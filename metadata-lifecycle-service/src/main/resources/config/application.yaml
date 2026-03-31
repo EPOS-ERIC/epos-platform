@@ -1,0 +1,97 @@
+# =============================================================================
+# EPOS GraphDB Configuration - Base Configuration
+# =============================================================================
+# This is the base configuration file. Profile-specific overrides should be
+# placed in application-{profile}.yaml files (e.g., application-prod.yaml)
+#
+# Configuration Resolution Order (highest priority first):
+# 1. Environment variables (EPOS_*)
+# 2. Profile-specific config (application-{profile}.yaml)
+# 3. This base config (application.yaml)
+# 4. Default values in code
+#
+# To use a profile, set: EPOS_PROFILE=prod (or -Depos.profile=prod)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# GraphDB Connection Settings
+# -----------------------------------------------------------------------------
+graphdb:
+  endpoint: "http://localhost:7200"
+  repositoryId: "epos"
+  timeout:
+    connectMs: 10000
+    readMs: 60000
+    writeMs: 60000
+
+# -----------------------------------------------------------------------------
+# Server Settings
+# -----------------------------------------------------------------------------
+server:
+  host: "0.0.0.0"
+  port: 8080
+  contextPath: ""
+  # Optional absolute public base URL for generated href values
+  # Example: "http://localhost:8080" or "https://api.example.org"
+  publicBaseUrl: null
+
+# -----------------------------------------------------------------------------
+# Data Source
+# -----------------------------------------------------------------------------
+# URL to the index.txt file containing TTL file locations
+indexUrl: "http://192.168.1.26:4500/index.txt"
+
+# -----------------------------------------------------------------------------
+# URI Configuration
+# -----------------------------------------------------------------------------
+# Base URI for all generated resource URIs
+baseUri: "https://epos-eu.org"
+
+# -----------------------------------------------------------------------------
+# Named Graphs
+# -----------------------------------------------------------------------------
+# Relative paths are resolved against baseUri
+# Use absolute URIs to override
+graphs:
+  conceptual: "/graphs/conceptual"
+  draft: "/graphs/data/draft"
+  submitted: "/graphs/data/submitted"
+  published: "/graphs/data/published"
+  archived: "/graphs/data/archived"
+  provenance: "/graphs/provenance"
+
+# -----------------------------------------------------------------------------
+# Agent URIs
+# -----------------------------------------------------------------------------
+# Default agent URIs for provenance tracking
+# Relative paths are resolved against baseUri
+agents:
+  system: "/agent/system"
+  initialPopulation: "/agent/InitialPopulationService"
+
+# -----------------------------------------------------------------------------
+# Logging Configuration
+# -----------------------------------------------------------------------------
+logging:
+  level: "INFO"          # DEBUG, INFO, WARN, ERROR
+  format: "text"         # "text" or "json"
+  includeTimestamp: true
+
+# -----------------------------------------------------------------------------
+# Feature Flags
+# -----------------------------------------------------------------------------
+features:
+  enableSwagger: true
+  enableCors: true
+  enableMetrics: false
+
+# -----------------------------------------------------------------------------
+# Custom Properties
+# -----------------------------------------------------------------------------
+# Add any application-specific properties here
+# Access via Config["custom.key.path"]
+custom:
+# Example custom properties:
+# myFeature:
+#   enabled: true
+#   maxItems: 100

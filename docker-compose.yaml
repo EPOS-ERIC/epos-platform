@@ -1,0 +1,61 @@
+services:
+  graphdb:
+    image: ontotext/graphdb:11.3.1
+    ports:
+      - "7200:7200"
+    environment:
+      - GDB_HEAP_SIZE=2g
+      - GDB_MIN_MEM=1g
+      - GDB_MAX_MEM=2g
+    volumes:
+      - graphdb-data:/opt/graphdb/home
+      - ${GRAPHDB_LICENSE_FILE:-./graphdb/license/EPOS_ERIC_GRAPHDB_FREE_v11.3.license}:/opt/graphdb/home/work/graphdb.license:ro
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7200/rest/repositories"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  graphdb-init:
+    image: curlimages/curl:latest
+    depends_on:
+      graphdb:
+        condition: service_healthy
+    environment:
+      - GRAPHDB_URL=http://graphdb:7200
+      - REPO_ID=epos
+      - CONFIG_FILE=/config/repo-config.ttl
+      - SHACL_URL=https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/refs/heads/EPOS-DCAT-AP-shapes/epos-dcat-ap_shapes.ttl
+    volumes:
+      - ./graphdb/config:/config:ro
+      - ./graphdb/init:/init:ro
+    entrypoint: ["sh", "/init/init-graphdb.sh"]
+    restart: "no"
+    networks:
+      - epos-network
+
+  metadata-lifecycle-service:
+    build:
+      context: ./metadata-lifecycle-service
+    depends_on:
+      graphdb-init:
+        condition: service_completed_successfully
+    environment:
+      - EPOS_GRAPHDB_ENDPOINT=http://graphdb:7200
+      - EPOS_REPOSITORY_ID=epos
+      - EPOS_SERVER_HOST=0.0.0.0
+      - EPOS_SERVER_PORT=8080
+    ports:
+      - "8080:8080"
+    restart: on-failure
+    networks:
+      - epos-network
+
+volumes:
+  graphdb-data:
+
+networks:
+  epos-network:
+    driver: bridge

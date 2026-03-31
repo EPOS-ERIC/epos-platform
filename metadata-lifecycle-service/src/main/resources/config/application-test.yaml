@@ -1,0 +1,45 @@
+# =============================================================================
+# EPOS GraphDB Configuration - TEST Profile
+# =============================================================================
+# Settings for automated testing with isolated database
+#
+# Activate with: EPOS_PROFILE=test or -Depos.profile=test
+# =============================================================================
+
+graphdb:
+  endpoint: "http://localhost:7200"
+  repositoryId: "epos-test"
+  timeout:
+    connectMs: 5000
+    readMs: 10000
+    writeMs: 10000
+
+# Test fixtures
+indexUrl: "file:///test/fixtures/index.txt"
+
+# Use test-specific base URI to avoid conflicts
+baseUri: "https://test.epos-eu.org"
+
+# Test graphs (isolated namespace)
+graphs:
+  conceptual: "/test/graphs/conceptual"
+  draft: "/test/graphs/data/draft"
+  submitted: "/test/graphs/data/submitted"
+  published: "/test/graphs/data/published"
+  archived: "/test/graphs/data/archived"
+  provenance: "/test/graphs/provenance"
+
+# Minimal logging during tests
+logging:
+  level: "WARN"
+  format: "text"
+
+# Disable external integrations
+features:
+  enableSwagger: false
+  enableCors: false
+  enableMetrics: false
+
+custom:
+  testMode: true
+  cleanupAfterTests: true

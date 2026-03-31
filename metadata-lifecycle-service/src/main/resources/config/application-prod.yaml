@@ -1,0 +1,36 @@
+# =============================================================================
+# EPOS GraphDB Configuration - PRODUCTION Profile
+# =============================================================================
+# This file contains production-specific overrides.
+# Only include settings that differ from application.yaml
+#
+# Activate with: EPOS_PROFILE=prod or -Depos.profile=prod
+# =============================================================================
+
+# Production GraphDB endpoint
+graphdb:
+  endpoint: "https://graphdb.epos-eu.org"
+  repositoryId: "epos"
+  timeout:
+    connectMs: 15000
+    readMs: 120000
+    writeMs: 120000
+
+# Production data source
+indexUrl: "https://data.epos-eu.org/index.txt"
+
+# Production server settings
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+# Production logging
+logging:
+  level: "WARN"
+  format: "json"
+
+# Production features
+features:
+  enableSwagger: true
+  enableCors: true
+  enableMetrics: true
