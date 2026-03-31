@@ -1,29 +1,31 @@
 # Multi-stage build: Build stage
-FROM maven:3.9-amazoncorretto-17 AS build
+FROM amazoncorretto:17 AS build
 
 WORKDIR /app
 
-# Copy pom.xml and download dependencies (layer caching)
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# Copy Gradle wrapper and build scripts first for layer caching
+COPY gradle ./gradle
+COPY gradlew gradlew
+COPY settings.gradle.kts build.gradle.kts gradle.properties ./
+
+RUN chmod +x gradlew
 
 # Copy source code
 COPY src ./src
 
-# Build the application and copy runtime dependencies
-RUN mvn clean package -DskipTests && mvn dependency:copy-dependencies -DincludeScope=runtime -DskipTests
+# Build the fat jar
+RUN ./gradlew --no-daemon shadowJar
 
 # Runtime stage
 FROM amazoncorretto:17
 
 WORKDIR /app
 
-# Copy the built JAR and runtime dependencies from build stage
-COPY --from=build /app/target/metadata-service-*.jar /app/app.jar
-COPY --from=build /app/target/dependency /app/lib
+# Copy the fat jar from build stage
+COPY --from=build /app/build/libs/metadata-service-*.jar /app/app.jar
 
 # Expose API port
 EXPOSE 8080
 
 # Default: run the API server (or pass args like "populate")
-ENTRYPOINT ["java", "-cp", "/app/app.jar:/app/lib/*", "org.epos.ApplicationKt"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

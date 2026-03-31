@@ -26,39 +26,39 @@ Examples:
 
 ```bash
 # API server
-java -jar target/metadata-service-1.0-SNAPSHOT.jar server
+java -jar build/libs/metadata-service-1.0-SNAPSHOT.jar server
 
 # Initial population only
-java -jar target/metadata-service-1.0-SNAPSHOT.jar populate
+java -jar build/libs/metadata-service-1.0-SNAPSHOT.jar populate
 
 # Populate and then start API
-java -jar target/metadata-service-1.0-SNAPSHOT.jar populate-and-serve
+java -jar build/libs/metadata-service-1.0-SNAPSHOT.jar populate-and-serve
 ```
 
 ## Prerequisites
 
 - JDK 17
-- Maven 3.9+
+- Gradle 9.0.0 via the included wrapper (`./gradlew`)
 - GraphDB (tested with 10.x)
 - GraphDB repository (default: `epos`)
 
 ## Build and local run commands
 
 ```bash
-# Build
-mvn clean package
+# Build fat jar
+./gradlew clean shadowJar
 
 # Compile only
-mvn -DskipTests compile
+./gradlew classes
 
 # Run tests
-mvn test
+./gradlew test
 
-# Run app via Maven (server mode)
-mvn exec:java
+# Run app via Gradle (server mode)
+./gradlew run
 
-# Run app via Maven in populate mode
-mvn exec:java -Dexec.args="populate"
+# Run app via Gradle in populate mode
+./gradlew run --args="populate"
 ```
 
 ## Configuration
@@ -80,7 +80,7 @@ Override order (high -> low):
 Select profile with:
 
 ```bash
-EPOS_PROFILE=dev java -jar target/metadata-service-1.0-SNAPSHOT.jar
+EPOS_PROFILE=dev java -jar build/libs/metadata-service-1.0-SNAPSHOT.jar
 ```
 
 ### Important environment variables
