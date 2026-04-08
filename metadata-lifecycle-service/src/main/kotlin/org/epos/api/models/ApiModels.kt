@@ -76,6 +76,17 @@ data class ShapeDefinitionInfo(
     val targetClasses: List<String>,
     val properties: List<PropertyInfo>,
     val resolvedRefs: List<String>? = null,
+    val name: String? = null,
+    val datatype: String? = null,
+    val datatypes: List<String>? = null,
+    val nodeKind: String? = null,
+    val nodeKinds: List<String>? = null,
+    val classConstraint: String? = null,
+    val classConstraints: List<String>? = null,
+    val nodeShapeRef: String? = null,
+    val nodeShapeRefs: List<String>? = null,
+    val ontologyEquivalentClasses: List<String>? = null,
+    val ontologySubClassesOf: List<String>? = null,
     val closed: Boolean = false,
     val description: String? = null
 )

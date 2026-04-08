@@ -9,6 +9,7 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory
 import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.model.vocabulary.RDFS
 import org.eclipse.rdf4j.model.vocabulary.SHACL
+import org.eclipse.rdf4j.model.vocabulary.OWL
 import org.eclipse.rdf4j.model.vocabulary.XSD
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
@@ -25,7 +26,8 @@ import java.io.StringReader
  */
 data class ShaclShapesGraph(
     val shapes: List<Shape>,
-    val prefixes: Map<String, String> = emptyMap()
+    val prefixes: Map<String, String> = emptyMap(),
+    val ontologySchema: OntologySchema = OntologySchema()
 ) {
     /** Get all node shapes */
     val nodeShapes: List<NodeShape> get() = shapes.filterIsInstance<NodeShape>()
@@ -42,6 +44,30 @@ data class ShaclShapesGraph(
             shape.targets.any { it is TargetClass && it.targetClass == classIri }
         }
 }
+
+data class OntologySchema(
+    val classes: Map<String, OntologyClassInfo> = emptyMap(),
+    val properties: Map<String, OntologyPropertyInfo> = emptyMap()
+)
+
+data class OntologyClassInfo(
+    val iri: String,
+    val labels: Map<String, String> = emptyMap(),
+    val descriptions: Map<String, String> = emptyMap(),
+    val equivalentClasses: List<String> = emptyList(),
+    val subClassOf: List<String> = emptyList()
+)
+
+data class OntologyPropertyInfo(
+    val iri: String,
+    val labels: Map<String, String> = emptyMap(),
+    val descriptions: Map<String, String> = emptyMap(),
+    val propertyTypes: List<String> = emptyList(),
+    val domains: List<String> = emptyList(),
+    val ranges: List<String> = emptyList(),
+    val equivalentProperties: List<String> = emptyList(),
+    val subPropertyOf: List<String> = emptyList()
+)
 
 /**
  * Base class for all SHACL shapes
@@ -181,8 +207,10 @@ data class ZeroOrOnePath(val inner: PropertyPath) : PropertyPath() {
  */
 data class NodeConstraints(
     val nodeKind: NodeKind? = null,
+    val nodeKinds: List<NodeKind> = emptyList(),
     val classConstraint: List<String> = emptyList(),  // sh:class
     val datatype: String? = null,                      // sh:datatype
+    val datatypes: List<String> = emptyList(),
     val node: List<String> = emptyList(),             // sh:node (reference to other shapes)
     val hasValue: List<Value> = emptyList(),          // sh:hasValue
     val inValues: List<Value>? = null                 // sh:in
@@ -432,14 +460,35 @@ class ShaclParser(private val httpClient: HttpClient) {
                 val targetClasses = shape.targets.filterIsInstance<TargetClass>().map { it.targetClass } +
                     shape.targets.filterIsInstance<ImplicitClassTarget>().map { it.classIri }
 
+                val nodeKinds = shape.nodeConstraints.nodeKinds.map { it.name }.distinct()
+                val datatypes = shape.nodeConstraints.datatypes.distinct()
+                val classConstraints = shape.nodeConstraints.classConstraint.distinct()
+                val nodeShapeRefs = shape.nodeConstraints.node.distinct()
+
+                val ontologyClass = shape.id?.let { shapesGraph.ontologySchema.classes[it] }
+
                 val description = shape.description[""] ?: shape.description.values.firstOrNull()
+                val name = shape.name[""] ?: shape.name.values.firstOrNull()
 
                 shape.id!! to ShapeDefinitionInfo(
                     id = shape.id,
-                    targetClasses = targetClasses.distinct(),
-                    properties = aggregateProperties(shape.properties),
+                    targetClasses = targetClasses.distinct().ifEmpty {
+                        if (shape.id in shapesGraph.ontologySchema.classes) listOf(shape.id) else emptyList()
+                    },
+                    properties = aggregateProperties(shape.properties, shapesGraph.ontologySchema, targetClasses.firstOrNull()),
                     closed = shape.closed,
-                    description = description
+                    description = description,
+                    name = name,
+                    datatype = if (datatypes.size == 1) datatypes.first() else null,
+                    datatypes = if (datatypes.size > 1) datatypes else null,
+                    nodeKind = if (nodeKinds.size == 1) nodeKinds.first() else null,
+                    nodeKinds = if (nodeKinds.size > 1) nodeKinds else null,
+                    classConstraint = if (classConstraints.size == 1) classConstraints.first() else null,
+                    classConstraints = if (classConstraints.size > 1) classConstraints else null,
+                    nodeShapeRef = if (nodeShapeRefs.size == 1) nodeShapeRefs.first() else null,
+                    nodeShapeRefs = if (nodeShapeRefs.size > 1) nodeShapeRefs else null,
+                    ontologyEquivalentClasses = ontologyClass?.equivalentClasses?.ifEmpty { null },
+                    ontologySubClassesOf = ontologyClass?.subClassOf?.ifEmpty { null }
                 )
             }
 
@@ -548,9 +597,9 @@ class ShaclParser(private val httpClient: HttpClient) {
             .filter { it !in explicitNodeShapes && it !in explicitPropertyShapes }
             .toSet()
 
-        // Find shapes that are also rdfs:Class (implicit class targets)
+        // Find shapes that are also classes (implicit class targets)
         val classShapes = model.filter {
-            it.predicate == RDF.TYPE && it.`object` == RDFS.CLASS
+            it.predicate == RDF.TYPE && (it.`object` == RDFS.CLASS || it.`object` == OWL.CLASS)
         }.map { it.subject }
             .filter { subj ->
                 // Must have some SHACL properties to be considered a shape
@@ -574,7 +623,9 @@ class ShaclParser(private val httpClient: HttpClient) {
             }
         }
 
-        return ShaclShapesGraph(shapes, prefixes)
+        val ontologySchema = parseOntologySchema(model)
+
+        return ShaclShapesGraph(shapes, prefixes, ontologySchema)
     }
 
     private fun isShaclProperty(predicate: IRI): Boolean {
@@ -783,9 +834,11 @@ class ShaclParser(private val httpClient: HttpClient) {
 
     private fun parseNodeConstraints(model: Model, subject: Resource): NodeConstraints {
         val directNodeKind = parseNodeKind(model, subject)
+        val directNodeKinds = listOfNotNull(directNodeKind)
         val directClassConstraints = model.filter { it.subject == subject && it.predicate == SHACL.CLASS }
             .mapNotNull { (it.`object` as? IRI)?.stringValue() }
         val directDatatype = parseIri(model, subject, SHACL.DATATYPE)
+        val directDatatypes = listOfNotNull(directDatatype)
         val directNodeRefs = model.filter { it.subject == subject && it.predicate == SHACL.NODE }
             .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
 
@@ -805,10 +858,15 @@ class ShaclParser(private val httpClient: HttpClient) {
                 .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
         }
 
+        val allNodeKinds = (directNodeKinds + orNodeKinds).distinct()
+        val allDatatypes = (directDatatypes + orDatatypes).distinct()
+
         return NodeConstraints(
-            nodeKind = directNodeKind ?: orNodeKinds.firstOrNull(),
+            nodeKind = allNodeKinds.firstOrNull(),
+            nodeKinds = allNodeKinds,
             classConstraint = (directClassConstraints + orClassConstraints).distinct(),
-            datatype = directDatatype ?: orDatatypes.firstOrNull(),
+            datatype = allDatatypes.firstOrNull(),
+            datatypes = allDatatypes,
             node = (directNodeRefs + orNodeRefs).distinct(),
             hasValue = model.filter { it.subject == subject && it.predicate == SHACL.HAS_VALUE }
                 .map { parseValue(it.`object`) },
@@ -970,6 +1028,71 @@ class ShaclParser(private val httpClient: HttpClient) {
         return prefixes
     }
 
+    private fun parseOntologySchema(model: Model): OntologySchema {
+        val classIris = model.filter {
+            it.predicate == RDF.TYPE && (it.`object` == RDFS.CLASS || it.`object` == OWL.CLASS)
+        }.mapNotNull { (it.subject as? IRI)?.stringValue() }.toSet()
+
+        val classes = classIris.associateWith { classIri ->
+            val classResource = vf.createIRI(classIri)
+            OntologyClassInfo(
+                iri = classIri,
+                labels = parseLanguageMap(model, classResource, RDFS.LABEL),
+                descriptions = parseLanguageMap(model, classResource, RDFS.COMMENT),
+                equivalentClasses = parseIriList(model, classResource, OWL.EQUIVALENTCLASS).distinct(),
+                subClassOf = model.filter { it.subject == classResource && it.predicate == RDFS.SUBCLASSOF }
+                    .flatMap { parseClassExpression(it.`object`, model) }
+                    .distinct()
+            )
+        }
+
+        val propertyIris = model.filter {
+            it.predicate == RDF.TYPE && it.`object` in setOf(
+                OWL.OBJECTPROPERTY,
+                OWL.DATATYPEPROPERTY,
+                OWL.ANNOTATIONPROPERTY,
+                RDF.PROPERTY
+            )
+        }.mapNotNull { (it.subject as? IRI)?.stringValue() }.toSet()
+
+        val properties = propertyIris.associateWith { propertyIri ->
+            val propertyResource = vf.createIRI(propertyIri)
+            val propertyTypes = model.filter { it.subject == propertyResource && it.predicate == RDF.TYPE }
+                .mapNotNull { (it.`object` as? IRI)?.stringValue() }
+                .distinct()
+
+            OntologyPropertyInfo(
+                iri = propertyIri,
+                labels = parseLanguageMap(model, propertyResource, RDFS.LABEL),
+                descriptions = parseLanguageMap(model, propertyResource, RDFS.COMMENT),
+                propertyTypes = propertyTypes,
+                domains = model.filter { it.subject == propertyResource && it.predicate == RDFS.DOMAIN }
+                    .flatMap { parseClassExpression(it.`object`, model) }
+                    .distinct(),
+                ranges = model.filter { it.subject == propertyResource && it.predicate == RDFS.RANGE }
+                    .flatMap { parseClassExpression(it.`object`, model) }
+                    .distinct(),
+                equivalentProperties = parseIriList(model, propertyResource, OWL.EQUIVALENTPROPERTY).distinct(),
+                subPropertyOf = parseIriList(model, propertyResource, RDFS.SUBPROPERTYOF).distinct()
+            )
+        }
+
+        return OntologySchema(classes = classes, properties = properties)
+    }
+
+    private fun parseClassExpression(value: org.eclipse.rdf4j.model.Value, model: Model): List<String> {
+        return when (value) {
+            is IRI -> listOf(value.stringValue())
+            is BNode -> {
+                val unionOf = model.filter { it.subject == value && it.predicate == OWL.UNIONOF }
+                    .firstOrNull()?.`object`
+                    ?: return emptyList()
+                parseRdfList(model, unionOf).flatMap { parseClassExpression(it, model) }
+            }
+            else -> emptyList()
+        }
+    }
+
     private fun parseListResources(model: Model, subject: Resource, predicate: IRI): List<Resource> {
         val listHead = model.filter { it.subject == subject && it.predicate == predicate }
             .firstOrNull()?.`object` ?: return emptyList()
@@ -1082,14 +1205,18 @@ class ShaclParser(private val httpClient: HttpClient) {
             ResourceTypeInfo(
                 name = resourceName,
                 targetClass = targetClass,
-                properties = aggregateProperties(nodeShape.properties),
+                properties = aggregateProperties(nodeShape.properties, shapesGraph.ontologySchema, targetClass),
                 closed = nodeShape.closed,
                 description = description
             )
         }
     }
 
-    private fun aggregateProperties(properties: List<PropertyShape>): List<PropertyInfo> {
+    private fun aggregateProperties(
+        properties: List<PropertyShape>,
+        ontologySchema: OntologySchema = OntologySchema(),
+        sourceClass: String? = null
+    ): List<PropertyInfo> {
         val pathOrder = mutableListOf<String>()
         val groupedByPath = linkedMapOf<String, MutableList<PropertyShape>>()
 
@@ -1104,7 +1231,7 @@ class ShaclParser(private val httpClient: HttpClient) {
 
         return pathOrder.mapNotNull { path ->
             val variants = groupedByPath[path].orEmpty()
-            if (variants.isEmpty()) null else aggregatePropertyVariants(path, variants)
+            if (variants.isEmpty()) null else aggregatePropertyVariants(path, variants, ontologySchema, sourceClass)
         }
     }
 
@@ -1115,7 +1242,12 @@ class ShaclParser(private val httpClient: HttpClient) {
         }
     }
 
-    private fun aggregatePropertyVariants(path: String, variants: List<PropertyShape>): PropertyInfo {
+    private fun aggregatePropertyVariants(
+        path: String,
+        variants: List<PropertyShape>,
+        ontologySchema: OntologySchema,
+        sourceClass: String?
+    ): PropertyInfo {
         val names = variants.mapNotNull { shape ->
             shape.name[""] ?: shape.name.values.firstOrNull()
         }.map { it.trim() }.filter { it.isNotBlank() }
@@ -1124,8 +1256,20 @@ class ShaclParser(private val httpClient: HttpClient) {
             shape.description[""] ?: shape.description.values.firstOrNull()
         }.map { it.trim() }.filter { it.isNotBlank() }
 
-        val datatypes = variants.mapNotNull { it.nodeConstraints.datatype }.distinct()
-        val nodeKinds = variants.mapNotNull { it.nodeConstraints.nodeKind?.name }.distinct()
+        val datatypes = variants.flatMap { shape ->
+            if (shape.nodeConstraints.datatypes.isNotEmpty()) {
+                shape.nodeConstraints.datatypes
+            } else {
+                listOfNotNull(shape.nodeConstraints.datatype)
+            }
+        }.distinct()
+        val nodeKinds = variants.flatMap { shape ->
+            if (shape.nodeConstraints.nodeKinds.isNotEmpty()) {
+                shape.nodeConstraints.nodeKinds.map { it.name }
+            } else {
+                listOfNotNull(shape.nodeConstraints.nodeKind?.name)
+            }
+        }.distinct()
         val classConstraints = variants.flatMap { it.nodeConstraints.classConstraint }.distinct()
         val nodeShapeRefs = variants.flatMap { it.nodeConstraints.node }.distinct()
         val severities = variants.map { it.severity.name }.distinct()
@@ -1150,15 +1294,28 @@ class ShaclParser(private val httpClient: HttpClient) {
             }
         }.distinct().ifEmpty { null }
 
+        val ontologyProperty = ontologySchema.properties[path]
+        val ontologyRanges = if (sourceClass == null || ontologyProperty == null || ontologyProperty.domains.isEmpty() || sourceClass in ontologyProperty.domains) {
+            ontologyProperty?.ranges.orEmpty()
+        } else {
+            emptyList()
+        }
+
+        val ontologyDatatypes = ontologyRanges.filter { isDatatypeIri(it) }
+        val ontologyClassRanges = ontologyRanges.filterNot { isDatatypeIri(it) }
+
+        val effectiveDatatypes = if (datatypes.isEmpty()) ontologyDatatypes.distinct() else datatypes
+        val effectiveClassConstraints = if (classConstraints.isEmpty()) ontologyClassRanges.distinct() else classConstraints
+
         return PropertyInfo(
             path = path,
             name = names.firstOrNull() ?: extractPropertyName(path),
-            datatype = if (datatypes.size == 1) datatypes.first() else null,
-            datatypes = if (datatypes.size > 1) datatypes else null,
+            datatype = if (effectiveDatatypes.size == 1) effectiveDatatypes.first() else null,
+            datatypes = if (effectiveDatatypes.size > 1) effectiveDatatypes else null,
             nodeKind = if (nodeKinds.size == 1) nodeKinds.first() else null,
             nodeKinds = if (nodeKinds.size > 1) nodeKinds else null,
-            classConstraint = if (classConstraints.size == 1) classConstraints.first() else null,
-            classConstraints = if (classConstraints.size > 1) classConstraints else null,
+            classConstraint = if (effectiveClassConstraints.size == 1) effectiveClassConstraints.first() else null,
+            classConstraints = if (effectiveClassConstraints.size > 1) effectiveClassConstraints else null,
             nodeShapeRef = if (nodeShapeRefs.size == 1) nodeShapeRefs.first() else null,
             nodeShapeRefs = if (nodeShapeRefs.size > 1) nodeShapeRefs else null,
             minCount = minCount,
@@ -1196,5 +1353,15 @@ class ShaclParser(private val httpClient: HttpClient) {
         val cleanName = localName.replace(Regex("[()*/+?|<>]"), "").trim()
 
         return cleanName.takeIf { it.isNotBlank() } ?: "property"
+    }
+
+    private fun isDatatypeIri(uri: String): Boolean {
+        val normalized = uri.lowercase()
+        return normalized.contains("/xmlschema#") ||
+            normalized.contains("/xsd#") ||
+            normalized.contains("/xsd/") ||
+            normalized.endsWith("#literal") ||
+            normalized.endsWith("/literal") ||
+            normalized.contains("datatype")
     }
 }

@@ -7,6 +7,7 @@ import org.epos.api.shacl.TargetSparql
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ShaclParserUnitTest {
@@ -166,5 +167,90 @@ class ShaclParserUnitTest {
         assertTrue(!bResolved.contains("http://example.org/BShape"))
         assertTrue(cResolved.contains("http://example.org/BShape"))
         assertTrue(!cResolved.contains("http://example.org/CShape"))
+    }
+
+    @Test
+    fun `owl class node shape is treated as implicit class target`() {
+        val ttl = """
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix owl: <http://www.w3.org/2002/07/owl#> .
+            @prefix ex: <http://example.org/> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+            ex:Equipment a sh:NodeShape, owl:Class ;
+              sh:property [
+                sh:path ex:code ;
+                sh:datatype xsd:string ;
+              ] .
+        """.trimIndent()
+
+        val parser = ShaclParser(HttpClient())
+        parser.parseShapesGraphFromString(ttl)
+        val definitions = parser.getShapeDefinitions()
+
+        val equipment = definitions["http://example.org/Equipment"]
+        assertNotNull(equipment)
+        assertTrue(equipment.targetClasses.contains("http://example.org/Equipment"))
+    }
+
+    @Test
+    fun `node shape keeps datatype alternatives from sh or`() {
+        val ttl = """
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix ex: <http://example.org/> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+            ex:DateOrDateTimeDataType
+              a sh:NodeShape ;
+              sh:or (
+                [ sh:datatype xsd:date ; ]
+                [ sh:datatype xsd:dateTime ; ]
+              ) .
+        """.trimIndent()
+
+        val parser = ShaclParser(HttpClient())
+        parser.parseShapesGraphFromString(ttl)
+        val definitions = parser.getShapeDefinitions()
+
+        val dateType = definitions["http://example.org/DateOrDateTimeDataType"]
+        assertNotNull(dateType)
+        assertNull(dateType.datatype)
+        assertTrue(dateType.datatypes?.contains("http://www.w3.org/2001/XMLSchema#date") == true)
+        assertTrue(dateType.datatypes?.contains("http://www.w3.org/2001/XMLSchema#dateTime") == true)
+    }
+
+    @Test
+    fun `property class constraints fallback from owl range unionOf`() {
+        val ttl = """
+            @prefix sh: <http://www.w3.org/ns/shacl#> .
+            @prefix ex: <http://example.org/> .
+            @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+            @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+            @prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+            ex:contactPoint
+              rdf:type owl:ObjectProperty ;
+              rdfs:domain ex:Catalog ;
+              rdfs:range [ rdf:type owl:Class ;
+                           owl:unionOf (ex:Organization ex:Person) ] .
+
+            ex:CatalogShape
+              a sh:NodeShape ;
+              sh:targetClass ex:Catalog ;
+              sh:property [
+                sh:path ex:contactPoint ;
+              ] .
+        """.trimIndent()
+
+        val parser = ShaclParser(HttpClient())
+        parser.parseShapesGraphFromString(ttl)
+        val definitions = parser.getShapeDefinitions()
+
+        val catalog = definitions["http://example.org/CatalogShape"]
+        assertNotNull(catalog)
+        val prop = catalog.properties.first { it.path == "http://example.org/contactPoint" }
+        val classes = prop.classConstraints ?: listOfNotNull(prop.classConstraint)
+        assertTrue(classes.contains("http://example.org/Organization"))
+        assertTrue(classes.contains("http://example.org/Person"))
     }
 }

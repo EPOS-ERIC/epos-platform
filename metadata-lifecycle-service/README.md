@@ -167,6 +167,8 @@ Notes:
   - single value -> `datatype` / `classConstraint` / `severity`
   - multiple values -> `datatypes` / `classConstraints` / `severities`
 - `nodeShapeRef` can be resolved directly in `shapeDefinitions[<IRI>]`
+- `shapeDefinitions` now also exposes node-level constraints for node-only shapes (e.g. `DateOrDateTimeDataType`), including `datatype(s)`, `classConstraint(s)` and `nodeShapeRef(s)`
+- OWL schema definitions are parsed and used as fallback for richer constraints (e.g. `owl:ObjectProperty` with `rdfs:range` / `owl:unionOf` enriches `classConstraint(s)` when SHACL property constraints are implicit)
 
 ## Example curl commands
 

@@ -494,12 +494,19 @@ class RelationshipGraph(
                     }
                 }
 
-                if (targetClasses.isEmpty()) continue
-
                 val pathVariants = extractPathVariants(propShape.path)
                 if (pathVariants.isEmpty()) continue
 
                 for ((propertyUri, isInversePath) in pathVariants) {
+                    if (targetClasses.isEmpty()) {
+                        shapesGraph.ontologySchema.properties[propertyUri]
+                            ?.ranges
+                            ?.filterNot { isDatatype(it) }
+                            ?.forEach { targetClasses.add(it) }
+                    }
+
+                    if (targetClasses.isEmpty()) continue
+
                     for (targetClass in targetClasses) {
                         if (isInversePath) {
                             addRelationship(targetClass, propertyUri, sourceClass)
