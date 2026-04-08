@@ -13,7 +13,8 @@ object OpenApiSpec {
             OpenApiPaths.Versioning.yaml,
             OpenApiPaths.Batch.yaml,
             OpenApiPaths.Legacy.yaml,
-            OpenApiPaths.Admin.yaml
+            OpenApiPaths.Admin.yaml,
+            OpenApiComponents.yaml
         ).joinToString("\n")
     }
 }
