@@ -9,7 +9,7 @@ services:
       - GDB_MAX_MEM=2g
     volumes:
       - graphdb-data:/opt/graphdb/home
-      - ${GRAPHDB_LICENSE_FILE:-./graphdb/license/EPOS_ERIC_GRAPHDB_FREE_v11.3.license}:/opt/graphdb/home/work/graphdb.license:ro
+      - ${GRAPHDB_LICENSE_FILE:-./services/metadata-lifecycle/graphdb/license/EPOS_ERIC_GRAPHDB_FREE_v11.3.license}:/opt/graphdb/home/work/graphdb.license:ro
     networks:
       - epos-network
     healthcheck:
@@ -29,8 +29,8 @@ services:
       - CONFIG_FILE=/config/repo-config.ttl
       - SHACL_URL=https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/refs/heads/EPOS-DCAT-AP-shapes/epos-dcat-ap_shapes.ttl
     volumes:
-      - ./graphdb/config:/config:ro
-      - ./graphdb/init:/init:ro
+      - ./services/metadata-lifecycle/graphdb/config:/config:ro
+      - ./services/metadata-lifecycle/graphdb/init:/init:ro
     entrypoint: ["sh", "/init/init-graphdb.sh"]
     restart: "no"
     networks:
@@ -38,7 +38,7 @@ services:
 
   metadata-lifecycle-service:
     build:
-      context: ./metadata-lifecycle-service
+      context: ./services/metadata-lifecycle
     depends_on:
       graphdb-init:
         condition: service_completed_successfully

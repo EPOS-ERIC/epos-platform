@@ -5,8 +5,8 @@
 This file defines repository-level rules for the EPOS platform monorepo.
 
 - Applies to all paths by default.
-- If a service-level `AGENTS.md` exists, it may add stricter rules for that service.
-- Service-level rules must not relax this root baseline.
+- If an app/service-level `AGENTS.md` exists, it may add stricter rules for that module.
+- App/service-level rules must not relax this root baseline.
 
 ## Core Philosophy
 
@@ -40,6 +40,66 @@ Agents must not:
 - Ignore errors silently.
 - Use untyped code unless it is the only practical option and the user explicitly approves it first.
 
+## Monorepo Structure and Ownership
+
+Canonical top-level layout:
+
+- `apps/` - frontend applications.
+- `services/` - backend services.
+- `packages/` - shared code and shared repository utilities.
+- `cli/` - repository CLI tool.
+- `docker/` - repository-level Docker assets (base images, compose files, related files).
+- `helm/` - repository-level Helm charts.
+- Root files: `AGENTS.md`, `Makefile`, `README.md`, `CHANGELOG.md`.
+
+Conventions:
+
+- App/service directories under `apps/` and `services/` use kebab-case names.
+- Do not use a `-service` suffix inside `services/`.
+- Service-specific infrastructure stays inside the owning service (example: `services/metadata-lifecycle/graphdb/`).
+- App/service internals may use module-specific conventions defined in that module's `AGENTS.md`.
+
+## Required Files Per App/Service
+
+Each app/service is expected to include:
+
+- `AGENTS.md` (module-specific stricter rules).
+- `Makefile`.
+- `Dockerfile`.
+- `README.md`.
+
+`Makefile` target expectations:
+
+- `build`
+- `test`
+- `lint` (must also run `fmt`)
+- `fmt`
+
+## Packages Conventions
+
+- Language-specific shared libraries live under `packages/` (for example `packages/go/`, `packages/ts/`).
+- Shared scripts live under `packages/scripts/`.
+- Shared assets (logos and similar) live under `packages/assets/`.
+- Apps/services should use shared assets from `packages/assets/` and must not duplicate those assets inside app/service directories.
+
+## Root Makefile Conventions
+
+- Root `Makefile` provides repository-wide commands (for example local Docker development).
+- Root `Makefile` also provides fan-out commands that execute common targets across apps/services using consistent target names (`build`, `test`, `lint`).
+
+## Changelog Policy
+
+- Root `CHANGELOG.md` follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/).
+- When an agent makes a notable change, update `## Unreleased` with an appropriate entry.
+- Skip changelog updates for trivial internal noise.
+
+## Migration Note
+
+- Some conventions may not yet be fully implemented across all modules.
+- For new work, follow these conventions.
+- For existing modules, align incrementally within the scope of touched changes.
+- Do not perform broad structural migrations unless explicitly requested.
+
 ## Testing Principles
 
 - Do not over-test trivial behavior that is unlikely to change.
@@ -52,25 +112,6 @@ Agents must not:
 - In backend services, add logging on useful operational and failure paths.
 - Use standard logging levels: `info`, `warn`, `error`, `debug`.
 - Do not over-log; prefer logs that are useful when reading a running instance.
-
-## Monorepo Structure
-
-Current top-level components:
-
-- `metadata-lifecycle-service/` - service
-- `orchestrator-service/` - service
-- `graphdb/` - infrastructure component
-- `docker-compose.yaml` - local stack orchestration
-
-Conventions for new services:
-
-- Use `<name>-service/` naming.
-- Include a service-local `README.md`.
-
-## Root Commands
-
-- `make up` - starts the local Docker stack
-- `make down` - stops the local Docker stack
 
 ## Workflow Discovery
 

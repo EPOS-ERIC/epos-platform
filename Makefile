@@ -1,10 +1,10 @@
 up:
-	docker compose up -d --build
+	docker compose up -f ./docker/docker-compose.yaml -d --build
 
 down:
-	docker compose down
+	docker compose down -f ./docker/docker-compose.yaml
 
 populate:
-	./populatescript.sh
+	./packages/scripts/populatescript.sh
 
-.PHONY: up down
+.PHONY: up down populate
