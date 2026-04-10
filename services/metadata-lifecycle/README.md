@@ -44,15 +44,31 @@ java -jar build/libs/metadata-service-1.0-SNAPSHOT.jar populate-and-serve
 
 ## Build and local run commands
 
+Run commands from `services/metadata-lifecycle/`.
+
+Preferred (repository standard):
+
+```bash
+make build
+make test
+make fmt
+make lint
+```
+
+Equivalent Gradle commands:
+
 ```bash
 # Build fat jar
 ./gradlew clean shadowJar
 
-# Compile only
-./gradlew classes
-
 # Run tests
 ./gradlew test
+
+# Format Kotlin and Gradle Kotlin scripts
+./gradlew spotlessApply
+
+# Check formatting
+./gradlew spotlessCheck
 
 # Run app via Gradle (server mode)
 ./gradlew run
@@ -190,14 +206,14 @@ curl -X POST "http://localhost:8080/api/v2/admin/populate/from-url" \
 
 ## Docker
 
-### GraphDB only (provided compose file)
+### Repository compose stack
 
-`docker-compose.yaml` in this repository currently starts only GraphDB:
+`docker/docker-compose.yaml` at repository root defines GraphDB, initialization, and this service.
 
 ```bash
-docker compose up -d
-docker compose logs -f graphdb
-docker compose down
+docker compose -f docker/docker-compose.yaml up -d
+docker compose -f docker/docker-compose.yaml logs -f graphdb
+docker compose -f docker/docker-compose.yaml down
 ```
 
 ### Build API image

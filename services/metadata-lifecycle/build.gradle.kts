@@ -5,6 +5,7 @@ plugins {
     kotlin("jvm") version "2.3.0"
     application
     id("com.gradleup.shadow") version "9.0.0"
+    id("com.diffplug.spotless") version "8.4.0"
 }
 
 group       = "org.epos"
@@ -38,6 +39,17 @@ kotlin {
 
 application {
     mainClass.set("org.epos.ApplicationKt")
+}
+
+spotless {
+    kotlin {
+        target("src/**/*.kt")
+        ktlint()
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint()
+    }
 }
 
 dependencies {
