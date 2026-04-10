@@ -1,0 +1,780 @@
+openapi: 3.1.0
+info:
+  title: EPOS API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for the EPOS catalogue API.
+
+    Design notes:
+    - Search returns heterogeneous, typed resource items in a flat list.
+    - Clients navigate by following `href` links; they never construct URLs themselves.
+    - All cross-entity references carry an `href` pointing to the typed detail endpoint.
+  termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
+  contact:
+    email: someemail@epos.com
+  license:
+    name: AGPL
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+
+servers:
+  - url: https://api.todo.com/v1
+    description: Versioned API server
+
+tags:
+  - name: Search
+    description: Search across all resource types
+  - name: Datasets
+    description: Dataset resources
+  - name: Distributions
+    description: Distribution resources
+  - name: Software Applications
+    description: Software application resources
+  - name: Software Source Codes
+    description: Software source code resources
+  - name: Categories
+    description: Category taxonomy resources
+
+paths:
+
+  /search:
+    get:
+      tags:
+        - Search
+      summary: Search metadata resources
+      description: |
+        Returns a flat, typed list of catalogue resources matching the supplied criteria.
+        Results may include datasets, distributions, software applications, software source
+        codes, and categories. Each item carries an `href` pointing to its typed detail
+        endpoint; clients should follow that link rather than construct URLs themselves.
+      operationId: searchMetadata
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/TypeFilter'
+        - $ref: '#/components/parameters/SpatialFilter'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/ServiceProviders'
+        - $ref: '#/components/parameters/VersioningStatus'
+        - $ref: '#/components/parameters/Keywords'
+      responses:
+        '200':
+          description: Search results returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+              examples:
+                mixedResults:
+                  summary: Mixed resource search results
+                  value:
+                    total: 42
+                    items:
+                      - type: dataset
+                        id: "123"
+                        name: "IRPINIA Seismic Stations"
+                        href: "/api/v1/dataset/123"
+                        serviceProvider: "UNINA"
+                        categories:
+                          - "Seismology"
+                          - "Strong Motion"
+                      - type: category
+                        id: "cat-seismology"
+                        name: "Seismology"
+                        href: "/api/v1/category/cat-seismology"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /dataset/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags:
+        - Datasets
+      summary: Get dataset by id
+      operationId: getDatasetById
+      responses:
+        '200':
+          description: Dataset found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /distribution/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags:
+        - Distributions
+      summary: Get distribution by id
+      operationId: getDistributionById
+      responses:
+        '200':
+          description: Distribution found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Distribution'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /software-application/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags:
+        - Software Applications
+      summary: Get software application by id
+      operationId: getSoftwareApplicationById
+      responses:
+        '200':
+          description: Software application found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoftwareApplication'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /software-source-code/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags:
+        - Software Source Codes
+      summary: Get software source code by id
+      operationId: getSoftwareSourceCodeById
+      responses:
+        '200':
+          description: Software source code found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SoftwareSourceCode'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /category:
+    get:
+      tags:
+        - Categories
+      summary: Get full category tree
+      description: |
+        Returns the complete category tree as an ordered list of category schemes.
+        Each scheme carries its full subtree of nested `Category` objects.
+        Intended as the primary data source for building facet navigation in clients.
+      operationId: getCategoryTree
+      responses:
+        '200':
+          description: Category tree returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryTreeResponse'
+              examples:
+                tree:
+                  summary: Category tree with one scheme
+                  value:
+                    schemes:
+                      - id: "scheme-solid-earth"
+                        label: "Solid Earth"
+                        title: "Solid Earth Science Categories"
+                        description: "Top-level grouping for solid earth science resources."
+                        logo: "https://www.epos-eu.org/logos/solid-earth.png"
+                        homepage: "https://www.epos-eu.org/solid-earth"
+                        color: "#3A7BD5"
+                        orderNumber: 1
+                        type: "DATA"
+                        children:
+                          - id: "cat-seismology"
+                            name: "Seismology"
+                            description: "Resources related to seismic monitoring."
+                            children:
+                              - id: "cat-strong-motion"
+                                name: "Strong Motion"
+                                children: []
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /category/{id}:
+    parameters:
+      - $ref: '#/components/parameters/ResourceId'
+    get:
+      tags:
+        - Categories
+      summary: Get category by id
+      description: Returns a single category node with its full subtree of children.
+      operationId: getCategoryById
+      responses:
+        '200':
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+
+  parameters:
+
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: Local identifier of the resource
+      schema:
+        type: string
+        examples:
+          - "123"
+
+    Q:
+      name: q
+      in: query
+      required: false
+      description: Free-text search query
+      schema:
+        type: string
+        examples:
+          - "seismic stations"
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of items to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+        examples:
+          - 10
+
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: Number of items to skip before returning results
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        examples:
+          - 0
+
+    TypeFilter:
+      name: type
+      in: query
+      required: false
+      description: |
+        Filter results to one or more resource types. When omitted, all types are returned.
+        Repeat the parameter for multiple values: `?type=dataset&type=distribution`.
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/ResourceType'
+      style: form
+      explode: true
+
+    SpatialFilter:
+      name: spatialFilter
+      in: query
+      required: false
+      description: |
+        Spatial filter expressed as a WKT polygon string (EPSG:4326).
+        Resources whose spatial coverage intersects this polygon are returned.
+        Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
+      schema:
+        type: string
+        examples:
+          - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+
+    DateFrom:
+      name: dateFrom
+      in: query
+      required: false
+      description: |
+        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Resources with temporal coverage overlapping this range are returned.
+      schema:
+        type: string
+        format: date-time
+        examples:
+          - "2020-01-01T00:00:00Z"
+
+    DateTo:
+      name: dateTo
+      in: query
+      required: false
+      description: |
+        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Must be greater than or equal to `dateFrom` when both are supplied.
+      schema:
+        type: string
+        format: date-time
+        examples:
+          - "2023-12-31T23:59:59Z"
+
+    ServiceProviders:
+      name: serviceProvider
+      in: query
+      required: false
+      description: |
+        Filter by one or more service provider names.
+        Repeat the parameter for multiple values: `?serviceProvider=INGV&serviceProvider=UNINA`.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+
+    VersioningStatus:
+      name: versioningStatus
+      in: query
+      required: false
+      description: |
+        Filter by one or more versioning statuses.
+        When omitted, defaults to `PUBLISHED`.
+        Repeat the parameter for multiple values: `?versioningStatus=PUBLISHED&versioningStatus=DRAFT`.
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/VersioningStatus'
+        default:
+          - PUBLISHED
+      style: form
+      explode: true
+
+    Keywords:
+      name: keywords
+      in: query
+      required: false
+      description: |
+        Filter resources that carry all the supplied keywords.
+        Repeat the parameter for multiple values: `?keywords=seismology&keywords=stations`.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+
+  responses:
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # -------------------------------------------------------------------------
+    # Shared enums
+    # -------------------------------------------------------------------------
+
+    ResourceType:
+      type: string
+      enum:
+        - dataset
+        - distribution
+        - software-application
+        - software-source-code
+        - category
+
+    VersioningStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - PUBLISHED
+        - ARCHIVED
+
+    # -------------------------------------------------------------------------
+    # Search
+    # -------------------------------------------------------------------------
+
+    SearchResponse:
+      type: object
+      required:
+        - total
+        - items
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of matching resources across all pages
+          examples:
+            - 123
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchItem'
+
+    SearchItem:
+      oneOf:
+        - $ref: '#/components/schemas/DatasetSearchItem'
+        - $ref: '#/components/schemas/GenericSearchItem'
+      discriminator:
+        propertyName: type
+        mapping:
+          dataset: '#/components/schemas/DatasetSearchItem'
+          distribution: '#/components/schemas/GenericSearchItem'
+          software-application: '#/components/schemas/GenericSearchItem'
+          software-source-code: '#/components/schemas/GenericSearchItem'
+          category: '#/components/schemas/GenericSearchItem'
+
+    BaseSearchItem:
+      type: object
+      required:
+        - type
+        - id
+        - name
+        - href
+      properties:
+        type:
+          $ref: '#/components/schemas/ResourceType'
+        id:
+          type: string
+          examples:
+            - "123"
+        name:
+          type: string
+          examples:
+            - "IRPINIA Seismic Stations"
+        href:
+          type: string
+          description: Path to the typed detail endpoint. Follow this link; do not construct URLs.
+          examples:
+            - "/api/v1/dataset/123"
+
+    DatasetSearchItem:
+      allOf:
+        - $ref: '#/components/schemas/BaseSearchItem'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              const: dataset
+            serviceProvider:
+              type: string
+              description: Display name of the organisation providing this dataset
+              examples:
+                - "UNINA"
+            categories:
+              type: array
+              description: Category labels assigned to this dataset
+              items:
+                type: string
+              examples:
+                - ["Seismology", "Strong Motion"]
+
+    GenericSearchItem:
+      allOf:
+        - $ref: '#/components/schemas/BaseSearchItem'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - distribution
+                - software-application
+                - software-source-code
+                - category
+
+    # -------------------------------------------------------------------------
+    # Detail schemas
+    # -------------------------------------------------------------------------
+
+    BaseDetailResource:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+
+    Dataset:
+      allOf:
+        - $ref: '#/components/schemas/BaseDetailResource'
+        - type: object
+          properties:
+            keywords:
+              type: array
+              items:
+                type: string
+              examples:
+                - ["seismology", "stations", "Irpinia"]
+            categories:
+              type: array
+              description: Category labels assigned to this dataset
+              items:
+                type: string
+              examples:
+                - ["Seismology", "Strong Motion"]
+            publisher:
+              type: array
+              description: Names of the organisations publishing this dataset
+              items:
+                type: string
+              examples:
+                - ["UNINA", "INGV"]
+            spatial:
+              type: string
+              description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
+              examples:
+                - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+            temporal:
+              $ref: '#/components/schemas/TemporalExtent'
+            status:
+              $ref: '#/components/schemas/VersioningStatus'
+            distributions:
+              type: array
+              description: IDs of distributions that provide access to this dataset
+              items:
+                type: string
+              examples:
+                - ["456", "457"]
+
+    Distribution:
+      allOf:
+        - $ref: '#/components/schemas/BaseDetailResource'
+        - type: object
+          properties:
+            accessUrl:
+              type: string
+              format: uri
+              description: URL used to access the distribution
+              examples:
+                - "https://service.example.org/fdsnws/station/1/query"
+            operation:
+              type: string
+              description: Operation ID describing the service operation exposed by this distribution
+              examples:
+                - "getFDSNStationXML"
+
+    SoftwareApplication:
+      allOf:
+        - $ref: '#/components/schemas/BaseDetailResource'
+        - type: object
+          properties:
+            keywords:
+              type: array
+              items:
+                type: string
+              examples:
+                - ["portal", "seismology", "data access"]
+            categories:
+              type: array
+              description: Category labels assigned to this application
+              items:
+                type: string
+              examples:
+                - ["Seismology", "Data Services"]
+            downloadUrl:
+              type: string
+              format: uri
+              description: URL to download or install the application
+              examples:
+                - "https://example.org/application/download"
+
+    SoftwareSourceCode:
+      allOf:
+        - $ref: '#/components/schemas/BaseDetailResource'
+        - type: object
+          properties:
+            programmingLanguage:
+              type: string
+              description: Primary programming language of the source code
+              examples:
+                - "Java"
+            keywords:
+              type: array
+              items:
+                type: string
+              examples:
+                - ["portal", "seismology", "open source"]
+            categories:
+              type: array
+              description: Category labels assigned to this source code
+              items:
+                type: string
+              examples:
+                - ["Seismology", "Data Services"]
+            repository:
+              type: string
+              format: uri
+              description: URL of the source code repository
+              examples:
+                - "https://github.com/example/epos-portal"
+
+    Category:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          examples:
+            - "cat-seismology"
+        name:
+          type: string
+          examples:
+            - "Seismology"
+        description:
+          type: string
+          examples:
+            - "Resources related to seismic monitoring and analysis."
+        children:
+          type: array
+          description: Nested child categories
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CategoryScheme:
+      type: object
+      required:
+        - id
+        - label
+        - type
+      properties:
+        id:
+          type: string
+          examples:
+            - "scheme-solid-earth"
+        label:
+          type: string
+          examples:
+            - "Solid Earth"
+        title:
+          type: string
+          examples:
+            - "Solid Earth Science Categories"
+        description:
+          type: string
+          examples:
+            - "Top-level grouping for all solid earth science resources."
+        logo:
+          type: string
+          format: uri
+          examples:
+            - "https://www.epos-eu.org/logos/solid-earth.png"
+        homepage:
+          type: string
+          format: uri
+          examples:
+            - "https://www.epos-eu.org/solid-earth"
+        color:
+          type: string
+          description: Hex colour code used for UI rendering
+          examples:
+            - "#3A7BD5"
+        orderNumber:
+          type: integer
+          description: Display order among sibling category schemes
+          examples:
+            - 1
+        type:
+          type: string
+          enum:
+            - DATA
+            - FACILITY
+            - SOFTWARE
+          examples:
+            - "DATA"
+        children:
+          type: array
+          description: Top-level categories within this scheme
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CategoryTreeResponse:
+      type: object
+      required:
+        - schemes
+      properties:
+        schemes:
+          type: array
+          description: Ordered list of category schemes, each carrying its full category subtree
+          items:
+            $ref: '#/components/schemas/CategoryScheme'
+
+    # -------------------------------------------------------------------------
+    # Shared helpers
+    # -------------------------------------------------------------------------
+
+    TemporalExtent:
+      type: object
+      description: Temporal coverage of a resource
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Start of the temporal coverage (inclusive), ISO 8601 UTC
+          examples:
+            - "2010-01-01T00:00:00Z"
+        end:
+          type: string
+          format: date-time
+          description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
+          examples:
+            - "2023-12-31T23:59:59Z"
+
+    ErrorResponse:
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          type: string
+          examples:
+            - "RESOURCE_NOT_FOUND"
+        errorMessage:
+          type: string
+          examples:
+            - "The requested resource was not found"
