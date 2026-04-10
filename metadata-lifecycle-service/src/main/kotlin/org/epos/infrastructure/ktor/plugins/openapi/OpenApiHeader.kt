@@ -45,10 +45,6 @@ tags:
     description: Batch submit and publish multiple entities
   - name: Admin
     description: Administrative operations (population, maintenance)
-  - name: Legacy
-    description: Backward-compatible endpoints from resources-service
-  - name: Monitoring
-    description: Graph and service monitoring metrics
 
 paths:""".trimIndent()
 }

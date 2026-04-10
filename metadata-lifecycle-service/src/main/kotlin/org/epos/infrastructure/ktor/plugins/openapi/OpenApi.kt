@@ -12,7 +12,6 @@ object OpenApiSpec {
             OpenApiPaths.Lifecycle.yaml,
             OpenApiPaths.Versioning.yaml,
             OpenApiPaths.Batch.yaml,
-            OpenApiPaths.Legacy.yaml,
             OpenApiPaths.Admin.yaml,
             OpenApiComponents.yaml
         ).joinToString("\n")
@@ -50,10 +49,6 @@ object OpenApiPaths {
 
     object Batch {
         val yaml = OpenApiBatchPaths.yaml
-    }
-
-    object Legacy {
-        val yaml = OpenApiLegacyPaths.yaml
     }
 
     object Admin {

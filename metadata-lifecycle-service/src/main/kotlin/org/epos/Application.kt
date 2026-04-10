@@ -214,7 +214,6 @@ fun Application.module() {
         
         // Search and Discovery
         searchRoutes(graphDBClient, shaclService, edmMappingService)
-        legacyRoutes(graphDBClient, edmMappingService)
 
         // SPARQL endpoint
         sparqlRoutes(graphDBClient)
