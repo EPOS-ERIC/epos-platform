@@ -7,8 +7,8 @@ plugins {
     id("com.gradleup.shadow") version "9.0.0"
 }
 
-group = "org.epos"
-version = "1.0-SNAPSHOT"
+group       = "org.epos"
+version     = "1.0-SNAPSHOT"
 description = "Kotlin application for managing RDF lifecycle in GraphDB with versioning and PROV-O"
 
 val rdf4jVersion            = "5.1.6"

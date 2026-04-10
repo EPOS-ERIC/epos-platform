@@ -1,37 +1,81 @@
-target/
+### OS / editor metadata ###
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+### Local environment / secrets ###
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+### Logs / temp / caches ###
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+tmp/
+temp/
+.cache/
+coverage/
+coverage.out
+htmlcov/
+
+### Binaries / shared libs ###
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.a
+*.o
+
+### Java / Kotlin / Gradle ###
 .gradle/
 .kotlin
+build/
+target/
+out/
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+### Go ###
+bin/
+*.test
+*.prof
+*.cover
+.coverprofile
+go.work
+go.work.sum
+
+### Node / TypeScript / Angular ###
+node_modules/
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.angular/
+.ng/
+out-tsc/
+dist/
+*.tsbuildinfo
+
+### Java IDE files ###
 *.iws
 *.iml
 *.ipr
-
-### Eclipse ###
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-### Mac OS ###
-.DS_Store
