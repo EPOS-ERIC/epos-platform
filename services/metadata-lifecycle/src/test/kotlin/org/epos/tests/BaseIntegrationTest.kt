@@ -183,7 +183,8 @@ abstract class BaseIntegrationTest {
 
             graphs.forEach { graph ->
                 try {
-                    val url = "$testEndpoint/repositories/test-repo/rdf-graphs/service?graph=${URLEncoder.encode(graph, "UTF-8")}"
+                    val contextParam = URLEncoder.encode("<$graph>", "UTF-8")
+                    val url = "$testEndpoint/repositories/test-repo/statements?context=$contextParam"
                     val connection = URL(url).openConnection() as HttpURLConnection
                     connection.requestMethod = "DELETE"
                     connection.responseCode // Execute

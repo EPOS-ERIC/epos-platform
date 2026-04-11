@@ -74,7 +74,8 @@ fun Route.searchRoutes(
             val resourceTypes = shaclService.getResourceTypes()
             val matchingType = resourceTypes.find { it.name.equals(type, ignoreCase = true) }
             if (matchingType != null) {
-                filters.add("?s rdf:type <${matchingType.targetClass}> .")
+                // Keep ?type bound even for typed filtering so response mapping stays consistent.
+                filters.add("?s rdf:type ?type . FILTER(?type = <${matchingType.targetClass}>)")
             } else {
                 filters.add("?s rdf:type ?type . FILTER(CONTAINS(LCASE(STR(?type)), \"${type.lowercase()}\"))")
             }

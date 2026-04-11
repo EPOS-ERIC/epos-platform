@@ -90,7 +90,8 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
         val entityUri = data?.get("uri") as? String
 
         // Get the entity
-        val response = client.get("/api/v2/dataset/$entityUri?status=draft")
+        val encodedEntityUri = java.net.URLEncoder.encode(entityUri, "UTF-8")
+        val response = client.get("/api/v2/dataset/$encodedEntityUri?status=draft")
 
         response.status shouldBe HttpStatusCode.OK
         response.bodyAsText() shouldContain "Test Dataset"
@@ -122,11 +123,12 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
         val entityUri = data?.get("uri") as? String
 
         // Get as Turtle
-        val response = client.get("/api/v2/dataset/$entityUri?status=draft&format=turtle")
+        val encodedEntityUri = java.net.URLEncoder.encode(entityUri, "UTF-8")
+        val response = client.get("/api/v2/dataset/$encodedEntityUri?status=draft&format=turtle")
 
         response.status shouldBe HttpStatusCode.OK
-        response.contentType() shouldBe ContentType.parse("text/turtle")
-        response.bodyAsText() shouldContain "@prefix"
+        response.contentType()?.withoutParameters() shouldBe ContentType.parse("text/turtle")
+        response.bodyAsText() shouldContain "http://purl.org/dc/terms/title"
     }
 
     @Test
@@ -135,7 +137,8 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
             module()
         }
 
-        val response = client.get("/api/v2/dataset/http://example.org/nonexistent")
+        val missingEntity = java.net.URLEncoder.encode("http://example.org/nonexistent", "UTF-8")
+        val response = client.get("/api/v2/dataset/$missingEntity")
 
         response.status shouldBe HttpStatusCode.NotFound
     }

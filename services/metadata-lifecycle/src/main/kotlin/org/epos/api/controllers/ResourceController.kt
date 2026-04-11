@@ -96,14 +96,14 @@ class ResourceController(
     }
 
     /**
-     * Determina se un valore stringa è un URI gestito dal sistema
+     * Checks whether a string value is a managed URI
      */
     private fun isManagedUri(value: String): Boolean {
         return value.startsWith("http://") || value.startsWith("https://")
     }
 
     /**
-     * Estrae il tipo di risorsa da un URI
+     * Extracts resource type from a URI
      */
     private fun extractResourceTypeFromUri(uri: String): String? {
         val query = """
@@ -137,7 +137,7 @@ class ResourceController(
     }
 
     /**
-     * Converte un valore in EntityReference se è un URI gestito
+     * Converts a value into EntityReference when it is a managed URI
      */
     private fun enrichValue(value: Any): Any {
         return when (value) {
@@ -226,7 +226,7 @@ class ResourceController(
             return ""
         }
 
-        // Aggiungi triple dei blank nodes collegati
+        // Add triples for connected blank nodes.
         val blankNodes = model.filter {
             it.`object` is org.eclipse.rdf4j.model.BNode
         }.map { it.`object` as org.eclipse.rdf4j.model.BNode }
@@ -464,7 +464,7 @@ class ResourceController(
     }
 
     /**
-     * Determina lo status di una versione cercando in tutti i grafi
+     * Determines version status by checking all graphs
      */
     private fun determineStatusForVersion(versionUri: String): String {
         val inDraft = graphDBClient.ask("""
@@ -640,7 +640,7 @@ class ResourceController(
 
             val propertyName = extractPropertyName(predicate)
 
-            // Se il valore è un blank node (genid-...), espandilo
+            // If the value is a blank node (genid-...), expand it.
             if (value.startsWith("genid-") || value.startsWith("_:")) {
                 val blankNodeProperties = getBlankNodeProperties(value, graphUri)
                 properties[propertyName] = blankNodeProperties
@@ -653,7 +653,7 @@ class ResourceController(
     }
 
     /**
-     * Recupera le proprietà di un blank node
+     * Retrieves properties of a blank node
      */
     private fun getBlankNodeProperties(blankNodeId: String, graphUri: String): Map<String, Any> {
         val query = """
@@ -674,7 +674,7 @@ class ResourceController(
 
             val propertyName = extractPropertyName(predicate)
 
-            // Ricorsione per blank nodes nidificati
+            // Recurse into nested blank nodes.
             if (value.startsWith("genid-") || value.startsWith("_:")) {
                 properties[propertyName] = getBlankNodeProperties(value, graphUri)
             } else {

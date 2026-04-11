@@ -44,7 +44,22 @@ private suspend fun handleOaiRequest(
     graphDBClient: GraphDBClient,
     shaclService: ShaclService
 ) {
-    val params = call.request.queryParameters
+    val params =
+        if (call.request.httpMethod == HttpMethod.Post) {
+            val formParameters =
+                runCatching { call.receiveParameters() }
+                    .getOrElse { Parameters.Empty }
+            Parameters.build {
+                call.request.queryParameters.forEach { key, values ->
+                    values.forEach { append(key, it) }
+                }
+                formParameters.forEach { key, values ->
+                    values.forEach { append(key, it) }
+                }
+            }
+        } else {
+            call.request.queryParameters
+        }
     val verb = params["verb"]
     
     val responseDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT)

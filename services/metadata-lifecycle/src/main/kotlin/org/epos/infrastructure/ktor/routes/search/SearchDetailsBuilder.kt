@@ -4,6 +4,21 @@ import org.epos.graphdb.client.GraphDBClient
 import org.epos.services.EdmMappingService
 import java.net.URLEncoder
 
+private const val RDF_TYPE_PREDICATE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
+private fun selectPrimaryTypeUri(typeUris: List<String>): String? {
+    val candidates = typeUris.filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+
+    // Prefer domain RDF classes over EDM classes to keep API type stable for clients.
+    return candidates.firstOrNull { !it.startsWith(EdmMappingService.EDM_NAMESPACE) } ?: candidates.first()
+}
+
+private fun toApiType(typeUri: String?): String {
+    if (typeUri.isNullOrBlank()) return "unknown"
+    return extractTypeName(typeUri).lowercase()
+}
+
 internal fun buildEdmDetailsResponse(
     graphDBClient: GraphDBClient,
     edmMappingService: EdmMappingService,
@@ -62,7 +77,7 @@ internal fun buildEdmDetailsResponse(
         val objectLabel = row["oLabel"]
         val edmPropName = edmMappingService.getEdmPropertyName(predicate)
 
-        if (predicate == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type") {
+        if (predicate == RDF_TYPE_PREDICATE) {
             types.add(value)
             return@forEach
         }
@@ -71,7 +86,7 @@ internal fun buildEdmDetailsResponse(
         val isUri = value.startsWith("http://") || value.startsWith("https://")
 
         if (isRelation && isUri) {
-            val relatedType = objectType?.let { edmMappingService.getEdmTypeName(it) }
+            val relatedType = objectType?.let { toApiType(it) }
             val relatedEntity =
                 RelatedEntity(
                     id = value,
@@ -97,8 +112,8 @@ internal fun buildEdmDetailsResponse(
         }
     }
 
-    val primaryType = types.firstOrNull()?.let { edmMappingService.getEdmTypeName(it) } ?: "Unknown"
-    val primaryTypeUri = types.firstOrNull() ?: ""
+    val primaryTypeUri = selectPrimaryTypeUri(types) ?: ""
+    val primaryType = toApiType(primaryTypeUri)
 
     val simplifiedProps =
         properties
@@ -114,7 +129,7 @@ internal fun buildEdmDetailsResponse(
 
     val inbound =
         if (includeInbound) {
-            buildInboundRelations(graphDBClient, edmMappingService, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
+            buildInboundRelations(graphDBClient, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
         } else {
             null
         }
@@ -185,7 +200,7 @@ internal fun buildAggregatedDetailsResponse(
 
     val basicResults = graphDBClient.query(basicQuery)
 
-    var entityType: String? = null
+    val entityTypes = mutableListOf<String>()
     var title: String? = null
     var description: String? = null
     var license: String? = null
@@ -212,7 +227,7 @@ internal fun buildAggregatedDetailsResponse(
         val value = row["o"] ?: return@forEach
 
         when {
-            predicate.endsWith("#type") || predicate.endsWith("/type") -> entityType = value
+            predicate == RDF_TYPE_PREDICATE -> entityTypes.add(value)
             predicate.contains("title") -> title = value
             predicate.contains("description") -> description = value
             predicate.contains("license") -> license = value
@@ -252,10 +267,11 @@ internal fun buildAggregatedDetailsResponse(
         )
     val availableFormats = buildAvailableFormats(graphDBClient, graphUri, prefixes, distributionUris)
     val contactPoints = buildContactPoints(graphDBClient, graphUri, prefixes, contactPointUris)
-    val edmType = entityType?.let { edmMappingService.getEdmTypeName(it) } ?: "Unknown"
+    val primaryTypeUri = selectPrimaryTypeUri(entityTypes)
+    val apiType = toApiType(primaryTypeUri)
     val inbound =
         if (includeInbound) {
-            buildInboundRelations(graphDBClient, edmMappingService, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
+            buildInboundRelations(graphDBClient, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
         } else {
             null
         }
@@ -264,7 +280,7 @@ internal fun buildAggregatedDetailsResponse(
         id = entityUri,
         uid = uid,
         metaId = metaId,
-        type = edmType,
+        type = apiType,
         status = status,
         title = title,
         description = description,
@@ -292,7 +308,6 @@ internal fun buildAggregatedDetailsResponse(
 
 internal fun buildInboundRelations(
     graphDBClient: GraphDBClient,
-    edmMappingService: EdmMappingService,
     entityUri: String,
     graphUri: String,
     publicBaseUrl: String,
@@ -330,7 +345,7 @@ internal fun buildInboundRelations(
         val predicate = row["predicate"] ?: return@forEach
         val sourceId = row["source"] ?: return@forEach
         val sourceTypeUri = row["sourceType"]
-        val sourceType = if (sourceTypeUri.isNullOrBlank()) null else edmMappingService.getEdmTypeName(sourceTypeUri)
+        val sourceType = if (sourceTypeUri.isNullOrBlank()) null else toApiType(sourceTypeUri)
         val sourceTitle = row["sourceLabel"]
 
         val bySource = grouped.getOrPut(predicate) { linkedMapOf() }
@@ -553,7 +568,7 @@ internal fun buildRelatedDataProducts(
         DataProductInfo(
             id = dpUri,
             uid = row["uid"],
-            type = "DataProduct",
+            type = "dataset",
             title = row["title"],
             description = row["description"],
             license = row["license"],
