@@ -10,9 +10,11 @@ internal fun buildEdmDetailsResponse(
     entityUri: String,
     graphUri: String,
     status: String,
-    publicBaseUrl: String
+    publicBaseUrl: String,
+    includeInbound: Boolean = false,
 ): EdmEntityResponse {
-    val detailsQuery = """
+    val detailsQuery =
+        """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -34,7 +36,7 @@ internal fun buildEdmDetailsResponse(
                 FILTER(isIRI(?o))
             }
         }
-    """.trimIndent()
+        """.trimIndent()
 
     val results = graphDBClient.query(detailsQuery)
 
@@ -70,12 +72,13 @@ internal fun buildEdmDetailsResponse(
 
         if (isRelation && isUri) {
             val relatedType = objectType?.let { edmMappingService.getEdmTypeName(it) }
-            val relatedEntity = RelatedEntity(
-                id = value,
-                type = relatedType,
-                name = objectLabel,
-                href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(value, "UTF-8")}"
-            )
+            val relatedEntity =
+                RelatedEntity(
+                    id = value,
+                    type = relatedType,
+                    name = objectLabel,
+                    href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(value, "UTF-8")}",
+                )
             relations.getOrPut(edmPropName) { mutableListOf() }.add(relatedEntity)
         } else {
             when (edmPropName) {
@@ -97,13 +100,24 @@ internal fun buildEdmDetailsResponse(
     val primaryType = types.firstOrNull()?.let { edmMappingService.getEdmTypeName(it) } ?: "Unknown"
     val primaryTypeUri = types.firstOrNull() ?: ""
 
-    val simplifiedProps = properties.mapValues { (_, values) ->
-        if (values.size == 1) values.first() else values.toList()
-    }.ifEmpty { null }
+    val simplifiedProps =
+        properties
+            .mapValues { (_, values) ->
+                if (values.size == 1) values.first() else values.toList()
+            }.ifEmpty { null }
 
-    val simplifiedRelations = relations.mapValues { (_, entities) ->
-        if (entities.size == 1) entities.first() as Any else entities.toList() as Any
-    }.ifEmpty { null }
+    val simplifiedRelations =
+        relations
+            .mapValues { (_, entities) ->
+                if (entities.size == 1) entities.first() as Any else entities.toList() as Any
+            }.ifEmpty { null }
+
+    val inbound =
+        if (includeInbound) {
+            buildInboundRelations(graphDBClient, edmMappingService, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
+        } else {
+            null
+        }
 
     return EdmEntityResponse(
         id = entityUri,
@@ -115,17 +129,19 @@ internal fun buildEdmDetailsResponse(
         title = title,
         name = name ?: title,
         description = description,
-        identifier = when {
-            identifiers.isEmpty() -> null
-            identifiers.size == 1 -> identifiers.first()
-            else -> identifiers
-        },
+        identifier =
+            when {
+                identifiers.isEmpty() -> null
+                identifiers.size == 1 -> identifiers.first()
+                else -> identifiers
+            },
         keywords = keywords.ifEmpty { null },
         created = created,
         modified = modified,
         issued = issued,
         properties = simplifiedProps,
-        relations = simplifiedRelations
+        relations = simplifiedRelations,
+        inbound = inbound,
     )
 }
 
@@ -135,9 +151,11 @@ internal fun buildAggregatedDetailsResponse(
     entityUri: String,
     graphUri: String,
     status: String,
-    publicBaseUrl: String
+    publicBaseUrl: String,
+    includeInbound: Boolean = false,
 ): AggregatedEntityResponse {
-    val prefixes = """
+    val prefixes =
+        """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -153,16 +171,17 @@ internal fun buildAggregatedDetailsResponse(
         PREFIX vcard: <http://www.w3.org/2006/vcard/ns#>
         PREFIX sh: <http://www.w3.org/ns/shacl#>
         PREFIX http: <http://www.w3.org/2006/http#>
-    """.trimIndent()
+        """.trimIndent()
 
-    val basicQuery = """
+    val basicQuery =
+        """
         $prefixes
         SELECT ?p ?o
         FROM <$graphUri>
         WHERE {
             <$entityUri> ?p ?o .
         }
-    """.trimIndent()
+        """.trimIndent()
 
     val basicResults = graphDBClient.query(basicQuery)
 
@@ -222,17 +241,24 @@ internal fun buildAggregatedDetailsResponse(
     val temporal = temporalUri?.let { buildTemporalCoverage(graphDBClient, graphUri, prefixes, it) }
     val categories = if (categoryUris.isNotEmpty()) buildCategoriesFacet(graphDBClient, graphUri, prefixes, categoryUris) else null
     val relatedDataProducts = buildRelatedDataProducts(graphDBClient, graphUri, prefixes, entityUri, publicBaseUrl)
-    val relatedWebservices = buildRelatedWebservices(
-        graphDBClient,
-        graphUri,
-        prefixes,
-        distributionUris + relatedWebserviceUris,
-        publicBaseUrl,
-        distributionOperationUris.distinct()
-    )
+    val relatedWebservices =
+        buildRelatedWebservices(
+            graphDBClient,
+            graphUri,
+            prefixes,
+            distributionUris + relatedWebserviceUris,
+            publicBaseUrl,
+            distributionOperationUris.distinct(),
+        )
     val availableFormats = buildAvailableFormats(graphDBClient, graphUri, prefixes, distributionUris)
     val contactPoints = buildContactPoints(graphDBClient, graphUri, prefixes, contactPointUris)
     val edmType = entityType?.let { edmMappingService.getEdmTypeName(it) } ?: "Unknown"
+    val inbound =
+        if (includeInbound) {
+            buildInboundRelations(graphDBClient, edmMappingService, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
+        } else {
+            null
+        }
 
     return AggregatedEntityResponse(
         id = entityUri,
@@ -259,20 +285,89 @@ internal fun buildAggregatedDetailsResponse(
         availableFormats = availableFormats.ifEmpty { null },
         categories = categories,
         relatedDataProducts = relatedDataProducts.ifEmpty { null },
-        relatedWebservices = relatedWebservices.ifEmpty { null }
+        relatedWebservices = relatedWebservices.ifEmpty { null },
+        inbound = inbound,
     )
+}
+
+internal fun buildInboundRelations(
+    graphDBClient: GraphDBClient,
+    edmMappingService: EdmMappingService,
+    entityUri: String,
+    graphUri: String,
+    publicBaseUrl: String,
+): List<InboundRelation> {
+    val query =
+        """
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX dcterms: <http://purl.org/dc/terms/>
+        PREFIX schema: <http://schema.org/>
+        PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+        SELECT DISTINCT ?source ?predicate ?sourceType ?sourceLabel
+        FROM <$graphUri>
+        WHERE {
+            ?source ?predicate <$entityUri> .
+            FILTER(isIRI(?source))
+            FILTER(?source != <$entityUri>)
+
+            OPTIONAL { ?source rdf:type ?sourceType . }
+            OPTIONAL { ?source rdfs:label|dcterms:title|schema:name|foaf:name|skos:prefLabel ?sourceLabel . }
+        }
+        ORDER BY ?predicate ?source
+        """.trimIndent()
+
+    val rows = graphDBClient.query(query)
+    if (rows.isEmpty()) {
+        return emptyList()
+    }
+
+    val grouped = linkedMapOf<String, LinkedHashMap<String, InboundEntity>>()
+
+    rows.forEach { row ->
+        val predicate = row["predicate"] ?: return@forEach
+        val sourceId = row["source"] ?: return@forEach
+        val sourceTypeUri = row["sourceType"]
+        val sourceType = if (sourceTypeUri.isNullOrBlank()) null else edmMappingService.getEdmTypeName(sourceTypeUri)
+        val sourceTitle = row["sourceLabel"]
+
+        val bySource = grouped.getOrPut(predicate) { linkedMapOf() }
+        val current = bySource[sourceId]
+        if (current == null) {
+            bySource[sourceId] =
+                InboundEntity(
+                    id = sourceId,
+                    type = sourceType,
+                    title = sourceTitle,
+                    href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(sourceId, "UTF-8")}",
+                )
+        } else if ((current.type == null && sourceType != null) || (current.title == null && sourceTitle != null)) {
+            bySource[sourceId] =
+                current.copy(
+                    type = current.type ?: sourceType,
+                    title = current.title ?: sourceTitle,
+                )
+        }
+    }
+
+    return grouped.map { (predicate, entities) ->
+        InboundRelation(predicate = predicate, items = entities.values.toList())
+    }
 }
 
 internal fun buildDataProviders(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    publisherUris: List<String>
+    publisherUris: List<String>,
 ): List<DataServiceProvider> {
     if (publisherUris.isEmpty()) return emptyList()
 
     return publisherUris.mapNotNull { uri ->
-        val query = """
+        val query =
+            """
             $prefixes
             SELECT ?name ?legalName ?url ?country
             FROM <$graphUri>
@@ -285,7 +380,7 @@ internal fun buildDataProviders(
                 OPTIONAL { <$uri> schema:address/schema:addressCountry ?country }
             }
             LIMIT 1
-        """.trimIndent()
+            """.trimIndent()
 
         val results = graphDBClient.query(query)
         results.firstOrNull()?.let { row ->
@@ -293,7 +388,7 @@ internal fun buildDataProviders(
                 dataProviderLegalName = row["legalName"] ?: row["name"] ?: row["foafName"],
                 dataProviderUrl = row["url"],
                 country = row["country"],
-                instanceid = uri
+                instanceid = uri,
             )
         }
     }
@@ -303,9 +398,10 @@ internal fun buildSpatialInfo(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    spatialUri: String
+    spatialUri: String,
 ): SpatialInfo? {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT ?wkt ?location
         FROM <$graphUri>
@@ -321,7 +417,7 @@ internal fun buildSpatialInfo(
             OPTIONAL { <$spatialUri> locn:geometry ?location }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     val results = graphDBClient.query(query)
     return results.firstOrNull()?.let { row ->
@@ -331,7 +427,7 @@ internal fun buildSpatialInfo(
             wkid = 4326,
             location = location,
             x = point?.first,
-            y = point?.second
+            y = point?.second,
         )
     }
 }
@@ -354,9 +450,10 @@ internal fun buildTemporalCoverage(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    temporalUri: String
+    temporalUri: String,
 ): TemporalCoverage? {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT ?startDate ?endDate
         FROM <$graphUri>
@@ -367,7 +464,7 @@ internal fun buildTemporalCoverage(
             OPTIONAL { <$temporalUri> schema:endDate ?endDate }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     val results = graphDBClient.query(query)
     return results.firstOrNull()?.let { row ->
@@ -383,32 +480,34 @@ internal fun buildCategoriesFacet(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    categoryUris: List<String>
+    categoryUris: List<String>,
 ): FacetNode? {
     if (categoryUris.isEmpty()) return null
 
-    val categories = categoryUris.mapNotNull { uri ->
-        val query = """
-            $prefixes
-            SELECT ?label ?scheme ?schemeLabel
-            FROM <$graphUri>
-            WHERE {
-                <$uri> a skos:Concept .
-                OPTIONAL { <$uri> skos:prefLabel ?label }
-                OPTIONAL { <$uri> rdfs:label ?rdfsLabel }
-                OPTIONAL {
-                    <$uri> skos:inScheme ?scheme .
-                    OPTIONAL { ?scheme skos:prefLabel ?schemeLabel }
+    val categories =
+        categoryUris.mapNotNull { uri ->
+            val query =
+                """
+                $prefixes
+                SELECT ?label ?scheme ?schemeLabel
+                FROM <$graphUri>
+                WHERE {
+                    <$uri> a skos:Concept .
+                    OPTIONAL { <$uri> skos:prefLabel ?label }
+                    OPTIONAL { <$uri> rdfs:label ?rdfsLabel }
+                    OPTIONAL {
+                        <$uri> skos:inScheme ?scheme .
+                        OPTIONAL { ?scheme skos:prefLabel ?schemeLabel }
+                    }
                 }
-            }
-            LIMIT 1
-        """.trimIndent()
+                LIMIT 1
+                """.trimIndent()
 
-        val results = graphDBClient.query(query)
-        results.firstOrNull()?.let { row ->
-            FacetNode(name = row["label"] ?: row["rdfsLabel"] ?: extractTypeName(uri), ddss = uri)
+            val results = graphDBClient.query(query)
+            results.firstOrNull()?.let { row ->
+                FacetNode(name = row["label"] ?: row["rdfsLabel"] ?: extractTypeName(uri), ddss = uri)
+            }
         }
-    }
 
     return if (categories.isNotEmpty()) FacetNode(name = "categories", children = categories) else null
 }
@@ -418,9 +517,10 @@ internal fun buildRelatedDataProducts(
     graphUri: String,
     prefixes: String,
     entityUri: String,
-    publicBaseUrl: String
+    publicBaseUrl: String,
 ): List<DataProductInfo> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?dp ?title ?description ?license ?uid ?accessRights ?qualityAssurance ?frequencyUpdate
         FROM <$graphUri>
@@ -435,7 +535,7 @@ internal fun buildRelatedDataProducts(
             OPTIONAL { ?dp epos:hasQualityAnnotation ?qualityAssurance }
             OPTIONAL { ?dp dcterms:accrualPeriodicity ?frequencyUpdate }
         }
-    """.trimIndent()
+        """.trimIndent()
 
     val results = graphDBClient.query(query)
 
@@ -468,7 +568,7 @@ internal fun buildRelatedDataProducts(
             temporalCoverage = temporalCoverage.ifEmpty { null },
             qualityAssurance = row["qualityAssurance"],
             accessRights = row["accessRights"],
-            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(dpUri, "UTF-8")}"
+            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(dpUri, "UTF-8")}",
         )
     }
 }
@@ -477,9 +577,10 @@ private fun buildDataProductIdentifiers(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): List<IdentifierInfo> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?idType ?idValue
         FROM <$graphUri>
@@ -489,7 +590,7 @@ private fun buildDataProductIdentifiers(
             OPTIONAL { ?identifier rdf:value|skos:notation|schema:value ?idNodeValue }
             BIND(COALESCE(?idNodeValue, STR(?identifier)) AS ?idValue)
         }
-    """.trimIndent()
+        """.trimIndent()
     return graphDBClient.query(query).mapNotNull { row ->
         val value = row["idValue"] ?: return@mapNotNull null
         IdentifierInfo(type = row["idType"] ?: inferIdentifierType(value), value = value)
@@ -500,16 +601,17 @@ private fun buildDataProductProviders(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): List<DataServiceProvider> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?org
         FROM <$graphUri>
         WHERE {
             <$dataProductUri> dcterms:publisher|schema:provider ?org .
         }
-    """.trimIndent()
+        """.trimIndent()
     val uris = graphDBClient.query(query).mapNotNull { it["org"] }
     return buildDataProviders(graphDBClient, graphUri, prefixes, uris)
 }
@@ -518,9 +620,10 @@ private fun buildDataProductScienceDomains(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): List<String> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?label ?theme
         FROM <$graphUri>
@@ -528,7 +631,7 @@ private fun buildDataProductScienceDomains(
             <$dataProductUri> dcat:theme ?theme .
             OPTIONAL { ?theme skos:prefLabel|rdfs:label ?label }
         }
-    """.trimIndent()
+        """.trimIndent()
     return graphDBClient.query(query).mapNotNull { it["label"] ?: it["theme"] }.distinct()
 }
 
@@ -536,16 +639,17 @@ private fun buildDataProductContactPoints(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): List<ContactPointInfo> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?cp
         FROM <$graphUri>
         WHERE {
             <$dataProductUri> dcat:contactPoint ?cp .
         }
-    """.trimIndent()
+        """.trimIndent()
     val cpUris = graphDBClient.query(query).mapNotNull { it["cp"] }
     return buildContactPoints(graphDBClient, graphUri, prefixes, cpUris)
 }
@@ -554,16 +658,17 @@ private fun buildDataProductCategories(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): FacetNode? {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?theme
         FROM <$graphUri>
         WHERE {
             <$dataProductUri> dcat:theme ?theme .
         }
-    """.trimIndent()
+        """.trimIndent()
     val categories = graphDBClient.query(query).mapNotNull { it["theme"] }
     return if (categories.isEmpty()) null else buildCategoriesFacet(graphDBClient, graphUri, prefixes, categories)
 }
@@ -572,16 +677,17 @@ private fun buildDataProductProvenance(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): List<Map<String, String>> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?prov
         FROM <$graphUri>
         WHERE {
             <$dataProductUri> epos:provenance ?prov .
         }
-    """.trimIndent()
+        """.trimIndent()
     return graphDBClient.query(query).mapNotNull { row ->
         row["prov"]?.let { mapOf("provenance" to it) }
     }
@@ -591,15 +697,16 @@ private fun buildDataProductSpatial(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): SpatialInfo? {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?sp
         FROM <$graphUri>
         WHERE { <$dataProductUri> dcterms:spatial ?sp . }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
     val spUri = graphDBClient.query(query).firstOrNull()?.get("sp") ?: return null
     return buildSpatialInfo(graphDBClient, graphUri, prefixes, spUri)
 }
@@ -608,14 +715,15 @@ private fun buildDataProductTemporal(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    dataProductUri: String
+    dataProductUri: String,
 ): List<TemporalCoverage> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?tp
         FROM <$graphUri>
         WHERE { <$dataProductUri> dcterms:temporal ?tp . }
-    """.trimIndent()
+        """.trimIndent()
     val temporalUris = graphDBClient.query(query).mapNotNull { it["tp"] }
     return temporalUris.mapNotNull { uri -> buildTemporalCoverage(graphDBClient, graphUri, prefixes, uri) }
 }
@@ -624,9 +732,10 @@ internal fun buildDistributionIdentifiers(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    distributionUri: String
+    distributionUri: String,
 ): List<IdentifierInfo> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?idType ?idValue
         FROM <$graphUri>
@@ -640,14 +749,15 @@ internal fun buildDistributionIdentifiers(
                 BIND(COALESCE(?idNodeValue, STR(?identifier)) AS ?idValue)
             }
         }
-    """.trimIndent()
+        """.trimIndent()
 
-    return graphDBClient.query(query)
+    return graphDBClient
+        .query(query)
         .mapNotNull { row ->
             val value = row["idValue"] ?: return@mapNotNull null
             IdentifierInfo(
                 type = row["idType"] ?: inferIdentifierType(value),
-                value = value
+                value = value,
             )
         }
 }
@@ -656,9 +766,10 @@ internal fun buildDistributionScienceDomains(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    distributionUri: String
+    distributionUri: String,
 ): List<String> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?label ?theme
         FROM <$graphUri>
@@ -668,18 +779,20 @@ internal fun buildDistributionScienceDomains(
             ?dp dcat:theme ?theme .
             OPTIONAL { ?theme skos:prefLabel|rdfs:label ?label }
         }
-    """.trimIndent()
+        """.trimIndent()
 
-    return graphDBClient.query(query)
+    return graphDBClient
+        .query(query)
         .mapNotNull { row -> row["label"] ?: row["theme"] }
         .distinct()
 }
 
-private fun inferIdentifierType(value: String): String = when {
-    value.contains("doi", ignoreCase = true) || value.startsWith("10.") -> "DOI"
-    value.contains("ddss", ignoreCase = true) -> "DDSS-ID"
-    else -> "IDENTIFIER"
-}
+private fun inferIdentifierType(value: String): String =
+    when {
+        value.contains("doi", ignoreCase = true) || value.startsWith("10.") -> "DOI"
+        value.contains("ddss", ignoreCase = true) -> "DDSS-ID"
+        else -> "IDENTIFIER"
+    }
 
 internal fun buildRelatedWebservices(
     graphDBClient: GraphDBClient,
@@ -687,12 +800,13 @@ internal fun buildRelatedWebservices(
     prefixes: String,
     serviceUris: List<String>,
     publicBaseUrl: String,
-    distributionOperationUris: List<String> = emptyList()
+    distributionOperationUris: List<String> = emptyList(),
 ): List<WebserviceInfo> {
     if (serviceUris.isEmpty()) return emptyList()
 
     return serviceUris.distinct().mapNotNull { uri ->
-        val accessServiceQuery = """
+        val accessServiceQuery =
+            """
             $prefixes
             SELECT ?ws
             FROM <$graphUri>
@@ -710,12 +824,13 @@ internal fun buildRelatedWebservices(
                 }
             }
             LIMIT 1
-        """.trimIndent()
+            """.trimIndent()
 
         val accessResults = graphDBClient.query(accessServiceQuery)
         val wsUri = accessResults.firstOrNull()?.get("ws") ?: return@mapNotNull null
 
-        val wsQuery = """
+        val wsQuery =
+            """
             $prefixes
             SELECT ?name ?description ?providerUri ?providerName ?documentation ?uid ?metaid
             FROM <$graphUri>
@@ -737,18 +852,19 @@ internal fun buildRelatedWebservices(
                 OPTIONAL { <$wsUri> epos:metaId ?metaid }
             }
             LIMIT 1
-        """.trimIndent()
+            """.trimIndent()
 
         val wsResults = graphDBClient.query(wsQuery)
         val wsRow = wsResults.firstOrNull() ?: return@mapNotNull null
-        val operations = buildOperations(
-            graphDBClient,
-            graphUri,
-            prefixes,
-            wsUri,
-            publicBaseUrl,
-            distributionOperationUris
-        )
+        val operations =
+            buildOperations(
+                graphDBClient,
+                graphUri,
+                prefixes,
+                wsUri,
+                publicBaseUrl,
+                distributionOperationUris,
+            )
         val spatial = buildWebserviceSpatial(graphDBClient, graphUri, prefixes, wsUri)
         val temporalCoverage = buildWebserviceTemporal(graphDBClient, graphUri, prefixes, wsUri)
         val serviceTypes = buildWebserviceTypes(graphDBClient, graphUri, prefixes, wsUri)
@@ -761,12 +877,13 @@ internal fun buildRelatedWebservices(
             metaid = wsRow["metaid"],
             name = wsRow["name"] ?: wsRow["title"],
             description = wsRow["description"],
-            provider = (wsRow["providerUri"] ?: wsRow["providerUriAlt"])?.let {
-                DataServiceProvider(
-                    dataProviderLegalName = wsRow["providerName"] ?: wsRow["providerNameAlt"],
-                    instanceid = it
-                )
-            },
+            provider =
+                (wsRow["providerUri"] ?: wsRow["providerUriAlt"])?.let {
+                    DataServiceProvider(
+                        dataProviderLegalName = wsRow["providerName"] ?: wsRow["providerNameAlt"],
+                        instanceid = it,
+                    )
+                },
             spatial = spatial,
             temporalCoverage = temporalCoverage.ifEmpty { null },
             documentation = wsRow["documentation"] ?: wsRow["documentationAlt"],
@@ -774,7 +891,7 @@ internal fun buildRelatedWebservices(
             contactPoints = contactPoints.ifEmpty { null },
             operations = operations.ifEmpty { null },
             categories = categories,
-            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(wsUri, "UTF-8")}"
+            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(wsUri, "UTF-8")}",
         )
     }
 }
@@ -783,15 +900,16 @@ private fun buildWebserviceSpatial(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    webserviceUri: String
+    webserviceUri: String,
 ): SpatialInfo? {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?sp
         FROM <$graphUri>
         WHERE { <$webserviceUri> dcterms:spatial|schema:spatialCoverage ?sp . }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
     val spUri = graphDBClient.query(query).firstOrNull()?.get("sp") ?: return null
     return buildSpatialInfo(graphDBClient, graphUri, prefixes, spUri)
 }
@@ -800,14 +918,15 @@ private fun buildWebserviceTemporal(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    webserviceUri: String
+    webserviceUri: String,
 ): List<TemporalCoverage> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?tp
         FROM <$graphUri>
         WHERE { <$webserviceUri> dcterms:temporal ?tp . }
-    """.trimIndent()
+        """.trimIndent()
     val temporalUris = graphDBClient.query(query).mapNotNull { it["tp"] }
     return temporalUris.mapNotNull { uri -> buildTemporalCoverage(graphDBClient, graphUri, prefixes, uri) }
 }
@@ -816,9 +935,10 @@ private fun buildWebserviceTypes(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    webserviceUri: String
+    webserviceUri: String,
 ): List<String> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?label ?cat
         FROM <$graphUri>
@@ -826,7 +946,7 @@ private fun buildWebserviceTypes(
             <$webserviceUri> dcterms:type|dcat:theme ?cat .
             OPTIONAL { ?cat skos:prefLabel|rdfs:label ?label }
         }
-    """.trimIndent()
+        """.trimIndent()
     return graphDBClient.query(query).mapNotNull { it["label"] ?: it["cat"] }
 }
 
@@ -834,14 +954,15 @@ private fun buildWebserviceContactPoints(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    webserviceUri: String
+    webserviceUri: String,
 ): List<ContactPointInfo> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?cp
         FROM <$graphUri>
         WHERE { <$webserviceUri> dcat:contactPoint ?cp . }
-    """.trimIndent()
+        """.trimIndent()
     val cpUris = graphDBClient.query(query).mapNotNull { it["cp"] }
     return buildContactPoints(graphDBClient, graphUri, prefixes, cpUris)
 }
@@ -850,9 +971,10 @@ private fun buildWebserviceCategories(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    webserviceUri: String
+    webserviceUri: String,
 ): Map<String, List<String>>? {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT DISTINCT ?schemeLabel ?label
         FROM <$graphUri>
@@ -864,7 +986,7 @@ private fun buildWebserviceCategories(
                 ?scheme skos:prefLabel|rdfs:label ?schemeLabel
             }
         }
-    """.trimIndent()
+        """.trimIndent()
     val rows = graphDBClient.query(query)
     if (rows.isEmpty()) return null
     val grouped = linkedMapOf<String, MutableList<String>>()
@@ -882,9 +1004,10 @@ internal fun buildOperations(
     prefixes: String,
     webserviceUri: String,
     publicBaseUrl: String,
-    distributionOperationUris: List<String> = emptyList()
+    distributionOperationUris: List<String> = emptyList(),
 ): List<OperationInfo> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT ?op ?method ?resolvedTemplate ?uid
         FROM <$graphUri>
@@ -912,25 +1035,26 @@ internal fun buildOperations(
             OPTIONAL { ?op epos:uid ?uid }
             BIND(COALESCE(?templateFromReturns, ?templateFromProperty, ?directTemplate) AS ?resolvedTemplate)
         }
-    """.trimIndent()
+        """.trimIndent()
 
     val results = graphDBClient.query(query)
 
-    val mapped = results.mapNotNull { row ->
-        val opUri = row["op"] ?: return@mapNotNull null
-        if (distributionOperationUris.isNotEmpty() && opUri !in distributionOperationUris) {
-            return@mapNotNull null
+    val mapped =
+        results.mapNotNull { row ->
+            val opUri = row["op"] ?: return@mapNotNull null
+            if (distributionOperationUris.isNotEmpty() && opUri !in distributionOperationUris) {
+                return@mapNotNull null
+            }
+            val parameters = buildServiceParameters(graphDBClient, graphUri, prefixes, opUri)
+            OperationInfo(
+                id = opUri,
+                uid = row["uid"],
+                method = row["method"] ?: "GET",
+                endpoint = row["resolvedTemplate"],
+                parameters = parameters.ifEmpty { null },
+                href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(opUri, "UTF-8")}",
+            )
         }
-        val parameters = buildServiceParameters(graphDBClient, graphUri, prefixes, opUri)
-        OperationInfo(
-            id = opUri,
-            uid = row["uid"],
-            method = row["method"] ?: "GET",
-            endpoint = row["resolvedTemplate"],
-            parameters = parameters.ifEmpty { null },
-            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(opUri, "UTF-8")}"
-        )
-    }
 
     if (mapped.isNotEmpty() || distributionOperationUris.isEmpty()) {
         return mapped
@@ -946,7 +1070,7 @@ internal fun buildOperations(
             method = row["method"] ?: "GET",
             endpoint = row["resolvedTemplate"],
             parameters = parameters.ifEmpty { null },
-            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(opUri, "UTF-8")}"
+            href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(opUri, "UTF-8")}",
         )
     }
 }
@@ -955,9 +1079,10 @@ internal fun buildServiceParameters(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    operationUri: String
+    operationUri: String,
 ): List<ServiceParameter> {
-    val query = """
+    val query =
+        """
         $prefixes
         SELECT ?mapping ?variable ?property ?required ?minValue ?maxValue ?defaultValue ?label
                ?range ?valuePattern ?multiple ?readOnly
@@ -998,27 +1123,33 @@ internal fun buildServiceParameters(
             }
         }
         GROUP BY ?mapping ?variable ?property ?required ?minValue ?maxValue ?defaultValue ?label ?range ?valuePattern ?multiple ?readOnly
-    """.trimIndent()
+        """.trimIndent()
 
     val results = graphDBClient.query(query)
 
-    val strictParameters = results.mapNotNull { row ->
-        val variable = row["variable"] ?: return@mapNotNull null
-        ServiceParameter(
-            name = variable,
-            label = row["label"],
-            type = row["range"]?.substringAfterLast(":")?.substringAfterLast("#"),
-            property = row["property"],
-            required = row["required"]?.toBoolean() ?: false,
-            minValue = row["minValue"],
-            maxValue = row["maxValue"],
-            defaultValue = row["defaultValue"],
-            enumValues = row["enumValues"]?.split(",")?.map { it.trim() }?.filter { it.isNotBlank() }?.distinct(),
-            valuePattern = row["valuePattern"],
-            multipleValues = row["multiple"]?.toBoolean() ?: false,
-            readOnlyValue = row["readOnly"]
-        )
-    }
+    val strictParameters =
+        results.mapNotNull { row ->
+            val variable = row["variable"] ?: return@mapNotNull null
+            ServiceParameter(
+                name = variable,
+                label = row["label"],
+                type = row["range"]?.substringAfterLast(":")?.substringAfterLast("#"),
+                property = row["property"],
+                required = row["required"]?.toBoolean() ?: false,
+                minValue = row["minValue"],
+                maxValue = row["maxValue"],
+                defaultValue = row["defaultValue"],
+                enumValues =
+                    row["enumValues"]
+                        ?.split(",")
+                        ?.map { it.trim() }
+                        ?.filter { it.isNotBlank() }
+                        ?.distinct(),
+                valuePattern = row["valuePattern"],
+                multipleValues = row["multiple"]?.toBoolean() ?: false,
+                readOnlyValue = row["readOnly"],
+            )
+        }
 
     if (strictParameters.isNotEmpty()) {
         return strictParameters
@@ -1030,9 +1161,10 @@ internal fun buildServiceParameters(
 private fun buildServiceParametersFallback(
     graphDBClient: GraphDBClient,
     graphUri: String,
-    operationUri: String
+    operationUri: String,
 ): List<ServiceParameter> {
-    val mappingQuery = """
+    val mappingQuery =
+        """
         PREFIX hydra: <http://www.w3.org/ns/hydra/core#>
 
         SELECT DISTINCT ?mapping
@@ -1045,13 +1177,14 @@ private fun buildServiceParametersFallback(
                 FILTER(CONTAINS(LCASE(STR(?predicate)), "mapping"))
             }
         }
-    """.trimIndent()
+        """.trimIndent()
 
     val mappings = graphDBClient.query(mappingQuery).mapNotNull { it["mapping"] }.distinct()
     if (mappings.isEmpty()) return emptyList()
 
     return mappings.mapNotNull { mappingUri ->
-        val detailQuery = """
+        val detailQuery =
+            """
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
             SELECT ?predicate ?value
@@ -1059,22 +1192,27 @@ private fun buildServiceParametersFallback(
             WHERE {
                 <$mappingUri> ?predicate ?value .
             }
-        """.trimIndent()
+            """.trimIndent()
 
         val rows = graphDBClient.query(detailQuery)
         if (rows.isEmpty()) return@mapNotNull null
 
         fun pick(vararg keywords: String): String? {
-            return rows.firstOrNull { row ->
-                val p = row["predicate"]?.lowercase() ?: return@firstOrNull false
-                keywords.any { k -> p.contains(k) }
-            }?.get("value")
+            return rows
+                .firstOrNull { row ->
+                    val p = row["predicate"]?.lowercase() ?: return@firstOrNull false
+                    keywords.any { k -> p.contains(k) }
+                }?.get("value")
         }
 
-        val enumValues = rows.filter { row ->
-            val p = row["predicate"]?.lowercase() ?: return@filter false
-            p.contains("paramvalue") || p.contains("enum") || p.contains("allowed")
-        }.mapNotNull { it["value"] }.distinct().ifEmpty { null }
+        val enumValues =
+            rows
+                .filter { row ->
+                    val p = row["predicate"]?.lowercase() ?: return@filter false
+                    p.contains("paramvalue") || p.contains("enum") || p.contains("allowed")
+                }.mapNotNull { it["value"] }
+                .distinct()
+                .ifEmpty { null }
 
         val name = pick("variable", "identifier", "name") ?: return@mapNotNull null
         ServiceParameter(
@@ -1089,7 +1227,7 @@ private fun buildServiceParametersFallback(
             enumValues = enumValues,
             valuePattern = pick("valuepattern", "pattern"),
             multipleValues = pick("multiple")?.toBoolean() ?: false,
-            readOnlyValue = pick("readonly")
+            readOnlyValue = pick("readonly"),
         )
     }
 }
@@ -1098,12 +1236,13 @@ internal fun buildAvailableFormats(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    distributionUris: List<String>
+    distributionUris: List<String>,
 ): List<AvailableFormat> {
     if (distributionUris.isEmpty()) return emptyList()
 
     return distributionUris.flatMap { uri ->
-        val query = """
+        val query =
+            """
             $prefixes
             SELECT ?format ?downloadURL ?accessURL ?title
             FROM <$graphUri>
@@ -1115,7 +1254,7 @@ internal fun buildAvailableFormats(
                 OPTIONAL { <$uri> dcterms:title ?title }
             }
             LIMIT 1
-        """.trimIndent()
+            """.trimIndent()
 
         val results = graphDBClient.query(query)
         results.mapNotNull { row ->
@@ -1127,67 +1266,12 @@ internal fun buildAvailableFormats(
                     format = format,
                     originalFormat = format,
                     href = url,
-                    type = "original"
+                    type = "original",
                 )
             } else {
                 null
             }
         }
-    }
-}
-
-internal fun buildAvailableFormatsForEntities(
-    graphDBClient: GraphDBClient,
-    graphUri: String,
-    entityUris: List<String>
-): Map<String, List<AvailableFormat>> {
-    val uniqueUris = entityUris.filter { it.isNotBlank() }.distinct()
-    if (uniqueUris.isEmpty()) return emptyMap()
-
-    val valuesClause = uniqueUris.joinToString(" ") { "<$it>" }
-    val query = """
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-
-        SELECT ?entity ?dist ?format ?downloadURL ?accessURL ?title
-        FROM <$graphUri>
-        WHERE {
-            VALUES ?entity { $valuesClause }
-            OPTIONAL {
-                ?entity dcat:distribution ?dist .
-                OPTIONAL { ?dist dcterms:format ?format }
-                OPTIONAL { ?dist dcat:downloadURL ?downloadURL }
-                OPTIONAL { ?dist dcat:accessURL ?accessURL }
-                OPTIONAL { ?dist dcterms:title ?title }
-            }
-        }
-    """.trimIndent()
-
-    val rows = graphDBClient.query(query)
-    val byEntity = mutableMapOf<String, MutableList<AvailableFormat>>()
-
-    rows.forEach { row ->
-        val entity = row["entity"] ?: return@forEach
-        val dist = row["dist"] ?: return@forEach
-        val href = row["downloadURL"] ?: row["accessURL"]
-        val format = row["format"]
-        val title = row["title"]
-
-        if (href == null && format == null && title == null) return@forEach
-
-        byEntity.getOrPut(entity) { mutableListOf() }.add(
-            AvailableFormat(
-                label = title ?: legacyFormatLabel(format),
-                format = format,
-                originalFormat = format,
-                href = href,
-                type = "original"
-            )
-        )
-    }
-
-    return byEntity.mapValues { (_, formats) ->
-        formats.distinctBy { listOf(it.href, it.format, it.label, it.type) }
     }
 }
 
@@ -1201,12 +1285,13 @@ internal fun buildContactPoints(
     graphDBClient: GraphDBClient,
     graphUri: String,
     prefixes: String,
-    contactPointUris: List<String>
+    contactPointUris: List<String>,
 ): List<ContactPointInfo> {
     if (contactPointUris.isEmpty()) return emptyList()
 
     return contactPointUris.mapNotNull { uri ->
-        val query = """
+        val query =
+            """
             $prefixes
             SELECT ?cpMetaId ?cpUid ?email ?telephone ?role ?personUri ?personMetaId ?personUid ?personName
             FROM <$graphUri>
@@ -1226,7 +1311,7 @@ internal fun buildContactPoints(
                 }
             }
             LIMIT 1
-        """.trimIndent()
+            """.trimIndent()
 
         val results = graphDBClient.query(query)
         results.firstOrNull()?.let { row ->
@@ -1237,14 +1322,15 @@ internal fun buildContactPoints(
                 email = row["email"] ?: row["vcardEmail"],
                 telephone = row["telephone"],
                 role = row["role"],
-                person = row["personUri"]?.let { personUri ->
-                    PersonInfo(
-                        id = personUri,
-                        metaid = row["personMetaId"],
-                        uid = row["personUid"],
-                        name = row["personName"]
-                    )
-                }
+                person =
+                    row["personUri"]?.let { personUri ->
+                        PersonInfo(
+                            id = personUri,
+                            metaid = row["personMetaId"],
+                            uid = row["personUid"],
+                            name = row["personName"],
+                        )
+                    },
             )
         }
     }

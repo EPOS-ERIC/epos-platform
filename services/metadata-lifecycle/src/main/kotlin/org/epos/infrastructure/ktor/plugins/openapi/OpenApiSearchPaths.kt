@@ -191,19 +191,6 @@ object OpenApiSearchPaths {
                           type: string
                         href:
                           type: string
-                        availableFormats:
-                          type: array
-                          items:
-                            type: object
-                            properties:
-                              label:
-                                type: string
-                              format:
-                                type: string
-                              href:
-                                type: string
-                              type:
-                                type: string
                   total:
                     type: integer
                   page:
@@ -343,6 +330,12 @@ object OpenApiSearchPaths {
           schema:
             type: boolean
             default: false
+        - name: includeInbound
+          in: query
+          description: Include inbound relations (entities that reference the current entity)
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Entity details
@@ -363,6 +356,26 @@ object OpenApiSearchPaths {
                         type: string
                       relations:
                         type: object
+                      inbound:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            predicate:
+                              type: string
+                            items:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  type:
+                                    type: string
+                                  title:
+                                    type: string
+                                  href:
+                                    type: string
                   - description: Aggregated response (extended=true)
                     type: object
                     properties:
@@ -390,6 +403,26 @@ object OpenApiSearchPaths {
                       relatedWebservices:
                         type: array
                         description: Nested WebService objects with operations
+                      inbound:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            predicate:
+                              type: string
+                            items:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  type:
+                                    type: string
+                                  title:
+                                    type: string
+                                  href:
+                                    type: string
         '404':
           description: Entity not found"""
 }

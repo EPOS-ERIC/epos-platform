@@ -9,6 +9,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.testing.*
 import org.epos.module
+import org.epos.graphdb.Config
 import org.junit.jupiter.api.*
 
 /**
@@ -120,6 +121,50 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
             turtleResponse.status shouldBe HttpStatusCode.OK
             turtleResponse.contentType() shouldBe ContentType.parse("text/turtle")
         }
+    }
+
+    @Test
+    fun `details endpoint should include inbound relations when requested`() = testApplication {
+        application {
+            module()
+        }
+
+        val sourceUri = "http://example.org/dataset/source-1"
+        val targetUri = "http://example.org/distribution/target-1"
+        val relationPredicate = "http://www.w3.org/ns/dcat#distribution"
+
+        graphDBClient.update(
+            """
+            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            PREFIX dcterms: <http://purl.org/dc/terms/>
+            PREFIX dcat: <http://www.w3.org/ns/dcat#>
+
+            INSERT DATA {
+              GRAPH <${Config.GRAPH_DRAFT}> {
+                <$sourceUri> rdf:type dcat:Dataset ;
+                             dcterms:title "Source Dataset" ;
+                             dcat:distribution <$targetUri> .
+
+                <$targetUri> rdf:type dcat:Distribution ;
+                             dcterms:title "Target Distribution" .
+              }
+            }
+            """.trimIndent()
+        )
+
+        val response = client.get("/api/v2/details/${java.net.URLEncoder.encode(targetUri, "UTF-8")}?status=draft&includeInbound=true")
+
+        response.status shouldBe HttpStatusCode.OK
+        val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
+
+        @Suppress("UNCHECKED_CAST")
+        val inbound = json["inbound"] as? List<Map<String, Any>>
+        (inbound != null && inbound.isNotEmpty()) shouldBe true
+
+        val relation = inbound!!.first { it["predicate"] == relationPredicate }
+        @Suppress("UNCHECKED_CAST")
+        val items = relation["items"] as List<Map<String, Any>>
+        items.any { it["id"] == sourceUri } shouldBe true
     }
 
     // =========================================================================

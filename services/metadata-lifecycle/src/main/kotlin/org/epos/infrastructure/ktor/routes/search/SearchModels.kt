@@ -9,7 +9,7 @@ data class SearchResponse(
     val page: Int,
     val pageSize: Int,
     val totalPages: Int,
-    val facets: SearchFacets? = null
+    val facets: SearchFacets? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -19,7 +19,7 @@ data class GroupedSearchResponse(
     val total: Int,
     val page: Int,
     val pageSize: Int,
-    val totalPages: Int
+    val totalPages: Int,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -32,14 +32,14 @@ data class FacetNode(
     val imgUrl: String? = null,
     val color: String? = null,
     val children: List<FacetNode>? = null,
-    val distributions: List<SearchResultItem>? = null
+    val distributions: List<SearchResultItem>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class FilterNode(
     val name: String,
     val id: String? = null,
-    val children: List<FilterNode>? = null
+    val children: List<FilterNode>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -50,7 +50,6 @@ data class SearchResultItem(
     val description: String?,
     val modified: String?,
     val href: String,
-    val availableFormats: List<AvailableFormat>? = null
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -58,14 +57,14 @@ data class SearchFacets(
     val types: List<FacetValue>,
     val keywords: List<FacetValue>,
     val conceptSchemes: List<HierarchicalFacet>? = null,
-    val dataProviders: List<HierarchicalFacet>? = null
+    val dataProviders: List<HierarchicalFacet>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class FacetValue(
     val value: String,
     val label: String,
-    val count: Int
+    val count: Int,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -74,7 +73,7 @@ data class HierarchicalFacet(
     val label: String,
     val description: String? = null,
     val count: Int,
-    val children: List<FacetValue>? = null
+    val children: List<FacetValue>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -83,7 +82,7 @@ data class EntityDetailsResponse(
     val type: String,
     val typeUri: String,
     val status: String,
-    val properties: Map<String, Any>
+    val properties: Map<String, Any>,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -103,7 +102,8 @@ data class EdmEntityResponse(
     val modified: String? = null,
     val issued: String? = null,
     val properties: Map<String, Any>? = null,
-    val relations: Map<String, Any>? = null
+    val relations: Map<String, Any>? = null,
+    val inbound: List<InboundRelation>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -111,7 +111,7 @@ data class RelatedEntity(
     val id: String,
     val type: String? = null,
     val name: String? = null,
-    val href: String
+    val href: String,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -140,7 +140,22 @@ data class AggregatedEntityResponse(
     val availableFormats: List<AvailableFormat>? = null,
     val categories: FacetNode? = null,
     val relatedDataProducts: List<DataProductInfo>? = null,
-    val relatedWebservices: List<WebserviceInfo>? = null
+    val relatedWebservices: List<WebserviceInfo>? = null,
+    val inbound: List<InboundRelation>? = null,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class InboundRelation(
+    val predicate: String,
+    val items: List<InboundEntity>,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class InboundEntity(
+    val id: String,
+    val type: String? = null,
+    val title: String? = null,
+    val href: String,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -149,13 +164,13 @@ data class SpatialInfo(
     val location: String? = null,
     val paths: List<Any>? = null,
     val x: Double? = null,
-    val y: Double? = null
+    val y: Double? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class TemporalCoverage(
     val startDate: String? = null,
-    val endDate: String? = null
+    val endDate: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -167,13 +182,13 @@ data class DataServiceProvider(
     val metaid: String? = null,
     val instanceid: String? = null,
     val relatedDataProvider: List<DataServiceProvider>? = null,
-    val relatedDataServiceProvider: List<DataServiceProvider>? = null
+    val relatedDataServiceProvider: List<DataServiceProvider>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class IdentifierInfo(
     val type: String,
-    val value: String
+    val value: String,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -184,7 +199,7 @@ data class ContactPointInfo(
     val email: String? = null,
     val telephone: String? = null,
     val role: String? = null,
-    val person: PersonInfo? = null
+    val person: PersonInfo? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -194,7 +209,7 @@ data class PersonInfo(
     val uid: String? = null,
     val name: String? = null,
     val email: String? = null,
-    val affiliation: String? = null
+    val affiliation: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -203,7 +218,7 @@ data class AvailableFormat(
     val format: String? = null,
     val originalFormat: String? = null,
     val href: String? = null,
-    val type: String? = null
+    val type: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -228,7 +243,7 @@ data class DataProductInfo(
     val provenance: List<Map<String, String>>? = null,
     val contactPoints: List<ContactPointInfo>? = null,
     val categories: FacetNode? = null,
-    val href: String? = null
+    val href: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -246,7 +261,7 @@ data class WebserviceInfo(
     val contactPoints: List<ContactPointInfo>? = null,
     val categories: Map<String, List<String>>? = null,
     val operations: List<OperationInfo>? = null,
-    val href: String? = null
+    val href: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -256,7 +271,7 @@ data class OperationInfo(
     val method: String? = null,
     val endpoint: String? = null,
     val parameters: List<ServiceParameter>? = null,
-    val href: String? = null
+    val href: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -272,5 +287,5 @@ data class ServiceParameter(
     val enumValues: List<String>? = null,
     val valuePattern: String? = null,
     val multipleValues: Boolean = false,
-    val readOnlyValue: String? = null
+    val readOnlyValue: String? = null,
 )

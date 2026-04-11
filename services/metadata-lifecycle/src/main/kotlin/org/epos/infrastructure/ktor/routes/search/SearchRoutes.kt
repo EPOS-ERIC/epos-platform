@@ -19,7 +19,7 @@ import java.net.URLEncoder
 fun Route.searchRoutes(
     graphDBClient: GraphDBClient,
     shaclService: ShaclService,
-    edmMappingService: EdmMappingService
+    edmMappingService: EdmMappingService,
 ) {
     get("/api/v2/search") {
         val publicBaseUrl = call.resolvePublicBaseUrl()
@@ -54,7 +54,8 @@ fun Route.searchRoutes(
         val offset = (page - 1) * pageSize
 
         val filters = mutableListOf<String>()
-        val prefixes = """
+        val prefixes =
+            """
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -67,7 +68,7 @@ fun Route.searchRoutes(
             PREFIX uom: <http://www.opengis.net/def/uom/OGC/1.0/>
             PREFIX sf: <http://www.opengis.net/ont/sf#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        """.trimIndent()
+            """.trimIndent()
 
         if (type != null) {
             val resourceTypes = shaclService.getResourceTypes()
@@ -84,34 +85,36 @@ fun Route.searchRoutes(
         if (!q.isNullOrBlank()) {
             val searchTerms = q.split("\\s+".toRegex()).filter { it.isNotBlank() }
             if (searchTerms.isNotEmpty()) {
-                val textFilters = searchTerms.joinToString(" && ") { term ->
-                    """(
+                val textFilters =
+                    searchTerms.joinToString(" && ") { term ->
+                        """(
                         CONTAINS(LCASE(STR(?title)), "${term.lowercase()}") ||
                         CONTAINS(LCASE(STR(?description)), "${term.lowercase()}") ||
                         CONTAINS(LCASE(STR(?label)), "${term.lowercase()}")
                     )"""
-                }
+                    }
                 filters.add(
                     """
                     OPTIONAL { ?s dcterms:title ?title }
                     OPTIONAL { ?s dcterms:description ?description }
                     OPTIONAL { ?s rdfs:label ?label }
                     FILTER($textFilters)
-                    """.trimIndent()
+                    """.trimIndent(),
                 )
             }
         }
 
         if (!keywords.isNullOrBlank()) {
             val keywordList = keywords.split(",").map { it.trim().lowercase() }
-            val keywordFilters = keywordList.joinToString(" || ") { kw ->
-                "CONTAINS(LCASE(STR(?keyword)), \"$kw\")"
-            }
+            val keywordFilters =
+                keywordList.joinToString(" || ") { kw ->
+                    "CONTAINS(LCASE(STR(?keyword)), \"$kw\")"
+                }
             filters.add(
                 """
                 ?s dcat:keyword ?keyword .
                 FILTER($keywordFilters)
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
 
@@ -131,12 +134,14 @@ fun Route.searchRoutes(
                     UNION
                     { FILTER(?org = <$organization>) }
                 }
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
 
         if (!startDate.isNullOrBlank() || !endDate.isNullOrBlank()) {
-            filters.add("OPTIONAL { ?s dcterms:temporal ?temporal . ?temporal dcat:startDate ?tempStart . ?temporal dcat:endDate ?tempEnd }")
+            filters.add(
+                "OPTIONAL { ?s dcterms:temporal ?temporal . ?temporal dcat:startDate ?tempStart . ?temporal dcat:endDate ?tempEnd }",
+            )
             if (!startDate.isNullOrBlank()) {
                 filters.add("FILTER(!BOUND(?tempEnd) || ?tempEnd >= \"$startDate\"^^xsd:dateTime)")
             }
@@ -154,7 +159,7 @@ fun Route.searchRoutes(
                 """
                 ?s dcat:theme ?themeConcept .
                 ?themeConcept skos:inScheme <$conceptScheme> .
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
 
@@ -168,7 +173,7 @@ fun Route.searchRoutes(
                 {
                     ?s schema:provider <$dataProvider> .
                 }
-                """.trimIndent()
+                """.trimIndent(),
             )
         }
 
@@ -176,16 +181,18 @@ fun Route.searchRoutes(
 
         val filterClause = filters.joinToString("\n            ")
 
-        val countQuery = """
+        val countQuery =
+            """
             $prefixes
             SELECT (COUNT(DISTINCT ?s) AS ?count)
             FROM <$graphUri>
             WHERE {
                 $filterClause
             }
-        """.trimIndent()
+            """.trimIndent()
 
-        val mainQuery = """
+        val mainQuery =
+            """
             $prefixes
             SELECT DISTINCT ?s ?type
                    (SAMPLE(?t) AS ?title)
@@ -202,34 +209,32 @@ fun Route.searchRoutes(
             ORDER BY DESC(?modified) ?s
             LIMIT $pageSize
             OFFSET $offset
-        """.trimIndent()
+            """.trimIndent()
 
         try {
             val countResult = graphDBClient.query(countQuery)
             val totalCount = countResult.firstOrNull()?.get("count")?.toIntOrNull() ?: 0
 
             val results = graphDBClient.query(mainQuery)
-            val formatsByEntity = buildAvailableFormatsForEntities(
-                graphDBClient = graphDBClient,
-                graphUri = graphUri,
-                entityUris = results.mapNotNull { it["s"] }
-            )
-            val items = results.map { row ->
-                val id = row["s"] ?: ""
-                SearchResultItem(
-                    id = id,
-                    type = extractTypeName(row["type"] ?: ""),
-                    title = row["title"],
-                    description = row["description"]?.take(500),
-                    modified = row["modified"],
-                    href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(id, "UTF-8")}",
-                    availableFormats = formatsByEntity[id]
-                )
-            }
+            val items =
+                results.map { row ->
+                    val id = row["s"] ?: ""
+                    SearchResultItem(
+                        id = id,
+                        type = extractTypeName(row["type"] ?: ""),
+                        title = row["title"],
+                        description = row["description"]?.take(500),
+                        modified = row["modified"],
+                        href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(id, "UTF-8")}",
+                    )
+                }
 
-            val facets = if (includeFacets) {
-                buildFacets(graphDBClient, graphUri)
-            } else null
+            val facets =
+                if (includeFacets) {
+                    buildFacets(graphDBClient, graphUri)
+                } else {
+                    null
+                }
 
             if (includeFacets && facetsType != "none") {
                 call.respond(
@@ -241,8 +246,8 @@ fun Route.searchRoutes(
                         facets,
                         totalCount,
                         page,
-                        pageSize
-                    )
+                        pageSize,
+                    ),
                 )
             } else {
                 call.respond(
@@ -252,14 +257,14 @@ fun Route.searchRoutes(
                         page = page,
                         pageSize = pageSize,
                         totalPages = (totalCount + pageSize - 1) / pageSize,
-                        facets = facets
-                    )
+                        facets = facets,
+                    ),
                 )
             }
         } catch (e: Exception) {
             call.respond(
                 HttpStatusCode.InternalServerError,
-                ErrorResponse("InternalServerError", e.message ?: "Search failed")
+                ErrorResponse("InternalServerError", e.message ?: "Search failed"),
             )
         }
     }
@@ -272,24 +277,27 @@ fun Route.searchRoutes(
             return@get
         }
 
-        val decodedUri = try {
-            URLDecoder.decode(entityUri, "UTF-8")
-        } catch (_: Exception) {
-            entityUri
-        }
+        val decodedUri =
+            try {
+                URLDecoder.decode(entityUri, "UTF-8")
+            } catch (_: Exception) {
+                entityUri
+            }
 
         val status = call.request.queryParameters["status"] ?: "published"
         val format = call.request.queryParameters["format"]?.lowercase() ?: "json"
         val extended = call.request.queryParameters["extended"]?.toBoolean() ?: false
+        val includeInbound = call.request.queryParameters["includeInbound"]?.toBoolean() ?: false
         val graphUri = getGraphUri(status)
 
-        val existsQuery = """
+        val existsQuery =
+            """
             ASK {
                 GRAPH <$graphUri> {
                     <$decodedUri> ?p ?o .
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         if (!graphDBClient.ask(existsQuery)) {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found: $decodedUri"))
@@ -327,8 +335,9 @@ fun Route.searchRoutes(
                             decodedUri,
                             graphUri,
                             status,
-                            publicBaseUrl
-                        )
+                            publicBaseUrl,
+                            includeInbound,
+                        ),
                     )
                 } else {
                     call.respond(
@@ -338,8 +347,9 @@ fun Route.searchRoutes(
                             decodedUri,
                             graphUri,
                             status,
-                            publicBaseUrl
-                        )
+                            publicBaseUrl,
+                            includeInbound,
+                        ),
                     )
                 }
             }

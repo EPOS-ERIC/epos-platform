@@ -2,7 +2,7 @@ package org.epos.infrastructure.ktor.plugins
 
 object OpenApiHeader {
     val yaml = """
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: EPOS Metadata Lifecycle API
   description: |

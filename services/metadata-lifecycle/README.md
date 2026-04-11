@@ -146,6 +146,7 @@ By default (resolved from `baseUri`):
 - Search and details
   - `GET /api/v2/search`
   - `GET /api/v2/details/{id}`
+    - optional query params: `extended=true`, `includeInbound=true`
 - SPARQL
   - `POST /api/v2/sparql`
 - OAI-PMH
@@ -197,6 +198,9 @@ curl "http://localhost:8080/api/v2/details/https%3A%2F%2Fepos-eu.org%2Fid%2Fdata
 
 # Get details as Turtle
 curl "http://localhost:8080/api/v2/details/https%3A%2F%2Fepos-eu.org%2Fid%2Fdataset%2F123?format=turtle"
+
+# Get details with inbound links
+curl "http://localhost:8080/api/v2/details/https%3A%2F%2Fepos-eu.org%2Fid%2Fdataset%2F123?includeInbound=true"
 
 # Populate from custom index URL
 curl -X POST "http://localhost:8080/api/v2/admin/populate/from-url" \
