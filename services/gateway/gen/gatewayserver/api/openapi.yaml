@@ -1,0 +1,1072 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: someemail@epos.com
+  description: |
+    OpenAPI specification for the EPOS catalogue API.
+
+    Design notes:
+    - Search returns heterogeneous, typed resource items in a flat list.
+    - Clients navigate by following `href` links; they never construct URLs themselves.
+    - All cross-entity references carry an `href` pointing to the typed detail endpoint.
+  license:
+    name: AGPL
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+  termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
+  title: EPOS API
+  version: 1.0.0
+servers:
+- description: Relative versioned API base path
+  url: /v1
+tags:
+- description: Search and taxonomy bootstrap endpoints
+  name: Discovery
+- description: Resource detail endpoints
+  name: Resources
+paths:
+  /search:
+    get:
+      description: |
+        Returns a flat, typed list of catalogue resources matching the supplied criteria.
+        Results may include datasets, distributions, software applications, software source
+        codes, and categories. Each item carries an `href` pointing to its typed detail
+        endpoint; clients should follow that link rather than construct URLs themselves.
+      operationId: searchMetadata
+      parameters:
+      - description: Free-text search query
+        explode: true
+        in: query
+        name: q
+        required: false
+        schema:
+          example: seismic stations
+          type: string
+        style: form
+      - description: Maximum number of items to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          example: 10
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Number of items to skip before returning results
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          example: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: |
+          Filter results to one or more resource types. When omitted, all types are returned.
+          Repeat the parameter for multiple values: `?type=dataset&type=distribution`.
+        explode: true
+        in: query
+        name: type
+        required: false
+        schema:
+          items:
+            $ref: "#/components/schemas/ResourceType"
+          type: array
+        style: form
+      - description: |
+          Spatial filter expressed as a WKT polygon string (EPSG:4326).
+          Resources whose spatial coverage intersects this polygon are returned.
+          Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
+        explode: true
+        in: query
+        name: spatialFilter
+        required: false
+        schema:
+          example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+          type: string
+        style: form
+      - description: |
+          Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+          Resources with temporal coverage overlapping this range are returned.
+        explode: true
+        in: query
+        name: dateFrom
+        required: false
+        schema:
+          example: 2020-01-01T00:00:00Z
+          format: date-time
+          type: string
+        style: form
+      - description: |
+          End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+          Must be greater than or equal to `dateFrom` when both are supplied.
+        explode: true
+        in: query
+        name: dateTo
+        required: false
+        schema:
+          example: 2023-12-31T23:59:59Z
+          format: date-time
+          type: string
+        style: form
+      - description: |
+          Filter by one or more service provider names.
+          Repeat the parameter for multiple values: `?serviceProvider=INGV&serviceProvider=UNINA`.
+        explode: true
+        in: query
+        name: serviceProvider
+        required: false
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      - description: |
+          Filter by one or more versioning statuses.
+          When omitted, defaults to `PUBLISHED`.
+          Repeat the parameter for multiple values: `?versioningStatus=PUBLISHED&versioningStatus=DRAFT`.
+        explode: true
+        in: query
+        name: versioningStatus
+        required: false
+        schema:
+          default:
+          - PUBLISHED
+          items:
+            $ref: "#/components/schemas/VersioningStatus"
+          type: array
+        style: form
+      - description: |
+          Filter resources that carry all the supplied keywords.
+          Repeat the parameter for multiple values: `?keywords=seismology&keywords=stations`.
+        explode: true
+        in: query
+        name: keywords
+        required: false
+        schema:
+          items:
+            type: string
+          type: array
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                mixedResults:
+                  summary: Mixed resource search results
+                  value:
+                    total: 42
+                    items:
+                    - type: dataset
+                      id: "123"
+                      name: IRPINIA Seismic Stations
+                      href: /v1/dataset/123
+                      serviceProvider: UNINA
+                      categories:
+                      - Seismology
+                      - Strong Motion
+                    - type: category
+                      id: cat-seismology
+                      name: Seismology
+                      href: /v1/category/cat-seismology
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+          description: Search results returned successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Invalid request parameters
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Search metadata resources
+      tags:
+      - Discovery
+  /dataset/{id}:
+    get:
+      operationId: getDatasetById
+      parameters:
+      - description: Local identifier of the resource
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: "123"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+          description: Dataset found
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Resource not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Get dataset by id
+      tags:
+      - Resources
+  /distribution/{id}:
+    get:
+      operationId: getDistributionById
+      parameters:
+      - description: Local identifier of the resource
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: "123"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+          description: Distribution found
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Resource not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Get distribution by id
+      tags:
+      - Resources
+  /software-application/{id}:
+    get:
+      operationId: getSoftwareApplicationById
+      parameters:
+      - description: Local identifier of the resource
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: "123"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoftwareApplication"
+          description: Software application found
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Resource not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Get software application by id
+      tags:
+      - Resources
+  /software-source-code/{id}:
+    get:
+      operationId: getSoftwareSourceCodeById
+      parameters:
+      - description: Local identifier of the resource
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: "123"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoftwareSourceCode"
+          description: Software source code found
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Resource not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Get software source code by id
+      tags:
+      - Resources
+  /category:
+    get:
+      description: |
+        Returns the complete category tree as an ordered list of category schemes.
+        Each scheme carries its full subtree of nested `Category` objects.
+        Intended as the primary data source for building facet navigation in clients.
+      operationId: getCategoryTree
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                tree:
+                  summary: Category tree with one scheme
+                  value:
+                    schemes:
+                    - id: scheme-solid-earth
+                      label: Solid Earth
+                      title: Solid Earth Science Categories
+                      description: Top-level grouping for solid earth science resources.
+                      logo: https://www.epos-eu.org/logos/solid-earth.png
+                      homepage: https://www.epos-eu.org/solid-earth
+                      color: "#3A7BD5"
+                      orderNumber: 1
+                      type: DATA
+                      children:
+                      - id: cat-seismology
+                        name: Seismology
+                        description: Resources related to seismic monitoring.
+                        children:
+                        - id: cat-strong-motion
+                          name: Strong Motion
+                          children: []
+              schema:
+                $ref: "#/components/schemas/CategoryTreeResponse"
+          description: Category tree returned successfully
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Get full category tree
+      tags:
+      - Discovery
+  /category/{id}:
+    get:
+      description: Returns a single category node with its full subtree of children.
+      operationId: getCategoryById
+      parameters:
+      - description: Local identifier of the resource
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          example: "123"
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+          description: Category found
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Resource not found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Internal server error
+      summary: Get category by id
+      tags:
+      - Resources
+components:
+  parameters:
+    ResourceId:
+      description: Local identifier of the resource
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        example: "123"
+        type: string
+      style: simple
+    Q:
+      description: Free-text search query
+      explode: true
+      in: query
+      name: q
+      required: false
+      schema:
+        example: seismic stations
+        type: string
+      style: form
+    Limit:
+      description: Maximum number of items to return
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 10
+        example: 10
+        maximum: 100
+        minimum: 1
+        type: integer
+      style: form
+    Offset:
+      description: Number of items to skip before returning results
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        default: 0
+        example: 0
+        minimum: 0
+        type: integer
+      style: form
+    TypeFilter:
+      description: |
+        Filter results to one or more resource types. When omitted, all types are returned.
+        Repeat the parameter for multiple values: `?type=dataset&type=distribution`.
+      explode: true
+      in: query
+      name: type
+      required: false
+      schema:
+        items:
+          $ref: "#/components/schemas/ResourceType"
+        type: array
+      style: form
+    SpatialFilter:
+      description: |
+        Spatial filter expressed as a WKT polygon string (EPSG:4326).
+        Resources whose spatial coverage intersects this polygon are returned.
+        Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
+      explode: true
+      in: query
+      name: spatialFilter
+      required: false
+      schema:
+        example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+        type: string
+      style: form
+    DateFrom:
+      description: |
+        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Resources with temporal coverage overlapping this range are returned.
+      explode: true
+      in: query
+      name: dateFrom
+      required: false
+      schema:
+        example: 2020-01-01T00:00:00Z
+        format: date-time
+        type: string
+      style: form
+    DateTo:
+      description: |
+        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Must be greater than or equal to `dateFrom` when both are supplied.
+      explode: true
+      in: query
+      name: dateTo
+      required: false
+      schema:
+        example: 2023-12-31T23:59:59Z
+        format: date-time
+        type: string
+      style: form
+    ServiceProviders:
+      description: |
+        Filter by one or more service provider names.
+        Repeat the parameter for multiple values: `?serviceProvider=INGV&serviceProvider=UNINA`.
+      explode: true
+      in: query
+      name: serviceProvider
+      required: false
+      schema:
+        items:
+          type: string
+        type: array
+      style: form
+    VersioningStatus:
+      description: |
+        Filter by one or more versioning statuses.
+        When omitted, defaults to `PUBLISHED`.
+        Repeat the parameter for multiple values: `?versioningStatus=PUBLISHED&versioningStatus=DRAFT`.
+      explode: true
+      in: query
+      name: versioningStatus
+      required: false
+      schema:
+        default:
+        - PUBLISHED
+        items:
+          $ref: "#/components/schemas/VersioningStatus"
+        type: array
+      style: form
+    Keywords:
+      description: |
+        Filter resources that carry all the supplied keywords.
+        Repeat the parameter for multiple values: `?keywords=seismology&keywords=stations`.
+      explode: true
+      in: query
+      name: keywords
+      required: false
+      schema:
+        items:
+          type: string
+        type: array
+      style: form
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Invalid request parameters
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Resource not found
+    InternalServerError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Internal server error
+  schemas:
+    ResourceType:
+      enum:
+      - dataset
+      - distribution
+      - software-application
+      - software-source-code
+      - category
+      type: string
+    VersioningStatus:
+      enum:
+      - DRAFT
+      - SUBMITTED
+      - PUBLISHED
+      - ARCHIVED
+      type: string
+    SearchResponse:
+      example:
+        total: 123
+        items:
+        - name: IRPINIA Seismic Stations
+          serviceProvider: UNINA
+          id: "123"
+          href: /v1/dataset/123
+          categories:
+          - Seismology
+          - Strong Motion
+          type: dataset
+        - name: IRPINIA Seismic Stations
+          serviceProvider: UNINA
+          id: "123"
+          href: /v1/dataset/123
+          categories:
+          - Seismology
+          - Strong Motion
+          type: dataset
+      properties:
+        total:
+          description: Total number of matching resources across all pages
+          example: 123
+          minimum: 0
+          type: integer
+        items:
+          items:
+            $ref: "#/components/schemas/SearchItem"
+          type: array
+      required:
+      - items
+      - total
+      type: object
+    SearchItem:
+      discriminator:
+        mapping:
+          dataset: "#/components/schemas/DatasetSearchItem"
+          distribution: "#/components/schemas/GenericSearchItem"
+          software-application: "#/components/schemas/GenericSearchItem"
+          software-source-code: "#/components/schemas/GenericSearchItem"
+          category: "#/components/schemas/GenericSearchItem"
+        propertyName: type
+      oneOf:
+      - $ref: "#/components/schemas/DatasetSearchItem"
+      - $ref: "#/components/schemas/GenericSearchItem"
+    BaseSearchItem:
+      properties:
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        id:
+          example: "123"
+          type: string
+        name:
+          example: IRPINIA Seismic Stations
+          type: string
+        href:
+          description: Path to the typed detail endpoint. Follow this link; do not
+            construct URLs.
+          example: /v1/dataset/123
+          type: string
+      required:
+      - href
+      - id
+      - name
+      - type
+      type: object
+    DatasetSearchItem:
+      allOf:
+      - $ref: "#/components/schemas/BaseSearchItem"
+      - properties:
+          type:
+            enum:
+            - dataset
+            type: string
+          serviceProvider:
+            description: Display name of the organisation providing this dataset
+            example: UNINA
+            type: string
+          categories:
+            description: Category labels assigned to this dataset
+            example:
+            - Seismology
+            - Strong Motion
+            items:
+              type: string
+            type: array
+        required:
+        - type
+        type: object
+      example:
+        name: IRPINIA Seismic Stations
+        serviceProvider: UNINA
+        id: "123"
+        href: /v1/dataset/123
+        categories:
+        - Seismology
+        - Strong Motion
+        type: dataset
+    GenericSearchItem:
+      allOf:
+      - $ref: "#/components/schemas/BaseSearchItem"
+      - properties:
+          type:
+            enum:
+            - distribution
+            - software-application
+            - software-source-code
+            - category
+            type: string
+        required:
+        - type
+        type: object
+    BaseDetailResource:
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+      required:
+      - id
+      - title
+      type: object
+    Dataset:
+      allOf:
+      - $ref: "#/components/schemas/BaseDetailResource"
+      - properties:
+          keywords:
+            example:
+            - seismology
+            - stations
+            - Irpinia
+            items:
+              type: string
+            type: array
+          categories:
+            description: Category labels assigned to this dataset
+            example:
+            - Seismology
+            - Strong Motion
+            items:
+              type: string
+            type: array
+          publisher:
+            description: Names of the organisations publishing this dataset
+            example:
+            - UNINA
+            - INGV
+            items:
+              type: string
+            type: array
+          spatial:
+            description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
+            example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+            type: string
+          temporal:
+            $ref: "#/components/schemas/TemporalExtent"
+          status:
+            $ref: "#/components/schemas/VersioningStatus"
+          distributions:
+            description: IDs of distributions that provide access to this dataset
+            example:
+            - "456"
+            - "457"
+            items:
+              type: string
+            type: array
+        type: object
+      example:
+        keywords:
+        - seismology
+        - stations
+        - Irpinia
+        description: description
+        publisher:
+        - UNINA
+        - INGV
+        id: id
+        categories:
+        - Seismology
+        - Strong Motion
+        title: title
+        spatial: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+        temporal:
+          start: 2010-01-01T00:00:00Z
+          end: 2023-12-31T23:59:59Z
+        distributions:
+        - "456"
+        - "457"
+        status: DRAFT
+    Distribution:
+      allOf:
+      - $ref: "#/components/schemas/BaseDetailResource"
+      - properties:
+          accessUrl:
+            description: URL used to access the distribution
+            example: https://service.example.org/fdsnws/station/1/query
+            format: uri
+            type: string
+          operation:
+            description: Operation ID describing the service operation exposed by
+              this distribution
+            example: getFDSNStationXML
+            type: string
+        type: object
+      example:
+        accessUrl: https://service.example.org/fdsnws/station/1/query
+        description: description
+        id: id
+        title: title
+        operation: getFDSNStationXML
+    SoftwareApplication:
+      allOf:
+      - $ref: "#/components/schemas/BaseDetailResource"
+      - properties:
+          keywords:
+            example:
+            - portal
+            - seismology
+            - data access
+            items:
+              type: string
+            type: array
+          categories:
+            description: Category labels assigned to this application
+            example:
+            - Seismology
+            - Data Services
+            items:
+              type: string
+            type: array
+          downloadUrl:
+            description: URL to download or install the application
+            example: https://example.org/application/download
+            format: uri
+            type: string
+        type: object
+      example:
+        keywords:
+        - portal
+        - seismology
+        - data access
+        downloadUrl: https://example.org/application/download
+        description: description
+        id: id
+        categories:
+        - Seismology
+        - Data Services
+        title: title
+    SoftwareSourceCode:
+      allOf:
+      - $ref: "#/components/schemas/BaseDetailResource"
+      - properties:
+          programmingLanguage:
+            description: Primary programming language of the source code
+            example: Java
+            type: string
+          keywords:
+            example:
+            - portal
+            - seismology
+            - open source
+            items:
+              type: string
+            type: array
+          categories:
+            description: Category labels assigned to this source code
+            example:
+            - Seismology
+            - Data Services
+            items:
+              type: string
+            type: array
+          repository:
+            description: URL of the source code repository
+            example: https://github.com/example/epos-portal
+            format: uri
+            type: string
+        type: object
+      example:
+        keywords:
+        - portal
+        - seismology
+        - open source
+        programmingLanguage: Java
+        description: description
+        id: id
+        categories:
+        - Seismology
+        - Data Services
+        title: title
+        repository: https://github.com/example/epos-portal
+    Category:
+      example:
+        children:
+        - null
+        - null
+        name: Seismology
+        description: Resources related to seismic monitoring and analysis.
+        id: cat-seismology
+      properties:
+        id:
+          example: cat-seismology
+          type: string
+        name:
+          example: Seismology
+          type: string
+        description:
+          example: Resources related to seismic monitoring and analysis.
+          type: string
+        children:
+          description: Nested child categories
+          items:
+            $ref: "#/components/schemas/Category"
+          type: array
+      required:
+      - id
+      - name
+      type: object
+    CategoryScheme:
+      example:
+        orderNumber: 1
+        color: "#3A7BD5"
+        children:
+        - children:
+          - null
+          - null
+          name: Seismology
+          description: Resources related to seismic monitoring and analysis.
+          id: cat-seismology
+        - children:
+          - null
+          - null
+          name: Seismology
+          description: Resources related to seismic monitoring and analysis.
+          id: cat-seismology
+        description: Top-level grouping for all solid earth science resources.
+        logo: https://www.epos-eu.org/logos/solid-earth.png
+        id: scheme-solid-earth
+        label: Solid Earth
+        title: Solid Earth Science Categories
+        type: DATA
+        homepage: https://www.epos-eu.org/solid-earth
+      properties:
+        id:
+          example: scheme-solid-earth
+          type: string
+        label:
+          example: Solid Earth
+          type: string
+        title:
+          example: Solid Earth Science Categories
+          type: string
+        description:
+          example: Top-level grouping for all solid earth science resources.
+          type: string
+        logo:
+          example: https://www.epos-eu.org/logos/solid-earth.png
+          format: uri
+          type: string
+        homepage:
+          example: https://www.epos-eu.org/solid-earth
+          format: uri
+          type: string
+        color:
+          description: Hex colour code used for UI rendering
+          example: "#3A7BD5"
+          type: string
+        orderNumber:
+          description: Display order among sibling category schemes
+          example: 1
+          type: integer
+        type:
+          enum:
+          - DATA
+          - FACILITY
+          - SOFTWARE
+          example: DATA
+          type: string
+        children:
+          description: Top-level categories within this scheme
+          items:
+            $ref: "#/components/schemas/Category"
+          type: array
+      required:
+      - id
+      - label
+      - type
+      type: object
+    CategoryTreeResponse:
+      example:
+        schemes:
+        - orderNumber: 1
+          color: "#3A7BD5"
+          children:
+          - children:
+            - null
+            - null
+            name: Seismology
+            description: Resources related to seismic monitoring and analysis.
+            id: cat-seismology
+          - children:
+            - null
+            - null
+            name: Seismology
+            description: Resources related to seismic monitoring and analysis.
+            id: cat-seismology
+          description: Top-level grouping for all solid earth science resources.
+          logo: https://www.epos-eu.org/logos/solid-earth.png
+          id: scheme-solid-earth
+          label: Solid Earth
+          title: Solid Earth Science Categories
+          type: DATA
+          homepage: https://www.epos-eu.org/solid-earth
+        - orderNumber: 1
+          color: "#3A7BD5"
+          children:
+          - children:
+            - null
+            - null
+            name: Seismology
+            description: Resources related to seismic monitoring and analysis.
+            id: cat-seismology
+          - children:
+            - null
+            - null
+            name: Seismology
+            description: Resources related to seismic monitoring and analysis.
+            id: cat-seismology
+          description: Top-level grouping for all solid earth science resources.
+          logo: https://www.epos-eu.org/logos/solid-earth.png
+          id: scheme-solid-earth
+          label: Solid Earth
+          title: Solid Earth Science Categories
+          type: DATA
+          homepage: https://www.epos-eu.org/solid-earth
+      properties:
+        schemes:
+          description: "Ordered list of category schemes, each carrying its full category\
+            \ subtree"
+          items:
+            $ref: "#/components/schemas/CategoryScheme"
+          type: array
+      required:
+      - schemes
+      type: object
+    TemporalExtent:
+      description: Temporal coverage of a resource
+      example:
+        start: 2010-01-01T00:00:00Z
+        end: 2023-12-31T23:59:59Z
+      properties:
+        start:
+          description: "Start of the temporal coverage (inclusive), ISO 8601 UTC"
+          example: 2010-01-01T00:00:00Z
+          format: date-time
+          type: string
+        end:
+          description: "End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted\
+            \ for open-ended coverage."
+          example: 2023-12-31T23:59:59Z
+          format: date-time
+          type: string
+      type: object
+    ErrorResponse:
+      example:
+        errorMessage: The requested resource was not found
+        errorCode: RESOURCE_NOT_FOUND
+      properties:
+        errorCode:
+          example: RESOURCE_NOT_FOUND
+          type: string
+        errorMessage:
+          example: The requested resource was not found
+          type: string
+      required:
+      - errorCode
+      - errorMessage
+      type: object

@@ -1,36 +1,34 @@
 package main
 
 import (
+	"flag"
 	"os"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/caarlos0/env/v11"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/server"
 )
 
-type Config struct {
-	Port    int           `env:"SERVER_PORT"`
-	Timeout time.Duration `env:"RESPONSE_TIMEOUT"`
-}
-
 func main() {
-	// TODO: improve logging
-	log := logging.Get("orchestrator")
+	log := logging.Get("gateway")
 	defer func() {
 		if err := logging.Close(); err != nil {
 			log.Error("failed to close logging", "error", err)
 		}
 	}()
 
-	log.Info("orchestrator service started")
+	log.Info("gateway service started")
 
-	var cfg Config
-	err := env.Parse(&cfg)
+	cfgPath := flag.String("config", "/etc/gateway/config.yaml", "path to config file")
+	flag.Parse()
+
+	cfg, err := config.Load(*cfgPath)
 	if err != nil {
-		// TODO
-		log.Error("error")
+		log.Error("error loading config", "err", err)
 		os.Exit(1)
 	}
 
-	serve()
+	log.Debug("config loaded", "listen", cfg.Server.Listen, "base_path", cfg.Server.BasePath)
+
+	server.RunServer(*cfg)
 }

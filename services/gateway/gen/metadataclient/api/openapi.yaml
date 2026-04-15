@@ -1,0 +1,1980 @@
+openapi: 3.0.3
+info:
+  contact:
+    name: EPOS Development Team
+    url: https://epos-eu.org
+  description: |
+    REST API to manage the lifecycle of RDF metadata resources in GraphDB.
+
+    ## Lifecycle Workflow
+    1. **DRAFT** - Create a new draft of a resource
+    2. **SUBMITTED** - Submit the draft for review
+    3. **PUBLISHED** - Publish the resource (automatically archives the previous version)
+    4. **ARCHIVED** - Outdated versions kept for historical purposes
+
+    ## Authentication
+    Use the `X-Agent` header with an absolute URI to identify the agent performing the operation.
+    Example: `X-Agent: mailto:user@example.org`
+  title: EPOS Metadata Lifecycle API
+  version: 2.2.0
+servers:
+- description: Development server
+  url: http://localhost:8080
+tags:
+- description: System information and health checks
+  name: System
+- description: Search and discovery endpoints
+  name: Search
+- description: Direct SPARQL query access
+  name: SPARQL
+- description: OAI-PMH 2.0 metadata harvesting
+  name: OAI-PMH
+- description: CRUD operations on metadata resources
+  name: Resources
+- description: "Lifecycle management (submit, publish)"
+  name: Lifecycle
+- description: Resource history and versions
+  name: Versioning
+- description: Batch submit and publish multiple entities
+  name: Batch
+- description: "Administrative operations (population, maintenance)"
+  name: Admin
+paths:
+  /health:
+    get:
+      description: Check the service status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_health_get_200_response"
+          description: Service operational
+      summary: Health check
+      tags:
+      - System
+  /api/v2/resource-types:
+    get:
+      description: Retrieve available resource types parsed from SHACL shapes
+      parameters:
+      - description: Include resolvable shape definitions map keyed by shape IRI
+        explode: true
+        in: query
+        name: includeShapeDefinitions
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Include only shape definitions reachable from resource type properties
+          via sh:node references
+        explode: true
+        in: query
+        name: includeTransitiveShapeDefinitions
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Add cycle-safe recursive reference metadata per shape definition
+        explode: true
+        in: query
+        name: includeResolvedRefs
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_resource_types_get_200_response"
+          description: List of resource types
+      summary: List resource types
+      tags:
+      - System
+  /api/v2/search:
+    get:
+      description: |
+        Search across all entity types with filtering, pagination, and hierarchical facets.
+
+        **Full GeoSPARQL Spatial Filtering Support:**
+        - `bbox`: Simple bounding box filter
+        - `geo` + `geoRelation`: Custom WKT geometry with spatial relation
+        - `lat`, `lon`, `radius`: Point + radius filter (km)
+
+        **Spatial Relations (geoRelation parameter):**
+        - `intersects` (default): Entity intersects the query geometry
+        - `within`: Entity is completely within the query geometry
+        - `contains`: Entity completely contains the query geometry
+        - `overlaps`: Entity overlaps the query geometry
+        - `touches`: Entity touches the query geometry
+        - `disjoint`: Entity does not touch the query geometry
+
+        **Hierarchical Concept/Theme Filtering:**
+        - `concept`: Filter by specific concept URI (dcat:theme)
+        - `conceptScheme`: Filter by concept scheme (returns entities themed with any concept in that scheme)
+
+        **Data Provider Filtering:**
+        - `dataProvider`: Filter by data provider organization URI
+        - `organization`: Filter by organization name (text search)
+
+        **Hierarchical Facets (when facets=true):**
+        - `conceptSchemes`: ConceptSchemes with child Concepts and entity counts
+        - `dataProviders`: Organizations with resource type breakdown
+      parameters:
+      - description: Free text search query
+        example: seismic data
+        explode: true
+        in: query
+        name: q
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter by resource type
+        example: dataset
+        explode: true
+        in: query
+        name: type
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Lifecycle status filter
+        explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          default: published
+          enum:
+          - draft
+          - submitted
+          - published
+          - archived
+          type: string
+        style: form
+      - description: "Bounding box filter (minLon,minLat,maxLon,maxLat). Uses GeoSPARQL\
+          \ for spatial filtering."
+        example: "-10,35,30,70"
+        explode: true
+        in: query
+        name: bbox
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: "WKT geometry for spatial filtering (e.g., POLYGON, POINT, LINESTRING)"
+        example: "POLYGON((10 40, 40 40, 40 10, 10 10, 10 40))"
+        explode: true
+        in: query
+        name: geo
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Spatial relation to use with bbox or geo parameter
+        explode: true
+        in: query
+        name: geoRelation
+        required: false
+        schema:
+          default: intersects
+          enum:
+          - within
+          - intersects
+          - contains
+          - overlaps
+          - touches
+          - disjoint
+          - crosses
+          - equals
+          type: string
+        style: form
+      - description: Latitude for point + radius filter
+        example: 45.5
+        explode: true
+        in: query
+        name: lat
+        required: false
+        schema:
+          format: double
+          type: number
+        style: form
+      - description: Longitude for point + radius filter
+        example: 9.2
+        explode: true
+        in: query
+        name: lon
+        required: false
+        schema:
+          format: double
+          type: number
+        style: form
+      - description: Radius in kilometers for point + radius filter
+        example: 100
+        explode: true
+        in: query
+        name: radius
+        required: false
+        schema:
+          format: double
+          type: number
+        style: form
+      - description: Temporal filter start date (ISO 8601)
+        explode: true
+        in: query
+        name: startDate
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - description: Temporal filter end date (ISO 8601)
+        explode: true
+        in: query
+        name: endDate
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - description: Comma-separated keywords filter
+        example: "earthquake,seismology"
+        explode: true
+        in: query
+        name: keywords
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter by organization URI or name (text search)
+        explode: true
+        in: query
+        name: organization
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter by concept URI (dcat:theme). Returns entities tagged with
+          this specific concept.
+        example: https://epos-eu.org/concept/seismology
+        explode: true
+        in: query
+        name: concept
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter by concept scheme URI. Returns entities tagged with any
+          concept in that scheme.
+        example: https://epos-eu.org/conceptscheme/domains
+        explode: true
+        in: query
+        name: conceptScheme
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter by data provider organization URI (exact match)
+        example: https://epos-eu.org/organization/ingv
+        explode: true
+        in: query
+        name: dataProvider
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          minimum: 1
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 20
+          maximum: 100
+          minimum: 1
+          type: integer
+        style: form
+      - description: Include facet counts in response
+        explode: true
+        in: query
+        name: facets
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: |
+          How to group results when facets=true. Matches resources-service behavior.
+          - categories: Group results hierarchically by ConceptScheme -> Concept
+          - dataproviders: Group results by data provider organization
+          - serviceproviders: Group results by service provider organization
+          - none: Return flat list with facet counts only (default)
+        explode: true
+        in: query
+        name: facetstype
+        required: false
+        schema:
+          default: none
+          enum:
+          - none
+          - categories
+          - dataproviders
+          - serviceproviders
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_search_get_200_response"
+          description: Search results
+      summary: Search across all entities
+      tags:
+      - Search
+  /api/v2/details/{id}:
+    get:
+      description: |
+        Retrieve detailed information about a specific entity.
+
+        **Standard Response (extended=false):**
+        Returns EDM-mapped properties with relations as hrefs.
+
+        **Extended/Aggregated Response (extended=true):**
+        Returns fully nested response matching resources-service structure:
+        - Nested relatedDataProducts with full DataProduct info
+        - Nested relatedWebservices with Operations and ServiceParameters
+        - Spatial and temporal extents as structured objects
+        - Contact points with person info
+        - Available formats for download/access
+        - Categories as facet tree
+      parameters:
+      - description: Entity URI (URL encoded)
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          default: published
+          enum:
+          - draft
+          - submitted
+          - published
+          - archived
+          type: string
+        style: form
+      - description: Response format
+        explode: true
+        in: query
+        name: format
+        required: false
+        schema:
+          default: json
+          enum:
+          - json
+          - turtle
+          - jsonld
+          - rdfxml
+          type: string
+        style: form
+      - description: |
+          If true, returns aggregated response with nested related entities
+          (DataProducts, WebServices, Operations) matching resources-service structure.
+        explode: true
+        in: query
+        name: extended
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_details__id__get_200_response"
+          description: Entity details
+        "404":
+          description: Entity not found
+      summary: Get entity details
+      tags:
+      - Search
+  /api/v2/sparql:
+    post:
+      description: |
+        Execute a SPARQL query against the triple store.
+        Supports SELECT, ASK, CONSTRUCT, and DESCRIBE queries.
+        UPDATE operations are not allowed.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/_api_v2_sparql_post_request"
+          application/sparql-query:
+            schema:
+              type: string
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2_sparql_post_request_1"
+        required: true
+      responses:
+        "200":
+          content:
+            application/sparql-results+json:
+              schema:
+                type: object
+            application/sparql-results+xml:
+              schema:
+                type: string
+            text/csv:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+            text/turtle:
+              schema:
+                type: string
+          description: Query results
+        "400":
+          description: Invalid query
+        "403":
+          description: UPDATE operations not allowed
+      summary: Execute SPARQL query
+      tags:
+      - SPARQL
+  /oai-pmh:
+    get:
+      description: |
+        OAI-PMH 2.0 compliant endpoint for metadata harvesting.
+
+        Supported verbs: Identify, ListMetadataFormats, ListSets, ListIdentifiers, ListRecords, GetRecord
+
+        Supported metadata formats: oai_dc (Dublin Core), dcat (DCAT-AP), epos_dcat_ap (EPOS-DCAT-AP)
+      parameters:
+      - description: OAI-PMH verb
+        explode: true
+        in: query
+        name: verb
+        required: true
+        schema:
+          enum:
+          - Identify
+          - ListMetadataFormats
+          - ListSets
+          - ListIdentifiers
+          - ListRecords
+          - GetRecord
+          type: string
+        style: form
+      - description: "Metadata format (required for ListIdentifiers, ListRecords,\
+          \ GetRecord)"
+        explode: true
+        in: query
+        name: metadataPrefix
+        required: false
+        schema:
+          enum:
+          - oai_dc
+          - dcat
+          - epos_dcat_ap
+          type: string
+        style: form
+      - description: Record identifier (required for GetRecord)
+        explode: true
+        in: query
+        name: identifier
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Set specification for selective harvesting
+        explode: true
+        in: query
+        name: set
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Start date for selective harvesting (ISO 8601)
+        explode: true
+        in: query
+        name: from
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - description: End date for selective harvesting (ISO 8601)
+        explode: true
+        in: query
+        name: until
+        required: false
+        schema:
+          format: date-time
+          type: string
+        style: form
+      - description: Token for paginated results
+        explode: true
+        in: query
+        name: resumptionToken
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            text/xml:
+              schema:
+                type: string
+          description: OAI-PMH XML response
+      summary: OAI-PMH 2.0 endpoint
+      tags:
+      - OAI-PMH
+  /api/v2/{resourceType}:
+    get:
+      description: Retrieve a paginated list of entities of a specific type
+      parameters:
+      - example: dataset
+        explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          default: published
+          enum:
+          - draft
+          - submitted
+          - published
+          - archived
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: page
+        required: false
+        schema:
+          default: 1
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: pageSize
+        required: false
+        schema:
+          default: 20
+          type: integer
+        style: form
+      responses:
+        "200":
+          description: List of entities
+      summary: List entities
+      tags:
+      - Resources
+    post:
+      description: Create a new entity in DRAFT state
+      parameters:
+      - example: dataset
+        explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - example: mailto:user@example.org
+        explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2__resourceType__post_request"
+        required: true
+      responses:
+        "201":
+          description: Entity created
+      summary: Create new entity (DRAFT)
+      tags:
+      - Resources
+  /api/v2/{resourceType}/{id}:
+    delete:
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Full entity URI
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Entity deleted
+      summary: Delete entity (DRAFT only)
+      tags:
+      - Resources
+    get:
+      description: Retrieve entity details. Supports multiple formats via Accept header
+        or format parameter.
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Full entity URI
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          default: published
+          enum:
+          - draft
+          - submitted
+          - published
+          - archived
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: format
+        required: false
+        schema:
+          enum:
+          - json
+          - turtle
+          - ttl
+          - jsonld
+          - rdfxml
+          - ntriples
+          type: string
+        style: form
+      responses:
+        "200":
+          description: Entity details
+        "404":
+          description: Entity not found
+      summary: Get entity
+      tags:
+      - Resources
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Full entity URI
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2__resourceType___id__put_request"
+        required: true
+      responses:
+        "200":
+          description: Entity updated
+      summary: Update entity (DRAFT only)
+      tags:
+      - Resources
+  /api/v2/{resourceType}/{id}/submit:
+    post:
+      description: Move an entity from DRAFT to SUBMITTED
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Entity submitted
+      summary: Submit for review
+      tags:
+      - Lifecycle
+  /api/v2/{resourceType}/{id}/publish:
+    post:
+      description: Publish an entity from SUBMITTED to PUBLISHED
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Entity published
+      summary: Publish entity
+      tags:
+      - Lifecycle
+  /api/v2/{resourceType}/{id}/draft:
+    post:
+      description: Creates a new draft version from a published entity
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: version
+        required: false
+        schema:
+          default: "2.0"
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "201":
+          description: Draft created
+      summary: Create new draft from published
+      tags:
+      - Lifecycle
+  /api/v2/{resourceType}/{id}/history:
+    get:
+      description: Retrieve all versions of a conceptual entity
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Version history
+      summary: Version history
+      tags:
+      - Versioning
+  /api/v2/batch/submit:
+    post:
+      description: Submit multiple entities in a single request
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2_batch_submit_post_request"
+        required: true
+      responses:
+        "200":
+          description: Batch operation completed
+      summary: Batch submit entities
+      tags:
+      - Batch
+  /api/v2/batch/publish:
+    post:
+      description: Publish multiple entities in a single request
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2_batch_submit_post_request"
+        required: true
+      responses:
+        "200":
+          description: Batch operation completed
+      summary: Batch publish entities
+      tags:
+      - Batch
+  /api/v2/{resourceType}/{id}/repair:
+    post:
+      description: Repair missing conceptual graph entries or provenance records
+      parameters:
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Entity repaired
+      summary: Repair entity metadata
+      tags:
+      - Admin
+  /api/v2/admin/populate:
+    post:
+      description: Triggers initial population from the configured INDEX_URL
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: Population completed
+        "500":
+          description: Population failed
+      summary: Populate database from TTL files
+      tags:
+      - Admin
+  /api/v2/admin/populate/from-url:
+    post:
+      description: Triggers population from a custom index URL
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2_admin_populate_from_url_post_request"
+        required: true
+      responses:
+        "200":
+          description: Population completed
+        "400":
+          description: Missing indexUrl
+        "500":
+          description: Population failed
+      summary: Populate from custom URL
+      tags:
+      - Admin
+  /api/v2/admin/populate/status:
+    get:
+      description: Returns current population configuration
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_admin_populate_status_get_200_response"
+          description: Population configuration
+      summary: Get population configuration
+      tags:
+      - Admin
+  /api/v2/admin/populate/file:
+    post:
+      description: |
+        Populates the database from a single TTL source.
+        You can provide either:
+        - `url`: an HTTP(S) URL to a TTL file
+        - `path`: a local filesystem path to a TTL file available on the server
+        Useful for loading individual TTL files from GitHub, HTTP endpoints, or mounted local volumes.
+
+        **Private Repository Support:**
+        Use the `X-Source-Authorization` header to access private GitHub repositories.
+        The header value is forwarded as the `Authorization` header when fetching the file.
+
+        Example URLs:
+        - GitHub raw (public): https://raw.githubusercontent.com/org/repo/main/data.ttl
+        - GitHub raw (private): Use X-Source-Authorization header with "token ghp_xxx"
+        - Direct URLs: https://example.com/metadata.ttl
+      parameters:
+      - description: Agent URI for provenance tracking
+        explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      - description: |
+          Authorization header to forward when fetching the URL.
+          For GitHub private repos, use "token ghp_YOUR_PERSONAL_ACCESS_TOKEN"
+        example: token ghp_xxxxxxxxxxxx
+        explode: false
+        in: header
+        name: X-Source-Authorization
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2_admin_populate_file_post_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_admin_populate_file_post_200_response"
+          description: Population completed
+        "400":
+          description: Invalid request (missing/invalid source or both url and path
+            provided)
+        "500":
+          description: Population failed
+      summary: Populate from URL or local TTL file
+      tags:
+      - Admin
+  /api/v2/admin/populate/content:
+    post:
+      description: |
+        Populates the database from TTL content uploaded directly in the request body.
+        Useful for uploading small TTL snippets or programmatic population.
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2_admin_populate_content_post_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_admin_populate_content_post_200_response"
+          description: Population completed
+        "400":
+          description: Missing content
+        "500":
+          description: Population failed
+      summary: Populate from TTL content
+      tags:
+      - Admin
+components:
+  schemas:
+    PropertyInfo:
+      example:
+        severity: severity
+        nodeShapeRefs:
+        - nodeShapeRefs
+        - nodeShapeRefs
+        nodeShapeRef: nodeShapeRef
+        helpText: helpText
+        classConstraint: https://openapi-generator.tech
+        minLength: 1
+        pattern: pattern
+        description: description
+        maxCount: 6
+        hasValueIn:
+        - hasValueIn
+        - hasValueIn
+        datatypes:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        required: true
+        classConstraints:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        recommended: true
+        path: https://openapi-generator.tech
+        datatype: https://openapi-generator.tech
+        name: name
+        nodeKinds:
+        - nodeKinds
+        - nodeKinds
+        nodeKind: nodeKind
+        minCount: 0
+        maxLength: 5
+        severities:
+        - severities
+        - severities
+      properties:
+        path:
+          format: uri
+          type: string
+        name:
+          type: string
+        datatype:
+          format: uri
+          nullable: true
+          type: string
+        datatypes:
+          items:
+            format: uri
+            type: string
+          nullable: true
+          type: array
+        nodeKind:
+          nullable: true
+          type: string
+        nodeKinds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        classConstraint:
+          format: uri
+          nullable: true
+          type: string
+        classConstraints:
+          items:
+            format: uri
+            type: string
+          nullable: true
+          type: array
+        nodeShapeRef:
+          nullable: true
+          type: string
+        nodeShapeRefs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        minCount:
+          format: int32
+          nullable: true
+          type: integer
+        maxCount:
+          format: int32
+          nullable: true
+          type: integer
+        required:
+          type: boolean
+        recommended:
+          type: boolean
+        pattern:
+          nullable: true
+          type: string
+        minLength:
+          format: int32
+          nullable: true
+          type: integer
+        maxLength:
+          format: int32
+          nullable: true
+          type: integer
+        hasValueIn:
+          items:
+            type: string
+          nullable: true
+          type: array
+        severity:
+          nullable: true
+          type: string
+        severities:
+          items:
+            type: string
+          nullable: true
+          type: array
+        helpText:
+          nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
+      required:
+      - name
+      - path
+      - recommended
+      - required
+      type: object
+    ResourceTypeInfo:
+      example:
+        targetClass: https://openapi-generator.tech
+        name: name
+        closed: true
+        description: description
+        properties:
+        - severity: severity
+          nodeShapeRefs:
+          - nodeShapeRefs
+          - nodeShapeRefs
+          nodeShapeRef: nodeShapeRef
+          helpText: helpText
+          classConstraint: https://openapi-generator.tech
+          minLength: 1
+          pattern: pattern
+          description: description
+          maxCount: 6
+          hasValueIn:
+          - hasValueIn
+          - hasValueIn
+          datatypes:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          required: true
+          classConstraints:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          recommended: true
+          path: https://openapi-generator.tech
+          datatype: https://openapi-generator.tech
+          name: name
+          nodeKinds:
+          - nodeKinds
+          - nodeKinds
+          nodeKind: nodeKind
+          minCount: 0
+          maxLength: 5
+          severities:
+          - severities
+          - severities
+        - severity: severity
+          nodeShapeRefs:
+          - nodeShapeRefs
+          - nodeShapeRefs
+          nodeShapeRef: nodeShapeRef
+          helpText: helpText
+          classConstraint: https://openapi-generator.tech
+          minLength: 1
+          pattern: pattern
+          description: description
+          maxCount: 6
+          hasValueIn:
+          - hasValueIn
+          - hasValueIn
+          datatypes:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          required: true
+          classConstraints:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          recommended: true
+          path: https://openapi-generator.tech
+          datatype: https://openapi-generator.tech
+          name: name
+          nodeKinds:
+          - nodeKinds
+          - nodeKinds
+          nodeKind: nodeKind
+          minCount: 0
+          maxLength: 5
+          severities:
+          - severities
+          - severities
+      properties:
+        name:
+          type: string
+        targetClass:
+          format: uri
+          type: string
+        properties:
+          items:
+            $ref: "#/components/schemas/PropertyInfo"
+          type: array
+        closed:
+          type: boolean
+        description:
+          nullable: true
+          type: string
+      required:
+      - closed
+      - name
+      - properties
+      - targetClass
+      type: object
+    ResourceTypeList:
+      description: Returned when shape definitions are not requested
+      items:
+        $ref: "#/components/schemas/ResourceTypeInfo"
+      type: array
+    ShapeDefinitionInfo:
+      properties:
+        id:
+          type: string
+        targetClasses:
+          items:
+            format: uri
+            type: string
+          type: array
+        properties:
+          items:
+            $ref: "#/components/schemas/PropertyInfo"
+          type: array
+        resolvedRefs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        name:
+          nullable: true
+          type: string
+        datatype:
+          format: uri
+          nullable: true
+          type: string
+        datatypes:
+          items:
+            format: uri
+            type: string
+          nullable: true
+          type: array
+        nodeKind:
+          nullable: true
+          type: string
+        nodeKinds:
+          items:
+            type: string
+          nullable: true
+          type: array
+        classConstraint:
+          format: uri
+          nullable: true
+          type: string
+        classConstraints:
+          items:
+            format: uri
+            type: string
+          nullable: true
+          type: array
+        nodeShapeRef:
+          nullable: true
+          type: string
+        nodeShapeRefs:
+          items:
+            type: string
+          nullable: true
+          type: array
+        ontologyEquivalentClasses:
+          items:
+            format: uri
+            type: string
+          nullable: true
+          type: array
+        ontologySubClassesOf:
+          items:
+            format: uri
+            type: string
+          nullable: true
+          type: array
+        closed:
+          type: boolean
+        description:
+          nullable: true
+          type: string
+      required:
+      - closed
+      - id
+      - properties
+      - targetClasses
+      type: object
+    ResourceTypesEnvelope:
+      description: Returned when includeShapeDefinitions or includeTransitiveShapeDefinitions
+        is true
+      properties:
+        resourceTypes:
+          items:
+            $ref: "#/components/schemas/ResourceTypeInfo"
+          type: array
+        shapeDefinitions:
+          additionalProperties:
+            $ref: "#/components/schemas/ShapeDefinitionInfo"
+          description: Map keyed by shape IRI
+          type: object
+      required:
+      - resourceTypes
+      type: object
+    _health_get_200_response:
+      example:
+        status: ok
+        timestamp: 0
+      properties:
+        status:
+          example: ok
+          type: string
+        timestamp:
+          format: int64
+          type: integer
+      type: object
+    _api_v2_resource_types_get_200_response:
+      oneOf:
+      - $ref: "#/components/schemas/ResourceTypeList"
+      - $ref: "#/components/schemas/ResourceTypesEnvelope"
+    _api_v2_search_get_200_response_results_inner_availableFormats_inner:
+      example:
+        format: format
+        label: label
+        href: href
+        type: type
+      properties:
+        label:
+          type: string
+        format:
+          type: string
+        href:
+          type: string
+        type:
+          type: string
+      type: object
+    _api_v2_search_get_200_response_results_inner:
+      example:
+        availableFormats:
+        - format: format
+          label: label
+          href: href
+          type: type
+        - format: format
+          label: label
+          href: href
+          type: type
+        description: description
+        id: id
+        href: href
+        type: type
+        title: title
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        href:
+          type: string
+        availableFormats:
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_results_inner_availableFormats_inner"
+          type: array
+      type: object
+    _api_v2_search_get_200_response_facets_types_inner:
+      example:
+        count: 5
+        label: label
+        value: value
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+      type: object
+    _api_v2_search_get_200_response_facets_conceptSchemes_inner_children_inner:
+      example:
+        count: 7
+        label: label
+        value: value
+      properties:
+        value:
+          description: Concept URI
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+      type: object
+    _api_v2_search_get_200_response_facets_conceptSchemes_inner:
+      example:
+        children:
+        - count: 7
+          label: label
+          value: value
+        - count: 7
+          label: label
+          value: value
+        count: 2
+        id: id
+        label: label
+      properties:
+        id:
+          description: ConceptScheme URI
+          type: string
+        label:
+          type: string
+        count:
+          description: Total entities tagged with concepts in this scheme
+          type: integer
+        children:
+          description: Child concepts with their entity counts
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_conceptSchemes_inner_children_inner"
+          type: array
+      type: object
+    _api_v2_search_get_200_response_facets_dataProviders_inner_children_inner:
+      example:
+        count: 3
+        label: label
+        value: value
+      properties:
+        value:
+          description: Resource type URI
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+      type: object
+    _api_v2_search_get_200_response_facets_dataProviders_inner:
+      example:
+        children:
+        - count: 3
+          label: label
+          value: value
+        - count: 3
+          label: label
+          value: value
+        count: 9
+        id: id
+        label: label
+      properties:
+        id:
+          description: Organization URI
+          type: string
+        label:
+          description: Organization name
+          type: string
+        count:
+          description: Total resources from this provider
+          type: integer
+        children:
+          description: Resource types with counts
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_dataProviders_inner_children_inner"
+          type: array
+      type: object
+    _api_v2_search_get_200_response_facets:
+      description: Hierarchical facets (only present when facets=true)
+      example:
+        types:
+        - count: 5
+          label: label
+          value: value
+        - count: 5
+          label: label
+          value: value
+        keywords:
+        - count: 5
+          label: label
+          value: value
+        - count: 5
+          label: label
+          value: value
+        dataProviders:
+        - children:
+          - count: 3
+            label: label
+            value: value
+          - count: 3
+            label: label
+            value: value
+          count: 9
+          id: id
+          label: label
+        - children:
+          - count: 3
+            label: label
+            value: value
+          - count: 3
+            label: label
+            value: value
+          count: 9
+          id: id
+          label: label
+        conceptSchemes:
+        - children:
+          - count: 7
+            label: label
+            value: value
+          - count: 7
+            label: label
+            value: value
+          count: 2
+          id: id
+          label: label
+        - children:
+          - count: 7
+            label: label
+            value: value
+          - count: 7
+            label: label
+            value: value
+          count: 2
+          id: id
+          label: label
+      properties:
+        types:
+          description: Resource type facets with counts
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_types_inner"
+          type: array
+        keywords:
+          description: Keyword facets with counts
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_types_inner"
+          type: array
+        conceptSchemes:
+          description: Hierarchical concept scheme facets with child concepts
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_conceptSchemes_inner"
+          type: array
+        dataProviders:
+          description: Data provider organization facets with resource type breakdown
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_dataProviders_inner"
+          type: array
+      type: object
+    _api_v2_search_get_200_response:
+      example:
+        total: 0
+        totalPages: 5
+        pageSize: 1
+        page: 6
+        results:
+        - availableFormats:
+          - format: format
+            label: label
+            href: href
+            type: type
+          - format: format
+            label: label
+            href: href
+            type: type
+          description: description
+          id: id
+          href: href
+          type: type
+          title: title
+        - availableFormats:
+          - format: format
+            label: label
+            href: href
+            type: type
+          - format: format
+            label: label
+            href: href
+            type: type
+          description: description
+          id: id
+          href: href
+          type: type
+          title: title
+        facets:
+          types:
+          - count: 5
+            label: label
+            value: value
+          - count: 5
+            label: label
+            value: value
+          keywords:
+          - count: 5
+            label: label
+            value: value
+          - count: 5
+            label: label
+            value: value
+          dataProviders:
+          - children:
+            - count: 3
+              label: label
+              value: value
+            - count: 3
+              label: label
+              value: value
+            count: 9
+            id: id
+            label: label
+          - children:
+            - count: 3
+              label: label
+              value: value
+            - count: 3
+              label: label
+              value: value
+            count: 9
+            id: id
+            label: label
+          conceptSchemes:
+          - children:
+            - count: 7
+              label: label
+              value: value
+            - count: 7
+              label: label
+              value: value
+            count: 2
+            id: id
+            label: label
+          - children:
+            - count: 7
+              label: label
+              value: value
+            - count: 7
+              label: label
+              value: value
+            count: 2
+            id: id
+            label: label
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/_api_v2_search_get_200_response_results_inner"
+          type: array
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalPages:
+          type: integer
+        facets:
+          $ref: "#/components/schemas/_api_v2_search_get_200_response_facets"
+      type: object
+    _api_v2_details__id__get_200_response_oneOf:
+      description: Standard EDM response (extended=false)
+      example:
+        description: description
+        id: id
+        type: type
+        title: title
+        relations: "{}"
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        relations:
+          type: object
+      type: object
+    _api_v2_details__id__get_200_response_oneOf_1:
+      description: Aggregated response (extended=true)
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        href:
+          type: string
+        hrefExtended:
+          type: string
+        spatial:
+          type: object
+        temporalCoverage:
+          type: object
+        dataProvider:
+          items:
+            type: object
+          type: array
+        relatedDataProducts:
+          description: Nested DataProduct objects
+          items:
+            type: object
+          type: array
+        relatedWebservices:
+          description: Nested WebService objects with operations
+          items:
+            type: object
+          type: array
+      type: object
+    _api_v2_details__id__get_200_response:
+      oneOf:
+      - $ref: "#/components/schemas/_api_v2_details__id__get_200_response_oneOf"
+      - $ref: "#/components/schemas/_api_v2_details__id__get_200_response_oneOf_1"
+    _api_v2_sparql_post_request:
+      properties:
+        query:
+          description: SPARQL query string
+          type: string
+      required:
+      - query
+      type: object
+    _api_v2_sparql_post_request_1:
+      properties:
+        query:
+          type: string
+      required:
+      - query
+      type: object
+    _api_v2__resourceType__post_request:
+      properties:
+        type:
+          type: string
+        properties:
+          type: object
+      type: object
+    _api_v2__resourceType___id__put_request:
+      properties:
+        properties:
+          type: object
+      type: object
+    _api_v2_batch_submit_post_request:
+      properties:
+        entityUris:
+          items:
+            type: string
+          type: array
+      type: object
+    _api_v2_admin_populate_from_url_post_request:
+      properties:
+        indexUrl:
+          example: http://example.com/index.txt
+          type: string
+      required:
+      - indexUrl
+      type: object
+    _api_v2_admin_populate_status_get_200_response:
+      example:
+        graphs: "{}"
+        graphdbEndpoint: graphdbEndpoint
+        repositoryId: repositoryId
+        indexUrl: indexUrl
+      properties:
+        indexUrl:
+          type: string
+        graphdbEndpoint:
+          type: string
+        repositoryId:
+          type: string
+        graphs:
+          type: object
+      type: object
+    _api_v2_admin_populate_file_post_request:
+      properties:
+        url:
+          description: URL to a TTL file
+          example: https://raw.githubusercontent.com/EPOS-ERIC/metadatone/main/metadatone.ttl
+          type: string
+        path:
+          description: Local filesystem path to a TTL file
+          example: /data/metadata/metadatone.ttl
+          type: string
+      type: object
+    _api_v2_admin_populate_file_post_200_response_data:
+      example:
+        sourceUrl: sourceUrl
+        agent: agent
+        triplesInserted: 6
+        subjectsProcessed: 0
+      properties:
+        sourceUrl:
+          type: string
+        subjectsProcessed:
+          type: integer
+        triplesInserted:
+          type: integer
+        agent:
+          type: string
+      type: object
+    _api_v2_admin_populate_file_post_200_response:
+      example:
+        data:
+          sourceUrl: sourceUrl
+          agent: agent
+          triplesInserted: 6
+          subjectsProcessed: 0
+        success: true
+        message: message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/_api_v2_admin_populate_file_post_200_response_data"
+      type: object
+    _api_v2_admin_populate_content_post_request:
+      properties:
+        content:
+          description: TTL content as a string
+          example: "@prefix dcat: <http://www.w3.org/ns/dcat#> .\\n<http://example.org/dataset1>\
+            \ a dcat:Dataset ."
+          type: string
+        sourceName:
+          description: Optional name for provenance tracking
+          example: my-upload
+          type: string
+      required:
+      - content
+      type: object
+    _api_v2_admin_populate_content_post_200_response_data:
+      example:
+        agent: agent
+        triplesInserted: 6
+        subjectsProcessed: 0
+        sourceName: sourceName
+      properties:
+        sourceName:
+          type: string
+        subjectsProcessed:
+          type: integer
+        triplesInserted:
+          type: integer
+        agent:
+          type: string
+      type: object
+    _api_v2_admin_populate_content_post_200_response:
+      example:
+        data:
+          agent: agent
+          triplesInserted: 6
+          subjectsProcessed: 0
+          sourceName: sourceName
+        success: true
+        message: message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/_api_v2_admin_populate_content_post_200_response_data"
+      type: object

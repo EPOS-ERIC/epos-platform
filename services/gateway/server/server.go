@@ -7,89 +7,59 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/routes"
 )
 
-// Config holds the application configuration.
-type Config struct {
-	Port    string        `mapstructure:"port" yaml:"port"`
-	Timeout time.Duration `mapstructure:"request_timeout" yaml:"request_timeout"`
-}
-
-// RunServer starts the HTTP server with the given configuration.
-func RunServer(cfg Config) {
-	defer func() {
-		_ = logging.Close()
-	}()
-
+func RunServer(cfg config.Config) {
 	log := logging.Get("server")
-	log.Info("initializing application")
 
-	log.Info("configuration loaded", "port", cfg.Port, "dbPath", cfg.DBPath, "dbName", cfg.DBName, "cacheTTL", cfg.CacheTTL)
-
-	db, err := db.NewSqliteDB(cfg.DBPath, cfg.DBName)
-	if err != nil {
-		log.Error("failed to initialize database", "error", err)
-		panic(err)
-	}
-	defer func() {
-		_ = db.Close()
-	}()
-
-	log.Debug("initializing services")
-	movieService := services.NewMovieService(db, tmdbClient, cfg.CacheTTL)
-	listService := services.NewListService(db, movieService)
-	watchedService := services.NewWatchedService(db, listService, movieService)
-	authService := services.NewAuthService(db, listService, cfg.SessionExpiry, cfg.HTTPS, cfg.AdminDefaultPassword)
-
-	router := routes.NewRouter(db, movieService, watchedService, listService, authService)
-
-	server := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      router,
-		ReadTimeout:  cfg.Timeout,
-		WriteTimeout: cfg.Timeout,
+	requestTimeout := cfg.Server.RequestTimeout
+	if requestTimeout <= 0 {
+		requestTimeout = 30 * time.Second
 	}
 
-	ticker := time.NewTicker(cfg.SessionExpiry)
-	done := make(chan bool)
+	httpServer := &http.Server{
+		Addr:         cfg.Server.Listen,
+		Handler:      routes.NewRouter(),
+		ReadTimeout:  requestTimeout,
+		WriteTimeout: requestTimeout,
+		IdleTimeout:  requestTimeout,
+	}
 
-	// clean expired sessions
+	listenErr := make(chan error, 1)
 	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				err := authService.CleanupExpiredSessions(context.Background())
-				if err != nil {
-					log.Error("failed to cleanup expired sessions", "error", err)
-					// Continue to next tick instead of returning
-				} else {
-					log.Debug("successfully cleaned up expired sessions")
-				}
-			}
-		}
+		log.Info("starting server", "listen", cfg.Server.Listen)
+		listenErr <- httpServer.ListenAndServe()
 	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
 
-	go func() {
-		log.Info("starting server", "port", cfg.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Error("server failed to start", "error", err)
-			panic(err)
+	select {
+	case err := <-listenErr:
+		if err != nil && err != http.ErrServerClosed {
+			log.Error("server failed", "error", err)
+			os.Exit(1)
 		}
-	}()
+		return
+	case sig := <-sigChan:
+		log.Info("received signal", "signal", sig)
+	}
 
-	sig := <-sigChan
-	log.Info("received signal, shutting down gracefully", "signal", sig)
-
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
-	if err := server.Shutdown(shutdownCtx); err != nil {
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Error("server shutdown failed", "error", err)
+		os.Exit(1)
+	}
+
+	if err := <-listenErr; err != nil && err != http.ErrServerClosed {
+		log.Error("server stopped with error", "error", err)
 		os.Exit(1)
 	}
 

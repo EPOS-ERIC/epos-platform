@@ -11,6 +11,9 @@ build:
 	cd services/gateway && $(MAKE) build
 	cd services/metadata-lifecycle && $(MAKE) build
 
+generate:
+	cd services/gateway && $(MAKE) generate
+
 test:
 	@echo "==> services/gateway: skipping test (target missing)"
 	cd services/metadata-lifecycle && $(MAKE) test
@@ -23,4 +26,4 @@ lint:
 	@echo "==> services/gateway: skipping lint (target missing)"
 	cd services/metadata-lifecycle && $(MAKE) lint
 
-.PHONY: up down populate build test fmt lint
+.PHONY: up down populate build generate test fmt lint

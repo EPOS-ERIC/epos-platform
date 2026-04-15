@@ -1,0 +1,14 @@
+server:
+  listen: ":5000"
+  request_timeout: "5s"
+  base_path: "/api/v1"
+
+auth:
+  enabled: true
+  auth_url: "http://user-management:8080/"
+
+services:
+  converter:
+    url: "http://converter:8080/"
+  metadata-lifecycle:
+    url: "http://metadata-lifecycle:8080/"

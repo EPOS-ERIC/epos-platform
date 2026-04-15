@@ -1,0 +1,32 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: disable
+linters:
+  default: standard
+  enable:
+    - staticcheck
+    - errcheck
+    - misspell
+    - dupl
+    - goconst
+    - gocritic
+    - godoclint
+    - contextcheck
+    - containedctx
+    - copyloopvar
+  exclusions:
+    paths: 
+      - ".*gen/.*"
+    rules:
+      - linters:
+          - errcheck
+        source: "^\\s*defer\\s+"
+  settings:
+    goconst:
+      ignore-string-values:
+        - "true"

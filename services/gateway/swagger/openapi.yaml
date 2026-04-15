@@ -1,4 +1,4 @@
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: EPOS API
   version: 1.0.0
@@ -17,29 +17,21 @@ info:
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
 
 servers:
-  - url: https://api.todo.com/v1
-    description: Versioned API server
+  - url: /v1
+    description: Relative versioned API base path
 
 tags:
-  - name: Search
-    description: Search across all resource types
-  - name: Datasets
-    description: Dataset resources
-  - name: Distributions
-    description: Distribution resources
-  - name: Software Applications
-    description: Software application resources
-  - name: Software Source Codes
-    description: Software source code resources
-  - name: Categories
-    description: Category taxonomy resources
+  - name: Discovery
+    description: Search and taxonomy bootstrap endpoints
+  - name: Resources
+    description: Resource detail endpoints
 
 paths:
 
   /search:
     get:
       tags:
-        - Search
+        - Discovery
       summary: Search metadata resources
       description: |
         Returns a flat, typed list of catalogue resources matching the supplied criteria.
@@ -74,7 +66,7 @@ paths:
                       - type: dataset
                         id: "123"
                         name: "IRPINIA Seismic Stations"
-                        href: "/api/v1/dataset/123"
+                        href: "/v1/dataset/123"
                         serviceProvider: "UNINA"
                         categories:
                           - "Seismology"
@@ -82,7 +74,7 @@ paths:
                       - type: category
                         id: "cat-seismology"
                         name: "Seismology"
-                        href: "/api/v1/category/cat-seismology"
+                        href: "/v1/category/cat-seismology"
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -93,7 +85,7 @@ paths:
       - $ref: '#/components/parameters/ResourceId'
     get:
       tags:
-        - Datasets
+        - Resources
       summary: Get dataset by id
       operationId: getDatasetById
       responses:
@@ -113,7 +105,7 @@ paths:
       - $ref: '#/components/parameters/ResourceId'
     get:
       tags:
-        - Distributions
+        - Resources
       summary: Get distribution by id
       operationId: getDistributionById
       responses:
@@ -133,7 +125,7 @@ paths:
       - $ref: '#/components/parameters/ResourceId'
     get:
       tags:
-        - Software Applications
+        - Resources
       summary: Get software application by id
       operationId: getSoftwareApplicationById
       responses:
@@ -153,7 +145,7 @@ paths:
       - $ref: '#/components/parameters/ResourceId'
     get:
       tags:
-        - Software Source Codes
+        - Resources
       summary: Get software source code by id
       operationId: getSoftwareSourceCodeById
       responses:
@@ -171,7 +163,7 @@ paths:
   /category:
     get:
       tags:
-        - Categories
+        - Discovery
       summary: Get full category tree
       description: |
         Returns the complete category tree as an ordered list of category schemes.
@@ -215,7 +207,7 @@ paths:
       - $ref: '#/components/parameters/ResourceId'
     get:
       tags:
-        - Categories
+        - Resources
       summary: Get category by id
       description: Returns a single category node with its full subtree of children.
       operationId: getCategoryById
@@ -242,8 +234,7 @@ components:
       description: Local identifier of the resource
       schema:
         type: string
-        examples:
-          - "123"
+        example: "123"
 
     Q:
       name: q
@@ -252,8 +243,7 @@ components:
       description: Free-text search query
       schema:
         type: string
-        examples:
-          - "seismic stations"
+        example: "seismic stations"
 
     Limit:
       name: limit
@@ -265,8 +255,7 @@ components:
         minimum: 1
         maximum: 100
         default: 10
-        examples:
-          - 10
+        example: 10
 
     Offset:
       name: offset
@@ -277,8 +266,7 @@ components:
         type: integer
         minimum: 0
         default: 0
-        examples:
-          - 0
+        example: 0
 
     TypeFilter:
       name: type
@@ -304,8 +292,7 @@ components:
         Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
       schema:
         type: string
-        examples:
-          - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+        example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
 
     DateFrom:
       name: dateFrom
@@ -317,8 +304,7 @@ components:
       schema:
         type: string
         format: date-time
-        examples:
-          - "2020-01-01T00:00:00Z"
+        example: "2020-01-01T00:00:00Z"
 
     DateTo:
       name: dateTo
@@ -330,8 +316,7 @@ components:
       schema:
         type: string
         format: date-time
-        examples:
-          - "2023-12-31T23:59:59Z"
+        example: "2023-12-31T23:59:59Z"
 
     ServiceProviders:
       name: serviceProvider
@@ -438,8 +423,7 @@ components:
           type: integer
           minimum: 0
           description: Total number of matching resources across all pages
-          examples:
-            - 123
+          example: 123
         items:
           type: array
           items:
@@ -470,17 +454,14 @@ components:
           $ref: '#/components/schemas/ResourceType'
         id:
           type: string
-          examples:
-            - "123"
+          example: "123"
         name:
           type: string
-          examples:
-            - "IRPINIA Seismic Stations"
+          example: "IRPINIA Seismic Stations"
         href:
           type: string
           description: Path to the typed detail endpoint. Follow this link; do not construct URLs.
-          examples:
-            - "/api/v1/dataset/123"
+          example: "/v1/dataset/123"
 
     DatasetSearchItem:
       allOf:
@@ -491,19 +472,20 @@ components:
           properties:
             type:
               type: string
-              const: dataset
+              enum:
+                - dataset
             serviceProvider:
               type: string
               description: Display name of the organisation providing this dataset
-              examples:
-                - "UNINA"
+              example: "UNINA"
             categories:
               type: array
               description: Category labels assigned to this dataset
               items:
                 type: string
-              examples:
-                - ["Seismology", "Strong Motion"]
+              example:
+                - "Seismology"
+                - "Strong Motion"
 
     GenericSearchItem:
       allOf:
@@ -546,27 +528,30 @@ components:
               type: array
               items:
                 type: string
-              examples:
-                - ["seismology", "stations", "Irpinia"]
+              example:
+                - "seismology"
+                - "stations"
+                - "Irpinia"
             categories:
               type: array
               description: Category labels assigned to this dataset
               items:
                 type: string
-              examples:
-                - ["Seismology", "Strong Motion"]
+              example:
+                - "Seismology"
+                - "Strong Motion"
             publisher:
               type: array
               description: Names of the organisations publishing this dataset
               items:
                 type: string
-              examples:
-                - ["UNINA", "INGV"]
+              example:
+                - "UNINA"
+                - "INGV"
             spatial:
               type: string
               description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
-              examples:
-                - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+              example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
             temporal:
               $ref: '#/components/schemas/TemporalExtent'
             status:
@@ -576,8 +561,9 @@ components:
               description: IDs of distributions that provide access to this dataset
               items:
                 type: string
-              examples:
-                - ["456", "457"]
+              example:
+                - "456"
+                - "457"
 
     Distribution:
       allOf:
@@ -588,13 +574,11 @@ components:
               type: string
               format: uri
               description: URL used to access the distribution
-              examples:
-                - "https://service.example.org/fdsnws/station/1/query"
+              example: "https://service.example.org/fdsnws/station/1/query"
             operation:
               type: string
               description: Operation ID describing the service operation exposed by this distribution
-              examples:
-                - "getFDSNStationXML"
+              example: "getFDSNStationXML"
 
     SoftwareApplication:
       allOf:
@@ -605,21 +589,23 @@ components:
               type: array
               items:
                 type: string
-              examples:
-                - ["portal", "seismology", "data access"]
+              example:
+                - "portal"
+                - "seismology"
+                - "data access"
             categories:
               type: array
               description: Category labels assigned to this application
               items:
                 type: string
-              examples:
-                - ["Seismology", "Data Services"]
+              example:
+                - "Seismology"
+                - "Data Services"
             downloadUrl:
               type: string
               format: uri
               description: URL to download or install the application
-              examples:
-                - "https://example.org/application/download"
+              example: "https://example.org/application/download"
 
     SoftwareSourceCode:
       allOf:
@@ -629,27 +615,28 @@ components:
             programmingLanguage:
               type: string
               description: Primary programming language of the source code
-              examples:
-                - "Java"
+              example: "Java"
             keywords:
               type: array
               items:
                 type: string
-              examples:
-                - ["portal", "seismology", "open source"]
+              example:
+                - "portal"
+                - "seismology"
+                - "open source"
             categories:
               type: array
               description: Category labels assigned to this source code
               items:
                 type: string
-              examples:
-                - ["Seismology", "Data Services"]
+              example:
+                - "Seismology"
+                - "Data Services"
             repository:
               type: string
               format: uri
               description: URL of the source code repository
-              examples:
-                - "https://github.com/example/epos-portal"
+              example: "https://github.com/example/epos-portal"
 
     Category:
       type: object
@@ -659,16 +646,13 @@ components:
       properties:
         id:
           type: string
-          examples:
-            - "cat-seismology"
+          example: "cat-seismology"
         name:
           type: string
-          examples:
-            - "Seismology"
+          example: "Seismology"
         description:
           type: string
-          examples:
-            - "Resources related to seismic monitoring and analysis."
+          example: "Resources related to seismic monitoring and analysis."
         children:
           type: array
           description: Nested child categories
@@ -684,48 +668,39 @@ components:
       properties:
         id:
           type: string
-          examples:
-            - "scheme-solid-earth"
+          example: "scheme-solid-earth"
         label:
           type: string
-          examples:
-            - "Solid Earth"
+          example: "Solid Earth"
         title:
           type: string
-          examples:
-            - "Solid Earth Science Categories"
+          example: "Solid Earth Science Categories"
         description:
           type: string
-          examples:
-            - "Top-level grouping for all solid earth science resources."
+          example: "Top-level grouping for all solid earth science resources."
         logo:
           type: string
           format: uri
-          examples:
-            - "https://www.epos-eu.org/logos/solid-earth.png"
+          example: "https://www.epos-eu.org/logos/solid-earth.png"
         homepage:
           type: string
           format: uri
-          examples:
-            - "https://www.epos-eu.org/solid-earth"
+          example: "https://www.epos-eu.org/solid-earth"
         color:
           type: string
           description: Hex colour code used for UI rendering
-          examples:
-            - "#3A7BD5"
+          example: "#3A7BD5"
         orderNumber:
           type: integer
           description: Display order among sibling category schemes
-          examples:
-            - 1
+          example: 1
         type:
           type: string
           enum:
             - DATA
             - FACILITY
             - SOFTWARE
-          examples:
-            - "DATA"
+          example: "DATA"
         children:
           type: array
           description: Top-level categories within this scheme
@@ -755,14 +730,12 @@ components:
           type: string
           format: date-time
           description: Start of the temporal coverage (inclusive), ISO 8601 UTC
-          examples:
-            - "2010-01-01T00:00:00Z"
+          example: "2010-01-01T00:00:00Z"
         end:
           type: string
           format: date-time
           description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
-          examples:
-            - "2023-12-31T23:59:59Z"
+          example: "2023-12-31T23:59:59Z"
 
     ErrorResponse:
       type: object
@@ -772,9 +745,7 @@ components:
       properties:
         errorCode:
           type: string
-          examples:
-            - "RESOURCE_NOT_FOUND"
+          example: "RESOURCE_NOT_FOUND"
         errorMessage:
           type: string
-          examples:
-            - "The requested resource was not found"
+          example: "The requested resource was not found"

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -20,6 +21,7 @@ var (
 func init() {
 	v, ok := os.LookupEnv("LOG_LEVEL")
 	if ok {
+		v = strings.ToUpper(v)
 		switch v {
 		case "DEBUG":
 			level = slog.LevelDebug
