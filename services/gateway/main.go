@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
@@ -25,7 +24,7 @@ func main() {
 	cfg, err := config.Load(*cfgPath)
 	if err != nil {
 		log.Error("error loading config", "err", err)
-		os.Exit(1)
+		panic("error loading config")
 	}
 
 	log.Debug("config loaded", "listen", cfg.Server.Listen, "base_path", cfg.Server.BasePath)

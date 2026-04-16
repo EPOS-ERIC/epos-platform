@@ -2,7 +2,10 @@ package metadatalifecycle
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
@@ -45,6 +48,11 @@ type SearchParams struct {
 }
 
 func NewService(baseURL string, timeout time.Duration) (*Service, error) {
+	normalizedBaseURL, err := normalizeBaseURL(baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("normalize metadata-lifecycle base URL: %w", err)
+	}
+
 	if timeout <= 0 {
 		timeout = defaultRequestTimeout
 	}
@@ -52,15 +60,33 @@ func NewService(baseURL string, timeout time.Duration) (*Service, error) {
 	cfg := metadataclient.NewConfiguration()
 	cfg.Servers = metadataclient.ServerConfigurations{
 		{
-			URL:         baseURL,
+			URL:         normalizedBaseURL,
 			Description: "metadata-lifecycle",
 		},
 	}
 	cfg.HTTPClient = &http.Client{Timeout: timeout}
 
-	log.Debug("metadata lifecycle client configured", "base_url", baseURL, "timeout", timeout.String())
+	log.Debug("metadata lifecycle client configured", "base_url", normalizedBaseURL, "timeout", timeout.String())
 
 	return &Service{client: metadataclient.NewAPIClient(cfg)}, nil
+}
+
+func normalizeBaseURL(baseURL string) (string, error) {
+	trimmedBaseURL := strings.TrimSpace(baseURL)
+	if trimmedBaseURL == "" {
+		return "", fmt.Errorf("base URL is required")
+	}
+
+	parsedURL, err := url.Parse(trimmedBaseURL)
+	if err != nil {
+		return "", fmt.Errorf("parse base URL: %w", err)
+	}
+
+	if !parsedURL.IsAbs() || parsedURL.Host == "" {
+		return "", fmt.Errorf("base URL must be an absolute URL")
+	}
+
+	return strings.TrimSuffix(parsedURL.String(), "/"), nil
 }
 
 func (s *Service) Search(ctx context.Context, params SearchParams) (*metadataclient.ApiV2SearchGet200Response, error) {

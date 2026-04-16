@@ -43,7 +43,7 @@ func RunServer(cfg config.Config) {
 	case err := <-listenErr:
 		if err != nil && err != http.ErrServerClosed {
 			log.Error("server failed", "error", err)
-			os.Exit(1)
+			panic("server failed")
 		}
 		return
 	case sig := <-sigChan:
@@ -55,12 +55,12 @@ func RunServer(cfg config.Config) {
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Error("server shutdown failed", "error", err)
-		os.Exit(1)
+		panic("server shutdown failed")
 	}
 
 	if err := <-listenErr; err != nil && err != http.ErrServerClosed {
 		log.Error("server stopped with error", "error", err)
-		os.Exit(1)
+		panic("server stopped with error")
 	}
 
 	log.Info("server shutdown complete")

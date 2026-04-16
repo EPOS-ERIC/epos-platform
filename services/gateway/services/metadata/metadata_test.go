@@ -38,6 +38,20 @@ func TestNewService(t *testing.T) {
 			wantReqTimout: defaultRequestTimeout,
 		},
 		{
+			name:          "trims whitespace around base URL",
+			baseURL:       "  http://metadata-lifecycle:8080/  ",
+			timeout:       0,
+			wantBaseURL:   "http://metadata-lifecycle:8080",
+			wantReqTimout: defaultRequestTimeout,
+		},
+		{
+			name:          "preserves path and trims trailing slash",
+			baseURL:       "http://metadata-lifecycle:8080/api/v2/",
+			timeout:       0,
+			wantBaseURL:   "http://metadata-lifecycle:8080/api/v2",
+			wantReqTimout: defaultRequestTimeout,
+		},
+		{
 			name:          "uses provided timeout",
 			baseURL:       "http://metadata-lifecycle:8080",
 			timeout:       2 * time.Second,
