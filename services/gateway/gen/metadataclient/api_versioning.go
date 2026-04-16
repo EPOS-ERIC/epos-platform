@@ -20,7 +20,6 @@ import (
 )
 
 type VersioningAPI interface {
-
 	/*
 		ApiV2ResourceTypeIdHistoryGet Version history
 

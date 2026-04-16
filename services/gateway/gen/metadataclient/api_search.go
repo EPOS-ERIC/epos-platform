@@ -21,7 +21,6 @@ import (
 )
 
 type SearchAPI interface {
-
 	/*
 			ApiV2DetailsIdGet Get entity details
 

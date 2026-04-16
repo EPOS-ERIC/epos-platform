@@ -20,7 +20,6 @@ import (
 )
 
 type LifecycleAPI interface {
-
 	/*
 		ApiV2ResourceTypeIdDraftPost Create new draft from published
 

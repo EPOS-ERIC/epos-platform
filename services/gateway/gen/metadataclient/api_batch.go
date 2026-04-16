@@ -19,7 +19,6 @@ import (
 )
 
 type BatchAPI interface {
-
 	/*
 		ApiV2BatchPublishPost Batch publish entities
 

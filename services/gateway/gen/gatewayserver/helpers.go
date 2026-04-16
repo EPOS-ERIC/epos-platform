@@ -25,9 +25,11 @@ import (
 	"time"
 )
 
-const errMsgRequiredMissing = "required parameter is missing"
-const errMsgMinValueConstraint = "provided parameter is not respecting minimum value constraint"
-const errMsgMaxValueConstraint = "provided parameter is not respecting maximum value constraint"
+const (
+	errMsgRequiredMissing    = "required parameter is missing"
+	errMsgMinValueConstraint = "provided parameter is not respecting minimum value constraint"
+	errMsgMaxValueConstraint = "provided parameter is not respecting maximum value constraint"
+)
 
 // Response return a ImplResponse struct filled
 func Response(code int, body interface{}) ImplResponse {

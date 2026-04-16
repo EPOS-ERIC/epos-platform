@@ -20,7 +20,6 @@ import (
 )
 
 type AdminAPI interface {
-
 	/*
 			ApiV2AdminPopulateContentPost Populate from TTL content
 

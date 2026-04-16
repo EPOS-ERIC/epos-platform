@@ -93,7 +93,6 @@ func (o *ApiV2SparqlPostRequest1) UnmarshalJSON(data []byte) (err error) {
 	allProperties := make(map[string]interface{})
 
 	err = json.Unmarshal(data, &allProperties)
-
 	if err != nil {
 		return err
 	}
@@ -109,7 +108,6 @@ func (o *ApiV2SparqlPostRequest1) UnmarshalJSON(data []byte) (err error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varApiV2SparqlPostRequest1)
-
 	if err != nil {
 		return err
 	}

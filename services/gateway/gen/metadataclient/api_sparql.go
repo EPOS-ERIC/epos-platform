@@ -19,7 +19,6 @@ import (
 )
 
 type SPARQLAPI interface {
-
 	/*
 			ApiV2SparqlPost Execute SPARQL query
 

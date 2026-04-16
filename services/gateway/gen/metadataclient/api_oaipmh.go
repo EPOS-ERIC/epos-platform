@@ -20,7 +20,6 @@ import (
 )
 
 type OAIPMHAPI interface {
-
 	/*
 			OaiPmhGet OAI-PMH 2.0 endpoint
 

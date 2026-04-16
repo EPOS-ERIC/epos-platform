@@ -68,13 +68,13 @@ func (c *DiscoveryAPIController) Routes() Routes {
 // OrderedRoutes returns all the api routes in a deterministic order for the DiscoveryAPIController
 func (c *DiscoveryAPIController) OrderedRoutes() []Route {
 	return []Route{
-		Route{
+		{
 			"SearchMetadata",
 			strings.ToUpper("Get"),
 			"/v1/search",
 			c.SearchMetadata,
 		},
-		Route{
+		{
 			"GetCategoryTree",
 			strings.ToUpper("Get"),
 			"/v1/category",
