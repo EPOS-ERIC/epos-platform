@@ -53,6 +53,19 @@ services:
     networks:
       - epos-network
 
+  gateway-service:
+    build:
+      context: ..
+      dockerfile: services/gateway/Dockerfile
+    depends_on:
+      metadata-lifecycle-service:
+        condition: service_started
+    ports:
+      - "5000:5000"
+    restart: on-failure
+    networks:
+      - epos-network
+
 volumes:
   graphdb-data:
 
