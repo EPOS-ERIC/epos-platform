@@ -68,13 +68,13 @@ func (c *DiscoveryAPIController) Routes() Routes {
 // OrderedRoutes returns all the api routes in a deterministic order for the DiscoveryAPIController
 func (c *DiscoveryAPIController) OrderedRoutes() []Route {
 	return []Route{
-		{
+		Route{
 			"SearchMetadata",
 			strings.ToUpper("Get"),
 			"/v1/search",
 			c.SearchMetadata,
 		},
-		{
+		Route{
 			"GetCategoryTree",
 			strings.ToUpper("Get"),
 			"/v1/category",
@@ -97,40 +97,40 @@ func (c *DiscoveryAPIController) SearchMetadata(w http.ResponseWriter, r *http.R
 		qParam = param
 	} else {
 	}
-	var limitParam int32
-	if query.Has("limit") {
+	var pageSizeParam int32
+	if query.Has("pageSize") {
 		param, err := parseNumericParameter[int32](
-			query.Get("limit"),
+			query.Get("pageSize"),
 			WithParse[int32](parseInt32),
 			WithMinimum[int32](1),
 			WithMaximum[int32](100),
 		)
 		if err != nil {
-			c.errorHandler(w, r, &ParsingError{Param: "limit", Err: err}, nil)
+			c.errorHandler(w, r, &ParsingError{Param: "pageSize", Err: err}, nil)
 			return
 		}
 
-		limitParam = param
+		pageSizeParam = param
 	} else {
 		var param int32 = 10
-		limitParam = param
+		pageSizeParam = param
 	}
-	var offsetParam int32
-	if query.Has("offset") {
+	var pageNumberParam int32
+	if query.Has("pageNumber") {
 		param, err := parseNumericParameter[int32](
-			query.Get("offset"),
+			query.Get("pageNumber"),
 			WithParse[int32](parseInt32),
-			WithMinimum[int32](0),
+			WithMinimum[int32](1),
 		)
 		if err != nil {
-			c.errorHandler(w, r, &ParsingError{Param: "offset", Err: err}, nil)
+			c.errorHandler(w, r, &ParsingError{Param: "pageNumber", Err: err}, nil)
 			return
 		}
 
-		offsetParam = param
+		pageNumberParam = param
 	} else {
-		var param int32 = 0
-		offsetParam = param
+		var param int32 = 1
+		pageNumberParam = param
 	}
 	var type_Param []ResourceType
 	if query.Has("type") {
@@ -195,7 +195,7 @@ func (c *DiscoveryAPIController) SearchMetadata(w http.ResponseWriter, r *http.R
 	if query.Has("keywords") {
 		keywordsParam = strings.Split(query.Get("keywords"), ",")
 	}
-	result, err := c.service.SearchMetadata(r.Context(), qParam, limitParam, offsetParam, type_Param, spatialFilterParam, dateFromParam, dateToParam, serviceProviderParam, versioningStatusParam, keywordsParam)
+	result, err := c.service.SearchMetadata(r.Context(), qParam, pageSizeParam, pageNumberParam, type_Param, spatialFilterParam, dateFromParam, dateToParam, serviceProviderParam, versioningStatusParam, keywordsParam)
 	// If an error occurred, encode the error with the status code
 	if err != nil {
 		c.errorHandler(w, r, err, &result)

@@ -41,8 +41,8 @@ paths:
       operationId: searchMetadata
       parameters:
         - $ref: '#/components/parameters/Q'
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageNumber'
         - $ref: '#/components/parameters/TypeFilter'
         - $ref: '#/components/parameters/SpatialFilter'
         - $ref: '#/components/parameters/DateFrom'
@@ -245,11 +245,11 @@ components:
         type: string
         example: "seismic stations"
 
-    Limit:
-      name: limit
+    PageSize:
+      name: pageSize
       in: query
       required: false
-      description: Maximum number of items to return
+      description: Number of items to return per page
       schema:
         type: integer
         minimum: 1
@@ -257,16 +257,16 @@ components:
         default: 10
         example: 10
 
-    Offset:
-      name: offset
+    PageNumber:
+      name: pageNumber
       in: query
       required: false
-      description: Number of items to skip before returning results
+      description: 1-based page index to return
       schema:
         type: integer
-        minimum: 0
-        default: 0
-        example: 0
+        minimum: 1
+        default: 1
+        example: 1
 
     TypeFilter:
       name: type

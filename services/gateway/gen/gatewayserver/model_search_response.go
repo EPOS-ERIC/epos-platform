@@ -16,6 +16,7 @@ import (
 )
 
 type SearchResponse struct {
+
 	// Total number of matching resources across all pages
 	Total int32 `json:"total"`
 

@@ -156,7 +156,7 @@ func parameterValueToString(obj interface{}, key string) string {
 
 		return fmt.Sprintf("%v", obj)
 	}
-	param, ok := obj.(MappedNullable)
+	var param, ok = obj.(MappedNullable)
 	if !ok {
 		return ""
 	}
@@ -170,8 +170,8 @@ func parameterValueToString(obj interface{}, key string) string {
 // parameterAddToHeaderOrQuery adds the provided object to the request header or url query
 // supporting deep object syntax
 func parameterAddToHeaderOrQuery(headerOrQueryParams interface{}, keyPrefix string, obj interface{}, style string, collectionType string) {
-	v := reflect.ValueOf(obj)
-	value := ""
+	var v = reflect.ValueOf(obj)
+	var value = ""
 	if v == reflect.ValueOf(nil) {
 		value = "null"
 	} else {
@@ -194,14 +194,14 @@ func parameterAddToHeaderOrQuery(headerOrQueryParams interface{}, keyPrefix stri
 			}
 			value = v.Type().String() + " value"
 		case reflect.Slice:
-			indValue := reflect.ValueOf(obj)
+			var indValue = reflect.ValueOf(obj)
 			if indValue == reflect.ValueOf(nil) {
 				return
 			}
-			lenIndValue := indValue.Len()
+			var lenIndValue = indValue.Len()
 			for i := 0; i < lenIndValue; i++ {
-				arrayValue := indValue.Index(i)
-				keyPrefixForCollectionType := keyPrefix
+				var arrayValue = indValue.Index(i)
+				var keyPrefixForCollectionType = keyPrefix
 				if style == "deepObject" {
 					keyPrefixForCollectionType = keyPrefix + "[" + strconv.Itoa(i) + "]"
 				}
@@ -210,7 +210,7 @@ func parameterAddToHeaderOrQuery(headerOrQueryParams interface{}, keyPrefix stri
 			return
 
 		case reflect.Map:
-			indValue := reflect.ValueOf(obj)
+			var indValue = reflect.ValueOf(obj)
 			if indValue == reflect.ValueOf(nil) {
 				return
 			}
@@ -312,8 +312,8 @@ func (c *APIClient) prepareRequest(
 	headerParams map[string]string,
 	queryParams url.Values,
 	formParams url.Values,
-	formFiles []formFile,
-) (localVarRequest *http.Request, err error) {
+	formFiles []formFile) (localVarRequest *http.Request, err error) {
+
 	var body *bytes.Buffer
 
 	// Detect postBody type and post.
@@ -440,6 +440,7 @@ func (c *APIClient) prepareRequest(
 		localVarRequest = localVarRequest.WithContext(ctx)
 
 		// Walk through any authentication.
+
 	}
 
 	for header, value := range c.cfg.DefaultHeader {

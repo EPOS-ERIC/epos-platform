@@ -12,6 +12,7 @@
 package gatewayserver
 
 type CategoryTreeResponse struct {
+
 	// Ordered list of category schemes, each carrying its full category subtree
 	Schemes []CategoryScheme `json:"schemes"`
 }

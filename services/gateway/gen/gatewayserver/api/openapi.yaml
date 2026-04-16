@@ -42,10 +42,10 @@ paths:
           example: seismic stations
           type: string
         style: form
-      - description: Maximum number of items to return
+      - description: Number of items to return per page
         explode: true
         in: query
-        name: limit
+        name: pageSize
         required: false
         schema:
           default: 10
@@ -54,15 +54,15 @@ paths:
           minimum: 1
           type: integer
         style: form
-      - description: Number of items to skip before returning results
+      - description: 1-based page index to return
         explode: true
         in: query
-        name: offset
+        name: pageNumber
         required: false
         schema:
-          default: 0
-          example: 0
-          minimum: 0
+          default: 1
+          example: 1
+          minimum: 1
           type: integer
         style: form
       - description: |
@@ -435,11 +435,11 @@ components:
         example: seismic stations
         type: string
       style: form
-    Limit:
-      description: Maximum number of items to return
+    PageSize:
+      description: Number of items to return per page
       explode: true
       in: query
-      name: limit
+      name: pageSize
       required: false
       schema:
         default: 10
@@ -448,16 +448,16 @@ components:
         minimum: 1
         type: integer
       style: form
-    Offset:
-      description: Number of items to skip before returning results
+    PageNumber:
+      description: 1-based page index to return
       explode: true
       in: query
-      name: offset
+      name: pageNumber
       required: false
       schema:
-        default: 0
-        example: 0
-        minimum: 0
+        default: 1
+        example: 1
+        minimum: 1
         type: integer
       style: form
     TypeFilter:

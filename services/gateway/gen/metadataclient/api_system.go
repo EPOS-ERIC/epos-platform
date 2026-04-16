@@ -19,6 +19,7 @@ import (
 )
 
 type SystemAPI interface {
+
 	/*
 		ApiV2ResourceTypesGet List resource types
 

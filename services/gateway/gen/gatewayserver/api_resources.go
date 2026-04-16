@@ -87,31 +87,31 @@ func (c *ResourcesAPIController) Routes() Routes {
 // OrderedRoutes returns all the api routes in a deterministic order for the ResourcesAPIController
 func (c *ResourcesAPIController) OrderedRoutes() []Route {
 	return []Route{
-		{
+		Route{
 			"GetDatasetById",
 			strings.ToUpper("Get"),
 			"/v1/dataset/{id}",
 			c.GetDatasetById,
 		},
-		{
+		Route{
 			"GetDistributionById",
 			strings.ToUpper("Get"),
 			"/v1/distribution/{id}",
 			c.GetDistributionById,
 		},
-		{
+		Route{
 			"GetSoftwareApplicationById",
 			strings.ToUpper("Get"),
 			"/v1/software-application/{id}",
 			c.GetSoftwareApplicationById,
 		},
-		{
+		Route{
 			"GetSoftwareSourceCodeById",
 			strings.ToUpper("Get"),
 			"/v1/software-source-code/{id}",
 			c.GetSoftwareSourceCodeById,
 		},
-		{
+		Route{
 			"GetCategoryById",
 			strings.ToUpper("Get"),
 			"/v1/category/{id}",

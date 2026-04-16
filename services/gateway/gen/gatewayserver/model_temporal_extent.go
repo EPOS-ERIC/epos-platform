@@ -17,6 +17,7 @@ import (
 
 // TemporalExtent - Temporal coverage of a resource
 type TemporalExtent struct {
+
 	// Start of the temporal coverage (inclusive), ISO 8601 UTC
 	Start time.Time `json:"start,omitempty"`
 

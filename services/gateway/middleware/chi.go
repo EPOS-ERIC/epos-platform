@@ -48,7 +48,7 @@ func Logger(next http.Handler) http.Handler {
 	})
 }
 
-// TODO: we have to make sure the error returned by the service follow the openapi spec
+// Recoverer handles panics and returns an internal server error response.
 func Recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

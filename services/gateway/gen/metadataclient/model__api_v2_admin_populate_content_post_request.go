@@ -131,6 +131,7 @@ func (o *ApiV2AdminPopulateContentPostRequest) UnmarshalJSON(data []byte) (err e
 	allProperties := make(map[string]interface{})
 
 	err = json.Unmarshal(data, &allProperties)
+
 	if err != nil {
 		return err
 	}
@@ -146,6 +147,7 @@ func (o *ApiV2AdminPopulateContentPostRequest) UnmarshalJSON(data []byte) (err e
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	err = decoder.Decode(&varApiV2AdminPopulateContentPostRequest)
+
 	if err != nil {
 		return err
 	}

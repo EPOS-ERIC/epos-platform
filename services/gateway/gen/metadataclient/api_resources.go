@@ -20,6 +20,7 @@ import (
 )
 
 type ResourcesAPI interface {
+
 	/*
 		ApiV2ResourceTypeGet List entities
 
