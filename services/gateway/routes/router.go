@@ -6,14 +6,15 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayserver"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/middleware"
-	gatewayswagger "github.com/EPOS-ERIC/epos-platform/services/gateway/swagger"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/services/metadata"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/swagger"
 	"github.com/go-chi/chi/v5"
 )
 
 var log = logging.Get("routes")
 
-func NewRouter() chi.Router {
-	log.Info("creating HTTP router")
+func NewHandler(metadataService *metadata.Service) http.Handler {
+	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
 
@@ -25,17 +26,17 @@ func NewRouter() chi.Router {
 		http.Redirect(w, r, "/swagger/", http.StatusMovedPermanently)
 	})
 
-	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(gatewayswagger.GetUI()))))
+	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(swagger.GetUI()))))
 
-	service := newOpenAPIService()
+	adapter := newAPIAdapter(metadataService)
 	controllers := []gatewayserver.Router{
-		gatewayserver.NewDiscoveryAPIController(service),
-		gatewayserver.NewResourcesAPIController(service),
+		gatewayserver.NewDiscoveryAPIController(adapter),
+		gatewayserver.NewResourcesAPIController(adapter),
 	}
 
 	for _, controller := range controllers {
 		for _, route := range controller.OrderedRoutes() {
-			r.With(middleware.JSONMiddleware).Method(route.Method, route.Pattern, route.HandlerFunc)
+			r.Method(route.Method, route.Pattern, route.HandlerFunc)
 		}
 	}
 
@@ -44,7 +45,7 @@ func NewRouter() chi.Router {
 
 func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
-	if _, err := w.Write(gatewayswagger.GetSpec()); err != nil {
+	if _, err := w.Write(swagger.GetSpec()); err != nil {
 		log.Error("failed to write openapi spec", "error", err)
 	}
 }

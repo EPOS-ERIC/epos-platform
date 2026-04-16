@@ -7,8 +7,7 @@ Use [Effective Go](https://go.dev/doc/effective_go) guide as baseline for all co
 ## Error Handling
 
 - Handle only genuine **runtime** errors.
-- If error can occur only due to **build-time or configuration issue** (e.g. embedded `fs` assets missing), **panic** instead — do not silently swallow or return it.
-- Every panic path must have corresponding test that exercises it.
+- If error can occur only due to **build-time or configuration issue** (e.g. embedded `fs` assets missing), that path must have corresponding test that exercises it.
 - Check all returned errors (`errcheck` enabled). Prefer `err != nil` checks with early returns.
 - Prefer early returns to reduce nesting and improve readability.
 
@@ -60,3 +59,4 @@ log.Info(...)
 - Maintain strong type safety:
   - Use typed enums (custom types with `const` values).
   - Avoid `interface{}` or `any` unless absolutely necessary; if used, document why.
+- Don't edit `gen/` files manually.

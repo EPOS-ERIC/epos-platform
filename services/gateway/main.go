@@ -27,7 +27,10 @@ func main() {
 		panic("error loading config")
 	}
 
-	log.Debug("config loaded", "listen", cfg.Server.Listen, "base_path", cfg.Server.BasePath)
+	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
-	server.RunServer(*cfg)
+	if err := server.RunServer(*cfg); err != nil {
+		log.Error("server failed", "error", err)
+		panic("server failed")
+	}
 }

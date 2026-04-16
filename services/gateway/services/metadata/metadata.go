@@ -1,4 +1,4 @@
-package metadatalifecycle
+package metadata
 
 import (
 	"context"
@@ -157,6 +157,8 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (*metadatacli
 	if err != nil {
 		return nil, wrapRequestError(searchOperation, httpResponse, err)
 	}
+
+	log.Debug("search response received", "response", response)
 
 	return response, nil
 }

@@ -3,31 +3,27 @@ package config
 import (
 	"fmt"
 	"os"
-	"path"
 	"time"
 
 	"go.yaml.in/yaml/v3"
 )
 
 type Config struct {
-	Server   Server             `yaml:"server"`
-	Auth     Auth               `yaml:"auth"`
-	Services map[string]Service `yaml:"services"`
+	Server   Server   `yaml:"server"`
+	Services Services `yaml:"services"`
 }
 
 type Server struct {
 	Listen         string        `yaml:"listen"`
 	RequestTimeout time.Duration `yaml:"request_timeout"`
-	BasePath       string        `yaml:"base_path"`
-}
-
-type Auth struct {
-	Enabled bool   `yaml:"enabled"`
-	AuthURL string `yaml:"auth_url"`
 }
 
 type Service struct {
 	URL string `yaml:"url"`
+}
+
+type Services struct {
+	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
 }
 
 // Load loads configuration from file
@@ -60,24 +56,9 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("server.listen is required")
 	}
 
-	if c.Auth.Enabled && c.Auth.AuthURL == "" {
-		return fmt.Errorf("auth.auth_url is required when auth.enabled is true")
+	if c.Services.MetadataLifecycle.URL == "" {
+		return fmt.Errorf("services.metadata-lifecycle.url is required")
 	}
-
-	if len(c.Services) == 0 {
-		return fmt.Errorf("at least one service is required")
-	}
-
-	for name, svc := range c.Services {
-		if name == "" {
-			return fmt.Errorf("services contains an empty service name")
-		}
-		if svc.URL == "" {
-			return fmt.Errorf("services.%s.url is required", name)
-		}
-	}
-
-	c.Server.BasePath = path.Clean(c.Server.BasePath)
 
 	return nil
 }

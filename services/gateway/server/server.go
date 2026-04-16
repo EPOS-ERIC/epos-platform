@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,9 +12,10 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/routes"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/services/metadata"
 )
 
-func RunServer(cfg config.Config) {
+func RunServer(cfg config.Config) error {
 	log := logging.Get("server")
 
 	requestTimeout := cfg.Server.RequestTimeout
@@ -21,9 +23,15 @@ func RunServer(cfg config.Config) {
 		requestTimeout = 30 * time.Second
 	}
 
+	metadataService, err := metadata.NewService(cfg.Services.MetadataLifecycle.URL, requestTimeout)
+	if err != nil {
+		log.Error("invalid metadata service configuration", "error", err)
+		return fmt.Errorf("build metadata service: %w", err)
+	}
+
 	httpServer := &http.Server{
 		Addr:         cfg.Server.Listen,
-		Handler:      routes.NewRouter(),
+		Handler:      routes.NewHandler(metadataService),
 		ReadTimeout:  requestTimeout,
 		WriteTimeout: requestTimeout,
 		IdleTimeout:  requestTimeout,
@@ -43,9 +51,9 @@ func RunServer(cfg config.Config) {
 	case err := <-listenErr:
 		if err != nil && err != http.ErrServerClosed {
 			log.Error("server failed", "error", err)
-			panic("server failed")
+			return fmt.Errorf("listen and serve: %w", err)
 		}
-		return
+		return nil
 	case sig := <-sigChan:
 		log.Info("received signal", "signal", sig)
 	}
@@ -55,13 +63,15 @@ func RunServer(cfg config.Config) {
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Error("server shutdown failed", "error", err)
-		panic("server shutdown failed")
+		return fmt.Errorf("shutdown server: %w", err)
 	}
 
 	if err := <-listenErr; err != nil && err != http.ErrServerClosed {
 		log.Error("server stopped with error", "error", err)
-		panic("server stopped with error")
+		return fmt.Errorf("server stopped with error: %w", err)
 	}
 
 	log.Info("server shutdown complete")
+
+	return nil
 }

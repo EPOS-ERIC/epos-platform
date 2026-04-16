@@ -1,4 +1,4 @@
-package metadatalifecycle
+package metadata
 
 import (
 	"context"
