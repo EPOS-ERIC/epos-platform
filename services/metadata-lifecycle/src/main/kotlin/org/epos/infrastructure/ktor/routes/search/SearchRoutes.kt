@@ -10,7 +10,6 @@ import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.epos.api.models.ErrorResponse
 import org.epos.graphdb.client.GraphDBClient
-import org.epos.services.EdmMappingService
 import org.epos.services.ShaclService
 import java.io.StringWriter
 import java.net.URLDecoder
@@ -19,7 +18,6 @@ import java.net.URLEncoder
 fun Route.searchRoutes(
     graphDBClient: GraphDBClient,
     shaclService: ShaclService,
-    edmMappingService: EdmMappingService,
 ) {
     get("/api/v2/search") {
         val publicBaseUrl = call.resolvePublicBaseUrl()
@@ -332,7 +330,7 @@ fun Route.searchRoutes(
                     call.respond(
                         buildAggregatedDetailsResponse(
                             graphDBClient,
-                            edmMappingService,
+                            shaclService,
                             decodedUri,
                             graphUri,
                             status,
@@ -344,7 +342,7 @@ fun Route.searchRoutes(
                     call.respond(
                         buildEdmDetailsResponse(
                             graphDBClient,
-                            edmMappingService,
+                            shaclService,
                             decodedUri,
                             graphUri,
                             status,

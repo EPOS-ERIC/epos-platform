@@ -1,33 +1,83 @@
 package org.epos.infrastructure.ktor.routes
 
 import org.epos.graphdb.client.GraphDBClient
-import org.epos.services.EdmMappingService
+import org.epos.services.ShaclService
 import java.net.URLEncoder
 
 private const val RDF_TYPE_PREDICATE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+private const val EDM_NAMESPACE = "http://www.epos-eu.org/epos-data-model#"
 
-private fun selectPrimaryTypeUri(typeUris: List<String>): String? {
+private data class ShaclNamingContext(
+    val typeByClassUri: Map<String, String>,
+    val propertyNameByPath: Map<String, String>,
+    val relationPaths: Set<String>,
+)
+
+private fun buildShaclNamingContext(shaclService: ShaclService): ShaclNamingContext {
+    val resourceTypes = shaclService.getResourceTypes()
+
+    val typeByClassUri =
+        resourceTypes
+            .associate { it.targetClass to it.name.lowercase() }
+
+    val propertyNameByPath = linkedMapOf<String, String>()
+    val relationPaths = linkedSetOf<String>()
+
+    resourceTypes.forEach { resourceType ->
+        resourceType.properties.forEach { property ->
+            val path = property.path
+            if (!path.startsWith("http://") && !path.startsWith("https://")) {
+                return@forEach
+            }
+
+            val shortName = property.name.trim().ifBlank { extractTypeName(path) }
+            propertyNameByPath.putIfAbsent(path, shortName)
+
+            val hasClassConstraint = !property.classConstraint.isNullOrBlank() || !property.classConstraints.isNullOrEmpty()
+            val hasNodeShapeRef = !property.nodeShapeRef.isNullOrBlank() || !property.nodeShapeRefs.isNullOrEmpty()
+            if (hasClassConstraint || hasNodeShapeRef) {
+                relationPaths.add(path)
+            }
+        }
+    }
+
+    return ShaclNamingContext(
+        typeByClassUri = typeByClassUri,
+        propertyNameByPath = propertyNameByPath,
+        relationPaths = relationPaths,
+    )
+}
+
+private fun selectPrimaryTypeUri(typeUris: List<String>, knownTypeUris: Set<String>): String? {
     val candidates = typeUris.filter { it.isNotBlank() }
     if (candidates.isEmpty()) return null
 
-    // Prefer domain RDF classes over EDM classes to keep API type stable for clients.
-    return candidates.firstOrNull { !it.startsWith(EdmMappingService.EDM_NAMESPACE) } ?: candidates.first()
+    // Prefer classes defined in SHACL first, then any non-EDM class, then fallback.
+    return candidates.firstOrNull { it in knownTypeUris }
+        ?: candidates.firstOrNull { !it.startsWith(EDM_NAMESPACE) }
+        ?: candidates.first()
 }
 
-private fun toApiType(typeUri: String?): String {
+private fun toApiType(typeUri: String?, typeByClassUri: Map<String, String>): String {
     if (typeUri.isNullOrBlank()) return "unknown"
-    return extractTypeName(typeUri).lowercase()
+    return typeByClassUri[typeUri] ?: extractTypeName(typeUri).lowercase()
+}
+
+private fun toPropertyName(predicateUri: String, propertyNameByPath: Map<String, String>): String {
+    return propertyNameByPath[predicateUri] ?: extractTypeName(predicateUri)
 }
 
 internal fun buildEdmDetailsResponse(
     graphDBClient: GraphDBClient,
-    edmMappingService: EdmMappingService,
+    shaclService: ShaclService,
     entityUri: String,
     graphUri: String,
     status: String,
     publicBaseUrl: String,
     includeInbound: Boolean = false,
 ): EdmEntityResponse {
+    val namingContext = buildShaclNamingContext(shaclService)
+
     val detailsQuery =
         """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -75,18 +125,18 @@ internal fun buildEdmDetailsResponse(
         val value = row["o"] ?: return@forEach
         val objectType = row["oType"]
         val objectLabel = row["oLabel"]
-        val edmPropName = edmMappingService.getEdmPropertyName(predicate)
+        val propertyName = toPropertyName(predicate, namingContext.propertyNameByPath)
 
         if (predicate == RDF_TYPE_PREDICATE) {
             types.add(value)
             return@forEach
         }
 
-        val isRelation = edmMappingService.isRelationProperty(predicate)
+        val isRelation = predicate in namingContext.relationPaths
         val isUri = value.startsWith("http://") || value.startsWith("https://")
 
         if (isRelation && isUri) {
-            val relatedType = objectType?.let { toApiType(it) }
+            val relatedType = objectType?.let { toApiType(it, namingContext.typeByClassUri) }
             val relatedEntity =
                 RelatedEntity(
                     id = value,
@@ -94,9 +144,9 @@ internal fun buildEdmDetailsResponse(
                     name = objectLabel,
                     href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(value, "UTF-8")}",
                 )
-            relations.getOrPut(edmPropName) { mutableListOf() }.add(relatedEntity)
+            relations.getOrPut(propertyName) { mutableListOf() }.add(relatedEntity)
         } else {
-            when (edmPropName) {
+            when (propertyName) {
                 "title" -> if (title == null) title = value
                 "name" -> if (name == null) name = value
                 "description" -> if (description == null) description = value
@@ -107,13 +157,13 @@ internal fun buildEdmDetailsResponse(
                 "issued" -> if (issued == null) issued = value
                 "instanceId" -> instanceId = value
                 "metaId" -> metaId = value
-                else -> properties.getOrPut(edmPropName) { mutableListOf() }.add(value)
+                else -> properties.getOrPut(propertyName) { mutableListOf() }.add(value)
             }
         }
     }
 
-    val primaryTypeUri = selectPrimaryTypeUri(types) ?: ""
-    val primaryType = toApiType(primaryTypeUri)
+    val primaryTypeUri = selectPrimaryTypeUri(types, namingContext.typeByClassUri.keys) ?: ""
+    val primaryType = toApiType(primaryTypeUri, namingContext.typeByClassUri)
 
     val simplifiedProps =
         properties
@@ -129,7 +179,7 @@ internal fun buildEdmDetailsResponse(
 
     val inbound =
         if (includeInbound) {
-            buildInboundRelations(graphDBClient, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
+            buildInboundRelations(graphDBClient, entityUri, graphUri, publicBaseUrl, namingContext.typeByClassUri).ifEmpty { null }
         } else {
             null
         }
@@ -162,13 +212,15 @@ internal fun buildEdmDetailsResponse(
 
 internal fun buildAggregatedDetailsResponse(
     graphDBClient: GraphDBClient,
-    edmMappingService: EdmMappingService,
+    shaclService: ShaclService,
     entityUri: String,
     graphUri: String,
     status: String,
     publicBaseUrl: String,
     includeInbound: Boolean = false,
 ): AggregatedEntityResponse {
+    val namingContext = buildShaclNamingContext(shaclService)
+
     val prefixes =
         """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -267,11 +319,11 @@ internal fun buildAggregatedDetailsResponse(
         )
     val availableFormats = buildAvailableFormats(graphDBClient, graphUri, prefixes, distributionUris)
     val contactPoints = buildContactPoints(graphDBClient, graphUri, prefixes, contactPointUris)
-    val primaryTypeUri = selectPrimaryTypeUri(entityTypes)
-    val apiType = toApiType(primaryTypeUri)
+    val primaryTypeUri = selectPrimaryTypeUri(entityTypes, namingContext.typeByClassUri.keys)
+    val apiType = toApiType(primaryTypeUri, namingContext.typeByClassUri)
     val inbound =
         if (includeInbound) {
-            buildInboundRelations(graphDBClient, entityUri, graphUri, publicBaseUrl).ifEmpty { null }
+            buildInboundRelations(graphDBClient, entityUri, graphUri, publicBaseUrl, namingContext.typeByClassUri).ifEmpty { null }
         } else {
             null
         }
@@ -311,6 +363,7 @@ internal fun buildInboundRelations(
     entityUri: String,
     graphUri: String,
     publicBaseUrl: String,
+    typeByClassUri: Map<String, String>,
 ): List<InboundRelation> {
     val query =
         """
@@ -345,7 +398,7 @@ internal fun buildInboundRelations(
         val predicate = row["predicate"] ?: return@forEach
         val sourceId = row["source"] ?: return@forEach
         val sourceTypeUri = row["sourceType"]
-        val sourceType = if (sourceTypeUri.isNullOrBlank()) null else toApiType(sourceTypeUri)
+        val sourceType = if (sourceTypeUri.isNullOrBlank()) null else toApiType(sourceTypeUri, typeByClassUri)
         val sourceTitle = row["sourceLabel"]
 
         val bySource = grouped.getOrPut(predicate) { linkedMapOf() }

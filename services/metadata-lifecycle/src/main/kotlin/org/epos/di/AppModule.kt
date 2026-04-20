@@ -8,7 +8,6 @@ import org.epos.graphdb.client.GraphDBClient
 import org.epos.graphdb.services.EntityLifecycleService
 import org.epos.graphdb.services.InitialPopulationService
 import org.epos.graphdb.services.ProvenanceService
-import org.epos.services.EdmMappingService
 import org.epos.services.ShaclService
 import org.koin.dsl.module
 
@@ -32,9 +31,6 @@ val appModule = module {
     single { ShaclParser(get()) }
     single { ShaclService(get(), get()) }
     
-    // EDM Mapping Service - provides EPOS Data Model property mappings
-    single { EdmMappingService(get()) }
-
     // Controllers - singletons (they're stateless)
     single { ResourceController(get(), get(), get()) }
 }
