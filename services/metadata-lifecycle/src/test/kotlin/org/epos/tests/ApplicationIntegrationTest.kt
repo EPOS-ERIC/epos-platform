@@ -69,41 +69,30 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
             module()
         }
 
-        // First create an entity
-        val createResponse = client.post("/api/v2/dataset") {
-            contentType(ContentType.Application.Json)
-            header("X-Agent", "mailto:test@example.org")
-            setBody("""
-                {
-                    "type": "dataset",
-                    "properties": {
-                        "http://purl.org/dc/terms/title": "Test Dataset"
-                    }
-                }
-            """.trimIndent())
-        }
+        // Insert a dataset directly into published graph for testing
+        val datasetUri = "http://example.org/dataset/test-json-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val dataset = vf.createIRI(datasetUri)
+        model.add(dataset, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(dataset, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Test Dataset"))
+        graphDBClient.insertIntoGraph(model, org.epos.graphdb.Config.GRAPH_PUBLISHED)
 
-        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
-
-        @Suppress("UNCHECKED_CAST")
-        val data = createJson["data"] as? Map<String, Any>
-        val entityUri = data?.get("uri") as? String
-
-        // Get the entity
-        val encodedEntityUri = java.net.URLEncoder.encode(entityUri, "UTF-8")
-        val response = client.get("/api/v2/dataset/$encodedEntityUri?status=draft")
+        // Get the entity using the new typed endpoint
+        val encodedEntityUri = java.net.URLEncoder.encode(datasetUri, "UTF-8")
+        val response = client.get("/api/v2/dataset/$encodedEntityUri")
 
         response.status shouldBe HttpStatusCode.OK
         response.bodyAsText() shouldContain "Test Dataset"
     }
 
     @Test
-    fun `should get entity as Turtle`() = testApplication {
+    fun `should get entity via CRUD endpoint as Turtle`() = testApplication {
         application {
             module()
         }
 
-        // Create entity
+        // Create entity via CRUD endpoint
         val createResponse = client.post("/api/v2/dataset") {
             contentType(ContentType.Application.Json)
             setBody("""
@@ -122,9 +111,9 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
         val data = createJson["data"] as? Map<String, Any>
         val entityUri = data?.get("uri") as? String
 
-        // Get as Turtle
+        // Get as Turtle - newly created entities are in DRAFT status
         val encodedEntityUri = java.net.URLEncoder.encode(entityUri, "UTF-8")
-        val response = client.get("/api/v2/dataset/$encodedEntityUri?status=draft&format=turtle")
+        val response = client.get("/api/v2/dataset/$encodedEntityUri?format=turtle&status=draft")
 
         response.status shouldBe HttpStatusCode.OK
         response.contentType()?.withoutParameters() shouldBe ContentType.parse("text/turtle")

@@ -1,59 +1,52 @@
 package org.epos.infrastructure.ktor.routes
 
-import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import org.eclipse.rdf4j.rio.RDFFormat
-import org.eclipse.rdf4j.rio.Rio
 import org.epos.api.models.ErrorResponse
 import org.epos.graphdb.client.GraphDBClient
 import org.epos.services.ShaclService
-import java.io.StringWriter
-import java.net.URLDecoder
-import java.net.URLEncoder
+
+private const val DATASET_TYPE_URI = "http://www.w3.org/ns/dcat#Dataset"
 
 fun Route.searchRoutes(
     graphDBClient: GraphDBClient,
     shaclService: ShaclService,
 ) {
     get("/api/v2/search") {
-        val publicBaseUrl = call.resolvePublicBaseUrl()
         val params = call.request.queryParameters
+
+        // Parse pagination parameters
+        // Preferred: page/resultsPerPage
+        // Backward compatibility: limit/offset
         val q = params["q"]
-        val type = params["type"]
-        val status = params["status"] ?: "published"
-        val bbox = params["bbox"]
-        val geo = params["geo"]
-        val geoRelation = params["geoRelation"]?.lowercase() ?: "intersects"
-        val lat = params["lat"]?.toDoubleOrNull()
-        val lon = params["lon"]?.toDoubleOrNull()
-        val radius = params["radius"]?.toDoubleOrNull()
-        val startDate = params["startDate"]
-        val endDate = params["endDate"]
-        val keywords = params["keywords"]
-        val organization = params["organization"]
-        val concept = params["concept"]
-        val conceptScheme = params["conceptScheme"]
-        val dataProvider = params["dataProvider"]
-        val page = params["page"]?.toIntOrNull() ?: 1
-        val pageSize = (params["pageSize"]?.toIntOrNull() ?: 20).coerceIn(1, 100)
-        val includeFacets = params["facets"]?.toBoolean() ?: false
-        val facetsType = params["facetstype"]?.lowercase() ?: "none"
-
-        if (page < 1) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("BadRequest", "Page must be >= 1"))
-            return@get
+        val resultsPerPage = (params["resultsPerPage"]?.toIntOrNull() ?: params["limit"]?.toIntOrNull() ?: 10)
+            .coerceIn(1, 100)
+        val pageParam = params["page"]?.toIntOrNull()
+        val page = (pageParam ?: 1).coerceAtLeast(1)
+        val offset = if (pageParam != null) {
+            (page - 1) * resultsPerPage
+        } else {
+            (params["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
         }
+        val limit = resultsPerPage
+        val types = params.getAll("type") ?: emptyList()
+        val spatialFilter = params["spatialFilter"]
+        val dateFrom = params["dateFrom"]
+        val dateTo = params["dateTo"]
+        val serviceProviders = params.getAll("serviceProvider") ?: emptyList()
+        val versioningStatuses = params.getAll("versioningStatus")?.map { it.uppercase() }
+            ?: listOf("PUBLISHED")
+        val keywords = params.getAll("keywords") ?: emptyList()
 
-        val graphUri = getGraphUri(status)
-        val offset = (page - 1) * pageSize
+        // Determine which graphs to query based on versioning status
+        val graphUris = versioningStatuses.map { status ->
+            getGraphUri(status.lowercase())
+        }.distinct()
 
         val filters = mutableListOf<String>()
-        val prefixes =
-            """
+        val prefixes = """
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -64,294 +57,263 @@ fun Route.searchRoutes(
             PREFIX geo: <http://www.opengis.net/ont/geosparql#>
             PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
             PREFIX uom: <http://www.opengis.net/def/uom/OGC/1.0/>
-            PREFIX sf: <http://www.opengis.net/ont/sf#>
             PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-            """.trimIndent()
+        """.trimIndent()
 
-        if (type != null) {
-            val resourceTypes = shaclService.getResourceTypes()
-            val matchingType = resourceTypes.find { it.name.equals(type, ignoreCase = true) }
-            if (matchingType != null) {
-                // Keep ?type bound even for typed filtering so response mapping stays consistent.
-                filters.add("?s rdf:type ?type . FILTER(?type = <${matchingType.targetClass}>)")
-            } else {
-                filters.add("?s rdf:type ?type . FILTER(CONTAINS(LCASE(STR(?type)), \"${type.lowercase()}\"))")
+        // Type filter
+        if (types.isNotEmpty()) {
+            val resourceTypeInfos = shaclService.getResourceTypes()
+            val typeFilters = types.mapNotNull { typeName ->
+                // Normalize the input type name for matching
+                val normalizedInput = normalizeTypeName(typeName)
+                
+                val matchingType = resourceTypeInfos.find { typeInfo ->
+                    val normalizedShacl = normalizeTypeName(typeInfo.name)
+                    normalizedShacl == normalizedInput
+                }
+                if (matchingType != null) {
+                    "?type = <${matchingType.targetClass}>"
+                } else {
+                    null
+                }
             }
+            if (typeFilters.isEmpty()) {
+                call.respond(SearchResponse(total = 0, items = emptyList()))
+                return@get
+            }
+            filters.add("?s rdf:type ?type . FILTER(${typeFilters.joinToString(" || ")})")
         } else {
             filters.add("?s rdf:type ?type .")
         }
 
+        // Text search
         if (!q.isNullOrBlank()) {
             val searchTerms = q.split("\\s+".toRegex()).filter { it.isNotBlank() }
             if (searchTerms.isNotEmpty()) {
-                val textFilters =
-                    searchTerms.joinToString(" && ") { term ->
-                        """(
+                val textFilters = searchTerms.joinToString(" && ") { term ->
+                    """(
                         CONTAINS(LCASE(STR(?title)), "${term.lowercase()}") ||
                         CONTAINS(LCASE(STR(?description)), "${term.lowercase()}") ||
                         CONTAINS(LCASE(STR(?label)), "${term.lowercase()}")
                     )"""
-                    }
-                filters.add(
-                    """
+                }
+                filters.add("""
                     OPTIONAL { ?s dcterms:title ?title }
                     OPTIONAL { ?s dcterms:description ?description }
                     OPTIONAL { ?s rdfs:label ?label }
                     FILTER($textFilters)
-                    """.trimIndent(),
-                )
+                """.trimIndent())
             }
         }
 
-        if (!keywords.isNullOrBlank()) {
-            val keywordList = keywords.split(",").map { it.trim().lowercase() }
-            val keywordFilters =
-                keywordList.joinToString(" || ") { kw ->
-                    "CONTAINS(LCASE(STR(?keyword)), \"$kw\")"
-                }
-            filters.add(
-                """
-                ?s dcat:keyword ?keyword .
-                FILTER($keywordFilters)
-                """.trimIndent(),
-            )
-        }
-
-        if (!organization.isNullOrBlank()) {
-            filters.add(
-                """
-                {
-                    ?s dcterms:publisher ?org .
-                    { ?org foaf:name ?orgName . FILTER(CONTAINS(LCASE(STR(?orgName)), "${organization.lowercase()}")) }
-                    UNION
-                    { FILTER(?org = <$organization>) }
-                }
-                UNION
-                {
-                    ?s schema:provider ?org .
-                    { ?org schema:name ?orgName . FILTER(CONTAINS(LCASE(STR(?orgName)), "${organization.lowercase()}")) }
-                    UNION
-                    { FILTER(?org = <$organization>) }
-                }
-                """.trimIndent(),
-            )
-        }
-
-        if (!startDate.isNullOrBlank() || !endDate.isNullOrBlank()) {
-            filters.add(
-                "OPTIONAL { ?s dcterms:temporal ?temporal . ?temporal dcat:startDate ?tempStart . ?temporal dcat:endDate ?tempEnd }",
-            )
-            if (!startDate.isNullOrBlank()) {
-                filters.add("FILTER(!BOUND(?tempEnd) || ?tempEnd >= \"$startDate\"^^xsd:dateTime)")
-            }
-            if (!endDate.isNullOrBlank()) {
-                filters.add("FILTER(!BOUND(?tempStart) || ?tempStart <= \"$endDate\"^^xsd:dateTime)")
+        // Keywords filter (all must match)
+        if (keywords.isNotEmpty()) {
+            keywords.forEachIndexed { index, kw ->
+                filters.add("""
+                    ?s dcat:keyword ?kw$index .
+                    FILTER(CONTAINS(LCASE(STR(?kw$index)), "${kw.lowercase()}"))
+                """.trimIndent())
             }
         }
 
-        if (!concept.isNullOrBlank()) {
-            filters.add("?s dcat:theme <$concept> .")
+        // Service provider filter
+        if (serviceProviders.isNotEmpty()) {
+            val providerFilters = serviceProviders.joinToString(" || ") { provider ->
+                """(
+                    CONTAINS(LCASE(COALESCE(STR(?providerName), STR(?provider))), "${provider.lowercase()}") ||
+                    STR(?provider) = "${provider}"
+                )"""
+            }
+            filters.add("""
+                ?s dcterms:publisher|schema:provider ?provider .
+                OPTIONAL { ?provider schema:legalName|schema:name|foaf:name|rdfs:label ?providerName }
+                FILTER($providerFilters)
+            """.trimIndent())
         }
 
-        if (!conceptScheme.isNullOrBlank()) {
+        // Temporal filter
+        if (!dateFrom.isNullOrBlank() || !dateTo.isNullOrBlank()) {
             filters.add(
-                """
-                ?s dcat:theme ?themeConcept .
-                ?themeConcept skos:inScheme <$conceptScheme> .
-                """.trimIndent(),
+                "OPTIONAL { ?s dcterms:temporal ?temporal . ?temporal dcat:startDate ?tempStart . ?temporal dcat:endDate ?tempEnd }"
             )
+            if (!dateFrom.isNullOrBlank()) {
+                filters.add("FILTER(!BOUND(?tempEnd) || ?tempEnd >= \"$dateFrom\"^^xsd:dateTime)")
+            }
+            if (!dateTo.isNullOrBlank()) {
+                filters.add("FILTER(!BOUND(?tempStart) || ?tempStart <= \"$dateTo\"^^xsd:dateTime)")
+            }
         }
 
-        if (!dataProvider.isNullOrBlank()) {
-            filters.add(
-                """
-                {
-                    ?s dcterms:publisher <$dataProvider> .
-                }
-                UNION
-                {
-                    ?s schema:provider <$dataProvider> .
-                }
-                """.trimIndent(),
-            )
+        // Spatial filter (WKT polygon)
+        if (!spatialFilter.isNullOrBlank()) {
+            filters.add(buildWktSpatialFilter(spatialFilter))
         }
-
-        buildSpatialFilter(bbox, geo, geoRelation, lat, lon, radius)?.let { filters.add(it) }
 
         val filterClause = filters.joinToString("\n            ")
+        val fromClauses = graphUris.joinToString("\n") { "FROM <$it>" }
 
-        val countQuery =
-            """
+        // Count query
+        val countQuery = """
             $prefixes
             SELECT (COUNT(DISTINCT ?s) AS ?count)
-            FROM <$graphUri>
+            $fromClauses
             WHERE {
                 $filterClause
             }
-            """.trimIndent()
+        """.trimIndent()
 
-        val mainQuery =
-            """
+        // Main query - fetch all needed data in one query
+        val mainQuery = """
             $prefixes
             SELECT DISTINCT ?s ?type
                    (SAMPLE(?t) AS ?title)
-                   (SAMPLE(?d) AS ?description)
-                   (SAMPLE(?m) AS ?modified)
-            FROM <$graphUri>
+                   (GROUP_CONCAT(DISTINCT ?provDisplay; SEPARATOR="|||") AS ?serviceProvider)
+                   (GROUP_CONCAT(DISTINCT COALESCE(STR(?catLabel), STR(?cat)); SEPARATOR="|||") AS ?categories)
+            $fromClauses
             WHERE {
                 $filterClause
                 OPTIONAL { ?s dcterms:title ?t }
-                OPTIONAL { ?s dcterms:description ?d }
-                OPTIONAL { ?s dcterms:modified ?m }
+                OPTIONAL { ?s rdfs:label ?lbl }
+                OPTIONAL {
+                    ?s dcterms:publisher|schema:provider ?prov .
+                    OPTIONAL { ?prov schema:legalName|schema:name|foaf:name|rdfs:label ?provName }
+                    BIND(
+                        IF(isLiteral(?prov), STR(?prov), IF(BOUND(?provName), STR(?provName), "")) AS ?provDisplay
+                    )
+                    FILTER(STRLEN(?provDisplay) > 0)
+                }
+                OPTIONAL {
+                    ?s dcat:theme ?cat .
+                    OPTIONAL { ?cat skos:prefLabel|rdfs:label ?catLabel }
+                }
             }
             GROUP BY ?s ?type
-            ORDER BY DESC(?modified) ?s
-            LIMIT $pageSize
+            ORDER BY ?s
+            LIMIT $limit
             OFFSET $offset
-            """.trimIndent()
+        """.trimIndent()
 
         try {
             val countResult = graphDBClient.query(countQuery)
             val totalCount = countResult.firstOrNull()?.get("count")?.toIntOrNull() ?: 0
 
             val results = graphDBClient.query(mainQuery)
-            val items =
-                results.map { row ->
-                    val id = row["s"] ?: ""
-                    SearchResultItem(
+            val baseUrl = call.resolvePublicBaseUrl()
+            val items: List<SearchItem> = results.map { row ->
+                val id = row["s"] ?: ""
+                val typeUri = row["type"] ?: ""
+                val apiType = mapSearchTypeUriToApiType(typeUri) ?: return@map null
+                val name = row["title"] ?: extractTypeName(id)
+
+                if (apiType == "dataset") {
+                    val serviceProvidersList = row["serviceProvider"]
+                        ?.split("|||")
+                        ?.map { it.trim() }
+                        ?.filter { it.isNotBlank() }
+                        ?.distinct()
+                        ?.takeIf { it.isNotEmpty() }
+
+                    val categoriesList = row["categories"]
+                        ?.split("|||")
+                        ?.filter { it.isNotBlank() }
+                        ?.distinct()
+                        ?.takeIf { it.isNotEmpty() }
+
+                    DatasetSearchItem(
                         id = id,
-                        type = extractTypeName(row["type"] ?: ""),
-                        title = row["title"],
-                        description = row["description"]?.take(500),
-                        modified = row["modified"],
-                        href = "$publicBaseUrl/api/v2/details/${URLEncoder.encode(id, "UTF-8")}",
+                        name = name,
+                        href = "$baseUrl/api/v2/dataset/${java.net.URLEncoder.encode(id, "UTF-8")}",
+                        serviceProviders = serviceProvidersList,
+                        categories = categoriesList,
+                    )
+                } else {
+                    GenericSearchItem(
+                        type = apiType,
+                        id = id,
+                        name = name,
+                        href = "$baseUrl/api/v2/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}",
                     )
                 }
+            }.filterNotNull()
 
-            val facets =
-                if (includeFacets) {
-                    buildFacets(graphDBClient, graphUri)
-                } else {
-                    null
-                }
-
-            if (includeFacets && facetsType != "none") {
-                call.respond(
-                    buildGroupedSearchResponse(
-                        graphDBClient,
-                        graphUri,
-                        items,
-                        facetsType,
-                        facets,
-                        totalCount,
-                        page,
-                        pageSize,
-                    ),
+            call.respond(
+                SearchResponse(
+                    total = totalCount,
+                    items = items,
                 )
-            } else {
-                call.respond(
-                    SearchResponse(
-                        results = items,
-                        total = totalCount,
-                        page = page,
-                        pageSize = pageSize,
-                        totalPages = (totalCount + pageSize - 1) / pageSize,
-                        facets = facets,
-                    ),
-                )
-            }
+            )
         } catch (e: Exception) {
             call.respond(
                 HttpStatusCode.InternalServerError,
-                ErrorResponse("InternalServerError", e.message ?: "Search failed"),
+                ErrorResponse("INTERNAL_SERVER_ERROR", e.message ?: "Search failed"),
             )
         }
     }
+}
 
-    get("/api/v2/details/{id}") {
-        val publicBaseUrl = call.resolvePublicBaseUrl()
-        val entityUri = call.parameters["id"]
-        if (entityUri.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse("BadRequest", "Missing entity ID"))
-            return@get
-        }
+/**
+ * Type aliases for user-friendly API type names.
+ * Maps API names to SHACL type names.
+ */
+private val TYPE_ALIASES = mapOf(
+    "category" to "concept",
+    "categories" to "concept",
+)
 
-        val decodedUri =
-            try {
-                URLDecoder.decode(entityUri, "UTF-8")
-            } catch (_: Exception) {
-                entityUri
-            }
+/**
+ * Normalizes a type name for comparison by:
+ * - Applying type aliases
+ * - Converting to lowercase
+ * - Removing hyphens and underscores
+ */
+private fun normalizeTypeName(typeName: String): String {
+    val lower = typeName.lowercase()
+    val aliased = TYPE_ALIASES[lower] ?: lower
+    return aliased.replace("-", "").replace("_", "")
+}
 
-        val status = call.request.queryParameters["status"] ?: "published"
-        val format = call.request.queryParameters["format"]?.lowercase() ?: "json"
-        val extended = call.request.queryParameters["extended"]?.toBoolean() ?: false
-        val includeInbound = call.request.queryParameters["includeInbound"]?.toBoolean() ?: false
-        val graphUri = getGraphUri(status)
-
-        val existsQuery =
-            """
-            ASK {
-                GRAPH <$graphUri> {
-                    <$decodedUri> ?p ?o .
-                }
-            }
-            """.trimIndent()
-
-        if (!graphDBClient.ask(existsQuery)) {
-            call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found: $decodedUri"))
-            return@get
-        }
-
-        when (format) {
-            "turtle", "ttl" -> {
-                val model = graphDBClient.getSubjectTriples(decodedUri, graphUri)
-                val writer = StringWriter()
-                Rio.write(model, writer, RDFFormat.TURTLE)
-                call.respondText(writer.toString(), ContentType.parse("text/turtle"))
-            }
-
-            "jsonld", "json-ld" -> {
-                val model = graphDBClient.getSubjectTriples(decodedUri, graphUri)
-                val writer = StringWriter()
-                Rio.write(model, writer, RDFFormat.JSONLD)
-                call.respondText(writer.toString(), ContentType.parse("application/ld+json"))
-            }
-
-            "rdfxml", "xml" -> {
-                val model = graphDBClient.getSubjectTriples(decodedUri, graphUri)
-                val writer = StringWriter()
-                Rio.write(model, writer, RDFFormat.RDFXML)
-                call.respondText(writer.toString(), ContentType.parse("application/rdf+xml"))
-            }
-
-            else -> {
-                if (extended) {
-                    call.respond(
-                        buildAggregatedDetailsResponse(
-                            graphDBClient,
-                            shaclService,
-                            decodedUri,
-                            graphUri,
-                            status,
-                            publicBaseUrl,
-                            includeInbound,
-                        ),
-                    )
-                } else {
-                    call.respond(
-                        buildEdmDetailsResponse(
-                            graphDBClient,
-                            shaclService,
-                            decodedUri,
-                            graphUri,
-                            status,
-                            publicBaseUrl,
-                            includeInbound,
-                        ),
-                    )
-                }
-            }
-        }
+/**
+ * Maps RDF type URI to API type strictly for search results.
+ * Returns null for unsupported types to avoid misclassifying them as datasets.
+ */
+private fun mapSearchTypeUriToApiType(typeUri: String): String? {
+    return when {
+        typeUri.equals(DATASET_TYPE_URI, ignoreCase = true) ||
+            typeUri.contains("/Dataset", ignoreCase = true) ||
+            typeUri.endsWith("#Dataset", ignoreCase = true) -> "dataset"
+        typeUri.contains("Distribution", ignoreCase = true) -> "distribution"
+        typeUri.contains("SoftwareApplication", ignoreCase = true) -> "software-application"
+        typeUri.contains("SoftwareSourceCode", ignoreCase = true) -> "software-source-code"
+        typeUri.contains("Concept", ignoreCase = true) -> "category"
+        else -> null
     }
+}
+
+/**
+ * Builds a spatial filter for WKT polygon intersection.
+ */
+private fun buildWktSpatialFilter(wkt: String): String {
+    val geometryExtraction = """
+        {
+            ?s dcterms:spatial ?spatialEntity .
+            ?spatialEntity geo:asWKT ?entityGeom .
+        } UNION {
+            ?s dcterms:spatial ?spatialEntity .
+            ?spatialEntity <http://www.w3.org/ns/locn#geometry> ?geomNode .
+            ?geomNode geo:asWKT ?entityGeom .
+        } UNION {
+            ?s geo:hasGeometry ?geomNode .
+            ?geomNode geo:asWKT ?entityGeom .
+        } UNION {
+            ?s geo:asWKT ?entityGeom .
+        } UNION {
+            ?s dcat:bbox ?entityGeom .
+            FILTER(DATATYPE(?entityGeom) = geo:wktLiteral)
+        }
+    """.trimIndent()
+
+    return """
+        $geometryExtraction
+        FILTER(geof:sfIntersects(?entityGeom, "$wkt"^^geo:wktLiteral))
+    """.trimIndent()
 }

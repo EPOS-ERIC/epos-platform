@@ -6,6 +6,8 @@ object OpenApiSpec {
             OpenApiHeader.yaml,
             OpenApiPaths.System.yaml,
             OpenApiPaths.Search.yaml,
+            OpenApiPaths.Categories.yaml,
+            OpenApiPaths.Details.yaml,
             OpenApiPaths.Sparql.yaml,
             OpenApiPaths.OaiPmh.yaml,
             OpenApiPaths.Resources.yaml,
@@ -25,6 +27,14 @@ object OpenApiPaths {
 
     object Search {
         val yaml = OpenApiSearchPaths.yaml
+    }
+
+    object Categories {
+        val yaml = OpenApiCategoryPaths.yaml
+    }
+
+    object Details {
+        val yaml = OpenApiDetailsPaths.yaml
     }
 
     object Sparql {

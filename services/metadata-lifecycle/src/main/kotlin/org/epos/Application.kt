@@ -209,16 +209,20 @@ fun Application.module() {
         resourceCrudRoutes(resourceController, shaclService, graphDBClient)
         lifecycleRoutes(resourceController, graphDBClient, provenanceService)
         batchRoutes(resourceController)
-        
-        // Search and Discovery
+
+        // Search and Discovery (new v2 API)
         searchRoutes(graphDBClient, shaclService)
+        categoryRoutes(graphDBClient)
+        datasetRoutes(graphDBClient, resourceController)
+        distributionRoutes(graphDBClient)
+        softwareRoutes(graphDBClient)
 
         // SPARQL endpoint
         sparqlRoutes(graphDBClient)
-        
+
         // OAI-PMH endpoint for harvesting
         oaiPmhRoutes(graphDBClient, shaclService)
-        
+
         // Admin routes (population, etc.)
         populationRoutes(populationService)
     }

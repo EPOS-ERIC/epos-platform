@@ -4,33 +4,53 @@ object OpenApiHeader {
     val yaml = """
 openapi: 3.1.0
 info:
-  title: EPOS Metadata Lifecycle API
+  title: EPOS API
+  version: 2.0.0
   description: |
-    REST API to manage the lifecycle of RDF metadata resources in GraphDB.
+    OpenAPI specification for the EPOS catalogue API.
 
-    ## Lifecycle Workflow
-    1. **DRAFT** - Create a new draft of a resource
-    2. **SUBMITTED** - Submit the draft for review
-    3. **PUBLISHED** - Publish the resource (automatically archives the previous version)
-    4. **ARCHIVED** - Outdated versions kept for historical purposes
+    ## Design Principles
+    - Search returns heterogeneous, typed resource items in a flat list.
+    - Clients navigate by following `href` links; they never construct URLs themselves.
+    - All cross-entity references carry an `href` pointing to the typed detail endpoint.
+
+    ## Lifecycle States
+    - **DRAFT** - Resource is being edited
+    - **SUBMITTED** - Resource submitted for review
+    - **PUBLISHED** - Resource is publicly visible
+    - **ARCHIVED** - Outdated versions kept for historical purposes
 
     ## Authentication
     Use the `X-Agent` header with an absolute URI to identify the agent performing the operation.
     Example: `X-Agent: mailto:user@example.org`
-  version: 2.2.0
+  termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
   contact:
     name: EPOS Development Team
+    email: support@epos-eu.org
     url: https://epos-eu.org
+  license:
+    name: AGPL-3.0
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
 
 servers:
   - url: http://localhost:8080
     description: Development server
 
 tags:
+  - name: Search
+    description: Search across all resource types
+  - name: Datasets
+    description: Dataset resources
+  - name: Distributions
+    description: Distribution resources
+  - name: Software Applications
+    description: Software application resources
+  - name: Software Source Codes
+    description: Software source code resources
+  - name: Categories
+    description: Category taxonomy resources
   - name: System
     description: System information and health checks
-  - name: Search
-    description: Search and discovery endpoints
   - name: SPARQL
     description: Direct SPARQL query access
   - name: OAI-PMH

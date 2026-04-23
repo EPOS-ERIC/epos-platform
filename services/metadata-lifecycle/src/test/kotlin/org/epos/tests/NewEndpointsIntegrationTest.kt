@@ -44,8 +44,8 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
         ((json["total"] as Number).toInt() >= 0) shouldBe true
         @Suppress("UNCHECKED_CAST")
-        val results = json["results"] as List<*>
-        (results.size >= 0) shouldBe true
+        val items = json["items"] as List<*>
+        (items.size >= 0) shouldBe true
     }
 
     @Test
@@ -54,77 +54,68 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
             module()
         }
 
-        val response = client.get("/api/v2/search?q=test&type=dataset&page=1&pageSize=10")
+        // New API uses limit/offset instead of page/pageSize
+        val response = client.get("/api/v2/search?q=test&type=dataset&limit=10&offset=0")
 
         response.status shouldBe HttpStatusCode.OK
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
-        json["page"] shouldBe 1
-        json["pageSize"] shouldBe 10
+        json.containsKey("total") shouldBe true
+        json.containsKey("items") shouldBe true
     }
 
     @Test
-    fun `search endpoint should return facets when requested`() = testApplication {
+    fun `search endpoint should return items with correct structure`() = testApplication {
         application {
             module()
         }
 
-        val response = client.get("/api/v2/search?facets=true")
+        // New API no longer has facets parameter - use category tree endpoint instead
+        val response = client.get("/api/v2/search")
 
         response.status shouldBe HttpStatusCode.OK
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
-        json.containsKey("facets") shouldBe true
+        json.containsKey("total") shouldBe true
+        json.containsKey("items") shouldBe true
     }
 
     @Test
-    fun `details endpoint should return 404 for non-existent entity`() = testApplication {
+    fun `dataset detail endpoint should return 404 for non-existent entity`() = testApplication {
         application {
             module()
         }
 
-        val response = client.get("/api/v2/details/http%3A%2F%2Fexample.org%2Fnonexistent")
+        val response = client.get("/api/v2/dataset/http%3A%2F%2Fexample.org%2Fnonexistent")
 
         response.status shouldBe HttpStatusCode.NotFound
     }
 
     @Test
-    fun `details endpoint should support different formats`() = testApplication {
+    fun `dataset detail endpoint should return dataset info`() = testApplication {
         application {
             module()
         }
 
-        // First create an entity
-        val createResponse = client.post("/api/v2/dataset") {
-            contentType(ContentType.Application.Json)
-            header("X-Agent", "mailto:test@example.org")
-            setBody("""
-                {
-                    "type": "dataset",
-                    "properties": {
-                        "http://purl.org/dc/terms/title": "Test Dataset for Details"
-                    }
-                }
-            """.trimIndent())
-        }
+        // Insert a dataset directly into the published graph
+        val datasetUri = "http://example.org/dataset/test-dataset-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val dataset = vf.createIRI(datasetUri)
+        model.add(dataset, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(dataset, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Test Dataset"))
+        model.add(dataset, vf.createIRI("http://purl.org/dc/terms/description"), vf.createLiteral("Test Description"))
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
 
-        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
-        @Suppress("UNCHECKED_CAST")
-        val data = createJson["data"] as? Map<String, Any>
-        val entityUri = data?.get("uri") as? String
+        // Test JSON format (default)
+        val jsonResponse = client.get("/api/v2/dataset/${java.net.URLEncoder.encode(datasetUri, "UTF-8")}")
+        jsonResponse.status shouldBe HttpStatusCode.OK
 
-        if (entityUri != null) {
-            // Test JSON format (default)
-            val jsonResponse = client.get("/api/v2/details/${java.net.URLEncoder.encode(entityUri, "UTF-8")}?status=draft")
-            jsonResponse.status shouldBe HttpStatusCode.OK
-
-            // Test Turtle format
-            val turtleResponse = client.get("/api/v2/details/${java.net.URLEncoder.encode(entityUri, "UTF-8")}?status=draft&format=turtle")
-            turtleResponse.status shouldBe HttpStatusCode.OK
-            turtleResponse.contentType()?.withoutParameters() shouldBe ContentType.parse("text/turtle")
-        }
+        val json = objectMapper.readValue<Map<String, Any>>(jsonResponse.bodyAsText())
+        json["id"] shouldBe datasetUri
+        json["title"] shouldBe "Test Dataset"
     }
 
     @Test
-    fun `details endpoint should include inbound relations when requested`() = testApplication {
+    fun `distribution detail endpoint should include relatedBy resources`() = testApplication {
         application {
             module()
         }
@@ -142,21 +133,19 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         model.add(source, vf.createIRI(relationPredicate), target)
         model.add(target, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Distribution"))
         model.add(target, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Target Distribution"))
-        graphDBClient.insertIntoGraph(model, Config.GRAPH_DRAFT)
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
 
-        val response = client.get("/api/v2/details/${java.net.URLEncoder.encode(targetUri, "UTF-8")}?status=draft&includeInbound=true")
+        // Use the new typed distribution endpoint
+        val response = client.get("/api/v2/distribution/${java.net.URLEncoder.encode(targetUri, "UTF-8")}")
 
         response.status shouldBe HttpStatusCode.OK
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
 
+        // Inbound resources are exposed as relatedBy in the new API
         @Suppress("UNCHECKED_CAST")
-        val inbound = json["inbound"] as? List<Map<String, Any>>
-        (inbound != null && inbound.isNotEmpty()) shouldBe true
-
-        val relation = inbound!!.first { it["predicate"] == relationPredicate }
-        @Suppress("UNCHECKED_CAST")
-        val items = relation["items"] as List<Map<String, Any>>
-        items.any { it["id"] == sourceUri } shouldBe true
+        val relatedBy = json["relatedBy"] as? List<Map<String, Any>>
+        (relatedBy != null && relatedBy.isNotEmpty()) shouldBe true
+        relatedBy!!.any { it["id"] == sourceUri } shouldBe true
     }
 
     // =========================================================================
