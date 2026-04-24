@@ -9,6 +9,7 @@ import org.epos.graphdb.Config
 import org.epos.graphdb.client.GraphDBClient
 import org.epos.graphdb.services.EntityLifecycleService
 import org.epos.graphdb.services.ProvenanceService
+import org.epos.graphdb.utils.Sparql
 import java.util.UUID
 
 class ResourceController(
@@ -480,6 +481,7 @@ class ResourceController(
                 version = extractVersionNumber(versionUri),
                 timestamp = version["timestamp"] ?: "",
                 agent = version["agent"],
+                group = version["group"],
                 status = determineStatusForVersion(versionUri)
             )
         }
@@ -513,6 +515,27 @@ class ResourceController(
             ASK { GRAPH <${Config.GRAPH_ARCHIVED}> { <$versionUri> ?p ?o . } }
         """.trimIndent())
         if (inArchived) return "archived"
+
+        val transitionStatus = graphDBClient.query(Sparql.selectLatestTransitionStatus(versionUri))
+            .firstOrNull()
+            ?.get("toStatus")
+            ?.trim()
+            ?.lowercase()
+        if (transitionStatus != null && transitionStatus in setOf("draft", "submitted", "published", "archived")) {
+            return transitionStatus
+        }
+
+        val conceptualUri = graphDBClient.query(Sparql.selectConceptualUri(versionUri))
+            .firstOrNull()
+            ?.get("conceptual")
+        if (conceptualUri != null) {
+            val currentVersion = graphDBClient.query(Sparql.selectCurrentVersion(conceptualUri))
+                .firstOrNull()
+                ?.get("currentVersion")
+            if (currentVersion == versionUri) {
+                return "published"
+            }
+        }
 
         return "unknown"
     }

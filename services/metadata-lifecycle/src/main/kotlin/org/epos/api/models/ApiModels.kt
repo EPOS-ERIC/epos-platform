@@ -59,6 +59,7 @@ data class VersionInfo(
     val version: String,
     val timestamp: String,
     val agent: String?,
+    val group: String?,
     val status: String,
 )
 
