@@ -46,6 +46,12 @@ object OpenApiSystemPaths {
           schema:
             type: string
             enum: [turtle, ttl, jsonld, json-ld, rdfxml, rdf+xml, ntriples, n-triples, nt]
+        - name: compact
+          in: query
+          description: When `true` and `view=shacl`, returns compact/beautified output for JSON-LD and Turtle
+          schema:
+            type: boolean
+            default: false
         - name: includeShapeDefinitions
           in: query
           description: Include resolvable shape definitions map keyed by shape IRI (only for `view=parsed`)

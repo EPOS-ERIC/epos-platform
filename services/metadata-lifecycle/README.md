@@ -378,6 +378,8 @@ Useful query parameters:
   - default is `parsed`
 - `format=turtle|ttl|jsonld|json-ld|rdfxml|rdf+xml|ntriples|n-triples|nt`
   - used when `view=shacl` (default `turtle`)
+- `compact=true|false`
+  - when `view=shacl`, `compact=true` returns a beautified compact representation for JSON-LD and Turtle
 - `Accept` header
   - also supported for `view=shacl` content negotiation (`text/turtle`, `application/ld+json`, `application/rdf+xml`, `application/n-triples`)
 
@@ -402,6 +404,12 @@ curl "http://localhost:8080/api/v2/resource-types?view=shacl&format=turtle"
 
 # Original SHACL as JSON-LD
 curl "http://localhost:8080/api/v2/resource-types?view=shacl&format=jsonld"
+
+# Original SHACL as compact/beautified JSON-LD
+curl "http://localhost:8080/api/v2/resource-types?view=shacl&format=jsonld&compact=true"
+
+# Original SHACL as compact/beautified Turtle
+curl "http://localhost:8080/api/v2/resource-types?view=shacl&format=turtle&compact=true"
 ```
 
 Notes:

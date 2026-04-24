@@ -849,6 +849,39 @@ components:
             ${'$'}ref: '#/components/schemas/ShapeDefinitionInfo'
       required: [resourceTypes]
 
+    VersionInfo:
+      type: object
+      properties:
+        uri:
+          type: string
+          format: uri
+        version:
+          type: string
+        timestamp:
+          type: string
+        agent:
+          type: string
+          nullable: true
+        group:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, submitted, published, archived, unknown]
+      required: [uri, version, timestamp, status]
+
+    VersionHistoryResponse:
+      type: object
+      properties:
+        conceptualUri:
+          type: string
+          format: uri
+        versions:
+          type: array
+          items:
+            ${'$'}ref: '#/components/schemas/VersionInfo'
+      required: [conceptualUri, versions]
+
     RevisionImportFileRequest:
       type: object
       description: Revision import from a single TTL source (URL or local path)
@@ -940,7 +973,9 @@ components:
             ${'$'}ref: '#/components/schemas/RevisionImportEntityResult'
         agent:
           type: string
-      required: [source, dryRun, subjectsProcessed, triplesPrepared, triplesInserted, draftsCreated, draftsReused, linksRewritten, entities]
+        group:
+          type: string
+      required: [source, dryRun, subjectsProcessed, triplesPrepared, triplesInserted, draftsCreated, draftsReused, linksRewritten, entities, agent, group]
 
     RevisionImportApiResponse:
       type: object

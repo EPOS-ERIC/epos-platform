@@ -426,4 +426,34 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         response.contentType()?.withoutParameters() shouldBe ContentType.parse("application/ld+json")
         response.bodyAsText().isNotBlank() shouldBe true
     }
+
+    @Test
+    fun `resource-types endpoint should export compact beautified json-ld`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/resource-types?view=shacl&format=jsonld&compact=true")
+
+        response.status shouldBe HttpStatusCode.OK
+        response.contentType()?.withoutParameters() shouldBe ContentType.parse("application/ld+json")
+        val body = response.bodyAsText()
+        body shouldContain "\"@context\""
+        body shouldContain "\"@graph\""
+    }
+
+    @Test
+    fun `resource-types endpoint should export compact beautified turtle`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/resource-types?view=shacl&format=turtle&compact=true")
+
+        response.status shouldBe HttpStatusCode.OK
+        response.contentType()?.withoutParameters() shouldBe ContentType.parse("text/turtle")
+        val body = response.bodyAsText()
+        body shouldContain "@prefix"
+        body shouldContain " a "
+    }
 }
