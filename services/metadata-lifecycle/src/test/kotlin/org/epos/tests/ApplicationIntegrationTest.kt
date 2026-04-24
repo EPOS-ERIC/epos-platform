@@ -121,6 +121,123 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `put should keep replace semantics and remove omitted relation properties`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "http://example.org/dataset/target-1"
+
+        val createResponse = client.post("/api/v2/distribution") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "type": "distribution",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Distribution v2 draft",
+                        "http://www.w3.org/ns/dcat#servesDataset": "$datasetUri"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val data = createJson["data"] as Map<String, Any>
+        val distributionUri = data["uri"] as String
+
+        val relationPresentBeforePut = graphDBClient.ask(
+            """
+            ASK {
+                GRAPH <${org.epos.graphdb.Config.GRAPH_DRAFT}> {
+                    <$distributionUri> <http://www.w3.org/ns/dcat#servesDataset> <$datasetUri> .
+                }
+            }
+            """.trimIndent()
+        )
+        relationPresentBeforePut shouldBe true
+
+        val encodedDistributionUri = java.net.URLEncoder.encode(distributionUri, "UTF-8")
+        val putResponse = client.put("/api/v2/distribution/$encodedDistributionUri") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Distribution v2 draft updated"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        putResponse.status shouldBe HttpStatusCode.OK
+
+        val relationPresentAfterPut = graphDBClient.ask(
+            """
+            ASK {
+                GRAPH <${org.epos.graphdb.Config.GRAPH_DRAFT}> {
+                    <$distributionUri> <http://www.w3.org/ns/dcat#servesDataset> <$datasetUri> .
+                }
+            }
+            """.trimIndent()
+        )
+        relationPresentAfterPut shouldBe false
+    }
+
+    @Test
+    fun `patch should merge properties and keep existing relation triples`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "http://example.org/dataset/target-2"
+
+        val createResponse = client.post("/api/v2/distribution") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "type": "distribution",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Distribution v2 draft",
+                        "http://www.w3.org/ns/dcat#servesDataset": "$datasetUri"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val data = createJson["data"] as Map<String, Any>
+        val distributionUri = data["uri"] as String
+
+        val encodedDistributionUri = java.net.URLEncoder.encode(distributionUri, "UTF-8")
+        val patchResponse = client.patch("/api/v2/distribution/$encodedDistributionUri") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "properties": {
+                        "http://purl.org/dc/terms/description": "Draft description update"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        patchResponse.status shouldBe HttpStatusCode.OK
+
+        val relationPresentAfterPatch = graphDBClient.ask(
+            """
+            ASK {
+                GRAPH <${org.epos.graphdb.Config.GRAPH_DRAFT}> {
+                    <$distributionUri> <http://www.w3.org/ns/dcat#servesDataset> <$datasetUri> .
+                }
+            }
+            """.trimIndent()
+        )
+        relationPresentAfterPatch shouldBe true
+    }
+
+    @Test
     fun `should return 404 for non-existent entity`() = testApplication {
         application {
             module()

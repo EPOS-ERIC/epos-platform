@@ -13,6 +13,12 @@ object OpenApiBatchPaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       requestBody:
@@ -38,6 +44,12 @@ object OpenApiBatchPaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       requestBody:

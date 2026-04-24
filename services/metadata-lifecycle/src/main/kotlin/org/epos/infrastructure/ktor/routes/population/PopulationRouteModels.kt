@@ -1,15 +1,33 @@
 package org.epos.infrastructure.ktor.routes
 
 data class PopulateFromUrlRequest(
-    val indexUrl: String? = null
+    val indexUrl: String? = null,
 )
 
 data class PopulateFromFileRequest(
     val url: String? = null,
-    val path: String? = null
+    val path: String? = null,
 )
 
 data class PopulateFromContentRequest(
     val content: String? = null,
-    val sourceName: String? = null
+    val sourceName: String? = null,
+)
+
+data class ImportRevisionFromFileRequest(
+    val url: String? = null,
+    val path: String? = null,
+    val versionMode: String? = null,
+    val version: String? = null,
+    val replaceDraftIfExists: Boolean? = null,
+    val dryRun: Boolean? = null,
+)
+
+data class ImportRevisionFromContentRequest(
+    val content: String? = null,
+    val sourceName: String? = null,
+    val versionMode: String? = null,
+    val version: String? = null,
+    val replaceDraftIfExists: Boolean? = null,
+    val dryRun: Boolean? = null,
 )

@@ -1,7 +1,8 @@
 package org.epos.infrastructure.ktor.plugins
 
 object OpenApiHeader {
-    val yaml = """
+    val yaml =
+        """
 openapi: 3.1.0
 info:
   title: EPOS API
@@ -21,8 +22,12 @@ info:
     - **ARCHIVED** - Outdated versions kept for historical purposes
 
     ## Authentication
-    Use the `X-Agent` header with an absolute URI to identify the agent performing the operation.
-    Example: `X-Agent: mailto:user@example.org`
+    Mutating operations require both headers with absolute URIs:
+    - `X-Agent` identifies the acting agent.
+    - `X-Group` identifies the acting group.
+    Example:
+    - `X-Agent: mailto:user@example.org`
+    - `X-Group: https://epos-eu.org/group/ingestion-team`
   termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
   contact:
     name: EPOS Development Team
@@ -66,5 +71,6 @@ tags:
   - name: Admin
     description: Administrative operations (population, maintenance)
 
-paths:""".trimIndent()
+paths:
+        """.trimIndent()
 }

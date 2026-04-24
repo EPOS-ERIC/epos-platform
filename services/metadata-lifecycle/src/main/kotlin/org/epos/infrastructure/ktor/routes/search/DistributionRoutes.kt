@@ -17,11 +17,12 @@ fun Route.distributionRoutes(graphDBClient: GraphDBClient) {
             return@get
         }
 
-        val decodedId = try {
-            URLDecoder.decode(distributionId, "UTF-8")
-        } catch (_: Exception) {
-            distributionId
-        }
+        val decodedId =
+            try {
+                URLDecoder.decode(distributionId, "UTF-8")
+            } catch (_: Exception) {
+                distributionId
+            }
 
         val graphUri = Config.GRAPH_PUBLISHED
 
@@ -32,12 +33,13 @@ fun Route.distributionRoutes(graphDBClient: GraphDBClient) {
         }
 
         try {
-            val distribution = buildDistributionDetail(
-                graphDBClient = graphDBClient,
-                entityUri = decodedId,
-                graphUri = graphUri,
-                publicBaseUrl = call.resolvePublicBaseUrl(),
-            )
+            val distribution =
+                buildDistributionDetail(
+                    graphDBClient = graphDBClient,
+                    entityUri = decodedId,
+                    graphUri = graphUri,
+                    publicBaseUrl = call.resolvePublicBaseUrl(),
+                )
             call.respond(distribution)
         } catch (e: Exception) {
             call.respond(
@@ -54,7 +56,8 @@ private fun buildDistributionDetail(
     graphUri: String,
     publicBaseUrl: String,
 ): DistributionDetail {
-    val query = """
+    val query =
+        """
         $DETAIL_PREFIXES
         
         SELECT ?title ?description ?accessUrl ?downloadUrl ?operation
@@ -72,7 +75,7 @@ private fun buildDistributionDetail(
             }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     val result = graphDBClient.query(query).firstOrNull()
     val title = result?.get("title") ?: result?.get("titleAlt") ?: extractTypeName(entityUri)
@@ -81,19 +84,21 @@ private fun buildDistributionDetail(
     val operation = result?.get("operation")
 
     // Get outbound and inbound relations (always included when present)
-    val related = buildRelatedResources(
-        graphDBClient = graphDBClient,
-        entityUri = entityUri,
-        graphUri = graphUri,
-        publicBaseUrl = publicBaseUrl,
-    ).takeIf { it.isNotEmpty() }
+    val related =
+        buildRelatedResources(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
 
-    val relatedBy = buildRelatedByResources(
-        graphDBClient = graphDBClient,
-        entityUri = entityUri,
-        graphUri = graphUri,
-        publicBaseUrl = publicBaseUrl,
-    ).takeIf { it.isNotEmpty() }
+    val relatedBy =
+        buildRelatedByResources(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
 
     return DistributionDetail(
         id = entityUri,

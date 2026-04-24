@@ -4,11 +4,15 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.eclipse.rdf4j.model.Model
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.*
 import org.epos.graphdb.Config
 import org.epos.graphdb.client.GraphDBClient
 import org.epos.services.ShaclService
+import java.io.StringWriter
 
 /**
  * Resource type listing routes.
@@ -17,6 +21,26 @@ fun Route.resourceTypeRoutes(shaclService: ShaclService, resourceController: Res
     get("/api/v2/resource-types") {
         val resourceTypes = shaclService.getResourceTypes()
         resourceController.setResourceType(resourceTypes)
+
+        val view = call.request.queryParameters["view"]?.lowercase() ?: "parsed"
+        if (view == "shacl") {
+            val model = shaclService.getParser().getCachedModel()
+            if (model == null) {
+                call.respond(
+                    HttpStatusCode.ServiceUnavailable,
+                    ErrorResponse("NotReady", "SHACL model is not initialized yet")
+                )
+                return@get
+            }
+
+            val formatParam = call.request.queryParameters["format"]?.lowercase()
+            val acceptHeader = call.request.header(HttpHeaders.Accept)?.lowercase()
+            val rdfFormat = resolveRdfFormat(formatParam, acceptHeader)
+            val contentType = resolveRdfContentType(rdfFormat)
+            val body = serializeModel(model, rdfFormat)
+            call.respondText(body, contentType)
+            return@get
+        }
 
         val includeShapeDefinitions = call.request.queryParameters["includeShapeDefinitions"]?.toBoolean() ?: false
         val includeTransitiveShapeDefinitions = call.request.queryParameters["includeTransitiveShapeDefinitions"]?.toBoolean() ?: false
@@ -32,6 +56,36 @@ fun Route.resourceTypeRoutes(shaclService: ShaclService, resourceController: Res
             includeResolvedRefs = includeResolvedRefs
         )
         call.respond(ResourceTypesResponse(resourceTypes = resourceTypes, shapeDefinitions = shapeDefinitions))
+    }
+}
+
+private fun serializeModel(model: Model, format: RDFFormat): String {
+    val writer = StringWriter()
+    Rio.write(model, writer, format)
+    return writer.toString()
+}
+
+private fun resolveRdfFormat(formatParam: String?, acceptHeader: String?): RDFFormat {
+    return when {
+        formatParam == "ttl" || formatParam == "turtle" -> RDFFormat.TURTLE
+        formatParam == "jsonld" || formatParam == "json-ld" -> RDFFormat.JSONLD
+        formatParam == "rdfxml" || formatParam == "rdf+xml" || formatParam == "xml" -> RDFFormat.RDFXML
+        formatParam == "ntriples" || formatParam == "n-triples" || formatParam == "nt" -> RDFFormat.NTRIPLES
+        acceptHeader?.contains("text/turtle") == true -> RDFFormat.TURTLE
+        acceptHeader?.contains("application/ld+json") == true || acceptHeader?.contains("application/json") == true -> RDFFormat.JSONLD
+        acceptHeader?.contains("application/rdf+xml") == true -> RDFFormat.RDFXML
+        acceptHeader?.contains("application/n-triples") == true -> RDFFormat.NTRIPLES
+        else -> RDFFormat.TURTLE
+    }
+}
+
+private fun resolveRdfContentType(format: RDFFormat): ContentType {
+    return when (format) {
+        RDFFormat.TURTLE -> ContentType.parse("text/turtle")
+        RDFFormat.JSONLD -> ContentType.parse("application/ld+json")
+        RDFFormat.RDFXML -> ContentType.parse("application/rdf+xml")
+        RDFFormat.NTRIPLES -> ContentType.parse("application/n-triples")
+        else -> ContentType.Text.Plain
     }
 }
 
@@ -62,11 +116,12 @@ fun Route.resourceCrudRoutes(
         post {
             val resourceType = call.parameters["resourceType"] ?: ""
             val request = call.receive<CreateEntityRequest>()
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.createEntity(
                 request.copy(type = resourceType),
-                agent
+                actorHeaders.agent,
+                actorHeaders.group
             )
             call.respond(HttpStatusCode.Created, response)
         }
@@ -175,9 +230,19 @@ fun Route.resourceCrudRoutes(
         put("/{id}") {
             val entityUri = call.parameters["id"] ?: ""
             val request = call.receive<UpdateEntityRequest>()
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@put
 
-            val response = resourceController.updateEntity(entityUri, request, agent)
+            val response = resourceController.updateEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
+            call.respond(response)
+        }
+
+        // Patch entity (merge semantics)
+        patch("/{id}") {
+            val entityUri = call.parameters["id"] ?: ""
+            val request = call.receive<UpdateEntityRequest>()
+            val actorHeaders = call.requireActorHeaders() ?: return@patch
+
+            val response = resourceController.patchEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
             call.respond(response)
         }
 

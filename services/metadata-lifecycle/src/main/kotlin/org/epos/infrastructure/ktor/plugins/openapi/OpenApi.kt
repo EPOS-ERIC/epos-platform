@@ -15,7 +15,7 @@ object OpenApiSpec {
             OpenApiPaths.Versioning.yaml,
             OpenApiPaths.Batch.yaml,
             OpenApiPaths.Admin.yaml,
-            OpenApiComponents.yaml
+            OpenApiComponents.yaml,
         ).joinToString("\n")
     }
 }

@@ -15,3 +15,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 ### Changed
 
 - metadata-lifecycle: removed EDM mapping dependency from search/details responses and aligned type/property/relation naming to SHACL-derived metadata with URI-local fallback.
+- docs: replaced placeholder root README with a practical project overview, repository layout, local Docker quick start, development commands, and service documentation links.

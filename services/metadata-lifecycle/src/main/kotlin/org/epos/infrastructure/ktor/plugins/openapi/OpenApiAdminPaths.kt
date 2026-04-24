@@ -24,6 +24,12 @@ object OpenApiAdminPaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       responses:
@@ -38,6 +44,12 @@ object OpenApiAdminPaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       responses:
@@ -54,6 +66,12 @@ object OpenApiAdminPaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       requestBody:
@@ -120,6 +138,13 @@ object OpenApiAdminPaths {
         - name: X-Agent
           in: header
           description: Agent URI for provenance tracking
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          description: Group URI for provenance tracking
+          required: true
           schema:
             type: string
         - name: X-Source-Authorization
@@ -183,6 +208,12 @@ object OpenApiAdminPaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       requestBody:
@@ -227,5 +258,79 @@ object OpenApiAdminPaths {
         '400':
           description: Missing content
         '500':
-          description: Population failed"""
+          description: Population failed
+
+  /api/v2/admin/import/revision/file:
+    post:
+      tags: [Admin]
+      summary: Import metadata revisions from URL or local TTL file
+      description: |
+        Imports TTL metadata into DRAFT revisions for existing published entities.
+        Existing links between imported resources are rewritten to their corresponding draft URIs.
+        This endpoint does not write directly to PUBLISHED.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              ${'$'}ref: '#/components/schemas/RevisionImportFileRequest'
+      responses:
+        '200':
+          description: Revision import completed
+          content:
+            application/json:
+              schema:
+                ${'$'}ref: '#/components/schemas/RevisionImportApiResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Revision import failed
+
+  /api/v2/admin/import/revision/content:
+    post:
+      tags: [Admin]
+      summary: Import metadata revisions from TTL content
+      description: |
+        Imports TTL metadata into DRAFT revisions for existing published entities.
+        Existing links between imported resources are rewritten to their corresponding draft URIs.
+        This endpoint does not write directly to PUBLISHED.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              ${'$'}ref: '#/components/schemas/RevisionImportContentRequest'
+      responses:
+        '200':
+          description: Revision import completed
+          content:
+            application/json:
+              schema:
+                ${'$'}ref: '#/components/schemas/RevisionImportApiResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Revision import failed"""
 }

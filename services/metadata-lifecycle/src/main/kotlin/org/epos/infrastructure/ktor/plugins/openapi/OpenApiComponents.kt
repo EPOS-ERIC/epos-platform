@@ -848,5 +848,109 @@ components:
           additionalProperties:
             ${'$'}ref: '#/components/schemas/ShapeDefinitionInfo'
       required: [resourceTypes]
+
+    RevisionImportFileRequest:
+      type: object
+      description: Revision import from a single TTL source (URL or local path)
+      properties:
+        url:
+          type: string
+          description: HTTP(S) URL to a TTL file
+        path:
+          type: string
+          description: Local filesystem path to a TTL file
+        versionMode:
+          type: string
+          enum: [auto, explicit]
+          default: auto
+        version:
+          type: string
+          description: Target version number, required when versionMode=explicit
+          example: "2.0"
+        replaceDraftIfExists:
+          type: boolean
+          default: true
+        dryRun:
+          type: boolean
+          default: false
+
+    RevisionImportContentRequest:
+      type: object
+      required: [content]
+      description: Revision import from raw TTL content
+      properties:
+        content:
+          type: string
+        sourceName:
+          type: string
+          example: imported-batch-2026-04-24
+        versionMode:
+          type: string
+          enum: [auto, explicit]
+          default: auto
+        version:
+          type: string
+          description: Target version number, required when versionMode=explicit
+          example: "2.0"
+        replaceDraftIfExists:
+          type: boolean
+          default: true
+        dryRun:
+          type: boolean
+          default: false
+
+    RevisionImportEntityResult:
+      type: object
+      properties:
+        importedUri:
+          type: string
+        conceptualUri:
+          type: string
+        draftUri:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+          nullable: true
+      required: [importedUri, conceptualUri, draftUri, status]
+
+    RevisionImportResponseData:
+      type: object
+      properties:
+        source:
+          type: string
+        dryRun:
+          type: boolean
+        subjectsProcessed:
+          type: integer
+        triplesPrepared:
+          type: integer
+        triplesInserted:
+          type: integer
+        draftsCreated:
+          type: integer
+        draftsReused:
+          type: integer
+        linksRewritten:
+          type: integer
+        entities:
+          type: array
+          items:
+            ${'$'}ref: '#/components/schemas/RevisionImportEntityResult'
+        agent:
+          type: string
+      required: [source, dryRun, subjectsProcessed, triplesPrepared, triplesInserted, draftsCreated, draftsReused, linksRewritten, entities]
+
+    RevisionImportApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          ${'$'}ref: '#/components/schemas/RevisionImportResponseData'
+      required: [success, message]
 """
 }

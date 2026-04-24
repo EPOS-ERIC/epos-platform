@@ -11,11 +11,17 @@ import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
 import org.epos.graphdb.Config
 import org.epos.graphdb.services.InitialPopulationService
+import org.epos.graphdb.services.RevisionImportOptions
+import org.epos.graphdb.services.RevisionImportService
+import org.epos.graphdb.services.VersionMode
 
 /**
  * Routes for database population operations.
  */
-fun Route.populationRoutes(populationService: InitialPopulationService) {
+fun Route.populationRoutes(
+    populationService: InitialPopulationService,
+    revisionImportService: RevisionImportService
+) {
     route("/api/v2/admin") {
         
         /**
@@ -23,10 +29,11 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
          * Triggers initial population from the configured INDEX_URL
          */
         post("/populate") {
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
 
             try {
-                println("Population triggered by agent: $agent")
+                println("Population triggered by agent: ${actorHeaders.agent}")
+                println("Population group: ${actorHeaders.group}")
                 println("Using INDEX_URL: ${Config.INDEX_URL}")
 
                 withContext(Dispatchers.IO) {
@@ -37,7 +44,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
                     message = "Population completed successfully",
                     data = mapOf(
                         "indexUrl" to Config.INDEX_URL,
-                        "agent" to agent
+                        "agent" to actorHeaders.agent,
+                        "group" to actorHeaders.group
                     )
                 )
             } catch (e: Exception) {
@@ -53,7 +61,7 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
          * Triggers population from a custom index URL
          */
         post("/populate/from-url") {
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
             val request = call.receive<PopulateFromUrlRequest>()
 
             val indexUrl = request.indexUrl
@@ -63,7 +71,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
             }
 
             try {
-                println("Population triggered by agent: $agent")
+                println("Population triggered by agent: ${actorHeaders.agent}")
+                println("Population group: ${actorHeaders.group}")
                 println("Using custom INDEX_URL: $indexUrl")
 
                 withContext(Dispatchers.IO) {
@@ -74,7 +83,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
                     message = "Population completed successfully",
                     data = mapOf(
                         "indexUrl" to indexUrl,
-                        "agent" to agent
+                        "agent" to actorHeaders.agent,
+                        "group" to actorHeaders.group
                     )
                 )
             } catch (e: Exception) {
@@ -122,7 +132,7 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
          * - Loading from any HTTP(S) accessible TTL file
          */
         post("/populate/file") {
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
             val sourceAuthorization = call.request.header("X-Source-Authorization")
             val request = call.receive<PopulateFromFileRequest>()
 
@@ -145,7 +155,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
             }
 
             try {
-                println("Single file population triggered by agent: $agent")
+                println("Single file population triggered by agent: ${actorHeaders.agent}")
+                println("Population group: ${actorHeaders.group}")
                 if (!ttlUrl.isNullOrBlank()) {
                     println("TTL URL: $ttlUrl")
                 }
@@ -170,7 +181,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
                             "sourceUrl" to result.sourceUrl,
                             "subjectsProcessed" to result.subjectsProcessed,
                             "triplesInserted" to result.triplesInserted,
-                            "agent" to agent
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group
                         )
                     )
                 } else {
@@ -199,7 +211,7 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
          * - Programmatic population from other services
          */
         post("/populate/content") {
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
             val request = call.receive<PopulateFromContentRequest>()
 
             val ttlContent = request.content
@@ -211,7 +223,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
             val sourceName = request.sourceName ?: "direct-upload-${System.currentTimeMillis()}"
 
             try {
-                println("Direct content population triggered by agent: $agent")
+                println("Direct content population triggered by agent: ${actorHeaders.agent}")
+                println("Population group: ${actorHeaders.group}")
                 println("Source name: $sourceName")
                 println("Content length: ${ttlContent.length} characters")
 
@@ -226,7 +239,8 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
                             "sourceName" to sourceName,
                             "subjectsProcessed" to result.subjectsProcessed,
                             "triplesInserted" to result.triplesInserted,
-                            "agent" to agent
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group
                         )
                     )
                 } else {
@@ -242,7 +256,172 @@ fun Route.populationRoutes(populationService: InitialPopulationService) {
                 )
             }
         }
+
+        /**
+         * POST /api/v2/admin/import/revision/file
+         * Imports a TTL source into DRAFT revisions for existing published entities.
+         */
+        post("/import/revision/file") {
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = call.receive<ImportRevisionFromFileRequest>()
+
+            val ttlUrl = request.url?.trim()
+            val localPath = request.path?.trim()
+
+            if (ttlUrl.isNullOrBlank() && localPath.isNullOrBlank()) {
+                call.respondBadRequest("Either url or path is required in request body")
+                return@post
+            }
+
+            if (!ttlUrl.isNullOrBlank() && !localPath.isNullOrBlank()) {
+                call.respondBadRequest("Provide only one of url or path")
+                return@post
+            }
+
+            if (!ttlUrl.isNullOrBlank() && !ttlUrl.startsWith("http://") && !ttlUrl.startsWith("https://")) {
+                call.respondBadRequest("url must be a valid HTTP(S) URL")
+                return@post
+            }
+
+            val options = parseRevisionImportOptions(
+                versionModeRaw = request.versionMode,
+                version = request.version,
+                replaceDraftIfExists = request.replaceDraftIfExists,
+                dryRun = request.dryRun
+            )
+
+            if (options == null) {
+                call.respondBadRequest("Invalid versionMode. Use 'auto' or 'explicit' (requires version)")
+                return@post
+            }
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    when {
+                        !ttlUrl.isNullOrBlank() -> revisionImportService.importFromSingleFile(ttlUrl, options, actorHeaders.agent, actorHeaders.group)
+                        else -> revisionImportService.importFromLocalFile(localPath!!, options, actorHeaders.agent, actorHeaders.group)
+                    }
+                }
+
+                if (result.success) {
+                    call.respondSuccess(
+                        message = result.message,
+                        data = mapOf(
+                            "source" to result.source,
+                            "dryRun" to result.dryRun,
+                            "subjectsProcessed" to result.subjectsProcessed,
+                            "triplesPrepared" to result.triplesPrepared,
+                            "triplesInserted" to result.triplesInserted,
+                            "draftsCreated" to result.draftsCreated,
+                            "draftsReused" to result.draftsReused,
+                            "linksRewritten" to result.linksRewritten,
+                            "entities" to result.entities,
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group
+                        )
+                    )
+                } else {
+                    call.respondPopulationError(
+                        message = result.message,
+                        details = result.errors.joinToString("; ")
+                    )
+                }
+            } catch (e: Exception) {
+                call.respondPopulationError(
+                    message = "Failed to import revisions from file: ${e.message}",
+                    details = e.stackTraceToString()
+                )
+            }
+        }
+
+        /**
+         * POST /api/v2/admin/import/revision/content
+         * Imports TTL content into DRAFT revisions for existing published entities.
+         */
+        post("/import/revision/content") {
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = call.receive<ImportRevisionFromContentRequest>()
+
+            val ttlContent = request.content
+            if (ttlContent.isNullOrBlank()) {
+                call.respondBadRequest("content is required in request body")
+                return@post
+            }
+
+            val options = parseRevisionImportOptions(
+                versionModeRaw = request.versionMode,
+                version = request.version,
+                replaceDraftIfExists = request.replaceDraftIfExists,
+                dryRun = request.dryRun
+            )
+
+            if (options == null) {
+                call.respondBadRequest("Invalid versionMode. Use 'auto' or 'explicit' (requires version)")
+                return@post
+            }
+
+            val sourceName = request.sourceName ?: "revision-import-${System.currentTimeMillis()}"
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    revisionImportService.importFromContent(ttlContent, sourceName, options, actorHeaders.agent, actorHeaders.group)
+                }
+
+                if (result.success) {
+                    call.respondSuccess(
+                        message = result.message,
+                        data = mapOf(
+                            "source" to result.source,
+                            "dryRun" to result.dryRun,
+                            "subjectsProcessed" to result.subjectsProcessed,
+                            "triplesPrepared" to result.triplesPrepared,
+                            "triplesInserted" to result.triplesInserted,
+                            "draftsCreated" to result.draftsCreated,
+                            "draftsReused" to result.draftsReused,
+                            "linksRewritten" to result.linksRewritten,
+                            "entities" to result.entities,
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group
+                        )
+                    )
+                } else {
+                    call.respondPopulationError(
+                        message = result.message,
+                        details = result.errors.joinToString("; ")
+                    )
+                }
+            } catch (e: Exception) {
+                call.respondPopulationError(
+                    message = "Failed to import revisions from content: ${e.message}",
+                    details = e.stackTraceToString()
+                )
+            }
+        }
     }
+}
+
+private fun parseRevisionImportOptions(
+    versionModeRaw: String?,
+    version: String?,
+    replaceDraftIfExists: Boolean?,
+    dryRun: Boolean?
+): RevisionImportOptions? {
+    val versionMode = when (versionModeRaw?.lowercase() ?: "auto") {
+        "auto" -> VersionMode.AUTO
+        "explicit" -> VersionMode.EXPLICIT
+        else -> return null
+    }
+
+    if (versionMode == VersionMode.EXPLICIT && version.isNullOrBlank()) {
+        return null
+    }
+
+    return RevisionImportOptions(
+        versionMode = versionMode,
+        explicitVersion = version?.trim(),
+        replaceDraftIfExists = replaceDraftIfExists ?: true,
+        dryRun = dryRun ?: false
+    )
 }
 
 private suspend fun ApplicationCall.respondSuccess(message: String, data: Any? = null) {

@@ -2,16 +2,16 @@ package org.epos.infrastructure.ktor.routes
 
 import org.epos.graphdb.Config
 
-internal fun getGraphUri(status: String): String = when (status.lowercase()) {
-    "draft" -> Config.GRAPH_DRAFT
-    "submitted" -> Config.GRAPH_SUBMITTED
-    "published" -> Config.GRAPH_PUBLISHED
-    "archived" -> Config.GRAPH_ARCHIVED
-    else -> Config.GRAPH_PUBLISHED
-}
+internal fun getGraphUri(status: String): String =
+    when (status.lowercase()) {
+        "draft" -> Config.GRAPH_DRAFT
+        "submitted" -> Config.GRAPH_SUBMITTED
+        "published" -> Config.GRAPH_PUBLISHED
+        "archived" -> Config.GRAPH_ARCHIVED
+        else -> Config.GRAPH_PUBLISHED
+    }
 
-internal fun extractTypeName(typeUri: String): String =
-    typeUri.substringAfterLast("/").substringAfterLast("#")
+internal fun extractTypeName(typeUri: String): String = typeUri.substringAfterLast("/").substringAfterLast("#")
 
 internal fun buildSpatialFilter(
     bbox: String?,
@@ -19,9 +19,10 @@ internal fun buildSpatialFilter(
     geoRelation: String,
     lat: Double?,
     lon: Double?,
-    radius: Double?
+    radius: Double?,
 ): String? {
-    val geometryExtraction = """
+    val geometryExtraction =
+        """
         {
             ?s dcterms:spatial ?spatialEntity .
             ?spatialEntity geo:asWKT ?entityGeom .
@@ -38,7 +39,7 @@ internal fun buildSpatialFilter(
             ?s dcat:bbox ?entityGeom .
             FILTER(DATATYPE(?entityGeom) = geo:wktLiteral)
         }
-    """.trimIndent()
+        """.trimIndent()
 
     return when {
         !geo.isNullOrBlank() -> {
@@ -59,7 +60,9 @@ internal fun buildSpatialFilter(
                 $geometryExtraction
                 FILTER($spatialFunction(?entityGeom, "$bboxWkt"^^geo:wktLiteral))
                 """.trimIndent()
-            } else null
+            } else {
+                null
+            }
         }
 
         lat != null && lon != null && radius != null -> {
@@ -80,18 +83,21 @@ internal fun buildSpatialFilter(
             """.trimIndent()
         }
 
-        else -> null
+        else -> {
+            null
+        }
     }
 }
 
-internal fun getSpatialFunction(relation: String): String = when (relation.lowercase()) {
-    "within" -> "geof:sfWithin"
-    "intersects" -> "geof:sfIntersects"
-    "contains" -> "geof:sfContains"
-    "overlaps" -> "geof:sfOverlaps"
-    "touches" -> "geof:sfTouches"
-    "disjoint" -> "geof:sfDisjoint"
-    "crosses" -> "geof:sfCrosses"
-    "equals" -> "geof:sfEquals"
-    else -> "geof:sfIntersects"
-}
+internal fun getSpatialFunction(relation: String): String =
+    when (relation.lowercase()) {
+        "within" -> "geof:sfWithin"
+        "intersects" -> "geof:sfIntersects"
+        "contains" -> "geof:sfContains"
+        "overlaps" -> "geof:sfOverlaps"
+        "touches" -> "geof:sfTouches"
+        "disjoint" -> "geof:sfDisjoint"
+        "crosses" -> "geof:sfCrosses"
+        "equals" -> "geof:sfEquals"
+        else -> "geof:sfIntersects"
+    }

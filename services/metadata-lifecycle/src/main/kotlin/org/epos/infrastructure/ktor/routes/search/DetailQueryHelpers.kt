@@ -7,7 +7,8 @@ import java.net.URLEncoder
 /**
  * Common SPARQL prefixes used across detail queries.
  */
-internal val DETAIL_PREFIXES = """
+internal val DETAIL_PREFIXES =
+    """
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     PREFIX dcterms: <http://purl.org/dc/terms/>
@@ -18,7 +19,7 @@ internal val DETAIL_PREFIXES = """
     PREFIX geo: <http://www.opengis.net/ont/geosparql#>
     PREFIX locn: <http://www.w3.org/ns/locn#>
     PREFIX epos: <https://www.epos-eu.org/epos-dcat-ap#>
-""".trimIndent()
+    """.trimIndent()
 
 /**
  * Checks if an entity exists in the specified graph.
@@ -28,13 +29,14 @@ internal fun entityExists(
     entityUri: String,
     graphUri: String,
 ): Boolean {
-    val query = """
+    val query =
+        """
         ASK {
             GRAPH <$graphUri> {
                 <$entityUri> ?p ?o .
             }
         }
-    """.trimIndent()
+        """.trimIndent()
     return graphDBClient.ask(query)
 }
 
@@ -48,7 +50,8 @@ internal fun buildRelatedByResources(
     graphUri: String,
     publicBaseUrl: String,
 ): List<ResourceRef> {
-    val query = """
+    val query =
+        """
         $DETAIL_PREFIXES
         
         SELECT DISTINCT ?source ?sourceType ?sourceTitle
@@ -62,7 +65,7 @@ internal fun buildRelatedByResources(
             OPTIONAL { ?source dcterms:title|rdfs:label|schema:name|foaf:name|skos:prefLabel ?sourceTitle . }
         }
         ORDER BY ?source
-    """.trimIndent()
+        """.trimIndent()
 
     val rows = graphDBClient.query(query)
     if (rows.isEmpty()) return emptyList()
@@ -74,11 +77,12 @@ internal fun buildRelatedByResources(
         if (bySource.containsKey(sourceId)) return@forEach
 
         val sourceType = row["sourceType"]?.let { mapTypeUriToApiType(it) } ?: "dataset"
-        bySource[sourceId] = ResourceRef(
-            id = sourceId,
-            title = row["sourceTitle"],
-            href = "$publicBaseUrl/api/v2/$sourceType/${URLEncoder.encode(sourceId, "UTF-8")}",
-        )
+        bySource[sourceId] =
+            ResourceRef(
+                id = sourceId,
+                title = row["sourceTitle"],
+                href = "$publicBaseUrl/api/v2/$sourceType/${URLEncoder.encode(sourceId, "UTF-8")}",
+            )
     }
 
     return bySource.values.toList()
@@ -93,7 +97,8 @@ internal fun buildRelatedResources(
     graphUri: String,
     publicBaseUrl: String,
 ): List<ResourceRef> {
-    val query = """
+    val query =
+        """
         $DETAIL_PREFIXES
 
         SELECT DISTINCT ?target ?targetType ?targetTitle
@@ -107,7 +112,7 @@ internal fun buildRelatedResources(
             OPTIONAL { ?target dcterms:title|rdfs:label|schema:name|foaf:name|skos:prefLabel ?targetTitle . }
         }
         ORDER BY ?target
-    """.trimIndent()
+        """.trimIndent()
 
     val rows = graphDBClient.query(query)
     if (rows.isEmpty()) return emptyList()
@@ -118,11 +123,12 @@ internal fun buildRelatedResources(
         if (byTarget.containsKey(targetId)) return@forEach
 
         val targetType = row["targetType"]?.let { mapTypeUriToApiType(it) } ?: "dataset"
-        byTarget[targetId] = ResourceRef(
-            id = targetId,
-            title = row["targetTitle"],
-            href = "$publicBaseUrl/api/v2/$targetType/${URLEncoder.encode(targetId, "UTF-8")}",
-        )
+        byTarget[targetId] =
+            ResourceRef(
+                id = targetId,
+                title = row["targetTitle"],
+                href = "$publicBaseUrl/api/v2/$targetType/${URLEncoder.encode(targetId, "UTF-8")}",
+            )
     }
 
     return byTarget.values.toList()
@@ -131,8 +137,8 @@ internal fun buildRelatedResources(
 /**
  * Maps RDF type URI to API type name for href construction.
  */
-internal fun mapTypeUriToApiType(typeUri: String): String {
-    return when {
+internal fun mapTypeUriToApiType(typeUri: String): String =
+    when {
         typeUri.contains("Dataset", ignoreCase = true) -> "dataset"
         typeUri.contains("Distribution", ignoreCase = true) -> "distribution"
         typeUri.contains("SoftwareApplication", ignoreCase = true) -> "software-application"
@@ -142,7 +148,6 @@ internal fun mapTypeUriToApiType(typeUri: String): String {
         typeUri.contains("DataService", ignoreCase = true) -> "distribution"
         else -> "dataset" // Default fallback
     }
-}
 
 /**
  * Extracts keywords from SPARQL results.
@@ -152,14 +157,15 @@ internal fun extractKeywords(
     entityUri: String,
     graphUri: String,
 ): List<String> {
-    val query = """
+    val query =
+        """
         PREFIX dcat: <http://www.w3.org/ns/dcat#>
         SELECT DISTINCT ?keyword
         FROM <$graphUri>
         WHERE {
             <$entityUri> dcat:keyword ?keyword .
         }
-    """.trimIndent()
+        """.trimIndent()
 
     return graphDBClient.query(query).mapNotNull { it["keyword"] }
 }
@@ -172,7 +178,8 @@ internal fun extractCategoryLabels(
     entityUri: String,
     graphUri: String,
 ): List<String> {
-    val query = """
+    val query =
+        """
         PREFIX dcat: <http://www.w3.org/ns/dcat#>
         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -183,7 +190,7 @@ internal fun extractCategoryLabels(
             <$entityUri> dcat:theme ?theme .
             ?theme skos:prefLabel|rdfs:label ?label .
         }
-    """.trimIndent()
+        """.trimIndent()
 
     return graphDBClient.query(query).mapNotNull { it["label"] }
 }
@@ -196,7 +203,8 @@ internal fun extractPublishers(
     entityUri: String,
     graphUri: String,
 ): List<String> {
-    val query = """
+    val query =
+        """
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX schema: <http://schema.org/>
         PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -214,7 +222,7 @@ internal fun extractPublishers(
                 ?org schema:legalName|schema:name|foaf:name ?name .
             }
         }
-    """.trimIndent()
+        """.trimIndent()
 
     return graphDBClient.query(query).mapNotNull { it["name"] }
 }
@@ -227,7 +235,8 @@ internal fun extractSpatialWkt(
     entityUri: String,
     graphUri: String,
 ): String? {
-    val query = """
+    val query =
+        """
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX geo: <http://www.opengis.net/ont/geosparql#>
         PREFIX locn: <http://www.w3.org/ns/locn#>
@@ -257,7 +266,7 @@ internal fun extractSpatialWkt(
             }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     return graphDBClient.query(query).firstOrNull()?.get("wkt")
 }
@@ -270,7 +279,8 @@ internal fun extractTemporalExtent(
     entityUri: String,
     graphUri: String,
 ): TemporalExtent? {
-    val query = """
+    val query =
+        """
         PREFIX dcterms: <http://purl.org/dc/terms/>
         PREFIX dcat: <http://www.w3.org/ns/dcat#>
         PREFIX schema: <http://schema.org/>
@@ -283,7 +293,7 @@ internal fun extractTemporalExtent(
             OPTIONAL { ?temporal dcat:endDate|schema:endDate ?endDate }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     val result = graphDBClient.query(query).firstOrNull() ?: return null
     val start = result["startDate"]
@@ -299,12 +309,11 @@ internal fun extractTemporalExtent(
 /**
  * Gets the versioning status based on which graph the entity is in.
  */
-internal fun getStatusFromGraph(graphUri: String): String {
-    return when (graphUri) {
+internal fun getStatusFromGraph(graphUri: String): String =
+    when (graphUri) {
         Config.GRAPH_DRAFT -> "DRAFT"
         Config.GRAPH_SUBMITTED -> "SUBMITTED"
         Config.GRAPH_PUBLISHED -> "PUBLISHED"
         Config.GRAPH_ARCHIVED -> "ARCHIVED"
         else -> "PUBLISHED"
     }
-}

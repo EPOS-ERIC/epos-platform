@@ -13,6 +13,7 @@ import org.epos.graphdb.Config
 import org.epos.graphdb.client.GraphDBClient
 import org.epos.graphdb.services.InitialPopulationService
 import org.epos.graphdb.services.ProvenanceService
+import org.epos.graphdb.services.RevisionImportService
 import org.epos.infrastructure.ktor.plugins.*
 import org.epos.infrastructure.ktor.routes.*
 import org.epos.services.ShaclService
@@ -189,6 +190,7 @@ fun Application.module() {
     val shaclService by inject<ShaclService>()
     val provenanceService by inject<ProvenanceService>()
     val populationService by inject<InitialPopulationService>()
+    val revisionImportService by inject<RevisionImportService>()
 
     // Initialize SHACL service (parse resource types)
     runBlocking {
@@ -224,6 +226,6 @@ fun Application.module() {
         oaiPmhRoutes(graphDBClient, shaclService)
 
         // Admin routes (population, etc.)
-        populationRoutes(populationService)
+        populationRoutes(populationService, revisionImportService)
     }
 }

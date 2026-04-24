@@ -32,7 +32,8 @@ fun Application.configureOpenApi() {
                     script(src = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js") {}
                     script {
                         unsafe {
-                            +"""
+                            +
+                                """
                                 window.onload = function() {
                                     const ui = SwaggerUIBundle({
                                         url: '/openapi.yaml',

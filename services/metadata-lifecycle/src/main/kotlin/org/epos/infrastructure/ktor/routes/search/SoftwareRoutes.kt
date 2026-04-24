@@ -18,11 +18,12 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
             return@get
         }
 
-        val decodedId = try {
-            URLDecoder.decode(appId, "UTF-8")
-        } catch (_: Exception) {
-            appId
-        }
+        val decodedId =
+            try {
+                URLDecoder.decode(appId, "UTF-8")
+            } catch (_: Exception) {
+                appId
+            }
 
         val graphUri = Config.GRAPH_PUBLISHED
 
@@ -33,12 +34,13 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
         }
 
         try {
-            val application = buildSoftwareApplicationDetail(
-                graphDBClient = graphDBClient,
-                entityUri = decodedId,
-                graphUri = graphUri,
-                publicBaseUrl = call.resolvePublicBaseUrl(),
-            )
+            val application =
+                buildSoftwareApplicationDetail(
+                    graphDBClient = graphDBClient,
+                    entityUri = decodedId,
+                    graphUri = graphUri,
+                    publicBaseUrl = call.resolvePublicBaseUrl(),
+                )
             call.respond(application)
         } catch (e: Exception) {
             call.respond(
@@ -56,11 +58,12 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
             return@get
         }
 
-        val decodedId = try {
-            URLDecoder.decode(codeId, "UTF-8")
-        } catch (_: Exception) {
-            codeId
-        }
+        val decodedId =
+            try {
+                URLDecoder.decode(codeId, "UTF-8")
+            } catch (_: Exception) {
+                codeId
+            }
 
         val graphUri = Config.GRAPH_PUBLISHED
 
@@ -71,12 +74,13 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
         }
 
         try {
-            val sourceCode = buildSoftwareSourceCodeDetail(
-                graphDBClient = graphDBClient,
-                entityUri = decodedId,
-                graphUri = graphUri,
-                publicBaseUrl = call.resolvePublicBaseUrl(),
-            )
+            val sourceCode =
+                buildSoftwareSourceCodeDetail(
+                    graphDBClient = graphDBClient,
+                    entityUri = decodedId,
+                    graphUri = graphUri,
+                    publicBaseUrl = call.resolvePublicBaseUrl(),
+                )
             call.respond(sourceCode)
         } catch (e: Exception) {
             call.respond(
@@ -93,7 +97,8 @@ private fun buildSoftwareApplicationDetail(
     graphUri: String,
     publicBaseUrl: String,
 ): SoftwareApplicationDetail {
-    val query = """
+    val query =
+        """
         $DETAIL_PREFIXES
         
         SELECT ?title ?description ?downloadUrl
@@ -106,7 +111,7 @@ private fun buildSoftwareApplicationDetail(
             OPTIONAL { <$entityUri> schema:downloadUrl|schema:installUrl ?downloadUrl }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     val result = graphDBClient.query(query).firstOrNull()
     val title = result?.get("title") ?: result?.get("titleAlt") ?: extractTypeName(entityUri)
@@ -120,19 +125,21 @@ private fun buildSoftwareApplicationDetail(
     val categories = extractCategoryLabels(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
 
     // Get outbound and inbound relations (always included when present)
-    val related = buildRelatedResources(
-        graphDBClient = graphDBClient,
-        entityUri = entityUri,
-        graphUri = graphUri,
-        publicBaseUrl = publicBaseUrl,
-    ).takeIf { it.isNotEmpty() }
+    val related =
+        buildRelatedResources(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
 
-    val relatedBy = buildRelatedByResources(
-        graphDBClient = graphDBClient,
-        entityUri = entityUri,
-        graphUri = graphUri,
-        publicBaseUrl = publicBaseUrl,
-    ).takeIf { it.isNotEmpty() }
+    val relatedBy =
+        buildRelatedByResources(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
 
     return SoftwareApplicationDetail(
         id = entityUri,
@@ -152,7 +159,8 @@ private fun buildSoftwareSourceCodeDetail(
     graphUri: String,
     publicBaseUrl: String,
 ): SoftwareSourceCodeDetail {
-    val query = """
+    val query =
+        """
         $DETAIL_PREFIXES
         
         SELECT ?title ?description ?programmingLanguage ?repository
@@ -166,7 +174,7 @@ private fun buildSoftwareSourceCodeDetail(
             OPTIONAL { <$entityUri> schema:codeRepository ?repository }
         }
         LIMIT 1
-    """.trimIndent()
+        """.trimIndent()
 
     val result = graphDBClient.query(query).firstOrNull()
     val title = result?.get("title") ?: result?.get("titleAlt") ?: extractTypeName(entityUri)
@@ -181,19 +189,21 @@ private fun buildSoftwareSourceCodeDetail(
     val categories = extractCategoryLabels(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
 
     // Get outbound and inbound relations (always included when present)
-    val related = buildRelatedResources(
-        graphDBClient = graphDBClient,
-        entityUri = entityUri,
-        graphUri = graphUri,
-        publicBaseUrl = publicBaseUrl,
-    ).takeIf { it.isNotEmpty() }
+    val related =
+        buildRelatedResources(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
 
-    val relatedBy = buildRelatedByResources(
-        graphDBClient = graphDBClient,
-        entityUri = entityUri,
-        graphUri = graphUri,
-        publicBaseUrl = publicBaseUrl,
-    ).takeIf { it.isNotEmpty() }
+    val relatedBy =
+        buildRelatedByResources(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
 
     return SoftwareSourceCodeDetail(
         id = entityUri,

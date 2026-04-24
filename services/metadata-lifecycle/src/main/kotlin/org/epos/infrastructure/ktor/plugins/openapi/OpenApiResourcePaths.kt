@@ -44,9 +44,16 @@ object OpenApiResourcePaths {
       parameters:
         - name: X-Agent
           in: header
+          required: true
           schema:
             type: string
           example: mailto:user@example.org
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+          example: https://epos-eu.org/group/ingestion-team
       requestBody:
         required: true
         content:
@@ -99,9 +106,16 @@ object OpenApiResourcePaths {
     put:
       tags: [Resources]
       summary: Update entity (DRAFT only)
+      description: Full replace semantics. Properties not included in the request are removed from the draft entity.
       parameters:
         - name: X-Agent
           in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
           schema:
             type: string
       requestBody:
@@ -116,6 +130,33 @@ object OpenApiResourcePaths {
       responses:
         '200':
           description: Entity updated
+    patch:
+      tags: [Resources]
+      summary: Patch entity (DRAFT only)
+      description: Merge semantics. Only the provided properties are replaced; all other properties are preserved.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                properties:
+                  type: object
+      responses:
+        '200':
+          description: Entity patched
     delete:
       tags: [Resources]
       summary: Delete entity (DRAFT only)

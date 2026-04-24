@@ -12,10 +12,10 @@ import org.epos.graphdb.client.GraphDBClient
  */
 class ShaclService(
     private val shaclParser: ShaclParser,
-    private val graphDBClient: GraphDBClient
+    private val graphDBClient: GraphDBClient,
 ) {
     companion object {
-        private const val DEFAULT_SHACL_URL = 
+        private const val DEFAULT_SHACL_URL =
             "https://raw.githubusercontent.com/epos-eu/EPOS-DCAT-AP/refs/heads/EPOS-DCAT-AP-shapes/epos-dcat-ap_shapes.ttl"
     }
 
@@ -46,12 +46,12 @@ class ShaclService(
         }
 
         println("Initializing ShaclService from $shaclUrl...")
-        
+
         try {
             resourceTypes = shaclParser.parseShacl(shaclUrl, graphDBClient)
             initialized = true
             println("ShaclService initialized with ${resourceTypes.size} resource types")
-            
+
             // Log available types
             resourceTypes.forEach { type ->
                 println("  - ${type.name} (${type.targetClass})")
@@ -74,23 +74,17 @@ class ShaclService(
     /**
      * Check if a resource type name is valid
      */
-    fun isValidResourceType(name: String): Boolean {
-        return getResourceTypes().any { it.name.equals(name, ignoreCase = true) }
-    }
+    fun isValidResourceType(name: String): Boolean = getResourceTypes().any { it.name.equals(name, ignoreCase = true) }
 
     /**
      * Get a specific resource type by name
      */
-    fun getResourceType(name: String): ResourceTypeInfo? {
-        return getResourceTypes().find { it.name.equals(name, ignoreCase = true) }
-    }
+    fun getResourceType(name: String): ResourceTypeInfo? = getResourceTypes().find { it.name.equals(name, ignoreCase = true) }
 
     /**
      * Get the target class URI for a resource type name
      */
-    fun getTargetClass(resourceTypeName: String): String? {
-        return getResourceType(resourceTypeName)?.targetClass
-    }
+    fun getTargetClass(resourceTypeName: String): String? = getResourceType(resourceTypeName)?.targetClass
 
     /**
      * Get the underlying SHACL parser for advanced operations

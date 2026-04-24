@@ -14,7 +14,8 @@ fun Route.categoryRoutes(graphDBClient: GraphDBClient) {
     get("/api/v2/category") {
         val graphUri = Config.GRAPH_PUBLISHED
 
-        val query = """
+        val query =
+            """
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -49,7 +50,7 @@ fun Route.categoryRoutes(graphDBClient: GraphDBClient) {
                 }
             }
             ORDER BY ?schemeOrder ?scheme ?broader ?conceptLabel
-        """.trimIndent()
+            """.trimIndent()
 
         try {
             val results = graphDBClient.query(query)
@@ -71,23 +72,25 @@ fun Route.categoryRoutes(graphDBClient: GraphDBClient) {
             return@get
         }
 
-        val decodedId = try {
-            URLDecoder.decode(categoryId, "UTF-8")
-        } catch (_: Exception) {
-            categoryId
-        }
+        val decodedId =
+            try {
+                URLDecoder.decode(categoryId, "UTF-8")
+            } catch (_: Exception) {
+                categoryId
+            }
 
         val graphUri = Config.GRAPH_PUBLISHED
 
         // First check if it exists
-        val existsQuery = """
+        val existsQuery =
+            """
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
             ASK {
                 GRAPH <$graphUri> {
                     <$decodedId> a skos:Concept .
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         if (!graphDBClient.ask(existsQuery)) {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Category not found: $decodedId"))
@@ -95,7 +98,8 @@ fun Route.categoryRoutes(graphDBClient: GraphDBClient) {
         }
 
         // Query the category and its children recursively
-        val query = """
+        val query =
+            """
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -132,7 +136,7 @@ fun Route.categoryRoutes(graphDBClient: GraphDBClient) {
                 }
             }
             ORDER BY ?broader ?conceptLabel
-        """.trimIndent()
+            """.trimIndent()
 
         try {
             val results = graphDBClient.query(query)
@@ -164,17 +168,18 @@ private fun buildCategoryTree(results: List<Map<String, String>>): CategoryTreeR
 
         // Build scheme info
         if (!schemeMap.containsKey(schemeUri)) {
-            schemeMap[schemeUri] = mutableMapOf(
-                "id" to schemeUri,
-                "label" to (row["schemeLabel"] ?: row["schemeLabelAlt"] ?: extractTypeName(schemeUri)),
-                "title" to row["schemeTitle"],
-                "description" to row["schemeDesc"],
-                "logo" to row["schemeLogo"],
-                "homepage" to row["schemeHomepage"],
-                "color" to row["schemeColor"],
-                "orderNumber" to row["schemeOrder"]?.toIntOrNull(),
-                "type" to (row["schemeType"] ?: "DATA"),
-            )
+            schemeMap[schemeUri] =
+                mutableMapOf(
+                    "id" to schemeUri,
+                    "label" to (row["schemeLabel"] ?: row["schemeLabelAlt"] ?: extractTypeName(schemeUri)),
+                    "title" to row["schemeTitle"],
+                    "description" to row["schemeDesc"],
+                    "logo" to row["schemeLogo"],
+                    "homepage" to row["schemeHomepage"],
+                    "color" to row["schemeColor"],
+                    "orderNumber" to row["schemeOrder"]?.toIntOrNull(),
+                    "type" to (row["schemeType"] ?: "DATA"),
+                )
         }
 
         // Collect concepts for this scheme
@@ -185,23 +190,25 @@ private fun buildCategoryTree(results: List<Map<String, String>>): CategoryTreeR
     }
 
     // Build scheme objects with their category trees
-    val schemes = schemeMap.map { (schemeUri, info) ->
-        val concepts = conceptsByScheme[schemeUri] ?: emptyList()
-        val children = buildCategoryHierarchy(concepts, null)
+    val schemes =
+        schemeMap
+            .map { (schemeUri, info) ->
+                val concepts = conceptsByScheme[schemeUri] ?: emptyList()
+                val children = buildCategoryHierarchy(concepts, null)
 
-        CategoryScheme(
-            id = info["id"] as String,
-            label = info["label"] as String,
-            title = info["title"] as? String,
-            description = info["description"] as? String,
-            logo = info["logo"] as? String,
-            homepage = info["homepage"] as? String,
-            color = info["color"] as? String,
-            orderNumber = info["orderNumber"] as? Int,
-            type = info["type"] as String,
-            children = children.takeIf { it.isNotEmpty() },
-        )
-    }.sortedBy { it.orderNumber ?: Int.MAX_VALUE }
+                CategoryScheme(
+                    id = info["id"] as String,
+                    label = info["label"] as String,
+                    title = info["title"] as? String,
+                    description = info["description"] as? String,
+                    logo = info["logo"] as? String,
+                    homepage = info["homepage"] as? String,
+                    color = info["color"] as? String,
+                    orderNumber = info["orderNumber"] as? Int,
+                    type = info["type"] as String,
+                    children = children.takeIf { it.isNotEmpty() },
+                )
+            }.sortedBy { it.orderNumber ?: Int.MAX_VALUE }
 
     return CategoryTreeResponse(schemes = schemes)
 }
@@ -216,27 +223,29 @@ private fun buildCategoryHierarchy(
     parentUri: String?,
 ): List<Category> {
     // Find concepts at this level (those whose broader == parentUri, or no broader for top-level)
-    val atThisLevel = concepts.filter { row ->
-        val conceptUri = row["concept"] ?: return@filter false
-        val broader = row["broader"]
-        if (parentUri == null) {
-            broader.isNullOrBlank()
-        } else {
-            broader == parentUri
+    val atThisLevel =
+        concepts.filter { row ->
+            val conceptUri = row["concept"] ?: return@filter false
+            val broader = row["broader"]
+            if (parentUri == null) {
+                broader.isNullOrBlank()
+            } else {
+                broader == parentUri
+            }
         }
-    }
 
-    return atThisLevel.mapNotNull { row ->
-        val conceptUri = row["concept"] ?: return@mapNotNull null
-        val children = buildCategoryHierarchy(concepts, conceptUri)
+    return atThisLevel
+        .mapNotNull { row ->
+            val conceptUri = row["concept"] ?: return@mapNotNull null
+            val children = buildCategoryHierarchy(concepts, conceptUri)
 
-        Category(
-            id = conceptUri,
-            name = row["conceptLabel"] ?: row["conceptLabelAlt"] ?: extractTypeName(conceptUri),
-            description = row["conceptDesc"] ?: row["conceptDescAlt"],
-            children = children.takeIf { it.isNotEmpty() },
-        )
-    }.distinctBy { it.id }
+            Category(
+                id = conceptUri,
+                name = row["conceptLabel"] ?: row["conceptLabelAlt"] ?: extractTypeName(conceptUri),
+                description = row["conceptDesc"] ?: row["conceptDescAlt"],
+                children = children.takeIf { it.isNotEmpty() },
+            )
+        }.distinctBy { it.id }
 }
 
 /**

@@ -398,4 +398,32 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         val types = objectMapper.readValue<List<Map<String, Any>>>(response.bodyAsText())
         types.isNotEmpty() shouldBe true
     }
+
+    @Test
+    fun `resource-types endpoint should export raw SHACL in turtle`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/resource-types?view=shacl&format=turtle")
+
+        response.status shouldBe HttpStatusCode.OK
+        response.contentType()?.withoutParameters() shouldBe ContentType.parse("text/turtle")
+        response.bodyAsText().isNotBlank() shouldBe true
+    }
+
+    @Test
+    fun `resource-types endpoint should export raw SHACL in json-ld via accept header`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/resource-types?view=shacl") {
+            header(HttpHeaders.Accept, "application/ld+json")
+        }
+
+        response.status shouldBe HttpStatusCode.OK
+        response.contentType()?.withoutParameters() shouldBe ContentType.parse("application/ld+json")
+        response.bodyAsText().isNotBlank() shouldBe true
+    }
 }

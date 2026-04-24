@@ -11,10 +11,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ShaclParserUnitTest {
-
     @Test
     fun `parser keeps OR constraints, qualified bnode and SPARQL target`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix ex: <http://example.org/> .
 
@@ -32,7 +32,7 @@ class ShaclParserUnitTest {
                 sh:qualifiedValueShape [ sh:class ex:Organization ] ;
                 sh:qualifiedMinCount 1 ;
               ] .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         val shapes = parser.parseShapesGraphFromString(ttl)
@@ -45,12 +45,12 @@ class ShaclParserUnitTest {
         assertTrue(prop.nodeConstraints.classConstraint.contains("http://example.org/Person"))
         assertNotNull(prop.qualifiedConstraints)
         assertTrue(prop.qualifiedConstraints.qualifiedValueShape.startsWith("_:"))
-
     }
 
     @Test
     fun `relationship graph supports inverse predicate paths from SHACL`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix ex: <http://example.org/> .
 
@@ -63,7 +63,7 @@ class ShaclParserUnitTest {
 
             ex:BShape a sh:NodeShape ;
               sh:targetClass ex:B .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         val shapes = parser.parseShapesGraphFromString(ttl)
@@ -78,7 +78,8 @@ class ShaclParserUnitTest {
 
     @Test
     fun `shape definitions map resolves nodeShapeRef targets`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix ex: <http://example.org/> .
 
@@ -97,7 +98,7 @@ class ShaclParserUnitTest {
                 sh:path ex:contactPoint ;
                 sh:node ex:ContactPointType ;
               ] .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         parser.parseShapesGraphFromString(ttl)
@@ -118,7 +119,8 @@ class ShaclParserUnitTest {
 
     @Test
     fun `transitive shape definitions are filtered and resolved refs are cycle-safe`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix ex: <http://example.org/> .
 
@@ -146,15 +148,16 @@ class ShaclParserUnitTest {
                 sh:path ex:x ;
                 sh:class ex:Something ;
               ] .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         parser.parseShapesGraphFromString(ttl)
 
-        val definitions = parser.getShapeDefinitions(
-            onlyReachableFromResourceTypes = true,
-            includeResolvedRefs = true
-        )
+        val definitions =
+            parser.getShapeDefinitions(
+                onlyReachableFromResourceTypes = true,
+                includeResolvedRefs = true,
+            )
 
         assertTrue(definitions.containsKey("http://example.org/BShape"))
         assertTrue(definitions.containsKey("http://example.org/CShape"))
@@ -171,7 +174,8 @@ class ShaclParserUnitTest {
 
     @Test
     fun `owl class node shape is treated as implicit class target`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix owl: <http://www.w3.org/2002/07/owl#> .
             @prefix ex: <http://example.org/> .
@@ -182,7 +186,7 @@ class ShaclParserUnitTest {
                 sh:path ex:code ;
                 sh:datatype xsd:string ;
               ] .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         parser.parseShapesGraphFromString(ttl)
@@ -195,7 +199,8 @@ class ShaclParserUnitTest {
 
     @Test
     fun `node shape keeps datatype alternatives from sh or`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix ex: <http://example.org/> .
             @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -206,7 +211,7 @@ class ShaclParserUnitTest {
                 [ sh:datatype xsd:date ; ]
                 [ sh:datatype xsd:dateTime ; ]
               ) .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         parser.parseShapesGraphFromString(ttl)
@@ -221,7 +226,8 @@ class ShaclParserUnitTest {
 
     @Test
     fun `property class constraints fallback from owl range unionOf`() {
-        val ttl = """
+        val ttl =
+            """
             @prefix sh: <http://www.w3.org/ns/shacl#> .
             @prefix ex: <http://example.org/> .
             @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -240,7 +246,7 @@ class ShaclParserUnitTest {
               sh:property [
                 sh:path ex:contactPoint ;
               ] .
-        """.trimIndent()
+            """.trimIndent()
 
         val parser = ShaclParser(HttpClient())
         parser.parseShapesGraphFromString(ttl)
