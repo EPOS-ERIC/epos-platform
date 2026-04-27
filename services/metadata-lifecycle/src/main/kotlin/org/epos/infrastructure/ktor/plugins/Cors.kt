@@ -13,10 +13,12 @@ fun Application.configureCors() {
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Accept)
         allowHeader("X-Agent")
+        allowHeader("X-Group")
         allowMethod(HttpMethod.Options)
         allowMethod(HttpMethod.Get)
         allowMethod(HttpMethod.Post)
         allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Patch)
         allowMethod(HttpMethod.Delete)
     }
 }

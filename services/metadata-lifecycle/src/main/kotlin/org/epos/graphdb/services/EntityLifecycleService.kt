@@ -33,7 +33,8 @@ class EntityLifecycleService(
     fun createDraft(
         conceptualUri: String,
         newVersionNumber: String,
-        agent: String = Config.AGENT_SYSTEM
+        agent: String = Config.AGENT_SYSTEM,
+        group: String = Config.AGENT_SYSTEM
     ): String {
         // Get current published version
         val currentVersion = getCurrentPublishedVersion(conceptualUri)
@@ -68,7 +69,8 @@ class EntityLifecycleService(
             newVersionUri = newDraftUri,
             basedOnVersionUri = currentVersion,
             conceptualUri = conceptualUri,
-            agent = agent
+            agent = agent,
+            group = group
         )
 
         println("✅ Created DRAFT: $newDraftUri (based on $currentVersion)")
@@ -78,11 +80,11 @@ class EntityLifecycleService(
     /**
      * Submits a DRAFT for review (DRAFT -> SUBMITTED).
      */
-    fun submitDraft(draftUri: String, agent: String = Config.AGENT_SYSTEM) {
+    fun submitDraft(draftUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {
         requireExists(draftUri, Config.GRAPH_DRAFT, "Draft")
 
         graphDBClient.moveSubject(draftUri, Config.GRAPH_DRAFT, Config.GRAPH_SUBMITTED)
-        provenanceService.recordStateTransition(draftUri, "DRAFT", "SUBMITTED", agent)
+        provenanceService.recordStateTransition(draftUri, "DRAFT", "SUBMITTED", agent, group)
 
         println("✅ Submitted: $draftUri (DRAFT -> SUBMITTED)")
     }
@@ -91,7 +93,7 @@ class EntityLifecycleService(
      * Publishes a SUBMITTED version (SUBMITTED -> PUBLISHED).
      * Archives the previous published version if it exists.
      */
-    fun publish(submittedUri: String, agent: String = Config.AGENT_SYSTEM) {
+    fun publish(submittedUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {
         requireExists(submittedUri, Config.GRAPH_SUBMITTED, "Submitted version")
 
         // Get conceptual URI
@@ -101,7 +103,7 @@ class EntityLifecycleService(
         // Archive current published version if exists
         getCurrentPublishedVersion(conceptualUri)?.let { currentPublished ->
             graphDBClient.moveSubject(currentPublished, Config.GRAPH_PUBLISHED, Config.GRAPH_ARCHIVED)
-            provenanceService.recordStateTransition(currentPublished, "PUBLISHED", "ARCHIVED", agent)
+            provenanceService.recordStateTransition(currentPublished, "PUBLISHED", "ARCHIVED", agent, group)
             println("  📦 Archived old version: $currentPublished")
         }
 
@@ -122,7 +124,7 @@ class EntityLifecycleService(
         // Update conceptual graph
         updateConceptualPointer(conceptualUri, finalUri)
 
-        provenanceService.recordStateTransition(finalUri, "SUBMITTED", "PUBLISHED", agent)
+        provenanceService.recordStateTransition(finalUri, "SUBMITTED", "PUBLISHED", agent, group)
 
         println("✅ Published: $finalUri (SUBMITTED -> PUBLISHED)")
         println("  🎯 Updated conceptual pointer: $conceptualUri -> $finalUri")
@@ -131,9 +133,9 @@ class EntityLifecycleService(
     /**
      * Rejects a SUBMITTED version (SUBMITTED -> DRAFT).
      */
-    fun rejectSubmission(submittedUri: String, agent: String = Config.AGENT_SYSTEM) {
+    fun rejectSubmission(submittedUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {
         graphDBClient.moveSubject(submittedUri, Config.GRAPH_SUBMITTED, Config.GRAPH_DRAFT)
-        provenanceService.recordStateTransition(submittedUri, "SUBMITTED", "DRAFT", agent)
+        provenanceService.recordStateTransition(submittedUri, "SUBMITTED", "DRAFT", agent, group)
         println("✅ Rejected: $submittedUri (SUBMITTED -> DRAFT)")
     }
 

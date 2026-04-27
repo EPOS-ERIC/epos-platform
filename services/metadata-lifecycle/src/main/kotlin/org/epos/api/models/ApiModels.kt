@@ -10,14 +10,14 @@ data class EntityResponse(
     val status: String,
     val properties: Map<String, Any>,
     val version: String? = null,
-    val conceptualUri: String? = null
+    val conceptualUri: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class EntityReference(
     val uri: String,
     val link: String,
-    val resourceType: String
+    val resourceType: String,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -25,33 +25,33 @@ data class EntityListResponse(
     val entities: List<EntityResponse>,
     val total: Int,
     val page: Int,
-    val pageSize: Int
+    val pageSize: Int,
 )
 
 data class CreateEntityRequest(
     val type: String,
-    val properties: Map<String, Any>
+    val properties: Map<String, Any>,
 )
 
 data class UpdateEntityRequest(
-    val properties: Map<String, Any>
+    val properties: Map<String, Any>,
 )
 
 data class ApiResponse(
     val success: Boolean,
     val message: String,
-    val data: Any? = null
+    val data: Any? = null,
 )
 
 data class ErrorResponse(
     val error: String,
     val message: String,
-    val details: String? = null
+    val details: String? = null,
 )
 
 data class VersionHistoryResponse(
     val conceptualUri: String,
-    val versions: List<VersionInfo>
+    val versions: List<VersionInfo>,
 )
 
 data class VersionInfo(
@@ -59,7 +59,8 @@ data class VersionInfo(
     val version: String,
     val timestamp: String,
     val agent: String?,
-    val status: String
+    val group: String?,
+    val status: String,
 )
 
 data class ResourceTypeInfo(
@@ -67,7 +68,7 @@ data class ResourceTypeInfo(
     val targetClass: String,
     val properties: List<PropertyInfo>,
     val closed: Boolean = false,
-    val description: String? = null
+    val description: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -88,13 +89,13 @@ data class ShapeDefinitionInfo(
     val ontologyEquivalentClasses: List<String>? = null,
     val ontologySubClassesOf: List<String>? = null,
     val closed: Boolean = false,
-    val description: String? = null
+    val description: String? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ResourceTypesResponse(
     val resourceTypes: List<ResourceTypeInfo>,
-    val shapeDefinitions: Map<String, ShapeDefinitionInfo>? = null
+    val shapeDefinitions: Map<String, ShapeDefinitionInfo>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -102,9 +103,9 @@ data class BatchOperationResponse(
     val success: Boolean,
     val message: String,
     val results: List<ApiResponse>,
-    val data: Map<String, Any>? = null
+    val data: Map<String, Any>? = null,
 )
 
 data class BatchOperationRequest(
-    val entityUris: List<String>
+    val entityUris: List<String>,
 )

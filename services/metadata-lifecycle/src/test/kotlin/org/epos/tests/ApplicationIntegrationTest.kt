@@ -69,40 +69,30 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
             module()
         }
 
-        // First create an entity
-        val createResponse = client.post("/api/v2/dataset") {
-            contentType(ContentType.Application.Json)
-            header("X-Agent", "mailto:test@example.org")
-            setBody("""
-                {
-                    "type": "dataset",
-                    "properties": {
-                        "http://purl.org/dc/terms/title": "Test Dataset"
-                    }
-                }
-            """.trimIndent())
-        }
+        // Insert a dataset directly into published graph for testing
+        val datasetUri = "http://example.org/dataset/test-json-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val dataset = vf.createIRI(datasetUri)
+        model.add(dataset, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(dataset, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Test Dataset"))
+        graphDBClient.insertIntoGraph(model, org.epos.graphdb.Config.GRAPH_PUBLISHED)
 
-        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
-
-        @Suppress("UNCHECKED_CAST")
-        val data = createJson["data"] as? Map<String, Any>
-        val entityUri = data?.get("uri") as? String
-
-        // Get the entity
-        val response = client.get("/api/v2/dataset/$entityUri?status=draft")
+        // Get the entity using the new typed endpoint
+        val encodedEntityUri = java.net.URLEncoder.encode(datasetUri, "UTF-8")
+        val response = client.get("/api/v2/dataset/$encodedEntityUri")
 
         response.status shouldBe HttpStatusCode.OK
         response.bodyAsText() shouldContain "Test Dataset"
     }
 
     @Test
-    fun `should get entity as Turtle`() = testApplication {
+    fun `should get entity via CRUD endpoint as Turtle`() = testApplication {
         application {
             module()
         }
 
-        // Create entity
+        // Create entity via CRUD endpoint
         val createResponse = client.post("/api/v2/dataset") {
             contentType(ContentType.Application.Json)
             setBody("""
@@ -121,12 +111,130 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
         val data = createJson["data"] as? Map<String, Any>
         val entityUri = data?.get("uri") as? String
 
-        // Get as Turtle
-        val response = client.get("/api/v2/dataset/$entityUri?status=draft&format=turtle")
+        // Get as Turtle - newly created entities are in DRAFT status
+        val encodedEntityUri = java.net.URLEncoder.encode(entityUri, "UTF-8")
+        val response = client.get("/api/v2/dataset/$encodedEntityUri?format=turtle&status=draft")
 
         response.status shouldBe HttpStatusCode.OK
-        response.contentType() shouldBe ContentType.parse("text/turtle")
-        response.bodyAsText() shouldContain "@prefix"
+        response.contentType()?.withoutParameters() shouldBe ContentType.parse("text/turtle")
+        response.bodyAsText() shouldContain "http://purl.org/dc/terms/title"
+    }
+
+    @Test
+    fun `put should keep replace semantics and remove omitted relation properties`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "http://example.org/dataset/target-1"
+
+        val createResponse = client.post("/api/v2/distribution") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "type": "distribution",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Distribution v2 draft",
+                        "http://www.w3.org/ns/dcat#servesDataset": "$datasetUri"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val data = createJson["data"] as Map<String, Any>
+        val distributionUri = data["uri"] as String
+
+        val relationPresentBeforePut = graphDBClient.ask(
+            """
+            ASK {
+                GRAPH <${org.epos.graphdb.Config.GRAPH_DRAFT}> {
+                    <$distributionUri> <http://www.w3.org/ns/dcat#servesDataset> <$datasetUri> .
+                }
+            }
+            """.trimIndent()
+        )
+        relationPresentBeforePut shouldBe true
+
+        val encodedDistributionUri = java.net.URLEncoder.encode(distributionUri, "UTF-8")
+        val putResponse = client.put("/api/v2/distribution/$encodedDistributionUri") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Distribution v2 draft updated"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        putResponse.status shouldBe HttpStatusCode.OK
+
+        val relationPresentAfterPut = graphDBClient.ask(
+            """
+            ASK {
+                GRAPH <${org.epos.graphdb.Config.GRAPH_DRAFT}> {
+                    <$distributionUri> <http://www.w3.org/ns/dcat#servesDataset> <$datasetUri> .
+                }
+            }
+            """.trimIndent()
+        )
+        relationPresentAfterPut shouldBe false
+    }
+
+    @Test
+    fun `patch should merge properties and keep existing relation triples`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "http://example.org/dataset/target-2"
+
+        val createResponse = client.post("/api/v2/distribution") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "type": "distribution",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Distribution v2 draft",
+                        "http://www.w3.org/ns/dcat#servesDataset": "$datasetUri"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val data = createJson["data"] as Map<String, Any>
+        val distributionUri = data["uri"] as String
+
+        val encodedDistributionUri = java.net.URLEncoder.encode(distributionUri, "UTF-8")
+        val patchResponse = client.patch("/api/v2/distribution/$encodedDistributionUri") {
+            contentType(ContentType.Application.Json)
+            setBody("""
+                {
+                    "properties": {
+                        "http://purl.org/dc/terms/description": "Draft description update"
+                    }
+                }
+            """.trimIndent())
+        }
+
+        patchResponse.status shouldBe HttpStatusCode.OK
+
+        val relationPresentAfterPatch = graphDBClient.ask(
+            """
+            ASK {
+                GRAPH <${org.epos.graphdb.Config.GRAPH_DRAFT}> {
+                    <$distributionUri> <http://www.w3.org/ns/dcat#servesDataset> <$datasetUri> .
+                }
+            }
+            """.trimIndent()
+        )
+        relationPresentAfterPatch shouldBe true
     }
 
     @Test
@@ -135,7 +243,8 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
             module()
         }
 
-        val response = client.get("/api/v2/dataset/http://example.org/nonexistent")
+        val missingEntity = java.net.URLEncoder.encode("http://example.org/nonexistent", "UTF-8")
+        val response = client.get("/api/v2/dataset/$missingEntity")
 
         response.status shouldBe HttpStatusCode.NotFound
     }

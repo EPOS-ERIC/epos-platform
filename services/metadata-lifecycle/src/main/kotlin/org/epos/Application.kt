@@ -13,9 +13,9 @@ import org.epos.graphdb.Config
 import org.epos.graphdb.client.GraphDBClient
 import org.epos.graphdb.services.InitialPopulationService
 import org.epos.graphdb.services.ProvenanceService
+import org.epos.graphdb.services.RevisionImportService
 import org.epos.infrastructure.ktor.plugins.*
 import org.epos.infrastructure.ktor.routes.*
-import org.epos.services.EdmMappingService
 import org.epos.services.ShaclService
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
@@ -190,7 +190,7 @@ fun Application.module() {
     val shaclService by inject<ShaclService>()
     val provenanceService by inject<ProvenanceService>()
     val populationService by inject<InitialPopulationService>()
-    val edmMappingService by inject<EdmMappingService>()
+    val revisionImportService by inject<RevisionImportService>()
 
     // Initialize SHACL service (parse resource types)
     runBlocking {
@@ -211,17 +211,21 @@ fun Application.module() {
         resourceCrudRoutes(resourceController, shaclService, graphDBClient)
         lifecycleRoutes(resourceController, graphDBClient, provenanceService)
         batchRoutes(resourceController)
-        
-        // Search and Discovery
-        searchRoutes(graphDBClient, shaclService, edmMappingService)
+
+        // Search and Discovery (new v2 API)
+        searchRoutes(graphDBClient, shaclService)
+        categoryRoutes(graphDBClient)
+        datasetRoutes(graphDBClient, resourceController)
+        distributionRoutes(graphDBClient)
+        softwareRoutes(graphDBClient)
 
         // SPARQL endpoint
         sparqlRoutes(graphDBClient)
-        
+
         // OAI-PMH endpoint for harvesting
         oaiPmhRoutes(graphDBClient, shaclService)
-        
+
         // Admin routes (population, etc.)
-        populationRoutes(populationService)
+        populationRoutes(populationService, revisionImportService)
     }
 }

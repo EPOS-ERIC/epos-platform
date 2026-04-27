@@ -9,6 +9,7 @@ import org.epos.graphdb.Config
 import org.epos.graphdb.client.GraphDBClient
 import org.epos.graphdb.services.EntityLifecycleService
 import org.epos.graphdb.services.ProvenanceService
+import org.epos.graphdb.utils.Sparql
 import java.util.UUID
 
 class ResourceController(
@@ -96,14 +97,14 @@ class ResourceController(
     }
 
     /**
-     * Determina se un valore stringa è un URI gestito dal sistema
+     * Checks whether a string value is a managed URI
      */
     private fun isManagedUri(value: String): Boolean {
         return value.startsWith("http://") || value.startsWith("https://")
     }
 
     /**
-     * Estrae il tipo di risorsa da un URI
+     * Extracts resource type from a URI
      */
     private fun extractResourceTypeFromUri(uri: String): String? {
         val query = """
@@ -137,7 +138,7 @@ class ResourceController(
     }
 
     /**
-     * Converte un valore in EntityReference se è un URI gestito
+     * Converts a value into EntityReference when it is a managed URI
      */
     private fun enrichValue(value: Any): Any {
         return when (value) {
@@ -226,7 +227,7 @@ class ResourceController(
             return ""
         }
 
-        // Aggiungi triple dei blank nodes collegati
+        // Add triples for connected blank nodes.
         val blankNodes = model.filter {
             it.`object` is org.eclipse.rdf4j.model.BNode
         }.map { it.`object` as org.eclipse.rdf4j.model.BNode }
@@ -250,7 +251,7 @@ class ResourceController(
     /**
      * Create a new draft entity
      */
-    fun createEntity(request: CreateEntityRequest, agent: String): ApiResponse {
+    fun createEntity(request: CreateEntityRequest, agent: String, group: String): ApiResponse {
         val vf = Values.getValueFactory()
         val model = LinkedHashModel()
 
@@ -268,22 +269,7 @@ class ResourceController(
         // Add properties
         request.properties.forEach { (key, value) ->
             val propertyIRI = vf.createIRI(key)
-            when (value) {
-                is String -> model.add(entityIRI, propertyIRI, vf.createLiteral(value))
-                is Number -> model.add(entityIRI, propertyIRI, vf.createLiteral(value.toString()))
-                is Boolean -> model.add(entityIRI, propertyIRI, vf.createLiteral(value))
-                is Map<*, *> -> {
-                    // Handle nested objects (create blank nodes)
-                    val blankNode = vf.createBNode()
-                    model.add(entityIRI, propertyIRI, blankNode)
-                    @Suppress("UNCHECKED_CAST")
-                    val nestedMap = value as Map<String, Any>
-                    nestedMap.forEach { (nestedKey, nestedValue) ->
-                        val nestedProp = vf.createIRI(nestedKey)
-                        model.add(blankNode, nestedProp, vf.createLiteral(nestedValue.toString()))
-                    }
-                }
-            }
+            addPropertyValue(model, entityIRI, propertyIRI, value)
         }
 
         // Add version info
@@ -298,7 +284,8 @@ class ResourceController(
             newVersionUri = draftUri,
             basedOnVersionUri = draftUri,
             conceptualUri = conceptualUri,
-            agent = agent
+            agent = agent,
+            group = group
         )
 
         // Create conceptual entity
@@ -320,7 +307,7 @@ class ResourceController(
     /**
      * Update an existing draft entity
      */
-    fun updateEntity(entityUri: String, request: UpdateEntityRequest, agent: String): ApiResponse {
+    fun updateEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
         // Check if entity exists in draft
         val exists = graphDBClient.ask("""
             ASK {
@@ -354,11 +341,7 @@ class ResourceController(
         // Add new properties
         request.properties.forEach { (key, value) ->
             val propertyIRI = vf.createIRI(key)
-            when (value) {
-                is String -> existingModel.add(entityIRI, propertyIRI, vf.createLiteral(value))
-                is Number -> existingModel.add(entityIRI, propertyIRI, vf.createLiteral(value.toString()))
-                is Boolean -> existingModel.add(entityIRI, propertyIRI, vf.createLiteral(value))
-            }
+            addPropertyValue(existingModel, entityIRI, propertyIRI, value)
         }
 
         // Delete old and insert new
@@ -373,10 +356,54 @@ class ResourceController(
     }
 
     /**
+     * Partially update an existing draft entity.
+     * Only the provided properties are replaced; all others are preserved.
+     */
+    fun patchEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
+        // Check if entity exists in draft
+        val exists = graphDBClient.ask("""
+            ASK {
+                GRAPH <${Config.GRAPH_DRAFT}> {
+                    <$entityUri> ?p ?o .
+                }
+            }
+        """.trimIndent())
+
+        if (!exists) {
+            return ApiResponse(success = false, message = "Entity not found in draft status")
+        }
+
+        // Get existing model
+        val existingModel = graphDBClient.getSubjectTriples(entityUri, Config.GRAPH_DRAFT)
+
+        val vf = Values.getValueFactory()
+        val entityIRI = vf.createIRI(entityUri)
+
+        // Replace only provided properties
+        request.properties.forEach { (key, value) ->
+            val propertyIRI = vf.createIRI(key)
+            existingModel.removeIf { statement ->
+                statement.subject == entityIRI && statement.predicate == propertyIRI
+            }
+            addPropertyValue(existingModel, entityIRI, propertyIRI, value)
+        }
+
+        // Delete old and insert new
+        graphDBClient.deleteFromGraph(entityUri, Config.GRAPH_DRAFT)
+        graphDBClient.insertIntoGraph(existingModel, Config.GRAPH_DRAFT)
+
+        return ApiResponse(
+            success = true,
+            message = "Entity patched successfully",
+            data = mapOf("uri" to entityUri)
+        )
+    }
+
+    /**
      * Submit a draft for review
      */
-    fun submitEntity(entityUri: String, agent: String): ApiResponse {
-        lifecycleService.submitDraft(entityUri, agent)
+    fun submitEntity(entityUri: String, agent: String, group: String): ApiResponse {
+        lifecycleService.submitDraft(entityUri, agent, group)
 
         return ApiResponse(
             success = true,
@@ -388,8 +415,8 @@ class ResourceController(
     /**
      * Publish a submitted entity
      */
-    fun publishEntity(entityUri: String, agent: String): ApiResponse {
-        lifecycleService.publish(entityUri, agent)
+    fun publishEntity(entityUri: String, agent: String, group: String): ApiResponse {
+        lifecycleService.publish(entityUri, agent, group)
 
         val finalUri = entityUri.removeSuffix("-draft")
         return ApiResponse(
@@ -402,12 +429,13 @@ class ResourceController(
     /**
      * Create a new draft from published version
      */
-    fun createNewDraft(conceptualUri: String, newVersion: String, agent: String): ApiResponse {
+    fun createNewDraft(conceptualUri: String, newVersion: String, agent: String, group: String): ApiResponse {
         try {
             val draftUri = lifecycleService.createDraft(
                 conceptualUri = conceptualUri,
                 newVersionNumber = newVersion,
-                agent = agent
+                agent = agent,
+                group = group
             )
 
             return ApiResponse(
@@ -453,6 +481,7 @@ class ResourceController(
                 version = extractVersionNumber(versionUri),
                 timestamp = version["timestamp"] ?: "",
                 agent = version["agent"],
+                group = version["group"],
                 status = determineStatusForVersion(versionUri)
             )
         }
@@ -464,7 +493,7 @@ class ResourceController(
     }
 
     /**
-     * Determina lo status di una versione cercando in tutti i grafi
+     * Determines version status by checking all graphs
      */
     private fun determineStatusForVersion(versionUri: String): String {
         val inDraft = graphDBClient.ask("""
@@ -487,16 +516,37 @@ class ResourceController(
         """.trimIndent())
         if (inArchived) return "archived"
 
+        val transitionStatus = graphDBClient.query(Sparql.selectLatestTransitionStatus(versionUri))
+            .firstOrNull()
+            ?.get("toStatus")
+            ?.trim()
+            ?.lowercase()
+        if (transitionStatus != null && transitionStatus in setOf("draft", "submitted", "published", "archived")) {
+            return transitionStatus
+        }
+
+        val conceptualUri = graphDBClient.query(Sparql.selectConceptualUri(versionUri))
+            .firstOrNull()
+            ?.get("conceptual")
+        if (conceptualUri != null) {
+            val currentVersion = graphDBClient.query(Sparql.selectCurrentVersion(conceptualUri))
+                .firstOrNull()
+                ?.get("currentVersion")
+            if (currentVersion == versionUri) {
+                return "published"
+            }
+        }
+
         return "unknown"
     }
 
     /**
      * Submit multiple entities for review (batch operation)
      */
-    fun submitEntityBatch(entityUris: List<String>, agent: String): BatchOperationResponse {
+    fun submitEntityBatch(entityUris: List<String>, agent: String, group: String): BatchOperationResponse {
         val results = entityUris.map { uri ->
             try {
-                submitEntity(uri, agent)
+                submitEntity(uri, agent, group)
             } catch (e: Exception) {
                 ApiResponse(
                     success = false,
@@ -519,13 +569,13 @@ class ResourceController(
     /**
      * Publish multiple entities (batch operation with dependency ordering)
      */
-    fun publishEntityBatch(entityUris: List<String>, agent: String): BatchOperationResponse {
+    fun publishEntityBatch(entityUris: List<String>, agent: String, group: String): BatchOperationResponse {
         // Sort URIs by dependency order (referenced entities first)
         val sortedUris = sortByDependencies(entityUris)
 
         val results = sortedUris.map { uri ->
             try {
-                publishEntity(uri, agent)
+                publishEntity(uri, agent, group)
             } catch (e: Exception) {
                 ApiResponse(
                     success = false,
@@ -613,6 +663,42 @@ class ResourceController(
         else -> Config.GRAPH_PUBLISHED
     }
 
+    private fun addPropertyValue(
+        model: org.eclipse.rdf4j.model.Model,
+        subject: org.eclipse.rdf4j.model.Resource,
+        predicate: org.eclipse.rdf4j.model.IRI,
+        value: Any
+    ) {
+        val vf = Values.getValueFactory()
+        when (value) {
+            is String -> {
+                if (isManagedUri(value)) {
+                    model.add(subject, predicate, vf.createIRI(value))
+                } else {
+                    model.add(subject, predicate, vf.createLiteral(value))
+                }
+            }
+            is Number -> model.add(subject, predicate, vf.createLiteral(value.toString()))
+            is Boolean -> model.add(subject, predicate, vf.createLiteral(value))
+            is Map<*, *> -> {
+                val blankNode = vf.createBNode()
+                model.add(subject, predicate, blankNode)
+                value.forEach { (nestedKey, nestedValue) ->
+                    if (nestedKey is String && nestedValue != null) {
+                        val nestedPredicate = vf.createIRI(nestedKey)
+                        addPropertyValue(model, blankNode, nestedPredicate, nestedValue)
+                    }
+                }
+            }
+            is List<*> -> {
+                value.filterNotNull().forEach { listValue ->
+                    addPropertyValue(model, subject, predicate, listValue)
+                }
+            }
+            else -> model.add(subject, predicate, vf.createLiteral(value.toString()))
+        }
+    }
+
     fun getTypeUri(resourceType: String): String {
         for (type in resourceTypes) {
             if (type.name.equals(resourceType, ignoreCase = true)) {
@@ -640,7 +726,7 @@ class ResourceController(
 
             val propertyName = extractPropertyName(predicate)
 
-            // Se il valore è un blank node (genid-...), espandilo
+            // If the value is a blank node (genid-...), expand it.
             if (value.startsWith("genid-") || value.startsWith("_:")) {
                 val blankNodeProperties = getBlankNodeProperties(value, graphUri)
                 properties[propertyName] = blankNodeProperties
@@ -653,7 +739,7 @@ class ResourceController(
     }
 
     /**
-     * Recupera le proprietà di un blank node
+     * Retrieves properties of a blank node
      */
     private fun getBlankNodeProperties(blankNodeId: String, graphUri: String): Map<String, Any> {
         val query = """
@@ -674,7 +760,7 @@ class ResourceController(
 
             val propertyName = extractPropertyName(predicate)
 
-            // Ricorsione per blank nodes nidificati
+            // Recurse into nested blank nodes.
             if (value.startsWith("genid-") || value.startsWith("_:")) {
                 properties[propertyName] = getBlankNodeProperties(value, graphUri)
             } else {

@@ -275,13 +275,33 @@ object Sparql {
     """.trimIndent())
 
     fun selectVersionHistory(conceptualUri: String): String = withPrefixes("""
-        SELECT ?version ?title ?timestamp ?agent
+        SELECT ?version ?title ?timestamp (SAMPLE(?agentRaw) AS ?agent) (SAMPLE(?groupRaw) AS ?group)
         FROM <${Config.GRAPH_PROVENANCE}> FROM <${Config.GRAPH_PUBLISHED}>
         FROM <${Config.GRAPH_ARCHIVED}> FROM <${Config.GRAPH_DRAFT}> FROM <${Config.GRAPH_SUBMITTED}>
         WHERE {
             ?version dcterms:isVersionOf <$conceptualUri> ; prov:generatedAtTime ?timestamp .
-            OPTIONAL { ?version prov:wasAttributedTo ?agent . }
+            OPTIONAL { ?version prov:wasAttributedTo ?agentRaw . }
+            OPTIONAL {
+                ?version prov:wasGeneratedBy ?activity .
+                ?activity prov:wasAssociatedWith ?associatedRaw .
+                FILTER(!BOUND(?agentRaw) || ?associatedRaw != ?agentRaw)
+                BIND(?associatedRaw AS ?groupRaw)
+            }
             OPTIONAL { ?version dct:title ?title . }
-        } ORDER BY DESC(?timestamp)
+        } GROUP BY ?version ?title ?timestamp ORDER BY DESC(?timestamp)
+    """.trimIndent())
+
+    fun selectLatestTransitionStatus(versionUri: String): String = withPrefixes("""
+        SELECT ?toStatus FROM <${Config.GRAPH_PROVENANCE}>
+        WHERE {
+            ?activity a prov:Activity ;
+                      prov:used <$versionUri> ;
+                      rdfs:label ?label ;
+                      prov:startedAtTime ?startedAt .
+            FILTER(STRSTARTS(STR(?label), "State transition: "))
+            BIND(LCASE(STRAFTER(STRAFTER(STR(?label), "State transition: "), " -> ")) AS ?toStatus)
+        }
+        ORDER BY DESC(?startedAt)
+        LIMIT 1
     """.trimIndent())
 }

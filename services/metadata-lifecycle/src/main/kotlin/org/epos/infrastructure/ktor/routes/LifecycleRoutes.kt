@@ -23,18 +23,18 @@ fun Route.lifecycleRoutes(
         // Submit for review
         post("/{id}/submit") {
             val entityUri = call.parameters["id"] ?: ""
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
 
-            val response = resourceController.submitEntity(entityUri, agent)
+            val response = resourceController.submitEntity(entityUri, actorHeaders.agent, actorHeaders.group)
             call.respond(response)
         }
 
         // Publish
         post("/{id}/publish") {
             val entityUri = call.parameters["id"] ?: ""
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
 
-            val response = resourceController.publishEntity(entityUri, agent)
+            val response = resourceController.publishEntity(entityUri, actorHeaders.agent, actorHeaders.group)
             call.respond(response)
         }
 
@@ -42,9 +42,9 @@ fun Route.lifecycleRoutes(
         post("/{id}/draft") {
             val conceptualUri = call.parameters["id"] ?: ""
             val newVersion = call.request.queryParameters["version"] ?: "2.0"
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
 
-            val response = resourceController.createNewDraft(conceptualUri, newVersion, agent)
+            val response = resourceController.createNewDraft(conceptualUri, newVersion, actorHeaders.agent, actorHeaders.group)
             call.respond(HttpStatusCode.Created, response)
         }
 
@@ -58,7 +58,7 @@ fun Route.lifecycleRoutes(
         // Repair missing conceptual/provenance
         post("/{id}/repair") {
             val entityUri = call.parameters["id"] ?: ""
-            val agent = call.request.header("X-Agent") ?: Config.AGENT_SYSTEM
+            val actorHeaders = call.requireActorHeaders() ?: return@post
 
             try {
                 val exists = graphDBClient.ask(
@@ -113,7 +113,8 @@ fun Route.lifecycleRoutes(
                         versionUri = versionUri,
                         conceptualUri = conceptualUri,
                         source = "manual-repair",
-                        agent = agent
+                        agent = actorHeaders.agent,
+                        group = actorHeaders.group
                     )
                 }
 

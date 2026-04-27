@@ -20,8 +20,12 @@ object OpenApiVersioningPaths {
     get:
       tags: [Versioning]
       summary: Version history
-      description: Retrieve all versions of a conceptual entity
+      description: Retrieve all versions of a conceptual entity, including status, agent, and group provenance
       responses:
         '200':
-          description: Version history"""
+          description: Version history
+          content:
+            application/json:
+              schema:
+                ${'$'}ref: '#/components/schemas/VersionHistoryResponse'"""
 }

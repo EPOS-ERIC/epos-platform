@@ -21,7 +21,7 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
-     * Esegue una query SPARQL SELECT e ritorna i risultati come lista di mappe
+     * Executes a SPARQL SELECT query and returns rows as maps
      */
     fun query(sparqlQuery: String): List<Map<String, String>> {
         return repository.connection.use { conn ->
@@ -42,7 +42,7 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
-     * Esegue una query SPARQL ASK
+     * Executes a SPARQL ASK query
      */
     fun ask(sparqlQuery: String): Boolean {
         return repository.connection.use { conn ->
@@ -52,18 +52,18 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
-     * Esegue un SPARQL UPDATE usando l'API REST diretta di GraphDB
+     * Executes a SPARQL UPDATE through the GraphDB REST API
      */
     fun update(sparqlUpdate: String) {
         runBlocking {
             try {
-                // GraphDB usa il parametro "query" sia per SELECT che per UPDATE
+                // GraphDB expects UPDATE statements in the "update" form parameter.
                 val url = Config.SPARQL_ENDPOINT
 
                 val response = httpClient.submitForm(
                     url = url,
                     formParameters = Parameters.build {
-                        append("query", sparqlUpdate)
+                        append("update", sparqlUpdate)
                     }
                 )
 
@@ -91,7 +91,7 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
-     * Inserisce un Model RDF in un Named Graph specifico usando l'API REST di GraphDB
+     * Inserts an RDF model into a specific named graph via GraphDB REST API
      */
     fun insertIntoGraph(model: Model, graphUri: String) {
         if (model.isEmpty()) {
@@ -101,16 +101,16 @@ class GraphDBClient(private val httpClient: HttpClient) {
 
         println("  📦 Inserting ${model.size} triples into graph...")
 
-        // Usa l'API REST diretta di GraphDB per il POST
+        // Use GraphDB REST API for POST requests.
         runBlocking {
             try {
-                // Converti il model in Turtle (più compatto di N-Triples)
+                // Serialize model as Turtle (more compact than N-Triples).
                 val stringWriter = StringWriter()
                 Rio.write(model, stringWriter, RDFFormat.TURTLE)
                 val rdfData = stringWriter.toString()
 
-                // POST all'endpoint /statements con il parametro context per il Named Graph
-                // GraphDB richiede il formato N-Triples per il context: <URI>
+                // POST to /statements with context parameter for named graph.
+                // GraphDB expects N-Triples syntax for context values: <URI>
                 val contextParam = "<$graphUri>"
                 val url = "${Config.SPARQL_UPDATE_ENDPOINT}?context=${java.net.URLEncoder.encode(contextParam, "UTF-8")}"
 
@@ -135,20 +135,20 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
-     * Metodo deprecato - mantenuto per retrocompatibilità
+     * Deprecated method retained for backward compatibility
      */
     @Deprecated("Use insertIntoGraph with HTTP client")
     private fun insertBatch(model: Model, graphUri: String) {
-        // Questo metodo non è più usato
+        // This method is no longer used.
     }
 
     /**
-     * Cancella tutte le triple di un soggetto da un Named Graph usando HTTP DELETE
+     * Deletes all triples for a subject from a named graph using HTTP DELETE
      */
     fun deleteFromGraph(subjectUri: String, graphUri: String) {
         runBlocking {
             try {
-                // GraphDB REST API per DELETE
+                // Use GraphDB REST API for DELETE requests.
                 val contextParam = "<$graphUri>"
                 val subjParam = "<$subjectUri>"
                 val url = "${Config.SPARQL_UPDATE_ENDPOINT}?" +
@@ -171,10 +171,10 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
-     * Sposta tutte le triple di un soggetto da un grafo a un altro
+     * Moves all triples of a subject from one graph to another
      */
     fun moveSubject(subjectUri: String, fromGraph: String, toGraph: String) {
-        // 1. Leggi le triple dal grafo di origine
+        // 1. Read triples from source graph.
         val model = getSubjectTriples(subjectUri, fromGraph)
 
         if (model.isEmpty()) {
@@ -182,15 +182,15 @@ class GraphDBClient(private val httpClient: HttpClient) {
             return
         }
 
-        // 2. Inserisci nel grafo di destinazione
+        // 2. Insert triples into target graph.
         insertIntoGraph(model, toGraph)
 
-        // 3. Cancella dal grafo di origine
+        // 3. Delete triples from source graph.
         deleteFromGraph(subjectUri, fromGraph)
     }
 
     /**
-     * Legge tutte le triple di un soggetto da un grafo
+     * Reads all triples of a subject from a graph
      */
     fun getSubjectTriples(subjectUri: String, graphUri: String): Model {
         repository.connection.use { conn ->

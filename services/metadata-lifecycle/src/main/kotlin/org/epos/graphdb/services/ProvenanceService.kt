@@ -17,11 +17,13 @@ class ProvenanceService(private val graphDBClient: GraphDBClient) {
         versionUri: String,
         conceptualUri: String,
         source: String,
-        agent: String = Config.AGENT_INITIAL_POPULATION
+        agent: String = Config.AGENT_INITIAL_POPULATION,
+        group: String = Config.AGENT_SYSTEM
     ) {
         val activityUri = UriUtils.generateActivityUri()
         val timestamp = now()
         val safeAgent = UriUtils.ensureAbsolute(agent, "agent")
+        val safeGroup = UriUtils.ensureAbsolute(group, "group")
         val safeSource = UriUtils.ensureAbsolute(source, "source")
 
         val provModel = model {
@@ -37,6 +39,8 @@ class ProvenanceService(private val graphDBClient: GraphDBClient) {
                 type(NS.PROV_ACTIVITY)
                 label("Initial import from source")
                 used(safeSource)
+                associatedWith(safeAgent)
+                associatedWith(safeGroup)
                 startedAt(timestamp)
             }
         }
@@ -51,11 +55,13 @@ class ProvenanceService(private val graphDBClient: GraphDBClient) {
         newVersionUri: String,
         basedOnVersionUri: String,
         conceptualUri: String,
-        agent: String = Config.AGENT_SYSTEM
+        agent: String = Config.AGENT_SYSTEM,
+        group: String = Config.AGENT_SYSTEM
     ) {
         val activityUri = UriUtils.generateActivityUri()
         val timestamp = now()
         val safeAgent = UriUtils.ensureAbsolute(agent, "agent")
+        val safeGroup = UriUtils.ensureAbsolute(group, "group")
 
         val provModel = model {
             // New version metadata
@@ -71,6 +77,8 @@ class ProvenanceService(private val graphDBClient: GraphDBClient) {
                 type(NS.PROV_ACTIVITY)
                 label("Draft creation")
                 used(basedOnVersionUri)
+                associatedWith(safeAgent)
+                associatedWith(safeGroup)
                 startedAt(timestamp)
             }
         }
@@ -85,11 +93,13 @@ class ProvenanceService(private val graphDBClient: GraphDBClient) {
         versionUri: String,
         fromStatus: String,
         toStatus: String,
-        agent: String = Config.AGENT_SYSTEM
+        agent: String = Config.AGENT_SYSTEM,
+        group: String = Config.AGENT_SYSTEM
     ) {
         val activityUri = UriUtils.generateActivityUri()
         val timestamp = now()
         val safeAgent = UriUtils.ensureAbsolute(agent, "agent")
+        val safeGroup = UriUtils.ensureAbsolute(group, "group")
 
         val provModel = model {
             // Activity metadata
@@ -98,6 +108,7 @@ class ProvenanceService(private val graphDBClient: GraphDBClient) {
                 label("State transition: $fromStatus -> $toStatus")
                 used(versionUri)
                 associatedWith(safeAgent)
+                associatedWith(safeGroup)
                 startedAt(timestamp)
             }
             // Link version to activity
