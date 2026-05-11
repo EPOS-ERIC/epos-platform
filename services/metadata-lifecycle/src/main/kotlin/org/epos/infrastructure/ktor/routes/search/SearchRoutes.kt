@@ -292,7 +292,8 @@ fun Route.searchRoutes(
         }
 
         val pairs =
-            call.request.queryParameters.entries()
+            call.request.queryParameters
+                .entries()
                 .flatMap { (key, values) -> values.map { value -> key to value } }
                 .toMutableList()
         pairs += "type" to shape

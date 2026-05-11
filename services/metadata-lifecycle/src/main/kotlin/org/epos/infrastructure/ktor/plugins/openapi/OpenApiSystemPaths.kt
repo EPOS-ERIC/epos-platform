@@ -20,7 +20,8 @@ object OpenApiSystemPaths {
                 properties:
                   status:
                     type: string
-                    example: ok
+                    examples:
+                      - ok
                   timestamp:
                     type: integer
                     format: int64

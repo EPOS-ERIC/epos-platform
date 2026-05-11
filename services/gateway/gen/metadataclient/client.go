@@ -49,15 +49,11 @@ type APIClient struct {
 
 	// API Services
 
+	AccessAPI AccessAPI
+
 	AdminAPI AdminAPI
 
 	BatchAPI BatchAPI
-
-	CategoriesAPI CategoriesAPI
-
-	DatasetsAPI DatasetsAPI
-
-	DistributionsAPI DistributionsAPI
 
 	LifecycleAPI LifecycleAPI
 
@@ -68,10 +64,6 @@ type APIClient struct {
 	SPARQLAPI SPARQLAPI
 
 	SearchAPI SearchAPI
-
-	SoftwareApplicationsAPI SoftwareApplicationsAPI
-
-	SoftwareSourceCodesAPI SoftwareSourceCodesAPI
 
 	SystemAPI SystemAPI
 
@@ -94,18 +86,14 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
+	c.AccessAPI = (*AccessAPIService)(&c.common)
 	c.AdminAPI = (*AdminAPIService)(&c.common)
 	c.BatchAPI = (*BatchAPIService)(&c.common)
-	c.CategoriesAPI = (*CategoriesAPIService)(&c.common)
-	c.DatasetsAPI = (*DatasetsAPIService)(&c.common)
-	c.DistributionsAPI = (*DistributionsAPIService)(&c.common)
 	c.LifecycleAPI = (*LifecycleAPIService)(&c.common)
 	c.OAIPMHAPI = (*OAIPMHAPIService)(&c.common)
 	c.ResourcesAPI = (*ResourcesAPIService)(&c.common)
 	c.SPARQLAPI = (*SPARQLAPIService)(&c.common)
 	c.SearchAPI = (*SearchAPIService)(&c.common)
-	c.SoftwareApplicationsAPI = (*SoftwareApplicationsAPIService)(&c.common)
-	c.SoftwareSourceCodesAPI = (*SoftwareSourceCodesAPIService)(&c.common)
 	c.SystemAPI = (*SystemAPIService)(&c.common)
 	c.VersioningAPI = (*VersioningAPIService)(&c.common)
 

@@ -60,8 +60,10 @@ fun Route.accessRoutes(
     }
 }
 
-private fun resolveResourceType(shape: String, shaclService: ShaclService) =
-    shaclService.getResourceTypes().find { normalizeShapeName(it.name) == normalizeShapeName(shape) }
+private fun resolveResourceType(
+    shape: String,
+    shaclService: ShaclService,
+) = shaclService.getResourceTypes().find { normalizeShapeName(it.name) == normalizeShapeName(shape) }
 
 private fun normalizeShapeName(typeName: String): String =
     typeName
@@ -187,7 +189,11 @@ private fun normalizeAccessPropertyValues(values: List<AccessPropertyValue>): An
     return if (values.size == 1) values.first() else values
 }
 
-private fun buildNavigableAccessHref(publicBaseUrl: String, objectType: String?, objectId: String): String? {
+private fun buildNavigableAccessHref(
+    publicBaseUrl: String,
+    objectType: String?,
+    objectId: String,
+): String? {
     if (objectType.isNullOrBlank()) return null
     return "$publicBaseUrl/api/v2/access/$objectType/${URLEncoder.encode(objectId, "UTF-8")}"
 }
@@ -197,11 +203,10 @@ private fun isResolvableResource(
     graphUri: String,
     objectId: String,
     existenceCache: MutableMap<String, Boolean>,
-): Boolean {
-    return existenceCache.getOrPut(objectId) {
+): Boolean =
+    existenceCache.getOrPut(objectId) {
         entityExists(graphDBClient, objectId, graphUri)
     }
-}
 
 private fun resolveObjectShape(
     objectTypeUri: String?,

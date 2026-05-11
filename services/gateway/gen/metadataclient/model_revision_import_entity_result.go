@@ -22,11 +22,11 @@ var _ MappedNullable = &RevisionImportEntityResult{}
 
 // RevisionImportEntityResult struct for RevisionImportEntityResult
 type RevisionImportEntityResult struct {
-	ImportedUri   string  `json:"importedUri"`
-	ConceptualUri string  `json:"conceptualUri"`
-	DraftUri      string  `json:"draftUri"`
-	Status        string  `json:"status"`
-	Message       *string `json:"message,omitempty"`
+	ImportedUri   string         `json:"importedUri"`
+	ConceptualUri string         `json:"conceptualUri"`
+	DraftUri      string         `json:"draftUri"`
+	Status        string         `json:"status"`
+	Message       NullableString `json:"message,omitempty"`
 }
 
 type _RevisionImportEntityResult RevisionImportEntityResult
@@ -148,36 +148,47 @@ func (o *RevisionImportEntityResult) SetStatus(v string) {
 	o.Status = v
 }
 
-// GetMessage returns the Message field value if set, zero value otherwise.
+// GetMessage returns the Message field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *RevisionImportEntityResult) GetMessage() string {
-	if o == nil || IsNil(o.Message) {
+	if o == nil || IsNil(o.Message.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Message
+	return *o.Message.Get()
 }
 
 // GetMessageOk returns a tuple with the Message field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *RevisionImportEntityResult) GetMessageOk() (*string, bool) {
-	if o == nil || IsNil(o.Message) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Message, true
+	return o.Message.Get(), o.Message.IsSet()
 }
 
 // HasMessage returns a boolean if a field has been set.
 func (o *RevisionImportEntityResult) HasMessage() bool {
-	if o != nil && !IsNil(o.Message) {
+	if o != nil && o.Message.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetMessage gets a reference to the given string and assigns it to the Message field.
+// SetMessage gets a reference to the given NullableString and assigns it to the Message field.
 func (o *RevisionImportEntityResult) SetMessage(v string) {
-	o.Message = &v
+	o.Message.Set(&v)
+}
+
+// SetMessageNil sets the value for Message to be an explicit nil
+func (o *RevisionImportEntityResult) SetMessageNil() {
+	o.Message.Set(nil)
+}
+
+// UnsetMessage ensures that no value is present for Message, not even an explicit nil
+func (o *RevisionImportEntityResult) UnsetMessage() {
+	o.Message.Unset()
 }
 
 func (o RevisionImportEntityResult) MarshalJSON() ([]byte, error) {
@@ -194,8 +205,8 @@ func (o RevisionImportEntityResult) ToMap() (map[string]interface{}, error) {
 	toSerialize["conceptualUri"] = o.ConceptualUri
 	toSerialize["draftUri"] = o.DraftUri
 	toSerialize["status"] = o.Status
-	if !IsNil(o.Message) {
-		toSerialize["message"] = o.Message
+	if o.Message.IsSet() {
+		toSerialize["message"] = o.Message.Get()
 	}
 	return toSerialize, nil
 }

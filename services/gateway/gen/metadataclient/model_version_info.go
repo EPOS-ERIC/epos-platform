@@ -22,12 +22,12 @@ var _ MappedNullable = &VersionInfo{}
 
 // VersionInfo struct for VersionInfo
 type VersionInfo struct {
-	Uri       string  `json:"uri"`
-	Version   string  `json:"version"`
-	Timestamp string  `json:"timestamp"`
-	Agent     *string `json:"agent,omitempty"`
-	Group     *string `json:"group,omitempty"`
-	Status    string  `json:"status"`
+	Uri       string         `json:"uri"`
+	Version   string         `json:"version"`
+	Timestamp string         `json:"timestamp"`
+	Agent     NullableString `json:"agent,omitempty"`
+	Group     NullableString `json:"group,omitempty"`
+	Status    string         `json:"status"`
 }
 
 type _VersionInfo VersionInfo
@@ -125,68 +125,90 @@ func (o *VersionInfo) SetTimestamp(v string) {
 	o.Timestamp = v
 }
 
-// GetAgent returns the Agent field value if set, zero value otherwise.
+// GetAgent returns the Agent field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *VersionInfo) GetAgent() string {
-	if o == nil || IsNil(o.Agent) {
+	if o == nil || IsNil(o.Agent.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Agent
+	return *o.Agent.Get()
 }
 
 // GetAgentOk returns a tuple with the Agent field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *VersionInfo) GetAgentOk() (*string, bool) {
-	if o == nil || IsNil(o.Agent) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Agent, true
+	return o.Agent.Get(), o.Agent.IsSet()
 }
 
 // HasAgent returns a boolean if a field has been set.
 func (o *VersionInfo) HasAgent() bool {
-	if o != nil && !IsNil(o.Agent) {
+	if o != nil && o.Agent.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetAgent gets a reference to the given string and assigns it to the Agent field.
+// SetAgent gets a reference to the given NullableString and assigns it to the Agent field.
 func (o *VersionInfo) SetAgent(v string) {
-	o.Agent = &v
+	o.Agent.Set(&v)
 }
 
-// GetGroup returns the Group field value if set, zero value otherwise.
+// SetAgentNil sets the value for Agent to be an explicit nil
+func (o *VersionInfo) SetAgentNil() {
+	o.Agent.Set(nil)
+}
+
+// UnsetAgent ensures that no value is present for Agent, not even an explicit nil
+func (o *VersionInfo) UnsetAgent() {
+	o.Agent.Unset()
+}
+
+// GetGroup returns the Group field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *VersionInfo) GetGroup() string {
-	if o == nil || IsNil(o.Group) {
+	if o == nil || IsNil(o.Group.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Group
+	return *o.Group.Get()
 }
 
 // GetGroupOk returns a tuple with the Group field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *VersionInfo) GetGroupOk() (*string, bool) {
-	if o == nil || IsNil(o.Group) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Group, true
+	return o.Group.Get(), o.Group.IsSet()
 }
 
 // HasGroup returns a boolean if a field has been set.
 func (o *VersionInfo) HasGroup() bool {
-	if o != nil && !IsNil(o.Group) {
+	if o != nil && o.Group.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetGroup gets a reference to the given string and assigns it to the Group field.
+// SetGroup gets a reference to the given NullableString and assigns it to the Group field.
 func (o *VersionInfo) SetGroup(v string) {
-	o.Group = &v
+	o.Group.Set(&v)
+}
+
+// SetGroupNil sets the value for Group to be an explicit nil
+func (o *VersionInfo) SetGroupNil() {
+	o.Group.Set(nil)
+}
+
+// UnsetGroup ensures that no value is present for Group, not even an explicit nil
+func (o *VersionInfo) UnsetGroup() {
+	o.Group.Unset()
 }
 
 // GetStatus returns the Status field value
@@ -226,11 +248,11 @@ func (o VersionInfo) ToMap() (map[string]interface{}, error) {
 	toSerialize["uri"] = o.Uri
 	toSerialize["version"] = o.Version
 	toSerialize["timestamp"] = o.Timestamp
-	if !IsNil(o.Agent) {
-		toSerialize["agent"] = o.Agent
+	if o.Agent.IsSet() {
+		toSerialize["agent"] = o.Agent.Get()
 	}
-	if !IsNil(o.Group) {
-		toSerialize["group"] = o.Group
+	if o.Group.IsSet() {
+		toSerialize["group"] = o.Group.Get()
 	}
 	toSerialize["status"] = o.Status
 	return toSerialize, nil

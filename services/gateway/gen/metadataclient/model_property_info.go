@@ -22,28 +22,28 @@ var _ MappedNullable = &PropertyInfo{}
 
 // PropertyInfo struct for PropertyInfo
 type PropertyInfo struct {
-	Path             string   `json:"path"`
-	Name             string   `json:"name"`
-	Datatype         *string  `json:"datatype,omitempty"`
-	Datatypes        []string `json:"datatypes,omitempty"`
-	NodeKind         *string  `json:"nodeKind,omitempty"`
-	NodeKinds        []string `json:"nodeKinds,omitempty"`
-	ClassConstraint  *string  `json:"classConstraint,omitempty"`
-	ClassConstraints []string `json:"classConstraints,omitempty"`
-	NodeShapeRef     *string  `json:"nodeShapeRef,omitempty"`
-	NodeShapeRefs    []string `json:"nodeShapeRefs,omitempty"`
-	MinCount         *int32   `json:"minCount,omitempty"`
-	MaxCount         *int32   `json:"maxCount,omitempty"`
-	Required         bool     `json:"required"`
-	Recommended      bool     `json:"recommended"`
-	Pattern          *string  `json:"pattern,omitempty"`
-	MinLength        *int32   `json:"minLength,omitempty"`
-	MaxLength        *int32   `json:"maxLength,omitempty"`
-	HasValueIn       []string `json:"hasValueIn,omitempty"`
-	Severity         *string  `json:"severity,omitempty"`
-	Severities       []string `json:"severities,omitempty"`
-	HelpText         *string  `json:"helpText,omitempty"`
-	Description      *string  `json:"description,omitempty"`
+	Path             string         `json:"path"`
+	Name             string         `json:"name"`
+	Datatype         NullableString `json:"datatype,omitempty"`
+	Datatypes        []string       `json:"datatypes,omitempty"`
+	NodeKind         NullableString `json:"nodeKind,omitempty"`
+	NodeKinds        []string       `json:"nodeKinds,omitempty"`
+	ClassConstraint  NullableString `json:"classConstraint,omitempty"`
+	ClassConstraints []string       `json:"classConstraints,omitempty"`
+	NodeShapeRef     NullableString `json:"nodeShapeRef,omitempty"`
+	NodeShapeRefs    []string       `json:"nodeShapeRefs,omitempty"`
+	MinCount         NullableInt32  `json:"minCount,omitempty"`
+	MaxCount         NullableInt32  `json:"maxCount,omitempty"`
+	Required         bool           `json:"required"`
+	Recommended      bool           `json:"recommended"`
+	Pattern          NullableString `json:"pattern,omitempty"`
+	MinLength        NullableInt32  `json:"minLength,omitempty"`
+	MaxLength        NullableInt32  `json:"maxLength,omitempty"`
+	HasValueIn       []string       `json:"hasValueIn,omitempty"`
+	Severity         NullableString `json:"severity,omitempty"`
+	Severities       []string       `json:"severities,omitempty"`
+	HelpText         NullableString `json:"helpText,omitempty"`
+	Description      NullableString `json:"description,omitempty"`
 }
 
 type _PropertyInfo PropertyInfo
@@ -117,41 +117,52 @@ func (o *PropertyInfo) SetName(v string) {
 	o.Name = v
 }
 
-// GetDatatype returns the Datatype field value if set, zero value otherwise.
+// GetDatatype returns the Datatype field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetDatatype() string {
-	if o == nil || IsNil(o.Datatype) {
+	if o == nil || IsNil(o.Datatype.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Datatype
+	return *o.Datatype.Get()
 }
 
 // GetDatatypeOk returns a tuple with the Datatype field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetDatatypeOk() (*string, bool) {
-	if o == nil || IsNil(o.Datatype) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Datatype, true
+	return o.Datatype.Get(), o.Datatype.IsSet()
 }
 
 // HasDatatype returns a boolean if a field has been set.
 func (o *PropertyInfo) HasDatatype() bool {
-	if o != nil && !IsNil(o.Datatype) {
+	if o != nil && o.Datatype.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetDatatype gets a reference to the given string and assigns it to the Datatype field.
+// SetDatatype gets a reference to the given NullableString and assigns it to the Datatype field.
 func (o *PropertyInfo) SetDatatype(v string) {
-	o.Datatype = &v
+	o.Datatype.Set(&v)
 }
 
-// GetDatatypes returns the Datatypes field value if set, zero value otherwise.
+// SetDatatypeNil sets the value for Datatype to be an explicit nil
+func (o *PropertyInfo) SetDatatypeNil() {
+	o.Datatype.Set(nil)
+}
+
+// UnsetDatatype ensures that no value is present for Datatype, not even an explicit nil
+func (o *PropertyInfo) UnsetDatatype() {
+	o.Datatype.Unset()
+}
+
+// GetDatatypes returns the Datatypes field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetDatatypes() []string {
-	if o == nil || IsNil(o.Datatypes) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -160,6 +171,7 @@ func (o *PropertyInfo) GetDatatypes() []string {
 
 // GetDatatypesOk returns a tuple with the Datatypes field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetDatatypesOk() ([]string, bool) {
 	if o == nil || IsNil(o.Datatypes) {
 		return nil, false
@@ -181,41 +193,52 @@ func (o *PropertyInfo) SetDatatypes(v []string) {
 	o.Datatypes = v
 }
 
-// GetNodeKind returns the NodeKind field value if set, zero value otherwise.
+// GetNodeKind returns the NodeKind field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetNodeKind() string {
-	if o == nil || IsNil(o.NodeKind) {
+	if o == nil || IsNil(o.NodeKind.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.NodeKind
+	return *o.NodeKind.Get()
 }
 
 // GetNodeKindOk returns a tuple with the NodeKind field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetNodeKindOk() (*string, bool) {
-	if o == nil || IsNil(o.NodeKind) {
+	if o == nil {
 		return nil, false
 	}
-	return o.NodeKind, true
+	return o.NodeKind.Get(), o.NodeKind.IsSet()
 }
 
 // HasNodeKind returns a boolean if a field has been set.
 func (o *PropertyInfo) HasNodeKind() bool {
-	if o != nil && !IsNil(o.NodeKind) {
+	if o != nil && o.NodeKind.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetNodeKind gets a reference to the given string and assigns it to the NodeKind field.
+// SetNodeKind gets a reference to the given NullableString and assigns it to the NodeKind field.
 func (o *PropertyInfo) SetNodeKind(v string) {
-	o.NodeKind = &v
+	o.NodeKind.Set(&v)
 }
 
-// GetNodeKinds returns the NodeKinds field value if set, zero value otherwise.
+// SetNodeKindNil sets the value for NodeKind to be an explicit nil
+func (o *PropertyInfo) SetNodeKindNil() {
+	o.NodeKind.Set(nil)
+}
+
+// UnsetNodeKind ensures that no value is present for NodeKind, not even an explicit nil
+func (o *PropertyInfo) UnsetNodeKind() {
+	o.NodeKind.Unset()
+}
+
+// GetNodeKinds returns the NodeKinds field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetNodeKinds() []string {
-	if o == nil || IsNil(o.NodeKinds) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -224,6 +247,7 @@ func (o *PropertyInfo) GetNodeKinds() []string {
 
 // GetNodeKindsOk returns a tuple with the NodeKinds field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetNodeKindsOk() ([]string, bool) {
 	if o == nil || IsNil(o.NodeKinds) {
 		return nil, false
@@ -245,41 +269,52 @@ func (o *PropertyInfo) SetNodeKinds(v []string) {
 	o.NodeKinds = v
 }
 
-// GetClassConstraint returns the ClassConstraint field value if set, zero value otherwise.
+// GetClassConstraint returns the ClassConstraint field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetClassConstraint() string {
-	if o == nil || IsNil(o.ClassConstraint) {
+	if o == nil || IsNil(o.ClassConstraint.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.ClassConstraint
+	return *o.ClassConstraint.Get()
 }
 
 // GetClassConstraintOk returns a tuple with the ClassConstraint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetClassConstraintOk() (*string, bool) {
-	if o == nil || IsNil(o.ClassConstraint) {
+	if o == nil {
 		return nil, false
 	}
-	return o.ClassConstraint, true
+	return o.ClassConstraint.Get(), o.ClassConstraint.IsSet()
 }
 
 // HasClassConstraint returns a boolean if a field has been set.
 func (o *PropertyInfo) HasClassConstraint() bool {
-	if o != nil && !IsNil(o.ClassConstraint) {
+	if o != nil && o.ClassConstraint.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetClassConstraint gets a reference to the given string and assigns it to the ClassConstraint field.
+// SetClassConstraint gets a reference to the given NullableString and assigns it to the ClassConstraint field.
 func (o *PropertyInfo) SetClassConstraint(v string) {
-	o.ClassConstraint = &v
+	o.ClassConstraint.Set(&v)
 }
 
-// GetClassConstraints returns the ClassConstraints field value if set, zero value otherwise.
+// SetClassConstraintNil sets the value for ClassConstraint to be an explicit nil
+func (o *PropertyInfo) SetClassConstraintNil() {
+	o.ClassConstraint.Set(nil)
+}
+
+// UnsetClassConstraint ensures that no value is present for ClassConstraint, not even an explicit nil
+func (o *PropertyInfo) UnsetClassConstraint() {
+	o.ClassConstraint.Unset()
+}
+
+// GetClassConstraints returns the ClassConstraints field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetClassConstraints() []string {
-	if o == nil || IsNil(o.ClassConstraints) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -288,6 +323,7 @@ func (o *PropertyInfo) GetClassConstraints() []string {
 
 // GetClassConstraintsOk returns a tuple with the ClassConstraints field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetClassConstraintsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ClassConstraints) {
 		return nil, false
@@ -309,41 +345,52 @@ func (o *PropertyInfo) SetClassConstraints(v []string) {
 	o.ClassConstraints = v
 }
 
-// GetNodeShapeRef returns the NodeShapeRef field value if set, zero value otherwise.
+// GetNodeShapeRef returns the NodeShapeRef field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetNodeShapeRef() string {
-	if o == nil || IsNil(o.NodeShapeRef) {
+	if o == nil || IsNil(o.NodeShapeRef.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.NodeShapeRef
+	return *o.NodeShapeRef.Get()
 }
 
 // GetNodeShapeRefOk returns a tuple with the NodeShapeRef field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetNodeShapeRefOk() (*string, bool) {
-	if o == nil || IsNil(o.NodeShapeRef) {
+	if o == nil {
 		return nil, false
 	}
-	return o.NodeShapeRef, true
+	return o.NodeShapeRef.Get(), o.NodeShapeRef.IsSet()
 }
 
 // HasNodeShapeRef returns a boolean if a field has been set.
 func (o *PropertyInfo) HasNodeShapeRef() bool {
-	if o != nil && !IsNil(o.NodeShapeRef) {
+	if o != nil && o.NodeShapeRef.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetNodeShapeRef gets a reference to the given string and assigns it to the NodeShapeRef field.
+// SetNodeShapeRef gets a reference to the given NullableString and assigns it to the NodeShapeRef field.
 func (o *PropertyInfo) SetNodeShapeRef(v string) {
-	o.NodeShapeRef = &v
+	o.NodeShapeRef.Set(&v)
 }
 
-// GetNodeShapeRefs returns the NodeShapeRefs field value if set, zero value otherwise.
+// SetNodeShapeRefNil sets the value for NodeShapeRef to be an explicit nil
+func (o *PropertyInfo) SetNodeShapeRefNil() {
+	o.NodeShapeRef.Set(nil)
+}
+
+// UnsetNodeShapeRef ensures that no value is present for NodeShapeRef, not even an explicit nil
+func (o *PropertyInfo) UnsetNodeShapeRef() {
+	o.NodeShapeRef.Unset()
+}
+
+// GetNodeShapeRefs returns the NodeShapeRefs field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetNodeShapeRefs() []string {
-	if o == nil || IsNil(o.NodeShapeRefs) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -352,6 +399,7 @@ func (o *PropertyInfo) GetNodeShapeRefs() []string {
 
 // GetNodeShapeRefsOk returns a tuple with the NodeShapeRefs field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetNodeShapeRefsOk() ([]string, bool) {
 	if o == nil || IsNil(o.NodeShapeRefs) {
 		return nil, false
@@ -373,68 +421,90 @@ func (o *PropertyInfo) SetNodeShapeRefs(v []string) {
 	o.NodeShapeRefs = v
 }
 
-// GetMinCount returns the MinCount field value if set, zero value otherwise.
+// GetMinCount returns the MinCount field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetMinCount() int32 {
-	if o == nil || IsNil(o.MinCount) {
+	if o == nil || IsNil(o.MinCount.Get()) {
 		var ret int32
 		return ret
 	}
-	return *o.MinCount
+	return *o.MinCount.Get()
 }
 
 // GetMinCountOk returns a tuple with the MinCount field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetMinCountOk() (*int32, bool) {
-	if o == nil || IsNil(o.MinCount) {
+	if o == nil {
 		return nil, false
 	}
-	return o.MinCount, true
+	return o.MinCount.Get(), o.MinCount.IsSet()
 }
 
 // HasMinCount returns a boolean if a field has been set.
 func (o *PropertyInfo) HasMinCount() bool {
-	if o != nil && !IsNil(o.MinCount) {
+	if o != nil && o.MinCount.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetMinCount gets a reference to the given int32 and assigns it to the MinCount field.
+// SetMinCount gets a reference to the given NullableInt32 and assigns it to the MinCount field.
 func (o *PropertyInfo) SetMinCount(v int32) {
-	o.MinCount = &v
+	o.MinCount.Set(&v)
 }
 
-// GetMaxCount returns the MaxCount field value if set, zero value otherwise.
+// SetMinCountNil sets the value for MinCount to be an explicit nil
+func (o *PropertyInfo) SetMinCountNil() {
+	o.MinCount.Set(nil)
+}
+
+// UnsetMinCount ensures that no value is present for MinCount, not even an explicit nil
+func (o *PropertyInfo) UnsetMinCount() {
+	o.MinCount.Unset()
+}
+
+// GetMaxCount returns the MaxCount field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetMaxCount() int32 {
-	if o == nil || IsNil(o.MaxCount) {
+	if o == nil || IsNil(o.MaxCount.Get()) {
 		var ret int32
 		return ret
 	}
-	return *o.MaxCount
+	return *o.MaxCount.Get()
 }
 
 // GetMaxCountOk returns a tuple with the MaxCount field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetMaxCountOk() (*int32, bool) {
-	if o == nil || IsNil(o.MaxCount) {
+	if o == nil {
 		return nil, false
 	}
-	return o.MaxCount, true
+	return o.MaxCount.Get(), o.MaxCount.IsSet()
 }
 
 // HasMaxCount returns a boolean if a field has been set.
 func (o *PropertyInfo) HasMaxCount() bool {
-	if o != nil && !IsNil(o.MaxCount) {
+	if o != nil && o.MaxCount.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetMaxCount gets a reference to the given int32 and assigns it to the MaxCount field.
+// SetMaxCount gets a reference to the given NullableInt32 and assigns it to the MaxCount field.
 func (o *PropertyInfo) SetMaxCount(v int32) {
-	o.MaxCount = &v
+	o.MaxCount.Set(&v)
+}
+
+// SetMaxCountNil sets the value for MaxCount to be an explicit nil
+func (o *PropertyInfo) SetMaxCountNil() {
+	o.MaxCount.Set(nil)
+}
+
+// UnsetMaxCount ensures that no value is present for MaxCount, not even an explicit nil
+func (o *PropertyInfo) UnsetMaxCount() {
+	o.MaxCount.Unset()
 }
 
 // GetRequired returns the Required field value
@@ -485,105 +555,138 @@ func (o *PropertyInfo) SetRecommended(v bool) {
 	o.Recommended = v
 }
 
-// GetPattern returns the Pattern field value if set, zero value otherwise.
+// GetPattern returns the Pattern field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetPattern() string {
-	if o == nil || IsNil(o.Pattern) {
+	if o == nil || IsNil(o.Pattern.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Pattern
+	return *o.Pattern.Get()
 }
 
 // GetPatternOk returns a tuple with the Pattern field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetPatternOk() (*string, bool) {
-	if o == nil || IsNil(o.Pattern) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Pattern, true
+	return o.Pattern.Get(), o.Pattern.IsSet()
 }
 
 // HasPattern returns a boolean if a field has been set.
 func (o *PropertyInfo) HasPattern() bool {
-	if o != nil && !IsNil(o.Pattern) {
+	if o != nil && o.Pattern.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetPattern gets a reference to the given string and assigns it to the Pattern field.
+// SetPattern gets a reference to the given NullableString and assigns it to the Pattern field.
 func (o *PropertyInfo) SetPattern(v string) {
-	o.Pattern = &v
+	o.Pattern.Set(&v)
 }
 
-// GetMinLength returns the MinLength field value if set, zero value otherwise.
+// SetPatternNil sets the value for Pattern to be an explicit nil
+func (o *PropertyInfo) SetPatternNil() {
+	o.Pattern.Set(nil)
+}
+
+// UnsetPattern ensures that no value is present for Pattern, not even an explicit nil
+func (o *PropertyInfo) UnsetPattern() {
+	o.Pattern.Unset()
+}
+
+// GetMinLength returns the MinLength field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetMinLength() int32 {
-	if o == nil || IsNil(o.MinLength) {
+	if o == nil || IsNil(o.MinLength.Get()) {
 		var ret int32
 		return ret
 	}
-	return *o.MinLength
+	return *o.MinLength.Get()
 }
 
 // GetMinLengthOk returns a tuple with the MinLength field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetMinLengthOk() (*int32, bool) {
-	if o == nil || IsNil(o.MinLength) {
+	if o == nil {
 		return nil, false
 	}
-	return o.MinLength, true
+	return o.MinLength.Get(), o.MinLength.IsSet()
 }
 
 // HasMinLength returns a boolean if a field has been set.
 func (o *PropertyInfo) HasMinLength() bool {
-	if o != nil && !IsNil(o.MinLength) {
+	if o != nil && o.MinLength.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetMinLength gets a reference to the given int32 and assigns it to the MinLength field.
+// SetMinLength gets a reference to the given NullableInt32 and assigns it to the MinLength field.
 func (o *PropertyInfo) SetMinLength(v int32) {
-	o.MinLength = &v
+	o.MinLength.Set(&v)
 }
 
-// GetMaxLength returns the MaxLength field value if set, zero value otherwise.
+// SetMinLengthNil sets the value for MinLength to be an explicit nil
+func (o *PropertyInfo) SetMinLengthNil() {
+	o.MinLength.Set(nil)
+}
+
+// UnsetMinLength ensures that no value is present for MinLength, not even an explicit nil
+func (o *PropertyInfo) UnsetMinLength() {
+	o.MinLength.Unset()
+}
+
+// GetMaxLength returns the MaxLength field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetMaxLength() int32 {
-	if o == nil || IsNil(o.MaxLength) {
+	if o == nil || IsNil(o.MaxLength.Get()) {
 		var ret int32
 		return ret
 	}
-	return *o.MaxLength
+	return *o.MaxLength.Get()
 }
 
 // GetMaxLengthOk returns a tuple with the MaxLength field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetMaxLengthOk() (*int32, bool) {
-	if o == nil || IsNil(o.MaxLength) {
+	if o == nil {
 		return nil, false
 	}
-	return o.MaxLength, true
+	return o.MaxLength.Get(), o.MaxLength.IsSet()
 }
 
 // HasMaxLength returns a boolean if a field has been set.
 func (o *PropertyInfo) HasMaxLength() bool {
-	if o != nil && !IsNil(o.MaxLength) {
+	if o != nil && o.MaxLength.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetMaxLength gets a reference to the given int32 and assigns it to the MaxLength field.
+// SetMaxLength gets a reference to the given NullableInt32 and assigns it to the MaxLength field.
 func (o *PropertyInfo) SetMaxLength(v int32) {
-	o.MaxLength = &v
+	o.MaxLength.Set(&v)
 }
 
-// GetHasValueIn returns the HasValueIn field value if set, zero value otherwise.
+// SetMaxLengthNil sets the value for MaxLength to be an explicit nil
+func (o *PropertyInfo) SetMaxLengthNil() {
+	o.MaxLength.Set(nil)
+}
+
+// UnsetMaxLength ensures that no value is present for MaxLength, not even an explicit nil
+func (o *PropertyInfo) UnsetMaxLength() {
+	o.MaxLength.Unset()
+}
+
+// GetHasValueIn returns the HasValueIn field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetHasValueIn() []string {
-	if o == nil || IsNil(o.HasValueIn) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -592,6 +695,7 @@ func (o *PropertyInfo) GetHasValueIn() []string {
 
 // GetHasValueInOk returns a tuple with the HasValueIn field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetHasValueInOk() ([]string, bool) {
 	if o == nil || IsNil(o.HasValueIn) {
 		return nil, false
@@ -613,41 +717,52 @@ func (o *PropertyInfo) SetHasValueIn(v []string) {
 	o.HasValueIn = v
 }
 
-// GetSeverity returns the Severity field value if set, zero value otherwise.
+// GetSeverity returns the Severity field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetSeverity() string {
-	if o == nil || IsNil(o.Severity) {
+	if o == nil || IsNil(o.Severity.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Severity
+	return *o.Severity.Get()
 }
 
 // GetSeverityOk returns a tuple with the Severity field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetSeverityOk() (*string, bool) {
-	if o == nil || IsNil(o.Severity) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Severity, true
+	return o.Severity.Get(), o.Severity.IsSet()
 }
 
 // HasSeverity returns a boolean if a field has been set.
 func (o *PropertyInfo) HasSeverity() bool {
-	if o != nil && !IsNil(o.Severity) {
+	if o != nil && o.Severity.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetSeverity gets a reference to the given string and assigns it to the Severity field.
+// SetSeverity gets a reference to the given NullableString and assigns it to the Severity field.
 func (o *PropertyInfo) SetSeverity(v string) {
-	o.Severity = &v
+	o.Severity.Set(&v)
 }
 
-// GetSeverities returns the Severities field value if set, zero value otherwise.
+// SetSeverityNil sets the value for Severity to be an explicit nil
+func (o *PropertyInfo) SetSeverityNil() {
+	o.Severity.Set(nil)
+}
+
+// UnsetSeverity ensures that no value is present for Severity, not even an explicit nil
+func (o *PropertyInfo) UnsetSeverity() {
+	o.Severity.Unset()
+}
+
+// GetSeverities returns the Severities field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetSeverities() []string {
-	if o == nil || IsNil(o.Severities) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -656,6 +771,7 @@ func (o *PropertyInfo) GetSeverities() []string {
 
 // GetSeveritiesOk returns a tuple with the Severities field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetSeveritiesOk() ([]string, bool) {
 	if o == nil || IsNil(o.Severities) {
 		return nil, false
@@ -677,68 +793,90 @@ func (o *PropertyInfo) SetSeverities(v []string) {
 	o.Severities = v
 }
 
-// GetHelpText returns the HelpText field value if set, zero value otherwise.
+// GetHelpText returns the HelpText field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetHelpText() string {
-	if o == nil || IsNil(o.HelpText) {
+	if o == nil || IsNil(o.HelpText.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.HelpText
+	return *o.HelpText.Get()
 }
 
 // GetHelpTextOk returns a tuple with the HelpText field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetHelpTextOk() (*string, bool) {
-	if o == nil || IsNil(o.HelpText) {
+	if o == nil {
 		return nil, false
 	}
-	return o.HelpText, true
+	return o.HelpText.Get(), o.HelpText.IsSet()
 }
 
 // HasHelpText returns a boolean if a field has been set.
 func (o *PropertyInfo) HasHelpText() bool {
-	if o != nil && !IsNil(o.HelpText) {
+	if o != nil && o.HelpText.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetHelpText gets a reference to the given string and assigns it to the HelpText field.
+// SetHelpText gets a reference to the given NullableString and assigns it to the HelpText field.
 func (o *PropertyInfo) SetHelpText(v string) {
-	o.HelpText = &v
+	o.HelpText.Set(&v)
 }
 
-// GetDescription returns the Description field value if set, zero value otherwise.
+// SetHelpTextNil sets the value for HelpText to be an explicit nil
+func (o *PropertyInfo) SetHelpTextNil() {
+	o.HelpText.Set(nil)
+}
+
+// UnsetHelpText ensures that no value is present for HelpText, not even an explicit nil
+func (o *PropertyInfo) UnsetHelpText() {
+	o.HelpText.Unset()
+}
+
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *PropertyInfo) GetDescription() string {
-	if o == nil || IsNil(o.Description) {
+	if o == nil || IsNil(o.Description.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Description
+	return *o.Description.Get()
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *PropertyInfo) GetDescriptionOk() (*string, bool) {
-	if o == nil || IsNil(o.Description) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Description, true
+	return o.Description.Get(), o.Description.IsSet()
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *PropertyInfo) HasDescription() bool {
-	if o != nil && !IsNil(o.Description) {
+	if o != nil && o.Description.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given string and assigns it to the Description field.
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
 func (o *PropertyInfo) SetDescription(v string) {
-	o.Description = &v
+	o.Description.Set(&v)
+}
+
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *PropertyInfo) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *PropertyInfo) UnsetDescription() {
+	o.Description.Unset()
 }
 
 func (o PropertyInfo) MarshalJSON() ([]byte, error) {
@@ -753,61 +891,61 @@ func (o PropertyInfo) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["path"] = o.Path
 	toSerialize["name"] = o.Name
-	if !IsNil(o.Datatype) {
-		toSerialize["datatype"] = o.Datatype
+	if o.Datatype.IsSet() {
+		toSerialize["datatype"] = o.Datatype.Get()
 	}
-	if !IsNil(o.Datatypes) {
+	if o.Datatypes != nil {
 		toSerialize["datatypes"] = o.Datatypes
 	}
-	if !IsNil(o.NodeKind) {
-		toSerialize["nodeKind"] = o.NodeKind
+	if o.NodeKind.IsSet() {
+		toSerialize["nodeKind"] = o.NodeKind.Get()
 	}
-	if !IsNil(o.NodeKinds) {
+	if o.NodeKinds != nil {
 		toSerialize["nodeKinds"] = o.NodeKinds
 	}
-	if !IsNil(o.ClassConstraint) {
-		toSerialize["classConstraint"] = o.ClassConstraint
+	if o.ClassConstraint.IsSet() {
+		toSerialize["classConstraint"] = o.ClassConstraint.Get()
 	}
-	if !IsNil(o.ClassConstraints) {
+	if o.ClassConstraints != nil {
 		toSerialize["classConstraints"] = o.ClassConstraints
 	}
-	if !IsNil(o.NodeShapeRef) {
-		toSerialize["nodeShapeRef"] = o.NodeShapeRef
+	if o.NodeShapeRef.IsSet() {
+		toSerialize["nodeShapeRef"] = o.NodeShapeRef.Get()
 	}
-	if !IsNil(o.NodeShapeRefs) {
+	if o.NodeShapeRefs != nil {
 		toSerialize["nodeShapeRefs"] = o.NodeShapeRefs
 	}
-	if !IsNil(o.MinCount) {
-		toSerialize["minCount"] = o.MinCount
+	if o.MinCount.IsSet() {
+		toSerialize["minCount"] = o.MinCount.Get()
 	}
-	if !IsNil(o.MaxCount) {
-		toSerialize["maxCount"] = o.MaxCount
+	if o.MaxCount.IsSet() {
+		toSerialize["maxCount"] = o.MaxCount.Get()
 	}
 	toSerialize["required"] = o.Required
 	toSerialize["recommended"] = o.Recommended
-	if !IsNil(o.Pattern) {
-		toSerialize["pattern"] = o.Pattern
+	if o.Pattern.IsSet() {
+		toSerialize["pattern"] = o.Pattern.Get()
 	}
-	if !IsNil(o.MinLength) {
-		toSerialize["minLength"] = o.MinLength
+	if o.MinLength.IsSet() {
+		toSerialize["minLength"] = o.MinLength.Get()
 	}
-	if !IsNil(o.MaxLength) {
-		toSerialize["maxLength"] = o.MaxLength
+	if o.MaxLength.IsSet() {
+		toSerialize["maxLength"] = o.MaxLength.Get()
 	}
-	if !IsNil(o.HasValueIn) {
+	if o.HasValueIn != nil {
 		toSerialize["hasValueIn"] = o.HasValueIn
 	}
-	if !IsNil(o.Severity) {
-		toSerialize["severity"] = o.Severity
+	if o.Severity.IsSet() {
+		toSerialize["severity"] = o.Severity.Get()
 	}
-	if !IsNil(o.Severities) {
+	if o.Severities != nil {
 		toSerialize["severities"] = o.Severities
 	}
-	if !IsNil(o.HelpText) {
-		toSerialize["helpText"] = o.HelpText
+	if o.HelpText.IsSet() {
+		toSerialize["helpText"] = o.HelpText.Get()
 	}
-	if !IsNil(o.Description) {
-		toSerialize["description"] = o.Description
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
 	}
 	return toSerialize, nil
 }

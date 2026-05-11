@@ -92,6 +92,9 @@ All URIs are relative to *http://localhost:8080*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AccessAPI* | [**ApiV2AccessSearchGet**](docs/AccessAPI.md#apiv2accesssearchget) | **Get** /api/v2/access/search | Search resources (access style)
+*AccessAPI* | [**ApiV2AccessSearchShapeGet**](docs/AccessAPI.md#apiv2accesssearchshapeget) | **Get** /api/v2/access/search/{shape} | Search resources by shape
+*AccessAPI* | [**ApiV2AccessShapeIdGet**](docs/AccessAPI.md#apiv2accessshapeidget) | **Get** /api/v2/access/{shape}/{id} | Access shape resources and details
 *AdminAPI* | [**ApiV2AdminImportRevisionContentPost**](docs/AdminAPI.md#apiv2adminimportrevisioncontentpost) | **Post** /api/v2/admin/import/revision/content | Import metadata revisions from TTL content
 *AdminAPI* | [**ApiV2AdminImportRevisionFilePost**](docs/AdminAPI.md#apiv2adminimportrevisionfilepost) | **Post** /api/v2/admin/import/revision/file | Import metadata revisions from URL or local TTL file
 *AdminAPI* | [**ApiV2AdminPopulateContentPost**](docs/AdminAPI.md#apiv2adminpopulatecontentpost) | **Post** /api/v2/admin/populate/content | Populate from TTL content
@@ -102,10 +105,6 @@ Class | Method | HTTP request | Description
 *AdminAPI* | [**ApiV2ResourceTypeIdRepairPost**](docs/AdminAPI.md#apiv2resourcetypeidrepairpost) | **Post** /api/v2/{resourceType}/{id}/repair | Repair entity metadata
 *BatchAPI* | [**ApiV2BatchPublishPost**](docs/BatchAPI.md#apiv2batchpublishpost) | **Post** /api/v2/batch/publish | Batch publish entities
 *BatchAPI* | [**ApiV2BatchSubmitPost**](docs/BatchAPI.md#apiv2batchsubmitpost) | **Post** /api/v2/batch/submit | Batch submit entities
-*CategoriesAPI* | [**GetCategoryById**](docs/CategoriesAPI.md#getcategorybyid) | **Get** /api/v2/category/{id} | Get category by id
-*CategoriesAPI* | [**GetCategoryTree**](docs/CategoriesAPI.md#getcategorytree) | **Get** /api/v2/category | Get full category tree
-*DatasetsAPI* | [**GetDatasetById**](docs/DatasetsAPI.md#getdatasetbyid) | **Get** /api/v2/dataset/{id} | Get dataset by id
-*DistributionsAPI* | [**GetDistributionById**](docs/DistributionsAPI.md#getdistributionbyid) | **Get** /api/v2/distribution/{id} | Get distribution by id
 *LifecycleAPI* | [**ApiV2ResourceTypeIdDraftPost**](docs/LifecycleAPI.md#apiv2resourcetypeiddraftpost) | **Post** /api/v2/{resourceType}/{id}/draft | Create new draft from published
 *LifecycleAPI* | [**ApiV2ResourceTypeIdPublishPost**](docs/LifecycleAPI.md#apiv2resourcetypeidpublishpost) | **Post** /api/v2/{resourceType}/{id}/publish | Publish entity
 *LifecycleAPI* | [**ApiV2ResourceTypeIdSubmitPost**](docs/LifecycleAPI.md#apiv2resourcetypeidsubmitpost) | **Post** /api/v2/{resourceType}/{id}/submit | Submit for review
@@ -118,8 +117,6 @@ Class | Method | HTTP request | Description
 *ResourcesAPI* | [**ApiV2ResourceTypePost**](docs/ResourcesAPI.md#apiv2resourcetypepost) | **Post** /api/v2/{resourceType} | Create new entity (DRAFT)
 *SPARQLAPI* | [**ApiV2SparqlPost**](docs/SPARQLAPI.md#apiv2sparqlpost) | **Post** /api/v2/sparql | Execute SPARQL query
 *SearchAPI* | [**SearchMetadata**](docs/SearchAPI.md#searchmetadata) | **Get** /api/v2/search | Search metadata resources
-*SoftwareApplicationsAPI* | [**GetSoftwareApplicationById**](docs/SoftwareApplicationsAPI.md#getsoftwareapplicationbyid) | **Get** /api/v2/software-application/{id} | Get software application by id
-*SoftwareSourceCodesAPI* | [**GetSoftwareSourceCodeById**](docs/SoftwareSourceCodesAPI.md#getsoftwaresourcecodebyid) | **Get** /api/v2/software-source-code/{id} | Get software source code by id
 *SystemAPI* | [**ApiV2ResourceTypesGet**](docs/SystemAPI.md#apiv2resourcetypesget) | **Get** /api/v2/resource-types | List resource types
 *SystemAPI* | [**HealthGet**](docs/SystemAPI.md#healthget) | **Get** /health | Health check
 *VersioningAPI* | [**ApiV2ResourceTypeIdHistoryGet**](docs/VersioningAPI.md#apiv2resourcetypeidhistoryget) | **Get** /api/v2/{resourceType}/{id}/history | Version history

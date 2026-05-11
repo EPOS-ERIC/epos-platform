@@ -40,6 +40,11 @@ type SearchAPI interface {
 		Parameters like `type`, `keywords`, `serviceProvider`, and `versioningStatus` accept
 		multiple values by repeating the parameter: `?type=dataset&type=distribution`
 
+		**SHACL-driven property filters:**
+		Any non-reserved query parameter is interpreted as a property filter when it matches
+		a NodeShape property local name or full IRI for the selected type(s).
+		You can also use `filter.<propertyName>=value`.
+
 
 			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 			@return ApiSearchMetadataRequest
@@ -150,6 +155,11 @@ endpoint; clients should follow that link rather than construct URLs themselves.
 **Multi-value Parameters:**
 Parameters like `type`, `keywords`, `serviceProvider`, and `versioningStatus` accept
 multiple values by repeating the parameter: `?type=dataset&type=distribution`
+
+**SHACL-driven property filters:**
+Any non-reserved query parameter is interpreted as a property filter when it matches
+a NodeShape property local name or full IRI for the selected type(s).
+You can also use `filter.<propertyName>=value`.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiSearchMetadataRequest

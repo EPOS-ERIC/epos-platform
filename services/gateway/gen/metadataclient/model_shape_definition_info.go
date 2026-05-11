@@ -26,19 +26,19 @@ type ShapeDefinitionInfo struct {
 	TargetClasses             []string       `json:"targetClasses"`
 	Properties                []PropertyInfo `json:"properties"`
 	ResolvedRefs              []string       `json:"resolvedRefs,omitempty"`
-	Name                      *string        `json:"name,omitempty"`
-	Datatype                  *string        `json:"datatype,omitempty"`
+	Name                      NullableString `json:"name,omitempty"`
+	Datatype                  NullableString `json:"datatype,omitempty"`
 	Datatypes                 []string       `json:"datatypes,omitempty"`
-	NodeKind                  *string        `json:"nodeKind,omitempty"`
+	NodeKind                  NullableString `json:"nodeKind,omitempty"`
 	NodeKinds                 []string       `json:"nodeKinds,omitempty"`
-	ClassConstraint           *string        `json:"classConstraint,omitempty"`
+	ClassConstraint           NullableString `json:"classConstraint,omitempty"`
 	ClassConstraints          []string       `json:"classConstraints,omitempty"`
-	NodeShapeRef              *string        `json:"nodeShapeRef,omitempty"`
+	NodeShapeRef              NullableString `json:"nodeShapeRef,omitempty"`
 	NodeShapeRefs             []string       `json:"nodeShapeRefs,omitempty"`
 	OntologyEquivalentClasses []string       `json:"ontologyEquivalentClasses,omitempty"`
 	OntologySubClassesOf      []string       `json:"ontologySubClassesOf,omitempty"`
 	Closed                    bool           `json:"closed"`
-	Description               *string        `json:"description,omitempty"`
+	Description               NullableString `json:"description,omitempty"`
 }
 
 type _ShapeDefinitionInfo ShapeDefinitionInfo
@@ -136,9 +136,9 @@ func (o *ShapeDefinitionInfo) SetProperties(v []PropertyInfo) {
 	o.Properties = v
 }
 
-// GetResolvedRefs returns the ResolvedRefs field value if set, zero value otherwise.
+// GetResolvedRefs returns the ResolvedRefs field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetResolvedRefs() []string {
-	if o == nil || IsNil(o.ResolvedRefs) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -147,6 +147,7 @@ func (o *ShapeDefinitionInfo) GetResolvedRefs() []string {
 
 // GetResolvedRefsOk returns a tuple with the ResolvedRefs field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetResolvedRefsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ResolvedRefs) {
 		return nil, false
@@ -168,73 +169,95 @@ func (o *ShapeDefinitionInfo) SetResolvedRefs(v []string) {
 	o.ResolvedRefs = v
 }
 
-// GetName returns the Name field value if set, zero value otherwise.
+// GetName returns the Name field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetName() string {
-	if o == nil || IsNil(o.Name) {
+	if o == nil || IsNil(o.Name.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Name
+	return *o.Name.Get()
 }
 
 // GetNameOk returns a tuple with the Name field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetNameOk() (*string, bool) {
-	if o == nil || IsNil(o.Name) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Name, true
+	return o.Name.Get(), o.Name.IsSet()
 }
 
 // HasName returns a boolean if a field has been set.
 func (o *ShapeDefinitionInfo) HasName() bool {
-	if o != nil && !IsNil(o.Name) {
+	if o != nil && o.Name.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetName gets a reference to the given string and assigns it to the Name field.
+// SetName gets a reference to the given NullableString and assigns it to the Name field.
 func (o *ShapeDefinitionInfo) SetName(v string) {
-	o.Name = &v
+	o.Name.Set(&v)
 }
 
-// GetDatatype returns the Datatype field value if set, zero value otherwise.
+// SetNameNil sets the value for Name to be an explicit nil
+func (o *ShapeDefinitionInfo) SetNameNil() {
+	o.Name.Set(nil)
+}
+
+// UnsetName ensures that no value is present for Name, not even an explicit nil
+func (o *ShapeDefinitionInfo) UnsetName() {
+	o.Name.Unset()
+}
+
+// GetDatatype returns the Datatype field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetDatatype() string {
-	if o == nil || IsNil(o.Datatype) {
+	if o == nil || IsNil(o.Datatype.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Datatype
+	return *o.Datatype.Get()
 }
 
 // GetDatatypeOk returns a tuple with the Datatype field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetDatatypeOk() (*string, bool) {
-	if o == nil || IsNil(o.Datatype) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Datatype, true
+	return o.Datatype.Get(), o.Datatype.IsSet()
 }
 
 // HasDatatype returns a boolean if a field has been set.
 func (o *ShapeDefinitionInfo) HasDatatype() bool {
-	if o != nil && !IsNil(o.Datatype) {
+	if o != nil && o.Datatype.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetDatatype gets a reference to the given string and assigns it to the Datatype field.
+// SetDatatype gets a reference to the given NullableString and assigns it to the Datatype field.
 func (o *ShapeDefinitionInfo) SetDatatype(v string) {
-	o.Datatype = &v
+	o.Datatype.Set(&v)
 }
 
-// GetDatatypes returns the Datatypes field value if set, zero value otherwise.
+// SetDatatypeNil sets the value for Datatype to be an explicit nil
+func (o *ShapeDefinitionInfo) SetDatatypeNil() {
+	o.Datatype.Set(nil)
+}
+
+// UnsetDatatype ensures that no value is present for Datatype, not even an explicit nil
+func (o *ShapeDefinitionInfo) UnsetDatatype() {
+	o.Datatype.Unset()
+}
+
+// GetDatatypes returns the Datatypes field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetDatatypes() []string {
-	if o == nil || IsNil(o.Datatypes) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -243,6 +266,7 @@ func (o *ShapeDefinitionInfo) GetDatatypes() []string {
 
 // GetDatatypesOk returns a tuple with the Datatypes field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetDatatypesOk() ([]string, bool) {
 	if o == nil || IsNil(o.Datatypes) {
 		return nil, false
@@ -264,41 +288,52 @@ func (o *ShapeDefinitionInfo) SetDatatypes(v []string) {
 	o.Datatypes = v
 }
 
-// GetNodeKind returns the NodeKind field value if set, zero value otherwise.
+// GetNodeKind returns the NodeKind field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetNodeKind() string {
-	if o == nil || IsNil(o.NodeKind) {
+	if o == nil || IsNil(o.NodeKind.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.NodeKind
+	return *o.NodeKind.Get()
 }
 
 // GetNodeKindOk returns a tuple with the NodeKind field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetNodeKindOk() (*string, bool) {
-	if o == nil || IsNil(o.NodeKind) {
+	if o == nil {
 		return nil, false
 	}
-	return o.NodeKind, true
+	return o.NodeKind.Get(), o.NodeKind.IsSet()
 }
 
 // HasNodeKind returns a boolean if a field has been set.
 func (o *ShapeDefinitionInfo) HasNodeKind() bool {
-	if o != nil && !IsNil(o.NodeKind) {
+	if o != nil && o.NodeKind.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetNodeKind gets a reference to the given string and assigns it to the NodeKind field.
+// SetNodeKind gets a reference to the given NullableString and assigns it to the NodeKind field.
 func (o *ShapeDefinitionInfo) SetNodeKind(v string) {
-	o.NodeKind = &v
+	o.NodeKind.Set(&v)
 }
 
-// GetNodeKinds returns the NodeKinds field value if set, zero value otherwise.
+// SetNodeKindNil sets the value for NodeKind to be an explicit nil
+func (o *ShapeDefinitionInfo) SetNodeKindNil() {
+	o.NodeKind.Set(nil)
+}
+
+// UnsetNodeKind ensures that no value is present for NodeKind, not even an explicit nil
+func (o *ShapeDefinitionInfo) UnsetNodeKind() {
+	o.NodeKind.Unset()
+}
+
+// GetNodeKinds returns the NodeKinds field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetNodeKinds() []string {
-	if o == nil || IsNil(o.NodeKinds) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -307,6 +342,7 @@ func (o *ShapeDefinitionInfo) GetNodeKinds() []string {
 
 // GetNodeKindsOk returns a tuple with the NodeKinds field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetNodeKindsOk() ([]string, bool) {
 	if o == nil || IsNil(o.NodeKinds) {
 		return nil, false
@@ -328,41 +364,52 @@ func (o *ShapeDefinitionInfo) SetNodeKinds(v []string) {
 	o.NodeKinds = v
 }
 
-// GetClassConstraint returns the ClassConstraint field value if set, zero value otherwise.
+// GetClassConstraint returns the ClassConstraint field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetClassConstraint() string {
-	if o == nil || IsNil(o.ClassConstraint) {
+	if o == nil || IsNil(o.ClassConstraint.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.ClassConstraint
+	return *o.ClassConstraint.Get()
 }
 
 // GetClassConstraintOk returns a tuple with the ClassConstraint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetClassConstraintOk() (*string, bool) {
-	if o == nil || IsNil(o.ClassConstraint) {
+	if o == nil {
 		return nil, false
 	}
-	return o.ClassConstraint, true
+	return o.ClassConstraint.Get(), o.ClassConstraint.IsSet()
 }
 
 // HasClassConstraint returns a boolean if a field has been set.
 func (o *ShapeDefinitionInfo) HasClassConstraint() bool {
-	if o != nil && !IsNil(o.ClassConstraint) {
+	if o != nil && o.ClassConstraint.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetClassConstraint gets a reference to the given string and assigns it to the ClassConstraint field.
+// SetClassConstraint gets a reference to the given NullableString and assigns it to the ClassConstraint field.
 func (o *ShapeDefinitionInfo) SetClassConstraint(v string) {
-	o.ClassConstraint = &v
+	o.ClassConstraint.Set(&v)
 }
 
-// GetClassConstraints returns the ClassConstraints field value if set, zero value otherwise.
+// SetClassConstraintNil sets the value for ClassConstraint to be an explicit nil
+func (o *ShapeDefinitionInfo) SetClassConstraintNil() {
+	o.ClassConstraint.Set(nil)
+}
+
+// UnsetClassConstraint ensures that no value is present for ClassConstraint, not even an explicit nil
+func (o *ShapeDefinitionInfo) UnsetClassConstraint() {
+	o.ClassConstraint.Unset()
+}
+
+// GetClassConstraints returns the ClassConstraints field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetClassConstraints() []string {
-	if o == nil || IsNil(o.ClassConstraints) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -371,6 +418,7 @@ func (o *ShapeDefinitionInfo) GetClassConstraints() []string {
 
 // GetClassConstraintsOk returns a tuple with the ClassConstraints field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetClassConstraintsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ClassConstraints) {
 		return nil, false
@@ -392,41 +440,52 @@ func (o *ShapeDefinitionInfo) SetClassConstraints(v []string) {
 	o.ClassConstraints = v
 }
 
-// GetNodeShapeRef returns the NodeShapeRef field value if set, zero value otherwise.
+// GetNodeShapeRef returns the NodeShapeRef field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetNodeShapeRef() string {
-	if o == nil || IsNil(o.NodeShapeRef) {
+	if o == nil || IsNil(o.NodeShapeRef.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.NodeShapeRef
+	return *o.NodeShapeRef.Get()
 }
 
 // GetNodeShapeRefOk returns a tuple with the NodeShapeRef field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetNodeShapeRefOk() (*string, bool) {
-	if o == nil || IsNil(o.NodeShapeRef) {
+	if o == nil {
 		return nil, false
 	}
-	return o.NodeShapeRef, true
+	return o.NodeShapeRef.Get(), o.NodeShapeRef.IsSet()
 }
 
 // HasNodeShapeRef returns a boolean if a field has been set.
 func (o *ShapeDefinitionInfo) HasNodeShapeRef() bool {
-	if o != nil && !IsNil(o.NodeShapeRef) {
+	if o != nil && o.NodeShapeRef.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetNodeShapeRef gets a reference to the given string and assigns it to the NodeShapeRef field.
+// SetNodeShapeRef gets a reference to the given NullableString and assigns it to the NodeShapeRef field.
 func (o *ShapeDefinitionInfo) SetNodeShapeRef(v string) {
-	o.NodeShapeRef = &v
+	o.NodeShapeRef.Set(&v)
 }
 
-// GetNodeShapeRefs returns the NodeShapeRefs field value if set, zero value otherwise.
+// SetNodeShapeRefNil sets the value for NodeShapeRef to be an explicit nil
+func (o *ShapeDefinitionInfo) SetNodeShapeRefNil() {
+	o.NodeShapeRef.Set(nil)
+}
+
+// UnsetNodeShapeRef ensures that no value is present for NodeShapeRef, not even an explicit nil
+func (o *ShapeDefinitionInfo) UnsetNodeShapeRef() {
+	o.NodeShapeRef.Unset()
+}
+
+// GetNodeShapeRefs returns the NodeShapeRefs field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetNodeShapeRefs() []string {
-	if o == nil || IsNil(o.NodeShapeRefs) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -435,6 +494,7 @@ func (o *ShapeDefinitionInfo) GetNodeShapeRefs() []string {
 
 // GetNodeShapeRefsOk returns a tuple with the NodeShapeRefs field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetNodeShapeRefsOk() ([]string, bool) {
 	if o == nil || IsNil(o.NodeShapeRefs) {
 		return nil, false
@@ -456,9 +516,9 @@ func (o *ShapeDefinitionInfo) SetNodeShapeRefs(v []string) {
 	o.NodeShapeRefs = v
 }
 
-// GetOntologyEquivalentClasses returns the OntologyEquivalentClasses field value if set, zero value otherwise.
+// GetOntologyEquivalentClasses returns the OntologyEquivalentClasses field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetOntologyEquivalentClasses() []string {
-	if o == nil || IsNil(o.OntologyEquivalentClasses) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -467,6 +527,7 @@ func (o *ShapeDefinitionInfo) GetOntologyEquivalentClasses() []string {
 
 // GetOntologyEquivalentClassesOk returns a tuple with the OntologyEquivalentClasses field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetOntologyEquivalentClassesOk() ([]string, bool) {
 	if o == nil || IsNil(o.OntologyEquivalentClasses) {
 		return nil, false
@@ -488,9 +549,9 @@ func (o *ShapeDefinitionInfo) SetOntologyEquivalentClasses(v []string) {
 	o.OntologyEquivalentClasses = v
 }
 
-// GetOntologySubClassesOf returns the OntologySubClassesOf field value if set, zero value otherwise.
+// GetOntologySubClassesOf returns the OntologySubClassesOf field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetOntologySubClassesOf() []string {
-	if o == nil || IsNil(o.OntologySubClassesOf) {
+	if o == nil {
 		var ret []string
 		return ret
 	}
@@ -499,6 +560,7 @@ func (o *ShapeDefinitionInfo) GetOntologySubClassesOf() []string {
 
 // GetOntologySubClassesOfOk returns a tuple with the OntologySubClassesOf field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetOntologySubClassesOfOk() ([]string, bool) {
 	if o == nil || IsNil(o.OntologySubClassesOf) {
 		return nil, false
@@ -544,36 +606,47 @@ func (o *ShapeDefinitionInfo) SetClosed(v bool) {
 	o.Closed = v
 }
 
-// GetDescription returns the Description field value if set, zero value otherwise.
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ShapeDefinitionInfo) GetDescription() string {
-	if o == nil || IsNil(o.Description) {
+	if o == nil || IsNil(o.Description.Get()) {
 		var ret string
 		return ret
 	}
-	return *o.Description
+	return *o.Description.Get()
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ShapeDefinitionInfo) GetDescriptionOk() (*string, bool) {
-	if o == nil || IsNil(o.Description) {
+	if o == nil {
 		return nil, false
 	}
-	return o.Description, true
+	return o.Description.Get(), o.Description.IsSet()
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *ShapeDefinitionInfo) HasDescription() bool {
-	if o != nil && !IsNil(o.Description) {
+	if o != nil && o.Description.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given string and assigns it to the Description field.
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
 func (o *ShapeDefinitionInfo) SetDescription(v string) {
-	o.Description = &v
+	o.Description.Set(&v)
+}
+
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *ShapeDefinitionInfo) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *ShapeDefinitionInfo) UnsetDescription() {
+	o.Description.Unset()
 }
 
 func (o ShapeDefinitionInfo) MarshalJSON() ([]byte, error) {
@@ -589,45 +662,45 @@ func (o ShapeDefinitionInfo) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["targetClasses"] = o.TargetClasses
 	toSerialize["properties"] = o.Properties
-	if !IsNil(o.ResolvedRefs) {
+	if o.ResolvedRefs != nil {
 		toSerialize["resolvedRefs"] = o.ResolvedRefs
 	}
-	if !IsNil(o.Name) {
-		toSerialize["name"] = o.Name
+	if o.Name.IsSet() {
+		toSerialize["name"] = o.Name.Get()
 	}
-	if !IsNil(o.Datatype) {
-		toSerialize["datatype"] = o.Datatype
+	if o.Datatype.IsSet() {
+		toSerialize["datatype"] = o.Datatype.Get()
 	}
-	if !IsNil(o.Datatypes) {
+	if o.Datatypes != nil {
 		toSerialize["datatypes"] = o.Datatypes
 	}
-	if !IsNil(o.NodeKind) {
-		toSerialize["nodeKind"] = o.NodeKind
+	if o.NodeKind.IsSet() {
+		toSerialize["nodeKind"] = o.NodeKind.Get()
 	}
-	if !IsNil(o.NodeKinds) {
+	if o.NodeKinds != nil {
 		toSerialize["nodeKinds"] = o.NodeKinds
 	}
-	if !IsNil(o.ClassConstraint) {
-		toSerialize["classConstraint"] = o.ClassConstraint
+	if o.ClassConstraint.IsSet() {
+		toSerialize["classConstraint"] = o.ClassConstraint.Get()
 	}
-	if !IsNil(o.ClassConstraints) {
+	if o.ClassConstraints != nil {
 		toSerialize["classConstraints"] = o.ClassConstraints
 	}
-	if !IsNil(o.NodeShapeRef) {
-		toSerialize["nodeShapeRef"] = o.NodeShapeRef
+	if o.NodeShapeRef.IsSet() {
+		toSerialize["nodeShapeRef"] = o.NodeShapeRef.Get()
 	}
-	if !IsNil(o.NodeShapeRefs) {
+	if o.NodeShapeRefs != nil {
 		toSerialize["nodeShapeRefs"] = o.NodeShapeRefs
 	}
-	if !IsNil(o.OntologyEquivalentClasses) {
+	if o.OntologyEquivalentClasses != nil {
 		toSerialize["ontologyEquivalentClasses"] = o.OntologyEquivalentClasses
 	}
-	if !IsNil(o.OntologySubClassesOf) {
+	if o.OntologySubClassesOf != nil {
 		toSerialize["ontologySubClassesOf"] = o.OntologySubClassesOf
 	}
 	toSerialize["closed"] = o.Closed
-	if !IsNil(o.Description) {
-		toSerialize["description"] = o.Description
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
 	}
 	return toSerialize, nil
 }

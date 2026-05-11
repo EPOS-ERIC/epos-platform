@@ -192,7 +192,7 @@ class ShaclService(
             throw IllegalStateException(
                 "SHACL graph is not configured and global discovery is disabled. " +
                     "Set EPOS_SHACL_GRAPH or custom.shacl.graph, " +
-                    "or enable custom.shacl.allowGlobalDiscovery=true"
+                    "or enable custom.shacl.allowGlobalDiscovery=true",
             )
         }
 
@@ -231,9 +231,8 @@ class ShaclService(
         )
     }
 
-    private fun resolveConfiguredShaclGraph(shaclUrl: String?): String? {
-        return shaclUrl ?: System.getenv("EPOS_SHACL_GRAPH") ?: (Config["shacl.graph"] as? String)
-    }
+    private fun resolveConfiguredShaclGraph(shaclUrl: String?): String? =
+        shaclUrl ?: System.getenv("EPOS_SHACL_GRAPH") ?: (Config["shacl.graph"] as? String)
 
     private fun resolveLocalShaclFile(): String? {
         val envFile = System.getenv("EPOS_SHACL_FILE")
@@ -297,13 +296,16 @@ class ShaclService(
             )
 
         val propertiesByShape =
-            propertyRows.groupBy { it["shape"].orEmpty() }
+            propertyRows
+                .groupBy { it["shape"].orEmpty() }
                 .mapValues { (_, rows) ->
-                    rows.groupBy { it["path"].orEmpty() }
+                    rows
+                        .groupBy { it["path"].orEmpty() }
                         .mapNotNull { (path, variants) ->
                             if (path.isBlank()) return@mapNotNull null
-                            val name = variants.firstNotNullOfOrNull { it["name"]?.takeIf { v -> v.isNotBlank() } }
-                                ?: localName(path)
+                            val name =
+                                variants.firstNotNullOfOrNull { it["name"]?.takeIf { v -> v.isNotBlank() } }
+                                    ?: localName(path)
                             val description = variants.firstNotNullOfOrNull { it["description"]?.takeIf { v -> v.isNotBlank() } }
                             val datatypes = variants.mapNotNull { it["datatype"] }.distinct()
                             val classConstraints = variants.mapNotNull { it["classConstraint"] }.distinct()
@@ -340,16 +342,13 @@ class ShaclService(
                     closed = false,
                     description = description,
                 )
-            }
-            .sortedBy { it.name }
+            }.sortedBy { it.name }
     }
 
-    private fun localName(iri: String): String {
-        return iri.substringAfterLast('/').substringAfterLast('#').ifBlank { iri }
-    }
+    private fun localName(iri: String): String = iri.substringAfterLast('/').substringAfterLast('#').ifBlank { iri }
 
-    private fun hasNodeShapes(graphUri: String): Boolean {
-        return try {
+    private fun hasNodeShapes(graphUri: String): Boolean =
+        try {
             graphDBClient.ask(
                 """
                 PREFIX sh: <http://www.w3.org/ns/shacl#>
@@ -363,7 +362,6 @@ class ShaclService(
         } catch (_: Exception) {
             false
         }
-    }
 
     /**
      * Check if a resource type name is valid

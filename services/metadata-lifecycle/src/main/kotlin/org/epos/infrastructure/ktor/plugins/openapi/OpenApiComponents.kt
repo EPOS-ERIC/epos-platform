@@ -653,83 +653,65 @@ components:
         name:
           type: string
         datatype:
-          type: string
+          type: [string, 'null']
           format: uri
-          nullable: true
         datatypes:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
             format: uri
         nodeKind:
-          type: string
-          nullable: true
+          type: [string, 'null']
         nodeKinds:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         classConstraint:
-          type: string
+          type: [string, 'null']
           format: uri
-          nullable: true
         classConstraints:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
             format: uri
         nodeShapeRef:
-          type: string
-          nullable: true
+          type: [string, 'null']
         nodeShapeRefs:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         minCount:
-          type: integer
+          type: [integer, 'null']
           format: int32
-          nullable: true
         maxCount:
-          type: integer
+          type: [integer, 'null']
           format: int32
-          nullable: true
         required:
           type: boolean
         recommended:
           type: boolean
         pattern:
-          type: string
-          nullable: true
+          type: [string, 'null']
         minLength:
-          type: integer
+          type: [integer, 'null']
           format: int32
-          nullable: true
         maxLength:
-          type: integer
+          type: [integer, 'null']
           format: int32
-          nullable: true
         hasValueIn:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         severity:
-          type: string
-          nullable: true
+          type: [string, 'null']
         severities:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         helpText:
-          type: string
-          nullable: true
+          type: [string, 'null']
         description:
-          type: string
-          nullable: true
+          type: [string, 'null']
       required: [path, name, required, recommended]
 
     ResourceTypeInfo:
@@ -747,8 +729,7 @@ components:
         closed:
           type: boolean
         description:
-          type: string
-          nullable: true
+          type: [string, 'null']
       required: [name, targetClass, properties, closed]
 
     ResourceTypeList:
@@ -772,66 +753,53 @@ components:
           items:
             ${'$'}ref: '#/components/schemas/PropertyInfo'
         resolvedRefs:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         name:
-          type: string
-          nullable: true
+          type: [string, 'null']
         datatype:
-          type: string
+          type: [string, 'null']
           format: uri
-          nullable: true
         datatypes:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
             format: uri
         nodeKind:
-          type: string
-          nullable: true
+          type: [string, 'null']
         nodeKinds:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         classConstraint:
-          type: string
+          type: [string, 'null']
           format: uri
-          nullable: true
         classConstraints:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
             format: uri
         nodeShapeRef:
-          type: string
-          nullable: true
+          type: [string, 'null']
         nodeShapeRefs:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
         ontologyEquivalentClasses:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
             format: uri
         ontologySubClassesOf:
-          type: array
-          nullable: true
+          type: [array, 'null']
           items:
             type: string
             format: uri
         closed:
           type: boolean
         description:
-          type: string
-          nullable: true
+          type: [string, 'null']
       required: [id, targetClasses, properties, closed]
 
     ResourceTypesEnvelope:
@@ -860,11 +828,9 @@ components:
         timestamp:
           type: string
         agent:
-          type: string
-          nullable: true
+          type: [string, 'null']
         group:
-          type: string
-          nullable: true
+          type: [string, 'null']
         status:
           type: string
           enum: [draft, submitted, published, archived, unknown]
@@ -899,7 +865,8 @@ components:
         version:
           type: string
           description: Target version number, required when versionMode=explicit
-          example: "2.0"
+          examples:
+            - "2.0"
         replaceDraftIfExists:
           type: boolean
           default: true
@@ -916,7 +883,8 @@ components:
           type: string
         sourceName:
           type: string
-          example: imported-batch-2026-04-24
+          examples:
+            - imported-batch-2026-04-24
         versionMode:
           type: string
           enum: [auto, explicit]
@@ -924,7 +892,8 @@ components:
         version:
           type: string
           description: Target version number, required when versionMode=explicit
-          example: "2.0"
+          examples:
+            - "2.0"
         replaceDraftIfExists:
           type: boolean
           default: true
@@ -944,8 +913,7 @@ components:
         status:
           type: string
         message:
-          type: string
-          nullable: true
+          type: [string, 'null']
       required: [importedUri, conceptualUri, draftUri, status]
 
     RevisionImportResponseData:

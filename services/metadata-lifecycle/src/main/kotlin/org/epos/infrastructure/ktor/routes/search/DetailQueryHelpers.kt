@@ -159,15 +159,18 @@ internal fun mapTypeUriToApiType(typeUri: String): String? =
         else -> null
     }
 
-private fun buildResolvableHref(publicBaseUrl: String, apiType: String?, resourceId: String): String? {
+private fun buildResolvableHref(
+    publicBaseUrl: String,
+    apiType: String?,
+    resourceId: String,
+): String? {
     if (apiType.isNullOrBlank()) return null
     if (!isLikelyInternalResourceId(resourceId)) return null
     return "$publicBaseUrl/api/v2/$apiType/${URLEncoder.encode(resourceId, "UTF-8")}"
 }
 
-private fun isLikelyInternalResourceId(resourceId: String): Boolean {
-    return resourceId.startsWith(Config.BASE_URI) || resourceId.startsWith("category:")
-}
+private fun isLikelyInternalResourceId(resourceId: String): Boolean =
+    resourceId.startsWith(Config.BASE_URI) || resourceId.startsWith("category:")
 
 /**
  * Extracts keywords from SPARQL results.

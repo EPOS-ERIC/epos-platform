@@ -21,20 +21,74 @@ type ResourceType string
 
 // List of ResourceType
 const (
-	DATASET              ResourceType = "dataset"
-	DISTRIBUTION         ResourceType = "distribution"
-	SOFTWARE_APPLICATION ResourceType = "software-application"
-	SOFTWARE_SOURCE_CODE ResourceType = "software-source-code"
-	CATEGORY             ResourceType = "category"
+	ADDRESS             ResourceType = "address"
+	AGENT               ResourceType = "agent"
+	ANNOTATION          ResourceType = "annotation"
+	APIDOCUMENTATION    ResourceType = "apidocumentation"
+	CATALOG             ResourceType = "catalog"
+	CATALOGRECORD       ResourceType = "catalogrecord"
+	CONCEPT             ResourceType = "concept"
+	CONCEPTSCHEME       ResourceType = "conceptscheme"
+	CONTACTPOINT        ResourceType = "contactpoint"
+	CONTROLACTION       ResourceType = "controlaction"
+	CREATIVEWORK        ResourceType = "creativework"
+	DATASET             ResourceType = "dataset"
+	DISTRIBUTION        ResourceType = "distribution"
+	EQUIPMENT           ResourceType = "equipment"
+	FACILITY            ResourceType = "facility"
+	IDENTIFIER          ResourceType = "identifier"
+	IRITEMPLATE         ResourceType = "iritemplate"
+	IRITEMPLATEMAPPING  ResourceType = "iritemplatemapping"
+	LOCATION            ResourceType = "location"
+	OPERATION           ResourceType = "operation"
+	ORGANIZATION        ResourceType = "organization"
+	PERIODOFTIME        ResourceType = "periodoftime"
+	PERSON              ResourceType = "person"
+	POSTALADDRESS       ResourceType = "postaladdress"
+	PROJECT             ResourceType = "project"
+	PROPERTYVALUE       ResourceType = "propertyvalue"
+	PUBLICATION         ResourceType = "publication"
+	QUANTITATIVEVALUE   ResourceType = "quantitativevalue"
+	SERVICE             ResourceType = "service"
+	SOFTWAREAPPLICATION ResourceType = "softwareapplication"
+	SOFTWARESOURCECODE  ResourceType = "softwaresourcecode"
+	WEBSERVICE          ResourceType = "webservice"
 )
 
 // All allowed values of ResourceType enum
 var AllowedResourceTypeEnumValues = []ResourceType{
+	"address",
+	"agent",
+	"annotation",
+	"apidocumentation",
+	"catalog",
+	"catalogrecord",
+	"concept",
+	"conceptscheme",
+	"contactpoint",
+	"controlaction",
+	"creativework",
 	"dataset",
 	"distribution",
-	"software-application",
-	"software-source-code",
-	"category",
+	"equipment",
+	"facility",
+	"identifier",
+	"iritemplate",
+	"iritemplatemapping",
+	"location",
+	"operation",
+	"organization",
+	"periodoftime",
+	"person",
+	"postaladdress",
+	"project",
+	"propertyvalue",
+	"publication",
+	"quantitativevalue",
+	"service",
+	"softwareapplication",
+	"softwaresourcecode",
+	"webservice",
 }
 
 func (v *ResourceType) UnmarshalJSON(src []byte) error {

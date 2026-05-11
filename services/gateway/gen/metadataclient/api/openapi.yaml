@@ -37,6 +37,8 @@ servers:
 tags:
 - description: Search across all resource types
   name: Search
+- description: Unified shape access for list and detail retrieval
+  name: Access
 - description: Dataset resources
   name: Datasets
 - description: Distribution resources
@@ -193,6 +195,11 @@ paths:
         **Multi-value Parameters:**
         Parameters like `type`, `keywords`, `serviceProvider`, and `versioningStatus` accept
         multiple values by repeating the parameter: `?type=dataset&type=distribution`
+
+        **SHACL-driven property filters:**
+        Any non-reserved query parameter is interpreted as a property filter when it matches
+        a NodeShape property local name or full IRI for the selected type(s).
+        You can also use `filter.<propertyName>=value`.
       operationId: searchMetadata
       parameters:
       - $ref: "#/components/parameters/Q"
@@ -238,166 +245,107 @@ paths:
       summary: Search metadata resources
       tags:
       - Search
-  /api/v2/category:
+  /api/v2/access/search:
     get:
-      description: |
-        Returns the complete category tree as an ordered list of category schemes.
-        Each scheme carries its full subtree of nested `Category` objects.
-        Intended as the primary data source for building facet navigation in clients.
-      operationId: getCategoryTree
+      description: "Same behavior as `/api/v2/search`, grouped under the Access namespace."
+      parameters:
+      - $ref: "#/components/parameters/Q"
+      - $ref: "#/components/parameters/Page"
+      - $ref: "#/components/parameters/ResultsPerPage"
+      - $ref: "#/components/parameters/TypeFilter"
+      - $ref: "#/components/parameters/SpatialFilter"
+      - $ref: "#/components/parameters/DateFrom"
+      - $ref: "#/components/parameters/DateTo"
+      - $ref: "#/components/parameters/ServiceProviders"
+      - $ref: "#/components/parameters/VersioningStatusFilter"
+      - $ref: "#/components/parameters/Keywords"
       responses:
         "200":
           content:
             application/json:
-              examples:
-                tree:
-                  summary: Category tree with one scheme
-                  value:
-                    schemes:
-                    - id: scheme-solid-earth
-                      label: Solid Earth
-                      title: Solid Earth Science Categories
-                      description: Top-level grouping for solid earth science resources.
-                      logo: https://www.epos-eu.org/logos/solid-earth.png
-                      homepage: https://www.epos-eu.org/solid-earth
-                      color: "#3A7BD5"
-                      orderNumber: 1
-                      type: DATA
-                      children:
-                      - id: cat-seismology
-                        name: Seismology
-                        description: Resources related to seismic monitoring.
-                        children:
-                        - id: cat-strong-motion
-                          name: Strong Motion
-                          children: []
               schema:
-                $ref: "#/components/schemas/CategoryTreeResponse"
-          description: Category tree returned successfully
+                $ref: "#/components/schemas/SearchResponse"
+          description: Search results returned successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
-      summary: Get full category tree
+      summary: Search resources (access style)
       tags:
-      - Categories
-  /api/v2/category/{id}:
+      - Access
+  /api/v2/access/search/{shape}:
     get:
-      description: Returns a single category node with its full subtree of children.
-      operationId: getCategoryById
+      description: "Access search scoped to a single shape (equivalent to applying\
+        \ `type={shape}`)."
       parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - description: Runtime SHACL shape/resource type name.
+        explode: false
+        in: path
+        name: shape
+        required: true
+        schema:
+          type: string
+        style: simple
+      - $ref: "#/components/parameters/Q"
+      - $ref: "#/components/parameters/Page"
+      - $ref: "#/components/parameters/ResultsPerPage"
+      - $ref: "#/components/parameters/SpatialFilter"
+      - $ref: "#/components/parameters/DateFrom"
+      - $ref: "#/components/parameters/DateTo"
+      - $ref: "#/components/parameters/ServiceProviders"
+      - $ref: "#/components/parameters/VersioningStatusFilter"
+      - $ref: "#/components/parameters/Keywords"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Category"
-          description: Category found
+                $ref: "#/components/schemas/SearchResponse"
+          description: Search results returned successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
-      summary: Get category by id
+      summary: Search resources by shape
       tags:
-      - Categories
-    parameters:
-    - $ref: "#/components/parameters/ResourceId"
-  /api/v2/dataset/{id}:
+      - Access
+  /api/v2/access/{shape}/{id}:
     get:
       description: |
-        Returns detailed information about a specific dataset.
-        Includes distributions as resource references with hrefs.
-        Inbound relations (entities referencing this dataset) are always included when present.
-      operationId: getDatasetById
+        Unified access endpoint.
+        - `id=all` returns all resources for the selected shape.
+        - any other id returns the detailed property-value and property-relation structure.
       parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - description: Runtime SHACL shape/resource type name.
+        explode: false
+        in: path
+        name: shape
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Resource id or `all`.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
       responses:
         "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dataset"
-          description: Dataset found
+          description: Access response returned successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
-      summary: Get dataset by id
+      summary: Access shape resources and details
       tags:
-      - Datasets
-    parameters:
-    - $ref: "#/components/parameters/ResourceId"
-  /api/v2/distribution/{id}:
-    get:
-      description: |
-        Returns detailed information about a specific distribution.
-        Inbound relations (entities referencing this distribution) are always included when present.
-      operationId: getDistributionById
-      parameters:
-      - $ref: "#/components/parameters/ResourceId"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Distribution"
-          description: Distribution found
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      summary: Get distribution by id
-      tags:
-      - Distributions
-    parameters:
-    - $ref: "#/components/parameters/ResourceId"
-  /api/v2/software-application/{id}:
-    get:
-      description: |
-        Returns detailed information about a specific software application.
-        Inbound relations (entities referencing this application) are always included when present.
-      operationId: getSoftwareApplicationById
-      parameters:
-      - $ref: "#/components/parameters/ResourceId"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SoftwareApplication"
-          description: Software application found
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      summary: Get software application by id
-      tags:
-      - Software Applications
-    parameters:
-    - $ref: "#/components/parameters/ResourceId"
-  /api/v2/software-source-code/{id}:
-    get:
-      description: |
-        Returns detailed information about a specific software source code.
-        Inbound relations (entities referencing this source code) are always included when present.
-      operationId: getSoftwareSourceCodeById
-      parameters:
-      - $ref: "#/components/parameters/ResourceId"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SoftwareSourceCode"
-          description: Software source code found
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-      summary: Get software source code by id
-      tags:
-      - Software Source Codes
-    parameters:
-    - $ref: "#/components/parameters/ResourceId"
+      - Access
   /api/v2/sparql:
     post:
       description: |
@@ -1403,8 +1351,7 @@ components:
       in: path
       name: id
       required: true
-      schema:
-        type: string
+      schema: {}
       style: simple
     Q:
       description: Free-text search query
@@ -1551,11 +1498,38 @@ components:
   schemas:
     ResourceType:
       enum:
+      - address
+      - agent
+      - annotation
+      - apidocumentation
+      - catalog
+      - catalogrecord
+      - concept
+      - conceptscheme
+      - contactpoint
+      - controlaction
+      - creativework
       - dataset
       - distribution
-      - software-application
-      - software-source-code
-      - category
+      - equipment
+      - facility
+      - identifier
+      - iritemplate
+      - iritemplatemapping
+      - location
+      - operation
+      - organization
+      - periodoftime
+      - person
+      - postaladdress
+      - project
+      - propertyvalue
+      - publication
+      - quantitativevalue
+      - service
+      - softwareapplication
+      - softwaresourcecode
+      - webservice
       type: string
     VersioningStatus:
       enum:
@@ -1674,10 +1648,6 @@ components:
         required:
         - type
     ResourceRef:
-      example:
-        id: id
-        href: href
-        title: title
       properties:
         id:
           type: string
@@ -1691,9 +1661,6 @@ components:
       - id
     TemporalExtent:
       description: Temporal coverage of a resource
-      example:
-        start: 2000-01-23T04:56:07.000+00:00
-        end: 2000-01-23T04:56:07.000+00:00
       properties:
         start:
           description: "Start of the temporal coverage (inclusive), ISO 8601 UTC"
@@ -1705,45 +1672,6 @@ components:
           format: date-time
           type: string
     Dataset:
-      example:
-        keywords:
-        - keywords
-        - keywords
-        related:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        description: description
-        publisher:
-        - publisher
-        - publisher
-        id: id
-        categories:
-        - categories
-        - categories
-        relatedBy:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        title: title
-        spatial: spatial
-        temporal:
-          start: 2000-01-23T04:56:07.000+00:00
-          end: 2000-01-23T04:56:07.000+00:00
-        distributions:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        status: DRAFT
       properties:
         id:
           type: string
@@ -1792,26 +1720,6 @@ components:
       - status
       - title
     Distribution:
-      example:
-        related:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        accessUrl: https://openapi-generator.tech
-        description: description
-        id: id
-        relatedBy:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        title: title
-        operation: operation
       properties:
         id:
           type: string
@@ -1841,31 +1749,6 @@ components:
       - id
       - title
     SoftwareApplication:
-      example:
-        keywords:
-        - keywords
-        - keywords
-        related:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        downloadUrl: https://openapi-generator.tech
-        description: description
-        id: id
-        categories:
-        - categories
-        - categories
-        relatedBy:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        title: title
       properties:
         id:
           type: string
@@ -1900,32 +1783,6 @@ components:
       - id
       - title
     SoftwareSourceCode:
-      example:
-        keywords:
-        - keywords
-        - keywords
-        related:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        programmingLanguage: programmingLanguage
-        description: description
-        id: id
-        categories:
-        - categories
-        - categories
-        relatedBy:
-        - id: id
-          href: href
-          title: title
-        - id: id
-          href: href
-          title: title
-        title: title
-        repository: https://openapi-generator.tech
       properties:
         id:
           type: string
@@ -1963,13 +1820,6 @@ components:
       - id
       - title
     Category:
-      example:
-        children:
-        - null
-        - null
-        name: name
-        description: description
-        id: id
       properties:
         id:
           type: string
@@ -1986,29 +1836,6 @@ components:
       - id
       - name
     CategoryScheme:
-      example:
-        orderNumber: 0
-        color: color
-        children:
-        - children:
-          - null
-          - null
-          name: name
-          description: description
-          id: id
-        - children:
-          - null
-          - null
-          name: name
-          description: description
-          id: id
-        description: description
-        logo: https://openapi-generator.tech
-        id: id
-        label: label
-        title: title
-        type: DATA
-        homepage: https://openapi-generator.tech
       properties:
         id:
           type: string
@@ -2046,52 +1873,6 @@ components:
       - label
       - type
     CategoryTreeResponse:
-      example:
-        schemes:
-        - orderNumber: 0
-          color: color
-          children:
-          - children:
-            - null
-            - null
-            name: name
-            description: description
-            id: id
-          - children:
-            - null
-            - null
-            name: name
-            description: description
-            id: id
-          description: description
-          logo: https://openapi-generator.tech
-          id: id
-          label: label
-          title: title
-          type: DATA
-          homepage: https://openapi-generator.tech
-        - orderNumber: 0
-          color: color
-          children:
-          - children:
-            - null
-            - null
-            name: name
-            description: description
-            id: id
-          - children:
-            - null
-            - null
-            name: name
-            description: description
-            id: id
-          description: description
-          logo: https://openapi-generator.tech
-          id: id
-          label: label
-          title: title
-          type: DATA
-          homepage: https://openapi-generator.tech
       properties:
         schemes:
           description: "Ordered list of category schemes, each carrying its full category\
@@ -2157,82 +1938,82 @@ components:
           type: string
         datatype:
           format: uri
-          type: string
           nullable: true
+          type: string
         datatypes:
           items:
             format: uri
             type: string
+          nullable: true
           type: array
-          nullable: true
         nodeKind:
-          type: string
           nullable: true
+          type: string
         nodeKinds:
           items:
             type: string
-          type: array
           nullable: true
+          type: array
         classConstraint:
           format: uri
-          type: string
           nullable: true
+          type: string
         classConstraints:
           items:
             format: uri
             type: string
+          nullable: true
           type: array
-          nullable: true
         nodeShapeRef:
-          type: string
           nullable: true
+          type: string
         nodeShapeRefs:
           items:
             type: string
-          type: array
           nullable: true
+          type: array
         minCount:
           format: int32
-          type: integer
           nullable: true
+          type: integer
         maxCount:
           format: int32
-          type: integer
           nullable: true
+          type: integer
         required:
           type: boolean
         recommended:
           type: boolean
         pattern:
-          type: string
           nullable: true
+          type: string
         minLength:
           format: int32
-          type: integer
           nullable: true
+          type: integer
         maxLength:
           format: int32
-          type: integer
           nullable: true
+          type: integer
         hasValueIn:
           items:
             type: string
+          nullable: true
           type: array
-          nullable: true
         severity:
-          type: string
           nullable: true
+          type: string
         severities:
           items:
             type: string
+          nullable: true
           type: array
-          nullable: true
         helpText:
-          type: string
           nullable: true
+          type: string
         description:
-          type: string
           nullable: true
+          type: string
       required:
       - name
       - path
@@ -2326,8 +2107,8 @@ components:
         closed:
           type: boolean
         description:
-          type: string
           nullable: true
+          type: string
       required:
       - closed
       - name
@@ -2354,64 +2135,64 @@ components:
         resolvedRefs:
           items:
             type: string
+          nullable: true
           type: array
-          nullable: true
         name:
-          type: string
           nullable: true
+          type: string
         datatype:
           format: uri
-          type: string
           nullable: true
+          type: string
         datatypes:
           items:
             format: uri
             type: string
+          nullable: true
           type: array
-          nullable: true
         nodeKind:
-          type: string
           nullable: true
+          type: string
         nodeKinds:
           items:
             type: string
-          type: array
           nullable: true
+          type: array
         classConstraint:
           format: uri
-          type: string
           nullable: true
+          type: string
         classConstraints:
           items:
             format: uri
             type: string
+          nullable: true
           type: array
-          nullable: true
         nodeShapeRef:
-          type: string
           nullable: true
+          type: string
         nodeShapeRefs:
           items:
             type: string
-          type: array
           nullable: true
+          type: array
         ontologyEquivalentClasses:
           items:
             format: uri
             type: string
-          type: array
           nullable: true
+          type: array
         ontologySubClassesOf:
           items:
             format: uri
             type: string
-          type: array
           nullable: true
+          type: array
         closed:
           type: boolean
         description:
-          type: string
           nullable: true
+          type: string
       required:
       - closed
       - id
@@ -2448,11 +2229,11 @@ components:
         timestamp:
           type: string
         agent:
-          type: string
           nullable: true
+          type: string
         group:
-          type: string
           nullable: true
+          type: string
         status:
           enum:
           - draft
@@ -2499,7 +2280,7 @@ components:
         path: path
         dryRun: false
         versionMode: auto
-        version: "2.0"
+        version: version
         url: url
         replaceDraftIfExists: true
       properties:
@@ -2517,7 +2298,6 @@ components:
           type: string
         version:
           description: "Target version number, required when versionMode=explicit"
-          example: "2.0"
           type: string
         replaceDraftIfExists:
           default: true
@@ -2530,15 +2310,14 @@ components:
       example:
         dryRun: false
         versionMode: auto
-        sourceName: imported-batch-2026-04-24
-        version: "2.0"
+        sourceName: sourceName
+        version: version
         content: content
         replaceDraftIfExists: true
       properties:
         content:
           type: string
         sourceName:
-          example: imported-batch-2026-04-24
           type: string
         versionMode:
           default: auto
@@ -2548,7 +2327,6 @@ components:
           type: string
         version:
           description: "Target version number, required when versionMode=explicit"
-          example: "2.0"
           type: string
         replaceDraftIfExists:
           default: true
@@ -2575,8 +2353,8 @@ components:
         status:
           type: string
         message:
-          type: string
           nullable: true
+          type: string
       required:
       - conceptualUri
       - draftUri
@@ -2680,11 +2458,10 @@ components:
       - success
     _health_get_200_response:
       example:
-        status: ok
+        status: status
         timestamp: 0
       properties:
         status:
-          example: ok
           type: string
         timestamp:
           format: int64
@@ -2725,7 +2502,6 @@ components:
     _api_v2_admin_populate_from_url_post_request:
       properties:
         indexUrl:
-          example: http://example.com/index.txt
           type: string
       required:
       - indexUrl
@@ -2748,11 +2524,9 @@ components:
       properties:
         url:
           description: URL to a TTL file
-          example: https://raw.githubusercontent.com/EPOS-ERIC/metadatone/main/metadatone.ttl
           type: string
         path:
           description: Local filesystem path to a TTL file
-          example: /data/metadata/metadatone.ttl
           type: string
     _api_v2_admin_populate_file_post_200_response_data:
       example:
@@ -2789,12 +2563,9 @@ components:
       properties:
         content:
           description: TTL content as a string
-          example: "@prefix dcat: <http://www.w3.org/ns/dcat#> .\\n<http://example.org/dataset1>\
-            \ a dcat:Dataset ."
           type: string
         sourceName:
           description: Optional name for provenance tracking
-          example: my-upload
           type: string
       required:
       - content
@@ -2829,3 +2600,922 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/_api_v2_admin_populate_content_post_200_response_data"
+x-runtime-shapes:
+- name: address
+  targetClass: http://www.w3.org/2006/vcard/ns#Address
+  filters:
+  - name: country-name
+    path: http://www.w3.org/2006/vcard/ns#country-name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: locality
+    path: http://www.w3.org/2006/vcard/ns#locality
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: postal-code
+    path: http://www.w3.org/2006/vcard/ns#postal-code
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: street-address
+    path: http://www.w3.org/2006/vcard/ns#street-address
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: agent
+  targetClass: http://xmlns.com/foaf/0.1/Agent
+  filters:
+  - name: name
+    path: http://xmlns.com/foaf/0.1/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: type
+    path: http://purl.org/dc/terms/type
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+    required: true
+- name: annotation
+  targetClass: http://www.w3.org/ns/oa#Annotation
+  filters:
+  - name: hasBody
+    path: http://www.w3.org/ns/oa#hasBody
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+  - name: hasTarget
+    path: http://www.w3.org/ns/oa#hasTarget
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+- name: apidocumentation
+  targetClass: http://www.w3.org/ns/hydra/core#ApiDocumentation
+  filters:
+  - name: description
+    path: http://www.w3.org/ns/hydra/core#description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: entrypoint
+    path: http://www.w3.org/ns/hydra/core#entrypoint
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+  - name: title
+    path: http://www.w3.org/ns/hydra/core#title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: catalog
+  targetClass: http://www.w3.org/ns/dcat#Catalog
+  filters:
+  - name: dataset
+    path: http://www.w3.org/ns/dcat#dataset
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+    required: true
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: hasPart
+    path: http://purl.org/dc/terms/hasPart
+    classConstraint: http://www.w3.org/ns/dcat#Catalog
+  - name: homepage
+    path: http://xmlns.com/foaf/0.1/homepage
+    classConstraint: http://xmlns.com/foaf/0.1/Document
+    required: true
+  - name: isPartOf
+    path: http://purl.org/dc/terms/isPartOf
+    classConstraint: http://www.w3.org/ns/dcat#Catalog
+  - name: issued
+    path: http://purl.org/dc/terms/issued
+    required: true
+  - name: language
+    path: http://purl.org/dc/terms/language
+    classConstraint: http://purl.org/dc/terms/LinguisticSystem
+    required: true
+  - name: license
+    path: http://purl.org/dc/terms/license
+    classConstraint: http://purl.org/dc/terms/LicenseDocument
+    required: true
+  - name: modified
+    path: http://purl.org/dc/terms/modified
+    required: true
+  - name: publisher
+    path: http://purl.org/dc/terms/publisher
+    required: true
+  - name: record
+    path: http://www.w3.org/ns/dcat#record
+    classConstraint: http://www.w3.org/ns/dcat#CatalogRecord
+  - name: resource
+    path: https://www.epos-eu.org/epos-dcat-ap#resource
+    classConstraint: http://www.w3.org/2000/01/rdf-schema#Resource
+  - name: rights
+    path: http://purl.org/dc/terms/rights
+    classConstraint: http://purl.org/dc/terms/RightsStatement
+  - name: spatial
+    path: http://purl.org/dc/terms/spatial
+    classConstraint: http://purl.org/dc/terms/Location
+  - name: themeTaxonomy
+    path: http://www.w3.org/ns/dcat#themeTaxonomy
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: catalogrecord
+  targetClass: http://www.w3.org/ns/dcat#CatalogRecord
+  filters:
+  - name: conformsTo
+    path: http://purl.org/dc/terms/conformsTo
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: identifier
+    path: http://purl.org/dc/terms/identifier
+    required: true
+  - name: issued
+    path: http://purl.org/dc/terms/issued
+    required: true
+  - name: language
+    path: http://purl.org/dc/terms/language
+    classConstraint: http://purl.org/dc/terms/LinguisticSystem
+  - name: modified
+    path: http://purl.org/dc/terms/modified
+    required: true
+  - name: primaryTopic
+    path: http://xmlns.com/foaf/0.1/primaryTopic
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+    required: true
+  - name: source
+    path: http://purl.org/dc/terms/source
+    classConstraint: http://www.w3.org/ns/dcat#CatalogRecord
+  - name: status
+    path: http://www.w3.org/ns/adms#status
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+- name: concept
+  targetClass: http://www.w3.org/2004/02/skos/core#Concept
+  filters:
+  - name: definition
+    path: http://www.w3.org/2004/02/skos/core#definition
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: inScheme
+    path: http://www.w3.org/2004/02/skos/core#inScheme
+    classConstraint: http://www.w3.org/2004/02/skos/core#ConceptScheme
+    required: true
+  - name: prefLabel
+    path: http://www.w3.org/2004/02/skos/core#prefLabel
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: conceptscheme
+  targetClass: http://www.w3.org/2004/02/skos/core#ConceptScheme
+  filters:
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: contactpoint
+  targetClass: http://schema.org/ContactPoint
+  filters:
+  - name: availableLanguage
+    path: http://schema.org/availableLanguage
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: contactType
+    path: http://schema.org/contactType
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: email
+    path: http://schema.org/email
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: telephone
+    path: http://schema.org/telephone
+    datatype: http://www.w3.org/2001/XMLSchema#string
+- name: controlaction
+  targetClass: http://schema.org/ControlAction
+  filters:
+  - name: object
+    path: http://schema.org/object
+    classConstraint: http://schema.org/CreativeWork
+  - name: result
+    path: http://schema.org/result
+    classConstraint: http://schema.org/CreativeWork
+- name: creativework
+  targetClass: http://schema.org/CreativeWork
+  filters:
+  - name: conformsTo
+    path: http://purl.org/dc/terms/conformsTo
+  - name: encodingFormat
+    path: http://schema.org/encodingFormat
+- name: dataset
+  targetClass: http://www.w3.org/ns/dcat#Dataset
+  filters:
+  - name: accessRights
+    path: http://purl.org/dc/terms/accessRights
+    classConstraint: http://purl.org/dc/terms/RightsStatement
+  - name: accrualPeriodicity
+    path: http://purl.org/dc/terms/accrualPeriodicity
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: annotation
+    path: https://www.epos-eu.org/epos-dcat-ap#annotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: conformsTo
+    path: http://purl.org/dc/terms/conformsTo
+    classConstraint: http://purl.org/dc/terms/Standard
+  - name: contactPoint
+    path: http://www.w3.org/ns/dcat#contactPoint
+    required: true
+  - name: created
+    path: http://purl.org/dc/terms/created
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: distribution
+    path: http://www.w3.org/ns/dcat#distribution
+    classConstraint: http://www.w3.org/ns/dcat#Distribution
+    required: true
+  - name: hasPart
+    path: http://purl.org/dc/terms/hasPart
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+  - name: hasQualityAnnotation
+    path: http://www.w3.org/ns/dqv#hasQualityAnnotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: hasVersion
+    path: http://purl.org/dc/terms/hasVersion
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+  - name: identifier
+    path: http://purl.org/dc/terms/identifier
+    required: true
+  - name: identifier
+    path: http://www.w3.org/ns/adms#identifier
+    classConstraint: http://www.w3.org/ns/adms#Identifier
+  - name: isPartOf
+    path: http://purl.org/dc/terms/isPartOf
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+  - name: isVersionOf
+    path: http://purl.org/dc/terms/isVersionOf
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+  - name: issued
+    path: http://purl.org/dc/terms/issued
+  - name: keyword
+    path: http://www.w3.org/ns/dcat#keyword
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: landingPage
+    path: http://www.w3.org/ns/dcat#landingPage
+    classConstraint: http://xmlns.com/foaf/0.1/Document
+  - name: language
+    path: http://purl.org/dc/terms/language
+    classConstraint: http://purl.org/dc/terms/LinguisticSystem
+  - name: modified
+    path: http://purl.org/dc/terms/modified
+  - name: page
+    path: http://xmlns.com/foaf/0.1/page
+    classConstraint: http://xmlns.com/foaf/0.1/Document
+  - name: provenance
+    path: http://purl.org/dc/terms/provenance
+    classConstraint: http://purl.org/dc/terms/ProvenanceStatement
+  - name: publisher
+    path: http://purl.org/dc/terms/publisher
+    required: true
+  - name: relation
+    path: http://purl.org/dc/terms/relation
+    classConstraint: http://www.w3.org/2000/01/rdf-schema#Resource
+  - name: sample
+    path: http://www.w3.org/ns/adms#sample
+    classConstraint: http://www.w3.org/ns/dcat#Distribution
+  - name: source
+    path: http://purl.org/dc/terms/source
+    classConstraint: http://www.w3.org/ns/dcat#Dataset
+  - name: spatial
+    path: http://purl.org/dc/terms/spatial
+    classConstraint: http://purl.org/dc/terms/Location
+  - name: temporal
+    path: http://purl.org/dc/terms/temporal
+    classConstraint: http://purl.org/dc/terms/PeriodOfTime
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    required: true
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: type
+    path: http://purl.org/dc/terms/type
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: versionInfo
+    path: http://www.w3.org/2002/07/owl#versionInfo
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: versionNotes
+    path: http://www.w3.org/ns/adms#versionNotes
+    datatype: http://www.w3.org/2001/XMLSchema#string
+- name: distribution
+  targetClass: http://www.w3.org/ns/dcat#Distribution
+  filters:
+  - name: accessURL
+    path: http://www.w3.org/ns/dcat#accessURL
+    required: true
+  - name: annotation
+    path: https://www.epos-eu.org/epos-dcat-ap#annotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: byteSize
+    path: http://www.w3.org/ns/dcat#byteSize
+    datatype: http://www.w3.org/2001/XMLSchema#decimal
+  - name: checksum
+    path: http://spdx.org/rdf/terms#checksum
+    classConstraint: http://spdx.org/rdf/terms#Checksum
+  - name: conformsTo
+    path: http://purl.org/dc/terms/conformsTo
+    required: true
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: downloadURL
+    path: http://www.w3.org/ns/dcat#downloadURL
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: format
+    path: http://purl.org/dc/terms/format
+    required: true
+  - name: identifier
+    path: http://purl.org/dc/terms/identifier
+    required: true
+  - name: issued
+    path: http://purl.org/dc/terms/issued
+  - name: language
+    path: http://purl.org/dc/terms/language
+    classConstraint: http://purl.org/dc/terms/LinguisticSystem
+  - name: license
+    path: http://purl.org/dc/terms/license
+  - name: mediaType
+    path: http://www.w3.org/ns/dcat#mediaType
+    classConstraint: http://purl.org/dc/terms/MediaTypeOrExtent
+  - name: modified
+    path: http://purl.org/dc/terms/modified
+  - name: page
+    path: http://xmlns.com/foaf/0.1/page
+    classConstraint: http://xmlns.com/foaf/0.1/Document
+  - name: rights
+    path: http://purl.org/dc/terms/rights
+    classConstraint: http://purl.org/dc/terms/RightsStatement
+  - name: status
+    path: http://www.w3.org/ns/adms#status
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: type
+    path: http://purl.org/dc/terms/type
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+- name: equipment
+  targetClass: https://www.epos-eu.org/epos-dcat-ap#Equipment
+  filters:
+  - name: annotation
+    path: https://www.epos-eu.org/epos-dcat-ap#annotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: contactPoint
+    path: http://www.w3.org/ns/dcat#contactPoint
+  - name: description
+    path: http://schema.org/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: dynamicRange
+    path: https://www.epos-eu.org/epos-dcat-ap#dynamicRange
+    classConstraint: http://schema.org/QuantitativeValue
+  - name: filter
+    path: https://www.epos-eu.org/epos-dcat-ap#filter
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: isPartOf
+    path: http://purl.org/dc/terms/isPartOf
+  - name: manufacturer
+    path: http://schema.org/manufacturer
+    classConstraint: http://schema.org/Organization
+    required: true
+  - name: name
+    path: http://schema.org/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: orientation
+    path: https://www.epos-eu.org/epos-dcat-ap#orientation
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: page
+    path: http://xmlns.com/foaf/0.1/page
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: relation
+    path: http://purl.org/dc/terms/relation
+  - name: resolution
+    path: https://www.epos-eu.org/epos-dcat-ap#resolution
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: samplePeriod
+    path: https://www.epos-eu.org/epos-dcat-ap#samplePeriod
+    classConstraint: http://schema.org/QuantitativeValue
+  - name: serialNumber
+    path: http://schema.org/serialNumber
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: spatial
+    path: http://purl.org/dc/terms/spatial
+    classConstraint: http://purl.org/dc/terms/Location
+  - name: temporal
+    path: http://purl.org/dc/terms/temporal
+    classConstraint: http://purl.org/dc/terms/PeriodOfTime
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+  - name: type
+    path: http://purl.org/dc/terms/type
+    required: true
+- name: facility
+  targetClass: https://www.epos-eu.org/epos-dcat-ap#Facility
+  filters:
+  - name: annotation
+    path: https://www.epos-eu.org/epos-dcat-ap#annotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: contactPoint
+    path: http://www.w3.org/ns/dcat#contactPoint
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: hasAddress
+    path: http://www.w3.org/2006/vcard/ns#hasAddress
+    classConstraint: http://www.w3.org/2006/vcard/ns#Address
+  - name: identifier
+    path: http://purl.org/dc/terms/identifier
+    required: true
+  - name: isPartOf
+    path: http://purl.org/dc/terms/isPartOf
+    classConstraint: https://www.epos-eu.org/epos-dcat-ap#Facility
+  - name: page
+    path: http://xmlns.com/foaf/0.1/page
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: relation
+    path: http://purl.org/dc/terms/relation
+  - name: spatial
+    path: http://purl.org/dc/terms/spatial
+    classConstraint: http://purl.org/dc/terms/Location
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+    required: true
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: type
+    path: http://purl.org/dc/terms/type
+    required: true
+- name: identifier
+  targetClass: http://www.w3.org/ns/adms#Identifier
+  filters:
+  - name: notation
+    path: http://www.w3.org/2004/02/skos/core#notation
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: schemeAgency
+    path: http://www.w3.org/ns/adms#schemeAgency
+    datatype: http://www.w3.org/2001/XMLSchema#string
+- name: iritemplate
+  targetClass: http://www.w3.org/ns/hydra/core#IriTemplate
+  filters:
+  - name: mapping
+    path: http://www.w3.org/ns/hydra/core#mapping
+    classConstraint: http://www.w3.org/ns/hydra/core#IriTemplateMapping
+  - name: template
+    path: http://www.w3.org/ns/hydra/core#template
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: iritemplatemapping
+  targetClass: http://www.w3.org/ns/hydra/core#IriTemplateMapping
+  filters:
+  - name: defaultValue
+    path: http://schema.org/defaultValue
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: label
+    path: http://www.w3.org/2000/01/rdf-schema#label
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: maxValue
+    path: http://schema.org/maxValue
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: minValue
+    path: http://schema.org/minValue
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: multipleValues
+    path: http://schema.org/multipleValues
+    datatype: http://www.w3.org/2001/XMLSchema#boolean
+  - name: paramValue
+    path: http://www.w3.org/2006/http#paramValue
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: property
+    path: http://www.w3.org/ns/hydra/core#property
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: range
+    path: http://www.w3.org/2000/01/rdf-schema#range
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: readonlyValue
+    path: http://schema.org/readonlyValue
+    datatype: http://www.w3.org/2001/XMLSchema#boolean
+  - name: required
+    path: http://www.w3.org/ns/hydra/core#required
+    datatype: http://www.w3.org/2001/XMLSchema#boolean
+    required: true
+  - name: valuePattern
+    path: http://schema.org/valuePattern
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: variable
+    path: http://www.w3.org/ns/hydra/core#variable
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: location
+  targetClass: http://purl.org/dc/terms/Location
+  filters:
+  - name: geometry
+    path: http://www.w3.org/ns/locn#geometry
+    datatype: http://www.opengis.net/ont/geosparql#wktLiteral
+    required: true
+- name: operation
+  targetClass: http://www.w3.org/ns/hydra/core#Operation
+  filters:
+  - name: method
+    path: http://www.w3.org/ns/hydra/core#method
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: property
+    path: http://www.w3.org/ns/hydra/core#property
+    classConstraint: http://www.w3.org/ns/hydra/core#IriTemplate
+    required: true
+  - name: returns
+    path: http://www.w3.org/ns/hydra/core#returns
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: organization
+  targetClass: http://schema.org/Organization
+  filters:
+  - name: address
+    path: http://schema.org/address
+  - name: annotation
+    path: https://www.epos-eu.org/epos-dcat-ap#annotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: associatedProject
+    path: https://www.epos-eu.org/epos-dcat-ap#associatedProject
+    classConstraint: http://xmlns.com/foaf/0.1/Project
+  - name: contactPoint
+    path: http://schema.org/contactPoint
+  - name: email
+    path: http://schema.org/email
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: legalName
+    path: http://schema.org/legalName
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: leiCode
+    path: http://schema.org/leiCode
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: logo
+    path: http://schema.org/logo
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: memberOf
+    path: http://schema.org/memberOf
+    classConstraint: http://schema.org/Organization
+  - name: owns
+    path: http://schema.org/owns
+  - name: telephone
+    path: http://schema.org/telephone
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: url
+    path: http://schema.org/url
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+- name: periodoftime
+  targetClass: http://purl.org/dc/terms/PeriodOfTime
+  filters:
+  - name: endDate
+    path: http://schema.org/endDate
+  - name: startDate
+    path: http://schema.org/startDate
+- name: person
+  targetClass: http://schema.org/Person
+  filters:
+  - name: address
+    path: http://schema.org/address
+  - name: affiliation
+    path: http://schema.org/affiliation
+    classConstraint: http://schema.org/Organization
+  - name: annotation
+    path: https://www.epos-eu.org/epos-dcat-ap#annotation
+    classConstraint: http://www.w3.org/ns/oa#Annotation
+  - name: contactPoint
+    path: http://schema.org/contactPoint
+  - name: email
+    path: http://schema.org/email
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: familyName
+    path: http://schema.org/familyName
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: givenName
+    path: http://schema.org/givenName
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: qualifications
+    path: http://schema.org/qualifications
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: telephone
+    path: http://schema.org/telephone
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: url
+    path: http://schema.org/url
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+- name: postaladdress
+  targetClass: http://schema.org/PostalAddress
+  filters:
+  - name: addressCountry
+    path: http://schema.org/addressCountry
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: addressLocality
+    path: http://schema.org/addressLocality
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: postalCode
+    path: http://schema.org/postalCode
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: streetAddress
+    path: http://schema.org/streetAddress
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: project
+  targetClass: http://xmlns.com/foaf/0.1/Project
+  filters:
+  - name: contactPoint
+    path: http://www.w3.org/ns/dcat#contactPoint
+    required: true
+  - name: description
+    path: http://purl.org/dc/terms/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: homepage
+    path: http://xmlns.com/foaf/0.1/homepage
+    classConstraint: http://xmlns.com/foaf/0.1/Document
+  - name: identifier
+    path: http://purl.org/dc/terms/identifier
+    required: true
+  - name: title
+    path: http://purl.org/dc/terms/title
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: propertyvalue
+  targetClass: http://schema.org/PropertyValue
+  filters:
+  - name: propertyID
+    path: http://schema.org/propertyID
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: value
+    path: http://schema.org/value
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+- name: publication
+  targetClass: https://www.epos-eu.org/epos-dcat-ap#Publication
+  filters:
+  - name: abstract
+    path: http://purl.org/dc/terms/abstract
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: author
+    path: http://schema.org/author
+    classConstraint: http://schema.org/Person
+    required: true
+  - name: contributor
+    path: http://schema.org/contributor
+    classConstraint: http://schema.org/Person
+    required: true
+  - name: datePublished
+    path: http://schema.org/datePublished
+    required: true
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: issn
+    path: http://schema.org/issn
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: keywords
+    path: http://schema.org/keywords
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: license
+    path: http://schema.org/license
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: name
+    path: http://schema.org/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: numberOfPages
+    path: http://schema.org/numberOfPages
+    datatype: http://www.w3.org/2001/XMLSchema#integer
+  - name: publisher
+    path: http://schema.org/publisher
+    required: true
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+  - name: volumeNumber
+    path: http://schema.org/volumeNumber
+    datatype: http://www.w3.org/2001/XMLSchema#string
+- name: quantitativevalue
+  targetClass: http://schema.org/QuantitativeValue
+  filters:
+  - name: unitCode
+    path: http://schema.org/unitCode
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: value
+    path: http://schema.org/value
+    datatype: http://www.w3.org/2001/XMLSchema#double
+    required: true
+- name: service
+  targetClass: http://schema.org/Service
+  filters:
+  - name: contactPoint
+    path: http://schema.org/contactPoint
+    required: true
+  - name: description
+    path: http://schema.org/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: keywords
+    path: http://schema.org/keywords
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: name
+    path: http://schema.org/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: provider
+    path: http://schema.org/provider
+    required: true
+  - name: serviceType
+    path: http://schema.org/serviceType
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: spatial
+    path: http://purl.org/dc/terms/spatial
+    classConstraint: http://purl.org/dc/terms/Location
+  - name: temporal
+    path: http://purl.org/dc/terms/temporal
+    classConstraint: http://purl.org/dc/terms/PeriodOfTime
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+  - name: url
+    path: http://schema.org/url
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+- name: softwareapplication
+  targetClass: http://schema.org/SoftwareApplication
+  filters:
+  - name: contactPoint
+    path: http://schema.org/contactPoint
+    required: true
+  - name: description
+    path: http://schema.org/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: downloadUrl
+    path: http://schema.org/downloadUrl
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: installUrl
+    path: http://schema.org/installUrl
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: keywords
+    path: http://schema.org/keywords
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: license
+    path: http://schema.org/license
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: mainEntityOfPage
+    path: http://schema.org/mainEntityOfPage
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: name
+    path: http://schema.org/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: potentialAction
+    path: http://schema.org/potentialAction
+    classConstraint: http://schema.org/ControlAction
+  - name: relation
+    path: http://purl.org/dc/terms/relation
+    classConstraint: http://www.w3.org/ns/hydra/core#Operation
+  - name: softwareRequirements
+    path: http://schema.org/softwareRequirements
+  - name: softwareVersion
+    path: http://schema.org/softwareVersion
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+- name: softwaresourcecode
+  targetClass: http://schema.org/SoftwareSourceCode
+  filters:
+  - name: codeRepository
+    path: http://schema.org/codeRepository
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: contactPoint
+    path: http://schema.org/contactPoint
+    required: true
+  - name: description
+    path: http://schema.org/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: keywords
+    path: http://schema.org/keywords
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: license
+    path: http://schema.org/license
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: mainEntityOfPage
+    path: http://schema.org/mainEntityOfPage
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+  - name: name
+    path: http://schema.org/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: programmingLanguage
+    path: http://schema.org/programmingLanguage
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: runtimePlatform
+    path: http://schema.org/runtimePlatform
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: softwareVersion
+    path: http://schema.org/softwareVersion
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: targetProduct
+    path: http://schema.org/targetProduct
+    classConstraint: http://schema.org/SoftwareApplication
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    classConstraint: http://www.w3.org/2004/02/skos/core#Concept
+- name: webservice
+  targetClass: https://www.epos-eu.org/epos-dcat-ap#WebService
+  filters:
+  - name: conformsTo
+    path: http://purl.org/dc/terms/conformsTo
+    classConstraint: http://www.w3.org/ns/hydra/core#ApiDocumentation
+  - name: contactPoint
+    path: http://www.w3.org/ns/dcat#contactPoint
+    required: true
+  - name: dateModified
+    path: http://schema.org/dateModified
+    required: true
+  - name: datePublished
+    path: http://schema.org/datePublished
+    required: true
+  - name: description
+    path: http://schema.org/description
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: entrypoint
+    path: http://www.w3.org/ns/hydra/core#entrypoint
+    datatype: http://www.w3.org/2001/XMLSchema#anyURI
+    required: true
+  - name: identifier
+    path: http://schema.org/identifier
+    required: true
+  - name: keywords
+    path: http://schema.org/keywords
+    datatype: http://www.w3.org/2001/XMLSchema#string
+  - name: license
+    path: http://purl.org/dc/terms/license
+  - name: name
+    path: http://schema.org/name
+    datatype: http://www.w3.org/2001/XMLSchema#string
+    required: true
+  - name: provider
+    path: http://schema.org/provider
+    required: true
+  - name: spatial
+    path: http://purl.org/dc/terms/spatial
+    classConstraint: http://purl.org/dc/terms/Location
+  - name: supportedOperation
+    path: http://www.w3.org/ns/hydra/core#supportedOperation
+    classConstraint: http://www.w3.org/ns/hydra/core#Operation
+  - name: temporal
+    path: http://purl.org/dc/terms/temporal
+    classConstraint: http://purl.org/dc/terms/PeriodOfTime
+  - name: theme
+    path: http://www.w3.org/ns/dcat#theme
+    required: true

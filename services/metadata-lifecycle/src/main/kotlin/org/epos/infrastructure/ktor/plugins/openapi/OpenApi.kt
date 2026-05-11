@@ -39,7 +39,10 @@ object OpenApiSpec {
         return "$yamlWithRuntimeTypes\n$runtimeSection"
     }
 
-    private fun applyRuntimeResourceTypes(base: String, resourceTypes: List<ResourceTypeInfo>): String {
+    private fun applyRuntimeResourceTypes(
+        base: String,
+        resourceTypes: List<ResourceTypeInfo>,
+    ): String {
         if (resourceTypes.isEmpty()) return base
 
         val dynamicTypes =
@@ -51,16 +54,17 @@ object OpenApiSpec {
 
         if (dynamicTypes.isEmpty()) return base
 
-        val enumBlock = buildString {
-            appendLine("      enum:")
-            dynamicTypes.forEach { type ->
-                appendLine("        - ${escapeYaml(type)}")
-            }
-        }.trimEnd()
+        val enumBlock =
+            buildString {
+                appendLine("      enum:")
+                dynamicTypes.forEach { type ->
+                    appendLine("        - ${escapeYaml(type)}")
+                }
+            }.trimEnd()
 
         val resourceTypeRegex =
             Regex(
-                pattern = """(?ms)^\s{4}ResourceType:\n\s{6}type:\s*string\n\s{6}enum:\n(?:\s{8}- .*\n)+""",
+                pattern = """(?m)^\s{4}ResourceType:\n\s{6}type:\s*string\n\s{6}enum:\n(?:\s{8}- [^\n]*\n)+""",
             )
 
         return base.replace(resourceTypeRegex) {

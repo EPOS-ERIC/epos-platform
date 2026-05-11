@@ -84,7 +84,8 @@ object OpenApiAdminPaths {
               properties:
                 indexUrl:
                   type: string
-                  example: http://example.com/index.txt
+                  examples:
+                    - http://example.com/index.txt
       responses:
         '200':
           description: Population completed
@@ -165,11 +166,13 @@ object OpenApiAdminPaths {
                 url:
                   type: string
                   description: URL to a TTL file
-                  example: https://raw.githubusercontent.com/EPOS-ERIC/metadatone/main/metadatone.ttl
+                  examples:
+                    - https://raw.githubusercontent.com/EPOS-ERIC/metadatone/main/metadatone.ttl
                 path:
                   type: string
                   description: Local filesystem path to a TTL file
-                  example: /data/metadata/metadatone.ttl
+                  examples:
+                    - /data/metadata/metadatone.ttl
       responses:
         '200':
           description: Population completed
@@ -227,11 +230,13 @@ object OpenApiAdminPaths {
                 content:
                   type: string
                   description: TTL content as a string
-                  example: "@prefix dcat: <http://www.w3.org/ns/dcat#> .\\n<http://example.org/dataset1> a dcat:Dataset ."
+                  examples:
+                    - "@prefix dcat: <http://www.w3.org/ns/dcat#> .\\n<http://example.org/dataset1> a dcat:Dataset ."
                 sourceName:
                   type: string
                   description: Optional name for provenance tracking
-                  example: my-upload
+                  examples:
+                    - my-upload
       responses:
         '200':
           description: Population completed

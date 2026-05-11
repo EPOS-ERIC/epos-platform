@@ -34,45 +34,47 @@ class RevisionImportService(
     private val httpClient: HttpClient,
     private val lifecycleService: EntityLifecycleService,
 ) {
-
     suspend fun importFromContent(
         ttlContent: String,
         sourceName: String,
         options: RevisionImportOptions,
         agent: String,
         group: String,
-    ): RevisionImportResult = withContext(Dispatchers.IO) {
-        val model = parseTurtleWithRecovery(ttlContent, sourceName)
-        importModel(model, sourceName, options, agent, group)
-    }
+    ): RevisionImportResult =
+        withContext(Dispatchers.IO) {
+            val model = parseTurtleWithRecovery(ttlContent, sourceName)
+            importModel(model, sourceName, options, agent, group)
+        }
 
     suspend fun importFromSingleFile(
         ttlUrl: String,
         options: RevisionImportOptions,
         agent: String,
         group: String,
-    ): RevisionImportResult = withContext(Dispatchers.IO) {
-        val ttlContent = httpClient.get(ttlUrl).bodyAsText()
-        val model = parseTurtleWithRecovery(ttlContent, ttlUrl)
-        importModel(model, ttlUrl, options, agent, group)
-    }
+    ): RevisionImportResult =
+        withContext(Dispatchers.IO) {
+            val ttlContent = httpClient.get(ttlUrl).bodyAsText()
+            val model = parseTurtleWithRecovery(ttlContent, ttlUrl)
+            importModel(model, ttlUrl, options, agent, group)
+        }
 
     suspend fun importFromLocalFile(
         filePath: String,
         options: RevisionImportOptions,
         agent: String,
         group: String,
-    ): RevisionImportResult = withContext(Dispatchers.IO) {
-        val path = Path.of(filePath)
-        require(Files.exists(path)) { "Local file not found: $filePath" }
-        require(Files.isRegularFile(path)) { "Path is not a regular file: $filePath" }
-        require(Files.isReadable(path)) { "Local file is not readable: $filePath" }
+    ): RevisionImportResult =
+        withContext(Dispatchers.IO) {
+            val path = Path.of(filePath)
+            require(Files.exists(path)) { "Local file not found: $filePath" }
+            require(Files.isRegularFile(path)) { "Path is not a regular file: $filePath" }
+            require(Files.isReadable(path)) { "Local file is not readable: $filePath" }
 
-        val ttlContent = Files.readString(path)
-        val sourceLabel = "file://${path.toAbsolutePath()}"
-        val model = parseTurtleWithRecovery(ttlContent, sourceLabel)
-        importModel(model, sourceLabel, options, agent, group)
-    }
+            val ttlContent = Files.readString(path)
+            val sourceLabel = "file://${path.toAbsolutePath()}"
+            val model = parseTurtleWithRecovery(ttlContent, sourceLabel)
+            importModel(model, sourceLabel, options, agent, group)
+        }
 
     private fun importModel(
         model: Model,
@@ -95,7 +97,7 @@ class RevisionImportService(
                 linksRewritten = 0,
                 entities = emptyList(),
                 errors = listOf("No URI subjects found in imported TTL content"),
-                message = "Revision import failed"
+                message = "Revision import failed",
             )
         }
 
@@ -104,24 +106,26 @@ class RevisionImportService(
         val errors = mutableListOf<String>()
 
         importedSubjects.forEach { importedUri ->
-            val conceptualUri = if (UriUtils.hasVersion(importedUri)) {
-                UriUtils.extractConceptualUri(importedUri)
-            } else {
-                importedUri
-            }
-
-            val plan = conceptualPlans.getOrPut(conceptualUri) {
-                try {
-                    planDraft(conceptualUri, options, agent, group)
-                } catch (e: Exception) {
-                    errors.add("$conceptualUri: ${e.message}")
-                    DraftPlan(
-                        draftUri = "",
-                        status = DraftPlanStatus.SKIPPED,
-                        message = e.message ?: "Planning failed"
-                    )
+            val conceptualUri =
+                if (UriUtils.hasVersion(importedUri)) {
+                    UriUtils.extractConceptualUri(importedUri)
+                } else {
+                    importedUri
                 }
-            }
+
+            val plan =
+                conceptualPlans.getOrPut(conceptualUri) {
+                    try {
+                        planDraft(conceptualUri, options, agent, group)
+                    } catch (e: Exception) {
+                        errors.add("$conceptualUri: ${e.message}")
+                        DraftPlan(
+                            draftUri = "",
+                            status = DraftPlanStatus.SKIPPED,
+                            message = e.message ?: "Planning failed",
+                        )
+                    }
+                }
 
             entityResults.add(
                 RevisionImportEntityResult(
@@ -129,8 +133,8 @@ class RevisionImportService(
                     conceptualUri = conceptualUri,
                     draftUri = plan.draftUri,
                     status = plan.status.name.lowercase(),
-                    message = plan.message
-                )
+                    message = plan.message,
+                ),
             )
         }
 
@@ -147,18 +151,20 @@ class RevisionImportService(
                 linksRewritten = 0,
                 entities = entityResults,
                 errors = errors,
-                message = "Revision import failed"
+                message = "Revision import failed",
             )
         }
 
-        val importedToDraft = importedSubjects.associateWith { importedUri ->
-            val conceptualUri = if (UriUtils.hasVersion(importedUri)) {
-                UriUtils.extractConceptualUri(importedUri)
-            } else {
-                importedUri
+        val importedToDraft =
+            importedSubjects.associateWith { importedUri ->
+                val conceptualUri =
+                    if (UriUtils.hasVersion(importedUri)) {
+                        UriUtils.extractConceptualUri(importedUri)
+                    } else {
+                        importedUri
+                    }
+                conceptualPlans.getValue(conceptualUri).draftUri
             }
-            conceptualPlans.getValue(conceptualUri).draftUri
-        }
 
         val rewrittenModel = rewriteModel(model, importedToDraft)
         val rewrittenLinks = countRewrittenLinks(model, importedToDraft)
@@ -186,30 +192,43 @@ class RevisionImportService(
             linksRewritten = rewrittenLinks,
             entities = entityResults,
             errors = emptyList(),
-            message = if (options.dryRun) "Revision import dry-run completed" else "Revision import completed"
+            message = if (options.dryRun) "Revision import dry-run completed" else "Revision import completed",
         )
     }
 
-    private fun planDraft(conceptualUri: String, options: RevisionImportOptions, agent: String, group: String): DraftPlan {
-        val currentPublished = lifecycleService.getCurrentPublishedVersion(conceptualUri)
-            ?: throw IllegalStateException("No published baseline found")
+    private fun planDraft(
+        conceptualUri: String,
+        options: RevisionImportOptions,
+        agent: String,
+        group: String,
+    ): DraftPlan {
+        val currentPublished =
+            lifecycleService.getCurrentPublishedVersion(conceptualUri)
+                ?: throw IllegalStateException("No published baseline found")
 
-        val targetVersion = when (options.versionMode) {
-            VersionMode.EXPLICIT -> options.explicitVersion
-                ?: throw IllegalArgumentException("version is required when versionMode=explicit")
-            VersionMode.AUTO -> nextVersionFrom(currentPublished)
-        }
+        val targetVersion =
+            when (options.versionMode) {
+                VersionMode.EXPLICIT -> {
+                    options.explicitVersion
+                        ?: throw IllegalArgumentException("version is required when versionMode=explicit")
+                }
 
-        val draftUri = "$conceptualUri/$targetVersion-draft"
-        val draftExists = graphDBClient.ask(
-            """
-            ASK {
-                GRAPH <${Config.GRAPH_DRAFT}> {
-                    <$draftUri> ?p ?o .
+                VersionMode.AUTO -> {
+                    nextVersionFrom(currentPublished)
                 }
             }
-            """.trimIndent()
-        )
+
+        val draftUri = "$conceptualUri/$targetVersion-draft"
+        val draftExists =
+            graphDBClient.ask(
+                """
+                ASK {
+                    GRAPH <${Config.GRAPH_DRAFT}> {
+                        <$draftUri> ?p ?o .
+                    }
+                }
+                """.trimIndent(),
+            )
 
         if (draftExists && !options.replaceDraftIfExists) {
             throw IllegalStateException("Draft already exists for target version ($targetVersion)")
@@ -220,28 +239,34 @@ class RevisionImportService(
             return DraftPlan(draftUri, DraftPlanStatus.CREATED, "Draft created")
         }
 
-        val message = when {
-            options.dryRun && !draftExists -> "Draft would be created"
-            draftExists -> "Existing draft reused"
-            else -> "Draft prepared"
-        }
+        val message =
+            when {
+                options.dryRun && !draftExists -> "Draft would be created"
+                draftExists -> "Existing draft reused"
+                else -> "Draft prepared"
+            }
         return DraftPlan(draftUri, DraftPlanStatus.REUSED, message)
     }
 
-    private fun rewriteModel(model: Model, importedToDraft: Map<String, String>): Model {
+    private fun rewriteModel(
+        model: Model,
+        importedToDraft: Map<String, String>,
+    ): Model {
         val remap = importedToDraft.mapKeys { it.key.toIRI() }.mapValues { it.value.toIRI() }
         val rewritten = LinkedHashModel()
 
         model.forEach { statement ->
-            val newSubject = when (val subject = statement.subject) {
-                is IRI -> remap[subject] ?: subject
-                else -> subject
-            }
+            val newSubject =
+                when (val subject = statement.subject) {
+                    is IRI -> remap[subject] ?: subject
+                    else -> subject
+                }
 
-            val newObject: Value = when (val obj = statement.`object`) {
-                is IRI -> remap[obj] ?: obj
-                else -> obj
-            }
+            val newObject: Value =
+                when (val obj = statement.`object`) {
+                    is IRI -> remap[obj] ?: obj
+                    else -> obj
+                }
 
             rewritten.add(newSubject, statement.predicate, newObject)
         }
@@ -249,12 +274,18 @@ class RevisionImportService(
         return rewritten
     }
 
-    private fun countRewrittenLinks(model: Model, importedToDraft: Map<String, String>): Int {
+    private fun countRewrittenLinks(
+        model: Model,
+        importedToDraft: Map<String, String>,
+    ): Int {
         val remapKeys = importedToDraft.keys.map { it.toIRI() }.toSet()
         return model.count { statement -> statement.`object` is IRI && remapKeys.contains(statement.`object`) }
     }
 
-    private fun keepReachableSubgraph(model: Model, rootSubjects: Set<IRI>): Model {
+    private fun keepReachableSubgraph(
+        model: Model,
+        rootSubjects: Set<IRI>,
+    ): Model {
         val allowedSubjects = mutableSetOf<Resource>().apply { addAll(rootSubjects) }
         var changed = true
 
@@ -278,7 +309,10 @@ class RevisionImportService(
         }
     }
 
-    private fun preserveCoreLifecycleTriples(model: Model, draftUris: Set<String>): Model {
+    private fun preserveCoreLifecycleTriples(
+        model: Model,
+        draftUris: Set<String>,
+    ): Model {
         val draftIris = draftUris.map { it.toIRI() }.toSet()
         val prepared = LinkedHashModel()
         val keepPredicates = setOf(RDF.TYPE, NS.PAV_VERSION, DCTERMS.IS_VERSION_OF)
@@ -314,8 +348,11 @@ class RevisionImportService(
         return "${major + 1}.0"
     }
 
-    private fun parseTurtleWithRecovery(ttlContent: String, source: String): Model {
-        return try {
+    private fun parseTurtleWithRecovery(
+        ttlContent: String,
+        source: String,
+    ): Model =
+        try {
             Rio.parse(StringReader(ttlContent), Config.BASE_URI, RDFFormat.TURTLE)
         } catch (e: Exception) {
             println("  WARNING: strict Turtle parsing failed for '$source': ${e.message}")
@@ -337,7 +374,6 @@ class RevisionImportService(
                 Rio.parse(StringReader(sanitized), Config.BASE_URI, RDFFormat.TURTLE)
             }
         }
-    }
 
     private fun sanitizeNonAbsoluteIriTokens(ttlContent: String): String {
         val iriToken = Regex("<([^<>]+)>")
