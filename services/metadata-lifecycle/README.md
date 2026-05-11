@@ -103,6 +103,7 @@ EPOS_PROFILE=dev java -jar build/libs/metadata-service-1.0-SNAPSHOT.jar
 
 - `EPOS_GRAPHDB_ENDPOINT` (default `http://localhost:7200`)
 - `EPOS_REPOSITORY_ID` (default `epos`)
+- `EPOS_SHACL_GRAPH` (named graph containing SHACL shapes, recommended in production)
 - `EPOS_INDEX_URL` (TTL index URL for population)
 - `EPOS_BASE_URI` (default `https://epos-eu.org`)
 - `EPOS_SERVER_HOST` / `HOST` (default `0.0.0.0`)

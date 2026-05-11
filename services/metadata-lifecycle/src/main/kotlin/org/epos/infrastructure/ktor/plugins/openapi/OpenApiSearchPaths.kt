@@ -25,6 +25,11 @@ object OpenApiSearchPaths {
         **Multi-value Parameters:**
         Parameters like `type`, `keywords`, `serviceProvider`, and `versioningStatus` accept
         multiple values by repeating the parameter: `?type=dataset&type=distribution`
+
+        **SHACL-driven property filters:**
+        Any non-reserved query parameter is interpreted as a property filter when it matches
+        a NodeShape property local name or full IRI for the selected type(s).
+        You can also use `filter.<propertyName>=value`.
       parameters:
         - ${'$'}ref: '#/components/parameters/Q'
         - ${'$'}ref: '#/components/parameters/Page'

@@ -141,6 +141,14 @@ private fun buildSoftwareApplicationDetail(
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
+    val relations =
+        buildImmediateRelationGraph(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
+
     return SoftwareApplicationDetail(
         id = entityUri,
         title = title,
@@ -148,6 +156,7 @@ private fun buildSoftwareApplicationDetail(
         keywords = keywords,
         categories = categories,
         downloadUrl = downloadUrl,
+        relations = relations,
         related = related,
         relatedBy = relatedBy,
     )
@@ -205,6 +214,14 @@ private fun buildSoftwareSourceCodeDetail(
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
+    val relations =
+        buildImmediateRelationGraph(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
+
     return SoftwareSourceCodeDetail(
         id = entityUri,
         title = title,
@@ -213,6 +230,7 @@ private fun buildSoftwareSourceCodeDetail(
         keywords = keywords,
         categories = categories,
         repository = repository,
+        relations = relations,
         related = related,
         relatedBy = relatedBy,
     )

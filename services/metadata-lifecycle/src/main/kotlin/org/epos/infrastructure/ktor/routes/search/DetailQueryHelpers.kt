@@ -29,16 +29,26 @@ internal fun entityExists(
     entityUri: String,
     graphUri: String,
 ): Boolean {
+    val escapedEntity = sparqlStringLiteral(entityUri)
     val query =
         """
         ASK {
             GRAPH <$graphUri> {
-                <$entityUri> ?p ?o .
+                ?s ?p ?o .
+                FILTER(STR(?s) = "$escapedEntity")
             }
         }
         """.trimIndent()
     return graphDBClient.ask(query)
 }
+
+internal fun sparqlStringLiteral(value: String): String =
+    value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
 
 /**
  * Builds a plain list of inbound related resources.
@@ -76,16 +86,16 @@ internal fun buildRelatedByResources(
         val sourceId = row["source"] ?: return@forEach
         if (bySource.containsKey(sourceId)) return@forEach
 
-        val sourceType = row["sourceType"]?.let { mapTypeUriToApiType(it) } ?: "dataset"
+        val sourceType = row["sourceType"]?.let { mapTypeUriToApiType(it) }
         bySource[sourceId] =
             ResourceRef(
                 id = sourceId,
                 title = row["sourceTitle"],
-                href = "$publicBaseUrl/api/v2/$sourceType/${URLEncoder.encode(sourceId, "UTF-8")}",
+                href = buildResolvableHref(publicBaseUrl, sourceType, sourceId),
             )
     }
 
-    return bySource.values.toList()
+    return bySource.values.filter { it.href != null }
 }
 
 /**
@@ -122,22 +132,22 @@ internal fun buildRelatedResources(
         val targetId = row["target"] ?: return@forEach
         if (byTarget.containsKey(targetId)) return@forEach
 
-        val targetType = row["targetType"]?.let { mapTypeUriToApiType(it) } ?: "dataset"
+        val targetType = row["targetType"]?.let { mapTypeUriToApiType(it) }
         byTarget[targetId] =
             ResourceRef(
                 id = targetId,
                 title = row["targetTitle"],
-                href = "$publicBaseUrl/api/v2/$targetType/${URLEncoder.encode(targetId, "UTF-8")}",
+                href = buildResolvableHref(publicBaseUrl, targetType, targetId),
             )
     }
 
-    return byTarget.values.toList()
+    return byTarget.values.filter { it.href != null }
 }
 
 /**
  * Maps RDF type URI to API type name for href construction.
  */
-internal fun mapTypeUriToApiType(typeUri: String): String =
+internal fun mapTypeUriToApiType(typeUri: String): String? =
     when {
         typeUri.contains("Dataset", ignoreCase = true) -> "dataset"
         typeUri.contains("Distribution", ignoreCase = true) -> "distribution"
@@ -146,8 +156,18 @@ internal fun mapTypeUriToApiType(typeUri: String): String =
         typeUri.contains("Concept", ignoreCase = true) -> "category"
         typeUri.contains("WebService", ignoreCase = true) -> "distribution"
         typeUri.contains("DataService", ignoreCase = true) -> "distribution"
-        else -> "dataset" // Default fallback
+        else -> null
     }
+
+private fun buildResolvableHref(publicBaseUrl: String, apiType: String?, resourceId: String): String? {
+    if (apiType.isNullOrBlank()) return null
+    if (!isLikelyInternalResourceId(resourceId)) return null
+    return "$publicBaseUrl/api/v2/$apiType/${URLEncoder.encode(resourceId, "UTF-8")}"
+}
+
+private fun isLikelyInternalResourceId(resourceId: String): Boolean {
+    return resourceId.startsWith(Config.BASE_URI) || resourceId.startsWith("category:")
+}
 
 /**
  * Extracts keywords from SPARQL results.
@@ -317,3 +337,65 @@ internal fun getStatusFromGraph(graphUri: String): String =
         Config.GRAPH_ARCHIVED -> "ARCHIVED"
         else -> "PUBLISHED"
     }
+
+internal fun buildImmediateRelationGraph(
+    graphDBClient: GraphDBClient,
+    entityUri: String,
+    graphUri: String,
+    publicBaseUrl: String,
+): List<RelationGroup> {
+    val query =
+        """
+        $DETAIL_PREFIXES
+
+        SELECT ?direction ?predicate ?other ?otherType ?otherTitle
+        FROM <$graphUri>
+        WHERE {
+            {
+                <$entityUri> ?predicate ?other .
+                FILTER(isIRI(?other))
+                FILTER(?other != <$entityUri>)
+                BIND("outbound" AS ?direction)
+            }
+            UNION
+            {
+                ?other ?predicate <$entityUri> .
+                FILTER(isIRI(?other))
+                FILTER(?other != <$entityUri>)
+                BIND("inbound" AS ?direction)
+            }
+            OPTIONAL { ?other rdf:type ?otherType . }
+            OPTIONAL { ?other dcterms:title|rdfs:label|schema:name|foaf:name|skos:prefLabel ?otherTitle . }
+        }
+        ORDER BY ?direction ?predicate ?other
+        """.trimIndent()
+
+    val rows = graphDBClient.query(query)
+    if (rows.isEmpty()) return emptyList()
+
+    val grouped = linkedMapOf<Pair<String, String>, LinkedHashMap<String, ResourceRef>>()
+    rows.forEach { row ->
+        val direction = row["direction"] ?: return@forEach
+        val predicate = row["predicate"] ?: return@forEach
+        val otherId = row["other"] ?: return@forEach
+        val otherType = row["otherType"]?.let { mapTypeUriToApiType(it) }
+        val key = direction to predicate
+        val bucket = grouped.getOrPut(key) { linkedMapOf() }
+        if (bucket.containsKey(otherId)) return@forEach
+        bucket[otherId] =
+            ResourceRef(
+                id = otherId,
+                title = row["otherTitle"],
+                href = buildResolvableHref(publicBaseUrl, otherType, otherId),
+            )
+    }
+
+    return grouped.entries.map { (key, resources) ->
+        val (direction, predicate) = key
+        RelationGroup(
+            direction = direction,
+            predicate = RelationPredicate(iri = predicate, name = extractTypeName(predicate)),
+            resources = resources.values.toList(),
+        )
+    }
+}

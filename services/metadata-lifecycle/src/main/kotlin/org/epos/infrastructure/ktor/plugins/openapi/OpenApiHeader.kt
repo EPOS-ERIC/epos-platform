@@ -44,6 +44,8 @@ servers:
 tags:
   - name: Search
     description: Search across all resource types
+  - name: Access
+    description: Unified shape access for list and detail retrieval
   - name: Datasets
     description: Dataset resources
   - name: Distributions

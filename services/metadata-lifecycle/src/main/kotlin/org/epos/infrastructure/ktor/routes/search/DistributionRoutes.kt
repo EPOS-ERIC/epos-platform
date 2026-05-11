@@ -100,12 +100,21 @@ private fun buildDistributionDetail(
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
+    val relations =
+        buildImmediateRelationGraph(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
+
     return DistributionDetail(
         id = entityUri,
         title = title,
         description = description,
         accessUrl = accessUrl,
         operation = operation,
+        relations = relations,
         related = related,
         relatedBy = relatedBy,
     )

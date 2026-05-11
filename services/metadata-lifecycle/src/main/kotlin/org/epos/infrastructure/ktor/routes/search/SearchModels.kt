@@ -63,5 +63,5 @@ data class GenericSearchItem(
 data class ResourceRef(
     val id: String,
     val title: String? = null,
-    val href: String,
+    val href: String? = null,
 )

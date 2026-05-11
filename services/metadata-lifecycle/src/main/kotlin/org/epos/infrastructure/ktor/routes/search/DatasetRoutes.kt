@@ -177,6 +177,14 @@ private fun buildDatasetDetail(
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
+    val relations =
+        buildImmediateRelationGraph(
+            graphDBClient = graphDBClient,
+            entityUri = entityUri,
+            graphUri = graphUri,
+            publicBaseUrl = publicBaseUrl,
+        ).takeIf { it.isNotEmpty() }
+
     return DatasetDetail(
         id = entityUri,
         title = title,
@@ -188,6 +196,7 @@ private fun buildDatasetDetail(
         temporal = temporal,
         status = getStatusFromGraph(graphUri),
         distributions = distributions,
+        relations = relations,
         related = related,
         relatedBy = relatedBy,
     )

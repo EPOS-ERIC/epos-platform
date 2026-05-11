@@ -52,6 +52,20 @@ class GraphDBClient(private val httpClient: HttpClient) {
     }
 
     /**
+     * Executes a SPARQL CONSTRUCT query and returns an RDF model
+     */
+    fun construct(sparqlQuery: String): Model {
+        return repository.connection.use { conn ->
+            val query = conn.prepareGraphQuery(sparqlQuery)
+            val model = LinkedHashModel()
+            query.evaluate().use { result ->
+                result.forEach { model.add(it) }
+            }
+            model
+        }
+    }
+
+    /**
      * Executes a SPARQL UPDATE through the GraphDB REST API
      */
     fun update(sparqlUpdate: String) {
