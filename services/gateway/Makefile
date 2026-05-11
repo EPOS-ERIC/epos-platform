@@ -1,3 +1,5 @@
+IMAGE ?= epos-gateway:latest
+
 BIN = gateway
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILDFLAGS=-trimpath
@@ -7,6 +9,9 @@ BUILDFLAGS=-trimpath
 
 build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
+
+build-docker: build
+	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
 	go test ./...
@@ -38,4 +43,4 @@ generate: clean
 clean:
 	rm -rf $(BIN) $(SERVER_GEN_DIR) $(METADATA_CLIENT_GEN_DIR)
 
-.PHONY: build generate test fmt lint clean
+.PHONY: build build-docker generate test fmt lint clean

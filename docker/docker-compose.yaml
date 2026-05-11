@@ -37,8 +37,7 @@ services:
       - epos-network
 
   metadata-lifecycle-service:
-    build:
-      context: ../services/metadata-lifecycle
+    image: epos-metadata-lifecycle:latest
     depends_on:
       graphdb-init:
         condition: service_completed_successfully
@@ -55,9 +54,7 @@ services:
       - epos-network
 
   gateway-service:
-    build:
-      context: ..
-      dockerfile: services/gateway/Dockerfile
+    image: epos-gateway:latest
     depends_on:
       metadata-lifecycle-service:
         condition: service_started

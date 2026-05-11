@@ -50,6 +50,7 @@ Preferred (repository standard):
 
 ```bash
 make build
+make build-docker
 make test
 make fmt
 make lint
@@ -495,8 +496,10 @@ docker compose -f docker/docker-compose.yaml down
 ### Build API image
 
 ```bash
-docker build -t epos-metadata-lifecycle:latest .
+make build-docker
 ```
+
+`make build-docker` runs `make build` first, then builds the runtime image from the jar in `build/libs/`.
 
 ### Run API container
 

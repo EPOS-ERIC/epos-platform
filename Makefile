@@ -1,5 +1,5 @@
-up: build
-	docker compose -f ./docker/docker-compose.yaml up -d --build
+up: build-docker
+	docker compose -f ./docker/docker-compose.yaml up -d
 
 down:
 	docker compose -f ./docker/docker-compose.yaml down
@@ -10,6 +10,10 @@ populate:
 build:
 	cd services/gateway && $(MAKE) build
 	cd services/metadata-lifecycle && $(MAKE) build
+
+build-docker:
+	cd services/gateway && $(MAKE) build-docker
+	cd services/metadata-lifecycle && $(MAKE) build-docker
 
 generate:
 	cd services/gateway && $(MAKE) generate
@@ -26,4 +30,4 @@ lint:
 	cd services/gateway && $(MAKE) lint
 	cd services/metadata-lifecycle && $(MAKE) lint
 
-.PHONY: up down populate build generate test fmt lint
+.PHONY: up down populate build build-docker generate test fmt lint
