@@ -25,26 +25,16 @@ type Service struct {
 }
 
 type SearchParams struct {
-	Query         string
-	Type          string
-	Status        string
-	BBox          string
-	Geo           string
-	GeoRelation   string
-	Lat           *float64
-	Lon           *float64
-	Radius        *float64
-	StartDate     *time.Time
-	EndDate       *time.Time
-	Keywords      string
-	Organization  string
-	Concept       string
-	ConceptScheme string
-	DataProvider  string
-	Page          *int32
-	PageSize      *int32
-	Facets        *bool
-	Facetstype    string
+	Query            string
+	Page             *int32
+	ResultsPerPage   *int32
+	Type             []metadataclient.ResourceType
+	SpatialFilter    string
+	DateFrom         *time.Time
+	DateTo           *time.Time
+	ServiceProvider  []string
+	VersioningStatus []metadataclient.VersioningStatus
+	Keywords         []string
 }
 
 func NewService(baseURL string, timeout time.Duration) (*Service, error) {
@@ -89,68 +79,38 @@ func normalizeBaseURL(baseURL string) (string, error) {
 	return strings.TrimSuffix(parsedURL.String(), "/"), nil
 }
 
-func (s *Service) Search(ctx context.Context, params SearchParams) (*metadataclient.ApiV2SearchGet200Response, error) {
-	req := s.client.SearchAPI.ApiV2SearchGet(ctx)
+func (s *Service) Search(ctx context.Context, params SearchParams) (*metadataclient.SearchResponse, error) {
+	req := s.client.SearchAPI.SearchMetadata(ctx)
 
 	if params.Query != "" {
 		req = req.Q(params.Query)
 	}
-	if params.Type != "" {
-		req = req.Type_(params.Type)
-	}
-	if params.Status != "" {
-		req = req.Status(params.Status)
-	}
-	if params.BBox != "" {
-		req = req.Bbox(params.BBox)
-	}
-	if params.Geo != "" {
-		req = req.Geo(params.Geo)
-	}
-	if params.GeoRelation != "" {
-		req = req.GeoRelation(params.GeoRelation)
-	}
-	if params.Lat != nil {
-		req = req.Lat(*params.Lat)
-	}
-	if params.Lon != nil {
-		req = req.Lon(*params.Lon)
-	}
-	if params.Radius != nil {
-		req = req.Radius(*params.Radius)
-	}
-	if params.StartDate != nil {
-		req = req.StartDate(*params.StartDate)
-	}
-	if params.EndDate != nil {
-		req = req.EndDate(*params.EndDate)
-	}
-	if params.Keywords != "" {
-		req = req.Keywords(params.Keywords)
-	}
-	if params.Organization != "" {
-		req = req.Organization(params.Organization)
-	}
-	if params.Concept != "" {
-		req = req.Concept(params.Concept)
-	}
-	if params.ConceptScheme != "" {
-		req = req.ConceptScheme(params.ConceptScheme)
-	}
-	if params.DataProvider != "" {
-		req = req.DataProvider(params.DataProvider)
-	}
 	if params.Page != nil {
 		req = req.Page(*params.Page)
 	}
-	if params.PageSize != nil {
-		req = req.PageSize(*params.PageSize)
+	if params.ResultsPerPage != nil {
+		req = req.ResultsPerPage(*params.ResultsPerPage)
 	}
-	if params.Facets != nil {
-		req = req.Facets(*params.Facets)
+	if len(params.Type) > 0 {
+		req = req.Type_(params.Type)
 	}
-	if params.Facetstype != "" {
-		req = req.Facetstype(params.Facetstype)
+	if params.SpatialFilter != "" {
+		req = req.SpatialFilter(params.SpatialFilter)
+	}
+	if params.DateFrom != nil {
+		req = req.DateFrom(*params.DateFrom)
+	}
+	if params.DateTo != nil {
+		req = req.DateTo(*params.DateTo)
+	}
+	if len(params.ServiceProvider) > 0 {
+		req = req.ServiceProvider(params.ServiceProvider)
+	}
+	if len(params.VersioningStatus) > 0 {
+		req = req.VersioningStatus(params.VersioningStatus)
+	}
+	if len(params.Keywords) > 0 {
+		req = req.Keywords(params.Keywords)
 	}
 
 	response, httpResponse, err := req.Execute()

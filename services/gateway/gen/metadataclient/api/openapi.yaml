@@ -1,30 +1,54 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   contact:
+    email: support@epos-eu.org
     name: EPOS Development Team
     url: https://epos-eu.org
   description: |
-    REST API to manage the lifecycle of RDF metadata resources in GraphDB.
+    OpenAPI specification for the EPOS catalogue API.
 
-    ## Lifecycle Workflow
-    1. **DRAFT** - Create a new draft of a resource
-    2. **SUBMITTED** - Submit the draft for review
-    3. **PUBLISHED** - Publish the resource (automatically archives the previous version)
-    4. **ARCHIVED** - Outdated versions kept for historical purposes
+    ## Design Principles
+    - Search returns heterogeneous, typed resource items in a flat list.
+    - Clients navigate by following `href` links; they never construct URLs themselves.
+    - All cross-entity references carry an `href` pointing to the typed detail endpoint.
+
+    ## Lifecycle States
+    - **DRAFT** - Resource is being edited
+    - **SUBMITTED** - Resource submitted for review
+    - **PUBLISHED** - Resource is publicly visible
+    - **ARCHIVED** - Outdated versions kept for historical purposes
 
     ## Authentication
-    Use the `X-Agent` header with an absolute URI to identify the agent performing the operation.
-    Example: `X-Agent: mailto:user@example.org`
-  title: EPOS Metadata Lifecycle API
-  version: 2.2.0
+    Mutating operations require both headers with absolute URIs:
+    - `X-Agent` identifies the acting agent.
+    - `X-Group` identifies the acting group.
+    Example:
+    - `X-Agent: mailto:user@example.org`
+    - `X-Group: https://epos-eu.org/group/ingestion-team`
+  license:
+    name: AGPL-3.0
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+  termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
+  title: EPOS API
+  version: 2.0.0
 servers:
 - description: Development server
   url: http://localhost:8080
 tags:
+- description: Search across all resource types
+  name: Search
+- description: Dataset resources
+  name: Datasets
+- description: Distribution resources
+  name: Distributions
+- description: Software application resources
+  name: Software Applications
+- description: Software source code resources
+  name: Software Source Codes
+- description: Category taxonomy resources
+  name: Categories
 - description: System information and health checks
   name: System
-- description: Search and discovery endpoints
-  name: Search
 - description: Direct SPARQL query access
   name: SPARQL
 - description: OAI-PMH 2.0 metadata harvesting
@@ -55,9 +79,53 @@ paths:
       - System
   /api/v2/resource-types:
     get:
-      description: Retrieve available resource types parsed from SHACL shapes
+      description: |
+        Retrieve available resource types parsed from SHACL shapes (default view),
+        or export the original cached SHACL graph in RDF formats.
       parameters:
-      - description: Include resolvable shape definitions map keyed by shape IRI
+      - description: Response view. `parsed` returns JSON resource types; `shacl`
+          returns raw SHACL RDF.
+        explode: true
+        in: query
+        name: view
+        required: false
+        schema:
+          default: parsed
+          enum:
+          - parsed
+          - shacl
+          type: string
+        style: form
+      - description: RDF serialization format used when `view=shacl`
+        explode: true
+        in: query
+        name: format
+        required: false
+        schema:
+          enum:
+          - turtle
+          - ttl
+          - jsonld
+          - json-ld
+          - rdfxml
+          - rdf+xml
+          - ntriples
+          - n-triples
+          - nt
+          type: string
+        style: form
+      - description: "When `true` and `view=shacl`, returns compact/beautified output\
+          \ for JSON-LD and Turtle"
+        explode: true
+        in: query
+        name: compact
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Include resolvable shape definitions map keyed by shape IRI (only
+          for `view=parsed`)
         explode: true
         in: query
         name: includeShapeDefinitions
@@ -67,7 +135,7 @@ paths:
           type: boolean
         style: form
       - description: Include only shape definitions reachable from resource type properties
-          via sh:node references
+          via sh:node references (only for `view=parsed`)
         explode: true
         in: query
         name: includeTransitiveShapeDefinitions
@@ -77,6 +145,7 @@ paths:
           type: boolean
         style: form
       - description: Add cycle-safe recursive reference metadata per shape definition
+          (only for `view=parsed`)
         explode: true
         in: query
         name: includeResolvedRefs
@@ -91,335 +160,244 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/_api_v2_resource_types_get_200_response"
-          description: List of resource types
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+          description: "Parsed resource types or raw SHACL RDF, depending on `view`"
       summary: List resource types
       tags:
       - System
   /api/v2/search:
     get:
       description: |
-        Search across all entity types with filtering, pagination, and hierarchical facets.
+        Returns a flat, typed list of catalogue resources matching the supplied criteria.
+        Results may include datasets, distributions, software applications, software source
+        codes, and categories. Each item carries an `href` pointing to its typed detail
+        endpoint; clients should follow that link rather than construct URLs themselves.
 
-        **Full GeoSPARQL Spatial Filtering Support:**
-        - `bbox`: Simple bounding box filter
-        - `geo` + `geoRelation`: Custom WKT geometry with spatial relation
-        - `lat`, `lon`, `radius`: Point + radius filter (km)
+        **Spatial Filtering:**
+        - `spatialFilter`: WKT polygon string (EPSG:4326)
 
-        **Spatial Relations (geoRelation parameter):**
-        - `intersects` (default): Entity intersects the query geometry
-        - `within`: Entity is completely within the query geometry
-        - `contains`: Entity completely contains the query geometry
-        - `overlaps`: Entity overlaps the query geometry
-        - `touches`: Entity touches the query geometry
-        - `disjoint`: Entity does not touch the query geometry
+        **Temporal Filtering:**
+        - `dateFrom`, `dateTo`: ISO 8601 date-time range
 
-        **Hierarchical Concept/Theme Filtering:**
-        - `concept`: Filter by specific concept URI (dcat:theme)
-        - `conceptScheme`: Filter by concept scheme (returns entities themed with any concept in that scheme)
-
-        **Data Provider Filtering:**
-        - `dataProvider`: Filter by data provider organization URI
-        - `organization`: Filter by organization name (text search)
-
-        **Hierarchical Facets (when facets=true):**
-        - `conceptSchemes`: ConceptSchemes with child Concepts and entity counts
-        - `dataProviders`: Organizations with resource type breakdown
+        **Multi-value Parameters:**
+        Parameters like `type`, `keywords`, `serviceProvider`, and `versioningStatus` accept
+        multiple values by repeating the parameter: `?type=dataset&type=distribution`
+      operationId: searchMetadata
       parameters:
-      - description: Free text search query
-        example: seismic data
-        explode: true
-        in: query
-        name: q
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Filter by resource type
-        example: dataset
-        explode: true
-        in: query
-        name: type
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Lifecycle status filter
-        explode: true
-        in: query
-        name: status
-        required: false
-        schema:
-          default: published
-          enum:
-          - draft
-          - submitted
-          - published
-          - archived
-          type: string
-        style: form
-      - description: "Bounding box filter (minLon,minLat,maxLon,maxLat). Uses GeoSPARQL\
-          \ for spatial filtering."
-        example: "-10,35,30,70"
-        explode: true
-        in: query
-        name: bbox
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: "WKT geometry for spatial filtering (e.g., POLYGON, POINT, LINESTRING)"
-        example: "POLYGON((10 40, 40 40, 40 10, 10 10, 10 40))"
-        explode: true
-        in: query
-        name: geo
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Spatial relation to use with bbox or geo parameter
-        explode: true
-        in: query
-        name: geoRelation
-        required: false
-        schema:
-          default: intersects
-          enum:
-          - within
-          - intersects
-          - contains
-          - overlaps
-          - touches
-          - disjoint
-          - crosses
-          - equals
-          type: string
-        style: form
-      - description: Latitude for point + radius filter
-        example: 45.5
-        explode: true
-        in: query
-        name: lat
-        required: false
-        schema:
-          format: double
-          type: number
-        style: form
-      - description: Longitude for point + radius filter
-        example: 9.2
-        explode: true
-        in: query
-        name: lon
-        required: false
-        schema:
-          format: double
-          type: number
-        style: form
-      - description: Radius in kilometers for point + radius filter
-        example: 100
-        explode: true
-        in: query
-        name: radius
-        required: false
-        schema:
-          format: double
-          type: number
-        style: form
-      - description: Temporal filter start date (ISO 8601)
-        explode: true
-        in: query
-        name: startDate
-        required: false
-        schema:
-          format: date-time
-          type: string
-        style: form
-      - description: Temporal filter end date (ISO 8601)
-        explode: true
-        in: query
-        name: endDate
-        required: false
-        schema:
-          format: date-time
-          type: string
-        style: form
-      - description: Comma-separated keywords filter
-        example: "earthquake,seismology"
-        explode: true
-        in: query
-        name: keywords
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Filter by organization URI or name (text search)
-        explode: true
-        in: query
-        name: organization
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Filter by concept URI (dcat:theme). Returns entities tagged with
-          this specific concept.
-        example: https://epos-eu.org/concept/seismology
-        explode: true
-        in: query
-        name: concept
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Filter by concept scheme URI. Returns entities tagged with any
-          concept in that scheme.
-        example: https://epos-eu.org/conceptscheme/domains
-        explode: true
-        in: query
-        name: conceptScheme
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Filter by data provider organization URI (exact match)
-        example: https://epos-eu.org/organization/ingv
-        explode: true
-        in: query
-        name: dataProvider
-        required: false
-        schema:
-          type: string
-        style: form
-      - explode: true
-        in: query
-        name: page
-        required: false
-        schema:
-          default: 1
-          minimum: 1
-          type: integer
-        style: form
-      - explode: true
-        in: query
-        name: pageSize
-        required: false
-        schema:
-          default: 20
-          maximum: 100
-          minimum: 1
-          type: integer
-        style: form
-      - description: Include facet counts in response
-        explode: true
-        in: query
-        name: facets
-        required: false
-        schema:
-          default: false
-          type: boolean
-        style: form
-      - description: |
-          How to group results when facets=true. Matches resources-service behavior.
-          - categories: Group results hierarchically by ConceptScheme -> Concept
-          - dataproviders: Group results by data provider organization
-          - serviceproviders: Group results by service provider organization
-          - none: Return flat list with facet counts only (default)
-        explode: true
-        in: query
-        name: facetstype
-        required: false
-        schema:
-          default: none
-          enum:
-          - none
-          - categories
-          - dataproviders
-          - serviceproviders
-          type: string
-        style: form
+      - $ref: "#/components/parameters/Q"
+      - $ref: "#/components/parameters/Page"
+      - $ref: "#/components/parameters/ResultsPerPage"
+      - $ref: "#/components/parameters/TypeFilter"
+      - $ref: "#/components/parameters/SpatialFilter"
+      - $ref: "#/components/parameters/DateFrom"
+      - $ref: "#/components/parameters/DateTo"
+      - $ref: "#/components/parameters/ServiceProviders"
+      - $ref: "#/components/parameters/VersioningStatusFilter"
+      - $ref: "#/components/parameters/Keywords"
       responses:
         "200":
           content:
             application/json:
+              examples:
+                mixedResults:
+                  summary: Mixed resource search results
+                  value:
+                    total: 42
+                    items:
+                    - type: dataset
+                      id: "123"
+                      name: IRPINIA Seismic Stations
+                      href: https://metadata.epos-eu.org/api/v2/dataset/123
+                      serviceProviders:
+                      - UNINA
+                      categories:
+                      - Seismology
+                      - Strong Motion
+                    - type: category
+                      id: cat-seismology
+                      name: Seismology
+                      href: https://metadata.epos-eu.org/api/v2/category/cat-seismology
               schema:
-                $ref: "#/components/schemas/_api_v2_search_get_200_response"
-          description: Search results
-      summary: Search across all entities
+                $ref: "#/components/schemas/SearchResponse"
+          description: Search results returned successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Search metadata resources
       tags:
       - Search
-  /api/v2/details/{id}:
+  /api/v2/category:
     get:
       description: |
-        Retrieve detailed information about a specific entity.
-
-        **Standard Response (extended=false):**
-        Returns EDM-mapped properties with relations as hrefs.
-
-        **Extended/Aggregated Response (extended=true):**
-        Returns fully nested response matching resources-service structure:
-        - Nested relatedDataProducts with full DataProduct info
-        - Nested relatedWebservices with Operations and ServiceParameters
-        - Spatial and temporal extents as structured objects
-        - Contact points with person info
-        - Available formats for download/access
-        - Categories as facet tree
+        Returns the complete category tree as an ordered list of category schemes.
+        Each scheme carries its full subtree of nested `Category` objects.
+        Intended as the primary data source for building facet navigation in clients.
+      operationId: getCategoryTree
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                tree:
+                  summary: Category tree with one scheme
+                  value:
+                    schemes:
+                    - id: scheme-solid-earth
+                      label: Solid Earth
+                      title: Solid Earth Science Categories
+                      description: Top-level grouping for solid earth science resources.
+                      logo: https://www.epos-eu.org/logos/solid-earth.png
+                      homepage: https://www.epos-eu.org/solid-earth
+                      color: "#3A7BD5"
+                      orderNumber: 1
+                      type: DATA
+                      children:
+                      - id: cat-seismology
+                        name: Seismology
+                        description: Resources related to seismic monitoring.
+                        children:
+                        - id: cat-strong-motion
+                          name: Strong Motion
+                          children: []
+              schema:
+                $ref: "#/components/schemas/CategoryTreeResponse"
+          description: Category tree returned successfully
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Get full category tree
+      tags:
+      - Categories
+  /api/v2/category/{id}:
+    get:
+      description: Returns a single category node with its full subtree of children.
+      operationId: getCategoryById
       parameters:
-      - description: Entity URI (URL encoded)
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
-      - explode: true
-        in: query
-        name: status
-        required: false
-        schema:
-          default: published
-          enum:
-          - draft
-          - submitted
-          - published
-          - archived
-          type: string
-        style: form
-      - description: Response format
-        explode: true
-        in: query
-        name: format
-        required: false
-        schema:
-          default: json
-          enum:
-          - json
-          - turtle
-          - jsonld
-          - rdfxml
-          type: string
-        style: form
-      - description: |
-          If true, returns aggregated response with nested related entities
-          (DataProducts, WebServices, Operations) matching resources-service structure.
-        explode: true
-        in: query
-        name: extended
-        required: false
-        schema:
-          default: false
-          type: boolean
-        style: form
+      - $ref: "#/components/parameters/ResourceId"
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/_api_v2_details__id__get_200_response"
-          description: Entity details
+                $ref: "#/components/schemas/Category"
+          description: Category found
         "404":
-          description: Entity not found
-      summary: Get entity details
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Get category by id
       tags:
-      - Search
+      - Categories
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+  /api/v2/dataset/{id}:
+    get:
+      description: |
+        Returns detailed information about a specific dataset.
+        Includes distributions as resource references with hrefs.
+        Inbound relations (entities referencing this dataset) are always included when present.
+      operationId: getDatasetById
+      parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+          description: Dataset found
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Get dataset by id
+      tags:
+      - Datasets
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+  /api/v2/distribution/{id}:
+    get:
+      description: |
+        Returns detailed information about a specific distribution.
+        Inbound relations (entities referencing this distribution) are always included when present.
+      operationId: getDistributionById
+      parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+          description: Distribution found
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Get distribution by id
+      tags:
+      - Distributions
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+  /api/v2/software-application/{id}:
+    get:
+      description: |
+        Returns detailed information about a specific software application.
+        Inbound relations (entities referencing this application) are always included when present.
+      operationId: getSoftwareApplicationById
+      parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoftwareApplication"
+          description: Software application found
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Get software application by id
+      tags:
+      - Software Applications
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+  /api/v2/software-source-code/{id}:
+    get:
+      description: |
+        Returns detailed information about a specific software source code.
+        Inbound relations (entities referencing this source code) are always included when present.
+      operationId: getSoftwareSourceCodeById
+      parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoftwareSourceCode"
+          description: Software source code found
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+      summary: Get software source code by id
+      tags:
+      - Software Source Codes
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
   /api/v2/sparql:
     post:
       description: |
@@ -557,14 +535,6 @@ paths:
     get:
       description: Retrieve a paginated list of entities of a specific type
       parameters:
-      - example: dataset
-        explode: false
-        in: path
-        name: resourceType
-        required: true
-        schema:
-          type: string
-        style: simple
       - explode: true
         in: query
         name: status
@@ -594,15 +564,6 @@ paths:
           default: 20
           type: integer
         style: form
-      responses:
-        "200":
-          description: List of entities
-      summary: List entities
-      tags:
-      - Resources
-    post:
-      description: Create a new entity in DRAFT state
-      parameters:
       - example: dataset
         explode: false
         in: path
@@ -611,11 +572,45 @@ paths:
         schema:
           type: string
         style: simple
+      responses:
+        "200":
+          description: List of entities
+      summary: List entities
+      tags:
+      - Resources
+    parameters:
+    - example: dataset
+      explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    post:
+      description: Create a new entity in DRAFT state
+      parameters:
       - example: mailto:user@example.org
         explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - example: https://epos-eu.org/group/ingestion-team
+        explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
+      - example: dataset
+        explode: false
+        in: path
+        name: resourceType
+        required: true
         schema:
           type: string
         style: simple
@@ -659,21 +654,6 @@ paths:
       description: Retrieve entity details. Supports multiple formats via Accept header
         or format parameter.
       parameters:
-      - explode: false
-        in: path
-        name: resourceType
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Full entity URI
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
       - explode: true
         in: query
         name: status
@@ -701,16 +681,6 @@ paths:
           - ntriples
           type: string
         style: form
-      responses:
-        "200":
-          description: Entity details
-        "404":
-          description: Entity not found
-      summary: Get entity
-      tags:
-      - Resources
-    put:
-      parameters:
       - explode: false
         in: path
         name: resourceType
@@ -726,10 +696,105 @@ paths:
         schema:
           type: string
         style: simple
+      responses:
+        "200":
+          description: Entity details
+        "404":
+          description: Entity not found
+      summary: Get entity
+      tags:
+      - Resources
+    parameters:
+    - explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    - description: Full entity URI
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+    patch:
+      description: Merge semantics. Only the provided properties are replaced; all
+        other properties are preserved.
+      parameters:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Full entity URI
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/_api_v2__resourceType___id__put_request"
+        required: true
+      responses:
+        "200":
+          description: Entity patched
+      summary: Patch entity (DRAFT only)
+      tags:
+      - Resources
+    put:
+      description: Full replace semantics. Properties not included in the request
+        are removed from the draft entity.
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Full entity URI
+        explode: false
+        in: path
+        name: id
+        required: true
         schema:
           type: string
         style: simple
@@ -746,9 +811,38 @@ paths:
       tags:
       - Resources
   /api/v2/{resourceType}/{id}/submit:
+    parameters:
+    - explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    - explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
     post:
       description: Move an entity from DRAFT to SUBMITTED
       parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
       - explode: false
         in: path
         name: resourceType
@@ -760,13 +854,6 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
-        style: simple
-      - explode: false
-        in: header
-        name: X-Agent
-        required: false
         schema:
           type: string
         style: simple
@@ -777,9 +864,38 @@ paths:
       tags:
       - Lifecycle
   /api/v2/{resourceType}/{id}/publish:
+    parameters:
+    - explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    - explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
     post:
       description: Publish an entity from SUBMITTED to PUBLISHED
       parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
       - explode: false
         in: path
         name: resourceType
@@ -791,13 +907,6 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
-        style: simple
-      - explode: false
-        in: header
-        name: X-Agent
-        required: false
         schema:
           type: string
         style: simple
@@ -808,23 +917,24 @@ paths:
       tags:
       - Lifecycle
   /api/v2/{resourceType}/{id}/draft:
+    parameters:
+    - explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    - explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
     post:
       description: Creates a new draft version from a published entity
       parameters:
-      - explode: false
-        in: path
-        name: resourceType
-        required: true
-        schema:
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
       - explode: true
         in: query
         name: version
@@ -836,7 +946,28 @@ paths:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: resourceType
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: id
+        required: true
         schema:
           type: string
         style: simple
@@ -848,7 +979,8 @@ paths:
       - Lifecycle
   /api/v2/{resourceType}/{id}/history:
     get:
-      description: Retrieve all versions of a conceptual entity
+      description: "Retrieve all versions of a conceptual entity, including status,\
+        \ agent, and group provenance"
       parameters:
       - explode: false
         in: path
@@ -866,10 +998,29 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionHistoryResponse"
           description: Version history
       summary: Version history
       tags:
       - Versioning
+    parameters:
+    - explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    - explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
   /api/v2/batch/submit:
     post:
       description: Submit multiple entities in a single request
@@ -877,7 +1028,14 @@ paths:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
         schema:
           type: string
         style: simple
@@ -900,7 +1058,14 @@ paths:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
         schema:
           type: string
         style: simple
@@ -917,9 +1082,38 @@ paths:
       tags:
       - Batch
   /api/v2/{resourceType}/{id}/repair:
+    parameters:
+    - explode: false
+      in: path
+      name: resourceType
+      required: true
+      schema:
+        type: string
+      style: simple
+    - explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
     post:
       description: Repair missing conceptual graph entries or provenance records
       parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
       - explode: false
         in: path
         name: resourceType
@@ -931,13 +1125,6 @@ paths:
         in: path
         name: id
         required: true
-        schema:
-          type: string
-        style: simple
-      - explode: false
-        in: header
-        name: X-Agent
-        required: false
         schema:
           type: string
         style: simple
@@ -954,7 +1141,14 @@ paths:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
         schema:
           type: string
         style: simple
@@ -973,7 +1167,14 @@ paths:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
         schema:
           type: string
         style: simple
@@ -1028,7 +1229,15 @@ paths:
         explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Group URI for provenance tracking
+        explode: false
+        in: header
+        name: X-Group
+        required: true
         schema:
           type: string
         style: simple
@@ -1073,7 +1282,14 @@ paths:
       - explode: false
         in: header
         name: X-Agent
-        required: false
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
         schema:
           type: string
         style: simple
@@ -1097,8 +1313,806 @@ paths:
       summary: Populate from TTL content
       tags:
       - Admin
+  /api/v2/admin/import/revision/file:
+    post:
+      description: |
+        Imports TTL metadata into DRAFT revisions for existing published entities.
+        Existing links between imported resources are rewritten to their corresponding draft URIs.
+        This endpoint does not write directly to PUBLISHED.
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevisionImportFileRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionImportApiResponse"
+          description: Revision import completed
+        "400":
+          description: Invalid request
+        "500":
+          description: Revision import failed
+      summary: Import metadata revisions from URL or local TTL file
+      tags:
+      - Admin
+  /api/v2/admin/import/revision/content:
+    post:
+      description: |
+        Imports TTL metadata into DRAFT revisions for existing published entities.
+        Existing links between imported resources are rewritten to their corresponding draft URIs.
+        This endpoint does not write directly to PUBLISHED.
+      parameters:
+      - explode: false
+        in: header
+        name: X-Agent
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-Group
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RevisionImportContentRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionImportApiResponse"
+          description: Revision import completed
+        "400":
+          description: Invalid request
+        "500":
+          description: Revision import failed
+      summary: Import metadata revisions from TTL content
+      tags:
+      - Admin
 components:
+  parameters:
+    ResourceId:
+      description: Local identifier of the resource
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+    Q:
+      description: Free-text search query
+      explode: true
+      in: query
+      name: q
+      required: false
+      schema:
+        type: string
+      style: form
+    Page:
+      description: 1-based page number
+      explode: true
+      in: query
+      name: page
+      required: false
+      schema:
+        default: 1
+        minimum: 1
+        type: integer
+      style: form
+    ResultsPerPage:
+      description: Number of items to return per page
+      explode: true
+      in: query
+      name: resultsPerPage
+      required: false
+      schema:
+        default: 10
+        maximum: 100
+        minimum: 1
+        type: integer
+      style: form
+    TypeFilter:
+      description: |
+        Filter results to one or more resource types. When omitted, all types are returned.
+        Repeat the parameter for multiple values: `?type=dataset&type=distribution`.
+      explode: true
+      in: query
+      name: type
+      required: false
+      schema:
+        items:
+          $ref: "#/components/schemas/ResourceType"
+        type: array
+      style: form
+    SpatialFilter:
+      description: |
+        Spatial filter expressed as a WKT polygon string (EPSG:4326).
+        Resources whose spatial coverage intersects this polygon are returned.
+        Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
+      explode: true
+      in: query
+      name: spatialFilter
+      required: false
+      schema:
+        type: string
+      style: form
+    DateFrom:
+      description: |
+        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Resources with temporal coverage overlapping this range are returned.
+      explode: true
+      in: query
+      name: dateFrom
+      required: false
+      schema:
+        format: date-time
+        type: string
+      style: form
+    DateTo:
+      description: |
+        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Must be greater than or equal to `dateFrom` when both are supplied.
+      explode: true
+      in: query
+      name: dateTo
+      required: false
+      schema:
+        format: date-time
+        type: string
+      style: form
+    ServiceProviders:
+      description: |
+        Filter by one or more service provider names.
+        Repeat the parameter for multiple values: `?serviceProvider=INGV&serviceProvider=UNINA`.
+      explode: true
+      in: query
+      name: serviceProvider
+      required: false
+      schema:
+        items:
+          type: string
+        type: array
+      style: form
+    VersioningStatusFilter:
+      description: |
+        Filter by one or more versioning statuses.
+        When omitted, defaults to `PUBLISHED`.
+        Repeat the parameter for multiple values: `?versioningStatus=PUBLISHED&versioningStatus=DRAFT`.
+      explode: true
+      in: query
+      name: versioningStatus
+      required: false
+      schema:
+        default:
+        - PUBLISHED
+        items:
+          $ref: "#/components/schemas/VersioningStatus"
+        type: array
+      style: form
+    Keywords:
+      description: |
+        Filter resources that carry all the supplied keywords.
+        Repeat the parameter for multiple values: `?keywords=seismology&keywords=stations`.
+      explode: true
+      in: query
+      name: keywords
+      required: false
+      schema:
+        items:
+          type: string
+        type: array
+      style: form
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Invalid request parameters
+    NotFound:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Resource not found
+    InternalServerError:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+      description: Internal server error
   schemas:
+    ResourceType:
+      enum:
+      - dataset
+      - distribution
+      - software-application
+      - software-source-code
+      - category
+      type: string
+    VersioningStatus:
+      enum:
+      - DRAFT
+      - SUBMITTED
+      - PUBLISHED
+      - ARCHIVED
+      type: string
+    SearchResponse:
+      example:
+        total: 0
+        items:
+        - name: name
+          id: id
+          href: href
+          serviceProviders:
+          - serviceProviders
+          - serviceProviders
+          categories:
+          - categories
+          - categories
+          type: dataset
+        - name: name
+          id: id
+          href: href
+          serviceProviders:
+          - serviceProviders
+          - serviceProviders
+          categories:
+          - categories
+          - categories
+          type: dataset
+      properties:
+        total:
+          description: Total number of matching resources across all pages
+          minimum: 0
+          type: integer
+        items:
+          items:
+            $ref: "#/components/schemas/SearchItem"
+          type: array
+      required:
+      - items
+      - total
+    SearchItem:
+      discriminator:
+        mapping:
+          dataset: "#/components/schemas/DatasetSearchItem"
+          distribution: "#/components/schemas/GenericSearchItem"
+          software-application: "#/components/schemas/GenericSearchItem"
+          software-source-code: "#/components/schemas/GenericSearchItem"
+          category: "#/components/schemas/GenericSearchItem"
+        propertyName: type
+      oneOf:
+      - $ref: "#/components/schemas/DatasetSearchItem"
+      - $ref: "#/components/schemas/GenericSearchItem"
+    BaseSearchItem:
+      properties:
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        id:
+          type: string
+        name:
+          type: string
+        href:
+          description: Absolute URL of the typed detail endpoint. Follow this link;
+            do not construct URLs.
+          type: string
+      required:
+      - href
+      - id
+      - name
+      - type
+    DatasetSearchItem:
+      allOf:
+      - $ref: "#/components/schemas/BaseSearchItem"
+      - properties:
+          type:
+            enum:
+            - dataset
+            type: string
+          serviceProviders:
+            description: Display names of organisations providing this dataset
+            items:
+              type: string
+            type: array
+          categories:
+            description: Category labels assigned to this dataset
+            items:
+              type: string
+            type: array
+        required:
+        - type
+      example:
+        name: name
+        id: id
+        href: href
+        serviceProviders:
+        - serviceProviders
+        - serviceProviders
+        categories:
+        - categories
+        - categories
+        type: dataset
+    GenericSearchItem:
+      allOf:
+      - $ref: "#/components/schemas/BaseSearchItem"
+      - properties:
+          type:
+            enum:
+            - distribution
+            - software-application
+            - software-source-code
+            - category
+            type: string
+        required:
+        - type
+    ResourceRef:
+      example:
+        id: id
+        href: href
+        title: title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        href:
+          description: Absolute URL of the typed detail endpoint
+          type: string
+      required:
+      - href
+      - id
+    TemporalExtent:
+      description: Temporal coverage of a resource
+      example:
+        start: 2000-01-23T04:56:07.000+00:00
+        end: 2000-01-23T04:56:07.000+00:00
+      properties:
+        start:
+          description: "Start of the temporal coverage (inclusive), ISO 8601 UTC"
+          format: date-time
+          type: string
+        end:
+          description: "End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted\
+            \ for open-ended coverage."
+          format: date-time
+          type: string
+    Dataset:
+      example:
+        keywords:
+        - keywords
+        - keywords
+        related:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        description: description
+        publisher:
+        - publisher
+        - publisher
+        id: id
+        categories:
+        - categories
+        - categories
+        relatedBy:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        title: title
+        spatial: spatial
+        temporal:
+          start: 2000-01-23T04:56:07.000+00:00
+          end: 2000-01-23T04:56:07.000+00:00
+        distributions:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        status: DRAFT
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        keywords:
+          items:
+            type: string
+          type: array
+        categories:
+          description: Category labels assigned to this dataset
+          items:
+            type: string
+          type: array
+        publisher:
+          description: Names of the organisations publishing this dataset
+          items:
+            type: string
+          type: array
+        spatial:
+          description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
+          type: string
+        temporal:
+          $ref: "#/components/schemas/TemporalExtent"
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
+        distributions:
+          description: Distributions that provide access to this dataset
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+        related:
+          description: Outbound related entities referenced by this dataset
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+        relatedBy:
+          description: Inbound related entities that reference this dataset
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+      required:
+      - id
+      - status
+      - title
+    Distribution:
+      example:
+        related:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        accessUrl: https://openapi-generator.tech
+        description: description
+        id: id
+        relatedBy:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        title: title
+        operation: operation
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        accessUrl:
+          description: URL used to access the distribution
+          format: uri
+          type: string
+        operation:
+          description: Operation ID describing the service operation exposed by this
+            distribution
+          type: string
+        related:
+          description: Outbound related entities referenced by this distribution
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+        relatedBy:
+          description: Inbound related entities that reference this distribution
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+      required:
+      - id
+      - title
+    SoftwareApplication:
+      example:
+        keywords:
+        - keywords
+        - keywords
+        related:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        downloadUrl: https://openapi-generator.tech
+        description: description
+        id: id
+        categories:
+        - categories
+        - categories
+        relatedBy:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        title: title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        keywords:
+          items:
+            type: string
+          type: array
+        categories:
+          description: Category labels assigned to this application
+          items:
+            type: string
+          type: array
+        downloadUrl:
+          description: URL to download or install the application
+          format: uri
+          type: string
+        related:
+          description: Outbound related entities referenced by this application
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+        relatedBy:
+          description: Inbound related entities that reference this application
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+      required:
+      - id
+      - title
+    SoftwareSourceCode:
+      example:
+        keywords:
+        - keywords
+        - keywords
+        related:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        programmingLanguage: programmingLanguage
+        description: description
+        id: id
+        categories:
+        - categories
+        - categories
+        relatedBy:
+        - id: id
+          href: href
+          title: title
+        - id: id
+          href: href
+          title: title
+        title: title
+        repository: https://openapi-generator.tech
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        programmingLanguage:
+          description: Primary programming language of the source code
+          type: string
+        keywords:
+          items:
+            type: string
+          type: array
+        categories:
+          description: Category labels assigned to this source code
+          items:
+            type: string
+          type: array
+        repository:
+          description: URL of the source code repository
+          format: uri
+          type: string
+        related:
+          description: Outbound related entities referenced by this source code
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+        relatedBy:
+          description: Inbound related entities that reference this source code
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          type: array
+      required:
+      - id
+      - title
+    Category:
+      example:
+        children:
+        - null
+        - null
+        name: name
+        description: description
+        id: id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        children:
+          description: Nested child categories
+          items:
+            $ref: "#/components/schemas/Category"
+          type: array
+      required:
+      - id
+      - name
+    CategoryScheme:
+      example:
+        orderNumber: 0
+        color: color
+        children:
+        - children:
+          - null
+          - null
+          name: name
+          description: description
+          id: id
+        - children:
+          - null
+          - null
+          name: name
+          description: description
+          id: id
+        description: description
+        logo: https://openapi-generator.tech
+        id: id
+        label: label
+        title: title
+        type: DATA
+        homepage: https://openapi-generator.tech
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        logo:
+          format: uri
+          type: string
+        homepage:
+          format: uri
+          type: string
+        color:
+          description: Hex colour code used for UI rendering
+          type: string
+        orderNumber:
+          description: Display order among sibling category schemes
+          type: integer
+        type:
+          enum:
+          - DATA
+          - FACILITY
+          - SOFTWARE
+          type: string
+        children:
+          description: Top-level categories within this scheme
+          items:
+            $ref: "#/components/schemas/Category"
+          type: array
+      required:
+      - id
+      - label
+      - type
+    CategoryTreeResponse:
+      example:
+        schemes:
+        - orderNumber: 0
+          color: color
+          children:
+          - children:
+            - null
+            - null
+            name: name
+            description: description
+            id: id
+          - children:
+            - null
+            - null
+            name: name
+            description: description
+            id: id
+          description: description
+          logo: https://openapi-generator.tech
+          id: id
+          label: label
+          title: title
+          type: DATA
+          homepage: https://openapi-generator.tech
+        - orderNumber: 0
+          color: color
+          children:
+          - children:
+            - null
+            - null
+            name: name
+            description: description
+            id: id
+          - children:
+            - null
+            - null
+            name: name
+            description: description
+            id: id
+          description: description
+          logo: https://openapi-generator.tech
+          id: id
+          label: label
+          title: title
+          type: DATA
+          homepage: https://openapi-generator.tech
+      properties:
+        schemes:
+          description: "Ordered list of category schemes, each carrying its full category\
+            \ subtree"
+          items:
+            $ref: "#/components/schemas/CategoryScheme"
+          type: array
+      required:
+      - schemes
+    ErrorResponse:
+      example:
+        errorMessage: errorMessage
+        errorCode: errorCode
+      properties:
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+      required:
+      - errorCode
+      - errorMessage
     PropertyInfo:
       example:
         severity: severity
@@ -1143,88 +2157,87 @@ components:
           type: string
         datatype:
           format: uri
-          nullable: true
           type: string
+          nullable: true
         datatypes:
           items:
             format: uri
             type: string
-          nullable: true
           type: array
-        nodeKind:
           nullable: true
+        nodeKind:
           type: string
+          nullable: true
         nodeKinds:
           items:
             type: string
-          nullable: true
           type: array
+          nullable: true
         classConstraint:
           format: uri
-          nullable: true
           type: string
+          nullable: true
         classConstraints:
           items:
             format: uri
             type: string
-          nullable: true
           type: array
-        nodeShapeRef:
           nullable: true
+        nodeShapeRef:
           type: string
+          nullable: true
         nodeShapeRefs:
           items:
             type: string
-          nullable: true
           type: array
+          nullable: true
         minCount:
           format: int32
-          nullable: true
           type: integer
+          nullable: true
         maxCount:
           format: int32
-          nullable: true
           type: integer
+          nullable: true
         required:
           type: boolean
         recommended:
           type: boolean
         pattern:
-          nullable: true
           type: string
+          nullable: true
         minLength:
           format: int32
-          nullable: true
           type: integer
+          nullable: true
         maxLength:
           format: int32
-          nullable: true
           type: integer
+          nullable: true
         hasValueIn:
           items:
             type: string
-          nullable: true
           type: array
-        severity:
           nullable: true
+        severity:
           type: string
+          nullable: true
         severities:
           items:
             type: string
-          nullable: true
           type: array
+          nullable: true
         helpText:
-          nullable: true
           type: string
+          nullable: true
         description:
-          nullable: true
           type: string
+          nullable: true
       required:
       - name
       - path
       - recommended
       - required
-      type: object
     ResourceTypeInfo:
       example:
         targetClass: https://openapi-generator.tech
@@ -1313,14 +2326,13 @@ components:
         closed:
           type: boolean
         description:
-          nullable: true
           type: string
+          nullable: true
       required:
       - closed
       - name
       - properties
       - targetClass
-      type: object
     ResourceTypeList:
       description: Returned when shape definitions are not requested
       items:
@@ -1342,70 +2354,69 @@ components:
         resolvedRefs:
           items:
             type: string
-          nullable: true
           type: array
-        name:
           nullable: true
+        name:
           type: string
+          nullable: true
         datatype:
           format: uri
-          nullable: true
           type: string
+          nullable: true
         datatypes:
           items:
             format: uri
             type: string
-          nullable: true
           type: array
-        nodeKind:
           nullable: true
+        nodeKind:
           type: string
+          nullable: true
         nodeKinds:
           items:
             type: string
-          nullable: true
           type: array
+          nullable: true
         classConstraint:
           format: uri
-          nullable: true
           type: string
+          nullable: true
         classConstraints:
           items:
             format: uri
             type: string
-          nullable: true
           type: array
-        nodeShapeRef:
           nullable: true
+        nodeShapeRef:
           type: string
+          nullable: true
         nodeShapeRefs:
           items:
             type: string
-          nullable: true
           type: array
+          nullable: true
         ontologyEquivalentClasses:
           items:
             format: uri
             type: string
-          nullable: true
           type: array
+          nullable: true
         ontologySubClassesOf:
           items:
             format: uri
             type: string
-          nullable: true
           type: array
+          nullable: true
         closed:
           type: boolean
         description:
-          nullable: true
           type: string
+          nullable: true
       required:
       - closed
       - id
       - properties
       - targetClasses
-      type: object
     ResourceTypesEnvelope:
       description: Returned when includeShapeDefinitions or includeTransitiveShapeDefinitions
         is true
@@ -1418,10 +2429,255 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/ShapeDefinitionInfo"
           description: Map keyed by shape IRI
-          type: object
       required:
       - resourceTypes
-      type: object
+    VersionInfo:
+      example:
+        agent: agent
+        uri: https://openapi-generator.tech
+        version: version
+        timestamp: timestamp
+        group: group
+        status: draft
+      properties:
+        uri:
+          format: uri
+          type: string
+        version:
+          type: string
+        timestamp:
+          type: string
+        agent:
+          type: string
+          nullable: true
+        group:
+          type: string
+          nullable: true
+        status:
+          enum:
+          - draft
+          - submitted
+          - published
+          - archived
+          - unknown
+          type: string
+      required:
+      - status
+      - timestamp
+      - uri
+      - version
+    VersionHistoryResponse:
+      example:
+        conceptualUri: https://openapi-generator.tech
+        versions:
+        - agent: agent
+          uri: https://openapi-generator.tech
+          version: version
+          timestamp: timestamp
+          group: group
+          status: draft
+        - agent: agent
+          uri: https://openapi-generator.tech
+          version: version
+          timestamp: timestamp
+          group: group
+          status: draft
+      properties:
+        conceptualUri:
+          format: uri
+          type: string
+        versions:
+          items:
+            $ref: "#/components/schemas/VersionInfo"
+          type: array
+      required:
+      - conceptualUri
+      - versions
+    RevisionImportFileRequest:
+      description: Revision import from a single TTL source (URL or local path)
+      example:
+        path: path
+        dryRun: false
+        versionMode: auto
+        version: "2.0"
+        url: url
+        replaceDraftIfExists: true
+      properties:
+        url:
+          description: HTTP(S) URL to a TTL file
+          type: string
+        path:
+          description: Local filesystem path to a TTL file
+          type: string
+        versionMode:
+          default: auto
+          enum:
+          - auto
+          - explicit
+          type: string
+        version:
+          description: "Target version number, required when versionMode=explicit"
+          example: "2.0"
+          type: string
+        replaceDraftIfExists:
+          default: true
+          type: boolean
+        dryRun:
+          default: false
+          type: boolean
+    RevisionImportContentRequest:
+      description: Revision import from raw TTL content
+      example:
+        dryRun: false
+        versionMode: auto
+        sourceName: imported-batch-2026-04-24
+        version: "2.0"
+        content: content
+        replaceDraftIfExists: true
+      properties:
+        content:
+          type: string
+        sourceName:
+          example: imported-batch-2026-04-24
+          type: string
+        versionMode:
+          default: auto
+          enum:
+          - auto
+          - explicit
+          type: string
+        version:
+          description: "Target version number, required when versionMode=explicit"
+          example: "2.0"
+          type: string
+        replaceDraftIfExists:
+          default: true
+          type: boolean
+        dryRun:
+          default: false
+          type: boolean
+      required:
+      - content
+    RevisionImportEntityResult:
+      example:
+        conceptualUri: conceptualUri
+        importedUri: importedUri
+        message: message
+        draftUri: draftUri
+        status: status
+      properties:
+        importedUri:
+          type: string
+        conceptualUri:
+          type: string
+        draftUri:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+          nullable: true
+      required:
+      - conceptualUri
+      - draftUri
+      - importedUri
+      - status
+    RevisionImportResponseData:
+      example:
+        agent: agent
+        dryRun: true
+        triplesInserted: 1
+        draftsCreated: 5
+        subjectsProcessed: 0
+        entities:
+        - conceptualUri: conceptualUri
+          importedUri: importedUri
+          message: message
+          draftUri: draftUri
+          status: status
+        - conceptualUri: conceptualUri
+          importedUri: importedUri
+          message: message
+          draftUri: draftUri
+          status: status
+        source: source
+        triplesPrepared: 6
+        linksRewritten: 2
+        draftsReused: 5
+        group: group
+      properties:
+        source:
+          type: string
+        dryRun:
+          type: boolean
+        subjectsProcessed:
+          type: integer
+        triplesPrepared:
+          type: integer
+        triplesInserted:
+          type: integer
+        draftsCreated:
+          type: integer
+        draftsReused:
+          type: integer
+        linksRewritten:
+          type: integer
+        entities:
+          items:
+            $ref: "#/components/schemas/RevisionImportEntityResult"
+          type: array
+        agent:
+          type: string
+        group:
+          type: string
+      required:
+      - agent
+      - draftsCreated
+      - draftsReused
+      - dryRun
+      - entities
+      - group
+      - linksRewritten
+      - source
+      - subjectsProcessed
+      - triplesInserted
+      - triplesPrepared
+    RevisionImportApiResponse:
+      example:
+        data:
+          agent: agent
+          dryRun: true
+          triplesInserted: 1
+          draftsCreated: 5
+          subjectsProcessed: 0
+          entities:
+          - conceptualUri: conceptualUri
+            importedUri: importedUri
+            message: message
+            draftUri: draftUri
+            status: status
+          - conceptualUri: conceptualUri
+            importedUri: importedUri
+            message: message
+            draftUri: draftUri
+            status: status
+          source: source
+          triplesPrepared: 6
+          linksRewritten: 2
+          draftsReused: 5
+          group: group
+        success: true
+        message: message
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/RevisionImportResponseData"
+      required:
+      - message
+      - success
     _health_get_200_response:
       example:
         status: ok
@@ -1433,402 +2689,10 @@ components:
         timestamp:
           format: int64
           type: integer
-      type: object
     _api_v2_resource_types_get_200_response:
       oneOf:
       - $ref: "#/components/schemas/ResourceTypeList"
       - $ref: "#/components/schemas/ResourceTypesEnvelope"
-    _api_v2_search_get_200_response_results_inner_availableFormats_inner:
-      example:
-        format: format
-        label: label
-        href: href
-        type: type
-      properties:
-        label:
-          type: string
-        format:
-          type: string
-        href:
-          type: string
-        type:
-          type: string
-      type: object
-    _api_v2_search_get_200_response_results_inner:
-      example:
-        availableFormats:
-        - format: format
-          label: label
-          href: href
-          type: type
-        - format: format
-          label: label
-          href: href
-          type: type
-        description: description
-        id: id
-        href: href
-        type: type
-        title: title
-      properties:
-        id:
-          type: string
-        type:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        href:
-          type: string
-        availableFormats:
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_results_inner_availableFormats_inner"
-          type: array
-      type: object
-    _api_v2_search_get_200_response_facets_types_inner:
-      example:
-        count: 5
-        label: label
-        value: value
-      properties:
-        value:
-          type: string
-        label:
-          type: string
-        count:
-          type: integer
-      type: object
-    _api_v2_search_get_200_response_facets_conceptSchemes_inner_children_inner:
-      example:
-        count: 7
-        label: label
-        value: value
-      properties:
-        value:
-          description: Concept URI
-          type: string
-        label:
-          type: string
-        count:
-          type: integer
-      type: object
-    _api_v2_search_get_200_response_facets_conceptSchemes_inner:
-      example:
-        children:
-        - count: 7
-          label: label
-          value: value
-        - count: 7
-          label: label
-          value: value
-        count: 2
-        id: id
-        label: label
-      properties:
-        id:
-          description: ConceptScheme URI
-          type: string
-        label:
-          type: string
-        count:
-          description: Total entities tagged with concepts in this scheme
-          type: integer
-        children:
-          description: Child concepts with their entity counts
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_conceptSchemes_inner_children_inner"
-          type: array
-      type: object
-    _api_v2_search_get_200_response_facets_dataProviders_inner_children_inner:
-      example:
-        count: 3
-        label: label
-        value: value
-      properties:
-        value:
-          description: Resource type URI
-          type: string
-        label:
-          type: string
-        count:
-          type: integer
-      type: object
-    _api_v2_search_get_200_response_facets_dataProviders_inner:
-      example:
-        children:
-        - count: 3
-          label: label
-          value: value
-        - count: 3
-          label: label
-          value: value
-        count: 9
-        id: id
-        label: label
-      properties:
-        id:
-          description: Organization URI
-          type: string
-        label:
-          description: Organization name
-          type: string
-        count:
-          description: Total resources from this provider
-          type: integer
-        children:
-          description: Resource types with counts
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_dataProviders_inner_children_inner"
-          type: array
-      type: object
-    _api_v2_search_get_200_response_facets:
-      description: Hierarchical facets (only present when facets=true)
-      example:
-        types:
-        - count: 5
-          label: label
-          value: value
-        - count: 5
-          label: label
-          value: value
-        keywords:
-        - count: 5
-          label: label
-          value: value
-        - count: 5
-          label: label
-          value: value
-        dataProviders:
-        - children:
-          - count: 3
-            label: label
-            value: value
-          - count: 3
-            label: label
-            value: value
-          count: 9
-          id: id
-          label: label
-        - children:
-          - count: 3
-            label: label
-            value: value
-          - count: 3
-            label: label
-            value: value
-          count: 9
-          id: id
-          label: label
-        conceptSchemes:
-        - children:
-          - count: 7
-            label: label
-            value: value
-          - count: 7
-            label: label
-            value: value
-          count: 2
-          id: id
-          label: label
-        - children:
-          - count: 7
-            label: label
-            value: value
-          - count: 7
-            label: label
-            value: value
-          count: 2
-          id: id
-          label: label
-      properties:
-        types:
-          description: Resource type facets with counts
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_types_inner"
-          type: array
-        keywords:
-          description: Keyword facets with counts
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_types_inner"
-          type: array
-        conceptSchemes:
-          description: Hierarchical concept scheme facets with child concepts
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_conceptSchemes_inner"
-          type: array
-        dataProviders:
-          description: Data provider organization facets with resource type breakdown
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_facets_dataProviders_inner"
-          type: array
-      type: object
-    _api_v2_search_get_200_response:
-      example:
-        total: 0
-        totalPages: 5
-        pageSize: 1
-        page: 6
-        results:
-        - availableFormats:
-          - format: format
-            label: label
-            href: href
-            type: type
-          - format: format
-            label: label
-            href: href
-            type: type
-          description: description
-          id: id
-          href: href
-          type: type
-          title: title
-        - availableFormats:
-          - format: format
-            label: label
-            href: href
-            type: type
-          - format: format
-            label: label
-            href: href
-            type: type
-          description: description
-          id: id
-          href: href
-          type: type
-          title: title
-        facets:
-          types:
-          - count: 5
-            label: label
-            value: value
-          - count: 5
-            label: label
-            value: value
-          keywords:
-          - count: 5
-            label: label
-            value: value
-          - count: 5
-            label: label
-            value: value
-          dataProviders:
-          - children:
-            - count: 3
-              label: label
-              value: value
-            - count: 3
-              label: label
-              value: value
-            count: 9
-            id: id
-            label: label
-          - children:
-            - count: 3
-              label: label
-              value: value
-            - count: 3
-              label: label
-              value: value
-            count: 9
-            id: id
-            label: label
-          conceptSchemes:
-          - children:
-            - count: 7
-              label: label
-              value: value
-            - count: 7
-              label: label
-              value: value
-            count: 2
-            id: id
-            label: label
-          - children:
-            - count: 7
-              label: label
-              value: value
-            - count: 7
-              label: label
-              value: value
-            count: 2
-            id: id
-            label: label
-      properties:
-        results:
-          items:
-            $ref: "#/components/schemas/_api_v2_search_get_200_response_results_inner"
-          type: array
-        total:
-          type: integer
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        totalPages:
-          type: integer
-        facets:
-          $ref: "#/components/schemas/_api_v2_search_get_200_response_facets"
-      type: object
-    _api_v2_details__id__get_200_response_oneOf:
-      description: Standard EDM response (extended=false)
-      example:
-        description: description
-        id: id
-        type: type
-        title: title
-        relations: "{}"
-      properties:
-        id:
-          type: string
-        type:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        relations:
-          type: object
-      type: object
-    _api_v2_details__id__get_200_response_oneOf_1:
-      description: Aggregated response (extended=true)
-      properties:
-        id:
-          type: string
-        type:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        href:
-          type: string
-        hrefExtended:
-          type: string
-        spatial:
-          type: object
-        temporalCoverage:
-          type: object
-        dataProvider:
-          items:
-            type: object
-          type: array
-        relatedDataProducts:
-          description: Nested DataProduct objects
-          items:
-            type: object
-          type: array
-        relatedWebservices:
-          description: Nested WebService objects with operations
-          items:
-            type: object
-          type: array
-      type: object
-    _api_v2_details__id__get_200_response:
-      oneOf:
-      - $ref: "#/components/schemas/_api_v2_details__id__get_200_response_oneOf"
-      - $ref: "#/components/schemas/_api_v2_details__id__get_200_response_oneOf_1"
     _api_v2_sparql_post_request:
       properties:
         query:
@@ -1836,33 +2700,28 @@ components:
           type: string
       required:
       - query
-      type: object
     _api_v2_sparql_post_request_1:
       properties:
         query:
           type: string
       required:
       - query
-      type: object
     _api_v2__resourceType__post_request:
       properties:
         type:
           type: string
         properties:
           type: object
-      type: object
     _api_v2__resourceType___id__put_request:
       properties:
         properties:
           type: object
-      type: object
     _api_v2_batch_submit_post_request:
       properties:
         entityUris:
           items:
             type: string
           type: array
-      type: object
     _api_v2_admin_populate_from_url_post_request:
       properties:
         indexUrl:
@@ -1870,7 +2729,6 @@ components:
           type: string
       required:
       - indexUrl
-      type: object
     _api_v2_admin_populate_status_get_200_response:
       example:
         graphs: "{}"
@@ -1886,7 +2744,6 @@ components:
           type: string
         graphs:
           type: object
-      type: object
     _api_v2_admin_populate_file_post_request:
       properties:
         url:
@@ -1897,7 +2754,6 @@ components:
           description: Local filesystem path to a TTL file
           example: /data/metadata/metadatone.ttl
           type: string
-      type: object
     _api_v2_admin_populate_file_post_200_response_data:
       example:
         sourceUrl: sourceUrl
@@ -1913,7 +2769,6 @@ components:
           type: integer
         agent:
           type: string
-      type: object
     _api_v2_admin_populate_file_post_200_response:
       example:
         data:
@@ -1930,7 +2785,6 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/_api_v2_admin_populate_file_post_200_response_data"
-      type: object
     _api_v2_admin_populate_content_post_request:
       properties:
         content:
@@ -1944,7 +2798,6 @@ components:
           type: string
       required:
       - content
-      type: object
     _api_v2_admin_populate_content_post_200_response_data:
       example:
         agent: agent
@@ -1960,7 +2813,6 @@ components:
           type: integer
         agent:
           type: string
-      type: object
     _api_v2_admin_populate_content_post_200_response:
       example:
         data:
@@ -1977,4 +2829,3 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/_api_v2_admin_populate_content_post_200_response_data"
-      type: object

@@ -139,7 +139,7 @@ func TestSearchErrorMapping(t *testing.T) {
 				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					time.Sleep(100 * time.Millisecond)
 					w.WriteHeader(http.StatusOK)
-					_, _ = w.Write([]byte(`{"results":[],"total":0,"page":1,"pageSize":20,"totalPages":0}`))
+					_, _ = w.Write([]byte(`{"total":0,"items":[]}`))
 				}))
 				t.Cleanup(srv.Close)
 
@@ -166,7 +166,7 @@ func TestSearchErrorMapping(t *testing.T) {
 
 				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
-					_, _ = w.Write([]byte(`{"results":[],"total":0,"page":1,"pageSize":20,"totalPages":0}`))
+					_, _ = w.Write([]byte(`{"total":0,"items":[]}`))
 				}))
 				t.Cleanup(srv.Close)
 
