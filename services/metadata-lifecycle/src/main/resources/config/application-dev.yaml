@@ -38,3 +38,5 @@ features:
 custom:
   devMode: true
   mockExternalServices: false
+  shacl:
+    file: "/home/valerio/Documenti/epos-platform/services/metadata-lifecycle/graphdb/shacl/epos-dcat-ap-refined.ttl"

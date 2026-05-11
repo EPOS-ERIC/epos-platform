@@ -2,6 +2,7 @@ package org.epos.infrastructure.ktor.routes
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import org.epos.api.models.ErrorResponse
@@ -42,6 +43,8 @@ fun Route.searchRoutes(
             params.getAll("versioningStatus")?.map { it.uppercase() }
                 ?: listOf("PUBLISHED")
         val keywords = params.getAll("keywords") ?: emptyList()
+        val resourceTypeInfos = shaclService.getResourceTypes()
+        val shapeByTargetClass = resourceTypeInfos.associate { it.targetClass to it.name }
 
         // Determine which graphs to query based on versioning status
         val graphUris =
@@ -68,7 +71,6 @@ fun Route.searchRoutes(
 
         // Type filter
         if (types.isNotEmpty()) {
-            val resourceTypeInfos = shaclService.getResourceTypes()
             val typeFilters =
                 types.mapNotNull { typeName ->
                     // Normalize the input type name for matching
@@ -222,8 +224,12 @@ fun Route.searchRoutes(
                     .map { row ->
                         val id = row["s"] ?: ""
                         val typeUri = row["type"] ?: ""
-                        val apiType = mapSearchTypeUriToApiType(typeUri) ?: return@map null
+                        val apiType =
+                            mapSearchTypeUriToApiType(typeUri)
+                                ?: shapeByTargetClass[typeUri]
+                                ?: extractTypeName(typeUri).lowercase()
                         val name = row["title"] ?: extractTypeName(id)
+                        val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
 
                         if (apiType == "dataset") {
                             val serviceProvidersList =
@@ -244,7 +250,7 @@ fun Route.searchRoutes(
                             DatasetSearchItem(
                                 id = id,
                                 name = name,
-                                href = "$baseUrl/api/v2/dataset/${java.net.URLEncoder.encode(id, "UTF-8")}",
+                                href = accessHref,
                                 serviceProviders = serviceProvidersList,
                                 categories = categoriesList,
                             )
@@ -253,7 +259,7 @@ fun Route.searchRoutes(
                                 type = apiType,
                                 id = id,
                                 name = name,
-                                href = "$baseUrl/api/v2/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}",
+                                href = accessHref,
                             )
                         }
                     }.filterNotNull()
@@ -271,7 +277,37 @@ fun Route.searchRoutes(
             )
         }
     }
+
+    get("/api/v2/access/search") {
+        val query = call.request.queryParameters.flattenToQueryString()
+        val target = if (query.isBlank()) "/api/v2/search" else "/api/v2/search?$query"
+        call.respondRedirect(target, permanent = false)
+    }
+
+    get("/api/v2/access/search/{shape}") {
+        val shape = call.parameters["shape"]
+        if (shape.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Missing shape"))
+            return@get
+        }
+
+        val pairs =
+            call.request.queryParameters.entries()
+                .flatMap { (key, values) -> values.map { value -> key to value } }
+                .toMutableList()
+        pairs += "type" to shape
+        val query = pairs.toQueryString()
+        call.respondRedirect("/api/v2/search?$query", permanent = false)
+    }
 }
+
+private fun io.ktor.http.Parameters.flattenToQueryString(): String =
+    entries().flatMap { (key, values) -> values.map { value -> key to value } }.toQueryString()
+
+private fun List<Pair<String, String>>.toQueryString(): String =
+    joinToString("&") { (key, value) ->
+        "${java.net.URLEncoder.encode(key, "UTF-8")}=${java.net.URLEncoder.encode(value, "UTF-8")}"
+    }
 
 /**
  * Type aliases for user-friendly API type names.

@@ -28,6 +28,7 @@ data class DatasetDetail(
     val temporal: TemporalExtent? = null,
     val status: String,
     val distributions: List<ResourceRef>? = null,
+    val relations: List<RelationGroup>? = null,
     val related: List<ResourceRef>? = null,
     val relatedBy: List<ResourceRef>? = null,
 )
@@ -43,6 +44,7 @@ data class DistributionDetail(
     val description: String? = null,
     val accessUrl: String? = null,
     val operation: String? = null,
+    val relations: List<RelationGroup>? = null,
     val related: List<ResourceRef>? = null,
     val relatedBy: List<ResourceRef>? = null,
 )
@@ -59,6 +61,7 @@ data class SoftwareApplicationDetail(
     val keywords: List<String>? = null,
     val categories: List<String>? = null,
     val downloadUrl: String? = null,
+    val relations: List<RelationGroup>? = null,
     val related: List<ResourceRef>? = null,
     val relatedBy: List<ResourceRef>? = null,
 )
@@ -76,6 +79,20 @@ data class SoftwareSourceCodeDetail(
     val keywords: List<String>? = null,
     val categories: List<String>? = null,
     val repository: String? = null,
+    val relations: List<RelationGroup>? = null,
     val related: List<ResourceRef>? = null,
     val relatedBy: List<ResourceRef>? = null,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class RelationPredicate(
+    val iri: String,
+    val name: String,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class RelationGroup(
+    val direction: String,
+    val predicate: RelationPredicate,
+    val resources: List<ResourceRef>,
 )

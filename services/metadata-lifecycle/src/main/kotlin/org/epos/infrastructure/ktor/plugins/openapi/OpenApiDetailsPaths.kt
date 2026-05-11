@@ -15,6 +15,7 @@ object OpenApiDetailsPaths {
       description: |
         Returns detailed information about a specific dataset.
         Includes distributions as resource references with hrefs.
+        Includes an immediate relation graph grouped by predicate and direction.
         Inbound relations (entities referencing this dataset) are always included when present.
       responses:
         '200':
@@ -37,6 +38,7 @@ object OpenApiDetailsPaths {
       operationId: getDistributionById
       description: |
         Returns detailed information about a specific distribution.
+        Includes an immediate relation graph grouped by predicate and direction.
         Inbound relations (entities referencing this distribution) are always included when present.
       responses:
         '200':
@@ -59,6 +61,7 @@ object OpenApiDetailsPaths {
       operationId: getSoftwareApplicationById
       description: |
         Returns detailed information about a specific software application.
+        Includes an immediate relation graph grouped by predicate and direction.
         Inbound relations (entities referencing this application) are always included when present.
       responses:
         '200':
@@ -81,6 +84,7 @@ object OpenApiDetailsPaths {
       operationId: getSoftwareSourceCodeById
       description: |
         Returns detailed information about a specific software source code.
+        Includes an immediate relation graph grouped by predicate and direction.
         Inbound relations (entities referencing this source code) are always included when present.
       responses:
         '200':

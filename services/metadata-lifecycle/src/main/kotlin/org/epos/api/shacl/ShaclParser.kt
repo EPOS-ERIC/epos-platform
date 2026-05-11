@@ -384,6 +384,15 @@ class ShaclParser(private val httpClient: HttpClient) {
     // Cache parsed shapes graph
     private var cachedShapesGraph: ShaclShapesGraph? = null
     private var cachedModel: Model? = null
+    private val parseCache = ThreadLocal<ParseCache?>()
+
+    private data class SubjectPredicateKey(val subject: Resource, val predicate: IRI)
+
+    private data class ParseCache(
+        val statementsBySubjectPredicate: MutableMap<SubjectPredicateKey, List<Statement>> = mutableMapOf(),
+        val subjectsByPredicate: MutableMap<IRI, List<Resource>> = mutableMapOf(),
+        val statementsBySubject: MutableMap<Resource, List<Statement>> = mutableMapOf(),
+    )
 
     // ==========================================================================
     // Public API
@@ -402,6 +411,16 @@ class ShaclParser(private val httpClient: HttpClient) {
      */
     fun parseShapesGraphFromString(content: String, format: RDFFormat = RDFFormat.TURTLE): ShaclShapesGraph {
         val model = Rio.parse(StringReader(content), "", format)
+        cachedModel = model
+        val shapesGraph = parseModel(model)
+        cachedShapesGraph = shapesGraph
+        return shapesGraph
+    }
+
+    /**
+     * Parse SHACL from an in-memory RDF model.
+     */
+    fun parseShapesGraphFromModel(model: Model): ShaclShapesGraph {
         cachedModel = model
         val shapesGraph = parseModel(model)
         cachedShapesGraph = shapesGraph
@@ -433,6 +452,8 @@ class ShaclParser(private val httpClient: HttpClient) {
 
         return convertToResourceTypes(shapesGraph)
     }
+
+    fun toResourceTypes(shapesGraph: ShaclShapesGraph): List<ResourceTypeInfo> = convertToResourceTypes(shapesGraph)
 
     /**
      * Get the cached model for additional processing
@@ -578,54 +599,56 @@ class ShaclParser(private val httpClient: HttpClient) {
     // ==========================================================================
 
     private fun parseModel(model: Model): ShaclShapesGraph {
-        val shapes = mutableListOf<Shape>()
-        val prefixes = model.namespaces.associate { it.prefix to it.name }
+        parseCache.set(ParseCache())
+        try {
+            val shapes = mutableListOf<Shape>()
+            val prefixes = model.namespaces.associate { it.prefix to it.name }
 
-        // Find explicit NodeShapes
-        val explicitNodeShapes = model.filter {
-            it.predicate == RDF.TYPE && it.`object` == SHACL.NODE_SHAPE
-        }.map { it.subject }.toSet()
+            // Find explicit NodeShapes
+            val explicitNodeShapes = subjectsForPredicate(model, RDF.TYPE)
+                .filter { subject -> valuesForSubjectPredicate(model, subject, RDF.TYPE).any { it == SHACL.NODE_SHAPE } }
+                .toSet()
 
-        // Find explicit PropertyShapes
-        val explicitPropertyShapes = model.filter {
-            it.predicate == RDF.TYPE && it.`object` == SHACL.PROPERTY_SHAPE
-        }.map { it.subject }.toSet()
+            // Find explicit PropertyShapes
+            val explicitPropertyShapes = subjectsForPredicate(model, RDF.TYPE)
+                .filter { subject -> valuesForSubjectPredicate(model, subject, RDF.TYPE).any { it == SHACL.PROPERTY_SHAPE } }
+                .toSet()
 
-        // Find implicit shapes (have sh:targetClass but no explicit type)
-        val implicitShapes = model.filter { it.predicate == SHACL.TARGET_CLASS }
-            .map { it.subject }
-            .filter { it !in explicitNodeShapes && it !in explicitPropertyShapes }
-            .toSet()
+            // Find implicit shapes (have sh:targetClass but no explicit type)
+            val implicitShapes = subjectsForPredicate(model, SHACL.TARGET_CLASS)
+                .filter { it !in explicitNodeShapes && it !in explicitPropertyShapes }
+                .toSet()
 
-        // Find shapes that are also classes (implicit class targets)
-        val classShapes = model.filter {
-            it.predicate == RDF.TYPE && (it.`object` == RDFS.CLASS || it.`object` == OWL.CLASS)
-        }.map { it.subject }
-            .filter { subj ->
-                // Must have some SHACL properties to be considered a shape
-                model.any { it.subject == subj && isShaclProperty(it.predicate) }
-            }.toSet()
+            // Find shapes that are also classes (implicit class targets)
+            val classShapes = subjectsForPredicate(model, RDF.TYPE)
+                .filter { subj ->
+                    val rdfTypes = valuesForSubjectPredicate(model, subj, RDF.TYPE)
+                    (rdfTypes.any { it == RDFS.CLASS } || rdfTypes.any { it == OWL.CLASS }) && hasShaclPredicates(model, subj)
+                }.toSet()
 
-        // Parse all node shapes
-        val allNodeShapeSubjects = explicitNodeShapes + implicitShapes + classShapes
-        for (shapeSubject in allNodeShapeSubjects) {
-            val nodeShape = parseNodeShape(model, shapeSubject, classShapes.contains(shapeSubject))
-            shapes.add(nodeShape)
-        }
+            // Parse all node shapes
+            val allNodeShapeSubjects = explicitNodeShapes + implicitShapes + classShapes
+            for (shapeSubject in allNodeShapeSubjects) {
+                val nodeShape = parseNodeShape(model, shapeSubject, classShapes.contains(shapeSubject))
+                shapes.add(nodeShape)
+            }
 
-        // Parse standalone property shapes (those with targets)
-        for (propShapeSubject in explicitPropertyShapes) {
-            if (hasTargets(model, propShapeSubject)) {
-                val propShape = parsePropertyShape(model, propShapeSubject)
-                if (propShape != null) {
-                    shapes.add(propShape)
+            // Parse standalone property shapes (those with targets)
+            for (propShapeSubject in explicitPropertyShapes) {
+                if (hasTargets(model, propShapeSubject)) {
+                    val propShape = parsePropertyShape(model, propShapeSubject)
+                    if (propShape != null) {
+                        shapes.add(propShape)
+                    }
                 }
             }
+
+            val ontologySchema = parseOntologySchema(model)
+
+            return ShaclShapesGraph(shapes, prefixes, ontologySchema)
+        } finally {
+            parseCache.remove()
         }
-
-        val ontologySchema = parseOntologySchema(model)
-
-        return ShaclShapesGraph(shapes, prefixes, ontologySchema)
     }
 
     private fun isShaclProperty(predicate: IRI): Boolean {
@@ -633,13 +656,43 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun hasTargets(model: Model, subject: Resource): Boolean {
-        return model.any { stmt ->
-            stmt.subject == subject && stmt.predicate in listOf(
-                SHACL.TARGET_CLASS,
-                SHACL.TARGET_NODE,
-                SHACL.TARGET_SUBJECTS_OF,
-                SHACL.TARGET_OBJECTS_OF
-            )
+        return statementsForSubjectPredicate(model, subject, SHACL.TARGET_CLASS).isNotEmpty() ||
+            statementsForSubjectPredicate(model, subject, SHACL.TARGET_NODE).isNotEmpty() ||
+            statementsForSubjectPredicate(model, subject, SHACL.TARGET_SUBJECTS_OF).isNotEmpty() ||
+            statementsForSubjectPredicate(model, subject, SHACL.TARGET_OBJECTS_OF).isNotEmpty()
+    }
+
+    private fun hasShaclPredicates(model: Model, subject: Resource): Boolean {
+        return statementsForSubject(model, subject).any { isShaclProperty(it.predicate) }
+    }
+
+    private fun statementsForSubjectPredicate(model: Model, subject: Resource, predicate: IRI): List<Statement> {
+        val cache = parseCache.get() ?: return model.filter { it.subject == subject && it.predicate == predicate }.toList()
+        val key = SubjectPredicateKey(subject, predicate)
+        return cache.statementsBySubjectPredicate.getOrPut(key) {
+            model.filter { it.subject == subject && it.predicate == predicate }.toList()
+        }
+    }
+
+    private fun valuesForSubjectPredicate(model: Model, subject: Resource, predicate: IRI): List<org.eclipse.rdf4j.model.Value> {
+        return statementsForSubjectPredicate(model, subject, predicate).map { it.`object` }
+    }
+
+    private fun firstValueForSubjectPredicate(model: Model, subject: Resource, predicate: IRI): org.eclipse.rdf4j.model.Value? {
+        return statementsForSubjectPredicate(model, subject, predicate).firstOrNull()?.`object`
+    }
+
+    private fun subjectsForPredicate(model: Model, predicate: IRI): List<Resource> {
+        val cache = parseCache.get() ?: return model.filter { it.predicate == predicate }.map { it.subject }.toList()
+        return cache.subjectsByPredicate.getOrPut(predicate) {
+            model.filter { it.predicate == predicate }.map { it.subject }.toList()
+        }
+    }
+
+    private fun statementsForSubject(model: Model, subject: Resource): List<Statement> {
+        val cache = parseCache.get() ?: return model.filter { it.subject == subject }.toList()
+        return cache.statementsBySubject.getOrPut(subject) {
+            model.filter { it.subject == subject }.toList()
         }
     }
 
@@ -672,7 +725,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     // ==========================================================================
 
     private fun parsePropertyShapes(model: Model, nodeShape: Resource): List<PropertyShape> {
-        return model.filter { it.subject == nodeShape && it.predicate == SHACL.PROPERTY }
+        return statementsForSubjectPredicate(model, nodeShape, SHACL.PROPERTY)
             .mapNotNull { stmt ->
                 (stmt.`object` as? Resource)?.let { parsePropertyShape(model, it) }
             }
@@ -708,8 +761,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     // ==========================================================================
 
     private fun parsePath(model: Model, subject: Resource): PropertyPath? {
-        val pathValue = model.filter { it.subject == subject && it.predicate == SHACL.PATH }
-            .firstOrNull()?.`object` ?: return null
+        val pathValue = firstValueForSubjectPredicate(model, subject, SHACL.PATH) ?: return null
 
         return parsePathValue(model, pathValue)
     }
@@ -724,48 +776,42 @@ class ShaclParser(private val httpClient: HttpClient) {
 
     private fun parseComplexPath(model: Model, bnode: BNode): PropertyPath? {
         // Check for inverse path: [ sh:inversePath <predicate> ]
-        val inversePath = model.filter { it.subject == bnode && it.predicate == SHACL.INVERSE_PATH }
-            .firstOrNull()?.`object`
+        val inversePath = firstValueForSubjectPredicate(model, bnode, SHACL.INVERSE_PATH)
         if (inversePath != null) {
             val inner = parsePathValue(model, inversePath) ?: return null
             return InversePath(inner)
         }
 
         // Check for alternative path: [ sh:alternativePath ( ... ) ]
-        val altPath = model.filter { it.subject == bnode && it.predicate == SHACL.ALTERNATIVE_PATH }
-            .firstOrNull()?.`object`
+        val altPath = firstValueForSubjectPredicate(model, bnode, SHACL.ALTERNATIVE_PATH)
         if (altPath != null) {
             val paths = parseRdfList(model, altPath).mapNotNull { parsePathValue(model, it) }
             return if (paths.size > 1) AlternativePath(paths) else paths.firstOrNull()
         }
 
         // Check for zero-or-more path: [ sh:zeroOrMorePath <predicate> ]
-        val zeroOrMore = model.filter { it.subject == bnode && it.predicate == SHACL.ZERO_OR_MORE_PATH }
-            .firstOrNull()?.`object`
+        val zeroOrMore = firstValueForSubjectPredicate(model, bnode, SHACL.ZERO_OR_MORE_PATH)
         if (zeroOrMore != null) {
             val inner = parsePathValue(model, zeroOrMore) ?: return null
             return ZeroOrMorePath(inner)
         }
 
         // Check for one-or-more path: [ sh:oneOrMorePath <predicate> ]
-        val oneOrMore = model.filter { it.subject == bnode && it.predicate == SHACL.ONE_OR_MORE_PATH }
-            .firstOrNull()?.`object`
+        val oneOrMore = firstValueForSubjectPredicate(model, bnode, SHACL.ONE_OR_MORE_PATH)
         if (oneOrMore != null) {
             val inner = parsePathValue(model, oneOrMore) ?: return null
             return OneOrMorePath(inner)
         }
 
         // Check for zero-or-one path: [ sh:zeroOrOnePath <predicate> ]
-        val zeroOrOne = model.filter { it.subject == bnode && it.predicate == SHACL.ZERO_OR_ONE_PATH }
-            .firstOrNull()?.`object`
+        val zeroOrOne = firstValueForSubjectPredicate(model, bnode, SHACL.ZERO_OR_ONE_PATH)
         if (zeroOrOne != null) {
             val inner = parsePathValue(model, zeroOrOne) ?: return null
             return ZeroOrOnePath(inner)
         }
 
         // Check for sequence path (RDF list directly on the bnode)
-        val first = model.filter { it.subject == bnode && it.predicate == RDF.FIRST }
-            .firstOrNull()?.`object`
+        val first = firstValueForSubjectPredicate(model, bnode, RDF.FIRST)
         if (first != null) {
             val paths = parseRdfList(model, bnode).mapNotNull { parsePathValue(model, it) }
             return if (paths.size > 1) SequencePath(paths) else paths.firstOrNull()
@@ -782,38 +828,38 @@ class ShaclParser(private val httpClient: HttpClient) {
         val targets = mutableListOf<Target>()
 
         // sh:targetClass
-        model.filter { it.subject == subject && it.predicate == SHACL.TARGET_CLASS }
+        statementsForSubjectPredicate(model, subject, SHACL.TARGET_CLASS)
             .forEach { stmt ->
                 (stmt.`object` as? IRI)?.let { targets.add(TargetClass(it.stringValue())) }
             }
 
         // sh:targetNode
-        model.filter { it.subject == subject && it.predicate == SHACL.TARGET_NODE }
+        statementsForSubjectPredicate(model, subject, SHACL.TARGET_NODE)
             .forEach { stmt ->
                 targets.add(TargetNode(stmt.`object`.stringValue()))
             }
 
         // sh:targetSubjectsOf
-        model.filter { it.subject == subject && it.predicate == SHACL.TARGET_SUBJECTS_OF }
+        statementsForSubjectPredicate(model, subject, SHACL.TARGET_SUBJECTS_OF)
             .forEach { stmt ->
                 (stmt.`object` as? IRI)?.let { targets.add(TargetSubjectsOf(it.stringValue())) }
             }
 
         // sh:targetObjectsOf
-        model.filter { it.subject == subject && it.predicate == SHACL.TARGET_OBJECTS_OF }
+        statementsForSubjectPredicate(model, subject, SHACL.TARGET_OBJECTS_OF)
             .forEach { stmt ->
                 (stmt.`object` as? IRI)?.let { targets.add(TargetObjectsOf(it.stringValue())) }
             }
 
         // sh:target with SHACL-AF target declarations (e.g., SHACL-SPARQL targets)
         val shTarget = vf.createIRI("http://www.w3.org/ns/shacl#target")
-        model.filter { it.subject == subject && (it.predicate == SHACL.TARGET || it.predicate == shTarget) }
+        (statementsForSubjectPredicate(model, subject, SHACL.TARGET) + statementsForSubjectPredicate(model, subject, shTarget))
             .forEach { stmt ->
                 val target = stmt.`object` as? Resource ?: return@forEach
                 val select = parseString(model, target, SHACL.SELECT)
-                    ?: model.filter {
+                    ?: statementsForSubject(model, target).firstOrNull {
                         it.subject == target && it.predicate.localName.equals("select", ignoreCase = true)
-                    }.firstOrNull()?.`object`?.stringValue()
+                    }?.`object`?.stringValue()
 
                 select?.let {
                     targets.add(TargetSparql(select))
@@ -835,16 +881,16 @@ class ShaclParser(private val httpClient: HttpClient) {
     private fun parseNodeConstraints(model: Model, subject: Resource): NodeConstraints {
         val directNodeKind = parseNodeKind(model, subject)
         val directNodeKinds = listOfNotNull(directNodeKind)
-        val directClassConstraints = model.filter { it.subject == subject && it.predicate == SHACL.CLASS }
+        val directClassConstraints = statementsForSubjectPredicate(model, subject, SHACL.CLASS)
             .mapNotNull { (it.`object` as? IRI)?.stringValue() }
         val directDatatype = parseIri(model, subject, SHACL.DATATYPE)
         val directDatatypes = listOfNotNull(directDatatype)
-        val directNodeRefs = model.filter { it.subject == subject && it.predicate == SHACL.NODE }
+        val directNodeRefs = statementsForSubjectPredicate(model, subject, SHACL.NODE)
             .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
 
         val orAlternatives = parseListResources(model, subject, SHACL.OR)
         val orClassConstraints = orAlternatives.flatMap { alternative ->
-            model.filter { it.subject == alternative && it.predicate == SHACL.CLASS }
+            statementsForSubjectPredicate(model, alternative, SHACL.CLASS)
                 .mapNotNull { (it.`object` as? IRI)?.stringValue() }
         }
         val orDatatypes = orAlternatives.mapNotNull { alternative ->
@@ -854,7 +900,7 @@ class ShaclParser(private val httpClient: HttpClient) {
             parseNodeKind(model, alternative)
         }
         val orNodeRefs = orAlternatives.flatMap { alternative ->
-            model.filter { it.subject == alternative && it.predicate == SHACL.NODE }
+            statementsForSubjectPredicate(model, alternative, SHACL.NODE)
                 .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
         }
 
@@ -868,15 +914,14 @@ class ShaclParser(private val httpClient: HttpClient) {
             datatype = allDatatypes.firstOrNull(),
             datatypes = allDatatypes,
             node = (directNodeRefs + orNodeRefs).distinct(),
-            hasValue = model.filter { it.subject == subject && it.predicate == SHACL.HAS_VALUE }
+            hasValue = statementsForSubjectPredicate(model, subject, SHACL.HAS_VALUE)
                 .map { parseValue(it.`object`) },
             inValues = parseInConstraint(model, subject)
         )
     }
 
     private fun parseNodeKind(model: Model, subject: Resource): NodeKind? {
-        val nodeKindValue = model.filter { it.subject == subject && it.predicate == SHACL.NODE_KIND }
-            .firstOrNull()?.`object` as? IRI ?: return null
+        val nodeKindValue = firstValueForSubjectPredicate(model, subject, SHACL.NODE_KIND) as? IRI ?: return null
 
         return when (nodeKindValue) {
             SHACL.BLANK_NODE -> NodeKind.BLANK_NODE
@@ -890,8 +935,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun parseInConstraint(model: Model, subject: Resource): List<Value>? {
-        val inValue = model.filter { it.subject == subject && it.predicate == SHACL.IN }
-            .firstOrNull()?.`object` ?: return null
+        val inValue = firstValueForSubjectPredicate(model, subject, SHACL.IN) ?: return null
 
         return parseRdfList(model, inValue).map { parseValue(it) }
     }
@@ -950,23 +994,20 @@ class ShaclParser(private val httpClient: HttpClient) {
             and = parseShapeListConstraint(model, subject, SHACL.AND),
             or = parseShapeListConstraint(model, subject, SHACL.OR),
             xone = parseShapeListConstraint(model, subject, SHACL.XONE),
-            not = model.filter { it.subject == subject && it.predicate == SHACL.NOT }
+            not = statementsForSubjectPredicate(model, subject, SHACL.NOT)
                 .mapNotNull { (it.`object` as? IRI)?.stringValue() }
         )
     }
 
     private fun parseShapeListConstraint(model: Model, subject: Resource, predicate: IRI): List<String> {
-        val listHead = model.filter { it.subject == subject && it.predicate == predicate }
-            .firstOrNull()?.`object` ?: return emptyList()
+        val listHead = firstValueForSubjectPredicate(model, subject, predicate) ?: return emptyList()
 
         return parseRdfList(model, listHead)
             .mapNotNull { value -> (value as? Resource)?.let { resourceRef(it) } }
     }
 
     private fun parseQualifiedConstraints(model: Model, subject: Resource): QualifiedConstraints? {
-        val qualifiedShape = model.filter {
-            it.subject == subject && it.predicate == SHACL.QUALIFIED_VALUE_SHAPE
-        }.firstOrNull()?.`object`
+        val qualifiedShape = firstValueForSubjectPredicate(model, subject, SHACL.QUALIFIED_VALUE_SHAPE)
             ?.let { value -> (value as? Resource)?.let { resourceRef(it) } }
             ?: return null
 
@@ -979,7 +1020,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun parseSparqlConstraints(model: Model, subject: Resource): List<SparqlConstraint> {
-        return model.filter { it.subject == subject && it.predicate == SHACL.SPARQL }
+        return statementsForSubjectPredicate(model, subject, SHACL.SPARQL)
             .mapNotNull { stmt ->
                 (stmt.`object` as? Resource)?.let { constraintNode ->
                     SparqlConstraint(
@@ -993,8 +1034,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun parseSeverity(model: Model, subject: Resource): Severity {
-        val severityValue = model.filter { it.subject == subject && it.predicate == SHACL.SEVERITY }
-            .firstOrNull()?.`object` as? IRI
+        val severityValue = firstValueForSubjectPredicate(model, subject, SHACL.SEVERITY) as? IRI
 
         return when (severityValue) {
             SHACL.INFO -> Severity.INFO
@@ -1005,7 +1045,7 @@ class ShaclParser(private val httpClient: HttpClient) {
 
     private fun parsePrefixes(model: Model, subject: Resource): Map<String, String> {
         val prefixes = mutableMapOf<String, String>()
-        model.filter { it.subject == subject && it.predicate == SHACL.PREFIXES }
+        statementsForSubjectPredicate(model, subject, SHACL.PREFIXES)
             .forEach { stmt ->
                 (stmt.`object` as? Resource)?.let { prefixDecl ->
                     val inlinePrefix = parseString(model, prefixDecl, SHACL.PREFIX_PROP)
@@ -1014,7 +1054,7 @@ class ShaclParser(private val httpClient: HttpClient) {
                         prefixes[inlinePrefix] = inlineNamespace
                     }
 
-                    model.filter { it.subject == prefixDecl && it.predicate == SHACL.DECLARE }
+                    statementsForSubjectPredicate(model, prefixDecl, SHACL.DECLARE)
                         .forEach { declareStmt ->
                             val declaration = declareStmt.`object` as? Resource ?: return@forEach
                             val prefix = parseString(model, declaration, SHACL.PREFIX_PROP)
@@ -1084,9 +1124,7 @@ class ShaclParser(private val httpClient: HttpClient) {
         return when (value) {
             is IRI -> listOf(value.stringValue())
             is BNode -> {
-                val unionOf = model.filter { it.subject == value && it.predicate == OWL.UNIONOF }
-                    .firstOrNull()?.`object`
-                    ?: return emptyList()
+                val unionOf = firstValueForSubjectPredicate(model, value, OWL.UNIONOF) ?: return emptyList()
                 parseRdfList(model, unionOf).flatMap { parseClassExpression(it, model) }
             }
             else -> emptyList()
@@ -1094,8 +1132,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun parseListResources(model: Model, subject: Resource, predicate: IRI): List<Resource> {
-        val listHead = model.filter { it.subject == subject && it.predicate == predicate }
-            .firstOrNull()?.`object` ?: return emptyList()
+        val listHead = firstValueForSubjectPredicate(model, subject, predicate) ?: return emptyList()
 
         return parseRdfList(model, listHead).mapNotNull { it as? Resource }
     }
@@ -1113,13 +1150,11 @@ class ShaclParser(private val httpClient: HttpClient) {
     // ==========================================================================
 
     private fun parseString(model: Model, subject: Resource, predicate: IRI): String? {
-        return model.filter { it.subject == subject && it.predicate == predicate }
-            .firstOrNull()?.`object`?.stringValue()
+        return firstValueForSubjectPredicate(model, subject, predicate)?.stringValue()
     }
 
     private fun parseIri(model: Model, subject: Resource, predicate: IRI): String? {
-        return model.filter { it.subject == subject && it.predicate == predicate }
-            .firstOrNull()?.`object`?.let { (it as? IRI)?.stringValue() }
+        return firstValueForSubjectPredicate(model, subject, predicate)?.let { (it as? IRI)?.stringValue() }
     }
 
     private fun parseInt(model: Model, subject: Resource, predicate: IRI): Int? {
@@ -1140,20 +1175,19 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun parseIriList(model: Model, subject: Resource, predicate: IRI): List<String> {
-        return model.filter { it.subject == subject && it.predicate == predicate }
+        return statementsForSubjectPredicate(model, subject, predicate)
             .mapNotNull { (it.`object` as? IRI)?.stringValue() }
     }
 
     private fun parseStringList(model: Model, subject: Resource, predicate: IRI): List<String>? {
-        val listHead = model.filter { it.subject == subject && it.predicate == predicate }
-            .firstOrNull()?.`object` ?: return null
+        val listHead = firstValueForSubjectPredicate(model, subject, predicate) ?: return null
 
         return parseRdfList(model, listHead).map { it.stringValue() }
     }
 
     private fun parseLanguageMap(model: Model, subject: Resource, predicate: IRI): Map<String, String> {
         val result = mutableMapOf<String, String>()
-        model.filter { it.subject == subject && it.predicate == predicate }
+        statementsForSubjectPredicate(model, subject, predicate)
             .forEach { stmt ->
                 val literal = stmt.`object` as? Literal
                 if (literal != null) {
@@ -1171,14 +1205,12 @@ class ShaclParser(private val httpClient: HttpClient) {
         while (current != null && current != RDF.NIL) {
             if (current !is Resource) break
 
-            val first = model.filter { it.subject == current && it.predicate == RDF.FIRST }
-                .firstOrNull()?.`object`
+            val first = firstValueForSubjectPredicate(model, current, RDF.FIRST)
             if (first != null) {
                 result.add(first)
             }
 
-            current = model.filter { it.subject == current && it.predicate == RDF.REST }
-                .firstOrNull()?.`object`
+            current = firstValueForSubjectPredicate(model, current, RDF.REST)
         }
 
         return result

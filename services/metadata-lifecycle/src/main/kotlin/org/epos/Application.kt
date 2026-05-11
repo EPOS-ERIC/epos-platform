@@ -182,8 +182,6 @@ fun Application.module() {
     configureContentNegotiation()
     configureCors()
     configureErrorHandling()
-    configureOpenApi()
-
     // Inject dependencies
     val graphDBClient by inject<GraphDBClient>()
     val resourceController by inject<ResourceController>()
@@ -195,8 +193,12 @@ fun Application.module() {
     // Initialize SHACL service (parse resource types)
     runBlocking {
         shaclService.initialize()
-        resourceController.setResourceType(shaclService.getResourceTypes())
+        val resourceTypes = shaclService.getResourceTypes()
+        resourceController.setResourceType(resourceTypes)
+        OpenApiSpec.initializeRuntime(resourceTypes)
     }
+
+    configureOpenApi(shaclService)
 
     // Configure routes
     routing {
@@ -214,10 +216,7 @@ fun Application.module() {
 
         // Search and Discovery (new v2 API)
         searchRoutes(graphDBClient, shaclService)
-        categoryRoutes(graphDBClient)
-        datasetRoutes(graphDBClient, resourceController)
-        distributionRoutes(graphDBClient)
-        softwareRoutes(graphDBClient)
+        accessRoutes(graphDBClient, shaclService)
 
         // SPARQL endpoint
         sparqlRoutes(graphDBClient)
