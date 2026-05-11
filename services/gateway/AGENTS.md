@@ -2,12 +2,12 @@
 
 ## General Practices
 
-Use [Effective Go](https://go.dev/doc/effective_go) guide as baseline for all code.
+Use [Effective Go](https://go.dev/doc/effective_go) as baseline for all code.
 
 ## Error Handling
 
 - Handle only genuine **runtime** errors.
-- If error can occur only due to **build-time or configuration issue** (e.g. embedded `fs` assets missing), that path must have corresponding test that exercises it.
+- If error can occur only from **build-time or configuration issue** (e.g. embedded `fs` assets missing), path must have test that exercises it.
 - Check all returned errors (`errcheck` enabled). Prefer `err != nil` checks with early returns.
 - Prefer early returns to reduce nesting and improve readability.
 
@@ -16,7 +16,7 @@ Use [Effective Go](https://go.dev/doc/effective_go) guide as baseline for all co
 ### Linting and Formatting
 
 - Follow all rules enforced by `golangci-lint` (see `.golangci.yaml`).
-- Formatting enforced via `golangci-lint fmt` (gofumpt + goimports).
+- Formatting via `golangci-lint fmt` (gofumpt + goimports).
 
 ### Naming
 
@@ -26,7 +26,7 @@ Use [Effective Go](https://go.dev/doc/effective_go) guide as baseline for all co
 
 ## Testing
 
-- Prefer **table-driven tests** where practical — follow existing patterns in repository.
+- Prefer **table-driven tests** where practical. Follow existing patterns in repository.
 - Add unit tests for new logic or bug fixes when feasible without excessive mocking.
 - Do not add tests for pure refactors unless behavior changes.
 - Keep tests **deterministic**:
@@ -47,14 +47,27 @@ log.Info(...)
 
 - Use [slog](https://pkg.go.dev/log/slog)-style structured logging.
 - Log on error-prone or failure paths.
-- Do **not** over-log — avoid noise in happy paths.
+- Do **not** over-log. Avoid noise in happy paths.
 
 ## Architecture and Safety
+
+### Gateway service structure
+
+- Keep package layout domain-first:
+  - `discovery/`, `resources/` = domain use-cases.
+  - `integrations/` = outbound adapters to external services (for example `integrations/metadatalifecycle`).
+  - `http/` = inbound transport adapter (router, handlers, middleware).
+  - `main.go` = single binary entrypoint and dependency wiring.
+  - `config/` = configuration load/validate.
+  - `gen/` = generated OpenAPI code (do not edit manually).
+- Dependency direction is mandatory:
+  - Domain packages must not import `http/` or `integrations/`.
+  - Adapter packages (`http/`, `integrations/`) can import domain packages.
+  - Keep business logic in domain packages, not transport or client adapter packages.
 
 - Follow existing package structure and naming conventions.
 - If similar functionality already exists, **extend it** instead of creating parallel implementation.
 - Use `context.Context` for cancellable or long-running operations.
-- Keep code **portable** — must build and run correctly on Linux, macOS, and Windows. Avoid OS-specific behavior.
 - Prefer simple, idiomatic Go over clever or complex abstractions.
 - Maintain strong type safety:
   - Use typed enums (custom types with `const` values).

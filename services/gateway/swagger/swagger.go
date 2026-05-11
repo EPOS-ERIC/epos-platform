@@ -1,3 +1,4 @@
+// Package swagger exposes embedded OpenAPI spec and Swagger UI assets.
 package swagger
 
 import (

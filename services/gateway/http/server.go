@@ -1,4 +1,5 @@
-package server
+// Package http provides gateway HTTP transport wiring and server runtime.
+package http
 
 import (
 	"context"
@@ -11,11 +12,12 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/routes"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/services/metadata"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/integrations/metadatalifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 )
 
-func RunServer(cfg config.Config) error {
+func Run(cfg config.Config, metadataClient *metadatalifecycle.Client) error {
 	log := logging.Get("server")
 
 	requestTimeout := cfg.Server.RequestTimeout
@@ -23,15 +25,12 @@ func RunServer(cfg config.Config) error {
 		requestTimeout = 30 * time.Second
 	}
 
-	metadataService, err := metadata.NewService(cfg.Services.MetadataLifecycle.URL, requestTimeout)
-	if err != nil {
-		log.Error("invalid metadata service configuration", "error", err)
-		return fmt.Errorf("build metadata service: %w", err)
-	}
+	discoveryService := discovery.NewService(metadataClient)
+	resourcesService := resources.NewService()
 
 	httpServer := &http.Server{
 		Addr:         cfg.Server.Listen,
-		Handler:      routes.NewHandler(metadataService),
+		Handler:      NewRouter(discoveryService, resourcesService),
 		ReadTimeout:  requestTimeout,
 		WriteTimeout: requestTimeout,
 		IdleTimeout:  requestTimeout,

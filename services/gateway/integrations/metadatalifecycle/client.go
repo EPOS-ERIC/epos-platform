@@ -1,4 +1,5 @@
-package metadata
+// Package metadatalifecycle provides gateway integration with metadata-lifecycle.
+package metadatalifecycle
 
 import (
 	"context"
@@ -24,6 +25,8 @@ type Service struct {
 	client *metadataclient.APIClient
 }
 
+type Client = Service
+
 type SearchParams struct {
 	Query            string
 	Page             *int32
@@ -37,7 +40,7 @@ type SearchParams struct {
 	Keywords         []string
 }
 
-func NewService(baseURL string, timeout time.Duration) (*Service, error) {
+func NewClient(baseURL string, timeout time.Duration) (*Client, error) {
 	normalizedBaseURL, err := normalizeBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("normalize metadata-lifecycle base URL: %w", err)
@@ -58,7 +61,7 @@ func NewService(baseURL string, timeout time.Duration) (*Service, error) {
 
 	log.Debug("metadata lifecycle client configured", "base_url", normalizedBaseURL, "timeout", timeout.String())
 
-	return &Service{client: metadataclient.NewAPIClient(cfg)}, nil
+	return &Client{client: metadataclient.NewAPIClient(cfg)}, nil
 }
 
 func normalizeBaseURL(baseURL string) (string, error) {
@@ -79,7 +82,7 @@ func normalizeBaseURL(baseURL string) (string, error) {
 	return strings.TrimSuffix(parsedURL.String(), "/"), nil
 }
 
-func (s *Service) Search(ctx context.Context, params SearchParams) (*metadataclient.SearchResponse, error) {
+func (s *Client) Search(ctx context.Context, params SearchParams) (*metadataclient.SearchResponse, error) {
 	req := s.client.SearchAPI.SearchMetadata(ctx)
 
 	if params.Query != "" {

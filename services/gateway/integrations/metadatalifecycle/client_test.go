@@ -1,4 +1,4 @@
-package metadata
+package metadatalifecycle
 
 import (
 	"context"
@@ -11,7 +11,9 @@ import (
 	"time"
 )
 
-func TestNewService(t *testing.T) {
+const metadataLifecycleBaseURL = "http://metadata-lifecycle:8080"
+
+func TestNewClient(t *testing.T) {
 	tests := []struct {
 		name          string
 		baseURL       string
@@ -32,37 +34,37 @@ func TestNewService(t *testing.T) {
 		},
 		{
 			name:          "normalizes base URL and sets default timeout",
-			baseURL:       "http://metadata-lifecycle:8080/",
+			baseURL:       metadataLifecycleBaseURL + "/",
 			timeout:       0,
-			wantBaseURL:   "http://metadata-lifecycle:8080",
+			wantBaseURL:   metadataLifecycleBaseURL,
 			wantReqTimout: defaultRequestTimeout,
 		},
 		{
 			name:          "trims whitespace around base URL",
-			baseURL:       "  http://metadata-lifecycle:8080/  ",
+			baseURL:       "  " + metadataLifecycleBaseURL + "/  ",
 			timeout:       0,
-			wantBaseURL:   "http://metadata-lifecycle:8080",
+			wantBaseURL:   metadataLifecycleBaseURL,
 			wantReqTimout: defaultRequestTimeout,
 		},
 		{
 			name:          "preserves path and trims trailing slash",
-			baseURL:       "http://metadata-lifecycle:8080/api/v2/",
+			baseURL:       metadataLifecycleBaseURL + "/api/v2/",
 			timeout:       0,
-			wantBaseURL:   "http://metadata-lifecycle:8080/api/v2",
+			wantBaseURL:   metadataLifecycleBaseURL + "/api/v2",
 			wantReqTimout: defaultRequestTimeout,
 		},
 		{
 			name:          "uses provided timeout",
-			baseURL:       "http://metadata-lifecycle:8080",
+			baseURL:       metadataLifecycleBaseURL,
 			timeout:       2 * time.Second,
-			wantBaseURL:   "http://metadata-lifecycle:8080",
+			wantBaseURL:   metadataLifecycleBaseURL,
 			wantReqTimout: 2 * time.Second,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			svc, err := NewService(tc.baseURL, tc.timeout)
+			svc, err := NewClient(tc.baseURL, tc.timeout)
 			if tc.wantErr {
 				if err == nil {
 					t.Fatal("expected error")
@@ -107,7 +109,7 @@ func TestSearchErrorMapping(t *testing.T) {
 				}))
 				t.Cleanup(srv.Close)
 
-				svc, err := NewService(srv.URL, time.Second)
+				svc, err := NewClient(srv.URL, time.Second)
 				if err != nil {
 					t.Fatalf("new service: %v", err)
 				}
@@ -143,7 +145,7 @@ func TestSearchErrorMapping(t *testing.T) {
 				}))
 				t.Cleanup(srv.Close)
 
-				svc, err := NewService(srv.URL, 5*time.Millisecond)
+				svc, err := NewClient(srv.URL, 5*time.Millisecond)
 				if err != nil {
 					t.Fatalf("new service: %v", err)
 				}
@@ -170,7 +172,7 @@ func TestSearchErrorMapping(t *testing.T) {
 				}))
 				t.Cleanup(srv.Close)
 
-				svc, err := NewService(srv.URL, time.Second)
+				svc, err := NewClient(srv.URL, time.Second)
 				if err != nil {
 					t.Fatalf("new service: %v", err)
 				}
@@ -204,7 +206,7 @@ func TestSearchErrorMapping(t *testing.T) {
 					t.Fatalf("close listener: %v", err)
 				}
 
-				svc, err := NewService("http://"+addr, 50*time.Millisecond)
+				svc, err := NewClient("http://"+addr, 50*time.Millisecond)
 				if err != nil {
 					t.Fatalf("new service: %v", err)
 				}
