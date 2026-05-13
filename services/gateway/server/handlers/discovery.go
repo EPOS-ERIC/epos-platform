@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
 type Discovery struct {
@@ -27,6 +29,11 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 
 	results, err := h.service.Search(r.Context(), params)
 	if err != nil {
+		if errors.Is(err, domain.ErrNotImplemented) {
+			writeNotImplemented(w)
+			return
+		}
+
 		writeBadRequest(w, err)
 		return
 	}

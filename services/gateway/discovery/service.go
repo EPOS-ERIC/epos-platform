@@ -4,16 +4,16 @@ package discovery
 import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/integrations/metadatalifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
 var log = logging.Get("discovery-service")
 
 type Service struct {
-	metadataClient *metadatalifecycle.Client
+	metadataClient *metadataclient.APIClient
 }
 
-func NewService(metadataClient *metadatalifecycle.Client) *Service {
+func NewService(metadataClient *metadataclient.APIClient) *Service {
 	return &Service{metadataClient: metadataClient}
 }
 

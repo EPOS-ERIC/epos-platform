@@ -1,5 +1,5 @@
 // Package http provides gateway HTTP transport wiring and server runtime.
-package http
+package server
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/integrations/metadatalifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 )
 
-func Run(cfg config.Config, metadataClient *metadatalifecycle.Client) error {
+func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 	log := logging.Get("server")
 
 	requestTimeout := cfg.Server.RequestTimeout

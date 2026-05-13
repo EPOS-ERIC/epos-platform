@@ -17,16 +17,34 @@ type SearchItem struct {
 }
 
 type Dataset struct {
-	ID            string           `json:"id"`
-	Title         string           `json:"title"`
-	Description   string           `json:"description,omitempty"`
-	Keywords      []string         `json:"keywords,omitempty"`
-	Concepts      []string         `json:"concepts,omitempty"`
-	Publisher     []string         `json:"publisher,omitempty"`
-	Spatial       string           `json:"spatial,omitempty"`
-	Temporal      TemporalExtent   `json:"temporal,omitempty"`
-	Status        VersioningStatus `json:"status,omitempty"`
-	Distributions []string         `json:"distributions,omitempty"`
+	ID          string           `json:"id"`
+	Status      VersioningStatus `json:"status,omitempty"`
+	Created     time.Time        `json:"created"`
+	Modified    time.Time        `json:"modified"`
+	Title       string           `json:"title,omitempty"`
+	VersionInfo string           `json:"version_info,omitempty"`
+	// just the ids of the contact points, not the full objects (can't show the emails)
+	ContactPoints      []string
+	Keywords           []string       `json:"keywords,omitempty"`
+	Concepts           []string       `json:"concepts,omitempty"`
+	Description        string         `json:"description,omitempty"`
+	Publisher          []string       `json:"publisher,omitempty"`
+	Issued             time.Time      `json:"issued"`
+	Spatial            string         `json:"spatial,omitempty"`
+	Identifiers        []Identifier   `json:"identifiers,omitempty"`
+	Temporal           TemporalExtent `json:"temporaly"`
+	Distributions      []Distribution `json:"distributions,omitempty"`
+	AccessRights       string         `json:"access_rights"`
+	AccrualPeriodicity string         `json:"accrual_periodicity"`
+	IsVersionOf        string         `json:"is_version_of"`
+	QualityAnnotation  []string       `json:"quality_annotation"`
+	// TODO: what is the difference between version and version info?
+	Version string `json:"version"`
+}
+
+type Identifier struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type Distribution struct {
@@ -81,11 +99,18 @@ type ConceptTreeResponse struct {
 }
 
 type TemporalExtent struct {
-	Start time.Time `json:"start,omitempty"`
-	End   time.Time `json:"end,omitempty"`
+	Start time.Time `json:"starty"`
+	End   time.Time `json:"endy"`
 }
 
 type ErrorResponse struct {
 	ErrorCode    string `json:"errorCode"`
 	ErrorMessage string `json:"errorMessage"`
+}
+
+type ContactPoint struct {
+	ID                string
+	Email             string
+	AvailableLanguage string
+	ContactType       string
 }

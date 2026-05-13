@@ -7,7 +7,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/integrations/metadatalifecycle"
 )
 
 type SearchParams struct {
@@ -23,7 +22,7 @@ type SearchParams struct {
 	Keywords         []string
 }
 
-func (p *SearchParams) ToMetadatalifecycleSearchParams() (metadatalifecycle.SearchParams, error) {
+func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiSearchMetadataRequest, error) {
 	versioningStatus := make([]metadataclient.VersioningStatus, len(p.VersioningStatus))
 	for i, v := range p.VersioningStatus {
 		versioningStatus[i] = metadataclient.VersioningStatus(v)
@@ -33,44 +32,57 @@ func (p *SearchParams) ToMetadatalifecycleSearchParams() (metadatalifecycle.Sear
 	for i, t := range p.Types {
 		metadataType, err := toMetadataResourceType(t)
 		if err != nil {
-			return metadatalifecycle.SearchParams{}, fmt.Errorf("TODO: %w", err)
+			return metadataclient.ApiSearchMetadataRequest{}, fmt.Errorf("convert resource type: %w", err)
 		}
 
 		types[i] = metadataType
 	}
 
-	dateFrom := &p.DateFrom
-	if dateFrom.IsZero() {
-		dateFrom = nil
+	req := client.SearchAPI.SearchMetadata(ctx)
+
+	if p.Query != "" {
+		req = req.Q(p.Query)
 	}
-	dateTo := &p.DateTo
-	if dateTo.IsZero() {
-		dateTo = nil
+	if p.PageNumber > 0 {
+		req = req.Page(p.PageNumber)
+	}
+	if p.PageSize > 0 {
+		req = req.ResultsPerPage(p.PageSize)
+	}
+	if len(types) > 0 {
+		req = req.Type_(types)
+	}
+	if p.SpatialFilter != "" {
+		req = req.SpatialFilter(p.SpatialFilter)
+	}
+	if !p.DateFrom.IsZero() {
+		req = req.DateFrom(p.DateFrom)
+	}
+	if !p.DateTo.IsZero() {
+		req = req.DateTo(p.DateTo)
+	}
+	if len(p.ServiceProviders) > 0 {
+		req = req.ServiceProvider(p.ServiceProviders)
+	}
+	if len(versioningStatus) > 0 {
+		req = req.VersioningStatus(versioningStatus)
+	}
+	if len(p.Keywords) > 0 {
+		req = req.Keywords(p.Keywords)
 	}
 
-	return metadatalifecycle.SearchParams{
-		Query:            p.Query,
-		Page:             &p.PageNumber,
-		ResultsPerPage:   &p.PageSize,
-		Type:             types,
-		SpatialFilter:    p.SpatialFilter,
-		DateFrom:         dateFrom,
-		DateTo:           dateTo,
-		ServiceProvider:  p.ServiceProviders,
-		VersioningStatus: versioningStatus,
-		Keywords:         p.Keywords,
-	}, nil
+	return req, nil
 }
 
 func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchResponse, error) {
-	metadataParams, err := params.ToMetadatalifecycleSearchParams()
+	req, err := params.buildMetadataSearchRequest(ctx, s.metadataClient)
 	if err != nil {
-		return api.SearchResponse{}, fmt.Errorf("TODO: %w", err)
+		return api.SearchResponse{}, fmt.Errorf("build metadata search request: %w", err)
 	}
 
-	resp, err := s.metadataClient.Search(ctx, metadataParams)
+	resp, _, err := req.Execute()
 	if err != nil {
-		return api.SearchResponse{}, fmt.Errorf("TODO: %w", err)
+		return api.SearchResponse{}, fmt.Errorf("search metadata: %w", err)
 	}
 
 	searchResp := api.SearchResponse{

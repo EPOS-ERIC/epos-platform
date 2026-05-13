@@ -5,9 +5,9 @@ import (
 	"flag"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/http"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/integrations/metadatalifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/server"
 )
 
 func main() {
@@ -32,13 +32,13 @@ func main() {
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
 	requestTimeout := cfg.Server.RequestTimeout
-	metadataClient, err := metadatalifecycle.NewClient(cfg.Services.MetadataLifecycle.URL, requestTimeout)
+	metadataClient, err := clients.NewMetadatalifecycle(cfg.Services.MetadataLifecycle.URL, requestTimeout)
 	if err != nil {
 		log.Error("invalid metadata service configuration", "error", err)
 		panic("invalid metadata service configuration")
 	}
 
-	if err := http.Run(*cfg, metadataClient); err != nil {
+	if err := server.Run(*cfg, metadataClient); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}
