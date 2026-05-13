@@ -9,7 +9,7 @@ func NewService() *Service {
 	return &Service{}
 }
 
-func (s *Service) GetCategoryByID() error {
+func (s *Service) GetConceptByID() error {
 	return domain.ErrNotImplemented
 }
 

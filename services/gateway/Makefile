@@ -23,24 +23,18 @@ lint: fmt
 	golangci-lint run ./...
 
 GATEWAY_SPEC := swagger/openapi.yaml
-SERVER_GEN_DIR := gen/gatewayserver
 METADATA_SPEC := ../metadata-lifecycle/openapi.yaml
 METADATA_CLIENT_GEN_DIR := gen/metadataclient
 generate: clean
-	openapi-generator generate -g go-server \
-		-i $(GATEWAY_SPEC) \
-		-o $(SERVER_GEN_DIR) \
-		-p packageName=gatewayserver,router=chi,outputAsLibrary=true,onlyInterfaces=true,hideGenerationTimestamp=true,sourceFolder=.
 	openapi-generator generate -g go \
 		-i $(METADATA_SPEC) \
 		-o $(METADATA_CLIENT_GEN_DIR) \
 		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
 		-p packageName=metadataclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
-    # Clean up wrong generated imports and format
-	(cd $(SERVER_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
+	# Format generated metadata client
 	(cd $(METADATA_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
 clean:
-	rm -rf $(BIN) $(SERVER_GEN_DIR) $(METADATA_CLIENT_GEN_DIR)
+	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR)
 
 .PHONY: build build-docker generate test fmt lint clean

@@ -35,8 +35,8 @@ paths:
       summary: Search metadata resources
       description: |
         Returns a flat, typed list of catalogue resources matching the supplied criteria.
-        Results may include datasets, distributions, software applications, software source
-        codes, and categories. Each item carries an `href` pointing to its typed detail
+        Results may include datasets, distributions, software applications, and software
+        source codes. Each item carries an `href` pointing to its typed detail
         endpoint; clients should follow that link rather than construct URLs themselves.
       operationId: searchMetadata
       parameters:
@@ -67,14 +67,15 @@ paths:
                         id: "123"
                         name: "IRPINIA Seismic Stations"
                         href: "/v1/dataset/123"
-                        serviceProvider: "UNINA"
-                        categories:
+                        serviceProviders:
+                          - "UNINA"
+                        concepts:
                           - "Seismology"
                           - "Strong Motion"
-                      - type: category
-                        id: "cat-seismology"
-                        name: "Seismology"
-                        href: "/v1/category/cat-seismology"
+                      - type: distribution
+                        id: "456"
+                        name: "FDSN Station Service"
+                        href: "/v1/distribution/456"
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -160,31 +161,31 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /category:
+  /concept:
     get:
       tags:
         - Discovery
-      summary: Get full category tree
+      summary: Get full concept tree
       description: |
-        Returns the complete category tree as an ordered list of category schemes.
-        Each scheme carries its full subtree of nested `Category` objects.
+        Returns the complete concept tree as an ordered list of concept schemes.
+        Each scheme carries its full subtree of nested `Concept` objects.
         Intended as the primary data source for building facet navigation in clients.
-      operationId: getCategoryTree
+      operationId: getConceptTree
       responses:
         '200':
-          description: Category tree returned successfully
+          description: Concept tree returned successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CategoryTreeResponse'
+                $ref: '#/components/schemas/ConceptTreeResponse'
               examples:
                 tree:
-                  summary: Category tree with one scheme
+                  summary: Concept tree with one scheme
                   value:
                     schemes:
                       - id: "scheme-solid-earth"
                         label: "Solid Earth"
-                        title: "Solid Earth Science Categories"
+                        title: "Solid Earth Science Concepts"
                         description: "Top-level grouping for solid earth science resources."
                         logo: "https://www.epos-eu.org/logos/solid-earth.png"
                         homepage: "https://www.epos-eu.org/solid-earth"
@@ -192,32 +193,32 @@ paths:
                         orderNumber: 1
                         type: "DATA"
                         children:
-                          - id: "cat-seismology"
+                          - id: "concept-seismology"
                             name: "Seismology"
                             description: "Resources related to seismic monitoring."
                             children:
-                              - id: "cat-strong-motion"
+                              - id: "concept-strong-motion"
                                 name: "Strong Motion"
                                 children: []
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /category/{id}:
+  /concept/{id}:
     parameters:
       - $ref: '#/components/parameters/ResourceId'
     get:
       tags:
         - Resources
-      summary: Get category by id
-      description: Returns a single category node with its full subtree of children.
-      operationId: getCategoryById
+      summary: Get concept by id
+      description: Returns a single concept node with its full subtree of children.
+      operationId: getConceptById
       responses:
         '200':
-          description: Category found
+          description: Concept found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Category'
+                $ref: '#/components/schemas/Concept'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -273,14 +274,15 @@ components:
       in: query
       required: false
       description: |
-        Filter results to one or more resource types. When omitted, all types are returned.
-        Repeat the parameter for multiple values: `?type=dataset&type=distribution`.
+        Filter results to one or more resource types. When omitted, all supported search
+        resource types are returned.
+        Pass comma-separated values in a single parameter: `?type=dataset,distribution`.
       schema:
         type: array
         items:
           $ref: '#/components/schemas/ResourceType'
       style: form
-      explode: true
+      explode: false
 
     SpatialFilter:
       name: spatialFilter
@@ -324,13 +326,14 @@ components:
       required: false
       description: |
         Filter by one or more service provider names.
-        Repeat the parameter for multiple values: `?serviceProvider=INGV&serviceProvider=UNINA`.
+        Pass comma-separated values in a single parameter:
+        `?serviceProvider=INGV,UNINA`.
       schema:
         type: array
         items:
           type: string
       style: form
-      explode: true
+      explode: false
 
     VersioningStatus:
       name: versioningStatus
@@ -339,7 +342,8 @@ components:
       description: |
         Filter by one or more versioning statuses.
         When omitted, defaults to `PUBLISHED`.
-        Repeat the parameter for multiple values: `?versioningStatus=PUBLISHED&versioningStatus=DRAFT`.
+        Pass comma-separated values in a single parameter:
+        `?versioningStatus=PUBLISHED,DRAFT`.
       schema:
         type: array
         items:
@@ -347,7 +351,7 @@ components:
         default:
           - PUBLISHED
       style: form
-      explode: true
+      explode: false
 
     Keywords:
       name: keywords
@@ -355,13 +359,14 @@ components:
       required: false
       description: |
         Filter resources that carry all the supplied keywords.
-        Repeat the parameter for multiple values: `?keywords=seismology&keywords=stations`.
+        Pass comma-separated values in a single parameter:
+        `?keywords=seismology,stations`.
       schema:
         type: array
         items:
           type: string
       style: form
-      explode: true
+      explode: false
 
   responses:
 
@@ -399,7 +404,6 @@ components:
         - distribution
         - software-application
         - software-source-code
-        - category
 
     VersioningStatus:
       type: string
@@ -440,7 +444,6 @@ components:
           distribution: '#/components/schemas/GenericSearchItem'
           software-application: '#/components/schemas/GenericSearchItem'
           software-source-code: '#/components/schemas/GenericSearchItem'
-          category: '#/components/schemas/GenericSearchItem'
 
     BaseSearchItem:
       type: object
@@ -474,13 +477,17 @@ components:
               type: string
               enum:
                 - dataset
-            serviceProvider:
-              type: string
-              description: Display name of the organisation providing this dataset
-              example: "UNINA"
-            categories:
+            serviceProviders:
               type: array
-              description: Category labels assigned to this dataset
+              description: Display names of organisations providing this dataset
+              items:
+                type: string
+              example:
+                - "UNINA"
+                - "INGV"
+            concepts:
+              type: array
+              description: Concept labels assigned to this dataset
               items:
                 type: string
               example:
@@ -500,7 +507,6 @@ components:
                 - distribution
                 - software-application
                 - software-source-code
-                - category
 
     # -------------------------------------------------------------------------
     # Detail schemas
@@ -532,9 +538,9 @@ components:
                 - "seismology"
                 - "stations"
                 - "Irpinia"
-            categories:
+            concepts:
               type: array
-              description: Category labels assigned to this dataset
+              description: Concept labels assigned to this dataset
               items:
                 type: string
               example:
@@ -593,9 +599,9 @@ components:
                 - "portal"
                 - "seismology"
                 - "data access"
-            categories:
+            concepts:
               type: array
-              description: Category labels assigned to this application
+              description: Concept labels assigned to this application
               items:
                 type: string
               example:
@@ -624,9 +630,9 @@ components:
                 - "portal"
                 - "seismology"
                 - "open source"
-            categories:
+            concepts:
               type: array
-              description: Category labels assigned to this source code
+              description: Concept labels assigned to this source code
               items:
                 type: string
               example:
@@ -638,7 +644,7 @@ components:
               description: URL of the source code repository
               example: "https://github.com/example/epos-portal"
 
-    Category:
+    Concept:
       type: object
       required:
         - id
@@ -646,7 +652,7 @@ components:
       properties:
         id:
           type: string
-          example: "cat-seismology"
+          example: "concept-seismology"
         name:
           type: string
           example: "Seismology"
@@ -655,11 +661,11 @@ components:
           example: "Resources related to seismic monitoring and analysis."
         children:
           type: array
-          description: Nested child categories
+          description: Nested child concepts
           items:
-            $ref: '#/components/schemas/Category'
+            $ref: '#/components/schemas/Concept'
 
-    CategoryScheme:
+    ConceptScheme:
       type: object
       required:
         - id
@@ -674,7 +680,7 @@ components:
           example: "Solid Earth"
         title:
           type: string
-          example: "Solid Earth Science Categories"
+          example: "Solid Earth Science Concepts"
         description:
           type: string
           example: "Top-level grouping for all solid earth science resources."
@@ -692,7 +698,7 @@ components:
           example: "#3A7BD5"
         orderNumber:
           type: integer
-          description: Display order among sibling category schemes
+          description: Display order among sibling concept schemes
           example: 1
         type:
           type: string
@@ -703,20 +709,20 @@ components:
           example: "DATA"
         children:
           type: array
-          description: Top-level categories within this scheme
+          description: Top-level concepts within this scheme
           items:
-            $ref: '#/components/schemas/Category'
+            $ref: '#/components/schemas/Concept'
 
-    CategoryTreeResponse:
+    ConceptTreeResponse:
       type: object
       required:
         - schemes
       properties:
         schemes:
           type: array
-          description: Ordered list of category schemes, each carrying its full category subtree
+          description: Ordered list of concept schemes, each carrying its full concept subtree
           items:
-            $ref: '#/components/schemas/CategoryScheme'
+            $ref: '#/components/schemas/ConceptScheme'
 
     # -------------------------------------------------------------------------
     # Shared helpers

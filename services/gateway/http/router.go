@@ -5,7 +5,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayserver"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/http/handlers"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/http/middleware"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/swagger"
@@ -29,17 +29,18 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(swagger.GetUI()))))
 
-	adapter := newAPIAdapter(discoveryService, resourcesService)
-	controllers := []gatewayserver.Router{
-		gatewayserver.NewDiscoveryAPIController(adapter),
-		gatewayserver.NewResourcesAPIController(adapter),
-	}
+	discoveryHandler := handlers.NewDiscovery(discoveryService)
+	resourcesHandler := handlers.NewResources(resourcesService)
 
-	for _, controller := range controllers {
-		for _, route := range controller.OrderedRoutes() {
-			r.Method(route.Method, route.Pattern, route.HandlerFunc)
-		}
-	}
+	r.Route("/v1", func(r chi.Router) {
+		r.Get("/search", discoveryHandler.SearchMetadata)
+		r.Get("/dataset/{id}", discoveryHandler.GetConceptTree)
+		r.Get("/distribution/{id}", resourcesHandler.GetConceptByID)
+		r.Get("/software-application/{id}", resourcesHandler.GetDatasetByID)
+		r.Get("/software-source-code/{id}", resourcesHandler.GetDistributionByID)
+		r.Get("/concept", resourcesHandler.GetSoftwareApplicationByID)
+		r.Get("/concept/{id}", resourcesHandler.GetSoftwareSourceCodeByID)
+	})
 
 	return r
 }
