@@ -1,0 +1,18 @@
+FROM amazoncorretto:17
+
+RUN yum install -y tar && yum clean all
+
+WORKDIR /workspace/services/metadata-lifecycle
+
+COPY services/metadata-lifecycle/gradlew ./gradlew
+COPY services/metadata-lifecycle/gradle ./gradle
+COPY services/metadata-lifecycle/settings.gradle.kts ./settings.gradle.kts
+COPY services/metadata-lifecycle/build.gradle.kts ./build.gradle.kts
+
+RUN chmod +x ./gradlew && ./gradlew --version
+
+COPY services/metadata-lifecycle/src ./src
+
+EXPOSE 8080
+
+CMD ["./gradlew", "run", "--args=server"]

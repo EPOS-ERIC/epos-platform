@@ -25,7 +25,7 @@ Monorepo for EPOS platform services and shared tooling.
 `- cli/
 ```
 
-## Quick start (Docker)
+## Quick start (Development)
 
 Run from repository root:
 
@@ -33,10 +33,11 @@ Run from repository root:
 make up
 ```
 
-This starts:
+This starts local development stack with Tilt:
 
 - GraphDB on `http://localhost:7200`
 - Metadata Lifecycle API on `http://localhost:8080`
+- Gateway API on `http://localhost:5000`
 
 Useful endpoints:
 
@@ -55,7 +56,8 @@ make down
 From repository root:
 
 ```bash
-make build
+make up
+make down
 make test
 make fmt
 make lint
@@ -64,8 +66,9 @@ make populate
 
 Notes:
 
-- Root `test`, `fmt`, and `lint` currently run for `metadata-lifecycle` only.
-- Gateway currently provides `make build` and `make generate` in `services/gateway/Makefile`.
+- Root `up` and `down` are development-only commands backed by Tilt.
+- Root `test`, `fmt`, and `lint` fan out to current services.
+- Service image and artifact build targets stay in each service `Makefile`.
 
 ## Service documentation
 

@@ -1,33 +1,22 @@
 up: 
-	docker compose -f ./docker/docker-compose.yaml up -d
+	tilt up
 
 down:
-	docker compose -f ./docker/docker-compose.yaml down
+	tilt down
 
 populate:
 	./packages/scripts/populatescript.sh
 
-build:
-	cd services/gateway && $(MAKE) build
-	cd services/metadata-lifecycle && $(MAKE) build
-
-build-docker:
-	cd services/gateway && $(MAKE) build-docker
-	cd services/metadata-lifecycle && $(MAKE) build-docker
-
-generate:
-	cd services/gateway && $(MAKE) generate
-
 test:
-	cd services/gateway && $(MAKE) test
-	cd services/metadata-lifecycle && $(MAKE) test
+	$(MAKE) -C services/gateway test
+	$(MAKE) -C services/metadata-lifecycle test
 
 fmt:
-	cd services/gateway && $(MAKE) fmt
-	cd services/metadata-lifecycle && $(MAKE) fmt
+	$(MAKE) -C services/gateway fmt
+	$(MAKE) -C services/metadata-lifecycle fmt
 
 lint:
-	cd services/gateway && $(MAKE) lint
-	cd services/metadata-lifecycle && $(MAKE) lint
+	$(MAKE) -C services/gateway lint
+	$(MAKE) -C services/metadata-lifecycle lint
 
-.PHONY: up down populate build build-docker generate test fmt lint
+.PHONY: up down populate test fmt lint

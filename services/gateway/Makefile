@@ -8,7 +8,7 @@ BUILDFLAGS=-trimpath
 # LDFLAGS=-s -w -X github.com/EPOS-ERIC//common.Version=$(VERSION)
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
+	CGO_ENABLED=0 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
 
 build-docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
