@@ -27,7 +27,6 @@ tags:
     description: Resource detail endpoints
 
 paths:
-
   /search:
     get:
       tags:
@@ -40,23 +39,23 @@ paths:
         endpoint; clients should follow that link rather than construct URLs themselves.
       operationId: searchMetadata
       parameters:
-        - $ref: '#/components/parameters/Q'
-        - $ref: '#/components/parameters/PageSize'
-        - $ref: '#/components/parameters/PageNumber'
-        - $ref: '#/components/parameters/TypeFilter'
-        - $ref: '#/components/parameters/SpatialFilter'
-        - $ref: '#/components/parameters/DateFrom'
-        - $ref: '#/components/parameters/DateTo'
-        - $ref: '#/components/parameters/ServiceProviders'
-        - $ref: '#/components/parameters/VersioningStatus'
-        - $ref: '#/components/parameters/Keywords'
+        - $ref: "#/components/parameters/Q"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/TypeFilter"
+        - $ref: "#/components/parameters/SpatialFilter"
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - $ref: "#/components/parameters/ServiceProviders"
+        - $ref: "#/components/parameters/VersioningStatus"
+        - $ref: "#/components/parameters/Keywords"
       responses:
-        '200':
+        "200":
           description: Search results returned successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchResponse'
+                $ref: "#/components/schemas/SearchResponse"
               examples:
                 mixedResults:
                   summary: Mixed resource search results
@@ -67,7 +66,7 @@ paths:
                         id: "123"
                         name: "IRPINIA Seismic Stations"
                         href: "/v1/dataset/123"
-                        serviceProviders:
+                        data_providers:
                           - "UNINA"
                         concepts:
                           - "Seismology"
@@ -76,90 +75,93 @@ paths:
                         id: "456"
                         name: "FDSN Station Service"
                         href: "/v1/distribution/456"
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /dataset/{id}:
     parameters:
-      - $ref: '#/components/parameters/ResourceId'
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Resources
       summary: Get dataset by id
       operationId: getDatasetById
       responses:
-        '200':
+        "200":
           description: Dataset found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dataset'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Dataset"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /distribution/{id}:
     parameters:
-      - $ref: '#/components/parameters/ResourceId'
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Resources
       summary: Get distribution by id
       operationId: getDistributionById
       responses:
-        '200':
+        "200":
           description: Distribution found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Distribution'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Distribution"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /software-application/{id}:
     parameters:
-      - $ref: '#/components/parameters/ResourceId'
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Resources
       summary: Get software application by id
       operationId: getSoftwareApplicationById
       responses:
-        '200':
+        "200":
           description: Software application found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SoftwareApplication'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/SoftwareApplication"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /software-source-code/{id}:
     parameters:
-      - $ref: '#/components/parameters/ResourceId'
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Resources
       summary: Get software source code by id
       operationId: getSoftwareSourceCodeById
       responses:
-        '200':
+        "200":
           description: Software source code found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SoftwareSourceCode'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/SoftwareSourceCode"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /agg-operation{resourcetype}{sourceid che può essere dataset, distribution o webservice}:
+  # si farà un'aggegazione di tutte le operation associate all'entità che viene passata, quindi i mapping, il template, i plugin, ... e si ritorna una lista con un oggetto per ogni operation aggregata
 
   /concept:
     get:
@@ -172,12 +174,12 @@ paths:
         Intended as the primary data source for building facet navigation in clients.
       operationId: getConceptTree
       responses:
-        '200':
+        "200":
           description: Concept tree returned successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConceptTreeResponse'
+                $ref: "#/components/schemas/ConceptTreeResponse"
               examples:
                 tree:
                   summary: Concept tree with one scheme
@@ -190,7 +192,7 @@ paths:
                         logo: "https://www.epos-eu.org/logos/solid-earth.png"
                         homepage: "https://www.epos-eu.org/solid-earth"
                         color: "#3A7BD5"
-                        orderNumber: 1
+                        order_number: 1
                         type: "DATA"
                         children:
                           - id: "concept-seismology"
@@ -200,12 +202,12 @@ paths:
                               - id: "concept-strong-motion"
                                 name: "Strong Motion"
                                 children: []
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /concept/{id}:
     parameters:
-      - $ref: '#/components/parameters/ResourceId'
+      - $ref: "#/components/parameters/ResourceId"
     get:
       tags:
         - Resources
@@ -213,21 +215,19 @@ paths:
       description: Returns a single concept node with its full subtree of children.
       operationId: getConceptById
       responses:
-        '200':
+        "200":
           description: Concept found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Concept'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/Concept"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 components:
-
   parameters:
-
     ResourceId:
       name: id
       in: path
@@ -280,7 +280,7 @@ components:
       schema:
         type: array
         items:
-          $ref: '#/components/schemas/ResourceType'
+          $ref: "#/components/schemas/ResourceType"
       style: form
       explode: false
 
@@ -347,7 +347,7 @@ components:
       schema:
         type: array
         items:
-          $ref: '#/components/schemas/VersioningStatus'
+          $ref: "#/components/schemas/VersioningStatus"
         default:
           - PUBLISHED
       style: form
@@ -369,30 +369,28 @@ components:
       explode: false
 
   responses:
-
     BadRequest:
       description: Invalid request parameters
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
     InternalServerError:
       description: Internal server error
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
 
   schemas:
-
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------
@@ -431,19 +429,19 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SearchItem'
+            $ref: "#/components/schemas/SearchItem"
 
     SearchItem:
       oneOf:
-        - $ref: '#/components/schemas/DatasetSearchItem'
-        - $ref: '#/components/schemas/GenericSearchItem'
+        - $ref: "#/components/schemas/DatasetSearchItem"
+        - $ref: "#/components/schemas/GenericSearchItem"
       discriminator:
         propertyName: type
         mapping:
-          dataset: '#/components/schemas/DatasetSearchItem'
-          distribution: '#/components/schemas/GenericSearchItem'
-          software-application: '#/components/schemas/GenericSearchItem'
-          software-source-code: '#/components/schemas/GenericSearchItem'
+          dataset: "#/components/schemas/DatasetSearchItem"
+          distribution: "#/components/schemas/GenericSearchItem"
+          software-application: "#/components/schemas/GenericSearchItem"
+          software-source-code: "#/components/schemas/GenericSearchItem"
 
     BaseSearchItem:
       type: object
@@ -454,7 +452,7 @@ components:
         - href
       properties:
         type:
-          $ref: '#/components/schemas/ResourceType'
+          $ref: "#/components/schemas/ResourceType"
         id:
           type: string
           example: "123"
@@ -468,7 +466,7 @@ components:
 
     DatasetSearchItem:
       allOf:
-        - $ref: '#/components/schemas/BaseSearchItem'
+        - $ref: "#/components/schemas/BaseSearchItem"
         - type: object
           required:
             - type
@@ -477,7 +475,7 @@ components:
               type: string
               enum:
                 - dataset
-            serviceProviders:
+            data_providers:
               type: array
               description: Display names of organisations providing this dataset
               items:
@@ -496,7 +494,7 @@ components:
 
     GenericSearchItem:
       allOf:
-        - $ref: '#/components/schemas/BaseSearchItem'
+        - $ref: "#/components/schemas/BaseSearchItem"
         - type: object
           required:
             - type
@@ -527,9 +525,31 @@ components:
 
     Dataset:
       allOf:
-        - $ref: '#/components/schemas/BaseDetailResource'
+        - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
           properties:
+            created:
+              type: string
+              format: date-time
+              description: Resource creation timestamp in ISO 8601 UTC
+              example: "2024-01-15T10:30:00Z"
+            modified:
+              type: string
+              format: date-time
+              description: Resource last modification timestamp in ISO 8601 UTC
+              example: "2024-03-01T08:45:00Z"
+            version_info:
+              type: string
+              description: Human-readable version information for this dataset
+              example: "Revision 3 reviewed by EPOS"
+            contact_points:
+              type: array
+              description: IDs of contact points associated with this dataset
+              items:
+                type: string
+              example:
+                - "contact-point-1"
+                - "contact-point-2"
             keywords:
               type: array
               items:
@@ -554,29 +574,68 @@ components:
               example:
                 - "UNINA"
                 - "INGV"
+            issued:
+              type: string
+              format: date-time
+              description: Dataset publication or issuance timestamp in ISO 8601 UTC
+              example: "2024-02-01T00:00:00Z"
             spatial:
               type: string
               description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
               example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+            identifiers:
+              type: array
+              description: External or domain-specific identifiers for this dataset
+              items:
+                $ref: "#/components/schemas/Identifier"
             temporal:
-              $ref: '#/components/schemas/TemporalExtent'
+              $ref: "#/components/schemas/TemporalExtent"
             status:
-              $ref: '#/components/schemas/VersioningStatus'
+              $ref: "#/components/schemas/VersioningStatus"
             distributions:
               type: array
-              description: IDs of distributions that provide access to this dataset
+              description: Distributions that provide access to this dataset
+              items:
+                $ref: "#/components/schemas/Distribution"
+              example:
+                - id: "456"
+                  title: "FDSN Station Service"
+                  access_url: "https://service.example.org/fdsnws/station/1/query"
+                  operation: "getFDSNStationXML"
+                - id: "457"
+                  title: "FDSN Event Service"
+                  access_url: "https://service.example.org/fdsnws/event/1/query"
+            access_rights:
+              type: string
+              description: Access rights statement for this dataset
+              example: "open"
+            accrual_periodicity:
+              type: string
+              description: Frequency with which this dataset is updated
+              example: "monthly"
+            is_version_of:
+              type: string
+              description: Identifier of parent resource this dataset version derives from
+              example: "dataset-root-123"
+            quality_annotation:
+              type: array
+              description: Quality annotation identifiers associated with this dataset
               items:
                 type: string
               example:
-                - "456"
-                - "457"
+                - "qa-1"
+                - "qa-2"
+            version:
+              type: string
+              description: Machine-readable version string for this dataset
+              example: "3.1.0"
 
     Distribution:
       allOf:
-        - $ref: '#/components/schemas/BaseDetailResource'
+        - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
           properties:
-            accessUrl:
+            access_url:
               type: string
               format: uri
               description: URL used to access the distribution
@@ -588,7 +647,7 @@ components:
 
     SoftwareApplication:
       allOf:
-        - $ref: '#/components/schemas/BaseDetailResource'
+        - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
           properties:
             keywords:
@@ -607,7 +666,7 @@ components:
               example:
                 - "Seismology"
                 - "Data Services"
-            downloadUrl:
+            download_url:
               type: string
               format: uri
               description: URL to download or install the application
@@ -615,10 +674,10 @@ components:
 
     SoftwareSourceCode:
       allOf:
-        - $ref: '#/components/schemas/BaseDetailResource'
+        - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
           properties:
-            programmingLanguage:
+            programming_language:
               type: string
               description: Primary programming language of the source code
               example: "Java"
@@ -663,7 +722,7 @@ components:
           type: array
           description: Nested child concepts
           items:
-            $ref: '#/components/schemas/Concept'
+            $ref: "#/components/schemas/Concept"
 
     ConceptScheme:
       type: object
@@ -696,7 +755,7 @@ components:
           type: string
           description: Hex colour code used for UI rendering
           example: "#3A7BD5"
-        orderNumber:
+        order_number:
           type: integer
           description: Display order among sibling concept schemes
           example: 1
@@ -711,7 +770,7 @@ components:
           type: array
           description: Top-level concepts within this scheme
           items:
-            $ref: '#/components/schemas/Concept'
+            $ref: "#/components/schemas/Concept"
 
     ConceptTreeResponse:
       type: object
@@ -722,7 +781,7 @@ components:
           type: array
           description: Ordered list of concept schemes, each carrying its full concept subtree
           items:
-            $ref: '#/components/schemas/ConceptScheme'
+            $ref: "#/components/schemas/ConceptScheme"
 
     # -------------------------------------------------------------------------
     # Shared helpers
@@ -743,15 +802,31 @@ components:
           description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
           example: "2023-12-31T23:59:59Z"
 
+    Identifier:
+      type: object
+      description: Typed identifier attached to a resource
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          description: Identifier scheme or type
+          example: "doi"
+        value:
+          type: string
+          description: Identifier value
+          example: "10.13127/tsunami/neamthm18"
+
     ErrorResponse:
       type: object
       required:
-        - errorCode
-        - errorMessage
+        - error_code
+        - error_message
       properties:
-        errorCode:
+        error_code:
           type: string
           example: "RESOURCE_NOT_FOUND"
-        errorMessage:
+        error_message:
           type: string
           example: "The requested resource was not found"
