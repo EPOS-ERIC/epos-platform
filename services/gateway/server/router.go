@@ -33,13 +33,16 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 	resourcesHandler := handlers.NewResources(resourcesService)
 
 	r.Route("/v1", func(r chi.Router) {
+		// discovery
 		r.Get("/search", discoveryHandler.SearchMetadata)
-		r.Get("/dataset/{id}", discoveryHandler.GetConceptTree)
-		r.Get("/distribution/{id}", resourcesHandler.GetConceptByID)
-		r.Get("/software-application/{id}", resourcesHandler.GetDatasetByID)
-		r.Get("/software-source-code/{id}", resourcesHandler.GetDistributionByID)
-		r.Get("/concept", resourcesHandler.GetSoftwareApplicationByID)
-		r.Get("/concept/{id}", resourcesHandler.GetSoftwareSourceCodeByID)
+		r.Get("/concept", discoveryHandler.GetConceptTree)
+
+		// resources
+		r.Get("/dataset/{id}", resourcesHandler.GetDatasetByID)
+		r.Get("/distribution/{id}", resourcesHandler.GetDistributionByID)
+		r.Get("/software-application/{id}", resourcesHandler.GetSoftwareApplicationByID)
+		r.Get("/software-source-code/{id}", resourcesHandler.GetSoftwareSourceCodeByID)
+		r.Get("/concept/{id}", resourcesHandler.GetConceptByID)
 	})
 
 	return r

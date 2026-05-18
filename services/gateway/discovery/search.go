@@ -86,7 +86,7 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 	}
 
 	searchResp := api.SearchResponse{
-		Total: 0,
+		Total: int(resp.Total),
 		Items: []api.SearchItem{},
 	}
 	for _, item := range resp.Items {
@@ -98,8 +98,6 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 
 		searchResp.Items = append(searchResp.Items, searchItem)
 	}
-
-	searchResp.Total = int32(len(searchResp.Items))
 
 	return searchResp, nil
 }
@@ -134,27 +132,41 @@ func toAPISearchItem(item metadataclient.SearchItem) (api.SearchItem, error) {
 	actual := item.GetActualInstanceValue()
 	switch typed := actual.(type) {
 	case metadataclient.DatasetSearchItem:
-		return api.SearchItem{
-			Type:             api.DatasetType,
-			ID:               typed.GetId(),
-			Name:             typed.GetName(),
-			Href:             typed.GetHref(),
-			ServiceProviders: typed.GetServiceProviders(),
-			Concepts:         typed.GetCategories(),
+		return api.DatasetItem{
+			BaseSearchItem: api.BaseSearchItem{
+				Type: api.DatasetType,
+				ID:   typed.GetId(),
+				Name: typed.GetName(),
+				Href: typed.GetHref(),
+			},
+			DataProviders: typed.GetServiceProviders(), // TODO: these should be data providers in the metadata lifecycle, not service providers
+			Concepts:      typed.GetCategories(),
+			Operations:    []string{}, // TODO the aggregation
 		}, nil
 	case metadataclient.GenericSearchItem:
 		resourceType, err := fromMetadataResourceType(metadataclient.ResourceType(typed.GetType()))
 		if err != nil {
-			return api.SearchItem{}, err
+			return nil, err
 		}
 
-		return api.SearchItem{
+		baseItem := api.BaseSearchItem{
 			Type: resourceType,
 			ID:   typed.GetId(),
 			Name: typed.GetName(),
 			Href: typed.GetHref(),
-		}, nil
+		}
+
+		// as of now there is no distinction between these types in the metadata lifecycle, when there will be these can be implemented
+		switch resourceType {
+		case api.SoftwareApplicationType:
+			return api.SoftwareApplicationItem{BaseSearchItem: baseItem}, nil
+		case api.SoftwareSourceCodeType:
+			return api.SoftwareSourceCodeItem{BaseSearchItem: baseItem}, nil
+		// TODO: add organizations
+		default:
+			return nil, fmt.Errorf("unsupported gateway resource type: %q", resourceType)
+		}
 	default:
-		return api.SearchItem{}, fmt.Errorf("unsupported metadata search item type %T", actual)
+		return nil, fmt.Errorf("unsupported metadata search item type %T", actual)
 	}
 }

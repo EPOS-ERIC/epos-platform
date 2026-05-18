@@ -13,7 +13,6 @@ docker_build(
         sync('services/gateway', '/workspace/services/gateway'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('docker/gateway-config.dev.yaml', '/workspace/docker/gateway-config.dev.yaml'),
-        run('cd /workspace/services/gateway && go mod download', trigger=['services/gateway/go.mod', 'services/gateway/go.sum']),
         restart_container(),
     ],
 )
