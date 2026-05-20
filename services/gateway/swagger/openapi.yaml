@@ -7,8 +7,8 @@ info:
 
     Design notes:
     - Search returns heterogeneous, typed resource items in a flat list.
-    - Clients navigate by following `href` links; they never construct URLs themselves.
-    - All cross-entity references carry an `href` pointing to the typed detail endpoint.
+    - Clients navigate by following `href` links resolved against their configured API base URL.
+    - All cross-entity references carry an API-base-relative `href` pointing to the typed detail endpoint.
   termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
   contact:
     email: someemail@epos.com
@@ -36,8 +36,10 @@ paths:
         Returns a flat, typed list of catalogue resources matching the supplied criteria.
         Results may include datasets, webservices, organizations, software applications,
         and software source codes. Each item carries an `href` pointing to its typed
-        detail endpoint; clients should follow that link rather than construct URLs
-        themselves.
+        detail endpoint; clients should resolve that API-base-relative link against
+        their configured API base URL rather than construct endpoint URLs themselves.
+        Provider-like relations are normalized in search results under the `provider`
+        field, regardless of the underlying detail schema naming.
       operationId: searchMetadata
       parameters:
         - $ref: "#/components/parameters/Q"
@@ -47,7 +49,7 @@ paths:
         - $ref: "#/components/parameters/SpatialFilter"
         - $ref: "#/components/parameters/DateFrom"
         - $ref: "#/components/parameters/DateTo"
-        - $ref: "#/components/parameters/ServiceProviders"
+        - $ref: "#/components/parameters/Provider"
         - $ref: "#/components/parameters/VersioningStatus"
         - $ref: "#/components/parameters/Keywords"
       responses:
@@ -61,37 +63,53 @@ paths:
                 mixedResults:
                   summary: Mixed resource search results
                   value:
+                    page_number: 1
+                    page_size: 10
                     total: 42
+                    total_pages: 5
                     items:
                       - type: dataset
                         id: "123"
                         name: "IRPINIA Seismic Stations"
-                        href: "/v1/dataset/123"
-                        data_providers:
+                        href: "v1/dataset/123"
+                        provider:
                           - id: "org-123"
-                            href: "/v1/organization/org-123"
+                            name: "INGV"
+                            href: "v1/organization/org-123"
                         concepts:
                           - id: "concept-seismology"
-                            href: "/v1/concept/concept-seismology"
+                            name: "Seismology"
+                            href: "v1/concept/concept-seismology"
                           - id: "concept-strong-motion"
-                            href: "/v1/concept/concept-strong-motion"
+                            name: "Strong Motion"
+                            href: "v1/concept/concept-strong-motion"
                         distributions:
                           - id: "distribution1"
-                            href: "/v1/distribution/distribution1"
+                            href: "v1/distribution/distribution1"
                       - type: organization
                         id: "org-456"
                         name: "University of Naples Federico II"
-                        href: "/v1/organization/org-456"
+                        href: "v1/organization/org-456"
                       - type: webservice
                         id: "ws-789"
                         name: "FDSN Station Web Service"
-                        href: "/v1/webservice/ws-789"
-                        service_providers:
+                        href: "v1/webservice/ws-789"
+                        provider:
                           - id: "org-456"
-                            href: "/v1/organization/org-456"
+                            name: "University of Naples Federico II"
+                            href: "v1/organization/org-456"
                         concepts:
                           - id: "concept-seismology"
-                            href: "/v1/concept/concept-seismology"
+                            name: "Seismology"
+                            href: "v1/concept/concept-seismology"
+                      - type: software-source-code
+                        id: "sc-101"
+                        name: "EPOS Data Toolkit"
+                        href: "v1/software-source-code/sc-101"
+                        provider:
+                          - id: "org-123"
+                            name: "INGV"
+                            href: "v1/organization/org-123"
         "400":
           $ref: "#/components/responses/BadRequest"
         "500":
@@ -241,7 +259,7 @@ paths:
                     schemes:
                       - id: "scheme-solid-earth"
                         label: "Solid Earth"
-                        title: "Solid Earth Science Concepts"
+                        name: "Solid Earth Science Concepts"
                         description: "Top-level grouping for solid earth science resources."
                         logo: "https://www.epos-eu.org/logos/solid-earth.png"
                         homepage: "https://www.epos-eu.org/solid-earth"
@@ -375,14 +393,16 @@ components:
         format: date-time
         example: "2023-12-31T23:59:59Z"
 
-    ServiceProviders:
-      name: serviceProvider
+    Provider:
+      name: provider
       in: query
       required: false
       description: |
-        Filter by one or more service provider names.
+        Filter by one or more provider organization IDs.
+        Applies only to resource types that expose a provider-like relation in search
+        results. When supplied, resource types without a `provider` relation are excluded.
         Pass comma-separated values in a single parameter:
-        `?serviceProvider=INGV,UNINA`.
+        `?provider=org-123,org-456`.
       schema:
         type: array
         items:
@@ -427,23 +447,43 @@ components:
     BadRequest:
       description: Invalid request parameters
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalidQuery:
+              summary: Invalid query parameter
+              value:
+                title: "Invalid query parameter"
+                status: 400
+                detail: "One or more query parameters are invalid."
 
     NotFound:
       description: Resource not found
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: "#/components/schemas/Problem"
+          examples:
+            resourceNotFound:
+              summary: Missing resource
+              value:
+                title: "Resource not found"
+                status: 404
+                detail: "Dataset not found."
 
     InternalServerError:
       description: Internal server error
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/ErrorResponse"
+            $ref: "#/components/schemas/Problem"
+          examples:
+            internalError:
+              summary: Unexpected server failure
+              value:
+                title: "Internal server error"
+                status: 500
 
   schemas:
     # -------------------------------------------------------------------------
@@ -474,14 +514,33 @@ components:
     SearchResponse:
       type: object
       required:
+        - page_number
+        - page_size
         - total
+        - total_pages
         - items
       properties:
+        page_number:
+          type: integer
+          minimum: 1
+          description: 1-based page index returned in this response
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items requested per page
+          example: 10
         total:
           type: integer
           minimum: 0
           description: Total number of matching resources across all pages
           example: 123
+        total_pages:
+          type: integer
+          minimum: 0
+          description: Total number of available result pages for the supplied page size
+          example: 13
         items:
           type: array
           items:
@@ -491,15 +550,17 @@ components:
       oneOf:
         - $ref: "#/components/schemas/DatasetSearchItem"
         - $ref: "#/components/schemas/WebserviceSearchItem"
-        - $ref: "#/components/schemas/GenericSearchItem"
+        - $ref: "#/components/schemas/OrganizationSearchItem"
+        - $ref: "#/components/schemas/SoftwareApplicationSearchItem"
+        - $ref: "#/components/schemas/SoftwareSourceCodeSearchItem"
       discriminator:
         propertyName: type
         mapping:
           dataset: "#/components/schemas/DatasetSearchItem"
           webservice: "#/components/schemas/WebserviceSearchItem"
-          organization: "#/components/schemas/GenericSearchItem"
-          software-application: "#/components/schemas/GenericSearchItem"
-          software-source-code: "#/components/schemas/GenericSearchItem"
+          organization: "#/components/schemas/OrganizationSearchItem"
+          software-application: "#/components/schemas/SoftwareApplicationSearchItem"
+          software-source-code: "#/components/schemas/SoftwareSourceCodeSearchItem"
 
     BaseSearchItem:
       type: object
@@ -519,8 +580,9 @@ components:
           example: "IRPINIA Seismic Stations"
         href:
           type: string
-          description: Path to the typed detail endpoint. Follow this link; do not construct URLs.
-          example: "/v1/dataset/123"
+          format: uri-reference
+          description: API-base-relative URI reference to typed detail endpoint. Resolve against configured API base URL.
+          example: "v1/dataset/123"
 
     DatasetSearchItem:
       allOf:
@@ -533,16 +595,18 @@ components:
               type: string
               enum:
                 - dataset
-            data_providers:
+            provider:
               type: array
-              description: Organization references for providers of this dataset
+              description: Organization references normalized from this dataset's publishers
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "org-123"
-                  href: "/v1/organization/org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
                 - id: "org-456"
-                  href: "/v1/organization/org-456"
+                  name: "UNINA"
+                  href: "v1/organization/org-456"
             concepts:
               type: array
               description: Concept references assigned to this dataset
@@ -550,9 +614,9 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "concept-seismology"
-                  href: "/v1/concept/concept-seismology"
+                  href: "v1/concept/concept-seismology"
                 - id: "concept-strong-motion"
-                  href: "/v1/concept/concept-strong-motion"
+                  href: "v1/concept/concept-strong-motion"
             distributions:
               type: array
               description: Distribution references for this dataset
@@ -560,11 +624,11 @@ components:
                 $ref: "#/components/schemas/DatasetDistributionSearchItem"
               example:
                 - id: "distribution1"
-                  href: "/v1/distribution/distribution1"
+                  href: "v1/distribution/distribution1"
                 - id: "distribution2"
-                  href: "/v1/distribution/distribution2"
+                  href: "v1/distribution/distribution2"
 
-    GenericSearchItem:
+    OrganizationSearchItem:
       allOf:
         - $ref: "#/components/schemas/BaseSearchItem"
         - type: object
@@ -575,8 +639,48 @@ components:
               type: string
               enum:
                 - organization
+
+    SoftwareApplicationSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
                 - software-application
+            provider:
+              type: array
+              description: Organization references for providers of this software application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+
+    SoftwareSourceCodeSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
                 - software-source-code
+            provider:
+              type: array
+              description: Organization references for providers of this software source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
 
     WebserviceSearchItem:
       allOf:
@@ -589,16 +693,18 @@ components:
               type: string
               enum:
                 - webservice
-            service_providers:
+            provider:
               type: array
               description: Organization references for providers of this webservice
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "org-456"
-                  href: "/v1/organization/org-456"
+                  name: "University of Naples Federico II"
+                  href: "v1/organization/org-456"
                 - id: "org-123"
-                  href: "/v1/organization/org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
             concepts:
               type: array
               description: Concept references assigned to this webservice
@@ -606,9 +712,9 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "concept-seismology"
-                  href: "/v1/concept/concept-seismology"
+                  href: "v1/concept/concept-seismology"
                 - id: "concept-data-services"
-                  href: "/v1/concept/concept-data-services"
+                  href: "v1/concept/concept-data-services"
 
     DatasetDistributionSearchItem:
       type: object
@@ -621,8 +727,9 @@ components:
           example: "distribution1"
         href:
           type: string
-          description: Path to the distribution detail endpoint
-          example: "/v1/distribution/distribution1"
+          format: uri-reference
+          description: API-base-relative URI reference to distribution detail endpoint
+          example: "v1/distribution/distribution1"
 
     # -------------------------------------------------------------------------
     # Resource references
@@ -637,13 +744,14 @@ components:
         id:
           type: string
           example: "123"
-        title:
+        name:
           type: string
           example: "IRPINIA Seismic Stations"
         href:
           type: string
-          description: Path to the typed detail endpoint
-          example: "/v1/dataset/123"
+          format: uri-reference
+          description: API-base-relative URI reference to typed detail endpoint
+          example: "v1/dataset/123"
 
     # -------------------------------------------------------------------------
     # Detail schemas
@@ -653,11 +761,12 @@ components:
       type: object
       required:
         - id
-        - title
+        - name
       properties:
         id:
           type: string
-        title:
+        name:
+          description: Human-readable display name of the resource
           type: string
         description:
           type: string
@@ -666,6 +775,8 @@ components:
       allOf:
         - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
+          required:
+            - description
           properties:
             created:
               type: string
@@ -683,12 +794,16 @@ components:
               example: "Revision 3 reviewed by EPOS"
             contact_points:
               type: array
-              description: IDs of contact points associated with this dataset
+              description: Contact point references associated with this dataset
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
               example:
-                - "contact-point-1"
-                - "contact-point-2"
+                - id: "contact-point-1"
+                  name: "Dataset support desk"
+                  href: "v1/contact-point/contact-point-1"
+                - id: "contact-point-2"
+                  name: "Scientific curator"
+                  href: "v1/contact-point/contact-point-2"
             keywords:
               type: array
               items:
@@ -699,24 +814,28 @@ components:
                 - "Irpinia"
             concepts:
               type: array
-              description: Concept labels assigned to this dataset
+              description: Concept references assigned to this dataset
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
               example:
-                - "Seismology"
-                - "Strong Motion"
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-strong-motion"
+                  name: "Strong Motion"
+                  href: "v1/concept/concept-strong-motion"
             publisher:
               type: array
-              description: Organizations publishing this dataset
+              description: Organizations publishing this dataset; exposed as `provider` in search results
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "org-1"
-                  title: "UNINA"
-                  href: "/v1/organization/org-1"
+                  name: "UNINA"
+                  href: "v1/organization/org-1"
                 - id: "org-2"
-                  title: "INGV"
-                  href: "/v1/organization/org-2"
+                  name: "INGV"
+                  href: "v1/organization/org-2"
             issued:
               type: string
               format: date-time
@@ -742,11 +861,11 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "456"
-                  title: "FDSN Station Service"
-                  href: "/v1/distribution/456"
+                  name: "FDSN Station Service"
+                  href: "v1/distribution/456"
                 - id: "457"
-                  title: "FDSN Event Service"
-                  href: "/v1/distribution/457"
+                  name: "FDSN Event Service"
+                  href: "v1/distribution/457"
             access_rights:
               type: string
               description: Access rights statement for this dataset
@@ -756,17 +875,17 @@ components:
               description: Frequency with which this dataset is updated
               example: "monthly"
             is_version_of:
-              type: string
-              description: Identifier of parent resource this dataset version derives from
-              example: "dataset-root-123"
-            quality_annotation:
-              type: array
-              description: Quality annotation identifiers associated with this dataset
-              items:
-                type: string
+              description: Reference to parent dataset resource this dataset version derives from
+              allOf:
+                - $ref: "#/components/schemas/ResourceRef"
               example:
-                - "qa-1"
-                - "qa-2"
+                id: "dataset-root-123"
+                name: "IRPINIA Seismic Stations"
+                href: "v1/dataset/dataset-root-123"
+            quality_annotation:
+              type: string
+              description: Aggregated quality annotation summary associated with this dataset
+              example: "Validated by EPOS thematic core service; station metadata completeness >95%."
             version:
               type: string
               description: Machine-readable version string for this dataset
@@ -776,6 +895,8 @@ components:
       allOf:
         - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
+          required:
+            - access_url
           properties:
             access_url:
               type: string
@@ -798,9 +919,13 @@ components:
           properties:
             contact_points:
               type: array
-              description: IDs of contact points associated with this software application
+              description: Contact point references associated with this software application
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Application support desk"
+                  href: "v1/contact-point/contact-point-1"
             keywords:
               type: array
               items:
@@ -811,12 +936,16 @@ components:
                 - "data access"
             concepts:
               type: array
-              description: Concept labels assigned to this application
+              description: Concept references assigned to this application
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
               example:
-                - "Seismology"
-                - "Data Services"
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-data-services"
+                  name: "Data Services"
+                  href: "v1/concept/concept-data-services"
             download_url:
               type: string
               format: uri
@@ -845,6 +974,15 @@ components:
               format: uri
               description: Web page describing the software application
               example: "https://example.org/app"
+            provider:
+              type: array
+              description: Organizations providing this software application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
             operations:
               type: array
               description: Web service operations linked to this software application
@@ -858,9 +996,13 @@ components:
           properties:
             contact_points:
               type: array
-              description: IDs of contact points associated with this software source code
+              description: Contact point references associated with this software source code
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Source code maintainer"
+                  href: "v1/contact-point/contact-point-1"
             programming_language:
               type: string
               description: Primary programming language of the source code
@@ -875,12 +1017,16 @@ components:
                 - "open source"
             concepts:
               type: array
-              description: Concept labels assigned to this source code
+              description: Concept references assigned to this source code
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
               example:
-                - "Seismology"
-                - "Data Services"
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-data-services"
+                  name: "Data Services"
+                  href: "v1/concept/concept-data-services"
             repository:
               type: string
               format: uri
@@ -904,6 +1050,15 @@ components:
               description: Software applications targeted by this source code
               items:
                 $ref: "#/components/schemas/ResourceRef"
+            provider:
+              type: array
+              description: Organizations providing this software source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
             main_entity_of_page:
               type: string
               format: uri
@@ -914,7 +1069,7 @@ components:
       type: object
       required:
         - id
-        - legal_name
+        - name
       properties:
         id:
           type: string
@@ -924,9 +1079,9 @@ components:
           description: External or domain-specific identifiers for this organization
           items:
             $ref: "#/components/schemas/Identifier"
-        legal_name:
+        name:
           type: string
-          description: Official name of the organization
+          description: Human-readable display name of the organization
           example: "University of Naples Federico II"
         lei_code:
           type: string
@@ -962,11 +1117,13 @@ components:
             - "+39-081-2531111"
         contact_points:
           type: array
-          description: IDs of contact points associated with this organization
+          description: Contact point references associated with this organization
           items:
-            type: string
+            $ref: "#/components/schemas/ResourceRef"
           example:
-            - "contact-point-1"
+            - id: "contact-point-1"
+              name: "Organization help desk"
+              href: "v1/contact-point/contact-point-1"
         member_of:
           type: array
           description: Parent organizations to which this organization belongs
@@ -990,11 +1147,25 @@ components:
               example: "https://service.example.org/fdsnws/station/1"
             contact_points:
               type: array
-              description: IDs of contact points associated with this webservice
+              description: Contact point references associated with this webservice
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Webservice support desk"
+                  href: "v1/contact-point/contact-point-1"
             provider:
-              $ref: "#/components/schemas/ResourceRef"
+              type: array
+              description: Organizations providing this webservice
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-456"
+                  name: "University of Naples Federico II"
+                  href: "v1/organization/org-456"
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
             issued:
               type: string
               format: date-time
@@ -1020,11 +1191,13 @@ components:
                 - "station"
             concepts:
               type: array
-              description: Concept labels assigned to this webservice
+              description: Concept references assigned to this webservice
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceRef"
               example:
-                - "Seismology"
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
             license:
               type: string
               description: License under which the webservice can be used or reused
@@ -1179,6 +1352,7 @@ components:
       required:
         - id
         - label
+        - name
         - type
       properties:
         id:
@@ -1187,7 +1361,7 @@ components:
         label:
           type: string
           example: "Solid Earth"
-        title:
+        name:
           type: string
           example: "Solid Earth Science Concepts"
         description:
@@ -1268,15 +1442,26 @@ components:
           description: Identifier value
           example: "10.13127/tsunami/neamthm18"
 
-    ErrorResponse:
+    Problem:
       type: object
       required:
-        - error_code
-        - error_message
+        - title
+        - status
       properties:
-        error_code:
+        title:
           type: string
-          example: "RESOURCE_NOT_FOUND"
-        error_message:
+          description: Short, human-readable summary of problem
+          example: "Resource not found"
+        status:
+          type: integer
+          description: HTTP status code for this problem occurrence
+          example: 404
+        detail:
           type: string
+          description: Optional human-readable explanation specific to this occurrence
           example: "The requested resource was not found"
+        instance:
+          type: string
+          format: uri-reference
+          description: Optional URI reference identifying this specific problem occurrence
+          example: "requests/req-123"
