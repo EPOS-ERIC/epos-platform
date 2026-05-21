@@ -11,6 +11,7 @@ import org.epos.propertygraph.Config
 import org.epos.infrastructure.ktor.routes.*
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
+import com.fasterxml.jackson.databind.ObjectMapper
 import java.net.URLDecoder
 
 fun Route.accessRoutes(
@@ -142,10 +143,7 @@ private fun buildAccessDetail(
 
     data.forEach { (key, value) ->
         val propName = key
-        val values = when (value) {
-            is List<*> -> value
-            else -> listOf(value)
-        }
+        val values = expandAccessValues(value)
         propertyWasArray[propName] = value is List<*>
 
         values.forEach { item ->
@@ -456,4 +454,28 @@ private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replac
 private fun prop(value: Any?): String? = when (value) {
     is List<*> -> value.firstOrNull()?.toString()
     else -> value?.toString()
+}
+
+private val accessJsonMapper = ObjectMapper()
+
+private fun expandAccessValues(value: Any?): List<Any?> {
+    val normalized = normalizeAccessValue(value)
+    return when (normalized) {
+        is List<*> -> normalized.flatMap { item -> expandAccessValues(item) }
+        else -> listOf(normalized)
+    }
+}
+
+private fun normalizeAccessValue(value: Any?): Any? {
+    return when (value) {
+        is String -> {
+            val trimmed = value.trim()
+            if ((trimmed.startsWith("[") && trimmed.endsWith("]")) || (trimmed.startsWith("{") && trimmed.endsWith("}"))) {
+                runCatching { accessJsonMapper.readValue(trimmed, Any::class.java) }.getOrDefault(value)
+            } else {
+                value
+            }
+        }
+        else -> value
+    }
 }

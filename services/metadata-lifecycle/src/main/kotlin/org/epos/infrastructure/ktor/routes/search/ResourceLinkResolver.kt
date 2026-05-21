@@ -112,12 +112,20 @@ internal object ResourceLinkResolver {
         normalizeShapeName: (String) -> String,
     ): String? {
         val versionId = resolveAccessEntityId(client, entityId) ?: return null
-        val conceptualType = client.runQuery(
-            """
-            g.V().hasLabel('Version').has('id', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
-              .values('type').limit(1).toList()
-            """.trimIndent(),
-        ).firstOrNull()?.get("value")?.toString() ?: return null
+        val conceptualType =
+            client.runQuery(
+                """
+                g.V().hasLabel('Version').has('id', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
+                  .values('type').limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull()?.get("value")?.toString()
+                ?: client.runQuery(
+                    """
+                    g.V().hasLabel('Version').has('identifier', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
+                      .values('type').limit(1).toList()
+                    """.trimIndent(),
+                ).firstOrNull()?.get("value")?.toString()
+                ?: return null
 
         return resourceTypeMap.entries.firstOrNull { (typeUri, shapeName) ->
             normalizeShapeName(shapeName) == normalizeShapeName(conceptualType) ||
