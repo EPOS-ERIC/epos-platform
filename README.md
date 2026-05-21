@@ -33,7 +33,7 @@ flowchart TB
         CSE[cassandra :9042]
     end
 
-    subgraph NET[epos-network (docker compose)]
+    subgraph NET["epos-network - docker compose"]
         GW[gateway-service]
         ML[metadata-lifecycle-service]
         UG[user-group-service]
