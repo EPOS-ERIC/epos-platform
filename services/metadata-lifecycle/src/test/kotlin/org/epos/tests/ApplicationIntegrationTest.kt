@@ -238,6 +238,329 @@ class ApplicationIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `submit endpoint should accept encoded draft version id`() = testApplication {
+        application {
+            module()
+        }
+
+        val createResponse = client.post("/api/v2/dataset") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "type": "dataset",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Submit encoded id"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val createData = createJson["data"] as Map<String, Any>
+        val draftUri = createData["uri"] as String
+        val encodedDraftUri = java.net.URLEncoder.encode(draftUri, "UTF-8")
+
+        val submitResponse = client.post("/api/v2/dataset/$encodedDraftUri/submit") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+
+        submitResponse.status shouldBe HttpStatusCode.OK
+        val submitJson = objectMapper.readValue<Map<String, Any>>(submitResponse.bodyAsText())
+        submitJson["success"] shouldBe true
+        @Suppress("UNCHECKED_CAST")
+        val submitData = submitJson["data"] as Map<String, Any>
+        submitData["uri"] shouldBe draftUri
+        submitData["status"] shouldBe "submitted"
+    }
+
+    @Test
+    fun `patch should return conflict for published resource`() = testApplication {
+        application {
+            module()
+        }
+
+        val createResponse = client.post("/api/v2/dataset") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "type": "dataset",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Published target"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val createData = createJson["data"] as Map<String, Any>
+        val draftUri = createData["uri"] as String
+
+        val encodedDraftUri = java.net.URLEncoder.encode(draftUri, "UTF-8")
+        val submitResponse = client.post("/api/v2/dataset/$encodedDraftUri/submit") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+        submitResponse.status shouldBe HttpStatusCode.OK
+
+        val publishResponse = client.post("/api/v2/dataset/$encodedDraftUri/publish") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+        publishResponse.status shouldBe HttpStatusCode.OK
+
+        val publishJson = objectMapper.readValue<Map<String, Any>>(publishResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val publishData = publishJson["data"] as Map<String, Any>
+        val publishedUri = publishData["uri"] as String
+        val encodedPublishedUri = java.net.URLEncoder.encode(publishedUri, "UTF-8")
+
+        val patchResponse = client.patch("/api/v2/dataset/$encodedPublishedUri") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "properties": {
+                        "http://purl.org/dc/terms/description": "Should fail on published"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        patchResponse.status shouldBe HttpStatusCode.Conflict
+        patchResponse.bodyAsText() shouldContain "Create/use a draft before patching"
+    }
+
+    @Test
+    fun `draft endpoint should accept published version id`() = testApplication {
+        application {
+            module()
+        }
+
+        val createResponse = client.post("/api/v2/dataset") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "type": "dataset",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Draft from published id"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val createData = createJson["data"] as Map<String, Any>
+        val draftUri = createData["uri"] as String
+
+        val encodedDraftUri = java.net.URLEncoder.encode(draftUri, "UTF-8")
+        client.post("/api/v2/dataset/$encodedDraftUri/submit") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }.status shouldBe HttpStatusCode.OK
+
+        val publishResponse = client.post("/api/v2/dataset/$encodedDraftUri/publish") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+        publishResponse.status shouldBe HttpStatusCode.OK
+
+        val publishJson = objectMapper.readValue<Map<String, Any>>(publishResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val publishData = publishJson["data"] as Map<String, Any>
+        val publishedUri = publishData["uri"] as String
+        val encodedPublishedUri = java.net.URLEncoder.encode(publishedUri, "UTF-8")
+
+        val newDraftResponse = client.post("/api/v2/dataset/$encodedPublishedUri/draft?version=3.0") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+
+        newDraftResponse.status shouldBe HttpStatusCode.Created
+        val newDraftJson = objectMapper.readValue<Map<String, Any>>(newDraftResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val newDraftData = newDraftJson["data"] as Map<String, Any>
+        (newDraftData["uri"] as String) shouldContain "/3.0-draft"
+        newDraftData["status"] shouldBe "draft"
+    }
+
+    @Test
+    fun `put should return conflict for submitted resource`() = testApplication {
+        application {
+            module()
+        }
+
+        val createResponse = client.post("/api/v2/dataset") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "type": "dataset",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Submitted target"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val createData = createJson["data"] as Map<String, Any>
+        val draftUri = createData["uri"] as String
+        val encodedDraftUri = java.net.URLEncoder.encode(draftUri, "UTF-8")
+
+        val submitResponse = client.post("/api/v2/dataset/$encodedDraftUri/submit") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+        submitResponse.status shouldBe HttpStatusCode.OK
+
+        val putResponse = client.put("/api/v2/dataset/$encodedDraftUri") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Should fail on submitted"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        putResponse.status shouldBe HttpStatusCode.Conflict
+        putResponse.bodyAsText() shouldContain "Create/use a draft before updating"
+    }
+
+    @Test
+    fun `delete should return conflict for published resource`() = testApplication {
+        application {
+            module()
+        }
+
+        val createResponse = client.post("/api/v2/dataset") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "type": "dataset",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Delete published target"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val createData = createJson["data"] as Map<String, Any>
+        val draftUri = createData["uri"] as String
+        val encodedDraftUri = java.net.URLEncoder.encode(draftUri, "UTF-8")
+
+        client.post("/api/v2/dataset/$encodedDraftUri/submit") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }.status shouldBe HttpStatusCode.OK
+
+        val publishResponse = client.post("/api/v2/dataset/$encodedDraftUri/publish") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+        publishResponse.status shouldBe HttpStatusCode.OK
+        val publishJson = objectMapper.readValue<Map<String, Any>>(publishResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val publishData = publishJson["data"] as Map<String, Any>
+        val publishedUri = publishData["uri"] as String
+        val encodedPublishedUri = java.net.URLEncoder.encode(publishedUri, "UTF-8")
+
+        val deleteResponse = client.delete("/api/v2/dataset/$encodedPublishedUri") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+
+        deleteResponse.status shouldBe HttpStatusCode.Conflict
+        deleteResponse.bodyAsText() shouldContain "Only drafts can be deleted"
+    }
+
+    @Test
+    fun `discard endpoint should move submitted to discarded`() = testApplication {
+        application {
+            module()
+        }
+
+        val createResponse = client.post("/api/v2/dataset") {
+            contentType(ContentType.Application.Json)
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+            setBody(
+                """
+                {
+                    "type": "dataset",
+                    "properties": {
+                        "http://purl.org/dc/terms/title": "Discard target"
+                    }
+                }
+                """.trimIndent(),
+            )
+        }
+
+        createResponse.status shouldBe HttpStatusCode.Created
+        val createJson = objectMapper.readValue<Map<String, Any>>(createResponse.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val createData = createJson["data"] as Map<String, Any>
+        val draftUri = createData["uri"] as String
+        val encodedDraftUri = java.net.URLEncoder.encode(draftUri, "UTF-8")
+
+        client.post("/api/v2/dataset/$encodedDraftUri/submit") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }.status shouldBe HttpStatusCode.OK
+
+        val discardResponse = client.post("/api/v2/dataset/$encodedDraftUri/discard") {
+            header("X-Agent", "https://example.org/agent/test")
+            header("X-Group", "https://example.org/group/test")
+        }
+
+        discardResponse.status shouldBe HttpStatusCode.OK
+        val discardJson = objectMapper.readValue<Map<String, Any>>(discardResponse.bodyAsText())
+        discardJson["success"] shouldBe true
+        @Suppress("UNCHECKED_CAST")
+        val discardData = discardJson["data"] as Map<String, Any>
+        discardData["status"] shouldBe "discarded"
+    }
+
+    @Test
     fun `should return 404 for non-existent entity`() = testApplication {
         application {
             module()

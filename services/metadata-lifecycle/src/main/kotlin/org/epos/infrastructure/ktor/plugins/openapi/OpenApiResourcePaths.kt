@@ -22,7 +22,7 @@ object OpenApiResourcePaths {
           in: query
           schema:
             type: string
-            enum: [draft, submitted, published, archived]
+            enum: [draft, submitted, published, archived, discarded]
             default: published
         - name: page
           in: query
@@ -81,7 +81,7 @@ object OpenApiResourcePaths {
         required: true
         schema:
           type: string
-        description: Full entity URI
+        description: Resource identifier (conceptual id, version id, or identifier)
     get:
       tags: [Resources]
       summary: Get entity
@@ -91,7 +91,7 @@ object OpenApiResourcePaths {
           in: query
           schema:
             type: string
-            enum: [draft, submitted, published, archived]
+            enum: [draft, submitted, published, archived, discarded]
             default: published
         - name: format
           in: query
@@ -106,7 +106,7 @@ object OpenApiResourcePaths {
     put:
       tags: [Resources]
       summary: Update entity (DRAFT only)
-      description: Full replace semantics. Properties not included in the request are removed from the draft entity.
+      description: Full replace semantics. Properties not included in the request are removed from the draft entity. Request fails with 409 if the resolved resource is not in DRAFT status.
       parameters:
         - name: X-Agent
           in: header
@@ -130,10 +130,14 @@ object OpenApiResourcePaths {
       responses:
         '200':
           description: Entity updated
+        '404':
+          description: Entity not found
+        '409':
+          description: Resolved resource is not in DRAFT status
     patch:
       tags: [Resources]
       summary: Patch entity (DRAFT only)
-      description: Merge semantics. Only the provided properties are replaced; all other properties are preserved.
+      description: Merge semantics. Only the provided properties are replaced; all other properties are preserved. Request fails with 409 if the resolved resource is not in DRAFT status.
       parameters:
         - name: X-Agent
           in: header
@@ -157,10 +161,30 @@ object OpenApiResourcePaths {
       responses:
         '200':
           description: Entity patched
+        '404':
+          description: Entity not found
+        '409':
+          description: Resolved resource is not in DRAFT status
     delete:
       tags: [Resources]
       summary: Delete entity (DRAFT only)
+      description: Deletes a DRAFT version. Request fails with 409 if the resolved resource is not in DRAFT status.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
       responses:
         '200':
-          description: Entity deleted"""
+          description: Entity deleted
+        '404':
+          description: Entity not found
+        '409':
+          description: Resolved resource is not in DRAFT status"""
 }

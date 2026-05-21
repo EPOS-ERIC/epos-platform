@@ -17,6 +17,17 @@ class ResourceController(
     private val lifecycleService: EntityLifecycleService,
     private val provenanceService: ProvenanceService
 ) {
+    private data class VersionState(
+        val id: String,
+        val status: String,
+    )
+
+    private sealed class DraftTargetResolution {
+        data class Found(val versionUri: String) : DraftTargetResolution()
+        data class Conflict(val status: String, val versionUri: String) : DraftTargetResolution()
+        data object NotFound : DraftTargetResolution()
+    }
+
     private val mapper = ObjectMapper()
     var resourceTypes: List<ResourceTypeInfo> = listOf()
 
@@ -263,64 +274,97 @@ class ResourceController(
     }
 
     fun updateEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
-        val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').limit(1).toList()")
-
-        if (!exists) {
-            return ApiResponse(success = false, message = "Entity not found in draft status")
+        val resolved = resolveDraftTarget(entityUri)
+        val draftUri = when (resolved) {
+            is DraftTargetResolution.Found -> resolved.versionUri
+            is DraftTargetResolution.Conflict -> {
+                return ApiResponse(
+                    success = false,
+                    message = "Entity is in '${resolved.status}' status at ${resolved.versionUri}. Create/use a draft before updating.",
+                )
+            }
+            DraftTargetResolution.NotFound -> {
+                return ApiResponse(success = false, message = "Entity not found")
+            }
         }
 
         val data = request.properties
         val now = java.time.Instant.now().toString()
         val setLines = data.entries.joinToString("\n") { (k, v) -> "v.property(${gStr(sanitizeKey(k))}, ${gVal(v)})" }
         client.runWrite("""
-            def v = g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').next()
+            def v = g.V().hasLabel('Version').has('id', ${gStr(draftUri)}).has('status','draft').next()
             $setLines
             v.property('updatedAt', ${gStr(now)})
+            null
         """.trimIndent())
 
         return ApiResponse(
             success = true,
             message = "Entity updated successfully",
-            data = mapOf("uri" to entityUri)
+            data = mapOf("uri" to draftUri)
         )
     }
 
     fun patchEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
-        val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').limit(1).toList()")
-
-        if (!exists) {
-            return ApiResponse(success = false, message = "Entity not found in draft status")
+        val resolved = resolveDraftTarget(entityUri)
+        val draftUri = when (resolved) {
+            is DraftTargetResolution.Found -> resolved.versionUri
+            is DraftTargetResolution.Conflict -> {
+                return ApiResponse(
+                    success = false,
+                    message = "Entity is in '${resolved.status}' status at ${resolved.versionUri}. Create/use a draft before patching.",
+                )
+            }
+            DraftTargetResolution.NotFound -> {
+                return ApiResponse(success = false, message = "Entity not found")
+            }
         }
 
         val now = java.time.Instant.now().toString()
         val setLines = request.properties.entries.joinToString("\n") { (k, v) -> "v.property(${gStr(sanitizeKey(k))}, ${gVal(v)})" }
         client.runWrite("""
-            def v = g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').next()
+            def v = g.V().hasLabel('Version').has('id', ${gStr(draftUri)}).has('status','draft').next()
             $setLines
             v.property('updatedAt', ${gStr(now)})
+            null
         """.trimIndent())
 
         return ApiResponse(
             success = true,
             message = "Entity patched successfully",
-            data = mapOf("uri" to entityUri)
+            data = mapOf("uri" to draftUri)
         )
     }
 
     fun submitEntity(entityUri: String, agent: String, group: String): ApiResponse {
-        lifecycleService.submitDraft(entityUri, agent, group)
+        val resolved = resolveDraftTarget(entityUri)
+        val draftUri = when (resolved) {
+            is DraftTargetResolution.Found -> resolved.versionUri
+            is DraftTargetResolution.Conflict -> {
+                return ApiResponse(
+                    success = false,
+                    message = "Entity is in '${resolved.status}' status at ${resolved.versionUri}. Only drafts can be submitted.",
+                )
+            }
+            DraftTargetResolution.NotFound -> {
+                return ApiResponse(success = false, message = "Entity not found")
+            }
+        }
+
+        lifecycleService.submitDraft(draftUri, agent, group)
 
         return ApiResponse(
             success = true,
             message = "Entity submitted for review",
-            data = mapOf("uri" to entityUri, "status" to "submitted")
+            data = mapOf("uri" to draftUri, "status" to "submitted")
         )
     }
 
     fun publishEntity(entityUri: String, agent: String, group: String): ApiResponse {
-        lifecycleService.publish(entityUri, agent, group)
+        val submitted = resolveSubmittedTarget(entityUri)
+            ?: return ApiResponse(success = false, message = "Entity not found in submitted status")
 
-        val finalUri = entityUri.removeSuffix("-draft")
+        val finalUri = lifecycleService.publish(submitted.id, agent, group)
         return ApiResponse(
             success = true,
             message = "Entity published successfully",
@@ -328,10 +372,33 @@ class ResourceController(
         )
     }
 
+    fun discardEntity(entityUri: String, agent: String, group: String): ApiResponse {
+        val version = resolveVersionTarget(entityUri) ?: resolveCurrentVersionFromConceptual(entityUri)
+            ?: return ApiResponse(success = false, message = "Entity not found")
+
+        val status = version.status.lowercase()
+        if (status != "draft" && status != "submitted") {
+            return ApiResponse(
+                success = false,
+                message = "Entity is in '${version.status}' status at ${version.id}. Only draft or submitted versions can be discarded.",
+            )
+        }
+
+        lifecycleService.discard(version.id, status, agent, group)
+        return ApiResponse(
+            success = true,
+            message = "Entity discarded successfully",
+            data = mapOf("uri" to version.id, "status" to "discarded"),
+        )
+    }
+
     fun createNewDraft(conceptualUri: String, newVersion: String, agent: String, group: String): ApiResponse {
         try {
+            val resolvedConceptual = resolveConceptualTarget(conceptualUri)
+                ?: return ApiResponse(success = false, message = "Conceptual resource not found")
+
             val draftUri = lifecycleService.createDraft(
-                conceptualUri = conceptualUri,
+                conceptualUri = resolvedConceptual,
                 newVersionNumber = newVersion,
                 agent = agent,
                 group = group
@@ -342,7 +409,7 @@ class ResourceController(
                 message = "New draft created successfully",
                 data = mapOf(
                     "uri" to draftUri,
-                    "conceptualUri" to conceptualUri,
+                    "conceptualUri" to resolvedConceptual,
                     "version" to newVersion,
                     "status" to "draft"
                 )
@@ -356,12 +423,134 @@ class ResourceController(
     }
 
     fun deleteEntity(entityUri: String): ApiResponse {
-        lifecycleService.deleteDraft(entityUri)
+        val resolved = resolveDraftTarget(entityUri)
+        val draftUri = when (resolved) {
+            is DraftTargetResolution.Found -> resolved.versionUri
+            is DraftTargetResolution.Conflict -> {
+                return ApiResponse(
+                    success = false,
+                    message = "Entity is in '${resolved.status}' status at ${resolved.versionUri}. Only drafts can be deleted.",
+                )
+            }
+            DraftTargetResolution.NotFound -> {
+                return ApiResponse(success = false, message = "Entity not found")
+            }
+        }
+
+        lifecycleService.deleteDraft(draftUri)
 
         return ApiResponse(
             success = true,
-            message = "Entity deleted successfully"
+            message = "Entity deleted successfully",
+            data = mapOf("uri" to draftUri),
         )
+    }
+
+    private fun resolveDraftTarget(reference: String): DraftTargetResolution {
+        val version = resolveVersionTarget(reference) ?: resolveCurrentVersionFromConceptual(reference)
+        if (version == null) return DraftTargetResolution.NotFound
+        return if (version.status.lowercase() == "draft") {
+            DraftTargetResolution.Found(version.id)
+        } else {
+            DraftTargetResolution.Conflict(version.status, version.id)
+        }
+    }
+
+    private fun resolveSubmittedTarget(reference: String): VersionState? {
+        val version = resolveVersionTarget(reference) ?: resolveCurrentVersionFromConceptual(reference) ?: return null
+        return version.takeIf { it.status.lowercase() == "submitted" }
+    }
+
+    private fun resolveConceptualTarget(reference: String): String? {
+        val conceptualDirect = client.runQuery(
+            "g.V().hasLabel('Conceptual').has('id', ${gStr(reference)}).values('id').limit(1).toList()",
+        ).firstOrNull()?.get("value")?.toString()
+        if (!conceptualDirect.isNullOrBlank()) return conceptualDirect
+
+        val conceptualByIdentifier = client.runQuery(
+            "g.V().hasLabel('Conceptual').has('identifier', ${gStr(reference)}).values('id').limit(1).toList()",
+        ).firstOrNull()?.get("value")?.toString()
+        if (!conceptualByIdentifier.isNullOrBlank()) return conceptualByIdentifier
+
+        return client.runQuery(
+            "g.V().hasLabel('Version').has('id', ${gStr(reference)}).in('HAS_VERSION').hasLabel('Conceptual').values('id').limit(1).toList()",
+        ).firstOrNull()?.get("value")?.toString()
+            ?: client.runQuery(
+                "g.V().hasLabel('Version').has('identifier', ${gStr(reference)}).in('HAS_VERSION').hasLabel('Conceptual').values('id').limit(1).toList()",
+            ).firstOrNull()?.get("value")?.toString()
+    }
+
+    private fun resolveVersionTarget(reference: String): VersionState? {
+        val row =
+            client.runQuery(
+                """
+                g.V().hasLabel('Version').has('id', ${gStr(reference)})
+                  .project('id','status')
+                  .by(coalesce(values('id'), constant('')))
+                  .by(coalesce(values('status'), constant('')))
+                  .limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull()
+                ?: resolveVersionByIdentifierWithinConceptual(reference)
+                ?: return null
+
+        val id = row["id"]?.toString()?.trim().orEmpty()
+        val status = row["status"]?.toString()?.trim().orEmpty()
+        if (id.isBlank() || status.isBlank()) return null
+        return VersionState(id = id, status = status)
+    }
+
+    private fun resolveVersionByIdentifierWithinConceptual(reference: String): Map<String, Any?>? {
+        val conceptualCandidate =
+            if (UriUtils.hasVersion(reference)) UriUtils.extractConceptualUri(reference) else null
+                ?: return null
+
+        return client.runQuery(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualCandidate)})
+              .out('HAS_VERSION').hasLabel('Version').has('identifier', ${gStr(reference)})
+              .project('id','status')
+              .by(coalesce(values('id'), constant('')))
+              .by(coalesce(values('status'), constant('')))
+              .limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull()
+    }
+
+    private fun resolveCurrentVersionFromConceptual(reference: String): VersionState? {
+        val conceptualByStructure = if (UriUtils.hasVersion(reference)) UriUtils.extractConceptualUri(reference) else null
+
+        val row =
+            client.runQuery(
+                """
+                g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualByStructure ?: reference)})
+                  .out('CURRENT_VERSION').hasLabel('Version')
+                  .project('id','status')
+                  .by(coalesce(values('id'), constant('')))
+                  .by(coalesce(values('status'), constant('')))
+                  .limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull()
+                ?: if (conceptualByStructure != null) {
+                    null
+                } else {
+                    client.runQuery(
+                        """
+                        g.V().hasLabel('Conceptual').has('identifier', ${gStr(reference)})
+                          .out('CURRENT_VERSION').hasLabel('Version')
+                          .project('id','status')
+                          .by(coalesce(values('id'), constant('')))
+                          .by(coalesce(values('status'), constant('')))
+                          .limit(1).toList()
+                        """.trimIndent(),
+                    ).firstOrNull()
+                }
+                ?: return null
+
+        val id = row["id"]?.toString()?.trim().orEmpty()
+        val status = row["status"]?.toString()?.trim().orEmpty()
+        if (id.isBlank() || status.isBlank()) return null
+        return VersionState(id = id, status = status)
     }
 
     fun getVersionHistory(conceptualUri: String): VersionHistoryResponse {

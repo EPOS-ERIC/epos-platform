@@ -61,15 +61,20 @@ class ProvenanceService(private val client: PropertyGraphClient) {
             val v = row["version"] as? Map<*, *> ?: return@mapNotNull null
             val activities: List<*> = (row["activities"] as? List<*>) ?: emptyList<Any>()
 
-            val latestActivity: Map<*, *>? = activities
-                .filterIsInstance<Map<*, *>>()
-                .filter { it["type"] == "state_transition" }
-                .maxByOrNull { it["timestamp"] as? String ?: "" }
+            val activityMaps = activities.filterIsInstance<Map<*, *>>()
+
+            val latestStateTransition: Map<*, *>? = activityMaps
+                .filter { readGremlinProperty(it["type"]) == "state_transition" }
+                .maxByOrNull { readGremlinProperty(it["timestamp"]) ?: "" }
+
+            val latestActivity: Map<*, *>? =
+                latestStateTransition
+                    ?: activityMaps.maxByOrNull { readGremlinProperty(it["timestamp"]) ?: "" }
 
             mapOf(
                 "version" to readGremlinProperty(v["id"]),
                 "title" to readGremlinProperty(v["title"]),
-                "timestamp" to readGremlinProperty(v["createdAt"]),
+                "timestamp" to (readGremlinProperty(latestActivity?.get("timestamp")) ?: readGremlinProperty(v["createdAt"])),
                 "agent" to readGremlinProperty(latestActivity?.get("agent")),
                 "group" to readGremlinProperty(latestActivity?.get("group")),
                 "status" to (readGremlinProperty(v["status"]) ?: "unknown")

@@ -13,11 +13,30 @@ class EntityLifecycleService(
     private val mapper = ObjectMapper()
 
     fun getCurrentPublishedVersion(conceptualUri: String): VersionRecord? {
-        val result = client.runQuery(
-            "g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).out('CURRENT_VERSION').limit(1).valueMap(true).toList()"
+        val current = client.runQuery(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
+              .out('CURRENT_VERSION').hasLabel('Version').has('status', within('published','PUBLISHED'))
+              .limit(1).valueMap(true).toList()
+            """.trimIndent(),
+        ).firstOrNull()
+
+        if (current != null) {
+            val currentMap = (current["value"] as? Map<*, *>) ?: (current as? Map<*, *>) ?: return null
+            return toVersionRecord(currentMap)
+        }
+
+        val fallback = client.runQuery(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
+              .out('HAS_VERSION').hasLabel('Version').has('status', within('published','PUBLISHED'))
+              .order().by(coalesce(values('updatedAt'), values('createdAt'), constant('')), decr)
+              .limit(1).valueMap(true).toList()
+            """.trimIndent(),
         ).firstOrNull() ?: return null
-        val map = result["value"] as? Map<*, *> ?: return null
-        return toVersionRecord(map)
+
+        val fallbackMap = (fallback["value"] as? Map<*, *>) ?: (fallback as? Map<*, *>) ?: return null
+        return toVersionRecord(fallbackMap)
     }
 
     fun createDraft(
@@ -83,7 +102,7 @@ class EntityLifecycleService(
         println("Submitted: $draftUri (DRAFT -> SUBMITTED)")
     }
 
-    fun publish(submittedUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {
+    fun publish(submittedUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM): String {
         requireVersionExists(submittedUri, "submitted")
 
         val conceptualUri = getConceptualUri(submittedUri)
@@ -91,18 +110,6 @@ class EntityLifecycleService(
 
         val currentPublished = getCurrentPublishedVersion(conceptualUri)
         val now = java.time.Instant.now().toString()
-
-        if (currentPublished != null) {
-            client.runWrite("""
-                g.V().hasLabel('Version').has('id', ${gStr(currentPublished.id)})
-                  .property('status', 'archived')
-                  .property('updatedAt', ${gStr(now)})
-                  .iterate()
-            """.trimIndent())
-
-            provenanceService.recordStateTransition(currentPublished.id, "PUBLISHED", "ARCHIVED", agent, group)
-            println("  Archived old version: ${currentPublished.id}")
-        }
 
         val finalUri = submittedUri.removeSuffix("-draft")
         if (finalUri != submittedUri) {
@@ -122,6 +129,40 @@ class EntityLifecycleService(
             """.trimIndent())
         }
 
+        val archivedRows = client.runWriteReturning(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
+              .out('HAS_VERSION').hasLabel('Version')
+              .has('status', within('published', 'PUBLISHED'))
+              .has('id', neq(${gStr(finalUri)}))
+              .project('id')
+              .by(coalesce(values('identifier'), values('id'), constant('')))
+              .toList()
+            """.trimIndent(),
+        )
+
+        if (archivedRows.isNotEmpty()) {
+            client.runWrite(
+                """
+                g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
+                  .out('HAS_VERSION').hasLabel('Version')
+                  .has('status', within('published', 'PUBLISHED'))
+                  .has('id', neq(${gStr(finalUri)}))
+                  .property('status', 'archived')
+                  .property('updatedAt', ${gStr(now)})
+                  .iterate()
+                """.trimIndent(),
+            )
+
+            archivedRows.forEach { row ->
+                val archivedId = row["id"]?.toString()?.trim().orEmpty()
+                if (archivedId.isNotBlank()) {
+                    provenanceService.recordStateTransition(archivedId, "PUBLISHED", "ARCHIVED", agent, group)
+                    println("  Archived old version: $archivedId")
+                }
+            }
+        }
+
         client.runWrite("""
             def c = g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).next()
             g.V(c.id()).outE('CURRENT_VERSION').drop().iterate()
@@ -131,10 +172,14 @@ class EntityLifecycleService(
 
         if (currentPublished != null) {
             client.runWrite("""
-                def oldV = g.V().hasLabel('Version').has('id', ${gStr(currentPublished.id)}).next()
-                def newV = g.V().hasLabel('Version').has('id', ${gStr(finalUri)}).next()
-                if (!g.V(oldV.id()).out('SUPERSEDED_BY').hasId(newV.id()).hasNext()) {
-                  g.V(oldV.id()).addE('SUPERSEDED_BY').to(V(newV.id())).iterate()
+                def oldQ = g.V().hasLabel('Version').has('id', ${gStr(currentPublished.id)}).limit(1).toList()
+                def newQ = g.V().hasLabel('Version').has('id', ${gStr(finalUri)}).limit(1).toList()
+                if (!oldQ.isEmpty() && !newQ.isEmpty()) {
+                  def oldV = oldQ.get(0)
+                  def newV = newQ.get(0)
+                  if (!g.V(oldV.id()).out('SUPERSEDED_BY').hasId(newV.id()).hasNext()) {
+                    g.V(oldV.id()).addE('SUPERSEDED_BY').to(V(newV.id())).iterate()
+                  }
                 }
             """.trimIndent())
         }
@@ -142,6 +187,7 @@ class EntityLifecycleService(
         provenanceService.recordStateTransition(finalUri, "SUBMITTED", "PUBLISHED", agent, group)
         println("Published: $finalUri (SUBMITTED -> PUBLISHED)")
         println("  Updated conceptual pointer: $conceptualUri -> $finalUri")
+        return finalUri
     }
 
     fun rejectSubmission(submittedUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {
@@ -155,6 +201,26 @@ class EntityLifecycleService(
 
         provenanceService.recordStateTransition(submittedUri, "SUBMITTED", "DRAFT", agent, group)
         println("Rejected: $submittedUri (SUBMITTED -> DRAFT)")
+    }
+
+    fun discard(versionUri: String, fromStatus: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {
+        val normalizedFrom = fromStatus.lowercase()
+        require(normalizedFrom == "draft" || normalizedFrom == "submitted") {
+            "Only draft or submitted versions can be discarded"
+        }
+
+        val now = java.time.Instant.now().toString()
+        client.runWrite(
+            """
+            g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).has('status', ${gStr(normalizedFrom)})
+              .property('status', 'discarded')
+              .property('updatedAt', ${gStr(now)})
+              .iterate()
+            """.trimIndent(),
+        )
+
+        provenanceService.recordStateTransition(versionUri, normalizedFrom.uppercase(), "DISCARDED", agent, group)
+        println("Discarded: $versionUri (${normalizedFrom.uppercase()} -> DISCARDED)")
     }
 
     fun deleteDraft(draftUri: String) {
@@ -172,9 +238,10 @@ class EntityLifecycleService(
     }
 
     private fun requireVersionExists(uri: String, expectedStatus: String) {
-        val exists = client.exists(
-            "g.V().hasLabel('Version').has('id', ${gStr(uri)}).has('status', ${gStr(expectedStatus)}).limit(1).toList()"
-        )
+        val count = client.runQuery(
+            "g.V().hasLabel('Version').has('id', ${gStr(uri)}).has('status', ${gStr(expectedStatus)}).count().next()",
+        ).firstOrNull()?.get("value")?.toString()?.toLongOrNull() ?: 0L
+        val exists = count > 0L
 
         if (!exists) {
             throw IllegalArgumentException("Version $uri not found in $expectedStatus status")
@@ -182,7 +249,7 @@ class EntityLifecycleService(
     }
 
     private fun toVersionRecord(map: Map<*, *>): VersionRecord {
-        val id = propAsString(map["id"]) ?: ""
+        val id = propAsString(map["identifier"]) ?: propAsString(map["id"]) ?: ""
         val status = propAsString(map["status"]) ?: ""
         val versionNumber = propAsString(map["versionNumber"]) ?: ""
         val createdAt = propAsString(map["createdAt"]) ?: ""

@@ -9,6 +9,7 @@ import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.services.ProvenanceService
+import java.net.URLDecoder
 
 fun Route.lifecycleRoutes(
     resourceController: ResourceController,
@@ -17,28 +18,40 @@ fun Route.lifecycleRoutes(
 ) {
     route("/api/v2/{resourceType}") {
         post("/{id}/submit") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.submitEntity(entityUri, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondLifecycleResponse(response)
         }
 
         post("/{id}/publish") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.publishEntity(entityUri, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondLifecycleResponse(response)
         }
 
         post("/{id}/draft") {
-            val conceptualUri = call.parameters["id"] ?: ""
+            val conceptualUri = decodePathId(call.parameters["id"])
             val newVersion = call.request.queryParameters["version"] ?: "2.0"
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.createNewDraft(conceptualUri, newVersion, actorHeaders.agent, actorHeaders.group)
-            call.respond(HttpStatusCode.Created, response)
+            if (response.success) {
+                call.respond(HttpStatusCode.Created, response)
+            } else {
+                call.respondLifecycleResponse(response)
+            }
+        }
+
+        post("/{id}/discard") {
+            val entityUri = decodePathId(call.parameters["id"])
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+
+            val response = resourceController.discardEntity(entityUri, actorHeaders.agent, actorHeaders.group)
+            call.respondLifecycleResponse(response)
         }
 
         get("/{id}/history") {
@@ -115,3 +128,24 @@ fun Route.lifecycleRoutes(
 }
 
 private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+
+private fun decodePathId(raw: String?): String {
+    val value = raw?.trim().orEmpty()
+    if (value.isBlank()) return ""
+    return runCatching { URLDecoder.decode(value, "UTF-8") }.getOrDefault(value)
+}
+
+private suspend fun io.ktor.server.application.ApplicationCall.respondLifecycleResponse(response: ApiResponse) {
+    if (response.success) {
+        respond(response)
+        return
+    }
+
+    val message = response.message.lowercase()
+    val status = when {
+        message.contains("not found") -> HttpStatusCode.NotFound
+        message.contains("create/use a draft") || message.contains("only drafts") -> HttpStatusCode.Conflict
+        else -> HttpStatusCode.BadRequest
+    }
+    respond(status, response)
+}

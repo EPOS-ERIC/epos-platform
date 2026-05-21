@@ -5,6 +5,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.net.URLDecoder
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.*
 import org.epos.propertygraph.client.PropertyGraphClient
@@ -394,32 +395,54 @@ fun Route.resourceCrudRoutes(
         }
 
         put("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val request = call.receive<UpdateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@put
 
             val response = resourceController.updateEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondMutationResponse(response)
         }
 
         patch("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val request = call.receive<UpdateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@patch
 
             val response = resourceController.patchEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondMutationResponse(response)
         }
 
         delete("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
+            call.requireActorHeaders() ?: return@delete
             val response = resourceController.deleteEntity(entityUri)
-            call.respond(response)
+            call.respondMutationResponse(response)
         }
     }
 }
 
 private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+
+private fun decodePathId(raw: String?): String {
+    val value = raw?.trim().orEmpty()
+    if (value.isBlank()) return ""
+    return runCatching { URLDecoder.decode(value, "UTF-8") }.getOrDefault(value)
+}
+
+private suspend fun io.ktor.server.application.ApplicationCall.respondMutationResponse(response: ApiResponse) {
+    if (response.success) {
+        respond(response)
+        return
+    }
+
+    val message = response.message.lowercase()
+    val status = when {
+        message.contains("not found") -> HttpStatusCode.NotFound
+        message.contains("create/use a draft") || message.contains("only drafts") -> HttpStatusCode.Conflict
+        else -> HttpStatusCode.BadRequest
+    }
+    respond(status, response)
+}
 
 internal fun convertEntityToTurtle(entity: EntityResponse): String {
     val builder = StringBuilder()

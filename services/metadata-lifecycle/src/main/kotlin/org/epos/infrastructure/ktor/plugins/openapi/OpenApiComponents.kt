@@ -851,7 +851,7 @@ components:
           type: [string, 'null']
         status:
           type: string
-          enum: [draft, submitted, published, archived, unknown]
+          enum: [draft, submitted, published, archived, discarded, unknown]
       required: [uri, version, timestamp, status]
 
     VersionHistoryResponse:

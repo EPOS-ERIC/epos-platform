@@ -11,6 +11,7 @@ import org.epos.api.controllers.ResourceController
 import org.epos.api.models.ErrorResponse
 import org.epos.infrastructure.ktor.routes.*
 import org.epos.propertygraph.client.PropertyGraphClient
+import org.epos.propertygraph.utils.UriUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
 
@@ -45,7 +46,7 @@ fun Route.datasetRoutes(
         val requestedFormat = formatParam ?: acceptHeader
 
         if (requestedFormat.contains("turtle") || requestedFormat == "ttl") {
-            val ttl = resourceController.getEntity(decodedId, status)?.let { convertEntityToTurtle(it) }
+            val ttl = resourceController.getEntity(resolvedId, status)?.let { convertEntityToTurtle(it) }
             if (!ttl.isNullOrEmpty()) {
                 call.respondText(ttl, ContentType.parse("text/turtle"))
             } else {
@@ -55,7 +56,7 @@ fun Route.datasetRoutes(
         }
 
         if (requestedFormat.contains("ld+json") || requestedFormat.contains("json-ld") || requestedFormat == "jsonld") {
-            val jsonld = resourceController.getEntity(decodedId, status)?.let { convertEntityToJsonLd(it) }
+            val jsonld = resourceController.getEntity(resolvedId, status)?.let { convertEntityToJsonLd(it) }
             if (!jsonld.isNullOrEmpty()) {
                 call.respondText(jsonld, ContentType.parse("application/ld+json"))
             } else {
@@ -157,10 +158,33 @@ private fun resolveVersionId(
         ).firstOrNull()?.get("value")?.toString()
     if (!versionId.isNullOrBlank()) return versionId
 
-    return client.runQuery(
+    val conceptualFromVersion = if (UriUtils.hasVersion(requestedId)) UriUtils.extractConceptualUri(requestedId) else null
+    if (!conceptualFromVersion.isNullOrBlank()) {
+        val byIdentifierWithinConceptual = client.runQuery(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion)})
+              .out('HAS_VERSION').hasLabel('Version')
+              .has('identifier', ${gStr(requestedId)})
+              .has('status', ${gStr(status)})
+              .values('id').limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull()?.get("value")?.toString()
+        if (!byIdentifierWithinConceptual.isNullOrBlank()) return byIdentifierWithinConceptual
+    }
+
+    val currentVersion = client.runQuery(
         """
         g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
           .out('CURRENT_VERSION').hasLabel('Version').has('status', ${gStr(status)})
+          .values('id').limit(1).toList()
+        """.trimIndent(),
+    ).firstOrNull()?.get("value")?.toString()
+    if (!currentVersion.isNullOrBlank()) return currentVersion
+
+    return client.runQuery(
+        """
+        g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
+          .out('HAS_VERSION').hasLabel('Version').has('status', ${gStr(status)})
           .values('id').limit(1).toList()
         """.trimIndent(),
     ).firstOrNull()?.get("value")?.toString()
