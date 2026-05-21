@@ -1,6 +1,7 @@
 package org.epos.infrastructure.ktor.routes.search
 
 import org.epos.propertygraph.client.PropertyGraphClient
+import org.epos.propertygraph.utils.UriUtils
 
 internal object ResourceLinkResolver {
     data class ResolvedLink(
@@ -13,6 +14,8 @@ internal object ResourceLinkResolver {
         client: PropertyGraphClient,
         requestedId: String,
     ): String? {
+        val conceptualFromVersion = if (UriUtils.hasVersion(requestedId)) UriUtils.extractConceptualUri(requestedId) else null
+
         val versionId =
             client.runQuery(
                 """
@@ -22,12 +25,26 @@ internal object ResourceLinkResolver {
                   .by(coalesce(values('id'), constant('')))
                   .limit(1).toList()
                 """.trimIndent(),
-            ).firstOrNull().toPreferredId()
+        ).firstOrNull().toPreferredId()
         if (!versionId.isNullOrBlank()) return versionId
+
+        if (!conceptualFromVersion.isNullOrBlank()) {
+            val versionFromIdentifierWithinConceptual = client.runQuery(
+                """
+                g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion)})
+                  .out('HAS_VERSION').hasLabel('Version').has('identifier', ${gStr(requestedId)})
+                  .project('identifier','id')
+                  .by(coalesce(values('identifier'), constant('')))
+                  .by(coalesce(values('id'), constant('')))
+                  .limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull().toPreferredId()
+            if (!versionFromIdentifierWithinConceptual.isNullOrBlank()) return versionFromIdentifierWithinConceptual
+        }
 
         val conceptualCurrentVersion = client.runQuery(
             """
-            g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion ?: requestedId)})
               .out('CURRENT_VERSION').hasLabel('Version')
               .project('identifier','id')
               .by(coalesce(values('identifier'), constant('')))
@@ -37,17 +54,31 @@ internal object ResourceLinkResolver {
         ).firstOrNull().toPreferredId()
         if (!conceptualCurrentVersion.isNullOrBlank()) return conceptualCurrentVersion
 
-        val conceptualCurrentVersionFromIdentifier = client.runQuery(
+        val conceptualAnyVersion = client.runQuery(
             """
-            g.V().hasLabel('Conceptual').has('identifier', ${gStr(requestedId)})
-              .out('CURRENT_VERSION').hasLabel('Version')
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion ?: requestedId)})
+              .out('HAS_VERSION').hasLabel('Version')
               .project('identifier','id')
               .by(coalesce(values('identifier'), constant('')))
               .by(coalesce(values('id'), constant('')))
               .limit(1).toList()
             """.trimIndent(),
         ).firstOrNull().toPreferredId()
-        if (!conceptualCurrentVersionFromIdentifier.isNullOrBlank()) return conceptualCurrentVersionFromIdentifier
+        if (!conceptualAnyVersion.isNullOrBlank()) return conceptualAnyVersion
+
+        if (conceptualFromVersion.isNullOrBlank()) {
+            val conceptualCurrentVersionFromIdentifier = client.runQuery(
+                """
+                g.V().hasLabel('Conceptual').has('identifier', ${gStr(requestedId)})
+                  .out('CURRENT_VERSION').hasLabel('Version')
+                  .project('identifier','id')
+                  .by(coalesce(values('identifier'), constant('')))
+                  .by(coalesce(values('id'), constant('')))
+                  .limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull().toPreferredId()
+            if (!conceptualCurrentVersionFromIdentifier.isNullOrBlank()) return conceptualCurrentVersionFromIdentifier
+        }
 
         val versionIdFromIdentifier = runCatching {
             client.runQuery(

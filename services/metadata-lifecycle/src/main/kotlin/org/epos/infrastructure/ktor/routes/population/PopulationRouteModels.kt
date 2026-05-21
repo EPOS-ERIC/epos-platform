@@ -3,6 +3,7 @@ package org.epos.infrastructure.ktor.routes
 data class PopulateFromFileRequest(
     val url: String? = null,
     val path: String? = null,
+    val indexUrl: String? = null,
 )
 
 data class PopulateFromContentRequest(

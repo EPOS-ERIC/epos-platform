@@ -172,6 +172,7 @@ fun Application.module() {
     runBlocking {
         shaclService.initialize()
         ensureJanusGraphIndexes(client)
+        warmupQueries(client)
         val resourceTypes = shaclService.getResourceTypes()
         resourceController.setResourceType(resourceTypes)
         OpenApiSpec.initializeRuntime(resourceTypes)
@@ -213,6 +214,8 @@ private fun ensureJanusGraphIndexes(client: PropertyGraphClient) {
         changed = []
         idKey = mgmt.getPropertyKey('id') ?: mgmt.makePropertyKey('id').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
         statusKey = mgmt.getPropertyKey('status') ?: mgmt.makePropertyKey('status').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
+        identifierKey = mgmt.getPropertyKey('identifier') ?: mgmt.makePropertyKey('identifier').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
+        typeKey = mgmt.getPropertyKey('type') ?: mgmt.makePropertyKey('type').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
         versionLabel = mgmt.getVertexLabel('Version') ?: mgmt.makeVertexLabel('Version').make()
 
         if (versionLabel != null && mgmt.getGraphIndex('idxVersionId') == null) {
@@ -231,6 +234,14 @@ private fun ensureJanusGraphIndexes(client: PropertyGraphClient) {
             changed.add('idxVersionStatus')
         }
 
+        if (versionLabel != null && mgmt.getGraphIndex('idxVersionIdentifier') == null) {
+            mgmt.buildIndex('idxVersionIdentifier', org.apache.tinkerpop.gremlin.structure.Vertex.class)
+                .addKey(identifierKey)
+                .indexOnly(versionLabel)
+                .buildCompositeIndex()
+            changed.add('idxVersionIdentifier')
+        }
+
         conceptualLabel = mgmt.getVertexLabel('Conceptual') ?: mgmt.makeVertexLabel('Conceptual').make()
         if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualId') == null) {
             mgmt.buildIndex('idxConceptualId', org.apache.tinkerpop.gremlin.structure.Vertex.class)
@@ -238,6 +249,22 @@ private fun ensureJanusGraphIndexes(client: PropertyGraphClient) {
                 .indexOnly(conceptualLabel)
                 .buildCompositeIndex()
             changed.add('idxConceptualId')
+        }
+
+        if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualType') == null) {
+            mgmt.buildIndex('idxConceptualType', org.apache.tinkerpop.gremlin.structure.Vertex.class)
+                .addKey(typeKey)
+                .indexOnly(conceptualLabel)
+                .buildCompositeIndex()
+            changed.add('idxConceptualType')
+        }
+
+        if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualIdentifier') == null) {
+            mgmt.buildIndex('idxConceptualIdentifier', org.apache.tinkerpop.gremlin.structure.Vertex.class)
+                .addKey(identifierKey)
+                .indexOnly(conceptualLabel)
+                .buildCompositeIndex()
+            changed.add('idxConceptualIdentifier')
         }
 
         mgmt.commit()
@@ -254,5 +281,18 @@ private fun ensureJanusGraphIndexes(client: PropertyGraphClient) {
         }
     } catch (e: Exception) {
         logger.warn("Failed to ensure JanusGraph indexes at startup: {}", e.message)
+    }
+}
+
+private fun warmupQueries(client: PropertyGraphClient) {
+    val warmups = listOf(
+        "g.V().hasLabel('Version').limit(1).count().next()",
+        "g.V().hasLabel('Conceptual').limit(1).count().next()",
+        "g.V().hasLabel('Conceptual').has('type','dataset').out('CURRENT_VERSION').hasLabel('Version').limit(1).count().next()",
+    )
+
+    warmups.forEach { query ->
+        runCatching { client.runQuery(query) }
+            .onFailure { e -> logger.debug("Warmup query failed: {}", e.message) }
     }
 }

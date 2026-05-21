@@ -44,8 +44,10 @@ docker exec cache sed -E -i "s|https?://[^/]+/|http://$HOST_ENDPOINT/|g" /opt/me
 echo "✅ Done.:"
 docker exec cache cat /opt/metadata-cache/index.txt
 
+echo "ℹ️ Calling /api/v2/admin/populate with explicit indexUrl"
+
 curl -X 'POST' \
-  'http://localhost:8080/api/v2/admin/populate/from-url' \
+  'http://localhost:8080/api/v2/admin/populate' \
   -H 'accept: */*' \
   -H 'X-Agent: http://test/agent' \
   -H 'X-Group: http://test/group' \

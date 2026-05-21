@@ -89,7 +89,13 @@ private fun buildAccessList(
     val typeList = candidateTypes.joinToString(",") { gStr(it) }
     val results = client.runQuery("""
         g.V().hasLabel('Conceptual').has('type', within($typeList)).as('c').out('CURRENT_VERSION').hasLabel('Version').as('v')
-          .select('c','v').by(valueMap(true)).by(valueMap(true)).toList()
+          .select('c','v')
+          .by(project('id','type')
+            .by(coalesce(values('id'), constant('')))
+            .by(coalesce(values('type'), constant(''))))
+          .by(project('title')
+            .by(coalesce(values('title'), constant(''))))
+          .toList()
     """.trimIndent())
 
     val items = results.mapNotNull { row ->
@@ -122,6 +128,7 @@ private fun buildAccessDetail(
 ): AccessDetailResponse {
     val result =
         client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
+            ?: client.runQuery("g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
             ?: client.runQuery("g.V().has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
 
     val rawMap = (result?.get("value") as? Map<*, *>) ?: (result as? Map<*, *>) ?: emptyMap<String, Any?>()
@@ -193,21 +200,38 @@ private fun buildAccessDetail(
         }
     }
 
-    val relationRows = client.runQuery(
-        """
-        g.V().hasLabel('Version').has('id', ${gStr(entityId)}).as('s')
-          .outE().as('e').inV().as('t')
-          .select('e','t')
-          .by(project('label','predicateIri','predicateKey')
-            .by(label)
-            .by(coalesce(values('predicateIri'), constant('')))
-            .by(coalesce(values('predicateKey'), constant(''))))
-          .by(project('identifier','id')
-            .by(coalesce(values('identifier'), constant('')))
-            .by(coalesce(values('id'), constant(''))))
-          .toList()
-        """.trimIndent(),
-    )
+    val relationRows =
+        client.runQuery(
+            """
+            g.V().hasLabel('Version').has('id', ${gStr(entityId)}).as('s')
+              .outE().as('e').inV().as('t')
+              .select('e','t')
+              .by(project('label','predicateIri','predicateKey')
+                .by(label)
+                .by(coalesce(values('predicateIri'), constant('')))
+                .by(coalesce(values('predicateKey'), constant(''))))
+              .by(project('identifier','id')
+                .by(coalesce(values('identifier'), constant('')))
+                .by(coalesce(values('id'), constant(''))))
+              .toList()
+            """.trimIndent(),
+        ).ifEmpty {
+            client.runQuery(
+                """
+                g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).as('s')
+                  .outE().as('e').inV().as('t')
+                  .select('e','t')
+                  .by(project('label','predicateIri','predicateKey')
+                    .by(label)
+                    .by(coalesce(values('predicateIri'), constant('')))
+                    .by(coalesce(values('predicateKey'), constant(''))))
+                  .by(project('identifier','id')
+                    .by(coalesce(values('identifier'), constant('')))
+                    .by(coalesce(values('id'), constant(''))))
+                  .toList()
+                """.trimIndent(),
+            )
+        }
 
     relationRows.forEach { row ->
         val edge = row["e"] as? Map<*, *> ?: return@forEach
@@ -395,12 +419,20 @@ private fun shapeMatchesEntityType(
     entityId: String,
     resourceTypes: List<ResourceTypeInfo>,
 ): Boolean {
-    val conceptualType = client.runQuery(
-        """
-        g.V().hasLabel('Version').has('id', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
-          .values('type').limit(1).toList()
-        """.trimIndent(),
-    ).firstOrNull()?.get("value")?.toString() ?: return false
+    val conceptualType =
+        client.runQuery(
+            """
+            g.V().hasLabel('Version').has('id', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
+              .values('type').limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull()?.get("value")?.toString()
+            ?: client.runQuery(
+                """
+                g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
+                  .values('type').limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull()?.get("value")?.toString()
+            ?: return false
 
     val resolvedShape = resolveShapeNameFromConceptualType(conceptualType, resourceTypes)
     return normalizeShapeName(resolvedShape) == normalizeShapeName(requestedShape)

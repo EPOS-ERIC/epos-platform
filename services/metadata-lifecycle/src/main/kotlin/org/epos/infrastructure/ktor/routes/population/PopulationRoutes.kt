@@ -35,14 +35,21 @@ fun Route.populationRoutes(
             val request = runCatching { call.receive<PopulateFromFileRequest>() }.getOrNull()
             val ttlUrl = request?.url?.trim()
             val localPath = request?.path?.trim()
+            val indexUrl = request?.indexUrl?.trim()
 
-            if (!ttlUrl.isNullOrBlank() && !localPath.isNullOrBlank()) {
-                call.respondBadRequest("Provide only one of url or path")
+            val sourceCount = listOf(ttlUrl, localPath, indexUrl).count { !it.isNullOrBlank() }
+            if (sourceCount > 1) {
+                call.respondBadRequest("Provide only one of url, path, or indexUrl")
                 return@post
             }
 
             if (!ttlUrl.isNullOrBlank() && !ttlUrl.startsWith("http://") && !ttlUrl.startsWith("https://")) {
                 call.respondBadRequest("url must be a valid HTTP(S) URL")
+                return@post
+            }
+
+            if (!indexUrl.isNullOrBlank() && !indexUrl.startsWith("http://") && !indexUrl.startsWith("https://")) {
+                call.respondBadRequest("indexUrl must be a valid HTTP(S) URL")
                 return@post
             }
 
@@ -53,7 +60,7 @@ fun Route.populationRoutes(
                 println("Population group: ${actorHeaders.group}")
 
                 when {
-                    ttlUrl.isNullOrBlank() && localPath.isNullOrBlank() -> {
+                    ttlUrl.isNullOrBlank() && localPath.isNullOrBlank() && indexUrl.isNullOrBlank() -> {
                         println("Using INDEX_URL: ${Config.INDEX_URL}")
                         withContext(Dispatchers.IO) {
                             populationService.populateInitial()
@@ -62,6 +69,20 @@ fun Route.populationRoutes(
                             message = "Population completed successfully",
                             data = mapOf(
                                 "indexUrl" to Config.INDEX_URL,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
+                        )
+                    }
+                    !indexUrl.isNullOrBlank() -> {
+                        println("Using request indexUrl: $indexUrl")
+                        withContext(Dispatchers.IO) {
+                            populationService.populateInitial(indexUrl)
+                        }
+                        call.respondSuccess(
+                            message = "Population completed successfully",
+                            data = mapOf(
+                                "indexUrl" to indexUrl,
                                 "agent" to actorHeaders.agent,
                                 "group" to actorHeaders.group,
                             ),
