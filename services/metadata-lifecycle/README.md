@@ -4,7 +4,7 @@ Kotlin service for managing metadata lifecycle in JanusGraph (Property Graph), w
 
 ## What this application does
 
-- Manages lifecycle states for metadata resources: `draft -> submitted -> published -> archived`
+- Manages lifecycle states for metadata resources: `draft -> submitted -> published -> archived`, with explicit `discarded` state for cancelled drafts/submissions
 - Stores data as Property Graph nodes with embedded entity data and explicit relationships
 - Tracks provenance with Activity nodes connected to Version nodes
 - Parses SHACL shapes to expose resource types and constraints (`/api/v2/resource-types`)
@@ -114,13 +114,29 @@ Mutating operations require both headers with absolute URIs:
 
 - System: `GET /health`, `GET /api/v2/resource-types`
 - Resources: `GET|POST /api/v2/{resourceType}`, `GET|PUT|PATCH|DELETE /api/v2/{resourceType}/{id}`
-- Lifecycle: `POST .../submit`, `POST .../publish`, `POST .../draft`, `GET .../history`, `POST .../repair`
+- Lifecycle: `POST .../submit`, `POST .../publish`, `POST .../draft`, `POST .../discard`, `GET .../history`, `POST .../repair`
 - Batch: `POST /api/v2/batch/submit`, `POST /api/v2/batch/publish`
 - Search: `GET /api/v2/access/search`, `GET /api/v2/access/search/{shape}`
 - Details: `GET /api/v2/dataset/{id}`, `GET /api/v2/distribution/{id}`, `GET /api/v2/software-application/{id}`, `GET /api/v2/category/{id}`
 - Cypher: `POST /api/v2/cypher` (read-only)
 - OAI-PMH: `GET /oai-pmh`
-- Admin: `POST /api/v2/admin/populate*`, `POST /api/v2/admin/import/revision/*`
+- Admin: `POST /api/v2/admin/populate`, `POST /api/v2/admin/import/revision/*`, `POST /api/v2/admin/relations/reconcile`
+
+## Lifecycle and mutation behavior
+
+- `{id}` in lifecycle/resource mutation endpoints accepts conceptual id, version id, or identifier URI.
+- `PUT`, `PATCH`, `DELETE` operate on `draft` versions only.
+- `submit` accepts `draft` only; `publish` accepts `submitted` only.
+- `discard` accepts `draft` or `submitted` and moves to `discarded`.
+- Invalid state transitions return `409 Conflict`.
+
+## Populate endpoint behavior
+
+- `POST /api/v2/admin/populate` with no body uses configured `EPOS_INDEX_URL`.
+- `POST /api/v2/admin/populate` with body supports exactly one of:
+  - `{"indexUrl": "http(s)://.../index.txt"}` for full index-based population
+  - `{"url": "http(s)://.../file.ttl"}` for single TTL source
+  - `{"path": "/absolute/path/file.ttl"}` for local TTL file
 
 ## Docker
 
