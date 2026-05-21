@@ -34,7 +34,7 @@ USER_GROUP_LISTEN_ADDR=:8090 ./user-group
 
 ## OpenAPI
 
-- Contract: `openapi.yaml`
+- Contract: `swagger/openapi.yaml`
 - Runtime spec: `GET /openapi.yaml`
 - Swagger UI: `GET /swagger`
 

@@ -14,12 +14,7 @@ func main() {
 		addr = ":8090"
 	}
 
-	openapiPath := os.Getenv("USER_GROUP_OPENAPI_PATH")
-	if openapiPath == "" {
-		openapiPath = "openapi.yaml"
-	}
-
-	handler := server.NewRouter(openapiPath)
+	handler := server.NewRouter()
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		log.Fatal(err)
 	}
