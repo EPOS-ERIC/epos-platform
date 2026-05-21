@@ -185,6 +185,7 @@ fun Application.module() {
         healthRoutes()
 
         resourceTypeRoutes(shaclService, resourceController)
+        entitiesRoutes(resourceController, shaclService, client)
         resourceCrudRoutes(resourceController, shaclService, client)
         lifecycleRoutes(resourceController, client, provenanceService)
         batchRoutes(resourceController)

@@ -625,6 +625,39 @@ components:
           examples:
             - "The requested resource was not found"
 
+    EntityResponse:
+      type: object
+      required:
+        - uri
+        - type
+        - status
+        - properties
+      properties:
+        uri:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
+        version:
+          type: [string, 'null']
+        conceptualUri:
+          type: [string, 'null']
+
+    ResolvedEntityResponse:
+      type: object
+      required:
+        - resolvedId
+        - entity
+      properties:
+        resolvedId:
+          type: string
+        entity:
+          ${'$'}ref: '#/components/schemas/EntityResponse'
+
     # -----------------------------------------------------------------------
     # Legacy schemas (for backward compatibility with admin/resource endpoints)
     # -----------------------------------------------------------------------

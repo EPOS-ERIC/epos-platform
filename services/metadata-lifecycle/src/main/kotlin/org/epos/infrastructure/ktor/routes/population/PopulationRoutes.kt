@@ -28,28 +28,72 @@ fun Route.populationRoutes(
         
         /**
          * POST /api/v2/admin/populate
-         * Triggers initial population from the configured INDEX_URL
+         * Populates from configured INDEX_URL (no body) or from {url|path} body.
          */
         post("/populate") {
             val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = runCatching { call.receive<PopulateFromFileRequest>() }.getOrNull()
+            val ttlUrl = request?.url?.trim()
+            val localPath = request?.path?.trim()
+
+            if (!ttlUrl.isNullOrBlank() && !localPath.isNullOrBlank()) {
+                call.respondBadRequest("Provide only one of url or path")
+                return@post
+            }
+
+            if (!ttlUrl.isNullOrBlank() && !ttlUrl.startsWith("http://") && !ttlUrl.startsWith("https://")) {
+                call.respondBadRequest("url must be a valid HTTP(S) URL")
+                return@post
+            }
+
+            val sourceAuthorization = call.request.header("X-Source-Authorization")
 
             try {
                 println("Population triggered by agent: ${actorHeaders.agent}")
                 println("Population group: ${actorHeaders.group}")
-                println("Using INDEX_URL: ${Config.INDEX_URL}")
 
-                withContext(Dispatchers.IO) {
-                    populationService.populateInitial()
+                when {
+                    ttlUrl.isNullOrBlank() && localPath.isNullOrBlank() -> {
+                        println("Using INDEX_URL: ${Config.INDEX_URL}")
+                        withContext(Dispatchers.IO) {
+                            populationService.populateInitial()
+                        }
+                        call.respondSuccess(
+                            message = "Population completed successfully",
+                            data = mapOf(
+                                "indexUrl" to Config.INDEX_URL,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
+                        )
+                    }
+                    else -> {
+                        val result = withContext(Dispatchers.IO) {
+                            when {
+                                !ttlUrl.isNullOrBlank() -> populationService.populateFromSingleFile(ttlUrl, sourceAuthorization)
+                                else -> populationService.populateFromLocalFile(localPath!!)
+                            }
+                        }
+
+                        if (result.success) {
+                            call.respondSuccess(
+                                message = result.message,
+                                data = mapOf(
+                                    "sourceUrl" to result.sourceUrl,
+                                    "subjectsProcessed" to result.subjectsProcessed,
+                                    "triplesInserted" to result.triplesInserted,
+                                    "agent" to actorHeaders.agent,
+                                    "group" to actorHeaders.group,
+                                ),
+                            )
+                        } else {
+                            call.respondPopulationError(
+                                message = result.message,
+                                details = result.error,
+                            )
+                        }
+                    }
                 }
-
-                call.respondSuccess(
-                    message = "Population completed successfully",
-                    data = mapOf(
-                        "indexUrl" to Config.INDEX_URL,
-                        "agent" to actorHeaders.agent,
-                        "group" to actorHeaders.group
-                    )
-                )
             } catch (e: Exception) {
                 call.respondPopulationError(
                     message = "Failed to populate database: ${e.message}",
@@ -145,45 +189,6 @@ fun Route.populationRoutes(
         }
         
         /**
-         * POST /api/v2/admin/populate/from-url
-         * Triggers population from a custom index URL
-         */
-        post("/populate/from-url") {
-            val actorHeaders = call.requireActorHeaders() ?: return@post
-            val request = call.receive<PopulateFromUrlRequest>()
-
-            val indexUrl = request.indexUrl
-            if (indexUrl.isNullOrBlank()) {
-                call.respondBadRequest("indexUrl is required in request body")
-                return@post
-            }
-
-            try {
-                println("Population triggered by agent: ${actorHeaders.agent}")
-                println("Population group: ${actorHeaders.group}")
-                println("Using custom INDEX_URL: $indexUrl")
-
-                withContext(Dispatchers.IO) {
-                    populationService.populateInitial(indexUrl = indexUrl)
-                }
-
-                call.respondSuccess(
-                    message = "Population completed successfully",
-                    data = mapOf(
-                        "indexUrl" to indexUrl,
-                        "agent" to actorHeaders.agent,
-                        "group" to actorHeaders.group
-                    )
-                )
-            } catch (e: Exception) {
-                call.respondPopulationError(
-                    message = "Failed to populate database: ${e.message}",
-                    details = e.stackTraceToString()
-                )
-            }
-        }
-        
-        /**
          * GET /api/v2/admin/populate/status
          * Returns the current population configuration
          */
@@ -196,91 +201,6 @@ fun Route.populationRoutes(
                     "traversalSource" to Config.JANUSGRAPH_TRAVERSAL_SOURCE
                 )
             )
-        }
-        
-        /**
-         * POST /api/v2/admin/populate/file
-         * Populates the database from a single TTL file URL or local file path.
-         * 
-         * Request body examples:
-         * - { "url": "https://example.com/data.ttl" }
-         * - { "path": "/data/metadata.ttl" }
-         * 
-         * Headers:
-         * - X-Source-Authorization: Optional auth header to forward when fetching the URL
-         *   (e.g., "token ghp_xxx" for private GitHub repos)
-         * 
-         * This is useful for:
-         * - Loading a single TTL file directly
-         * - Loading from GitHub raw URLs (including private repos with auth)
-         * - Loading from any HTTP(S) accessible TTL file
-         */
-        post("/populate/file") {
-            val actorHeaders = call.requireActorHeaders() ?: return@post
-            val sourceAuthorization = call.request.header("X-Source-Authorization")
-            val request = call.receive<PopulateFromFileRequest>()
-
-            val ttlUrl = request.url?.trim()
-            val localPath = request.path?.trim()
-
-            if (ttlUrl.isNullOrBlank() && localPath.isNullOrBlank()) {
-                call.respondBadRequest("Either url or path is required in request body")
-                return@post
-            }
-
-            if (!ttlUrl.isNullOrBlank() && !localPath.isNullOrBlank()) {
-                call.respondBadRequest("Provide only one of url or path")
-                return@post
-            }
-
-            if (!ttlUrl.isNullOrBlank() && !ttlUrl.startsWith("http://") && !ttlUrl.startsWith("https://")) {
-                call.respondBadRequest("url must be a valid HTTP(S) URL")
-                return@post
-            }
-
-            try {
-                println("Single file population triggered by agent: ${actorHeaders.agent}")
-                println("Population group: ${actorHeaders.group}")
-                if (!ttlUrl.isNullOrBlank()) {
-                    println("TTL URL: $ttlUrl")
-                }
-                if (!localPath.isNullOrBlank()) {
-                    println("Local file path: $localPath")
-                }
-                if (!ttlUrl.isNullOrBlank() && sourceAuthorization != null) {
-                    println("Using provided authorization header")
-                }
-                
-                val result = withContext(Dispatchers.IO) {
-                    when {
-                        !ttlUrl.isNullOrBlank() -> populationService.populateFromSingleFile(ttlUrl, sourceAuthorization)
-                        else -> populationService.populateFromLocalFile(localPath!!)
-                    }
-                }
-
-                if (result.success) {
-                    call.respondSuccess(
-                        message = result.message,
-                        data = mapOf(
-                            "sourceUrl" to result.sourceUrl,
-                            "subjectsProcessed" to result.subjectsProcessed,
-                            "triplesInserted" to result.triplesInserted,
-                            "agent" to actorHeaders.agent,
-                            "group" to actorHeaders.group
-                        )
-                    )
-                } else {
-                    call.respondPopulationError(
-                        message = result.message,
-                        details = result.error
-                    )
-                }
-            } catch (e: Exception) {
-                call.respondPopulationError(
-                    message = "Failed to populate from file: ${e.message}",
-                    details = e.stackTraceToString()
-                )
-            }
         }
         
         /**

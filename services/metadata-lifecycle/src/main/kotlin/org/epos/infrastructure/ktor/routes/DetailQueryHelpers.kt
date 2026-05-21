@@ -85,7 +85,10 @@ internal fun buildRelatedResources(
         """
         g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).as('s')
           .outE().as('e').inV().as('t')
-          .select('e','t').by(label).by(values('id'))
+          .select('e','t').by(label)
+          .by(project('identifier','id')
+            .by(coalesce(values('identifier'), constant('')))
+            .by(coalesce(values('id'), constant(''))))
           .toList()
         """.trimIndent(),
     )
@@ -94,7 +97,8 @@ internal fun buildRelatedResources(
         val edgeLabel = row["e"]?.toString() ?: return@forEach
         if (!edgeLabel.startsWith("rel_")) return@forEach
 
-        val targetId = row["t"]?.toString() ?: return@forEach
+        val target = row["t"] as? Map<*, *> ?: return@forEach
+        val targetId = preferredResourceId(target) ?: return@forEach
         if (seen.add(targetId)) {
             val targetType = inferTypeFromId(targetId)
             val href = buildResolvableHref(publicBaseUrl, targetType, targetId)
@@ -228,7 +232,9 @@ internal fun buildImmediateRelationGraph(
             .by(label)
             .by(coalesce(values('predicateIri'), constant('')))
             .by(coalesce(values('predicateKey'), constant(''))))
-          .by(values('id'))
+          .by(project('identifier','id')
+            .by(coalesce(values('identifier'), constant('')))
+            .by(coalesce(values('id'), constant(''))))
           .toList()
         """.trimIndent(),
     )
@@ -240,7 +246,8 @@ internal fun buildImmediateRelationGraph(
 
         val predicateIri = prop(edge["predicateIri"]) ?: edgeLabel.removePrefix("rel_")
         val predicateName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
-        val targetId = row["t"]?.toString() ?: return@forEach
+        val target = row["t"] as? Map<*, *> ?: return@forEach
+        val targetId = preferredResourceId(target) ?: return@forEach
         val otherType = inferTypeFromId(targetId)
         val keyPair = "outbound" to PredicateDescriptor(iri = predicateIri, name = predicateName)
         val bucket = grouped.getOrPut(keyPair) { linkedMapOf() }
@@ -274,7 +281,7 @@ internal fun buildImmediateRelationGraph(
         val predicateName = prop(edge["predicateKey"]) ?: if (edgeLabel.startsWith("rel_")) edgeLabel.removePrefix("rel_") else edgeLabel
 
         val otherNode = (row["s"] as? Map<*, *>) ?: (row["value"] as? Map<*, *>) ?: row as? Map<*, *> ?: return@forEach
-        val otherId = prop(otherNode["id"]) ?: return@forEach
+        val otherId = preferredResourceId(otherNode) ?: return@forEach
         val otherData = otherNode.filterKeys { it is String && it !in structuralKeys }
             .mapKeys { (k, _) -> k as String }
         val otherType = inferTypeFromId(otherId)
@@ -305,4 +312,12 @@ private fun prop(value: Any?): String? = when (value) {
     null -> null
     is List<*> -> value.firstOrNull()?.toString()
     else -> value.toString()
+}
+
+private fun preferredResourceId(node: Map<*, *>): String? {
+    val identifier = prop(node["identifier"])
+    if (!identifier.isNullOrBlank()) return identifier
+    val id = prop(node["id"])
+    if (!id.isNullOrBlank()) return id
+    return null
 }

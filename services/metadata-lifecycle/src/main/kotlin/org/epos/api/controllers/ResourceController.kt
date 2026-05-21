@@ -35,9 +35,16 @@ class ResourceController(
         pageSize: Int = 20
     ): EntityListResponse {
         val typeFilter = getTypeUri(resourceType)
+        val typeCandidates = buildConceptualTypeCandidates(resourceType, typeFilter)
 
         val skip = (page - 1) * pageSize
-        val typePredicate = if (typeFilter.isNotBlank()) ".has('type', ${gStr(typeFilter)})" else ""
+        val typePredicate =
+            if (typeCandidates.isNotEmpty()) {
+                val values = typeCandidates.joinToString(",") { gStr(it) }
+                ".has('type', within($values))"
+            } else {
+                ""
+            }
         val results = client.runQuery(
             """
             g.V().hasLabel('Version').has('status', ${gStr(status)})
@@ -56,12 +63,12 @@ class ResourceController(
             val v = normalizePropertyMap(row["v"] as? Map<*, *> ?: return@mapNotNull null)
             val c = normalizePropertyMap(row["c"] as? Map<*, *> ?: return@mapNotNull null)
 
-            val versionUri = prop(v["id"]) ?: return@mapNotNull null
-            val conceptualUri = prop(c["id"])
+            val versionUri = propString(v["id"]) ?: return@mapNotNull null
+            val conceptualUri = propString(c["id"])
 
-            val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+            val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt", "_vertexId", "_vertexLabel", "label")
             val dataMap = v.filterKeys { it !in structuralKeys }
-                .mapValues { (_, v2) -> prop(v2) ?: "" }
+                .mapValues { (_, v2) -> normalizeValue(v2) ?: "" }
 
             EntityResponse(
                 uri = versionUri,
@@ -94,7 +101,7 @@ class ResourceController(
         val v = normalizePropertyMap(results.firstOrNull()?.get("value") as? Map<*, *> ?: return null)
         val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
         val data = v.filterKeys { it !in structuralKeys }
-        val typeValue = data["type"] as? String ?: return null
+        val typeValue = propString(data["type"]) ?: return null
 
         resourceTypes.forEach { resourceType ->
             if (resourceType.targetClass.equals(typeValue, ignoreCase = true)) {
@@ -130,14 +137,19 @@ class ResourceController(
     }
 
     fun getEntity(entityUri: String, status: String = "published", enrichReferences: Boolean = true): EntityResponse? {
-        val result = client.runQuery(
-            "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', ${gStr(status)}).valueMap(true).limit(1).toList()"
-        ).firstOrNull() ?: return null
+        val result =
+            client.runQuery(
+                "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', ${gStr(status)}).valueMap(true).limit(1).toList()",
+            ).firstOrNull()
+                ?: client.runQuery(
+                    "g.V().hasLabel('Version').has('identifier', ${gStr(entityUri)}).has('status', ${gStr(status)}).valueMap(true).limit(1).toList()",
+                ).firstOrNull()
+                ?: return null
 
         val v = normalizePropertyMap(result["value"] as? Map<*, *> ?: return null)
-        val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+        val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt", "_vertexId", "_vertexLabel", "label")
         val data = v.filterKeys { it !in structuralKeys }
-            .mapValues { (_, v2) -> prop(v2) ?: "" }
+            .mapValues { (_, v2) -> normalizeValue(v2) ?: "" }
 
         val enrichedProperties = if (enrichReferences) {
             data.mapValues { (_, value) -> enrichValue(value) }
@@ -145,12 +157,16 @@ class ResourceController(
             data
         }
 
-        val typeUri = enrichedProperties["type"] as? String ?: ""
+        val typeUri = propString(enrichedProperties["type"]) ?: ""
         val resourceType = extractResourceName(typeUri)
 
-        val conceptualUri = client.runQuery(
-            "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).in('HAS_VERSION').values('id').limit(1).toList()"
-        ).firstOrNull()?.get("value")?.toString()
+        val conceptualUri =
+            client.runQuery(
+                "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).in('HAS_VERSION').values('id').limit(1).toList()",
+            ).firstOrNull()?.get("value")?.toString()
+                ?: client.runQuery(
+                    "g.V().hasLabel('Version').has('identifier', ${gStr(entityUri)}).in('HAS_VERSION').values('id').limit(1).toList()",
+                ).firstOrNull()?.get("value")?.toString()
 
         return EntityResponse(
             uri = entityUri,
@@ -158,6 +174,42 @@ class ResourceController(
             status = status,
             properties = enrichedProperties,
             conceptualUri = conceptualUri
+        )
+    }
+
+    fun getEntityByConceptualId(conceptualId: String, status: String = "published", enrichReferences: Boolean = true): EntityResponse? {
+        val result = client.runQuery(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
+              .out('CURRENT_VERSION').hasLabel('Version').has('status', ${gStr(status)})
+              .project('uri','data')
+              .by(coalesce(values('identifier'), values('id'), constant('')))
+              .by(valueMap())
+              .limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull() ?: return null
+
+        val versionUri = propString(result["uri"]) ?: conceptualId
+        val v = normalizePropertyMap(result["data"] as? Map<*, *> ?: return null)
+        val structuralKeys = setOf("status", "versionNumber", "createdAt", "updatedAt", "_vertexId", "_vertexLabel", "label")
+        val data = v.filterKeys { it !in structuralKeys }
+            .mapValues { (_, v2) -> normalizeValue(v2) ?: "" }
+
+        val enrichedProperties = if (enrichReferences) {
+            data.mapValues { (_, value) -> enrichValue(value) }
+        } else {
+            data
+        }
+
+        val typeUri = propString(enrichedProperties["type"]) ?: ""
+        val resourceType = extractResourceName(typeUri)
+
+        return EntityResponse(
+            uri = versionUri,
+            type = resourceType,
+            status = status,
+            properties = enrichedProperties,
+            conceptualUri = conceptualId,
         )
     }
 
@@ -403,7 +455,7 @@ class ResourceController(
             try {
                 val deps = results.flatMap { row ->
                     val vm = row["value"] as? Map<*, *> ?: return@flatMap emptyList<String>()
-                    vm.values.mapNotNull { prop(it) }
+                    vm.values.mapNotNull { propString(it) }
                 }
                     .filter { it.startsWith("${Config.ID_BASE}/") }
                     .filter { it in entityUris }
@@ -453,15 +505,63 @@ class ResourceController(
         return parts.lastOrNull()?.lowercase() ?: "resource"
     }
 
+    private fun buildConceptualTypeCandidates(resourceType: String, targetClassUri: String): List<String> {
+        val candidates = linkedSetOf<String>()
+        val trimmedType = resourceType.trim()
+        if (trimmedType.isNotBlank()) {
+            candidates += trimmedType.lowercase()
+        }
+
+        if (targetClassUri.isNotBlank()) {
+            candidates += targetClassUri
+            val short = targetClassUri.substringAfterLast('/').substringAfterLast('#').trim().lowercase()
+            if (short.isNotBlank()) {
+                candidates += short
+            }
+        }
+
+        return candidates.toList()
+    }
+
     private fun sanitizeKey(key: String): String {
         val reserved = setOf("id", "label", "key", "value", "property")
         return if (key in reserved) "pg_$key" else key
     }
 
-    private fun prop(value: Any?): String? = when (value) {
-        null -> null
-        is List<*> -> value.firstOrNull()?.toString()
-        else -> value.toString()
+    private fun propString(value: Any?): String? {
+        val normalized = normalizeValue(value) ?: return null
+        return when (normalized) {
+            is String -> normalized
+            is List<*> -> normalized.firstOrNull()?.toString()
+            else -> normalized.toString()
+        }
+    }
+
+    private fun normalizeValue(value: Any?): Any? {
+        return when (value) {
+            null -> null
+            is String -> {
+                val trimmed = value.trim()
+                if ((trimmed.startsWith("[") && trimmed.endsWith("]")) || (trimmed.startsWith("{") && trimmed.endsWith("}"))) {
+                    runCatching { mapper.readValue(trimmed, Any::class.java) }
+                        .getOrNull()
+                        ?.let { parsed -> normalizeValue(parsed) }
+                        ?: value
+                } else {
+                    value
+                }
+            }
+            is List<*> -> {
+                if (value.isEmpty()) return emptyList<Any?>()
+                if (value.size == 1 && (value.first() is List<*> || value.first() is Map<*, *>)) {
+                    normalizeValue(value.first())
+                } else {
+                    value.map { normalizeValue(it) }
+                }
+            }
+            is Map<*, *> -> value.entries.associate { (k, v) -> (k?.toString() ?: "") to normalizeValue(v) }
+            else -> value
+        }
     }
 
     private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
@@ -477,7 +577,12 @@ class ResourceController(
         return raw.entries.associate { (key, value) ->
             val normalizedKey =
                 when (key) {
-                    is T -> key.name
+                    is T ->
+                        when (key) {
+                            T.id -> "_vertexId"
+                            T.label -> "_vertexLabel"
+                            else -> key.name
+                        }
                     else -> key?.toString() ?: ""
                 }
             normalizedKey to value

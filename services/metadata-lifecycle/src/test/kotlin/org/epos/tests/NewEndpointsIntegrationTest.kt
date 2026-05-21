@@ -113,6 +113,16 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `entities endpoint should be available for shacl resource types`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/entities/dataset")
+        response.status shouldBe HttpStatusCode.OK
+    }
+
+    @Test
     fun `dataset detail endpoint should return 404 for non-existent entity`() = testApplication {
         application {
             module()

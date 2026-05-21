@@ -39,8 +39,11 @@ object OpenApiAdminPaths {
   /api/v2/admin/populate:
     post:
       tags: [Admin]
-      summary: Populate database from TTL files
-      description: Triggers initial population from the configured INDEX_URL
+      summary: Populate database
+      description: |
+        Population entrypoint.
+        - No body: populates from configured INDEX_URL.
+        - Body with `url` or `path`: populates from a single TTL source.
       parameters:
         - name: X-Agent
           in: header
@@ -52,45 +55,26 @@ object OpenApiAdminPaths {
           required: true
           schema:
             type: string
-      responses:
-        '200':
-          description: Population completed
-        '500':
-          description: Population failed
-
-  /api/v2/admin/populate/from-url:
-    post:
-      tags: [Admin]
-      summary: Populate from custom URL
-      description: Triggers population from a custom index URL
-      parameters:
-        - name: X-Agent
+        - name: X-Source-Authorization
           in: header
-          required: true
+          required: false
           schema:
             type: string
-        - name: X-Group
-          in: header
-          required: true
-          schema:
-            type: string
+          description: Optional auth header forwarded when fetching `url`.
       requestBody:
-        required: true
+        required: false
         content:
           application/json:
             schema:
               type: object
-              required: [indexUrl]
               properties:
-                indexUrl:
+                url:
                   type: string
-                  examples:
-                    - http://example.com/index.txt
+                path:
+                  type: string
       responses:
         '200':
           description: Population completed
-        '400':
-          description: Missing indexUrl
         '500':
           description: Population failed
 
@@ -115,91 +99,6 @@ object OpenApiAdminPaths {
                     type: string
                   graphs:
                     type: object
-
-  /api/v2/admin/populate/file:
-    post:
-      tags: [Admin]
-      summary: Populate from URL or local TTL file
-      description: |
-        Populates the database from a single TTL source.
-        You can provide either:
-        - `url`: an HTTP(S) URL to a TTL file
-        - `path`: a local filesystem path to a TTL file available on the server
-        Useful for loading individual TTL files from GitHub, HTTP endpoints, or mounted local volumes.
-
-        **Private Repository Support:**
-        Use the `X-Source-Authorization` header to access private GitHub repositories.
-        The header value is forwarded as the `Authorization` header when fetching the file.
-
-        Example URLs:
-        - GitHub raw (public): https://raw.githubusercontent.com/org/repo/main/data.ttl
-        - GitHub raw (private): Use X-Source-Authorization header with "token ghp_xxx"
-        - Direct URLs: https://example.com/metadata.ttl
-      parameters:
-        - name: X-Agent
-          in: header
-          description: Agent URI for provenance tracking
-          required: true
-          schema:
-            type: string
-        - name: X-Group
-          in: header
-          description: Group URI for provenance tracking
-          required: true
-          schema:
-            type: string
-        - name: X-Source-Authorization
-          in: header
-          description: |
-            Authorization header to forward when fetching the URL.
-            For GitHub private repos, use "token ghp_YOUR_PERSONAL_ACCESS_TOKEN"
-          schema:
-            type: string
-          example: "token ghp_xxxxxxxxxxxx"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                url:
-                  type: string
-                  description: URL to a TTL file
-                  examples:
-                    - https://raw.githubusercontent.com/EPOS-ERIC/metadatone/main/metadatone.ttl
-                path:
-                  type: string
-                  description: Local filesystem path to a TTL file
-                  examples:
-                    - /data/metadata/metadatone.ttl
-      responses:
-        '200':
-          description: Population completed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      sourceUrl:
-                        type: string
-                      subjectsProcessed:
-                        type: integer
-                      triplesInserted:
-                        type: integer
-                      agent:
-                        type: string
-        '400':
-          description: Invalid request (missing/invalid source or both url and path provided)
-        '500':
-          description: Population failed
 
   /api/v2/admin/populate/content:
     post:

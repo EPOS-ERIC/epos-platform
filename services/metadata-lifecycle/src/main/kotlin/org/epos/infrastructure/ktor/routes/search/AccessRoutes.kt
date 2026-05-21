@@ -202,7 +202,9 @@ private fun buildAccessDetail(
             .by(label)
             .by(coalesce(values('predicateIri'), constant('')))
             .by(coalesce(values('predicateKey'), constant(''))))
-          .by(values('id'))
+          .by(project('identifier','id')
+            .by(coalesce(values('identifier'), constant('')))
+            .by(coalesce(values('id'), constant(''))))
           .toList()
         """.trimIndent(),
     )
@@ -214,7 +216,11 @@ private fun buildAccessDetail(
 
         val propertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
         val predicateIri = prop(edge["predicateIri"])
-        val targetId = row["t"]?.toString() ?: return@forEach
+        val target = row["t"] as? Map<*, *> ?: return@forEach
+        val targetId =
+            (prop(target["identifier"])?.takeIf { it.isNotBlank() }
+                ?: prop(target["id"])?.takeIf { it.isNotBlank() })
+                ?: return@forEach
 
         if (targetId == requestedId) return@forEach
 

@@ -42,20 +42,8 @@ servers:
     description: Development server
 
 tags:
-  - name: Search
-    description: Search across all resource types
   - name: Access
     description: Unified shape access for list and detail retrieval
-  - name: Datasets
-    description: Dataset resources
-  - name: Distributions
-    description: Distribution resources
-  - name: Software Applications
-    description: Software application resources
-  - name: Software Source Codes
-    description: Software source code resources
-  - name: Categories
-    description: Category taxonomy resources
   - name: System
     description: System information and health checks
   - name: SPARQL

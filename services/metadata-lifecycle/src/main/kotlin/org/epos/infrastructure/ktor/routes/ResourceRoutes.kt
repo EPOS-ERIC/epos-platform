@@ -274,6 +274,10 @@ fun Route.resourceCrudRoutes(
                 call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
                 return@get
             }
+            if (resourceType.equals("entities", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@get
+            }
             val status = call.request.queryParameters["status"] ?: "published"
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
             val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull() ?: 20
@@ -287,6 +291,10 @@ fun Route.resourceCrudRoutes(
 
         post {
             val resourceType = call.parameters["resourceType"] ?: ""
+            if (resourceType.equals("entities", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@post
+            }
             val request = call.receive<CreateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
@@ -300,6 +308,11 @@ fun Route.resourceCrudRoutes(
 
         get("/{id}") {
             val entityUri = call.parameters["id"] ?: ""
+            val resourceType = call.parameters["resourceType"] ?: ""
+            if (resourceType.equals("entities", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@get
+            }
             val status = call.request.queryParameters["status"] ?: "published"
 
             val formatParam = call.request.queryParameters["format"]?.lowercase()
@@ -420,11 +433,10 @@ internal fun convertEntityToTurtle(entity: EntityResponse): String {
             "type" -> "a"
             else -> "dct:$key"
         }
-        val objValue = when (value) {
-            is String -> if (value.startsWith("http")) "<$value>" else "\"$value\""
-            else -> "\"$value\""
+        val objectTokens = toRdfObjectTokens(value)
+        if (objectTokens.isNotEmpty()) {
+            builder.append("  $predicate ${objectTokens.joinToString(", ")} ;\n")
         }
-        builder.append("  $predicate $objValue ;\n")
     }
     builder.append("  dct:isVersionOf <${entity.conceptualUri}> .\n")
     return builder.toString()
@@ -447,18 +459,41 @@ internal fun convertEntityToJsonLd(entity: EntityResponse): String {
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
 }
 
-private fun convertEntityToRdfXml(entity: EntityResponse): String {
+internal fun convertEntityToRdfXml(entity: EntityResponse): String {
     return "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
         "  <rdf:Description rdf:about=\"${entity.uri}\">\n" +
-        entity.properties.map { (key, value) ->
-            "    <dct:$key>${value}</dct:$key>"
+        entity.properties.flatMap { (key, value) ->
+            toRdfValues(value).map { item ->
+                val text = item.toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                "    <dct:$key>${text}</dct:$key>"
+            }
         }.joinToString("\n") +
         "\n  </rdf:Description>\n</rdf:RDF>"
 }
 
-private fun convertEntityToNTriples(entity: EntityResponse): String {
-    return entity.properties.map { (key, value) ->
-        "<${entity.uri}> <http://purl.org/dc/terms/$key> ${if (value is String && value.startsWith("http")) "<$value>" else "\"$value\""} ."
+internal fun convertEntityToNTriples(entity: EntityResponse): String {
+    return entity.properties.flatMap { (key, value) ->
+        toRdfObjectTokens(value).map { obj ->
+            "<${entity.uri}> <http://purl.org/dc/terms/$key> $obj ."
+        }
     }.joinToString("\n") + "\n" +
         "<${entity.uri}> <http://purl.org/dc/terms/isVersionOf> <${entity.conceptualUri}> ."
 }
+
+private fun toRdfValues(value: Any?): List<Any?> =
+    when (value) {
+        null -> emptyList()
+        is List<*> -> value.flatMap { toRdfValues(it) }
+        else -> listOf(value)
+    }
+
+private fun toRdfObjectTokens(value: Any?): List<String> =
+    toRdfValues(value).map { item ->
+        val text = item?.toString() ?: ""
+        if (text.startsWith("http://") || text.startsWith("https://")) {
+            "<$text>"
+        } else {
+            val escaped = text.replace("\\", "\\\\").replace("\"", "\\\"")
+            "\"$escaped\""
+        }
+    }
