@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/repository"
@@ -8,12 +9,16 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/swagger"
 )
 
-func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupRepository) http.Handler {
+type healthPinger interface {
+	PingContext(ctx context.Context) error
+}
+
+func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupRepository, pinger healthPinger) http.Handler {
 	mux := http.NewServeMux()
 	groupsHandler := handlers.NewGroupsHandler(groupsRepo)
 	usersHandler := handlers.NewUsersHandler(usersRepo)
 
-	mux.HandleFunc("GET /health", handlers.Health)
+	mux.HandleFunc("GET /health", handlers.NewHealthHandler(pinger))
 	mux.HandleFunc("POST /api/v2/authorize", handlers.Authorize)
 	mux.HandleFunc("GET /openapi.yaml", handlers.OpenAPISpec)
 	mux.HandleFunc("GET /swagger", handlers.SwaggerRedirect)

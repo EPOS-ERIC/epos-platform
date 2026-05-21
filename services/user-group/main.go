@@ -46,6 +46,7 @@ func main() {
 	handler := server.NewRouter(
 		repository.NewUserPostgresRepository(db),
 		repository.NewGroupPostgresRepository(db),
+		db,
 	)
 	log.Info("starting http server", "addr", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {

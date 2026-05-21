@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/domain"
@@ -19,18 +20,23 @@ import (
 var log = logging.Get("data-retriever-handler")
 
 type Handler struct {
-	repo   repository.RetrievalRepository
-	client retrievalClient
+	repo       repository.RetrievalRepository
+	client     retrievalClient
+	healthPing healthPinger
+}
+
+type healthPinger interface {
+	PingContext(ctx context.Context) error
 }
 
 type retrievalClient interface {
 	Execute(rctx context.Context, req domain.ValidatedRequest) (retriever.Result, error)
 }
 
-func NewRouter(repo repository.RetrievalRepository, client retrievalClient) http.Handler {
-	h := &Handler{repo: repo, client: client}
+func NewRouter(repo repository.RetrievalRepository, client retrievalClient, healthPing healthPinger) http.Handler {
+	h := &Handler{repo: repo, client: client, healthPing: healthPing}
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /health", health)
+	mux.HandleFunc("GET /health", h.health)
 	mux.HandleFunc("GET /openapi.yaml", openAPISpec)
 	mux.HandleFunc("GET /swagger", swaggerRedirect)
 	mux.Handle("/swagger/", http.StripPrefix("/swagger", http.FileServer(http.FS(swagger.GetUI()))))
@@ -40,7 +46,21 @@ func NewRouter(repo repository.RetrievalRepository, client retrievalClient) http
 	return mux
 }
 
-func health(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) health(w http.ResponseWriter, r *http.Request) {
+	if h.healthPing == nil {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+
+	if err := h.healthPing.PingContext(ctx); err != nil {
+		log.Error("health check failed", "component", "database", "error", err)
+		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "degraded", "reason": "database unreachable"})
+		return
+	}
+
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 

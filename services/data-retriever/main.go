@@ -49,6 +49,7 @@ func main() {
 	handler := server.NewRouter(
 		repository.NewRetrievalPostgresRepository(db),
 		retriever.NewClient(timeout, maxBodyBytes),
+		db,
 	)
 	log.Info("starting http server", "addr", addr, "timeout", timeout.String())
 
