@@ -71,31 +71,40 @@ func (r *RetrievalPostgresRepository) Create(ctx context.Context, req domain.Val
 	usedAuth := req.BearerToken != ""
 
 	row := r.db.QueryRowContext(ctx, `
-		INSERT INTO retrievals (
-			source_id, method, url_template, generated_url,
-			path_params_json, query_params_json, headers_json,
-			request_body_text, request_body_hash, request_body_is_json,
-			http_status, content_type, is_binary, payload_text, payload_hash, payload_size_bytes,
-			used_auth, fetched_at
-		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
-		ON CONFLICT (source_id, method, generated_url, request_body_hash)
-		DO UPDATE SET
-			url_template = EXCLUDED.url_template,
-			path_params_json = EXCLUDED.path_params_json,
-			query_params_json = EXCLUDED.query_params_json,
-			headers_json = EXCLUDED.headers_json,
-			request_body_text = EXCLUDED.request_body_text,
-			request_body_is_json = EXCLUDED.request_body_is_json,
-			http_status = EXCLUDED.http_status,
-			content_type = EXCLUDED.content_type,
-			is_binary = EXCLUDED.is_binary,
-			payload_text = EXCLUDED.payload_text,
-			payload_hash = EXCLUDED.payload_hash,
-			payload_size_bytes = EXCLUDED.payload_size_bytes,
-			used_auth = EXCLUDED.used_auth,
-			fetched_at = EXCLUDED.fetched_at,
-			updated_at = NOW()
-		RETURNING id, source_id, method, url_template, generated_url, http_status, content_type, is_binary, COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at, COALESCE(request_body_text,'')`,
+		WITH upserted AS (
+			INSERT INTO retrievals (
+				source_id, method, url_template, generated_url,
+				path_params_json, query_params_json, headers_json,
+				request_body_text, request_body_hash, request_body_is_json,
+				http_status, content_type, is_binary, payload_text, payload_hash, payload_size_bytes,
+				used_auth, fetched_at
+			) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+			ON CONFLICT (source_id, method, generated_url, request_body_hash)
+			DO UPDATE SET
+				url_template = EXCLUDED.url_template,
+				path_params_json = EXCLUDED.path_params_json,
+				query_params_json = EXCLUDED.query_params_json,
+				headers_json = EXCLUDED.headers_json,
+				request_body_text = EXCLUDED.request_body_text,
+				request_body_is_json = EXCLUDED.request_body_is_json,
+				http_status = EXCLUDED.http_status,
+				content_type = EXCLUDED.content_type,
+				is_binary = EXCLUDED.is_binary,
+				payload_text = EXCLUDED.payload_text,
+				payload_hash = EXCLUDED.payload_hash,
+				payload_size_bytes = EXCLUDED.payload_size_bytes,
+				used_auth = EXCLUDED.used_auth,
+				fetched_at = EXCLUDED.fetched_at,
+				updated_at = NOW()
+			WHERE retrievals.payload_hash IS DISTINCT FROM EXCLUDED.payload_hash
+			RETURNING id, source_id, method, url_template, generated_url, http_status, content_type, is_binary, COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at, COALESCE(request_body_text,'')
+		)
+		SELECT * FROM upserted
+		UNION ALL
+		SELECT id, source_id, method, url_template, generated_url, http_status, content_type, is_binary, COALESCE(payload_text,''), payload_hash, payload_size_bytes, used_auth, fetched_at, created_at, COALESCE(request_body_text,'')
+		FROM retrievals
+		WHERE source_id = $1 AND method = $2 AND generated_url = $4 AND request_body_hash = $9
+		LIMIT 1`,
 		req.SourceID,
 		req.Method,
 		req.URLTemplate,

@@ -5,6 +5,7 @@ RUN apk add --no-cache git
 WORKDIR /workspace/services/user-group
 
 COPY services/user-group/go.mod ./
+COPY packages/go/logging /workspace/packages/go/logging
 
 RUN go mod download
 

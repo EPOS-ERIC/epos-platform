@@ -148,7 +148,18 @@ func validateBody(method string, body *RequestBody) ([]byte, error) {
 		if !json.Valid(body.JSON) {
 			return nil, errors.New("body.json must be valid JSON")
 		}
-		return body.JSON, nil
+
+		var decoded any
+		if err := json.Unmarshal(body.JSON, &decoded); err != nil {
+			return nil, errors.New("body.json must be valid JSON")
+		}
+
+		canonicalJSON, err := json.Marshal(decoded)
+		if err != nil {
+			return nil, errors.New("body.json cannot be serialized")
+		}
+
+		return canonicalJSON, nil
 	}
 
 	return []byte(body.Raw), nil

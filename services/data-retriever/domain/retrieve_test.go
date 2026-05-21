@@ -53,3 +53,25 @@ func TestValidateRejectPathParamMismatch(t *testing.T) {
 		t.Fatal("expected error for mismatched path params")
 	}
 }
+
+func TestValidateCanonicalizesJSONBody(t *testing.T) {
+	req := RetrieveRequest{
+		SourceID:    "svc-a",
+		Method:      "POST",
+		URLTemplate: "https://example.org/resource/{id}",
+		PathParams:  map[string]string{"id": "abc"},
+		Body: &RequestBody{
+			ContentType: "application/json",
+			JSON:        []byte(`{"b":2, "a":1}`),
+		},
+	}
+
+	validated, err := req.Validate()
+	if err != nil {
+		t.Fatalf("expected valid request, got error: %v", err)
+	}
+
+	if string(validated.BodyBytes) != `{"a":1,"b":2}` {
+		t.Fatalf("unexpected canonical JSON: %s", string(validated.BodyBytes))
+	}
+}

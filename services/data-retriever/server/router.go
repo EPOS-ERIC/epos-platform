@@ -9,11 +9,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/repository"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/retriever"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/swagger"
 )
+
+var log = logging.Get("data-retriever-handler")
 
 type Handler struct {
 	repo   repository.RetrievalRepository
@@ -47,7 +50,9 @@ func swaggerRedirect(w http.ResponseWriter, r *http.Request) {
 
 func openAPISpec(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
-	_, _ = w.Write(swagger.GetSpec())
+	if _, err := w.Write(swagger.GetSpec()); err != nil {
+		log.Error("failed to write openapi spec", "error", err)
+	}
 }
 
 func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
@@ -56,24 +61,28 @@ func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
 
 	var req domain.RetrieveRequest
 	if err := decoder.Decode(&req); err != nil {
+		log.Warn("invalid retrieve request body", "error", err)
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	validated, err := req.Validate()
 	if err != nil {
+		log.Warn("invalid retrieve request", "source_id", req.SourceID, "error", err)
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	result, err := h.client.Execute(r.Context(), validated)
 	if err != nil {
+		log.Error("failed retrieval upstream call", "source_id", validated.SourceID, "method", validated.Method, "url", validated.GeneratedURL, "error", err)
 		writeError(w, http.StatusBadGateway, err.Error())
 		return
 	}
 
 	record, err := h.repo.Create(r.Context(), validated, result)
 	if err != nil {
+		log.Error("failed storing retrieval record", "source_id", validated.SourceID, "method", validated.Method, "url", validated.GeneratedURL, "error", err)
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -96,6 +105,7 @@ func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
+		log.Warn("invalid retrieval id", "id", r.PathValue("id"), "error", err)
 		writeError(w, http.StatusBadRequest, "invalid id")
 		return
 	}
@@ -103,9 +113,11 @@ func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 	record, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			log.Warn("retrieval record not found", "id", id)
 			writeError(w, http.StatusNotFound, "record not found")
 			return
 		}
+		log.Error("failed reading retrieval by id", "id", id, "error", err)
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -116,6 +128,7 @@ func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) search(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	if q == "" {
+		log.Warn("missing search query")
 		writeError(w, http.StatusBadRequest, "q is required")
 		return
 	}
@@ -135,6 +148,7 @@ func (h *Handler) search(w http.ResponseWriter, r *http.Request) {
 		pageSize,
 	)
 	if err != nil {
+		log.Error("failed searching retrieval records", "query", q, "error", err)
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -156,7 +170,9 @@ func parsePositiveInt(raw string, fallback int) int {
 func writeJSON(w http.ResponseWriter, code int, payload any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(payload)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		log.Error("failed to encode JSON response", "status", code, "error", err)
+	}
 }
 
 func writeError(w http.ResponseWriter, code int, message string) {

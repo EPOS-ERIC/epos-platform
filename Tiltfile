@@ -44,9 +44,11 @@ docker_build(
     dockerfile='services/user-group/Dockerfile.dev',
     only=[
         'services/user-group',
+        'packages/go/logging',
     ],
     live_update=[
         sync('services/user-group', '/workspace/services/user-group'),
+        sync('packages/go/logging', '/workspace/packages/go/logging'),
         restart_container(),
     ],
 )
@@ -57,9 +59,11 @@ docker_build(
     dockerfile='services/data-retriever/Dockerfile.dev',
     only=[
         'services/data-retriever',
+        'packages/go/logging',
     ],
     live_update=[
         sync('services/data-retriever', '/workspace/services/data-retriever'),
+        sync('packages/go/logging', '/workspace/packages/go/logging'),
         restart_container(),
     ],
 )

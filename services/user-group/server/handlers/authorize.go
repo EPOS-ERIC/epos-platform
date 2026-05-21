@@ -23,11 +23,13 @@ type AuthorizeResponse struct {
 func Authorize(w http.ResponseWriter, r *http.Request) {
 	var req AuthorizeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Warn("invalid authorize request body", "error", err)
 		writeJSON(w, http.StatusBadRequest, AuthorizeResponse{Allowed: false, Reason: "invalid request body"})
 		return
 	}
 
 	if strings.TrimSpace(req.AuthIdentifier) == "" || strings.TrimSpace(req.Group) == "" || strings.TrimSpace(req.Service) == "" || strings.TrimSpace(req.Action) == "" {
+		log.Warn("missing required authorize fields")
 		writeJSON(w, http.StatusBadRequest, AuthorizeResponse{Allowed: false, Reason: "authIdentifier, group, service and action are required"})
 		return
 	}
@@ -41,5 +43,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(body)
+	if err := json.NewEncoder(w).Encode(body); err != nil {
+		log.Error("failed to encode JSON response", "status", status, "error", err)
+	}
 }

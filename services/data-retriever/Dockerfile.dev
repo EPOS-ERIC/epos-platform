@@ -5,6 +5,7 @@ WORKDIR /workspace/services/data-retriever
 ENV CGO_ENABLED=0
 
 COPY services/data-retriever/go.mod services/data-retriever/go.sum ./
+COPY packages/go/logging /workspace/packages/go/logging
 RUN go mod download
 
 COPY services/data-retriever/ ./
