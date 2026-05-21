@@ -1,5 +1,5 @@
 # =============================================================================
-# EPOS GraphDB Configuration - Base Configuration
+# EPOS JanusGraph Configuration - Base Configuration
 # =============================================================================
 # This is the base configuration file. Profile-specific overrides should be
 # placed in application-{profile}.yaml files (e.g., application-prod.yaml)
@@ -14,15 +14,16 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# GraphDB Connection Settings
+# JanusGraph Connection Settings
 # -----------------------------------------------------------------------------
-graphdb:
-  endpoint: "http://localhost:7200"
-  repositoryId: "epos"
-  timeout:
-    connectMs: 10000
-    readMs: 60000
-    writeMs: 60000
+janusgraph:
+  host: "localhost"
+  port: 8182
+  traversalSource: "g"
+  username: ""
+  password: ""
+  maxConnectionPoolSize: 50
+  connectionTimeoutMs: 30000
 
 # -----------------------------------------------------------------------------
 # Server Settings
@@ -46,19 +47,6 @@ indexUrl: "http://192.168.1.26:4500/index.txt"
 # -----------------------------------------------------------------------------
 # Base URI for all generated resource URIs
 baseUri: "https://epos-eu.org"
-
-# -----------------------------------------------------------------------------
-# Named Graphs
-# -----------------------------------------------------------------------------
-# Relative paths are resolved against baseUri
-# Use absolute URIs to override
-graphs:
-  conceptual: "/graphs/conceptual"
-  draft: "/graphs/data/draft"
-  submitted: "/graphs/data/submitted"
-  published: "/graphs/data/published"
-  archived: "/graphs/data/archived"
-  provenance: "/graphs/provenance"
 
 # -----------------------------------------------------------------------------
 # Agent URIs

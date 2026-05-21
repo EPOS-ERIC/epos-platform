@@ -5,7 +5,7 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.header
 import io.ktor.server.response.respond
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.utils.UriUtils
+import org.epos.propertygraph.utils.UriUtils
 
 data class ActorHeaders(
     val agent: String,

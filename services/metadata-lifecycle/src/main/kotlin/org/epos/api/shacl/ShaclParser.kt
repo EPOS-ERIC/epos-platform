@@ -403,14 +403,18 @@ class ShaclParser(private val httpClient: HttpClient) {
      */
     suspend fun parseShapesGraph(shaclUrl: String): ShaclShapesGraph {
         val shaclContent = httpClient.get(shaclUrl).bodyAsText()
-        return parseShapesGraphFromString(shaclContent, RDFFormat.TURTLE)
+        return parseShapesGraphFromString(shaclContent, RDFFormat.TURTLE, shaclUrl)
     }
 
     /**
      * Parse SHACL from string content
      */
-    fun parseShapesGraphFromString(content: String, format: RDFFormat = RDFFormat.TURTLE): ShaclShapesGraph {
-        val model = Rio.parse(StringReader(content), "", format)
+    fun parseShapesGraphFromString(
+        content: String,
+        format: RDFFormat = RDFFormat.TURTLE,
+        baseUri: String = "",
+    ): ShaclShapesGraph {
+        val model = Rio.parse(StringReader(content), baseUri, format)
         cachedModel = model
         val shapesGraph = parseModel(model)
         cachedShapesGraph = shapesGraph
@@ -432,19 +436,17 @@ class ShaclParser(private val httpClient: HttpClient) {
      */
     suspend fun parseShacl(
         shaclUrl: String,
-        graphDBClient: org.epos.graphdb.client.GraphDBClient? = null
+        propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient? = null
     ): List<ResourceTypeInfo> {
         val shapesGraph = parseShapesGraph(shaclUrl)
 
-        println("🔗 Building relationship graph from SHACL schema...")
+        println("Building relationship graph from SHACL schema...")
         relationshipGraph.buildFromShacl(shapesGraph)
 
-        // Enrich relationship graph with actual data if client provided
-        if (graphDBClient != null) {
-            println("🔗 Enriching relationship graph from actual data...")
+        if (propertyGraphClient != null) {
+            println("Enriching relationship graph from actual data...")
             relationshipGraph.buildFromData(
-                graphDBClient,
-                org.epos.graphdb.Config.GRAPH_PUBLISHED,
+                propertyGraphClient,
                 clearExisting = false
             )
             relationshipGraph.printGraph()
@@ -1353,7 +1355,7 @@ class ShaclParser(private val httpClient: HttpClient) {
             minCount = minCount,
             maxCount = maxCount,
             required = (minCount ?: 0) > 0,
-            recommended = (minCount ?: 0) > 0 && severities.contains(Severity.WARNING.name),
+            recommended = severities.contains(Severity.WARNING.name),
             pattern = pattern,
             minLength = minLength,
             maxLength = maxLength,

@@ -1,18 +1,19 @@
 # =============================================================================
-# EPOS GraphDB Configuration - DEVELOPMENT Profile
+# EPOS JanusGraph Configuration - DEVELOPMENT Profile
 # =============================================================================
 # Local development settings with verbose logging and all debug features
 #
 # Activate with: EPOS_PROFILE=dev or -Depos.profile=dev
 # =============================================================================
 
-graphdb:
-  endpoint: "http://localhost:7200"
-  repositoryId: "epos-dev"
-  timeout:
-    connectMs: 5000
-    readMs: 30000
-    writeMs: 30000
+janusgraph:
+  host: "localhost"
+  port: 8182
+  traversalSource: "g"
+  username: ""
+  password: ""
+  maxConnectionPoolSize: 20
+  connectionTimeoutMs: 5000
 
 # Local index file
 indexUrl: "http://localhost:4500/index.txt"

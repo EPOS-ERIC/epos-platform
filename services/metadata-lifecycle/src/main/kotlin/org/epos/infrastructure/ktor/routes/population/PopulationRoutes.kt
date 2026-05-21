@@ -9,45 +9,112 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.Config
-import org.epos.graphdb.services.InitialPopulationService
-import org.epos.graphdb.services.RevisionImportOptions
-import org.epos.graphdb.services.RevisionImportService
-import org.epos.graphdb.services.VersionMode
+import org.epos.propertygraph.Config
+import org.epos.propertygraph.services.population.InitialPopulationService
+import org.epos.propertygraph.services.population.RelationReconciliationService
+import org.epos.propertygraph.services.population.RevisionImportOptions
+import org.epos.propertygraph.services.population.RevisionImportService
+import org.epos.propertygraph.services.population.VersionMode
 
 /**
  * Routes for database population operations.
  */
 fun Route.populationRoutes(
     populationService: InitialPopulationService,
-    revisionImportService: RevisionImportService
+    revisionImportService: RevisionImportService,
+    relationReconciliationService: RelationReconciliationService,
 ) {
     route("/api/v2/admin") {
         
         /**
          * POST /api/v2/admin/populate
-         * Triggers initial population from the configured INDEX_URL
+         * Populates from configured INDEX_URL (no body) or from {url|path} body.
          */
         post("/populate") {
             val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = runCatching { call.receive<PopulateFromFileRequest>() }.getOrNull()
+            val ttlUrl = request?.url?.trim()
+            val localPath = request?.path?.trim()
+            val indexUrl = request?.indexUrl?.trim()
+
+            val sourceCount = listOf(ttlUrl, localPath, indexUrl).count { !it.isNullOrBlank() }
+            if (sourceCount > 1) {
+                call.respondBadRequest("Provide only one of url, path, or indexUrl")
+                return@post
+            }
+
+            if (!ttlUrl.isNullOrBlank() && !ttlUrl.startsWith("http://") && !ttlUrl.startsWith("https://")) {
+                call.respondBadRequest("url must be a valid HTTP(S) URL")
+                return@post
+            }
+
+            if (!indexUrl.isNullOrBlank() && !indexUrl.startsWith("http://") && !indexUrl.startsWith("https://")) {
+                call.respondBadRequest("indexUrl must be a valid HTTP(S) URL")
+                return@post
+            }
+
+            val sourceAuthorization = call.request.header("X-Source-Authorization")
 
             try {
                 println("Population triggered by agent: ${actorHeaders.agent}")
                 println("Population group: ${actorHeaders.group}")
-                println("Using INDEX_URL: ${Config.INDEX_URL}")
 
-                withContext(Dispatchers.IO) {
-                    populationService.populateInitial()
+                when {
+                    ttlUrl.isNullOrBlank() && localPath.isNullOrBlank() && indexUrl.isNullOrBlank() -> {
+                        println("Using INDEX_URL: ${Config.INDEX_URL}")
+                        withContext(Dispatchers.IO) {
+                            populationService.populateInitial()
+                        }
+                        call.respondSuccess(
+                            message = "Population completed successfully",
+                            data = mapOf(
+                                "indexUrl" to Config.INDEX_URL,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
+                        )
+                    }
+                    !indexUrl.isNullOrBlank() -> {
+                        println("Using request indexUrl: $indexUrl")
+                        withContext(Dispatchers.IO) {
+                            populationService.populateInitial(indexUrl)
+                        }
+                        call.respondSuccess(
+                            message = "Population completed successfully",
+                            data = mapOf(
+                                "indexUrl" to indexUrl,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
+                        )
+                    }
+                    else -> {
+                        val result = withContext(Dispatchers.IO) {
+                            when {
+                                !ttlUrl.isNullOrBlank() -> populationService.populateFromSingleFile(ttlUrl, sourceAuthorization)
+                                else -> populationService.populateFromLocalFile(localPath!!)
+                            }
+                        }
+
+                        if (result.success) {
+                            call.respondSuccess(
+                                message = result.message,
+                                data = mapOf(
+                                    "sourceUrl" to result.sourceUrl,
+                                    "subjectsProcessed" to result.subjectsProcessed,
+                                    "triplesInserted" to result.triplesInserted,
+                                    "agent" to actorHeaders.agent,
+                                    "group" to actorHeaders.group,
+                                ),
+                            )
+                        } else {
+                            call.respondPopulationError(
+                                message = result.message,
+                                details = result.error,
+                            )
+                        }
+                    }
                 }
-
-                call.respondSuccess(
-                    message = "Population completed successfully",
-                    data = mapOf(
-                        "indexUrl" to Config.INDEX_URL,
-                        "agent" to actorHeaders.agent,
-                        "group" to actorHeaders.group
-                    )
-                )
             } catch (e: Exception) {
                 call.respondPopulationError(
                     message = "Failed to populate database: ${e.message}",
@@ -55,42 +122,89 @@ fun Route.populationRoutes(
                 )
             }
         }
-        
-        /**
-         * POST /api/v2/admin/populate/from-url
-         * Triggers population from a custom index URL
-         */
-        post("/populate/from-url") {
-            val actorHeaders = call.requireActorHeaders() ?: return@post
-            val request = call.receive<PopulateFromUrlRequest>()
 
-            val indexUrl = request.indexUrl
-            if (indexUrl.isNullOrBlank()) {
-                call.respondBadRequest("indexUrl is required in request body")
+        /**
+         * POST /api/v2/admin/relations/reconcile
+         * Reconciles missing semantic relation edges and backfills legacy edge metadata.
+         */
+        post("/relations/reconcile") {
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = runCatching { call.receive<ReconcileRelationsRequest>() }.getOrNull()
+            val dryRun = request?.dryRun ?: true
+            val resourceId = request?.resourceId?.trim()?.takeIf { it.isNotBlank() }
+            val maxVersions = request?.maxVersions
+            val batchSize = request?.batchSize
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    relationReconciliationService.reconcile(
+                        dryRun = dryRun,
+                        resourceId = resourceId,
+                        maxVersions = maxVersions,
+                        batchSize = batchSize,
+                    )
+                }
+
+                call.respondSuccess(
+                    message = if (dryRun) "Relation reconciliation dry-run completed" else "Relation reconciliation completed",
+                    data = mapOf(
+                        "dryRun" to result.dryRun,
+                        "resourceId" to resourceId,
+                        "versionsScanned" to result.versionsScanned,
+                        "missingEdgesDiscovered" to result.missingEdgesDiscovered,
+                        "edgesCreated" to result.edgesCreated,
+                        "legacyEdgesScanned" to result.legacyEdgesScanned,
+                        "legacyEdgesBackfilled" to result.legacyEdgesBackfilled,
+                        "agent" to actorHeaders.agent,
+                        "group" to actorHeaders.group,
+                    ),
+                )
+            } catch (e: Exception) {
+                call.respondPopulationError(
+                    message = "Failed to reconcile relations: ${e.message}",
+                    details = e.stackTraceToString(),
+                )
+            }
+        }
+
+        /**
+         * POST /api/v2/admin/relations/audit
+         * Audits one resource relation/property cardinality and mixed conceptual/version values.
+         */
+        post("/relations/audit") {
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = runCatching { call.receive<AuditRelationsRequest>() }.getOrNull()
+            val resourceId = request?.resourceId?.trim()
+            if (resourceId.isNullOrBlank()) {
+                call.respondBadRequest("resourceId is required")
                 return@post
             }
 
             try {
-                println("Population triggered by agent: ${actorHeaders.agent}")
-                println("Population group: ${actorHeaders.group}")
-                println("Using custom INDEX_URL: $indexUrl")
-
-                withContext(Dispatchers.IO) {
-                    populationService.populateInitial(indexUrl = indexUrl)
+                val result = withContext(Dispatchers.IO) {
+                    relationReconciliationService.auditResource(resourceId)
+                }
+                if (result == null) {
+                    call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Resource not found: $resourceId"))
+                    return@post
                 }
 
                 call.respondSuccess(
-                    message = "Population completed successfully",
+                    message = "Relation audit completed",
                     data = mapOf(
-                        "indexUrl" to indexUrl,
+                        "resourceId" to result.resourceId,
+                        "resolvedVersionId" to result.resolvedVersionId,
+                        "propertyCounts" to result.propertyCounts,
+                        "relationCandidates" to result.relationCandidates,
+                        "mixedConceptualAndVersionValues" to result.mixedConceptualAndVersionValues,
                         "agent" to actorHeaders.agent,
-                        "group" to actorHeaders.group
-                    )
+                        "group" to actorHeaders.group,
+                    ),
                 )
             } catch (e: Exception) {
                 call.respondPopulationError(
-                    message = "Failed to populate database: ${e.message}",
-                    details = e.stackTraceToString()
+                    message = "Failed to audit relations: ${e.message}",
+                    details = e.stackTraceToString(),
                 )
             }
         }
@@ -103,100 +217,11 @@ fun Route.populationRoutes(
             call.respond(
                 mapOf(
                     "indexUrl" to Config.INDEX_URL,
-                    "graphdbEndpoint" to Config.GRAPHDB_ENDPOINT,
-                    "repositoryId" to Config.REPOSITORY_ID,
-                    "graphs" to mapOf(
-                        "published" to Config.GRAPH_PUBLISHED,
-                        "conceptual" to Config.GRAPH_CONCEPTUAL,
-                        "provenance" to Config.GRAPH_PROVENANCE
-                    )
+                    "janusgraphHost" to Config.JANUSGRAPH_HOST,
+                    "janusgraphPort" to Config.JANUSGRAPH_PORT,
+                    "traversalSource" to Config.JANUSGRAPH_TRAVERSAL_SOURCE
                 )
             )
-        }
-        
-        /**
-         * POST /api/v2/admin/populate/file
-         * Populates the database from a single TTL file URL or local file path.
-         * 
-         * Request body examples:
-         * - { "url": "https://example.com/data.ttl" }
-         * - { "path": "/data/metadata.ttl" }
-         * 
-         * Headers:
-         * - X-Source-Authorization: Optional auth header to forward when fetching the URL
-         *   (e.g., "token ghp_xxx" for private GitHub repos)
-         * 
-         * This is useful for:
-         * - Loading a single TTL file directly
-         * - Loading from GitHub raw URLs (including private repos with auth)
-         * - Loading from any HTTP(S) accessible TTL file
-         */
-        post("/populate/file") {
-            val actorHeaders = call.requireActorHeaders() ?: return@post
-            val sourceAuthorization = call.request.header("X-Source-Authorization")
-            val request = call.receive<PopulateFromFileRequest>()
-
-            val ttlUrl = request.url?.trim()
-            val localPath = request.path?.trim()
-
-            if (ttlUrl.isNullOrBlank() && localPath.isNullOrBlank()) {
-                call.respondBadRequest("Either url or path is required in request body")
-                return@post
-            }
-
-            if (!ttlUrl.isNullOrBlank() && !localPath.isNullOrBlank()) {
-                call.respondBadRequest("Provide only one of url or path")
-                return@post
-            }
-
-            if (!ttlUrl.isNullOrBlank() && !ttlUrl.startsWith("http://") && !ttlUrl.startsWith("https://")) {
-                call.respondBadRequest("url must be a valid HTTP(S) URL")
-                return@post
-            }
-
-            try {
-                println("Single file population triggered by agent: ${actorHeaders.agent}")
-                println("Population group: ${actorHeaders.group}")
-                if (!ttlUrl.isNullOrBlank()) {
-                    println("TTL URL: $ttlUrl")
-                }
-                if (!localPath.isNullOrBlank()) {
-                    println("Local file path: $localPath")
-                }
-                if (!ttlUrl.isNullOrBlank() && sourceAuthorization != null) {
-                    println("Using provided authorization header")
-                }
-                
-                val result = withContext(Dispatchers.IO) {
-                    when {
-                        !ttlUrl.isNullOrBlank() -> populationService.populateFromSingleFile(ttlUrl, sourceAuthorization)
-                        else -> populationService.populateFromLocalFile(localPath!!)
-                    }
-                }
-
-                if (result.success) {
-                    call.respondSuccess(
-                        message = result.message,
-                        data = mapOf(
-                            "sourceUrl" to result.sourceUrl,
-                            "subjectsProcessed" to result.subjectsProcessed,
-                            "triplesInserted" to result.triplesInserted,
-                            "agent" to actorHeaders.agent,
-                            "group" to actorHeaders.group
-                        )
-                    )
-                } else {
-                    call.respondPopulationError(
-                        message = result.message,
-                        details = result.error
-                    )
-                }
-            } catch (e: Exception) {
-                call.respondPopulationError(
-                    message = "Failed to populate from file: ${e.message}",
-                    details = e.stackTraceToString()
-                )
-            }
         }
         
         /**
@@ -206,7 +231,7 @@ fun Route.populationRoutes(
          * Request body: { "content": "@prefix ...", "sourceName": "my-upload" }
          * 
          * This is useful for:
-         * - Uploading TTL content directly without hosting it
+         * - Uploading ttl content directly without hosting it
          * - Testing with small TTL snippets
          * - Programmatic population from other services
          */

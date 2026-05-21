@@ -1,16 +1,5 @@
 package org.epos.infrastructure.ktor.routes
 
-import org.epos.graphdb.Config
-
-internal fun getGraphUri(status: String): String =
-    when (status.lowercase()) {
-        "draft" -> Config.GRAPH_DRAFT
-        "submitted" -> Config.GRAPH_SUBMITTED
-        "published" -> Config.GRAPH_PUBLISHED
-        "archived" -> Config.GRAPH_ARCHIVED
-        else -> Config.GRAPH_PUBLISHED
-    }
-
 internal fun extractTypeName(typeUri: String): String = typeUri.substringAfterLast("/").substringAfterLast("#")
 
 internal fun buildSpatialFilter(

@@ -14,6 +14,12 @@ data class EntityResponse(
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+data class ResolvedEntityResponse(
+    val resolvedId: String,
+    val entity: EntityResponse,
+)
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class EntityReference(
     val uri: String,
     val link: String,

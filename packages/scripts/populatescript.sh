@@ -1,30 +1,34 @@
 #!/bin/bash
 
-get_host_ip() {
+set -euo pipefail
+
+get_host_alias() {
   case "$(uname -s)" in
-    Darwin)
-      ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null
+    Darwin|MINGW*|CYGWIN*|MSYS*)
+      # Docker Desktop reliably exposes host via this DNS name
+      echo "host.docker.internal"
       ;;
     Linux)
-      ip route get 1.1.1.1 2>/dev/null | awk '/src/ {print $7}'
-      ;;
-    MINGW*|CYGWIN*|MSYS*)
-      ipconfig | grep -A1 "Ethernet\|Wi-Fi" | grep "IPv4" | head -1 | awk '{print $NF}' | tr -d '\r'
+      # Linux Docker may not support host.docker.internal by default
+      ip route | awk '/default/ {print $3; exit}'
       ;;
     *)
-      echo ""
+      echo "host.docker.internal"
       ;;
   esac
 }
 
-HOST_IP=$(get_host_ip)
+HOST_ALIAS=${HOST_ALIAS:-$(get_host_alias)}
 
-if [ -z "$HOST_IP" ]; then
-  echo "❌ Impossible get the host IP"
+if [ -z "$HOST_ALIAS" ]; then
+  echo "❌ Impossible to resolve host alias"
   exit 1
 fi
 
-echo "🌐 IP: $HOST_IP"
+HOST_ENDPOINT="${HOST_ALIAS}:5050"
+echo "🌐 Host endpoint for metadata-lifecycle: $HOST_ENDPOINT"
+
+docker rm -f cache || true
 
 # Start container
 docker run -idt -p 5050:80 --name cache epos-ci.brgm.fr:5005/epos/metadata-cache:test-ref
@@ -34,16 +38,20 @@ echo "Waiting for the container to be ready.."
 sleep 2
 
 # Sed inside the container
-echo "Sed metadata-cache with $HOST_IP:5050 in index.txt..."
-docker exec cache sed -i "s|metadata-cache|$HOST_IP:5050|g" /opt/metadata-cache/index.txt
+echo "Rewriting all index URLs to http://$HOST_ENDPOINT/..."
+docker exec cache sed -E -i "s|https?://[^/]+/|http://$HOST_ENDPOINT/|g" /opt/metadata-cache/index.txt
 
 echo "✅ Done.:"
 docker exec cache cat /opt/metadata-cache/index.txt
 
+echo "ℹ️ Calling /api/v2/admin/populate with explicit indexUrl"
+
 curl -X 'POST' \
-  'http://localhost:8080/api/v2/admin/populate/from-url' \
+  'http://localhost:8080/api/v2/admin/populate' \
   -H 'accept: */*' \
+  -H 'X-Agent: http://test/agent' \
+  -H 'X-Group: http://test/group' \
   -H 'Content-Type: application/json' \
   -d '{
-  "indexUrl": "http://'$HOST_IP':5050/index.txt"
+  "indexUrl": "http://'$HOST_ENDPOINT'/index.txt"
 }'

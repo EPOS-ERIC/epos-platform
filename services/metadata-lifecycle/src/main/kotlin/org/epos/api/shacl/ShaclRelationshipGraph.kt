@@ -315,13 +315,27 @@ interface SparqlClient {
 }
 
 /**
- * Adapter for your existing GraphDBClient
+ * Adapter for PropertyGraphClient to discover relationships from data
  */
-class GraphDBClientAdapter(
-    private val graphDBClient: org.epos.graphdb.client.GraphDBClient
+class PropertyGraphClientAdapter(
+    private val propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient
 ) : SparqlClient {
     override fun query(sparql: String): Sequence<Map<String, String>> {
-        return graphDBClient.query(sparql).asSequence()
+        val results = propertyGraphClient.runQuery("""
+            g.V().hasLabel('Version').as('source').out().hasLabel('Version').as('target')
+              .where('source', neq('target'))
+              .select('source','target').by(valueMap(true)).by(valueMap(true)).limit(1000).toList()
+        """.trimIndent())
+
+        return results.map { row ->
+            val source = row["source"] as? Map<*, *> ?: emptyMap<Any, Any>()
+            val target = row["target"] as? Map<*, *> ?: emptyMap<Any, Any>()
+            mapOf(
+                "sourceType" to (((source["type"] as? List<*>)?.firstOrNull() ?: source["type"])?.toString() ?: ""),
+                "property" to (row["property"] as? String ?: ""),
+                "targetType" to (((target["type"] as? List<*>)?.firstOrNull() ?: target["type"])?.toString() ?: "")
+            )
+        }.asSequence()
     }
 }
 
@@ -398,22 +412,15 @@ class RelationshipGraph(
     }
 
     /**
-     * Build from your existing GraphDBClient (convenience method)
+     * Build from PropertyGraphClient (convenience method)
      */
     fun buildFromData(
-        graphDBClient: org.epos.graphdb.client.GraphDBClient,
-        graphUri: String,
+        propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient,
         clearExisting: Boolean = true
     ) {
         buildFromSparql(
-            GraphDBClientAdapter(graphDBClient),
-            graphUri,
-            additionalFilters = """
-                FILTER(!CONTAINS(STR(?source), "bnode"))
-                FILTER(!CONTAINS(STR(?target), "bnode"))
-                FILTER(!CONTAINS(STR(?source), "genid"))
-                FILTER(!CONTAINS(STR(?target), "genid"))
-            """.trimIndent(),
+            PropertyGraphClientAdapter(propertyGraphClient),
+            additionalFilters = "",
             clearExisting = clearExisting
         )
     }

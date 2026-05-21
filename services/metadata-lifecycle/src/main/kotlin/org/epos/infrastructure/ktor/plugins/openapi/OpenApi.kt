@@ -35,8 +35,10 @@ object OpenApiSpec {
 
     fun yaml(resourceTypes: List<ResourceTypeInfo>): String {
         val yamlWithRuntimeTypes = applyRuntimeResourceTypes(baseYaml, resourceTypes)
+        val yamlWithEntityPaths = applyRuntimeEntityPaths(yamlWithRuntimeTypes, resourceTypes)
+        val yamlWithEntitySchemas = applyRuntimeEntitySchemas(yamlWithEntityPaths, resourceTypes)
         val runtimeSection = buildRuntimeShapesExtension(resourceTypes)
-        return "$yamlWithRuntimeTypes\n$runtimeSection"
+        return "$yamlWithEntitySchemas\n$runtimeSection"
     }
 
     private fun applyRuntimeResourceTypes(
@@ -97,6 +99,149 @@ object OpenApiSpec {
             }
         }
         return lines.joinToString("\n")
+    }
+
+    private fun applyRuntimeEntityPaths(base: String, resourceTypes: List<ResourceTypeInfo>): String {
+        if (resourceTypes.isEmpty()) return base
+
+        val pathsBlock =
+            buildString {
+                resourceTypes
+                    .map { it.name.trim().lowercase() }
+                    .filter { it.isNotBlank() }
+                    .distinct()
+                    .sorted()
+                    .forEach { typeName ->
+                        val schemaName = runtimeEntitySchemaName(typeName)
+                        appendLine("  /api/v2/entities/$typeName:")
+                        appendLine("    get:")
+                        appendLine("      tags: [Entities]")
+                        appendLine("      summary: List $typeName entities")
+                        appendLine("      parameters:")
+                        appendLine("        - \$ref: '#/components/parameters/Page'")
+                        appendLine("        - \$ref: '#/components/parameters/ResultsPerPage'")
+                        appendLine("        - name: status")
+                        appendLine("          in: query")
+                        appendLine("          required: false")
+                        appendLine("          schema:")
+                        appendLine("            type: string")
+                        appendLine("            default: published")
+                        appendLine("      responses:")
+                        appendLine("        '200':")
+                        appendLine("          description: Entity list")
+                        appendLine("          content:")
+                        appendLine("            application/json:")
+                        appendLine("              schema:")
+                        appendLine("                \$ref: '#/components/schemas/$schemaName'")
+                        appendLine("  /api/v2/entities/$typeName/{id}:")
+                        appendLine("    get:")
+                        appendLine("      tags: [Entities]")
+                        appendLine("      summary: Get $typeName entity")
+                        appendLine("      parameters:")
+                        appendLine("        - name: id")
+                        appendLine("          in: path")
+                        appendLine("          required: true")
+                        appendLine("          description: Conceptual or version resource identifier (not internal numeric graph id)")
+                        appendLine("          schema:")
+                        appendLine("            type: string")
+                        appendLine("        - name: status")
+                        appendLine("          in: query")
+                        appendLine("          required: false")
+                        appendLine("          schema:")
+                        appendLine("            type: string")
+                        appendLine("            default: published")
+                        appendLine("        - name: format")
+                        appendLine("          in: query")
+                        appendLine("          required: false")
+                        appendLine("          description: Response format override")
+                        appendLine("          schema:")
+                        appendLine("            type: string")
+                        appendLine("            enum: [json, ttl, jsonld, rdfxml, nt]")
+                        appendLine("      responses:")
+                        appendLine("        '200':")
+                        appendLine("          description: Entity detail")
+                        appendLine("          content:")
+                        appendLine("            application/json:")
+                        appendLine("              schema:")
+                        appendLine("                \$ref: '#/components/schemas/ResolvedEntityResponse_$schemaName'")
+                        appendLine("            text/turtle:")
+                        appendLine("              schema:")
+                        appendLine("                type: string")
+                        appendLine("            application/ld+json:")
+                        appendLine("              schema:")
+                        appendLine("                type: string")
+                        appendLine("            application/rdf+xml:")
+                        appendLine("              schema:")
+                        appendLine("                type: string")
+                        appendLine("            application/n-triples:")
+                        appendLine("              schema:")
+                        appendLine("                type: string")
+                    }
+            }.trimEnd()
+
+        return base.replace("\ncomponents:\n", "\n$pathsBlock\ncomponents:\n")
+    }
+
+    private fun applyRuntimeEntitySchemas(base: String, resourceTypes: List<ResourceTypeInfo>): String {
+        if (resourceTypes.isEmpty()) return base
+
+        val uniqueTypesByLowerName =
+            resourceTypes
+                .map { it.name.trim().lowercase() to it }
+                .filter { it.first.isNotBlank() }
+                .groupBy { it.first }
+                .mapValues { (_, items) -> items.first().second }
+
+        val uniqueTypes =
+            uniqueTypesByLowerName
+                .toList()
+                .groupBy { (typeName, _) -> runtimeEntitySchemaName(typeName) }
+                .mapValues { (_, items) -> items.first() }
+                .values
+
+        val schemasBlock =
+            buildString {
+                uniqueTypes
+                    .sortedBy { it.first }
+                    .forEach { (typeName, type) ->
+                        val schemaName = runtimeEntitySchemaName(typeName)
+                        appendLine("    $schemaName:")
+                        appendLine("      type: object")
+                        appendLine("      properties:")
+                        type.properties
+                            .asSequence()
+                            .filter { it.name.isNotBlank() }
+                            .groupBy { it.name.trim().lowercase() }
+                            .mapValues { (_, items) -> items.first() }
+                            .toList()
+                            .sortedBy { it.first }
+                            .forEach { (lowerName, _) ->
+                            val propKey = escapeYaml(lowerName)
+                            appendLine("        $propKey:")
+                            appendLine("          type: [string, array, object, number, boolean, 'null']")
+                            }
+                        appendLine("      additionalProperties: true")
+                        appendLine("    ResolvedEntityResponse_$schemaName:")
+                        appendLine("      allOf:")
+                        appendLine("        - \$ref: '#/components/schemas/ResolvedEntityResponse'")
+                        appendLine("        - type: object")
+                        appendLine("          properties:")
+                        appendLine("            entity:")
+                        appendLine("              allOf:")
+                        appendLine("                - \$ref: '#/components/schemas/EntityResponse'")
+                        appendLine("                - type: object")
+                        appendLine("                  properties:")
+                        appendLine("                    properties:")
+                        appendLine("                      \$ref: '#/components/schemas/$schemaName'")
+                    }
+            }.trimEnd()
+
+        return base.replace("\n    ResourceTypesEnvelope:\n", "\n$schemasBlock\n\n    ResourceTypesEnvelope:\n")
+    }
+
+    private fun runtimeEntitySchemaName(typeName: String): String {
+        val cleaned = typeName.replace(Regex("[^A-Za-z0-9_]"), "_")
+        return "Entity_${cleaned}"
     }
 
     private fun escapeYaml(value: String): String = value.replace("\\", "\\\\").replace("\"", "\\\"")

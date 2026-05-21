@@ -14,7 +14,7 @@ import org.junit.jupiter.api.*
 
 /**
  * Integration tests for the new endpoints:
- * - Search API (/api/v2/search, /api/v2/details/{id})
+ * - Search API (/api/v2/access/search, /api/v2/details/{id})
  * - SPARQL endpoint (/api/v2/sparql)
  * - OAI-PMH endpoint (/oai-pmh)
  */
@@ -38,7 +38,7 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
             module()
         }
 
-        val response = client.get("/api/v2/search")
+        val response = client.get("/api/v2/access/search")
 
         response.status shouldBe HttpStatusCode.OK
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
@@ -55,7 +55,7 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         }
 
         // New API uses limit/offset instead of page/pageSize
-        val response = client.get("/api/v2/search?q=test&type=dataset&limit=10&offset=0")
+        val response = client.get("/api/v2/access/search?q=test&type=dataset&limit=10&offset=0")
 
         response.status shouldBe HttpStatusCode.OK
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
@@ -70,12 +70,56 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         }
 
         // New API no longer has facets parameter - use category tree endpoint instead
-        val response = client.get("/api/v2/search")
+        val response = client.get("/api/v2/access/search")
 
         response.status shouldBe HttpStatusCode.OK
         val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
         json.containsKey("total") shouldBe true
         json.containsKey("items") shouldBe true
+    }
+
+    @Test
+    fun `search endpoint should return SHACL-driven fields without constraints`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "http://example.org/dataset/with-constraints-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val dataset = vf.createIRI(datasetUri)
+        model.add(dataset, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(dataset, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Dataset Constraints Test"))
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
+
+        val response = client.get("/api/v2/access/search?type=dataset&q=constraints")
+        response.status shouldBe HttpStatusCode.OK
+        val jsonWithout = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val itemsWithout = jsonWithout["items"] as List<Map<String, Any>>
+        (itemsWithout.isNotEmpty()) shouldBe true
+        itemsWithout.first().containsKey("constraints") shouldBe false
+        itemsWithout.first().containsKey("fields") shouldBe true
+    }
+
+    @Test
+    fun `legacy search endpoint should return 404`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/search")
+        response.status shouldBe HttpStatusCode.NotFound
+    }
+
+    @Test
+    fun `entities endpoint should be available for shacl resource types`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.get("/api/v2/entities/dataset")
+        response.status shouldBe HttpStatusCode.OK
     }
 
     @Test
@@ -146,6 +190,59 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         val relatedBy = json["relatedBy"] as? List<Map<String, Any>>
         (relatedBy != null && relatedBy.isNotEmpty()) shouldBe true
         relatedBy!!.any { it["id"] == sourceUri } shouldBe true
+    }
+
+    @Test
+    fun `relations and access detail should expose predicate iri`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "https://example.org/dataset/source-iri-1"
+        val distributionUri = "https://example.org/distribution/target-iri-1"
+        val relationPredicate = "http://www.w3.org/ns/dcat#distribution"
+
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val source = vf.createIRI(datasetUri)
+        val target = vf.createIRI(distributionUri)
+        model.add(source, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(source, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Dataset with edge metadata"))
+        model.add(source, vf.createIRI(relationPredicate), target)
+        model.add(target, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Distribution"))
+        model.add(target, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Distribution with edge metadata"))
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
+
+        val distributionResponse = client.get("/api/v2/distribution/${java.net.URLEncoder.encode(distributionUri, "UTF-8")}")
+        distributionResponse.status shouldBe HttpStatusCode.OK
+        val distributionJson = objectMapper.readValue<Map<String, Any>>(distributionResponse.bodyAsText())
+
+        @Suppress("UNCHECKED_CAST")
+        val relations = distributionJson["relations"] as? List<Map<String, Any>>
+        (relations != null && relations.isNotEmpty()) shouldBe true
+        val hasPredicateIri = relations!!.any { relation ->
+            val predicate = relation["predicate"] as? Map<*, *> ?: return@any false
+            predicate["iri"] == relationPredicate
+        }
+        hasPredicateIri shouldBe true
+
+        val accessResponse = client.get("/api/v2/access/distribution/${java.net.URLEncoder.encode(distributionUri, "UTF-8")}")
+        accessResponse.status shouldBe HttpStatusCode.OK
+        val accessJson = objectMapper.readValue<Map<String, Any>>(accessResponse.bodyAsText())
+
+        @Suppress("UNCHECKED_CAST")
+        val properties = accessJson["properties"] as? Map<String, Any>
+        (properties != null) shouldBe true
+
+        val distributionValues = properties!!["distribution"]
+        val linkedValues = when (distributionValues) {
+            is List<*> -> distributionValues.filterIsInstance<Map<*, *>>()
+            is Map<*, *> -> listOf(distributionValues)
+            else -> emptyList()
+        }
+
+        val hasAccessPredicateIri = linkedValues.any { value -> value["predicateIri"] == relationPredicate }
+        hasAccessPredicateIri shouldBe true
     }
 
     // =========================================================================

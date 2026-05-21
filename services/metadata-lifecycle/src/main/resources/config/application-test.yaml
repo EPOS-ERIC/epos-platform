@@ -1,33 +1,25 @@
 # =============================================================================
-# EPOS GraphDB Configuration - TEST Profile
+# EPOS JanusGraph Configuration - TEST Profile
 # =============================================================================
 # Settings for automated testing with isolated database
 #
 # Activate with: EPOS_PROFILE=test or -Depos.profile=test
 # =============================================================================
 
-graphdb:
-  endpoint: "http://localhost:7200"
-  repositoryId: "epos-test"
-  timeout:
-    connectMs: 5000
-    readMs: 10000
-    writeMs: 10000
+janusgraph:
+  host: "localhost"
+  port: 8182
+  traversalSource: "g"
+  username: ""
+  password: ""
+  maxConnectionPoolSize: 10
+  connectionTimeoutMs: 5000
 
 # Test fixtures
 indexUrl: "file:///test/fixtures/index.txt"
 
 # Use test-specific base URI to avoid conflicts
 baseUri: "https://test.epos-eu.org"
-
-# Test graphs (isolated namespace)
-graphs:
-  conceptual: "/test/graphs/conceptual"
-  draft: "/test/graphs/data/draft"
-  submitted: "/test/graphs/data/submitted"
-  published: "/test/graphs/data/published"
-  archived: "/test/graphs/data/archived"
-  provenance: "/test/graphs/provenance"
 
 # Minimal logging during tests
 logging:

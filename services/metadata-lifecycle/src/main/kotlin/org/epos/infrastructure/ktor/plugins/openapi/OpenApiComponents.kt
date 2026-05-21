@@ -246,7 +246,6 @@ components:
       required:
         - type
         - id
-        - name
         - href
       properties:
         type:
@@ -255,15 +254,15 @@ components:
           type: string
           examples:
             - "123"
-        name:
-          type: string
-          examples:
-            - "IRPINIA Seismic Stations"
         href:
           type: string
           description: Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
           examples:
             - "https://metadata.epos-eu.org/api/v2/dataset/123"
+        fields:
+          type: object
+          description: SHACL-selected property values returned as field-value pairs (includes `name`)
+          additionalProperties: true
 
     DatasetSearchItem:
       allOf:
@@ -275,20 +274,6 @@ components:
             type:
               type: string
               const: dataset
-            serviceProviders:
-              type: array
-              description: Display names of organisations providing this dataset
-              items:
-                type: string
-              examples:
-                - ["UNINA", "INGV"]
-            categories:
-              type: array
-              description: Category labels assigned to this dataset
-              items:
-                type: string
-              examples:
-                - ["Seismology", "Strong Motion"]
 
     GenericSearchItem:
       allOf:
@@ -640,6 +625,39 @@ components:
           examples:
             - "The requested resource was not found"
 
+    EntityResponse:
+      type: object
+      required:
+        - uri
+        - type
+        - status
+        - properties
+      properties:
+        uri:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
+        version:
+          type: [string, 'null']
+        conceptualUri:
+          type: [string, 'null']
+
+    ResolvedEntityResponse:
+      type: object
+      required:
+        - resolvedId
+        - entity
+      properties:
+        resolvedId:
+          type: string
+        entity:
+          ${'$'}ref: '#/components/schemas/EntityResponse'
+
     # -----------------------------------------------------------------------
     # Legacy schemas (for backward compatibility with admin/resource endpoints)
     # -----------------------------------------------------------------------
@@ -833,7 +851,7 @@ components:
           type: [string, 'null']
         status:
           type: string
-          enum: [draft, submitted, published, archived, unknown]
+          enum: [draft, submitted, published, archived, discarded, unknown]
       required: [uri, version, timestamp, status]
 
     VersionHistoryResponse:

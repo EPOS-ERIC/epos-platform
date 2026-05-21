@@ -7,65 +7,65 @@ import io.ktor.server.routing.*
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
-import org.epos.graphdb.services.ProvenanceService
+import org.epos.propertygraph.client.PropertyGraphClient
+import org.epos.propertygraph.services.ProvenanceService
+import java.net.URLDecoder
 
-/**
- * Lifecycle management routes (submit, publish, draft, repair).
- */
 fun Route.lifecycleRoutes(
     resourceController: ResourceController,
-    graphDBClient: GraphDBClient,
+    client: PropertyGraphClient,
     provenanceService: ProvenanceService
 ) {
     route("/api/v2/{resourceType}") {
-        // Submit for review
         post("/{id}/submit") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.submitEntity(entityUri, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondLifecycleResponse(response)
         }
 
-        // Publish
         post("/{id}/publish") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.publishEntity(entityUri, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondLifecycleResponse(response)
         }
 
-        // Create new draft from published version
         post("/{id}/draft") {
-            val conceptualUri = call.parameters["id"] ?: ""
+            val conceptualUri = decodePathId(call.parameters["id"])
             val newVersion = call.request.queryParameters["version"] ?: "2.0"
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             val response = resourceController.createNewDraft(conceptualUri, newVersion, actorHeaders.agent, actorHeaders.group)
-            call.respond(HttpStatusCode.Created, response)
+            if (response.success) {
+                call.respond(HttpStatusCode.Created, response)
+            } else {
+                call.respondLifecycleResponse(response)
+            }
         }
 
-        // Get version history
+        post("/{id}/discard") {
+            val entityUri = decodePathId(call.parameters["id"])
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+
+            val response = resourceController.discardEntity(entityUri, actorHeaders.agent, actorHeaders.group)
+            call.respondLifecycleResponse(response)
+        }
+
         get("/{id}/history") {
             val conceptualUri = call.parameters["id"] ?: ""
             val response = resourceController.getVersionHistory(conceptualUri)
             call.respond(response)
         }
 
-        // Repair missing conceptual/provenance
         post("/{id}/repair") {
             val entityUri = call.parameters["id"] ?: ""
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             try {
-                val exists = graphDBClient.ask(
-                    """
-                    ASK { GRAPH <${Config.GRAPH_PUBLISHED}> { <$entityUri> ?p ?o . } }
-                    """.trimIndent()
-                )
+                val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','published').limit(1).toList()")
 
                 if (!exists) {
                     call.respond(
@@ -75,38 +75,25 @@ fun Route.lifecycleRoutes(
                     return@post
                 }
 
-                val conceptualUri = entityUri
+                val conceptualUri = entityUri.substringBeforeLast("/")
                 val versionUri = entityUri
 
-                val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
-                val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
-                val conceptualIRI = vf.createIRI(conceptualUri)
-                val versionIRI = vf.createIRI(versionUri)
+                val conceptualExists = client.exists("g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).limit(1).toList()")
 
-                model.add(
-                    conceptualIRI,
-                    org.eclipse.rdf4j.model.vocabulary.RDF.TYPE,
-                    vf.createIRI("http://www.w3.org/ns/dcat#Resource")
-                )
-                model.add(
-                    conceptualIRI,
-                    vf.createIRI("http://purl.org/pav/hasCurrentVersion"),
-                    versionIRI
-                )
+                if (!conceptualExists) {
+                    client.runWrite("""
+                        g.addV('Conceptual').property('id', ${gStr(conceptualUri)}).property('type','Resource').property('createdAt', '${java.time.Instant.now()}').iterate()
+                    """.trimIndent())
+                }
 
-                graphDBClient.deleteFromGraph(conceptualUri, Config.GRAPH_CONCEPTUAL)
-                graphDBClient.insertIntoGraph(model, Config.GRAPH_CONCEPTUAL)
+                client.runWrite("""
+                    def c = g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).next()
+                    def v = g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).next()
+                    g.V(c.id()).outE('CURRENT_VERSION').drop().iterate()
+                    g.V(c.id()).addE('CURRENT_VERSION').to(V(v.id())).iterate()
+                """.trimIndent())
 
-                val hasProvenance = graphDBClient.ask(
-                    """
-                    PREFIX dcterms: <http://purl.org/dc/terms/>
-                    ASK { 
-                        GRAPH <${Config.GRAPH_PROVENANCE}> { 
-                            <$versionUri> dcterms:isVersionOf ?c . 
-                        } 
-                    }
-                    """.trimIndent()
-                )
+                val hasProvenance = client.exists("g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).in('AFFECTED').hasLabel('Activity').limit(1).toList()")
 
                 if (!hasProvenance) {
                     provenanceService.recordInitialCreation(
@@ -125,7 +112,7 @@ fun Route.lifecycleRoutes(
                         data = mapOf(
                             "uri" to entityUri,
                             "conceptualUri" to conceptualUri,
-                            "conceptualCreated" to true,
+                            "conceptualCreated" to !conceptualExists,
                             "provenanceCreated" to !hasProvenance
                         )
                     )
@@ -138,4 +125,27 @@ fun Route.lifecycleRoutes(
             }
         }
     }
+}
+
+private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+
+private fun decodePathId(raw: String?): String {
+    val value = raw?.trim().orEmpty()
+    if (value.isBlank()) return ""
+    return runCatching { URLDecoder.decode(value, "UTF-8") }.getOrDefault(value)
+}
+
+private suspend fun io.ktor.server.application.ApplicationCall.respondLifecycleResponse(response: ApiResponse) {
+    if (response.success) {
+        respond(response)
+        return
+    }
+
+    val message = response.message.lowercase()
+    val status = when {
+        message.contains("not found") -> HttpStatusCode.NotFound
+        message.contains("create/use a draft") || message.contains("only drafts") -> HttpStatusCode.Conflict
+        else -> HttpStatusCode.BadRequest
+    }
+    respond(status, response)
 }

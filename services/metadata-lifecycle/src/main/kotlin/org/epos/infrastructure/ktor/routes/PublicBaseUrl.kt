@@ -2,7 +2,7 @@ package org.epos.infrastructure.ktor.routes
 
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.plugins.origin
-import org.epos.graphdb.Config
+import org.epos.propertygraph.Config
 
 fun ApplicationCall.resolvePublicBaseUrl(): String {
     val configured =

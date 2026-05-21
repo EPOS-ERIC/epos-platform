@@ -5,24 +5,12 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.eclipse.rdf4j.model.BNode
-import org.eclipse.rdf4j.model.IRI
-import org.eclipse.rdf4j.model.Literal
-import org.eclipse.rdf4j.model.Model
-import org.eclipse.rdf4j.model.Statement
-import org.eclipse.rdf4j.model.Value
-import org.eclipse.rdf4j.rio.RDFFormat
-import org.eclipse.rdf4j.rio.Rio
+import java.net.URLDecoder
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.*
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
+import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
-import java.io.StringWriter
 
-/**
- * Resource type listing routes.
- */
 fun Route.resourceTypeRoutes(shaclService: ShaclService, resourceController: ResourceController) {
     get("/api/v2/resource-types") {
         val resourceTypes = shaclService.getResourceTypes()
@@ -66,22 +54,22 @@ fun Route.resourceTypeRoutes(shaclService: ShaclService, resourceController: Res
     }
 }
 
-private fun serializeModel(model: Model, format: RDFFormat, compact: Boolean = false): String {
+private fun serializeModel(model: org.eclipse.rdf4j.model.Model, format: org.eclipse.rdf4j.rio.RDFFormat, compact: Boolean = false): String {
     if (compact) {
-        if (format == RDFFormat.JSONLD) {
+        if (format == org.eclipse.rdf4j.rio.RDFFormat.JSONLD) {
             return serializeCompactJsonLd(model)
         }
-        if (format == RDFFormat.TURTLE) {
+        if (format == org.eclipse.rdf4j.rio.RDFFormat.TURTLE) {
             return serializeCompactTurtle(model)
         }
     }
 
-    val writer = StringWriter()
-    Rio.write(model, writer, format)
+    val writer = java.io.StringWriter()
+    org.eclipse.rdf4j.rio.Rio.write(model, writer, format)
     return writer.toString()
 }
 
-private fun serializeCompactTurtle(model: Model): String {
+private fun serializeCompactTurtle(model: org.eclipse.rdf4j.model.Model): String {
     val namespaces = linkedMapOf<String, String>()
     model.namespaces
         .filter { it.prefix.isNotBlank() }
@@ -136,7 +124,7 @@ private fun serializeCompactTurtle(model: Model): String {
     return builder.toString()
 }
 
-private fun serializeCompactJsonLd(model: Model): String {
+private fun serializeCompactJsonLd(model: org.eclipse.rdf4j.model.Model): String {
     val context = linkedMapOf<String, String>()
     model.namespaces
         .filter { it.prefix.isNotBlank() }
@@ -146,8 +134,8 @@ private fun serializeCompactJsonLd(model: Model): String {
     val bySubject = linkedMapOf<String, MutableMap<String, Any>>()
     model.sortedBy { statementSortKey(it) }.forEach { statement ->
         val subject = when (val subjectValue = statement.subject) {
-            is IRI -> compactIri(subjectValue, context)
-            is BNode -> "_:${subjectValue.id}"
+            is org.eclipse.rdf4j.model.IRI -> compactIri(subjectValue, context)
+            is org.eclipse.rdf4j.model.BNode -> "_:${subjectValue.id}"
             else -> statement.subject.stringValue()
         }
 
@@ -162,7 +150,7 @@ private fun serializeCompactJsonLd(model: Model): String {
         }
 
         val value = toCompactJsonLdValue(statement, context, predicate)
-        node.put(predicate, mergeJsonValue(node[predicate], value))
+        node[predicate] = mergeJsonValue(node[predicate], value)
     }
 
     val result = linkedMapOf<String, Any>(
@@ -173,10 +161,10 @@ private fun serializeCompactJsonLd(model: Model): String {
     return ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(result)
 }
 
-private fun statementSortKey(statement: Statement): String =
+private fun statementSortKey(statement: org.eclipse.rdf4j.model.Statement): String =
     "${statement.subject.stringValue()}|${statement.predicate.stringValue()}|${statement.`object`.stringValue()}"
 
-private fun compactIri(iri: IRI, context: Map<String, String>): String {
+private fun compactIri(iri: org.eclipse.rdf4j.model.IRI, context: Map<String, String>): String {
     val prefix = context.entries.firstOrNull { (_, namespace) -> namespace == iri.namespace }?.key
     return if (prefix != null) {
         "$prefix:${iri.localName}"
@@ -185,14 +173,14 @@ private fun compactIri(iri: IRI, context: Map<String, String>): String {
     }
 }
 
-private fun toCompactJsonLdValue(statement: Statement, context: Map<String, String>, predicate: String): Any {
+private fun toCompactJsonLdValue(statement: org.eclipse.rdf4j.model.Statement, context: Map<String, String>, predicate: String): Any {
     return when (val obj = statement.`object`) {
-        is IRI -> {
+        is org.eclipse.rdf4j.model.IRI -> {
             val compacted = compactIri(obj, context)
             if (predicate == "@type") compacted else mapOf("@id" to compacted)
         }
-        is BNode -> mapOf("@id" to "_:${obj.id}")
-        is Literal -> {
+        is org.eclipse.rdf4j.model.BNode -> mapOf("@id" to "_:${obj.id}")
+        is org.eclipse.rdf4j.model.Literal -> {
             val language = obj.language.orElse(null)
             val datatype = obj.datatype?.stringValue()
             when {
@@ -201,7 +189,7 @@ private fun toCompactJsonLdValue(statement: Statement, context: Map<String, Stri
                 else -> mapOf("@value" to obj.label, "@type" to compactIri(obj.datatype, context))
             }
         }
-        is Value -> obj.stringValue()
+        is org.eclipse.rdf4j.model.Value -> obj.stringValue()
         else -> obj.stringValue()
     }
 }
@@ -214,23 +202,23 @@ private fun mergeJsonValue(current: Any?, next: Any): Any {
     }
 }
 
-private fun formatPredicate(predicate: IRI, namespaces: Map<String, String>): String {
+private fun formatPredicate(predicate: org.eclipse.rdf4j.model.IRI, namespaces: Map<String, String>): String {
     if (predicate.stringValue() == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type") {
         return "a"
     }
     return compactIri(predicate, namespaces)
 }
 
-private fun formatTurtleValue(value: Value, namespaces: Map<String, String>): String {
+private fun formatTurtleValue(value: org.eclipse.rdf4j.model.Value, namespaces: Map<String, String>): String {
     return when (value) {
-        is IRI -> compactIri(value, namespaces)
-        is BNode -> "_:${value.id}"
-        is Literal -> formatTurtleLiteral(value, namespaces)
+        is org.eclipse.rdf4j.model.IRI -> compactIri(value, namespaces)
+        is org.eclipse.rdf4j.model.BNode -> "_:${value.id}"
+        is org.eclipse.rdf4j.model.Literal -> formatTurtleLiteral(value, namespaces)
         else -> "<${value.stringValue()}>"
     }
 }
 
-private fun formatTurtleLiteral(literal: Literal, namespaces: Map<String, String>): String {
+private fun formatTurtleLiteral(literal: org.eclipse.rdf4j.model.Literal, namespaces: Map<String, String>): String {
     val escaped = literal.label
         .replace("\\", "\\\\")
         .replace("\"", "\\\"")
@@ -251,42 +239,46 @@ private fun formatTurtleLiteral(literal: Literal, namespaces: Map<String, String
     return "\"$escaped\"^^${compactIri(literal.datatype, namespaces)}"
 }
 
-private fun resolveRdfFormat(formatParam: String?, acceptHeader: String?): RDFFormat {
+private fun resolveRdfFormat(formatParam: String?, acceptHeader: String?): org.eclipse.rdf4j.rio.RDFFormat {
     return when {
-        formatParam == "ttl" || formatParam == "turtle" -> RDFFormat.TURTLE
-        formatParam == "jsonld" || formatParam == "json-ld" -> RDFFormat.JSONLD
-        formatParam == "rdfxml" || formatParam == "rdf+xml" || formatParam == "xml" -> RDFFormat.RDFXML
-        formatParam == "ntriples" || formatParam == "n-triples" || formatParam == "nt" -> RDFFormat.NTRIPLES
-        acceptHeader?.contains("text/turtle") == true -> RDFFormat.TURTLE
-        acceptHeader?.contains("application/ld+json") == true || acceptHeader?.contains("application/json") == true -> RDFFormat.JSONLD
-        acceptHeader?.contains("application/rdf+xml") == true -> RDFFormat.RDFXML
-        acceptHeader?.contains("application/n-triples") == true -> RDFFormat.NTRIPLES
-        else -> RDFFormat.TURTLE
+        formatParam == "ttl" || formatParam == "turtle" -> org.eclipse.rdf4j.rio.RDFFormat.TURTLE
+        formatParam == "jsonld" || formatParam == "json-ld" -> org.eclipse.rdf4j.rio.RDFFormat.JSONLD
+        formatParam == "rdfxml" || formatParam == "rdf+xml" || formatParam == "xml" -> org.eclipse.rdf4j.rio.RDFFormat.RDFXML
+        formatParam == "ntriples" || formatParam == "n-triples" || formatParam == "nt" -> org.eclipse.rdf4j.rio.RDFFormat.NTRIPLES
+        acceptHeader?.contains("text/turtle") == true -> org.eclipse.rdf4j.rio.RDFFormat.TURTLE
+        acceptHeader?.contains("application/ld+json") == true || acceptHeader?.contains("application/json") == true -> org.eclipse.rdf4j.rio.RDFFormat.JSONLD
+        acceptHeader?.contains("application/rdf+xml") == true -> org.eclipse.rdf4j.rio.RDFFormat.RDFXML
+        acceptHeader?.contains("application/n-triples") == true -> org.eclipse.rdf4j.rio.RDFFormat.NTRIPLES
+        else -> org.eclipse.rdf4j.rio.RDFFormat.TURTLE
     }
 }
 
-private fun resolveRdfContentType(format: RDFFormat): ContentType {
+private fun resolveRdfContentType(format: org.eclipse.rdf4j.rio.RDFFormat): ContentType {
     return when (format) {
-        RDFFormat.TURTLE -> ContentType.parse("text/turtle")
-        RDFFormat.JSONLD -> ContentType.parse("application/ld+json")
-        RDFFormat.RDFXML -> ContentType.parse("application/rdf+xml")
-        RDFFormat.NTRIPLES -> ContentType.parse("application/n-triples")
+        org.eclipse.rdf4j.rio.RDFFormat.TURTLE -> ContentType.parse("text/turtle")
+        org.eclipse.rdf4j.rio.RDFFormat.JSONLD -> ContentType.parse("application/ld+json")
+        org.eclipse.rdf4j.rio.RDFFormat.RDFXML -> ContentType.parse("application/rdf+xml")
+        org.eclipse.rdf4j.rio.RDFFormat.NTRIPLES -> ContentType.parse("application/n-triples")
         else -> ContentType.Text.Plain
     }
 }
 
-/**
- * CRUD routes for resources.
- */
 fun Route.resourceCrudRoutes(
     resourceController: ResourceController,
     shaclService: ShaclService,
-    graphDBClient: GraphDBClient
+    client: PropertyGraphClient
 ) {
     route("/api/v2/{resourceType}") {
-        // List entities
         get {
             val resourceType = call.parameters["resourceType"] ?: ""
+            if (resourceType.equals("search", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@get
+            }
+            if (resourceType.equals("entities", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@get
+            }
             val status = call.request.queryParameters["status"] ?: "published"
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
             val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull() ?: 20
@@ -298,9 +290,12 @@ fun Route.resourceCrudRoutes(
             call.respond(response)
         }
 
-        // Create entity
         post {
             val resourceType = call.parameters["resourceType"] ?: ""
+            if (resourceType.equals("entities", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@post
+            }
             val request = call.receive<CreateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
@@ -312,87 +307,74 @@ fun Route.resourceCrudRoutes(
             call.respond(HttpStatusCode.Created, response)
         }
 
-        // Get single entity
         get("/{id}") {
             val entityUri = call.parameters["id"] ?: ""
+            val resourceType = call.parameters["resourceType"] ?: ""
+            if (resourceType.equals("entities", ignoreCase = true)) {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
+                return@get
+            }
             val status = call.request.queryParameters["status"] ?: "published"
 
             val formatParam = call.request.queryParameters["format"]?.lowercase()
             val acceptHeader = call.request.header("Accept")?.lowercase() ?: "application/json"
             val requestedFormat = formatParam ?: acceptHeader
 
-            val graphUri = when (status.lowercase()) {
-                "draft" -> Config.GRAPH_DRAFT
-                "submitted" -> Config.GRAPH_SUBMITTED
-                "published" -> Config.GRAPH_PUBLISHED
-                "archived" -> Config.GRAPH_ARCHIVED
-                else -> Config.GRAPH_PUBLISHED
-            }
-
-            val exists = graphDBClient.ask(
-                """
-                ASK {
-                    GRAPH <$graphUri> {
-                        <$entityUri> ?p ?o .
-                    }
-                }
-                """.trimIndent()
-            )
+            val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', ${gStr(status)}).limit(1).toList()")
 
             if (!exists) {
                 call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
                 return@get
             }
 
-            // Handle different RDF formats
             if (requestedFormat.contains("turtle") || requestedFormat == "ttl") {
-                val ttl = resourceController.getEntityAsRdf(
-                    entityUri, status, org.eclipse.rdf4j.rio.RDFFormat.TURTLE
-                )
-                if (ttl.isNotEmpty()) {
+                val ttl = resourceController.getEntity(entityUri, status)?.let { entity ->
+                    convertEntityToTurtle(entity)
+                }
+                if (!ttl.isNullOrEmpty()) {
                     call.respondText(ttl, ContentType.parse("text/turtle"))
                 } else {
                     call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
                 }
                 return@get
             }
-            
+
             if (requestedFormat.contains("ld+json") || requestedFormat.contains("json-ld") || requestedFormat == "jsonld") {
-                val jsonld = resourceController.getEntityAsRdf(
-                    entityUri, status, org.eclipse.rdf4j.rio.RDFFormat.JSONLD
-                )
-                if (jsonld.isNotEmpty()) {
+                val jsonld = resourceController.getEntity(entityUri, status)?.let { entity ->
+                    convertEntityToJsonLd(entity)
+                }
+                if (!jsonld.isNullOrEmpty()) {
                     call.respondText(jsonld, ContentType.parse("application/ld+json"))
                 } else {
                     call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
                 }
                 return@get
             }
-            
+
             if (requestedFormat.contains("rdf+xml") || requestedFormat == "rdfxml" || requestedFormat == "xml") {
-                val rdfxml = resourceController.getEntityAsRdf(
-                    entityUri, status, org.eclipse.rdf4j.rio.RDFFormat.RDFXML
-                )
-                if (rdfxml.isNotEmpty()) {
+                val rdfxml = resourceController.getEntity(entityUri, status)?.let { entity ->
+                    convertEntityToRdfXml(entity)
+                }
+                if (!rdfxml.isNullOrEmpty()) {
                     call.respondText(rdfxml, ContentType.parse("application/rdf+xml"))
                 } else {
                     call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
                 }
                 return@get
             }
-            
+
             if (requestedFormat.contains("n-triples") || requestedFormat.contains("ntriples") || requestedFormat == "nt") {
-                val ntriples = resourceController.getEntityAsRdf(
-                    entityUri, status, org.eclipse.rdf4j.rio.RDFFormat.NTRIPLES
-                )
-                if (ntriples.isNotEmpty()) {
+                val ntriples = resourceController.getEntity(entityUri, status)?.let { entity ->
+                    convertEntityToNTriples(entity)
+                }
+                if (!ntriples.isNullOrEmpty()) {
                     call.respondText(ntriples, ContentType.parse("application/n-triples"))
                 } else {
                     call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
                 }
                 return@get
             }
-            
+
             if (requestedFormat.contains("json") || requestedFormat == "*/*") {
                 val response = resourceController.getEntity(entityUri, status, enrichReferences = true)
                 if (response != null) {
@@ -402,7 +384,7 @@ fun Route.resourceCrudRoutes(
                 }
                 return@get
             }
-            
+
             call.respond(
                 HttpStatusCode.NotAcceptable,
                 ErrorResponse(
@@ -412,31 +394,129 @@ fun Route.resourceCrudRoutes(
             )
         }
 
-        // Update entity
         put("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val request = call.receive<UpdateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@put
 
             val response = resourceController.updateEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondMutationResponse(response)
         }
 
-        // Patch entity (merge semantics)
         patch("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val request = call.receive<UpdateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@patch
 
             val response = resourceController.patchEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
-            call.respond(response)
+            call.respondMutationResponse(response)
         }
 
-        // Delete entity
         delete("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
+            call.requireActorHeaders() ?: return@delete
             val response = resourceController.deleteEntity(entityUri)
-            call.respond(response)
+            call.respondMutationResponse(response)
         }
     }
 }
+
+private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+
+private fun decodePathId(raw: String?): String {
+    val value = raw?.trim().orEmpty()
+    if (value.isBlank()) return ""
+    return runCatching { URLDecoder.decode(value, "UTF-8") }.getOrDefault(value)
+}
+
+private suspend fun io.ktor.server.application.ApplicationCall.respondMutationResponse(response: ApiResponse) {
+    if (response.success) {
+        respond(response)
+        return
+    }
+
+    val message = response.message.lowercase()
+    val status = when {
+        message.contains("not found") -> HttpStatusCode.NotFound
+        message.contains("create/use a draft") || message.contains("only drafts") -> HttpStatusCode.Conflict
+        else -> HttpStatusCode.BadRequest
+    }
+    respond(status, response)
+}
+
+internal fun convertEntityToTurtle(entity: EntityResponse): String {
+    val builder = StringBuilder()
+    builder.append("@prefix dcat: <http://www.w3.org/ns/dcat#> .\n")
+    builder.append("@prefix dct: <http://purl.org/dc/terms/> .\n")
+    builder.append("@prefix pav: <http://purl.org/pav/> .\n\n")
+
+    builder.append("<${entity.uri}>\n")
+    entity.properties.forEach { (key, value) ->
+        val predicate = when (key) {
+            "type" -> "a"
+            else -> "dct:$key"
+        }
+        val objectTokens = toRdfObjectTokens(value)
+        if (objectTokens.isNotEmpty()) {
+            builder.append("  $predicate ${objectTokens.joinToString(", ")} ;\n")
+        }
+    }
+    builder.append("  dct:isVersionOf <${entity.conceptualUri}> .\n")
+    return builder.toString()
+}
+
+internal fun convertEntityToJsonLd(entity: EntityResponse): String {
+    val mapper = ObjectMapper()
+    val node = mutableMapOf<String, Any>(
+        "@context" to mapOf(
+            "dcat" to "http://www.w3.org/ns/dcat#",
+            "dct" to "http://purl.org/dc/terms/",
+            "pav" to "http://purl.org/pav/"
+        ),
+        "@id" to entity.uri
+    )
+    entity.properties.forEach { (key, value) ->
+        node["dct:$key"] = value
+    }
+    node["dct:isVersionOf"] = mapOf("@id" to entity.conceptualUri)
+    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
+}
+
+internal fun convertEntityToRdfXml(entity: EntityResponse): String {
+    return "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
+        "  <rdf:Description rdf:about=\"${entity.uri}\">\n" +
+        entity.properties.flatMap { (key, value) ->
+            toRdfValues(value).map { item ->
+                val text = item.toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                "    <dct:$key>${text}</dct:$key>"
+            }
+        }.joinToString("\n") +
+        "\n  </rdf:Description>\n</rdf:RDF>"
+}
+
+internal fun convertEntityToNTriples(entity: EntityResponse): String {
+    return entity.properties.flatMap { (key, value) ->
+        toRdfObjectTokens(value).map { obj ->
+            "<${entity.uri}> <http://purl.org/dc/terms/$key> $obj ."
+        }
+    }.joinToString("\n") + "\n" +
+        "<${entity.uri}> <http://purl.org/dc/terms/isVersionOf> <${entity.conceptualUri}> ."
+}
+
+private fun toRdfValues(value: Any?): List<Any?> =
+    when (value) {
+        null -> emptyList()
+        is List<*> -> value.flatMap { toRdfValues(it) }
+        else -> listOf(value)
+    }
+
+private fun toRdfObjectTokens(value: Any?): List<String> =
+    toRdfValues(value).map { item ->
+        val text = item?.toString() ?: ""
+        if (text.startsWith("http://") || text.startsWith("https://")) {
+            "<$text>"
+        } else {
+            val escaped = text.replace("\\", "\\\\").replace("\"", "\\\"")
+            "\"$escaped\""
+        }
+    }

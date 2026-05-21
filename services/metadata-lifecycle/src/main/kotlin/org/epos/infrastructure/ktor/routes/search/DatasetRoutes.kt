@@ -1,4 +1,4 @@
-package org.epos.infrastructure.ktor.routes
+package org.epos.infrastructure.ktor.routes.search
 
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -7,16 +7,16 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
-import org.eclipse.rdf4j.rio.RDFFormat
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
+import org.epos.infrastructure.ktor.routes.*
+import org.epos.propertygraph.client.PropertyGraphClient
+import org.epos.propertygraph.utils.UriUtils
 import java.net.URLDecoder
 import java.net.URLEncoder
 
 fun Route.datasetRoutes(
-    graphDBClient: GraphDBClient,
+    client: PropertyGraphClient,
     resourceController: ResourceController,
 ) {
     get("/api/v2/dataset/{id}") {
@@ -33,62 +33,43 @@ fun Route.datasetRoutes(
                 datasetId
             }
 
-        // Support status parameter for accessing different lifecycle stages
         val status = call.request.queryParameters["status"]?.lowercase() ?: "published"
-        val graphUri =
-            when (status) {
-                "draft" -> Config.GRAPH_DRAFT
-                "submitted" -> Config.GRAPH_SUBMITTED
-                "published" -> Config.GRAPH_PUBLISHED
-                "archived" -> Config.GRAPH_ARCHIVED
-                else -> Config.GRAPH_PUBLISHED
-            }
+        val resolvedId = resolveVersionId(client, decodedId, status)
 
-        // Check if dataset exists
-        if (!entityExists(graphDBClient, decodedId, graphUri)) {
+        if (resolvedId == null) {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Dataset not found: $decodedId"))
             return@get
         }
 
-        // Check for RDF format requests (format param or Accept header)
         val formatParam = call.request.queryParameters["format"]?.lowercase()
         val acceptHeader = call.request.header("Accept")?.lowercase() ?: "application/json"
         val requestedFormat = formatParam ?: acceptHeader
 
-        // Handle RDF format requests
-        val rdfFormat = detectRdfFormat(requestedFormat)
-        if (rdfFormat != null) {
-            try {
-                val rdf = resourceController.getEntityAsRdf(decodedId, status, rdfFormat)
-                if (rdf.isNotEmpty()) {
-                    val contentType =
-                        when (rdfFormat) {
-                            RDFFormat.TURTLE -> ContentType.parse("text/turtle")
-                            RDFFormat.JSONLD -> ContentType.parse("application/ld+json")
-                            RDFFormat.RDFXML -> ContentType.parse("application/rdf+xml")
-                            RDFFormat.NTRIPLES -> ContentType.parse("application/n-triples")
-                            else -> ContentType.parse("text/turtle")
-                        }
-                    call.respondText(rdf, contentType)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Dataset not found"))
-                }
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.InternalServerError,
-                    ErrorResponse("INTERNAL_SERVER_ERROR", e.message ?: "Failed to serialize dataset"),
-                )
+        if (requestedFormat.contains("turtle") || requestedFormat == "ttl") {
+            val ttl = resourceController.getEntity(resolvedId, status)?.let { convertEntityToTurtle(it) }
+            if (!ttl.isNullOrEmpty()) {
+                call.respondText(ttl, ContentType.parse("text/turtle"))
+            } else {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Dataset not found"))
             }
             return@get
         }
 
-        // Default: return JSON detail response
+        if (requestedFormat.contains("ld+json") || requestedFormat.contains("json-ld") || requestedFormat == "jsonld") {
+            val jsonld = resourceController.getEntity(resolvedId, status)?.let { convertEntityToJsonLd(it) }
+            if (!jsonld.isNullOrEmpty()) {
+                call.respondText(jsonld, ContentType.parse("application/ld+json"))
+            } else {
+                call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Dataset not found"))
+            }
+            return@get
+        }
+
         try {
             val dataset =
                 buildDatasetDetail(
-                    graphDBClient = graphDBClient,
-                    entityUri = decodedId,
-                    graphUri = graphUri,
+                    client = client,
+                    entityUri = resolvedId,
                     publicBaseUrl = call.resolvePublicBaseUrl(),
                 )
             call.respond(dataset)
@@ -101,87 +82,49 @@ fun Route.datasetRoutes(
     }
 }
 
-private fun detectRdfFormat(format: String): RDFFormat? =
-    when {
-        format.contains("turtle") || format == "ttl" -> RDFFormat.TURTLE
-        format.contains("ld+json") || format.contains("json-ld") || format == "jsonld" -> RDFFormat.JSONLD
-        format.contains("rdf+xml") || format == "rdfxml" || format == "xml" -> RDFFormat.RDFXML
-        format.contains("n-triples") || format.contains("ntriples") || format == "nt" -> RDFFormat.NTRIPLES
-        else -> null
-    }
-
 private fun buildDatasetDetail(
-    graphDBClient: GraphDBClient,
+    client: PropertyGraphClient,
     entityUri: String,
-    graphUri: String,
     publicBaseUrl: String,
 ): DatasetDetail {
-    // Query basic properties
-    val basicQuery =
-        """
-        $DETAIL_PREFIXES
-        
-        SELECT ?title ?description
-        FROM <$graphUri>
-        WHERE {
-            <$entityUri> a ?type .
-            OPTIONAL { <$entityUri> dcterms:title ?title }
-            OPTIONAL { <$entityUri> dcterms:description ?description }
-        }
-        LIMIT 1
-        """.trimIndent()
+    val result = client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).valueMap(true).limit(1).toList()").firstOrNull()
 
-    val basicResult = graphDBClient.query(basicQuery).firstOrNull()
-    val title = basicResult?.get("title") ?: extractTypeName(entityUri)
-    val description = basicResult?.get("description")
+    @Suppress("UNCHECKED_CAST")
+    val rawMap = (result?.get("value") as? Map<String, Any?>) ?: (result as? Map<String, Any?>) ?: emptyMap()
+    val v = rawMap.mapValues { (_, vv) -> prop(vv) }
+    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+    val data = v.filterKeys { it !in structuralKeys }
+    val status = (v["status"] as? String)?.uppercase() ?: "PUBLISHED"
 
-    // Get keywords
-    val keywords = extractKeywords(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val title = data["title"] as? String ?: extractTypeName(entityUri)
+    val description = data["description"] as? String
 
-    // Get categories
-    val categories = extractCategoryLabels(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val keywords = extractKeywords(data).takeIf { it.isNotEmpty() }
+    val categories = extractCategories(data).takeIf { it.isNotEmpty() }
+    val publishers = extractPublishers(data).takeIf { it.isNotEmpty() }
+    val spatial = extractSpatialWkt(data)
+    val temporal = extractTemporalExtent(data)
 
-    // Get publishers
-    val publishers = extractPublishers(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val distributions = getDatasetDistributions(data, publicBaseUrl).takeIf { it.isNotEmpty() }
 
-    // Get spatial
-    val spatial = extractSpatialWkt(graphDBClient, entityUri, graphUri)
-
-    // Get temporal
-    val temporal = extractTemporalExtent(graphDBClient, entityUri, graphUri)
-
-    // Get distributions with hrefs
-    val distributions =
-        getDatasetDistributions(
-            graphDBClient = graphDBClient,
-            datasetUri = entityUri,
-            graphUri = graphUri,
-            publicBaseUrl = publicBaseUrl,
-        ).takeIf { it.isNotEmpty() }
-
-    // Get inbound relations (always included)
     val related =
         buildRelatedResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
-    // Get inbound related resources (always included when present)
     val relatedBy =
         buildRelatedByResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relations =
         buildImmediateRelationGraph(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
@@ -194,7 +137,7 @@ private fun buildDatasetDetail(
         publisher = publishers,
         spatial = spatial,
         temporal = temporal,
-        status = getStatusFromGraph(graphUri),
+        status = status,
         distributions = distributions,
         relations = relations,
         related = related,
@@ -202,31 +145,68 @@ private fun buildDatasetDetail(
     )
 }
 
-private fun getDatasetDistributions(
-    graphDBClient: GraphDBClient,
-    datasetUri: String,
-    graphUri: String,
-    publicBaseUrl: String,
-): List<ResourceRef> {
-    val query =
-        """
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        
-        SELECT DISTINCT ?dist ?title
-        FROM <$graphUri>
-        WHERE {
-            <$datasetUri> dcat:distribution ?dist .
-            OPTIONAL { ?dist dcterms:title|rdfs:label ?title }
-        }
-        """.trimIndent()
+private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
-    return graphDBClient.query(query).mapNotNull { row ->
-        val distUri = row["dist"] ?: return@mapNotNull null
+private fun resolveVersionId(
+    client: PropertyGraphClient,
+    requestedId: String,
+    status: String,
+): String? {
+    val versionId =
+        client.runQuery(
+            "g.V().hasLabel('Version').has('id', ${gStr(requestedId)}).has('status', ${gStr(status)}).values('id').limit(1).toList()",
+        ).firstOrNull()?.get("value")?.toString()
+    if (!versionId.isNullOrBlank()) return versionId
+
+    val conceptualFromVersion = if (UriUtils.hasVersion(requestedId)) UriUtils.extractConceptualUri(requestedId) else null
+    if (!conceptualFromVersion.isNullOrBlank()) {
+        val byIdentifierWithinConceptual = client.runQuery(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion)})
+              .out('HAS_VERSION').hasLabel('Version')
+              .has('identifier', ${gStr(requestedId)})
+              .has('status', ${gStr(status)})
+              .values('id').limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull()?.get("value")?.toString()
+        if (!byIdentifierWithinConceptual.isNullOrBlank()) return byIdentifierWithinConceptual
+    }
+
+    val currentVersion = client.runQuery(
+        """
+        g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
+          .out('CURRENT_VERSION').hasLabel('Version').has('status', ${gStr(status)})
+          .values('id').limit(1).toList()
+        """.trimIndent(),
+    ).firstOrNull()?.get("value")?.toString()
+    if (!currentVersion.isNullOrBlank()) return currentVersion
+
+    return client.runQuery(
+        """
+        g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
+          .out('HAS_VERSION').hasLabel('Version').has('status', ${gStr(status)})
+          .values('id').limit(1).toList()
+        """.trimIndent(),
+    ).firstOrNull()?.get("value")?.toString()
+}
+private fun prop(value: Any?): Any? =
+    when (value) {
+        is List<*> -> if (value.size == 1) value.firstOrNull() else value
+        else -> value
+    }
+
+private fun getDatasetDistributions(data: Map<*, *>, publicBaseUrl: String): List<ResourceRef> {
+    val distributions = data["distribution"] ?: data["dcat:distribution"] ?: return emptyList()
+    val uris = when (distributions) {
+        is String -> listOf(distributions)
+        is List<*> -> distributions.mapNotNull { it as? String }
+        else -> emptyList()
+    }
+
+    return uris.mapNotNull { distUri ->
         ResourceRef(
             id = distUri,
-            title = row["title"],
+            title = null,
             href = "$publicBaseUrl/api/v2/distribution/${URLEncoder.encode(distUri, "UTF-8")}",
         )
     }

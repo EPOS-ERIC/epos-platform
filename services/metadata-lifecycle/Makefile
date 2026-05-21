@@ -9,10 +9,13 @@ build-docker: build
 test:
 	./gradlew --no-daemon test
 
+test-integration:
+	./gradlew --no-daemon test --tests "*IntegrationTest"
+
 fmt:
 	./gradlew --no-daemon spotlessApply
 
 lint: fmt
 	./gradlew --no-daemon spotlessCheck
 
-.PHONY: build build-docker test fmt lint
+.PHONY: build build-docker test test-integration fmt lint
