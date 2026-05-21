@@ -22,12 +22,28 @@ paths:
             schema:
               $ref: '#/components/schemas/RetrieveRequest'
       responses:
-        '201':
-          description: Retrieval created
+        '200':
+          description: Non-binary payload returned as raw upstream payload.
+          headers:
+            X-Retrieval-Id:
+              schema:
+                type: string
+              description: Stored retrieval record id.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RetrievalRecord'
+                type: object
+                additionalProperties: true
+            text/plain:
+              schema:
+                type: string
+        '303':
+          description: Binary payload; redirect to generated upstream URL.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
         '400':
           description: Invalid request
   /api/v2/retrieve/{id}:

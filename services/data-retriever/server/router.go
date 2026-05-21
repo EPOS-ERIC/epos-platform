@@ -78,7 +78,19 @@ func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, record)
+	if result.IsBinary {
+		http.Redirect(w, r, validated.GeneratedURL, http.StatusSeeOther)
+		return
+	}
+
+	if result.ContentType != "" {
+		w.Header().Set("Content-Type", result.ContentType)
+	} else {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	}
+	w.Header().Set("X-Retrieval-Id", strconv.FormatInt(record.ID, 10))
+	w.WriteHeader(result.StatusCode)
+	_, _ = w.Write(result.Payload)
 }
 
 func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
