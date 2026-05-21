@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 - user-group: added a new backend service scaffold under `services/user-group` with `/api/v2` API contract, initial PostgreSQL migrations for users/groups/memberships/permissions, and baseline build/test/lint integration in the root Makefile.
 - user-group: added built-in API documentation endpoints (`/openapi.yaml` and `/swagger`) to expose the OpenAPI contract and interactive Swagger UI.
 - user-group: added in-memory `/api/v2/groups` management endpoints with full CRUD plus PATCH semantics.
+- user-group: added in-memory `/api/v2/users` management endpoints with full CRUD plus PATCH semantics, including user lookup by auth identifier.
+- user-group: wired users and groups CRUD/PATCH endpoints to PostgreSQL-backed repositories and added database connection configuration via `USER_GROUP_DB_*` environment variables.
 
 ### Changed
 

@@ -32,6 +32,14 @@ Run service binary:
 USER_GROUP_LISTEN_ADDR=:8090 ./user-group
 ```
 
+Database environment variables:
+
+- `USER_GROUP_DB_HOST` (default `localhost`)
+- `USER_GROUP_DB_PORT` (default `5432`)
+- `USER_GROUP_DB_NAME` (default `user_group`)
+- `USER_GROUP_DB_USER` (default `user_group`)
+- `USER_GROUP_DB_PASSWORD` (default `user_group`)
+
 ## OpenAPI
 
 - Contract: `swagger/openapi.yaml`

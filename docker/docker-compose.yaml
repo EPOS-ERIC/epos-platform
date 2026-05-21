@@ -129,6 +129,11 @@ services:
         condition: service_healthy
     environment:
       - USER_GROUP_LISTEN_ADDR=:8090
+      - USER_GROUP_DB_HOST=user-group-db
+      - USER_GROUP_DB_PORT=5432
+      - USER_GROUP_DB_NAME=user_group
+      - USER_GROUP_DB_USER=user_group
+      - USER_GROUP_DB_PASSWORD=user_group
     ports:
       - "8090:8090"
     restart: on-failure
