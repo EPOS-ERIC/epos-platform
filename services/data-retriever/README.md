@@ -2,6 +2,8 @@
 
 Service that executes structured outbound HTTP requests, stores retrieval metadata, caches non-binary payloads, and offers free-text search on cached payload text.
 
+The service uses shared Go packages from `packages/go/` for structured logging, PostgreSQL connection bootstrap, and SQL migrations.
+
 ## API version
 
 - Base path: `/api/v2`
@@ -23,6 +25,11 @@ Run service binary:
 DATA_RETRIEVER_LISTEN_ADDR=:8100 ./data-retriever
 ```
 
+Logging environment variables:
+
+- `LOG_LEVEL` (optional: `DEBUG`, `INFO`, `WARN`, `ERROR`; default `INFO`)
+- `LOG_FILE` (optional: write JSON logs to file instead of stdout)
+
 Database environment variables:
 
 - `DATA_RETRIEVER_DB_HOST` (default `localhost`)
@@ -37,6 +44,13 @@ Database environment variables:
 - Runtime spec: `GET /openapi.yaml`
 - Swagger UI: `GET /swagger`
 
+## Health check
+
+- Endpoint: `GET /health`
+- Returns `200` with `{"status":"ok"}` when the service is healthy and database is reachable.
+- Returns `503` with `{"status":"degraded","reason":"database unreachable"}` when database ping fails.
+
 ## Database migrations
 
 - SQL migrations: `migrations/`
+- Runtime migration runner is shared via `packages/go/migrations`.

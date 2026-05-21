@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 - user-group: added in-memory `/api/v2/groups` management endpoints with full CRUD plus PATCH semantics.
 - user-group: added in-memory `/api/v2/users` management endpoints with full CRUD plus PATCH semantics, including user lookup by auth identifier.
 - user-group: wired users and groups CRUD/PATCH endpoints to PostgreSQL-backed repositories and added database connection configuration via `USER_GROUP_DB_*` environment variables.
+- packages/go: added shared `postgres` and `migrations` Go modules under `packages/go/` to centralize PostgreSQL connection bootstrap and SQL migration execution logic.
 
 ### Changed
 
@@ -31,6 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 - metadata-lifecycle: consolidated admin population API into `POST /api/v2/admin/populate`, and added request-level `indexUrl` support for index-based population without restarting service.
 - metadata-lifecycle: expanded lifecycle transitions with `discarded` state and `POST /api/v2/{resourceType}/{id}/discard` endpoint.
 - metadata-lifecycle: normalized lifecycle/resource mutation ID resolution so conceptual/version/identifier URIs resolve consistently across submit/publish/draft/discard and PUT/PATCH/DELETE flows.
+- data-retriever: switched to shared structured logging package usage across service startup and HTTP handlers, and aligned `/health` to include database reachability checks.
+- user-group: switched to shared structured logging package usage across service startup and handlers, and aligned `/health` to include database reachability checks.
+- data-retriever, user-group: migrated storage internals to shared `packages/go/postgres` and `packages/go/migrations` modules and updated development Docker/Tilt wiring for shared local package paths.
 
 ### Fixed
 

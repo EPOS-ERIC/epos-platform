@@ -1,14 +1,80 @@
 # EPOS Platform
 
-Monorepo for EPOS platform services and shared tooling.
+Monorepo for EPOS platform services, shared packages, and local development tooling.
 
-## Current scope
+## Current status
 
-- `services/metadata-lifecycle`: Kotlin service that manages metadata lifecycle in GraphDB.
-- `services/gateway`: Go service scaffold (build target available; test/lint/fmt targets still pending).
-- `services/data-retriever`: Go service that executes templated outbound HTTP requests, caches non-binary payloads, and provides free-text search over cached payload text.
-- `docker/`: local stack definitions (GraphDB + metadata-lifecycle service).
-- `packages/scripts/`: shared scripts used by repository commands.
+The repository currently contains four active backend services used in local development:
+
+- `services/metadata-lifecycle` (Kotlin): metadata lifecycle and versioning APIs backed by JanusGraph.
+- `services/gateway` (Go): API gateway/aggregation layer.
+- `services/user-group` (Go): users, groups, memberships, and authorization-oriented data.
+- `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
+
+Local infrastructure and service wiring for development are defined in `docker/compose.dev.yaml` and orchestrated by Tilt.
+
+## Architecture (current dev setup)
+
+```mermaid
+flowchart LR
+    subgraph Clients
+        C1[Developers]
+        C2[External API clients]
+    end
+
+    subgraph Platform_Services[Platform Services]
+        GW[gateway\n:32000]
+        ML[metadata-lifecycle\n:8080]
+        UG[user-group\n:8090]
+        DR[data-retriever\n:8100]
+    end
+
+    subgraph Data_Infra[Data and Infra]
+        JG[janusgraph\n:8182]
+        CA[cassandra\n:9042]
+        ES[elasticsearch\n:9200]
+        UGDB[(user-group-db\nPostgreSQL)]
+        DRDB[(data-retriever-db\nPostgreSQL)]
+        JGV[janusgraph-visualizer\n:3001]
+    end
+
+    C1 --> GW
+    C2 --> GW
+    C1 --> UG
+    C1 --> DR
+    C1 --> ML
+
+    GW --> ML
+    ML --> JG
+    JG --> CA
+    JG --> ES
+    JGV --> JG
+
+    UG --> UGDB
+    DR --> DRDB
+
+    subgraph Shared_Packages[Shared Go Packages]
+        LOG[packages/go/logging]
+        PG[packages/go/postgres]
+        MIG[packages/go/migrations]
+    end
+
+    GW -. uses .-> LOG
+    UG -. uses .-> LOG
+    DR -. uses .-> LOG
+    UG -. uses .-> PG
+    DR -. uses .-> PG
+    UG -. uses .-> MIG
+    DR -. uses .-> MIG
+```
+
+## Shared Go packages
+
+Shared Go modules live in `packages/go/` and are reused across services.
+
+- `packages/go/logging`: structured JSON logging with component loggers (`logging.Get("component")`).
+- `packages/go/postgres`: shared PostgreSQL connection bootstrap from env configuration.
+- `packages/go/migrations`: shared `.sql` migration runner (sorted file execution).
 
 ## Repository layout
 
@@ -17,43 +83,44 @@ Monorepo for EPOS platform services and shared tooling.
 |- apps/
 |- services/
 |  |- gateway/
+|  |- user-group/
 |  |- data-retriever/
 |  `- metadata-lifecycle/
 |- packages/
 |  |- go/
+|  |- shacl/
 |  `- scripts/
 |- docker/
 |- helm/
 `- cli/
 ```
 
-## Quick start (Development)
+## Local development
 
-Run from repository root:
+From repository root:
 
 ```bash
 make up
 ```
 
-This starts local development stack with Tilt:
+This starts Tilt and the local stack (service + infra containers).
 
-- GraphDB on `http://localhost:7200`
-- Metadata Lifecycle API on `http://localhost:8080`
-- Gateway API on `http://localhost:5000`
+Common local endpoints:
 
-Useful endpoints:
+- Metadata Lifecycle API: `http://localhost:8080`
+- Metadata Lifecycle Swagger: `http://localhost:8080/swagger`
+- Gateway API: `http://localhost:32000`
+- User Group API: `http://localhost:8090`
+- Data Retriever API: `http://localhost:8100`
+- JanusGraph Visualizer: `http://localhost:3001`
 
-- API docs (Swagger): `http://localhost:8080/swagger`
-- OpenAPI spec: `http://localhost:8080/openapi.yaml`
-- Health: `http://localhost:8080/health`
-
-Stop the stack:
+Stop local development stack:
 
 ```bash
 make down
 ```
 
-## Development commands
+## Repository commands
 
 From repository root:
 
@@ -66,20 +133,12 @@ make lint
 make populate
 ```
 
-Notes:
-
-- Root `up` and `down` are development-only commands backed by Tilt.
-- Root `test`, `fmt`, and `lint` fan out to current services.
-- Service image and artifact build targets stay in each service `Makefile`.
+- `make test|fmt|lint` fan out to all current services.
+- Service-specific build and Docker targets stay in each service `Makefile`.
 
 ## Service documentation
 
 - Metadata Lifecycle: `services/metadata-lifecycle/README.md`
 - Gateway: `services/gateway/README.md`
+- User Group: `services/user-group/README.md`
 - Data Retriever: `services/data-retriever/README.md`
-
-## Current priorities
-
-- Complete metadata lifecycle hardening and validation.
-- Improve GraphDB setup and operational defaults.
-- Build out backoffice-facing integration surfaces.
