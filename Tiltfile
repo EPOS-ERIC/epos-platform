@@ -38,9 +38,24 @@ docker_build(
     ],
 )
 
+docker_build(
+    'epos-user-group-dev:local',
+    '.',
+    dockerfile='services/user-group/Dockerfile.dev',
+    only=[
+        'services/user-group',
+    ],
+    live_update=[
+        sync('services/user-group', '/workspace/services/user-group'),
+        restart_container(),
+    ],
+)
+
 dc_resource('cassandra', labels=['infra'])
 dc_resource('elasticsearch', labels=['infra'])
+dc_resource('user-group-db', labels=['infra'])
 dc_resource('janusgraph', labels=['infra'], resource_deps=['cassandra', 'elasticsearch'])
 dc_resource('janusgraph-visualizer', labels=['infra'], resource_deps=['janusgraph'])
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['janusgraph'])
+dc_resource('user-group-service', labels=['app'], resource_deps=['user-group-db'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['metadata-lifecycle-service'])

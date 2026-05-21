@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 
 ## Unreleased
 
+### Added
+
+- user-group: added a new backend service scaffold under `services/user-group` with `/api/v2` API contract, initial PostgreSQL migrations for users/groups/memberships/permissions, and baseline build/test/lint integration in the root Makefile.
+- user-group: added built-in API documentation endpoints (`/openapi.yaml` and `/swagger`) to expose the OpenAPI contract and interactive Swagger UI.
+- user-group: added in-memory `/api/v2/groups` management endpoints with full CRUD plus PATCH semantics.
+
 ### Changed
 
 - metadata-lifecycle: switched infrastructure and runtime defaults from FalkorDB to JanusGraph with Cassandra and Elasticsearch. Updated service and repository Docker Compose stacks, JanusGraph environment keys (`EPOS_JANUSGRAPH_*`), and service configuration profiles to target Gremlin Server on port 8182 while preserving the Property Graph conceptual/version/activity model.

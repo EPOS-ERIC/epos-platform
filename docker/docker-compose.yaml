@@ -1,4 +1,22 @@
 services:
+  user-group-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=user_group
+      - POSTGRES_USER=user_group
+      - POSTGRES_PASSWORD=user_group
+    ports:
+      - "5432:5432"
+    volumes:
+      - user-group-db-data:/var/lib/postgresql/data
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_group -d user_group || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   cassandra:
     image: cassandra:4.1
     environment:
@@ -104,7 +122,21 @@ services:
     networks:
       - epos-network
 
+  user-group-service:
+    image: epos-user-group:latest
+    depends_on:
+      user-group-db:
+        condition: service_healthy
+    environment:
+      - USER_GROUP_LISTEN_ADDR=:8090
+    ports:
+      - "8090:8090"
+    restart: on-failure
+    networks:
+      - epos-network
+
 volumes:
+  user-group-db-data:
   cassandra-data:
   elasticsearch-data:
 

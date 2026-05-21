@@ -1,0 +1,454 @@
+openapi: 3.0.3
+info:
+  title: EPOS User Group API
+  version: 2.0.0
+  description: User, group, membership and authorization APIs for orchestrated service access.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /api/v2/authorize:
+    post:
+      summary: Evaluate authorization decision
+      operationId: authorize
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeRequest'
+      responses:
+        '200':
+          description: Decision computed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeResponse'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/users/by-auth/{authIdentifier}:
+    get:
+      summary: Resolve user by auth identifier
+      parameters:
+        - name: authIdentifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+  /api/v2/users/{userId}:
+    get:
+      summary: Get user by id
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+  /api/v2/users/{userId}/groups:
+    get:
+      summary: List groups for a user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Groups listed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupMembership'
+  /api/v2/groups:
+    get:
+      summary: List groups
+      responses:
+        '200':
+          description: Groups listed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+    post:
+      summary: Create group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Group created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Slug conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api/v2/groups/{groupId}:
+    get:
+      summary: Get group by id
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Group found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '404':
+          description: Group not found
+    put:
+      summary: Replace group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '200':
+          description: Group replaced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Group not found
+        '409':
+          description: Slug conflict
+    patch:
+      summary: Patch group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchGroupRequest'
+      responses:
+        '200':
+          description: Group updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+        '400':
+          description: Validation failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Group not found
+        '409':
+          description: Slug conflict
+    delete:
+      summary: Delete group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Group deleted
+        '404':
+          description: Group not found
+  /api/v2/groups/{groupId}/members/{userId}:
+    put:
+      summary: Upsert membership role and status
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertMembershipRequest'
+      responses:
+        '200':
+          description: Membership upserted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMembership'
+    patch:
+      summary: Partial update membership role or status
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchMembershipRequest'
+      responses:
+        '200':
+          description: Membership updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupMembership'
+
+components:
+  schemas:
+    UserStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, BLOCKED]
+    MembershipStatus:
+      type: string
+      enum: [PENDING, ACTIVE, REVOKED, REJECTED]
+    GroupRole:
+      type: string
+      enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
+    User:
+      type: object
+      required: [id, authIdentifier, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        authIdentifier:
+          type: string
+        email:
+          type: string
+          format: email
+        givenName:
+          type: string
+        familyName:
+          type: string
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Group:
+      type: object
+      required: [id, slug, name, isSystem, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isSystem:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateGroupRequest:
+      type: object
+      required: [slug, name]
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isSystem:
+          type: boolean
+          default: false
+    PatchGroupRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isSystem:
+          type: boolean
+    GroupMembership:
+      type: object
+      required: [userId, groupId, role, status, createdAt, updatedAt]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        role:
+          $ref: '#/components/schemas/GroupRole'
+        status:
+          $ref: '#/components/schemas/MembershipStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AuthorizeRequest:
+      type: object
+      required: [authIdentifier, group, service, action]
+      properties:
+        authIdentifier:
+          type: string
+        group:
+          type: string
+          description: Group id (uuid) or slug
+        service:
+          type: string
+        action:
+          type: string
+        resourceType:
+          type: string
+        resourceId:
+          type: string
+    AuthorizeResponse:
+      type: object
+      required: [allowed]
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: string
+        context:
+          type: object
+          properties:
+            userId:
+              type: string
+              format: uuid
+            groupId:
+              type: string
+              format: uuid
+            role:
+              $ref: '#/components/schemas/GroupRole'
+            status:
+              $ref: '#/components/schemas/MembershipStatus'
+    UpsertMembershipRequest:
+      type: object
+      required: [role, status]
+      properties:
+        role:
+          $ref: '#/components/schemas/GroupRole'
+        status:
+          $ref: '#/components/schemas/MembershipStatus'
+    PatchMembershipRequest:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/GroupRole'
+        status:
+          $ref: '#/components/schemas/MembershipStatus'
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string

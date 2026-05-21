@@ -1,0 +1,15 @@
+FROM golang:1.26-alpine3.22
+
+RUN apk add --no-cache git
+
+WORKDIR /workspace/services/user-group
+
+COPY services/user-group/go.mod ./
+
+RUN go mod download
+
+COPY services/user-group /workspace/services/user-group
+
+EXPOSE 8090
+
+CMD ["go", "run", "."]
