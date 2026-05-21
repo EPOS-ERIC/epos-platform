@@ -16,48 +16,67 @@ Local infrastructure and service wiring for development are defined in `docker/c
 ## Architecture (current dev setup)
 
 ```mermaid
-flowchart LR
-    subgraph Clients
-        C1[Developers]
-        C2[External API clients]
+flowchart TB
+    %% Based on docker/compose.dev.yaml and Tilt image wiring
+
+    DEV([Developer / Local Client])
+
+    subgraph EDGE[Published host ports]
+        GWE[gateway-service :32000]
+        MLE[metadata-lifecycle-service :8080]
+        UGE[user-group-service :8090]
+        DRE[data-retriever-service :8100]
+        JVE[janusgraph-visualizer :3001]
+        PUG[user-group-db :5432]
+        PDR[data-retriever-db :5433]
+        ESE[elasticsearch :9200]
+        CSE[cassandra :9042]
     end
 
-    subgraph Platform_Services[Platform Services]
-        GW[gateway\n:32000]
-        ML[metadata-lifecycle\n:8080]
-        UG[user-group\n:8090]
-        DR[data-retriever\n:8100]
+    subgraph NET[epos-network (docker compose)]
+        GW[gateway-service]
+        ML[metadata-lifecycle-service]
+        UG[user-group-service]
+        DR[data-retriever-service]
+
+        JG[janusgraph]
+        JV[janusgraph-visualizer]
+        ES[(elasticsearch)]
+        CS[(cassandra)]
+        UGDB[(user-group-db)]
+        DRDB[(data-retriever-db)]
     end
 
-    subgraph Data_Infra[Data and Infra]
-        JG[janusgraph\n:8182]
-        CA[cassandra\n:9042]
-        ES[elasticsearch\n:9200]
-        UGDB[(user-group-db\nPostgreSQL)]
-        DRDB[(data-retriever-db\nPostgreSQL)]
-        JGV[janusgraph-visualizer\n:3001]
-    end
-
-    C1 --> GW
-    C2 --> GW
-    C1 --> UG
-    C1 --> DR
-    C1 --> ML
-
-    GW --> ML
-    ML --> JG
-    JG --> CA
-    JG --> ES
-    JGV --> JG
-
-    UG --> UGDB
-    DR --> DRDB
-
-    subgraph Shared_Packages[Shared Go Packages]
+    subgraph SHARED[Shared Go packages used by dev images]
         LOG[packages/go/logging]
         PG[packages/go/postgres]
         MIG[packages/go/migrations]
     end
+
+    DEV --> GWE
+    DEV --> MLE
+    DEV --> UGE
+    DEV --> DRE
+    DEV --> JVE
+
+    GWE --- GW
+    MLE --- ML
+    UGE --- UG
+    DRE --- DR
+    JVE --- JV
+    PUG --- UGDB
+    PDR --- DRDB
+    ESE --- ES
+    CSE --- CS
+
+    GW -->|depends_on started| ML
+    UG -->|depends_on healthy| UGDB
+    DR -->|depends_on healthy| DRDB
+    ML -->|depends_on healthy| JG
+    JV -->|depends_on started| JG
+
+    JG --> CS
+    JG --> ES
 
     GW -. uses .-> LOG
     UG -. uses .-> LOG
@@ -66,6 +85,18 @@ flowchart LR
     DR -. uses .-> PG
     UG -. uses .-> MIG
     DR -. uses .-> MIG
+
+    classDef svc fill:#0b5d8b,stroke:#083b59,color:#ffffff,stroke-width:1px;
+    classDef infra fill:#175c4c,stroke:#0f3d32,color:#ffffff,stroke-width:1px;
+    classDef db fill:#3f6b1d,stroke:#2d4c14,color:#ffffff,stroke-width:1px;
+    classDef shared fill:#6f4b1f,stroke:#4f3516,color:#ffffff,stroke-width:1px;
+    classDef edge fill:#39424e,stroke:#1f252d,color:#ffffff,stroke-width:1px;
+
+    class GW,ML,UG,DR,JV svc;
+    class JG,ES,CS infra;
+    class UGDB,DRDB db;
+    class LOG,PG,MIG shared;
+    class GWE,MLE,UGE,DRE,JVE,PUG,PDR,ESE,CSE edge;
 ```
 
 ## Shared Go packages
