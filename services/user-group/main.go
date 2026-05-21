@@ -24,6 +24,14 @@ func main() {
 		_ = db.Close()
 	}()
 
+	migrationsDir := os.Getenv("USER_GROUP_MIGRATIONS_DIR")
+	if migrationsDir == "" {
+		migrationsDir = "migrations"
+	}
+	if err := storage.ApplyMigrations(db, migrationsDir); err != nil {
+		log.Fatal(err)
+	}
+
 	handler := server.NewRouter(
 		repository.NewUserPostgresRepository(db),
 		repository.NewGroupPostgresRepository(db),

@@ -17,6 +17,24 @@ services:
       timeout: 5s
       retries: 20
 
+  data-retriever-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=data_retriever
+      - POSTGRES_USER=data_retriever
+      - POSTGRES_PASSWORD=data_retriever
+    ports:
+      - "5433:5432"
+    volumes:
+      - data-retriever-db-data:/var/lib/postgresql/data
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U data_retriever -d data_retriever || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   cassandra:
     image: cassandra:4.1
     environment:
@@ -140,8 +158,29 @@ services:
     networks:
       - epos-network
 
+  data-retriever-service:
+    image: epos-data-retriever:latest
+    depends_on:
+      data-retriever-db:
+        condition: service_healthy
+    environment:
+      - DATA_RETRIEVER_LISTEN_ADDR=:8100
+      - DATA_RETRIEVER_DB_HOST=data-retriever-db
+      - DATA_RETRIEVER_DB_PORT=5432
+      - DATA_RETRIEVER_DB_NAME=data_retriever
+      - DATA_RETRIEVER_DB_USER=data_retriever
+      - DATA_RETRIEVER_DB_PASSWORD=data_retriever
+      - DATA_RETRIEVER_MIGRATIONS_DIR=/migrations
+      - DATA_RETRIEVER_HTTP_TIMEOUT=30s
+    ports:
+      - "8100:8100"
+    restart: on-failure
+    networks:
+      - epos-network
+
 volumes:
   user-group-db-data:
+  data-retriever-db-data:
   cassandra-data:
   elasticsearch-data:
 

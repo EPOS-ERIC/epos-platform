@@ -6,6 +6,7 @@ Monorepo for EPOS platform services and shared tooling.
 
 - `services/metadata-lifecycle`: Kotlin service that manages metadata lifecycle in GraphDB.
 - `services/gateway`: Go service scaffold (build target available; test/lint/fmt targets still pending).
+- `services/data-retriever`: Go service that executes templated outbound HTTP requests, caches non-binary payloads, and provides free-text search over cached payload text.
 - `docker/`: local stack definitions (GraphDB + metadata-lifecycle service).
 - `packages/scripts/`: shared scripts used by repository commands.
 
@@ -16,6 +17,7 @@ Monorepo for EPOS platform services and shared tooling.
 |- apps/
 |- services/
 |  |- gateway/
+|  |- data-retriever/
 |  `- metadata-lifecycle/
 |- packages/
 |  |- go/
@@ -74,6 +76,7 @@ Notes:
 
 - Metadata Lifecycle: `services/metadata-lifecycle/README.md`
 - Gateway: `services/gateway/README.md`
+- Data Retriever: `services/data-retriever/README.md`
 
 ## Current priorities
 
