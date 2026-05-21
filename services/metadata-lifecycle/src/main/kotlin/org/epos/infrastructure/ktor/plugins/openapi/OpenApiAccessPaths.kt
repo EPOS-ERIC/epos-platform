@@ -6,8 +6,8 @@ object OpenApiAccessPaths {
   /api/v2/access/search:
     get:
       tags: [Access]
-      summary: Search resources (access style)
-      description: Same behavior as `/api/v2/search`, grouped under the Access namespace.
+      summary: Search resources
+      description: Returns a flat, typed list of catalogue resources matching the supplied criteria.
       parameters:
         - ${'$'}ref: '#/components/parameters/Q'
         - ${'$'}ref: '#/components/parameters/Page'

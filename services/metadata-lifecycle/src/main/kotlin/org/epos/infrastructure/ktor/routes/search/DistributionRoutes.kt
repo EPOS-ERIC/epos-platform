@@ -1,15 +1,15 @@
-package org.epos.infrastructure.ktor.routes
+package org.epos.infrastructure.ktor.routes.search
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
+import org.epos.infrastructure.ktor.routes.*
+import org.epos.propertygraph.client.PropertyGraphClient
 import java.net.URLDecoder
 
-fun Route.distributionRoutes(graphDBClient: GraphDBClient) {
+fun Route.distributionRoutes(client: PropertyGraphClient) {
     get("/api/v2/distribution/{id}") {
         val distributionId = call.parameters["id"]
         if (distributionId.isNullOrBlank()) {
@@ -24,10 +24,8 @@ fun Route.distributionRoutes(graphDBClient: GraphDBClient) {
                 distributionId
             }
 
-        val graphUri = Config.GRAPH_PUBLISHED
-
-        // Check if distribution exists
-        if (!entityExists(graphDBClient, decodedId, graphUri)) {
+        val resolvedId = resolveDistributionVersionId(client, decodedId)
+        if (resolvedId == null) {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Distribution not found: $decodedId"))
             return@get
         }
@@ -35,9 +33,8 @@ fun Route.distributionRoutes(graphDBClient: GraphDBClient) {
         try {
             val distribution =
                 buildDistributionDetail(
-                    graphDBClient = graphDBClient,
-                    entityUri = decodedId,
-                    graphUri = graphUri,
+                    client = client,
+                    entityUri = resolvedId,
                     publicBaseUrl = call.resolvePublicBaseUrl(),
                 )
             call.respond(distribution)
@@ -51,60 +48,41 @@ fun Route.distributionRoutes(graphDBClient: GraphDBClient) {
 }
 
 private fun buildDistributionDetail(
-    graphDBClient: GraphDBClient,
+    client: PropertyGraphClient,
     entityUri: String,
-    graphUri: String,
     publicBaseUrl: String,
 ): DistributionDetail {
-    val query =
-        """
-        $DETAIL_PREFIXES
-        
-        SELECT ?title ?description ?accessUrl ?downloadUrl ?operation
-        FROM <$graphUri>
-        WHERE {
-            <$entityUri> a ?type .
-            OPTIONAL { <$entityUri> dcterms:title ?title }
-            OPTIONAL { <$entityUri> rdfs:label ?titleAlt }
-            OPTIONAL { <$entityUri> dcterms:description ?description }
-            OPTIONAL { <$entityUri> dcat:accessURL ?accessUrl }
-            OPTIONAL { <$entityUri> dcat:downloadURL ?downloadUrl }
-            OPTIONAL { 
-                <$entityUri> dcat:accessService ?service .
-                ?service epos:uid ?operation .
-            }
-        }
-        LIMIT 1
-        """.trimIndent()
+    val result = client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).valueMap(true).limit(1).toList()").firstOrNull()
 
-    val result = graphDBClient.query(query).firstOrNull()
-    val title = result?.get("title") ?: result?.get("titleAlt") ?: extractTypeName(entityUri)
-    val description = result?.get("description")
-    val accessUrl = result?.get("accessUrl") ?: result?.get("downloadUrl")
-    val operation = result?.get("operation")
+    @Suppress("UNCHECKED_CAST")
+    val rawMap = (result?.get("value") as? Map<String, Any?>) ?: (result as? Map<String, Any?>) ?: emptyMap()
+    val v = rawMap.mapValues { (_, vv) -> prop(vv) }
+    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+    val data = v.filterKeys { it !in structuralKeys }
 
-    // Get outbound and inbound relations (always included when present)
+    val title = data["title"] as? String ?: data["label"] as? String ?: extractTypeName(entityUri)
+    val description = data["description"] as? String
+    val accessUrl = data["accessURL"] as? String ?: data["downloadURL"] as? String
+    val operation = data["operation"] as? String
+
     val related =
         buildRelatedResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relatedBy =
         buildRelatedByResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relations =
         buildImmediateRelationGraph(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
@@ -118,4 +96,29 @@ private fun buildDistributionDetail(
         related = related,
         relatedBy = relatedBy,
     )
+}
+
+private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+private fun prop(value: Any?): Any? =
+    when (value) {
+        is List<*> -> if (value.size == 1) value.firstOrNull() else value
+        else -> value
+    }
+
+private fun resolveDistributionVersionId(
+    client: PropertyGraphClient,
+    requestedId: String,
+): String? {
+    val versionId =
+        client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(requestedId)}).values('id').limit(1).toList()")
+            .firstOrNull()?.get("value")?.toString()
+    if (!versionId.isNullOrBlank()) return versionId
+
+    return client.runQuery(
+        """
+        g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
+          .out('CURRENT_VERSION').hasLabel('Version')
+          .values('id').limit(1).toList()
+        """.trimIndent(),
+    ).firstOrNull()?.get("value")?.toString()
 }

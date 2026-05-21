@@ -2,11 +2,8 @@ package org.epos.infrastructure.ktor.routes
 
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.epos.graphdb.Config
+import org.epos.propertygraph.Config
 
-/**
- * Health check and status routes.
- */
 fun Route.healthRoutes() {
     get("/health") {
         call.respond(
@@ -14,8 +11,9 @@ fun Route.healthRoutes() {
                 "status" to "ok",
                 "timestamp" to System.currentTimeMillis(),
                 "config" to mapOf(
-                    "graphdbEndpoint" to Config.GRAPHDB_ENDPOINT,
-                    "repositoryId" to Config.REPOSITORY_ID
+                    "janusgraphHost" to Config.JANUSGRAPH_HOST,
+                    "janusgraphPort" to Config.JANUSGRAPH_PORT,
+                    "traversalSource" to Config.JANUSGRAPH_TRAVERSAL_SOURCE
                 )
             )
         )

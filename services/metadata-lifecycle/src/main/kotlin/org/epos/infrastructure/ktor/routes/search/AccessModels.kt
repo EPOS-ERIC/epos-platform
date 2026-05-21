@@ -32,4 +32,5 @@ data class AccessPropertyValue(
     val type: String? = null,
     val title: String? = null,
     val href: String? = null,
+    val predicateIri: String? = null,
 )

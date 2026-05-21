@@ -31,3 +31,14 @@ data class ImportRevisionFromContentRequest(
     val replaceDraftIfExists: Boolean? = null,
     val dryRun: Boolean? = null,
 )
+
+data class ReconcileRelationsRequest(
+    val dryRun: Boolean? = null,
+    val resourceId: String? = null,
+    val maxVersions: Int? = null,
+    val batchSize: Int? = null,
+)
+
+data class AuditRelationsRequest(
+    val resourceId: String? = null,
+)

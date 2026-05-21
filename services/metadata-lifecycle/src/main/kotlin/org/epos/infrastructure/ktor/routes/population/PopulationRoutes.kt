@@ -9,18 +9,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.Config
-import org.epos.graphdb.services.InitialPopulationService
-import org.epos.graphdb.services.RevisionImportOptions
-import org.epos.graphdb.services.RevisionImportService
-import org.epos.graphdb.services.VersionMode
+import org.epos.propertygraph.Config
+import org.epos.propertygraph.services.population.InitialPopulationService
+import org.epos.propertygraph.services.population.RelationReconciliationService
+import org.epos.propertygraph.services.population.RevisionImportOptions
+import org.epos.propertygraph.services.population.RevisionImportService
+import org.epos.propertygraph.services.population.VersionMode
 
 /**
  * Routes for database population operations.
  */
 fun Route.populationRoutes(
     populationService: InitialPopulationService,
-    revisionImportService: RevisionImportService
+    revisionImportService: RevisionImportService,
+    relationReconciliationService: RelationReconciliationService,
 ) {
     route("/api/v2/admin") {
         
@@ -52,6 +54,92 @@ fun Route.populationRoutes(
                 call.respondPopulationError(
                     message = "Failed to populate database: ${e.message}",
                     details = e.stackTraceToString()
+                )
+            }
+        }
+
+        /**
+         * POST /api/v2/admin/relations/reconcile
+         * Reconciles missing semantic relation edges and backfills legacy edge metadata.
+         */
+        post("/relations/reconcile") {
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = runCatching { call.receive<ReconcileRelationsRequest>() }.getOrNull()
+            val dryRun = request?.dryRun ?: true
+            val resourceId = request?.resourceId?.trim()?.takeIf { it.isNotBlank() }
+            val maxVersions = request?.maxVersions
+            val batchSize = request?.batchSize
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    relationReconciliationService.reconcile(
+                        dryRun = dryRun,
+                        resourceId = resourceId,
+                        maxVersions = maxVersions,
+                        batchSize = batchSize,
+                    )
+                }
+
+                call.respondSuccess(
+                    message = if (dryRun) "Relation reconciliation dry-run completed" else "Relation reconciliation completed",
+                    data = mapOf(
+                        "dryRun" to result.dryRun,
+                        "resourceId" to resourceId,
+                        "versionsScanned" to result.versionsScanned,
+                        "missingEdgesDiscovered" to result.missingEdgesDiscovered,
+                        "edgesCreated" to result.edgesCreated,
+                        "legacyEdgesScanned" to result.legacyEdgesScanned,
+                        "legacyEdgesBackfilled" to result.legacyEdgesBackfilled,
+                        "agent" to actorHeaders.agent,
+                        "group" to actorHeaders.group,
+                    ),
+                )
+            } catch (e: Exception) {
+                call.respondPopulationError(
+                    message = "Failed to reconcile relations: ${e.message}",
+                    details = e.stackTraceToString(),
+                )
+            }
+        }
+
+        /**
+         * POST /api/v2/admin/relations/audit
+         * Audits one resource relation/property cardinality and mixed conceptual/version values.
+         */
+        post("/relations/audit") {
+            val actorHeaders = call.requireActorHeaders() ?: return@post
+            val request = runCatching { call.receive<AuditRelationsRequest>() }.getOrNull()
+            val resourceId = request?.resourceId?.trim()
+            if (resourceId.isNullOrBlank()) {
+                call.respondBadRequest("resourceId is required")
+                return@post
+            }
+
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    relationReconciliationService.auditResource(resourceId)
+                }
+                if (result == null) {
+                    call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Resource not found: $resourceId"))
+                    return@post
+                }
+
+                call.respondSuccess(
+                    message = "Relation audit completed",
+                    data = mapOf(
+                        "resourceId" to result.resourceId,
+                        "resolvedVersionId" to result.resolvedVersionId,
+                        "propertyCounts" to result.propertyCounts,
+                        "relationCandidates" to result.relationCandidates,
+                        "mixedConceptualAndVersionValues" to result.mixedConceptualAndVersionValues,
+                        "agent" to actorHeaders.agent,
+                        "group" to actorHeaders.group,
+                    ),
+                )
+            } catch (e: Exception) {
+                call.respondPopulationError(
+                    message = "Failed to audit relations: ${e.message}",
+                    details = e.stackTraceToString(),
                 )
             }
         }
@@ -103,13 +191,9 @@ fun Route.populationRoutes(
             call.respond(
                 mapOf(
                     "indexUrl" to Config.INDEX_URL,
-                    "graphdbEndpoint" to Config.GRAPHDB_ENDPOINT,
-                    "repositoryId" to Config.REPOSITORY_ID,
-                    "graphs" to mapOf(
-                        "published" to Config.GRAPH_PUBLISHED,
-                        "conceptual" to Config.GRAPH_CONCEPTUAL,
-                        "provenance" to Config.GRAPH_PROVENANCE
-                    )
+                    "janusgraphHost" to Config.JANUSGRAPH_HOST,
+                    "janusgraphPort" to Config.JANUSGRAPH_PORT,
+                    "traversalSource" to Config.JANUSGRAPH_TRAVERSAL_SOURCE
                 )
             )
         }
@@ -206,7 +290,7 @@ fun Route.populationRoutes(
          * Request body: { "content": "@prefix ...", "sourceName": "my-upload" }
          * 
          * This is useful for:
-         * - Uploading TTL content directly without hosting it
+         * - Uploading ttl content directly without hosting it
          * - Testing with small TTL snippets
          * - Programmatic population from other services
          */

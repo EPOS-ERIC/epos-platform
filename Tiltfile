@@ -39,7 +39,9 @@ docker_build(
     ],
 )
 
-dc_resource('graphdb', labels=['infra'])
-dc_resource('graphdb-init', labels=['infra'], resource_deps=['graphdb'])
-dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['graphdb-init'])
+dc_resource('cassandra', labels=['infra'])
+dc_resource('elasticsearch', labels=['infra'])
+dc_resource('janusgraph', labels=['infra'], resource_deps=['cassandra', 'elasticsearch'])
+dc_resource('janusgraph-visualizer', labels=['infra'], resource_deps=['janusgraph'])
+dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['janusgraph'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['metadata-lifecycle-service'])

@@ -1,5 +1,5 @@
 # =============================================================================
-# EPOS GraphDB Configuration - PRODUCTION Profile
+# EPOS JanusGraph Configuration - PRODUCTION Profile
 # =============================================================================
 # This file contains production-specific overrides.
 # Only include settings that differ from application.yaml
@@ -7,14 +7,15 @@
 # Activate with: EPOS_PROFILE=prod or -Depos.profile=prod
 # =============================================================================
 
-# Production GraphDB endpoint
-graphdb:
-  endpoint: "https://graphdb.epos-eu.org"
-  repositoryId: "epos"
-  timeout:
-    connectMs: 15000
-    readMs: 120000
-    writeMs: 120000
+# Production JanusGraph endpoint
+janusgraph:
+  host: "janusgraph.epos-eu.org"
+  port: 8182
+  traversalSource: "g"
+  username: ""
+  password: ""
+  maxConnectionPoolSize: 100
+  connectionTimeoutMs: 15000
 
 # Production data source
 indexUrl: "https://data.epos-eu.org/index.txt"

@@ -1,16 +1,23 @@
-package org.epos.infrastructure.ktor.routes
+package org.epos.infrastructure.ktor.routes.search
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import org.epos.api.models.ErrorResponse
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
+import org.epos.infrastructure.ktor.routes.SoftwareApplicationDetail
+import org.epos.infrastructure.ktor.routes.SoftwareSourceCodeDetail
+import org.epos.infrastructure.ktor.routes.buildImmediateRelationGraph
+import org.epos.infrastructure.ktor.routes.buildRelatedByResources
+import org.epos.infrastructure.ktor.routes.buildRelatedResources
+import org.epos.infrastructure.ktor.routes.extractCategories
+import org.epos.infrastructure.ktor.routes.extractKeywords
+import org.epos.infrastructure.ktor.routes.extractTypeName
+import org.epos.infrastructure.ktor.routes.resolvePublicBaseUrl
+import org.epos.propertygraph.client.PropertyGraphClient
 import java.net.URLDecoder
 
-fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
-    // GET /api/v2/software-application/{id}
+fun Route.softwareRoutes(client: PropertyGraphClient) {
     get("/api/v2/software-application/{id}") {
         val appId = call.parameters["id"]
         if (appId.isNullOrBlank()) {
@@ -25,10 +32,8 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
                 appId
             }
 
-        val graphUri = Config.GRAPH_PUBLISHED
-
-        // Check if software application exists
-        if (!entityExists(graphDBClient, decodedId, graphUri)) {
+        val resolvedId = resolveSoftwareVersionId(client, decodedId)
+        if (resolvedId == null) {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Software application not found: $decodedId"))
             return@get
         }
@@ -36,9 +41,8 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
         try {
             val application =
                 buildSoftwareApplicationDetail(
-                    graphDBClient = graphDBClient,
-                    entityUri = decodedId,
-                    graphUri = graphUri,
+                    client = client,
+                    entityUri = resolvedId,
                     publicBaseUrl = call.resolvePublicBaseUrl(),
                 )
             call.respond(application)
@@ -50,7 +54,6 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
         }
     }
 
-    // GET /api/v2/software-source-code/{id}
     get("/api/v2/software-source-code/{id}") {
         val codeId = call.parameters["id"]
         if (codeId.isNullOrBlank()) {
@@ -65,10 +68,8 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
                 codeId
             }
 
-        val graphUri = Config.GRAPH_PUBLISHED
-
-        // Check if software source code exists
-        if (!entityExists(graphDBClient, decodedId, graphUri)) {
+        val resolvedId = resolveSoftwareVersionId(client, decodedId)
+        if (resolvedId == null) {
             call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Software source code not found: $decodedId"))
             return@get
         }
@@ -76,9 +77,8 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
         try {
             val sourceCode =
                 buildSoftwareSourceCodeDetail(
-                    graphDBClient = graphDBClient,
-                    entityUri = decodedId,
-                    graphUri = graphUri,
+                    client = client,
+                    entityUri = resolvedId,
                     publicBaseUrl = call.resolvePublicBaseUrl(),
                 )
             call.respond(sourceCode)
@@ -92,60 +92,43 @@ fun Route.softwareRoutes(graphDBClient: GraphDBClient) {
 }
 
 private fun buildSoftwareApplicationDetail(
-    graphDBClient: GraphDBClient,
+    client: PropertyGraphClient,
     entityUri: String,
-    graphUri: String,
     publicBaseUrl: String,
 ): SoftwareApplicationDetail {
-    val query =
-        """
-        $DETAIL_PREFIXES
-        
-        SELECT ?title ?description ?downloadUrl
-        FROM <$graphUri>
-        WHERE {
-            <$entityUri> a ?type .
-            OPTIONAL { <$entityUri> dcterms:title|schema:name ?title }
-            OPTIONAL { <$entityUri> rdfs:label ?titleAlt }
-            OPTIONAL { <$entityUri> dcterms:description|schema:description ?description }
-            OPTIONAL { <$entityUri> schema:downloadUrl|schema:installUrl ?downloadUrl }
-        }
-        LIMIT 1
-        """.trimIndent()
+    val result = client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).valueMap(true).limit(1).toList()").firstOrNull()
 
-    val result = graphDBClient.query(query).firstOrNull()
-    val title = result?.get("title") ?: result?.get("titleAlt") ?: extractTypeName(entityUri)
-    val description = result?.get("description")
-    val downloadUrl = result?.get("downloadUrl")
+    @Suppress("UNCHECKED_CAST")
+    val rawMap = (result?.get("value") as? Map<String, Any?>) ?: (result as? Map<String, Any?>) ?: emptyMap()
+    val v = rawMap.mapValues { (_, vv) -> prop(vv) }
+    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+    val data = v.filterKeys { it !in structuralKeys }
 
-    // Get keywords
-    val keywords = extractKeywords(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val title = data["title"] as? String ?: data["name"] as? String ?: extractTypeName(entityUri)
+    val description = data["description"] as? String
+    val downloadUrl = data["downloadUrl"] as? String ?: data["installUrl"] as? String
 
-    // Get categories
-    val categories = extractCategoryLabels(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val keywords = extractKeywords(data).takeIf { it.isNotEmpty() }
+    val categories = extractCategories(data).takeIf { it.isNotEmpty() }
 
-    // Get outbound and inbound relations (always included when present)
     val related =
         buildRelatedResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relatedBy =
         buildRelatedByResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relations =
         buildImmediateRelationGraph(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
@@ -163,62 +146,44 @@ private fun buildSoftwareApplicationDetail(
 }
 
 private fun buildSoftwareSourceCodeDetail(
-    graphDBClient: GraphDBClient,
+    client: PropertyGraphClient,
     entityUri: String,
-    graphUri: String,
     publicBaseUrl: String,
 ): SoftwareSourceCodeDetail {
-    val query =
-        """
-        $DETAIL_PREFIXES
-        
-        SELECT ?title ?description ?programmingLanguage ?repository
-        FROM <$graphUri>
-        WHERE {
-            <$entityUri> a ?type .
-            OPTIONAL { <$entityUri> dcterms:title|schema:name ?title }
-            OPTIONAL { <$entityUri> rdfs:label ?titleAlt }
-            OPTIONAL { <$entityUri> dcterms:description|schema:description ?description }
-            OPTIONAL { <$entityUri> schema:programmingLanguage ?programmingLanguage }
-            OPTIONAL { <$entityUri> schema:codeRepository ?repository }
-        }
-        LIMIT 1
-        """.trimIndent()
+    val result = client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).valueMap(true).limit(1).toList()").firstOrNull()
 
-    val result = graphDBClient.query(query).firstOrNull()
-    val title = result?.get("title") ?: result?.get("titleAlt") ?: extractTypeName(entityUri)
-    val description = result?.get("description")
-    val programmingLanguage = result?.get("programmingLanguage")
-    val repository = result?.get("repository")
+    @Suppress("UNCHECKED_CAST")
+    val rawMap = (result?.get("value") as? Map<String, Any?>) ?: (result as? Map<String, Any?>) ?: emptyMap()
+    val v2 = rawMap.mapValues { (_, vv) -> prop(vv) }
+    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+    val data = v2.filterKeys { it !in structuralKeys }
 
-    // Get keywords
-    val keywords = extractKeywords(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val title = data["title"] as? String ?: data["name"] as? String ?: extractTypeName(entityUri)
+    val description = data["description"] as? String
+    val programmingLanguage = data["programmingLanguage"] as? String
+    val repository = data["codeRepository"] as? String
 
-    // Get categories
-    val categories = extractCategoryLabels(graphDBClient, entityUri, graphUri).takeIf { it.isNotEmpty() }
+    val keywords = extractKeywords(data).takeIf { it.isNotEmpty() }
+    val categories = extractCategories(data).takeIf { it.isNotEmpty() }
 
-    // Get outbound and inbound relations (always included when present)
     val related =
         buildRelatedResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relatedBy =
         buildRelatedByResources(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
     val relations =
         buildImmediateRelationGraph(
-            graphDBClient = graphDBClient,
+            client = client,
             entityUri = entityUri,
-            graphUri = graphUri,
             publicBaseUrl = publicBaseUrl,
         ).takeIf { it.isNotEmpty() }
 
@@ -234,4 +199,29 @@ private fun buildSoftwareSourceCodeDetail(
         related = related,
         relatedBy = relatedBy,
     )
+}
+
+private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+private fun prop(value: Any?): Any? =
+    when (value) {
+        is List<*> -> if (value.size == 1) value.firstOrNull() else value
+        else -> value
+    }
+
+private fun resolveSoftwareVersionId(
+    client: PropertyGraphClient,
+    requestedId: String,
+): String? {
+    val versionId =
+        client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(requestedId)}).values('id').limit(1).toList()")
+            .firstOrNull()?.get("value")?.toString()
+    if (!versionId.isNullOrBlank()) return versionId
+
+    return client.runQuery(
+        """
+        g.V().hasLabel('Conceptual').has('id', ${gStr(requestedId)})
+          .out('CURRENT_VERSION').hasLabel('Version')
+          .values('id').limit(1).toList()
+        """.trimIndent(),
+    ).firstOrNull()?.get("value")?.toString()
 }

@@ -1,22 +1,23 @@
 package org.epos.api.controllers
 
-import org.eclipse.rdf4j.model.impl.LinkedHashModel
-import org.eclipse.rdf4j.model.util.Values
-import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.epos.api.models.*
 import org.epos.api.shacl.ShaclParser
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
-import org.epos.graphdb.services.EntityLifecycleService
-import org.epos.graphdb.services.ProvenanceService
-import org.epos.graphdb.utils.Sparql
+import org.epos.propertygraph.Config
+import org.epos.propertygraph.client.PropertyGraphClient
+import org.epos.propertygraph.services.EntityLifecycleService
+import org.epos.propertygraph.services.ProvenanceService
+import org.epos.propertygraph.utils.UriUtils
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.apache.tinkerpop.gremlin.structure.T
 import java.util.UUID
 
+@Suppress("UNCHECKED_CAST")
 class ResourceController(
-    private val graphDBClient: GraphDBClient,
+    private val client: PropertyGraphClient,
     private val lifecycleService: EntityLifecycleService,
     private val provenanceService: ProvenanceService
 ) {
+    private val mapper = ObjectMapper()
     var resourceTypes: List<ResourceTypeInfo> = listOf()
 
     fun setResourceType(resourceTypes: List<ResourceTypeInfo>) {
@@ -27,66 +28,53 @@ class ResourceController(
         return resourceTypes
     }
 
-    /**
-     * List all entities of a specific type
-     */
     fun listEntities(
         resourceType: String,
         status: String = "published",
         page: Int = 1,
         pageSize: Int = 20
     ): EntityListResponse {
-        val graphUri = getGraphUriForStatus(status)
-        val typeUri = getTypeUri(resourceType)
+        val typeFilter = getTypeUri(resourceType)
 
-        val offset = (page - 1) * pageSize
+        val skip = (page - 1) * pageSize
+        val typePredicate = if (typeFilter.isNotBlank()) ".has('type', ${gStr(typeFilter)})" else ""
+        val results = client.runQuery(
+            """
+            g.V().hasLabel('Version').has('status', ${gStr(status)})
+              .as('v')
+              .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate
+              .as('c')
+              .select('v','c')
+              .by(valueMap(true))
+              .by(valueMap(true))
+              .range($skip, ${skip + pageSize})
+              .toList()
+            """.trimIndent()
+        )
 
-        // Query to get entities
-        val query = """
-            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            PREFIX dcterms: <http://purl.org/dc/terms/>
-            
-            SELECT ?entity ?conceptual
-            FROM <$graphUri>
-            FROM <${Config.GRAPH_PROVENANCE}>
-            WHERE {
-                ?entity rdf:type <$typeUri> .
-                OPTIONAL {
-                    ?entity dcterms:isVersionOf ?conceptual .
-                }
-            }
-            ORDER BY ?entity
-            LIMIT $pageSize
-            OFFSET $offset
-        """.trimIndent()
+        val entities = results.mapNotNull { row ->
+            val v = normalizePropertyMap(row["v"] as? Map<*, *> ?: return@mapNotNull null)
+            val c = normalizePropertyMap(row["c"] as? Map<*, *> ?: return@mapNotNull null)
 
-        val results = graphDBClient.query(query)
+            val versionUri = prop(v["id"]) ?: return@mapNotNull null
+            val conceptualUri = prop(c["id"])
 
-        val entities = results.map { row ->
-            val entityUri = row["entity"] ?: ""
-            val conceptualUri = row["conceptual"]
+            val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+            val dataMap = v.filterKeys { it !in structuralKeys }
+                .mapValues { (_, v2) -> prop(v2) ?: "" }
 
             EntityResponse(
-                uri = entityUri,
+                uri = versionUri,
                 type = resourceType,
                 status = status,
-                properties = getEntityProperties(entityUri, graphUri),
+                properties = dataMap,
                 conceptualUri = conceptualUri
             )
         }
 
-        // Get total count
-        val countQuery = """
-            PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            SELECT (COUNT(?entity) as ?count)
-            FROM <$graphUri>
-            WHERE {
-                ?entity rdf:type <$typeUri> .
-            }
-        """.trimIndent()
-
-        val total = graphDBClient.query(countQuery)
-            .firstOrNull()?.get("count")?.toIntOrNull() ?: 0
+        val countScript =
+            "g.V().hasLabel('Version').has('status', ${gStr(status)}).in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.count().next()"
+        val total = client.runQuery(countScript).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
 
         return EntityListResponse(
             entities = entities,
@@ -96,50 +84,27 @@ class ResourceController(
         )
     }
 
-    /**
-     * Checks whether a string value is a managed URI
-     */
     private fun isManagedUri(value: String): Boolean {
         return value.startsWith("http://") || value.startsWith("https://")
     }
 
-    /**
-     * Extracts resource type from a URI
-     */
     private fun extractResourceTypeFromUri(uri: String): String? {
-        val query = """
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        
-        SELECT ?type
-        WHERE {
-            GRAPH ?g {
-                <$uri> rdf:type ?type .
-            }
-        }
-        LIMIT 1
-    """.trimIndent()
+        val results = client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(uri)}).valueMap(true).toList()")
 
-        try {
-            val results = graphDBClient.query(query)
-            val rdfType = results.firstOrNull()?.get("type")
+        val v = normalizePropertyMap(results.firstOrNull()?.get("value") as? Map<*, *> ?: return null)
+        val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+        val data = v.filterKeys { it !in structuralKeys }
+        val typeValue = data["type"] as? String ?: return null
 
-            if (rdfType != null) {
-                resourceTypes.forEach { resourceType ->
-                    if (resourceType.targetClass.equals(rdfType, ignoreCase = true)) {
-                        return resourceType.name
-                    }
-                }
+        resourceTypes.forEach { resourceType ->
+            if (resourceType.targetClass.equals(typeValue, ignoreCase = true)) {
+                return resourceType.name
             }
-        } catch (e: Exception) {
-            println("⚠️ Warning: Could not retrieve type for URI $uri: ${e.message}")
         }
 
         return null
     }
 
-    /**
-     * Converts a value into EntityReference when it is a managed URI
-     */
     private fun enrichValue(value: Any): Any {
         return when (value) {
             is String -> {
@@ -148,8 +113,8 @@ class ResourceController(
                     if (resourceType != null) {
                         EntityReference(
                             uri = value,
-                            link = "/api/$resourceType/$value",
-                            resourceType = "$resourceType"
+                            link = "/api/v2/$resourceType/${UriUtils.extractConceptualUri(value)}",
+                            resourceType = resourceType
                         )
                     } else {
                         value
@@ -164,47 +129,28 @@ class ResourceController(
         }
     }
 
-    /**
-     * Get a single entity by URI
-     */
     fun getEntity(entityUri: String, status: String = "published", enrichReferences: Boolean = true): EntityResponse? {
-        val graphUri = getGraphUriForStatus(status)
+        val result = client.runQuery(
+            "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', ${gStr(status)}).valueMap(true).limit(1).toList()"
+        ).firstOrNull() ?: return null
 
-        // Check if entity exists
-        val exists = graphDBClient.ask("""
-            ASK {
-                GRAPH <$graphUri> {
-                    <$entityUri> ?p ?o .
-                }
-            }
-        """.trimIndent())
+        val v = normalizePropertyMap(result["value"] as? Map<*, *> ?: return null)
+        val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+        val data = v.filterKeys { it !in structuralKeys }
+            .mapValues { (_, v2) -> prop(v2) ?: "" }
 
-        if (!exists) return null
-
-        val properties = getEntityProperties(entityUri, graphUri)
-
-        // Enrich references if requested
         val enrichedProperties = if (enrichReferences) {
-            properties.mapValues { (_, value) -> enrichValue(value) }
+            data.mapValues { (_, value) -> enrichValue(value) }
         } else {
-            properties
+            data
         }
 
         val typeUri = enrichedProperties["type"] as? String ?: ""
         val resourceType = extractResourceName(typeUri)
 
-        // Get conceptual URI
-        val conceptualQuery = """
-            PREFIX dcterms: <http://purl.org/dc/terms/>
-            SELECT ?conceptual
-            FROM <${Config.GRAPH_PROVENANCE}>
-            WHERE {
-                <$entityUri> dcterms:isVersionOf ?conceptual .
-            }
-        """.trimIndent()
-
-        val conceptualUri = graphDBClient.query(conceptualQuery)
-            .firstOrNull()?.get("conceptual")
+        val conceptualUri = client.runQuery(
+            "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).in('HAS_VERSION').values('id').limit(1).toList()"
+        ).firstOrNull()?.get("value")?.toString()
 
         return EntityResponse(
             uri = entityUri,
@@ -215,71 +161,36 @@ class ResourceController(
         )
     }
 
-    /**
-     * Get entity as RDF in various formats (includes blank nodes)
-     */
-    fun getEntityAsRdf(entityUri: String, status: String = "published", format: org.eclipse.rdf4j.rio.RDFFormat): String {
-        val graphUri = getGraphUriForStatus(status)
-
-        val model = graphDBClient.getSubjectTriples(entityUri, graphUri)
-
-        if (model.isEmpty()) {
-            return ""
-        }
-
-        // Add triples for connected blank nodes.
-        val blankNodes = model.filter {
-            it.`object` is org.eclipse.rdf4j.model.BNode
-        }.map { it.`object` as org.eclipse.rdf4j.model.BNode }
-
-        blankNodes.forEach { bnode ->
-            val bnodeTriples = graphDBClient.repository.connection.use { conn ->
-                val bnModel = org.eclipse.rdf4j.model.impl.LinkedHashModel()
-                conn.getStatements(bnode, null, null, conn.valueFactory.createIRI(graphUri)).forEach {
-                    bnModel.add(it)
-                }
-                bnModel
-            }
-            model.addAll(bnodeTriples)
-        }
-
-        val stringWriter = java.io.StringWriter()
-        org.eclipse.rdf4j.rio.Rio.write(model, stringWriter, format)
-        return stringWriter.toString()
-    }
-
-    /**
-     * Create a new draft entity
-     */
     fun createEntity(request: CreateEntityRequest, agent: String, group: String): ApiResponse {
-        val vf = Values.getValueFactory()
-        val model = LinkedHashModel()
-
-        // Generate URI
         val entityId = UUID.randomUUID().toString()
         val conceptualUri = "${Config.ID_BASE}/${request.type}/$entityId"
         val draftUri = "$conceptualUri/1.0-draft"
 
-        val entityIRI = vf.createIRI(draftUri)
-        val typeIRI = vf.createIRI(getTypeUri(request.type))
+        val typeUri = getTypeUri(request.type)
+        val typeShortName = typeUri.substringAfterLast("/").substringAfterLast("#").lowercase()
 
-        // Add type
-        model.add(entityIRI, RDF.TYPE, typeIRI)
+        val data = request.properties.toMutableMap()
+        data["type"] = typeUri
 
-        // Add properties
-        request.properties.forEach { (key, value) ->
-            val propertyIRI = vf.createIRI(key)
-            addPropertyValue(model, entityIRI, propertyIRI, value)
+        val now = java.time.Instant.now().toString()
+        val propScript = data.entries.joinToString("\n") { (k, v) ->
+            "v.property(${gStr(sanitizeKey(k))}, ${gVal(v)})"
         }
+        client.runWrite(
+            """
+            def c = g.addV('Conceptual').property('id', ${gStr(conceptualUri)}).property('type', ${gStr(typeShortName)}).property('createdAt', ${gStr(now)}).next()
+            def v = g.addV('Version')
+              .property('id', ${gStr(draftUri)})
+              .property('status', 'draft')
+              .property('versionNumber', '1.0')
+              .property('createdAt', ${gStr(now)})
+              .property('updatedAt', ${gStr(now)})
+              .next()
+            $propScript
+            g.V(c.id()).addE('HAS_VERSION').to(V(v.id())).iterate()
+            """.trimIndent()
+        )
 
-        // Add version info
-        model.add(entityIRI, vf.createIRI("http://purl.org/pav/version"), vf.createLiteral("1.0"))
-        model.add(entityIRI, org.eclipse.rdf4j.model.vocabulary.DCTERMS.IS_VERSION_OF, vf.createIRI(conceptualUri))
-
-        // Insert into draft graph
-        graphDBClient.insertIntoGraph(model, Config.GRAPH_DRAFT)
-
-        // Record provenance
         provenanceService.recordDraftCreation(
             newVersionUri = draftUri,
             basedOnVersionUri = draftUri,
@@ -287,11 +198,6 @@ class ResourceController(
             agent = agent,
             group = group
         )
-
-        // Create conceptual entity
-        val conceptualModel = LinkedHashModel()
-        conceptualModel.add(vf.createIRI(conceptualUri), RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Resource"))
-        graphDBClient.insertIntoGraph(conceptualModel, Config.GRAPH_CONCEPTUAL)
 
         return ApiResponse(
             success = true,
@@ -304,49 +210,21 @@ class ResourceController(
         )
     }
 
-    /**
-     * Update an existing draft entity
-     */
     fun updateEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
-        // Check if entity exists in draft
-        val exists = graphDBClient.ask("""
-            ASK {
-                GRAPH <${Config.GRAPH_DRAFT}> {
-                    <$entityUri> ?p ?o .
-                }
-            }
-        """.trimIndent())
+        val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').limit(1).toList()")
 
         if (!exists) {
             return ApiResponse(success = false, message = "Entity not found in draft status")
         }
 
-        // Get existing model
-        val existingModel = graphDBClient.getSubjectTriples(entityUri, Config.GRAPH_DRAFT)
-
-        // Remove old property values (keep type and version info)
-        val vf = Values.getValueFactory()
-        val entityIRI = vf.createIRI(entityUri)
-
-        val propertiesToKeep = setOf(
-            RDF.TYPE.stringValue(),
-            "http://purl.org/pav/version",
-            "http://purl.org/dc/terms/isVersionOf"
-        )
-
-        existingModel.removeIf { statement ->
-            statement.subject == entityIRI && statement.predicate.stringValue() !in propertiesToKeep
-        }
-
-        // Add new properties
-        request.properties.forEach { (key, value) ->
-            val propertyIRI = vf.createIRI(key)
-            addPropertyValue(existingModel, entityIRI, propertyIRI, value)
-        }
-
-        // Delete old and insert new
-        graphDBClient.deleteFromGraph(entityUri, Config.GRAPH_DRAFT)
-        graphDBClient.insertIntoGraph(existingModel, Config.GRAPH_DRAFT)
+        val data = request.properties
+        val now = java.time.Instant.now().toString()
+        val setLines = data.entries.joinToString("\n") { (k, v) -> "v.property(${gStr(sanitizeKey(k))}, ${gVal(v)})" }
+        client.runWrite("""
+            def v = g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').next()
+            $setLines
+            v.property('updatedAt', ${gStr(now)})
+        """.trimIndent())
 
         return ApiResponse(
             success = true,
@@ -355,42 +233,20 @@ class ResourceController(
         )
     }
 
-    /**
-     * Partially update an existing draft entity.
-     * Only the provided properties are replaced; all others are preserved.
-     */
     fun patchEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
-        // Check if entity exists in draft
-        val exists = graphDBClient.ask("""
-            ASK {
-                GRAPH <${Config.GRAPH_DRAFT}> {
-                    <$entityUri> ?p ?o .
-                }
-            }
-        """.trimIndent())
+        val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').limit(1).toList()")
 
         if (!exists) {
             return ApiResponse(success = false, message = "Entity not found in draft status")
         }
 
-        // Get existing model
-        val existingModel = graphDBClient.getSubjectTriples(entityUri, Config.GRAPH_DRAFT)
-
-        val vf = Values.getValueFactory()
-        val entityIRI = vf.createIRI(entityUri)
-
-        // Replace only provided properties
-        request.properties.forEach { (key, value) ->
-            val propertyIRI = vf.createIRI(key)
-            existingModel.removeIf { statement ->
-                statement.subject == entityIRI && statement.predicate == propertyIRI
-            }
-            addPropertyValue(existingModel, entityIRI, propertyIRI, value)
-        }
-
-        // Delete old and insert new
-        graphDBClient.deleteFromGraph(entityUri, Config.GRAPH_DRAFT)
-        graphDBClient.insertIntoGraph(existingModel, Config.GRAPH_DRAFT)
+        val now = java.time.Instant.now().toString()
+        val setLines = request.properties.entries.joinToString("\n") { (k, v) -> "v.property(${gStr(sanitizeKey(k))}, ${gVal(v)})" }
+        client.runWrite("""
+            def v = g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','draft').next()
+            $setLines
+            v.property('updatedAt', ${gStr(now)})
+        """.trimIndent())
 
         return ApiResponse(
             success = true,
@@ -399,9 +255,6 @@ class ResourceController(
         )
     }
 
-    /**
-     * Submit a draft for review
-     */
     fun submitEntity(entityUri: String, agent: String, group: String): ApiResponse {
         lifecycleService.submitDraft(entityUri, agent, group)
 
@@ -412,9 +265,6 @@ class ResourceController(
         )
     }
 
-    /**
-     * Publish a submitted entity
-     */
     fun publishEntity(entityUri: String, agent: String, group: String): ApiResponse {
         lifecycleService.publish(entityUri, agent, group)
 
@@ -426,9 +276,6 @@ class ResourceController(
         )
     }
 
-    /**
-     * Create a new draft from published version
-     */
     fun createNewDraft(conceptualUri: String, newVersion: String, agent: String, group: String): ApiResponse {
         try {
             val draftUri = lifecycleService.createDraft(
@@ -456,9 +303,6 @@ class ResourceController(
         }
     }
 
-    /**
-     * Delete a draft entity
-     */
     fun deleteEntity(entityUri: String): ApiResponse {
         lifecycleService.deleteDraft(entityUri)
 
@@ -468,9 +312,6 @@ class ResourceController(
         )
     }
 
-    /**
-     * Get version history
-     */
     fun getVersionHistory(conceptualUri: String): VersionHistoryResponse {
         val history = provenanceService.getVersionHistory(conceptualUri)
 
@@ -478,11 +319,11 @@ class ResourceController(
             val versionUri = version["version"] ?: ""
             VersionInfo(
                 uri = versionUri,
-                version = extractVersionNumber(versionUri),
+                version = UriUtils.extractVersionNumber(versionUri),
                 timestamp = version["timestamp"] ?: "",
                 agent = version["agent"],
                 group = version["group"],
-                status = determineStatusForVersion(versionUri)
+                status = version["status"] ?: determineStatusForVersion(versionUri)
             )
         }
 
@@ -492,57 +333,12 @@ class ResourceController(
         )
     }
 
-    /**
-     * Determines version status by checking all graphs
-     */
     private fun determineStatusForVersion(versionUri: String): String {
-        val inDraft = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$versionUri> ?p ?o . } }
-        """.trimIndent())
-        if (inDraft) return "draft"
-
-        val inSubmitted = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_SUBMITTED}> { <$versionUri> ?p ?o . } }
-        """.trimIndent())
-        if (inSubmitted) return "submitted"
-
-        val inPublished = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_PUBLISHED}> { <$versionUri> ?p ?o . } }
-        """.trimIndent())
-        if (inPublished) return "published"
-
-        val inArchived = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_ARCHIVED}> { <$versionUri> ?p ?o . } }
-        """.trimIndent())
-        if (inArchived) return "archived"
-
-        val transitionStatus = graphDBClient.query(Sparql.selectLatestTransitionStatus(versionUri))
-            .firstOrNull()
-            ?.get("toStatus")
-            ?.trim()
-            ?.lowercase()
-        if (transitionStatus != null && transitionStatus in setOf("draft", "submitted", "published", "archived")) {
-            return transitionStatus
-        }
-
-        val conceptualUri = graphDBClient.query(Sparql.selectConceptualUri(versionUri))
-            .firstOrNull()
-            ?.get("conceptual")
-        if (conceptualUri != null) {
-            val currentVersion = graphDBClient.query(Sparql.selectCurrentVersion(conceptualUri))
-                .firstOrNull()
-                ?.get("currentVersion")
-            if (currentVersion == versionUri) {
-                return "published"
-            }
-        }
-
-        return "unknown"
+        val result = client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).values('status').limit(1).toList()")
+            .firstOrNull()?.get("value")?.toString()
+        return result?.lowercase() ?: "unknown"
     }
 
-    /**
-     * Submit multiple entities for review (batch operation)
-     */
     fun submitEntityBatch(entityUris: List<String>, agent: String, group: String): BatchOperationResponse {
         val results = entityUris.map { uri ->
             try {
@@ -566,11 +362,7 @@ class ResourceController(
         )
     }
 
-    /**
-     * Publish multiple entities (batch operation with dependency ordering)
-     */
     fun publishEntityBatch(entityUris: List<String>, agent: String, group: String): BatchOperationResponse {
-        // Sort URIs by dependency order (referenced entities first)
         val sortedUris = sortByDependencies(entityUris)
 
         val results = sortedUris.map { uri ->
@@ -596,28 +388,24 @@ class ResourceController(
         )
     }
 
-    /**
-     * Sort entities by dependencies - entities that are referenced by others come first
-     */
     private fun sortByDependencies(entityUris: List<String>): List<String> {
         val dependencyGraph = mutableMapOf<String, MutableSet<String>>()
 
-        // Build dependency graph: entity -> list of entities it depends on
         entityUris.forEach { uri ->
             dependencyGraph[uri] = mutableSetOf()
 
-            val query = """
-            SELECT DISTINCT ?dependency
-            FROM <${Config.GRAPH_SUBMITTED}>
-            WHERE {
-                <$uri> ?p ?dependency .
-                FILTER(isIRI(?dependency))
-            }
-        """.trimIndent()
+            val results = client.runQuery("""
+                g.V().hasLabel('Version').has('id', ${gStr(uri)})
+                  .valueMap(true)
+                  .toList()
+            """.trimIndent())
 
             try {
-                val deps = graphDBClient.query(query)
-                    .mapNotNull { it["dependency"] }
+                val deps = results.flatMap { row ->
+                    val vm = row["value"] as? Map<*, *> ?: return@flatMap emptyList<String>()
+                    vm.values.mapNotNull { prop(it) }
+                }
+                    .filter { it.startsWith("${Config.ID_BASE}/") }
                     .filter { it in entityUris }
 
                 dependencyGraph[uri]?.addAll(deps)
@@ -626,7 +414,6 @@ class ResourceController(
             }
         }
 
-        // Topological sort using Kahn's algorithm
         val sorted = mutableListOf<String>()
         val inDegree = entityUris.associateWith { uri ->
             dependencyGraph.values.count { it.contains(uri) }
@@ -646,57 +433,10 @@ class ResourceController(
             }
         }
 
-        // If there are remaining items (circular dependencies), add them at the end
         val remaining = entityUris.filter { it !in sorted }
         sorted.addAll(remaining)
 
         return sorted
-    }
-
-    // Helper methods
-
-    private fun getGraphUriForStatus(status: String): String = when (status.lowercase()) {
-        "draft" -> Config.GRAPH_DRAFT
-        "submitted" -> Config.GRAPH_SUBMITTED
-        "published" -> Config.GRAPH_PUBLISHED
-        "archived" -> Config.GRAPH_ARCHIVED
-        else -> Config.GRAPH_PUBLISHED
-    }
-
-    private fun addPropertyValue(
-        model: org.eclipse.rdf4j.model.Model,
-        subject: org.eclipse.rdf4j.model.Resource,
-        predicate: org.eclipse.rdf4j.model.IRI,
-        value: Any
-    ) {
-        val vf = Values.getValueFactory()
-        when (value) {
-            is String -> {
-                if (isManagedUri(value)) {
-                    model.add(subject, predicate, vf.createIRI(value))
-                } else {
-                    model.add(subject, predicate, vf.createLiteral(value))
-                }
-            }
-            is Number -> model.add(subject, predicate, vf.createLiteral(value.toString()))
-            is Boolean -> model.add(subject, predicate, vf.createLiteral(value))
-            is Map<*, *> -> {
-                val blankNode = vf.createBNode()
-                model.add(subject, predicate, blankNode)
-                value.forEach { (nestedKey, nestedValue) ->
-                    if (nestedKey is String && nestedValue != null) {
-                        val nestedPredicate = vf.createIRI(nestedKey)
-                        addPropertyValue(model, blankNode, nestedPredicate, nestedValue)
-                    }
-                }
-            }
-            is List<*> -> {
-                value.filterNotNull().forEach { listValue ->
-                    addPropertyValue(model, subject, predicate, listValue)
-                }
-            }
-            else -> model.add(subject, predicate, vf.createLiteral(value.toString()))
-        }
     }
 
     fun getTypeUri(resourceType: String): String {
@@ -708,205 +448,39 @@ class ResourceController(
         return ""
     }
 
-    private fun getEntityProperties(entityUri: String, graphUri: String): Map<String, Any> {
-        val query = """
-            SELECT ?p ?o
-            FROM <$graphUri>
-            WHERE {
-                <$entityUri> ?p ?o .
-            }
-        """.trimIndent()
-
-        val results = graphDBClient.query(query)
-        val properties = mutableMapOf<String, Any>()
-
-        results.forEach { row ->
-            val predicate = row["p"] ?: ""
-            val value = row["o"] ?: ""
-
-            val propertyName = extractPropertyName(predicate)
-
-            // If the value is a blank node (genid-...), expand it.
-            if (value.startsWith("genid-") || value.startsWith("_:")) {
-                val blankNodeProperties = getBlankNodeProperties(value, graphUri)
-                properties[propertyName] = blankNodeProperties
-            } else {
-                properties[propertyName] = value
-            }
-        }
-
-        return properties
-    }
-
-    /**
-     * Retrieves properties of a blank node
-     */
-    private fun getBlankNodeProperties(blankNodeId: String, graphUri: String): Map<String, Any> {
-        val query = """
-            SELECT ?p ?o
-            FROM <$graphUri>
-            WHERE {
-                ?bn ?p ?o .
-                FILTER(str(?bn) = "$blankNodeId")
-            }
-        """.trimIndent()
-
-        val results = graphDBClient.query(query)
-        val properties = mutableMapOf<String, Any>()
-
-        results.forEach { row ->
-            val predicate = row["p"] ?: ""
-            val value = row["o"] ?: ""
-
-            val propertyName = extractPropertyName(predicate)
-
-            // Recurse into nested blank nodes.
-            if (value.startsWith("genid-") || value.startsWith("_:")) {
-                properties[propertyName] = getBlankNodeProperties(value, graphUri)
-            } else {
-                properties[propertyName] = value
-            }
-        }
-
-        return properties
-    }
-
-    /**
-     * Get enhanced label for a group by trying multiple sources
-     */
-    private fun getEnhancedGroupLabel(groupKey: String, groupResults: List<Map<String, String>>): String? {
-        // First, try to get label from the query results
-        val labelFromQuery = groupResults.firstOrNull()?.get("groupLabel")
-        if (!labelFromQuery.isNullOrBlank()) {
-            return labelFromQuery
-        }
-
-        // If not found, query across all graphs for the label
-        val labelQuery = """
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX schema: <http://schema.org/>
-        
-        SELECT ?label
-        WHERE {
-            GRAPH ?g {
-                <$groupKey> ?labelProp ?label .
-                FILTER(?labelProp IN (rdfs:label, skos:prefLabel, foaf:name, dcterms:title, schema:name))
-            }
-        }
-        LIMIT 1
-    """.trimIndent()
-
-        return try {
-            graphDBClient.query(labelQuery).firstOrNull()?.get("label")
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Resolve property name to full URI
-     * Supports common property names and full URIs
-     */
-    private fun resolvePropertyUri(propertyName: String): String {
-        // If already a full URI, return as-is
-        if (propertyName.startsWith("http://") || propertyName.startsWith("https://")) {
-            return propertyName
-        }
-
-        // Common property mappings
-        val commonProperties = mapOf(
-            // Organization-related
-            "publisher" to "http://purl.org/dc/terms/publisher",
-            "provider" to "http://purl.org/dc/terms/provider",
-            "creator" to "http://purl.org/dc/terms/creator",
-
-            // Classification
-            "theme" to "http://www.w3.org/ns/dcat#theme",
-            "concept" to "http://www.w3.org/ns/dcat#theme",
-            "category" to "http://www.w3.org/ns/dcat#theme",
-            "keyword" to "http://www.w3.org/ns/dcat#keyword",
-
-            // SKOS relationships
-            "broader" to "http://www.w3.org/2004/02/skos/core#broader",
-            "narrower" to "http://www.w3.org/2004/02/skos/core#narrower",
-            "related" to "http://www.w3.org/2004/02/skos/core#related",
-            "inScheme" to "http://www.w3.org/2004/02/skos/core#inScheme",
-            "topConceptOf" to "http://www.w3.org/2004/02/skos/core#topConceptOf",
-            "conceptscheme" to "http://www.w3.org/2004/02/skos/core#inScheme",
-
-            // Contact and relations
-            "contactPoint" to "http://www.w3.org/ns/dcat#contactPoint",
-            "qualifiedRelation" to "http://www.w3.org/ns/dcat#qualifiedRelation",
-
-            // Spatial and temporal
-            "spatial" to "http://purl.org/dc/terms/spatial",
-            "spatialResolutionInMeters" to "http://www.w3.org/ns/dcat#spatialResolutionInMeters",
-            "temporal" to "http://purl.org/dc/terms/temporal",
-            "temporalResolution" to "http://www.w3.org/ns/dcat#temporalResolution",
-
-            // Resource metadata
-            "type" to "http://purl.org/dc/terms/type",
-            "format" to "http://purl.org/dc/terms/format",
-            "mediaType" to "http://www.w3.org/ns/dcat#mediaType",
-            "license" to "http://purl.org/dc/terms/license",
-            "rights" to "http://purl.org/dc/terms/rights",
-            "accessRights" to "http://purl.org/dc/terms/accessRights",
-            "language" to "http://purl.org/dc/terms/language",
-
-            // Standards and conformance
-            "conformsTo" to "http://purl.org/dc/terms/conformsTo",
-            "standard" to "http://purl.org/dc/terms/conformsTo",
-
-            // Relationships
-            "isPartOf" to "http://purl.org/dc/terms/isPartOf",
-            "hasPart" to "http://purl.org/dc/terms/hasPart",
-            "relation" to "http://purl.org/dc/terms/relation",
-            "isReferencedBy" to "http://purl.org/dc/terms/isReferencedBy",
-            "references" to "http://purl.org/dc/terms/references",
-
-            // DCAT-specific
-            "distribution" to "http://www.w3.org/ns/dcat#distribution",
-            "landingPage" to "http://www.w3.org/ns/dcat#landingPage",
-            "endpointURL" to "http://www.w3.org/ns/dcat#endpointURL",
-            "servesDataset" to "http://www.w3.org/ns/dcat#servesDataset",
-            "accessService" to "http://www.w3.org/ns/dcat#accessService"
-        )
-
-        return commonProperties[propertyName.lowercase()]
-            ?: "http://purl.org/dc/terms/$propertyName"
-    }
-
-    /**
-     * Get conceptual URI for a resource
-     */
-    private fun getConceptualUriForResource(resourceUri: String): String? {
-        val query = """
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        SELECT ?conceptual
-        FROM <${Config.GRAPH_PROVENANCE}>
-        WHERE {
-            <$resourceUri> dcterms:isVersionOf ?conceptual .
-        }
-    """.trimIndent()
-
-        return graphDBClient.query(query).firstOrNull()?.get("conceptual")
-    }
-
     private fun extractResourceName(uri: String): String {
         val parts = uri.split("/", "#")
         return parts.lastOrNull()?.lowercase() ?: "resource"
     }
 
-    private fun extractPropertyName(uri: String): String {
-        val parts = uri.split("/", "#")
-        return parts.lastOrNull() ?: "property"
+    private fun sanitizeKey(key: String): String {
+        val reserved = setOf("id", "label", "key", "value", "property")
+        return if (key in reserved) "pg_$key" else key
     }
 
-    private fun extractVersionNumber(uri: String): String {
-        val regex = Regex(".*/v?([0-9.]+)(-draft)?$")
-        return regex.find(uri)?.groupValues?.get(1) ?: "1.0"
+    private fun prop(value: Any?): String? = when (value) {
+        null -> null
+        is List<*> -> value.firstOrNull()?.toString()
+        else -> value.toString()
+    }
+
+    private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+
+    private fun gVal(value: Any): String = when (value) {
+        is String -> gStr(value)
+        is Number, is Boolean -> value.toString()
+        is List<*>, is Map<*, *> -> gStr(mapper.writeValueAsString(value))
+        else -> gStr(value.toString())
+    }
+
+    private fun normalizePropertyMap(raw: Map<*, *>): Map<String, Any?> {
+        return raw.entries.associate { (key, value) ->
+            val normalizedKey =
+                when (key) {
+                    is T -> key.name
+                    else -> key?.toString() ?: ""
+                }
+            normalizedKey to value
+        }
     }
 }

@@ -1,566 +1,347 @@
 package org.epos.infrastructure.ktor.routes
 
 import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.epos.graphdb.Config
-import org.epos.graphdb.client.GraphDBClient
+import org.epos.api.models.ErrorResponse
+import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
-/**
- * OAI-PMH 2.0 compliant endpoint for metadata harvesting.
- * 
- * Supported verbs:
- * - Identify: Information about the repository
- * - ListMetadataFormats: Available metadata formats
- * - ListSets: Available sets (resource types)
- * - ListIdentifiers: List record identifiers with optional filtering
- * - ListRecords: List full records with optional filtering
- * - GetRecord: Get a single record by identifier
- * 
- * Supported metadata formats:
- * - oai_dc: Dublin Core (required by OAI-PMH)
- * - dcat: DCAT-AP RDF/XML
- * - epos_dcat_ap: EPOS-DCAT-AP Turtle
- */
-fun Route.oaiPmhRoutes(graphDBClient: GraphDBClient, shaclService: ShaclService) {
+fun Route.oaiPmhRoutes(
+    client: PropertyGraphClient,
+    shaclService: ShaclService
+) {
     route("/oai-pmh") {
-        
         get {
-            handleOaiRequest(call, graphDBClient, shaclService)
+            handleOaiRequest(call, client, shaclService)
         }
-        
+
         post {
-            handleOaiRequest(call, graphDBClient, shaclService)
+            handleOaiRequest(call, client, shaclService)
         }
     }
 }
 
 private suspend fun handleOaiRequest(
-    call: io.ktor.server.application.ApplicationCall,
-    graphDBClient: GraphDBClient,
+    call: ApplicationCall,
+    client: PropertyGraphClient,
     shaclService: ShaclService
 ) {
     val params =
         if (call.request.httpMethod == HttpMethod.Post) {
-            val formParameters =
-                runCatching { call.receiveParameters() }
-                    .getOrElse { Parameters.Empty }
-            Parameters.build {
-                call.request.queryParameters.forEach { key, values ->
-                    values.forEach { append(key, it) }
-                }
-                formParameters.forEach { key, values ->
-                    values.forEach { append(key, it) }
-                }
-            }
+            runCatching { call.receiveParameters() }.getOrDefault(call.request.queryParameters)
         } else {
             call.request.queryParameters
         }
+
     val verb = params["verb"]
-    
-    val responseDate = ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT)
-    val baseUrl = "${Config.BASE_URI}/oai-pmh"
-    
-    when (verb) {
-        "Identify" -> {
-            val xml = buildIdentifyResponse(responseDate, baseUrl)
-            call.respondText(xml, ContentType.Text.Xml)
-        }
-        "ListMetadataFormats" -> {
-            val identifier = params["identifier"]
-            val xml = buildListMetadataFormatsResponse(responseDate, baseUrl, identifier)
-            call.respondText(xml, ContentType.Text.Xml)
-        }
-        "ListSets" -> {
-            val xml = buildListSetsResponse(responseDate, baseUrl, shaclService)
-            call.respondText(xml, ContentType.Text.Xml)
-        }
-        "ListIdentifiers" -> {
-            val metadataPrefix = params["metadataPrefix"]
-            if (metadataPrefix == null) {
-                call.respondText(
-                    buildErrorResponse(responseDate, baseUrl, "badArgument", "Missing required argument: metadataPrefix"),
-                    ContentType.Text.Xml
-                )
-                return
-            }
-            if (!isValidMetadataPrefix(metadataPrefix)) {
-                call.respondText(
-                    buildErrorResponse(responseDate, baseUrl, "cannotDisseminateFormat", "Unknown metadata format: $metadataPrefix"),
-                    ContentType.Text.Xml
-                )
-                return
-            }
-            val set = params["set"]
-            val from = params["from"]
-            val until = params["until"]
-            val resumptionToken = params["resumptionToken"]
-            
-            val xml = buildListIdentifiersResponse(
-                responseDate, baseUrl, graphDBClient, 
-                metadataPrefix, set, from, until, resumptionToken
-            )
-            call.respondText(xml, ContentType.Text.Xml)
-        }
-        "ListRecords" -> {
-            val metadataPrefix = params["metadataPrefix"]
-            if (metadataPrefix == null) {
-                call.respondText(
-                    buildErrorResponse(responseDate, baseUrl, "badArgument", "Missing required argument: metadataPrefix"),
-                    ContentType.Text.Xml
-                )
-                return
-            }
-            if (!isValidMetadataPrefix(metadataPrefix)) {
-                call.respondText(
-                    buildErrorResponse(responseDate, baseUrl, "cannotDisseminateFormat", "Unknown metadata format: $metadataPrefix"),
-                    ContentType.Text.Xml
-                )
-                return
-            }
-            val set = params["set"]
-            val from = params["from"]
-            val until = params["until"]
-            val resumptionToken = params["resumptionToken"]
-            
-            val xml = buildListRecordsResponse(
-                responseDate, baseUrl, graphDBClient,
-                metadataPrefix, set, from, until, resumptionToken
-            )
-            call.respondText(xml, ContentType.Text.Xml)
-        }
-        "GetRecord" -> {
-            val identifier = params["identifier"]
-            val metadataPrefix = params["metadataPrefix"]
-            
-            if (identifier == null || metadataPrefix == null) {
-                call.respondText(
-                    buildErrorResponse(responseDate, baseUrl, "badArgument", "Missing required arguments: identifier and metadataPrefix"),
-                    ContentType.Text.Xml
-                )
-                return
-            }
-            if (!isValidMetadataPrefix(metadataPrefix)) {
-                call.respondText(
-                    buildErrorResponse(responseDate, baseUrl, "cannotDisseminateFormat", "Unknown metadata format: $metadataPrefix"),
-                    ContentType.Text.Xml
-                )
-                return
-            }
-            
-            val xml = buildGetRecordResponse(
-                responseDate, baseUrl, graphDBClient,
-                identifier, metadataPrefix
-            )
-            call.respondText(xml, ContentType.Text.Xml)
-        }
-        null -> {
-            call.respondText(
-                buildErrorResponse(responseDate, baseUrl, "badVerb", "Missing verb argument"),
-                ContentType.Text.Xml
-            )
-        }
+    if (verb.isNullOrBlank()) {
+        call.respond(HttpStatusCode.BadRequest, buildOaiError("badVerb", "verb parameter is required"))
+        return
+    }
+
+    val response = when (verb) {
+        "Identify" -> handleIdentify()
+        "ListMetadataFormats" -> handleListMetadataFormats()
+        "ListSets" -> handleListSets(shaclService)
+        "ListIdentifiers" -> handleListIdentifiers(client, params, shaclService)
+        "ListRecords" -> handleListRecords(client, params, shaclService)
+        "GetRecord" -> handleGetRecord(client, params, shaclService)
         else -> {
-            call.respondText(
-                buildErrorResponse(responseDate, baseUrl, "badVerb", "Unknown verb: $verb"),
-                ContentType.Text.Xml
-            )
+            call.respond(HttpStatusCode.BadRequest, buildOaiError("badVerb", "Unknown verb: $verb"))
+            return
         }
     }
+
+    call.respondText(response, ContentType.Text.Xml)
 }
 
-private fun isValidMetadataPrefix(prefix: String): Boolean {
-    return prefix in listOf("oai_dc", "dcat", "epos_dcat_ap")
-}
-
-private fun buildIdentifyResponse(responseDate: String, baseUrl: String): String {
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request verb="Identify">$baseUrl</request>
-  <Identify>
-    <repositoryName>EPOS Metadata Repository</repositoryName>
-    <baseURL>$baseUrl</baseURL>
-    <protocolVersion>2.0</protocolVersion>
-    <adminEmail>support@epos-eu.org</adminEmail>
-    <earliestDatestamp>2020-01-01T00:00:00Z</earliestDatestamp>
-    <deletedRecord>no</deletedRecord>
-    <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
-    <description>
-      <oai-identifier xmlns="http://www.openarchives.org/OAI/2.0/oai-identifier"
-                      xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai-identifier http://www.openarchives.org/OAI/2.0/oai-identifier.xsd">
-        <scheme>oai</scheme>
-        <repositoryIdentifier>epos-eu.org</repositoryIdentifier>
-        <delimiter>:</delimiter>
-        <sampleIdentifier>oai:epos-eu.org:dataset/12345</sampleIdentifier>
-      </oai-identifier>
-    </description>
-  </Identify>
-</OAI-PMH>"""
-}
-
-private fun buildListMetadataFormatsResponse(responseDate: String, baseUrl: String, identifier: String?): String {
-    val requestAttrs = if (identifier != null) {
-        """verb="ListMetadataFormats" identifier="$identifier""""
-    } else {
-        """verb="ListMetadataFormats""""
+private fun handleIdentify(): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <request verb=\"Identify\">http://localhost:8080/oai-pmh</request>\n")
+        append("  <Identify>\n")
+        append("    <repositoryName>EPOS Metadata Repository</repositoryName>\n")
+        append("    <baseURL>http://localhost:8080/oai-pmh</baseURL>\n")
+        append("    <protocolVersion>2.0</protocolVersion>\n")
+        append("    <adminEmail>admin@epos-eu.org</adminEmail>\n")
+        append("    <earliestDatestamp>2024-01-01T00:00:00Z</earliestDatestamp>\n")
+        append("    <deletedRecord>no</deletedRecord>\n")
+        append("    <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>\n")
+        append("  </Identify>\n")
+        append("</OAI-PMH>")
     }
-    
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request $requestAttrs>$baseUrl</request>
-  <ListMetadataFormats>
-    <metadataFormat>
-      <metadataPrefix>oai_dc</metadataPrefix>
-      <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>
-      <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/</metadataNamespace>
-    </metadataFormat>
-    <metadataFormat>
-      <metadataPrefix>dcat</metadataPrefix>
-      <schema>http://www.w3.org/ns/dcat#</schema>
-      <metadataNamespace>http://www.w3.org/ns/dcat#</metadataNamespace>
-    </metadataFormat>
-    <metadataFormat>
-      <metadataPrefix>epos_dcat_ap</metadataPrefix>
-      <schema>https://www.epos-eu.org/epos-dcat-ap</schema>
-      <metadataNamespace>https://www.epos-eu.org/epos-dcat-ap#</metadataNamespace>
-    </metadataFormat>
-  </ListMetadataFormats>
-</OAI-PMH>"""
 }
 
-private fun buildListSetsResponse(responseDate: String, baseUrl: String, shaclService: ShaclService): String {
+private fun handleListMetadataFormats(): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <request verb=\"ListMetadataFormats\">http://localhost:8080/oai-pmh</request>\n")
+        append("  <ListMetadataFormats>\n")
+        append("    <metadataFormat>\n")
+        append("      <metadataPrefix>oai_dc</metadataPrefix>\n")
+        append("      <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>\n")
+        append("      <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/</metadataNamespace>\n")
+        append("    </metadataFormat>\n")
+        append("    <metadataFormat>\n")
+        append("      <metadataPrefix>dcat</metadataPrefix>\n")
+        append("      <schema>http://www.w3.org/ns/dcat</schema>\n")
+        append("      <metadataNamespace>http://www.w3.org/ns/dcat#</metadataNamespace>\n")
+        append("    </metadataFormat>\n")
+        append("  </ListMetadataFormats>\n")
+        append("</OAI-PMH>")
+    }
+}
+
+private fun handleListSets(shaclService: ShaclService): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
     val resourceTypes = shaclService.getResourceTypes()
-    
     val setsXml = resourceTypes.joinToString("\n    ") { type ->
-        """<set>
-      <setSpec>${type.name}</setSpec>
-      <setName>${type.name.replaceFirstChar { it.uppercase() }}</setName>
-    </set>"""
+        "<set>\n      <setSpec>${type.name}</setSpec>\n      <setName>${type.name}</setName>\n    </set>"
     }
-    
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request verb="ListSets">$baseUrl</request>
-  <ListSets>
-    $setsXml
-  </ListSets>
-</OAI-PMH>"""
+
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <request verb=\"ListSets\">http://localhost:8080/oai-pmh</request>\n")
+        append("  <ListSets>\n")
+        append("    $setsXml\n")
+        append("  </ListSets>\n")
+        append("</OAI-PMH>")
+    }
 }
 
-private fun buildListIdentifiersResponse(
-    responseDate: String,
-    baseUrl: String,
-    graphDBClient: GraphDBClient,
-    metadataPrefix: String,
+private fun handleListIdentifiers(
+    client: PropertyGraphClient,
+    params: Parameters,
+    shaclService: ShaclService
+): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+    val set = params["set"]
+
+    val results = fetchPublishedRecords(client, set, shaclService)
+
+    val identifiersXml = results.joinToString("\n    ") { record ->
+        "<header identifier=\"${record.id.escapeXml()}\" datestamp=\"${record.datestamp}\" status=\"available\"/>"
+    }
+
+    val setAttr = set?.let { " set=\"$it\"" } ?: ""
+
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <request verb=\"ListIdentifiers\"$setAttr>http://localhost:8080/oai-pmh</request>\n")
+        append("  <ListIdentifiers>\n")
+        append("    $identifiersXml\n")
+        append("  </ListIdentifiers>\n")
+        append("</OAI-PMH>")
+    }
+}
+
+private fun handleListRecords(
+    client: PropertyGraphClient,
+    params: Parameters,
+    shaclService: ShaclService
+): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+    val set = params["set"]
+    val metadataPrefix = params["metadataPrefix"] ?: "oai_dc"
+
+    val results = fetchPublishedRecords(client, set, shaclService)
+
+    val recordsXml = results.joinToString("\n    ") { record ->
+        val metadata = formatMetadata(record, metadataPrefix)
+        "<record>\n      <header identifier=\"${record.id.escapeXml()}\" datestamp=\"${record.datestamp}\" status=\"available\"/>\n      <metadata>\n        $metadata\n      </metadata>\n    </record>"
+    }
+
+    val setAttr = set?.let { " set=\"$it\"" } ?: ""
+
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <request verb=\"ListRecords\" metadataPrefix=\"$metadataPrefix\"$setAttr>http://localhost:8080/oai-pmh</request>\n")
+        append("  <ListRecords>\n")
+        append("    $recordsXml\n")
+        append("  </ListRecords>\n")
+        append("</OAI-PMH>")
+    }
+}
+
+private fun handleGetRecord(
+    client: PropertyGraphClient,
+    params: Parameters,
+    shaclService: ShaclService
+): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+    val identifier = params["identifier"]
+    val metadataPrefix = params["metadataPrefix"] ?: "oai_dc"
+
+    if (identifier.isNullOrBlank()) {
+        return buildOaiError("badArgument", "identifier parameter is required")
+    }
+
+    val record = fetchRecordById(client, identifier)
+    if (record == null) {
+        return buildOaiError("idDoesNotExist", "Record not found: $identifier")
+    }
+
+    val metadata = formatMetadata(record, metadataPrefix)
+
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <request verb=\"GetRecord\" identifier=\"${identifier.escapeXml()}\" metadataPrefix=\"$metadataPrefix\">http://localhost:8080/oai-pmh</request>\n")
+        append("  <GetRecord>\n")
+        append("    <record>\n")
+        append("      <header identifier=\"${record.id.escapeXml()}\" datestamp=\"${record.datestamp}\" status=\"available\"/>\n")
+        append("      <metadata>\n")
+        append("        $metadata\n")
+        append("      </metadata>\n")
+        append("    </record>\n")
+        append("  </GetRecord>\n")
+        append("</OAI-PMH>")
+    }
+}
+
+private data class OaiRecord(
+    val id: String,
+    val datestamp: String,
+    val title: String?,
+    val description: String?,
+    val type: String,
+    val data: Map<String, Any?>
+)
+
+private fun fetchPublishedRecords(
+    client: PropertyGraphClient,
     set: String?,
-    from: String?,
-    until: String?,
-    resumptionToken: String?
-): String {
-    // Parse resumption token for pagination
-    val offset = resumptionToken?.toIntOrNull() ?: 0
-    val limit = 100
-    
-    // Build SPARQL query
-    val typeFilter = if (set != null) {
-        "?s a ?type . FILTER(CONTAINS(LCASE(STR(?type)), \"${set.lowercase()}\"))"
-    } else {
-        "?s a ?type ."
-    }
-    
-    val dateFilter = buildDateFilter(from, until)
-    
-    val query = """
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        SELECT DISTINCT ?s ?type ?modified
-        FROM <${Config.GRAPH_PUBLISHED}>
-        WHERE {
-            $typeFilter
-            OPTIONAL { ?s dcterms:modified ?modified }
-            $dateFilter
+    shaclService: ShaclService
+): List<OaiRecord> {
+    val typeFilter: String? = if (set != null) {
+        val typeInfo = shaclService.getResourceTypes().find { it.name == set }
+        typeInfo?.targetClass
+    } else null
+
+    val results = client.runQuery("""
+        g.V().hasLabel('Conceptual').as('c').out('CURRENT_VERSION').hasLabel('Version').has('status','published').as('v')
+          .select('c','v').by(valueMap(true)).by(valueMap(true)).toList()
+    """.trimIndent())
+        .filter { row ->
+            if (typeFilter == null || typeFilter.isBlank()) return@filter true
+            val c = row["c"] as? Map<*, *> ?: return@filter false
+            prop(c["type"]) == typeFilter
         }
-        ORDER BY ?s
-        LIMIT $limit
-        OFFSET $offset
-    """.trimIndent()
-    
-    val results = graphDBClient.query(query)
-    
-    val headersXml = results.joinToString("\n    ") { row ->
-        val identifier = "oai:epos-eu.org:${extractLocalId(row["s"] ?: "")}"
-        val datestamp = row["modified"] ?: responseDate
-        val setSpec = extractSetSpec(row["type"] ?: "")
-        
-        """<header>
-      <identifier>$identifier</identifier>
-      <datestamp>$datestamp</datestamp>
-      <setSpec>$setSpec</setSpec>
-    </header>"""
+        .take(100)
+
+    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+    return results.mapNotNull { row ->
+        val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
+        val id = prop(c["id"]) ?: return@mapNotNull null
+        val v = row["v"] as? Map<*, *> ?: return@mapNotNull null
+        val data = v.filterKeys { it is String && it !in structuralKeys }
+            .mapKeys { (k, _) -> k as String }
+            .mapValues { (_, vv) -> propAny(vv) }
+        OaiRecord(
+            id = id,
+            datestamp = (prop(v["updatedAt"]) ?: "2024-01-01T00:00:00Z").take(19) + "Z",
+            title = data["title"] as? String,
+            description = data["description"] as? String,
+            type = prop(c["type"]) ?: "Resource",
+            data = data
+        )
     }
-    
-    val resumption = if (results.size == limit) {
-        """<resumptionToken>${offset + limit}</resumptionToken>"""
-    } else {
-        ""
+}
+
+private fun fetchRecordById(client: PropertyGraphClient, identifier: String): OaiRecord? {
+    val result = client.runQuery("""
+        g.V().hasLabel('Conceptual').has('id', ${gStr(identifier)}).as('c')
+          .out('CURRENT_VERSION').hasLabel('Version').has('status','published').as('v')
+          .select('c','v').by(valueMap(true)).by(valueMap(true)).limit(1).toList()
+    """.trimIndent()).firstOrNull() ?: return null
+
+    val c = result["c"] as? Map<*, *> ?: return null
+    val id = prop(c["id"]) ?: return null
+    val v = result["v"] as? Map<*, *> ?: return null
+    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+    val data = v.filterKeys { it is String && it !in structuralKeys }
+        .mapKeys { (k, _) -> k as String }
+        .mapValues { (_, vv) -> propAny(vv) }
+    return OaiRecord(
+        id = id,
+        datestamp = (prop(v["updatedAt"]) ?: "2024-01-01T00:00:00Z").take(19) + "Z",
+        title = data["title"] as? String,
+        description = data["description"] as? String,
+        type = prop(c["type"]) ?: "Resource",
+        data = data
+    )
+}
+
+private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
+private fun prop(value: Any?): String? = when (value) {
+    is List<*> -> value.firstOrNull()?.toString()
+    else -> value?.toString()
+}
+private fun propAny(value: Any?): Any? =
+    when (value) {
+        is List<*> -> if (value.size == 1) value.firstOrNull() else value
+        else -> value
     }
-    
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request verb="ListIdentifiers" metadataPrefix="$metadataPrefix"${set?.let { """ set="$it"""" } ?: ""}>$baseUrl</request>
-  <ListIdentifiers>
-    $headersXml
-    $resumption
-  </ListIdentifiers>
-</OAI-PMH>"""
-}
 
-private fun buildListRecordsResponse(
-    responseDate: String,
-    baseUrl: String,
-    graphDBClient: GraphDBClient,
-    metadataPrefix: String,
-    set: String?,
-    from: String?,
-    until: String?,
-    resumptionToken: String?
-): String {
-    val offset = resumptionToken?.toIntOrNull() ?: 0
-    val limit = 50
-    
-    val typeFilter = if (set != null) {
-        "?s a ?type . FILTER(CONTAINS(LCASE(STR(?type)), \"${set.lowercase()}\"))"
-    } else {
-        "?s a ?type ."
+private fun formatMetadata(record: OaiRecord, metadataPrefix: String): String {
+    return when (metadataPrefix) {
+        "oai_dc" -> formatOaiDc(record)
+        "dcat" -> formatDcat(record)
+        else -> formatOaiDc(record)
     }
-    
-    val dateFilter = buildDateFilter(from, until)
-    
-    val query = """
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        
-        SELECT DISTINCT ?s ?type ?title ?description ?modified ?creator ?subject
-        FROM <${Config.GRAPH_PUBLISHED}>
-        WHERE {
-            $typeFilter
-            OPTIONAL { ?s dcterms:title ?title }
-            OPTIONAL { ?s dcterms:description ?description }
-            OPTIONAL { ?s dcterms:modified ?modified }
-            OPTIONAL { ?s dcterms:creator ?creator }
-            OPTIONAL { ?s dcat:keyword ?subject }
-            $dateFilter
-        }
-        ORDER BY ?s
-        LIMIT $limit
-        OFFSET $offset
-    """.trimIndent()
-    
-    val results = graphDBClient.query(query)
-    
-    val recordsXml = results.joinToString("\n    ") { row ->
-        buildRecordXml(row, metadataPrefix, responseDate)
-    }
-    
-    val resumption = if (results.size == limit) {
-        """<resumptionToken>${offset + limit}</resumptionToken>"""
-    } else {
-        ""
-    }
-    
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request verb="ListRecords" metadataPrefix="$metadataPrefix"${set?.let { """ set="$it"""" } ?: ""}>$baseUrl</request>
-  <ListRecords>
-    $recordsXml
-    $resumption
-  </ListRecords>
-</OAI-PMH>"""
 }
 
-private fun buildGetRecordResponse(
-    responseDate: String,
-    baseUrl: String,
-    graphDBClient: GraphDBClient,
-    identifier: String,
-    metadataPrefix: String
-): String {
-    // Extract the actual URI from OAI identifier
-    val entityUri = identifier.removePrefix("oai:epos-eu.org:")
-    val fullUri = if (entityUri.startsWith("http")) entityUri else "${Config.BASE_URI}/$entityUri"
-    
-    val query = """
-        PREFIX dcterms: <http://purl.org/dc/terms/>
-        PREFIX dcat: <http://www.w3.org/ns/dcat#>
-        
-        SELECT ?type ?title ?description ?modified ?creator ?subject
-        FROM <${Config.GRAPH_PUBLISHED}>
-        WHERE {
-            <$fullUri> a ?type .
-            OPTIONAL { <$fullUri> dcterms:title ?title }
-            OPTIONAL { <$fullUri> dcterms:description ?description }
-            OPTIONAL { <$fullUri> dcterms:modified ?modified }
-            OPTIONAL { <$fullUri> dcterms:creator ?creator }
-            OPTIONAL { <$fullUri> dcat:keyword ?subject }
-        }
-        LIMIT 1
-    """.trimIndent()
-    
-    val results = graphDBClient.query(query)
-    
-    if (results.isEmpty()) {
-        return buildErrorResponse(responseDate, baseUrl, "idDoesNotExist", "No record found for identifier: $identifier")
-    }
-    
-    val row = results.first().toMutableMap()
-    row["s"] = fullUri
-    
-    val recordXml = buildRecordXml(row, metadataPrefix, responseDate)
-    
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request verb="GetRecord" identifier="$identifier" metadataPrefix="$metadataPrefix">$baseUrl</request>
-  <GetRecord>
-    $recordXml
-  </GetRecord>
-</OAI-PMH>"""
+private fun formatOaiDc(record: OaiRecord): String {
+    val title = record.title?.let { "<dc:title>${it.escapeXml()}</dc:title>" } ?: ""
+    val description = record.description?.let { "<dc:description>${it.escapeXml()}</dc:description>" } ?: ""
+    val identifier = "<dc:identifier>${record.id.escapeXml()}</dc:identifier>"
+    val type = "<dc:type>${record.type.escapeXml()}</dc:type>"
+
+    return "<oai_dc:dc xmlns:oai_dc=\"http://www.openarchives.org/OAI/2.0/oai_dc/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n" +
+        "        $title\n" +
+        "        $description\n" +
+        "        $identifier\n" +
+        "        $type\n" +
+        "      </oai_dc:dc>"
 }
 
-private fun buildRecordXml(row: Map<String, String>, metadataPrefix: String, responseDate: String): String {
-    val identifier = "oai:epos-eu.org:${extractLocalId(row["s"] ?: "")}"
-    val datestamp = row["modified"] ?: responseDate
-    val setSpec = extractSetSpec(row["type"] ?: "")
-    
-    val metadata = when (metadataPrefix) {
-        "oai_dc" -> buildDublinCoreMetadata(row)
-        "dcat" -> buildDcatMetadata(row)
-        "epos_dcat_ap" -> buildEposDcatApMetadata(row)
-        else -> buildDublinCoreMetadata(row)
-    }
-    
-    return """<record>
-      <header>
-        <identifier>$identifier</identifier>
-        <datestamp>$datestamp</datestamp>
-        <setSpec>$setSpec</setSpec>
-      </header>
-      <metadata>
-        $metadata
-      </metadata>
-    </record>"""
+private fun formatDcat(record: OaiRecord): String {
+    return "<dcat:Catalog xmlns:dcat=\"http://www.w3.org/ns/dcat#\" xmlns:dcterms=\"http://purl.org/dc/terms/\">\n" +
+        "        <dcterms:title>${record.title?.escapeXml() ?: record.id.escapeXml()}</dcterms:title>\n" +
+        "        <dcterms:identifier>${record.id.escapeXml()}</dcterms:identifier>\n" +
+        "      </dcat:Catalog>"
 }
 
-private fun buildDublinCoreMetadata(row: Map<String, String>): String {
-    val title = escapeXml(row["title"] ?: "")
-    val description = escapeXml(row["description"] ?: "")
-    val creator = escapeXml(row["creator"] ?: "")
-    val subject = escapeXml(row["subject"] ?: "")
-    val identifier = escapeXml(row["s"] ?: "")
-    val type = extractSetSpec(row["type"] ?: "")
-    
-    return """<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
-                  xmlns:dc="http://purl.org/dc/elements/1.1/"
-                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-          ${if (title.isNotEmpty()) "<dc:title>$title</dc:title>" else ""}
-          ${if (creator.isNotEmpty()) "<dc:creator>$creator</dc:creator>" else ""}
-          ${if (subject.isNotEmpty()) "<dc:subject>$subject</dc:subject>" else ""}
-          ${if (description.isNotEmpty()) "<dc:description>$description</dc:description>" else ""}
-          <dc:identifier>$identifier</dc:identifier>
-          <dc:type>$type</dc:type>
-        </oai_dc:dc>"""
-}
-
-private fun buildDcatMetadata(row: Map<String, String>): String {
-    val uri = row["s"] ?: ""
-    val title = escapeXml(row["title"] ?: "")
-    val description = escapeXml(row["description"] ?: "")
-    
-    return """<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-                xmlns:dcat="http://www.w3.org/ns/dcat#"
-                xmlns:dcterms="http://purl.org/dc/terms/">
-          <dcat:Resource rdf:about="$uri">
-            ${if (title.isNotEmpty()) "<dcterms:title>$title</dcterms:title>" else ""}
-            ${if (description.isNotEmpty()) "<dcterms:description>$description</dcterms:description>" else ""}
-          </dcat:Resource>
-        </rdf:RDF>"""
-}
-
-private fun buildEposDcatApMetadata(row: Map<String, String>): String {
-    val uri = row["s"] ?: ""
-    val type = row["type"] ?: ""
-    val title = escapeXml(row["title"] ?: "")
-    val description = escapeXml(row["description"] ?: "")
-    
-    return """<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-                xmlns:dcat="http://www.w3.org/ns/dcat#"
-                xmlns:dcterms="http://purl.org/dc/terms/"
-                xmlns:epos="https://www.epos-eu.org/epos-dcat-ap#">
-          <rdf:Description rdf:about="$uri">
-            <rdf:type rdf:resource="$type"/>
-            ${if (title.isNotEmpty()) "<dcterms:title>$title</dcterms:title>" else ""}
-            ${if (description.isNotEmpty()) "<dcterms:description>$description</dcterms:description>" else ""}
-          </rdf:Description>
-        </rdf:RDF>"""
-}
-
-private fun buildErrorResponse(responseDate: String, baseUrl: String, code: String, message: String): String {
-    return """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-  <responseDate>$responseDate</responseDate>
-  <request>$baseUrl</request>
-  <error code="$code">$message</error>
-</OAI-PMH>"""
-}
-
-private fun buildDateFilter(from: String?, until: String?): String {
-    val filters = mutableListOf<String>()
-    if (from != null) {
-        filters.add("FILTER(!BOUND(?modified) || ?modified >= \"$from\"^^xsd:dateTime)")
-    }
-    if (until != null) {
-        filters.add("FILTER(!BOUND(?modified) || ?modified <= \"$until\"^^xsd:dateTime)")
-    }
-    return filters.joinToString(" ")
-}
-
-private fun extractLocalId(uri: String): String {
-    return uri.substringAfterLast("/").substringAfterLast("#")
-}
-
-private fun extractSetSpec(typeUri: String): String {
-    return typeUri.substringAfterLast("/").substringAfterLast("#").lowercase()
-}
-
-private fun escapeXml(text: String): String {
-    return text
-        .replace("&", "&amp;")
+private fun String.escapeXml(): String =
+    this.replace("&", "&amp;")
         .replace("<", "&lt;")
         .replace(">", "&gt;")
         .replace("\"", "&quot;")
         .replace("'", "&apos;")
+
+private fun buildOaiError(code: String, message: String): String {
+    val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
+    return buildString {
+        append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+        append("<OAI-PMH xmlns=\"http://www.openarchives.org/OAI/2.0/\">\n")
+        append("  <responseDate>$now</responseDate>\n")
+        append("  <error code=\"$code\">$message</error>\n")
+        append("</OAI-PMH>")
+    }
 }
