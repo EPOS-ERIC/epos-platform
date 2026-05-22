@@ -139,8 +139,8 @@ var resourceTypeMatrix = map[api.ResourceType]metadataclient.ResourceType{
 	api.DatasetType:             metadataclient.DATASET,
 	api.SoftwareApplicationType: metadataclient.SOFTWAREAPPLICATION,
 	api.SoftwareSourceCodeType:  metadataclient.SOFTWARESOURCECODE,
-	api.Organization:            metadataclient.ORGANIZATION,
-	api.WebService:              metadataclient.WEBSERVICE,
+	api.OrganizationType:        metadataclient.ORGANIZATION,
+	api.WebserviceType:          metadataclient.WEBSERVICE,
 }
 
 func toMetadataResourceType(t api.ResourceType) (metadataclient.ResourceType, error) {

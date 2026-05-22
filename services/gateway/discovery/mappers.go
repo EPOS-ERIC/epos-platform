@@ -43,13 +43,13 @@ func mapGenericItem(item metadataclient.GenericSearchItem) (api.SearchItem, erro
 	}
 
 	switch resourceType {
-	case api.Organization:
+	case api.OrganizationType:
 		return api.OrganizationItem{BaseSearchItem: baseItem}, nil
 	case api.SoftwareApplicationType:
 		return api.SoftwareApplicationItem{BaseSearchItem: baseItem}, nil
 	case api.SoftwareSourceCodeType:
 		return api.SoftwareSourceCodeItem{BaseSearchItem: baseItem}, nil
-	case api.WebService:
+	case api.WebserviceType:
 		return api.WebServiceItem{BaseSearchItem: baseItem}, nil
 	default:
 		return nil, fmt.Errorf("unsupported gateway resource type: %q", resourceType)

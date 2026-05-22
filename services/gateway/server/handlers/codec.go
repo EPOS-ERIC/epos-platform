@@ -34,9 +34,10 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
-	writeJSON(w, status, api.ErrorResponse{
-		ErrorCode:    code,
-		ErrorMessage: message,
+	writeJSON(w, status, api.Problem{
+		Title:  code,
+		Status: status,
+		Detail: message,
 	})
 }
 
