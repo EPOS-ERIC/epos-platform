@@ -9,7 +9,7 @@ const (
 	SoftwareApplicationType ResourceType = "software-application"
 	SoftwareSourceCodeType  ResourceType = "software-source-code"
 	Organization            ResourceType = "organization"
-	WebService              ResourceType = "web-service"
+	WebService              ResourceType = "webservice"
 )
 
 func (t ResourceType) IsValid() bool {

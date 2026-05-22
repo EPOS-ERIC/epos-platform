@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
@@ -17,7 +18,7 @@ type SearchParams struct {
 	SpatialFilter    string
 	DateFrom         time.Time
 	DateTo           time.Time
-	ServiceProviders []string
+	Providers        []string
 	VersioningStatus []api.VersioningStatus
 	Keywords         []string
 }
@@ -76,8 +77,8 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	if !p.DateTo.IsZero() {
 		req = req.DateTo(p.DateTo)
 	}
-	if len(p.ServiceProviders) > 0 {
-		req = req.ServiceProvider(p.ServiceProviders)
+	if len(p.Providers) > 0 {
+		req = req.ServiceProvider(p.Providers)
 	}
 	if len(versioningStatus) > 0 {
 		req = req.VersioningStatus(versioningStatus)
@@ -105,8 +106,11 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 	log.Debug("metadataclient search response", "response", resp)
 
 	searchResp := api.SearchResponse{
-		Total: int(resp.Total),
-		Items: []api.SearchItem{},
+		PageNumber: int(params.PageNumber),
+		PageSize:   int(params.PageSize),
+		Total:      int(resp.Total),
+		TotalPages: totalPages(int(resp.Total), int(params.PageSize)),
+		Items:      []api.SearchItem{},
 	}
 	for _, item := range resp.Items {
 		searchItem, err := toAPISearchItem(item)
@@ -119,6 +123,14 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 	}
 
 	return searchResp, nil
+}
+
+func totalPages(total, pageSize int) int {
+	if total == 0 {
+		return 0
+	}
+
+	return int(math.Ceil(float64(total) / float64(pageSize)))
 }
 
 // enumMapping defines the canonical source-of-truth for ResourceType conversions.

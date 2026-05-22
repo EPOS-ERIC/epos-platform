@@ -95,7 +95,7 @@ func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {
 		SpatialFilter:    query.Get("spatialFilter"),
 		DateFrom:         dateFrom,
 		DateTo:           dateTo,
-		ServiceProviders: parseCSVStrings(query, "serviceProvider"),
+		Providers:        parseCSVStrings(query, "provider"),
 		VersioningStatus: versioningStatus,
 		Keywords:         parseCSVStrings(query, "keywords"),
 	}

@@ -29,3 +29,11 @@ func (s *Service) GetSoftwareApplicationByID() error {
 func (s *Service) GetSoftwareSourceCodeByID() error {
 	return domain.ErrNotImplemented
 }
+
+func (s *Service) GetWebserviceByID() error {
+	return domain.ErrNotImplemented
+}
+
+func (s *Service) GetOrganizationByID() error {
+	return domain.ErrNotImplemented
+}

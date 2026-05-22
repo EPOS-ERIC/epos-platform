@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
@@ -10,17 +11,7 @@ import (
 func mapDatasetItem(dataset metadataclient.DatasetSearchItem) (api.DatasetItem, error) {
 	name, err := getField[string](dataset.Fields, "name")
 	if err != nil {
-		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
-	}
-
-	provider, err := getField[string](dataset.Fields, "publisher")
-	if err != nil {
-		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
-	}
-
-	concepts, err := getField[string](dataset.Fields, "theme")
-	if err != nil {
-		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
+		return api.DatasetItem{}, fmt.Errorf("get dataset name: %w", err)
 	}
 
 	return api.DatasetItem{
@@ -28,38 +19,46 @@ func mapDatasetItem(dataset metadataclient.DatasetSearchItem) (api.DatasetItem, 
 			Type: api.DatasetType,
 			ID:   dataset.Id,
 			Name: name,
-			// TODO: we have to build this in the right way, pointing to the details endpoint of the gateway, not the metadataclient
-			Href: "TODO",
+			Href: buildGatewayHref(api.DatasetType, dataset.Id),
 		},
-		// TODO: check if this should be an array of strings or just a single string. from the metadataclient it looks we only get a single string but in theory the publishers can be more than 1?
-		DataProviders: []string{provider},
-		Concepts:      []string{concepts},
-		// TODO: see how to do this, in theory we should get it from the search, but maybe we decided to fetch from the details? TBD
-		Operations: []string{},
 	}, nil
 }
 
-func mapGenericItem(item metadataclient.GenericSearchItem) (api.BaseSearchItem, error) {
+func mapGenericItem(item metadataclient.GenericSearchItem) (api.SearchItem, error) {
 	name, err := getField[string](item.Fields, "name")
 	if err != nil {
-		return api.BaseSearchItem{}, fmt.Errorf("TODO: %w", err)
-	}
-
-	baseItem := api.BaseSearchItem{
-		ID:   item.Id,
-		Name: name,
-		// TODO: we have to build this in the right way, pointing to the details endpoint of the gateway, not the metadataclient
-		Href: "TODO",
+		return nil, fmt.Errorf("get generic item name: %w", err)
 	}
 
 	resourceType, err := fromMetadataResourceType(metadataclient.ResourceType(item.GetType()))
 	if err != nil {
-		return api.BaseSearchItem{}, err
+		return nil, err
 	}
 
-	baseItem.Type = resourceType
+	baseItem := api.BaseSearchItem{
+		Type: resourceType,
+		ID:   item.Id,
+		Name: name,
+		Href: buildGatewayHref(resourceType, item.Id),
+	}
 
-	return baseItem, nil
+	switch resourceType {
+	case api.Organization:
+		return api.OrganizationItem{BaseSearchItem: baseItem}, nil
+	case api.SoftwareApplicationType:
+		return api.SoftwareApplicationItem{BaseSearchItem: baseItem}, nil
+	case api.SoftwareSourceCodeType:
+		return api.SoftwareSourceCodeItem{BaseSearchItem: baseItem}, nil
+	case api.WebService:
+		return api.WebServiceItem{BaseSearchItem: baseItem}, nil
+	default:
+		return nil, fmt.Errorf("unsupported gateway resource type: %q", resourceType)
+	}
+}
+
+// TODO: this should probably be done better?
+func buildGatewayHref(resourceType api.ResourceType, id string) string {
+	return strings.TrimPrefix(fmt.Sprintf("v1/%s/%s", resourceType, id), "/")
 }
 
 func getField[T any](fields map[string]any, key string) (T, error) {

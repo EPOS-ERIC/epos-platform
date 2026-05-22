@@ -33,3 +33,11 @@ func (h *Resources) GetSoftwareApplicationByID(w http.ResponseWriter, _ *http.Re
 func (h *Resources) GetSoftwareSourceCodeByID(w http.ResponseWriter, _ *http.Request) {
 	writeNotImplemented(w)
 }
+
+func (h *Resources) GetWebserviceByID(w http.ResponseWriter, _ *http.Request) {
+	writeNotImplemented(w)
+}
+
+func (h *Resources) GetOrganizationByID(w http.ResponseWriter, _ *http.Request) {
+	writeNotImplemented(w)
+}
