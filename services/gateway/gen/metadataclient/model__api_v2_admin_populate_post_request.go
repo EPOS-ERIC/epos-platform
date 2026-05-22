@@ -15,36 +15,34 @@ import (
 	"encoding/json"
 )
 
-// checks if the ApiV2AdminPopulateFilePostRequest type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &ApiV2AdminPopulateFilePostRequest{}
+// checks if the ApiV2AdminPopulatePostRequest type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &ApiV2AdminPopulatePostRequest{}
 
-// ApiV2AdminPopulateFilePostRequest struct for ApiV2AdminPopulateFilePostRequest
-type ApiV2AdminPopulateFilePostRequest struct {
-	// URL to a TTL file
-	Url *string `json:"url,omitempty"`
-	// Local filesystem path to a TTL file
+// ApiV2AdminPopulatePostRequest struct for ApiV2AdminPopulatePostRequest
+type ApiV2AdminPopulatePostRequest struct {
+	Url  *string `json:"url,omitempty"`
 	Path *string `json:"path,omitempty"`
 }
 
-// NewApiV2AdminPopulateFilePostRequest instantiates a new ApiV2AdminPopulateFilePostRequest object
+// NewApiV2AdminPopulatePostRequest instantiates a new ApiV2AdminPopulatePostRequest object
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewApiV2AdminPopulateFilePostRequest() *ApiV2AdminPopulateFilePostRequest {
-	this := ApiV2AdminPopulateFilePostRequest{}
+func NewApiV2AdminPopulatePostRequest() *ApiV2AdminPopulatePostRequest {
+	this := ApiV2AdminPopulatePostRequest{}
 	return &this
 }
 
-// NewApiV2AdminPopulateFilePostRequestWithDefaults instantiates a new ApiV2AdminPopulateFilePostRequest object
+// NewApiV2AdminPopulatePostRequestWithDefaults instantiates a new ApiV2AdminPopulatePostRequest object
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewApiV2AdminPopulateFilePostRequestWithDefaults() *ApiV2AdminPopulateFilePostRequest {
-	this := ApiV2AdminPopulateFilePostRequest{}
+func NewApiV2AdminPopulatePostRequestWithDefaults() *ApiV2AdminPopulatePostRequest {
+	this := ApiV2AdminPopulatePostRequest{}
 	return &this
 }
 
 // GetUrl returns the Url field value if set, zero value otherwise.
-func (o *ApiV2AdminPopulateFilePostRequest) GetUrl() string {
+func (o *ApiV2AdminPopulatePostRequest) GetUrl() string {
 	if o == nil || IsNil(o.Url) {
 		var ret string
 		return ret
@@ -54,7 +52,7 @@ func (o *ApiV2AdminPopulateFilePostRequest) GetUrl() string {
 
 // GetUrlOk returns a tuple with the Url field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ApiV2AdminPopulateFilePostRequest) GetUrlOk() (*string, bool) {
+func (o *ApiV2AdminPopulatePostRequest) GetUrlOk() (*string, bool) {
 	if o == nil || IsNil(o.Url) {
 		return nil, false
 	}
@@ -62,7 +60,7 @@ func (o *ApiV2AdminPopulateFilePostRequest) GetUrlOk() (*string, bool) {
 }
 
 // HasUrl returns a boolean if a field has been set.
-func (o *ApiV2AdminPopulateFilePostRequest) HasUrl() bool {
+func (o *ApiV2AdminPopulatePostRequest) HasUrl() bool {
 	if o != nil && !IsNil(o.Url) {
 		return true
 	}
@@ -71,12 +69,12 @@ func (o *ApiV2AdminPopulateFilePostRequest) HasUrl() bool {
 }
 
 // SetUrl gets a reference to the given string and assigns it to the Url field.
-func (o *ApiV2AdminPopulateFilePostRequest) SetUrl(v string) {
+func (o *ApiV2AdminPopulatePostRequest) SetUrl(v string) {
 	o.Url = &v
 }
 
 // GetPath returns the Path field value if set, zero value otherwise.
-func (o *ApiV2AdminPopulateFilePostRequest) GetPath() string {
+func (o *ApiV2AdminPopulatePostRequest) GetPath() string {
 	if o == nil || IsNil(o.Path) {
 		var ret string
 		return ret
@@ -86,7 +84,7 @@ func (o *ApiV2AdminPopulateFilePostRequest) GetPath() string {
 
 // GetPathOk returns a tuple with the Path field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ApiV2AdminPopulateFilePostRequest) GetPathOk() (*string, bool) {
+func (o *ApiV2AdminPopulatePostRequest) GetPathOk() (*string, bool) {
 	if o == nil || IsNil(o.Path) {
 		return nil, false
 	}
@@ -94,7 +92,7 @@ func (o *ApiV2AdminPopulateFilePostRequest) GetPathOk() (*string, bool) {
 }
 
 // HasPath returns a boolean if a field has been set.
-func (o *ApiV2AdminPopulateFilePostRequest) HasPath() bool {
+func (o *ApiV2AdminPopulatePostRequest) HasPath() bool {
 	if o != nil && !IsNil(o.Path) {
 		return true
 	}
@@ -103,11 +101,11 @@ func (o *ApiV2AdminPopulateFilePostRequest) HasPath() bool {
 }
 
 // SetPath gets a reference to the given string and assigns it to the Path field.
-func (o *ApiV2AdminPopulateFilePostRequest) SetPath(v string) {
+func (o *ApiV2AdminPopulatePostRequest) SetPath(v string) {
 	o.Path = &v
 }
 
-func (o ApiV2AdminPopulateFilePostRequest) MarshalJSON() ([]byte, error) {
+func (o ApiV2AdminPopulatePostRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
@@ -115,7 +113,7 @@ func (o ApiV2AdminPopulateFilePostRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(toSerialize)
 }
 
-func (o ApiV2AdminPopulateFilePostRequest) ToMap() (map[string]interface{}, error) {
+func (o ApiV2AdminPopulatePostRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	if !IsNil(o.Url) {
 		toSerialize["url"] = o.Url
@@ -126,38 +124,38 @@ func (o ApiV2AdminPopulateFilePostRequest) ToMap() (map[string]interface{}, erro
 	return toSerialize, nil
 }
 
-type NullableApiV2AdminPopulateFilePostRequest struct {
-	value *ApiV2AdminPopulateFilePostRequest
+type NullableApiV2AdminPopulatePostRequest struct {
+	value *ApiV2AdminPopulatePostRequest
 	isSet bool
 }
 
-func (v NullableApiV2AdminPopulateFilePostRequest) Get() *ApiV2AdminPopulateFilePostRequest {
+func (v NullableApiV2AdminPopulatePostRequest) Get() *ApiV2AdminPopulatePostRequest {
 	return v.value
 }
 
-func (v *NullableApiV2AdminPopulateFilePostRequest) Set(val *ApiV2AdminPopulateFilePostRequest) {
+func (v *NullableApiV2AdminPopulatePostRequest) Set(val *ApiV2AdminPopulatePostRequest) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableApiV2AdminPopulateFilePostRequest) IsSet() bool {
+func (v NullableApiV2AdminPopulatePostRequest) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableApiV2AdminPopulateFilePostRequest) Unset() {
+func (v *NullableApiV2AdminPopulatePostRequest) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableApiV2AdminPopulateFilePostRequest(val *ApiV2AdminPopulateFilePostRequest) *NullableApiV2AdminPopulateFilePostRequest {
-	return &NullableApiV2AdminPopulateFilePostRequest{value: val, isSet: true}
+func NewNullableApiV2AdminPopulatePostRequest(val *ApiV2AdminPopulatePostRequest) *NullableApiV2AdminPopulatePostRequest {
+	return &NullableApiV2AdminPopulatePostRequest{value: val, isSet: true}
 }
 
-func (v NullableApiV2AdminPopulateFilePostRequest) MarshalJSON() ([]byte, error) {
+func (v NullableApiV2AdminPopulatePostRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableApiV2AdminPopulateFilePostRequest) UnmarshalJSON(src []byte) error {
+func (v *NullableApiV2AdminPopulatePostRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

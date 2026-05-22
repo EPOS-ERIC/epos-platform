@@ -21,38 +21,40 @@ type ResourceType string
 
 // List of ResourceType
 const (
-	ADDRESS             ResourceType = "address"
-	AGENT               ResourceType = "agent"
-	ANNOTATION          ResourceType = "annotation"
-	APIDOCUMENTATION    ResourceType = "apidocumentation"
-	CATALOG             ResourceType = "catalog"
-	CATALOGRECORD       ResourceType = "catalogrecord"
-	CONCEPT             ResourceType = "concept"
-	CONCEPTSCHEME       ResourceType = "conceptscheme"
-	CONTACTPOINT        ResourceType = "contactpoint"
-	CONTROLACTION       ResourceType = "controlaction"
-	CREATIVEWORK        ResourceType = "creativework"
-	DATASET             ResourceType = "dataset"
-	DISTRIBUTION        ResourceType = "distribution"
-	EQUIPMENT           ResourceType = "equipment"
-	FACILITY            ResourceType = "facility"
-	IDENTIFIER          ResourceType = "identifier"
-	IRITEMPLATE         ResourceType = "iritemplate"
-	IRITEMPLATEMAPPING  ResourceType = "iritemplatemapping"
-	LOCATION            ResourceType = "location"
-	OPERATION           ResourceType = "operation"
-	ORGANIZATION        ResourceType = "organization"
-	PERIODOFTIME        ResourceType = "periodoftime"
-	PERSON              ResourceType = "person"
-	POSTALADDRESS       ResourceType = "postaladdress"
-	PROJECT             ResourceType = "project"
-	PROPERTYVALUE       ResourceType = "propertyvalue"
-	PUBLICATION         ResourceType = "publication"
-	QUANTITATIVEVALUE   ResourceType = "quantitativevalue"
-	SERVICE             ResourceType = "service"
-	SOFTWAREAPPLICATION ResourceType = "softwareapplication"
-	SOFTWARESOURCECODE  ResourceType = "softwaresourcecode"
-	WEBSERVICE          ResourceType = "webservice"
+	ADDRESS                ResourceType = "address"
+	AGENT                  ResourceType = "agent"
+	ANNOTATION             ResourceType = "annotation"
+	APIDOCUMENTATION       ResourceType = "apidocumentation"
+	CATALOG                ResourceType = "catalog"
+	CATALOGRECORD          ResourceType = "catalogrecord"
+	CONCEPT                ResourceType = "concept"
+	CONCEPTSCHEME          ResourceType = "conceptscheme"
+	CONTACTPOINT           ResourceType = "contactpoint"
+	CONTACTPOINTTYPE       ResourceType = "contactpointtype"
+	CONTROLACTION          ResourceType = "controlaction"
+	CREATIVEWORK           ResourceType = "creativework"
+	DATASET                ResourceType = "dataset"
+	DATEORDATETIMEDATATYPE ResourceType = "dateordatetimedatatype"
+	DISTRIBUTION           ResourceType = "distribution"
+	EQUIPMENT              ResourceType = "equipment"
+	FACILITY               ResourceType = "facility"
+	IDENTIFIER             ResourceType = "identifier"
+	IRITEMPLATE            ResourceType = "iritemplate"
+	IRITEMPLATEMAPPING     ResourceType = "iritemplatemapping"
+	LOCATION               ResourceType = "location"
+	OPERATION              ResourceType = "operation"
+	ORGANIZATION           ResourceType = "organization"
+	PERIODOFTIME           ResourceType = "periodoftime"
+	PERSON                 ResourceType = "person"
+	POSTALADDRESS          ResourceType = "postaladdress"
+	PROJECT                ResourceType = "project"
+	PROPERTYVALUE          ResourceType = "propertyvalue"
+	PUBLICATION            ResourceType = "publication"
+	QUANTITATIVEVALUE      ResourceType = "quantitativevalue"
+	SERVICE                ResourceType = "service"
+	SOFTWAREAPPLICATION    ResourceType = "softwareapplication"
+	SOFTWARESOURCECODE     ResourceType = "softwaresourcecode"
+	WEBSERVICE             ResourceType = "webservice"
 )
 
 // All allowed values of ResourceType enum
@@ -66,9 +68,11 @@ var AllowedResourceTypeEnumValues = []ResourceType{
 	"concept",
 	"conceptscheme",
 	"contactpoint",
+	"contactpointtype",
 	"controlaction",
 	"creativework",
 	"dataset",
+	"dateordatetimedatatype",
 	"distribution",
 	"equipment",
 	"facility",

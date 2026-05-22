@@ -22,9 +22,24 @@ import (
 
 type LifecycleAPI interface {
 	/*
+		ApiV2ResourceTypeIdDiscardPost Discard draft/submitted entity
+
+		Move an entity from DRAFT or SUBMITTED to DISCARDED. Path id may be a conceptual id, version id, or identifier.
+
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@param resourceType
+		@param id
+		@return ApiApiV2ResourceTypeIdDiscardPostRequest
+	*/
+	ApiV2ResourceTypeIdDiscardPost(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdDiscardPostRequest
+
+	// ApiV2ResourceTypeIdDiscardPostExecute executes the request
+	ApiV2ResourceTypeIdDiscardPostExecute(r ApiApiV2ResourceTypeIdDiscardPostRequest) (*http.Response, error)
+
+	/*
 		ApiV2ResourceTypeIdDraftPost Create new draft from published
 
-		Creates a new draft version from a published entity
+		Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
@@ -39,7 +54,7 @@ type LifecycleAPI interface {
 	/*
 		ApiV2ResourceTypeIdPublishPost Publish entity
 
-		Publish an entity from SUBMITTED to PUBLISHED
+		Publish an entity from SUBMITTED to PUBLISHED. Path id may be a conceptual id, version id, or identifier, but it must resolve to a SUBMITTED version.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
@@ -54,7 +69,7 @@ type LifecycleAPI interface {
 	/*
 		ApiV2ResourceTypeIdSubmitPost Submit for review
 
-		Move an entity from DRAFT to SUBMITTED
+		Move an entity from DRAFT to SUBMITTED. Path id may be a conceptual id, version id, or identifier, but it must resolve to a DRAFT version.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
@@ -69,6 +84,122 @@ type LifecycleAPI interface {
 
 // LifecycleAPIService LifecycleAPI service
 type LifecycleAPIService service
+
+type ApiApiV2ResourceTypeIdDiscardPostRequest struct {
+	ctx          context.Context
+	ApiService   LifecycleAPI
+	xAgent       *string
+	xGroup       *string
+	resourceType string
+	id           string
+}
+
+func (r ApiApiV2ResourceTypeIdDiscardPostRequest) XAgent(xAgent string) ApiApiV2ResourceTypeIdDiscardPostRequest {
+	r.xAgent = &xAgent
+	return r
+}
+
+func (r ApiApiV2ResourceTypeIdDiscardPostRequest) XGroup(xGroup string) ApiApiV2ResourceTypeIdDiscardPostRequest {
+	r.xGroup = &xGroup
+	return r
+}
+
+func (r ApiApiV2ResourceTypeIdDiscardPostRequest) Execute() (*http.Response, error) {
+	return r.ApiService.ApiV2ResourceTypeIdDiscardPostExecute(r)
+}
+
+/*
+ApiV2ResourceTypeIdDiscardPost Discard draft/submitted entity
+
+Move an entity from DRAFT or SUBMITTED to DISCARDED. Path id may be a conceptual id, version id, or identifier.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param resourceType
+	@param id
+	@return ApiApiV2ResourceTypeIdDiscardPostRequest
+*/
+func (a *LifecycleAPIService) ApiV2ResourceTypeIdDiscardPost(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdDiscardPostRequest {
+	return ApiApiV2ResourceTypeIdDiscardPostRequest{
+		ApiService:   a,
+		ctx:          ctx,
+		resourceType: resourceType,
+		id:           id,
+	}
+}
+
+// Execute executes the request
+func (a *LifecycleAPIService) ApiV2ResourceTypeIdDiscardPostExecute(r ApiApiV2ResourceTypeIdDiscardPostRequest) (*http.Response, error) {
+	var (
+		localVarHTTPMethod = http.MethodPost
+		localVarPostBody   interface{}
+		formFiles          []formFile
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "LifecycleAPIService.ApiV2ResourceTypeIdDiscardPost")
+	if err != nil {
+		return nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v2/{resourceType}/{id}/discard"
+	localVarPath = strings.Replace(localVarPath, "{"+"resourceType"+"}", url.PathEscape(parameterValueToString(r.resourceType, "resourceType")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.xAgent == nil {
+		return nil, reportError("xAgent is required and must be specified")
+	}
+	if r.xGroup == nil {
+		return nil, reportError("xGroup is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Group", r.xGroup, "simple", "")
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
 
 type ApiApiV2ResourceTypeIdDraftPostRequest struct {
 	ctx          context.Context
@@ -102,7 +233,7 @@ func (r ApiApiV2ResourceTypeIdDraftPostRequest) Execute() (*http.Response, error
 /*
 ApiV2ResourceTypeIdDraftPost Create new draft from published
 
-Creates a new draft version from a published entity
+Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
@@ -225,7 +356,7 @@ func (r ApiApiV2ResourceTypeIdPublishPostRequest) Execute() (*http.Response, err
 /*
 ApiV2ResourceTypeIdPublishPost Publish entity
 
-Publish an entity from SUBMITTED to PUBLISHED
+Publish an entity from SUBMITTED to PUBLISHED. Path id may be a conceptual id, version id, or identifier, but it must resolve to a SUBMITTED version.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
@@ -341,7 +472,7 @@ func (r ApiApiV2ResourceTypeIdSubmitPostRequest) Execute() (*http.Response, erro
 /*
 ApiV2ResourceTypeIdSubmitPost Submit for review
 
-Move an entity from DRAFT to SUBMITTED
+Move an entity from DRAFT to SUBMITTED. Path id may be a conceptual id, version id, or identifier, but it must resolve to a DRAFT version.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType

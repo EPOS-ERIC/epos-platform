@@ -1,0 +1,6118 @@
+openapi: 3.1.0
+info:
+  title: EPOS API
+  version: 2.0.0
+  description: |
+    OpenAPI specification for the EPOS catalogue API.
+
+    ## Design Principles
+    - Search returns heterogeneous, typed resource items in a flat list.
+    - Clients navigate by following `href` links; they never construct URLs themselves.
+    - All cross-entity references carry an `href` pointing to the typed detail endpoint.
+
+    ## Lifecycle States
+    - **DRAFT** - Resource is being edited
+    - **SUBMITTED** - Resource submitted for review
+    - **PUBLISHED** - Resource is publicly visible
+    - **ARCHIVED** - Outdated versions kept for historical purposes
+
+    ## Authentication
+    Mutating operations require both headers with absolute URIs:
+    - `X-Agent` identifies the acting agent.
+    - `X-Group` identifies the acting group.
+    Example:
+    - `X-Agent: mailto:user@example.org`
+    - `X-Group: https://epos-eu.org/group/ingestion-team`
+  termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
+  contact:
+    name: EPOS Development Team
+    email: support@epos-eu.org
+    url: https://epos-eu.org
+  license:
+    name: AGPL-3.0
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+tags:
+  - name: Access
+    description: Unified shape access for list and detail retrieval
+  - name: System
+    description: System information and health checks
+  - name: SPARQL
+    description: Direct SPARQL query access
+  - name: OAI-PMH
+    description: OAI-PMH 2.0 metadata harvesting
+  - name: Resources
+    description: CRUD operations on metadata resources
+  - name: Lifecycle
+    description: Lifecycle management (submit, publish)
+  - name: Versioning
+    description: Resource history and versions
+  - name: Batch
+    description: Batch submit and publish multiple entities
+  - name: Admin
+    description: Administrative operations (population, maintenance)
+
+paths:
+
+  # ============================================================
+  # SYSTEM ENDPOINTS
+  # ============================================================
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      description: Check the service status
+      responses:
+        '200':
+          description: Service operational
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    examples:
+                      - ok
+                  timestamp:
+                    type: integer
+                    format: int64
+
+  /api/v2/resource-types:
+    get:
+      tags: [System]
+      summary: List resource types
+      description: |
+        Retrieve available resource types parsed from SHACL shapes (default view),
+        or export the original cached SHACL graph in RDF formats.
+      parameters:
+        - name: view
+          in: query
+          description: Response view. `parsed` returns JSON resource types; `shacl` returns raw SHACL RDF.
+          schema:
+            type: string
+            enum: [parsed, shacl]
+            default: parsed
+        - name: format
+          in: query
+          description: RDF serialization format used when `view=shacl`
+          schema:
+            type: string
+            enum: [turtle, ttl, jsonld, json-ld, rdfxml, rdf+xml, ntriples, n-triples, nt]
+        - name: compact
+          in: query
+          description: When `true` and `view=shacl`, returns compact/beautified output for JSON-LD and Turtle
+          schema:
+            type: boolean
+            default: false
+        - name: includeShapeDefinitions
+          in: query
+          description: Include resolvable shape definitions map keyed by shape IRI (only for `view=parsed`)
+          schema:
+            type: boolean
+            default: false
+        - name: includeTransitiveShapeDefinitions
+          in: query
+          description: Include only shape definitions reachable from resource type properties via sh:node references (only for `view=parsed`)
+          schema:
+            type: boolean
+            default: false
+        - name: includeResolvedRefs
+          in: query
+          description: Add cycle-safe recursive reference metadata per shape definition (only for `view=parsed`)
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Parsed resource types or raw SHACL RDF, depending on `view`
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ResourceTypeList'
+                  - $ref: '#/components/schemas/ResourceTypesEnvelope'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+
+
+  /api/v2/access/search:
+    get:
+      tags: [Access]
+      summary: Search resources
+      description: Returns a flat, typed list of catalogue resources matching the supplied criteria.
+      parameters:
+        - $ref: '#/components/parameters/Q'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - $ref: '#/components/parameters/TypeFilter'
+        - $ref: '#/components/parameters/SpatialFilter'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/ServiceProviders'
+        - $ref: '#/components/parameters/VersioningStatusFilter'
+        - $ref: '#/components/parameters/Keywords'
+      responses:
+        '200':
+          description: Search results returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v2/access/search/{shape}:
+    get:
+      tags: [Access]
+      summary: Search resources by shape
+      description: Access search scoped to a single shape (equivalent to applying `type={shape}`).
+      parameters:
+        - name: shape
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Runtime SHACL shape/resource type name.
+        - $ref: '#/components/parameters/Q'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - $ref: '#/components/parameters/SpatialFilter'
+        - $ref: '#/components/parameters/DateFrom'
+        - $ref: '#/components/parameters/DateTo'
+        - $ref: '#/components/parameters/ServiceProviders'
+        - $ref: '#/components/parameters/VersioningStatusFilter'
+        - $ref: '#/components/parameters/Keywords'
+      responses:
+        '200':
+          description: Search results returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================
+  # ACCESS ENDPOINT
+  # ============================================================
+  /api/v2/access/{shape}/{id}:
+    get:
+      tags: [Access]
+      summary: Access shape resources and details
+      description: |
+        Unified access endpoint.
+        - `id=all` returns all resources for the selected shape.
+        - any other id returns the detailed property-value and property-relation structure.
+      parameters:
+        - name: shape
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Runtime SHACL shape/resource type name.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource id or `all`.
+      responses:
+        '200':
+          description: Access response returned successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+
+  # ============================================================
+  # SPARQL ENDPOINT
+  # ============================================================
+  /api/v2/sparql:
+    post:
+      tags: [SPARQL]
+      summary: Execute SPARQL query
+      description: |
+        Execute a SPARQL query against the triple store.
+        Supports SELECT, ASK, CONSTRUCT, and DESCRIBE queries.
+        UPDATE operations are not allowed.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  description: SPARQL query string
+          application/sparql-query:
+            schema:
+              type: string
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/sparql-results+json:
+              schema:
+                type: object
+            application/sparql-results+xml:
+              schema:
+                type: string
+            text/csv:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+            text/turtle:
+              schema:
+                type: string
+        '400':
+          description: Invalid query
+        '403':
+          description: UPDATE operations not allowed
+
+  # ============================================================
+  # OAI-PMH ENDPOINT
+  # ============================================================
+  /oai-pmh:
+    get:
+      tags: [OAI-PMH]
+      summary: OAI-PMH 2.0 endpoint
+      description: |
+        OAI-PMH 2.0 compliant endpoint for metadata harvesting.
+
+        Supported verbs: Identify, ListMetadataFormats, ListSets, ListIdentifiers, ListRecords, GetRecord
+
+        Supported metadata formats: oai_dc (Dublin Core), dcat (DCAT-AP), epos_dcat_ap (EPOS-DCAT-AP)
+      parameters:
+        - name: verb
+          in: query
+          required: true
+          description: OAI-PMH verb
+          schema:
+            type: string
+            enum: [Identify, ListMetadataFormats, ListSets, ListIdentifiers, ListRecords, GetRecord]
+        - name: metadataPrefix
+          in: query
+          description: Metadata format (required for ListIdentifiers, ListRecords, GetRecord)
+          schema:
+            type: string
+            enum: [oai_dc, dcat, epos_dcat_ap]
+        - name: identifier
+          in: query
+          description: Record identifier (required for GetRecord)
+          schema:
+            type: string
+        - name: set
+          in: query
+          description: Set specification for selective harvesting
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Start date for selective harvesting (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          description: End date for selective harvesting (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: resumptionToken
+          in: query
+          description: Token for paginated results
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OAI-PMH XML response
+          content:
+            text/xml:
+              schema:
+                type: string
+
+  # ============================================================
+  # RESOURCE CRUD ENDPOINTS
+  # ============================================================
+  /api/v2/{resourceType}:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+        example: dataset
+    get:
+      tags: [Resources]
+      summary: List entities
+      description: Retrieve a paginated list of entities of a specific type
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, published, archived, discarded]
+            default: published
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of entities
+    post:
+      tags: [Resources]
+      summary: Create new entity (DRAFT)
+      description: Create a new entity in DRAFT state
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+          example: mailto:user@example.org
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+          example: https://epos-eu.org/group/ingestion-team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                properties:
+                  type: object
+      responses:
+        '201':
+          description: Entity created
+
+  /api/v2/{resourceType}/{id}:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Resource identifier (conceptual id, version id, or identifier)
+    get:
+      tags: [Resources]
+      summary: Get entity
+      description: Retrieve entity details. Supports multiple formats via Accept header or format parameter.
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, published, archived, discarded]
+            default: published
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, turtle, ttl, jsonld, rdfxml, ntriples]
+      responses:
+        '200':
+          description: Entity details
+        '404':
+          description: Entity not found
+    put:
+      tags: [Resources]
+      summary: Update entity (DRAFT only)
+      description: Full replace semantics. Properties not included in the request are removed from the draft entity. Request fails with 409 if the resolved resource is not in DRAFT status.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                properties:
+                  type: object
+      responses:
+        '200':
+          description: Entity updated
+        '404':
+          description: Entity not found
+        '409':
+          description: Resolved resource is not in DRAFT status
+    patch:
+      tags: [Resources]
+      summary: Patch entity (DRAFT only)
+      description: Merge semantics. Only the provided properties are replaced; all other properties are preserved. Request fails with 409 if the resolved resource is not in DRAFT status.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                properties:
+                  type: object
+      responses:
+        '200':
+          description: Entity patched
+        '404':
+          description: Entity not found
+        '409':
+          description: Resolved resource is not in DRAFT status
+    delete:
+      tags: [Resources]
+      summary: Delete entity (DRAFT only)
+      description: Deletes a DRAFT version. Request fails with 409 if the resolved resource is not in DRAFT status.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity deleted
+        '404':
+          description: Entity not found
+        '409':
+          description: Resolved resource is not in DRAFT status
+
+  # ============================================================
+  # LIFECYCLE ENDPOINTS
+  # ============================================================
+  /api/v2/{resourceType}/{id}/submit:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Lifecycle]
+      summary: Submit for review
+      description: Move an entity from DRAFT to SUBMITTED. Path id may be a conceptual id, version id, or identifier, but it must resolve to a DRAFT version.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity submitted
+        '404':
+          description: Entity not found
+        '409':
+          description: Resource resolves to non-DRAFT status
+
+  /api/v2/{resourceType}/{id}/publish:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Lifecycle]
+      summary: Publish entity
+      description: Publish an entity from SUBMITTED to PUBLISHED. Path id may be a conceptual id, version id, or identifier, but it must resolve to a SUBMITTED version.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity published
+        '404':
+          description: Entity not found
+        '409':
+          description: Resource resolves to non-SUBMITTED status
+
+  /api/v2/{resourceType}/{id}/draft:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Lifecycle]
+      summary: Create new draft from published
+      description: Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
+      parameters:
+        - name: version
+          in: query
+          schema:
+            type: string
+            default: "2.0"
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Draft created
+        '404':
+          description: Resource not found
+
+  /api/v2/{resourceType}/{id}/discard:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Lifecycle]
+      summary: Discard draft/submitted entity
+      description: Move an entity from DRAFT or SUBMITTED to DISCARDED. Path id may be a conceptual id, version id, or identifier.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity discarded
+        '404':
+          description: Entity not found
+        '409':
+          description: Resource resolves to non-discardable status
+
+  # ============================================================
+  # VERSIONING ENDPOINTS
+  # ============================================================
+  /api/v2/{resourceType}/{id}/history:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [Versioning]
+      summary: Version history
+      description: Retrieve all versions of a conceptual entity, including status, agent, and group provenance
+      responses:
+        '200':
+          description: Version history
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionHistoryResponse'
+
+  # ============================================================
+  # BATCH ENDPOINTS
+  # ============================================================
+  /api/v2/batch/submit:
+    post:
+      tags: [Batch]
+      summary: Batch submit entities
+      description: Submit multiple entities in a single request
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entityUris:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Batch operation completed
+
+  /api/v2/batch/publish:
+    post:
+      tags: [Batch]
+      summary: Batch publish entities
+      description: Publish multiple entities in a single request
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                entityUris:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Batch operation completed
+
+  # ============================================================
+  # ADMIN ENDPOINTS
+  # ============================================================
+  /api/v2/{resourceType}/{id}/repair:
+    parameters:
+      - name: resourceType
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Admin]
+      summary: Repair entity metadata
+      description: Repair missing conceptual graph entries or provenance records
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entity repaired
+
+  /api/v2/admin/populate:
+    post:
+      tags: [Admin]
+      summary: Populate database
+      description: |
+        Population entrypoint.
+        - No body: populates from configured INDEX_URL.
+        - Body with `url` or `path`: populates from a single TTL source.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Source-Authorization
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional auth header forwarded when fetching `url`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                path:
+                  type: string
+      responses:
+        '200':
+          description: Population completed
+        '500':
+          description: Population failed
+
+  /api/v2/admin/populate/status:
+    get:
+      tags: [Admin]
+      summary: Get population configuration
+      description: Returns current population configuration
+      responses:
+        '200':
+          description: Population configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  indexUrl:
+                    type: string
+                  graphdbEndpoint:
+                    type: string
+                  repositoryId:
+                    type: string
+                  graphs:
+                    type: object
+
+  /api/v2/admin/populate/content:
+    post:
+      tags: [Admin]
+      summary: Populate from TTL content
+      description: |
+        Populates the database from TTL content uploaded directly in the request body.
+        Useful for uploading small TTL snippets or programmatic population.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: TTL content as a string
+                  examples:
+                    - "@prefix dcat: <http://www.w3.org/ns/dcat#> .\\n<http://example.org/dataset1> a dcat:Dataset ."
+                sourceName:
+                  type: string
+                  description: Optional name for provenance tracking
+                  examples:
+                    - my-upload
+      responses:
+        '200':
+          description: Population completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      sourceName:
+                        type: string
+                      subjectsProcessed:
+                        type: integer
+                      triplesInserted:
+                        type: integer
+                      agent:
+                        type: string
+        '400':
+          description: Missing content
+        '500':
+          description: Population failed
+
+  /api/v2/admin/import/revision/file:
+    post:
+      tags: [Admin]
+      summary: Import metadata revisions from URL or local TTL file
+      description: |
+        Imports TTL metadata into DRAFT revisions for existing published entities.
+        Existing links between imported resources are rewritten to their corresponding draft URIs.
+        This endpoint does not write directly to PUBLISHED.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevisionImportFileRequest'
+      responses:
+        '200':
+          description: Revision import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionImportApiResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Revision import failed
+
+  /api/v2/admin/import/revision/content:
+    post:
+      tags: [Admin]
+      summary: Import metadata revisions from TTL content
+      description: |
+        Imports TTL metadata into DRAFT revisions for existing published entities.
+        Existing links between imported resources are rewritten to their corresponding draft URIs.
+        This endpoint does not write directly to PUBLISHED.
+      parameters:
+        - name: X-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-Group
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevisionImportContentRequest'
+      responses:
+        '200':
+          description: Revision import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevisionImportApiResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Revision import failed
+
+  /api/v2/entities/address:
+    get:
+      tags: [Entities]
+      summary: List address entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_address'
+  /api/v2/entities/address/{id}:
+    get:
+      tags: [Entities]
+      summary: Get address entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_address'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/agent:
+    get:
+      tags: [Entities]
+      summary: List agent entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_agent'
+  /api/v2/entities/agent/{id}:
+    get:
+      tags: [Entities]
+      summary: Get agent entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_agent'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/annotation:
+    get:
+      tags: [Entities]
+      summary: List annotation entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_annotation'
+  /api/v2/entities/annotation/{id}:
+    get:
+      tags: [Entities]
+      summary: Get annotation entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_annotation'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/apidocumentation:
+    get:
+      tags: [Entities]
+      summary: List apidocumentation entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_apidocumentation'
+  /api/v2/entities/apidocumentation/{id}:
+    get:
+      tags: [Entities]
+      summary: Get apidocumentation entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_apidocumentation'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/catalog:
+    get:
+      tags: [Entities]
+      summary: List catalog entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_catalog'
+  /api/v2/entities/catalog/{id}:
+    get:
+      tags: [Entities]
+      summary: Get catalog entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_catalog'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/catalogrecord:
+    get:
+      tags: [Entities]
+      summary: List catalogrecord entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_catalogrecord'
+  /api/v2/entities/catalogrecord/{id}:
+    get:
+      tags: [Entities]
+      summary: Get catalogrecord entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_catalogrecord'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/concept:
+    get:
+      tags: [Entities]
+      summary: List concept entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_concept'
+  /api/v2/entities/concept/{id}:
+    get:
+      tags: [Entities]
+      summary: Get concept entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_concept'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/conceptscheme:
+    get:
+      tags: [Entities]
+      summary: List conceptscheme entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_conceptscheme'
+  /api/v2/entities/conceptscheme/{id}:
+    get:
+      tags: [Entities]
+      summary: Get conceptscheme entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_conceptscheme'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/contactpoint:
+    get:
+      tags: [Entities]
+      summary: List contactpoint entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_contactpoint'
+  /api/v2/entities/contactpoint/{id}:
+    get:
+      tags: [Entities]
+      summary: Get contactpoint entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_contactpoint'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/contactpointtype:
+    get:
+      tags: [Entities]
+      summary: List contactpointtype entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_contactpointtype'
+  /api/v2/entities/contactpointtype/{id}:
+    get:
+      tags: [Entities]
+      summary: Get contactpointtype entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_contactpointtype'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/controlaction:
+    get:
+      tags: [Entities]
+      summary: List controlaction entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_controlaction'
+  /api/v2/entities/controlaction/{id}:
+    get:
+      tags: [Entities]
+      summary: Get controlaction entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_controlaction'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/creativework:
+    get:
+      tags: [Entities]
+      summary: List creativework entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_creativework'
+  /api/v2/entities/creativework/{id}:
+    get:
+      tags: [Entities]
+      summary: Get creativework entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_creativework'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/dataset:
+    get:
+      tags: [Entities]
+      summary: List dataset entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_dataset'
+  /api/v2/entities/dataset/{id}:
+    get:
+      tags: [Entities]
+      summary: Get dataset entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_dataset'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/dateordatetimedatatype:
+    get:
+      tags: [Entities]
+      summary: List dateordatetimedatatype entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_dateordatetimedatatype'
+  /api/v2/entities/dateordatetimedatatype/{id}:
+    get:
+      tags: [Entities]
+      summary: Get dateordatetimedatatype entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_dateordatetimedatatype'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/distribution:
+    get:
+      tags: [Entities]
+      summary: List distribution entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_distribution'
+  /api/v2/entities/distribution/{id}:
+    get:
+      tags: [Entities]
+      summary: Get distribution entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_distribution'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/equipment:
+    get:
+      tags: [Entities]
+      summary: List equipment entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_equipment'
+  /api/v2/entities/equipment/{id}:
+    get:
+      tags: [Entities]
+      summary: Get equipment entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_equipment'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/facility:
+    get:
+      tags: [Entities]
+      summary: List facility entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_facility'
+  /api/v2/entities/facility/{id}:
+    get:
+      tags: [Entities]
+      summary: Get facility entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_facility'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/identifier:
+    get:
+      tags: [Entities]
+      summary: List identifier entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_identifier'
+  /api/v2/entities/identifier/{id}:
+    get:
+      tags: [Entities]
+      summary: Get identifier entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_identifier'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/iritemplate:
+    get:
+      tags: [Entities]
+      summary: List iritemplate entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_iritemplate'
+  /api/v2/entities/iritemplate/{id}:
+    get:
+      tags: [Entities]
+      summary: Get iritemplate entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_iritemplate'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/iritemplatemapping:
+    get:
+      tags: [Entities]
+      summary: List iritemplatemapping entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_iritemplatemapping'
+  /api/v2/entities/iritemplatemapping/{id}:
+    get:
+      tags: [Entities]
+      summary: Get iritemplatemapping entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_iritemplatemapping'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/location:
+    get:
+      tags: [Entities]
+      summary: List location entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_location'
+  /api/v2/entities/location/{id}:
+    get:
+      tags: [Entities]
+      summary: Get location entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_location'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/operation:
+    get:
+      tags: [Entities]
+      summary: List operation entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_operation'
+  /api/v2/entities/operation/{id}:
+    get:
+      tags: [Entities]
+      summary: Get operation entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_operation'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/organization:
+    get:
+      tags: [Entities]
+      summary: List organization entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_organization'
+  /api/v2/entities/organization/{id}:
+    get:
+      tags: [Entities]
+      summary: Get organization entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_organization'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/periodoftime:
+    get:
+      tags: [Entities]
+      summary: List periodoftime entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_periodoftime'
+  /api/v2/entities/periodoftime/{id}:
+    get:
+      tags: [Entities]
+      summary: Get periodoftime entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_periodoftime'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/person:
+    get:
+      tags: [Entities]
+      summary: List person entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_person'
+  /api/v2/entities/person/{id}:
+    get:
+      tags: [Entities]
+      summary: Get person entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_person'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/postaladdress:
+    get:
+      tags: [Entities]
+      summary: List postaladdress entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_postaladdress'
+  /api/v2/entities/postaladdress/{id}:
+    get:
+      tags: [Entities]
+      summary: Get postaladdress entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_postaladdress'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/project:
+    get:
+      tags: [Entities]
+      summary: List project entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_project'
+  /api/v2/entities/project/{id}:
+    get:
+      tags: [Entities]
+      summary: Get project entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_project'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/propertyvalue:
+    get:
+      tags: [Entities]
+      summary: List propertyvalue entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_propertyvalue'
+  /api/v2/entities/propertyvalue/{id}:
+    get:
+      tags: [Entities]
+      summary: Get propertyvalue entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_propertyvalue'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/publication:
+    get:
+      tags: [Entities]
+      summary: List publication entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_publication'
+  /api/v2/entities/publication/{id}:
+    get:
+      tags: [Entities]
+      summary: Get publication entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_publication'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/quantitativevalue:
+    get:
+      tags: [Entities]
+      summary: List quantitativevalue entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_quantitativevalue'
+  /api/v2/entities/quantitativevalue/{id}:
+    get:
+      tags: [Entities]
+      summary: Get quantitativevalue entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_quantitativevalue'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/service:
+    get:
+      tags: [Entities]
+      summary: List service entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_service'
+  /api/v2/entities/service/{id}:
+    get:
+      tags: [Entities]
+      summary: Get service entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_service'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/softwareapplication:
+    get:
+      tags: [Entities]
+      summary: List softwareapplication entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_softwareapplication'
+  /api/v2/entities/softwareapplication/{id}:
+    get:
+      tags: [Entities]
+      summary: Get softwareapplication entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_softwareapplication'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/softwaresourcecode:
+    get:
+      tags: [Entities]
+      summary: List softwaresourcecode entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_softwaresourcecode'
+  /api/v2/entities/softwaresourcecode/{id}:
+    get:
+      tags: [Entities]
+      summary: Get softwaresourcecode entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_softwaresourcecode'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+  /api/v2/entities/webservice:
+    get:
+      tags: [Entities]
+      summary: List webservice entities
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/ResultsPerPage'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+      responses:
+        '200':
+          description: Entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity_webservice'
+  /api/v2/entities/webservice/{id}:
+    get:
+      tags: [Entities]
+      summary: Get webservice entity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Conceptual or version resource identifier (not internal numeric graph id)
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            default: published
+        - name: format
+          in: query
+          required: false
+          description: Response format override
+          schema:
+            type: string
+            enum: [json, ttl, jsonld, rdfxml, nt]
+      responses:
+        '200':
+          description: Entity detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolvedEntityResponse_Entity_webservice'
+            text/turtle:
+              schema:
+                type: string
+            application/ld+json:
+              schema:
+                type: string
+            application/rdf+xml:
+              schema:
+                type: string
+            application/n-triples:
+              schema:
+                type: string
+components:
+
+  # -------------------------------------------------------------------------
+  # Parameters
+  # -------------------------------------------------------------------------
+
+  parameters:
+
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: Local identifier of the resource
+      schema:
+        type: string
+        examples:
+          - "123"
+
+    Q:
+      name: q
+      in: query
+      required: false
+      description: Free-text search query
+      schema:
+        type: string
+        examples:
+          - "seismic stations"
+
+    Page:
+      name: page
+      in: query
+      required: false
+      description: 1-based page number
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        examples:
+          - 1
+
+    ResultsPerPage:
+      name: resultsPerPage
+      in: query
+      required: false
+      description: Number of items to return per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+        examples:
+          - 10
+
+    TypeFilter:
+      name: type
+      in: query
+      required: false
+      description: |
+        Filter results to one or more resource types. When omitted, all types are returned.
+        Repeat the parameter for multiple values: `?type=dataset&type=distribution`.
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/ResourceType'
+      style: form
+      explode: true
+
+    SpatialFilter:
+      name: spatialFilter
+      in: query
+      required: false
+      description: |
+        Spatial filter expressed as a WKT polygon string (EPSG:4326).
+        Resources whose spatial coverage intersects this polygon are returned.
+        Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
+      schema:
+        type: string
+        examples:
+          - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+
+    DateFrom:
+      name: dateFrom
+      in: query
+      required: false
+      description: |
+        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Resources with temporal coverage overlapping this range are returned.
+      schema:
+        type: string
+        format: date-time
+        examples:
+          - "2020-01-01T00:00:00Z"
+
+    DateTo:
+      name: dateTo
+      in: query
+      required: false
+      description: |
+        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Must be greater than or equal to `dateFrom` when both are supplied.
+      schema:
+        type: string
+        format: date-time
+        examples:
+          - "2023-12-31T23:59:59Z"
+
+    ServiceProviders:
+      name: serviceProvider
+      in: query
+      required: false
+      description: |
+        Filter by one or more service provider names.
+        Repeat the parameter for multiple values: `?serviceProvider=INGV&serviceProvider=UNINA`.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+
+    VersioningStatusFilter:
+      name: versioningStatus
+      in: query
+      required: false
+      description: |
+        Filter by one or more versioning statuses.
+        When omitted, defaults to `PUBLISHED`.
+        Repeat the parameter for multiple values: `?versioningStatus=PUBLISHED&versioningStatus=DRAFT`.
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/VersioningStatus'
+        default:
+          - PUBLISHED
+      style: form
+      explode: true
+
+    Keywords:
+      name: keywords
+      in: query
+      required: false
+      description: |
+        Filter resources that carry all the supplied keywords.
+        Repeat the parameter for multiple values: `?keywords=seismology&keywords=stations`.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+
+  # -------------------------------------------------------------------------
+  # Responses
+  # -------------------------------------------------------------------------
+
+  responses:
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # -------------------------------------------------------------------------
+  # Schemas
+  # -------------------------------------------------------------------------
+
+  schemas:
+
+    # -----------------------------------------------------------------------
+    # Shared enums
+    # -----------------------------------------------------------------------
+
+    ResourceType:
+      type: string
+      enum:
+        - address
+        - agent
+        - annotation
+        - apidocumentation
+        - catalog
+        - catalogrecord
+        - concept
+        - conceptscheme
+        - contactpoint
+        - contactpointtype
+        - controlaction
+        - creativework
+        - dataset
+        - dateordatetimedatatype
+        - distribution
+        - equipment
+        - facility
+        - identifier
+        - iritemplate
+        - iritemplatemapping
+        - location
+        - operation
+        - organization
+        - periodoftime
+        - person
+        - postaladdress
+        - project
+        - propertyvalue
+        - publication
+        - quantitativevalue
+        - service
+        - softwareapplication
+        - softwaresourcecode
+        - webservice
+
+    VersioningStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - PUBLISHED
+        - ARCHIVED
+
+    # -----------------------------------------------------------------------
+    # Search
+    # -----------------------------------------------------------------------
+
+    SearchResponse:
+      type: object
+      required:
+        - total
+        - items
+      properties:
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of matching resources across all pages
+          examples:
+            - 123
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchItem'
+
+    SearchItem:
+      oneOf:
+        - $ref: '#/components/schemas/DatasetSearchItem'
+        - $ref: '#/components/schemas/GenericSearchItem'
+      discriminator:
+        propertyName: type
+        mapping:
+          dataset: '#/components/schemas/DatasetSearchItem'
+          distribution: '#/components/schemas/GenericSearchItem'
+          software-application: '#/components/schemas/GenericSearchItem'
+          software-source-code: '#/components/schemas/GenericSearchItem'
+          category: '#/components/schemas/GenericSearchItem'
+
+    BaseSearchItem:
+      type: object
+      required:
+        - type
+        - id
+        - href
+      properties:
+        type:
+          $ref: '#/components/schemas/ResourceType'
+        id:
+          type: string
+          examples:
+            - "123"
+        href:
+          type: string
+          description: Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
+          examples:
+            - "https://metadata.epos-eu.org/api/v2/dataset/123"
+        fields:
+          type: object
+          description: SHACL-selected property values returned as field-value pairs (includes `name`)
+          additionalProperties: true
+
+    DatasetSearchItem:
+      allOf:
+        - $ref: '#/components/schemas/BaseSearchItem'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              const: dataset
+
+    GenericSearchItem:
+      allOf:
+        - $ref: '#/components/schemas/BaseSearchItem'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - distribution
+                - software-application
+                - software-source-code
+                - category
+
+    # -----------------------------------------------------------------------
+    # Resource references (for hrefs)
+    # -----------------------------------------------------------------------
+
+    ResourceRef:
+      type: object
+      required:
+        - id
+        - href
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+          description: Absolute URL of the typed detail endpoint
+
+    # -----------------------------------------------------------------------
+    # Detail schemas
+    # -----------------------------------------------------------------------
+
+    TemporalExtent:
+      type: object
+      description: Temporal coverage of a resource
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Start of the temporal coverage (inclusive), ISO 8601 UTC
+          examples:
+            - "2010-01-01T00:00:00Z"
+        end:
+          type: string
+          format: date-time
+          description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
+          examples:
+            - "2023-12-31T23:59:59Z"
+
+    Dataset:
+      type: object
+      required:
+        - id
+        - title
+        - status
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+          examples:
+            - ["seismology", "stations", "Irpinia"]
+        categories:
+          type: array
+          description: Category labels assigned to this dataset
+          items:
+            type: string
+          examples:
+            - ["Seismology", "Strong Motion"]
+        publisher:
+          type: array
+          description: Names of the organisations publishing this dataset
+          items:
+            type: string
+          examples:
+            - ["UNINA", "INGV"]
+        spatial:
+          type: string
+          description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
+          examples:
+            - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+        temporal:
+          $ref: '#/components/schemas/TemporalExtent'
+        status:
+          $ref: '#/components/schemas/VersioningStatus'
+        distributions:
+          type: array
+          description: Distributions that provide access to this dataset
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+        related:
+          type: array
+          description: Outbound related entities referenced by this dataset
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+        relatedBy:
+          type: array
+          description: Inbound related entities that reference this dataset
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+
+    Distribution:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        accessUrl:
+          type: string
+          format: uri
+          description: URL used to access the distribution
+          examples:
+            - "https://service.example.org/fdsnws/station/1/query"
+        operation:
+          type: string
+          description: Operation ID describing the service operation exposed by this distribution
+          examples:
+            - "getFDSNStationXML"
+        related:
+          type: array
+          description: Outbound related entities referenced by this distribution
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+        relatedBy:
+          type: array
+          description: Inbound related entities that reference this distribution
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+
+    SoftwareApplication:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        keywords:
+          type: array
+          items:
+            type: string
+          examples:
+            - ["portal", "seismology", "data access"]
+        categories:
+          type: array
+          description: Category labels assigned to this application
+          items:
+            type: string
+          examples:
+            - ["Seismology", "Data Services"]
+        downloadUrl:
+          type: string
+          format: uri
+          description: URL to download or install the application
+          examples:
+            - "https://example.org/application/download"
+        related:
+          type: array
+          description: Outbound related entities referenced by this application
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+        relatedBy:
+          type: array
+          description: Inbound related entities that reference this application
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+
+    SoftwareSourceCode:
+      type: object
+      required:
+        - id
+        - title
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        programmingLanguage:
+          type: string
+          description: Primary programming language of the source code
+          examples:
+            - "Java"
+        keywords:
+          type: array
+          items:
+            type: string
+          examples:
+            - ["portal", "seismology", "open source"]
+        categories:
+          type: array
+          description: Category labels assigned to this source code
+          items:
+            type: string
+          examples:
+            - ["Seismology", "Data Services"]
+        repository:
+          type: string
+          format: uri
+          description: URL of the source code repository
+          examples:
+            - "https://github.com/example/epos-portal"
+        related:
+          type: array
+          description: Outbound related entities referenced by this source code
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+        relatedBy:
+          type: array
+          description: Inbound related entities that reference this source code
+          items:
+            $ref: '#/components/schemas/ResourceRef'
+
+    # -----------------------------------------------------------------------
+    # Category schemas
+    # -----------------------------------------------------------------------
+
+    Category:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          examples:
+            - "cat-seismology"
+        name:
+          type: string
+          examples:
+            - "Seismology"
+        description:
+          type: string
+          examples:
+            - "Resources related to seismic monitoring and analysis."
+        children:
+          type: array
+          description: Nested child categories
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CategoryScheme:
+      type: object
+      required:
+        - id
+        - label
+        - type
+      properties:
+        id:
+          type: string
+          examples:
+            - "scheme-solid-earth"
+        label:
+          type: string
+          examples:
+            - "Solid Earth"
+        title:
+          type: string
+          examples:
+            - "Solid Earth Science Categories"
+        description:
+          type: string
+          examples:
+            - "Top-level grouping for all solid earth science resources."
+        logo:
+          type: string
+          format: uri
+          examples:
+            - "https://www.epos-eu.org/logos/solid-earth.png"
+        homepage:
+          type: string
+          format: uri
+          examples:
+            - "https://www.epos-eu.org/solid-earth"
+        color:
+          type: string
+          description: Hex colour code used for UI rendering
+          examples:
+            - "#3A7BD5"
+        orderNumber:
+          type: integer
+          description: Display order among sibling category schemes
+          examples:
+            - 1
+        type:
+          type: string
+          enum:
+            - DATA
+            - FACILITY
+            - SOFTWARE
+          examples:
+            - "DATA"
+        children:
+          type: array
+          description: Top-level categories within this scheme
+          items:
+            $ref: '#/components/schemas/Category'
+
+    CategoryTreeResponse:
+      type: object
+      required:
+        - schemes
+      properties:
+        schemes:
+          type: array
+          description: Ordered list of category schemes, each carrying its full category subtree
+          items:
+            $ref: '#/components/schemas/CategoryScheme'
+
+    # -----------------------------------------------------------------------
+    # Error response
+    # -----------------------------------------------------------------------
+
+    ErrorResponse:
+      type: object
+      required:
+        - errorCode
+        - errorMessage
+      properties:
+        errorCode:
+          type: string
+          examples:
+            - "RESOURCE_NOT_FOUND"
+        errorMessage:
+          type: string
+          examples:
+            - "The requested resource was not found"
+
+    EntityResponse:
+      type: object
+      required:
+        - uri
+        - type
+        - status
+        - properties
+      properties:
+        uri:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
+        version:
+          type: [string, 'null']
+        conceptualUri:
+          type: [string, 'null']
+
+    ResolvedEntityResponse:
+      type: object
+      required:
+        - resolvedId
+        - entity
+      properties:
+        resolvedId:
+          type: string
+        entity:
+          $ref: '#/components/schemas/EntityResponse'
+
+    # -----------------------------------------------------------------------
+    # Legacy schemas (for backward compatibility with admin/resource endpoints)
+    # -----------------------------------------------------------------------
+
+    PropertyInfo:
+      type: object
+      properties:
+        path:
+          type: string
+          format: uri
+        name:
+          type: string
+        datatype:
+          type: [string, 'null']
+          format: uri
+        datatypes:
+          type: [array, 'null']
+          items:
+            type: string
+            format: uri
+        nodeKind:
+          type: [string, 'null']
+        nodeKinds:
+          type: [array, 'null']
+          items:
+            type: string
+        classConstraint:
+          type: [string, 'null']
+          format: uri
+        classConstraints:
+          type: [array, 'null']
+          items:
+            type: string
+            format: uri
+        nodeShapeRef:
+          type: [string, 'null']
+        nodeShapeRefs:
+          type: [array, 'null']
+          items:
+            type: string
+        minCount:
+          type: [integer, 'null']
+          format: int32
+        maxCount:
+          type: [integer, 'null']
+          format: int32
+        required:
+          type: boolean
+        recommended:
+          type: boolean
+        pattern:
+          type: [string, 'null']
+        minLength:
+          type: [integer, 'null']
+          format: int32
+        maxLength:
+          type: [integer, 'null']
+          format: int32
+        hasValueIn:
+          type: [array, 'null']
+          items:
+            type: string
+        severity:
+          type: [string, 'null']
+        severities:
+          type: [array, 'null']
+          items:
+            type: string
+        helpText:
+          type: [string, 'null']
+        description:
+          type: [string, 'null']
+      required: [path, name, required, recommended]
+
+    ResourceTypeInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        targetClass:
+          type: string
+          format: uri
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyInfo'
+        closed:
+          type: boolean
+        description:
+          type: [string, 'null']
+      required: [name, targetClass, properties, closed]
+
+    ResourceTypeList:
+      type: array
+      description: Returned when shape definitions are not requested
+      items:
+        $ref: '#/components/schemas/ResourceTypeInfo'
+
+    ShapeDefinitionInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        targetClasses:
+          type: array
+          items:
+            type: string
+            format: uri
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyInfo'
+        resolvedRefs:
+          type: [array, 'null']
+          items:
+            type: string
+        name:
+          type: [string, 'null']
+        datatype:
+          type: [string, 'null']
+          format: uri
+        datatypes:
+          type: [array, 'null']
+          items:
+            type: string
+            format: uri
+        nodeKind:
+          type: [string, 'null']
+        nodeKinds:
+          type: [array, 'null']
+          items:
+            type: string
+        classConstraint:
+          type: [string, 'null']
+          format: uri
+        classConstraints:
+          type: [array, 'null']
+          items:
+            type: string
+            format: uri
+        nodeShapeRef:
+          type: [string, 'null']
+        nodeShapeRefs:
+          type: [array, 'null']
+          items:
+            type: string
+        ontologyEquivalentClasses:
+          type: [array, 'null']
+          items:
+            type: string
+            format: uri
+        ontologySubClassesOf:
+          type: [array, 'null']
+          items:
+            type: string
+            format: uri
+        closed:
+          type: boolean
+        description:
+          type: [string, 'null']
+      required: [id, targetClasses, properties, closed]
+
+    Entity_address:
+      type: object
+      properties:
+        country name:
+          type: [string, array, object, number, boolean, 'null']
+        locality:
+          type: [string, array, object, number, boolean, 'null']
+        postal code:
+          type: [string, array, object, number, boolean, 'null']
+        street address:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_address:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_address'
+    Entity_agent:
+      type: object
+      properties:
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        type:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_agent:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_agent'
+    Entity_annotation:
+      type: object
+      properties:
+        has body:
+          type: [string, array, object, number, boolean, 'null']
+        has target:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_annotation:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_annotation'
+    Entity_apidocumentation:
+      type: object
+      properties:
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        entrypoint:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_apidocumentation:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_apidocumentation'
+    Entity_catalog:
+      type: object
+      properties:
+        dataset:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        has part:
+          type: [string, array, object, number, boolean, 'null']
+        homepage:
+          type: [string, array, object, number, boolean, 'null']
+        is part of:
+          type: [string, array, object, number, boolean, 'null']
+        issued:
+          type: [string, array, object, number, boolean, 'null']
+        language:
+          type: [string, array, object, number, boolean, 'null']
+        license:
+          type: [string, array, object, number, boolean, 'null']
+        modified:
+          type: [string, array, object, number, boolean, 'null']
+        publisher:
+          type: [string, array, object, number, boolean, 'null']
+        record:
+          type: [string, array, object, number, boolean, 'null']
+        resource:
+          type: [string, array, object, number, boolean, 'null']
+        rights:
+          type: [string, array, object, number, boolean, 'null']
+        spatial:
+          type: [string, array, object, number, boolean, 'null']
+        theme taxonomy:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_catalog:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_catalog'
+    Entity_catalogrecord:
+      type: object
+      properties:
+        conforms to:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        issued:
+          type: [string, array, object, number, boolean, 'null']
+        language:
+          type: [string, array, object, number, boolean, 'null']
+        modified:
+          type: [string, array, object, number, boolean, 'null']
+        primary topic:
+          type: [string, array, object, number, boolean, 'null']
+        source:
+          type: [string, array, object, number, boolean, 'null']
+        status:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_catalogrecord:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_catalogrecord'
+    Entity_concept:
+      type: object
+      properties:
+        definition:
+          type: [string, array, object, number, boolean, 'null']
+        in scheme:
+          type: [string, array, object, number, boolean, 'null']
+        pref label:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_concept:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_concept'
+    Entity_conceptscheme:
+      type: object
+      properties:
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_conceptscheme:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_conceptscheme'
+    Entity_contactpoint:
+      type: object
+      properties:
+        available language:
+          type: [string, array, object, number, boolean, 'null']
+        contact type:
+          type: [string, array, object, number, boolean, 'null']
+        email:
+          type: [string, array, object, number, boolean, 'null']
+        telephone:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_contactpoint:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_contactpoint'
+    Entity_contactpointtype:
+      type: object
+      properties: {}
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_contactpointtype:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_contactpointtype'
+    Entity_controlaction:
+      type: object
+      properties:
+        object:
+          type: [string, array, object, number, boolean, 'null']
+        result:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_controlaction:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_controlaction'
+    Entity_creativework:
+      type: object
+      properties:
+        conforms to:
+          type: [string, array, object, number, boolean, 'null']
+        encoding format:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_creativework:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_creativework'
+    Entity_dataset:
+      type: object
+      properties:
+        access rights:
+          type: [string, array, object, number, boolean, 'null']
+        accrual periodicity:
+          type: [string, array, object, number, boolean, 'null']
+        annotation:
+          type: [string, array, object, number, boolean, 'null']
+        conforms to:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        created:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        distribution:
+          type: [string, array, object, number, boolean, 'null']
+        has part:
+          type: [string, array, object, number, boolean, 'null']
+        has quality annotation:
+          type: [string, array, object, number, boolean, 'null']
+        has version:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        is part of:
+          type: [string, array, object, number, boolean, 'null']
+        is version of:
+          type: [string, array, object, number, boolean, 'null']
+        issued:
+          type: [string, array, object, number, boolean, 'null']
+        keyword:
+          type: [string, array, object, number, boolean, 'null']
+        landing page:
+          type: [string, array, object, number, boolean, 'null']
+        language:
+          type: [string, array, object, number, boolean, 'null']
+        modified:
+          type: [string, array, object, number, boolean, 'null']
+        page:
+          type: [string, array, object, number, boolean, 'null']
+        provenance:
+          type: [string, array, object, number, boolean, 'null']
+        publisher:
+          type: [string, array, object, number, boolean, 'null']
+        relation:
+          type: [string, array, object, number, boolean, 'null']
+        sample:
+          type: [string, array, object, number, boolean, 'null']
+        source:
+          type: [string, array, object, number, boolean, 'null']
+        spatial:
+          type: [string, array, object, number, boolean, 'null']
+        temporal:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+        type:
+          type: [string, array, object, number, boolean, 'null']
+        version info:
+          type: [string, array, object, number, boolean, 'null']
+        version notes:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_dataset:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_dataset'
+    Entity_dateordatetimedatatype:
+      type: object
+      properties: {}
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_dateordatetimedatatype:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_dateordatetimedatatype'
+    Entity_distribution:
+      type: object
+      properties:
+        access url:
+          type: [string, array, object, number, boolean, 'null']
+        annotation:
+          type: [string, array, object, number, boolean, 'null']
+        byte size:
+          type: [string, array, object, number, boolean, 'null']
+        checksum:
+          type: [string, array, object, number, boolean, 'null']
+        conforms to:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        download url:
+          type: [string, array, object, number, boolean, 'null']
+        format:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        issued:
+          type: [string, array, object, number, boolean, 'null']
+        language:
+          type: [string, array, object, number, boolean, 'null']
+        license:
+          type: [string, array, object, number, boolean, 'null']
+        media type:
+          type: [string, array, object, number, boolean, 'null']
+        modified:
+          type: [string, array, object, number, boolean, 'null']
+        page:
+          type: [string, array, object, number, boolean, 'null']
+        rights:
+          type: [string, array, object, number, boolean, 'null']
+        status:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+        type:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_distribution:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_distribution'
+    Entity_equipment:
+      type: object
+      properties:
+        annotation:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        dynamic range:
+          type: [string, array, object, number, boolean, 'null']
+        filter:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        is part of:
+          type: [string, array, object, number, boolean, 'null']
+        manufacturer:
+          type: [string, array, object, number, boolean, 'null']
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        orientation:
+          type: [string, array, object, number, boolean, 'null']
+        page:
+          type: [string, array, object, number, boolean, 'null']
+        relation:
+          type: [string, array, object, number, boolean, 'null']
+        resolution:
+          type: [string, array, object, number, boolean, 'null']
+        sample period:
+          type: [string, array, object, number, boolean, 'null']
+        serial number:
+          type: [string, array, object, number, boolean, 'null']
+        spatial:
+          type: [string, array, object, number, boolean, 'null']
+        temporal:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+        type:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_equipment:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_equipment'
+    Entity_facility:
+      type: object
+      properties:
+        annotation:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        has address:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        is part of:
+          type: [string, array, object, number, boolean, 'null']
+        page:
+          type: [string, array, object, number, boolean, 'null']
+        relation:
+          type: [string, array, object, number, boolean, 'null']
+        spatial:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+        type:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_facility:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_facility'
+    Entity_identifier:
+      type: object
+      properties:
+        notation:
+          type: [string, array, object, number, boolean, 'null']
+        scheme agency:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_identifier:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_identifier'
+    Entity_iritemplate:
+      type: object
+      properties:
+        mapping:
+          type: [string, array, object, number, boolean, 'null']
+        template:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_iritemplate:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_iritemplate'
+    Entity_iritemplatemapping:
+      type: object
+      properties:
+        default value:
+          type: [string, array, object, number, boolean, 'null']
+        label:
+          type: [string, array, object, number, boolean, 'null']
+        max value:
+          type: [string, array, object, number, boolean, 'null']
+        min value:
+          type: [string, array, object, number, boolean, 'null']
+        multiple values:
+          type: [string, array, object, number, boolean, 'null']
+        param value:
+          type: [string, array, object, number, boolean, 'null']
+        property:
+          type: [string, array, object, number, boolean, 'null']
+        range:
+          type: [string, array, object, number, boolean, 'null']
+        readonly value:
+          type: [string, array, object, number, boolean, 'null']
+        required:
+          type: [string, array, object, number, boolean, 'null']
+        value pattern:
+          type: [string, array, object, number, boolean, 'null']
+        variable:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_iritemplatemapping:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_iritemplatemapping'
+    Entity_location:
+      type: object
+      properties:
+        geometry:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_location:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_location'
+    Entity_operation:
+      type: object
+      properties:
+        method:
+          type: [string, array, object, number, boolean, 'null']
+        property:
+          type: [string, array, object, number, boolean, 'null']
+        returns:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_operation:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_operation'
+    Entity_organization:
+      type: object
+      properties:
+        address:
+          type: [string, array, object, number, boolean, 'null']
+        annotation:
+          type: [string, array, object, number, boolean, 'null']
+        associated project:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        email:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        legal name:
+          type: [string, array, object, number, boolean, 'null']
+        lei code:
+          type: [string, array, object, number, boolean, 'null']
+        logo:
+          type: [string, array, object, number, boolean, 'null']
+        member of:
+          type: [string, array, object, number, boolean, 'null']
+        owns:
+          type: [string, array, object, number, boolean, 'null']
+        telephone:
+          type: [string, array, object, number, boolean, 'null']
+        url:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_organization:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_organization'
+    Entity_periodoftime:
+      type: object
+      properties:
+        end date:
+          type: [string, array, object, number, boolean, 'null']
+        start date:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_periodoftime:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_periodoftime'
+    Entity_person:
+      type: object
+      properties:
+        address:
+          type: [string, array, object, number, boolean, 'null']
+        affiliation:
+          type: [string, array, object, number, boolean, 'null']
+        annotation:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        email:
+          type: [string, array, object, number, boolean, 'null']
+        family name:
+          type: [string, array, object, number, boolean, 'null']
+        given name:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        qualifications:
+          type: [string, array, object, number, boolean, 'null']
+        telephone:
+          type: [string, array, object, number, boolean, 'null']
+        url:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_person:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_person'
+    Entity_postaladdress:
+      type: object
+      properties:
+        address country:
+          type: [string, array, object, number, boolean, 'null']
+        address locality:
+          type: [string, array, object, number, boolean, 'null']
+        postal code:
+          type: [string, array, object, number, boolean, 'null']
+        street address:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_postaladdress:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_postaladdress'
+    Entity_project:
+      type: object
+      properties:
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        homepage:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        title:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_project:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_project'
+    Entity_propertyvalue:
+      type: object
+      properties:
+        property id:
+          type: [string, array, object, number, boolean, 'null']
+        value:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_propertyvalue:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_propertyvalue'
+    Entity_publication:
+      type: object
+      properties:
+        abstract:
+          type: [string, array, object, number, boolean, 'null']
+        author:
+          type: [string, array, object, number, boolean, 'null']
+        contributor:
+          type: [string, array, object, number, boolean, 'null']
+        date published:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        issn:
+          type: [string, array, object, number, boolean, 'null']
+        keywords:
+          type: [string, array, object, number, boolean, 'null']
+        license:
+          type: [string, array, object, number, boolean, 'null']
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        number of pages:
+          type: [string, array, object, number, boolean, 'null']
+        publisher:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+        volume number:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_publication:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_publication'
+    Entity_quantitativevalue:
+      type: object
+      properties:
+        unit code:
+          type: [string, array, object, number, boolean, 'null']
+        value:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_quantitativevalue:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_quantitativevalue'
+    Entity_service:
+      type: object
+      properties:
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        keywords:
+          type: [string, array, object, number, boolean, 'null']
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        provider:
+          type: [string, array, object, number, boolean, 'null']
+        service type:
+          type: [string, array, object, number, boolean, 'null']
+        spatial:
+          type: [string, array, object, number, boolean, 'null']
+        temporal:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+        url:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_service:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_service'
+    Entity_softwareapplication:
+      type: object
+      properties:
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        download url:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        install url:
+          type: [string, array, object, number, boolean, 'null']
+        keywords:
+          type: [string, array, object, number, boolean, 'null']
+        license:
+          type: [string, array, object, number, boolean, 'null']
+        main entity of page:
+          type: [string, array, object, number, boolean, 'null']
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        potential action:
+          type: [string, array, object, number, boolean, 'null']
+        relation:
+          type: [string, array, object, number, boolean, 'null']
+        software requirements:
+          type: [string, array, object, number, boolean, 'null']
+        software version:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_softwareapplication:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_softwareapplication'
+    Entity_softwaresourcecode:
+      type: object
+      properties:
+        code repository:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        keywords:
+          type: [string, array, object, number, boolean, 'null']
+        license:
+          type: [string, array, object, number, boolean, 'null']
+        main entity of page:
+          type: [string, array, object, number, boolean, 'null']
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        programming language:
+          type: [string, array, object, number, boolean, 'null']
+        runtime platform:
+          type: [string, array, object, number, boolean, 'null']
+        software version:
+          type: [string, array, object, number, boolean, 'null']
+        target product:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_softwaresourcecode:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_softwaresourcecode'
+    Entity_webservice:
+      type: object
+      properties:
+        conforms to:
+          type: [string, array, object, number, boolean, 'null']
+        contact point:
+          type: [string, array, object, number, boolean, 'null']
+        date modified:
+          type: [string, array, object, number, boolean, 'null']
+        date published:
+          type: [string, array, object, number, boolean, 'null']
+        description:
+          type: [string, array, object, number, boolean, 'null']
+        entrypoint:
+          type: [string, array, object, number, boolean, 'null']
+        identifier:
+          type: [string, array, object, number, boolean, 'null']
+        keywords:
+          type: [string, array, object, number, boolean, 'null']
+        license:
+          type: [string, array, object, number, boolean, 'null']
+        name:
+          type: [string, array, object, number, boolean, 'null']
+        provider:
+          type: [string, array, object, number, boolean, 'null']
+        spatial:
+          type: [string, array, object, number, boolean, 'null']
+        supported operation:
+          type: [string, array, object, number, boolean, 'null']
+        temporal:
+          type: [string, array, object, number, boolean, 'null']
+        theme:
+          type: [string, array, object, number, boolean, 'null']
+      additionalProperties: true
+    ResolvedEntityResponse_Entity_webservice:
+      allOf:
+        - $ref: '#/components/schemas/ResolvedEntityResponse'
+        - type: object
+          properties:
+            entity:
+              allOf:
+                - $ref: '#/components/schemas/EntityResponse'
+                - type: object
+                  properties:
+                    properties:
+                      $ref: '#/components/schemas/Entity_webservice'
+
+    ResourceTypesEnvelope:
+      type: object
+      description: Returned when includeShapeDefinitions or includeTransitiveShapeDefinitions is true
+      properties:
+        resourceTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceTypeInfo'
+        shapeDefinitions:
+          type: object
+          description: Map keyed by shape IRI
+          additionalProperties:
+            $ref: '#/components/schemas/ShapeDefinitionInfo'
+      required: [resourceTypes]
+
+    VersionInfo:
+      type: object
+      properties:
+        uri:
+          type: string
+          format: uri
+        version:
+          type: string
+        timestamp:
+          type: string
+        agent:
+          type: [string, 'null']
+        group:
+          type: [string, 'null']
+        status:
+          type: string
+          enum: [draft, submitted, published, archived, discarded, unknown]
+      required: [uri, version, timestamp, status]
+
+    VersionHistoryResponse:
+      type: object
+      properties:
+        conceptualUri:
+          type: string
+          format: uri
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/VersionInfo'
+      required: [conceptualUri, versions]
+
+    RevisionImportFileRequest:
+      type: object
+      description: Revision import from a single TTL source (URL or local path)
+      properties:
+        url:
+          type: string
+          description: HTTP(S) URL to a TTL file
+        path:
+          type: string
+          description: Local filesystem path to a TTL file
+        versionMode:
+          type: string
+          enum: [auto, explicit]
+          default: auto
+        version:
+          type: string
+          description: Target version number, required when versionMode=explicit
+          examples:
+            - "2.0"
+        replaceDraftIfExists:
+          type: boolean
+          default: true
+        dryRun:
+          type: boolean
+          default: false
+
+    RevisionImportContentRequest:
+      type: object
+      required: [content]
+      description: Revision import from raw TTL content
+      properties:
+        content:
+          type: string
+        sourceName:
+          type: string
+          examples:
+            - imported-batch-2026-04-24
+        versionMode:
+          type: string
+          enum: [auto, explicit]
+          default: auto
+        version:
+          type: string
+          description: Target version number, required when versionMode=explicit
+          examples:
+            - "2.0"
+        replaceDraftIfExists:
+          type: boolean
+          default: true
+        dryRun:
+          type: boolean
+          default: false
+
+    RevisionImportEntityResult:
+      type: object
+      properties:
+        importedUri:
+          type: string
+        conceptualUri:
+          type: string
+        draftUri:
+          type: string
+        status:
+          type: string
+        message:
+          type: [string, 'null']
+      required: [importedUri, conceptualUri, draftUri, status]
+
+    RevisionImportResponseData:
+      type: object
+      properties:
+        source:
+          type: string
+        dryRun:
+          type: boolean
+        subjectsProcessed:
+          type: integer
+        triplesPrepared:
+          type: integer
+        triplesInserted:
+          type: integer
+        draftsCreated:
+          type: integer
+        draftsReused:
+          type: integer
+        linksRewritten:
+          type: integer
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/RevisionImportEntityResult'
+        agent:
+          type: string
+        group:
+          type: string
+      required: [source, dryRun, subjectsProcessed, triplesPrepared, triplesInserted, draftsCreated, draftsReused, linksRewritten, entities, agent, group]
+
+    RevisionImportApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/RevisionImportResponseData'
+      required: [success, message]
+
+x-runtime-shapes:
+  - name: "address"
+    targetClass: "http://www.w3.org/2006/vcard/ns#Address"
+    filters:
+      - name: "Country Name"
+        path: "http://www.w3.org/2006/vcard/ns#country-name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Locality"
+        path: "http://www.w3.org/2006/vcard/ns#locality"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Postal Code"
+        path: "http://www.w3.org/2006/vcard/ns#postal-code"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Street Address"
+        path: "http://www.w3.org/2006/vcard/ns#street-address"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "agent"
+    targetClass: "http://xmlns.com/foaf/0.1/Agent"
+    filters:
+      - name: "Name"
+        path: "http://xmlns.com/foaf/0.1/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Type"
+        path: "http://purl.org/dc/terms/type"
+        required: true
+  - name: "annotation"
+    targetClass: "http://www.w3.org/ns/oa#Annotation"
+    filters:
+      - name: "Has Body"
+        path: "http://www.w3.org/ns/oa#hasBody"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Has Target"
+        path: "http://www.w3.org/ns/oa#hasTarget"
+  - name: "apidocumentation"
+    targetClass: "http://www.w3.org/ns/hydra/core#ApiDocumentation"
+    filters:
+      - name: "Description"
+        path: "http://www.w3.org/ns/hydra/core#description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Entrypoint"
+        path: "http://www.w3.org/ns/hydra/core#entrypoint"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Title"
+        path: "http://www.w3.org/ns/hydra/core#title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "catalog"
+    targetClass: "http://www.w3.org/ns/dcat#Catalog"
+    filters:
+      - name: "Dataset"
+        path: "http://www.w3.org/ns/dcat#dataset"
+        required: true
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Has Part"
+        path: "http://purl.org/dc/terms/hasPart"
+      - name: "Homepage"
+        path: "http://xmlns.com/foaf/0.1/homepage"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Is Part Of"
+        path: "http://purl.org/dc/terms/isPartOf"
+      - name: "Issued"
+        path: "http://purl.org/dc/terms/issued"
+        required: true
+      - name: "Language"
+        path: "http://purl.org/dc/terms/language"
+        classConstraint: "http://purl.org/dc/terms/LinguisticSystem"
+        required: true
+      - name: "License"
+        path: "http://purl.org/dc/terms/license"
+        classConstraint: "http://purl.org/dc/terms/LicenseDocument"
+        required: true
+      - name: "Modified"
+        path: "http://purl.org/dc/terms/modified"
+        required: true
+      - name: "Publisher"
+        path: "http://purl.org/dc/terms/publisher"
+        required: true
+      - name: "Record"
+        path: "http://www.w3.org/ns/dcat#record"
+      - name: "Resource"
+        path: "https://www.epos-eu.org/epos-dcat-ap#resource"
+        classConstraint: "http://www.w3.org/2000/01/rdf-schema#Resource"
+      - name: "Rights"
+        path: "http://purl.org/dc/terms/rights"
+        classConstraint: "http://purl.org/dc/terms/RightsStatement"
+      - name: "Spatial"
+        path: "http://purl.org/dc/terms/spatial"
+      - name: "Theme Taxonomy"
+        path: "http://www.w3.org/ns/dcat#themeTaxonomy"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "catalogrecord"
+    targetClass: "http://www.w3.org/ns/dcat#CatalogRecord"
+    filters:
+      - name: "Conforms To"
+        path: "http://purl.org/dc/terms/conformsTo"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Identifier"
+        path: "http://purl.org/dc/terms/identifier"
+        required: true
+      - name: "Issued"
+        path: "http://purl.org/dc/terms/issued"
+        required: true
+      - name: "Language"
+        path: "http://purl.org/dc/terms/language"
+        classConstraint: "http://purl.org/dc/terms/LinguisticSystem"
+      - name: "Modified"
+        path: "http://purl.org/dc/terms/modified"
+        required: true
+      - name: "Primary Topic"
+        path: "http://xmlns.com/foaf/0.1/primaryTopic"
+        required: true
+      - name: "Source"
+        path: "http://purl.org/dc/terms/source"
+      - name: "Status"
+        path: "http://www.w3.org/ns/adms#status"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+  - name: "concept"
+    targetClass: "http://www.w3.org/2004/02/skos/core#Concept"
+    filters:
+      - name: "Definition"
+        path: "http://www.w3.org/2004/02/skos/core#definition"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "In Scheme"
+        path: "http://www.w3.org/2004/02/skos/core#inScheme"
+        required: true
+      - name: "Pref Label"
+        path: "http://www.w3.org/2004/02/skos/core#prefLabel"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "conceptscheme"
+    targetClass: "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+    filters:
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "contactpoint"
+    targetClass: "http://schema.org/ContactPoint"
+    filters:
+      - name: "Available Language"
+        path: "http://schema.org/availableLanguage"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Contact Type"
+        path: "http://schema.org/contactType"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Email"
+        path: "http://schema.org/email"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Telephone"
+        path: "http://schema.org/telephone"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+  - name: "contactpointtype"
+    targetClass: "https://www.epos-eu.org/epos-dcat-ap#ContactPointType"
+    description: "A vcard:Kind or schema:ContactPoint"
+    filters:
+      []
+  - name: "controlaction"
+    targetClass: "http://schema.org/ControlAction"
+    filters:
+      - name: "Object"
+        path: "http://schema.org/object"
+      - name: "Result"
+        path: "http://schema.org/result"
+  - name: "creativework"
+    targetClass: "http://schema.org/CreativeWork"
+    filters:
+      - name: "Conforms To"
+        path: "http://purl.org/dc/terms/conformsTo"
+      - name: "Encoding Format"
+        path: "http://schema.org/encodingFormat"
+  - name: "dataset"
+    targetClass: "http://www.w3.org/ns/dcat#Dataset"
+    filters:
+      - name: "Access Rights"
+        path: "http://purl.org/dc/terms/accessRights"
+        classConstraint: "http://purl.org/dc/terms/RightsStatement"
+      - name: "Accrual Periodicity"
+        path: "http://purl.org/dc/terms/accrualPeriodicity"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Annotation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#annotation"
+      - name: "Conforms To"
+        path: "http://purl.org/dc/terms/conformsTo"
+        classConstraint: "http://purl.org/dc/terms/Standard"
+      - name: "Contact Point"
+        path: "http://www.w3.org/ns/dcat#contactPoint"
+        required: true
+      - name: "Created"
+        path: "http://purl.org/dc/terms/created"
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Distribution"
+        path: "http://www.w3.org/ns/dcat#distribution"
+        required: true
+      - name: "Has Part"
+        path: "http://purl.org/dc/terms/hasPart"
+      - name: "Has Quality Annotation"
+        path: "http://www.w3.org/ns/dqv#hasQualityAnnotation"
+      - name: "Has Version"
+        path: "http://purl.org/dc/terms/hasVersion"
+      - name: "Identifier"
+        path: "http://purl.org/dc/terms/identifier"
+        required: true
+      - name: "Identifier"
+        path: "http://www.w3.org/ns/adms#identifier"
+      - name: "Is Part Of"
+        path: "http://purl.org/dc/terms/isPartOf"
+      - name: "Is Version Of"
+        path: "http://purl.org/dc/terms/isVersionOf"
+      - name: "Issued"
+        path: "http://purl.org/dc/terms/issued"
+      - name: "Keyword"
+        path: "http://www.w3.org/ns/dcat#keyword"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Landing Page"
+        path: "http://www.w3.org/ns/dcat#landingPage"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Language"
+        path: "http://purl.org/dc/terms/language"
+        classConstraint: "http://purl.org/dc/terms/LinguisticSystem"
+      - name: "Modified"
+        path: "http://purl.org/dc/terms/modified"
+      - name: "Page"
+        path: "http://xmlns.com/foaf/0.1/page"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Provenance"
+        path: "http://purl.org/dc/terms/provenance"
+        classConstraint: "http://purl.org/dc/terms/ProvenanceStatement"
+      - name: "Publisher"
+        path: "http://purl.org/dc/terms/publisher"
+        required: true
+      - name: "Relation"
+        path: "http://purl.org/dc/terms/relation"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Sample"
+        path: "http://www.w3.org/ns/adms#sample"
+      - name: "Source"
+        path: "http://purl.org/dc/terms/source"
+      - name: "Spatial"
+        path: "http://purl.org/dc/terms/spatial"
+      - name: "Temporal"
+        path: "http://purl.org/dc/terms/temporal"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        classConstraint: "http://www.w3.org/2004/02/skos/core#Concept"
+        required: true
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Type"
+        path: "http://purl.org/dc/terms/type"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Version Info"
+        path: "http://www.w3.org/2002/07/owl#versionInfo"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Version Notes"
+        path: "http://www.w3.org/ns/adms#versionNotes"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+  - name: "dateordatetimedatatype"
+    targetClass: "https://www.epos-eu.org/epos-dcat-ap#DateOrDateTimeDataType"
+    description: "It checks that a datatype property receives a date or a dateTime literal"
+    filters:
+      []
+  - name: "distribution"
+    targetClass: "http://www.w3.org/ns/dcat#Distribution"
+    filters:
+      - name: "Access URL"
+        path: "http://www.w3.org/ns/dcat#accessURL"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        classConstraint: "http://www.w3.org/2000/01/rdf-schema#Resource"
+        required: true
+      - name: "Annotation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#annotation"
+        classConstraint: "http://www.w3.org/ns/oa#Annotation"
+      - name: "Byte Size"
+        path: "http://www.w3.org/ns/dcat#byteSize"
+        datatype: "http://www.w3.org/2001/XMLSchema#decimal"
+      - name: "Checksum"
+        path: "http://spdx.org/rdf/terms#checksum"
+        classConstraint: "http://spdx.org/rdf/terms#Checksum"
+      - name: "Conforms To"
+        path: "http://purl.org/dc/terms/conformsTo"
+        classConstraint: "http://purl.org/dc/terms/Standard"
+        required: true
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Download URL"
+        path: "http://www.w3.org/ns/dcat#downloadURL"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Format"
+        path: "http://purl.org/dc/terms/format"
+        required: true
+      - name: "Identifier"
+        path: "http://purl.org/dc/terms/identifier"
+        required: true
+      - name: "Issued"
+        path: "http://purl.org/dc/terms/issued"
+      - name: "Language"
+        path: "http://purl.org/dc/terms/language"
+        classConstraint: "http://purl.org/dc/terms/LinguisticSystem"
+      - name: "License"
+        path: "http://purl.org/dc/terms/license"
+        classConstraint: "http://purl.org/dc/terms/LicenseDocument"
+      - name: "Media Type"
+        path: "http://www.w3.org/ns/dcat#mediaType"
+        classConstraint: "http://purl.org/dc/terms/MediaTypeOrExtent"
+      - name: "Modified"
+        path: "http://purl.org/dc/terms/modified"
+      - name: "Page"
+        path: "http://xmlns.com/foaf/0.1/page"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Rights"
+        path: "http://purl.org/dc/terms/rights"
+        classConstraint: "http://purl.org/dc/terms/RightsStatement"
+      - name: "Status"
+        path: "http://www.w3.org/ns/adms#status"
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Type"
+        path: "http://purl.org/dc/terms/type"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+  - name: "equipment"
+    targetClass: "https://www.epos-eu.org/epos-dcat-ap#Equipment"
+    filters:
+      - name: "Annotation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#annotation"
+      - name: "Contact Point"
+        path: "http://www.w3.org/ns/dcat#contactPoint"
+      - name: "Description"
+        path: "http://schema.org/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Dynamic Range"
+        path: "https://www.epos-eu.org/epos-dcat-ap#dynamicRange"
+        classConstraint: "http://schema.org/QuantitativeValue"
+      - name: "Filter"
+        path: "https://www.epos-eu.org/epos-dcat-ap#filter"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Is Part Of"
+        path: "http://purl.org/dc/terms/isPartOf"
+      - name: "Manufacturer"
+        path: "http://schema.org/manufacturer"
+        required: true
+      - name: "Name"
+        path: "http://schema.org/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Orientation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#orientation"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Page"
+        path: "http://xmlns.com/foaf/0.1/page"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Relation"
+        path: "http://purl.org/dc/terms/relation"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Resolution"
+        path: "https://www.epos-eu.org/epos-dcat-ap#resolution"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Sample Period"
+        path: "https://www.epos-eu.org/epos-dcat-ap#samplePeriod"
+        classConstraint: "http://schema.org/QuantitativeValue"
+      - name: "Serial Number"
+        path: "http://schema.org/serialNumber"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Spatial"
+        path: "http://purl.org/dc/terms/spatial"
+      - name: "Temporal"
+        path: "http://purl.org/dc/terms/temporal"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+      - name: "Type"
+        path: "http://purl.org/dc/terms/type"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+  - name: "facility"
+    targetClass: "https://www.epos-eu.org/epos-dcat-ap#Facility"
+    filters:
+      - name: "Annotation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#annotation"
+      - name: "Contact Point"
+        path: "http://www.w3.org/ns/dcat#contactPoint"
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Has Address"
+        path: "http://www.w3.org/2006/vcard/ns#hasAddress"
+      - name: "Identifier"
+        path: "http://purl.org/dc/terms/identifier"
+        required: true
+      - name: "Is Part Of"
+        path: "http://purl.org/dc/terms/isPartOf"
+      - name: "Page"
+        path: "http://xmlns.com/foaf/0.1/page"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Relation"
+        path: "http://purl.org/dc/terms/relation"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Spatial"
+        path: "http://purl.org/dc/terms/spatial"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+        required: true
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Type"
+        path: "http://purl.org/dc/terms/type"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+  - name: "identifier"
+    targetClass: "http://www.w3.org/ns/adms#Identifier"
+    filters:
+      - name: "Notation"
+        path: "http://www.w3.org/2004/02/skos/core#notation"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Scheme Agency"
+        path: "http://www.w3.org/ns/adms#schemeAgency"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+  - name: "iritemplate"
+    targetClass: "http://www.w3.org/ns/hydra/core#IriTemplate"
+    filters:
+      - name: "Mapping"
+        path: "http://www.w3.org/ns/hydra/core#mapping"
+      - name: "Template"
+        path: "http://www.w3.org/ns/hydra/core#template"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "iritemplatemapping"
+    targetClass: "http://www.w3.org/ns/hydra/core#IriTemplateMapping"
+    filters:
+      - name: "Default Value"
+        path: "http://schema.org/defaultValue"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Label"
+        path: "http://www.w3.org/2000/01/rdf-schema#label"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Max Value"
+        path: "http://schema.org/maxValue"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Min Value"
+        path: "http://schema.org/minValue"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Multiple Values"
+        path: "http://schema.org/multipleValues"
+        datatype: "http://www.w3.org/2001/XMLSchema#boolean"
+      - name: "Param Value"
+        path: "http://www.w3.org/2006/http#paramValue"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Property"
+        path: "http://www.w3.org/ns/hydra/core#property"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Range"
+        path: "http://www.w3.org/2000/01/rdf-schema#range"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Readonly Value"
+        path: "http://schema.org/readonlyValue"
+        datatype: "http://www.w3.org/2001/XMLSchema#boolean"
+      - name: "Required"
+        path: "http://www.w3.org/ns/hydra/core#required"
+        datatype: "http://www.w3.org/2001/XMLSchema#boolean"
+        required: true
+      - name: "Value Pattern"
+        path: "http://schema.org/valuePattern"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Variable"
+        path: "http://www.w3.org/ns/hydra/core#variable"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "location"
+    targetClass: "http://purl.org/dc/terms/Location"
+    filters:
+      - name: "Geometry"
+        path: "http://www.w3.org/ns/locn#geometry"
+        datatype: "http://www.opengis.net/ont/geosparql#wktLiteral"
+        required: true
+  - name: "operation"
+    targetClass: "http://www.w3.org/ns/hydra/core#Operation"
+    filters:
+      - name: "Method"
+        path: "http://www.w3.org/ns/hydra/core#method"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Property"
+        path: "http://www.w3.org/ns/hydra/core#property"
+        required: true
+      - name: "Returns"
+        path: "http://www.w3.org/ns/hydra/core#returns"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "organization"
+    targetClass: "http://schema.org/Organization"
+    filters:
+      - name: "Address"
+        path: "http://schema.org/address"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Annotation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#annotation"
+      - name: "Associated Project"
+        path: "https://www.epos-eu.org/epos-dcat-ap#associatedProject"
+        classConstraint: "http://xmlns.com/foaf/0.1/Project"
+      - name: "Contact Point"
+        path: "http://schema.org/contactPoint"
+      - name: "Email"
+        path: "http://schema.org/email"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "LEI Code"
+        path: "http://schema.org/leiCode"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Legal Name"
+        path: "http://schema.org/legalName"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Logo"
+        path: "http://schema.org/logo"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Member Of"
+        path: "http://schema.org/memberOf"
+      - name: "Owns"
+        path: "http://schema.org/owns"
+      - name: "Telephone"
+        path: "http://schema.org/telephone"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "URL"
+        path: "http://schema.org/url"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+  - name: "periodoftime"
+    targetClass: "http://purl.org/dc/terms/PeriodOfTime"
+    filters:
+      - name: "End Date"
+        path: "http://schema.org/endDate"
+      - name: "Start Date"
+        path: "http://schema.org/startDate"
+  - name: "person"
+    targetClass: "http://schema.org/Person"
+    filters:
+      - name: "Address"
+        path: "http://schema.org/address"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Affiliation"
+        path: "http://schema.org/affiliation"
+      - name: "Annotation"
+        path: "https://www.epos-eu.org/epos-dcat-ap#annotation"
+      - name: "Contact Point"
+        path: "http://schema.org/contactPoint"
+      - name: "Email"
+        path: "http://schema.org/email"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Family Name"
+        path: "http://schema.org/familyName"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Given Name"
+        path: "http://schema.org/givenName"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Qualifications"
+        path: "http://schema.org/qualifications"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Telephone"
+        path: "http://schema.org/telephone"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "URL"
+        path: "http://schema.org/url"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+  - name: "postaladdress"
+    targetClass: "http://schema.org/PostalAddress"
+    filters:
+      - name: "Address Country"
+        path: "http://schema.org/addressCountry"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Address Locality"
+        path: "http://schema.org/addressLocality"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Postal Code"
+        path: "http://schema.org/postalCode"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Street Address"
+        path: "http://schema.org/streetAddress"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "project"
+    targetClass: "http://xmlns.com/foaf/0.1/Project"
+    filters:
+      - name: "Contact Point"
+        path: "http://www.w3.org/ns/dcat#contactPoint"
+        required: true
+      - name: "Description"
+        path: "http://purl.org/dc/terms/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Homepage"
+        path: "http://xmlns.com/foaf/0.1/homepage"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Identifier"
+        path: "http://purl.org/dc/terms/identifier"
+        required: true
+      - name: "Title"
+        path: "http://purl.org/dc/terms/title"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "propertyvalue"
+    targetClass: "http://schema.org/PropertyValue"
+    filters:
+      - name: "Property ID"
+        path: "http://schema.org/propertyID"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Value"
+        path: "http://schema.org/value"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+  - name: "publication"
+    targetClass: "https://www.epos-eu.org/epos-dcat-ap#Publication"
+    filters:
+      - name: "Abstract"
+        path: "http://purl.org/dc/terms/abstract"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Author"
+        path: "http://schema.org/author"
+        required: true
+      - name: "Contributor"
+        path: "http://schema.org/contributor"
+        required: true
+      - name: "Date Published"
+        path: "http://schema.org/datePublished"
+        required: true
+      - name: "ISSN"
+        path: "http://schema.org/issn"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Keywords"
+        path: "http://schema.org/keywords"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "License"
+        path: "http://schema.org/license"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Name"
+        path: "http://schema.org/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Number Of Pages"
+        path: "http://schema.org/numberOfPages"
+        datatype: "http://www.w3.org/2001/XMLSchema#integer"
+      - name: "Publisher"
+        path: "http://schema.org/publisher"
+        required: true
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+      - name: "Volume Number"
+        path: "http://schema.org/volumeNumber"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+  - name: "quantitativevalue"
+    targetClass: "http://schema.org/QuantitativeValue"
+    filters:
+      - name: "Unit Code"
+        path: "http://schema.org/unitCode"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Value"
+        path: "http://schema.org/value"
+        datatype: "http://www.w3.org/2001/XMLSchema#double"
+        required: true
+  - name: "service"
+    targetClass: "http://schema.org/Service"
+    filters:
+      - name: "Contact Point"
+        path: "http://schema.org/contactPoint"
+        required: true
+      - name: "Description"
+        path: "http://schema.org/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Keywords"
+        path: "http://schema.org/keywords"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Name"
+        path: "http://schema.org/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Provider"
+        path: "http://schema.org/provider"
+        required: true
+      - name: "Service Type"
+        path: "http://schema.org/serviceType"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Spatial"
+        path: "http://purl.org/dc/terms/spatial"
+      - name: "Temporal"
+        path: "http://purl.org/dc/terms/temporal"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+      - name: "URL"
+        path: "http://schema.org/url"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+  - name: "softwareapplication"
+    targetClass: "http://schema.org/SoftwareApplication"
+    filters:
+      - name: "Contact Point"
+        path: "http://schema.org/contactPoint"
+        required: true
+      - name: "Description"
+        path: "http://schema.org/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Download URL"
+        path: "http://schema.org/downloadUrl"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Install URL"
+        path: "http://schema.org/installUrl"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Keywords"
+        path: "http://schema.org/keywords"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "License"
+        path: "http://schema.org/license"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Main Entity Of Page"
+        path: "http://schema.org/mainEntityOfPage"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Name"
+        path: "http://schema.org/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Potential Action"
+        path: "http://schema.org/potentialAction"
+      - name: "Relation"
+        path: "http://purl.org/dc/terms/relation"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Software Requirements"
+        path: "http://schema.org/softwareRequirements"
+      - name: "Software Version"
+        path: "http://schema.org/softwareVersion"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+  - name: "softwaresourcecode"
+    targetClass: "http://schema.org/SoftwareSourceCode"
+    filters:
+      - name: "Code Repository"
+        path: "http://schema.org/codeRepository"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Contact Point"
+        path: "http://schema.org/contactPoint"
+        required: true
+      - name: "Description"
+        path: "http://schema.org/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Keywords"
+        path: "http://schema.org/keywords"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "License"
+        path: "http://schema.org/license"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Main Entity Of Page"
+        path: "http://schema.org/mainEntityOfPage"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+      - name: "Name"
+        path: "http://schema.org/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Programming Language"
+        path: "http://schema.org/programmingLanguage"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Runtime Platform"
+        path: "http://schema.org/runtimePlatform"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Software Version"
+        path: "http://schema.org/softwareVersion"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "Target Product"
+        path: "http://schema.org/targetProduct"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+  - name: "webservice"
+    targetClass: "https://www.epos-eu.org/epos-dcat-ap#WebService"
+    filters:
+      - name: "Conforms To"
+        path: "http://purl.org/dc/terms/conformsTo"
+      - name: "Contact Point"
+        path: "http://www.w3.org/ns/dcat#contactPoint"
+        required: true
+      - name: "Date Modified"
+        path: "http://schema.org/dateModified"
+        required: true
+      - name: "Date Published"
+        path: "http://schema.org/datePublished"
+        required: true
+      - name: "Description"
+        path: "http://schema.org/description"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Entrypoint"
+        path: "http://www.w3.org/ns/hydra/core#entrypoint"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true
+      - name: "Identifier"
+        path: "http://schema.org/identifier"
+        required: true
+      - name: "Keywords"
+        path: "http://schema.org/keywords"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+      - name: "License"
+        path: "http://purl.org/dc/terms/license"
+        classConstraint: "http://purl.org/dc/terms/LicenseDocument"
+      - name: "Name"
+        path: "http://schema.org/name"
+        datatype: "http://www.w3.org/2001/XMLSchema#string"
+        required: true
+      - name: "Provider"
+        path: "http://schema.org/provider"
+        required: true
+      - name: "Spatial"
+        path: "http://purl.org/dc/terms/spatial"
+      - name: "Supported Operation"
+        path: "http://www.w3.org/ns/hydra/core#supportedOperation"
+      - name: "Temporal"
+        path: "http://purl.org/dc/terms/temporal"
+      - name: "Theme"
+        path: "http://www.w3.org/ns/dcat#theme"
+        datatype: "http://www.w3.org/2001/XMLSchema#anyURI"
+        required: true

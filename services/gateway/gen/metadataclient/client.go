@@ -55,6 +55,8 @@ type APIClient struct {
 
 	BatchAPI BatchAPI
 
+	EntitiesAPI EntitiesAPI
+
 	LifecycleAPI LifecycleAPI
 
 	OAIPMHAPI OAIPMHAPI
@@ -62,8 +64,6 @@ type APIClient struct {
 	ResourcesAPI ResourcesAPI
 
 	SPARQLAPI SPARQLAPI
-
-	SearchAPI SearchAPI
 
 	SystemAPI SystemAPI
 
@@ -89,11 +89,11 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.AccessAPI = (*AccessAPIService)(&c.common)
 	c.AdminAPI = (*AdminAPIService)(&c.common)
 	c.BatchAPI = (*BatchAPIService)(&c.common)
+	c.EntitiesAPI = (*EntitiesAPIService)(&c.common)
 	c.LifecycleAPI = (*LifecycleAPIService)(&c.common)
 	c.OAIPMHAPI = (*OAIPMHAPIService)(&c.common)
 	c.ResourcesAPI = (*ResourcesAPIService)(&c.common)
 	c.SPARQLAPI = (*SPARQLAPIService)(&c.common)
-	c.SearchAPI = (*SearchAPIService)(&c.common)
 	c.SystemAPI = (*SystemAPIService)(&c.common)
 	c.VersioningAPI = (*VersioningAPIService)(&c.common)
 

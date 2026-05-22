@@ -24,9 +24,10 @@ var _ MappedNullable = &BaseSearchItem{}
 type BaseSearchItem struct {
 	Type ResourceType `json:"type"`
 	Id   string       `json:"id"`
-	Name string       `json:"name"`
 	// Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
 	Href string `json:"href"`
+	// SHACL-selected property values returned as field-value pairs (includes `name`)
+	Fields map[string]interface{} `json:"fields,omitempty"`
 }
 
 type _BaseSearchItem BaseSearchItem
@@ -35,11 +36,10 @@ type _BaseSearchItem BaseSearchItem
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewBaseSearchItem(type_ ResourceType, id string, name string, href string) *BaseSearchItem {
+func NewBaseSearchItem(type_ ResourceType, id string, href string) *BaseSearchItem {
 	this := BaseSearchItem{}
 	this.Type = type_
 	this.Id = id
-	this.Name = name
 	this.Href = href
 	return &this
 }
@@ -100,30 +100,6 @@ func (o *BaseSearchItem) SetId(v string) {
 	o.Id = v
 }
 
-// GetName returns the Name field value
-func (o *BaseSearchItem) GetName() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Name
-}
-
-// GetNameOk returns a tuple with the Name field value
-// and a boolean to check if the value has been set.
-func (o *BaseSearchItem) GetNameOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Name, true
-}
-
-// SetName sets field value
-func (o *BaseSearchItem) SetName(v string) {
-	o.Name = v
-}
-
 // GetHref returns the Href field value
 func (o *BaseSearchItem) GetHref() string {
 	if o == nil {
@@ -148,6 +124,38 @@ func (o *BaseSearchItem) SetHref(v string) {
 	o.Href = v
 }
 
+// GetFields returns the Fields field value if set, zero value otherwise.
+func (o *BaseSearchItem) GetFields() map[string]interface{} {
+	if o == nil || IsNil(o.Fields) {
+		var ret map[string]interface{}
+		return ret
+	}
+	return o.Fields
+}
+
+// GetFieldsOk returns a tuple with the Fields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *BaseSearchItem) GetFieldsOk() (map[string]interface{}, bool) {
+	if o == nil || IsNil(o.Fields) {
+		return map[string]interface{}{}, false
+	}
+	return o.Fields, true
+}
+
+// HasFields returns a boolean if a field has been set.
+func (o *BaseSearchItem) HasFields() bool {
+	if o != nil && !IsNil(o.Fields) {
+		return true
+	}
+
+	return false
+}
+
+// SetFields gets a reference to the given map[string]interface{} and assigns it to the Fields field.
+func (o *BaseSearchItem) SetFields(v map[string]interface{}) {
+	o.Fields = v
+}
+
 func (o BaseSearchItem) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -160,8 +168,10 @@ func (o BaseSearchItem) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["type"] = o.Type
 	toSerialize["id"] = o.Id
-	toSerialize["name"] = o.Name
 	toSerialize["href"] = o.Href
+	if !IsNil(o.Fields) {
+		toSerialize["fields"] = o.Fields
+	}
 	return toSerialize, nil
 }
 
@@ -172,7 +182,6 @@ func (o *BaseSearchItem) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"type",
 		"id",
-		"name",
 		"href",
 	}
 

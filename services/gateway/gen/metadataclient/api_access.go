@@ -24,9 +24,9 @@ import (
 
 type AccessAPI interface {
 	/*
-		ApiV2AccessSearchGet Search resources (access style)
+		ApiV2AccessSearchGet Search resources
 
-		Same behavior as `/api/v2/search`, grouped under the Access namespace.
+		Returns a flat, typed list of catalogue resources matching the supplied criteria.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@return ApiApiV2AccessSearchGetRequest
@@ -154,9 +154,9 @@ func (r ApiApiV2AccessSearchGetRequest) Execute() (*SearchResponse, *http.Respon
 }
 
 /*
-ApiV2AccessSearchGet Search resources (access style)
+ApiV2AccessSearchGet Search resources
 
-Same behavior as `/api/v2/search`, grouped under the Access namespace.
+Returns a flat, typed list of catalogue resources matching the supplied criteria.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiApiV2AccessSearchGetRequest

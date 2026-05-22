@@ -24,13 +24,10 @@ var _ MappedNullable = &DatasetSearchItem{}
 type DatasetSearchItem struct {
 	Type string `json:"type"`
 	Id   string `json:"id"`
-	Name string `json:"name"`
 	// Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
 	Href string `json:"href"`
-	// Display names of organisations providing this dataset
-	ServiceProviders []string `json:"serviceProviders,omitempty"`
-	// Category labels assigned to this dataset
-	Categories []string `json:"categories,omitempty"`
+	// SHACL-selected property values returned as field-value pairs (includes `name`)
+	Fields map[string]interface{} `json:"fields,omitempty"`
 }
 
 type _DatasetSearchItem DatasetSearchItem
@@ -39,11 +36,10 @@ type _DatasetSearchItem DatasetSearchItem
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDatasetSearchItem(type_ string, id string, name string, href string) *DatasetSearchItem {
+func NewDatasetSearchItem(type_ string, id string, href string) *DatasetSearchItem {
 	this := DatasetSearchItem{}
 	this.Type = type_
 	this.Id = id
-	this.Name = name
 	this.Href = href
 	return &this
 }
@@ -104,30 +100,6 @@ func (o *DatasetSearchItem) SetId(v string) {
 	o.Id = v
 }
 
-// GetName returns the Name field value
-func (o *DatasetSearchItem) GetName() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.Name
-}
-
-// GetNameOk returns a tuple with the Name field value
-// and a boolean to check if the value has been set.
-func (o *DatasetSearchItem) GetNameOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Name, true
-}
-
-// SetName sets field value
-func (o *DatasetSearchItem) SetName(v string) {
-	o.Name = v
-}
-
 // GetHref returns the Href field value
 func (o *DatasetSearchItem) GetHref() string {
 	if o == nil {
@@ -152,68 +124,36 @@ func (o *DatasetSearchItem) SetHref(v string) {
 	o.Href = v
 }
 
-// GetServiceProviders returns the ServiceProviders field value if set, zero value otherwise.
-func (o *DatasetSearchItem) GetServiceProviders() []string {
-	if o == nil || IsNil(o.ServiceProviders) {
-		var ret []string
+// GetFields returns the Fields field value if set, zero value otherwise.
+func (o *DatasetSearchItem) GetFields() map[string]interface{} {
+	if o == nil || IsNil(o.Fields) {
+		var ret map[string]interface{}
 		return ret
 	}
-	return o.ServiceProviders
+	return o.Fields
 }
 
-// GetServiceProvidersOk returns a tuple with the ServiceProviders field value if set, nil otherwise
+// GetFieldsOk returns a tuple with the Fields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *DatasetSearchItem) GetServiceProvidersOk() ([]string, bool) {
-	if o == nil || IsNil(o.ServiceProviders) {
-		return nil, false
+func (o *DatasetSearchItem) GetFieldsOk() (map[string]interface{}, bool) {
+	if o == nil || IsNil(o.Fields) {
+		return map[string]interface{}{}, false
 	}
-	return o.ServiceProviders, true
+	return o.Fields, true
 }
 
-// HasServiceProviders returns a boolean if a field has been set.
-func (o *DatasetSearchItem) HasServiceProviders() bool {
-	if o != nil && !IsNil(o.ServiceProviders) {
+// HasFields returns a boolean if a field has been set.
+func (o *DatasetSearchItem) HasFields() bool {
+	if o != nil && !IsNil(o.Fields) {
 		return true
 	}
 
 	return false
 }
 
-// SetServiceProviders gets a reference to the given []string and assigns it to the ServiceProviders field.
-func (o *DatasetSearchItem) SetServiceProviders(v []string) {
-	o.ServiceProviders = v
-}
-
-// GetCategories returns the Categories field value if set, zero value otherwise.
-func (o *DatasetSearchItem) GetCategories() []string {
-	if o == nil || IsNil(o.Categories) {
-		var ret []string
-		return ret
-	}
-	return o.Categories
-}
-
-// GetCategoriesOk returns a tuple with the Categories field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *DatasetSearchItem) GetCategoriesOk() ([]string, bool) {
-	if o == nil || IsNil(o.Categories) {
-		return nil, false
-	}
-	return o.Categories, true
-}
-
-// HasCategories returns a boolean if a field has been set.
-func (o *DatasetSearchItem) HasCategories() bool {
-	if o != nil && !IsNil(o.Categories) {
-		return true
-	}
-
-	return false
-}
-
-// SetCategories gets a reference to the given []string and assigns it to the Categories field.
-func (o *DatasetSearchItem) SetCategories(v []string) {
-	o.Categories = v
+// SetFields gets a reference to the given map[string]interface{} and assigns it to the Fields field.
+func (o *DatasetSearchItem) SetFields(v map[string]interface{}) {
+	o.Fields = v
 }
 
 func (o DatasetSearchItem) MarshalJSON() ([]byte, error) {
@@ -228,13 +168,9 @@ func (o DatasetSearchItem) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["type"] = o.Type
 	toSerialize["id"] = o.Id
-	toSerialize["name"] = o.Name
 	toSerialize["href"] = o.Href
-	if !IsNil(o.ServiceProviders) {
-		toSerialize["serviceProviders"] = o.ServiceProviders
-	}
-	if !IsNil(o.Categories) {
-		toSerialize["categories"] = o.Categories
+	if !IsNil(o.Fields) {
+		toSerialize["fields"] = o.Fields
 	}
 	return toSerialize, nil
 }
@@ -246,7 +182,6 @@ func (o *DatasetSearchItem) UnmarshalJSON(data []byte) (err error) {
 	requiredProperties := []string{
 		"type",
 		"id",
-		"name",
 		"href",
 	}
 
