@@ -6,14 +6,15 @@ type ResourceType string
 
 const (
 	DatasetType             ResourceType = "dataset"
-	DistributionType        ResourceType = "distribution"
 	SoftwareApplicationType ResourceType = "software-application"
 	SoftwareSourceCodeType  ResourceType = "software-source-code"
+	Organization            ResourceType = "organization"
+	WebService              ResourceType = "web-service"
 )
 
 func (t ResourceType) IsValid() bool {
 	switch t {
-	case DatasetType, DistributionType, SoftwareApplicationType, SoftwareSourceCodeType:
+	case DatasetType, SoftwareApplicationType, SoftwareSourceCodeType, Organization, WebService:
 		return true
 	default:
 		return false

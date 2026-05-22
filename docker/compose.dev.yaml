@@ -65,7 +65,11 @@ services:
     networks:
       - epos-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:9200/_cluster/health || exit 1",
+        ]
       interval: 15s
       timeout: 10s
       retries: 20
@@ -141,6 +145,8 @@ services:
         condition: service_started
     ports:
       - "32000:5000"
+    environment:
+      - LOG_LEVEL=DEBUG
     volumes:
       - gateway-gomod-cache:/go/pkg/mod
       - gateway-gobuild-cache:/root/.cache/go-build

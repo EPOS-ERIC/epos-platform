@@ -17,6 +17,8 @@ type BaseSearchItem struct {
 	Href string       `json:"href"`
 }
 
+func (BaseSearchItem) searchItem() {}
+
 type DatasetItem struct {
 	BaseSearchItem
 	DataProviders []string `json:"data_providers,omitempty"`
