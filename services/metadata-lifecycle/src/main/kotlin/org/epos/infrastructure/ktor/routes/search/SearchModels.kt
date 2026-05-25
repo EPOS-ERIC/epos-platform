@@ -11,6 +11,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class SearchResponse(
     val total: Int,
+    val totalItems: Int,
+    val page: Int,
+    val totalPages: Int,
     val items: List<SearchItem>,
 )
 
@@ -23,15 +26,15 @@ data class SearchResponse(
 @JsonSubTypes(
     JsonSubTypes.Type(value = DatasetSearchItem::class, name = "dataset"),
     JsonSubTypes.Type(value = GenericSearchItem::class, name = "distribution"),
-    JsonSubTypes.Type(value = GenericSearchItem::class, name = "software-application"),
-    JsonSubTypes.Type(value = GenericSearchItem::class, name = "software-source-code"),
+    JsonSubTypes.Type(value = GenericSearchItem::class, name = "softwareapplication"),
+    JsonSubTypes.Type(value = GenericSearchItem::class, name = "softwaresourcecode"),
     JsonSubTypes.Type(value = GenericSearchItem::class, name = "category"),
 )
 sealed interface SearchItem {
     val type: String
     val id: String
     val href: String
-    val fields: Map<String, Any?>
+    val fields: Map<String, Any?>?
 }
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -39,7 +42,7 @@ sealed interface SearchItem {
 data class DatasetSearchItem(
     override val id: String,
     override val href: String,
-    override val fields: Map<String, Any?> = emptyMap(),
+    override val fields: Map<String, Any?>? = null,
 ) : SearchItem {
     override val type: String = "dataset"
 }
@@ -50,7 +53,7 @@ data class GenericSearchItem(
     override val type: String,
     override val id: String,
     override val href: String,
-    override val fields: Map<String, Any?> = emptyMap(),
+    override val fields: Map<String, Any?>? = null,
 ) : SearchItem
 
 // =============================================================================

@@ -19,6 +19,12 @@ object OpenApiAccessPaths {
         - ${'$'}ref: '#/components/parameters/ServiceProviders'
         - ${'$'}ref: '#/components/parameters/VersioningStatusFilter'
         - ${'$'}ref: '#/components/parameters/Keywords'
+        - name: includeConstraints
+          in: query
+          description: When true, include SHACL-driven `fields` in each search item.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Search results returned successfully
@@ -52,6 +58,12 @@ object OpenApiAccessPaths {
         - ${'$'}ref: '#/components/parameters/ServiceProviders'
         - ${'$'}ref: '#/components/parameters/VersioningStatusFilter'
         - ${'$'}ref: '#/components/parameters/Keywords'
+        - name: includeConstraints
+          in: query
+          description: When true, include SHACL-driven `fields` in each search item.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Search results returned successfully
@@ -93,6 +105,12 @@ object OpenApiAccessPaths {
       responses:
         '200':
           description: Access response returned successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - ${'$'}ref: '#/components/schemas/AccessListResponse'
+                  - ${'$'}ref: '#/components/schemas/AccessDetailResponse'
         '400':
           ${'$'}ref: '#/components/responses/BadRequest'
         '404':

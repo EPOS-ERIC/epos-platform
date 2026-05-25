@@ -13,13 +13,16 @@ type healthPinger interface {
 	PingContext(ctx context.Context) error
 }
 
-func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupRepository, pinger healthPinger) http.Handler {
+func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupRepository, membershipsRepo repository.MembershipRepository, friendshipsRepo repository.FriendshipRepository, pinger healthPinger) http.Handler {
 	mux := http.NewServeMux()
 	groupsHandler := handlers.NewGroupsHandler(groupsRepo)
 	usersHandler := handlers.NewUsersHandler(usersRepo)
+	membershipsHandler := handlers.NewMembershipsHandler(usersRepo, groupsRepo, membershipsRepo)
+	friendshipsHandler := handlers.NewFriendshipsHandler(usersRepo, friendshipsRepo)
+	authorizeHandler := handlers.NewAuthorizeHandler(usersRepo, membershipsRepo, friendshipsRepo)
 
 	mux.HandleFunc("GET /health", handlers.NewHealthHandler(pinger))
-	mux.HandleFunc("POST /api/v2/authorize", handlers.Authorize)
+	mux.HandleFunc("POST /api/v2/authorize", authorizeHandler.Authorize)
 	mux.HandleFunc("GET /openapi.yaml", handlers.OpenAPISpec)
 	mux.HandleFunc("GET /swagger", handlers.SwaggerRedirect)
 	mux.Handle("/swagger/", http.StripPrefix("/swagger", http.FileServer(http.FS(swagger.GetUI()))))
@@ -29,6 +32,9 @@ func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupR
 	mux.HandleFunc("PUT /api/v2/groups/{groupId}", groupsHandler.Replace)
 	mux.HandleFunc("PATCH /api/v2/groups/{groupId}", groupsHandler.Patch)
 	mux.HandleFunc("DELETE /api/v2/groups/{groupId}", groupsHandler.Delete)
+	mux.HandleFunc("GET /api/v2/groups/{groupId}/memberships", membershipsHandler.ListByGroup)
+	mux.HandleFunc("PUT /api/v2/groups/{groupId}/memberships/{userId}", membershipsHandler.Upsert)
+	mux.HandleFunc("DELETE /api/v2/groups/{groupId}/memberships/{userId}", membershipsHandler.Delete)
 	mux.HandleFunc("GET /api/v2/users", usersHandler.List)
 	mux.HandleFunc("POST /api/v2/users", usersHandler.Create)
 	mux.HandleFunc("GET /api/v2/users/by-auth/{authIdentifier}", usersHandler.GetByAuthIdentifier)
@@ -36,6 +42,8 @@ func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupR
 	mux.HandleFunc("PUT /api/v2/users/{userId}", usersHandler.Replace)
 	mux.HandleFunc("PATCH /api/v2/users/{userId}", usersHandler.Patch)
 	mux.HandleFunc("DELETE /api/v2/users/{userId}", usersHandler.Delete)
+	mux.HandleFunc("POST /api/v2/users/{userId}/friends/{friendUserId}", friendshipsHandler.Create)
+	mux.HandleFunc("DELETE /api/v2/users/{userId}/friends/{friendUserId}", friendshipsHandler.Delete)
 
 	return mux
 }

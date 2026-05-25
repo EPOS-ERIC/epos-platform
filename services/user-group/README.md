@@ -2,6 +2,8 @@
 
 Service that stores users, groups, memberships, and role-based authorization data used by the orchestrator.
 
+Membership and friendship APIs are available to manage user roles in groups and draft-sharing relationships.
+
 The service uses shared Go packages from `packages/go/` for structured logging, PostgreSQL connection bootstrap, and SQL migrations.
 
 ## API version

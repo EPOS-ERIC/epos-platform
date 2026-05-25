@@ -118,8 +118,8 @@ internal fun inferTypeFromId(resourceId: String): String? =
     when {
         resourceId.contains("/dataset/", ignoreCase = true) -> "dataset"
         resourceId.contains("/distribution/", ignoreCase = true) -> "distribution"
-        resourceId.contains("SoftwareApplication", ignoreCase = true) -> "software-application"
-        resourceId.contains("SoftwareSourceCode", ignoreCase = true) -> "software-source-code"
+        resourceId.contains("SoftwareApplication", ignoreCase = true) -> "softwareapplication"
+        resourceId.contains("SoftwareSourceCode", ignoreCase = true) -> "softwaresourcecode"
         resourceId.contains("/concept/", ignoreCase = true) || resourceId.contains("Concept", ignoreCase = true) -> "category"
         resourceId.contains("/facility/", ignoreCase = true) -> "facility"
         resourceId.contains("/equipment/", ignoreCase = true) -> "equipment"

@@ -46,6 +46,8 @@ func main() {
 	handler := server.NewRouter(
 		repository.NewUserPostgresRepository(db),
 		repository.NewGroupPostgresRepository(db),
+		repository.NewMembershipPostgresRepository(db),
+		repository.NewFriendshipPostgresRepository(db),
 		db,
 	)
 	log.Info("starting http server", "addr", addr)

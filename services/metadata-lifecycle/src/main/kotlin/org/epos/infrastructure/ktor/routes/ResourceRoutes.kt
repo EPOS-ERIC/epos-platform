@@ -282,11 +282,12 @@ fun Route.resourceCrudRoutes(
             val status = call.request.queryParameters["status"] ?: "published"
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
             val pageSize = call.request.queryParameters["pageSize"]?.toIntOrNull() ?: 20
+            val agent = call.request.header("X-Agent")?.trim()?.takeIf { it.isNotBlank() }
 
             val resourceTypes = shaclService.getResourceTypes()
             resourceController.setResourceType(resourceTypes)
 
-            val response = resourceController.listEntities(resourceType, status, page, pageSize)
+            val response = resourceController.listEntities(resourceType, status, page, pageSize, agent)
             call.respond(response)
         }
 
@@ -329,7 +330,7 @@ fun Route.resourceCrudRoutes(
 
             if (requestedFormat.contains("turtle") || requestedFormat == "ttl") {
                 val ttl = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToTurtle(entity)
+                    convertEntityToTurtle(entity, shaclService.getResourceTypes())
                 }
                 if (!ttl.isNullOrEmpty()) {
                     call.respondText(ttl, ContentType.parse("text/turtle"))
@@ -341,7 +342,7 @@ fun Route.resourceCrudRoutes(
 
             if (requestedFormat.contains("ld+json") || requestedFormat.contains("json-ld") || requestedFormat == "jsonld") {
                 val jsonld = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToJsonLd(entity)
+                    convertEntityToJsonLd(entity, shaclService.getResourceTypes())
                 }
                 if (!jsonld.isNullOrEmpty()) {
                     call.respondText(jsonld, ContentType.parse("application/ld+json"))
@@ -353,7 +354,7 @@ fun Route.resourceCrudRoutes(
 
             if (requestedFormat.contains("rdf+xml") || requestedFormat == "rdfxml" || requestedFormat == "xml") {
                 val rdfxml = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToRdfXml(entity)
+                    convertEntityToRdfXml(entity, shaclService.getResourceTypes())
                 }
                 if (!rdfxml.isNullOrEmpty()) {
                     call.respondText(rdfxml, ContentType.parse("application/rdf+xml"))
@@ -365,7 +366,7 @@ fun Route.resourceCrudRoutes(
 
             if (requestedFormat.contains("n-triples") || requestedFormat.contains("ntriples") || requestedFormat == "nt") {
                 val ntriples = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToNTriples(entity)
+                    convertEntityToNTriples(entity, shaclService.getResourceTypes())
                 }
                 if (!ntriples.isNullOrEmpty()) {
                     call.respondText(ntriples, ContentType.parse("application/n-triples"))
@@ -444,7 +445,8 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondMutationRe
     respond(status, response)
 }
 
-internal fun convertEntityToTurtle(entity: EntityResponse): String {
+internal fun convertEntityToTurtle(entity: EntityResponse, resourceTypes: List<ResourceTypeInfo>): String {
+    val predicateMap = predicateMapForEntity(entity, resourceTypes)
     val builder = StringBuilder()
     builder.append("@prefix dcat: <http://www.w3.org/ns/dcat#> .\n")
     builder.append("@prefix dct: <http://purl.org/dc/terms/> .\n")
@@ -452,10 +454,7 @@ internal fun convertEntityToTurtle(entity: EntityResponse): String {
 
     builder.append("<${entity.uri}>\n")
     entity.properties.forEach { (key, value) ->
-        val predicate = when (key) {
-            "type" -> "a"
-            else -> "dct:$key"
-        }
+        val predicate = if (key == "type") "a" else predicateMap[key] ?: "dct:$key"
         val objectTokens = toRdfObjectTokens(value)
         if (objectTokens.isNotEmpty()) {
             builder.append("  $predicate ${objectTokens.joinToString(", ")} ;\n")
@@ -464,6 +463,8 @@ internal fun convertEntityToTurtle(entity: EntityResponse): String {
     builder.append("  dct:isVersionOf <${entity.conceptualUri}> .\n")
     return builder.toString()
 }
+
+internal fun convertEntityToTurtle(entity: EntityResponse): String = convertEntityToTurtle(entity, emptyList())
 
 internal fun convertEntityToJsonLd(entity: EntityResponse): String {
     val mapper = ObjectMapper()
@@ -482,25 +483,81 @@ internal fun convertEntityToJsonLd(entity: EntityResponse): String {
     return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
 }
 
-internal fun convertEntityToRdfXml(entity: EntityResponse): String {
+internal fun convertEntityToJsonLd(entity: EntityResponse, resourceTypes: List<ResourceTypeInfo>): String {
+    val predicateMap = predicateMapForEntity(entity, resourceTypes)
+    val mapper = ObjectMapper()
+    val node = mutableMapOf<String, Any>(
+        "@context" to mapOf(
+            "dcat" to "http://www.w3.org/ns/dcat#",
+            "dct" to "http://purl.org/dc/terms/",
+            "pav" to "http://purl.org/pav/"
+        ),
+        "@id" to entity.uri
+    )
+    entity.properties.forEach { (key, value) ->
+        val predicate = predicateMap[key] ?: "dct:$key"
+        node[predicate] = value
+    }
+    node[predicateMap["isVersionOf"] ?: "dct:isVersionOf"] = mapOf("@id" to entity.conceptualUri)
+    return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node)
+}
+
+internal fun convertEntityToRdfXml(entity: EntityResponse, resourceTypes: List<ResourceTypeInfo>): String {
+    val predicateMap = predicateMapForEntity(entity, resourceTypes)
     return "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
         "  <rdf:Description rdf:about=\"${entity.uri}\">\n" +
         entity.properties.flatMap { (key, value) ->
             toRdfValues(value).map { item ->
                 val text = item.toString().replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-                "    <dct:$key>${text}</dct:$key>"
+                "    <${predicateMap[key] ?: "dct:$key"}>${text}</${predicateMap[key] ?: "dct:$key"}>"
             }
         }.joinToString("\n") +
         "\n  </rdf:Description>\n</rdf:RDF>"
 }
 
-internal fun convertEntityToNTriples(entity: EntityResponse): String {
+internal fun convertEntityToRdfXml(entity: EntityResponse): String = convertEntityToRdfXml(entity, emptyList())
+
+internal fun convertEntityToNTriples(entity: EntityResponse, resourceTypes: List<ResourceTypeInfo>): String {
+    val predicateMap = predicateMapForEntity(entity, resourceTypes)
     return entity.properties.flatMap { (key, value) ->
         toRdfObjectTokens(value).map { obj ->
-            "<${entity.uri}> <http://purl.org/dc/terms/$key> $obj ."
+            val predicate = predicateMap[key] ?: "dct:$key"
+            val predicateIri = if (predicate.contains(":")) {
+                when (predicate.substringBefore(':')) {
+                    "dct" -> "http://purl.org/dc/terms/${predicate.substringAfter(':')}"
+                    "dcat" -> "http://www.w3.org/ns/dcat#${predicate.substringAfter(':')}"
+                    "pav" -> "http://purl.org/pav/${predicate.substringAfter(':')}"
+                    else -> predicate
+                }
+            } else {
+                predicate
+            }
+            "<${entity.uri}> <$predicateIri> $obj ."
         }
     }.joinToString("\n") + "\n" +
         "<${entity.uri}> <http://purl.org/dc/terms/isVersionOf> <${entity.conceptualUri}> ."
+}
+
+internal fun convertEntityToNTriples(entity: EntityResponse): String = convertEntityToNTriples(entity, emptyList())
+
+private fun predicateMapForEntity(entity: EntityResponse, resourceTypes: List<ResourceTypeInfo>): Map<String, String> {
+    val normalizedType = entity.type.lowercase().replace("-", "")
+    val typeInfo = resourceTypes.firstOrNull {
+        it.name.lowercase().replace("-", "") == normalizedType
+    } ?: return emptyMap()
+
+    return typeInfo.properties.associate { property ->
+        property.name to compactPath(property.path)
+    }
+}
+
+private fun compactPath(path: String): String {
+    return when {
+        path.startsWith("http://purl.org/dc/terms/") -> "dct:${path.substringAfterLast('/')}"
+        path.startsWith("http://www.w3.org/ns/dcat#") -> "dcat:${path.substringAfter('#')}"
+        path.startsWith("http://purl.org/pav/") -> "pav:${path.substringAfterLast('/')}"
+        else -> "dct:${path.substringAfterLast('/').substringAfterLast('#')}"
+    }
 }
 
 private fun toRdfValues(value: Any?): List<Any?> =

@@ -52,7 +52,7 @@ object OpenApiDetailsPaths {
         '500':
           ${'$'}ref: '#/components/responses/InternalServerError'
 
-  /api/v2/software-application/{id}:
+  /api/v2/softwareapplication/{id}:
     parameters:
       - ${'$'}ref: '#/components/parameters/ResourceId'
     get:
@@ -75,7 +75,7 @@ object OpenApiDetailsPaths {
         '500':
           ${'$'}ref: '#/components/responses/InternalServerError'
 
-  /api/v2/software-source-code/{id}:
+  /api/v2/softwaresourcecode/{id}:
     parameters:
       - ${'$'}ref: '#/components/parameters/ResourceId'
     get:

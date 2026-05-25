@@ -28,6 +28,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthorizeResponse'
+  /api/v2/groups/{groupId}/memberships:
+    get:
+      summary: List memberships by group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Memberships listed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Membership'
+  /api/v2/groups/{groupId}/memberships/{userId}:
+    put:
+      summary: Create or update membership
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertMembershipRequest'
+      responses:
+        '200':
+          description: Membership upserted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membership'
+    delete:
+      summary: Delete membership
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Membership deleted
   /api/v2/groups:
     get:
       summary: List groups
@@ -242,6 +303,43 @@ paths:
       responses:
         '204':
           description: User deleted
+  /api/v2/users/{userId}/friends/{friendUserId}:
+    post:
+      summary: Create friendship between users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: friendUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Friendship created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Friendship'
+    delete:
+      summary: Delete friendship between users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: friendUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Friendship deleted
 
 components:
   schemas:
@@ -293,6 +391,8 @@ components:
           type: string
         action:
           type: string
+        resourceOwnerIdentifier:
+          type: string
     AuthorizeResponse:
       type: object
       required: [allowed]
@@ -301,6 +401,45 @@ components:
           type: boolean
         reason:
           type: string
+    Membership:
+      type: object
+      properties:
+        userId:
+          type: string
+        groupId:
+          type: string
+        role:
+          type: string
+          enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
+        status:
+          type: string
+          enum: [PENDING, ACTIVE, REVOKED, REJECTED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UpsertMembershipRequest:
+      type: object
+      required: [role, status]
+      properties:
+        role:
+          type: string
+          enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
+        status:
+          type: string
+          enum: [PENDING, ACTIVE, REVOKED, REJECTED]
+    Friendship:
+      type: object
+      properties:
+        userId:
+          type: string
+        friendId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     User:
       type: object
       properties:

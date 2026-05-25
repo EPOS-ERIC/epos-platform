@@ -29,7 +29,22 @@ class ProvenanceService(private val client: PropertyGraphClient) {
         val activityUri = UriUtils.generateActivityUri()
         val timestamp = java.time.Instant.now().toString()
 
-        client.runWrite(createActivityScript(activityUri, "draft_creation", newVersionUri, null, "draft", agent, group, timestamp))
+        client.runWrite(
+            createActivityScript(
+                activityUri = activityUri,
+                type = "draft_creation",
+                versionUri = newVersionUri,
+                fromStatus = null,
+                toStatus = "draft",
+                agent = agent,
+                group = group,
+                timestamp = timestamp,
+                extraProperties = mapOf(
+                    "startingVersionId" to basedOnVersionUri,
+                    "startingDatasetId" to conceptualUri,
+                ),
+            ),
+        )
     }
 
     fun recordStateTransition(
@@ -98,10 +113,14 @@ class ProvenanceService(private val client: PropertyGraphClient) {
         toStatus: String?,
         agent: String,
         group: String,
-        timestamp: String
+        timestamp: String,
+        extraProperties: Map<String, String> = emptyMap(),
     ): String {
         val fromStatusLine = fromStatus?.let { "a.property('fromStatus', ${toGremlinString(it)})" } ?: ""
         val toStatusLine = toStatus?.let { "a.property('toStatus', ${toGremlinString(it)})" } ?: ""
+        val extraPropertyLines = extraProperties.entries.joinToString("\n") { (key, value) ->
+            "a.property('${key.replace("'", "")}', ${toGremlinString(value)})"
+        }
 
         return """
             import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*
@@ -116,6 +135,7 @@ class ProvenanceService(private val client: PropertyGraphClient) {
                 .next()
               $fromStatusLine
               $toStatusLine
+              $extraPropertyLines
               g.V(a.id()).addE('AFFECTED').to(V(v.id())).iterate()
             }
         """.trimIndent()
