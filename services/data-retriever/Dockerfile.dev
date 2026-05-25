@@ -1,0 +1,17 @@
+FROM golang:1.26.2
+
+WORKDIR /workspace/services/data-retriever
+
+ENV CGO_ENABLED=0
+
+COPY services/data-retriever/go.mod services/data-retriever/go.sum ./
+COPY packages/go/logging /workspace/packages/go/logging
+COPY packages/go/migrations /workspace/packages/go/migrations
+COPY packages/go/postgres /workspace/packages/go/postgres
+RUN go mod download
+
+COPY services/data-retriever/ ./
+
+EXPOSE 8100
+
+CMD ["go", "run", "."]

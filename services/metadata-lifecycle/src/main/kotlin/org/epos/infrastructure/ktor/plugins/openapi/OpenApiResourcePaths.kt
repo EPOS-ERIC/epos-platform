@@ -16,8 +16,14 @@ object OpenApiResourcePaths {
     get:
       tags: [Resources]
       summary: List entities
-      description: Retrieve a paginated list of entities of a specific type
+      description: Retrieve a paginated list of entities of a specific type. For status=draft, X-Agent can scope results to drafts created by that agent.
       parameters:
+        - name: X-Agent
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional agent URI used to filter draft results for this actor.
         - name: status
           in: query
           schema:

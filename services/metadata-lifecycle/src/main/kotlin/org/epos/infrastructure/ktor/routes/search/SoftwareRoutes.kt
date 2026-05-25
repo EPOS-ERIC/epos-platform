@@ -18,7 +18,7 @@ import org.epos.propertygraph.client.PropertyGraphClient
 import java.net.URLDecoder
 
 fun Route.softwareRoutes(client: PropertyGraphClient) {
-    get("/api/v2/software-application/{id}") {
+    get("/api/v2/softwareapplication/{id}") {
         val appId = call.parameters["id"]
         if (appId.isNullOrBlank()) {
             call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Missing software application ID"))
@@ -54,7 +54,7 @@ fun Route.softwareRoutes(client: PropertyGraphClient) {
         }
     }
 
-    get("/api/v2/software-source-code/{id}") {
+    get("/api/v2/softwaresourcecode/{id}") {
         val codeId = call.parameters["id"]
         if (codeId.isNullOrBlank()) {
             call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Missing software source code ID"))

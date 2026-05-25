@@ -43,7 +43,8 @@ class ResourceController(
         resourceType: String,
         status: String = "published",
         page: Int = 1,
-        pageSize: Int = 20
+        pageSize: Int = 20,
+        agent: String? = null,
     ): EntityListResponse {
         val typeFilter = getTypeUri(resourceType)
         val typeCandidates = buildConceptualTypeCandidates(resourceType, typeFilter)
@@ -56,9 +57,17 @@ class ResourceController(
             } else {
                 ""
             }
+        val draftAgentPredicate =
+            if (status.equals("draft", ignoreCase = true) && !agent.isNullOrBlank()) {
+                ".where(org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.in('AFFECTED').hasLabel('Activity').has('type', 'draft_creation').has('agent', ${gStr(agent)}))"
+            } else {
+                ""
+            }
+
         val results = client.runQuery(
             """
             g.V().hasLabel('Version').has('status', ${gStr(status)})
+              $draftAgentPredicate
               .as('v')
               .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate
               .as('c')
@@ -91,7 +100,7 @@ class ResourceController(
         }
 
         val countScript =
-            "g.V().hasLabel('Version').has('status', ${gStr(status)}).in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.count().next()"
+            "g.V().hasLabel('Version').has('status', ${gStr(status)})$draftAgentPredicate.in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.count().next()"
         val total = client.runQuery(countScript).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
 
         return EntityListResponse(

@@ -1,4 +1,40 @@
 services:
+  user-group-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=user_group
+      - POSTGRES_USER=user_group
+      - POSTGRES_PASSWORD=user_group
+    ports:
+      - "5432:5432"
+    volumes:
+      - user-group-db-data:/var/lib/postgresql/data
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_group -d user_group || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  data-retriever-db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=data_retriever
+      - POSTGRES_USER=data_retriever
+      - POSTGRES_PASSWORD=data_retriever
+    ports:
+      - "5433:5432"
+    volumes:
+      - data-retriever-db-data:/var/lib/postgresql/data
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U data_retriever -d data_retriever || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
   cassandra:
     image: cassandra:4.1
     environment:
@@ -112,12 +148,61 @@ services:
     networks:
       - epos-network
 
+  user-group-service:
+    image: epos-user-group-dev:local
+    depends_on:
+      user-group-db:
+        condition: service_healthy
+    ports:
+      - "8090:8090"
+    environment:
+      - USER_GROUP_LISTEN_ADDR=:8090
+      - USER_GROUP_DB_HOST=user-group-db
+      - USER_GROUP_DB_PORT=5432
+      - USER_GROUP_DB_NAME=user_group
+      - USER_GROUP_DB_USER=user_group
+      - USER_GROUP_DB_PASSWORD=user_group
+    volumes:
+      - user-group-gomod-cache:/go/pkg/mod
+      - user-group-gobuild-cache:/root/.cache/go-build
+    restart: on-failure
+    networks:
+      - epos-network
+
+  data-retriever-service:
+    image: epos-data-retriever-dev:local
+    depends_on:
+      data-retriever-db:
+        condition: service_healthy
+    ports:
+      - "8100:8100"
+    environment:
+      - DATA_RETRIEVER_LISTEN_ADDR=:8100
+      - DATA_RETRIEVER_DB_HOST=data-retriever-db
+      - DATA_RETRIEVER_DB_PORT=5432
+      - DATA_RETRIEVER_DB_NAME=data_retriever
+      - DATA_RETRIEVER_DB_USER=data_retriever
+      - DATA_RETRIEVER_DB_PASSWORD=data_retriever
+      - DATA_RETRIEVER_HTTP_TIMEOUT=30s
+    volumes:
+      - data-retriever-gomod-cache:/go/pkg/mod
+      - data-retriever-gobuild-cache:/root/.cache/go-build
+    restart: on-failure
+    networks:
+      - epos-network
+
 volumes:
   cassandra-data:
   elasticsearch-data:
   metadata-gradle-cache:
   gateway-gomod-cache:
   gateway-gobuild-cache:
+  user-group-gomod-cache:
+  user-group-gobuild-cache:
+  user-group-db-data:
+  data-retriever-gomod-cache:
+  data-retriever-gobuild-cache:
+  data-retriever-db-data:
 
 networks:
   epos-network:

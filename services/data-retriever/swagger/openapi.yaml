@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: EPOS Data Retriever API
+  version: 2.0.0
+  description: Execute templated external HTTP requests, cache non-binary payloads, and search cached payload text.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+  /api/v2/retrieve:
+    post:
+      summary: Execute and cache external request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetrieveRequest'
+      responses:
+        '200':
+          description: Non-binary payload returned as raw upstream payload.
+          headers:
+            X-Retrieval-Id:
+              schema:
+                type: string
+              description: Stored retrieval record id.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+            text/plain:
+              schema:
+                type: string
+        '303':
+          description: Binary payload; redirect to generated upstream URL.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+        '400':
+          description: Invalid request
+  /api/v2/retrieve/{id}:
+    get:
+      summary: Get retrieval by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Retrieval found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrievalRecord'
+        '404':
+          description: Retrieval not found
+  /api/v2/search:
+    get:
+      summary: Search cached payload text
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source_id
+          in: query
+          schema:
+            type: string
+        - name: method
+          in: query
+          schema:
+            type: string
+            enum: [GET, POST, PUT, DELETE]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Search result list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchItem'
+components:
+  schemas:
+    RetrieveRequest:
+      type: object
+      required: [source_id, method, url_template, path_params]
+      properties:
+        source_id:
+          type: string
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE]
+        url_template:
+          type: string
+          example: https://example.org/resources/{id}
+        path_params:
+          type: object
+          additionalProperties:
+            type: string
+        query_params:
+          type: object
+          additionalProperties:
+            type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        bearer_token:
+          type: string
+          description: Optional bearer token used only at execution time and never persisted.
+        body:
+          $ref: '#/components/schemas/RetrieveBody'
+    RetrieveBody:
+      type: object
+      required: [content_type]
+      properties:
+        content_type:
+          type: string
+          example: application/json; charset=utf-8
+        raw:
+          type: string
+        json:
+          type: object
+          additionalProperties: true
+      description: Exactly one of raw or json must be set.
+    RetrievalRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        source_id:
+          type: string
+        method:
+          type: string
+        url_template:
+          type: string
+        generated_url:
+          type: string
+        http_status:
+          type: integer
+        content_type:
+          type: string
+        is_binary:
+          type: boolean
+        payload_text:
+          type: string
+        payload_hash:
+          type: string
+        payload_size_bytes:
+          type: integer
+        used_auth:
+          type: boolean
+        fetched_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        request_body_text:
+          type: string
+    SearchItem:
+      allOf:
+        - $ref: '#/components/schemas/RetrievalRecord'
+        - type: object
+          properties:
+            score:
+              type: number
+              format: double

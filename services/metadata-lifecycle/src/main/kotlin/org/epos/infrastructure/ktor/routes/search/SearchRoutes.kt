@@ -2,6 +2,7 @@ package org.epos.infrastructure.ktor.routes.search
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.log
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
@@ -18,6 +19,7 @@ import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
 
 private const val DATASET_TYPE_URI = "http://www.w3.org/ns/dcat#Dataset"
+private const val SEARCH_QUERY_TIMING_ENV = "EPOS_SEARCH_QUERY_TIMING"
 
 fun Route.searchRoutes(
     client: PropertyGraphClient,
@@ -66,6 +68,7 @@ private suspend fun executeSearch(
             }
         val limit = resultsPerPage
         val types = params.getAll("type") ?: emptyList()
+        val includeConstraints = params["includeConstraints"]?.toBooleanStrictOrNull() ?: false
         val versioningStatuses =
             params.getAll("versioningStatus")?.map { it.lowercase() }
                 ?: listOf("published")
@@ -75,56 +78,109 @@ private suspend fun executeSearch(
 
         val statusFilter = versioningStatuses
 
-        val typeFilter: Set<String>? = if (types.isNotEmpty()) {
+        val matchedResourceTypes = if (types.isNotEmpty()) {
             val normalizedTypes = types.map { normalizeTypeName(it) }
             val matchingTypes = resourceTypeInfos.filter { typeInfo ->
                 normalizeTypeName(typeInfo.name) in normalizedTypes
             }
             if (matchingTypes.isEmpty()) {
-                call.respond(SearchResponse(total = 0, items = emptyList()))
+                call.respond(
+                    SearchResponse(
+                        total = 0,
+                        totalItems = 0,
+                        page = page,
+                        totalPages = 0,
+                        items = emptyList(),
+                    ),
+                )
                 return
             }
-            matchingTypes.map { normalizeTypeName(it.name) }.toSet()
+            matchingTypes
         } else {
             null
         }
 
         val searchTerms = q?.split("\\s+".toRegex())?.filter { it.isNotBlank() } ?: emptyList()
         val statusGremlinList = statusFilter.joinToString(",") { gStr(it) }
-        val typeGremlinList = typeFilter?.joinToString(",") { gStr(it) }
-        val typePredicate = if (typeGremlinList.isNullOrBlank()) "" else ".has('type', within($typeGremlinList))"
+        val typeValueFilter =
+            matchedResourceTypes
+                ?.flatMap { typeInfo ->
+                    val targetClass = typeInfo.targetClass
+                    val targetLocal = targetClass.substringAfterLast('/').substringAfterLast('#')
+                    listOf(typeInfo.name, targetClass, targetLocal)
+                }
+                ?.filter { it.isNotBlank() }
+                ?.toSet()
+                .orEmpty()
+        val typeGremlinList = typeValueFilter.joinToString(",") { gStr(it) }
+        val typePredicate = if (typeGremlinList.isBlank()) "" else ".has('type', within($typeGremlinList))"
+
+        val textPredicate =
+            if (searchTerms.isEmpty()) {
+                ""
+            } else {
+                val termPredicates =
+                    searchTerms.flatMap { term ->
+                        val escapedTerm = gStr(term.lowercase())
+                        listOf(
+                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('title').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
+                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('description').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
+                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('label').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
+                        )
+                    }
+                ".where(org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.or(${termPredicates.joinToString(",")}))"
+            }
 
         try {
-            val fetchEndExclusive = offset + (limit * 5)
-            val rawResults = client.runQuery("""
+            val query =
+                """
                 g.V().hasLabel('Version').has('status', within($statusGremlinList)).as('v')
+                  $textPredicate
                   .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.as('c')
                   .select('c','v')
                   .by(valueMap('id','type'))
                   .by(valueMap(true))
-                  .range($offset, $fetchEndExclusive)
+                  .range($offset, ${offset + limit})
                   .toList()
-            """.trimIndent())
+                """.trimIndent()
+
+            val countQuery =
+                """
+                g.V().hasLabel('Version').has('status', within($statusGremlinList)).as('v')
+                  $textPredicate
+                  .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.as('c')
+                  .select('c','v')
+                  .count()
+                  .next()
+                """.trimIndent()
+
+            val queryStartNanos = System.nanoTime()
+            val rawResults = client.runQuery(query)
+            if (isSearchQueryTimingEnabled()) {
+                val elapsedMs = (System.nanoTime() - queryStartNanos) / 1_000_000
+                call.application.log.info(
+                    "search query timing: elapsedMs={}, rows={}, offset={}, limit={}, statuses={}, types={}, terms={}",
+                    elapsedMs,
+                    rawResults.size,
+                    offset,
+                    limit,
+                    statusFilter.joinToString(","),
+                    typeValueFilter.size,
+                    searchTerms.size,
+                )
+            }
             val results = rawResults
                 .filter { row ->
                     val c = row["c"] as? Map<*, *> ?: return@filter false
                     val v = row["v"] as? Map<*, *> ?: return@filter false
                     val status = prop(v["status"])?.lowercase() ?: return@filter false
-                    val cType = prop(c["type"]) ?: ""
-                    if (typeFilter != null) {
-                        val normalizedConceptualType = normalizeTypeName(cType.substringAfterLast('/').substringAfterLast('#'))
-                        if (normalizedConceptualType !in typeFilter) return@filter false
-                    }
-                    if (searchTerms.isEmpty()) return@filter true
-                    val blob = listOf(prop(v["title"]), prop(v["description"]), prop(v["label"])).joinToString(" ") { it ?: "" }.lowercase()
-                    searchTerms.all { blob.contains(it.lowercase()) }
+                    status in statusFilter
                 }
-            val paged = results.take(limit)
-            val hasMore = results.size > limit
-            val totalCount = if (hasMore) offset + limit + 1 else offset + paged.size
+            val totalCount = client.runQuery(countQuery).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
+            val totalPages = if (totalCount == 0) 0 else ((totalCount + limit - 1) / limit)
             val baseUrl = call.resolvePublicBaseUrl()
             val items: List<SearchItem> =
-                paged.mapNotNull { row ->
+                results.mapNotNull { row ->
                     val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
                     val v = row["v"] as? Map<*, *> ?: return@mapNotNull null
 
@@ -146,9 +202,14 @@ private suspend fun executeSearch(
                     val apiType = canonicalApiType(apiTypeRaw)
                     val name = (data["title"] as? String) ?: (data["label"] as? String) ?: extractTypeName(id)
                     val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
-                    val fields = linkedMapOf<String, Any?>("name" to name).apply {
-                        putAll(buildSearchItemFields(resourceTypeInfos, typeUri, apiType, data))
-                    }
+                    val fields: Map<String, Any?>? =
+                        if (includeConstraints) {
+                            linkedMapOf<String, Any?>("name" to name).apply {
+                                putAll(buildSearchItemFields(resourceTypeInfos, typeUri, apiType, data))
+                            }
+                        } else {
+                            null
+                        }
 
                     if (apiType == "dataset") {
                         DatasetSearchItem(
@@ -169,6 +230,9 @@ private suspend fun executeSearch(
             call.respond(
                 SearchResponse(
                     total = totalCount,
+                    totalItems = totalCount,
+                    page = page,
+                    totalPages = totalPages,
                     items = items,
                 ),
             )
@@ -200,8 +264,8 @@ private val TYPE_ALIASES =
         "category" to "concept",
         "categories" to "concept",
         "data" to "dataset",
-        "softwareapplication" to "software-application",
-        "softwaresourcecode" to "software-source-code",
+        "softwareapplication" to "softwareapplication",
+        "softwaresourcecode" to "softwaresourcecode",
     )
 
 private fun normalizeTypeName(typeName: String): String {
@@ -218,9 +282,9 @@ private fun mapSearchTypeUriToApiType(typeUri: String): String? =
 
         typeUri.contains("Distribution", ignoreCase = true) -> "distribution"
 
-        typeUri.contains("SoftwareApplication", ignoreCase = true) -> "software-application"
+        typeUri.contains("SoftwareApplication", ignoreCase = true) -> "softwareapplication"
 
-        typeUri.contains("SoftwareSourceCode", ignoreCase = true) -> "software-source-code"
+        typeUri.contains("SoftwareSourceCode", ignoreCase = true) -> "softwaresourcecode"
 
         typeUri.contains("Concept", ignoreCase = true) -> "category"
 
@@ -230,8 +294,8 @@ private fun mapSearchTypeUriToApiType(typeUri: String): String? =
 private fun canonicalApiType(typeName: String): String {
     val normalized = normalizeTypeName(typeName)
     return when (normalized) {
-        "softwareapplication" -> "software-application"
-        "softwaresourcecode" -> "software-source-code"
+        "softwareapplication" -> "softwareapplication"
+        "softwaresourcecode" -> "softwaresourcecode"
         "dataset", "distribution", "category" -> normalized
         else -> typeName.lowercase().ifBlank { "resource" }
     }.ifBlank { "resource" }
@@ -267,3 +331,6 @@ private fun extractFieldValue(data: Map<String, Any?>, path: String, name: Strin
     val candidates = listOf(name, localFromPath, path)
     return candidates.firstNotNullOfOrNull { key -> data[key] }
 }
+
+private fun isSearchQueryTimingEnabled(): Boolean =
+    System.getenv(SEARCH_QUERY_TIMING_ENV)?.toBooleanStrictOrNull() ?: false

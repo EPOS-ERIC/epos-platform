@@ -195,8 +195,8 @@ components:
       enum:
         - dataset
         - distribution
-        - software-application
-        - software-source-code
+        - softwareapplication
+        - softwaresourcecode
         - category
 
     VersioningStatus:
@@ -215,14 +215,33 @@ components:
       type: object
       required:
         - total
+        - totalItems
+        - page
+        - totalPages
         - items
       properties:
         total:
           type: integer
           minimum: 0
+          description: Backward-compatible alias of totalItems
+          examples:
+            - 123
+        totalItems:
+          type: integer
+          minimum: 0
           description: Total number of matching resources across all pages
           examples:
             - 123
+        page:
+          type: integer
+          minimum: 1
+          examples:
+            - 1
+        totalPages:
+          type: integer
+          minimum: 0
+          examples:
+            - 13
         items:
           type: array
           items:
@@ -237,8 +256,8 @@ components:
         mapping:
           dataset: '#/components/schemas/DatasetSearchItem'
           distribution: '#/components/schemas/GenericSearchItem'
-          software-application: '#/components/schemas/GenericSearchItem'
-          software-source-code: '#/components/schemas/GenericSearchItem'
+          softwareapplication: '#/components/schemas/GenericSearchItem'
+          softwaresourcecode: '#/components/schemas/GenericSearchItem'
           category: '#/components/schemas/GenericSearchItem'
 
     BaseSearchItem:
@@ -261,7 +280,7 @@ components:
             - "https://metadata.epos-eu.org/api/v2/dataset/123"
         fields:
           type: object
-          description: SHACL-selected property values returned as field-value pairs (includes `name`)
+          description: SHACL-selected property values returned only when includeConstraints=true (includes `name`)
           additionalProperties: true
 
     DatasetSearchItem:
@@ -286,9 +305,66 @@ components:
               type: string
               enum:
                 - distribution
-                - software-application
-                - software-source-code
+                - softwareapplication
+                - softwaresourcecode
                 - category
+
+    AccessListItem:
+      type: object
+      required: [id, type, href]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+
+    AccessListResponse:
+      type: object
+      required: [shape, total, items]
+      properties:
+        shape:
+          type: string
+        total:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            ${'$'}ref: '#/components/schemas/AccessListItem'
+
+    AccessPropertyValue:
+      type: object
+      properties:
+        value:
+          type: string
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+        predicateIri:
+          type: string
+
+    AccessDetailResponse:
+      type: object
+      required: [id, shape, href, properties]
+      properties:
+        id:
+          type: string
+        shape:
+          type: string
+        href:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
 
     # -----------------------------------------------------------------------
     # Resource references (for hrefs)

@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 
 ## Unreleased
 
+### Added
+
+- data-retriever: added a new backend service under `services/data-retriever` with `/api/v2` retrieval and search endpoints, strict URL placeholder validation, optional bearer authentication for outbound requests, PostgreSQL persistence, and Swagger/OpenAPI documentation endpoints.
+- user-group: added a new backend service scaffold under `services/user-group` with `/api/v2` API contract, initial PostgreSQL migrations for users/groups/memberships/permissions, and baseline build/test/lint integration in the root Makefile.
+- user-group: added built-in API documentation endpoints (`/openapi.yaml` and `/swagger`) to expose the OpenAPI contract and interactive Swagger UI.
+- user-group: added in-memory `/api/v2/groups` management endpoints with full CRUD plus PATCH semantics.
+- user-group: added in-memory `/api/v2/users` management endpoints with full CRUD plus PATCH semantics, including user lookup by auth identifier.
+- user-group: wired users and groups CRUD/PATCH endpoints to PostgreSQL-backed repositories and added database connection configuration via `USER_GROUP_DB_*` environment variables.
+- packages/go: added shared `postgres` and `migrations` Go modules under `packages/go/` to centralize PostgreSQL connection bootstrap and SQL migration execution logic.
+
 ### Changed
 
 - metadata-lifecycle: switched infrastructure and runtime defaults from FalkorDB to JanusGraph with Cassandra and Elasticsearch. Updated service and repository Docker Compose stacks, JanusGraph environment keys (`EPOS_JANUSGRAPH_*`), and service configuration profiles to target Gremlin Server on port 8182 while preserving the Property Graph conceptual/version/activity model.
@@ -22,6 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 - metadata-lifecycle: consolidated admin population API into `POST /api/v2/admin/populate`, and added request-level `indexUrl` support for index-based population without restarting service.
 - metadata-lifecycle: expanded lifecycle transitions with `discarded` state and `POST /api/v2/{resourceType}/{id}/discard` endpoint.
 - metadata-lifecycle: normalized lifecycle/resource mutation ID resolution so conceptual/version/identifier URIs resolve consistently across submit/publish/draft/discard and PUT/PATCH/DELETE flows.
+- data-retriever: switched to shared structured logging package usage across service startup and HTTP handlers, and aligned `/health` to include database reachability checks.
+- user-group: switched to shared structured logging package usage across service startup and handlers, and aligned `/health` to include database reachability checks.
+- data-retriever, user-group: migrated storage internals to shared `packages/go/postgres` and `packages/go/migrations` modules and updated development Docker/Tilt wiring for shared local package paths.
 
 ### Fixed
 
