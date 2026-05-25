@@ -181,6 +181,15 @@ paths:
       - $ref: "#/components/parameters/ServiceProviders"
       - $ref: "#/components/parameters/VersioningStatusFilter"
       - $ref: "#/components/parameters/Keywords"
+      - description: "When true, include SHACL-driven `fields` in each search item."
+        explode: true
+        in: query
+        name: includeConstraints
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
       responses:
         "200":
           content:
@@ -217,6 +226,15 @@ paths:
       - $ref: "#/components/parameters/ServiceProviders"
       - $ref: "#/components/parameters/VersioningStatusFilter"
       - $ref: "#/components/parameters/Keywords"
+      - description: "When true, include SHACL-driven `fields` in each search item."
+        explode: true
+        in: query
+        name: includeConstraints
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
       responses:
         "200":
           content:
@@ -258,6 +276,10 @@ paths:
         style: simple
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/_api_v2_access__shape___id__get_200_response"
           description: Access response returned successfully
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -403,8 +425,17 @@ paths:
       - OAI-PMH
   /api/v2/{resourceType}:
     get:
-      description: Retrieve a paginated list of entities of a specific type
+      description: "Retrieve a paginated list of entities of a specific type. For\
+        \ status=draft, X-Agent can scope results to drafts created by that agent."
       parameters:
+      - description: Optional agent URI used to filter draft results for this actor.
+        explode: false
+        in: header
+        name: X-Agent
+        required: false
+        schema:
+          type: string
+        style: simple
       - explode: true
         in: query
         name: status
@@ -4174,6 +4205,9 @@ components:
     SearchResponse:
       example:
         total: 0
+        totalItems: 0
+        totalPages: 0
+        page: 1
         items:
         - id: id
           href: href
@@ -4187,7 +4221,17 @@ components:
             key: ""
       properties:
         total:
+          description: Backward-compatible alias of totalItems
+          minimum: 0
+          type: integer
+        totalItems:
           description: Total number of matching resources across all pages
+          minimum: 0
+          type: integer
+        page:
+          minimum: 1
+          type: integer
+        totalPages:
           minimum: 0
           type: integer
         items:
@@ -4196,14 +4240,17 @@ components:
           type: array
       required:
       - items
+      - page
       - total
+      - totalItems
+      - totalPages
     SearchItem:
       discriminator:
         mapping:
           dataset: "#/components/schemas/DatasetSearchItem"
           distribution: "#/components/schemas/GenericSearchItem"
-          software-application: "#/components/schemas/GenericSearchItem"
-          software-source-code: "#/components/schemas/GenericSearchItem"
+          softwareapplication: "#/components/schemas/GenericSearchItem"
+          softwaresourcecode: "#/components/schemas/GenericSearchItem"
           category: "#/components/schemas/GenericSearchItem"
         propertyName: type
       oneOf:
@@ -4221,7 +4268,7 @@ components:
           type: string
         fields:
           additionalProperties: true
-          description: SHACL-selected property values returned as field-value pairs
+          description: SHACL-selected property values returned only when includeConstraints=true
             (includes `name`)
           type: object
       required:
@@ -4251,12 +4298,88 @@ components:
           type:
             enum:
             - distribution
-            - software-application
-            - software-source-code
+            - softwareapplication
+            - softwaresourcecode
             - category
             type: string
         required:
         - type
+    AccessListItem:
+      example:
+        id: id
+        href: href
+        type: type
+        title: title
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+      required:
+      - href
+      - id
+      - type
+    AccessListResponse:
+      example:
+        total: 0
+        shape: shape
+        items:
+        - id: id
+          href: href
+          type: type
+          title: title
+        - id: id
+          href: href
+          type: type
+          title: title
+      properties:
+        shape:
+          type: string
+        total:
+          minimum: 0
+          type: integer
+        items:
+          items:
+            $ref: "#/components/schemas/AccessListItem"
+          type: array
+      required:
+      - items
+      - shape
+      - total
+    AccessPropertyValue:
+      properties:
+        value:
+          type: string
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+        predicateIri:
+          type: string
+    AccessDetailResponse:
+      properties:
+        id:
+          type: string
+        shape:
+          type: string
+        href:
+          type: string
+        properties:
+          additionalProperties: true
+          type: object
+      required:
+      - href
+      - id
+      - properties
+      - shape
     ResourceRef:
       properties:
         id:
@@ -6796,6 +6919,10 @@ components:
       oneOf:
       - $ref: "#/components/schemas/ResourceTypeList"
       - $ref: "#/components/schemas/ResourceTypesEnvelope"
+    _api_v2_access__shape___id__get_200_response:
+      oneOf:
+      - $ref: "#/components/schemas/AccessListResponse"
+      - $ref: "#/components/schemas/AccessDetailResponse"
     _api_v2_sparql_post_request:
       properties:
         query:

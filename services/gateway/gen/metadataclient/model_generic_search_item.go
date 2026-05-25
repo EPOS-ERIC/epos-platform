@@ -26,7 +26,7 @@ type GenericSearchItem struct {
 	Id   string `json:"id"`
 	// Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
 	Href string `json:"href"`
-	// SHACL-selected property values returned as field-value pairs (includes `name`)
+	// SHACL-selected property values returned only when includeConstraints=true (includes `name`)
 	Fields map[string]interface{} `json:"fields,omitempty"`
 }
 

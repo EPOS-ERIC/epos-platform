@@ -18,6 +18,7 @@ configuration.go
 git_push.sh
 model__api_v2__resource_type___id__put_request.go
 model__api_v2__resource_type__post_request.go
+model__api_v2_access__shape___id__get_200_response.go
 model__api_v2_admin_populate_content_post_200_response.go
 model__api_v2_admin_populate_content_post_200_response_data.go
 model__api_v2_admin_populate_content_post_request.go
@@ -27,6 +28,10 @@ model__api_v2_batch_submit_post_request.go
 model__api_v2_resource_types_get_200_response.go
 model__api_v2_sparql_post_request_1.go
 model__health_get_200_response.go
+model_access_detail_response.go
+model_access_list_item.go
+model_access_list_response.go
+model_access_property_value.go
 model_base_search_item.go
 model_category.go
 model_category_scheme.go

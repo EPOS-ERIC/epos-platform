@@ -68,25 +68,27 @@ type AccessAPI interface {
 	ApiV2AccessShapeIdGet(ctx context.Context, shape string, id string) ApiApiV2AccessShapeIdGetRequest
 
 	// ApiV2AccessShapeIdGetExecute executes the request
-	ApiV2AccessShapeIdGetExecute(r ApiApiV2AccessShapeIdGetRequest) (*http.Response, error)
+	//  @return ApiV2AccessShapeIdGet200Response
+	ApiV2AccessShapeIdGetExecute(r ApiApiV2AccessShapeIdGetRequest) (*ApiV2AccessShapeIdGet200Response, *http.Response, error)
 }
 
 // AccessAPIService AccessAPI service
 type AccessAPIService service
 
 type ApiApiV2AccessSearchGetRequest struct {
-	ctx              context.Context
-	ApiService       AccessAPI
-	q                *string
-	page             *int32
-	resultsPerPage   *int32
-	type_            *[]ResourceType
-	spatialFilter    *string
-	dateFrom         *time.Time
-	dateTo           *time.Time
-	serviceProvider  *[]string
-	versioningStatus *[]VersioningStatus
-	keywords         *[]string
+	ctx                context.Context
+	ApiService         AccessAPI
+	q                  *string
+	page               *int32
+	resultsPerPage     *int32
+	type_              *[]ResourceType
+	spatialFilter      *string
+	dateFrom           *time.Time
+	dateTo             *time.Time
+	serviceProvider    *[]string
+	versioningStatus   *[]VersioningStatus
+	keywords           *[]string
+	includeConstraints *bool
 }
 
 // Free-text search query
@@ -146,6 +148,12 @@ func (r ApiApiV2AccessSearchGetRequest) VersioningStatus(versioningStatus []Vers
 // Filter resources that carry all the supplied keywords. Repeat the parameter for multiple values: &#x60;?keywords&#x3D;seismology&amp;keywords&#x3D;stations&#x60;.
 func (r ApiApiV2AccessSearchGetRequest) Keywords(keywords []string) ApiApiV2AccessSearchGetRequest {
 	r.keywords = &keywords
+	return r
+}
+
+// When true, include SHACL-driven &#x60;fields&#x60; in each search item.
+func (r ApiApiV2AccessSearchGetRequest) IncludeConstraints(includeConstraints bool) ApiApiV2AccessSearchGetRequest {
+	r.includeConstraints = &includeConstraints
 	return r
 }
 
@@ -264,6 +272,13 @@ func (a *AccessAPIService) ApiV2AccessSearchGetExecute(r ApiApiV2AccessSearchGet
 			parameterAddToHeaderOrQuery(localVarQueryParams, "keywords", t, "form", "multi")
 		}
 	}
+	if r.includeConstraints != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "includeConstraints", r.includeConstraints, "form", "")
+	} else {
+		var defaultValue bool = false
+		parameterAddToHeaderOrQuery(localVarQueryParams, "includeConstraints", defaultValue, "form", "")
+		r.includeConstraints = &defaultValue
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -340,18 +355,19 @@ func (a *AccessAPIService) ApiV2AccessSearchGetExecute(r ApiApiV2AccessSearchGet
 }
 
 type ApiApiV2AccessSearchShapeGetRequest struct {
-	ctx              context.Context
-	ApiService       AccessAPI
-	shape            string
-	q                *string
-	page             *int32
-	resultsPerPage   *int32
-	spatialFilter    *string
-	dateFrom         *time.Time
-	dateTo           *time.Time
-	serviceProvider  *[]string
-	versioningStatus *[]VersioningStatus
-	keywords         *[]string
+	ctx                context.Context
+	ApiService         AccessAPI
+	shape              string
+	q                  *string
+	page               *int32
+	resultsPerPage     *int32
+	spatialFilter      *string
+	dateFrom           *time.Time
+	dateTo             *time.Time
+	serviceProvider    *[]string
+	versioningStatus   *[]VersioningStatus
+	keywords           *[]string
+	includeConstraints *bool
 }
 
 // Free-text search query
@@ -405,6 +421,12 @@ func (r ApiApiV2AccessSearchShapeGetRequest) VersioningStatus(versioningStatus [
 // Filter resources that carry all the supplied keywords. Repeat the parameter for multiple values: &#x60;?keywords&#x3D;seismology&amp;keywords&#x3D;stations&#x60;.
 func (r ApiApiV2AccessSearchShapeGetRequest) Keywords(keywords []string) ApiApiV2AccessSearchShapeGetRequest {
 	r.keywords = &keywords
+	return r
+}
+
+// When true, include SHACL-driven &#x60;fields&#x60; in each search item.
+func (r ApiApiV2AccessSearchShapeGetRequest) IncludeConstraints(includeConstraints bool) ApiApiV2AccessSearchShapeGetRequest {
+	r.includeConstraints = &includeConstraints
 	return r
 }
 
@@ -515,6 +537,13 @@ func (a *AccessAPIService) ApiV2AccessSearchShapeGetExecute(r ApiApiV2AccessSear
 			parameterAddToHeaderOrQuery(localVarQueryParams, "keywords", t, "form", "multi")
 		}
 	}
+	if r.includeConstraints != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "includeConstraints", r.includeConstraints, "form", "")
+	} else {
+		var defaultValue bool = false
+		parameterAddToHeaderOrQuery(localVarQueryParams, "includeConstraints", defaultValue, "form", "")
+		r.includeConstraints = &defaultValue
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -608,7 +637,7 @@ type ApiApiV2AccessShapeIdGetRequest struct {
 	id         string
 }
 
-func (r ApiApiV2AccessShapeIdGetRequest) Execute() (*http.Response, error) {
+func (r ApiApiV2AccessShapeIdGetRequest) Execute() (*ApiV2AccessShapeIdGet200Response, *http.Response, error) {
 	return r.ApiService.ApiV2AccessShapeIdGetExecute(r)
 }
 
@@ -634,16 +663,19 @@ func (a *AccessAPIService) ApiV2AccessShapeIdGet(ctx context.Context, shape stri
 }
 
 // Execute executes the request
-func (a *AccessAPIService) ApiV2AccessShapeIdGetExecute(r ApiApiV2AccessShapeIdGetRequest) (*http.Response, error) {
+//
+//	@return ApiV2AccessShapeIdGet200Response
+func (a *AccessAPIService) ApiV2AccessShapeIdGetExecute(r ApiApiV2AccessShapeIdGetRequest) (*ApiV2AccessShapeIdGet200Response, *http.Response, error) {
 	var (
-		localVarHTTPMethod = http.MethodGet
-		localVarPostBody   interface{}
-		formFiles          []formFile
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ApiV2AccessShapeIdGet200Response
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AccessAPIService.ApiV2AccessShapeIdGet")
 	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
 	localVarPath := localBasePath + "/api/v2/access/{shape}/{id}"
@@ -673,19 +705,19 @@ func (a *AccessAPIService) ApiV2AccessShapeIdGetExecute(r ApiApiV2AccessShapeIdG
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
-		return nil, err
+		return localVarReturnValue, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return localVarReturnValue, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -698,35 +730,44 @@ func (a *AccessAPIService) ApiV2AccessShapeIdGetExecute(r ApiApiV2AccessShapeIdG
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
 			var v ErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v ErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
 			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
 			newErr.model = v
 		}
-		return localVarHTTPResponse, newErr
+		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
 }

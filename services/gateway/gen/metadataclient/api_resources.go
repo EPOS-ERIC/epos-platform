@@ -24,7 +24,7 @@ type ResourcesAPI interface {
 	/*
 		ApiV2ResourceTypeGet List entities
 
-		Retrieve a paginated list of entities of a specific type
+		Retrieve a paginated list of entities of a specific type. For status=draft, X-Agent can scope results to drafts created by that agent.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
@@ -117,9 +117,16 @@ type ApiApiV2ResourceTypeGetRequest struct {
 	ctx          context.Context
 	ApiService   ResourcesAPI
 	resourceType string
+	xAgent       *string
 	status       *string
 	page         *int32
 	pageSize     *int32
+}
+
+// Optional agent URI used to filter draft results for this actor.
+func (r ApiApiV2ResourceTypeGetRequest) XAgent(xAgent string) ApiApiV2ResourceTypeGetRequest {
+	r.xAgent = &xAgent
+	return r
 }
 
 func (r ApiApiV2ResourceTypeGetRequest) Status(status string) ApiApiV2ResourceTypeGetRequest {
@@ -144,7 +151,7 @@ func (r ApiApiV2ResourceTypeGetRequest) Execute() (*http.Response, error) {
 /*
 ApiV2ResourceTypeGet List entities
 
-Retrieve a paginated list of entities of a specific type
+Retrieve a paginated list of entities of a specific type. For status=draft, X-Agent can scope results to drafts created by that agent.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
@@ -215,6 +222,9 @@ func (a *ResourcesAPIService) ApiV2ResourceTypeGetExecute(r ApiApiV2ResourceType
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.xAgent != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {

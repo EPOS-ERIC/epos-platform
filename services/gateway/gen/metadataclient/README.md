@@ -190,6 +190,11 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [AccessDetailResponse](docs/AccessDetailResponse.md)
+ - [AccessListItem](docs/AccessListItem.md)
+ - [AccessListResponse](docs/AccessListResponse.md)
+ - [AccessPropertyValue](docs/AccessPropertyValue.md)
+ - [ApiV2AccessShapeIdGet200Response](docs/ApiV2AccessShapeIdGet200Response.md)
  - [ApiV2AdminPopulateContentPost200Response](docs/ApiV2AdminPopulateContentPost200Response.md)
  - [ApiV2AdminPopulateContentPost200ResponseData](docs/ApiV2AdminPopulateContentPost200ResponseData.md)
  - [ApiV2AdminPopulateContentPostRequest](docs/ApiV2AdminPopulateContentPostRequest.md)

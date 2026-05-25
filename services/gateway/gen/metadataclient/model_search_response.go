@@ -22,9 +22,13 @@ var _ MappedNullable = &SearchResponse{}
 
 // SearchResponse struct for SearchResponse
 type SearchResponse struct {
+	// Backward-compatible alias of totalItems
+	Total int32 `json:"total"`
 	// Total number of matching resources across all pages
-	Total int32        `json:"total"`
-	Items []SearchItem `json:"items"`
+	TotalItems int32        `json:"totalItems"`
+	Page       int32        `json:"page"`
+	TotalPages int32        `json:"totalPages"`
+	Items      []SearchItem `json:"items"`
 }
 
 type _SearchResponse SearchResponse
@@ -33,9 +37,12 @@ type _SearchResponse SearchResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSearchResponse(total int32, items []SearchItem) *SearchResponse {
+func NewSearchResponse(total int32, totalItems int32, page int32, totalPages int32, items []SearchItem) *SearchResponse {
 	this := SearchResponse{}
 	this.Total = total
+	this.TotalItems = totalItems
+	this.Page = page
+	this.TotalPages = totalPages
 	this.Items = items
 	return &this
 }
@@ -70,6 +77,78 @@ func (o *SearchResponse) GetTotalOk() (*int32, bool) {
 // SetTotal sets field value
 func (o *SearchResponse) SetTotal(v int32) {
 	o.Total = v
+}
+
+// GetTotalItems returns the TotalItems field value
+func (o *SearchResponse) GetTotalItems() int32 {
+	if o == nil {
+		var ret int32
+		return ret
+	}
+
+	return o.TotalItems
+}
+
+// GetTotalItemsOk returns a tuple with the TotalItems field value
+// and a boolean to check if the value has been set.
+func (o *SearchResponse) GetTotalItemsOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.TotalItems, true
+}
+
+// SetTotalItems sets field value
+func (o *SearchResponse) SetTotalItems(v int32) {
+	o.TotalItems = v
+}
+
+// GetPage returns the Page field value
+func (o *SearchResponse) GetPage() int32 {
+	if o == nil {
+		var ret int32
+		return ret
+	}
+
+	return o.Page
+}
+
+// GetPageOk returns a tuple with the Page field value
+// and a boolean to check if the value has been set.
+func (o *SearchResponse) GetPageOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Page, true
+}
+
+// SetPage sets field value
+func (o *SearchResponse) SetPage(v int32) {
+	o.Page = v
+}
+
+// GetTotalPages returns the TotalPages field value
+func (o *SearchResponse) GetTotalPages() int32 {
+	if o == nil {
+		var ret int32
+		return ret
+	}
+
+	return o.TotalPages
+}
+
+// GetTotalPagesOk returns a tuple with the TotalPages field value
+// and a boolean to check if the value has been set.
+func (o *SearchResponse) GetTotalPagesOk() (*int32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.TotalPages, true
+}
+
+// SetTotalPages sets field value
+func (o *SearchResponse) SetTotalPages(v int32) {
+	o.TotalPages = v
 }
 
 // GetItems returns the Items field value
@@ -107,6 +186,9 @@ func (o SearchResponse) MarshalJSON() ([]byte, error) {
 func (o SearchResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["total"] = o.Total
+	toSerialize["totalItems"] = o.TotalItems
+	toSerialize["page"] = o.Page
+	toSerialize["totalPages"] = o.TotalPages
 	toSerialize["items"] = o.Items
 	return toSerialize, nil
 }
@@ -117,6 +199,9 @@ func (o *SearchResponse) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"total",
+		"totalItems",
+		"page",
+		"totalPages",
 		"items",
 	}
 

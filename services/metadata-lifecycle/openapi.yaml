@@ -166,6 +166,12 @@ paths:
         - $ref: '#/components/parameters/ServiceProviders'
         - $ref: '#/components/parameters/VersioningStatusFilter'
         - $ref: '#/components/parameters/Keywords'
+        - name: includeConstraints
+          in: query
+          description: When true, include SHACL-driven `fields` in each search item.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Search results returned successfully
@@ -199,6 +205,12 @@ paths:
         - $ref: '#/components/parameters/ServiceProviders'
         - $ref: '#/components/parameters/VersioningStatusFilter'
         - $ref: '#/components/parameters/Keywords'
+        - name: includeConstraints
+          in: query
+          description: When true, include SHACL-driven `fields` in each search item.
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Search results returned successfully
@@ -240,6 +252,12 @@ paths:
       responses:
         '200':
           description: Access response returned successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AccessListResponse'
+                  - $ref: '#/components/schemas/AccessDetailResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -380,8 +398,14 @@ paths:
     get:
       tags: [Resources]
       summary: List entities
-      description: Retrieve a paginated list of entities of a specific type
+      description: Retrieve a paginated list of entities of a specific type. For status=draft, X-Agent can scope results to drafts created by that agent.
       parameters:
+        - name: X-Agent
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Optional agent URI used to filter draft results for this actor.
         - name: status
           in: query
           schema:
@@ -3410,14 +3434,33 @@ components:
       type: object
       required:
         - total
+        - totalItems
+        - page
+        - totalPages
         - items
       properties:
         total:
           type: integer
           minimum: 0
+          description: Backward-compatible alias of totalItems
+          examples:
+            - 123
+        totalItems:
+          type: integer
+          minimum: 0
           description: Total number of matching resources across all pages
           examples:
             - 123
+        page:
+          type: integer
+          minimum: 1
+          examples:
+            - 1
+        totalPages:
+          type: integer
+          minimum: 0
+          examples:
+            - 13
         items:
           type: array
           items:
@@ -3432,8 +3475,8 @@ components:
         mapping:
           dataset: '#/components/schemas/DatasetSearchItem'
           distribution: '#/components/schemas/GenericSearchItem'
-          software-application: '#/components/schemas/GenericSearchItem'
-          software-source-code: '#/components/schemas/GenericSearchItem'
+          softwareapplication: '#/components/schemas/GenericSearchItem'
+          softwaresourcecode: '#/components/schemas/GenericSearchItem'
           category: '#/components/schemas/GenericSearchItem'
 
     BaseSearchItem:
@@ -3456,7 +3499,7 @@ components:
             - "https://metadata.epos-eu.org/api/v2/dataset/123"
         fields:
           type: object
-          description: SHACL-selected property values returned as field-value pairs (includes `name`)
+          description: SHACL-selected property values returned only when includeConstraints=true (includes `name`)
           additionalProperties: true
 
     DatasetSearchItem:
@@ -3481,9 +3524,66 @@ components:
               type: string
               enum:
                 - distribution
-                - software-application
-                - software-source-code
+                - softwareapplication
+                - softwaresourcecode
                 - category
+
+    AccessListItem:
+      type: object
+      required: [id, type, href]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+
+    AccessListResponse:
+      type: object
+      required: [shape, total, items]
+      properties:
+        shape:
+          type: string
+        total:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccessListItem'
+
+    AccessPropertyValue:
+      type: object
+      properties:
+        value:
+          type: string
+        id:
+          type: string
+        type:
+          type: string
+        title:
+          type: string
+        href:
+          type: string
+        predicateIri:
+          type: string
+
+    AccessDetailResponse:
+      type: object
+      required: [id, shape, href, properties]
+      properties:
+        id:
+          type: string
+        shape:
+          type: string
+        href:
+          type: string
+        properties:
+          type: object
+          additionalProperties: true
 
     # -----------------------------------------------------------------------
     # Resource references (for hrefs)
