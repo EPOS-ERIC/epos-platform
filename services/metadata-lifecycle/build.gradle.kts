@@ -148,3 +148,7 @@ tasks.named<ShadowJar>("shadowJar") {
 tasks.assemble {
     dependsOn(tasks.named("shadowJar"))
 }
+
+dependencyLocking {
+    lockAllConfigurations()
+}
