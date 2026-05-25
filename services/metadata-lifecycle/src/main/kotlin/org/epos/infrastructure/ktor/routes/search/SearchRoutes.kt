@@ -8,8 +8,6 @@ import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import org.epos.api.models.ErrorResponse
-import org.epos.infrastructure.ktor.routes.DatasetSearchItem
-import org.epos.infrastructure.ktor.routes.GenericSearchItem
 import org.epos.infrastructure.ktor.routes.SearchItem
 import org.epos.infrastructure.ktor.routes.SearchResponse
 import org.epos.infrastructure.ktor.routes.extractTypeName
@@ -211,20 +209,12 @@ private suspend fun executeSearch(
                             null
                         }
 
-                    if (apiType == "dataset") {
-                        DatasetSearchItem(
-                            id = id,
-                            href = accessHref,
-                            fields = fields,
-                        )
-                    } else {
-                        GenericSearchItem(
-                            type = apiType,
-                            id = id,
-                            href = accessHref,
-                            fields = fields,
-                        )
-                    }
+                    SearchItem(
+                        type = apiType,
+                        id = id,
+                        href = accessHref,
+                        fields = fields,
+                    )
                 }
 
             call.respond(
@@ -320,11 +310,21 @@ private fun buildSearchItemFields(
     selectedProps.forEach { prop ->
         val value = extractFieldValue(data, prop.path, prop.name)
         if (value != null) {
-            selected[prop.name.lowercase()] = value
+            selected[prop.name.lowercase()] = normalizeFieldValue(value, prop.maxCount)
         }
     }
     return selected
 }
+
+private fun normalizeFieldValue(value: Any, maxCount: Int?): Any =
+    if (maxCount == 1) {
+        value
+    } else {
+        when (value) {
+            is List<*> -> value
+            else -> listOf(value)
+        }
+    }
 
 private fun extractFieldValue(data: Map<String, Any?>, path: String, name: String): Any? {
     val localFromPath = path.substringAfterLast('/').substringAfterLast('#')

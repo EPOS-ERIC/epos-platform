@@ -103,6 +103,40 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `search endpoint should serialize multi-valued SHACL fields as arrays`() = testApplication {
+        application {
+            module()
+        }
+
+        val datasetUri = "http://example.org/dataset/array-fields-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val dataset = vf.createIRI(datasetUri)
+        val dcterms = "http://purl.org/dc/terms/"
+        val dcat = "http://www.w3.org/ns/dcat#"
+
+        model.add(dataset, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(dataset, vf.createIRI("${dcterms}title"), vf.createLiteral("Dataset Array Field Test"))
+        model.add(dataset, vf.createIRI("${dcterms}publisher"), vf.createLiteral("Single Publisher"))
+        model.add(dataset, vf.createIRI("${dcat}theme"), vf.createLiteral("Single Theme"))
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
+
+        val response = client.get("/api/v2/access/search?type=dataset&q=array&includeConstraints=true")
+        response.status shouldBe HttpStatusCode.OK
+
+        val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val items = json["items"] as List<Map<String, Any>>
+        (items.isNotEmpty()) shouldBe true
+        val item = items.first { it["id"] == datasetUri }
+
+        @Suppress("UNCHECKED_CAST")
+        val fields = item["fields"] as Map<String, Any>
+        (fields["publisher"] is List<*>) shouldBe true
+        (fields["theme"] is List<*>) shouldBe true
+    }
+
+    @Test
     fun `legacy search endpoint should return 404`() = testApplication {
         application {
             module()
