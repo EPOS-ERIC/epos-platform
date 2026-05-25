@@ -5,6 +5,8 @@ import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.infrastructure.ktor.routes.search.ResourceLinkResolver
 import java.net.URLEncoder
 
+private data class RelationPredicateDescriptor(val iri: String, val name: String)
+
 internal fun entityExists(
     client: PropertyGraphClient,
     entityUri: String,
@@ -196,33 +198,24 @@ internal fun buildImmediateRelationGraph(
     val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
     val outboundData = v.filterKeys { it is String && it !in structuralKeys }
         .mapKeys { (k, _) -> k as String }
-    data class PredicateDescriptor(val iri: String, val name: String)
-    val grouped = linkedMapOf<Pair<String, PredicateDescriptor>, LinkedHashMap<String, ResourceRef>>()
+    val grouped = linkedMapOf<Pair<String, RelationPredicateDescriptor>, LinkedHashMap<String, ResourceRef>>()
+    val skipInboundLabels = setOf("HAS_VERSION", "CURRENT_VERSION", "REVISION_OF", "SUPERSEDED_BY", "AFFECTED")
 
+    // Outbound references derived from version properties.
     outboundData.forEach { (key, value) ->
-        val predicate = key.toString()
-        val uris = when (value) {
-            is String -> listOf(value)
-            is List<*> -> value.mapNotNull { it?.toString() }
-            else -> emptyList()
-        }
+        val predicate = key
+        val uris = valuesAsStrings(value)
 
         uris.forEach { uri ->
             if (ResourceLinkResolver.isPotentialResourceIdentifier(uri)) {
                 val otherType = inferTypeFromId(uri)
-                val keyPair = "outbound" to PredicateDescriptor(iri = predicate, name = extractTypeName(predicate))
-                val bucket = grouped.getOrPut(keyPair) { linkedMapOf() }
-                if (!bucket.containsKey(uri)) {
-                    bucket[uri] = ResourceRef(
-                        id = uri,
-                        title = null,
-                        href = buildResolvableHref(publicBaseUrl, otherType, uri),
-                    )
-                }
+                val keyPair = "outbound" to RelationPredicateDescriptor(iri = predicate, name = extractTypeName(predicate))
+                addGroupedResource(grouped, keyPair, ResourceRef(id = uri, title = null, href = buildResolvableHref(publicBaseUrl, otherType, uri)))
             }
         }
     }
 
+    // Outbound references derived from explicit rel_* graph edges.
     val relationRows = client.runQuery(
         """
         g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).as('s')
@@ -249,18 +242,11 @@ internal fun buildImmediateRelationGraph(
         val target = row["t"] as? Map<*, *> ?: return@forEach
         val targetId = preferredResourceId(target) ?: return@forEach
         val otherType = inferTypeFromId(targetId)
-        val keyPair = "outbound" to PredicateDescriptor(iri = predicateIri, name = predicateName)
-        val bucket = grouped.getOrPut(keyPair) { linkedMapOf() }
-        if (!bucket.containsKey(targetId)) {
-            bucket[targetId] =
-                ResourceRef(
-                    id = targetId,
-                    title = null,
-                    href = buildResolvableHref(publicBaseUrl, otherType, targetId),
-                )
-        }
+        val keyPair = "outbound" to RelationPredicateDescriptor(iri = predicateIri, name = predicateName)
+        addGroupedResource(grouped, keyPair, ResourceRef(id = targetId, title = null, href = buildResolvableHref(publicBaseUrl, otherType, targetId)))
     }
 
+    // Inbound references (other resources pointing to this entity).
     val inboundResults = client.runQuery("""
         g.V().hasLabel('Version').has('id', ${gStr(entityUri)})
           .inE().as('e').outV().as('s')
@@ -276,7 +262,7 @@ internal fun buildImmediateRelationGraph(
     inboundResults.forEach { row ->
         val edge = row["e"] as? Map<*, *> ?: return@forEach
         val edgeLabel = prop(edge["label"]) ?: return@forEach
-        if (edgeLabel in setOf("HAS_VERSION", "CURRENT_VERSION", "REVISION_OF", "SUPERSEDED_BY", "AFFECTED")) return@forEach
+        if (edgeLabel in skipInboundLabels) return@forEach
         val predicateIri = prop(edge["predicateIri"]) ?: if (edgeLabel.startsWith("rel_")) edgeLabel.removePrefix("rel_") else edgeLabel
         val predicateName = prop(edge["predicateKey"]) ?: if (edgeLabel.startsWith("rel_")) edgeLabel.removePrefix("rel_") else edgeLabel
 
@@ -285,15 +271,16 @@ internal fun buildImmediateRelationGraph(
         val otherData = otherNode.filterKeys { it is String && it !in structuralKeys }
             .mapKeys { (k, _) -> k as String }
         val otherType = inferTypeFromId(otherId)
-        val keyPair = "inbound" to PredicateDescriptor(iri = predicateIri, name = predicateName)
-        val bucket = grouped.getOrPut(keyPair) { linkedMapOf() }
-        if (!bucket.containsKey(otherId)) {
-            bucket[otherId] = ResourceRef(
+        val keyPair = "inbound" to RelationPredicateDescriptor(iri = predicateIri, name = predicateName)
+        addGroupedResource(
+            grouped,
+            keyPair,
+            ResourceRef(
                 id = otherId,
                 title = prop(otherData["title"]),
                 href = buildResolvableHref(publicBaseUrl, otherType, otherId),
-            )
-        }
+            ),
+        )
     }
 
     return grouped.entries.map { (key, resources) ->
@@ -303,6 +290,24 @@ internal fun buildImmediateRelationGraph(
             predicate = RelationPredicate(iri = predicate.iri, name = predicate.name),
             resources = resources.values.toList(),
         )
+    }
+}
+
+private fun valuesAsStrings(value: Any?): List<String> =
+    when (value) {
+        is String -> listOf(value)
+        is List<*> -> value.mapNotNull { it?.toString() }
+        else -> emptyList()
+    }
+
+private fun addGroupedResource(
+    grouped: LinkedHashMap<Pair<String, RelationPredicateDescriptor>, LinkedHashMap<String, ResourceRef>>,
+    key: Pair<String, RelationPredicateDescriptor>,
+    resource: ResourceRef,
+) {
+    val bucket = grouped.getOrPut(key) { linkedMapOf() }
+    if (!bucket.containsKey(resource.id)) {
+        bucket[resource.id] = resource
     }
 }
 

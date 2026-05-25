@@ -14,82 +14,106 @@ internal object ResourceLinkResolver {
         client: PropertyGraphClient,
         requestedId: String,
     ): String? {
-        val conceptualFromVersion = if (UriUtils.hasVersion(requestedId)) UriUtils.extractConceptualUri(requestedId) else null
+        val conceptualFromVersion =
+            if (UriUtils.hasVersion(requestedId)) {
+                UriUtils.extractConceptualUri(requestedId)
+            } else {
+                null
+            }
 
+        // Resolve using strict-to-loose fallbacks to keep links stable.
         val versionId =
-            client.runQuery(
-                """
-                g.V().hasLabel('Version').has('id', ${gStr(requestedId)})
-                  .project('identifier','id')
-                  .by(coalesce(values('identifier'), constant('')))
-                  .by(coalesce(values('id'), constant('')))
-                  .limit(1).toList()
-                """.trimIndent(),
-        ).firstOrNull().toPreferredId()
+            queryPreferredVersionId(
+                client = client,
+                query =
+                    """
+                    g.V().hasLabel('Version').has('id', ${gStr(requestedId)})
+                      .project('identifier','id')
+                      .by(coalesce(values('identifier'), constant('')))
+                      .by(coalesce(values('id'), constant('')))
+                      .limit(1).toList()
+                    """.trimIndent(),
+            )
         if (!versionId.isNullOrBlank()) return versionId
 
         if (!conceptualFromVersion.isNullOrBlank()) {
-            val versionFromIdentifierWithinConceptual = client.runQuery(
-                """
-                g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion)})
-                  .out('HAS_VERSION').hasLabel('Version').has('identifier', ${gStr(requestedId)})
-                  .project('identifier','id')
-                  .by(coalesce(values('identifier'), constant('')))
-                  .by(coalesce(values('id'), constant('')))
-                  .limit(1).toList()
-                """.trimIndent(),
-            ).firstOrNull().toPreferredId()
+            val versionFromIdentifierWithinConceptual =
+                queryPreferredVersionId(
+                    client = client,
+                    query =
+                        """
+                        g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion)})
+                          .out('HAS_VERSION').hasLabel('Version').has('identifier', ${gStr(requestedId)})
+                          .project('identifier','id')
+                          .by(coalesce(values('identifier'), constant('')))
+                          .by(coalesce(values('id'), constant('')))
+                          .limit(1).toList()
+                        """.trimIndent(),
+                )
             if (!versionFromIdentifierWithinConceptual.isNullOrBlank()) return versionFromIdentifierWithinConceptual
         }
 
-        val conceptualCurrentVersion = client.runQuery(
-            """
-            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion ?: requestedId)})
-              .out('CURRENT_VERSION').hasLabel('Version')
-              .project('identifier','id')
-              .by(coalesce(values('identifier'), constant('')))
-              .by(coalesce(values('id'), constant('')))
-              .limit(1).toList()
-            """.trimIndent(),
-        ).firstOrNull().toPreferredId()
+        val conceptualId = conceptualFromVersion ?: requestedId
+
+        val conceptualCurrentVersion =
+            queryPreferredVersionId(
+                client = client,
+                query =
+                    """
+                    g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
+                      .out('CURRENT_VERSION').hasLabel('Version')
+                      .project('identifier','id')
+                      .by(coalesce(values('identifier'), constant('')))
+                      .by(coalesce(values('id'), constant('')))
+                      .limit(1).toList()
+                    """.trimIndent(),
+            )
         if (!conceptualCurrentVersion.isNullOrBlank()) return conceptualCurrentVersion
 
-        val conceptualAnyVersion = client.runQuery(
-            """
-            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion ?: requestedId)})
-              .out('HAS_VERSION').hasLabel('Version')
-              .project('identifier','id')
-              .by(coalesce(values('identifier'), constant('')))
-              .by(coalesce(values('id'), constant('')))
-              .limit(1).toList()
-            """.trimIndent(),
-        ).firstOrNull().toPreferredId()
+        val conceptualAnyVersion =
+            queryPreferredVersionId(
+                client = client,
+                query =
+                    """
+                    g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
+                      .out('HAS_VERSION').hasLabel('Version')
+                      .project('identifier','id')
+                      .by(coalesce(values('identifier'), constant('')))
+                      .by(coalesce(values('id'), constant('')))
+                      .limit(1).toList()
+                    """.trimIndent(),
+            )
         if (!conceptualAnyVersion.isNullOrBlank()) return conceptualAnyVersion
 
         if (conceptualFromVersion.isNullOrBlank()) {
-            val conceptualCurrentVersionFromIdentifier = client.runQuery(
-                """
-                g.V().hasLabel('Conceptual').has('identifier', ${gStr(requestedId)})
-                  .out('CURRENT_VERSION').hasLabel('Version')
-                  .project('identifier','id')
-                  .by(coalesce(values('identifier'), constant('')))
-                  .by(coalesce(values('id'), constant('')))
-                  .limit(1).toList()
-                """.trimIndent(),
-            ).firstOrNull().toPreferredId()
+            val conceptualCurrentVersionFromIdentifier =
+                queryPreferredVersionId(
+                    client = client,
+                    query =
+                        """
+                        g.V().hasLabel('Conceptual').has('identifier', ${gStr(requestedId)})
+                          .out('CURRENT_VERSION').hasLabel('Version')
+                          .project('identifier','id')
+                          .by(coalesce(values('identifier'), constant('')))
+                          .by(coalesce(values('id'), constant('')))
+                          .limit(1).toList()
+                        """.trimIndent(),
+                )
             if (!conceptualCurrentVersionFromIdentifier.isNullOrBlank()) return conceptualCurrentVersionFromIdentifier
         }
 
         val versionIdFromIdentifier = runCatching {
-            client.runQuery(
-                """
-                g.V().hasLabel('Version').has('identifier', ${gStr(requestedId)})
-                  .project('identifier','id')
-                  .by(coalesce(values('identifier'), constant('')))
-                  .by(coalesce(values('id'), constant('')))
-                  .limit(1).toList()
-                """.trimIndent(),
-            ).firstOrNull().toPreferredId()
+            queryPreferredVersionId(
+                client = client,
+                query =
+                    """
+                    g.V().hasLabel('Version').has('identifier', ${gStr(requestedId)})
+                      .project('identifier','id')
+                      .by(coalesce(values('identifier'), constant('')))
+                      .by(coalesce(values('id'), constant('')))
+                      .limit(1).toList()
+                    """.trimIndent(),
+            )
         }.getOrNull()
 
         return versionIdFromIdentifier
@@ -104,6 +128,11 @@ internal object ResourceLinkResolver {
         val fallback = this["value"]?.toString()?.trim().orEmpty()
         return fallback.ifBlank { null }
     }
+
+    private fun queryPreferredVersionId(
+        client: PropertyGraphClient,
+        query: String,
+    ): String? = client.runQuery(query).firstOrNull().toPreferredId()
 
     fun resolveEntityShapeFromGraph(
         client: PropertyGraphClient,

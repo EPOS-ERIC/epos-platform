@@ -127,6 +127,7 @@ private fun buildAccessDetail(
     requestedId: String,
     publicBaseUrl: String,
 ): AccessDetailResponse {
+    // Load version payload with progressively looser id/identifier fallbacks.
     val result =
         client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
             ?: client.runQuery("g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
@@ -149,51 +150,17 @@ private fun buildAccessDetail(
         values.forEach { item ->
             val obj = item?.toString() ?: return@forEach
             val predicateIri = resolvePredicateIriFromShacl(propName, shapeProperties)
-            val objectType =
-                resolveObjectShape(
-                    objectId = obj,
-                    propertyName = propName,
-                    shapeProperties = shapeProperties,
-                    resourceTypeMap = resourceTypeMap,
-                )?.takeIf { candidate -> knownShapeNames.any { normalizeShapeName(it) == normalizeShapeName(candidate) } }
-
-            val accessValue =
-                if (ResourceLinkResolver.isPotentialResourceIdentifier(obj)) {
-                    if (obj == requestedId) {
-                        val plainSelfValue = AccessPropertyValue(value = obj)
-                        groupedProperties.getOrPut(propName) { mutableListOf() }.add(plainSelfValue)
-                        return@forEach
-                    }
-                    val resolvedLink =
-                        if (isResolvableResource(client, obj, existenceCache)) {
-                            ResourceLinkResolver.resolveLink(
-                                client = client,
-                                objectId = obj,
-                                resourceTypeMap = resourceTypeMap,
-                                normalizeShapeName = ::normalizeShapeName,
-                                publicBaseUrl = publicBaseUrl,
-                                preferredShape = objectType,
-                            )
-                        } else {
-                            null
-                        }
-                    val href = resolvedLink?.href
-                    val resolvedType = objectType ?: resolvedLink?.resolvedShape
-
-                    if (!resolvedType.isNullOrBlank() || href != null) {
-                        AccessPropertyValue(
-                            id = obj,
-                            type = resolvedType,
-                            title = null,
-                            href = href,
-                            predicateIri = predicateIri,
-                        )
-                    } else {
-                        AccessPropertyValue(value = obj, predicateIri = predicateIri)
-                    }
-                } else {
-                    AccessPropertyValue(value = obj)
-                }
+            val objectType = resolveKnownObjectShape(obj, propName, shapeProperties, resourceTypeMap, knownShapeNames)
+            val accessValue = buildAccessPropertyValue(
+                client = client,
+                objectId = obj,
+                requestedId = requestedId,
+                predicateIri = predicateIri,
+                objectType = objectType,
+                resourceTypeMap = resourceTypeMap,
+                publicBaseUrl = publicBaseUrl,
+                existenceCache = existenceCache,
+            )
             groupedProperties.getOrPut(propName) { mutableListOf() }.add(accessValue)
         }
     }
@@ -246,13 +213,7 @@ private fun buildAccessDetail(
 
         if (targetId == requestedId) return@forEach
 
-        val objectType =
-            resolveObjectShape(
-                objectId = targetId,
-                propertyName = propertyName,
-                shapeProperties = shapeProperties,
-                resourceTypeMap = resourceTypeMap,
-            )?.takeIf { candidate -> knownShapeNames.any { normalizeShapeName(it) == normalizeShapeName(candidate) } }
+        val objectType = resolveKnownObjectShape(targetId, propertyName, shapeProperties, resourceTypeMap, knownShapeNames)
 
         val resolvedLink =
             if (isResolvableResource(client, targetId, existenceCache)) {
@@ -321,6 +282,66 @@ private fun isResolvableResource(
     existenceCache.getOrPut(objectId) {
         ResourceLinkResolver.resolveAccessEntityId(client, objectId) != null
     }
+
+private fun resolveKnownObjectShape(
+    objectId: String,
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+    resourceTypeMap: Map<String, String>,
+    knownShapeNames: Set<String>,
+): String? =
+    resolveObjectShape(
+        objectId = objectId,
+        propertyName = propertyName,
+        shapeProperties = shapeProperties,
+        resourceTypeMap = resourceTypeMap,
+    )?.takeIf { candidate -> knownShapeNames.any { normalizeShapeName(it) == normalizeShapeName(candidate) } }
+
+private fun buildAccessPropertyValue(
+    client: PropertyGraphClient,
+    objectId: String,
+    requestedId: String,
+    predicateIri: String?,
+    objectType: String?,
+    resourceTypeMap: Map<String, String>,
+    publicBaseUrl: String,
+    existenceCache: MutableMap<String, Boolean>,
+): AccessPropertyValue {
+    if (!ResourceLinkResolver.isPotentialResourceIdentifier(objectId)) {
+        return AccessPropertyValue(value = objectId)
+    }
+    if (objectId == requestedId) {
+        return AccessPropertyValue(value = objectId)
+    }
+
+    val resolvedLink =
+        if (isResolvableResource(client, objectId, existenceCache)) {
+            ResourceLinkResolver.resolveLink(
+                client = client,
+                objectId = objectId,
+                resourceTypeMap = resourceTypeMap,
+                normalizeShapeName = ::normalizeShapeName,
+                publicBaseUrl = publicBaseUrl,
+                preferredShape = objectType,
+            )
+        } else {
+            null
+        }
+    val href = resolvedLink?.href
+    val resolvedType = objectType ?: resolvedLink?.resolvedShape
+
+    return if (!resolvedType.isNullOrBlank() || href != null) {
+        AccessPropertyValue(
+            id = objectId,
+            type = resolvedType,
+            title = null,
+            href = href,
+            predicateIri = predicateIri,
+        )
+    } else {
+        AccessPropertyValue(value = objectId, predicateIri = predicateIri)
+    }
+}
 
 private fun resolveObjectShape(
     objectId: String,
