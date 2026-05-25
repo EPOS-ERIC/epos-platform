@@ -22,7 +22,7 @@ val jacksonVersion          = "2.21.2"
 val slf4jVersion            = "2.0.9"
 val ktorOpenApiToolsVersion = "5.4.0"
 val serializationVersion    = "1.6.2"
-val koinVersion             = "3.5.6"
+val koinVersion             = "4.0.2"
 val junitVersion            = "5.14.3"
 val testcontainersVersion   = "1.21.4"
 val kotestVersion           = "5.8.0"
@@ -107,6 +107,12 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm:$ktorVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
     testRuntimeOnly("ch.qos.logback:logback-classic:1.4.14")
+
+    // Version constraints for transitive dependencies
+    constraints {
+        implementation("commons-beanutils:commons-beanutils:1.11.0")
+        implementation("org.apache.commons:commons-lang3:3.18.0")
+    }
 }
 
 tasks.test {
