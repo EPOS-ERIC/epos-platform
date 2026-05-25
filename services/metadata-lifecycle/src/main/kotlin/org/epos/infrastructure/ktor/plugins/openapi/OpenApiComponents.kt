@@ -248,19 +248,6 @@ components:
             ${'$'}ref: '#/components/schemas/SearchItem'
 
     SearchItem:
-      oneOf:
-        - ${'$'}ref: '#/components/schemas/DatasetSearchItem'
-        - ${'$'}ref: '#/components/schemas/GenericSearchItem'
-      discriminator:
-        propertyName: type
-        mapping:
-          dataset: '#/components/schemas/DatasetSearchItem'
-          distribution: '#/components/schemas/GenericSearchItem'
-          softwareapplication: '#/components/schemas/GenericSearchItem'
-          softwaresourcecode: '#/components/schemas/GenericSearchItem'
-          category: '#/components/schemas/GenericSearchItem'
-
-    BaseSearchItem:
       type: object
       required:
         - type
@@ -282,32 +269,6 @@ components:
           type: object
           description: SHACL-selected property values returned only when includeConstraints=true (includes `name`)
           additionalProperties: true
-
-    DatasetSearchItem:
-      allOf:
-        - ${'$'}ref: '#/components/schemas/BaseSearchItem'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              const: dataset
-
-    GenericSearchItem:
-      allOf:
-        - ${'$'}ref: '#/components/schemas/BaseSearchItem'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - distribution
-                - softwareapplication
-                - softwaresourcecode
-                - category
 
     AccessListItem:
       type: object
