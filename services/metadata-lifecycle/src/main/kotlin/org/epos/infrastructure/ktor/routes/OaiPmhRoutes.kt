@@ -38,7 +38,7 @@ private suspend fun handleOaiRequest(
 
     val verb = params["verb"]
     if (verb.isNullOrBlank()) {
-        call.respond(HttpStatusCode.BadRequest, buildOaiError("badVerb", "verb parameter is required"))
+        call.respondText(buildOaiError("badVerb", "verb parameter is required"), ContentType.Text.Xml)
         return
     }
 
@@ -50,7 +50,7 @@ private suspend fun handleOaiRequest(
         "ListRecords" -> handleListRecords(client, params, shaclService)
         "GetRecord" -> handleGetRecord(client, params, shaclService)
         else -> {
-            call.respond(HttpStatusCode.BadRequest, buildOaiError("badVerb", "Unknown verb: $verb"))
+            call.respondText(buildOaiError("badVerb", "Unknown verb: $verb"), ContentType.Text.Xml)
             return
         }
     }
@@ -91,14 +91,19 @@ private fun handleListMetadataFormats(): String {
         append("      <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>\n")
         append("      <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/</metadataNamespace>\n")
         append("    </metadataFormat>\n")
-        append("    <metadataFormat>\n")
-        append("      <metadataPrefix>dcat</metadataPrefix>\n")
-        append("      <schema>http://www.w3.org/ns/dcat</schema>\n")
-        append("      <metadataNamespace>http://www.w3.org/ns/dcat#</metadataNamespace>\n")
-        append("    </metadataFormat>\n")
-        append("  </ListMetadataFormats>\n")
-        append("</OAI-PMH>")
-    }
+    append("    <metadataFormat>\n")
+    append("      <metadataPrefix>dcat</metadataPrefix>\n")
+    append("      <schema>http://www.w3.org/ns/dcat</schema>\n")
+    append("      <metadataNamespace>http://www.w3.org/ns/dcat#</metadataNamespace>\n")
+    append("    </metadataFormat>\n")
+    append("    <metadataFormat>\n")
+    append("      <metadataPrefix>epos_dcat_ap</metadataPrefix>\n")
+    append("      <schema>https://www.epos-eu.org/epos-dcat-ap</schema>\n")
+    append("      <metadataNamespace>https://www.epos-eu.org/epos-dcat-ap#</metadataNamespace>\n")
+    append("    </metadataFormat>\n")
+    append("  </ListMetadataFormats>\n")
+    append("</OAI-PMH>")
+  }
 }
 
 private fun handleListSets(shaclService: ShaclService): String {
