@@ -14,6 +14,35 @@ func mapDatasetItem(dataset metadataclient.DatasetSearchItem) (api.DatasetItem, 
 		return api.DatasetItem{}, fmt.Errorf("get dataset name: %w", err)
 	}
 
+	// TODO: check this, i think sometimes it returns just a string instead of an array of strings, an array sholud be right though
+	themes, err := getField[[]string](dataset.Fields, "theme")
+	if err != nil {
+		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
+	}
+
+	concepts := []api.ResourceRef{}
+	for _, theme := range themes {
+		concepts = append(concepts, api.ResourceRef{
+			ID:   theme,
+			Name: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the concept, not just the id
+			Href: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the concept, not just the id
+		})
+	}
+
+	publishers, err := getField[[]string](dataset.Fields, "publishers")
+	if err != nil {
+		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
+	}
+
+	providers := []api.ResourceRef{}
+	for _, publisher := range publishers {
+		providers = append(providers, api.ResourceRef{
+			ID:   publisher,
+			Name: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the org, not just the id
+			Href: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the org, not just the id
+		})
+	}
+
 	return api.DatasetItem{
 		BaseSearchItem: api.BaseSearchItem{
 			Type: api.DatasetType,
@@ -21,6 +50,9 @@ func mapDatasetItem(dataset metadataclient.DatasetSearchItem) (api.DatasetItem, 
 			Name: name,
 			Href: buildGatewayHref(api.DatasetType, dataset.Id),
 		},
+		Provider:      providers,
+		Concepts:      concepts,
+		Distributions: []api.DatasetDistributionSearchItem{},
 	}, nil
 }
 

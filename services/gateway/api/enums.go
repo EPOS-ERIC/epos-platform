@@ -6,8 +6,8 @@ type ResourceType string
 
 const (
 	DatasetType             ResourceType = "dataset"
-	SoftwareApplicationType ResourceType = "software-application"
-	SoftwareSourceCodeType  ResourceType = "software-source-code"
+	SoftwareApplicationType ResourceType = "softwareapplication"
+	SoftwareSourceCodeType  ResourceType = "softwaresourcecode"
 	OrganizationType        ResourceType = "organization"
 	WebserviceType          ResourceType = "webservice"
 )

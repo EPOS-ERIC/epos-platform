@@ -102,10 +102,10 @@ paths:
                           - id: "concept-seismology"
                             name: "Seismology"
                             href: "v1/concept/concept-seismology"
-                      - type: software-source-code
+                      - type: softwaresourcecode
                         id: "sc-101"
                         name: "EPOS Data Toolkit"
-                        href: "v1/software-source-code/sc-101"
+                        href: "v1/softwaresourcecode/sc-101"
                         provider:
                           - id: "org-123"
                             name: "INGV"
@@ -155,7 +155,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /software-application/{id}:
+  /softwareapplication/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
     get:
@@ -175,7 +175,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /software-source-code/{id}:
+  /softwaresourcecode/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
     get:
@@ -496,8 +496,8 @@ components:
         - dataset
         - webservice
         - organization
-        - software-application
-        - software-source-code
+        - softwareapplication
+        - softwaresourcecode
 
     VersioningStatus:
       type: string
@@ -559,8 +559,8 @@ components:
           dataset: "#/components/schemas/DatasetSearchItem"
           webservice: "#/components/schemas/WebserviceSearchItem"
           organization: "#/components/schemas/OrganizationSearchItem"
-          software-application: "#/components/schemas/SoftwareApplicationSearchItem"
-          software-source-code: "#/components/schemas/SoftwareSourceCodeSearchItem"
+          softwareapplication: "#/components/schemas/SoftwareApplicationSearchItem"
+          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeSearchItem"
 
     BaseSearchItem:
       type: object
@@ -650,7 +650,7 @@ components:
             type:
               type: string
               enum:
-                - software-application
+                - softwareapplication
             provider:
               type: array
               description: Organization references for providers of this software application
@@ -671,7 +671,7 @@ components:
             type:
               type: string
               enum:
-                - software-source-code
+                - softwaresourcecode
             provider:
               type: array
               description: Organization references for providers of this software source code

@@ -82,8 +82,8 @@ func (dst *SearchItem) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	// check if the discriminator value is 'software-application'
-	if jsonDict["type"] == "software-application" {
+	// check if the discriminator value is 'softwareapplication'
+	if jsonDict["type"] == "softwareapplication" {
 		// try to unmarshal JSON data into GenericSearchItem
 		err = json.Unmarshal(data, &dst.GenericSearchItem)
 		if err == nil {
@@ -94,8 +94,8 @@ func (dst *SearchItem) UnmarshalJSON(data []byte) error {
 		}
 	}
 
-	// check if the discriminator value is 'software-source-code'
-	if jsonDict["type"] == "software-source-code" {
+	// check if the discriminator value is 'softwaresourcecode'
+	if jsonDict["type"] == "softwaresourcecode" {
 		// try to unmarshal JSON data into GenericSearchItem
 		err = json.Unmarshal(data, &dst.GenericSearchItem)
 		if err == nil {
