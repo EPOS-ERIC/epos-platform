@@ -20,8 +20,6 @@ type BaseSearchItem struct {
 	Href string       `json:"href"`
 }
 
-func (BaseSearchItem) searchItem() {}
-
 type ResourceRef struct {
 	ID   string `json:"id"`
 	Name string `json:"name,omitempty"`

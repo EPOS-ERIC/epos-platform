@@ -8,96 +8,157 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
-func mapDatasetItem(dataset metadataclient.DatasetSearchItem) (api.DatasetItem, error) {
-	name, err := getField[string](dataset.Fields, "name")
+func mapDatasetItem(item metadataclient.SearchItem) (api.DatasetItem, error) {
+	baseItem, err := mapBaseItem(item)
 	if err != nil {
-		return api.DatasetItem{}, fmt.Errorf("get dataset name: %w", err)
+		return api.DatasetItem{}, err
 	}
 
-	// TODO: check this, i think sometimes it returns just a string instead of an array of strings, an array sholud be right though
-	themes, err := getField[[]string](dataset.Fields, "theme")
+	themes, err := getOptionalField[[]string](item.Fields, "theme")
 	if err != nil {
-		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
+		return api.DatasetItem{}, fmt.Errorf("get dataset concepts: %w", err)
 	}
 
-	concepts := []api.ResourceRef{}
-	for _, theme := range themes {
-		concepts = append(concepts, api.ResourceRef{
-			ID:   theme,
-			Name: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the concept, not just the id
-			Href: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the concept, not just the id
-		})
-	}
-
-	publishers, err := getField[[]string](dataset.Fields, "publishers")
+	publishers, err := getOptionalField[[]string](item.Fields, "publishers")
 	if err != nil {
-		return api.DatasetItem{}, fmt.Errorf("TODO: %w", err)
-	}
-
-	providers := []api.ResourceRef{}
-	for _, publisher := range publishers {
-		providers = append(providers, api.ResourceRef{
-			ID:   publisher,
-			Name: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the org, not just the id
-			Href: "", // TODO: for now ignore this, but later i think the metadataclient sholud return the whole reference of the org, not just the id
-		})
+		return api.DatasetItem{}, fmt.Errorf("get dataset providers: %w", err)
 	}
 
 	return api.DatasetItem{
-		BaseSearchItem: api.BaseSearchItem{
-			Type: api.DatasetType,
-			ID:   dataset.Id,
-			Name: name,
-			Href: buildGatewayHref(api.DatasetType, dataset.Id),
-		},
-		Provider:      providers,
-		Concepts:      concepts,
-		Distributions: []api.DatasetDistributionSearchItem{},
+		BaseSearchItem: baseItem,
+		Provider:       mapProviders(publishers),
+		Concepts:       mapConcepts(themes),
+		Distributions:  []api.DatasetDistributionSearchItem{},
 	}, nil
 }
 
-func mapGenericItem(item metadataclient.GenericSearchItem) (api.SearchItem, error) {
-	name, err := getField[string](item.Fields, "name")
+func mapOrganizationItem(item metadataclient.SearchItem) (api.OrganizationItem, error) {
+	baseItem, err := mapBaseItem(item)
 	if err != nil {
-		return nil, fmt.Errorf("get generic item name: %w", err)
+		return api.OrganizationItem{}, err
 	}
 
-	resourceType, err := fromMetadataResourceType(metadataclient.ResourceType(item.GetType()))
+	return api.OrganizationItem{BaseSearchItem: baseItem}, nil
+}
+
+func mapSoftwareApplicationItem(item metadataclient.SearchItem) (api.SoftwareApplicationItem, error) {
+	baseItem, err := mapBaseItem(item)
 	if err != nil {
-		return nil, err
+		return api.SoftwareApplicationItem{}, err
 	}
 
-	baseItem := api.BaseSearchItem{
+	publishers, err := getOptionalField[[]string](item.Fields, "publishers")
+	if err != nil {
+		return api.SoftwareApplicationItem{}, fmt.Errorf("get software application providers: %w", err)
+	}
+
+	return api.SoftwareApplicationItem{
+		BaseSearchItem: baseItem,
+		Provider:       mapProviders(publishers),
+	}, nil
+}
+
+func mapSoftwareSourceCodeItem(item metadataclient.SearchItem) (api.SoftwareSourceCodeItem, error) {
+	baseItem, err := mapBaseItem(item)
+	if err != nil {
+		return api.SoftwareSourceCodeItem{}, err
+	}
+
+	publishers, err := getOptionalField[[]string](item.Fields, "publishers")
+	if err != nil {
+		return api.SoftwareSourceCodeItem{}, fmt.Errorf("get software source code providers: %w", err)
+	}
+
+	return api.SoftwareSourceCodeItem{
+		BaseSearchItem: baseItem,
+		Provider:       mapProviders(publishers),
+	}, nil
+}
+
+func mapWebServiceItem(item metadataclient.SearchItem) (api.WebServiceItem, error) {
+	baseItem, err := mapBaseItem(item)
+	if err != nil {
+		return api.WebServiceItem{}, err
+	}
+
+	publishers, err := getOptionalField[[]string](item.Fields, "publishers")
+	if err != nil {
+		return api.WebServiceItem{}, fmt.Errorf("get webservice providers: %w", err)
+	}
+
+	themes, err := getOptionalField[[]string](item.Fields, "theme")
+	if err != nil {
+		return api.WebServiceItem{}, fmt.Errorf("get webservice concepts: %w", err)
+	}
+
+	return api.WebServiceItem{
+		BaseSearchItem: baseItem,
+		Provider:       mapProviders(publishers),
+		Concepts:       mapConcepts(themes),
+	}, nil
+}
+
+func mapBaseItem(item metadataclient.SearchItem) (api.BaseSearchItem, error) {
+	name, err := getRequiredField[string](item.Fields, "name")
+	if err != nil {
+		return api.BaseSearchItem{}, fmt.Errorf("get item name: %w", err)
+	}
+
+	resourceType, err := fromMetadataResourceType(item.GetType())
+	if err != nil {
+		return api.BaseSearchItem{}, err
+	}
+
+	return api.BaseSearchItem{
 		Type: resourceType,
 		ID:   item.Id,
 		Name: name,
 		Href: buildGatewayHref(resourceType, item.Id),
-	}
-
-	switch resourceType {
-	case api.OrganizationType:
-		return api.OrganizationItem{BaseSearchItem: baseItem}, nil
-	case api.SoftwareApplicationType:
-		return api.SoftwareApplicationItem{BaseSearchItem: baseItem}, nil
-	case api.SoftwareSourceCodeType:
-		return api.SoftwareSourceCodeItem{BaseSearchItem: baseItem}, nil
-	case api.WebserviceType:
-		return api.WebServiceItem{BaseSearchItem: baseItem}, nil
-	default:
-		return nil, fmt.Errorf("unsupported gateway resource type: %q", resourceType)
-	}
+	}, nil
 }
 
-// TODO: this should probably be done better?
+func mapProviders(providerIDs []string) []api.ResourceRef {
+	providers := make([]api.ResourceRef, 0, len(providerIDs))
+	for _, providerID := range providerIDs {
+		providers = append(providers, api.ResourceRef{ID: providerID})
+	}
+
+	return providers
+}
+
+func mapConcepts(conceptIDs []string) []api.ResourceRef {
+	concepts := make([]api.ResourceRef, 0, len(conceptIDs))
+	for _, conceptID := range conceptIDs {
+		concepts = append(concepts, api.ResourceRef{ID: conceptID})
+	}
+
+	return concepts
+}
+
 func buildGatewayHref(resourceType api.ResourceType, id string) string {
 	return strings.TrimPrefix(fmt.Sprintf("v1/%s/%s", resourceType, id), "/")
 }
 
-func getField[T any](fields map[string]any, key string) (T, error) {
+func getRequiredField[T any](fields map[string]any, key string) (T, error) {
 	var zero T
 	raw, ok := fields[key]
 	if !ok {
 		return zero, fmt.Errorf("missing field %q", key)
+	}
+
+	val, ok := raw.(T)
+	if !ok {
+		return zero, fmt.Errorf("field %q: expected %T, got %T", key, zero, raw)
+	}
+
+	return val, nil
+}
+
+func getOptionalField[T any](fields map[string]any, key string) (T, error) {
+	var zero T
+	raw, ok := fields[key]
+	if !ok {
+		return zero, nil
 	}
 
 	val, ok := raw.(T)

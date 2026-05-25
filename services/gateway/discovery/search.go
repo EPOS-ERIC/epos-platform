@@ -161,13 +161,18 @@ func fromMetadataResourceType(t metadataclient.ResourceType) (api.ResourceType, 
 }
 
 func toAPISearchItem(item metadataclient.SearchItem) (api.SearchItem, error) {
-	actual := item.GetActualInstanceValue()
-	switch typed := actual.(type) {
-	case metadataclient.DatasetSearchItem:
-		return mapDatasetItem(typed)
-	case metadataclient.GenericSearchItem:
-		return mapGenericItem(typed)
+	switch item.GetType() {
+	case metadataclient.DATASET:
+		return mapDatasetItem(item)
+	case metadataclient.ORGANIZATION:
+		return mapOrganizationItem(item)
+	case metadataclient.SOFTWAREAPPLICATION:
+		return mapSoftwareApplicationItem(item)
+	case metadataclient.SOFTWARESOURCECODE:
+		return mapSoftwareSourceCodeItem(item)
+	case metadataclient.WEBSERVICE:
+		return mapWebServiceItem(item)
 	default:
-		return nil, fmt.Errorf("unsupported metadata search item type %T", actual)
+		return nil, fmt.Errorf("unsupported metadata resource type: %q", item.GetType())
 	}
 }
