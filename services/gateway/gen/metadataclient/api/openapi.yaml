@@ -4211,12 +4211,12 @@ components:
         items:
         - id: id
           href: href
-          type: dataset
+          type: address
           fields:
             key: ""
         - id: id
           href: href
-          type: dataset
+          type: address
           fields:
             key: ""
       properties:
@@ -4245,18 +4245,12 @@ components:
       - totalItems
       - totalPages
     SearchItem:
-      discriminator:
-        mapping:
-          dataset: "#/components/schemas/DatasetSearchItem"
-          distribution: "#/components/schemas/GenericSearchItem"
-          softwareapplication: "#/components/schemas/GenericSearchItem"
-          softwaresourcecode: "#/components/schemas/GenericSearchItem"
-          category: "#/components/schemas/GenericSearchItem"
-        propertyName: type
-      oneOf:
-      - $ref: "#/components/schemas/DatasetSearchItem"
-      - $ref: "#/components/schemas/GenericSearchItem"
-    BaseSearchItem:
+      example:
+        id: id
+        href: href
+        type: address
+        fields:
+          key: ""
       properties:
         type:
           $ref: "#/components/schemas/ResourceType"
@@ -4275,35 +4269,6 @@ components:
       - href
       - id
       - type
-    DatasetSearchItem:
-      allOf:
-      - $ref: "#/components/schemas/BaseSearchItem"
-      - properties:
-          type:
-            enum:
-            - dataset
-            type: string
-        required:
-        - type
-      example:
-        id: id
-        href: href
-        type: dataset
-        fields:
-          key: ""
-    GenericSearchItem:
-      allOf:
-      - $ref: "#/components/schemas/BaseSearchItem"
-      - properties:
-          type:
-            enum:
-            - distribution
-            - softwareapplication
-            - softwaresourcecode
-            - category
-            type: string
-        required:
-        - type
     AccessListItem:
       example:
         id: id

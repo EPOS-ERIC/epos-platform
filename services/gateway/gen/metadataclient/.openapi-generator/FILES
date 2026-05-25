@@ -32,12 +32,10 @@ model_access_detail_response.go
 model_access_list_item.go
 model_access_list_response.go
 model_access_property_value.go
-model_base_search_item.go
 model_category.go
 model_category_scheme.go
 model_category_tree_response.go
 model_dataset.go
-model_dataset_search_item.go
 model_distribution.go
 model_entity_address.go
 model_entity_address_country_name.go
@@ -74,7 +72,6 @@ model_entity_softwareapplication.go
 model_entity_softwaresourcecode.go
 model_entity_webservice.go
 model_error_response.go
-model_generic_search_item.go
 model_property_info.go
 model_resolved_entity_response.go
 model_resolved_entity_response_entity_address.go
