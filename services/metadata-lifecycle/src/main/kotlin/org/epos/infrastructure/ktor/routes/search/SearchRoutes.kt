@@ -2,6 +2,7 @@ package org.epos.infrastructure.ktor.routes.search
 
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.log
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
@@ -18,6 +19,7 @@ import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
 
 private const val DATASET_TYPE_URI = "http://www.w3.org/ns/dcat#Dataset"
+private const val SEARCH_QUERY_TIMING_ENV = "EPOS_SEARCH_QUERY_TIMING"
 
 fun Route.searchRoutes(
     client: PropertyGraphClient,
@@ -75,7 +77,7 @@ private suspend fun executeSearch(
 
         val statusFilter = versioningStatuses
 
-        val typeFilter: Set<String>? = if (types.isNotEmpty()) {
+        val matchedResourceTypes = if (types.isNotEmpty()) {
             val normalizedTypes = types.map { normalizeTypeName(it) }
             val matchingTypes = resourceTypeInfos.filter { typeInfo ->
                 normalizeTypeName(typeInfo.name) in normalizedTypes
@@ -84,40 +86,77 @@ private suspend fun executeSearch(
                 call.respond(SearchResponse(total = 0, items = emptyList()))
                 return
             }
-            matchingTypes.map { normalizeTypeName(it.name) }.toSet()
+            matchingTypes
         } else {
             null
         }
 
         val searchTerms = q?.split("\\s+".toRegex())?.filter { it.isNotBlank() } ?: emptyList()
         val statusGremlinList = statusFilter.joinToString(",") { gStr(it) }
-        val typeGremlinList = typeFilter?.joinToString(",") { gStr(it) }
-        val typePredicate = if (typeGremlinList.isNullOrBlank()) "" else ".has('type', within($typeGremlinList))"
+        val typeValueFilter =
+            matchedResourceTypes
+                ?.flatMap { typeInfo ->
+                    val targetClass = typeInfo.targetClass
+                    val targetLocal = targetClass.substringAfterLast('/').substringAfterLast('#')
+                    listOf(typeInfo.name, targetClass, targetLocal)
+                }
+                ?.filter { it.isNotBlank() }
+                ?.toSet()
+                .orEmpty()
+        val typeGremlinList = typeValueFilter.joinToString(",") { gStr(it) }
+        val typePredicate = if (typeGremlinList.isBlank()) "" else ".has('type', within($typeGremlinList))"
+
+        val textPredicate =
+            if (searchTerms.isEmpty()) {
+                ""
+            } else {
+                val termPredicates =
+                    searchTerms.flatMap { term ->
+                        val escapedTerm = gStr(term.lowercase())
+                        listOf(
+                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('title').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
+                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('description').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
+                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('label').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
+                        )
+                    }
+                ".where(org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.or(${termPredicates.joinToString(",")}))"
+            }
 
         try {
-            val fetchEndExclusive = offset + (limit * 5)
-            val rawResults = client.runQuery("""
+            val fetchEndExclusive = offset + limit + 1
+            val query =
+                """
                 g.V().hasLabel('Version').has('status', within($statusGremlinList)).as('v')
+                  $textPredicate
                   .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.as('c')
                   .select('c','v')
                   .by(valueMap('id','type'))
                   .by(valueMap(true))
                   .range($offset, $fetchEndExclusive)
                   .toList()
-            """.trimIndent())
+                """.trimIndent()
+
+            val queryStartNanos = System.nanoTime()
+            val rawResults = client.runQuery(query)
+            if (isSearchQueryTimingEnabled()) {
+                val elapsedMs = (System.nanoTime() - queryStartNanos) / 1_000_000
+                call.application.log.info(
+                    "search query timing: elapsedMs={}, rows={}, offset={}, limit={}, statuses={}, types={}, terms={}",
+                    elapsedMs,
+                    rawResults.size,
+                    offset,
+                    limit,
+                    statusFilter.joinToString(","),
+                    typeValueFilter.size,
+                    searchTerms.size,
+                )
+            }
             val results = rawResults
                 .filter { row ->
                     val c = row["c"] as? Map<*, *> ?: return@filter false
                     val v = row["v"] as? Map<*, *> ?: return@filter false
                     val status = prop(v["status"])?.lowercase() ?: return@filter false
-                    val cType = prop(c["type"]) ?: ""
-                    if (typeFilter != null) {
-                        val normalizedConceptualType = normalizeTypeName(cType.substringAfterLast('/').substringAfterLast('#'))
-                        if (normalizedConceptualType !in typeFilter) return@filter false
-                    }
-                    if (searchTerms.isEmpty()) return@filter true
-                    val blob = listOf(prop(v["title"]), prop(v["description"]), prop(v["label"])).joinToString(" ") { it ?: "" }.lowercase()
-                    searchTerms.all { blob.contains(it.lowercase()) }
+                    status in statusFilter
                 }
             val paged = results.take(limit)
             val hasMore = results.size > limit
@@ -267,3 +306,6 @@ private fun extractFieldValue(data: Map<String, Any?>, path: String, name: Strin
     val candidates = listOf(name, localFromPath, path)
     return candidates.firstNotNullOfOrNull { key -> data[key] }
 }
+
+private fun isSearchQueryTimingEnabled(): Boolean =
+    System.getenv(SEARCH_QUERY_TIMING_ENV)?.toBooleanStrictOrNull() ?: false
