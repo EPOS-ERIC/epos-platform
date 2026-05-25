@@ -112,24 +112,47 @@ class EntityLifecycleService(
         val now = java.time.Instant.now().toString()
 
         val finalUri = submittedUri.removeSuffix("-draft")
+        // Publish submitted version first, then reconcile previous published versions and pointers.
+        markSubmittedAsPublished(submittedUri, finalUri, now)
+
+        val archivedRows = findArchivedPublishedRows(conceptualUri, finalUri)
+        archivePreviousPublishedVersions(conceptualUri, finalUri, now, archivedRows, agent, group)
+
+        updateCurrentVersionPointer(conceptualUri, finalUri)
+        linkSupersededVersion(currentPublished?.id, finalUri)
+
+        provenanceService.recordStateTransition(finalUri, "SUBMITTED", "PUBLISHED", agent, group)
+        println("Published: $finalUri (SUBMITTED -> PUBLISHED)")
+        println("  Updated conceptual pointer: $conceptualUri -> $finalUri")
+        return finalUri
+    }
+
+    private fun markSubmittedAsPublished(submittedUri: String, finalUri: String, now: String) {
         if (finalUri != submittedUri) {
-            client.runWrite("""
+            client.runWrite(
+                """
                 g.V().hasLabel('Version').has('id', ${gStr(submittedUri)})
                   .property('id', ${gStr(finalUri)})
                   .property('status', 'published')
                   .property('updatedAt', ${gStr(now)})
                   .iterate()
-            """.trimIndent())
-        } else {
-            client.runWrite("""
-                g.V().hasLabel('Version').has('id', ${gStr(submittedUri)})
-                  .property('status', 'published')
-                  .property('updatedAt', ${gStr(now)})
-                  .iterate()
-            """.trimIndent())
+                """.trimIndent(),
+            )
+            return
         }
 
-        val archivedRows = client.runWriteReturning(
+        client.runWrite(
+            """
+            g.V().hasLabel('Version').has('id', ${gStr(submittedUri)})
+              .property('status', 'published')
+              .property('updatedAt', ${gStr(now)})
+              .iterate()
+            """.trimIndent(),
+        )
+    }
+
+    private fun findArchivedPublishedRows(conceptualUri: String, finalUri: String): List<Map<String, Any?>> =
+        client.runWriteReturning(
             """
             g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
               .out('HAS_VERSION').hasLabel('Version')
@@ -141,53 +164,62 @@ class EntityLifecycleService(
             """.trimIndent(),
         )
 
-        if (archivedRows.isNotEmpty()) {
-            client.runWrite(
-                """
-                g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
-                  .out('HAS_VERSION').hasLabel('Version')
-                  .has('status', within('published', 'PUBLISHED'))
-                  .has('id', neq(${gStr(finalUri)}))
-                  .property('status', 'archived')
-                  .property('updatedAt', ${gStr(now)})
-                  .iterate()
-                """.trimIndent(),
-            )
+    private fun archivePreviousPublishedVersions(
+        conceptualUri: String,
+        finalUri: String,
+        now: String,
+        archivedRows: List<Map<String, Any?>>,
+        agent: String,
+        group: String,
+    ) {
+        if (archivedRows.isEmpty()) return
 
-            archivedRows.forEach { row ->
-                val archivedId = row["id"]?.toString()?.trim().orEmpty()
-                if (archivedId.isNotBlank()) {
-                    provenanceService.recordStateTransition(archivedId, "PUBLISHED", "ARCHIVED", agent, group)
-                    println("  Archived old version: $archivedId")
-                }
-            }
+        client.runWrite(
+            """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)})
+              .out('HAS_VERSION').hasLabel('Version')
+              .has('status', within('published', 'PUBLISHED'))
+              .has('id', neq(${gStr(finalUri)}))
+              .property('status', 'archived')
+              .property('updatedAt', ${gStr(now)})
+              .iterate()
+            """.trimIndent(),
+        )
+
+        archivedRows.forEach { row ->
+            val archivedId = row["id"]?.toString()?.trim().orEmpty()
+            if (archivedId.isBlank()) return@forEach
+            provenanceService.recordStateTransition(archivedId, "PUBLISHED", "ARCHIVED", agent, group)
+            println("  Archived old version: $archivedId")
         }
+    }
 
-        client.runWrite("""
+    private fun updateCurrentVersionPointer(conceptualUri: String, finalUri: String) {
+        client.runWrite(
+            """
             def c = g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).next()
             g.V(c.id()).outE('CURRENT_VERSION').drop().iterate()
             def v = g.V().hasLabel('Version').has('id', ${gStr(finalUri)}).next()
             g.V(c.id()).addE('CURRENT_VERSION').to(V(v.id())).iterate()
-        """.trimIndent())
+            """.trimIndent(),
+        )
+    }
 
-        if (currentPublished != null) {
-            client.runWrite("""
-                def oldQ = g.V().hasLabel('Version').has('id', ${gStr(currentPublished.id)}).limit(1).toList()
-                def newQ = g.V().hasLabel('Version').has('id', ${gStr(finalUri)}).limit(1).toList()
-                if (!oldQ.isEmpty() && !newQ.isEmpty()) {
-                  def oldV = oldQ.get(0)
-                  def newV = newQ.get(0)
-                  if (!g.V(oldV.id()).out('SUPERSEDED_BY').hasId(newV.id()).hasNext()) {
-                    g.V(oldV.id()).addE('SUPERSEDED_BY').to(V(newV.id())).iterate()
-                  }
-                }
-            """.trimIndent())
-        }
-
-        provenanceService.recordStateTransition(finalUri, "SUBMITTED", "PUBLISHED", agent, group)
-        println("Published: $finalUri (SUBMITTED -> PUBLISHED)")
-        println("  Updated conceptual pointer: $conceptualUri -> $finalUri")
-        return finalUri
+    private fun linkSupersededVersion(previousPublishedUri: String?, finalUri: String) {
+        if (previousPublishedUri.isNullOrBlank()) return
+        client.runWrite(
+            """
+            def oldQ = g.V().hasLabel('Version').has('id', ${gStr(previousPublishedUri)}).limit(1).toList()
+            def newQ = g.V().hasLabel('Version').has('id', ${gStr(finalUri)}).limit(1).toList()
+            if (!oldQ.isEmpty() && !newQ.isEmpty()) {
+              def oldV = oldQ.get(0)
+              def newV = newQ.get(0)
+              if (!g.V(oldV.id()).out('SUPERSEDED_BY').hasId(newV.id()).hasNext()) {
+                g.V(oldV.id()).addE('SUPERSEDED_BY').to(V(newV.id())).iterate()
+              }
+            }
+            """.trimIndent(),
+        )
     }
 
     fun rejectSubmission(submittedUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {

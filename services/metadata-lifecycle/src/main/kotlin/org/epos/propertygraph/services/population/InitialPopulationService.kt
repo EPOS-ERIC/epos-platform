@@ -448,6 +448,7 @@ class InitialPopulationService(
             }
         }
 
+        // Phase 1: collect vertex properties and relation edge drafts.
         val entityDataMap = mutableMapOf<String, MutableMap<String, Any>>()
         val entityEdgeMap = mutableMapOf<String, MutableList<EdgeDraft>>()
         val importedVersionUris = uriMappings.values.map { it.second }.toSet()
@@ -481,41 +482,17 @@ class InitialPopulationService(
                         )
                     }
                     if (targetUri !in importedVersionUris) {
-                        val existing = data[propName]
-                        data[propName] = when (existing) {
-                            null -> targetUri
-                            is List<*> -> existing + targetUri
-                            else -> listOf(existing, targetUri)
-                        }
+                        appendPropertyValue(data, propName, targetUri)
                     }
                 }
                 is org.eclipse.rdf4j.model.Literal -> {
                     val value = obj.stringValue()
-                    val existing = data[propName]
-                    data[propName] = when (existing) {
-                        null -> value
-                        is List<*> -> existing + value
-                        else -> listOf(existing, value)
-                    }
+                    appendPropertyValue(data, propName, value)
                 }
                 is org.eclipse.rdf4j.model.BNode -> {
-                    val bnodeProps = mutableMapOf<String, Any>()
-                    processedModel.filter { it.subject == obj }.forEach { bStmt ->
-                        val bProp = bStmt.predicate.stringValue().substringAfterLast("/").substringAfterLast("#")
-                        val bObj = bStmt.`object`
-                        bnodeProps[bProp] = when (bObj) {
-                            is org.eclipse.rdf4j.model.IRI -> bObj.stringValue()
-                            is org.eclipse.rdf4j.model.Literal -> bObj.stringValue()
-                            else -> bObj.stringValue()
-                        }
-                    }
+                    val bnodeProps = extractBNodeProperties(processedModel, obj)
                     if (bnodeProps.isNotEmpty()) {
-                        val existing = data[propName]
-                        data[propName] = when (existing) {
-                            null -> bnodeProps
-                            is List<*> -> existing + bnodeProps
-                            else -> listOf(existing, bnodeProps)
-                        }
+                        appendPropertyValue(data, propName, bnodeProps)
                     }
                 }
             }
@@ -523,6 +500,7 @@ class InitialPopulationService(
 
         var triplesInserted = 0
 
+        // Phase 2: create/update Conceptual + Version vertices.
         uriMappings.values.forEach { (conceptual, versioned) ->
             val typeUri = processedModel.filter { it.subject.stringValue() == versioned }
                 .find { it.predicate.stringValue().endsWith("type") || it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
@@ -538,13 +516,13 @@ class InitialPopulationService(
                 typeShortName = typeShortName,
                 timestamp = timestamp,
                 data = data,
-                edges = entityEdgeMap[versioned].orEmpty(),
             )
             client.runWrite(script)
 
             triplesInserted += data.size
         }
 
+        // Phase 3: attach relation edges now that all vertices exist.
         entityEdgeMap.forEach { (sourceVersionId, edges) ->
             if (edges.isNotEmpty()) {
                 client.runWrite(buildAttachEdgesScript(sourceVersionId, edges))
@@ -564,13 +542,37 @@ class InitialPopulationService(
         return ProcessingStats(uriMappings.size, triplesInserted)
     }
 
+    private fun appendPropertyValue(
+        data: MutableMap<String, Any>,
+        propName: String,
+        value: Any,
+    ) {
+        val existing = data[propName]
+        data[propName] = when (existing) {
+            null -> value
+            is List<*> -> existing + value
+            else -> listOf(existing, value)
+        }
+    }
+
+    private fun extractBNodeProperties(
+        model: Model,
+        bNode: org.eclipse.rdf4j.model.BNode,
+    ): Map<String, Any> {
+        val bnodeProps = mutableMapOf<String, Any>()
+        model.filter { it.subject == bNode }.forEach { bStmt ->
+            val bProp = bStmt.predicate.stringValue().substringAfterLast("/").substringAfterLast("#")
+            bnodeProps[bProp] = bStmt.`object`.stringValue()
+        }
+        return bnodeProps
+    }
+
     private fun buildInsertVersionScript(
         conceptual: String,
         versioned: String,
         typeShortName: String,
         timestamp: String,
         data: Map<String, Any>,
-        edges: List<EdgeDraft>,
     ): String {
         val propertyAssignments =
             data.entries.flatMap { (key, value) ->
