@@ -145,7 +145,7 @@ private fun buildAccessDetail(
     data.forEach { (key, value) ->
         val propName = key
         val values = expandAccessValues(value)
-        propertyWasArray[propName] = value is List<*>
+        propertyWasArray[propName] = value is List<*> || shouldBeArrayByShacl(propName, shapeProperties)
 
         values.forEach { item ->
             val obj = item?.toString() ?: return@forEach
@@ -204,6 +204,9 @@ private fun buildAccessDetail(
         if (!edgeLabel.startsWith("rel_")) return@forEach
 
         val propertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
+        if (shouldBeArrayByShacl(propertyName, shapeProperties)) {
+            propertyWasArray[propertyName] = true
+        }
         val predicateIri = prop(edge["predicateIri"])
         val target = row["t"] as? Map<*, *> ?: return@forEach
         val targetId =
@@ -273,6 +276,22 @@ private fun normalizeAccessPropertyValues(values: List<AccessPropertyValue>, for
     if (forceArray) return values
     return if (values.size == 1) values.first() else values
 }
+
+private fun shouldBeArrayByShacl(
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+): Boolean {
+    val normalizedProperty = normalizeShapeName(localPropertyName(propertyName))
+    val property = shapeProperties.firstOrNull { prop ->
+        normalizeShapeName(localPropertyName(prop.name)) == normalizedProperty ||
+            normalizeShapeName(localPropertyName(prop.path)) == normalizedProperty
+    } ?: return false
+
+    return property.maxCount != 1
+}
+
+private fun localPropertyName(value: String): String =
+    value.substringAfterLast('/').substringAfterLast('#').substringAfter(':')
 
 private fun isResolvableResource(
     client: PropertyGraphClient,
