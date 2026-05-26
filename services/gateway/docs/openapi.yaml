@@ -113,6 +113,8 @@ paths:
                             href: "v1/organization/org-123"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -485,6 +487,20 @@ components:
               value:
                 title: "Internal server error"
                 status: 500
+
+    GatewayTimeout:
+      description: Upstream dependency timeout
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            upstreamTimeout:
+              summary: Metadata service timeout
+              value:
+                title: "upstream_timeout"
+                status: 504
+                detail: "metadata search timed out"
 
   schemas:
     # -------------------------------------------------------------------------

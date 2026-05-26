@@ -34,11 +34,18 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 }
 
 func writeError(w http.ResponseWriter, status int, code, message string) {
-	writeJSON(w, status, api.Problem{
+	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
+	w.WriteHeader(status)
+
+	problem := api.Problem{
 		Title:  code,
 		Status: status,
 		Detail: message,
-	})
+	}
+
+	if err := json.NewEncoder(w).Encode(problem); err != nil {
+		log.Error("failed to encode problem response", "status", status, "error", err)
+	}
 }
 
 func writeBadRequest(w http.ResponseWriter, err error) {

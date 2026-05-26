@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -35,7 +36,14 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 	results, err := h.service.Search(r.Context(), params)
 	if err != nil {
 		h.log.Error("search metadata failed", "method", r.Method, "path", r.URL.Path, "raw_query", r.URL.RawQuery, "error", err.Error())
-		writeError(w, http.StatusInternalServerError, "TODO", "TODO")
+		switch {
+		case errors.Is(err, discovery.ErrUpstreamTimeout):
+			writeError(w, http.StatusGatewayTimeout, "upstream_timeout", "metadata search timed out")
+		case errors.Is(err, discovery.ErrUpstreamRequestFailed):
+			writeError(w, http.StatusInternalServerError, "internal_server_error", "metadata search request failed")
+		default:
+			writeError(w, http.StatusInternalServerError, "internal_server_error", "search failed")
+		}
 		return
 	}
 
@@ -63,6 +71,9 @@ func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {
 
 	types, err := parseCSVResourceTypes(query, "type")
 	if err != nil {
+		return discovery.SearchParams{}, fmt.Errorf("parse type filter: %w", err)
+	}
+	if err := discovery.ValidateSearchTypes(types); err != nil {
 		return discovery.SearchParams{}, fmt.Errorf("parse type filter: %w", err)
 	}
 

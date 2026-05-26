@@ -4,12 +4,36 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"golang.org/x/sync/errgroup"
 )
+
+var supportedSearchTypes = []api.ResourceType{
+	api.DatasetType,
+	api.OrganizationType,
+	api.SoftwareApplicationType,
+	api.SoftwareSourceCodeType,
+	api.WebserviceType,
+}
+
+var (
+	ErrUpstreamTimeout       = errors.New("upstream timeout")
+	ErrUpstreamRequestFailed = errors.New("upstream request failed")
+)
+
+func ValidateSearchTypes(types []api.ResourceType) error {
+	for _, resourceType := range types {
+		if !slices.Contains(supportedSearchTypes, resourceType) {
+			return fmt.Errorf("unsupported search type %q; allowed values: %s", resourceType, supportedSearchTypes)
+		}
+	}
+
+	return nil
+}
 
 type SearchParams struct {
 	Query            string
@@ -25,24 +49,24 @@ type SearchParams struct {
 }
 
 func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiApiV2AccessSearchGetRequest, error) {
+	if err := ValidateSearchTypes(p.Types); err != nil {
+		return metadataclient.ApiApiV2AccessSearchGetRequest{}, err
+	}
+
 	versioningStatus := make([]metadataclient.VersioningStatus, len(p.VersioningStatus))
 	for i, v := range p.VersioningStatus {
 		versioningStatus[i] = metadataclient.VersioningStatus(v)
 	}
 
-	supportedTypes := map[metadataclient.ResourceType]struct{}{
-		metadataclient.DATASET:             {},
-		metadataclient.ORGANIZATION:        {},
-		metadataclient.SOFTWAREAPPLICATION: {},
-		metadataclient.SOFTWARESOURCECODE:  {},
-		metadataclient.WEBSERVICE:          {},
-	}
-
-	// intersect the types we support with the types asked for in the query
 	types := []metadataclient.ResourceType{}
 	if len(p.Types) == 0 {
-		for t := range supportedTypes {
-			types = append(types, t)
+		for _, resourceType := range supportedSearchTypes {
+			metadataType, err := toMetadataResourceType(resourceType)
+			if err != nil {
+				return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("convert resource type: %w", err)
+			}
+
+			types = append(types, metadataType)
 		}
 	} else {
 		for _, t := range p.Types {
@@ -51,9 +75,7 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 				return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("convert resource type: %w", err)
 			}
 
-			if _, ok := supportedTypes[metadataType]; ok {
-				types = append(types, metadataType)
-			}
+			types = append(types, metadataType)
 		}
 	}
 
@@ -116,10 +138,14 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		}
 
 		if errors.Is(err, context.DeadlineExceeded) {
-			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w", context.DeadlineExceeded)
+			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w", ErrUpstreamTimeout)
 		}
 
-		return api.SearchResponse{}, fmt.Errorf("search metadata request failed")
+		if errors.Is(err, context.Canceled) {
+			return api.SearchResponse{}, fmt.Errorf("search metadata canceled: %w", ErrUpstreamTimeout)
+		}
+
+		return api.SearchResponse{}, fmt.Errorf("search metadata request failed: %w", ErrUpstreamRequestFailed)
 	}
 
 	s.log.Debug("metadata search response received", "total", resp.Total, "items_count", len(resp.Items), "page", resp.Page)
