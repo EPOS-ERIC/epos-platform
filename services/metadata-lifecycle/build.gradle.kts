@@ -112,6 +112,7 @@ dependencies {
     constraints {
         implementation("commons-beanutils:commons-beanutils:1.11.0")
         implementation("org.apache.commons:commons-lang3:3.18.0")
+        implementation("org.apache.commons:commons-configuration2:2.10.1")
     }
 }
 
