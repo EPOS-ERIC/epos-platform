@@ -216,12 +216,12 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 			resp, _, err := req.Execute()
 			if err != nil {
 				s.log.Error("provider details fetch failed", "provider_id", providerID, "error", err)
-				return fmt.Errorf("fetch provider %q details: %w", providerID, err)
+				return fmt.Errorf("fetch provider '%s' details: %w", providerID, err)
 			}
 
 			if resp == nil {
 				s.log.Warn("provider details fetch returned empty response", "provider_id", providerID)
-				return fmt.Errorf("fetch provider %q details: empty response", providerID)
+				return fmt.Errorf("fetch provider '%s' details: empty response", providerID)
 			}
 
 			switch {
@@ -229,17 +229,17 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 				names, err := getStringSliceField(resp.AccessDetailResponse.GetProperties(), "legalName")
 				if err != nil {
 					s.log.Warn("provider legal name extraction failed", "provider_id", providerID, "error", err)
-					return fmt.Errorf("extract provider %q legal name: %w", providerID, err)
+					return fmt.Errorf("extract provider '%s' legal name: %w", providerID, err)
 				}
 				if len(names) > 0 {
 					provider.Name = names[0]
 				}
 			case resp.AccessListResponse != nil:
 				s.log.Warn("provider details fetch returned unexpected list response", "provider_id", providerID)
-				return fmt.Errorf("fetch provider %q details: unexpected list response", providerID)
+				return fmt.Errorf("fetch provider '%s' details: unexpected list response", providerID)
 			default:
 				s.log.Warn("provider details fetch returned empty typed response", "provider_id", providerID)
-				return fmt.Errorf("fetch provider %q details: empty typed response", providerID)
+				return fmt.Errorf("fetch provider '%s' details: empty typed response", providerID)
 			}
 
 			providers[i] = provider
@@ -259,18 +259,18 @@ func (s *Service) mapDistributions(ctx context.Context, distributionID string) (
 	req := s.metadataClient.AccessAPI.ApiV2AccessShapeIdGet(ctx, string(api.DatasetType), distributionID)
 	resp, _, err := req.Execute()
 	if err != nil {
-		return nil, fmt.Errorf("fetch dataset %q details: %w", distributionID, err)
+		return nil, fmt.Errorf("fetch dataset '%s' details: %w", distributionID, err)
 	}
 
 	if resp == nil {
-		return nil, fmt.Errorf("fetch dataset %q details: empty response", distributionID)
+		return nil, fmt.Errorf("fetch dataset '%s' details: empty response", distributionID)
 	}
 
 	switch {
 	case resp.AccessDetailResponse != nil:
 		refs, err := getLinkedRefsField(resp.AccessDetailResponse.GetProperties(), "distribution", api.DistributionType)
 		if err != nil {
-			return nil, fmt.Errorf("extract dataset %q distribution refs: %w", distributionID, err)
+			return nil, fmt.Errorf("extract dataset '%s' distribution refs: %w", distributionID, err)
 		}
 		if len(refs) == 0 {
 			return []api.DatasetDistributionSearchItem{}, nil
@@ -284,9 +284,9 @@ func (s *Service) mapDistributions(ctx context.Context, distributionID string) (
 			})
 		}
 	case resp.AccessListResponse != nil:
-		return nil, fmt.Errorf("fetch dataset %q details: unexpected list response", distributionID)
+		return nil, fmt.Errorf("fetch dataset '%s' details: unexpected list response", distributionID)
 	default:
-		return nil, fmt.Errorf("fetch dataset %q details: empty typed response", distributionID)
+		return nil, fmt.Errorf("fetch dataset '%s' details: empty typed response", distributionID)
 	}
 
 	return distributions, nil
@@ -307,26 +307,26 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 			req := s.metadataClient.AccessAPI.ApiV2AccessShapeIdGet(groupCtx, string(api.ConceptType), conceptID)
 			resp, _, err := req.Execute()
 			if err != nil {
-				return fmt.Errorf("fetch concept %q details: %w", conceptID, err)
+				return fmt.Errorf("fetch concept '%s' details: %w", conceptID, err)
 			}
 
 			if resp == nil {
-				return fmt.Errorf("fetch concept %q details: empty response", conceptID)
+				return fmt.Errorf("fetch concept '%s' details: empty response", conceptID)
 			}
 
 			switch {
 			case resp.AccessDetailResponse != nil:
 				labels, err := getStringSliceField(resp.AccessDetailResponse.GetProperties(), "prefLabel")
 				if err != nil {
-					return fmt.Errorf("extract concept %q prefLabel: %w", conceptID, err)
+					return fmt.Errorf("extract concept '%s' prefLabel: %w", conceptID, err)
 				}
 				if len(labels) > 0 {
 					concept.Name = labels[0]
 				}
 			case resp.AccessListResponse != nil:
-				return fmt.Errorf("fetch concept %q details: unexpected list response", conceptID)
+				return fmt.Errorf("fetch concept '%s' details: unexpected list response", conceptID)
 			default:
-				return fmt.Errorf("fetch concept %q details: empty typed response", conceptID)
+				return fmt.Errorf("fetch concept '%s' details: empty typed response", conceptID)
 			}
 
 			concepts[i] = concept
@@ -349,12 +349,12 @@ func getField[T any](fields map[string]any, key string) (T, error) {
 	var zero T
 	raw, ok := fields[key]
 	if !ok {
-		return zero, fmt.Errorf("missing field %q", key)
+		return zero, fmt.Errorf("missing field '%s'", key)
 	}
 
 	val, ok := raw.(T)
 	if !ok {
-		return zero, fmt.Errorf("field %q: expected %T, got %T", key, zero, raw)
+		return zero, fmt.Errorf("field '%s': expected %T, got %T", key, zero, raw)
 	}
 
 	return val, nil
@@ -363,7 +363,7 @@ func getField[T any](fields map[string]any, key string) (T, error) {
 func getStringSliceField(fields map[string]any, key string) ([]string, error) {
 	raw, ok := fields[key]
 	if !ok {
-		return nil, fmt.Errorf("missing field %q", key)
+		return nil, fmt.Errorf("missing field '%s'", key)
 	}
 
 	if val, ok := raw.([]string); ok {
@@ -372,14 +372,14 @@ func getStringSliceField(fields map[string]any, key string) ([]string, error) {
 
 	values, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf("field %q: expected []string or []interface{}, got %T", key, raw)
+		return nil, fmt.Errorf("field '%s': expected []string or []interface{}, got %T", key, raw)
 	}
 
 	result := make([]string, 0, len(values))
 	for i, value := range values {
 		strValue, ok := value.(string)
 		if !ok {
-			return nil, fmt.Errorf("field %q[%d]: expected string, got %T", key, i, value)
+			return nil, fmt.Errorf("field '%s[%d]': expected string, got %T", key, i, value)
 		}
 
 		result = append(result, strValue)
@@ -391,21 +391,21 @@ func getStringSliceField(fields map[string]any, key string) ([]string, error) {
 func getLinkedRefsField(fields map[string]any, key string, resourceType api.ResourceType) ([]api.ResourceRef, error) {
 	raw, ok := fields[key]
 	if !ok {
-		return nil, fmt.Errorf("missing field %q", key)
+		return nil, fmt.Errorf("missing field '%s'", key)
 	}
 	values, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf("field %q: expected []interface{}, got %T", key, raw)
+		return nil, fmt.Errorf("field '%s': expected []interface{}, got %T", key, raw)
 	}
 	refs := make([]api.ResourceRef, 0, len(values))
 	for i, v := range values {
 		obj, ok := v.(map[string]any)
 		if !ok {
-			return nil, fmt.Errorf("field %q[%d]: expected object, got %T", key, i, v)
+			return nil, fmt.Errorf("field '%s[%d]': expected object, got %T", key, i, v)
 		}
 		id, ok := obj["id"].(string)
 		if !ok || id == "" {
-			return nil, fmt.Errorf("field %q[%d].id: missing/invalid", key, i)
+			return nil, fmt.Errorf("field '%s[%d].id': missing/invalid", key, i)
 		}
 
 		name := ""
