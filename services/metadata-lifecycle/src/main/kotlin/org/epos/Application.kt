@@ -200,6 +200,7 @@ fun Application.module() {
         categoryRoutes(client)
 
         cypherRoutes(client)
+        sparqlRoutes(client)
 
         oaiPmhRoutes(client, shaclService)
 

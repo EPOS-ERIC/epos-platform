@@ -127,6 +127,7 @@ private fun buildAccessDetail(
     requestedId: String,
     publicBaseUrl: String,
 ): AccessDetailResponse {
+    // Load version payload with progressively looser id/identifier fallbacks.
     val result =
         client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
             ?: client.runQuery("g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
@@ -144,56 +145,22 @@ private fun buildAccessDetail(
     data.forEach { (key, value) ->
         val propName = key
         val values = expandAccessValues(value)
-        propertyWasArray[propName] = value is List<*>
+        propertyWasArray[propName] = value is List<*> || shouldBeArrayByShacl(propName, shapeProperties)
 
         values.forEach { item ->
             val obj = item?.toString() ?: return@forEach
             val predicateIri = resolvePredicateIriFromShacl(propName, shapeProperties)
-            val objectType =
-                resolveObjectShape(
-                    objectId = obj,
-                    propertyName = propName,
-                    shapeProperties = shapeProperties,
-                    resourceTypeMap = resourceTypeMap,
-                )?.takeIf { candidate -> knownShapeNames.any { normalizeShapeName(it) == normalizeShapeName(candidate) } }
-
-            val accessValue =
-                if (ResourceLinkResolver.isPotentialResourceIdentifier(obj)) {
-                    if (obj == requestedId) {
-                        val plainSelfValue = AccessPropertyValue(value = obj)
-                        groupedProperties.getOrPut(propName) { mutableListOf() }.add(plainSelfValue)
-                        return@forEach
-                    }
-                    val resolvedLink =
-                        if (isResolvableResource(client, obj, existenceCache)) {
-                            ResourceLinkResolver.resolveLink(
-                                client = client,
-                                objectId = obj,
-                                resourceTypeMap = resourceTypeMap,
-                                normalizeShapeName = ::normalizeShapeName,
-                                publicBaseUrl = publicBaseUrl,
-                                preferredShape = objectType,
-                            )
-                        } else {
-                            null
-                        }
-                    val href = resolvedLink?.href
-                    val resolvedType = objectType ?: resolvedLink?.resolvedShape
-
-                    if (!resolvedType.isNullOrBlank() || href != null) {
-                        AccessPropertyValue(
-                            id = obj,
-                            type = resolvedType,
-                            title = null,
-                            href = href,
-                            predicateIri = predicateIri,
-                        )
-                    } else {
-                        AccessPropertyValue(value = obj, predicateIri = predicateIri)
-                    }
-                } else {
-                    AccessPropertyValue(value = obj)
-                }
+            val objectType = resolveKnownObjectShape(obj, propName, shapeProperties, resourceTypeMap, knownShapeNames)
+            val accessValue = buildAccessPropertyValue(
+                client = client,
+                objectId = obj,
+                requestedId = requestedId,
+                predicateIri = predicateIri,
+                objectType = objectType,
+                resourceTypeMap = resourceTypeMap,
+                publicBaseUrl = publicBaseUrl,
+                existenceCache = existenceCache,
+            )
             groupedProperties.getOrPut(propName) { mutableListOf() }.add(accessValue)
         }
     }
@@ -237,6 +204,9 @@ private fun buildAccessDetail(
         if (!edgeLabel.startsWith("rel_")) return@forEach
 
         val propertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
+        if (shouldBeArrayByShacl(propertyName, shapeProperties)) {
+            propertyWasArray[propertyName] = true
+        }
         val predicateIri = prop(edge["predicateIri"])
         val target = row["t"] as? Map<*, *> ?: return@forEach
         val targetId =
@@ -246,13 +216,7 @@ private fun buildAccessDetail(
 
         if (targetId == requestedId) return@forEach
 
-        val objectType =
-            resolveObjectShape(
-                objectId = targetId,
-                propertyName = propertyName,
-                shapeProperties = shapeProperties,
-                resourceTypeMap = resourceTypeMap,
-            )?.takeIf { candidate -> knownShapeNames.any { normalizeShapeName(it) == normalizeShapeName(candidate) } }
+        val objectType = resolveKnownObjectShape(targetId, propertyName, shapeProperties, resourceTypeMap, knownShapeNames)
 
         val resolvedLink =
             if (isResolvableResource(client, targetId, existenceCache)) {
@@ -313,6 +277,22 @@ private fun normalizeAccessPropertyValues(values: List<AccessPropertyValue>, for
     return if (values.size == 1) values.first() else values
 }
 
+private fun shouldBeArrayByShacl(
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+): Boolean {
+    val normalizedProperty = normalizeShapeName(localPropertyName(propertyName))
+    val property = shapeProperties.firstOrNull { prop ->
+        normalizeShapeName(localPropertyName(prop.name)) == normalizedProperty ||
+            normalizeShapeName(localPropertyName(prop.path)) == normalizedProperty
+    } ?: return false
+
+    return property.maxCount != 1
+}
+
+private fun localPropertyName(value: String): String =
+    value.substringAfterLast('/').substringAfterLast('#').substringAfter(':')
+
 private fun isResolvableResource(
     client: PropertyGraphClient,
     objectId: String,
@@ -321,6 +301,66 @@ private fun isResolvableResource(
     existenceCache.getOrPut(objectId) {
         ResourceLinkResolver.resolveAccessEntityId(client, objectId) != null
     }
+
+private fun resolveKnownObjectShape(
+    objectId: String,
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+    resourceTypeMap: Map<String, String>,
+    knownShapeNames: Set<String>,
+): String? =
+    resolveObjectShape(
+        objectId = objectId,
+        propertyName = propertyName,
+        shapeProperties = shapeProperties,
+        resourceTypeMap = resourceTypeMap,
+    )?.takeIf { candidate -> knownShapeNames.any { normalizeShapeName(it) == normalizeShapeName(candidate) } }
+
+private fun buildAccessPropertyValue(
+    client: PropertyGraphClient,
+    objectId: String,
+    requestedId: String,
+    predicateIri: String?,
+    objectType: String?,
+    resourceTypeMap: Map<String, String>,
+    publicBaseUrl: String,
+    existenceCache: MutableMap<String, Boolean>,
+): AccessPropertyValue {
+    if (!ResourceLinkResolver.isPotentialResourceIdentifier(objectId)) {
+        return AccessPropertyValue(value = objectId)
+    }
+    if (objectId == requestedId) {
+        return AccessPropertyValue(value = objectId)
+    }
+
+    val resolvedLink =
+        if (isResolvableResource(client, objectId, existenceCache)) {
+            ResourceLinkResolver.resolveLink(
+                client = client,
+                objectId = objectId,
+                resourceTypeMap = resourceTypeMap,
+                normalizeShapeName = ::normalizeShapeName,
+                publicBaseUrl = publicBaseUrl,
+                preferredShape = objectType,
+            )
+        } else {
+            null
+        }
+    val href = resolvedLink?.href
+    val resolvedType = objectType ?: resolvedLink?.resolvedShape
+
+    return if (!resolvedType.isNullOrBlank() || href != null) {
+        AccessPropertyValue(
+            id = objectId,
+            type = resolvedType,
+            title = null,
+            href = href,
+            predicateIri = predicateIri,
+        )
+    } else {
+        AccessPropertyValue(value = objectId, predicateIri = predicateIri)
+    }
+}
 
 private fun resolveObjectShape(
     objectId: String,

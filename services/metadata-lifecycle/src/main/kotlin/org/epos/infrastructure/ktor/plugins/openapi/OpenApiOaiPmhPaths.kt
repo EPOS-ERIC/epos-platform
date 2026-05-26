@@ -62,5 +62,43 @@ object OpenApiOaiPmhPaths {
           content:
             text/xml:
               schema:
+                type: string
+    post:
+      tags: [OAI-PMH]
+      summary: OAI-PMH 2.0 endpoint (POST)
+      description: |
+        Same behavior as GET, with arguments in
+        application/x-www-form-urlencoded body.
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                verb:
+                  type: string
+                  enum: [Identify, ListMetadataFormats, ListSets, ListIdentifiers, ListRecords, GetRecord]
+                metadataPrefix:
+                  type: string
+                  enum: [oai_dc, dcat, epos_dcat_ap]
+                identifier:
+                  type: string
+                set:
+                  type: string
+                from:
+                  type: string
+                  format: date-time
+                until:
+                  type: string
+                  format: date-time
+                resumptionToken:
+                  type: string
+      responses:
+        '200':
+          description: OAI-PMH XML response (including protocol errors)
+          content:
+            text/xml:
+              schema:
                 type: string"""
 }
