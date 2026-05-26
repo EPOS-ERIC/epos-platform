@@ -38,8 +38,9 @@ paths:
         and software source codes. Each item carries an `href` pointing to its typed
         detail endpoint; clients should resolve that API-base-relative link against
         their configured API base URL rather than construct endpoint URLs themselves.
-        Provider-like relations are normalized in search results under the `provider`
-        field, regardless of the underlying detail schema naming.
+        Provider-like relations are normalized in search results, regardless of the
+        underlying detail schema naming. Dataset items expose this relation as
+        `providers`.
       operationId: searchMetadata
       parameters:
         - $ref: "#/components/parameters/Q"
@@ -72,7 +73,7 @@ paths:
                         id: "123"
                         name: "IRPINIA Seismic Stations"
                         href: "v1/dataset/123"
-                        provider:
+                        providers:
                           - id: "org-123"
                             name: "INGV"
                             href: "v1/organization/org-123"
@@ -595,7 +596,7 @@ components:
               type: string
               enum:
                 - dataset
-            provider:
+            providers:
               type: array
               description: Organization references normalized from this dataset's publishers
               items:
@@ -826,7 +827,7 @@ components:
                   href: "v1/concept/concept-strong-motion"
             publisher:
               type: array
-              description: Organizations publishing this dataset; exposed as `provider` in search results
+              description: Organizations publishing this dataset; exposed as `providers` in search results
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:

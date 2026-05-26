@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"golang.org/x/sync/errgroup"
 )
 
 type SearchParams struct {
@@ -110,9 +110,9 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		}
 
 		if requestURL != "" {
-			log.Error("metadata search request failed", "method", requestMethod, "url", requestURL, "error", err)
+			s.log.Error("metadata search request failed", "method", requestMethod, "url", requestURL, "error", err)
 		} else {
-			log.Error("metadata search request failed", "error", err)
+			s.log.Error("metadata search request failed", "error", err)
 		}
 
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -122,34 +122,43 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		return api.SearchResponse{}, fmt.Errorf("search metadata request failed")
 	}
 
-	log.Debug("metadata search response received", "total", resp.Total, "items_count", len(resp.Items), "page", resp.Page)
+	s.log.Debug("metadata search response received", "total", resp.Total, "items_count", len(resp.Items), "page", resp.Page)
 
 	searchResp := api.SearchResponse{
-		PageNumber: int(params.PageNumber),
-		PageSize:   int(params.PageSize),
+		PageNumber: int(resp.Page),
+		PageSize:   len(resp.Items),
 		Total:      int(resp.Total),
-		TotalPages: totalPages(int(resp.Total), int(params.PageSize)),
+		TotalPages: int(resp.TotalPages),
 		Items:      []api.SearchItem{},
 	}
-	for i, item := range resp.Items {
-		searchItem, err := toAPISearchItem(item)
-		if err != nil {
-			log.Warn("metadata search item parse failed", "index", i, "item_id", item.Id, "item_type", item.GetType(), "error", err)
-			continue
-		}
+	mappedItems := make([]api.SearchItem, len(resp.Items))
 
-		searchResp.Items = append(searchResp.Items, searchItem)
+	g, groupCtx := errgroup.WithContext(ctx)
+	g.SetLimit(s.fanOutLimit)
+	for i, item := range resp.Items {
+		g.Go(func() error {
+			searchItem, err := s.toAPISearchItem(groupCtx, item)
+			if err != nil {
+				s.log.Warn("metadata search item parse failed", "index", i, "item id", item.Id, "item type", item.GetType(), "error", err)
+				return nil
+			}
+
+			mappedItems[i] = searchItem
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return api.SearchResponse{}, fmt.Errorf("map search items: %w", err)
+	}
+
+	for i := range resp.Items {
+		if mappedItems[i] != nil {
+			searchResp.Items = append(searchResp.Items, mappedItems[i])
+		}
 	}
 
 	return searchResp, nil
-}
-
-func totalPages(total, pageSize int) int {
-	if total == 0 {
-		return 0
-	}
-
-	return int(math.Ceil(float64(total) / float64(pageSize)))
 }
 
 // enumMapping defines the canonical source-of-truth for ResourceType conversions.
@@ -179,18 +188,18 @@ func fromMetadataResourceType(t metadataclient.ResourceType) (api.ResourceType, 
 	return "", fmt.Errorf("unsupported metadata resource type: %q", t)
 }
 
-func toAPISearchItem(item metadataclient.SearchItem) (api.SearchItem, error) {
+func (s *Service) toAPISearchItem(ctx context.Context, item metadataclient.SearchItem) (api.SearchItem, error) {
 	switch item.GetType() {
 	case metadataclient.DATASET:
-		return mapDatasetItem(item)
+		return s.mapDatasetItem(ctx, item)
 	case metadataclient.ORGANIZATION:
 		return mapOrganizationItem(item)
 	case metadataclient.SOFTWAREAPPLICATION:
-		return mapSoftwareApplicationItem(item)
+		return s.mapSoftwareApplicationItem(ctx, item)
 	case metadataclient.SOFTWARESOURCECODE:
-		return mapSoftwareSourceCodeItem(item)
+		return s.mapSoftwareSourceCodeItem(ctx, item)
 	case metadataclient.WEBSERVICE:
-		return mapWebServiceItem(item)
+		return s.mapWebServiceItem(ctx, item)
 	default:
 		return nil, fmt.Errorf("unsupported metadata resource type: %q", item.GetType())
 	}

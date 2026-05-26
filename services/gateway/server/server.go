@@ -25,7 +25,7 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 		requestTimeout = 30 * time.Second
 	}
 
-	discoveryService := discovery.NewService(metadataClient)
+	discoveryService := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
 	resourcesService := resources.NewService()
 
 	httpServer := &http.Server{

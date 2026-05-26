@@ -8,6 +8,9 @@ upstream:
   cache_ttl: "0s"
   max_entries: 0
 
+discovery:
+  fan_out_limit: 64
+
 services:
   metadata-lifecycle:
     url: "http://metadata-lifecycle:8080/"

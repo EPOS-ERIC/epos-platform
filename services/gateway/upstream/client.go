@@ -227,7 +227,6 @@ func (c *Client) getOrStartInflight(ctx context.Context, key string, prepared pr
 	call := &inflightCall{done: make(chan struct{})}
 	c.inflight[key] = call
 	c.mu.Unlock()
-	c.log.Debug("upstream inflight started", "method", prepared.method, "url", prepared.url)
 
 	go c.execute(ctx, key, prepared, call)
 

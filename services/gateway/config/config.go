@@ -10,9 +10,10 @@ import (
 )
 
 type Config struct {
-	Server   Server   `yaml:"server"`
-	Upstream Upstream `yaml:"upstream"`
-	Services Services `yaml:"services"`
+	Server    Server    `yaml:"server"`
+	Upstream  Upstream  `yaml:"upstream"`
+	Discovery Discovery `yaml:"discovery"`
+	Services  Services  `yaml:"services"`
 }
 
 type Server struct {
@@ -29,6 +30,10 @@ type Upstream struct {
 	RealTimeout time.Duration `yaml:"real_timeout"`
 	CacheTTL    time.Duration `yaml:"cache_ttl"`
 	MaxEntries  int           `yaml:"max_entries"`
+}
+
+type Discovery struct {
+	FanOutLimit int `yaml:"fan_out_limit"`
 }
 
 type Services struct {
@@ -83,6 +88,10 @@ func (c *Config) Validate() error {
 
 	if c.Upstream.MaxEntries < 0 {
 		return fmt.Errorf("upstream.max_entries must be zero or greater")
+	}
+
+	if c.Discovery.FanOutLimit < 0 {
+		return fmt.Errorf("discovery.fan_out_limit must be zero or greater")
 	}
 
 	return nil
