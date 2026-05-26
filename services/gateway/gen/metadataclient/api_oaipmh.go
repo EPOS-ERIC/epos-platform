@@ -39,6 +39,22 @@ type OAIPMHAPI interface {
 	// OaiPmhGetExecute executes the request
 	//  @return string
 	OaiPmhGetExecute(r ApiOaiPmhGetRequest) (string, *http.Response, error)
+
+	/*
+			OaiPmhPost OAI-PMH 2.0 endpoint (POST)
+
+			Same behavior as GET, with arguments in
+		application/x-www-form-urlencoded body.
+
+
+			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+			@return ApiOaiPmhPostRequest
+	*/
+	OaiPmhPost(ctx context.Context) ApiOaiPmhPostRequest
+
+	// OaiPmhPostExecute executes the request
+	//  @return string
+	OaiPmhPostExecute(r ApiOaiPmhPostRequest) (string, *http.Response, error)
 }
 
 // OAIPMHAPIService OAIPMHAPI service
@@ -181,6 +197,170 @@ func (a *OAIPMHAPIService) OaiPmhGetExecute(r ApiOaiPmhGetRequest) (string, *htt
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiOaiPmhPostRequest struct {
+	ctx             context.Context
+	ApiService      OAIPMHAPI
+	verb            *string
+	metadataPrefix  *string
+	identifier      *string
+	set             *string
+	from            *time.Time
+	until           *time.Time
+	resumptionToken *string
+}
+
+func (r ApiOaiPmhPostRequest) Verb(verb string) ApiOaiPmhPostRequest {
+	r.verb = &verb
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) MetadataPrefix(metadataPrefix string) ApiOaiPmhPostRequest {
+	r.metadataPrefix = &metadataPrefix
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) Identifier(identifier string) ApiOaiPmhPostRequest {
+	r.identifier = &identifier
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) Set(set string) ApiOaiPmhPostRequest {
+	r.set = &set
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) From(from time.Time) ApiOaiPmhPostRequest {
+	r.from = &from
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) Until(until time.Time) ApiOaiPmhPostRequest {
+	r.until = &until
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) ResumptionToken(resumptionToken string) ApiOaiPmhPostRequest {
+	r.resumptionToken = &resumptionToken
+	return r
+}
+
+func (r ApiOaiPmhPostRequest) Execute() (string, *http.Response, error) {
+	return r.ApiService.OaiPmhPostExecute(r)
+}
+
+/*
+OaiPmhPost OAI-PMH 2.0 endpoint (POST)
+
+Same behavior as GET, with arguments in
+application/x-www-form-urlencoded body.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiOaiPmhPostRequest
+*/
+func (a *OAIPMHAPIService) OaiPmhPost(ctx context.Context) ApiOaiPmhPostRequest {
+	return ApiOaiPmhPostRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return string
+func (a *OAIPMHAPIService) OaiPmhPostExecute(r ApiOaiPmhPostRequest) (string, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue string
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OAIPMHAPIService.OaiPmhPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/oai-pmh"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/x-www-form-urlencoded"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"text/xml"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.verb != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "verb", r.verb, "", "")
+	}
+	if r.metadataPrefix != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "metadataPrefix", r.metadataPrefix, "", "")
+	}
+	if r.identifier != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "identifier", r.identifier, "", "")
+	}
+	if r.set != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "set", r.set, "", "")
+	}
+	if r.from != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "from", r.from, "", "")
+	}
+	if r.until != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "until", r.until, "", "")
+	}
+	if r.resumptionToken != nil {
+		parameterAddToHeaderOrQuery(localVarFormParams, "resumptionToken", r.resumptionToken, "", "")
 	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {

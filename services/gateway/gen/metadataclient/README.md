@@ -176,6 +176,7 @@ Class | Method | HTTP request | Description
 *LifecycleAPI* | [**ApiV2ResourceTypeIdPublishPost**](docs/LifecycleAPI.md#apiv2resourcetypeidpublishpost) | **Post** /api/v2/{resourceType}/{id}/publish | Publish entity
 *LifecycleAPI* | [**ApiV2ResourceTypeIdSubmitPost**](docs/LifecycleAPI.md#apiv2resourcetypeidsubmitpost) | **Post** /api/v2/{resourceType}/{id}/submit | Submit for review
 *OAIPMHAPI* | [**OaiPmhGet**](docs/OAIPMHAPI.md#oaipmhget) | **Get** /oai-pmh | OAI-PMH 2.0 endpoint
+*OAIPMHAPI* | [**OaiPmhPost**](docs/OAIPMHAPI.md#oaipmhpost) | **Post** /oai-pmh | OAI-PMH 2.0 endpoint (POST)
 *ResourcesAPI* | [**ApiV2ResourceTypeGet**](docs/ResourcesAPI.md#apiv2resourcetypeget) | **Get** /api/v2/{resourceType} | List entities
 *ResourcesAPI* | [**ApiV2ResourceTypeIdDelete**](docs/ResourcesAPI.md#apiv2resourcetypeiddelete) | **Delete** /api/v2/{resourceType}/{id} | Delete entity (DRAFT only)
 *ResourcesAPI* | [**ApiV2ResourceTypeIdGet**](docs/ResourcesAPI.md#apiv2resourcetypeidget) | **Get** /api/v2/{resourceType}/{id} | Get entity
