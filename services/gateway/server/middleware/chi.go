@@ -3,6 +3,7 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 )
@@ -28,14 +29,17 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		startedAt := time.Now()
 		rw := &responseWriter{ResponseWriter: w, status: 200}
 		next.ServeHTTP(rw, r)
+		duration := time.Since(startedAt)
 
 		if r.URL.RawQuery == "" {
 			log.Info("http request",
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", rw.status,
+				"duration", duration,
 			)
 		} else {
 			log.Info("http request",
@@ -43,6 +47,7 @@ func Logger(next http.Handler) http.Handler {
 				"path", r.URL.Path,
 				"query", r.URL.RawQuery,
 				"status", rw.status,
+				"duration", duration,
 			)
 		}
 	})

@@ -32,7 +32,7 @@ func main() {
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
 	requestTimeout := cfg.Server.RequestTimeout
-	metadataClient, err := clients.NewMetadatalifecycle(cfg.Services.MetadataLifecycle.URL, requestTimeout)
+	metadataClient, err := clients.NewMetadatalifecycle(cfg.Services.MetadataLifecycle.URL, requestTimeout, cfg.Upstream)
 	if err != nil {
 		log.Error("invalid metadata service configuration", "error", err)
 		panic("invalid metadata service configuration")

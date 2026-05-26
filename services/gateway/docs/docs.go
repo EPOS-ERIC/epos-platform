@@ -5,11 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 )
-
-var log = logging.Get("docs")
 
 //go:embed openapi.yaml
 var openapiSpec []byte
@@ -21,19 +17,16 @@ var swaggerUI embed.FS
 var scalarUI embed.FS
 
 func GetSpec() []byte {
-	log.Debug("returning openapi spec")
 	return openapiSpec
 }
 
 func GetUI() fs.FS {
 	uiFS := subFSOrPanic(swaggerUI, "swagger-ui")
-	log.Debug("returning swagger ui filesystem")
 	return uiFS
 }
 
 func GetScalarUI() fs.FS {
 	uiFS := subFSOrPanic(scalarUI, "scalar")
-	log.Debug("returning scalar ui filesystem")
 	return uiFS
 }
 

@@ -153,14 +153,35 @@ func (c *Client) DoWithOptions(req *nethttp.Request, opts RequestOptions) (*Resp
 func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeout time.Duration) (*Response, error) {
 	now := c.now()
 	if entry := c.getCache(prepared.key); entry != nil && now.Before(entry.expiresAt) {
+		c.log.Debug("upstream request behavior", "mode", "cache-hit-fresh", "method", prepared.method, "url", prepared.url)
 		return buildResponse(entry.response, CacheMetadata{Hit: true}), nil
 	}
 
 	staleEntry := c.getCache(prepared.key)
-	backgroundCtx := context.WithoutCancel(ctx)
-	call, existing := c.getOrStartInflight(backgroundCtx, prepared.key, prepared)
+	if staleEntry == nil {
+		c.log.Debug("upstream request behavior", "mode", "cache-miss-cold", "method", prepared.method, "url", prepared.url, "real_timeout", c.realTimeout)
+	} else {
+		c.log.Debug("upstream request behavior", "mode", "cache-hit-stale-candidate", "method", prepared.method, "url", prepared.url, "caller_timeout", timeout, "real_timeout", c.realTimeout)
+	}
+
+	inflightCtx := ctx
+	if staleEntry != nil {
+		inflightCtx = context.WithoutCancel(ctx)
+	}
+
+	call, existing := c.getOrStartInflight(inflightCtx, prepared.key, prepared)
 	if existing && staleEntry != nil && call.isStaleReady() {
+		c.log.Debug("upstream request behavior", "mode", "stale-served-inflight", "method", prepared.method, "url", prepared.url)
 		return staleResponse(staleEntry.response), nil
+	}
+
+	if staleEntry == nil {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-call.done:
+			return c.finishForeground(call)
+		}
 	}
 
 	if timeout <= 0 {
@@ -181,11 +202,8 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 	case <-call.done:
 		return c.finishForeground(call)
 	case <-timer.C:
-		if staleEntry == nil {
-			return nil, fmt.Errorf("request timeout after %s: %w", timeout, context.DeadlineExceeded)
-		}
-
 		call.markStaleReady()
+		c.log.Debug("upstream request behavior", "mode", "stale-served-timeout", "method", prepared.method, "url", prepared.url, "timeout", timeout)
 		return staleResponse(staleEntry.response), nil
 	}
 }
@@ -202,12 +220,14 @@ func (c *Client) getOrStartInflight(ctx context.Context, key string, prepared pr
 	c.mu.Lock()
 	if call, ok := c.inflight[key]; ok {
 		c.mu.Unlock()
+		c.log.Debug("upstream inflight joined", "method", prepared.method, "url", prepared.url)
 		return call, true
 	}
 
 	call := &inflightCall{done: make(chan struct{})}
 	c.inflight[key] = call
 	c.mu.Unlock()
+	c.log.Debug("upstream inflight started", "method", prepared.method, "url", prepared.url)
 
 	go c.execute(ctx, key, prepared, call)
 
@@ -236,19 +256,23 @@ func (c *Client) execute(ctx context.Context, key string, prepared preparedReque
 
 	if c.cacheTTL > 0 {
 		c.storeCache(key, cached)
+		c.log.Debug("upstream cache stored", "method", prepared.method, "url", prepared.url, "ttl", c.cacheTTL)
 	} else {
 		c.deleteCache(key)
+		c.log.Debug("upstream cache disabled", "method", prepared.method, "url", prepared.url)
 	}
 
 	call.response = cached
 }
 
 func (c *Client) fetch(prepared preparedRequest, req *nethttp.Request) (*cachedResponse, error) {
+	c.log.Debug("upstream request", "method", prepared.method, "url", prepared.url)
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.deleteCache(prepared.key)
 		c.log.Warn("upstream request failed", "method", prepared.method, "url", prepared.url, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("upstream request failed: %s %s: %w", prepared.method, prepared.url, err)
 	}
 	defer resp.Body.Close()
 
@@ -264,7 +288,7 @@ func (c *Client) cacheableResponse(prepared preparedRequest, resp *nethttp.Respo
 	}
 
 	if resp.StatusCode < nethttp.StatusOK || resp.StatusCode >= nethttp.StatusMultipleChoices {
-		err = fmt.Errorf("unexpected upstream status: %s", resp.Status)
+		err = fmt.Errorf("unexpected upstream status for %s %s: %s", prepared.method, prepared.url, resp.Status)
 		c.deleteCache(prepared.key)
 		c.log.Warn("upstream returned non-cacheable status", "method", prepared.method, "url", prepared.url, "status", resp.StatusCode)
 		return nil, err

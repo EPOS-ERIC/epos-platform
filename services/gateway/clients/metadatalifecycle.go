@@ -2,17 +2,18 @@ package clients
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/upstream"
 )
 
 const defaultMetadataRequestTimeout = 30 * time.Second
 
-func NewMetadatalifecycle(baseURL string, timeout time.Duration) (*metadataclient.APIClient, error) {
+func NewMetadatalifecycle(baseURL string, timeout time.Duration, upstreamCfg config.Upstream) (*metadataclient.APIClient, error) {
 	normalizedBaseURL, err := normalizeBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("normalize metadata-lifecycle base URL: %w", err)
@@ -22,12 +23,27 @@ func NewMetadatalifecycle(baseURL string, timeout time.Duration) (*metadataclien
 		timeout = defaultMetadataRequestTimeout
 	}
 
+	clientTimeout := timeout
+	if upstreamCfg.Timeout > 0 {
+		clientTimeout = upstreamCfg.Timeout
+	}
+
+	upstreamClient, err := upstream.NewClient(upstream.Config{
+		Timeout:     clientTimeout,
+		RealTimeout: upstreamCfg.RealTimeout,
+		CacheTTL:    upstreamCfg.CacheTTL,
+		MaxEntries:  upstreamCfg.MaxEntries,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create upstream client: %w", err)
+	}
+
 	cfg := metadataclient.NewConfiguration()
 	cfg.Servers = metadataclient.ServerConfigurations{{
 		URL:         normalizedBaseURL,
 		Description: "metadata-lifecycle",
 	}}
-	cfg.HTTPClient = &http.Client{Timeout: timeout}
+	cfg.HTTPClient = upstreamClient.StandardClient()
 
 	return metadataclient.NewAPIClient(cfg), nil
 }

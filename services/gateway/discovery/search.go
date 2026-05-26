@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -86,6 +87,7 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	if len(p.Keywords) > 0 {
 		req = req.Keywords(p.Keywords)
 	}
+	req = req.IncludeConstraints(true)
 
 	return req, nil
 }
@@ -96,14 +98,31 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		return api.SearchResponse{}, fmt.Errorf("build metadata search request: %w", err)
 	}
 
-	log.Debug("built search request", "request", req)
-
-	resp, _, err := req.Execute()
+	resp, httpResp, err := req.Execute()
 	if err != nil {
-		return api.SearchResponse{}, fmt.Errorf("search metadata: %w", err)
+		requestMethod := ""
+		requestURL := ""
+		if httpResp != nil && httpResp.Request != nil {
+			requestMethod = httpResp.Request.Method
+			if httpResp.Request.URL != nil {
+				requestURL = httpResp.Request.URL.String()
+			}
+		}
+
+		if requestURL != "" {
+			log.Error("metadata search request failed", "method", requestMethod, "url", requestURL, "error", err)
+		} else {
+			log.Error("metadata search request failed", "error", err)
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w", context.DeadlineExceeded)
+		}
+
+		return api.SearchResponse{}, fmt.Errorf("search metadata request failed")
 	}
 
-	log.Debug("metadataclient search response", "response", resp)
+	log.Debug("metadata search response received", "total", resp.Total, "items_count", len(resp.Items), "page", resp.Page)
 
 	searchResp := api.SearchResponse{
 		PageNumber: int(params.PageNumber),
@@ -112,10 +131,10 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		TotalPages: totalPages(int(resp.Total), int(params.PageSize)),
 		Items:      []api.SearchItem{},
 	}
-	for _, item := range resp.Items {
+	for i, item := range resp.Items {
 		searchItem, err := toAPISearchItem(item)
 		if err != nil {
-			log.Warn("error parsing metadata client search item", "error", err)
+			log.Warn("metadata search item parse failed", "index", i, "item_id", item.Id, "item_type", item.GetType(), "error", err)
 			continue
 		}
 

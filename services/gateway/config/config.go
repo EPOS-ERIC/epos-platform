@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	Server   Server   `yaml:"server"`
+	Upstream Upstream `yaml:"upstream"`
 	Services Services `yaml:"services"`
 }
 
@@ -21,6 +22,13 @@ type Server struct {
 
 type Service struct {
 	URL string `yaml:"url"`
+}
+
+type Upstream struct {
+	Timeout     time.Duration `yaml:"timeout"`
+	RealTimeout time.Duration `yaml:"real_timeout"`
+	CacheTTL    time.Duration `yaml:"cache_ttl"`
+	MaxEntries  int           `yaml:"max_entries"`
 }
 
 type Services struct {
@@ -59,6 +67,22 @@ func (c *Config) Validate() error {
 
 	if c.Services.MetadataLifecycle.URL == "" {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
+	}
+
+	if c.Upstream.Timeout < 0 {
+		return fmt.Errorf("upstream.timeout must be zero or greater")
+	}
+
+	if c.Upstream.RealTimeout < 0 {
+		return fmt.Errorf("upstream.real_timeout must be zero or greater")
+	}
+
+	if c.Upstream.CacheTTL < 0 {
+		return fmt.Errorf("upstream.cache_ttl must be zero or greater")
+	}
+
+	if c.Upstream.MaxEntries < 0 {
+		return fmt.Errorf("upstream.max_entries must be zero or greater")
 	}
 
 	return nil

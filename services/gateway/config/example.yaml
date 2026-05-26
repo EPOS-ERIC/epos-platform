@@ -2,6 +2,12 @@ server:
   listen: ":5000"
   request_timeout: "5s"
 
+upstream:
+  timeout: "0s"
+  real_timeout: "0s"
+  cache_ttl: "0s"
+  max_entries: 0
+
 services:
   metadata-lifecycle:
     url: "http://metadata-lifecycle:8080/"

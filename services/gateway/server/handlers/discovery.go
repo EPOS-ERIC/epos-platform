@@ -23,7 +23,7 @@ func NewDiscovery(service *discovery.Service) *Discovery {
 }
 
 func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
-	h.log.Info("search metadata request", "path", r.URL.Path, "method", r.Method, "raw_query", r.URL.RawQuery)
+	h.log.Debug("search metadata", "method", r.Method, "path", r.URL.Path, "raw_query", r.URL.RawQuery)
 
 	params, err := parseSearchParams(r)
 	if err != nil {
@@ -34,12 +34,12 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 
 	results, err := h.service.Search(r.Context(), params)
 	if err != nil {
-		h.log.Error("search metadata failed", "error", err.Error())
+		h.log.Error("search metadata failed", "method", r.Method, "path", r.URL.Path, "raw_query", r.URL.RawQuery, "error", err.Error())
 		writeError(w, http.StatusInternalServerError, "TODO", "TODO")
 		return
 	}
 
-	h.log.Info("search metadata success", "results_count", len(results.Items))
+	h.log.Debug("search metadata success", "results_count", len(results.Items), "total", results.Total)
 	writeJSON(w, http.StatusOK, results)
 }
 
@@ -50,7 +50,6 @@ func (h *Discovery) GetConceptTree(w http.ResponseWriter, _ *http.Request) {
 func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {
 	log := logging.Get("discovery-handler")
 	query := r.URL.Query()
-	log.Debug("parse search params", "raw_query", r.URL.RawQuery)
 
 	pageSize, err := parsePageSize(query)
 	if err != nil {
@@ -100,7 +99,7 @@ func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {
 		Keywords:         parseCSVStrings(query, "keywords"),
 	}
 
-	log.Debug("parsed search params", "page_size", params.PageSize, "page_number", params.PageNumber, "types_count", len(params.Types), "keywords_count", len(params.Keywords))
+	log.Debug("parsed search params", "page_size", params.PageSize, "page_number", params.PageNumber, "types_count", len(params.Types), "keywords_count", len(params.Keywords), "providers_count", len(params.Providers), "versioning_status_count", len(params.VersioningStatus))
 
 	return params, nil
 }
