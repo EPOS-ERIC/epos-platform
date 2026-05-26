@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -18,46 +19,62 @@ var (
 	logFile *os.File
 )
 
-func init() {
-	v, ok := os.LookupEnv("LOG_LEVEL")
-	if ok {
-		v = strings.ToUpper(v)
-		switch v {
-		case "DEBUG":
-			level = slog.LevelDebug
-		case "INFO":
-			level = slog.LevelInfo
-		case "WARN":
-			level = slog.LevelWarn
-		case "ERROR":
-			level = slog.LevelError
-		default:
-			slog.Warn("unknown LOG_LEVEL, falling back to INFO", "value", v)
-			return
-		}
-	} else {
-		// slog.Warn("env variable LOG_LEVEL not set, falling back to INFO")
-		return
+var nonAlphaNum = regexp.MustCompile(`[^A-Z0-9]+`)
+
+func parseLevel(value string) (slog.Level, bool) {
+	switch strings.ToUpper(value) {
+	case "DEBUG":
+		return slog.LevelDebug, true
+	case "INFO":
+		return slog.LevelInfo, true
+	case "WARN":
+		return slog.LevelWarn, true
+	case "ERROR":
+		return slog.LevelError, true
+	default:
+		return slog.LevelInfo, false
 	}
-	fmt.Printf("setting up logging with level %s\n", v)
 }
 
-func initBase() {
-	var writer io.Writer = os.Stdout
+func componentLevelEnvKey(component string) string {
+	normalized := strings.ToUpper(component)
+	normalized = nonAlphaNum.ReplaceAllString(normalized, "_")
+	normalized = strings.Trim(normalized, "_")
+	return "LOG_LEVEL_" + normalized
+}
 
-	// Check for LOG_FILE environment variable
-	if logPath, ok := os.LookupEnv("LOG_FILE"); ok {
-		file, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600) // #nosec G304
-		if err != nil {
-			slog.Error("failed to open log file, falling back to stdout", "path", logPath, "error", err)
-		} else {
-			logFile = file
-			writer = file
-			fmt.Printf("logging to file: %s\n", logPath)
-		}
+func configuredGlobalLevel() slog.Level {
+	v, ok := os.LookupEnv("LOG_LEVEL")
+	if !ok {
+		return slog.LevelInfo
 	}
 
-	handler := slog.NewJSONHandler(writer, &slog.HandlerOptions{
+	parsed, valid := parseLevel(v)
+	if !valid {
+		slog.Warn("unknown LOG_LEVEL, falling back to INFO", "value", strings.ToUpper(v))
+		return slog.LevelInfo
+	}
+
+	fmt.Printf("setting up logging with level %s\n", strings.ToUpper(v))
+	return parsed
+}
+
+func configuredComponentLevel(component string) (slog.Level, bool) {
+	v, ok := os.LookupEnv(componentLevelEnvKey(component))
+	if !ok {
+		return slog.LevelInfo, false
+	}
+
+	parsed, valid := parseLevel(v)
+	if !valid {
+		return slog.LevelInfo, false
+	}
+
+	return parsed, true
+}
+
+func newHandler(writer io.Writer, level slog.Level) slog.Handler {
+	return slog.NewJSONHandler(writer, &slog.HandlerOptions{
 		Level: level,
 		// Format time to second precision only
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
@@ -72,6 +89,26 @@ func initBase() {
 			return a
 		},
 	})
+}
+
+func initBase() {
+	level = configuredGlobalLevel()
+
+	var writer io.Writer = os.Stdout
+
+	// Check for LOG_FILE environment variable
+	if logPath, ok := os.LookupEnv("LOG_FILE"); ok {
+		file, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600) // #nosec G304
+		if err != nil {
+			slog.Error("failed to open log file, falling back to stdout", "path", logPath, "error", err)
+		} else {
+			logFile = file
+			writer = file
+			fmt.Printf("logging to file: %s\n", logPath)
+		}
+	}
+
+	handler := newHandler(writer, level)
 	base = slog.New(handler)
 	slog.SetDefault(base.With("component", "default"))
 }
@@ -83,7 +120,22 @@ func initBase() {
 //	var log = logging.Get("database")
 func Get(component string) *slog.Logger {
 	once.Do(initBase)
-	return base.With("component", component)
+
+	configuredLevel, hasComponentLevel := configuredComponentLevel(component)
+	if !hasComponentLevel {
+		return base.With("component", component)
+	}
+
+	handler := newHandler(logWriter(), configuredLevel)
+	return slog.New(handler).With("component", component)
+}
+
+func logWriter() io.Writer {
+	if logFile != nil {
+		return logFile
+	}
+
+	return os.Stdout
 }
 
 // Close closes the log file if one was opened.

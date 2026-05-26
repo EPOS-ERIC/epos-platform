@@ -16,7 +16,7 @@ type SearchItem interface {
 type BaseSearchItem struct {
 	Type ResourceType `json:"type"`
 	ID   string       `json:"id"`
-	Name string       `json:"name"`
+	Name string       `json:"name,omitempty"`
 	Href string       `json:"href"`
 }
 

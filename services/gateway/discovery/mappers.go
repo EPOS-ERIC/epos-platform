@@ -76,6 +76,13 @@ func mapOrganizationItem(item metadataclient.SearchItem) (api.OrganizationItem, 
 		return api.OrganizationItem{}, err
 	}
 
+	// TODO: is it correct that sometimes an organization item from the metadataclient doesn't have a legal name? what do we put here in those cases?
+	name, err := getField[string](item.Fields, "legal name")
+	if err != nil {
+		name = ""
+	}
+	baseItem.Name = name
+
 	return api.OrganizationItem{BaseSearchItem: baseItem}, nil
 }
 
@@ -129,7 +136,7 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 		return api.WebServiceItem{}, err
 	}
 
-	publishers, err := getStringSliceField(item.Fields, "publishers")
+	publishers, err := getField[string](item.Fields, "provider")
 	if err != nil {
 		return api.WebServiceItem{}, fmt.Errorf("get webservice providers: %w", err)
 	}
@@ -146,7 +153,7 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 
 	g, groupCtx := errgroup.WithContext(ctx)
 	g.Go(func() error {
-		mappedProviders, err := s.mapProviders(groupCtx, publishers)
+		mappedProviders, err := s.mapProviders(groupCtx, []string{publishers})
 		if err != nil {
 			return fmt.Errorf("map webservice providers: %w", err)
 		}
