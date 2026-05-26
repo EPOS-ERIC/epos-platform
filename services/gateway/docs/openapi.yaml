@@ -1,0 +1,1484 @@
+openapi: 3.0.3
+info:
+  title: EPOS API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for the EPOS catalogue API.
+
+    Design notes:
+    - Search returns heterogeneous, typed resource items in a flat list.
+    - Clients navigate by following `href` links resolved against their configured API base URL.
+    - All cross-entity references carry an API-base-relative `href` pointing to the typed detail endpoint.
+  termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
+  contact:
+    email: someemail@epos.com
+  license:
+    name: AGPL
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+
+servers:
+  - url: /v1
+    description: Relative versioned API base path
+
+tags:
+  - name: Discovery
+    description: Search and taxonomy bootstrap endpoints
+  - name: Resources
+    description: Resource detail endpoints
+
+paths:
+  /search:
+    get:
+      tags:
+        - Discovery
+      summary: Search metadata resources
+      description: |
+        Returns a flat, typed list of catalogue resources matching the supplied criteria.
+        Results may include datasets, webservices, organizations, software applications,
+        and software source codes. Each item carries an `href` pointing to its typed
+        detail endpoint; clients should resolve that API-base-relative link against
+        their configured API base URL rather than construct endpoint URLs themselves.
+        Provider-like relations are normalized in search results, regardless of the
+        underlying detail schema naming. Dataset items expose this relation as
+        `providers`.
+      operationId: searchMetadata
+      parameters:
+        - $ref: "#/components/parameters/Q"
+        - $ref: "#/components/parameters/PageSize"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/TypeFilter"
+        - $ref: "#/components/parameters/SpatialFilter"
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - $ref: "#/components/parameters/Provider"
+        - $ref: "#/components/parameters/VersioningStatus"
+        - $ref: "#/components/parameters/Keywords"
+      responses:
+        "200":
+          description: Search results returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+              examples:
+                mixedResults:
+                  summary: Mixed resource search results
+                  value:
+                    page_number: 1
+                    page_size: 10
+                    total: 42
+                    total_pages: 5
+                    items:
+                      - type: dataset
+                        id: "123"
+                        name: "IRPINIA Seismic Stations"
+                        href: "v1/dataset/123"
+                        providers:
+                          - id: "org-123"
+                            name: "INGV"
+                            href: "v1/organization/org-123"
+                        concepts:
+                          - id: "concept-seismology"
+                            name: "Seismology"
+                            href: "v1/concept/concept-seismology"
+                          - id: "concept-strong-motion"
+                            name: "Strong Motion"
+                            href: "v1/concept/concept-strong-motion"
+                        distributions:
+                          - id: "distribution1"
+                            href: "v1/distribution/distribution1"
+                      - type: organization
+                        id: "org-456"
+                        name: "University of Naples Federico II"
+                        href: "v1/organization/org-456"
+                      - type: webservice
+                        id: "ws-789"
+                        name: "FDSN Station Web Service"
+                        href: "v1/webservice/ws-789"
+                        provider:
+                          - id: "org-456"
+                            name: "University of Naples Federico II"
+                            href: "v1/organization/org-456"
+                        concepts:
+                          - id: "concept-seismology"
+                            name: "Seismology"
+                            href: "v1/concept/concept-seismology"
+                      - type: softwaresourcecode
+                        id: "sc-101"
+                        name: "EPOS Data Toolkit"
+                        href: "v1/softwaresourcecode/sc-101"
+                        provider:
+                          - id: "org-123"
+                            name: "INGV"
+                            href: "v1/organization/org-123"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /dataset/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get dataset by id
+      operationId: getDatasetById
+      responses:
+        "200":
+          description: Dataset found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /distribution/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get distribution by id
+      operationId: getDistributionById
+      responses:
+        "200":
+          description: Distribution found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Distribution"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /softwareapplication/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get software application by id
+      operationId: getSoftwareApplicationById
+      responses:
+        "200":
+          description: Software application found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoftwareApplication"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /softwaresourcecode/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get software source code by id
+      operationId: getSoftwareSourceCodeById
+      responses:
+        "200":
+          description: Software source code found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SoftwareSourceCode"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /webservice/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get webservice by id
+      operationId: getWebserviceById
+      responses:
+        "200":
+          description: Webservice found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Webservice"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /organization/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get organization by id
+      operationId: getOrganizationById
+      responses:
+        "200":
+          description: Organization found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /concept:
+    get:
+      tags:
+        - Discovery
+      summary: Get full concept tree
+      description: |
+        Returns the complete concept tree as an ordered list of concept schemes.
+        Each scheme carries its full subtree of nested `Concept` objects.
+        Intended as the primary data source for building facet navigation in clients.
+      operationId: getConceptTree
+      responses:
+        "200":
+          description: Concept tree returned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptTreeResponse"
+              examples:
+                tree:
+                  summary: Concept tree with one scheme
+                  value:
+                    schemes:
+                      - id: "scheme-solid-earth"
+                        label: "Solid Earth"
+                        name: "Solid Earth Science Concepts"
+                        description: "Top-level grouping for solid earth science resources."
+                        logo: "https://www.epos-eu.org/logos/solid-earth.png"
+                        homepage: "https://www.epos-eu.org/solid-earth"
+                        color: "#3A7BD5"
+                        order_number: 1
+                        type: "DATA"
+                        children:
+                          - id: "concept-seismology"
+                            name: "Seismology"
+                            description: "Resources related to seismic monitoring."
+                            children:
+                              - id: "concept-strong-motion"
+                                name: "Strong Motion"
+                                children: []
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /concept/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get concept by id
+      description: Returns a single concept node with its full subtree of children.
+      operationId: getConceptById
+      responses:
+        "200":
+          description: Concept found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Concept"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      description: Local identifier of the resource
+      schema:
+        type: string
+        example: "123"
+
+    Q:
+      name: q
+      in: query
+      required: false
+      description: Free-text search query
+      schema:
+        type: string
+        example: "seismic stations"
+
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Number of items to return per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+        example: 10
+
+    PageNumber:
+      name: pageNumber
+      in: query
+      required: false
+      description: 1-based page index to return
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+        example: 1
+
+    TypeFilter:
+      name: type
+      in: query
+      required: false
+      description: |
+        Filter results to one or more resource types. When omitted, all supported search
+        resource types are returned.
+        Pass comma-separated values in a single parameter:
+        `?type=dataset,webservice`.
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/ResourceType"
+      style: form
+      explode: false
+
+    SpatialFilter:
+      name: spatialFilter
+      in: query
+      required: false
+      description: |
+        Spatial filter expressed as a WKT polygon string (EPSG:4326).
+        Resources whose spatial coverage intersects this polygon are returned.
+        Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
+      schema:
+        type: string
+        example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+
+    DateFrom:
+      name: dateFrom
+      in: query
+      required: false
+      description: |
+        Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Resources with temporal coverage overlapping this range are returned.
+      schema:
+        type: string
+        format: date-time
+        example: "2020-01-01T00:00:00Z"
+
+    DateTo:
+      name: dateTo
+      in: query
+      required: false
+      description: |
+        End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Must be greater than or equal to `dateFrom` when both are supplied.
+      schema:
+        type: string
+        format: date-time
+        example: "2023-12-31T23:59:59Z"
+
+    Provider:
+      name: provider
+      in: query
+      required: false
+      description: |
+        Filter by one or more provider organization IDs.
+        Applies only to resource types that expose a provider-like relation in search
+        results. When supplied, resource types without a `provider` relation are excluded.
+        Pass comma-separated values in a single parameter:
+        `?provider=org-123,org-456`.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+
+    VersioningStatus:
+      name: versioningStatus
+      in: query
+      required: false
+      description: |
+        Filter by one or more versioning statuses.
+        When omitted, defaults to `PUBLISHED`.
+        Pass comma-separated values in a single parameter:
+        `?versioningStatus=PUBLISHED,DRAFT`.
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/VersioningStatus"
+        default:
+          - PUBLISHED
+      style: form
+      explode: false
+
+    Keywords:
+      name: keywords
+      in: query
+      required: false
+      description: |
+        Filter resources that carry all the supplied keywords.
+        Pass comma-separated values in a single parameter:
+        `?keywords=seismology,stations`.
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: false
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalidQuery:
+              summary: Invalid query parameter
+              value:
+                title: "Invalid query parameter"
+                status: 400
+                detail: "One or more query parameters are invalid."
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            resourceNotFound:
+              summary: Missing resource
+              value:
+                title: "Resource not found"
+                status: 404
+                detail: "Dataset not found."
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            internalError:
+              summary: Unexpected server failure
+              value:
+                title: "Internal server error"
+                status: 500
+
+    GatewayTimeout:
+      description: Upstream dependency timeout
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            upstreamTimeout:
+              summary: Metadata service timeout
+              value:
+                title: "upstream_timeout"
+                status: 504
+                detail: "metadata search timed out"
+
+  schemas:
+    # -------------------------------------------------------------------------
+    # Shared enums
+    # -------------------------------------------------------------------------
+
+    ResourceType:
+      type: string
+      enum:
+        - dataset
+        - webservice
+        - organization
+        - softwareapplication
+        - softwaresourcecode
+
+    VersioningStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - PUBLISHED
+        - ARCHIVED
+
+    # -------------------------------------------------------------------------
+    # Search
+    # -------------------------------------------------------------------------
+
+    SearchResponse:
+      type: object
+      required:
+        - page_number
+        - page_size
+        - total
+        - total_pages
+        - items
+      properties:
+        page_number:
+          type: integer
+          minimum: 1
+          description: 1-based page index returned in this response
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of items requested per page
+          example: 10
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of matching resources across all pages
+          example: 123
+        total_pages:
+          type: integer
+          minimum: 0
+          description: Total number of available result pages for the supplied page size
+          example: 13
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchItem"
+
+    SearchItem:
+      oneOf:
+        - $ref: "#/components/schemas/DatasetSearchItem"
+        - $ref: "#/components/schemas/WebserviceSearchItem"
+        - $ref: "#/components/schemas/OrganizationSearchItem"
+        - $ref: "#/components/schemas/SoftwareApplicationSearchItem"
+        - $ref: "#/components/schemas/SoftwareSourceCodeSearchItem"
+      discriminator:
+        propertyName: type
+        mapping:
+          dataset: "#/components/schemas/DatasetSearchItem"
+          webservice: "#/components/schemas/WebserviceSearchItem"
+          organization: "#/components/schemas/OrganizationSearchItem"
+          softwareapplication: "#/components/schemas/SoftwareApplicationSearchItem"
+          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeSearchItem"
+
+    BaseSearchItem:
+      type: object
+      required:
+        - type
+        - id
+        - name
+        - href
+      properties:
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        id:
+          type: string
+          example: "123"
+        name:
+          type: string
+          example: "IRPINIA Seismic Stations"
+        href:
+          type: string
+          format: uri-reference
+          description: API-base-relative URI reference to typed detail endpoint. Resolve against configured API base URL.
+          example: "v1/dataset/123"
+
+    DatasetSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - dataset
+            providers:
+              type: array
+              description: Organization references normalized from this dataset's publishers
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+                - id: "org-456"
+                  name: "UNINA"
+                  href: "v1/organization/org-456"
+            concepts:
+              type: array
+              description: Concept references assigned to this dataset
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "concept-seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-strong-motion"
+                  href: "v1/concept/concept-strong-motion"
+            distributions:
+              type: array
+              description: Distribution references for this dataset
+              items:
+                $ref: "#/components/schemas/DatasetDistributionSearchItem"
+              example:
+                - id: "distribution1"
+                  href: "v1/distribution/distribution1"
+                - id: "distribution2"
+                  href: "v1/distribution/distribution2"
+
+    OrganizationSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - organization
+
+    SoftwareApplicationSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - softwareapplication
+            provider:
+              type: array
+              description: Organization references for providers of this software application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+
+    SoftwareSourceCodeSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - softwaresourcecode
+            provider:
+              type: array
+              description: Organization references for providers of this software source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+
+    WebserviceSearchItem:
+      allOf:
+        - $ref: "#/components/schemas/BaseSearchItem"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum:
+                - webservice
+            provider:
+              type: array
+              description: Organization references for providers of this webservice
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-456"
+                  name: "University of Naples Federico II"
+                  href: "v1/organization/org-456"
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+            concepts:
+              type: array
+              description: Concept references assigned to this webservice
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "concept-seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-data-services"
+                  href: "v1/concept/concept-data-services"
+
+    DatasetDistributionSearchItem:
+      type: object
+      required:
+        - id
+        - href
+      properties:
+        id:
+          type: string
+          example: "distribution1"
+        href:
+          type: string
+          format: uri-reference
+          description: API-base-relative URI reference to distribution detail endpoint
+          example: "v1/distribution/distribution1"
+
+    # -------------------------------------------------------------------------
+    # Resource references
+    # -------------------------------------------------------------------------
+
+    ResourceRef:
+      type: object
+      required:
+        - id
+        - href
+      properties:
+        id:
+          type: string
+          example: "123"
+        name:
+          type: string
+          example: "IRPINIA Seismic Stations"
+        href:
+          type: string
+          format: uri-reference
+          description: API-base-relative URI reference to typed detail endpoint
+          example: "v1/dataset/123"
+
+    # -------------------------------------------------------------------------
+    # Detail schemas
+    # -------------------------------------------------------------------------
+
+    BaseDetailResource:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          description: Human-readable display name of the resource
+          type: string
+        description:
+          type: string
+
+    Dataset:
+      allOf:
+        - $ref: "#/components/schemas/BaseDetailResource"
+        - type: object
+          required:
+            - description
+          properties:
+            created:
+              type: string
+              format: date-time
+              description: Resource creation timestamp in ISO 8601 UTC
+              example: "2024-01-15T10:30:00Z"
+            modified:
+              type: string
+              format: date-time
+              description: Resource last modification timestamp in ISO 8601 UTC
+              example: "2024-03-01T08:45:00Z"
+            version_info:
+              type: string
+              description: Human-readable version information for this dataset
+              example: "Revision 3 reviewed by EPOS"
+            contact_points:
+              type: array
+              description: Contact point references associated with this dataset
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Dataset support desk"
+                  href: "v1/contact-point/contact-point-1"
+                - id: "contact-point-2"
+                  name: "Scientific curator"
+                  href: "v1/contact-point/contact-point-2"
+            keywords:
+              type: array
+              items:
+                type: string
+              example:
+                - "seismology"
+                - "stations"
+                - "Irpinia"
+            concepts:
+              type: array
+              description: Concept references assigned to this dataset
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-strong-motion"
+                  name: "Strong Motion"
+                  href: "v1/concept/concept-strong-motion"
+            publisher:
+              type: array
+              description: Organizations publishing this dataset; exposed as `providers` in search results
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-1"
+                  name: "UNINA"
+                  href: "v1/organization/org-1"
+                - id: "org-2"
+                  name: "INGV"
+                  href: "v1/organization/org-2"
+            issued:
+              type: string
+              format: date-time
+              description: Dataset publication or issuance timestamp in ISO 8601 UTC
+              example: "2024-02-01T00:00:00Z"
+            spatial:
+              type: string
+              description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
+              example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+            identifiers:
+              type: array
+              description: External or domain-specific identifiers for this dataset
+              items:
+                $ref: "#/components/schemas/Identifier"
+            temporal:
+              $ref: "#/components/schemas/TemporalExtent"
+            status:
+              $ref: "#/components/schemas/VersioningStatus"
+            distributions:
+              type: array
+              description: Distributions that provide access to this dataset
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "456"
+                  name: "FDSN Station Service"
+                  href: "v1/distribution/456"
+                - id: "457"
+                  name: "FDSN Event Service"
+                  href: "v1/distribution/457"
+            access_rights:
+              type: string
+              description: Access rights statement for this dataset
+              example: "open"
+            accrual_periodicity:
+              type: string
+              description: Frequency with which this dataset is updated
+              example: "monthly"
+            is_version_of:
+              description: Reference to parent dataset resource this dataset version derives from
+              allOf:
+                - $ref: "#/components/schemas/ResourceRef"
+              example:
+                id: "dataset-root-123"
+                name: "IRPINIA Seismic Stations"
+                href: "v1/dataset/dataset-root-123"
+            quality_annotation:
+              type: string
+              description: Aggregated quality annotation summary associated with this dataset
+              example: "Validated by EPOS thematic core service; station metadata completeness >95%."
+            version:
+              type: string
+              description: Machine-readable version string for this dataset
+              example: "3.1.0"
+
+    Distribution:
+      allOf:
+        - $ref: "#/components/schemas/BaseDetailResource"
+        - type: object
+          required:
+            - access_url
+          properties:
+            access_url:
+              type: string
+              format: uri
+              description: URL used to access the distribution
+              example: "https://service.example.org/fdsnws/station/1/query"
+            operation:
+              $ref: "#/components/schemas/Operation"
+            webservice:
+              $ref: "#/components/schemas/ResourceRef"
+            format:
+              type: string
+              description: File format of the distribution
+              example: "application/xml"
+
+    SoftwareApplication:
+      allOf:
+        - $ref: "#/components/schemas/BaseDetailResource"
+        - type: object
+          properties:
+            contact_points:
+              type: array
+              description: Contact point references associated with this software application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Application support desk"
+                  href: "v1/contact-point/contact-point-1"
+            keywords:
+              type: array
+              items:
+                type: string
+              example:
+                - "portal"
+                - "seismology"
+                - "data access"
+            concepts:
+              type: array
+              description: Concept references assigned to this application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-data-services"
+                  name: "Data Services"
+                  href: "v1/concept/concept-data-services"
+            download_url:
+              type: string
+              format: uri
+              description: URL to download or install the application
+              example: "https://example.org/application/download"
+            install_url:
+              type: string
+              format: uri
+              description: URL at which the application may be installed
+              example: "https://example.org/application/install"
+            license:
+              type: string
+              format: uri
+              description: URL of the license document for the software application
+              example: "https://example.org/licenses/epos-app-license"
+            software_version:
+              type: string
+              description: Version of the software application instance
+              example: "2.4.1"
+            software_requirements:
+              type: string
+              description: Runtime dependencies required by the application
+              example: "Java 21"
+            main_entity_of_page:
+              type: string
+              format: uri
+              description: Web page describing the software application
+              example: "https://example.org/app"
+            provider:
+              type: array
+              description: Organizations providing this software application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+            operations:
+              type: array
+              description: Web service operations linked to this software application
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+
+    SoftwareSourceCode:
+      allOf:
+        - $ref: "#/components/schemas/BaseDetailResource"
+        - type: object
+          properties:
+            contact_points:
+              type: array
+              description: Contact point references associated with this software source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Source code maintainer"
+                  href: "v1/contact-point/contact-point-1"
+            programming_language:
+              type: string
+              description: Primary programming language of the source code
+              example: "Java"
+            keywords:
+              type: array
+              items:
+                type: string
+              example:
+                - "portal"
+                - "seismology"
+                - "open source"
+            concepts:
+              type: array
+              description: Concept references assigned to this source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+                - id: "concept-data-services"
+                  name: "Data Services"
+                  href: "v1/concept/concept-data-services"
+            repository:
+              type: string
+              format: uri
+              description: URL of the source code repository
+              example: "https://github.com/example/epos-portal"
+            license:
+              type: string
+              format: uri
+              description: URL of the license document for the software source code
+              example: "https://example.org/licenses/epos-source-license"
+            software_version:
+              type: string
+              description: Version of the software source code instance
+              example: "2.4.1"
+            runtime_platform:
+              type: string
+              description: Runtime platform or interpreter dependencies
+              example: "Java 21"
+            target_products:
+              type: array
+              description: Software applications targeted by this source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+            provider:
+              type: array
+              description: Organizations providing this software source code
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+            main_entity_of_page:
+              type: string
+              format: uri
+              description: Web page describing the software source code
+              example: "https://example.org/source"
+
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: "org-123"
+        identifiers:
+          type: array
+          description: External or domain-specific identifiers for this organization
+          items:
+            $ref: "#/components/schemas/Identifier"
+        name:
+          type: string
+          description: Human-readable display name of the organization
+          example: "University of Naples Federico II"
+        lei_code:
+          type: string
+          description: Legal Entity Identifier code
+          example: "5493001KJTIIGC8Y1R12"
+        address:
+          type: string
+          description: Physical address of the organization
+          example: "Corso Umberto I, 40, 80138 Napoli NA, Italy"
+        logo:
+          type: string
+          format: uri
+          description: URL of the organization logo
+          example: "https://example.org/logo.png"
+        url:
+          type: string
+          format: uri
+          description: URL of the organization website
+          example: "https://www.unina.it"
+        email:
+          type: array
+          description: Email addresses of the organization
+          items:
+            type: string
+          example:
+            - "info@example.org"
+        telephone:
+          type: array
+          description: Telephone numbers of the organization
+          items:
+            type: string
+          example:
+            - "+39-081-2531111"
+        contact_points:
+          type: array
+          description: Contact point references associated with this organization
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+          example:
+            - id: "contact-point-1"
+              name: "Organization help desk"
+              href: "v1/contact-point/contact-point-1"
+        member_of:
+          type: array
+          description: Parent organizations to which this organization belongs
+          items:
+            $ref: "#/components/schemas/ResourceRef"
+
+    Webservice:
+      allOf:
+        - $ref: "#/components/schemas/BaseDetailResource"
+        - type: object
+          properties:
+            identifiers:
+              type: array
+              description: External or domain-specific identifiers for this webservice
+              items:
+                $ref: "#/components/schemas/Identifier"
+            entrypoint:
+              type: string
+              format: uri
+              description: API entrypoint of the webservice
+              example: "https://service.example.org/fdsnws/station/1"
+            contact_points:
+              type: array
+              description: Contact point references associated with this webservice
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "contact-point-1"
+                  name: "Webservice support desk"
+                  href: "v1/contact-point/contact-point-1"
+            provider:
+              type: array
+              description: Organizations providing this webservice
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "org-456"
+                  name: "University of Naples Federico II"
+                  href: "v1/organization/org-456"
+                - id: "org-123"
+                  name: "INGV"
+                  href: "v1/organization/org-123"
+            issued:
+              type: string
+              format: date-time
+              description: Webservice publication timestamp in ISO 8601 UTC
+              example: "2024-02-01T00:00:00Z"
+            modified:
+              type: string
+              format: date-time
+              description: Webservice last modification timestamp in ISO 8601 UTC
+              example: "2024-03-01T08:45:00Z"
+            spatial:
+              type: string
+              description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
+              example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+            temporal:
+              $ref: "#/components/schemas/TemporalExtent"
+            keywords:
+              type: array
+              items:
+                type: string
+              example:
+                - "fdsn"
+                - "station"
+            concepts:
+              type: array
+              description: Concept references assigned to this webservice
+              items:
+                $ref: "#/components/schemas/ResourceRef"
+              example:
+                - id: "concept-seismology"
+                  name: "Seismology"
+                  href: "v1/concept/concept-seismology"
+            license:
+              type: string
+              description: License under which the webservice can be used or reused
+              example: "open"
+            operations:
+              type: array
+              description: Operations supported by this webservice
+              items:
+                $ref: "#/components/schemas/Operation"
+
+    Operation:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          example: "operation-get-station"
+        method:
+          type: string
+          description: HTTP method used by the operation
+          example: "GET"
+        returns:
+          type: string
+          description: Output media type returned by the operation
+          example: "application/xml"
+        iri_template:
+          $ref: "#/components/schemas/IriTemplate"
+        api_documentation:
+          $ref: "#/components/schemas/ApiDocumentation"
+
+    IriTemplate:
+      type: object
+      required:
+        - template
+      properties:
+        template:
+          type: string
+          description: URI template describing the operation endpoint
+          example: "https://service.example.org/fdsnws/station/1/query?network={network}&station={station}"
+        mappings:
+          type: array
+          description: Parameter mappings supported by the URI template
+          items:
+            $ref: "#/components/schemas/IriTemplateMapping"
+
+    IriTemplateMapping:
+      type: object
+      required:
+        - variable
+        - label
+        - required
+        - range
+      properties:
+        variable:
+          type: string
+          description: Template variable name
+          example: "network"
+        label:
+          type: string
+          description: Short string describing the meaning of the parameter
+          example: "Network code"
+        range:
+          type: string
+          description: Parameter type such as `xsd:string`, `xsd:boolean`, `xsd:date`, or `xsd:dateTime`
+          example: "xsd:string"
+        property:
+          type: string
+          description: Property mapped to the variable
+          example: "http://schema.org/name"
+        required:
+          type: boolean
+          description: Whether the variable is required
+          example: false
+        default_value:
+          type: string
+          description: Default value of the parameter
+          example: "IV"
+        min_value:
+          type: string
+          description: Minimum value of the parameter
+          example: "0"
+        max_value:
+          type: string
+          description: Maximum value of the parameter
+          example: "9999"
+        param_value:
+          type: array
+          description: Allowed values that can be used for the parameter
+          items:
+            type: string
+          example:
+            - "BHZ"
+            - "HHZ"
+        multiple_values:
+          type: boolean
+          description: Whether multiple values are allowed for the parameter
+          example: true
+        readonly_value:
+          type: boolean
+          description: Whether the parameter is mutable
+          example: false
+        value_pattern:
+          type: string
+          description: Regular expression used to validate parameter values
+          example: "^[A-Z0-9]+$"
+
+    ApiDocumentation:
+      type: object
+      required:
+        - title
+        - description
+        - entrypoint
+      properties:
+        title:
+          type: string
+          description: Title of the API documentation
+          example: "FDSN Station Service API"
+        description:
+          type: string
+          description: Description of the API documentation
+          example: "API documentation for the FDSN station web service."
+        entrypoint:
+          type: string
+          format: uri
+          description: API documentation entry point
+          example: "https://service.example.org/docs/openapi"
+
+    Concept:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: "concept-seismology"
+        name:
+          type: string
+          example: "Seismology"
+        description:
+          type: string
+          example: "Resources related to seismic monitoring and analysis."
+        children:
+          type: array
+          description: Nested child concepts
+          items:
+            $ref: "#/components/schemas/Concept"
+
+    ConceptScheme:
+      type: object
+      required:
+        - id
+        - label
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          example: "scheme-solid-earth"
+        label:
+          type: string
+          example: "Solid Earth"
+        name:
+          type: string
+          example: "Solid Earth Science Concepts"
+        description:
+          type: string
+          example: "Top-level grouping for all solid earth science resources."
+        logo:
+          type: string
+          format: uri
+          example: "https://www.epos-eu.org/logos/solid-earth.png"
+        homepage:
+          type: string
+          format: uri
+          example: "https://www.epos-eu.org/solid-earth"
+        color:
+          type: string
+          description: Hex colour code used for UI rendering
+          example: "#3A7BD5"
+        order_number:
+          type: integer
+          description: Display order among sibling concept schemes
+          example: 1
+        type:
+          type: string
+          enum:
+            - DATA
+            - FACILITY
+            - SOFTWARE
+          example: "DATA"
+        children:
+          type: array
+          description: Top-level concepts within this scheme
+          items:
+            $ref: "#/components/schemas/Concept"
+
+    ConceptTreeResponse:
+      type: object
+      required:
+        - schemes
+      properties:
+        schemes:
+          type: array
+          description: Ordered list of concept schemes, each carrying its full concept subtree
+          items:
+            $ref: "#/components/schemas/ConceptScheme"
+
+    # -------------------------------------------------------------------------
+    # Shared helpers
+    # -------------------------------------------------------------------------
+
+    TemporalExtent:
+      type: object
+      description: Temporal coverage of a resource
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Start of the temporal coverage (inclusive), ISO 8601 UTC
+          example: "2010-01-01T00:00:00Z"
+        end:
+          type: string
+          format: date-time
+          description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
+          example: "2023-12-31T23:59:59Z"
+
+    Identifier:
+      type: object
+      description: Typed identifier attached to a resource
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          description: Identifier scheme or type
+          example: "doi"
+        value:
+          type: string
+          description: Identifier value
+          example: "10.13127/tsunami/neamthm18"
+
+    Problem:
+      type: object
+      required:
+        - title
+        - status
+      properties:
+        title:
+          type: string
+          description: Short, human-readable summary of problem
+          example: "Resource not found"
+        status:
+          type: integer
+          description: HTTP status code for this problem occurrence
+          example: 404
+        detail:
+          type: string
+          description: Optional human-readable explanation specific to this occurrence
+          example: "The requested resource was not found"
+        instance:
+          type: string
+          format: uri-reference
+          description: Optional URI reference identifying this specific problem occurrence
+          example: "requests/req-123"

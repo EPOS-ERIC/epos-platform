@@ -72,53 +72,15 @@ type AdminAPI interface {
 	ApiV2AdminPopulateContentPostExecute(r ApiApiV2AdminPopulateContentPostRequest) (*ApiV2AdminPopulateContentPost200Response, *http.Response, error)
 
 	/*
-			ApiV2AdminPopulateFilePost Populate from URL or local TTL file
+			ApiV2AdminPopulatePost Populate database
 
-			Populates the database from a single TTL source.
-		You can provide either:
-		- `url`: an HTTP(S) URL to a TTL file
-		- `path`: a local filesystem path to a TTL file available on the server
-		Useful for loading individual TTL files from GitHub, HTTP endpoints, or mounted local volumes.
-
-		**Private Repository Support:**
-		Use the `X-Source-Authorization` header to access private GitHub repositories.
-		The header value is forwarded as the `Authorization` header when fetching the file.
-
-		Example URLs:
-		- GitHub raw (public): https://raw.githubusercontent.com/org/repo/main/data.ttl
-		- GitHub raw (private): Use X-Source-Authorization header with "token ghp_xxx"
-		- Direct URLs: https://example.com/metadata.ttl
+			Population entrypoint.
+		- No body: populates from configured INDEX_URL.
+		- Body with `url` or `path`: populates from a single TTL source.
 
 
 			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-			@return ApiApiV2AdminPopulateFilePostRequest
-	*/
-	ApiV2AdminPopulateFilePost(ctx context.Context) ApiApiV2AdminPopulateFilePostRequest
-
-	// ApiV2AdminPopulateFilePostExecute executes the request
-	//  @return ApiV2AdminPopulateFilePost200Response
-	ApiV2AdminPopulateFilePostExecute(r ApiApiV2AdminPopulateFilePostRequest) (*ApiV2AdminPopulateFilePost200Response, *http.Response, error)
-
-	/*
-		ApiV2AdminPopulateFromUrlPost Populate from custom URL
-
-		Triggers population from a custom index URL
-
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApiApiV2AdminPopulateFromUrlPostRequest
-	*/
-	ApiV2AdminPopulateFromUrlPost(ctx context.Context) ApiApiV2AdminPopulateFromUrlPostRequest
-
-	// ApiV2AdminPopulateFromUrlPostExecute executes the request
-	ApiV2AdminPopulateFromUrlPostExecute(r ApiApiV2AdminPopulateFromUrlPostRequest) (*http.Response, error)
-
-	/*
-		ApiV2AdminPopulatePost Populate database from TTL files
-
-		Triggers initial population from the configured INDEX_URL
-
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApiApiV2AdminPopulatePostRequest
+			@return ApiApiV2AdminPopulatePostRequest
 	*/
 	ApiV2AdminPopulatePost(ctx context.Context) ApiApiV2AdminPopulatePostRequest
 
@@ -556,286 +518,13 @@ func (a *AdminAPIService) ApiV2AdminPopulateContentPostExecute(r ApiApiV2AdminPo
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-type ApiApiV2AdminPopulateFilePostRequest struct {
-	ctx                               context.Context
-	ApiService                        AdminAPI
-	xAgent                            *string
-	xGroup                            *string
-	apiV2AdminPopulateFilePostRequest *ApiV2AdminPopulateFilePostRequest
-	xSourceAuthorization              *string
-}
-
-// Agent URI for provenance tracking
-func (r ApiApiV2AdminPopulateFilePostRequest) XAgent(xAgent string) ApiApiV2AdminPopulateFilePostRequest {
-	r.xAgent = &xAgent
-	return r
-}
-
-// Group URI for provenance tracking
-func (r ApiApiV2AdminPopulateFilePostRequest) XGroup(xGroup string) ApiApiV2AdminPopulateFilePostRequest {
-	r.xGroup = &xGroup
-	return r
-}
-
-func (r ApiApiV2AdminPopulateFilePostRequest) ApiV2AdminPopulateFilePostRequest(apiV2AdminPopulateFilePostRequest ApiV2AdminPopulateFilePostRequest) ApiApiV2AdminPopulateFilePostRequest {
-	r.apiV2AdminPopulateFilePostRequest = &apiV2AdminPopulateFilePostRequest
-	return r
-}
-
-// Authorization header to forward when fetching the URL. For GitHub private repos, use \&quot;token ghp_YOUR_PERSONAL_ACCESS_TOKEN\&quot;
-func (r ApiApiV2AdminPopulateFilePostRequest) XSourceAuthorization(xSourceAuthorization string) ApiApiV2AdminPopulateFilePostRequest {
-	r.xSourceAuthorization = &xSourceAuthorization
-	return r
-}
-
-func (r ApiApiV2AdminPopulateFilePostRequest) Execute() (*ApiV2AdminPopulateFilePost200Response, *http.Response, error) {
-	return r.ApiService.ApiV2AdminPopulateFilePostExecute(r)
-}
-
-/*
-ApiV2AdminPopulateFilePost Populate from URL or local TTL file
-
-Populates the database from a single TTL source.
-You can provide either:
-- `url`: an HTTP(S) URL to a TTL file
-- `path`: a local filesystem path to a TTL file available on the server
-Useful for loading individual TTL files from GitHub, HTTP endpoints, or mounted local volumes.
-
-**Private Repository Support:**
-Use the `X-Source-Authorization` header to access private GitHub repositories.
-The header value is forwarded as the `Authorization` header when fetching the file.
-
-Example URLs:
-- GitHub raw (public): https://raw.githubusercontent.com/org/repo/main/data.ttl
-- GitHub raw (private): Use X-Source-Authorization header with "token ghp_xxx"
-- Direct URLs: https://example.com/metadata.ttl
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiApiV2AdminPopulateFilePostRequest
-*/
-func (a *AdminAPIService) ApiV2AdminPopulateFilePost(ctx context.Context) ApiApiV2AdminPopulateFilePostRequest {
-	return ApiApiV2AdminPopulateFilePostRequest{
-		ApiService: a,
-		ctx:        ctx,
-	}
-}
-
-// Execute executes the request
-//
-//	@return ApiV2AdminPopulateFilePost200Response
-func (a *AdminAPIService) ApiV2AdminPopulateFilePostExecute(r ApiApiV2AdminPopulateFilePostRequest) (*ApiV2AdminPopulateFilePost200Response, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *ApiV2AdminPopulateFilePost200Response
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.ApiV2AdminPopulateFilePost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v2/admin/populate/file"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.xAgent == nil {
-		return localVarReturnValue, nil, reportError("xAgent is required and must be specified")
-	}
-	if r.xGroup == nil {
-		return localVarReturnValue, nil, reportError("xGroup is required and must be specified")
-	}
-	if r.apiV2AdminPopulateFilePostRequest == nil {
-		return localVarReturnValue, nil, reportError("apiV2AdminPopulateFilePostRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Group", r.xGroup, "simple", "")
-	if r.xSourceAuthorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Source-Authorization", r.xSourceAuthorization, "simple", "")
-	}
-	// body params
-	localVarPostBody = r.apiV2AdminPopulateFilePostRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiApiV2AdminPopulateFromUrlPostRequest struct {
-	ctx                                  context.Context
-	ApiService                           AdminAPI
-	xAgent                               *string
-	xGroup                               *string
-	apiV2AdminPopulateFromUrlPostRequest *ApiV2AdminPopulateFromUrlPostRequest
-}
-
-func (r ApiApiV2AdminPopulateFromUrlPostRequest) XAgent(xAgent string) ApiApiV2AdminPopulateFromUrlPostRequest {
-	r.xAgent = &xAgent
-	return r
-}
-
-func (r ApiApiV2AdminPopulateFromUrlPostRequest) XGroup(xGroup string) ApiApiV2AdminPopulateFromUrlPostRequest {
-	r.xGroup = &xGroup
-	return r
-}
-
-func (r ApiApiV2AdminPopulateFromUrlPostRequest) ApiV2AdminPopulateFromUrlPostRequest(apiV2AdminPopulateFromUrlPostRequest ApiV2AdminPopulateFromUrlPostRequest) ApiApiV2AdminPopulateFromUrlPostRequest {
-	r.apiV2AdminPopulateFromUrlPostRequest = &apiV2AdminPopulateFromUrlPostRequest
-	return r
-}
-
-func (r ApiApiV2AdminPopulateFromUrlPostRequest) Execute() (*http.Response, error) {
-	return r.ApiService.ApiV2AdminPopulateFromUrlPostExecute(r)
-}
-
-/*
-ApiV2AdminPopulateFromUrlPost Populate from custom URL
-
-Triggers population from a custom index URL
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiApiV2AdminPopulateFromUrlPostRequest
-*/
-func (a *AdminAPIService) ApiV2AdminPopulateFromUrlPost(ctx context.Context) ApiApiV2AdminPopulateFromUrlPostRequest {
-	return ApiApiV2AdminPopulateFromUrlPostRequest{
-		ApiService: a,
-		ctx:        ctx,
-	}
-}
-
-// Execute executes the request
-func (a *AdminAPIService) ApiV2AdminPopulateFromUrlPostExecute(r ApiApiV2AdminPopulateFromUrlPostRequest) (*http.Response, error) {
-	var (
-		localVarHTTPMethod = http.MethodPost
-		localVarPostBody   interface{}
-		formFiles          []formFile
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminAPIService.ApiV2AdminPopulateFromUrlPost")
-	if err != nil {
-		return nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v2/admin/populate/from-url"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.xAgent == nil {
-		return nil, reportError("xAgent is required and must be specified")
-	}
-	if r.xGroup == nil {
-		return nil, reportError("xGroup is required and must be specified")
-	}
-	if r.apiV2AdminPopulateFromUrlPostRequest == nil {
-		return nil, reportError("apiV2AdminPopulateFromUrlPostRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Group", r.xGroup, "simple", "")
-	// body params
-	localVarPostBody = r.apiV2AdminPopulateFromUrlPostRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
 type ApiApiV2AdminPopulatePostRequest struct {
-	ctx        context.Context
-	ApiService AdminAPI
-	xAgent     *string
-	xGroup     *string
+	ctx                           context.Context
+	ApiService                    AdminAPI
+	xAgent                        *string
+	xGroup                        *string
+	xSourceAuthorization          *string
+	apiV2AdminPopulatePostRequest *ApiV2AdminPopulatePostRequest
 }
 
 func (r ApiApiV2AdminPopulatePostRequest) XAgent(xAgent string) ApiApiV2AdminPopulatePostRequest {
@@ -848,14 +537,27 @@ func (r ApiApiV2AdminPopulatePostRequest) XGroup(xGroup string) ApiApiV2AdminPop
 	return r
 }
 
+// Optional auth header forwarded when fetching &#x60;url&#x60;.
+func (r ApiApiV2AdminPopulatePostRequest) XSourceAuthorization(xSourceAuthorization string) ApiApiV2AdminPopulatePostRequest {
+	r.xSourceAuthorization = &xSourceAuthorization
+	return r
+}
+
+func (r ApiApiV2AdminPopulatePostRequest) ApiV2AdminPopulatePostRequest(apiV2AdminPopulatePostRequest ApiV2AdminPopulatePostRequest) ApiApiV2AdminPopulatePostRequest {
+	r.apiV2AdminPopulatePostRequest = &apiV2AdminPopulatePostRequest
+	return r
+}
+
 func (r ApiApiV2AdminPopulatePostRequest) Execute() (*http.Response, error) {
 	return r.ApiService.ApiV2AdminPopulatePostExecute(r)
 }
 
 /*
-ApiV2AdminPopulatePost Populate database from TTL files
+ApiV2AdminPopulatePost Populate database
 
-Triggers initial population from the configured INDEX_URL
+Population entrypoint.
+- No body: populates from configured INDEX_URL.
+- Body with `url` or `path`: populates from a single TTL source.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiApiV2AdminPopulatePostRequest
@@ -893,7 +595,7 @@ func (a *AdminAPIService) ApiV2AdminPopulatePostExecute(r ApiApiV2AdminPopulateP
 	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -911,6 +613,11 @@ func (a *AdminAPIService) ApiV2AdminPopulatePostExecute(r ApiApiV2AdminPopulateP
 	}
 	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
 	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Group", r.xGroup, "simple", "")
+	if r.xSourceAuthorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Source-Authorization", r.xSourceAuthorization, "simple", "")
+	}
+	// body params
+	localVarPostBody = r.apiV2AdminPopulatePostRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err

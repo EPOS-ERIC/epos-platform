@@ -2,16 +2,20 @@
 package resources
 
 import (
+	"log/slog"
+
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
-var log = logging.Get("resources-service")
-
-type Service struct{}
+type Service struct {
+	log *slog.Logger
+}
 
 func NewService() *Service {
-	return &Service{}
+	return &Service{
+		log: logging.Get("resources-service"),
+	}
 }
 
 func (s *Service) GetConceptByID() error {
@@ -27,5 +31,13 @@ func (s *Service) GetSoftwareApplicationByID() error {
 }
 
 func (s *Service) GetSoftwareSourceCodeByID() error {
+	return domain.ErrNotImplemented
+}
+
+func (s *Service) GetWebserviceByID() error {
+	return domain.ErrNotImplemented
+}
+
+func (s *Service) GetOrganizationByID() error {
 	return domain.ErrNotImplemented
 }

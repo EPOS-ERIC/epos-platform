@@ -24,7 +24,7 @@ type ResourcesAPI interface {
 	/*
 		ApiV2ResourceTypeGet List entities
 
-		Retrieve a paginated list of entities of a specific type
+		Retrieve a paginated list of entities of a specific type. For status=draft, X-Agent can scope results to drafts created by that agent.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
@@ -38,9 +38,11 @@ type ResourcesAPI interface {
 	/*
 		ApiV2ResourceTypeIdDelete Delete entity (DRAFT only)
 
+		Deletes a DRAFT version. Request fails with 409 if the resolved resource is not in DRAFT status.
+
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
-		@param id Full entity URI
+		@param id Resource identifier (conceptual id, version id, or identifier)
 		@return ApiApiV2ResourceTypeIdDeleteRequest
 	*/
 	ApiV2ResourceTypeIdDelete(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdDeleteRequest
@@ -55,7 +57,7 @@ type ResourcesAPI interface {
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
-		@param id Full entity URI
+		@param id Resource identifier (conceptual id, version id, or identifier)
 		@return ApiApiV2ResourceTypeIdGetRequest
 	*/
 	ApiV2ResourceTypeIdGet(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdGetRequest
@@ -66,11 +68,11 @@ type ResourcesAPI interface {
 	/*
 		ApiV2ResourceTypeIdPatch Patch entity (DRAFT only)
 
-		Merge semantics. Only the provided properties are replaced; all other properties are preserved.
+		Merge semantics. Only the provided properties are replaced; all other properties are preserved. Request fails with 409 if the resolved resource is not in DRAFT status.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
-		@param id Full entity URI
+		@param id Resource identifier (conceptual id, version id, or identifier)
 		@return ApiApiV2ResourceTypeIdPatchRequest
 	*/
 	ApiV2ResourceTypeIdPatch(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdPatchRequest
@@ -81,11 +83,11 @@ type ResourcesAPI interface {
 	/*
 		ApiV2ResourceTypeIdPut Update entity (DRAFT only)
 
-		Full replace semantics. Properties not included in the request are removed from the draft entity.
+		Full replace semantics. Properties not included in the request are removed from the draft entity. Request fails with 409 if the resolved resource is not in DRAFT status.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
-		@param id Full entity URI
+		@param id Resource identifier (conceptual id, version id, or identifier)
 		@return ApiApiV2ResourceTypeIdPutRequest
 	*/
 	ApiV2ResourceTypeIdPut(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdPutRequest
@@ -115,9 +117,16 @@ type ApiApiV2ResourceTypeGetRequest struct {
 	ctx          context.Context
 	ApiService   ResourcesAPI
 	resourceType string
+	xAgent       *string
 	status       *string
 	page         *int32
 	pageSize     *int32
+}
+
+// Optional agent URI used to filter draft results for this actor.
+func (r ApiApiV2ResourceTypeGetRequest) XAgent(xAgent string) ApiApiV2ResourceTypeGetRequest {
+	r.xAgent = &xAgent
+	return r
 }
 
 func (r ApiApiV2ResourceTypeGetRequest) Status(status string) ApiApiV2ResourceTypeGetRequest {
@@ -142,7 +151,7 @@ func (r ApiApiV2ResourceTypeGetRequest) Execute() (*http.Response, error) {
 /*
 ApiV2ResourceTypeGet List entities
 
-Retrieve a paginated list of entities of a specific type
+Retrieve a paginated list of entities of a specific type. For status=draft, X-Agent can scope results to drafts created by that agent.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
@@ -214,6 +223,9 @@ func (a *ResourcesAPIService) ApiV2ResourceTypeGetExecute(r ApiApiV2ResourceType
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	if r.xAgent != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
+	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -245,8 +257,20 @@ func (a *ResourcesAPIService) ApiV2ResourceTypeGetExecute(r ApiApiV2ResourceType
 type ApiApiV2ResourceTypeIdDeleteRequest struct {
 	ctx          context.Context
 	ApiService   ResourcesAPI
+	xAgent       *string
+	xGroup       *string
 	resourceType string
 	id           string
+}
+
+func (r ApiApiV2ResourceTypeIdDeleteRequest) XAgent(xAgent string) ApiApiV2ResourceTypeIdDeleteRequest {
+	r.xAgent = &xAgent
+	return r
+}
+
+func (r ApiApiV2ResourceTypeIdDeleteRequest) XGroup(xGroup string) ApiApiV2ResourceTypeIdDeleteRequest {
+	r.xGroup = &xGroup
+	return r
 }
 
 func (r ApiApiV2ResourceTypeIdDeleteRequest) Execute() (*http.Response, error) {
@@ -256,9 +280,11 @@ func (r ApiApiV2ResourceTypeIdDeleteRequest) Execute() (*http.Response, error) {
 /*
 ApiV2ResourceTypeIdDelete Delete entity (DRAFT only)
 
+Deletes a DRAFT version. Request fails with 409 if the resolved resource is not in DRAFT status.
+
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
-	@param id Full entity URI
+	@param id Resource identifier (conceptual id, version id, or identifier)
 	@return ApiApiV2ResourceTypeIdDeleteRequest
 */
 func (a *ResourcesAPIService) ApiV2ResourceTypeIdDelete(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdDeleteRequest {
@@ -290,6 +316,12 @@ func (a *ResourcesAPIService) ApiV2ResourceTypeIdDeleteExecute(r ApiApiV2Resourc
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.xAgent == nil {
+		return nil, reportError("xAgent is required and must be specified")
+	}
+	if r.xGroup == nil {
+		return nil, reportError("xGroup is required and must be specified")
+	}
 
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -308,6 +340,8 @@ func (a *ResourcesAPIService) ApiV2ResourceTypeIdDeleteExecute(r ApiApiV2Resourc
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Agent", r.xAgent, "simple", "")
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-Group", r.xGroup, "simple", "")
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -366,7 +400,7 @@ Retrieve entity details. Supports multiple formats via Accept header or format p
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
-	@param id Full entity URI
+	@param id Resource identifier (conceptual id, version id, or identifier)
 	@return ApiApiV2ResourceTypeIdGetRequest
 */
 func (a *ResourcesAPIService) ApiV2ResourceTypeIdGet(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdGetRequest {
@@ -486,11 +520,11 @@ func (r ApiApiV2ResourceTypeIdPatchRequest) Execute() (*http.Response, error) {
 /*
 ApiV2ResourceTypeIdPatch Patch entity (DRAFT only)
 
-Merge semantics. Only the provided properties are replaced; all other properties are preserved.
+Merge semantics. Only the provided properties are replaced; all other properties are preserved. Request fails with 409 if the resolved resource is not in DRAFT status.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
-	@param id Full entity URI
+	@param id Resource identifier (conceptual id, version id, or identifier)
 	@return ApiApiV2ResourceTypeIdPatchRequest
 */
 func (a *ResourcesAPIService) ApiV2ResourceTypeIdPatch(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdPatchRequest {
@@ -613,11 +647,11 @@ func (r ApiApiV2ResourceTypeIdPutRequest) Execute() (*http.Response, error) {
 /*
 ApiV2ResourceTypeIdPut Update entity (DRAFT only)
 
-Full replace semantics. Properties not included in the request are removed from the draft entity.
+Full replace semantics. Properties not included in the request are removed from the draft entity. Request fails with 409 if the resolved resource is not in DRAFT status.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
-	@param id Full entity URI
+	@param id Resource identifier (conceptual id, version id, or identifier)
 	@return ApiApiV2ResourceTypeIdPutRequest
 */
 func (a *ResourcesAPIService) ApiV2ResourceTypeIdPut(ctx context.Context, resourceType string, id string) ApiApiV2ResourceTypeIdPutRequest {

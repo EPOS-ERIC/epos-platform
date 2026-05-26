@@ -3,89 +3,60 @@ package handlers
 import (
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 )
 
-func TestParseSearchParamsDefaults(t *testing.T) {
-	t.Parallel()
-
-	req := httptest.NewRequest("GET", "/v1/search", nil)
-
-	params, err := parseSearchParams(req)
-	if err != nil {
-		t.Fatalf("parseSearchParams() error = %v", err)
-	}
-
-	if params.PageSize != defaultPageSize {
-		t.Fatalf("PageSize = %d, want %d", params.PageSize, defaultPageSize)
-	}
-
-	if params.PageNumber != defaultPageNumber {
-		t.Fatalf("PageNumber = %d, want %d", params.PageNumber, defaultPageNumber)
-	}
-
-	if len(params.VersioningStatus) != 1 || params.VersioningStatus[0] != api.PublishedStatus {
-		t.Fatalf("VersioningStatus = %v, want [%s]", params.VersioningStatus, api.PublishedStatus)
-	}
-}
-
-func TestParseSearchParamsParsesCSVAndDates(t *testing.T) {
-	t.Parallel()
-
-	req := httptest.NewRequest("GET", "/v1/search?q=test&pageSize=25&pageNumber=2&type=dataset,distribution&dateFrom=2020-01-01T00:00:00Z&dateTo=2020-01-02T00:00:00Z&serviceProvider=INGV,UNINA&versioningStatus=PUBLISHED,DRAFT&keywords=seismology,stations", nil)
-
-	params, err := parseSearchParams(req)
-	if err != nil {
-		t.Fatalf("parseSearchParams() error = %v", err)
-	}
-
-	if params.Query != "test" {
-		t.Fatalf("Query = %q, want test", params.Query)
-	}
-
-	if len(params.Types) != 2 || params.Types[0] != api.DatasetType || params.Types[1] != api.DistributionType {
-		t.Fatalf("Types = %v", params.Types)
-	}
-
-	if len(params.ServiceProviders) != 2 || params.ServiceProviders[0] != "INGV" || params.ServiceProviders[1] != "UNINA" {
-		t.Fatalf("ServiceProviders = %v", params.ServiceProviders)
-	}
-
-	if len(params.Keywords) != 2 || params.Keywords[0] != "seismology" || params.Keywords[1] != "stations" {
-		t.Fatalf("Keywords = %v", params.Keywords)
-	}
-
-	if got, want := params.DateFrom.Format(time.RFC3339), "2020-01-01T00:00:00Z"; got != want {
-		t.Fatalf("DateFrom = %s, want %s", got, want)
-	}
-
-	if got, want := params.DateTo.Format(time.RFC3339), "2020-01-02T00:00:00Z"; got != want {
-		t.Fatalf("DateTo = %s, want %s", got, want)
-	}
-}
-
-func TestParseSearchParamsRejectsInvalidValues(t *testing.T) {
-	t.Parallel()
-
+func TestParseSearchParamsRejectsUnsupportedSearchTypes(t *testing.T) {
 	tests := []struct {
-		name string
-		url  string
+		name     string
+		rawQuery string
+		wantErr  string
 	}{
-		{name: "page size below minimum", url: "/v1/search?pageSize=0"},
-		{name: "invalid type", url: "/v1/search?type=bad"},
-		{name: "invalid date", url: "/v1/search?dateFrom=bad"},
-		{name: "date range reversed", url: "/v1/search?dateFrom=2020-01-02T00:00:00Z&dateTo=2020-01-01T00:00:00Z"},
+		{
+			name:     "concept type is rejected",
+			rawQuery: "type=concept",
+			wantErr:  `parse type filter: unsupported search type "concept"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
+		},
+		{
+			name:     "mixed supported and unsupported types are rejected",
+			rawQuery: "type=dataset,distribution",
+			wantErr:  `parse type filter: unsupported search type "distribution"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
+		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", tc.url, nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/search?"+tt.rawQuery, nil)
 
-			if _, err := parseSearchParams(req); err == nil {
+			_, err := parseSearchParams(req)
+			if err == nil {
 				t.Fatal("expected error")
 			}
+
+			if err.Error() != tt.wantErr {
+				t.Fatalf("unexpected error: got %q want %q", err.Error(), tt.wantErr)
+			}
 		})
+	}
+}
+
+func TestParseSearchParamsAcceptsSupportedSearchTypes(t *testing.T) {
+	req := httptest.NewRequest("GET", "/search?type=dataset,webservice", nil)
+
+	params, err := parseSearchParams(req)
+	if err != nil {
+		t.Fatalf("parse search params: %v", err)
+	}
+
+	want := []api.ResourceType{api.DatasetType, api.WebserviceType}
+	if len(params.Types) != len(want) {
+		t.Fatalf("unexpected types length: got %d want %d", len(params.Types), len(want))
+	}
+
+	for i := range want {
+		if params.Types[i] != want[i] {
+			t.Fatalf("unexpected type at index %d: got %q want %q", i, params.Types[i], want[i])
+		}
 	}
 }

@@ -1,4 +1,4 @@
-// Package http provides gateway HTTP transport wiring and server runtime.
+// Package server provides gateway HTTP transport wiring and server runtime.
 package server
 
 import (
@@ -25,15 +25,14 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 		requestTimeout = 30 * time.Second
 	}
 
-	discoveryService := discovery.NewService(metadataClient)
+	discoveryService := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
 	resourcesService := resources.NewService()
 
 	httpServer := &http.Server{
-		Addr:         cfg.Server.Listen,
-		Handler:      NewRouter(discoveryService, resourcesService),
-		ReadTimeout:  requestTimeout,
-		WriteTimeout: requestTimeout,
-		IdleTimeout:  requestTimeout,
+		Addr:        cfg.Server.Listen,
+		Handler:     NewRouter(discoveryService, resourcesService),
+		ReadTimeout: requestTimeout,
+		IdleTimeout: requestTimeout,
 	}
 
 	listenErr := make(chan error, 1)

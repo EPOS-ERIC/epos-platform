@@ -1,13 +1,14 @@
 package api
 
-type ErrorResponse struct {
-	ErrorCode    string `json:"error_code"`
-	ErrorMessage string `json:"error_message"`
+type Problem struct {
+	Title    string `json:"title"`
+	Status   int    `json:"status"`
+	Detail   string `json:"detail,omitempty"`
+	Instance string `json:"instance,omitempty"`
 }
 
-type ContactPoint struct {
-	ID                string
-	Email             string
-	AvailableLanguage string
-	ContactType       string
+type BaseDetailResource struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
 }

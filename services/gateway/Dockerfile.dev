@@ -14,4 +14,7 @@ COPY docker/gateway-config.dev.yaml /workspace/docker/gateway-config.dev.yaml
 
 EXPOSE 5000
 
+RUN adduser -D -u 1000 appuser && chown -R 1000:1000 /workspace
+USER 1000
+
 CMD ["go", "run", ".", "-config", "/workspace/docker/gateway-config.dev.yaml"]

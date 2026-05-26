@@ -2,28 +2,26 @@ package api
 
 import "time"
 
-// TODO: improve this package and the openapi spec by explicitly set required and not fields
 type Dataset struct {
-	ID                 string           `json:"id"`
-	Status             VersioningStatus `json:"status,omitempty"`
-	Created            time.Time        `json:"created"`
-	Modified           time.Time        `json:"modified"`
-	Title              string           `json:"title,omitempty"`
+	BaseDetailResource
+	Created            *time.Time       `json:"created,omitempty"`
+	Modified           *time.Time       `json:"modified,omitempty"`
 	VersionInfo        string           `json:"version_info,omitempty"`
-	ContactPoints      []string         `json:"contact_points,omitempty"` // just the ids of the contact points, not the full objects (can't show the emails)
+	ContactPoints      []ResourceRef    `json:"contact_points,omitempty"`
 	Keywords           []string         `json:"keywords,omitempty"`
-	Concepts           []string         `json:"concepts,omitempty"`
-	Description        string           `json:"description,omitempty"`
-	Publisher          []string         `json:"publisher,omitempty"`
-	Issued             time.Time        `json:"issued"`
+	Concepts           []ResourceRef    `json:"concepts,omitempty"`
+	Publisher          []ResourceRef    `json:"publisher,omitempty"`
+	Issued             *time.Time       `json:"issued,omitempty"`
 	Spatial            string           `json:"spatial,omitempty"`
 	Identifiers        []Identifier     `json:"identifiers,omitempty"`
-	Temporal           TemporalExtent   `json:"temporal"`
-	Distributions      []SearchItem     `json:"distributions,omitempty"` // just the link to the Distributions not aggregated
+	Temporal           *TemporalExtent  `json:"temporal,omitempty"`
+	Status             VersioningStatus `json:"status,omitempty"`
+	Distributions      []ResourceRef    `json:"distributions,omitempty"`
 	AccessRights       string           `json:"access_rights,omitempty"`
 	AccrualPeriodicity string           `json:"accrual_periodicity,omitempty"`
-	IsVersionOf        string           `json:"is_version_of,omitempty"`
-	QualityAnnotation  []string         `json:"quality_annotation,omitempty"`
+	IsVersionOf        *ResourceRef     `json:"is_version_of,omitempty"`
+	QualityAnnotation  string           `json:"quality_annotation,omitempty"`
+	Version            string           `json:"version,omitempty"`
 }
 
 type Identifier struct {
@@ -32,36 +30,108 @@ type Identifier struct {
 }
 
 type SoftwareApplication struct {
-	ID          string   `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description,omitempty"`
-	Keywords    []string `json:"keywords,omitempty"`
-	Concepts    []string `json:"concepts,omitempty"`
-	DownloadURL string   `json:"download_url,omitempty"`
+	BaseDetailResource
+	ContactPoints        []ResourceRef `json:"contact_points,omitempty"`
+	Keywords             []string      `json:"keywords,omitempty"`
+	Concepts             []ResourceRef `json:"concepts,omitempty"`
+	DownloadURL          string        `json:"download_url,omitempty"`
+	InstallURL           string        `json:"install_url,omitempty"`
+	License              string        `json:"license,omitempty"`
+	SoftwareVersion      string        `json:"software_version,omitempty"`
+	SoftwareRequirements string        `json:"software_requirements,omitempty"`
+	MainEntityOfPage     string        `json:"main_entity_of_page,omitempty"`
+	Provider             []ResourceRef `json:"provider,omitempty"`
+	Operations           []ResourceRef `json:"operations,omitempty"`
 }
 
 type SoftwareSourceCode struct {
-	ID                  string   `json:"id"`
-	Title               string   `json:"title"`
-	Description         string   `json:"description,omitempty"`
-	ProgrammingLanguage string   `json:"programming_language,omitempty"`
-	Keywords            []string `json:"keywords,omitempty"`
-	Concepts            []string `json:"concepts,omitempty"`
-	Repository          string   `json:"repository,omitempty"`
+	BaseDetailResource
+	ContactPoints       []ResourceRef `json:"contact_points,omitempty"`
+	ProgrammingLanguage string        `json:"programming_language,omitempty"`
+	Keywords            []string      `json:"keywords,omitempty"`
+	Concepts            []ResourceRef `json:"concepts,omitempty"`
+	Repository          string        `json:"repository,omitempty"`
+	License             string        `json:"license,omitempty"`
+	SoftwareVersion     string        `json:"software_version,omitempty"`
+	RuntimePlatform     string        `json:"runtime_platform,omitempty"`
+	TargetProducts      []ResourceRef `json:"target_products,omitempty"`
+	Provider            []ResourceRef `json:"provider,omitempty"`
+	MainEntityOfPage    string        `json:"main_entity_of_page,omitempty"`
+}
+
+type Distribution struct {
+	BaseDetailResource
+	AccessURL  string       `json:"access_url,omitempty"`
+	Operation  *Operation   `json:"operation,omitempty"`
+	Webservice *ResourceRef `json:"webservice,omitempty"`
+	Format     string       `json:"format,omitempty"`
+}
+
+type Organization struct {
+	ID            string        `json:"id"`
+	Identifiers   []Identifier  `json:"identifiers,omitempty"`
+	Name          string        `json:"name"`
+	LeiCode       string        `json:"lei_code,omitempty"`
+	Address       string        `json:"address,omitempty"`
+	Logo          string        `json:"logo,omitempty"`
+	URL           string        `json:"url,omitempty"`
+	Email         []string      `json:"email,omitempty"`
+	Telephone     []string      `json:"telephone,omitempty"`
+	ContactPoints []ResourceRef `json:"contact_points,omitempty"`
+	MemberOf      []ResourceRef `json:"member_of,omitempty"`
+}
+
+type Webservice struct {
+	BaseDetailResource
+	Identifiers   []Identifier    `json:"identifiers,omitempty"`
+	Entrypoint    string          `json:"entrypoint,omitempty"`
+	ContactPoints []ResourceRef   `json:"contact_points,omitempty"`
+	Provider      []ResourceRef   `json:"provider,omitempty"`
+	Issued        *time.Time      `json:"issued,omitempty"`
+	Modified      *time.Time      `json:"modified,omitempty"`
+	Spatial       string          `json:"spatial,omitempty"`
+	Temporal      *TemporalExtent `json:"temporal,omitempty"`
+	Keywords      []string        `json:"keywords,omitempty"`
+	Concepts      []ResourceRef   `json:"concepts,omitempty"`
+	License       string          `json:"license,omitempty"`
+	Operations    []Operation     `json:"operations,omitempty"`
+}
+
+type Operation struct {
+	ID               string            `json:"id"`
+	Method           string            `json:"method,omitempty"`
+	Returns          string            `json:"returns,omitempty"`
+	IriTemplate      *IriTemplate      `json:"iri_template,omitempty"`
+	APIDocumentation *APIDocumentation `json:"api_documentation,omitempty"`
+}
+
+type IriTemplate struct {
+	Template string               `json:"template"`
+	Mappings []IriTemplateMapping `json:"mappings,omitempty"`
+}
+
+type IriTemplateMapping struct {
+	Variable       string   `json:"variable"`
+	Label          string   `json:"label"`
+	Range          string   `json:"range"`
+	Property       string   `json:"property,omitempty"`
+	Required       bool     `json:"required"`
+	DefaultValue   string   `json:"default_value,omitempty"`
+	MinValue       string   `json:"min_value,omitempty"`
+	MaxValue       string   `json:"max_value,omitempty"`
+	ParamValue     []string `json:"param_value,omitempty"`
+	MultipleValues bool     `json:"multiple_values,omitempty"`
+	ReadonlyValue  bool     `json:"readonly_value,omitempty"`
+	ValuePattern   string   `json:"value_pattern,omitempty"`
+}
+
+type APIDocumentation struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Entrypoint  string `json:"entrypoint"`
 }
 
 type TemporalExtent struct {
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
+	Start *time.Time `json:"start,omitempty"`
+	End   *time.Time `json:"end,omitempty"`
 }
-
-// TODO main entities:
-// Dataset
-// Distribution
-// SoftwareSourceCode
-// SoftwareApplication
-// Webservice
-// Organization
-// Operation: aggiungere anche l'api documentation
-
-// only aggregate "small" entities, like temporal or spatial, main entities have their own endpoint

@@ -13,6 +13,7 @@ require (
 require (
 	github.com/go-chi/chi/v5 v5.2.5
 	go.yaml.in/yaml/v3 v3.0.3
+	golang.org/x/sync v0.20.0
 )
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging

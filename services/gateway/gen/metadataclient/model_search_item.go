@@ -12,145 +12,204 @@ Contact: support@epos-eu.org
 package metadataclient
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
 
-// SearchItem - struct for SearchItem
+// checks if the SearchItem type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &SearchItem{}
+
+// SearchItem struct for SearchItem
 type SearchItem struct {
-	DatasetSearchItem *DatasetSearchItem
-	GenericSearchItem *GenericSearchItem
+	Type ResourceType `json:"type"`
+	Id   string       `json:"id"`
+	// Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
+	Href string `json:"href"`
+	// SHACL-selected property values returned only when includeConstraints=true (includes `name`)
+	Fields map[string]interface{} `json:"fields,omitempty"`
 }
 
-// DatasetSearchItemAsSearchItem is a convenience function that returns DatasetSearchItem wrapped in SearchItem
-func DatasetSearchItemAsSearchItem(v *DatasetSearchItem) SearchItem {
-	return SearchItem{
-		DatasetSearchItem: v,
+type _SearchItem SearchItem
+
+// NewSearchItem instantiates a new SearchItem object
+// This constructor will assign default values to properties that have it defined,
+// and makes sure properties required by API are set, but the set of arguments
+// will change when the set of required properties is changed
+func NewSearchItem(type_ ResourceType, id string, href string) *SearchItem {
+	this := SearchItem{}
+	this.Type = type_
+	this.Id = id
+	this.Href = href
+	return &this
+}
+
+// NewSearchItemWithDefaults instantiates a new SearchItem object
+// This constructor will only assign default values to properties that have it defined,
+// but it doesn't guarantee that properties required by API are set
+func NewSearchItemWithDefaults() *SearchItem {
+	this := SearchItem{}
+	return &this
+}
+
+// GetType returns the Type field value
+func (o *SearchItem) GetType() ResourceType {
+	if o == nil {
+		var ret ResourceType
+		return ret
 	}
+
+	return o.Type
 }
 
-// GenericSearchItemAsSearchItem is a convenience function that returns GenericSearchItem wrapped in SearchItem
-func GenericSearchItemAsSearchItem(v *GenericSearchItem) SearchItem {
-	return SearchItem{
-		GenericSearchItem: v,
+// GetTypeOk returns a tuple with the Type field value
+// and a boolean to check if the value has been set.
+func (o *SearchItem) GetTypeOk() (*ResourceType, bool) {
+	if o == nil {
+		return nil, false
 	}
+	return &o.Type, true
 }
 
-// Unmarshal JSON data into one of the pointers in the struct
-func (dst *SearchItem) UnmarshalJSON(data []byte) error {
-	var err error
-	// use discriminator value to speed up the lookup
-	var jsonDict map[string]interface{}
-	err = newStrictDecoder(data).Decode(&jsonDict)
+// SetType sets field value
+func (o *SearchItem) SetType(v ResourceType) {
+	o.Type = v
+}
+
+// GetId returns the Id field value
+func (o *SearchItem) GetId() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Id
+}
+
+// GetIdOk returns a tuple with the Id field value
+// and a boolean to check if the value has been set.
+func (o *SearchItem) GetIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Id, true
+}
+
+// SetId sets field value
+func (o *SearchItem) SetId(v string) {
+	o.Id = v
+}
+
+// GetHref returns the Href field value
+func (o *SearchItem) GetHref() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Href
+}
+
+// GetHrefOk returns a tuple with the Href field value
+// and a boolean to check if the value has been set.
+func (o *SearchItem) GetHrefOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Href, true
+}
+
+// SetHref sets field value
+func (o *SearchItem) SetHref(v string) {
+	o.Href = v
+}
+
+// GetFields returns the Fields field value if set, zero value otherwise.
+func (o *SearchItem) GetFields() map[string]interface{} {
+	if o == nil || IsNil(o.Fields) {
+		var ret map[string]interface{}
+		return ret
+	}
+	return o.Fields
+}
+
+// GetFieldsOk returns a tuple with the Fields field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SearchItem) GetFieldsOk() (map[string]interface{}, bool) {
+	if o == nil || IsNil(o.Fields) {
+		return map[string]interface{}{}, false
+	}
+	return o.Fields, true
+}
+
+// HasFields returns a boolean if a field has been set.
+func (o *SearchItem) HasFields() bool {
+	if o != nil && !IsNil(o.Fields) {
+		return true
+	}
+
+	return false
+}
+
+// SetFields gets a reference to the given map[string]interface{} and assigns it to the Fields field.
+func (o *SearchItem) SetFields(v map[string]interface{}) {
+	o.Fields = v
+}
+
+func (o SearchItem) MarshalJSON() ([]byte, error) {
+	toSerialize, err := o.ToMap()
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal JSON into map for the discriminator lookup")
+		return []byte{}, err
 	}
-
-	// check if the discriminator value is 'category'
-	if jsonDict["type"] == "category" {
-		// try to unmarshal JSON data into GenericSearchItem
-		err = json.Unmarshal(data, &dst.GenericSearchItem)
-		if err == nil {
-			return nil // data stored in dst.GenericSearchItem, return on the first match
-		} else {
-			dst.GenericSearchItem = nil
-			return fmt.Errorf("failed to unmarshal SearchItem as GenericSearchItem: %s", err.Error())
-		}
-	}
-
-	// check if the discriminator value is 'dataset'
-	if jsonDict["type"] == "dataset" {
-		// try to unmarshal JSON data into DatasetSearchItem
-		err = json.Unmarshal(data, &dst.DatasetSearchItem)
-		if err == nil {
-			return nil // data stored in dst.DatasetSearchItem, return on the first match
-		} else {
-			dst.DatasetSearchItem = nil
-			return fmt.Errorf("failed to unmarshal SearchItem as DatasetSearchItem: %s", err.Error())
-		}
-	}
-
-	// check if the discriminator value is 'distribution'
-	if jsonDict["type"] == "distribution" {
-		// try to unmarshal JSON data into GenericSearchItem
-		err = json.Unmarshal(data, &dst.GenericSearchItem)
-		if err == nil {
-			return nil // data stored in dst.GenericSearchItem, return on the first match
-		} else {
-			dst.GenericSearchItem = nil
-			return fmt.Errorf("failed to unmarshal SearchItem as GenericSearchItem: %s", err.Error())
-		}
-	}
-
-	// check if the discriminator value is 'software-application'
-	if jsonDict["type"] == "software-application" {
-		// try to unmarshal JSON data into GenericSearchItem
-		err = json.Unmarshal(data, &dst.GenericSearchItem)
-		if err == nil {
-			return nil // data stored in dst.GenericSearchItem, return on the first match
-		} else {
-			dst.GenericSearchItem = nil
-			return fmt.Errorf("failed to unmarshal SearchItem as GenericSearchItem: %s", err.Error())
-		}
-	}
-
-	// check if the discriminator value is 'software-source-code'
-	if jsonDict["type"] == "software-source-code" {
-		// try to unmarshal JSON data into GenericSearchItem
-		err = json.Unmarshal(data, &dst.GenericSearchItem)
-		if err == nil {
-			return nil // data stored in dst.GenericSearchItem, return on the first match
-		} else {
-			dst.GenericSearchItem = nil
-			return fmt.Errorf("failed to unmarshal SearchItem as GenericSearchItem: %s", err.Error())
-		}
-	}
-
-	return nil
+	return json.Marshal(toSerialize)
 }
 
-// Marshal data from the first non-nil pointers in the struct to JSON
-func (src SearchItem) MarshalJSON() ([]byte, error) {
-	if src.DatasetSearchItem != nil {
-		return json.Marshal(&src.DatasetSearchItem)
+func (o SearchItem) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["type"] = o.Type
+	toSerialize["id"] = o.Id
+	toSerialize["href"] = o.Href
+	if !IsNil(o.Fields) {
+		toSerialize["fields"] = o.Fields
 	}
-
-	if src.GenericSearchItem != nil {
-		return json.Marshal(&src.GenericSearchItem)
-	}
-
-	return nil, nil // no data in oneOf schemas
+	return toSerialize, nil
 }
 
-// Get the actual instance
-func (obj *SearchItem) GetActualInstance() interface{} {
-	if obj == nil {
-		return nil
-	}
-	if obj.DatasetSearchItem != nil {
-		return obj.DatasetSearchItem
-	}
-
-	if obj.GenericSearchItem != nil {
-		return obj.GenericSearchItem
+func (o *SearchItem) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"type",
+		"id",
+		"href",
 	}
 
-	// all schemas are nil
-	return nil
-}
+	allProperties := make(map[string]interface{})
 
-// Get the actual instance value
-func (obj SearchItem) GetActualInstanceValue() interface{} {
-	if obj.DatasetSearchItem != nil {
-		return *obj.DatasetSearchItem
+	err = json.Unmarshal(data, &allProperties)
+	if err != nil {
+		return err
 	}
 
-	if obj.GenericSearchItem != nil {
-		return *obj.GenericSearchItem
+	for _, requiredProperty := range requiredProperties {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
 	}
 
-	// all schemas are nil
-	return nil
+	varSearchItem := _SearchItem{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varSearchItem)
+	if err != nil {
+		return err
+	}
+
+	*o = SearchItem(varSearchItem)
+
+	return err
 }
 
 type NullableSearchItem struct {

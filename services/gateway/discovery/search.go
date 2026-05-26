@@ -2,12 +2,38 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"golang.org/x/sync/errgroup"
 )
+
+var supportedSearchTypes = []api.ResourceType{
+	api.DatasetType,
+	api.OrganizationType,
+	api.SoftwareApplicationType,
+	api.SoftwareSourceCodeType,
+	api.WebserviceType,
+}
+
+var (
+	ErrUpstreamTimeout       = errors.New("upstream timeout")
+	ErrUpstreamRequestFailed = errors.New("upstream request failed")
+)
+
+func ValidateSearchTypes(types []api.ResourceType) error {
+	for _, resourceType := range types {
+		if !slices.Contains(supportedSearchTypes, resourceType) {
+			return fmt.Errorf("unsupported search type %q; allowed values: %s", resourceType, supportedSearchTypes)
+		}
+	}
+
+	return nil
+}
 
 type SearchParams struct {
 	Query            string
@@ -17,28 +43,43 @@ type SearchParams struct {
 	SpatialFilter    string
 	DateFrom         time.Time
 	DateTo           time.Time
-	ServiceProviders []string
+	Providers        []string
 	VersioningStatus []api.VersioningStatus
 	Keywords         []string
 }
 
-func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiSearchMetadataRequest, error) {
+func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiApiV2AccessSearchGetRequest, error) {
+	if err := ValidateSearchTypes(p.Types); err != nil {
+		return metadataclient.ApiApiV2AccessSearchGetRequest{}, err
+	}
+
 	versioningStatus := make([]metadataclient.VersioningStatus, len(p.VersioningStatus))
 	for i, v := range p.VersioningStatus {
 		versioningStatus[i] = metadataclient.VersioningStatus(v)
 	}
 
-	types := make([]metadataclient.ResourceType, len(p.Types))
-	for i, t := range p.Types {
-		metadataType, err := toMetadataResourceType(t)
-		if err != nil {
-			return metadataclient.ApiSearchMetadataRequest{}, fmt.Errorf("convert resource type: %w", err)
-		}
+	types := []metadataclient.ResourceType{}
+	if len(p.Types) == 0 {
+		for _, resourceType := range supportedSearchTypes {
+			metadataType, err := toMetadataResourceType(resourceType)
+			if err != nil {
+				return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("convert resource type: %w", err)
+			}
 
-		types[i] = metadataType
+			types = append(types, metadataType)
+		}
+	} else {
+		for _, t := range p.Types {
+			metadataType, err := toMetadataResourceType(t)
+			if err != nil {
+				return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("convert resource type: %w", err)
+			}
+
+			types = append(types, metadataType)
+		}
 	}
 
-	req := client.SearchAPI.SearchMetadata(ctx)
+	req := client.AccessAPI.ApiV2AccessSearchGet(ctx)
 
 	if p.Query != "" {
 		req = req.Q(p.Query)
@@ -49,9 +90,7 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	if p.PageSize > 0 {
 		req = req.ResultsPerPage(p.PageSize)
 	}
-	if len(types) > 0 {
-		req = req.Type_(types)
-	}
+	req = req.Type_(types)
 	if p.SpatialFilter != "" {
 		req = req.SpatialFilter(p.SpatialFilter)
 	}
@@ -61,8 +100,8 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	if !p.DateTo.IsZero() {
 		req = req.DateTo(p.DateTo)
 	}
-	if len(p.ServiceProviders) > 0 {
-		req = req.ServiceProvider(p.ServiceProviders)
+	if len(p.Providers) > 0 {
+		req = req.ServiceProvider(p.Providers)
 	}
 	if len(versioningStatus) > 0 {
 		req = req.VersioningStatus(versioningStatus)
@@ -70,6 +109,7 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	if len(p.Keywords) > 0 {
 		req = req.Keywords(p.Keywords)
 	}
+	req = req.IncludeConstraints(true)
 
 	return req, nil
 }
@@ -80,23 +120,68 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		return api.SearchResponse{}, fmt.Errorf("build metadata search request: %w", err)
 	}
 
-	resp, _, err := req.Execute()
+	resp, httpResp, err := req.Execute()
 	if err != nil {
-		return api.SearchResponse{}, fmt.Errorf("search metadata: %w", err)
-	}
-
-	searchResp := api.SearchResponse{
-		Total: int(resp.Total),
-		Items: []api.SearchItem{},
-	}
-	for _, item := range resp.Items {
-		searchItem, err := toAPISearchItem(item)
-		if err != nil {
-			log.Warn("error parsing metadata client search item", "error", err)
-			continue
+		requestMethod := ""
+		requestURL := ""
+		if httpResp != nil && httpResp.Request != nil {
+			requestMethod = httpResp.Request.Method
+			if httpResp.Request.URL != nil {
+				requestURL = httpResp.Request.URL.String()
+			}
 		}
 
-		searchResp.Items = append(searchResp.Items, searchItem)
+		if requestURL != "" {
+			s.log.Error("metadata search request failed", "method", requestMethod, "url", requestURL, "error", err)
+		} else {
+			s.log.Error("metadata search request failed", "error", err)
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) {
+			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w", ErrUpstreamTimeout)
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return api.SearchResponse{}, fmt.Errorf("search metadata canceled: %w", ErrUpstreamTimeout)
+		}
+
+		return api.SearchResponse{}, fmt.Errorf("search metadata request failed: %w", ErrUpstreamRequestFailed)
+	}
+
+	s.log.Debug("metadata search response received", "total", resp.Total, "items_count", len(resp.Items), "page", resp.Page)
+
+	searchResp := api.SearchResponse{
+		PageNumber: int(resp.Page),
+		PageSize:   len(resp.Items),
+		Total:      int(resp.Total),
+		TotalPages: int(resp.TotalPages),
+		Items:      []api.SearchItem{},
+	}
+	mappedItems := make([]api.SearchItem, len(resp.Items))
+
+	g, groupCtx := errgroup.WithContext(ctx)
+	g.SetLimit(s.fanOutLimit)
+	for i, item := range resp.Items {
+		g.Go(func() error {
+			searchItem, err := s.toAPISearchItem(groupCtx, item)
+			if err != nil {
+				s.log.Warn("metadata search item parse failed", "index", i, "item id", item.Id, "item type", item.GetType(), "error", err)
+				return nil
+			}
+
+			mappedItems[i] = searchItem
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return api.SearchResponse{}, fmt.Errorf("map search items: %w", err)
+	}
+
+	for i := range resp.Items {
+		if mappedItems[i] != nil {
+			searchResp.Items = append(searchResp.Items, mappedItems[i])
+		}
 	}
 
 	return searchResp, nil
@@ -106,9 +191,10 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 // To add a new type, only this map needs to change.
 var resourceTypeMatrix = map[api.ResourceType]metadataclient.ResourceType{
 	api.DatasetType:             metadataclient.DATASET,
-	api.DistributionType:        metadataclient.DISTRIBUTION,
 	api.SoftwareApplicationType: metadataclient.SOFTWAREAPPLICATION,
 	api.SoftwareSourceCodeType:  metadataclient.SOFTWARESOURCECODE,
+	api.OrganizationType:        metadataclient.ORGANIZATION,
+	api.WebserviceType:          metadataclient.WEBSERVICE,
 }
 
 func toMetadataResourceType(t api.ResourceType) (metadataclient.ResourceType, error) {
@@ -128,45 +214,19 @@ func fromMetadataResourceType(t metadataclient.ResourceType) (api.ResourceType, 
 	return "", fmt.Errorf("unsupported metadata resource type: %q", t)
 }
 
-func toAPISearchItem(item metadataclient.SearchItem) (api.SearchItem, error) {
-	actual := item.GetActualInstanceValue()
-	switch typed := actual.(type) {
-	case metadataclient.DatasetSearchItem:
-		return api.DatasetItem{
-			BaseSearchItem: api.BaseSearchItem{
-				Type: api.DatasetType,
-				ID:   typed.GetId(),
-				Name: typed.GetName(),
-				Href: typed.GetHref(),
-			},
-			DataProviders: typed.GetServiceProviders(), // TODO: these should be data providers in the metadata lifecycle, not service providers
-			Concepts:      typed.GetCategories(),
-			Operations:    []string{}, // TODO the aggregation
-		}, nil
-	case metadataclient.GenericSearchItem:
-		resourceType, err := fromMetadataResourceType(metadataclient.ResourceType(typed.GetType()))
-		if err != nil {
-			return nil, err
-		}
-
-		baseItem := api.BaseSearchItem{
-			Type: resourceType,
-			ID:   typed.GetId(),
-			Name: typed.GetName(),
-			Href: typed.GetHref(),
-		}
-
-		// as of now there is no distinction between these types in the metadata lifecycle, when there will be these can be implemented
-		switch resourceType {
-		case api.SoftwareApplicationType:
-			return api.SoftwareApplicationItem{BaseSearchItem: baseItem}, nil
-		case api.SoftwareSourceCodeType:
-			return api.SoftwareSourceCodeItem{BaseSearchItem: baseItem}, nil
-		// TODO: add organizations
-		default:
-			return nil, fmt.Errorf("unsupported gateway resource type: %q", resourceType)
-		}
+func (s *Service) toAPISearchItem(ctx context.Context, item metadataclient.SearchItem) (api.SearchItem, error) {
+	switch item.GetType() {
+	case metadataclient.DATASET:
+		return s.mapDatasetItem(ctx, item)
+	case metadataclient.ORGANIZATION:
+		return mapOrganizationItem(item)
+	case metadataclient.SOFTWAREAPPLICATION:
+		return s.mapSoftwareApplicationItem(ctx, item)
+	case metadataclient.SOFTWARESOURCECODE:
+		return s.mapSoftwareSourceCodeItem(ctx, item)
+	case metadataclient.WEBSERVICE:
+		return s.mapWebServiceItem(ctx, item)
 	default:
-		return nil, fmt.Errorf("unsupported metadata search item type %T", actual)
+		return nil, fmt.Errorf("unsupported metadata resource type: %q", item.GetType())
 	}
 }
