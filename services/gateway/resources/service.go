@@ -22,10 +22,6 @@ func NewService(metadataClient *metadataclient.APIClient) *Service {
 	}
 }
 
-func (s *Service) GetConceptByID(id string) (api.Concept, error) {
-	return api.Concept{}, domain.ErrNotImplemented
-}
-
 func (s *Service) GetSoftwareApplicationByID(id string) (api.SoftwareApplication, error) {
 	return api.SoftwareApplication{}, domain.ErrNotImplemented
 }

@@ -287,7 +287,7 @@ paths:
       tags:
         - Resources
       summary: Get concept by id
-      description: Returns a single concept node with its full subtree of children.
+      description: Returns a single concept node with direct child references.
       operationId: getConceptById
       responses:
         "200":
@@ -296,6 +296,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Concept"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /conceptscheme/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get concept scheme by id
+      operationId: getConceptSchemeById
+      responses:
+        "200":
+          description: Concept scheme found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptScheme"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -1412,11 +1432,15 @@ components:
         description:
           type: string
           example: "Resources related to seismic monitoring and analysis."
+        in_scheme:
+          description: Concept scheme containing this concept
+          allOf:
+            - $ref: "#/components/schemas/ResourceRef"
         children:
           type: array
-          description: Nested child concepts
+          description: Child concepts directly below this concept
           items:
-            $ref: "#/components/schemas/Concept"
+            $ref: "#/components/schemas/ResourceRef"
 
     ConceptScheme:
       type: object
@@ -1456,16 +1480,17 @@ components:
           example: 1
         type:
           type: string
-          enum:
-            - DATA
-            - FACILITY
-            - SOFTWARE
-          example: "DATA"
+          example: "http://www.w3.org/2004/02/skos/core#ConceptScheme"
         children:
           type: array
-          description: Top-level concepts within this scheme
+          description: Nested child concepts used by concept tree responses
           items:
             $ref: "#/components/schemas/Concept"
+        top_concepts:
+          type: array
+          description: Top concepts directly contained in this concept scheme
+          items:
+            $ref: "#/components/schemas/ResourceRef"
 
     ConceptTreeResponse:
       type: object

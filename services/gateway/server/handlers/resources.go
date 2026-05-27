@@ -20,13 +20,24 @@ func NewResources(service *resources.Service) *Resources {
 
 func (h *Resources) GetConceptByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	concept, err := h.service.GetConceptByID(id)
+	concept, err := h.service.GetConceptByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(w, err)
 		return
 	}
 
 	writeJSON(w, http.StatusOK, concept)
+}
+
+func (h *Resources) GetConceptSchemeByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	conceptScheme, err := h.service.GetConceptSchemeByID(r.Context(), id)
+	if err != nil {
+		h.writeResourceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, conceptScheme)
 }
 
 func (h *Resources) GetDatasetByID(w http.ResponseWriter, r *http.Request) {

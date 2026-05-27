@@ -12,11 +12,12 @@ const (
 	WebserviceType          ResourceType = "webservice"
 	DistributionType        ResourceType = "distribution"
 	ConceptType             ResourceType = "concept"
+	ConceptSchemeType       ResourceType = "conceptscheme"
 )
 
 func (t ResourceType) IsValid() bool {
 	switch t {
-	case DatasetType, SoftwareApplicationType, SoftwareSourceCodeType, OrganizationType, WebserviceType, DistributionType, ConceptType:
+	case DatasetType, SoftwareApplicationType, SoftwareSourceCodeType, OrganizationType, WebserviceType, DistributionType, ConceptType, ConceptSchemeType:
 		return true
 	default:
 		return false
