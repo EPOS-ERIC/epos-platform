@@ -33,7 +33,3 @@ func (s *Service) GetSoftwareApplicationByID(id string) (api.SoftwareApplication
 func (s *Service) GetSoftwareSourceCodeByID(id string) (api.SoftwareSourceCode, error) {
 	return api.SoftwareSourceCode{}, domain.ErrNotImplemented
 }
-
-func (s *Service) GetOrganizationByID(id string) (api.Organization, error) {
-	return api.Organization{}, domain.ErrNotImplemented
-}

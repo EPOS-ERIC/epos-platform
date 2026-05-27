@@ -8,7 +8,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const propertyValueShape = "propertyvalue"
+
 func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) ([]api.Identifier, error) {
+	// TODO: fix/semplify this once the metadata-lifecycle fixes the identifiers in all the entities
 	reader := newPropertyReader(properties)
 	items, err := reader.items("identifier")
 	if err != nil || len(items) == 0 {
@@ -55,13 +58,31 @@ func mapIdentifierItem(ctx context.Context, item propertyItem, fetch accessDetai
 		return api.Identifier{}, nil
 	}
 
-	detail, err := fetch(ctx, "identifier", item.ID)
+	shape := firstNonEmpty(item.Type, "identifier")
+	detail, err := fetch(ctx, shape, item.ID)
 	if err != nil {
 		return api.Identifier{}, err
 	}
 
 	properties := detail.GetProperties()
 	reader := newPropertyReader(properties)
+	if shape == propertyValueShape {
+		values, err := reader.items("pg_value")
+		if err != nil {
+			return api.Identifier{}, fmt.Errorf("get property value identifier value: %w", err)
+		}
+
+		value := ""
+		if len(values) > 0 {
+			value = firstNonEmpty(values[0].Value, values[0].ID, values[0].Title)
+		}
+
+		return api.Identifier{
+			Type:  reader.optionalString("propertyID"),
+			Value: value,
+		}, nil
+	}
+
 	return api.Identifier{
 		Type:  reader.optionalString("scheme agency"),
 		Value: reader.optionalString("notation"),

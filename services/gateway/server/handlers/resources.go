@@ -86,7 +86,7 @@ func (h *Resources) GetWebserviceByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *Resources) GetOrganizationByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	organization, err := h.service.GetOrganizationByID(id)
+	organization, err := h.service.GetOrganizationByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(w, err)
 		return

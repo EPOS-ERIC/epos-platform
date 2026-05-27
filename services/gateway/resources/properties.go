@@ -13,6 +13,7 @@ import (
 
 type propertyItem struct {
 	ID    string
+	Type  string
 	Title string
 	Href  string
 	Value string
@@ -59,6 +60,7 @@ func (r propertyReader) items(key string) ([]propertyItem, error) {
 		case map[string]any:
 			item := propertyItem{
 				ID:    r.mapString(typed, "id"),
+				Type:  r.mapString(typed, "type"),
 				Title: firstNonEmpty(r.mapString(typed, "title"), r.mapString(typed, "name")),
 				Href:  r.mapString(typed, "href"),
 				Value: r.mapString(typed, "value"),
