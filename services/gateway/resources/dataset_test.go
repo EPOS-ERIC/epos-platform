@@ -45,7 +45,7 @@ func TestMapDataset(t *testing.T) {
 		},
 	}
 
-	dataset, err := mapDataset(detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
+	dataset, err := mapDataset(context.Background(), detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
 		_ = ctx
 		switch {
 		case shape == identifierShape && id == "identifier-1":

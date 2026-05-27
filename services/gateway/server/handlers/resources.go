@@ -31,7 +31,7 @@ func (h *Resources) GetConceptByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *Resources) GetDatasetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	dataset, err := h.service.GetDatasetByID(id)
+	dataset, err := h.service.GetDatasetByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(w, err)
 		return

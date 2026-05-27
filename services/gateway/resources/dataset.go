@@ -12,17 +12,17 @@ import (
 
 type accessDetailFetcher func(ctx context.Context, shape, id string) (*metadataclient.AccessDetailResponse, error)
 
-func (s *Service) GetDatasetByID(id string) (api.Dataset, error) {
+func (s *Service) GetDatasetByID(ctx context.Context, id string) (api.Dataset, error) {
 	fetchDetail := func(ctx context.Context, shape, id string) (*metadataclient.AccessDetailResponse, error) {
 		return metadataaccess.FetchDetail(ctx, s.metadataClient, shape, id)
 	}
 
-	detail, err := fetchDetail(context.Background(), string(api.DatasetType), id)
+	detail, err := fetchDetail(ctx, string(api.DatasetType), id)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("fetch dataset %q detail: %w", id, err)
 	}
 
-	dataset, err := mapDataset(detail, fetchDetail)
+	dataset, err := mapDataset(ctx, detail, fetchDetail)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("map dataset %q detail: %w", id, err)
 	}
@@ -30,7 +30,7 @@ func (s *Service) GetDatasetByID(id string) (api.Dataset, error) {
 	return dataset, nil
 }
 
-func mapDataset(detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Dataset, error) {
+func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Dataset, error) {
 	properties := detail.GetProperties()
 	reader := newPropertyReader(properties)
 
@@ -59,7 +59,7 @@ func mapDataset(detail *metadataclient.AccessDetailResponse, fetch accessDetailF
 		return api.Dataset{}, fmt.Errorf("get dataset issued: %w", err)
 	}
 
-	identifiers, temporal, spatial, qualityAnnotation, err := aggregateDatasetEntities(context.Background(), properties, fetch)
+	identifiers, temporal, spatial, qualityAnnotation, err := aggregateDatasetEntities(ctx, properties, fetch)
 	if err != nil {
 		return api.Dataset{}, err
 	}
