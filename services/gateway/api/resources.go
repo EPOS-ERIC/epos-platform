@@ -4,9 +4,10 @@ import "time"
 
 type Dataset struct {
 	BaseDetailResource
-	Created            *time.Time       `json:"created,omitempty"`
-	Modified           *time.Time       `json:"modified,omitempty"`
-	VersionInfo        string           `json:"version_info,omitempty"`
+	Created     *time.Time `json:"created,omitempty"`
+	Modified    *time.Time `json:"modified,omitempty"`
+	VersionInfo string     `json:"version_info,omitempty"`
+	// TODO: see if we should even return these, even if just returning the ids, they could expose the emails
 	ContactPoints      []ResourceRef    `json:"contact_points,omitempty"`
 	Keywords           []string         `json:"keywords,omitempty"`
 	Concepts           []ResourceRef    `json:"concepts,omitempty"`

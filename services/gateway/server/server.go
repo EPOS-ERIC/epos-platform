@@ -26,7 +26,7 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 	}
 
 	discoveryService := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
-	resourcesService := resources.NewService()
+	resourcesService := resources.NewService(metadataClient)
 
 	httpServer := &http.Server{
 		Addr:        cfg.Server.Listen,

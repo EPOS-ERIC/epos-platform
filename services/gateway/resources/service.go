@@ -5,39 +5,43 @@ import (
 	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
 type Service struct {
-	log *slog.Logger
+	log            *slog.Logger
+	metadataClient *metadataclient.APIClient
 }
 
-func NewService() *Service {
+func NewService(metadataClient *metadataclient.APIClient) *Service {
 	return &Service{
-		log: logging.Get("resources-service"),
+		log:            logging.Get("resources-service"),
+		metadataClient: metadataClient,
 	}
 }
 
-func (s *Service) GetConceptByID() error {
-	return domain.ErrNotImplemented
+func (s *Service) GetConceptByID(id string) (api.Concept, error) {
+	return api.Concept{}, domain.ErrNotImplemented
 }
 
-func (s *Service) GetDistributionByID() error {
-	return domain.ErrNotImplemented
+func (s *Service) GetDistributionByID(id string) (api.Distribution, error) {
+	return api.Distribution{}, domain.ErrNotImplemented
 }
 
-func (s *Service) GetSoftwareApplicationByID() error {
-	return domain.ErrNotImplemented
+func (s *Service) GetSoftwareApplicationByID(id string) (api.SoftwareApplication, error) {
+	return api.SoftwareApplication{}, domain.ErrNotImplemented
 }
 
-func (s *Service) GetSoftwareSourceCodeByID() error {
-	return domain.ErrNotImplemented
+func (s *Service) GetSoftwareSourceCodeByID(id string) (api.SoftwareSourceCode, error) {
+	return api.SoftwareSourceCode{}, domain.ErrNotImplemented
 }
 
-func (s *Service) GetWebserviceByID() error {
-	return domain.ErrNotImplemented
+func (s *Service) GetWebserviceByID(id string) (api.Webservice, error) {
+	return api.Webservice{}, domain.ErrNotImplemented
 }
 
-func (s *Service) GetOrganizationByID() error {
-	return domain.ErrNotImplemented
+func (s *Service) GetOrganizationByID(id string) (api.Organization, error) {
+	return api.Organization{}, domain.ErrNotImplemented
 }
