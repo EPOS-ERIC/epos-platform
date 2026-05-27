@@ -75,7 +75,7 @@ func (h *Resources) GetSoftwareSourceCodeByID(w http.ResponseWriter, r *http.Req
 
 func (h *Resources) GetWebserviceByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	webservice, err := h.service.GetWebserviceByID(id)
+	webservice, err := h.service.GetWebserviceByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(w, err)
 		return

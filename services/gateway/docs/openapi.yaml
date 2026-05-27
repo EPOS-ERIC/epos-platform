@@ -1224,17 +1224,13 @@ components:
                   name: "Webservice support desk"
                   href: "v1/contact-point/contact-point-1"
             provider:
-              type: array
-              description: Organizations providing this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
+              description: Primary organization providing this webservice
+              allOf:
+                - $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-456"
-                  name: "University of Naples Federico II"
-                  href: "v1/organization/org-456"
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                id: "org-456"
+                name: "University of Naples Federico II"
+                href: "v1/organization/org-456"
             issued:
               type: string
               format: date-time
@@ -1276,6 +1272,8 @@ components:
               description: Operations supported by this webservice
               items:
                 $ref: "#/components/schemas/Operation"
+            api_documentation:
+              $ref: "#/components/schemas/ApiDocumentation"
 
     Operation:
       type: object

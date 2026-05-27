@@ -134,6 +134,17 @@ func (r propertyReader) requiredString(key string) (string, error) {
 	return value, nil
 }
 
+func (r propertyReader) requiredStringOneOf(keys ...string) (string, error) {
+	for _, key := range keys {
+		value := r.optionalString(key)
+		if value != "" {
+			return value, nil
+		}
+	}
+
+	return "", fmt.Errorf("missing fields %v", keys)
+}
+
 func (r propertyReader) optionalString(key string) string {
 	items, err := r.items(key)
 	if err != nil || len(items) == 0 {
@@ -178,6 +189,20 @@ func (r propertyReader) optionalTime(key string) (*time.Time, error) {
 	return nil, fmt.Errorf("parse '%s': unsupported time format '%s'", key, value)
 }
 
+func (r propertyReader) optionalTimeOneOf(keys ...string) (*time.Time, error) {
+	for _, key := range keys {
+		value, err := r.optionalTime(key)
+		if err != nil {
+			return nil, err
+		}
+		if value != nil {
+			return value, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (r propertyReader) optionalVersioningStatus(key string) (api.VersioningStatus, error) {
 	value := r.optionalString(key)
 	if value == "" {
@@ -216,6 +241,20 @@ func (r propertyReader) requiredBool(key string) (bool, error) {
 	}
 
 	return *value, nil
+}
+
+func (r propertyReader) itemsOneOf(keys ...string) ([]propertyItem, error) {
+	for _, key := range keys {
+		items, err := r.items(key)
+		if err != nil {
+			return nil, err
+		}
+		if len(items) > 0 {
+			return items, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func (r propertyReader) mapString(values map[string]any, key string) string {

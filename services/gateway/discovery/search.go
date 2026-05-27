@@ -28,7 +28,7 @@ var (
 func ValidateSearchTypes(types []api.ResourceType) error {
 	for _, resourceType := range types {
 		if !slices.Contains(supportedSearchTypes, resourceType) {
-			return fmt.Errorf("unsupported search type '%s'; allowed values: %s", resourceType, supportedSearchTypes)
+			return fmt.Errorf("unsupported search type %q; allowed values: %s", resourceType, supportedSearchTypes)
 		}
 	}
 

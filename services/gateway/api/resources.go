@@ -88,18 +88,19 @@ type Organization struct {
 
 type Webservice struct {
 	BaseDetailResource
-	Identifiers   []Identifier    `json:"identifiers,omitempty"`
-	Entrypoint    string          `json:"entrypoint,omitempty"`
-	ContactPoints []ResourceRef   `json:"contact_points,omitempty"`
-	Provider      []ResourceRef   `json:"provider,omitempty"`
-	Issued        *time.Time      `json:"issued,omitempty"`
-	Modified      *time.Time      `json:"modified,omitempty"`
-	Spatial       string          `json:"spatial,omitempty"`
-	Temporal      *TemporalExtent `json:"temporal,omitempty"`
-	Keywords      []string        `json:"keywords,omitempty"`
-	Concepts      []ResourceRef   `json:"concepts,omitempty"`
-	License       string          `json:"license,omitempty"`
-	Operations    []Operation     `json:"operations,omitempty"`
+	Identifiers      []Identifier      `json:"identifiers,omitempty"`
+	Entrypoint       string            `json:"entrypoint,omitempty"`
+	ContactPoints    []ResourceRef     `json:"contact_points,omitempty"`
+	Provider         ResourceRef       `json:"provider"`
+	Issued           *time.Time        `json:"issued,omitempty"`
+	Modified         *time.Time        `json:"modified,omitempty"`
+	Spatial          string            `json:"spatial,omitempty"`
+	Temporal         *TemporalExtent   `json:"temporal,omitempty"`
+	Keywords         []string          `json:"keywords,omitempty"`
+	Concepts         []ResourceRef     `json:"concepts,omitempty"`
+	License          string            `json:"license,omitempty"`
+	Operations       []Operation       `json:"operations,omitempty"`
+	APIDocumentation *APIDocumentation `json:"api_documentation,omitempty"`
 }
 
 type Operation struct {
