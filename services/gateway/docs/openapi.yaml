@@ -909,25 +909,77 @@ components:
               example: "3.1.0"
 
     Distribution:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistribution"
+        - $ref: "#/components/schemas/DownloadableFileDistribution"
+      discriminator:
+        propertyName: type
+        mapping:
+          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistribution"
+          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistribution"
+
+    DistributionBase:
       allOf:
         - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
-          required:
-            - access_url
           properties:
-            access_url:
-              type: string
-              format: uri
-              description: URL used to access the distribution
-              example: "https://service.example.org/fdsnws/station/1/query"
-            operation:
-              $ref: "#/components/schemas/Operation"
-            webservice:
-              $ref: "#/components/schemas/ResourceRef"
             format:
               type: string
               description: File format of the distribution
               example: "application/xml"
+            issued:
+              type: string
+              format: date-time
+              description: Distribution publication timestamp in ISO 8601 UTC
+              example: "2024-02-01T00:00:00Z"
+            modified:
+              type: string
+              format: date-time
+              description: Distribution last modification timestamp in ISO 8601 UTC
+              example: "2024-03-01T08:45:00Z"
+            license:
+              type: string
+              format: uri
+              description: License under which the distribution can be used or reused
+              example: "https://creativecommons.org/licenses/by-nc/4.0/"
+
+    WebServiceDistribution:
+      allOf:
+        - $ref: "#/components/schemas/DistributionBase"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              description: Distribution delivery kind
+              enum:
+                - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+              example: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+            webservice:
+              $ref: "#/components/schemas/ResourceRef"
+            operation:
+              $ref: "#/components/schemas/Operation"
+
+    DownloadableFileDistribution:
+      allOf:
+        - $ref: "#/components/schemas/DistributionBase"
+        - type: object
+          required:
+            - type
+            - download_url
+          properties:
+            type:
+              type: string
+              description: Distribution delivery kind
+              enum:
+                - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+              example: "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+            download_url:
+              type: string
+              format: uri
+              description: Direct download URL for downloadable-file distributions.
+              example: "https://example.org/download/file.xml"
 
     SoftwareApplication:
       allOf:
@@ -1238,9 +1290,13 @@ components:
           description: HTTP method used by the operation
           example: "GET"
         returns:
-          type: string
-          description: Output media type returned by the operation
-          example: "application/xml"
+          type: array
+          description: Output media types returned by the operation
+          items:
+            type: string
+          example:
+            - "application/xml"
+            - "application/json"
         iri_template:
           $ref: "#/components/schemas/IriTemplate"
         api_documentation:

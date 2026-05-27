@@ -62,10 +62,14 @@ type SoftwareSourceCode struct {
 
 type Distribution struct {
 	BaseDetailResource
-	AccessURL  string       `json:"access_url,omitempty"`
-	Operation  *Operation   `json:"operation,omitempty"`
-	Webservice *ResourceRef `json:"webservice,omitempty"`
-	Format     string       `json:"format,omitempty"`
+	DownloadURL string           `json:"download_url,omitempty"`
+	Operation   *Operation       `json:"operation,omitempty"`
+	Webservice  *ResourceRef     `json:"webservice,omitempty"`
+	Format      string           `json:"format,omitempty"`
+	Issued      *time.Time       `json:"issued,omitempty"`
+	Modified    *time.Time       `json:"modified,omitempty"`
+	License     string           `json:"license,omitempty"`
+	Type        DistributionKind `json:"type,omitempty"`
 }
 
 type Organization struct {
@@ -101,7 +105,7 @@ type Webservice struct {
 type Operation struct {
 	ID               string            `json:"id"`
 	Method           string            `json:"method,omitempty"`
-	Returns          string            `json:"returns,omitempty"`
+	Returns          []string          `json:"returns,omitempty"`
 	IriTemplate      *IriTemplate      `json:"iri_template,omitempty"`
 	APIDocumentation *APIDocumentation `json:"api_documentation,omitempty"`
 }

@@ -42,7 +42,7 @@ func (h *Resources) GetDatasetByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *Resources) GetDistributionByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	distribution, err := h.service.GetDistributionByID(id)
+	distribution, err := h.service.GetDistributionByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(w, err)
 		return

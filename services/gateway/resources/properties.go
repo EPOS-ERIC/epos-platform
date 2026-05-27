@@ -2,6 +2,7 @@ package resources
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -189,6 +190,32 @@ func (r propertyReader) optionalVersioningStatus(key string) (api.VersioningStat
 	}
 
 	return status, nil
+}
+
+func (r propertyReader) optionalBool(key string) (*bool, error) {
+	value := r.optionalString(key)
+	if value == "" {
+		return nil, nil
+	}
+
+	parsedValue, err := strconv.ParseBool(value)
+	if err != nil {
+		return nil, fmt.Errorf("parse %q bool: %w", key, err)
+	}
+
+	return &parsedValue, nil
+}
+
+func (r propertyReader) requiredBool(key string) (bool, error) {
+	value, err := r.optionalBool(key)
+	if err != nil {
+		return false, err
+	}
+	if value == nil {
+		return false, fmt.Errorf("missing field %q", key)
+	}
+
+	return *value, nil
 }
 
 func (r propertyReader) mapString(values map[string]any, key string) string {

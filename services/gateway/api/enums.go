@@ -58,3 +58,28 @@ func NewVersioningStatusFromValue(value string) (VersioningStatus, error) {
 
 	return "", fmt.Errorf("invalid value %q for VersioningStatus", value)
 }
+
+type DistributionKind string
+
+const (
+	DistributionKindWebService       DistributionKind = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+	DistributionKindDownloadableFile DistributionKind = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+)
+
+func (t DistributionKind) IsValid() bool {
+	switch t {
+	case DistributionKindWebService, DistributionKindDownloadableFile:
+		return true
+	default:
+		return false
+	}
+}
+
+func NewDistributionKindFromValue(value string) (DistributionKind, error) {
+	distributionKind := DistributionKind(value)
+	if distributionKind.IsValid() {
+		return distributionKind, nil
+	}
+
+	return "", fmt.Errorf("invalid value %q for DistributionKind", value)
+}

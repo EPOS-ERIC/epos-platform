@@ -26,10 +26,6 @@ func (s *Service) GetConceptByID(id string) (api.Concept, error) {
 	return api.Concept{}, domain.ErrNotImplemented
 }
 
-func (s *Service) GetDistributionByID(id string) (api.Distribution, error) {
-	return api.Distribution{}, domain.ErrNotImplemented
-}
-
 func (s *Service) GetSoftwareApplicationByID(id string) (api.SoftwareApplication, error) {
 	return api.SoftwareApplication{}, domain.ErrNotImplemented
 }
