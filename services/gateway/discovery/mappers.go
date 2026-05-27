@@ -60,7 +60,7 @@ func (s *Service) mapDatasetItem(ctx context.Context, item metadataclient.Search
 	})
 
 	if err := g.Wait(); err != nil {
-		return api.DatasetItem{}, err
+		return api.DatasetItem{}, fmt.Errorf("map dataset item dependencies: %w", err)
 	}
 
 	return api.DatasetItem{
@@ -171,7 +171,7 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 	})
 
 	if err := g.Wait(); err != nil {
-		return api.WebServiceItem{}, err
+		return api.WebServiceItem{}, fmt.Errorf("map webservice item dependencies: %w", err)
 	}
 
 	return api.WebServiceItem{

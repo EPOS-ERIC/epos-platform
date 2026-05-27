@@ -17,55 +17,55 @@ func TestMapDistribution(t *testing.T) {
 		Shape: "distribution",
 		Href:  "/api/v2/access/distribution/distribution-1",
 		Properties: map[string]any{
-			titleKey:      "Distribution title",
-			"description": "Distribution description",
-			"issued":      "2024-03-04T05:06:07Z",
-			"modified":    "2024-04-05T06:07:08Z",
-			"license":     "https://creativecommons.org/licenses/by-nc/4.0/",
-			"format":      "application/xml",
-			"type": []any{
+			titleKey:       distributionTitle,
+			descriptionKey: "Distribution description",
+			"issued":       "2024-03-04T05:06:07Z",
+			"modified":     "2024-04-05T06:07:08Z",
+			"license":      "https://creativecommons.org/licenses/by-nc/4.0/",
+			"format":       "application/xml",
+			typeKey: []any{
 				genericDistributionTypeIRI,
 				string(api.DistributionKindWebService),
 			},
 			"conformsTo": map[string]any{"id": "webservice-1", titleKey: "Webservice 1"},
-			"accessURL":  map[string]any{"id": "operation-1", "type": "operation"},
+			accessURLKey: map[string]any{"id": operationID1, typeKey: operationType},
 		},
 	}
 
 	distribution, err := mapDistribution(context.Background(), detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
 		_ = ctx
 		switch {
-		case shape == "operation" && id == "operation-1":
+		case shape == operationType && id == operationID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				"method":        "GET",
 				"returns":       []any{"text/csv", "application/json"},
-				"pgProperty":    map[string]any{"id": "iri-template-1", "type": "iritemplate"},
+				"pgProperty":    map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
 				"documentation": map[string]any{"id": "api-doc-1", titleKey: "API docs"},
 			}}, nil
-		case shape == "iritemplate" && id == "iri-template-1":
+		case shape == iriTemplateType && id == iriTemplateID:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				"template": "https://example.org/query{?station}",
 				"mapping": []any{
-					map[string]any{"id": "mapping-1", "type": "iritemplatemapping"},
-					map[string]any{"id": "mapping-2", "type": "iritemplatemapping"},
+					map[string]any{"id": mappingID1, typeKey: iriTemplateMappingType},
+					map[string]any{"id": "mapping-2", typeKey: iriTemplateMappingType},
 				},
 			}}, nil
-		case shape == "iritemplatemapping" && id == "mapping-1":
+		case shape == iriTemplateMappingType && id == mappingID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"variable":     "station",
-				"pg_label":     "Station code",
-				"range":        "xsd:string",
-				"required":     "true",
+				variableKey:    "station",
+				"pg_label":     stationCodeLabel,
+				rangeKey:       xsdStringRange,
+				requiredKey:    "true",
 				"defaultValue": "ABC",
 				"paramValue":   []any{"ABC", "DEF"},
 			}}, nil
-		case shape == "iritemplatemapping" && id == "mapping-2":
+		case shape == iriTemplateMappingType && id == "mapping-2":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"variable":       "channel",
+				variableKey:      "channel",
 				"label":          "Channel",
-				"range":          "xsd:string",
+				rangeKey:         xsdStringRange,
 				"property":       "http://schema.org/name",
-				"required":       "false",
+				requiredKey:      "false",
 				"minValue":       "1",
 				"maxValue":       "3",
 				"multipleValues": "true",
@@ -74,9 +74,9 @@ func TestMapDistribution(t *testing.T) {
 			}}, nil
 		case shape == "apidocumentation" && id == "api-doc-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				titleKey:      "API docs",
-				"description": "Operation documentation",
-				"entrypoint":  "https://example.org/docs",
+				titleKey:       "API docs",
+				descriptionKey: "Operation documentation",
+				"entrypoint":   "https://example.org/docs",
 			}}, nil
 		default:
 			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
@@ -89,7 +89,7 @@ func TestMapDistribution(t *testing.T) {
 	if distribution.ID != "distribution-1" {
 		t.Fatalf("distribution.ID = %q", distribution.ID)
 	}
-	if distribution.Name != "Distribution title" {
+	if distribution.Name != distributionTitle {
 		t.Fatalf("distribution.Name = %q", distribution.Name)
 	}
 	if distribution.Description != "Distribution description" {
@@ -152,8 +152,8 @@ func TestMapDistributionInvalidType(t *testing.T) {
 
 	_, err := mapDistribution(context.Background(), &metadataclient.AccessDetailResponse{
 		Properties: map[string]any{
-			titleKey: "Distribution title",
-			"type":   []any{genericDistributionTypeIRI, "unsupported-type"},
+			titleKey: distributionTitle,
+			typeKey:  []any{genericDistributionTypeIRI, "unsupported-type"},
 		},
 	}, nil)
 	if err == nil {
@@ -167,9 +167,9 @@ func TestMapDistributionDownloadableFileDownloadURL(t *testing.T) {
 	distribution, err := mapDistribution(context.Background(), &metadataclient.AccessDetailResponse{
 		Id: "distribution-download-1",
 		Properties: map[string]any{
-			titleKey:    "Downloadable distribution",
-			"type":      []any{string(api.DistributionKindDownloadableFile)},
-			"accessURL": []any{"https://example.org/download/file.xml"},
+			titleKey:     "Downloadable distribution",
+			typeKey:      []any{string(api.DistributionKindDownloadableFile)},
+			accessURLKey: []any{"https://example.org/download/file.xml"},
 		},
 	}, nil)
 	if err != nil {
@@ -192,27 +192,27 @@ func TestMapDistributionInvalidMappingRequired(t *testing.T) {
 
 	_, err := mapDistribution(context.Background(), &metadataclient.AccessDetailResponse{
 		Properties: map[string]any{
-			titleKey:    "Distribution title",
-			"accessURL": map[string]any{"id": "operation-1", "type": "operation"},
+			titleKey:     distributionTitle,
+			accessURLKey: map[string]any{"id": operationID1, typeKey: operationType},
 		},
 	}, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
 		_ = ctx
 		switch {
-		case shape == "operation" && id == "operation-1":
+		case shape == operationType && id == operationID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"pg_property": map[string]any{"id": "iri-template-1", "type": "iritemplate"},
+				"pg_property": map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
 			}}, nil
-		case shape == "iritemplate" && id == "iri-template-1":
+		case shape == iriTemplateType && id == iriTemplateID:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				"template": "https://example.org/query{?station}",
-				"mapping":  []any{map[string]any{"id": "mapping-1", "type": "iritemplatemapping"}},
+				"mapping":  []any{map[string]any{"id": mappingID1, typeKey: iriTemplateMappingType}},
 			}}, nil
-		case shape == "iritemplatemapping" && id == "mapping-1":
+		case shape == iriTemplateMappingType && id == mappingID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"variable": "station",
-				"pg_label": "Station code",
-				"range":    "xsd:string",
-				"required": "not-a-bool",
+				variableKey: "station",
+				"pg_label":  "Station code",
+				rangeKey:    xsdStringRange,
+				requiredKey: "not-a-bool",
 			}}, nil
 		default:
 			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)

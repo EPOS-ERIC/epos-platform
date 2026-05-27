@@ -28,7 +28,7 @@ var (
 func ValidateSearchTypes(types []api.ResourceType) error {
 	for _, resourceType := range types {
 		if !slices.Contains(supportedSearchTypes, resourceType) {
-			return fmt.Errorf("unsupported search type %q; allowed values: %s", resourceType, supportedSearchTypes)
+			return fmt.Errorf("unsupported search type '%s'; allowed values: %s", resourceType, supportedSearchTypes)
 		}
 	}
 
@@ -200,7 +200,7 @@ var resourceTypeMatrix = map[api.ResourceType]metadataclient.ResourceType{
 func toMetadataResourceType(t api.ResourceType) (metadataclient.ResourceType, error) {
 	v, ok := resourceTypeMatrix[t]
 	if !ok {
-		return "", fmt.Errorf("unsupported gateway resource type: %q", t)
+		return "", fmt.Errorf("unsupported gateway resource type: '%s'", t)
 	}
 	return v, nil
 }
@@ -211,7 +211,7 @@ func fromMetadataResourceType(t metadataclient.ResourceType) (api.ResourceType, 
 			return gw, nil
 		}
 	}
-	return "", fmt.Errorf("unsupported metadata resource type: %q", t)
+	return "", fmt.Errorf("unsupported metadata resource type: '%s'", t)
 }
 
 func (s *Service) toAPISearchItem(ctx context.Context, item metadataclient.SearchItem) (api.SearchItem, error) {
@@ -227,6 +227,6 @@ func (s *Service) toAPISearchItem(ctx context.Context, item metadataclient.Searc
 	case metadataclient.WEBSERVICE:
 		return s.mapWebServiceItem(ctx, item)
 	default:
-		return nil, fmt.Errorf("unsupported metadata resource type: %q", item.GetType())
+		return nil, fmt.Errorf("unsupported metadata resource type: '%s'", item.GetType())
 	}
 }

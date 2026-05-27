@@ -128,7 +128,7 @@ func (r propertyReader) optionalResourceRef(key string, resourceType api.Resourc
 func (r propertyReader) requiredString(key string) (string, error) {
 	value := r.optionalString(key)
 	if value == "" {
-		return "", fmt.Errorf("missing field %q", key)
+		return "", fmt.Errorf("missing field '%s'", key)
 	}
 
 	return value, nil
@@ -175,7 +175,7 @@ func (r propertyReader) optionalTime(key string) (*time.Time, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("parse %q: unsupported time format %q", key, value)
+	return nil, fmt.Errorf("parse '%s': unsupported time format '%s'", key, value)
 }
 
 func (r propertyReader) optionalVersioningStatus(key string) (api.VersioningStatus, error) {
@@ -186,7 +186,7 @@ func (r propertyReader) optionalVersioningStatus(key string) (api.VersioningStat
 
 	status, err := api.NewVersioningStatusFromValue(value)
 	if err != nil {
-		return "", fmt.Errorf("parse %q versioning status: %w", key, err)
+		return "", fmt.Errorf("parse '%s' versioning status: %w", key, err)
 	}
 
 	return status, nil
@@ -200,7 +200,7 @@ func (r propertyReader) optionalBool(key string) (*bool, error) {
 
 	parsedValue, err := strconv.ParseBool(value)
 	if err != nil {
-		return nil, fmt.Errorf("parse %q bool: %w", key, err)
+		return nil, fmt.Errorf("parse '%s' bool: %w", key, err)
 	}
 
 	return &parsedValue, nil
@@ -212,7 +212,7 @@ func (r propertyReader) requiredBool(key string) (bool, error) {
 		return false, err
 	}
 	if value == nil {
-		return false, fmt.Errorf("missing field %q", key)
+		return false, fmt.Errorf("missing field '%s'", key)
 	}
 
 	return *value, nil

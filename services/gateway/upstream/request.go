@@ -52,13 +52,13 @@ func snapshotRequestBody(req *nethttp.Request) ([]byte, bool, error) {
 	if req.GetBody != nil {
 		body, err := req.GetBody()
 		if err != nil {
-			return nil, true, err
+			return nil, true, fmt.Errorf("clone request body: %w", err)
 		}
 		defer body.Close()
 
 		data, err := io.ReadAll(body)
 		if err != nil {
-			return nil, true, err
+			return nil, true, fmt.Errorf("read cloned request body: %w", err)
 		}
 
 		return data, true, nil
@@ -66,11 +66,11 @@ func snapshotRequestBody(req *nethttp.Request) ([]byte, bool, error) {
 
 	data, err := io.ReadAll(req.Body)
 	if err != nil {
-		return nil, true, err
+		return nil, true, fmt.Errorf("read request body: %w", err)
 	}
 
 	if err := req.Body.Close(); err != nil {
-		return nil, true, err
+		return nil, true, fmt.Errorf("close request body: %w", err)
 	}
 
 	req.Body = io.NopCloser(bytes.NewReader(data))
@@ -148,7 +148,7 @@ func (p preparedRequest) newRequest(ctx context.Context) (*nethttp.Request, erro
 
 	req, err := nethttp.NewRequestWithContext(ctx, p.method, p.url, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("build upstream request: %w", err)
 	}
 
 	req.Header = p.header.Clone()

@@ -29,7 +29,7 @@ func NewResourceTypeFromValue(value string) (ResourceType, error) {
 		return resourceType, nil
 	}
 
-	return "", fmt.Errorf("invalid value %q for ResourceType", value)
+	return "", fmt.Errorf("invalid value '%s' for ResourceType", value)
 }
 
 type VersioningStatus string
@@ -56,7 +56,7 @@ func NewVersioningStatusFromValue(value string) (VersioningStatus, error) {
 		return status, nil
 	}
 
-	return "", fmt.Errorf("invalid value %q for VersioningStatus", value)
+	return "", fmt.Errorf("invalid value '%s' for VersioningStatus", value)
 }
 
 type DistributionKind string
@@ -81,5 +81,5 @@ func NewDistributionKindFromValue(value string) (DistributionKind, error) {
 		return distributionKind, nil
 	}
 
-	return "", fmt.Errorf("invalid value %q for DistributionKind", value)
+	return "", fmt.Errorf("invalid value '%s' for DistributionKind", value)
 }

@@ -2,6 +2,7 @@ package upstream
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -550,5 +551,5 @@ func (t *contextAwareTransport) RoundTrip(req *http.Request) (*http.Response, er
 	<-req.Context().Done()
 	t.once.Do(func() { close(t.ctxDone) })
 
-	return nil, req.Context().Err()
+	return nil, fmt.Errorf("round trip canceled: %w", req.Context().Err())
 }

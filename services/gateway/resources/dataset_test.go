@@ -11,9 +11,23 @@ import (
 )
 
 const (
-	titleKey        = "title"
-	typeKey         = "type"
-	identifierShape = "identifier"
+	titleKey               = "title"
+	typeKey                = "type"
+	descriptionKey         = "description"
+	accessURLKey           = "accessURL"
+	operationID1           = "operation-1"
+	operationType          = "operation"
+	iriTemplateType        = "iritemplate"
+	iriTemplateID          = "iri-template-1"
+	iriTemplateMappingType = "iritemplatemapping"
+	mappingID1             = "mapping-1"
+	variableKey            = "variable"
+	stationCodeLabel       = "Station code"
+	rangeKey               = "range"
+	xsdStringRange         = "xsd:string"
+	requiredKey            = "required"
+	distributionTitle      = "Distribution title"
+	identifierShape        = "identifier"
 )
 
 func TestMapDataset(t *testing.T) {
@@ -25,7 +39,7 @@ func TestMapDataset(t *testing.T) {
 		Href:  "/api/v2/access/dataset/dataset-1",
 		Properties: map[string]any{
 			titleKey:               "Dataset title",
-			"description":          "Dataset description",
+			descriptionKey:         "Dataset description",
 			"created":              "2024-01-02T03:04:05Z",
 			"modified":             "2024-02-03T04:05:06Z",
 			"issued":               "2024-03-04T05:06:07Z",

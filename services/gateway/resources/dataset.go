@@ -19,12 +19,12 @@ func (s *Service) GetDatasetByID(ctx context.Context, id string) (api.Dataset, e
 
 	detail, err := fetchDetail(ctx, string(api.DatasetType), id)
 	if err != nil {
-		return api.Dataset{}, fmt.Errorf("fetch dataset %q detail: %w", id, err)
+		return api.Dataset{}, fmt.Errorf("fetch dataset '%s' detail: %w", id, err)
 	}
 
 	dataset, err := mapDataset(ctx, detail, fetchDetail)
 	if err != nil {
-		return api.Dataset{}, fmt.Errorf("map dataset %q detail: %w", id, err)
+		return api.Dataset{}, fmt.Errorf("map dataset '%s' detail: %w", id, err)
 	}
 
 	return dataset, nil
