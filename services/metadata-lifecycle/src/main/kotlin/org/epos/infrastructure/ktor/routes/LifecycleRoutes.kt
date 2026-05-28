@@ -35,10 +35,9 @@ fun Route.lifecycleRoutes(
 
         post("/{id}/draft") {
             val conceptualUri = decodePathId(call.parameters["id"])
-            val newVersion = call.request.queryParameters["version"] ?: "2.0"
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
-            val response = resourceController.createNewDraft(conceptualUri, newVersion, actorHeaders.agent, actorHeaders.group)
+            val response = resourceController.createNewDraft(conceptualUri, actorHeaders.agent, actorHeaders.group)
             if (response.success) {
                 call.respond(HttpStatusCode.Created, response)
             } else {
@@ -65,7 +64,7 @@ fun Route.lifecycleRoutes(
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             try {
-                val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','published').limit(1).toList()")
+                val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','published').values('id').limit(1).toList()")
 
                 if (!exists) {
                     call.respond(
@@ -78,7 +77,7 @@ fun Route.lifecycleRoutes(
                 val conceptualUri = entityUri.substringBeforeLast("/")
                 val versionUri = entityUri
 
-                val conceptualExists = client.exists("g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).limit(1).toList()")
+                val conceptualExists = client.exists("g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).values('id').limit(1).toList()")
 
                 if (!conceptualExists) {
                     client.runWrite("""
@@ -93,7 +92,7 @@ fun Route.lifecycleRoutes(
                     g.V(c.id()).addE('CURRENT_VERSION').to(V(v.id())).iterate()
                 """.trimIndent())
 
-                val hasProvenance = client.exists("g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).in('AFFECTED').hasLabel('Activity').limit(1).toList()")
+                val hasProvenance = client.exists("g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).in('AFFECTED').hasLabel('Activity').values('id').limit(1).toList()")
 
                 if (!hasProvenance) {
                     provenanceService.recordInitialCreation(

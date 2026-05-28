@@ -18,7 +18,7 @@ class ResourceLinkResolverTest {
         } returns listOf(mapOf("value" to "PIC:999591306/v1.0"))
 
         every {
-            client.runQuery(match { it.contains("in('HAS_VERSION')") && it.contains("PIC:999591306/v1.0") }, any())
+            client.runQuery(match { it.contains("hasLabel('Conceptual')") && it.contains("PIC:999591306/v1.0") }, any())
         } returns listOf(mapOf("value" to "Organization"))
 
         val shape =

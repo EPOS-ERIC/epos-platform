@@ -309,7 +309,7 @@ fun Route.resourceCrudRoutes(
         }
 
         get("/{id}") {
-            val entityUri = call.parameters["id"] ?: ""
+            val entityUri = decodePathId(call.parameters["id"])
             val resourceType = call.parameters["resourceType"] ?: ""
             if (resourceType.equals("entities", ignoreCase = true)) {
                 call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Endpoint not found"))
@@ -321,17 +321,17 @@ fun Route.resourceCrudRoutes(
             val acceptHeader = call.request.header("Accept")?.lowercase() ?: "application/json"
             val requestedFormat = formatParam ?: acceptHeader
 
-            val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', ${gStr(status)}).limit(1).toList()")
+            val entity =
+                resourceController.getEntity(entityUri, status, enrichReferences = true)
+                    ?: resourceController.getEntityByConceptualId(entityUri, status, enrichReferences = true)
 
-            if (!exists) {
+            if (entity == null) {
                 call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
                 return@get
             }
 
             if (requestedFormat.contains("turtle") || requestedFormat == "ttl") {
-                val ttl = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToTurtle(entity, shaclService.getResourceTypes())
-                }
+                val ttl = convertEntityToTurtle(entity, shaclService.getResourceTypes())
                 if (!ttl.isNullOrEmpty()) {
                     call.respondText(ttl, ContentType.parse("text/turtle"))
                 } else {
@@ -341,9 +341,7 @@ fun Route.resourceCrudRoutes(
             }
 
             if (requestedFormat.contains("ld+json") || requestedFormat.contains("json-ld") || requestedFormat == "jsonld") {
-                val jsonld = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToJsonLd(entity, shaclService.getResourceTypes())
-                }
+                val jsonld = convertEntityToJsonLd(entity, shaclService.getResourceTypes())
                 if (!jsonld.isNullOrEmpty()) {
                     call.respondText(jsonld, ContentType.parse("application/ld+json"))
                 } else {
@@ -353,9 +351,7 @@ fun Route.resourceCrudRoutes(
             }
 
             if (requestedFormat.contains("rdf+xml") || requestedFormat == "rdfxml" || requestedFormat == "xml") {
-                val rdfxml = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToRdfXml(entity, shaclService.getResourceTypes())
-                }
+                val rdfxml = convertEntityToRdfXml(entity, shaclService.getResourceTypes())
                 if (!rdfxml.isNullOrEmpty()) {
                     call.respondText(rdfxml, ContentType.parse("application/rdf+xml"))
                 } else {
@@ -365,9 +361,7 @@ fun Route.resourceCrudRoutes(
             }
 
             if (requestedFormat.contains("n-triples") || requestedFormat.contains("ntriples") || requestedFormat == "nt") {
-                val ntriples = resourceController.getEntity(entityUri, status)?.let { entity ->
-                    convertEntityToNTriples(entity, shaclService.getResourceTypes())
-                }
+                val ntriples = convertEntityToNTriples(entity, shaclService.getResourceTypes())
                 if (!ntriples.isNullOrEmpty()) {
                     call.respondText(ntriples, ContentType.parse("application/n-triples"))
                 } else {
@@ -377,12 +371,7 @@ fun Route.resourceCrudRoutes(
             }
 
             if (requestedFormat.contains("json") || requestedFormat == "*/*") {
-                val response = resourceController.getEntity(entityUri, status, enrichReferences = true)
-                if (response != null) {
-                    call.respond(response)
-                } else {
-                    call.respond(HttpStatusCode.NotFound, ErrorResponse("NotFound", "Entity not found"))
-                }
+                call.respond(entity)
                 return@get
             }
 

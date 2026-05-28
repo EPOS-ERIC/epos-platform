@@ -141,13 +141,39 @@ internal object ResourceLinkResolver {
         normalizeShapeName: (String) -> String,
     ): String? {
         val versionId = resolveAccessEntityId(client, entityId) ?: return null
+        val conceptualFromVersion =
+            if (UriUtils.hasVersion(versionId)) {
+                UriUtils.extractConceptualUri(versionId)
+            } else {
+                null
+            }
         val conceptualType =
             client.runQuery(
                 """
-                g.V().hasLabel('Version').has('id', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
+                g.V().hasLabel('Conceptual').has('id', ${gStr(entityId)})
                   .values('type').limit(1).toList()
                 """.trimIndent(),
             ).firstOrNull()?.get("value")?.toString()
+                ?: client.runQuery(
+                    """
+                    g.V().hasLabel('Conceptual').has('id', ${gStr(versionId)})
+                      .values('type').limit(1).toList()
+                    """.trimIndent(),
+                ).firstOrNull()?.get("value")?.toString()
+                ?: conceptualFromVersion?.let { conceptualId ->
+                    client.runQuery(
+                        """
+                        g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
+                          .values('type').limit(1).toList()
+                        """.trimIndent(),
+                    ).firstOrNull()?.get("value")?.toString()
+                }
+                ?: client.runQuery(
+            """
+            g.V().hasLabel('Version').has('id', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
+              .values('type').limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull()?.get("value")?.toString()
                 ?: client.runQuery(
                     """
                     g.V().hasLabel('Version').has('identifier', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')

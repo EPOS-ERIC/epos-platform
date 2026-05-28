@@ -194,11 +194,6 @@ fun Application.module() {
         searchRoutes(client, shaclService)
         accessRoutes(client, shaclService)
 
-        datasetRoutes(client, resourceController)
-        distributionRoutes(client)
-        softwareRoutes(client)
-        categoryRoutes(client)
-
         cypherRoutes(client)
         sparqlRoutes(client)
 
@@ -287,9 +282,8 @@ private fun ensureJanusGraphIndexes(client: PropertyGraphClient) {
 
 private fun warmupQueries(client: PropertyGraphClient) {
     val warmups = listOf(
-        "g.V().hasLabel('Version').limit(1).count().next()",
-        "g.V().hasLabel('Conceptual').limit(1).count().next()",
-        "g.V().hasLabel('Conceptual').has('type','dataset').out('CURRENT_VERSION').hasLabel('Version').limit(1).count().next()",
+        "g.V().hasLabel('Version').limit(1).valueMap().toList()",
+        "g.V().hasLabel('Conceptual').limit(1).valueMap().toList()",
     )
 
     warmups.forEach { query ->

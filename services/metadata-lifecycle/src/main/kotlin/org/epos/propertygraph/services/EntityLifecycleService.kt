@@ -41,17 +41,20 @@ class EntityLifecycleService(
 
     fun createDraft(
         conceptualUri: String,
-        newVersionNumber: String,
+        newVersionNumber: String? = null,
         agent: String = Config.AGENT_SYSTEM,
         group: String = Config.AGENT_SYSTEM
     ): String {
         val currentVersion = getCurrentPublishedVersion(conceptualUri)
             ?: throw IllegalStateException("No published version found for $conceptualUri")
 
-        val newDraftUri = "$conceptualUri/$newVersionNumber-draft"
+        val resolvedVersionNumber = newVersionNumber?.trim().takeUnless { it.isNullOrBlank() }
+            ?: nextVersionFrom(currentVersion.id)
+
+        val newDraftUri = "$conceptualUri/$resolvedVersionNumber-draft"
 
         val draftData = currentVersion.data.toMutableMap()
-        draftData["versionNumber"] = newVersionNumber
+        draftData["versionNumber"] = resolvedVersionNumber
 
         val timestamp = java.time.Instant.now().toString()
         val assignments = draftData.entries.joinToString("\n") { (k, v) ->
@@ -65,7 +68,7 @@ class EntityLifecycleService(
             def draft = g.addV('Version')
               .property('id', ${gStr(newDraftUri)})
               .property('status', 'draft')
-              .property('versionNumber', ${gStr(newVersionNumber)})
+              .property('versionNumber', ${gStr(resolvedVersionNumber)})
               .property('createdAt', ${gStr(timestamp)})
               .property('updatedAt', ${gStr(timestamp)})
               .next()
@@ -85,6 +88,14 @@ class EntityLifecycleService(
 
         println("Created DRAFT: $newDraftUri (based on ${currentVersion.id})")
         return newDraftUri
+    }
+
+    private fun nextVersionFrom(currentVersionUri: String): String {
+        val segment = currentVersionUri.substringAfterLast("/").removeSuffix("-draft")
+        val match = Regex("v?(\\d+)(?:\\.(\\d+))?.*").find(segment)
+        if (match == null) return "2.0"
+        val major = match.groupValues[1].toIntOrNull() ?: 1
+        return "${major + 1}.0"
     }
 
     fun submitDraft(draftUri: String, agent: String = Config.AGENT_SYSTEM, group: String = Config.AGENT_SYSTEM) {

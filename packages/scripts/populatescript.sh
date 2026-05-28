@@ -31,7 +31,7 @@ echo "🌐 Host endpoint for metadata-lifecycle: $HOST_ENDPOINT"
 docker rm -f cache || true
 
 # Start container
-docker run -idt -p 5050:80 --name cache epos-ci.brgm.fr:5005/epos/metadata-cache:test-ref
+docker run -idt -p 5050:80 --name cache epos-ci.brgm.fr:5005/epos/metadata-cache:development
 
 # Wait for container to be ready
 echo "Waiting for the container to be ready.."

@@ -48,9 +48,11 @@ services:
       - janusgraph.index.search.hostname=elasticsearch
       - janusgraph.graphname=epos
       - JANUS_STORAGE_TIMEOUT=60000
-      - JAVA_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_OPTIONS=-Xms256m -Xmx512m -Dlog4j2.configurationFile=/etc/opt/janusgraph/log4j2.xml
     ports:
       - "8182:8182"
+    volumes:
+      - ./docker/janusgraph/log4j2.xml:/etc/opt/janusgraph/log4j2.xml:ro
     healthcheck:
       test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/localhost/8182' || exit 1"]
       interval: 15s

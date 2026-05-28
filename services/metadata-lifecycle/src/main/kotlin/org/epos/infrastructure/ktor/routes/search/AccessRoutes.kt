@@ -460,6 +460,18 @@ private fun shapeMatchesEntityType(
     val conceptualType =
         client.runQuery(
             """
+            g.V().hasLabel('Conceptual').has('id', ${gStr(entityId)})
+              .values('type').limit(1).toList()
+            """.trimIndent(),
+        ).firstOrNull()?.get("value")?.toString()
+            ?: client.runQuery(
+                """
+                g.V().hasLabel('Conceptual').has('identifier', ${gStr(entityId)})
+                  .values('type').limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull()?.get("value")?.toString()
+            ?: client.runQuery(
+            """
             g.V().hasLabel('Version').has('id', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
               .values('type').limit(1).toList()
             """.trimIndent(),

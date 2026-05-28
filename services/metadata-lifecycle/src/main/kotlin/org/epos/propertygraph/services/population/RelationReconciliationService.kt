@@ -89,7 +89,7 @@ class RelationReconciliationService(
                         client.exists(
                             """
                             g.V().hasLabel('Version').has('id', ${gStr(sourceId)})
-                              .outE(${gStr(edgeLabel)}).inV().has('id', ${gStr(resolvedTargetId)}).limit(1).toList()
+                              .outE(${gStr(edgeLabel)}).inV().has('id', ${gStr(resolvedTargetId)}).values('id').limit(1).toList()
                             """.trimIndent(),
                         )
 

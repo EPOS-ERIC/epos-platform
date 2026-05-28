@@ -356,7 +356,7 @@ class RevisionImportService(
 
         val draftUri = "$conceptualUri/$targetVersion-draft"
 
-        val draftExists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(draftUri)}).has('status','draft').limit(1).toList()")
+        val draftExists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(draftUri)}).has('status','draft').values('id').limit(1).toList()")
 
         if (draftExists && !options.replaceDraftIfExists) {
             throw IllegalStateException("Draft already exists for target version ($targetVersion)")

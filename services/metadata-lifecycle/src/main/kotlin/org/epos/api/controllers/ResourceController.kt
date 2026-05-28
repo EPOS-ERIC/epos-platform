@@ -48,6 +48,7 @@ class ResourceController(
     ): EntityListResponse {
         val typeFilter = getTypeUri(resourceType)
         val typeCandidates = buildConceptualTypeCandidates(resourceType, typeFilter)
+        val statusPredicate = statusWithinPredicate(status)
 
         val skip = (page - 1) * pageSize
         val typePredicate =
@@ -66,7 +67,7 @@ class ResourceController(
 
         val results = client.runQuery(
             """
-            g.V().hasLabel('Version').has('status', ${gStr(status)})
+            g.V().hasLabel('Version').has('status', $statusPredicate)
               $draftAgentPredicate
               .as('v')
               .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate
@@ -83,24 +84,29 @@ class ResourceController(
             val v = normalizePropertyMap(row["v"] as? Map<*, *> ?: return@mapNotNull null)
             val c = normalizePropertyMap(row["c"] as? Map<*, *> ?: return@mapNotNull null)
 
-            val versionUri = propString(v["id"]) ?: return@mapNotNull null
+            val versionUri = propString(v["identifier"])?.takeIf { it.isNotBlank() }
+                ?: propString(v["id"])
+                ?: return@mapNotNull null
             val conceptualUri = propString(c["id"])
+            val resolvedStatus = propString(v["status"]) ?: status
 
             val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt", "_vertexId", "_vertexLabel", "label")
             val dataMap = v.filterKeys { it !in structuralKeys }
                 .mapValues { (_, v2) -> normalizeValue(v2) ?: "" }
+            val typeUri = propString(dataMap["type"]) ?: ""
+            val resolvedType = extractResourceName(typeUri)
 
             EntityResponse(
                 uri = versionUri,
-                type = resourceType,
-                status = status,
+                type = resolvedType,
+                status = resolvedStatus,
                 properties = dataMap,
                 conceptualUri = conceptualUri
             )
         }
 
         val countScript =
-            "g.V().hasLabel('Version').has('status', ${gStr(status)})$draftAgentPredicate.in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.count().next()"
+            "g.V().hasLabel('Version').has('status', $statusPredicate)$draftAgentPredicate.in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.count().next()"
         val total = client.runQuery(countScript).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
 
         return EntityListResponse(
@@ -157,12 +163,13 @@ class ResourceController(
     }
 
     fun getEntity(entityUri: String, status: String = "published", enrichReferences: Boolean = true): EntityResponse? {
+        val statusPredicate = statusWithinPredicate(status)
         val result =
             client.runQuery(
-                "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', ${gStr(status)}).valueMap(true).limit(1).toList()",
+                "g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status', $statusPredicate).valueMap(true).limit(1).toList()",
             ).firstOrNull()
                 ?: client.runQuery(
-                    "g.V().hasLabel('Version').has('identifier', ${gStr(entityUri)}).has('status', ${gStr(status)}).valueMap(true).limit(1).toList()",
+                    "g.V().hasLabel('Version').has('identifier', ${gStr(entityUri)}).has('status', $statusPredicate).valueMap(true).limit(1).toList()",
                 ).firstOrNull()
                 ?: return null
 
@@ -188,26 +195,74 @@ class ResourceController(
                     "g.V().hasLabel('Version').has('identifier', ${gStr(entityUri)}).in('HAS_VERSION').values('id').limit(1).toList()",
                 ).firstOrNull()?.get("value")?.toString()
 
+        val resolvedUri = propString(v["identifier"])?.takeIf { it.isNotBlank() }
+            ?: propString(v["id"])
+            ?: entityUri
+        val resolvedStatus = propString(v["status"]) ?: status
+
         return EntityResponse(
-            uri = entityUri,
+            uri = resolvedUri,
             type = resourceType,
-            status = status,
+            status = resolvedStatus,
             properties = enrichedProperties,
             conceptualUri = conceptualUri
         )
     }
 
     fun getEntityByConceptualId(conceptualId: String, status: String = "published", enrichReferences: Boolean = true): EntityResponse? {
+        val statusPredicate = statusWithinPredicate(status)
+        val versionEdge = if (status.equals("published", ignoreCase = true)) "CURRENT_VERSION" else "HAS_VERSION"
         val result = client.runQuery(
             """
             g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
-              .out('CURRENT_VERSION').hasLabel('Version').has('status', ${gStr(status)})
+              .out('$versionEdge').hasLabel('Version').has('status', $statusPredicate)
               .project('uri','data')
               .by(coalesce(values('identifier'), values('id'), constant('')))
               .by(valueMap())
               .limit(1).toList()
             """.trimIndent(),
-        ).firstOrNull() ?: return null
+        ).firstOrNull()
+            ?: if (status.equals("published", ignoreCase = true)) {
+                client.runQuery(
+                    """
+                    g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
+                      .out('HAS_VERSION').hasLabel('Version').has('status', $statusPredicate)
+                      .order().by(coalesce(values('updatedAt'), values('createdAt'), constant('')), desc)
+                      .project('uri','data')
+                      .by(coalesce(values('identifier'), values('id'), constant('')))
+                      .by(valueMap())
+                      .limit(1).toList()
+                    """.trimIndent(),
+                ).firstOrNull()
+            } else {
+                null
+            }
+            ?: client.runQuery(
+                """
+                g.V().hasLabel('Conceptual').has('identifier', ${gStr(conceptualId)})
+                  .out('$versionEdge').hasLabel('Version').has('status', $statusPredicate)
+                  .project('uri','data')
+                  .by(coalesce(values('identifier'), values('id'), constant('')))
+                  .by(valueMap())
+                  .limit(1).toList()
+                """.trimIndent(),
+            ).firstOrNull()
+            ?: if (status.equals("published", ignoreCase = true)) {
+                client.runQuery(
+                    """
+                    g.V().hasLabel('Conceptual').has('identifier', ${gStr(conceptualId)})
+                      .out('HAS_VERSION').hasLabel('Version').has('status', $statusPredicate)
+                      .order().by(coalesce(values('updatedAt'), values('createdAt'), constant('')), desc)
+                      .project('uri','data')
+                      .by(coalesce(values('identifier'), values('id'), constant('')))
+                      .by(valueMap())
+                      .limit(1).toList()
+                    """.trimIndent(),
+                ).firstOrNull()
+            } else {
+                null
+            }
+            ?: return null
 
         val versionUri = propString(result["uri"]) ?: conceptualId
         val v = normalizePropertyMap(result["data"] as? Map<*, *> ?: return null)
@@ -401,17 +456,18 @@ class ResourceController(
         )
     }
 
-    fun createNewDraft(conceptualUri: String, newVersion: String, agent: String, group: String): ApiResponse {
+    fun createNewDraft(conceptualUri: String, agent: String, group: String): ApiResponse {
         try {
             val resolvedConceptual = resolveConceptualTarget(conceptualUri)
                 ?: return ApiResponse(success = false, message = "Conceptual resource not found")
 
             val draftUri = lifecycleService.createDraft(
                 conceptualUri = resolvedConceptual,
-                newVersionNumber = newVersion,
                 agent = agent,
                 group = group
             )
+
+            val createdVersion = draftUri.substringAfterLast('/').removeSuffix("-draft")
 
             return ApiResponse(
                 success = true,
@@ -419,7 +475,7 @@ class ResourceController(
                 data = mapOf(
                     "uri" to draftUri,
                     "conceptualUri" to resolvedConceptual,
-                    "version" to newVersion,
+                    "version" to createdVersion,
                     "status" to "draft"
                 )
             )
@@ -769,6 +825,12 @@ class ResourceController(
         is Number, is Boolean -> value.toString()
         is List<*>, is Map<*, *> -> gStr(mapper.writeValueAsString(value))
         else -> gStr(value.toString())
+    }
+
+    private fun statusWithinPredicate(status: String): String {
+        val normalized = status.trim().ifBlank { "published" }
+        val candidates = linkedSetOf(normalized, normalized.lowercase(), normalized.uppercase())
+        return "within(${candidates.joinToString(",") { gStr(it) }})"
     }
 
     private fun normalizePropertyMap(raw: Map<*, *>): Map<String, Any?> {
