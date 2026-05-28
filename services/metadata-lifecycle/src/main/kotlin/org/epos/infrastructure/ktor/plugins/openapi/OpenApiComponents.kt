@@ -267,7 +267,7 @@ components:
             - "https://metadata.epos-eu.org/api/v2/dataset/123"
         fields:
           type: object
-          description: SHACL-selected property values returned only when includeConstraints=true
+          description: SHACL-selected property values returned only when includeConstraints=true. Relation properties are returned as object(s) with `id`, `type`, and `href`; literal properties remain scalar/array values.
           additionalProperties: true
 
     AccessListItem:

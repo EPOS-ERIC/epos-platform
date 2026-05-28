@@ -16,7 +16,6 @@ import org.epos.infrastructure.ktor.routes.requireActorHeaders
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
 
-private const val DATASET_TYPE_URI = "http://www.w3.org/ns/dcat#Dataset"
 private const val SEARCH_QUERY_TIMING_ENV = "EPOS_SEARCH_QUERY_TIMING"
 
 fun Route.searchRoutes(
@@ -201,7 +200,14 @@ private suspend fun executeSearch(
                     val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
                     val fields: Map<String, Any?>? =
                         if (includeConstraints) {
-                            buildSearchItemFields(resourceTypeInfos, typeUri, apiType, data)
+                            buildSearchItemFields(
+                                client = client,
+                                resourceTypeInfos = resourceTypeInfos,
+                                typeUri = typeUri,
+                                apiType = apiType,
+                                data = data,
+                                publicBaseUrl = baseUrl,
+                            )
                         } else {
                             null
                         }
@@ -246,55 +252,30 @@ private fun List<Pair<String, String>>.toQueryString(): String =
         "${java.net.URLEncoder.encode(key, "UTF-8")}=${java.net.URLEncoder.encode(value, "UTF-8")}"
     }
 
-private val TYPE_ALIASES =
-    mapOf(
-        "category" to "concept",
-        "categories" to "concept",
-        "data" to "dataset",
-        "softwareapplication" to "softwareapplication",
-        "softwaresourcecode" to "softwaresourcecode",
-    )
-
 private fun normalizeTypeName(typeName: String): String {
-    val lower = typeName.lowercase()
-    val aliased = TYPE_ALIASES[lower] ?: lower
-    return aliased.replace("-", "").replace("_", "")
+    return typeName.lowercase().replace("-", "").replace("_", "")
 }
 
 private fun mapSearchTypeUriToApiType(typeUri: String): String? =
-    when {
-        typeUri.equals(DATASET_TYPE_URI, ignoreCase = true) ||
-            typeUri.contains("/Dataset", ignoreCase = true) ||
-            typeUri.endsWith("#Dataset", ignoreCase = true) -> "dataset"
-
-        typeUri.contains("Distribution", ignoreCase = true) -> "distribution"
-
-        typeUri.contains("SoftwareApplication", ignoreCase = true) -> "softwareapplication"
-
-        typeUri.contains("SoftwareSourceCode", ignoreCase = true) -> "softwaresourcecode"
-
-        typeUri.contains("Concept", ignoreCase = true) -> "category"
-
-        else -> null
-    }
+    typeUri
+        .substringAfterLast('/')
+        .substringAfterLast('#')
+        .takeIf { it.isNotBlank() }
+        ?.lowercase()
 
 private fun canonicalApiType(typeName: String): String {
-    val normalized = normalizeTypeName(typeName)
-    return when (normalized) {
-        "softwareapplication" -> "softwareapplication"
-        "softwaresourcecode" -> "softwaresourcecode"
-        "dataset", "distribution", "category" -> normalized
-        else -> typeName.lowercase().ifBlank { "resource" }
-    }.ifBlank { "resource" }
+    return normalizeTypeName(typeName).ifBlank { "resource" }
 }
 
 private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
 private fun buildSearchItemFields(
+    client: PropertyGraphClient,
     resourceTypeInfos: List<org.epos.api.models.ResourceTypeInfo>,
     typeUri: String,
     apiType: String,
     data: Map<String, Any?>,
+    publicBaseUrl: String,
 ): Map<String, Any?> {
     val normalizedApiType = normalizeTypeName(apiType)
     val resourceType =
@@ -302,15 +283,67 @@ private fun buildSearchItemFields(
             normalizeTypeName(it.name) == normalizedApiType || it.targetClass.equals(typeUri, ignoreCase = true)
         } ?: return emptyMap()
 
+    val resourceTypeMap = resourceTypeInfos.associate { it.targetClass to it.name }
+    val knownShapeNames = resourceTypeInfos.map { it.name }.toSet()
+
     val selected = linkedMapOf<String, Any?>()
     val selectedProps = resourceType.properties.filter { it.required || it.recommended }
     selectedProps.forEach { prop ->
         val value = extractFieldValue(data, prop.path, prop.name)
         if (value != null) {
-            selected[prop.name.lowercase()] = normalizeFieldValue(value, prop.maxCount)
+            selected[prop.name.lowercase()] =
+                normalizeSearchFieldValue(
+                    client = client,
+                    value = value,
+                    maxCount = prop.maxCount,
+                    property = prop,
+                    resourceTypeMap = resourceTypeMap,
+                    knownShapeNames = knownShapeNames,
+                    publicBaseUrl = publicBaseUrl,
+                )
         }
     }
     return selected
+}
+
+private fun normalizeSearchFieldValue(
+    client: PropertyGraphClient,
+    value: Any,
+    maxCount: Int?,
+    property: org.epos.api.shacl.PropertyInfo,
+    resourceTypeMap: Map<String, String>,
+    knownShapeNames: Set<String>,
+    publicBaseUrl: String,
+): Any {
+    val relationShapeCandidates = relationShapeCandidates(property, resourceTypeMap, knownShapeNames)
+    val relationValues = relationValues(value)
+    if (relationShapeCandidates.isNotEmpty() && relationValues.isNotEmpty()) {
+        val mapped = relationValues.map { objectId ->
+            val link = ResourceLinkResolver.resolveLink(
+                client = client,
+                objectId = objectId,
+                resourceTypeMap = resourceTypeMap,
+                normalizeShapeName = ::normalizeTypeName,
+                publicBaseUrl = publicBaseUrl,
+                preferredShape = null,
+            )
+            val resolvedType = resolveRelationType(link?.resolvedShape, relationShapeCandidates)
+            val href =
+                if (resolvedType != null) {
+                    ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, objectId)
+                } else {
+                    link?.href
+                }
+            linkedMapOf(
+                "id" to objectId,
+                "type" to resolvedType,
+                "href" to href,
+            )
+        }
+        return if (maxCount == 1) mapped.firstOrNull() ?: emptyMap<String, Any?>() else mapped
+    }
+
+    return normalizeFieldValue(value, maxCount)
 }
 
 private fun normalizeFieldValue(value: Any, maxCount: Int?): Any =
@@ -328,6 +361,59 @@ private fun extractFieldValue(data: Map<String, Any?>, path: String, name: Strin
     val candidates = listOf(name, localFromPath, path)
     return candidates.firstNotNullOfOrNull { key -> data[key] }
 }
+
+private fun relationShapeCandidates(
+    property: org.epos.api.shacl.PropertyInfo,
+    resourceTypeMap: Map<String, String>,
+    knownShapeNames: Set<String>,
+): List<String> {
+    val classCandidates = buildList {
+        property.classConstraint?.let { add(it) }
+        property.classConstraints?.let { addAll(it) }
+    }
+
+    val classShapes =
+        classCandidates.mapNotNull { classIri ->
+        resourceTypeMap[classIri]
+            ?: resourceTypeMap.entries.firstOrNull {
+                normalizeTypeName(it.key.substringAfterLast('/').substringAfterLast('#')) ==
+                    normalizeTypeName(classIri.substringAfterLast('/').substringAfterLast('#'))
+            }?.value
+        }.filter { resolved -> knownShapeNames.any { normalizeTypeName(it) == normalizeTypeName(resolved) } }
+
+    val nodeCandidates = buildList {
+        property.nodeShapeRef?.let { add(it) }
+        property.nodeShapeRefs?.let { addAll(it) }
+    }
+
+    val nodeShapes =
+        nodeCandidates.mapNotNull { nodeRef ->
+            val shapeCandidate =
+            nodeRef
+                .substringAfterLast('/')
+                .substringAfterLast('#')
+                .removeSuffix("Shape")
+                .lowercase()
+            knownShapeNames.firstOrNull { normalizeTypeName(it) == normalizeTypeName(shapeCandidate) }
+        }
+
+    return (classShapes + nodeShapes).distinctBy { normalizeTypeName(it) }
+}
+
+private fun resolveRelationType(resolvedFromGraph: String?, candidates: List<String>): String? {
+    if (!resolvedFromGraph.isNullOrBlank()) {
+        val matched = candidates.firstOrNull { normalizeTypeName(it) == normalizeTypeName(resolvedFromGraph) }
+        if (matched != null) return matched
+        return resolvedFromGraph
+    }
+    return if (candidates.size == 1) candidates.first() else candidates.firstOrNull()
+}
+
+private fun relationValues(value: Any): List<String> =
+    when (value) {
+        is List<*> -> value.mapNotNull { it?.toString()?.trim() }.filter { ResourceLinkResolver.isPotentialResourceIdentifier(it) }
+        else -> listOf(value.toString().trim()).filter { ResourceLinkResolver.isPotentialResourceIdentifier(it) }
+    }
 
 private fun isSearchQueryTimingEnabled(): Boolean =
     System.getenv(SEARCH_QUERY_TIMING_ENV)?.toBooleanStrictOrNull() ?: false
