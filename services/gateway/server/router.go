@@ -49,6 +49,7 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 		r.Get("/webservice/{id}", resourcesHandler.GetWebserviceByID)
 		r.Get("/organization/{id}", resourcesHandler.GetOrganizationByID)
 		r.Get("/concept/{id}", resourcesHandler.GetConceptByID)
+		r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
 	})
 
 	return r

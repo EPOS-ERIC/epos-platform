@@ -4,9 +4,10 @@ import "time"
 
 type Dataset struct {
 	BaseDetailResource
-	Created            *time.Time       `json:"created,omitempty"`
-	Modified           *time.Time       `json:"modified,omitempty"`
-	VersionInfo        string           `json:"version_info,omitempty"`
+	Created     *time.Time `json:"created,omitempty"`
+	Modified    *time.Time `json:"modified,omitempty"`
+	VersionInfo string     `json:"version_info,omitempty"`
+	// TODO: see if we should even return these, even if just returning the ids, they could expose the emails
 	ContactPoints      []ResourceRef    `json:"contact_points,omitempty"`
 	Keywords           []string         `json:"keywords,omitempty"`
 	Concepts           []ResourceRef    `json:"concepts,omitempty"`
@@ -61,10 +62,14 @@ type SoftwareSourceCode struct {
 
 type Distribution struct {
 	BaseDetailResource
-	AccessURL  string       `json:"access_url,omitempty"`
-	Operation  *Operation   `json:"operation,omitempty"`
-	Webservice *ResourceRef `json:"webservice,omitempty"`
-	Format     string       `json:"format,omitempty"`
+	DownloadURL string           `json:"download_url,omitempty"`
+	Operation   *Operation       `json:"operation,omitempty"`
+	Webservice  *ResourceRef     `json:"webservice,omitempty"`
+	Format      string           `json:"format,omitempty"`
+	Issued      *time.Time       `json:"issued,omitempty"`
+	Modified    *time.Time       `json:"modified,omitempty"`
+	License     string           `json:"license,omitempty"`
+	Type        DistributionKind `json:"type,omitempty"`
 }
 
 type Organization struct {
@@ -83,24 +88,25 @@ type Organization struct {
 
 type Webservice struct {
 	BaseDetailResource
-	Identifiers   []Identifier    `json:"identifiers,omitempty"`
-	Entrypoint    string          `json:"entrypoint,omitempty"`
-	ContactPoints []ResourceRef   `json:"contact_points,omitempty"`
-	Provider      []ResourceRef   `json:"provider,omitempty"`
-	Issued        *time.Time      `json:"issued,omitempty"`
-	Modified      *time.Time      `json:"modified,omitempty"`
-	Spatial       string          `json:"spatial,omitempty"`
-	Temporal      *TemporalExtent `json:"temporal,omitempty"`
-	Keywords      []string        `json:"keywords,omitempty"`
-	Concepts      []ResourceRef   `json:"concepts,omitempty"`
-	License       string          `json:"license,omitempty"`
-	Operations    []Operation     `json:"operations,omitempty"`
+	Identifiers      []Identifier      `json:"identifiers,omitempty"`
+	Entrypoint       string            `json:"entrypoint,omitempty"`
+	ContactPoints    []ResourceRef     `json:"contact_points,omitempty"`
+	Provider         ResourceRef       `json:"provider"`
+	Issued           *time.Time        `json:"issued,omitempty"`
+	Modified         *time.Time        `json:"modified,omitempty"`
+	Spatial          string            `json:"spatial,omitempty"`
+	Temporal         *TemporalExtent   `json:"temporal,omitempty"`
+	Keywords         []string          `json:"keywords,omitempty"`
+	Concepts         []ResourceRef     `json:"concepts,omitempty"`
+	License          string            `json:"license,omitempty"`
+	Operations       []Operation       `json:"operations,omitempty"`
+	APIDocumentation *APIDocumentation `json:"api_documentation,omitempty"`
 }
 
 type Operation struct {
 	ID               string            `json:"id"`
 	Method           string            `json:"method,omitempty"`
-	Returns          string            `json:"returns,omitempty"`
+	Returns          []string          `json:"returns,omitempty"`
 	IriTemplate      *IriTemplate      `json:"iri_template,omitempty"`
 	APIDocumentation *APIDocumentation `json:"api_documentation,omitempty"`
 }

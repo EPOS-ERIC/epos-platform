@@ -178,7 +178,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 	if staleEntry == nil {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, fmt.Errorf("wait for inflight request: %w", ctx.Err())
 		case <-call.done:
 			return c.finishForeground(call)
 		}
@@ -187,7 +187,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 	if timeout <= 0 {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, fmt.Errorf("wait for inflight request without timeout: %w", ctx.Err())
 		case <-call.done:
 			return c.finishForeground(call)
 		}
@@ -198,7 +198,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, fmt.Errorf("wait for inflight request with timeout: %w", ctx.Err())
 	case <-call.done:
 		return c.finishForeground(call)
 	case <-timer.C:

@@ -287,7 +287,7 @@ paths:
       tags:
         - Resources
       summary: Get concept by id
-      description: Returns a single concept node with its full subtree of children.
+      description: Returns a single concept node with direct child references.
       operationId: getConceptById
       responses:
         "200":
@@ -296,6 +296,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Concept"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /conceptscheme/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get concept scheme by id
+      operationId: getConceptSchemeById
+      responses:
+        "200":
+          description: Concept scheme found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConceptScheme"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -909,25 +929,77 @@ components:
               example: "3.1.0"
 
     Distribution:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistribution"
+        - $ref: "#/components/schemas/DownloadableFileDistribution"
+      discriminator:
+        propertyName: type
+        mapping:
+          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistribution"
+          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistribution"
+
+    DistributionBase:
       allOf:
         - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
-          required:
-            - access_url
           properties:
-            access_url:
-              type: string
-              format: uri
-              description: URL used to access the distribution
-              example: "https://service.example.org/fdsnws/station/1/query"
-            operation:
-              $ref: "#/components/schemas/Operation"
-            webservice:
-              $ref: "#/components/schemas/ResourceRef"
             format:
               type: string
               description: File format of the distribution
               example: "application/xml"
+            issued:
+              type: string
+              format: date-time
+              description: Distribution publication timestamp in ISO 8601 UTC
+              example: "2024-02-01T00:00:00Z"
+            modified:
+              type: string
+              format: date-time
+              description: Distribution last modification timestamp in ISO 8601 UTC
+              example: "2024-03-01T08:45:00Z"
+            license:
+              type: string
+              format: uri
+              description: License under which the distribution can be used or reused
+              example: "https://creativecommons.org/licenses/by-nc/4.0/"
+
+    WebServiceDistribution:
+      allOf:
+        - $ref: "#/components/schemas/DistributionBase"
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              description: Distribution delivery kind
+              enum:
+                - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+              example: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+            webservice:
+              $ref: "#/components/schemas/ResourceRef"
+            operation:
+              $ref: "#/components/schemas/Operation"
+
+    DownloadableFileDistribution:
+      allOf:
+        - $ref: "#/components/schemas/DistributionBase"
+        - type: object
+          required:
+            - type
+            - download_url
+          properties:
+            type:
+              type: string
+              description: Distribution delivery kind
+              enum:
+                - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+              example: "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+            download_url:
+              type: string
+              format: uri
+              description: Direct download URL for downloadable-file distributions.
+              example: "https://example.org/download/file.xml"
 
     SoftwareApplication:
       allOf:
@@ -1172,17 +1244,13 @@ components:
                   name: "Webservice support desk"
                   href: "v1/contact-point/contact-point-1"
             provider:
-              type: array
-              description: Organizations providing this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
+              description: Primary organization providing this webservice
+              allOf:
+                - $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-456"
-                  name: "University of Naples Federico II"
-                  href: "v1/organization/org-456"
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                id: "org-456"
+                name: "University of Naples Federico II"
+                href: "v1/organization/org-456"
             issued:
               type: string
               format: date-time
@@ -1224,6 +1292,8 @@ components:
               description: Operations supported by this webservice
               items:
                 $ref: "#/components/schemas/Operation"
+            api_documentation:
+              $ref: "#/components/schemas/ApiDocumentation"
 
     Operation:
       type: object
@@ -1238,9 +1308,13 @@ components:
           description: HTTP method used by the operation
           example: "GET"
         returns:
-          type: string
-          description: Output media type returned by the operation
-          example: "application/xml"
+          type: array
+          description: Output media types returned by the operation
+          items:
+            type: string
+          example:
+            - "application/xml"
+            - "application/json"
         iri_template:
           $ref: "#/components/schemas/IriTemplate"
         api_documentation:
@@ -1358,11 +1432,15 @@ components:
         description:
           type: string
           example: "Resources related to seismic monitoring and analysis."
+        in_scheme:
+          description: Concept scheme containing this concept
+          allOf:
+            - $ref: "#/components/schemas/ResourceRef"
         children:
           type: array
-          description: Nested child concepts
+          description: Child concepts directly below this concept
           items:
-            $ref: "#/components/schemas/Concept"
+            $ref: "#/components/schemas/ResourceRef"
 
     ConceptScheme:
       type: object
@@ -1402,16 +1480,17 @@ components:
           example: 1
         type:
           type: string
-          enum:
-            - DATA
-            - FACILITY
-            - SOFTWARE
-          example: "DATA"
+          example: "http://www.w3.org/2004/02/skos/core#ConceptScheme"
         children:
           type: array
-          description: Top-level concepts within this scheme
+          description: Nested child concepts used by concept tree responses
           items:
             $ref: "#/components/schemas/Concept"
+        top_concepts:
+          type: array
+          description: Top concepts directly contained in this concept scheme
+          items:
+            $ref: "#/components/schemas/ResourceRef"
 
     ConceptTreeResponse:
       type: object

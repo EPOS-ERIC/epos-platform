@@ -2,6 +2,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -24,7 +25,10 @@ func (rw *responseWriter) WriteHeader(code int) {
 func (rw *responseWriter) Write(b []byte) (int, error) {
 	size, err := rw.ResponseWriter.Write(b)
 	rw.size += size
-	return size, err
+	if err != nil {
+		return size, fmt.Errorf("write response body: %w", err)
+	}
+	return size, nil
 }
 
 func Logger(next http.Handler) http.Handler {

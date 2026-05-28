@@ -3,10 +3,11 @@ package discovery
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -59,7 +60,7 @@ func (s *Service) mapDatasetItem(ctx context.Context, item metadataclient.Search
 	})
 
 	if err := g.Wait(); err != nil {
-		return api.DatasetItem{}, err
+		return api.DatasetItem{}, fmt.Errorf("map dataset item dependencies: %w", err)
 	}
 
 	return api.DatasetItem{
@@ -170,7 +171,7 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 	})
 
 	if err := g.Wait(); err != nil {
-		return api.WebServiceItem{}, err
+		return api.WebServiceItem{}, fmt.Errorf("map webservice item dependencies: %w", err)
 	}
 
 	return api.WebServiceItem{
@@ -195,7 +196,7 @@ func mapBaseItem(item metadataclient.SearchItem) (api.BaseSearchItem, error) {
 		Type: resourceType,
 		ID:   item.Id,
 		Name: name,
-		Href: buildGatewayHref(resourceType, item.Id),
+		Href: gatewayhref.Build(resourceType, item.Id),
 	}, nil
 }
 
@@ -209,37 +210,22 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 		g.Go(func() error {
 			provider := api.ResourceRef{
 				ID:   providerID,
-				Href: buildGatewayHref(api.OrganizationType, providerID),
+				Href: gatewayhref.Build(api.OrganizationType, providerID),
 			}
 
-			req := s.metadataClient.AccessAPI.ApiV2AccessShapeIdGet(groupCtx, string(api.OrganizationType), providerID)
-			resp, _, err := req.Execute()
+			detail, err := metadataaccess.FetchDetail(groupCtx, s.metadataClient, string(api.OrganizationType), providerID)
 			if err != nil {
 				s.log.Error("provider details fetch failed", "provider_id", providerID, "error", err)
 				return fmt.Errorf("fetch provider '%s' details: %w", providerID, err)
 			}
 
-			if resp == nil {
-				s.log.Warn("provider details fetch returned empty response", "provider_id", providerID)
-				return fmt.Errorf("fetch provider '%s' details: empty response", providerID)
+			names, err := getStringSliceField(detail.GetProperties(), "legalName")
+			if err != nil {
+				s.log.Warn("provider legal name extraction failed", "provider_id", providerID, "error", err)
+				return fmt.Errorf("extract provider '%s' legal name: %w", providerID, err)
 			}
-
-			switch {
-			case resp.AccessDetailResponse != nil:
-				names, err := getStringSliceField(resp.AccessDetailResponse.GetProperties(), "legalName")
-				if err != nil {
-					s.log.Warn("provider legal name extraction failed", "provider_id", providerID, "error", err)
-					return fmt.Errorf("extract provider '%s' legal name: %w", providerID, err)
-				}
-				if len(names) > 0 {
-					provider.Name = names[0]
-				}
-			case resp.AccessListResponse != nil:
-				s.log.Warn("provider details fetch returned unexpected list response", "provider_id", providerID)
-				return fmt.Errorf("fetch provider '%s' details: unexpected list response", providerID)
-			default:
-				s.log.Warn("provider details fetch returned empty typed response", "provider_id", providerID)
-				return fmt.Errorf("fetch provider '%s' details: empty typed response", providerID)
+			if len(names) > 0 {
+				provider.Name = names[0]
 			}
 
 			providers[i] = provider
@@ -256,37 +242,25 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 
 func (s *Service) mapDistributions(ctx context.Context, distributionID string) ([]api.DatasetDistributionSearchItem, error) {
 	distributions := []api.DatasetDistributionSearchItem{}
-	req := s.metadataClient.AccessAPI.ApiV2AccessShapeIdGet(ctx, string(api.DatasetType), distributionID)
-	resp, _, err := req.Execute()
+	detail, err := metadataaccess.FetchDetail(ctx, s.metadataClient, string(api.DatasetType), distributionID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch dataset '%s' details: %w", distributionID, err)
 	}
 
-	if resp == nil {
-		return nil, fmt.Errorf("fetch dataset '%s' details: empty response", distributionID)
+	refs, err := getLinkedRefsField(detail.GetProperties(), "distribution", api.DistributionType)
+	if err != nil {
+		return nil, fmt.Errorf("extract dataset '%s' distribution refs: %w", distributionID, err)
+	}
+	if len(refs) == 0 {
+		return []api.DatasetDistributionSearchItem{}, nil
 	}
 
-	switch {
-	case resp.AccessDetailResponse != nil:
-		refs, err := getLinkedRefsField(resp.AccessDetailResponse.GetProperties(), "distribution", api.DistributionType)
-		if err != nil {
-			return nil, fmt.Errorf("extract dataset '%s' distribution refs: %w", distributionID, err)
-		}
-		if len(refs) == 0 {
-			return []api.DatasetDistributionSearchItem{}, nil
-		}
-
-		for _, distribution := range refs {
-			distributions = append(distributions, api.DatasetDistributionSearchItem{
-				ID:   distribution.ID,
-				Name: distribution.Name,
-				Href: buildGatewayHref(api.DistributionType, distribution.ID),
-			})
-		}
-	case resp.AccessListResponse != nil:
-		return nil, fmt.Errorf("fetch dataset '%s' details: unexpected list response", distributionID)
-	default:
-		return nil, fmt.Errorf("fetch dataset '%s' details: empty typed response", distributionID)
+	for _, distribution := range refs {
+		distributions = append(distributions, api.DatasetDistributionSearchItem{
+			ID:   distribution.ID,
+			Name: distribution.Name,
+			Href: gatewayhref.Build(api.DistributionType, distribution.ID),
+		})
 	}
 
 	return distributions, nil
@@ -301,32 +275,20 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 		g.Go(func() error {
 			concept := api.ResourceRef{
 				ID:   conceptID,
-				Href: buildGatewayHref(api.ConceptType, conceptID),
+				Href: gatewayhref.Build(api.ConceptType, conceptID),
 			}
 
-			req := s.metadataClient.AccessAPI.ApiV2AccessShapeIdGet(groupCtx, string(api.ConceptType), conceptID)
-			resp, _, err := req.Execute()
+			detail, err := metadataaccess.FetchDetail(groupCtx, s.metadataClient, string(api.ConceptType), conceptID)
 			if err != nil {
 				return fmt.Errorf("fetch concept '%s' details: %w", conceptID, err)
 			}
 
-			if resp == nil {
-				return fmt.Errorf("fetch concept '%s' details: empty response", conceptID)
+			labels, err := getStringSliceField(detail.GetProperties(), "prefLabel")
+			if err != nil {
+				return fmt.Errorf("extract concept '%s' prefLabel: %w", conceptID, err)
 			}
-
-			switch {
-			case resp.AccessDetailResponse != nil:
-				labels, err := getStringSliceField(resp.AccessDetailResponse.GetProperties(), "prefLabel")
-				if err != nil {
-					return fmt.Errorf("extract concept '%s' prefLabel: %w", conceptID, err)
-				}
-				if len(labels) > 0 {
-					concept.Name = labels[0]
-				}
-			case resp.AccessListResponse != nil:
-				return fmt.Errorf("fetch concept '%s' details: unexpected list response", conceptID)
-			default:
-				return fmt.Errorf("fetch concept '%s' details: empty typed response", conceptID)
+			if len(labels) > 0 {
+				concept.Name = labels[0]
 			}
 
 			concepts[i] = concept
@@ -339,10 +301,6 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 	}
 
 	return concepts, nil
-}
-
-func buildGatewayHref(resourceType api.ResourceType, id string) string {
-	return strings.TrimPrefix(fmt.Sprintf("v1/%s/%s", resourceType, id), "/")
 }
 
 func getField[T any](fields map[string]any, key string) (T, error) {
@@ -418,7 +376,7 @@ func getLinkedRefsField(fields map[string]any, key string, resourceType api.Reso
 		refs = append(refs, api.ResourceRef{
 			ID:   id,
 			Name: name,
-			Href: buildGatewayHref(resourceType, id),
+			Href: gatewayhref.Build(resourceType, id),
 		})
 	}
 	return refs, nil

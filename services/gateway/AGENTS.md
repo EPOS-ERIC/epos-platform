@@ -43,9 +43,10 @@ log.Debug(...)
 log.Info(...)
 ```
 
-- Use [slog](https://pkg.go.dev/log/slog)-style structured logging.
-- Log on error-prone or failure paths.
-- Do **not** over-log. Avoid noise in happy paths.
+- Use [slog](https://pkg.go.dev/log/slog)-style structured logging
+- Log on error-prone or failure paths
+- Do **not** over-log. Avoid noise in happy paths
+- Do not use `%q` in wrapped/logged strings. Always use `'%s'` instead if necessary
 
 ## Architecture and Safety
 
