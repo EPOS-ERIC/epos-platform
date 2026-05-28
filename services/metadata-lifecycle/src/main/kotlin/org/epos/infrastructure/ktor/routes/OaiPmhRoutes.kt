@@ -5,7 +5,6 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.epos.api.models.ErrorResponse
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
 
@@ -48,7 +47,7 @@ private suspend fun handleOaiRequest(
         "ListSets" -> handleListSets(shaclService)
         "ListIdentifiers" -> handleListIdentifiers(client, params, shaclService)
         "ListRecords" -> handleListRecords(client, params, shaclService)
-        "GetRecord" -> handleGetRecord(client, params, shaclService)
+        "GetRecord" -> handleGetRecord(client, params)
         else -> {
             call.respondText(buildOaiError("badVerb", "Unknown verb: $verb"), ContentType.Text.Xml)
             return
@@ -185,8 +184,7 @@ private fun handleListRecords(
 
 private fun handleGetRecord(
     client: PropertyGraphClient,
-    params: Parameters,
-    shaclService: ShaclService
+    params: Parameters
 ): String {
     val now = java.time.ZonedDateTime.now().format(java.time.format.DateTimeFormatter.ISO_INSTANT)
     val identifier = params["identifier"]

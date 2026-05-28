@@ -1,7 +1,6 @@
 package org.epos.api.controllers
 
 import org.epos.api.models.*
-import org.epos.api.shacl.ShaclParser
 import org.epos.propertygraph.Config
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.services.EntityLifecycleService
@@ -337,7 +336,7 @@ class ResourceController(
         )
     }
 
-    fun updateEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
+    fun updateEntity(entityUri: String, request: UpdateEntityRequest): ApiResponse {
         val resolved = resolveDraftTarget(entityUri)
         val draftUri = when (resolved) {
             is DraftTargetResolution.Found -> resolved.versionUri
@@ -369,7 +368,7 @@ class ResourceController(
         )
     }
 
-    fun patchEntity(entityUri: String, request: UpdateEntityRequest, agent: String, group: String): ApiResponse {
+    fun patchEntity(entityUri: String, request: UpdateEntityRequest): ApiResponse {
         val resolved = resolveDraftTarget(entityUri)
         val draftUri = when (resolved) {
             is DraftTargetResolution.Found -> resolved.versionUri
@@ -566,9 +565,7 @@ class ResourceController(
     }
 
     private fun resolveVersionByIdentifierWithinConceptual(reference: String): Map<String, Any?>? {
-        val conceptualCandidate =
-            if (UriUtils.hasVersion(reference)) UriUtils.extractConceptualUri(reference) else null
-                ?: return null
+        val conceptualCandidate = if (UriUtils.hasVersion(reference)) UriUtils.extractConceptualUri(reference) else return null
 
         return client.runQuery(
             """

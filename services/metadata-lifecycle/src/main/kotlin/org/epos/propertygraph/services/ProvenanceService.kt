@@ -8,8 +8,6 @@ class ProvenanceService(private val client: PropertyGraphClient) {
 
     fun recordInitialCreation(
         versionUri: String,
-        conceptualUri: String,
-        source: String,
         agent: String = Config.AGENT_INITIAL_POPULATION,
         group: String = Config.AGENT_SYSTEM
     ) {

@@ -10,7 +10,6 @@ import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.model.vocabulary.RDFS
 import org.eclipse.rdf4j.model.vocabulary.SHACL
 import org.eclipse.rdf4j.model.vocabulary.OWL
-import org.eclipse.rdf4j.model.vocabulary.XSD
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.epos.api.models.ResourceTypeInfo
@@ -99,17 +98,15 @@ data class NodeShape(
     override val order: Double? = null,
     val properties: List<PropertyShape> = emptyList(),
     val nodeConstraints: NodeConstraints = NodeConstraints(),
-    val logicalConstraints: LogicalConstraints = LogicalConstraints(),
     val closed: Boolean = false,
-    val ignoredProperties: List<String> = emptyList(),
-    val sparqlConstraints: List<SparqlConstraint> = emptyList()
+    val ignoredProperties: List<String> = emptyList()
 ) : Shape()
 
 /**
  * Property Shape - validates property values
  */
 data class PropertyShape(
-    override val id: String?,
+    override val id: String? = null,
     override val targets: List<Target> = emptyList(),
     override val severity: Severity = Severity.VIOLATION,
     override val deactivated: Boolean = false,
@@ -122,11 +119,7 @@ data class PropertyShape(
     val nodeConstraints: NodeConstraints = NodeConstraints(),
     val stringConstraints: StringConstraints = StringConstraints(),
     val cardinalityConstraints: CardinalityConstraints = CardinalityConstraints(),
-    val valueConstraints: ValueConstraints = ValueConstraints(),
-    val comparisonConstraints: ComparisonConstraints = ComparisonConstraints(),
-    val logicalConstraints: LogicalConstraints = LogicalConstraints(),
-    val qualifiedConstraints: QualifiedConstraints? = null,
-    val nestedShapes: List<PropertyShape> = emptyList()  // For nested property shapes
+    val qualifiedConstraints: QualifiedConstraints? = null
 ) : Shape()
 
 // =============================================================================
@@ -136,10 +129,10 @@ data class PropertyShape(
 sealed class Target
 
 data class TargetClass(val targetClass: String) : Target()
-data class TargetNode(val targetNode: String) : Target()
-data class TargetSubjectsOf(val predicate: String) : Target()
-data class TargetObjectsOf(val predicate: String) : Target()
-data class TargetSparql(val select: String) : Target()  // SHACL-AF
+data class TargetNode(val targetNode: String? = null) : Target()
+data class TargetSubjectsOf(val predicate: String? = null) : Target()
+data class TargetObjectsOf(val predicate: String? = null) : Target()
+data class TargetSparql(val query: String? = null) : Target()  // SHACL-AF
 
 /** Implicit target when shape is also an rdfs:Class */
 data class ImplicitClassTarget(val classIri: String) : Target()
@@ -313,11 +306,9 @@ enum class Severity {
 sealed class Value {
     data class IriValue(val iri: String) : Value()
     data class LiteralValue(
-        val value: String,
-        val datatype: String? = null,
-        val language: String? = null
+        val value: String
     ) : Value()
-    data class BlankNodeValue(val id: String) : Value()
+    data class BlankNodeValue(val id: String? = null) : Value()
 }
 
 // =============================================================================
@@ -706,19 +697,12 @@ class ShaclParser(private val httpClient: HttpClient) {
         return NodeShape(
             id = (subject as? IRI)?.stringValue(),
             targets = parseTargets(model, subject, isClassShape),
-            severity = parseSeverity(model, subject),
-            deactivated = parseBoolean(model, subject, SHACL.DEACTIVATED) ?: false,
-            message = parseLanguageMap(model, subject, SHACL.MESSAGE),
             name = parseLanguageMap(model, subject, SHACL.NAME),
             description = parseLanguageMap(model, subject, SHACL.DESCRIPTION),
-            group = parseIri(model, subject, SHACL.GROUP),
-            order = parseDouble(model, subject, SHACL.ORDER),
             properties = parsePropertyShapes(model, subject),
             nodeConstraints = parseNodeConstraints(model, subject),
-            logicalConstraints = parseLogicalConstraints(model, subject),
             closed = parseBoolean(model, subject, SHACL.CLOSED) ?: false,
-            ignoredProperties = parseIriList(model, subject, SHACL.IGNORED_PROPERTIES),
-            sparqlConstraints = parseSparqlConstraints(model, subject)
+            ignoredProperties = parseIriList(model, subject, SHACL.IGNORED_PROPERTIES)
         )
     }
 
@@ -737,24 +721,15 @@ class ShaclParser(private val httpClient: HttpClient) {
         val path = parsePath(model, subject) ?: return null
 
         return PropertyShape(
-            id = (subject as? IRI)?.stringValue(),
-            targets = parseTargets(model, subject, false),
             severity = parseSeverity(model, subject),
-            deactivated = parseBoolean(model, subject, SHACL.DEACTIVATED) ?: false,
             message = parseLanguageMap(model, subject, SHACL.MESSAGE),
             name = parseLanguageMap(model, subject, SHACL.NAME),
             description = parseLanguageMap(model, subject, SHACL.DESCRIPTION),
-            group = parseIri(model, subject, SHACL.GROUP),
-            order = parseDouble(model, subject, SHACL.ORDER),
             path = path,
             nodeConstraints = parseNodeConstraints(model, subject),
             stringConstraints = parseStringConstraints(model, subject),
             cardinalityConstraints = parseCardinalityConstraints(model, subject),
-            valueConstraints = parseValueConstraints(model, subject),
-            comparisonConstraints = parseComparisonConstraints(model, subject),
-            logicalConstraints = parseLogicalConstraints(model, subject),
-            qualifiedConstraints = parseQualifiedConstraints(model, subject),
-            nestedShapes = parsePropertyShapes(model, subject)
+            qualifiedConstraints = parseQualifiedConstraints(model, subject)
         )
     }
 
@@ -838,19 +813,19 @@ class ShaclParser(private val httpClient: HttpClient) {
         // sh:targetNode
         statementsForSubjectPredicate(model, subject, SHACL.TARGET_NODE)
             .forEach { stmt ->
-                targets.add(TargetNode(stmt.`object`.stringValue()))
+                targets.add(TargetNode())
             }
 
         // sh:targetSubjectsOf
         statementsForSubjectPredicate(model, subject, SHACL.TARGET_SUBJECTS_OF)
             .forEach { stmt ->
-                (stmt.`object` as? IRI)?.let { targets.add(TargetSubjectsOf(it.stringValue())) }
+                (stmt.`object` as? IRI)?.let { targets.add(TargetSubjectsOf()) }
             }
 
         // sh:targetObjectsOf
         statementsForSubjectPredicate(model, subject, SHACL.TARGET_OBJECTS_OF)
             .forEach { stmt ->
-                (stmt.`object` as? IRI)?.let { targets.add(TargetObjectsOf(it.stringValue())) }
+                (stmt.`object` as? IRI)?.let { targets.add(TargetObjectsOf()) }
             }
 
         // sh:target with SHACL-AF target declarations (e.g., SHACL-SPARQL targets)
@@ -864,7 +839,7 @@ class ShaclParser(private val httpClient: HttpClient) {
                     }?.`object`?.stringValue()
 
                 select?.let {
-                    targets.add(TargetSparql(select))
+                    targets.add(TargetSparql())
                 }
             }
 
@@ -946,11 +921,9 @@ class ShaclParser(private val httpClient: HttpClient) {
         return when (value) {
             is IRI -> Value.IriValue(value.stringValue())
             is Literal -> Value.LiteralValue(
-                value = value.stringValue(),
-                datatype = value.datatype?.stringValue(),
-                language = value.language.orElse(null)
+                value = value.stringValue()
             )
-            is BNode -> Value.BlankNodeValue(value.id)
+            is BNode -> Value.BlankNodeValue()
             else -> Value.LiteralValue(value.stringValue())
         }
     }

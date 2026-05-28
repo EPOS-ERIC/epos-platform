@@ -17,9 +17,8 @@ import kotlinx.html.style
 import kotlinx.html.script
 import kotlinx.html.title
 import kotlinx.html.unsafe
-import org.epos.services.ShaclService
 
-fun Application.configureOpenApi(shaclService: ShaclService) {
+fun Application.configureOpenApi() {
     routing {
         get("/openapi.runtime.yaml") {
             call.response.header(HttpHeaders.CacheControl, "no-store, no-cache, must-revalidate")

@@ -1,7 +1,6 @@
 package org.epos.infrastructure.ktor.routes
 
 import io.ktor.http.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.epos.api.controllers.ResourceController
@@ -97,8 +96,6 @@ fun Route.lifecycleRoutes(
                 if (!hasProvenance) {
                     provenanceService.recordInitialCreation(
                         versionUri = versionUri,
-                        conceptualUri = conceptualUri,
-                        source = "manual-repair",
                         agent = actorHeaders.agent,
                         group = actorHeaders.group
                     )

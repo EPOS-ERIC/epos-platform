@@ -178,7 +178,7 @@ fun Application.module() {
         OpenApiSpec.initializeRuntime(resourceTypes)
     }
 
-    configureOpenApi(shaclService)
+    configureOpenApi()
 
     routing {
         swaggerRoutes()
@@ -187,7 +187,7 @@ fun Application.module() {
 
         resourceTypeRoutes(shaclService, resourceController)
         entitiesRoutes(resourceController, shaclService, client)
-        resourceCrudRoutes(resourceController, shaclService, client)
+        resourceCrudRoutes(resourceController, shaclService)
         lifecycleRoutes(resourceController, client, provenanceService)
         batchRoutes(resourceController)
 

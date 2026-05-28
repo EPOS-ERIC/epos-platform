@@ -21,6 +21,7 @@ import org.epos.propertygraph.services.ProvenanceService
 import org.epos.propertygraph.utils.UriUtils
 import org.epos.services.ShaclService
 import java.io.StringReader
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -331,9 +332,20 @@ class InitialPopulationService(
     }
 
     private fun replaceUri(model: Model, oldUri: String, newUri: String): Model {
-        val oldIRI = org.eclipse.rdf4j.model.util.Values.iri(oldUri)
-        val newIRI = org.eclipse.rdf4j.model.util.Values.iri(newUri)
-        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        if (!isAbsoluteIri(oldUri) || !isAbsoluteIri(newUri)) {
+            return model
+        }
+
+        val oldIRI = try {
+            org.eclipse.rdf4j.model.util.Values.iri(oldUri)
+        } catch (_: IllegalArgumentException) {
+            return model
+        }
+        val newIRI = try {
+            org.eclipse.rdf4j.model.util.Values.iri(newUri)
+        } catch (_: IllegalArgumentException) {
+            return model
+        }
 
         return LinkedHashModel().apply {
             model.forEach { stmt ->
@@ -342,6 +354,14 @@ class InitialPopulationService(
                 val obj = if (stmt.`object` == oldIRI) newIRI else stmt.`object`
                 add(subject, predicate, obj)
             }
+        }
+    }
+
+    private fun isAbsoluteIri(value: String): Boolean {
+        return try {
+            URI(value).isAbsolute
+        } catch (_: Exception) {
+            false
         }
     }
 
@@ -532,9 +552,7 @@ class InitialPopulationService(
 
         uriMappings.values.forEach { (conceptual, versioned) ->
             provenanceService.recordInitialCreation(
-                versionUri = versioned,
-                conceptualUri = conceptual,
-                source = sourceUrl
+                versionUri = versioned
             )
         }
         println("  Recorded provenance (${uriMappings.size} entities)")

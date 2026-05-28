@@ -328,10 +328,6 @@ object OpenApiPaths {
         val yaml = OpenApiSearchPaths.yaml
     }
 
-    object Categories {
-        val yaml = OpenApiCategoryPaths.yaml
-    }
-
     object Access {
         val yaml = OpenApiAccessPaths.yaml
     }

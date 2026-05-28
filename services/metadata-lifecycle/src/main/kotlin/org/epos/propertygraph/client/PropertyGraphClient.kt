@@ -49,7 +49,14 @@ class PropertyGraphClient {
     }
 
     fun exists(cypher: String, parameters: Map<String, Any> = emptyMap()): Boolean {
-        return runQuery(cypher, parameters).isNotEmpty()
+        val script = resolveParameters(cypher, parameters)
+        val wrapped = "(($script).size() > 0)"
+        val result = client.submit(wrapped).all().get().firstOrNull() ?: return false
+        return when (val value = result.`object`) {
+            is Boolean -> value
+            is Number -> value.toInt() > 0
+            else -> value?.toString()?.toBooleanStrictOrNull() ?: false
+        }
     }
 
     fun close() {

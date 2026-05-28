@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.net.URLDecoder
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.*
-import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
 
 fun Route.resourceTypeRoutes(shaclService: ShaclService, resourceController: ResourceController) {
@@ -265,8 +264,7 @@ private fun resolveRdfContentType(format: org.eclipse.rdf4j.rio.RDFFormat): Cont
 
 fun Route.resourceCrudRoutes(
     resourceController: ResourceController,
-    shaclService: ShaclService,
-    client: PropertyGraphClient
+    shaclService: ShaclService
 ) {
     route("/api/v2/{resourceType}") {
         get {
@@ -389,7 +387,7 @@ fun Route.resourceCrudRoutes(
             val request = call.receive<UpdateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@put
 
-            val response = resourceController.updateEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
+            val response = resourceController.updateEntity(entityUri, request)
             call.respondMutationResponse(response)
         }
 
@@ -398,7 +396,7 @@ fun Route.resourceCrudRoutes(
             val request = call.receive<UpdateEntityRequest>()
             val actorHeaders = call.requireActorHeaders() ?: return@patch
 
-            val response = resourceController.patchEntity(entityUri, request, actorHeaders.agent, actorHeaders.group)
+            val response = resourceController.patchEntity(entityUri, request)
             call.respondMutationResponse(response)
         }
 
