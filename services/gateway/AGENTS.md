@@ -1,28 +1,26 @@
-# Agents
+# AGENTS
 
-## General Practices
+## Build and Test Workflow
 
-Use [Effective Go](https://go.dev/doc/effective_go) as baseline for all code.
+- `make generate` regenerates `gen/metadataclient` from metadata-lifecycle OpenAPI spec.
 
-## Error Handling
+## Service Conventions
 
-- Handle only genuine **runtime** errors.
-- If error can occur only from **build-time or configuration issue** (e.g. embedded `fs` assets missing), path must have test that exercises it.
-- Check all returned errors (`errcheck` enabled). Prefer `err != nil` checks with early returns.
-- Prefer early returns to reduce nesting and improve readability.
-
-## Code Style and Conventions
-
-### Linting and Formatting
-
-- Follow all rules enforced by `golangci-lint` (see `.golangci.yaml`).
-- Formatting via `golangci-lint fmt` (gofumpt + goimports).
-
-### Naming
-
-- `camelCase` for local variables and unexported functions.
-- `PascalCase` for exported identifiers.
-- Package names and file names use **single word**.
+- Keep request routing, HTTP parsing, and response encoding in `server/`; keep business logic in domain-oriented packages outside transport layer.
+- Keep service-specific outbound client wiring in `clients/`; keep reusable HTTP/cache behavior in `upstream/`.
+- Keep shared domain errors and contracts in `domain/`.
+- Keep helper code that should not become public package API in `internal/`.
+- Extend existing package areas when responsibility matches; create new top-level packages only when they represent genuine new gateway domain or adapter boundary.
+- Treat `api/` as gateway response shapes and mapping targets. Do not leak generated client models directly from handlers.
+- Validate new config in `config/Validate` when adding fields or behavior controlled by config.
+- Use `context.Context` for outbound or cancellable work. Do not start background work without clear shutdown behavior.
+- Keep handlers thin: extract params, call service, map domain errors to HTTP status, write response.
+- Do not use `%q` in error messages or logs. If quoted formatting is necessary, prefer `'%s'`.
+- Keep everything strongly typed. Do not introduce `any` or `interface{}` unless absolutely necessary and only after explicit user confirmation.
+- Prefer typed structs and explicit fields over dynamic maps. If upstream payload forces dynamic data, confine it to mapping layer.
+- Use shared `packages/go/logging` logger with structured fields. Log useful failure or boundary events, not routine happy-path noise.
+- Do not edit `gen/` manually. Regenerate it.
+- Treat `docs/openapi.yaml` and embedded docs assets as source for served API docs. Keep route changes aligned with docs updates.
 
 ## Testing
 
