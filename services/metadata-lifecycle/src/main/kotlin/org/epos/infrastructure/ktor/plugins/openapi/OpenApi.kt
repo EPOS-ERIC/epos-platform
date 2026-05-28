@@ -215,10 +215,9 @@ object OpenApiSpec {
                             .mapValues { (_, items) -> items.first() }
                             .toList()
                             .sortedBy { it.first }
-                            .forEach { (lowerName, _) ->
+                            .forEach { (lowerName, property) ->
                             val propKey = escapeYaml(lowerName)
-                            appendLine("        $propKey:")
-                            appendLine("          type: [string, array, object, number, boolean, 'null']")
+                            append(buildPropertySchemaYaml(propKey, property))
                             }
                         appendLine("      additionalProperties: true")
                         appendLine("    ResolvedEntityResponse_$schemaName:")
@@ -242,6 +241,79 @@ object OpenApiSpec {
     private fun runtimeEntitySchemaName(typeName: String): String {
         val cleaned = typeName.replace(Regex("[^A-Za-z0-9_]"), "_")
         return "Entity_${cleaned}"
+    }
+
+    private fun buildPropertySchemaYaml(
+        propertyKey: String,
+        property: org.epos.api.shacl.PropertyInfo,
+    ): String {
+        val schemaType = inferOpenApiType(property)
+        val format = inferOpenApiFormat(property)
+        val enumValues = property.hasValueIn.orEmpty().map { it.trim() }.filter { it.isNotBlank() }.distinct().sorted()
+        val isArray = (property.maxCount == null || property.maxCount > 1)
+        val lines = mutableListOf<String>()
+        lines += "        $propertyKey:"
+        if (isArray) {
+            lines += "          type: array"
+            lines += "          items:"
+            lines += "            type: $schemaType"
+            if (!format.isNullOrBlank()) {
+                lines += "            format: $format"
+            }
+            if (enumValues.isNotEmpty()) {
+                lines += "            enum:"
+                enumValues.forEach { value -> lines += "              - \"${escapeYaml(value)}\"" }
+            }
+            property.minCount?.let { lines += "          minItems: $it" }
+            property.maxCount?.let { lines += "          maxItems: $it" }
+        } else {
+            lines += "          type: $schemaType"
+            if (!format.isNullOrBlank()) {
+                lines += "          format: $format"
+            }
+            if (enumValues.isNotEmpty()) {
+                lines += "          enum:"
+                enumValues.forEach { value -> lines += "            - \"${escapeYaml(value)}\"" }
+            }
+        }
+        if (property.required) {
+            lines += "          nullable: false"
+        } else {
+            lines += "          nullable: true"
+        }
+        if (property.description != null) {
+            lines += "          description: \"${escapeYaml(property.description)}\""
+        }
+        return lines.joinToString("\n", postfix = "\n")
+    }
+
+    private fun inferOpenApiType(property: org.epos.api.shacl.PropertyInfo): String {
+        val datatype = property.datatype?.lowercase().orEmpty()
+        val datatypes = property.datatypes.orEmpty().map { it.lowercase() }
+        val all = buildList {
+            if (datatype.isNotBlank()) add(datatype)
+            addAll(datatypes)
+        }
+        if (all.any { it.contains("boolean") }) return "boolean"
+        if (all.any { it.contains("int") || it.contains("integer") || it.endsWith("#long") || it.endsWith("#short") }) return "integer"
+        if (all.any { it.contains("decimal") || it.contains("double") || it.contains("float") }) return "number"
+        return "string"
+    }
+
+    private fun inferOpenApiFormat(property: org.epos.api.shacl.PropertyInfo): String? {
+        val datatype = property.datatype?.lowercase().orEmpty()
+        val datatypes = property.datatypes.orEmpty().map { it.lowercase() }
+        val all = buildList {
+            if (datatype.isNotBlank()) add(datatype)
+            addAll(datatypes)
+        }
+        if (property.classConstraint != null || !property.classConstraints.isNullOrEmpty()) return "uri"
+        return when {
+            all.any { it.contains("datetime") || it.endsWith("#datetime") } -> "date-time"
+            all.any { it.endsWith("#date") || it.contains("/date") } -> "date"
+            all.any { it.contains("anyuri") || it.endsWith("#uri") } -> "uri"
+            else -> null
+        }
     }
 
     private fun escapeYaml(value: String): String = value.replace("\\", "\\\\").replace("\"", "\\\"")
