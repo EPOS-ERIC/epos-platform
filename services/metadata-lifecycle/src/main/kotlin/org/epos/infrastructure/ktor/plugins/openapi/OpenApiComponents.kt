@@ -267,7 +267,7 @@ components:
             - "https://metadata.epos-eu.org/api/v2/dataset/123"
         fields:
           type: object
-          description: SHACL-selected property values returned only when includeConstraints=true (includes `name`)
+          description: SHACL-selected property values returned only when includeConstraints=true
           additionalProperties: true
 
     AccessListItem:

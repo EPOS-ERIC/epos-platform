@@ -198,13 +198,10 @@ private suspend fun executeSearch(
                             ?: shapeByNormalizedName[normalizeTypeName(typeUri)]?.name
                             ?: inferredFromId
                     val apiType = canonicalApiType(apiTypeRaw)
-                    val name = (data["title"] as? String) ?: (data["label"] as? String) ?: extractTypeName(id)
                     val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
                     val fields: Map<String, Any?>? =
                         if (includeConstraints) {
-                            linkedMapOf<String, Any?>("name" to name).apply {
-                                putAll(buildSearchItemFields(resourceTypeInfos, typeUri, apiType, data))
-                            }
+                            buildSearchItemFields(resourceTypeInfos, typeUri, apiType, data)
                         } else {
                             null
                         }
