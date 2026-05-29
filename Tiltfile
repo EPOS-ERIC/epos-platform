@@ -7,11 +7,13 @@ docker_build(
     only=[
         'services/gateway',
         'packages/go/logging',
+        'packages/go/observability',
         'docker/gateway-config.dev.yaml',
     ],
     live_update=[
         sync('services/gateway', '/workspace/services/gateway'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('docker/gateway-config.dev.yaml', '/workspace/docker/gateway-config.dev.yaml'),
         restart_container(),
     ],
