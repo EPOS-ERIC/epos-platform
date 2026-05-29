@@ -2,6 +2,8 @@ FROM amazoncorretto:21
 
 RUN yum install -y tar && yum clean all
 
+COPY packages/assets/otel/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
+
 WORKDIR /workspace/services/metadata-lifecycle
 
 COPY services/metadata-lifecycle/gradlew ./gradlew

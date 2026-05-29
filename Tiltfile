@@ -29,6 +29,7 @@ docker_build(
         'services/metadata-lifecycle/gradlew',
         'services/metadata-lifecycle/build.gradle.kts',
         'services/metadata-lifecycle/settings.gradle.kts',
+        'packages/assets/otel/opentelemetry-javaagent.jar',
     ],
     live_update=[
         sync('services/metadata-lifecycle/src', '/workspace/services/metadata-lifecycle/src'),
@@ -36,6 +37,7 @@ docker_build(
         sync('services/metadata-lifecycle/gradlew', '/workspace/services/metadata-lifecycle/gradlew'),
         sync('services/metadata-lifecycle/build.gradle.kts', '/workspace/services/metadata-lifecycle/build.gradle.kts'),
         sync('services/metadata-lifecycle/settings.gradle.kts', '/workspace/services/metadata-lifecycle/settings.gradle.kts'),
+        sync('packages/assets/otel/opentelemetry-javaagent.jar', '/otel/opentelemetry-javaagent.jar'),
         restart_container(),
     ],
 )

@@ -11,6 +11,7 @@ import (
 	nethttp "net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const defaultMaxEntries = 128
@@ -91,6 +92,7 @@ func NewClient(cfg Config) (*Client, error) {
 	if transport == nil {
 		transport = nethttp.DefaultTransport
 	}
+	transport = otelhttp.NewTransport(transport)
 
 	logger := cfg.Logger
 	if logger == nil {
