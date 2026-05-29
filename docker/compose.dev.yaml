@@ -153,6 +153,11 @@ services:
       - LOG_LEVEL=DEBUG
       - LOG_LEVEL_GATEWAY_HTTP_CLIENT=INFO
       # - LOG_LEVEL_GATEWAY_HTTP_CLIENT=DEBUG
+
+      - OTEL_SERVICE_NAME=gateway
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     user: 0:0 # run as root indev for intercting with system volumes
     volumes:
       - gateway-gomod-cache:/go/pkg/mod
@@ -201,6 +206,18 @@ services:
       - data-retriever-gomod-cache:/go/pkg/mod
       - data-retriever-gobuild-cache:/root/.cache/go-build
     restart: on-failure
+    networks:
+      - epos-network
+
+  otel-lgtm:
+    image: grafana/otel-lgtm
+
+    ports:
+      - 3000:3000
+      - 4040:4040
+      - 4317:4317
+      - 4318:4318
+      - 9090:9090
     networks:
       - epos-network
 

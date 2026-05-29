@@ -36,14 +36,6 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := r.Header.Get("X-Request-Id")
-		if requestID == "" {
-			generatedID, err := logging.NewRequestID()
-			if err != nil {
-				log.ErrorContext(r.Context(), "generate request id failed", "error", err)
-			} else {
-				requestID = generatedID
-			}
-		}
 
 		ctx := logging.WithRequest(r.Context(), logging.Request{
 			RequestID: requestID,

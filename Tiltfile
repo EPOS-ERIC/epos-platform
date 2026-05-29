@@ -82,7 +82,10 @@ dc_resource('user-group-db', labels=['infra'])
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('janusgraph', labels=['infra'], resource_deps=['cassandra', 'elasticsearch'])
 dc_resource('janusgraph-visualizer', labels=['infra'], resource_deps=['janusgraph'])
+
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['janusgraph'])
 dc_resource('user-group-service', labels=['app'], resource_deps=['user-group-db'])
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['metadata-lifecycle-service'])
+
+dc_resource('otel-lgtm', labels=['observability'])

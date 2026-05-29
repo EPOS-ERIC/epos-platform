@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/middleware"
 	"github.com/go-chi/chi/v5"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var log = logging.Get("routes")
@@ -52,7 +53,7 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 		r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
 	})
 
-	return r
+	return otelhttp.NewHandler(r, "/")
 }
 
 func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
