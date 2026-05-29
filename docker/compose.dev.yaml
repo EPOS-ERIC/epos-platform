@@ -152,6 +152,7 @@ services:
     environment:
       - LOG_LEVEL=DEBUG
       - LOG_LEVEL_GATEWAY_HTTP_CLIENT=INFO
+      # - LOG_LEVEL_GATEWAY_HTTP_CLIENT=DEBUG
     user: 0:0 # run as root indev for intercting with system volumes
     volumes:
       - gateway-gomod-cache:/go/pkg/mod

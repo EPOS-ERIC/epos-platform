@@ -153,15 +153,26 @@ func (c *Client) DoWithOptions(req *nethttp.Request, opts RequestOptions) (*Resp
 func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeout time.Duration) (*Response, error) {
 	now := c.now()
 	if entry := c.getCache(prepared.key); entry != nil && now.Before(entry.expiresAt) {
-		c.log.Debug("upstream request behavior", "mode", "cache-hit-fresh", "method", prepared.method, "url", prepared.url)
+		c.log.DebugContext(ctx, "upstream request behavior",
+			slog.Group("cache", "mode", "cache-hit-fresh"),
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+		)
 		return buildResponse(entry.response, CacheMetadata{Hit: true}), nil
 	}
 
 	staleEntry := c.getCache(prepared.key)
 	if staleEntry == nil {
-		c.log.Debug("upstream request behavior", "mode", "cache-miss-cold", "method", prepared.method, "url", prepared.url, "real_timeout", c.realTimeout)
+		c.log.DebugContext(ctx, "upstream request behavior",
+			slog.Group("cache", "mode", "cache-miss-cold"),
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+			slog.Group("timeouts", "real", c.realTimeout),
+		)
 	} else {
-		c.log.Debug("upstream request behavior", "mode", "cache-hit-stale-candidate", "method", prepared.method, "url", prepared.url, "caller_timeout", timeout, "real_timeout", c.realTimeout)
+		c.log.DebugContext(ctx, "upstream request behavior",
+			slog.Group("cache", "mode", "cache-hit-stale-candidate"),
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+			slog.Group("timeouts", "caller", timeout, "real", c.realTimeout),
+		)
 	}
 
 	inflightCtx := ctx
@@ -171,7 +182,10 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 
 	call, existing := c.getOrStartInflight(inflightCtx, prepared.key, prepared)
 	if existing && staleEntry != nil && call.isStaleReady() {
-		c.log.Debug("upstream request behavior", "mode", "stale-served-inflight", "method", prepared.method, "url", prepared.url)
+		c.log.DebugContext(ctx, "upstream request behavior",
+			slog.Group("cache", "mode", "stale-served-inflight"),
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+		)
 		return staleResponse(staleEntry.response), nil
 	}
 
@@ -203,7 +217,11 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 		return c.finishForeground(call)
 	case <-timer.C:
 		call.markStaleReady()
-		c.log.Debug("upstream request behavior", "mode", "stale-served-timeout", "method", prepared.method, "url", prepared.url, "timeout", timeout)
+		c.log.DebugContext(ctx, "upstream request behavior",
+			slog.Group("cache", "mode", "stale-served-timeout"),
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+			slog.Group("timeouts", "caller", timeout),
+		)
 		return staleResponse(staleEntry.response), nil
 	}
 }
@@ -220,7 +238,7 @@ func (c *Client) getOrStartInflight(ctx context.Context, key string, prepared pr
 	c.mu.Lock()
 	if call, ok := c.inflight[key]; ok {
 		c.mu.Unlock()
-		c.log.Debug("upstream inflight joined", "method", prepared.method, "url", prepared.url)
+		c.log.DebugContext(ctx, "upstream inflight joined", slog.Group("upstream", "method", prepared.method, "url", prepared.url))
 		return call, true
 	}
 
@@ -247,7 +265,7 @@ func (c *Client) execute(ctx context.Context, key string, prepared preparedReque
 		return
 	}
 
-	cached, err := c.fetch(prepared, req)
+	cached, err := c.fetch(requestCtx, prepared, req)
 	if err != nil {
 		call.err = err
 		return
@@ -255,41 +273,47 @@ func (c *Client) execute(ctx context.Context, key string, prepared preparedReque
 
 	if c.cacheTTL > 0 {
 		c.storeCache(key, cached)
-		c.log.Debug("upstream cache stored", "method", prepared.method, "url", prepared.url, "ttl", c.cacheTTL)
+		c.log.DebugContext(requestCtx, "upstream cache stored",
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+			slog.Group("cache", "ttl", c.cacheTTL),
+		)
 	} else {
 		c.deleteCache(key)
-		c.log.Debug("upstream cache disabled", "method", prepared.method, "url", prepared.url)
+		c.log.DebugContext(requestCtx, "upstream cache disabled", slog.Group("upstream", "method", prepared.method, "url", prepared.url))
 	}
 
 	call.response = cached
 }
 
-func (c *Client) fetch(prepared preparedRequest, req *nethttp.Request) (*cachedResponse, error) {
-	c.log.Debug("upstream request", "method", prepared.method, "url", prepared.url)
+func (c *Client) fetch(ctx context.Context, prepared preparedRequest, req *nethttp.Request) (*cachedResponse, error) {
+	c.log.DebugContext(ctx, "upstream request", slog.Group("upstream", "method", prepared.method, "url", prepared.url))
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		c.deleteCache(prepared.key)
-		c.log.Warn("upstream request failed", "method", prepared.method, "url", prepared.url, "error", err)
+		c.log.WarnContext(ctx, "upstream request failed", slog.Group("upstream", "method", prepared.method, "url", prepared.url), "error", err)
 		return nil, fmt.Errorf("upstream request failed: %s %s: %w", prepared.method, prepared.url, err)
 	}
 	defer resp.Body.Close()
 
-	return c.cacheableResponse(prepared, resp)
+	return c.cacheableResponse(ctx, prepared, resp)
 }
 
-func (c *Client) cacheableResponse(prepared preparedRequest, resp *nethttp.Response) (*cachedResponse, error) {
+func (c *Client) cacheableResponse(ctx context.Context, prepared preparedRequest, resp *nethttp.Response) (*cachedResponse, error) {
 	body, err := readResponseBody(resp)
 	if err != nil {
 		c.deleteCache(prepared.key)
-		c.log.Warn("upstream response read failed", "method", prepared.method, "url", prepared.url, "error", err)
+		c.log.WarnContext(ctx, "upstream response read failed", slog.Group("upstream", "method", prepared.method, "url", prepared.url), "error", err)
 		return nil, err
 	}
 
 	if resp.StatusCode < nethttp.StatusOK || resp.StatusCode >= nethttp.StatusMultipleChoices {
 		err = fmt.Errorf("unexpected upstream status for %s %s: %s", prepared.method, prepared.url, resp.Status)
 		c.deleteCache(prepared.key)
-		c.log.Warn("upstream returned non-cacheable status", "method", prepared.method, "url", prepared.url, "status", resp.StatusCode)
+		c.log.WarnContext(ctx, "upstream returned non-cacheable status",
+			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
+			slog.Group("response", "status", resp.StatusCode),
+		)
 		return nil, err
 	}
 

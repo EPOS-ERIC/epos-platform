@@ -2,6 +2,9 @@
 package logging
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -20,6 +23,16 @@ var (
 )
 
 var nonAlphaNum = regexp.MustCompile(`[^A-Z0-9]+`)
+
+type requestContextKey struct{}
+
+// Request carries request-scoped metadata that should be attached to context-aware log records.
+type Request struct {
+	RequestID string
+	Method    string
+	Path      string
+	Query     string
+}
 
 func parseLevel(value string) (slog.Level, bool) {
 	switch strings.ToUpper(value) {
@@ -74,7 +87,7 @@ func configuredComponentLevel(component string) (slog.Level, bool) {
 }
 
 func newHandler(writer io.Writer, level slog.Level) slog.Handler {
-	return slog.NewJSONHandler(writer, &slog.HandlerOptions{
+	return &contextHandler{next: slog.NewJSONHandler(writer, &slog.HandlerOptions{
 		Level: level,
 		// Format time to second precision only
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
@@ -88,7 +101,7 @@ func newHandler(writer io.Writer, level slog.Level) slog.Handler {
 			}
 			return a
 		},
-	})
+	})}
 }
 
 func initBase() {
@@ -146,4 +159,72 @@ func Close() error {
 		return logFile.Close()
 	}
 	return nil
+}
+
+// WithRequest returns a context enriched with request-scoped logging metadata.
+func WithRequest(ctx context.Context, request Request) context.Context {
+	return context.WithValue(ctx, requestContextKey{}, request)
+}
+
+// RequestFromContext returns request-scoped logging metadata stored in ctx, if present.
+func RequestFromContext(ctx context.Context) (Request, bool) {
+	request, ok := ctx.Value(requestContextKey{}).(Request)
+	return request, ok
+}
+
+// NewRequestID generates a random request identifier suitable for log correlation.
+func NewRequestID() (string, error) {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return "", fmt.Errorf("generate request id: %w", err)
+	}
+
+	return hex.EncodeToString(buf), nil
+}
+
+type contextHandler struct {
+	next slog.Handler
+}
+
+func (h *contextHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return h.next.Enabled(ctx, level)
+}
+
+func (h *contextHandler) Handle(ctx context.Context, record slog.Record) error {
+	request, ok := RequestFromContext(ctx)
+	if !ok {
+		return h.next.Handle(ctx, record)
+	}
+
+	enriched := record.Clone()
+	attrs := make([]slog.Attr, 0, 1)
+	requestAttrs := make([]any, 0, 4)
+	if request.RequestID != "" {
+		requestAttrs = append(requestAttrs, slog.String("id", request.RequestID))
+	}
+	if request.Method != "" {
+		requestAttrs = append(requestAttrs, slog.String("method", request.Method))
+	}
+	if request.Path != "" {
+		requestAttrs = append(requestAttrs, slog.String("path", request.Path))
+	}
+	if request.Query != "" {
+		requestAttrs = append(requestAttrs, slog.String("query", request.Query))
+	}
+	if len(requestAttrs) > 0 {
+		attrs = append(attrs, slog.Group("request", requestAttrs...))
+	}
+	if len(attrs) > 0 {
+		enriched.AddAttrs(attrs...)
+	}
+
+	return h.next.Handle(ctx, enriched)
+}
+
+func (h *contextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &contextHandler{next: h.next.WithAttrs(attrs)}
+}
+
+func (h *contextHandler) WithGroup(name string) slog.Handler {
+	return &contextHandler{next: h.next.WithGroup(name)}
 }

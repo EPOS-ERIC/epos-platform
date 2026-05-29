@@ -2,7 +2,8 @@
 
 ## Build and Test Workflow
 
-- `make generate` regenerates `gen/metadataclient` from metadata-lifecycle OpenAPI spec.
+- `make generate` regenerates `gen/metadataclient` from metadata-lifecycle OpenAPI spec
+- `make lint test` formats + checks if changes ok
 
 ## Service Conventions
 

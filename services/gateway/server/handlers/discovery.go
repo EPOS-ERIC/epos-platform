@@ -24,35 +24,35 @@ func NewDiscovery(service *discovery.Service) *Discovery {
 }
 
 func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
-	h.log.Debug("search metadata", "method", r.Method, "path", r.URL.Path, "raw_query", r.URL.RawQuery)
+	h.log.DebugContext(r.Context(), "search metadata")
 
 	params, err := parseSearchParams(r)
 	if err != nil {
-		h.log.Warn("invalid search metadata params", "error", err.Error(), "raw_query", r.URL.RawQuery)
-		writeBadRequest(w, err)
+		h.log.WarnContext(r.Context(), "invalid search metadata params", "error", err.Error())
+		writeBadRequest(r.Context(), w, err)
 		return
 	}
 
 	results, err := h.service.Search(r.Context(), params)
 	if err != nil {
-		h.log.Error("search metadata failed", "method", r.Method, "path", r.URL.Path, "raw_query", r.URL.RawQuery, "error", err.Error())
+		h.log.ErrorContext(r.Context(), "search metadata failed", "error", err.Error())
 		switch {
 		case errors.Is(err, discovery.ErrUpstreamTimeout):
-			writeError(w, http.StatusGatewayTimeout, "upstream_timeout", "metadata search timed out")
+			writeError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "metadata search timed out", err)
 		case errors.Is(err, discovery.ErrUpstreamRequestFailed):
-			writeError(w, http.StatusInternalServerError, "internal_server_error", "metadata search request failed")
+			writeError(r.Context(), w, http.StatusInternalServerError, "internal_server_error", "metadata search request failed", err)
 		default:
-			writeError(w, http.StatusInternalServerError, "internal_server_error", "search failed")
+			writeError(r.Context(), w, http.StatusInternalServerError, "internal_server_error", "search failed", err)
 		}
 		return
 	}
 
-	h.log.Debug("search metadata success", "results_count", len(results.Items), "total", results.Total)
+	h.log.DebugContext(r.Context(), "search metadata success", "results_count", len(results.Items), "total", results.Total)
 	writeJSON(w, http.StatusOK, results)
 }
 
-func (h *Discovery) GetConceptTree(w http.ResponseWriter, _ *http.Request) {
-	writeNotImplemented(w)
+func (h *Discovery) GetConceptTree(w http.ResponseWriter, r *http.Request) {
+	writeNotImplemented(r.Context(), w)
 }
 
 func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {

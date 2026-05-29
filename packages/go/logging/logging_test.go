@@ -1,7 +1,9 @@
 package logging
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"log/slog"
 	"sync"
 	"testing"
@@ -59,5 +61,57 @@ func TestGetFallsBackToGlobalLevelForInvalidComponentOverride(t *testing.T) {
 	logger := Get("gateway-http-client")
 	if !logger.Enabled(context.Background(), slog.LevelDebug) {
 		t.Fatal("expected invalid component override to fall back to global debug level")
+	}
+}
+
+func TestContextHandlerAddsRequest(t *testing.T) {
+	var output bytes.Buffer
+	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
+
+	ctx := WithRequest(context.Background(), Request{
+		RequestID: "req-123",
+		Method:    "GET",
+		Path:      "/v1/search",
+		Query:     "q=tsunami",
+	})
+
+	logger.InfoContext(ctx, "request log")
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log output: %v", err)
+	}
+
+	request, ok := payload["request"].(map[string]any)
+	if !ok {
+		t.Fatalf("request field = %#v", payload["request"])
+	}
+	if request["id"] != "req-123" {
+		t.Fatalf("request.id = %#v", request["id"])
+	}
+	if request["method"] != "GET" {
+		t.Fatalf("request.method = %#v", request["method"])
+	}
+	if request["path"] != "/v1/search" {
+		t.Fatalf("request.path = %#v", request["path"])
+	}
+	if request["query"] != "q=tsunami" {
+		t.Fatalf("request.query = %#v", request["query"])
+	}
+}
+
+func TestContextHandlerSkipsMissingRequest(t *testing.T) {
+	var output bytes.Buffer
+	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
+
+	logger.InfoContext(context.Background(), "request log")
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log output: %v", err)
+	}
+
+	if _, ok := payload["request"]; ok {
+		t.Fatalf("unexpected request field = %#v", payload["request"])
 	}
 }

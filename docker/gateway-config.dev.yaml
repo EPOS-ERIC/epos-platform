@@ -6,7 +6,7 @@ upstream:
   timeout: "5s"
   real_timeout: "30s"
   cache_ttl: "5m"
-  max_entries: 256
+  max_entries: 2048
 
 services:
   metadata-lifecycle:
