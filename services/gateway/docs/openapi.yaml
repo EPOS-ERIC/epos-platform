@@ -3,15 +3,18 @@ info:
   title: EPOS API
   version: 1.0.0
   description: |
-    OpenAPI specification for the EPOS catalogue API.
+    Public API for searching and retrieving EPOS catalogue resources.
 
-    Design notes:
-    - Search returns heterogeneous, typed resource items in a flat list.
-    - Clients navigate by following `href` links resolved against their configured API base URL.
-    - All cross-entity references carry an API-base-relative `href` pointing to the typed detail endpoint.
+    API structure:
+    - Use discovery endpoints to search catalogue content and browse the concept tree.
+    - Use resource endpoints to retrieve full details for a specific dataset, distribution, webservice, organization, concept, or concept scheme.
+    - Search responses may include different resource types in the same result page.
+
+    How to use this API:
+    - Start with `/search` when you want to find resources by text, type, provider, time range, spatial area, or keywords.
+    - Start with `/concept` when you want to build browse or filtering interfaces based on the concept tree.
+    - Follow returned `href` values to retrieve related resources. Or use the IDs in the relative endpoints.
   termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
-  contact:
-    email: someemail@epos.com
   license:
     name: AGPL
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
@@ -35,12 +38,8 @@ paths:
       description: |
         Returns a flat, typed list of catalogue resources matching the supplied criteria.
         Results may include datasets, webservices, organizations, software applications,
-        and software source codes. Each item carries an `href` pointing to its typed
-        detail endpoint; clients should resolve that API-base-relative link against
-        their configured API base URL rather than construct endpoint URLs themselves.
-        Provider-like relations are normalized in search results, regardless of the
-        underlying detail schema naming. Dataset items expose this relation as
-        `providers`.
+        and software source codes. Each item includes an `href` that can be followed
+        to retrieve the corresponding resource detail.
       operationId: searchMetadata
       parameters:
         - $ref: "#/components/parameters/Q"
@@ -96,9 +95,9 @@ paths:
                         name: "FDSN Station Web Service"
                         href: "v1/webservice/ws-789"
                         provider:
-                          - id: "org-456"
-                            name: "University of Naples Federico II"
-                            href: "v1/organization/org-456"
+                          id: "org-456"
+                          name: "University of Naples Federico II"
+                          href: "v1/organization/org-456"
                         concepts:
                           - id: "concept-seismology"
                             name: "Seismology"
@@ -125,6 +124,9 @@ paths:
       tags:
         - Resources
       summary: Get dataset by id
+      description: |
+        Returns dataset detail metadata, including temporal and spatial coverage,
+        publishers, linked concepts, and linked distributions.
       operationId: getDatasetById
       responses:
         "200":
@@ -133,8 +135,44 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Dataset"
+              examples:
+                dataset:
+                  summary: Seismology dataset detail
+                  value:
+                    id: "dataset-123"
+                    name: "IRPINIA Seismic Stations"
+                    description: "Station metadata and access information for seismic monitoring in the Irpinia area."
+                    created: "2024-01-15T10:30:00Z"
+                    modified: "2024-03-01T08:45:00Z"
+                    version_info: "Revision reviewed by EPOS TCS Seismology"
+                    keywords:
+                      - "seismology"
+                      - "stations"
+                      - "Irpinia"
+                    concepts:
+                      - id: "concept-seismology"
+                        name: "Seismology"
+                        href: "v1/concept/concept-seismology"
+                    publisher:
+                      - id: "org-123"
+                        name: "INGV"
+                        href: "v1/organization/org-123"
+                    issued: "2024-02-01T00:00:00Z"
+                    spatial: "POLYGON((14.8 40.7, 15.6 40.7, 15.6 41.3, 14.8 41.3, 14.8 40.7))"
+                    temporal:
+                      start: "2010-01-01T00:00:00Z"
+                    status: "PUBLISHED"
+                    distributions:
+                      - id: "distribution-456"
+                        name: "FDSN Station Access"
+                        href: "v1/distribution/distribution-456"
+                    access_rights: "open"
+                    accrual_periodicity: "monthly"
+                    version: "3.1.0"
         "404":
           $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -145,6 +183,9 @@ paths:
       tags:
         - Resources
       summary: Get distribution by id
+      description: |
+        Returns distribution detail metadata. Distribution payload shape depends on
+        distribution `type`, for example a downloadable file or a linked web service.
       operationId: getDistributionById
       responses:
         "200":
@@ -153,8 +194,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Distribution"
+              examples:
+                webserviceDistribution:
+                  summary: Distribution backed by webservice operation
+                  value:
+                    id: "distribution-456"
+                    name: "FDSN Station Access"
+                    description: "Distribution exposing station metadata through FDSN web service operations."
+                    type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+                    format: "application/xml"
+                    issued: "2024-02-01T00:00:00Z"
+                    modified: "2024-03-01T08:45:00Z"
+                    license: "https://creativecommons.org/licenses/by/4.0/"
+                    webservice:
+                      id: "ws-789"
+                      name: "FDSN Station Web Service"
+                      href: "v1/webservice/ws-789"
+                    operation:
+                      id: "operation-get-station"
+                      method: "GET"
+                      returns:
+                        - "application/xml"
         "404":
           $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -175,6 +239,8 @@ paths:
                 $ref: "#/components/schemas/SoftwareApplication"
         "404":
           $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -195,6 +261,8 @@ paths:
                 $ref: "#/components/schemas/SoftwareSourceCode"
         "404":
           $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -205,6 +273,9 @@ paths:
       tags:
         - Resources
       summary: Get webservice by id
+      description: |
+        Returns webservice detail metadata, including single provider organization,
+        supported operations, API documentation, and temporal or spatial coverage.
       operationId: getWebserviceById
       responses:
         "200":
@@ -213,8 +284,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Webservice"
+              examples:
+                webservice:
+                  summary: Webservice detail
+                  value:
+                    id: "ws-789"
+                    name: "FDSN Station Web Service"
+                    description: "Web service exposing seismic station metadata through FDSN-compatible endpoints."
+                    entrypoint: "https://webservices.ingv.it/fdsnws/station/1"
+                    provider:
+                      id: "org-123"
+                      name: "INGV"
+                      href: "v1/organization/org-123"
+                    issued: "2024-02-01T00:00:00Z"
+                    modified: "2024-03-01T08:45:00Z"
+                    spatial: "POLYGON((6.6 36.6, 18.6 36.6, 18.6 47.1, 6.6 47.1, 6.6 36.6))"
+                    temporal:
+                      start: "2010-01-01T00:00:00Z"
+                    keywords:
+                      - "fdsn"
+                      - "station"
+                    concepts:
+                      - id: "concept-seismology"
+                        name: "Seismology"
+                        href: "v1/concept/concept-seismology"
+                    license: "open"
+                    operations:
+                      - id: "operation-get-station"
+                        method: "GET"
+                        returns:
+                          - "application/xml"
+                        iri_template:
+                          template: "https://webservices.ingv.it/fdsnws/station/1/query?network={network}&station={station}"
+                    api_documentation:
+                      title: "FDSN Station Service API"
+                      description: "OpenAPI-style reference for station query operations."
+                      entrypoint: "https://webservices.ingv.it/fdsnws/station/1/application.wadl"
         "404":
           $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -225,6 +334,9 @@ paths:
       tags:
         - Resources
       summary: Get organization by id
+      description: |
+        Returns organization detail metadata, including identifiers, contact points,
+        and parent organizations when available.
       operationId: getOrganizationById
       responses:
         "200":
@@ -233,8 +345,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Organization"
+              examples:
+                organization:
+                  summary: Organization detail
+                  value:
+                    id: "org-123"
+                    identifiers:
+                      - type: "ror"
+                        value: "https://ror.org/02jbv0t02"
+                    name: "Istituto Nazionale di Geofisica e Vulcanologia"
+                    address: "Via di Vigna Murata 605, 00143 Rome, Italy"
+                    logo: "https://www.ingv.it/images/logo-ingv.png"
+                    url: "https://www.ingv.it"
+                    email:
+                      - "info@ingv.it"
+                    telephone:
+                      - "+39-06-518601"
         "404":
           $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -245,8 +375,8 @@ paths:
       summary: Get full concept tree
       description: |
         Returns the complete concept tree as an ordered list of concept schemes.
-        Each scheme carries its full subtree of nested `Concept` objects.
-        Intended as the primary data source for building facet navigation in clients.
+        Each scheme carries its full subtree of nested concepts.
+        Use this endpoint to populate browse or filtering interfaces.
       operationId: getConceptTree
       responses:
         "200":
@@ -288,7 +418,9 @@ paths:
       tags:
         - Resources
       summary: Get concept by id
-      description: Returns a single concept node with direct child references.
+      description: |
+        Returns a single concept node with its containing concept scheme and direct
+        child concept references.
       operationId: getConceptById
       responses:
         "200":
@@ -297,6 +429,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Concept"
+              examples:
+                concept:
+                  summary: Concept detail
+                  value:
+                    id: "concept-seismology"
+                    name: "Seismology"
+                    description: "Resources related to seismic monitoring and analysis."
+                    in_scheme:
+                      id: "scheme-solid-earth"
+                      name: "Solid Earth Science Concepts"
+                      href: "v1/conceptscheme/scheme-solid-earth"
+                    children:
+                      - id: "concept-strong-motion"
+                        name: "Strong Motion"
+                        href: "v1/concept/concept-strong-motion"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -309,6 +456,9 @@ paths:
       tags:
         - Resources
       summary: Get concept scheme by id
+      description: |
+        Returns concept scheme detail metadata, including top concepts and optional
+        concept tree children when present.
       operationId: getConceptSchemeById
       responses:
         "200":
@@ -317,6 +467,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConceptScheme"
+              examples:
+                conceptScheme:
+                  summary: Concept scheme detail
+                  value:
+                    id: "scheme-solid-earth"
+                    label: "Solid Earth"
+                    name: "Solid Earth Science Concepts"
+                    description: "Top-level grouping for solid earth science resources."
+                    logo: "https://www.epos-eu.org/logos/solid-earth.png"
+                    homepage: "https://www.epos-eu.org/tcs/seismology"
+                    color: "#3A7BD5"
+                    order_number: 1
+                    top_concepts:
+                      - id: "concept-seismology"
+                        name: "Seismology"
+                        href: "v1/concept/concept-seismology"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -337,7 +503,7 @@ components:
       name: q
       in: query
       required: false
-      description: Free-text search query
+      description: Free-text query used to search catalogue resources.
       schema:
         type: string
         example: "seismic stations"
@@ -346,7 +512,7 @@ components:
       name: pageSize
       in: query
       required: false
-      description: Number of items to return per page
+      description: Maximum number of search items requested per page.
       schema:
         type: integer
         minimum: 1
@@ -358,7 +524,7 @@ components:
       name: pageNumber
       in: query
       required: false
-      description: 1-based page index to return
+      description: 1-based result page index to return.
       schema:
         type: integer
         minimum: 1
@@ -423,8 +589,8 @@ components:
       required: false
       description: |
         Filter by one or more provider organization IDs.
-        Applies only to resource types that expose a provider-like relation in search
-        results. When supplied, resource types without a `provider` relation are excluded.
+        Use this filter to restrict results to resources associated with one of the
+        specified provider organizations.
         Pass comma-separated values in a single parameter:
         `?provider=org-123,org-456`.
       schema:
@@ -439,7 +605,7 @@ components:
       in: query
       required: false
       description: |
-        Filter by one or more versioning statuses.
+        Filter by one or more resource publication statuses.
         When omitted, defaults to `PUBLISHED`.
         Pass comma-separated values in a single parameter:
         `?versioningStatus=PUBLISHED,DRAFT`.
@@ -457,7 +623,7 @@ components:
       in: query
       required: false
       description: |
-        Filter resources that carry all the supplied keywords.
+        Filter resources that carry all supplied keyword values.
         Pass comma-separated values in a single parameter:
         `?keywords=seismology,stations`.
       schema:
@@ -510,14 +676,14 @@ components:
                 status: 500
 
     GatewayTimeout:
-      description: Upstream dependency timeout
+      description: Request could not be completed before timeout
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           examples:
             upstreamTimeout:
-              summary: Metadata service timeout
+              summary: Request timed out
               value:
                 title: "upstream_timeout"
                 status: 504
@@ -530,6 +696,7 @@ components:
 
     ResourceType:
       type: string
+      description: Resource type identifier used in search results.
       enum:
         - dataset
         - webservice
@@ -539,6 +706,7 @@ components:
 
     VersioningStatus:
       type: string
+      description: Publication status of resource.
       enum:
         - DRAFT
         - SUBMITTED
@@ -567,7 +735,7 @@ components:
           type: integer
           minimum: 1
           maximum: 100
-          description: Number of items requested per page
+          description: Number of items returned in this response page
           example: 10
         total:
           type: integer
@@ -612,14 +780,16 @@ components:
           $ref: "#/components/schemas/ResourceType"
         id:
           type: string
+          description: Identifier of resource within this API.
           example: "123"
         name:
+          description: Human-readable display name used in search results.
           type: string
           example: "IRPINIA Seismic Stations"
         href:
           type: string
           format: uri-reference
-          description: API-base-relative URI reference to typed detail endpoint. Resolve against configured API base URL.
+          description: Relative URI reference to resource detail endpoint.
           example: "v1/dataset/123"
 
     DatasetSearchItem:
@@ -635,7 +805,7 @@ components:
                 - dataset
             providers:
               type: array
-              description: Organization references normalized from this dataset's publishers
+              description: Organization references associated with this dataset
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
@@ -732,17 +902,13 @@ components:
               enum:
                 - webservice
             provider:
-              type: array
-              description: Organization references for providers of this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
+              description: Organization reference for provider of this webservice
+              allOf:
+                - $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-456"
-                  name: "University of Naples Federico II"
-                  href: "v1/organization/org-456"
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                id: "org-456"
+                name: "University of Naples Federico II"
+                href: "v1/organization/org-456"
             concepts:
               type: array
               description: Concept references assigned to this webservice
@@ -784,11 +950,12 @@ components:
           example: "123"
         name:
           type: string
+          description: Optional human-readable label for referenced resource.
           example: "IRPINIA Seismic Stations"
         href:
           type: string
           format: uri-reference
-          description: API-base-relative URI reference to typed detail endpoint
+          description: Relative URI reference to referenced resource detail endpoint
           example: "v1/dataset/123"
 
     # -------------------------------------------------------------------------
@@ -803,10 +970,12 @@ components:
       properties:
         id:
           type: string
+          description: Identifier of resource within this API.
         name:
           description: Human-readable display name of the resource
           type: string
         description:
+          description: Optional human-readable summary of resource.
           type: string
 
     Dataset:
@@ -1000,7 +1169,7 @@ components:
               type: string
               format: uri
               description: Direct download URL for downloadable-file distributions.
-              example: "https://example.org/download/file.xml"
+              example: "https://data.ingv.it/downloads/irpinia-stations.xml"
 
     SoftwareApplication:
       allOf:
@@ -1185,7 +1354,7 @@ components:
           type: string
           format: uri
           description: URL of the organization logo
-          example: "https://example.org/logo.png"
+          example: "https://www.ingv.it/images/logo-ingv.png"
         url:
           type: string
           format: uri
@@ -1197,7 +1366,7 @@ components:
           items:
             type: string
           example:
-            - "info@example.org"
+            - "info@ingv.it"
         telephone:
           type: array
           description: Telephone numbers of the organization
@@ -1234,7 +1403,7 @@ components:
               type: string
               format: uri
               description: API entrypoint of the webservice
-              example: "https://service.example.org/fdsnws/station/1"
+              example: "https://webservices.ingv.it/fdsnws/station/1"
             contact_points:
               type: array
               description: Contact point references associated with this webservice
@@ -1245,7 +1414,7 @@ components:
                   name: "Webservice support desk"
                   href: "v1/contact-point/contact-point-1"
             provider:
-              description: Primary organization providing this webservice
+              description: Organization providing this webservice
               allOf:
                 - $ref: "#/components/schemas/ResourceRef"
               example:
@@ -1329,7 +1498,7 @@ components:
         template:
           type: string
           description: URI template describing the operation endpoint
-          example: "https://service.example.org/fdsnws/station/1/query?network={network}&station={station}"
+          example: "https://webservices.ingv.it/fdsnws/station/1/query?network={network}&station={station}"
         mappings:
           type: array
           description: Parameter mappings supported by the URI template
@@ -1416,7 +1585,7 @@ components:
           type: string
           format: uri
           description: API documentation entry point
-          example: "https://service.example.org/docs/openapi"
+          example: "https://webservices.ingv.it/fdsnws/station/1/application.wadl"
 
     Concept:
       type: object
