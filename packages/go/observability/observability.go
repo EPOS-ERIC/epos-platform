@@ -20,8 +20,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -82,6 +84,10 @@ func Start(ctx context.Context, cfg Config) (func(context.Context) error, error)
 	global.SetLoggerProvider(loggerProvider)
 
 	return shutdown, err
+}
+
+func NewHTTPHandler(handler http.Handler, operation string) http.Handler {
+	return otelhttp.NewHandler(handler, operation)
 }
 
 func newPropagator() propagation.TextMapPropagator {

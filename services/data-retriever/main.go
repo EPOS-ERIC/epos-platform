@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/repository"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/retriever"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/server"
@@ -17,6 +20,17 @@ func main() {
 	defer func() {
 		if err := logging.Close(); err != nil {
 			log.Error("failed to close logging", "error", err)
+		}
+	}()
+
+	otelShutdown, err := observability.Start(context.Background(), observability.Config{})
+	if err != nil {
+		log.Error("failed to setup observability", "error", fmt.Errorf("setup observability: %w", err))
+		os.Exit(1)
+	}
+	defer func() {
+		if err := otelShutdown(context.Background()); err != nil {
+			log.Error("otel shutdown failed", "error", err)
 		}
 	}()
 

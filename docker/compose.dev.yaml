@@ -180,6 +180,10 @@ services:
       - USER_GROUP_DB_NAME=user_group
       - USER_GROUP_DB_USER=user_group
       - USER_GROUP_DB_PASSWORD=user_group
+      - OTEL_SERVICE_NAME=user-group
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     volumes:
       - user-group-gomod-cache:/go/pkg/mod
       - user-group-gobuild-cache:/root/.cache/go-build
@@ -202,6 +206,10 @@ services:
       - DATA_RETRIEVER_DB_USER=data_retriever
       - DATA_RETRIEVER_DB_PASSWORD=data_retriever
       - DATA_RETRIEVER_HTTP_TIMEOUT=30s
+      - OTEL_SERVICE_NAME=data-retriever
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     volumes:
       - data-retriever-gomod-cache:/go/pkg/mod
       - data-retriever-gobuild-cache:/root/.cache/go-build

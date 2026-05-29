@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/repository"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/server/handlers"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/swagger"
@@ -45,5 +46,5 @@ func NewRouter(usersRepo repository.UserRepository, groupsRepo repository.GroupR
 	mux.HandleFunc("POST /api/v2/users/{userId}/friends/{friendUserId}", friendshipsHandler.Create)
 	mux.HandleFunc("DELETE /api/v2/users/{userId}/friends/{friendUserId}", friendshipsHandler.Delete)
 
-	return mux
+	return observability.NewHTTPHandler(mux, "/")
 }

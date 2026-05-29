@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/middleware"
 	"github.com/go-chi/chi/v5"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 var log = logging.Get("routes")
@@ -53,7 +53,7 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 		r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
 	})
 
-	return otelhttp.NewHandler(r, "/")
+	return observability.NewHTTPHandler(r, "/")
 }
 
 func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {

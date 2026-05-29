@@ -47,12 +47,14 @@ docker_build(
     only=[
         'services/user-group',
         'packages/go/logging',
+        'packages/go/observability',
         'packages/go/migrations',
         'packages/go/postgres',
     ],
     live_update=[
         sync('services/user-group', '/workspace/services/user-group'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/migrations', '/workspace/packages/go/migrations'),
         sync('packages/go/postgres', '/workspace/packages/go/postgres'),
         restart_container(),
@@ -66,12 +68,14 @@ docker_build(
     only=[
         'services/data-retriever',
         'packages/go/logging',
+        'packages/go/observability',
         'packages/go/migrations',
         'packages/go/postgres',
     ],
     live_update=[
         sync('services/data-retriever', '/workspace/services/data-retriever'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/migrations', '/workspace/packages/go/migrations'),
         sync('packages/go/postgres', '/workspace/packages/go/postgres'),
         restart_container(),
