@@ -58,7 +58,7 @@ func (SoftwareApplicationItem) searchItem() {}
 
 type WebServiceItem struct {
 	BaseSearchItem
-	Provider []ResourceRef `json:"provider,omitempty"`
+	Provider ResourceRef   `json:"provider"`
 	Concepts []ResourceRef `json:"concepts,omitempty"`
 }
 

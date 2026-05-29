@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -36,14 +37,7 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 	results, err := h.service.Search(r.Context(), params)
 	if err != nil {
 		h.log.ErrorContext(r.Context(), "search metadata failed", "error", err.Error())
-		switch {
-		case errors.Is(err, discovery.ErrUpstreamTimeout):
-			writeError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "metadata search timed out", err)
-		case errors.Is(err, discovery.ErrUpstreamRequestFailed):
-			writeError(r.Context(), w, http.StatusInternalServerError, "internal_server_error", "metadata search request failed", err)
-		default:
-			writeError(r.Context(), w, http.StatusInternalServerError, "internal_server_error", "search failed", err)
-		}
+		h.writeDiscoveryError(r.Context(), w, err, "metadata search")
 		return
 	}
 
@@ -52,7 +46,28 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Discovery) GetConceptTree(w http.ResponseWriter, r *http.Request) {
-	writeNotImplemented(r.Context(), w)
+	results, err := h.service.GetConceptTree(r.Context())
+	if err != nil {
+		h.log.Error("get concept tree failed", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+		h.writeDiscoveryError(r.Context(), w, err, "concept tree")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, results)
+}
+
+func (h *Discovery) writeDiscoveryError(ctx context.Context, w http.ResponseWriter, err error, operation string) {
+	if errors.Is(err, discovery.ErrUpstreamTimeout) {
+		writeError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", operation+" timed out", err)
+		return
+	}
+
+	if errors.Is(err, discovery.ErrUpstreamRequestFailed) {
+		writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" request failed", err)
+		return
+	}
+
+	writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" failed", err)
 }
 
 func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {

@@ -2,6 +2,7 @@ package metadataaccess
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,10 @@ func FetchDetail(ctx context.Context, client *metadataclient.APIClient, shape, i
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			return nil, domain.ErrNotFound
+		}
+
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+			return nil, fmt.Errorf("fetch access detail for %s '%s': %w: %w", shape, id, domain.ErrUpstreamTimeout, err)
 		}
 
 		return nil, fmt.Errorf("fetch access detail for %s '%s': %w", shape, id, err)

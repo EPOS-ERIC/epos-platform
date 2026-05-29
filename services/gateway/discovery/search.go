@@ -139,14 +139,14 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		s.log.ErrorContext(ctx, "metadata search request failed", attrs...)
 
 		if errors.Is(err, context.DeadlineExceeded) {
-			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w", ErrUpstreamTimeout)
+			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w: %w", ErrUpstreamTimeout, err)
 		}
 
 		if errors.Is(err, context.Canceled) {
-			return api.SearchResponse{}, fmt.Errorf("search metadata canceled: %w", ErrUpstreamTimeout)
+			return api.SearchResponse{}, fmt.Errorf("search metadata canceled: %w: %w", ErrUpstreamTimeout, err)
 		}
 
-		return api.SearchResponse{}, fmt.Errorf("search metadata request failed: %w", ErrUpstreamRequestFailed)
+		return api.SearchResponse{}, fmt.Errorf("search metadata request failed: %w: %w", ErrUpstreamRequestFailed, err)
 	}
 
 	s.log.DebugContext(ctx, "metadata search response received",

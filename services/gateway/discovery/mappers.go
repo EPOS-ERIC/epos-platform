@@ -155,8 +155,8 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 	}
 
 	var (
-		providers []api.ResourceRef
-		concepts  []api.ResourceRef
+		provider api.ResourceRef
+		concepts []api.ResourceRef
 	)
 
 	g, groupCtx := errgroup.WithContext(ctx)
@@ -165,7 +165,9 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 		if err != nil {
 			return fmt.Errorf("map webservice providers: %w", err)
 		}
-		providers = mappedProviders
+		if len(mappedProviders) > 0 {
+			provider = mappedProviders[0]
+		}
 		return nil
 	})
 	g.Go(func() error {
@@ -183,7 +185,7 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 
 	return api.WebServiceItem{
 		BaseSearchItem: baseItem,
-		Provider:       providers,
+		Provider:       provider,
 		Concepts:       concepts,
 	}, nil
 }

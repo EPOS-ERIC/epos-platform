@@ -8,6 +8,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -31,9 +32,9 @@ func (s *Service) GetOrganizationByID(ctx context.Context, id string) (api.Organ
 
 func mapOrganization(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Organization, error) {
 	properties := detail.GetProperties()
-	reader := newPropertyReader(properties)
+	reader := metadatareader.New(properties)
 
-	name, err := reader.requiredStringOneOf("legalName", "legal name", "name")
+	name, err := reader.RequiredStringOneOf("legalName", "legal name", "name")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization name: %w", err)
 	}
@@ -43,22 +44,22 @@ func mapOrganization(ctx context.Context, detail *metadataclient.AccessDetailRes
 		return api.Organization{}, err
 	}
 
-	contactPoints, err := reader.passthroughRefs("contactPoint")
+	contactPoints, err := reader.PassthroughRefs("contactPoint")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization contact points: %w", err)
 	}
 
-	memberOf, err := reader.resourceRefs("memberOf", api.OrganizationType)
+	memberOf, err := reader.ResourceRefs("memberOf", api.OrganizationType)
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization member of: %w", err)
 	}
 
-	email, err := reader.strings("email")
+	email, err := reader.Strings("email")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization email: %w", err)
 	}
 
-	telephone, err := reader.strings("telephone")
+	telephone, err := reader.Strings("telephone")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization telephone: %w", err)
 	}
@@ -67,10 +68,10 @@ func mapOrganization(ctx context.Context, detail *metadataclient.AccessDetailRes
 		ID:            detail.GetId(),
 		Identifiers:   identifiers,
 		Name:          name,
-		LeiCode:       reader.optionalString("leiCode"),
+		LeiCode:       reader.OptionalString("leiCode"),
 		Address:       address,
-		Logo:          reader.optionalString("logo"),
-		URL:           reader.optionalString("url"),
+		Logo:          reader.OptionalString("logo"),
+		URL:           reader.OptionalString("url"),
 		Email:         email,
 		Telephone:     telephone,
 		ContactPoints: contactPoints,
@@ -110,10 +111,13 @@ func aggregateOrganizationEntities(ctx context.Context, properties map[string]an
 }
 
 func aggregateOrganizationAddress(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (string, error) {
-	reader := newPropertyReader(properties)
-	items, err := reader.items("address")
-	if err != nil || len(items) == 0 {
-		return "", err
+	reader := metadatareader.New(properties)
+	items, err := reader.Items("address")
+	if err != nil {
+		return "", fmt.Errorf("get address items: %w", err)
+	}
+	if len(items) == 0 {
+		return "", nil
 	}
 
 	item := items[0]
@@ -124,17 +128,17 @@ func aggregateOrganizationAddress(ctx context.Context, properties map[string]any
 		return "", nil
 	}
 
-	detail, err := fetch(ctx, firstNonEmpty(item.Type, "postaladdress"), item.ID)
+	detail, err := fetch(ctx, metadatareader.FirstNonEmpty(item.Type, "postaladdress"), item.ID)
 	if err != nil {
 		return "", err
 	}
 
-	addressReader := newPropertyReader(detail.GetProperties())
+	addressReader := metadatareader.New(detail.GetProperties())
 	parts := []string{
-		addressReader.optionalString("streetAddress"),
-		addressReader.optionalString("addressLocality"),
-		addressReader.optionalString("postalCode"),
-		addressReader.optionalString("addressCountry"),
+		addressReader.OptionalString("streetAddress"),
+		addressReader.OptionalString("addressLocality"),
+		addressReader.OptionalString("postalCode"),
+		addressReader.OptionalString("addressCountry"),
 	}
 
 	nonEmpty := make([]string, 0, len(parts))

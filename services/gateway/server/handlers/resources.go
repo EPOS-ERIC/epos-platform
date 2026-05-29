@@ -113,6 +113,11 @@ func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWrite
 		return
 	}
 
+	if errors.Is(err, domain.ErrUpstreamTimeout) {
+		writeError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "resource request timed out", err)
+		return
+	}
+
 	// TODO: remove this once we have implemented everything
 	if errors.Is(err, domain.ErrNotImplemented) {
 		writeNotImplemented(ctx, w)
