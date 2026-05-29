@@ -268,7 +268,6 @@ paths:
                         homepage: "https://www.epos-eu.org/solid-earth"
                         color: "#3A7BD5"
                         order_number: 1
-                        type: "DATA"
                         children:
                           - id: "concept-seismology"
                             name: "Seismology"
@@ -277,6 +276,8 @@ paths:
                               - id: "concept-strong-motion"
                                 name: "Strong Motion"
                                 children: []
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -1442,13 +1443,33 @@ components:
           items:
             $ref: "#/components/schemas/ResourceRef"
 
+    ConceptTreeNode:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: "concept-seismology"
+        name:
+          type: string
+          example: "Seismology"
+        description:
+          type: string
+          example: "Resources related to seismic monitoring and analysis."
+        children:
+          type: array
+          description: Nested child concepts directly below this concept
+          items:
+            $ref: "#/components/schemas/ConceptTreeNode"
+
     ConceptScheme:
       type: object
       required:
         - id
         - label
         - name
-        - type
       properties:
         id:
           type: string
@@ -1478,14 +1499,11 @@ components:
           type: integer
           description: Display order among sibling concept schemes
           example: 1
-        type:
-          type: string
-          example: "http://www.w3.org/2004/02/skos/core#ConceptScheme"
         children:
           type: array
           description: Nested child concepts used by concept tree responses
           items:
-            $ref: "#/components/schemas/Concept"
+            $ref: "#/components/schemas/ConceptTreeNode"
         top_concepts:
           type: array
           description: Top concepts directly contained in this concept scheme

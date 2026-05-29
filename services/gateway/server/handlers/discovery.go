@@ -52,7 +52,21 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Discovery) GetConceptTree(w http.ResponseWriter, r *http.Request) {
-	writeNotImplemented(r.Context(), w)
+	results, err := h.service.GetConceptTree(r.Context())
+	if err != nil {
+		h.log.Error("get concept tree failed", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+		switch {
+		case errors.Is(err, discovery.ErrUpstreamTimeout):
+			writeError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "concept tree request timed out", err)
+		case errors.Is(err, discovery.ErrUpstreamRequestFailed):
+			writeError(r.Context(), w, http.StatusInternalServerError, "internal_server_error", "concept tree request failed", err)
+		default:
+			writeError(r.Context(), w, http.StatusInternalServerError, "internal_server_error", "concept tree failed", err)
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, results)
 }
 
 func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {

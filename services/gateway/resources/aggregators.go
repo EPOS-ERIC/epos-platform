@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -12,24 +13,25 @@ const propertyValueShape = "propertyvalue"
 
 func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) ([]api.Identifier, error) {
 	// TODO: fix/semplify this once the metadata-lifecycle fixes the identifiers in all the entities
-	reader := newPropertyReader(properties)
-	items, err := reader.items("identifier")
-	if err != nil || len(items) == 0 {
-		return nil, err
+	reader := metadatareader.New(properties)
+	items, err := reader.Items("identifier")
+	if err != nil {
+		return nil, fmt.Errorf("get identifiers: %w", err)
+	}
+	if len(items) == 0 {
+		return nil, nil
 	}
 
 	identifiers := make([]api.Identifier, len(items))
 	g, groupCtx := errgroup.WithContext(ctx)
 
 	for i, item := range items {
-		idx := i
-		it := item
 		g.Go(func() error {
-			identifier, err := mapIdentifierItem(groupCtx, it, fetch)
+			identifier, err := mapIdentifierItem(groupCtx, item, fetch)
 			if err != nil {
-				return fmt.Errorf("identifier %d: %w", idx, err)
+				return fmt.Errorf("identifier %d: %w", i, err)
 			}
-			identifiers[idx] = identifier
+			identifiers[i] = identifier
 			return nil
 		})
 	}
@@ -49,7 +51,7 @@ func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch 
 	return result, nil
 }
 
-func mapIdentifierItem(ctx context.Context, item propertyItem, fetch accessDetailFetcher) (api.Identifier, error) {
+func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch accessDetailFetcher) (api.Identifier, error) {
 	if item.Value != "" {
 		return api.Identifier{Value: item.Value}, nil
 	}
@@ -58,42 +60,45 @@ func mapIdentifierItem(ctx context.Context, item propertyItem, fetch accessDetai
 		return api.Identifier{}, nil
 	}
 
-	shape := firstNonEmpty(item.Type, "identifier")
+	shape := metadatareader.FirstNonEmpty(item.Type, "identifier")
 	detail, err := fetch(ctx, shape, item.ID)
 	if err != nil {
 		return api.Identifier{}, err
 	}
 
 	properties := detail.GetProperties()
-	reader := newPropertyReader(properties)
+	reader := metadatareader.New(properties)
 	if shape == propertyValueShape {
-		values, err := reader.items("pg_value")
+		values, err := reader.Items("pg_value")
 		if err != nil {
 			return api.Identifier{}, fmt.Errorf("get property value identifier value: %w", err)
 		}
 
 		value := ""
 		if len(values) > 0 {
-			value = firstNonEmpty(values[0].Value, values[0].ID, values[0].Title)
+			value = metadatareader.FirstNonEmpty(values[0].Value, values[0].ID, values[0].Title)
 		}
 
 		return api.Identifier{
-			Type:  reader.optionalString("propertyID"),
+			Type:  reader.OptionalString("propertyID"),
 			Value: value,
 		}, nil
 	}
 
 	return api.Identifier{
-		Type:  reader.optionalString("scheme agency"),
-		Value: reader.optionalString("notation"),
+		Type:  reader.OptionalString("scheme agency"),
+		Value: reader.OptionalString("notation"),
 	}, nil
 }
 
 func aggregateTemporal(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (*api.TemporalExtent, error) {
-	reader := newPropertyReader(properties)
-	items, err := reader.items("temporal")
-	if err != nil || len(items) == 0 {
-		return nil, err
+	reader := metadatareader.New(properties)
+	items, err := reader.Items("temporal")
+	if err != nil {
+		return nil, fmt.Errorf("get temporal items: %w", err)
+	}
+	if len(items) == 0 {
+		return nil, nil
 	}
 
 	item := items[0]
@@ -107,13 +112,13 @@ func aggregateTemporal(ctx context.Context, properties map[string]any, fetch acc
 	}
 
 	temporalProperties := detail.GetProperties()
-	temporalReader := newPropertyReader(temporalProperties)
-	start, err := temporalReader.optionalTime("start date")
+	temporalReader := metadatareader.New(temporalProperties)
+	start, err := temporalReader.OptionalTime("start date")
 	if err != nil {
 		return nil, fmt.Errorf("get temporal start date: %w", err)
 	}
 
-	end, err := temporalReader.optionalTime("end date")
+	end, err := temporalReader.OptionalTime("end date")
 	if err != nil {
 		return nil, fmt.Errorf("get temporal end date: %w", err)
 	}
@@ -126,10 +131,13 @@ func aggregateTemporal(ctx context.Context, properties map[string]any, fetch acc
 }
 
 func aggregateAnnotationBody(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (string, error) {
-	reader := newPropertyReader(properties)
-	items, err := reader.items("has quality annotation")
-	if err != nil || len(items) == 0 {
-		return "", err
+	reader := metadatareader.New(properties)
+	items, err := reader.Items("has quality annotation")
+	if err != nil {
+		return "", fmt.Errorf("get quality annotation items: %w", err)
+	}
+	if len(items) == 0 {
+		return "", nil
 	}
 
 	item := items[0]
@@ -146,14 +154,17 @@ func aggregateAnnotationBody(ctx context.Context, properties map[string]any, fet
 		return "", err
 	}
 
-	return newPropertyReader(detail.GetProperties()).optionalString("has body"), nil
+	return metadatareader.New(detail.GetProperties()).OptionalString("has body"), nil
 }
 
 func aggregateSpatial(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (string, error) {
-	reader := newPropertyReader(properties)
-	items, err := reader.items("spatial")
-	if err != nil || len(items) == 0 {
-		return "", err
+	reader := metadatareader.New(properties)
+	items, err := reader.Items("spatial")
+	if err != nil {
+		return "", fmt.Errorf("get spatial items: %w", err)
+	}
+	if len(items) == 0 {
+		return "", nil
 	}
 
 	item := items[0]
@@ -170,5 +181,5 @@ func aggregateSpatial(ctx context.Context, properties map[string]any, fetch acce
 		return "", err
 	}
 
-	return newPropertyReader(detail.GetProperties()).optionalString("geometry"), nil
+	return metadatareader.New(detail.GetProperties()).OptionalString("geometry"), nil
 }

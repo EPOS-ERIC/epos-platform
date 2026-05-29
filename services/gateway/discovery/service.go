@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
@@ -27,8 +26,4 @@ func NewService(metadataClient *metadataclient.APIClient, fanOutLimit int) *Serv
 		fanOutLimit:    fanOutLimit,
 		log:            logging.Get("discovery-service"),
 	}
-}
-
-func (s *Service) GetConceptTree() error {
-	return domain.ErrNotImplemented
 }

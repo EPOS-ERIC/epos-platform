@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 )
 
 func (s *Service) GetConceptByID(ctx context.Context, id string) (api.Concept, error) {
@@ -28,14 +29,14 @@ func (s *Service) GetConceptByID(ctx context.Context, id string) (api.Concept, e
 }
 
 func mapConcept(detail *metadataclient.AccessDetailResponse) (api.Concept, error) {
-	reader := newPropertyReader(detail.GetProperties())
+	reader := metadatareader.New(detail.GetProperties())
 
-	name, err := reader.requiredStringOneOf("prefLabel", "name")
+	name, err := reader.RequiredStringOneOf("prefLabel", "name")
 	if err != nil {
 		return api.Concept{}, fmt.Errorf("get concept name: %w", err)
 	}
 
-	inScheme, err := reader.optionalResourceRef("inScheme", api.ConceptSchemeType)
+	inScheme, err := reader.OptionalResourceRef("inScheme", api.ConceptSchemeType)
 	if err != nil {
 		return api.Concept{}, fmt.Errorf("get concept in scheme: %w", err)
 	}
@@ -48,16 +49,16 @@ func mapConcept(detail *metadataclient.AccessDetailResponse) (api.Concept, error
 	return api.Concept{
 		ID:          detail.GetId(),
 		Name:        name,
-		Description: reader.optionalString("definition"),
+		Description: reader.OptionalString("definition"),
 		InScheme:    inScheme,
 		Children:    children,
 	}, nil
 }
 
-func mapConceptChildren(reader propertyReader) ([]api.ResourceRef, error) {
-	children, err := reader.resourceRefs("narrower", api.ConceptType)
+func mapConceptChildren(reader metadatareader.Reader) ([]api.ResourceRef, error) {
+	children, err := reader.ResourceRefs("narrower", api.ConceptType)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get narrower refs: %w", err)
 	}
 
 	return children, nil

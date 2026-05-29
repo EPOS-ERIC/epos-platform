@@ -3,11 +3,11 @@ package resources
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 )
 
 func (s *Service) GetConceptSchemeByID(ctx context.Context, id string) (api.ConceptScheme, error) {
@@ -29,24 +29,24 @@ func (s *Service) GetConceptSchemeByID(ctx context.Context, id string) (api.Conc
 }
 
 func mapConceptScheme(detail *metadataclient.AccessDetailResponse) (api.ConceptScheme, error) {
-	reader := newPropertyReader(detail.GetProperties())
+	reader := metadatareader.New(detail.GetProperties())
 
-	label, err := reader.requiredStringOneOf("prefLabel", "label")
+	label, err := reader.RequiredStringOneOf("prefLabel", "label")
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme label: %w", err)
 	}
 
-	name, err := reader.requiredStringOneOf("title", "name")
+	name, err := reader.RequiredStringOneOf("title", "name")
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme name: %w", err)
 	}
 
-	topConcepts, err := reader.resourceRefs("hasTopConcept", api.ConceptType)
+	topConcepts, err := reader.ResourceRefs("hasTopConcept", api.ConceptType)
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme top concepts: %w", err)
 	}
 
-	orderNumber, err := parseOptionalInt32(reader.optionalString("orderItemNumber"))
+	orderNumber, err := metadatareader.ParseOptionalInt32(reader.OptionalString("orderItemNumber"))
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme order number: %w", err)
 	}
@@ -55,24 +55,11 @@ func mapConceptScheme(detail *metadataclient.AccessDetailResponse) (api.ConceptS
 		ID:          detail.GetId(),
 		Label:       label,
 		Name:        name,
-		Description: reader.optionalString("description"),
-		Logo:        reader.optionalString("logo"),
-		Homepage:    reader.optionalString("homepage"),
-		Color:       reader.optionalString("color"),
+		Description: reader.OptionalString("description"),
+		Logo:        reader.OptionalString("logo"),
+		Homepage:    reader.OptionalString("homepage"),
+		Color:       reader.OptionalString("color"),
 		OrderNumber: orderNumber,
 		TopConcepts: topConcepts,
 	}, nil
-}
-
-func parseOptionalInt32(value string) (int32, error) {
-	if value == "" {
-		return 0, nil
-	}
-
-	parsedValue, err := strconv.ParseInt(value, 10, 32)
-	if err != nil {
-		return 0, fmt.Errorf("parse int32 '%s': %w", value, err)
-	}
-
-	return int32(parsedValue), nil
 }
