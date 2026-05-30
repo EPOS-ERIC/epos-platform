@@ -3,8 +3,8 @@ package org.epos.tests
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.infrastructure.ktor.routes.search.ResourceLinkResolver
+import org.epos.propertygraph.client.PropertyGraphClient
 import org.junit.jupiter.api.Test
 
 class ResourceLinkResolverTest {
@@ -26,7 +26,13 @@ class ResourceLinkResolverTest {
                 client = client,
                 entityId = "PIC:999591306/v1.0",
                 resourceTypeMap = resourceTypeMap,
-                normalizeShapeName = { it.lowercase().replace("-", "").replace("_", "").replace(" ", "") },
+                normalizeShapeName = {
+                    it
+                        .lowercase()
+                        .replace("-", "")
+                        .replace("_", "")
+                        .replace(" ", "")
+                },
             )
 
         shape shouldBe "organization"

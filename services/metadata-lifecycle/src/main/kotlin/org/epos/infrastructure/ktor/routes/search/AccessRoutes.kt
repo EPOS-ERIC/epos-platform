@@ -88,17 +88,14 @@ private fun buildAccessList(
     publicBaseUrl: String,
 ): AccessListResponse {
     val candidateTypes = typeCandidatesForShape(shape, resourceTypes).ifEmpty { listOf(shape.lowercase()) }
-    val typeList = candidateTypes.joinToString(",") { gStr(it) }
-    val results = client.runQuery("""
-        g.V().hasLabel('Conceptual').has('type', within($typeList)).as('c').out('CURRENT_VERSION').hasLabel('Version').as('v')
-          .select('c','v')
-          .by(project('id','type')
-            .by(coalesce(values('id'), constant('')))
-            .by(coalesce(values('type'), constant(''))))
-          .by(project('title')
-            .by(coalesce(values('title'), constant(''))))
-          .toList()
-    """.trimIndent())
+    val results = client.runQuery(
+        """
+        MATCH (c:Conceptual)-[:CURRENT_VERSION]->(v:Version)
+        WHERE toLower(c.type) IN ${'$'}typeList
+        RETURN {id: c.id, type: c.type} AS c, {title: coalesce(v.title, '')} AS v
+        """.trimIndent(),
+        mapOf("typeList" to candidateTypes.map { it.lowercase() }),
+    )
 
     val items = results.mapNotNull { row ->
         val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
@@ -131,9 +128,18 @@ private fun buildAccessDetail(
 ): AccessDetailResponse {
     // Load version payload with progressively looser id/identifier fallbacks.
     val result =
-        client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
-            ?: client.runQuery("g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
-            ?: client.runQuery("g.V().has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
+        client.runQuery(
+            "MATCH (v:Version {id: ${'$'}entityId}) RETURN properties(v) AS value LIMIT 1",
+            mapOf("entityId" to entityId),
+        ).firstOrNull()
+            ?: client.runQuery(
+                "MATCH (v:Version {identifier: ${'$'}entityId}) RETURN properties(v) AS value LIMIT 1",
+                mapOf("entityId" to entityId),
+            ).firstOrNull()
+            ?: client.runQuery(
+                "MATCH (v:Version) WHERE v.id = ${'$'}entityId RETURN properties(v) AS value LIMIT 1",
+                mapOf("entityId" to entityId),
+            ).firstOrNull()
 
     val rawMap = (result?.get("value") as? Map<*, *>) ?: (result as? Map<*, *>) ?: emptyMap<String, Any?>()
     val v = rawMap
@@ -176,33 +182,33 @@ private fun buildAccessDetail(
     val relationRows =
         client.runQuery(
             """
-            g.V().hasLabel('Version').has('id', ${gStr(entityId)}).as('s')
-              .outE().as('e').inV().as('t')
-              .select('e','t')
-              .by(project('label','predicateIri','predicateKey')
-                .by(label)
-                .by(coalesce(values('predicateIri'), constant('')))
-                .by(coalesce(values('predicateKey'), constant(''))))
-              .by(project('identifier','id')
-                .by(coalesce(values('identifier'), constant('')))
-                .by(coalesce(values('id'), constant(''))))
-              .toList()
+            MATCH (s:Version {id: ${'$'}entityId})-[e]->(t:Version)
+            RETURN {
+              label: type(e),
+              predicateIri: coalesce(e.predicateIri, ''),
+              predicateKey: coalesce(e.predicateKey, '')
+            } AS e,
+            {
+              identifier: coalesce(t.identifier, ''),
+              id: coalesce(t.id, '')
+            } AS t
             """.trimIndent(),
+            mapOf("entityId" to entityId),
         ).ifEmpty {
             client.runQuery(
                 """
-                g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).as('s')
-                  .outE().as('e').inV().as('t')
-                  .select('e','t')
-                  .by(project('label','predicateIri','predicateKey')
-                    .by(label)
-                    .by(coalesce(values('predicateIri'), constant('')))
-                    .by(coalesce(values('predicateKey'), constant(''))))
-                  .by(project('identifier','id')
-                    .by(coalesce(values('identifier'), constant('')))
-                    .by(coalesce(values('id'), constant(''))))
-                  .toList()
+                MATCH (s:Version {identifier: ${'$'}entityId})-[e]->(t:Version)
+                RETURN {
+                  label: type(e),
+                  predicateIri: coalesce(e.predicateIri, ''),
+                  predicateKey: coalesce(e.predicateKey, '')
+                } AS e,
+                {
+                  identifier: coalesce(t.identifier, ''),
+                  id: coalesce(t.id, '')
+                } AS t
                 """.trimIndent(),
+                mapOf("entityId" to entityId),
             )
         }
 
@@ -494,27 +500,35 @@ private fun shapeMatchesEntityType(
     val conceptualType =
         client.runQuery(
             """
-            g.V().hasLabel('Conceptual').has('id', ${gStr(entityId)})
-              .values('type').limit(1).toList()
+            MATCH (c:Conceptual {id: ${'$'}entityId})
+            RETURN c.type AS value
+            LIMIT 1
             """.trimIndent(),
+            mapOf("entityId" to entityId),
         ).firstOrNull()?.get("value")?.toString()
             ?: client.runQuery(
                 """
-                g.V().hasLabel('Conceptual').has('identifier', ${gStr(entityId)})
-                  .values('type').limit(1).toList()
+                MATCH (c:Conceptual {identifier: ${'$'}entityId})
+                RETURN c.type AS value
+                LIMIT 1
                 """.trimIndent(),
+                mapOf("entityId" to entityId),
             ).firstOrNull()?.get("value")?.toString()
             ?: client.runQuery(
             """
-            g.V().hasLabel('Version').has('id', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
-              .values('type').limit(1).toList()
+            MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version {id: ${'$'}entityId})
+            RETURN c.type AS value
+            LIMIT 1
             """.trimIndent(),
+            mapOf("entityId" to entityId),
         ).firstOrNull()?.get("value")?.toString()
             ?: client.runQuery(
                 """
-                g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
-                  .values('type').limit(1).toList()
+                MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version {identifier: ${'$'}entityId})
+                RETURN c.type AS value
+                LIMIT 1
                 """.trimIndent(),
+                mapOf("entityId" to entityId),
             ).firstOrNull()?.get("value")?.toString()
             ?: return false
 
@@ -536,7 +550,6 @@ private fun resolveShapeNameFromConceptualType(
         ?: conceptualType
 }
 
-private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 private fun prop(value: Any?): String? = when (value) {
     is List<*> -> value.firstOrNull()?.toString()
     else -> value?.toString()

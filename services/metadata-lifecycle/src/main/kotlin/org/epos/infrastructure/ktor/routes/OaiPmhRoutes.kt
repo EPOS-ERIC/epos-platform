@@ -237,10 +237,13 @@ private fun fetchPublishedRecords(
         typeInfo?.targetClass
     } else null
 
-    val results = client.runQuery("""
-        g.V().hasLabel('Conceptual').as('c').out('CURRENT_VERSION').hasLabel('Version').has('status','published').as('v')
-          .select('c','v').by(valueMap(true)).by(valueMap(true)).toList()
-    """.trimIndent())
+    val results = client.runQuery(
+        """
+        MATCH (c:Conceptual)-[:CURRENT_VERSION]->(v:Version)
+        WHERE toLower(v.status) = 'published'
+        RETURN properties(c) AS c, properties(v) AS v
+        """.trimIndent(),
+    )
         .filter { row ->
             if (typeFilter == null || typeFilter.isBlank()) return@filter true
             val c = row["c"] as? Map<*, *> ?: return@filter false
@@ -268,11 +271,16 @@ private fun fetchPublishedRecords(
 }
 
 private fun fetchRecordById(client: PropertyGraphClient, identifier: String): OaiRecord? {
-    val result = client.runQuery("""
-        g.V().hasLabel('Conceptual').has('id', ${gStr(identifier)}).as('c')
-          .out('CURRENT_VERSION').hasLabel('Version').has('status','published').as('v')
-          .select('c','v').by(valueMap(true)).by(valueMap(true)).limit(1).toList()
-    """.trimIndent()).firstOrNull() ?: return null
+    val result =
+        client.runQuery(
+            """
+            MATCH (c:Conceptual {id: ${'$'}identifier})-[:CURRENT_VERSION]->(v:Version)
+            WHERE toLower(v.status) = 'published'
+            RETURN properties(c) AS c, properties(v) AS v
+            LIMIT 1
+            """.trimIndent(),
+            mapOf("identifier" to identifier),
+        ).firstOrNull() ?: return null
 
     val c = result["c"] as? Map<*, *> ?: return null
     val id = prop(c["id"]) ?: return null
@@ -291,7 +299,6 @@ private fun fetchRecordById(client: PropertyGraphClient, identifier: String): Oa
     )
 }
 
-private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 private fun prop(value: Any?): String? = when (value) {
     is List<*> -> value.firstOrNull()?.toString()
     else -> value?.toString()

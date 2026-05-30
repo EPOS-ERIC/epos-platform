@@ -1,5 +1,5 @@
 # =============================================================================
-# EPOS JanusGraph Configuration - PRODUCTION Profile
+# EPOS Neo4j Configuration - PRODUCTION Profile
 # =============================================================================
 # This file contains production-specific overrides.
 # Only include settings that differ from application.yaml
@@ -7,11 +7,9 @@
 # Activate with: EPOS_PROFILE=prod or -Depos.profile=prod
 # =============================================================================
 
-# Production JanusGraph endpoint
-janusgraph:
-  host: "janusgraph.epos-eu.org"
-  port: 8182
-  traversalSource: "g"
+# Production Neo4j endpoint
+neo4j:
+  uri: "bolt://neo4j.epos-eu.org:7687"
   username: ""
   password: ""
   maxConnectionPoolSize: 100

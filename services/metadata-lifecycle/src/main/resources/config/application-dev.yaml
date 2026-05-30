@@ -1,15 +1,13 @@
 # =============================================================================
-# EPOS JanusGraph Configuration - DEVELOPMENT Profile
+# EPOS Neo4j Configuration - DEVELOPMENT Profile
 # =============================================================================
 # Local development settings with verbose logging and all debug features
 #
 # Activate with: EPOS_PROFILE=dev or -Depos.profile=dev
 # =============================================================================
 
-janusgraph:
-  host: "localhost"
-  port: 8182
-  traversalSource: "g"
+neo4j:
+  uri: "bolt://localhost:7687"
   username: ""
   password: ""
   maxConnectionPoolSize: 20

@@ -1,5 +1,5 @@
 # =============================================================================
-# EPOS JanusGraph Configuration - Base Configuration
+# EPOS Neo4j Configuration - Base Configuration
 # =============================================================================
 # This is the base configuration file. Profile-specific overrides should be
 # placed in application-{profile}.yaml files (e.g., application-prod.yaml)
@@ -14,12 +14,10 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# JanusGraph Connection Settings
+# Neo4j Connection Settings
 # -----------------------------------------------------------------------------
-janusgraph:
-  host: "localhost"
-  port: 8182
-  traversalSource: "g"
+neo4j:
+  uri: "bolt://localhost:7687"
   username: ""
   password: ""
   maxConnectionPoolSize: 50

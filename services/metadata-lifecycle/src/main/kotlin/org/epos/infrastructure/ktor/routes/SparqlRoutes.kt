@@ -117,7 +117,7 @@ private fun runTranslatedSparqlQuery(
     val askAnyTriple = Regex("""^ASK\s+WHERE\s*\{\s*\?s\s+\?p\s+\?o\s*\}\s*$""", RegexOption.IGNORE_CASE)
     if (askAnyTriple.matches(normalizedQuery)) {
         val count =
-            client.runQuery("g.V().limit(1).count().next()")
+            client.runQuery("MATCH (n) RETURN count(n) AS value")
                 .firstOrNull()?.get("value")?.toString()?.toLongOrNull() ?: 0L
         return listOf(mapOf("boolean" to (count > 0)))
     }
@@ -132,14 +132,13 @@ private fun runTranslatedSparqlQuery(
 
     return client.runQuery(
         """
-        g.V().as('s').outE().as('e').inV().as('o')
-          .select('s','e','o')
-          .by(coalesce(values('id'), id()))
-          .by(label)
-          .by(coalesce(values('id'), id()))
-          .limit($limit)
-          .toList()
+        MATCH (s)-[e]->(o)
+        RETURN coalesce(s.id, toString(elementId(s))) AS s,
+               type(e) AS e,
+               coalesce(o.id, toString(elementId(o))) AS o
+        LIMIT ${'$'}limit
         """.trimIndent(),
+        mapOf("limit" to limit),
     ).map { row ->
         mapOf(
             "s" to row["s"],

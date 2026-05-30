@@ -63,7 +63,11 @@ fun Route.lifecycleRoutes(
             val actorHeaders = call.requireActorHeaders() ?: return@post
 
             try {
-                val exists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(entityUri)}).has('status','published').values('id').limit(1).toList()")
+                val exists =
+                    client.exists(
+                        "MATCH (v:Version {id: ${'$'}id}) WHERE toLower(v.status) = 'published' RETURN v.id AS value LIMIT 1",
+                        mapOf("id" to entityUri),
+                    )
 
                 if (!exists) {
                     call.respond(
@@ -76,22 +80,36 @@ fun Route.lifecycleRoutes(
                 val conceptualUri = entityUri.substringBeforeLast("/")
                 val versionUri = entityUri
 
-                val conceptualExists = client.exists("g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).values('id').limit(1).toList()")
+                val conceptualExists =
+                    client.exists(
+                        "MATCH (c:Conceptual {id: ${'$'}id}) RETURN c.id AS value LIMIT 1",
+                        mapOf("id" to conceptualUri),
+                    )
 
                 if (!conceptualExists) {
-                    client.runWrite("""
-                        g.addV('Conceptual').property('id', ${gStr(conceptualUri)}).property('type','Resource').property('createdAt', '${java.time.Instant.now()}').iterate()
-                    """.trimIndent())
+                    client.runWrite(
+                        "MERGE (c:Conceptual {id: ${'$'}id}) ON CREATE SET c.type = 'Resource', c.createdAt = ${'$'}createdAt",
+                        mapOf("id" to conceptualUri, "createdAt" to java.time.Instant.now().toString()),
+                    )
                 }
 
-                client.runWrite("""
-                    def c = g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualUri)}).next()
-                    def v = g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).next()
-                    g.V(c.id()).outE('CURRENT_VERSION').drop().iterate()
-                    g.V(c.id()).addE('CURRENT_VERSION').to(V(v.id())).iterate()
-                """.trimIndent())
+                client.runWrite(
+                    """
+                    MATCH (c:Conceptual {id: ${'$'}conceptualUri})
+                    OPTIONAL MATCH (c)-[old:CURRENT_VERSION]->(:Version)
+                    DELETE old
+                    WITH c
+                    MATCH (v:Version {id: ${'$'}versionUri})
+                    MERGE (c)-[:CURRENT_VERSION]->(v)
+                    """.trimIndent(),
+                    mapOf("conceptualUri" to conceptualUri, "versionUri" to versionUri),
+                )
 
-                val hasProvenance = client.exists("g.V().hasLabel('Version').has('id', ${gStr(versionUri)}).in('AFFECTED').hasLabel('Activity').values('id').limit(1).toList()")
+                val hasProvenance =
+                    client.exists(
+                        "MATCH (a:Activity)-[:AFFECTED]->(v:Version {id: ${'$'}id}) RETURN a.id AS value LIMIT 1",
+                        mapOf("id" to versionUri),
+                    )
 
                 if (!hasProvenance) {
                     provenanceService.recordInitialCreation(
@@ -122,8 +140,6 @@ fun Route.lifecycleRoutes(
         }
     }
 }
-
-private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
 private fun decodePathId(raw: String?): String {
     val value = raw?.trim().orEmpty()

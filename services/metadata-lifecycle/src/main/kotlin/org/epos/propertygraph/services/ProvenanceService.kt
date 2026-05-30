@@ -4,17 +4,33 @@ import org.epos.propertygraph.Config
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.utils.UriUtils
 
-class ProvenanceService(private val client: PropertyGraphClient) {
-
+class ProvenanceService(
+    private val client: PropertyGraphClient,
+) {
     fun recordInitialCreation(
         versionUri: String,
         agent: String = Config.AGENT_INITIAL_POPULATION,
-        group: String = Config.AGENT_SYSTEM
+        group: String = Config.AGENT_SYSTEM,
     ) {
         val activityUri = UriUtils.generateActivityUri()
-        val timestamp = java.time.Instant.now().toString()
+        val timestamp =
+            java.time.Instant
+                .now()
+                .toString()
 
-        client.runWrite(createActivityScript(activityUri, "initial_creation", versionUri, null, "published", agent, group, timestamp))
+        client.runWrite(
+            createActivityCypher(),
+            buildActivityParams(
+                activityUri = activityUri,
+                type = "initial_creation",
+                versionUri = versionUri,
+                fromStatus = null,
+                toStatus = "published",
+                agent = agent,
+                group = group,
+                timestamp = timestamp,
+            ),
+        )
     }
 
     fun recordDraftCreation(
@@ -22,13 +38,17 @@ class ProvenanceService(private val client: PropertyGraphClient) {
         basedOnVersionUri: String,
         conceptualUri: String,
         agent: String = Config.AGENT_SYSTEM,
-        group: String = Config.AGENT_SYSTEM
+        group: String = Config.AGENT_SYSTEM,
     ) {
         val activityUri = UriUtils.generateActivityUri()
-        val timestamp = java.time.Instant.now().toString()
+        val timestamp =
+            java.time.Instant
+                .now()
+                .toString()
 
         client.runWrite(
-            createActivityScript(
+            createActivityCypher(),
+            buildActivityParams(
                 activityUri = activityUri,
                 type = "draft_creation",
                 versionUri = newVersionUri,
@@ -37,10 +57,11 @@ class ProvenanceService(private val client: PropertyGraphClient) {
                 agent = agent,
                 group = group,
                 timestamp = timestamp,
-                extraProperties = mapOf(
-                    "startingVersionId" to basedOnVersionUri,
-                    "startingDatasetId" to conceptualUri,
-                ),
+                extraProperties =
+                    mapOf(
+                        "startingVersionId" to basedOnVersionUri,
+                        "startingDatasetId" to conceptualUri,
+                    ),
             ),
         )
     }
@@ -50,25 +71,40 @@ class ProvenanceService(private val client: PropertyGraphClient) {
         fromStatus: String,
         toStatus: String,
         agent: String = Config.AGENT_SYSTEM,
-        group: String = Config.AGENT_SYSTEM
+        group: String = Config.AGENT_SYSTEM,
     ) {
         val activityUri = UriUtils.generateActivityUri()
-        val timestamp = java.time.Instant.now().toString()
+        val timestamp =
+            java.time.Instant
+                .now()
+                .toString()
 
-        client.runWrite(createActivityScript(activityUri, "state_transition", versionUri, fromStatus, toStatus, agent, group, timestamp))
+        client.runWrite(
+            createActivityCypher(),
+            buildActivityParams(
+                activityUri = activityUri,
+                type = "state_transition",
+                versionUri = versionUri,
+                fromStatus = fromStatus,
+                toStatus = toStatus,
+                agent = agent,
+                group = group,
+                timestamp = timestamp,
+            ),
+        )
     }
 
     fun getVersionHistory(conceptualUri: String): List<Map<String, String?>> {
-        val results = client.runQuery(
-            """
-            g.V().hasLabel('Conceptual').has('id', ${toGremlinString(conceptualUri)})
-              .out('HAS_VERSION')
-              .project('version','activities')
-                .by(valueMap(true))
-                .by(__.in('AFFECTED').valueMap(true).fold())
-              .toList()
-            """.trimIndent()
-        )
+        val results =
+            client.runQuery(
+                """
+                MATCH (:Conceptual {id: ${'$'}conceptualUri})-[:HAS_VERSION]->(v:Version)
+                OPTIONAL MATCH (a:Activity)-[:AFFECTED]->(v)
+                WITH properties(v) AS version, collect(properties(a)) AS activities
+                RETURN version, activities
+                """.trimIndent(),
+                mapOf("conceptualUri" to conceptualUri),
+            )
 
         return results.mapNotNull { row ->
             val v = row["version"] as? Map<*, *> ?: return@mapNotNull null
@@ -76,9 +112,10 @@ class ProvenanceService(private val client: PropertyGraphClient) {
 
             val activityMaps = activities.filterIsInstance<Map<*, *>>()
 
-            val latestStateTransition: Map<*, *>? = activityMaps
-                .filter { readGremlinProperty(it["type"]) == "state_transition" }
-                .maxByOrNull { readGremlinProperty(it["timestamp"]) ?: "" }
+            val latestStateTransition: Map<*, *>? =
+                activityMaps
+                    .filter { readGremlinProperty(it["type"]) == "state_transition" }
+                    .maxByOrNull { readGremlinProperty(it["timestamp"]) ?: "" }
 
             val latestActivity: Map<*, *>? =
                 latestStateTransition
@@ -90,20 +127,33 @@ class ProvenanceService(private val client: PropertyGraphClient) {
                 "timestamp" to (readGremlinProperty(latestActivity?.get("timestamp")) ?: readGremlinProperty(v["createdAt"])),
                 "agent" to readGremlinProperty(latestActivity?.get("agent")),
                 "group" to readGremlinProperty(latestActivity?.get("group")),
-                "status" to (readGremlinProperty(v["status"]) ?: "unknown")
+                "status" to (readGremlinProperty(v["status"]) ?: "unknown"),
             )
         }
     }
 
-    private fun readGremlinProperty(value: Any?): String? {
-        return when (value) {
+    private fun readGremlinProperty(value: Any?): String? =
+        when (value) {
             null -> null
             is List<*> -> value.firstOrNull()?.toString()
             else -> value.toString()
         }
-    }
 
-    private fun createActivityScript(
+    private fun createActivityCypher(): String =
+        """
+        MATCH (v:Version {id: ${'$'}versionUri})
+        MERGE (a:Activity {id: ${'$'}activityUri})
+        SET a.type = ${'$'}type,
+            a.agent = ${'$'}agent,
+            a.group = ${'$'}group,
+            a.timestamp = ${'$'}timestamp,
+            a.fromStatus = ${'$'}fromStatus,
+            a.toStatus = ${'$'}toStatus
+        SET a += ${'$'}extraProperties
+        MERGE (a)-[:AFFECTED]->(v)
+        """.trimIndent()
+
+    private fun buildActivityParams(
         activityUri: String,
         type: String,
         versionUri: String,
@@ -113,30 +163,18 @@ class ProvenanceService(private val client: PropertyGraphClient) {
         group: String,
         timestamp: String,
         extraProperties: Map<String, String> = emptyMap(),
-    ): String {
-        val fromStatusLine = fromStatus?.let { "a.property('fromStatus', ${toGremlinString(it)})" } ?: ""
-        val toStatusLine = toStatus?.let { "a.property('toStatus', ${toGremlinString(it)})" } ?: ""
-        val extraPropertyLines = extraProperties.entries.joinToString("\n") { (key, value) ->
-            "a.property('${key.replace("'", "")}', ${toGremlinString(value)})"
-        }
-
-        return """
-            import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*
-            def v = g.V().hasLabel('Version').has('id', ${toGremlinString(versionUri)}).tryNext().orElse(null)
-            if (v != null) {
-              def a = g.addV('Activity')
-                .property('id', ${toGremlinString(activityUri)})
-                .property('type', ${toGremlinString(type)})
-                .property('agent', ${toGremlinString(agent)})
-                .property('group', ${toGremlinString(group)})
-                .property('timestamp', ${toGremlinString(timestamp)})
-                .next()
-              $fromStatusLine
-              $toStatusLine
-              $extraPropertyLines
-              g.V(a.id()).addE('AFFECTED').to(V(v.id())).iterate()
-            }
-        """.trimIndent()
+    ): Map<String, Any> {
+        return mapOf(
+            "activityUri" to activityUri,
+            "type" to type,
+            "versionUri" to versionUri,
+            "fromStatus" to (fromStatus ?: ""),
+            "toStatus" to (toStatus ?: ""),
+            "agent" to agent,
+            "group" to group,
+            "timestamp" to timestamp,
+            "extraProperties" to extraProperties,
+        )
     }
 
     private fun toGremlinString(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"

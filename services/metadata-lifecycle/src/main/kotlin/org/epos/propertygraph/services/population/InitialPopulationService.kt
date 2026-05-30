@@ -44,7 +44,7 @@ class InitialPopulationService(
     suspend fun populateInitial(indexUrl: String = Config.INDEX_URL) {
         println("=== Initial Population Started ===")
 
-        ensureGremlinSupport()
+        ensureNeo4jSupport()
         ensureIndexesReadyForPopulation()
 
         val urls = fetchIndex(indexUrl)
@@ -82,111 +82,28 @@ class InitialPopulationService(
         }
     }
 
-    private fun ensureGremlinSupport() {
+    private fun ensureNeo4jSupport() {
         try {
-            client.runQuery("g.V().limit(1).count()")
+            client.runQuery("RETURN 1 AS ok")
         } catch (e: Exception) {
-            throw IllegalStateException("Gremlin preflight failed: ${e.message}", e)
+            throw IllegalStateException("Neo4j preflight failed: ${e.message}", e)
         }
     }
 
     private fun ensureIndexesReadyForPopulation() {
         try {
-            println("  Ensuring JanusGraph indexes for population...")
-            client.runWrite(
-                """
-                mgmt = graph.openManagement()
-                idKey = mgmt.getPropertyKey('id') ?: mgmt.makePropertyKey('id').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
-                statusKey = mgmt.getPropertyKey('status') ?: mgmt.makePropertyKey('status').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
-                versionLabel = mgmt.getVertexLabel('Version') ?: mgmt.makeVertexLabel('Version').make()
-                conceptualLabel = mgmt.getVertexLabel('Conceptual') ?: mgmt.makeVertexLabel('Conceptual').make()
-
-                if (versionLabel != null && mgmt.getGraphIndex('idxVersionId') == null) {
-                    mgmt.buildIndex('idxVersionId', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                        .addKey(idKey)
-                        .indexOnly(versionLabel)
-                        .buildCompositeIndex()
-                }
-                if (versionLabel != null && mgmt.getGraphIndex('idxVersionStatus') == null) {
-                    mgmt.buildIndex('idxVersionStatus', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                        .addKey(statusKey)
-                        .indexOnly(versionLabel)
-                        .buildCompositeIndex()
-                }
-                if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualId') == null) {
-                    mgmt.buildIndex('idxConceptualId', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                        .addKey(idKey)
-                        .indexOnly(conceptualLabel)
-                        .buildCompositeIndex()
-                }
-                if (mgmt.getGraphIndex('idxVertexIdGlobal') == null) {
-                    mgmt.buildIndex('idxVertexIdGlobal', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                        .addKey(idKey)
-                        .buildCompositeIndex()
-                }
-                mgmt.commit()
-                """.trimIndent()
+            println("  Ensuring Neo4j constraints and indexes for population...")
+            val statements = listOf(
+                "CREATE CONSTRAINT conceptual_id_unique IF NOT EXISTS FOR (c:Conceptual) REQUIRE c.id IS UNIQUE",
+                "CREATE CONSTRAINT version_id_unique IF NOT EXISTS FOR (v:Version) REQUIRE v.id IS UNIQUE",
+                "CREATE INDEX version_status_idx IF NOT EXISTS FOR (v:Version) ON (v.status)",
+                "CREATE INDEX conceptual_type_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.type)",
+                "CREATE INDEX conceptual_id_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.id)",
             )
-
-            val maxAttempts = 12
-            val waitMillis = 5000L
-            var enabled = false
-
-            repeat(maxAttempts) { attempt ->
-                val statusesRows =
-                    client.runQuery(
-                        """
-                        mgmt = graph.openManagement()
-                        def statusMap = [
-                            versionId: mgmt.getGraphIndex('idxVersionId')?.getIndexStatus(mgmt.getPropertyKey('id'))?.name(),
-                            versionStatus: mgmt.getGraphIndex('idxVersionStatus')?.getIndexStatus(mgmt.getPropertyKey('status'))?.name(),
-                            conceptualId: mgmt.getGraphIndex('idxConceptualId')?.getIndexStatus(mgmt.getPropertyKey('id'))?.name(),
-                            globalId: mgmt.getGraphIndex('idxVertexIdGlobal')?.getIndexStatus(mgmt.getPropertyKey('id'))?.name()
-                        ]
-                        mgmt.rollback()
-                        statusMap
-                        """.trimIndent(),
-                    )
-
-                val statuses = mutableMapOf<String, String>()
-                statusesRows.forEach { row ->
-                    row.forEach { (key, value) ->
-                        if (value != null) statuses[key] = value.toString()
-                    }
-                }
-
-                val versionIdStatus = statuses["versionId"] ?: "UNKNOWN"
-                val versionStatusStatus = statuses["versionStatus"] ?: "UNKNOWN"
-                val conceptualIdStatus = statuses["conceptualId"] ?: "UNKNOWN"
-                val globalIdStatus = statuses["globalId"] ?: "UNKNOWN"
-
-                println(
-                    "  Index status check ${attempt + 1}/$maxAttempts: " +
-                        "idxVersionId=$versionIdStatus, idxVersionStatus=$versionStatusStatus, idxConceptualId=$conceptualIdStatus, idxVertexIdGlobal=$globalIdStatus",
-                )
-
-                val allEnabled =
-                    versionIdStatus == "ENABLED" &&
-                        conceptualIdStatus == "ENABLED" &&
-                        (versionStatusStatus == "ENABLED" || versionStatusStatus == "REGISTERED" || versionStatusStatus == "UNKNOWN")
-
-                if (allEnabled) {
-                    enabled = true
-                    return@repeat
-                }
-
-                Thread.sleep(waitMillis)
-            }
-
-            if (!enabled) {
-                throw IllegalStateException(
-                    "Indexes not ENABLED after ${maxAttempts * waitMillis / 1000}s; aborting populate to avoid full scans",
-                )
-            }
-
-            println("  JanusGraph indexes are ENABLED; starting population")
+            statements.forEach { client.runWrite(it) }
+            println("  Neo4j indexes are ready; starting population")
         } catch (e: Exception) {
-            throw IllegalStateException("Could not ensure JanusGraph indexes before population: ${e.message}", e)
+            throw IllegalStateException("Could not ensure Neo4j indexes before population: ${e.message}", e)
         }
     }
 
@@ -531,14 +448,13 @@ class InitialPopulationService(
 
             val data = entityDataMap[versioned] ?: emptyMap()
             val timestamp = java.time.Instant.now().toString()
-            val script = buildInsertVersionScript(
+            upsertVersion(
                 conceptual = conceptual,
                 versioned = versioned,
                 typeShortName = typeShortName,
                 timestamp = timestamp,
                 data = data,
             )
-            client.runWrite(script)
 
             triplesInserted += data.size
         }
@@ -546,7 +462,7 @@ class InitialPopulationService(
         // Phase 3: attach relation edges now that all vertices exist.
         entityEdgeMap.forEach { (sourceVersionId, edges) ->
             if (edges.isNotEmpty()) {
-                client.runWrite(buildAttachEdgesScript(sourceVersionId, edges))
+                attachEdges(sourceVersionId, edges)
             }
         }
         println("  Inserted into Property Graph ($triplesInserted property sets)")
@@ -586,89 +502,94 @@ class InitialPopulationService(
         return bnodeProps
     }
 
-    private fun buildInsertVersionScript(
+    private fun upsertVersion(
         conceptual: String,
         versioned: String,
         typeShortName: String,
         timestamp: String,
         data: Map<String, Any>,
-    ): String {
-        val propertyAssignments =
-            data.entries.flatMap { (key, value) ->
-                val propKey = gremlinString(key)
-                when (value) {
-                    is List<*> -> listOf("v.property($propKey, ${gremlinValue(value)})")
-                    else -> listOf("v.property($propKey, ${gremlinScalarValue(value)})")
-                }
-            }.joinToString("\n")
+    ) {
+        client.runWrite(
+            """
+            MERGE (c:Conceptual {id: ${'$'}conceptual})
+            ON CREATE SET c.type = ${'$'}typeShortName, c.createdAt = ${'$'}timestamp
+            SET c.type = coalesce(c.type, ${'$'}typeShortName)
+            WITH c
+            MERGE (v:Version {id: ${'$'}versioned})
+            ON CREATE SET v.status = 'published', v.versionNumber = '1.0', v.createdAt = ${'$'}timestamp
+            SET v.updatedAt = ${'$'}timestamp
+            MERGE (c)-[:HAS_VERSION]->(v)
+            MERGE (c)-[:CURRENT_VERSION]->(v)
+            """.trimIndent(),
+            mapOf(
+                "conceptual" to conceptual,
+                "versioned" to versioned,
+                "typeShortName" to typeShortName,
+                "timestamp" to timestamp,
+            ),
+        )
 
-        return """
-            import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*
-            def c = g.V().hasLabel('Conceptual').has('id', ${gremlinString(conceptual)}).fold().coalesce(
-                unfold(),
-                addV('Conceptual')
-                    .property('id', ${gremlinString(conceptual)})
-                    .property('type', ${gremlinString(typeShortName)})
-                    .property('createdAt', ${gremlinString(timestamp)})
-            ).next()
-
-            def v = g.V().hasLabel('Version').has('id', ${gremlinString(versioned)}).fold().coalesce(
-                unfold(),
-                addV('Version')
-                    .property('id', ${gremlinString(versioned)})
-                    .property('status', 'published')
-                    .property('versionNumber', '1.0')
-                    .property('createdAt', ${gremlinString(timestamp)})
-                    .property('updatedAt', ${gremlinString(timestamp)})
-            ).next()
-
-            ${propertyAssignments}
-
-            if (!g.V(c.id()).out('HAS_VERSION').has('id', ${gremlinString(versioned)}).hasNext()) {
-                g.V(c.id()).addE('HAS_VERSION').to(V(v.id())).iterate()
-            }
-
-            if (!g.V(c.id()).out('CURRENT_VERSION').has('id', ${gremlinString(versioned)}).hasNext()) {
-                g.V(c.id()).addE('CURRENT_VERSION').to(V(v.id())).iterate()
-            }
-        """.trimIndent()
+        data.forEach { (key, value) ->
+            val propertyName = sanitizeCypherPropertyKey(key)
+            val cypher =
+                """
+                MATCH (v:Version {id: ${'$'}versioned})
+                SET v.`$propertyName` = ${'$'}value
+                """.trimIndent()
+            client.runWrite(
+                cypher,
+                mapOf(
+                    "versioned" to versioned,
+                    "value" to toNeo4jPropertyValue(value),
+                ),
+            )
+        }
     }
 
-    private fun buildAttachEdgesScript(
+    private fun attachEdges(
         sourceVersionId: String,
         edges: List<EdgeDraft>,
-    ): String {
-        val edgeAssignments =
-            edges.distinct().joinToString("\n") { edge ->
+    ) {
+        edges.distinct().forEach { edge ->
+            val edgeType = sanitizeCypherRelationshipType(edge.label)
+            val query =
                 """
-                def t_${edge.safeVarName()} = g.V().hasLabel('Version').has('id', ${gremlinString(edge.targetVersionUri)}).limit(1).toList()
-                if (t_${edge.safeVarName()}.isEmpty()) {
-                    t_${edge.safeVarName()} = g.V().hasLabel('Conceptual').has('id', ${gremlinString(edge.targetVersionUri)})
-                        .out('CURRENT_VERSION').hasLabel('Version').limit(1).toList()
-                }
-                if (!t_${edge.safeVarName()}.isEmpty()) {
-                    def tId_${edge.safeVarName()} = t_${edge.safeVarName()}[0].value('id')
-                    if (!g.V(v.id()).out(${gremlinString(edge.label)}).has('id', tId_${edge.safeVarName()}).hasNext()) {
-                        g.V(v.id()).addE(${gremlinString(edge.label)}).to(t_${edge.safeVarName()}[0])
-                            .property('predicateIri', ${gremlinString(edge.predicateIri)})
-                            .property('predicateKey', ${gremlinString(edge.predicateKey)})
-                            .iterate()
-                    }
-                }
+                MATCH (s:Version {id: ${'$'}sourceVersionId})
+                OPTIONAL MATCH (tv:Version {id: ${'$'}targetVersionUri})
+                OPTIONAL MATCH (tc:Conceptual {id: ${'$'}targetVersionUri})-[:CURRENT_VERSION]->(tcv:Version)
+                WITH s, coalesce(tv, tcv) AS t
+                WHERE t IS NOT NULL
+                MERGE (s)-[r:$edgeType]->(t)
+                SET r.predicateIri = ${'$'}predicateIri,
+                    r.predicateKey = ${'$'}predicateKey
                 """.trimIndent()
-            }
-
-        return """
-            def vs = g.V().hasLabel('Version').has('id', ${gremlinString(sourceVersionId)}).limit(1).toList()
-            if (!vs.isEmpty()) {
-                def v = vs[0]
-                ${edgeAssignments}
-            }
-        """.trimIndent()
+            client.runWrite(
+                query,
+                mapOf(
+                    "sourceVersionId" to sourceVersionId,
+                    "targetVersionUri" to edge.targetVersionUri,
+                    "predicateIri" to edge.predicateIri,
+                    "predicateKey" to edge.predicateKey,
+                ),
+            )
+        }
     }
 
-    private fun gremlinString(value: String): String =
-        "'${value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")}'"
+    private fun sanitizeCypherPropertyKey(key: String): String = key.replace("`", "")
+
+    private fun sanitizeCypherRelationshipType(label: String): String {
+        val cleaned = label.replace(Regex("[^A-Za-z0-9_]"), "_")
+        val normalized = if (cleaned.firstOrNull()?.isDigit() == true) "R_$cleaned" else cleaned
+        return normalized.ifBlank { "RELATED_TO" }
+    }
+
+    private fun toNeo4jPropertyValue(value: Any?): Any =
+        when (value) {
+            null -> ""
+            is String, is Number, is Boolean -> value
+            is List<*>, is Map<*, *> -> com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value)
+            else -> value.toString()
+        }
 
     private fun sanitizePropertyKey(key: String): String {
         val cleaned = key.trim().ifBlank { "prop" }
@@ -778,28 +699,12 @@ class InitialPopulationService(
         return candidates.toList()
     }
 
-    private fun gremlinValue(value: Any): String = when (value) {
-        is String -> gremlinString(value)
-        is Number, is Boolean -> value.toString()
-        is List<*>, is Map<*, *> -> gremlinString(com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value))
-        else -> gremlinString(value.toString())
-    }
-
-    private fun gremlinScalarValue(value: Any?): String = when (value) {
-        null -> gremlinString("")
-        is String -> gremlinString(value)
-        is Number, is Boolean -> value.toString()
-        else -> gremlinString(value.toString())
-    }
-
     private data class EdgeDraft(
         val label: String,
         val targetVersionUri: String,
         val predicateIri: String,
         val predicateKey: String,
-    ) {
-        fun safeVarName(): String = (label + targetVersionUri).hashCode().toString().replace("-", "n")
-    }
+    )
 
     private data class ProcessingStats(val subjectsProcessed: Int, val triplesInserted: Int)
 }

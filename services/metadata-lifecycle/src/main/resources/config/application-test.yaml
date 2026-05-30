@@ -1,15 +1,13 @@
 # =============================================================================
-# EPOS JanusGraph Configuration - TEST Profile
+# EPOS Neo4j Configuration - TEST Profile
 # =============================================================================
 # Settings for automated testing with isolated database
 #
 # Activate with: EPOS_PROFILE=test or -Depos.profile=test
 # =============================================================================
 
-janusgraph:
-  host: "localhost"
-  port: 8182
-  traversalSource: "g"
+neo4j:
+  uri: "bolt://localhost:7687"
   username: ""
   password: ""
   maxConnectionPoolSize: 10

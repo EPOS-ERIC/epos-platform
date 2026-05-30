@@ -101,7 +101,10 @@ object OpenApiSpec {
         return lines.joinToString("\n")
     }
 
-    private fun applyRuntimeEntityPaths(base: String, resourceTypes: List<ResourceTypeInfo>): String {
+    private fun applyRuntimeEntityPaths(
+        base: String,
+        resourceTypes: List<ResourceTypeInfo>,
+    ): String {
         if (resourceTypes.isEmpty()) return base
 
         val pathsBlock =
@@ -182,7 +185,10 @@ object OpenApiSpec {
         return base.replace("\ncomponents:\n", "\n$pathsBlock\ncomponents:\n")
     }
 
-    private fun applyRuntimeEntitySchemas(base: String, resourceTypes: List<ResourceTypeInfo>): String {
+    private fun applyRuntimeEntitySchemas(
+        base: String,
+        resourceTypes: List<ResourceTypeInfo>,
+    ): String {
         if (resourceTypes.isEmpty()) return base
 
         val uniqueTypesByLowerName =
@@ -216,8 +222,8 @@ object OpenApiSpec {
                             .toList()
                             .sortedBy { it.first }
                             .forEach { (lowerName, property) ->
-                            val propKey = escapeYaml(lowerName)
-                            append(buildPropertySchemaYaml(propKey, property))
+                                val propKey = escapeYaml(lowerName)
+                                append(buildPropertySchemaYaml(propKey, property))
                             }
                         appendLine("      additionalProperties: true")
                         appendLine("    ResolvedEntityResponse_$schemaName:")
@@ -240,7 +246,7 @@ object OpenApiSpec {
 
     private fun runtimeEntitySchemaName(typeName: String): String {
         val cleaned = typeName.replace(Regex("[^A-Za-z0-9_]"), "_")
-        return "Entity_${cleaned}"
+        return "Entity_$cleaned"
     }
 
     private fun buildPropertySchemaYaml(
@@ -249,7 +255,13 @@ object OpenApiSpec {
     ): String {
         val schemaType = inferOpenApiType(property)
         val format = inferOpenApiFormat(property)
-        val enumValues = property.hasValueIn.orEmpty().map { it.trim() }.filter { it.isNotBlank() }.distinct().sorted()
+        val enumValues =
+            property.hasValueIn
+                .orEmpty()
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .sorted()
         val isArray = (property.maxCount == null || property.maxCount > 1)
         val lines = mutableListOf<String>()
         lines += "        $propertyKey:"
@@ -290,10 +302,11 @@ object OpenApiSpec {
     private fun inferOpenApiType(property: org.epos.api.shacl.PropertyInfo): String {
         val datatype = property.datatype?.lowercase().orEmpty()
         val datatypes = property.datatypes.orEmpty().map { it.lowercase() }
-        val all = buildList {
-            if (datatype.isNotBlank()) add(datatype)
-            addAll(datatypes)
-        }
+        val all =
+            buildList {
+                if (datatype.isNotBlank()) add(datatype)
+                addAll(datatypes)
+            }
         if (all.any { it.contains("boolean") }) return "boolean"
         if (all.any { it.contains("int") || it.contains("integer") || it.endsWith("#long") || it.endsWith("#short") }) return "integer"
         if (all.any { it.contains("decimal") || it.contains("double") || it.contains("float") }) return "number"
@@ -303,10 +316,11 @@ object OpenApiSpec {
     private fun inferOpenApiFormat(property: org.epos.api.shacl.PropertyInfo): String? {
         val datatype = property.datatype?.lowercase().orEmpty()
         val datatypes = property.datatypes.orEmpty().map { it.lowercase() }
-        val all = buildList {
-            if (datatype.isNotBlank()) add(datatype)
-            addAll(datatypes)
-        }
+        val all =
+            buildList {
+                if (datatype.isNotBlank()) add(datatype)
+                addAll(datatypes)
+            }
         if (property.classConstraint != null || !property.classConstraints.isNullOrEmpty()) return "uri"
         return when {
             all.any { it.contains("datetime") || it.endsWith("#datetime") } -> "date-time"

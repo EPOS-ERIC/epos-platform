@@ -59,7 +59,7 @@ private fun printHelp() {
     println(
         """
         |=================================================
-        |   EPOS JanusGraph Metadata Lifecycle Management System
+        |   EPOS Neo4j Metadata Lifecycle Management System
         |=================================================
         |
         |Usage: java -jar app.jar [mode]
@@ -71,11 +71,10 @@ private fun printHelp() {
         |  --help              Show this help message
         |
         |Environment Variables:
-        |  EPOS_JANUSGRAPH_HOST   JanusGraph host
-        |  EPOS_JANUSGRAPH_PORT   JanusGraph Gremlin port
-        |  EPOS_JANUSGRAPH_TRAVERSAL_SOURCE  Gremlin traversal source
-        |  EPOS_JANUSGRAPH_USERNAME JanusGraph username
-        |  EPOS_JANUSGRAPH_PASSWORD JanusGraph password
+        |  EPOS_NEO4J_URI         Neo4j Bolt URI
+        |  EPOS_NEO4J_USERNAME    Neo4j username
+        |  EPOS_NEO4J_PASSWORD    Neo4j password
+        |  EPOS_NEO4J_DATABASE    Neo4j database
         |  EPOS_INDEX_URL       URL to index.txt file
         |  EPOS_BASE_URI        Base URI for generated resources
         |  PORT                   Server port (default: 8080)
@@ -84,7 +83,7 @@ private fun printHelp() {
         |Examples:
         |  java -jar app.jar server
         |  java -jar app.jar populate
-        |  EPOS_JANUSGRAPH_HOST=prod java -jar app.jar populate-and-serve
+        |  EPOS_NEO4J_URI=bolt://prod:7687 java -jar app.jar populate-and-serve
         |
     """.trimMargin()
     )
@@ -104,7 +103,7 @@ private suspend fun runPopulation() {
 
     try {
         println("======================================================================")
-        println("   EPOS JanusGraph Initial Population")
+        println("   EPOS Neo4j Initial Population")
         println("======================================================================\n")
 
         Config.printConfig()
@@ -132,7 +131,7 @@ private fun startServer() {
     println("======================================================================")
     printBanner()
     println("======================================================================")
-    println("   EPOS JanusGraph REST API Server")
+    println("   EPOS Neo4j REST API Server")
     println("======================================================================")
     Config.printConfig()
     println("Server: http://$host:$port")
@@ -171,7 +170,7 @@ fun Application.module() {
 
     runBlocking {
         shaclService.initialize()
-        ensureJanusGraphIndexes(client)
+        ensureNeo4jIndexes(client)
         warmupQueries(client)
         val resourceTypes = shaclService.getResourceTypes()
         resourceController.setResourceType(resourceTypes)
@@ -203,87 +202,28 @@ fun Application.module() {
     }
 }
 
-private fun ensureJanusGraphIndexes(client: PropertyGraphClient) {
-    val script =
-        """
-        mgmt = graph.openManagement()
-        changed = []
-        idKey = mgmt.getPropertyKey('id') ?: mgmt.makePropertyKey('id').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
-        statusKey = mgmt.getPropertyKey('status') ?: mgmt.makePropertyKey('status').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
-        identifierKey = mgmt.getPropertyKey('identifier') ?: mgmt.makePropertyKey('identifier').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
-        typeKey = mgmt.getPropertyKey('type') ?: mgmt.makePropertyKey('type').dataType(String.class).cardinality(org.janusgraph.core.Cardinality.SINGLE).make()
-        versionLabel = mgmt.getVertexLabel('Version') ?: mgmt.makeVertexLabel('Version').make()
-
-        if (versionLabel != null && mgmt.getGraphIndex('idxVersionId') == null) {
-            mgmt.buildIndex('idxVersionId', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                .addKey(idKey)
-                .indexOnly(versionLabel)
-                .buildCompositeIndex()
-            changed.add('idxVersionId')
-        }
-
-        if (versionLabel != null && mgmt.getGraphIndex('idxVersionStatus') == null) {
-            mgmt.buildIndex('idxVersionStatus', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                .addKey(statusKey)
-                .indexOnly(versionLabel)
-                .buildCompositeIndex()
-            changed.add('idxVersionStatus')
-        }
-
-        if (versionLabel != null && mgmt.getGraphIndex('idxVersionIdentifier') == null) {
-            mgmt.buildIndex('idxVersionIdentifier', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                .addKey(identifierKey)
-                .indexOnly(versionLabel)
-                .buildCompositeIndex()
-            changed.add('idxVersionIdentifier')
-        }
-
-        conceptualLabel = mgmt.getVertexLabel('Conceptual') ?: mgmt.makeVertexLabel('Conceptual').make()
-        if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualId') == null) {
-            mgmt.buildIndex('idxConceptualId', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                .addKey(idKey)
-                .indexOnly(conceptualLabel)
-                .buildCompositeIndex()
-            changed.add('idxConceptualId')
-        }
-
-        if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualType') == null) {
-            mgmt.buildIndex('idxConceptualType', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                .addKey(typeKey)
-                .indexOnly(conceptualLabel)
-                .buildCompositeIndex()
-            changed.add('idxConceptualType')
-        }
-
-        if (conceptualLabel != null && mgmt.getGraphIndex('idxConceptualIdentifier') == null) {
-            mgmt.buildIndex('idxConceptualIdentifier', org.apache.tinkerpop.gremlin.structure.Vertex.class)
-                .addKey(identifierKey)
-                .indexOnly(conceptualLabel)
-                .buildCompositeIndex()
-            changed.add('idxConceptualIdentifier')
-        }
-
-        mgmt.commit()
-        changed
-        """.trimIndent()
+private fun ensureNeo4jIndexes(client: PropertyGraphClient) {
+    val statements = listOf(
+        "CREATE CONSTRAINT conceptual_id_unique IF NOT EXISTS FOR (c:Conceptual) REQUIRE c.id IS UNIQUE",
+        "CREATE CONSTRAINT version_id_unique IF NOT EXISTS FOR (v:Version) REQUIRE v.id IS UNIQUE",
+        "CREATE INDEX version_status_idx IF NOT EXISTS FOR (v:Version) ON (v.status)",
+        "CREATE INDEX version_identifier_idx IF NOT EXISTS FOR (v:Version) ON (v.identifier)",
+        "CREATE INDEX conceptual_type_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.type)",
+        "CREATE INDEX conceptual_identifier_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.identifier)",
+    )
 
     try {
-        val created = client.runQuery(script).mapNotNull { it["value"]?.toString() }
-        if (created.isNotEmpty()) {
-            logger.info("JanusGraph indexes created: {}", created.joinToString(", "))
-            logger.info("Run JanusGraph reindex for existing data to fully eliminate full-scan warnings")
-        } else {
-            logger.info("JanusGraph indexes already present")
-        }
+        statements.forEach { client.runWrite(it) }
+        logger.info("Neo4j constraints and indexes ensured")
     } catch (e: Exception) {
-        logger.warn("Failed to ensure JanusGraph indexes at startup: {}", e.message)
+        logger.warn("Failed to ensure Neo4j indexes at startup: {}", e.message)
     }
 }
 
 private fun warmupQueries(client: PropertyGraphClient) {
     val warmups = listOf(
-        "g.V().hasLabel('Version').limit(1).valueMap().toList()",
-        "g.V().hasLabel('Conceptual').limit(1).valueMap().toList()",
+        "MATCH (v:Version) RETURN v LIMIT 1",
+        "MATCH (c:Conceptual) RETURN c LIMIT 1",
     )
 
     warmups.forEach { query ->
