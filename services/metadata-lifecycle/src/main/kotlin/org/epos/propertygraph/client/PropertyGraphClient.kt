@@ -4,13 +4,152 @@ import org.apache.tinkerpop.gremlin.driver.Client
 import org.apache.tinkerpop.gremlin.driver.Cluster
 import org.apache.tinkerpop.gremlin.driver.Result
 import org.epos.propertygraph.Config
+import org.slf4j.LoggerFactory
+import java.util.concurrent.TimeUnit
 
 class PropertyGraphClient {
-    private val cluster: Cluster
-    private val client: Client
+    @Volatile
+    private var cluster: Cluster? = null
+
+    @Volatile
+    private var client: Client? = null
+
+    private val connectionLock = Any()
+
+    private val logger = LoggerFactory.getLogger(PropertyGraphClient::class.java)
+
+    private val maxConnectAttempts = 12
+    private val connectRetryDelayMs = 5_000L
 
     init {
-        cluster = if (Config.JANUSGRAPH_USERNAME.isNotBlank() && Config.JANUSGRAPH_PASSWORD.isNotBlank()) {
+        connectWithRetry()
+    }
+
+    fun runQuery(cypher: String, parameters: Map<String, Any> = emptyMap()): List<Map<String, Any?>> {
+        val script = resolveParameters(cypher, parameters)
+        return submitWithReconnect(script).map { result -> mapResult(result) }
+    }
+
+    fun runSingle(cypher: String, parameters: Map<String, Any> = emptyMap()): Map<String, Any?>? {
+        val results = runQuery(cypher, parameters)
+        return results.firstOrNull()
+    }
+
+    fun runWrite(cypher: String, parameters: Map<String, Any> = emptyMap()) {
+        val script = resolveParameters(cypher, parameters)
+        submitWithReconnect(script)
+    }
+
+    fun runWriteReturning(cypher: String, parameters: Map<String, Any> = emptyMap()): List<Map<String, Any?>> {
+        val script = resolveParameters(cypher, parameters)
+        return submitWithReconnect(script).map { result -> mapResult(result) }
+    }
+
+    fun exists(cypher: String, parameters: Map<String, Any> = emptyMap()): Boolean {
+        val script = resolveParameters(cypher, parameters)
+        val wrapped = "(($script).size() > 0)"
+        val result = submitWithReconnect(wrapped).firstOrNull() ?: return false
+        return when (val value = result.`object`) {
+            is Boolean -> value
+            is Number -> value.toInt() > 0
+            else -> value?.toString()?.toBooleanStrictOrNull() ?: false
+        }
+    }
+
+    fun close() {
+        synchronized(connectionLock) {
+            closeResources()
+        }
+    }
+
+    private fun submitWithReconnect(script: String): List<Result> {
+        return try {
+            submit(script)
+        } catch (e: Exception) {
+            logger.warn("Gremlin query failed, reconnecting and retrying once: {}", e.message)
+            reconnect()
+            submit(script)
+        }
+    }
+
+    private fun submit(script: String): List<Result> {
+        val activeClient = ensureClient()
+        return activeClient.submit(script).all().get()
+    }
+
+    private fun ensureClient(): Client {
+        val current = client
+        if (current != null) {
+            return current
+        }
+
+        synchronized(connectionLock) {
+            val existing = client
+            if (existing != null) {
+                return existing
+            }
+
+            connectWithRetry()
+            return requireNotNull(client) { "Gremlin client is not initialized" }
+        }
+    }
+
+    private fun reconnect() {
+        synchronized(connectionLock) {
+            closeResources()
+            connectWithRetry()
+        }
+    }
+
+    private fun connectWithRetry() {
+        var lastError: Exception? = null
+
+        repeat(maxConnectAttempts) { attempt ->
+            try {
+                val nextCluster = buildCluster()
+                val nextClient: Client = nextCluster.connect()
+
+                cluster = nextCluster
+                client = nextClient
+
+                logger.info(
+                    "JanusGraph connected: {}:{}/{}",
+                    Config.JANUSGRAPH_HOST,
+                    Config.JANUSGRAPH_PORT,
+                    Config.JANUSGRAPH_TRAVERSAL_SOURCE,
+                )
+                return
+            } catch (e: Exception) {
+                lastError = e
+                val nextAttempt = attempt + 1
+                if (nextAttempt < maxConnectAttempts) {
+                    logger.warn(
+                        "JanusGraph unavailable (attempt {}/{}), retrying in {} ms: {}",
+                        nextAttempt,
+                        maxConnectAttempts,
+                        connectRetryDelayMs,
+                        e.message,
+                    )
+                    TimeUnit.MILLISECONDS.sleep(connectRetryDelayMs)
+                }
+            }
+        }
+
+        throw IllegalStateException(
+            "Unable to connect to JanusGraph after $maxConnectAttempts attempts",
+            lastError,
+        )
+    }
+
+    private fun closeResources() {
+        runCatching { client?.close() }
+        runCatching { cluster?.close() }
+        client = null
+        cluster = null
+    }
+
+    private fun buildCluster(): Cluster {
+        return if (Config.JANUSGRAPH_USERNAME.isNotBlank() && Config.JANUSGRAPH_PASSWORD.isNotBlank()) {
             Cluster.build()
                 .addContactPoint(Config.JANUSGRAPH_HOST)
                 .port(Config.JANUSGRAPH_PORT)
@@ -22,46 +161,6 @@ class PropertyGraphClient {
                 .port(Config.JANUSGRAPH_PORT)
                 .create()
         }
-        client = cluster.connect()
-        println("JanusGraph connected: ${Config.JANUSGRAPH_HOST}:${Config.JANUSGRAPH_PORT}/${Config.JANUSGRAPH_TRAVERSAL_SOURCE}")
-    }
-
-    fun runQuery(cypher: String, parameters: Map<String, Any> = emptyMap()): List<Map<String, Any?>> {
-        val script = resolveParameters(cypher, parameters)
-        val results = client.submit(script).all().get()
-        return results.map { result -> mapResult(result) }
-    }
-
-    fun runSingle(cypher: String, parameters: Map<String, Any> = emptyMap()): Map<String, Any?>? {
-        val results = runQuery(cypher, parameters)
-        return results.firstOrNull()
-    }
-
-    fun runWrite(cypher: String, parameters: Map<String, Any> = emptyMap()) {
-        val script = resolveParameters(cypher, parameters)
-        client.submit(script).all().get()
-    }
-
-    fun runWriteReturning(cypher: String, parameters: Map<String, Any> = emptyMap()): List<Map<String, Any?>> {
-        val script = resolveParameters(cypher, parameters)
-        val results = client.submit(script).all().get()
-        return results.map { result -> mapResult(result) }
-    }
-
-    fun exists(cypher: String, parameters: Map<String, Any> = emptyMap()): Boolean {
-        val script = resolveParameters(cypher, parameters)
-        val wrapped = "(($script).size() > 0)"
-        val result = client.submit(wrapped).all().get().firstOrNull() ?: return false
-        return when (val value = result.`object`) {
-            is Boolean -> value
-            is Number -> value.toInt() > 0
-            else -> value?.toString()?.toBooleanStrictOrNull() ?: false
-        }
-    }
-
-    fun close() {
-        client.close()
-        cluster.close()
     }
 
     private fun resolveParameters(cypher: String, parameters: Map<String, Any>): String {

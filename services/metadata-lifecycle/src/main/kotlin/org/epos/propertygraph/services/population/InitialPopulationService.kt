@@ -473,6 +473,7 @@ class InitialPopulationService(
         val entityEdgeMap = mutableMapOf<String, MutableList<EdgeDraft>>()
         val importedVersionUris = uriMappings.values.map { it.second }.toSet()
         val resourceTypesByName = shaclService.getResourceTypes().associateBy { normalizeShapeName(it.name) }
+        val shaclPrefixes = shaclService.getParser().getCachedShapesGraph()?.prefixes.orEmpty()
         val subjectTypeByVersionUri = extractSubjectTypeByVersionUri(processedModel)
 
         processedModel.forEach { stmt ->
@@ -484,7 +485,7 @@ class InitialPopulationService(
 
             val data = entityDataMap.getOrPut(subject) { mutableMapOf() }
 
-            val propName = sanitizePropertyKey(predicate.substringAfterLast("/").substringAfterLast("#"))
+            val propName = propertyKeyFromPredicate(predicate, shaclPrefixes)
 
             when (obj) {
                 is org.eclipse.rdf4j.model.IRI -> {
@@ -675,6 +676,40 @@ class InitialPopulationService(
         return if (cleaned in reserved) "pg_$cleaned" else cleaned
     }
 
+    private fun propertyKeyFromPredicate(predicate: String, shaclPrefixes: Map<String, String>): String {
+        val local = predicate.substringAfterLast('/').substringAfterLast('#').trim()
+        if (local.isBlank()) return sanitizePropertyKey("prop")
+
+        val namespace = predicate.substringBeforeLast('#', predicate.substringBeforeLast('/') + "/")
+        val namespaceToken = preferredShaclPrefix(namespace, shaclPrefixes)
+            ?: predicate
+                .substringBeforeLast('#', predicate)
+                .substringBeforeLast('/', predicate)
+                .substringAfterLast('/')
+                .substringAfterLast('#')
+                .lowercase()
+                .replace(Regex("[^a-z0-9]"), "")
+
+        val localKey = sanitizePropertyKey(local)
+        if (namespaceToken.isBlank() || !namespaceToken.first().isLetter()) return localKey
+        return "$namespaceToken:$localKey"
+    }
+
+    private fun preferredShaclPrefix(namespace: String, shaclPrefixes: Map<String, String>): String? {
+        val normalizedNamespace = normalizeNamespace(namespace)
+        val candidates =
+            shaclPrefixes
+                .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+                .keys
+                .filter { it.isNotBlank() }
+        if (candidates.isEmpty()) return null
+        return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+    }
+
+    private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+    private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
+
     private fun sanitizeEdgeLabel(label: String): String {
         val cleaned = label.trim().ifBlank { "relatedTo" }
         val normalized = cleaned.replace(Regex("[^A-Za-z0-9_\\-]"), "_")
@@ -706,11 +741,12 @@ class InitialPopulationService(
     ): Boolean {
         val subjectType = subjectTypeByVersionUri[subjectVersionUri] ?: return true
         val resourceType = resourceTypesByName[normalizeShapeName(subjectType)] ?: return true
-        val normalizedKey = normalizeShapeName(predicateKey)
+        val normalizedKeyCandidates = predicateKeyLookupCandidates(predicateKey).map { normalizeShapeName(it) }
 
         val property = resourceType.properties.firstOrNull { prop ->
-            normalizeShapeName(prop.name) == normalizedKey ||
-                normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedKey ||
+            val propName = normalizeShapeName(prop.name)
+            val propPathLocal = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+            normalizedKeyCandidates.any { it == propName || it == propPathLocal } ||
                 prop.path.equals(predicateIri, ignoreCase = true)
         } ?: return true
 
@@ -732,6 +768,13 @@ class InitialPopulationService(
         if (hasLiteralNodeKind) return false
 
         return !hasDatatype
+    }
+
+    private fun predicateKeyLookupCandidates(predicateKey: String): List<String> {
+        val candidates = linkedSetOf(predicateKey)
+        predicateKey.substringAfter(':', predicateKey).takeIf { it != predicateKey }?.let { candidates.add(it) }
+        predicateKey.substringAfter('_', predicateKey).takeIf { it != predicateKey }?.let { candidates.add(it) }
+        return candidates.toList()
     }
 
     private fun gremlinValue(value: Any): String = when (value) {

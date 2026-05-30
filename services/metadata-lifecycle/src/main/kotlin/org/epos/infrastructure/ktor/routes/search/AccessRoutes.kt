@@ -59,6 +59,7 @@ fun Route.accessRoutes(
                 resourceTypeMap = resourceTypes.associate { it.targetClass to it.name },
                 knownShapeNames = resourceTypes.map { it.name }.toSet(),
                 shapeProperties = resourceType?.properties.orEmpty(),
+                shaclPrefixes = shaclService.getParser().getCachedShapesGraph()?.prefixes.orEmpty(),
                 shape = resolvedShapeName,
                 entityId = resolvedEntityId,
                 requestedId = decodedId,
@@ -122,6 +123,7 @@ private fun buildAccessDetail(
     resourceTypeMap: Map<String, String>,
     knownShapeNames: Set<String>,
     shapeProperties: List<PropertyInfo>,
+    shaclPrefixes: Map<String, String>,
     shape: String,
     entityId: String,
     requestedId: String,
@@ -143,7 +145,7 @@ private fun buildAccessDetail(
     val existenceCache = mutableMapOf<String, Boolean>()
 
     data.forEach { (key, value) ->
-        val propName = key
+        val propName = canonicalPropertyKeyFromShacl(key, shapeProperties, shaclPrefixes)
         val values = expandAccessValues(value)
         propertyWasArray[propName] = value is List<*> || shouldBeArrayByShacl(propName, shapeProperties)
 
@@ -203,7 +205,8 @@ private fun buildAccessDetail(
         val edgeLabel = prop(edge["label"]) ?: return@forEach
         if (!edgeLabel.startsWith("rel_")) return@forEach
 
-        val propertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
+        val rawPropertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
+        val propertyName = canonicalPropertyKeyFromShacl(rawPropertyName, shapeProperties, shaclPrefixes)
         if (shouldBeArrayByShacl(propertyName, shapeProperties)) {
             propertyWasArray[propertyName] = true
         }
@@ -281,10 +284,11 @@ private fun shouldBeArrayByShacl(
     propertyName: String,
     shapeProperties: List<PropertyInfo>,
 ): Boolean {
-    val normalizedProperty = normalizeShapeName(localPropertyName(propertyName))
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(localPropertyName(it)) }
     val property = shapeProperties.firstOrNull { prop ->
-        normalizeShapeName(localPropertyName(prop.name)) == normalizedProperty ||
-            normalizeShapeName(localPropertyName(prop.path)) == normalizedProperty
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
     } ?: return false
 
     return property.maxCount != 1
@@ -403,10 +407,11 @@ private fun resolveObjectShapeFromShacl(
     shapeProperties: List<PropertyInfo>,
     resourceTypeMap: Map<String, String>,
 ): String? {
-    val normalizedProperty = normalizeShapeName(propertyName)
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(it) }
     val property = shapeProperties.firstOrNull { prop ->
-        normalizeShapeName(prop.name) == normalizedProperty ||
-            normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedProperty
+        val propName = normalizeShapeName(prop.name)
+        val propPath = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+        normalizedCandidates.any { it == propName || it == propPath }
     } ?: return null
 
     val candidates = mutableListOf<String>()
@@ -427,10 +432,11 @@ private fun resolvePredicateIriFromShacl(
     propertyName: String,
     shapeProperties: List<PropertyInfo>,
 ): String? {
-    val normalizedProperty = normalizeShapeName(propertyName)
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(it) }
     val property = shapeProperties.firstOrNull { prop ->
-        normalizeShapeName(prop.name) == normalizedProperty ||
-            normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedProperty
+        val propName = normalizeShapeName(prop.name)
+        val propPath = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+        normalizedCandidates.any { it == propName || it == propPath }
     } ?: return null
 
     return property.path.takeIf { it.startsWith("http://") || it.startsWith("https://") }
@@ -507,6 +513,51 @@ private fun prop(value: Any?): String? = when (value) {
     is List<*> -> value.firstOrNull()?.toString()
     else -> value?.toString()
 }
+
+private fun propertyLookupCandidates(propertyName: String): List<String> {
+    val values = linkedSetOf(propertyName)
+    propertyName.substringAfter(':', propertyName).takeIf { it != propertyName }?.let { values.add(it) }
+    propertyName.substringAfter('_', propertyName).takeIf { it != propertyName }?.let { values.add(it) }
+    return values.toList()
+}
+
+private fun canonicalPropertyKeyFromShacl(
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+    shaclPrefixes: Map<String, String>,
+): String {
+    if (propertyName.contains(':')) return propertyName
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(localPropertyName(it)) }
+    val property = shapeProperties.firstOrNull { prop ->
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
+    } ?: return propertyName
+
+    return namespacedPropertyKey(property.path, shaclPrefixes)
+}
+
+private fun namespacedPropertyKey(path: String, shaclPrefixes: Map<String, String>): String {
+    val local = path.substringAfterLast('/').substringAfterLast('#').lowercase()
+    val namespace = path.substringBeforeLast('#', path.substringBeforeLast('/') + "/")
+    val prefix = preferredShaclPrefix(namespace, shaclPrefixes)
+    return if (prefix != null) "$prefix:$local" else local
+}
+
+private fun preferredShaclPrefix(namespace: String, shaclPrefixes: Map<String, String>): String? {
+    val normalizedNamespace = normalizeNamespace(namespace)
+    val candidates =
+        shaclPrefixes
+            .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+            .keys
+            .filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+    return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+}
+
+private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
 
 private val accessJsonMapper = ObjectMapper()
 

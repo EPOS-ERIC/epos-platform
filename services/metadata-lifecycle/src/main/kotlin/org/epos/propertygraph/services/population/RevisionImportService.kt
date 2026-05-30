@@ -215,6 +215,7 @@ class RevisionImportService(
         val entityDataMap = mutableMapOf<String, MutableMap<String, Any>>()
         val entityEdgeMap = mutableMapOf<String, MutableList<EdgeDraft>>()
         val resourceTypesByName = shaclService.getResourceTypes().associateBy { normalizeShapeName(it.name) }
+        val shaclPrefixes = shaclService.getParser().getCachedShapesGraph()?.prefixes.orEmpty()
         val subjectTypeByVersionUri = extractSubjectTypeByVersionUri(rewrittenModel)
 
         rewrittenModel.forEach { stmt ->
@@ -225,7 +226,7 @@ class RevisionImportService(
             val predicate = stmt.predicate.stringValue()
             val obj = stmt.`object`
 
-            val propName = sanitizeKey(predicate.substringAfterLast("/").substringAfterLast("#"))
+            val propName = propertyKeyFromPredicate(predicate, shaclPrefixes)
             if (predicate.endsWith("type") || predicate == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" ||
                 predicate.endsWith("version") || predicate.endsWith("isVersionOf")) {
                 return@forEach
@@ -528,11 +529,12 @@ class RevisionImportService(
     ): Boolean {
         val subjectType = subjectTypeByVersionUri[subjectVersionUri] ?: return true
         val resourceType = resourceTypesByName[normalizeShapeName(subjectType)] ?: return true
-        val normalizedKey = normalizeShapeName(predicateKey)
+        val normalizedKeyCandidates = predicateKeyLookupCandidates(predicateKey).map { normalizeShapeName(it) }
 
         val property = resourceType.properties.firstOrNull { prop ->
-            normalizeShapeName(prop.name) == normalizedKey ||
-                normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedKey ||
+            val propName = normalizeShapeName(prop.name)
+            val propPathLocal = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+            normalizedKeyCandidates.any { it == propName || it == propPathLocal } ||
                 prop.path.equals(predicateIri, ignoreCase = true)
         } ?: return true
 
@@ -577,6 +579,47 @@ private fun gVal(value: Any): String = when (value) {
 private fun sanitizeKey(key: String): String {
     val reserved = setOf("id", "label", "key", "value", "property")
     return if (key in reserved) "pg_$key" else key
+}
+
+private fun propertyKeyFromPredicate(predicate: String, shaclPrefixes: Map<String, String>): String {
+    val local = predicate.substringAfterLast('/').substringAfterLast('#').trim()
+    if (local.isBlank()) return sanitizeKey("prop")
+
+    val namespace = predicate.substringBeforeLast('#', predicate.substringBeforeLast('/') + "/")
+    val namespaceToken = preferredShaclPrefix(namespace, shaclPrefixes)
+        ?: predicate
+            .substringBeforeLast('#', predicate)
+            .substringBeforeLast('/', predicate)
+            .substringAfterLast('/')
+            .substringAfterLast('#')
+            .lowercase()
+            .replace(Regex("[^a-z0-9]"), "")
+
+    val localKey = sanitizeKey(local)
+    if (namespaceToken.isBlank() || !namespaceToken.first().isLetter()) return localKey
+    return "$namespaceToken:$localKey"
+}
+
+private fun preferredShaclPrefix(namespace: String, shaclPrefixes: Map<String, String>): String? {
+    val normalizedNamespace = normalizeNamespace(namespace)
+    val candidates =
+        shaclPrefixes
+            .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+            .keys
+            .filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+    return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+}
+
+private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
+
+private fun predicateKeyLookupCandidates(predicateKey: String): List<String> {
+    val candidates = linkedSetOf(predicateKey)
+    predicateKey.substringAfter(':', predicateKey).takeIf { it != predicateKey }?.let { candidates.add(it) }
+    predicateKey.substringAfter('_', predicateKey).takeIf { it != predicateKey }?.let { candidates.add(it) }
+    return candidates.toList()
 }
 
 private fun sanitizeEdgeLabel(label: String): String {

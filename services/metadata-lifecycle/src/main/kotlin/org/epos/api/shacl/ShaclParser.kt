@@ -407,9 +407,28 @@ class ShaclParser(private val httpClient: HttpClient) {
     ): ShaclShapesGraph {
         val model = Rio.parse(StringReader(content), baseUri, format)
         cachedModel = model
-        val shapesGraph = parseModel(model)
+        val parsedGraph = parseModel(model)
+        val declaredPrefixes = extractDeclaredPrefixes(content)
+        val mergedPrefixes = linkedMapOf<String, String>().apply {
+            putAll(parsedGraph.prefixes)
+            putAll(declaredPrefixes)
+        }
+        val shapesGraph = parsedGraph.copy(prefixes = mergedPrefixes)
         cachedShapesGraph = shapesGraph
         return shapesGraph
+    }
+
+    private fun extractDeclaredPrefixes(content: String): Map<String, String> {
+        val prefixes = linkedMapOf<String, String>()
+        val regex = Regex("""@prefix\s+([A-Za-z][A-Za-z0-9_-]*)\s*:\s*<([^>]+)>\s*\.""")
+        regex.findAll(content).forEach { match ->
+            val prefix = match.groupValues[1].trim()
+            val namespace = match.groupValues[2].trim()
+            if (prefix.isNotBlank() && namespace.isNotBlank()) {
+                prefixes[prefix] = namespace
+            }
+        }
+        return prefixes
     }
 
     /**

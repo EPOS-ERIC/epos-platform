@@ -70,6 +70,7 @@ private suspend fun executeSearch(
             params.getAll("versioningStatus")?.map { it.lowercase() }
                 ?: listOf("published")
         val resourceTypeInfos = shaclService.getResourceTypes()
+        val shaclPrefixes = shaclService.getParser().getCachedShapesGraph()?.prefixes.orEmpty()
         val shapeByTargetClass = resourceTypeInfos.associate { it.targetClass to it.name }
         val shapeByNormalizedName = resourceTypeInfos.associateBy { normalizeTypeName(it.name) }
 
@@ -207,6 +208,7 @@ private suspend fun executeSearch(
                                 apiType = apiType,
                                 data = data,
                                 publicBaseUrl = baseUrl,
+                                shaclPrefixes = shaclPrefixes,
                             )
                         } else {
                             null
@@ -276,6 +278,7 @@ private fun buildSearchItemFields(
     apiType: String,
     data: Map<String, Any?>,
     publicBaseUrl: String,
+    shaclPrefixes: Map<String, String>,
 ): Map<String, Any?> {
     val normalizedApiType = normalizeTypeName(apiType)
     val resourceType =
@@ -289,12 +292,14 @@ private fun buildSearchItemFields(
     val selected = linkedMapOf<String, Any?>()
     val selectedProps = resourceType.properties.filter { it.required || it.recommended }
     selectedProps.forEach { prop ->
-        val value = extractFieldValue(data, prop.path, prop.name)
-        if (value != null) {
-            selected[prop.name.lowercase()] =
+        val field = extractFieldValue(data, prop, shaclPrefixes)
+        if (field != null) {
+            val fieldValue = field.value ?: return@forEach
+            val key = selectFieldKey(prop, selected, field.sourceKey, shaclPrefixes)
+            selected[key] =
                 normalizeSearchFieldValue(
                     client = client,
-                    value = value,
+                    value = fieldValue,
                     maxCount = prop.maxCount,
                     property = prop,
                     resourceTypeMap = resourceTypeMap,
@@ -304,6 +309,26 @@ private fun buildSearchItemFields(
         }
     }
     return selected
+}
+
+private fun selectFieldKey(
+    property: org.epos.api.shacl.PropertyInfo,
+    current: Map<String, Any?>,
+    sourceKey: String?,
+    shaclPrefixes: Map<String, String>,
+): String {
+    if (!sourceKey.isNullOrBlank() && sourceKey.contains(':') && !current.containsKey(sourceKey)) {
+        return sourceKey
+    }
+    val qualifiedBase = namespacedPropertyKey(property.path, shaclPrefixes)
+        .ifBlank { property.name.trim().lowercase().replace(" ", "") }
+    if (!current.containsKey(qualifiedBase)) return qualifiedBase
+
+    var idx = 2
+    while (current.containsKey("${qualifiedBase}_$idx")) {
+        idx++
+    }
+    return "${qualifiedBase}_$idx"
 }
 
 private fun normalizeSearchFieldValue(
@@ -356,11 +381,68 @@ private fun normalizeFieldValue(value: Any, maxCount: Int?): Any =
         }
     }
 
-private fun extractFieldValue(data: Map<String, Any?>, path: String, name: String): Any? {
-    val localFromPath = path.substringAfterLast('/').substringAfterLast('#')
-    val candidates = listOf(name, localFromPath, path)
-    return candidates.firstNotNullOfOrNull { key -> data[key] }
+private fun extractFieldValue(
+    data: Map<String, Any?>,
+    property: org.epos.api.shacl.PropertyInfo,
+    shaclPrefixes: Map<String, String>,
+): MatchedFieldValue? {
+    val localFromPath = property.path.substringAfterLast('/').substringAfterLast('#')
+    val namespaced = namespacedPropertyKey(property.path, shaclPrefixes)
+    val candidates = listOf(property.name, localFromPath, namespaced, property.path)
+    val matchedKey = candidates.firstOrNull { key -> data.containsKey(key) }
+    val raw = matchedKey?.let { data[it] } ?: return null
+    if (raw == null) return null
+
+    if (raw !is List<*>) return MatchedFieldValue(matchedKey, raw)
+
+    val expectsRelation =
+        property.classConstraint != null ||
+            !property.classConstraints.isNullOrEmpty() ||
+            property.nodeShapeRef != null ||
+            !property.nodeShapeRefs.isNullOrEmpty()
+
+    val relationLike = raw.filter { it is Map<*, *> }
+    val literalLike = raw.filterNot { it is Map<*, *> }
+
+    val normalized = if (expectsRelation) {
+        when {
+            relationLike.isEmpty() -> raw
+            relationLike.size == 1 && property.maxCount == 1 -> relationLike.first()
+            else -> relationLike
+        }
+    } else {
+        when {
+            literalLike.isEmpty() -> raw
+            literalLike.size == 1 && property.maxCount == 1 -> literalLike.first()
+            else -> literalLike
+        }
+    }
+    return MatchedFieldValue(matchedKey, normalized)
 }
+
+private data class MatchedFieldValue(val sourceKey: String?, val value: Any?)
+
+private fun namespacedPropertyKey(path: String, shaclPrefixes: Map<String, String>): String {
+    val local = path.substringAfterLast('/').substringAfterLast('#').lowercase()
+    val namespace = path.substringBeforeLast('#', path.substringBeforeLast('/') + "/")
+    val prefix = preferredShaclPrefix(namespace, shaclPrefixes)
+    return if (prefix != null) "$prefix:$local" else local
+}
+
+private fun preferredShaclPrefix(namespace: String, shaclPrefixes: Map<String, String>): String? {
+    val normalizedNamespace = normalizeNamespace(namespace)
+    val candidates =
+        shaclPrefixes
+            .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+            .keys
+            .filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+    return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+}
+
+private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
 
 private fun relationShapeCandidates(
     property: org.epos.api.shacl.PropertyInfo,
