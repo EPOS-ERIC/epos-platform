@@ -102,6 +102,10 @@ object Config {
     val NEO4J_USERNAME: String get() = envOverride("EPOS_NEO4J_USERNAME") ?: neo4j.username
     val NEO4J_PASSWORD: String get() = envOverride("EPOS_NEO4J_PASSWORD") ?: neo4j.password
     val NEO4J_DATABASE: String get() = envOverride("EPOS_NEO4J_DATABASE") ?: "neo4j"
+    val NEO4J_CONNECT_MAX_ATTEMPTS: Int
+        get() = envOverride("EPOS_NEO4J_CONNECT_MAX_ATTEMPTS")?.toIntOrNull()?.coerceAtLeast(1) ?: 20
+    val NEO4J_CONNECT_RETRY_DELAY_MS: Long
+        get() = envOverride("EPOS_NEO4J_CONNECT_RETRY_DELAY_MS")?.toLongOrNull()?.coerceAtLeast(0L) ?: 2_000L
     val INDEX_URL: String get() = indexUrl
     val BASE_URI: String get() = baseUri
     val ID_BASE: String get() = "$BASE_URI/id"
@@ -356,26 +360,14 @@ object Config {
     fun printConfig() {
         println(
             """
-            |Configuration Summary
-            |=====================
-            | Neo4j
-            |   URI:      $NEO4J_URI
-            |   Username: $NEO4J_USERNAME
-            |   Database: $NEO4J_DATABASE
-            | Server
-            |   Host:     ${server.host}
-            |   Port:     ${server.port}
-            | URIs
-            |   Base URI: $BASE_URI
-            |   Index URL: $INDEX_URL
-            |   ID Base:   $ID_BASE
-            | Agents
-            |   System:    $AGENT_SYSTEM
-            |   Initial Pop: $AGENT_INITIAL_POPULATION
-            | Features
-            |   Swagger:   ${features.enableSwagger}
-            |   CORS:      ${features.enableCors}
-            |   Metrics:   ${features.enableMetrics}
+            |Startup Configuration
+            |Neo4j       $NEO4J_URI (db=$NEO4J_DATABASE, user=${NEO4J_USERNAME.ifBlank { "<none>" }})
+            |Retry       attempts=$NEO4J_CONNECT_MAX_ATTEMPTS, delayMs=$NEO4J_CONNECT_RETRY_DELAY_MS
+            |Server      ${server.host}:${server.port}
+            |Base URI    $BASE_URI
+            |Index URL   $INDEX_URL
+            |Agent       system=$AGENT_SYSTEM
+            |Features    swagger=${features.enableSwagger}, cors=${features.enableCors}, metrics=${features.enableMetrics}
             """.trimMargin(),
         )
     }

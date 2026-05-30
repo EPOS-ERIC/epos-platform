@@ -101,8 +101,40 @@ class PropertyGraphClient {
             } else {
                 AuthTokens.none()
             }
-        driver = GraphDatabase.driver(Config.NEO4J_URI, auth)
-        logger.info("Neo4j connected: {}", Config.NEO4J_URI)
+
+        var lastError: Exception? = null
+        repeat(Config.NEO4J_CONNECT_MAX_ATTEMPTS) { attemptIndex ->
+            val attempt = attemptIndex + 1
+            try {
+                val candidate = GraphDatabase.driver(Config.NEO4J_URI, auth)
+                candidate.verifyConnectivity()
+                driver = candidate
+                logger.info(
+                    "Neo4j connected: {} (database={}, attempt={}/{})",
+                    Config.NEO4J_URI,
+                    Config.NEO4J_DATABASE,
+                    attempt,
+                    Config.NEO4J_CONNECT_MAX_ATTEMPTS,
+                )
+                return
+            } catch (e: Exception) {
+                lastError = e
+                logger.warn(
+                    "Neo4j connection attempt {}/{} failed: {}",
+                    attempt,
+                    Config.NEO4J_CONNECT_MAX_ATTEMPTS,
+                    e.message,
+                )
+                if (attempt < Config.NEO4J_CONNECT_MAX_ATTEMPTS) {
+                    Thread.sleep(Config.NEO4J_CONNECT_RETRY_DELAY_MS)
+                }
+            }
+        }
+
+        throw IllegalStateException(
+            "Failed to connect to Neo4j after ${Config.NEO4J_CONNECT_MAX_ATTEMPTS} attempts",
+            lastError,
+        )
     }
 
     private fun mapRecord(record: Record): Map<String, Any?> = record.keys().associateWith { key -> toJavaValue(record[key].asObject()) }
