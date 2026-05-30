@@ -532,10 +532,11 @@ class RevisionImportService(
         val normalizedKeyCandidates = predicateKeyLookupCandidates(predicateKey).map { normalizeShapeName(it) }
 
         val property = resourceType.properties.firstOrNull { prop ->
+            prop.path.equals(predicateIri, ignoreCase = true)
+        } ?: resourceType.properties.firstOrNull { prop ->
             val propName = normalizeShapeName(prop.name)
             val propPathLocal = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
-            normalizedKeyCandidates.any { it == propName || it == propPathLocal } ||
-                prop.path.equals(predicateIri, ignoreCase = true)
+            normalizedKeyCandidates.any { it == propName || it == propPathLocal }
         } ?: return true
 
         return !property.classConstraint.isNullOrBlank() ||

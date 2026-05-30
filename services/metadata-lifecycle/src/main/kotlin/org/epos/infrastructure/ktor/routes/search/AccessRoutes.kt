@@ -147,11 +147,16 @@ private fun buildAccessDetail(
     data.forEach { (key, value) ->
         val propName = canonicalPropertyKeyFromShacl(key, shapeProperties, shaclPrefixes)
         if (isStructuralProperty(propName)) return@forEach
+        val relationByShacl = isRelationPropertyByShacl(propName, shapeProperties)
         val values = expandAccessValues(value)
         propertyWasArray[propName] = value is List<*> || shouldBeArrayByShacl(propName, shapeProperties)
 
         values.forEach { item ->
             val obj = item?.toString() ?: return@forEach
+            if (!relationByShacl) {
+                groupedProperties.getOrPut(propName) { mutableListOf() }.add(AccessPropertyValue(value = obj))
+                return@forEach
+            }
             val predicateIri = resolvePredicateIriFromShacl(propName, shapeProperties)
             val objectType = resolveKnownObjectShape(obj, propName, shapeProperties, resourceTypeMap, knownShapeNames)
             val accessValue = buildAccessPropertyValue(
@@ -293,6 +298,23 @@ private fun shouldBeArrayByShacl(
     } ?: return false
 
     return property.maxCount != 1
+}
+
+private fun isRelationPropertyByShacl(
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+): Boolean {
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(localPropertyName(it)) }
+    val property = shapeProperties.firstOrNull { prop ->
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
+    } ?: return false
+
+    return !property.classConstraint.isNullOrBlank() ||
+        !property.classConstraints.isNullOrEmpty() ||
+        !property.nodeShapeRef.isNullOrBlank() ||
+        !property.nodeShapeRefs.isNullOrEmpty()
 }
 
 private fun localPropertyName(value: String): String =
