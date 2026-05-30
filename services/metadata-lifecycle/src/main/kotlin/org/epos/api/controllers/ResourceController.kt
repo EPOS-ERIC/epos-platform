@@ -92,7 +92,7 @@ class ResourceController(
             val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt", "_vertexId", "_vertexLabel", "label")
             val dataMap = v.filterKeys { it !in structuralKeys }
                 .mapValues { (_, v2) -> normalizeValue(v2) ?: "" }
-            val typeUri = propString(dataMap["type"]) ?: ""
+            val typeUri = resolveEntityTypeUri(versionProps = dataMap, conceptualProps = c)
             val resolvedType = extractResourceName(typeUri)
 
             EntityResponse(
@@ -126,7 +126,7 @@ class ResourceController(
         val v = normalizePropertyMap(results.firstOrNull()?.get("value") as? Map<*, *> ?: return null)
         val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
         val data = v.filterKeys { it !in structuralKeys }
-        val typeValue = propString(data["type"]) ?: return null
+        val typeValue = resolveEntityTypeUri(versionProps = data, conceptualProps = null).ifBlank { return null }
 
         resourceTypes.forEach { resourceType ->
             if (resourceType.targetClass.equals(typeValue, ignoreCase = true)) {
@@ -183,7 +183,7 @@ class ResourceController(
             data
         }
 
-        val typeUri = propString(enrichedProperties["type"]) ?: ""
+        val typeUri = resolveEntityTypeUri(versionProps = enrichedProperties, conceptualProps = null)
         val resourceType = extractResourceName(typeUri)
 
         val conceptualUri =
@@ -288,8 +288,7 @@ class ResourceController(
     }
 
     fun createEntity(request: CreateEntityRequest, agent: String, group: String): ApiResponse {
-        val entityId = UUID.randomUUID().toString()
-        val conceptualUri = "${Config.ID_BASE}/${request.type}/$entityId"
+        val conceptualUri = resolveConceptualUriForCreate(request)
         val draftUri = "$conceptualUri/1.0-draft"
 
         val typeUri = getTypeUri(request.type)
@@ -334,6 +333,17 @@ class ResourceController(
                 "status" to "draft"
             )
         )
+    }
+
+    private fun resolveConceptualUriForCreate(request: CreateEntityRequest): String {
+        val provided = request.id?.trim().orEmpty()
+        if (provided.isBlank()) {
+            return "${Config.ID_BASE}/${request.type}/${UUID.randomUUID()}"
+        }
+        if (provided.startsWith("http://") || provided.startsWith("https://")) {
+            return provided.removeSuffix("/1.0-draft").removeSuffix("/1.0")
+        }
+        return "${Config.ID_BASE}/${request.type}/$provided"
     }
 
     fun updateEntity(entityUri: String, request: UpdateEntityRequest): ApiResponse {
@@ -844,5 +854,15 @@ class ResourceController(
                 }
             normalizedKey to value
         }
+    }
+
+    private fun resolveEntityTypeUri(
+        versionProps: Map<String, Any?>,
+        conceptualProps: Map<String, Any?>?,
+    ): String {
+        return propString(versionProps["type"])?.takeIf { it.isNotBlank() }
+            ?: propString(versionProps["rdf:type"])?.takeIf { it.isNotBlank() }
+            ?: conceptualProps?.let { propString(it["type"])?.takeIf { value -> value.isNotBlank() } }
+            ?: ""
     }
 }

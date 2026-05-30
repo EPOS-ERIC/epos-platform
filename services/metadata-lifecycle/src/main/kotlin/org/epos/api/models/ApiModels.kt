@@ -35,7 +35,8 @@ data class EntityListResponse(
 )
 
 data class CreateEntityRequest(
-    val type: String,
+    val type: String = "",
+    val id: String? = null,
     val properties: Map<String, Any>,
 )
 
