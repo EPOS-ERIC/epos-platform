@@ -10,6 +10,12 @@ Kotlin service for managing metadata lifecycle in Neo4j Community (Property Grap
 - Parses SHACL shapes to expose resource types and constraints (`/api/v2/resource-types`)
 - Provides search/discovery, Cypher passthrough, OAI-PMH harvesting, and admin population endpoints
 
+## Migration status
+
+- Runtime graph backend is Neo4j Community only (Bolt/Cypher)
+- Legacy JanusGraph/FalkorDB compatibility aliases were removed from runtime config
+- Local development stack uses Neo4j service wiring in Docker/Tilt
+
 ## Neo4j Property Graph Data Model
 
 ### Node Types
@@ -88,6 +94,7 @@ Configuration is profile-based and loaded from YAML files under `src/main/resour
 - `EPOS_NEO4J_USERNAME` (default empty)
 - `EPOS_NEO4J_PASSWORD` (default empty)
 - `EPOS_NEO4J_DATABASE` (default `neo4j`)
+- `NEO4J_dbms_usage__report_enabled=false` (recommended in local Docker to disable Neo4j usage reporting)
 - `EPOS_INDEX_URL` (TTL index URL for population)
 - `EPOS_BASE_URI` (default `https://epos-eu.org`)
 - `PORT` (default `8080`)
@@ -219,6 +226,8 @@ curl -X POST "http://localhost:8080/oai-pmh" \
 - Keep `resultsPerPage` between `1` and `100` (server clamps values outside this range).
 - For stable pagination, prefer `page` + `resultsPerPage`; use `offset` only for cursor-like clients.
 - Use `type` filters when possible to reduce full-graph scans and improve response time.
+- Text matching is case-insensitive and uses Cypher `CONTAINS` over title/description/label fields.
+- Type filtering accepts values resolved from conceptual type, version type, and `rdf:type` data fields.
 
 Search endpoint examples:
 
