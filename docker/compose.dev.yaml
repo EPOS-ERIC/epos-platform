@@ -40,7 +40,7 @@ services:
       retries: 20
 
   neo4j:
-    image: neo4j:5
+    image: neo4j:2026.04.0-community
     environment:
       - NEO4J_AUTH=neo4j/neo4jpassword
       - NEO4J_dbms_usage__report_enabled=false

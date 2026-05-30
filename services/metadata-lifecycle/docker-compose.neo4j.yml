@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   neo4j:
-    image: neo4j:5
+    image: neo4j:2026.04.0-community
     container_name: epos-neo4j
     environment:
       - NEO4J_AUTH=neo4j/neo4jpassword
