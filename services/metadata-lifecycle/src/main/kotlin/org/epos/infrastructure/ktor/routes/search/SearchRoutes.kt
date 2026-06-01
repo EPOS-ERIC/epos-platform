@@ -81,12 +81,13 @@ private suspend fun executeSearch(
 
     val statusFilter = versioningStatuses
 
+    val normalizedRequestedTypes = types.map { canonicalSearchType(normalizeTypeName(it)) }.toSet()
+
     val matchedResourceTypes =
         if (types.isNotEmpty()) {
-            val normalizedTypes = types.map { canonicalSearchType(normalizeTypeName(it)) }
             val matchingTypes =
                 resourceTypeInfos.filter { typeInfo ->
-                    canonicalSearchType(normalizeTypeName(typeInfo.name)) in normalizedTypes
+                    canonicalSearchType(normalizeTypeName(typeInfo.name)) in normalizedRequestedTypes
                 }
             if (matchingTypes.isEmpty()) {
                 call.respond(
@@ -244,6 +245,7 @@ private suspend fun executeSearch(
                         ?: shapeByNormalizedName[normalizeTypeName(typeUri)]?.name
                         ?: inferredFromId
                 val apiType = canonicalApiType(apiTypeRaw)
+                if (!matchesRequestedTypes(apiType, normalizedRequestedTypes)) return@mapNotNull null
                 val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
                 val fields: Map<String, Any?>? =
                     if (includeConstraints) {
@@ -325,6 +327,13 @@ internal fun canonicalSearchType(typeName: String): String =
         "publisher", "provider", "organization" -> "organization"
         else -> normalizeTypeName(typeName)
     }
+
+internal fun matchesRequestedTypes(
+    apiType: String,
+    normalizedRequestedTypes: Set<String>,
+): Boolean =
+    normalizedRequestedTypes.isEmpty() ||
+        canonicalSearchType(normalizeTypeName(apiType)) in normalizedRequestedTypes
 
 private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
