@@ -20,15 +20,16 @@ fun Route.accessRoutes(
 ) {
     get("/api/v2/access/{shape}/{id}") {
         val shape = call.parameters["shape"]?.trim().orEmpty()
+        val canonicalShape = canonicalAccessShape(shape)
         val idParam = call.parameters["id"]?.trim().orEmpty()
-        if (shape.isBlank() || idParam.isBlank()) {
+        if (canonicalShape.isBlank() || idParam.isBlank()) {
             call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Missing shape or id"))
             return@get
         }
 
         val resourceTypes = shaclService.getResourceTypes()
-        val resourceType = resolveResourceType(shape, resourceTypes)
-        val resolvedShapeName = resourceType?.name ?: shape
+        val resourceType = resolveResourceType(canonicalShape, resourceTypes)
+        val resolvedShapeName = resourceType?.name ?: canonicalShape
 
         if (idParam.equals("all", ignoreCase = true)) {
             call.respond(buildAccessList(client, resolvedShapeName, resourceTypes, call.resolvePublicBaseUrl()))
@@ -80,6 +81,12 @@ private fun normalizeShapeName(typeName: String): String =
         .replace("_", "")
         .replace("-", "")
         .replace(" ", "")
+
+private fun canonicalAccessShape(shape: String): String =
+    when (normalizeShapeName(shape)) {
+        "publisher", "provider", "organization" -> "organization"
+        else -> shape
+    }
 
 private fun buildAccessList(
     client: PropertyGraphClient,
