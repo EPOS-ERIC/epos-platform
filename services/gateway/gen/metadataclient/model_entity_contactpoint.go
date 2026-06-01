@@ -20,10 +20,14 @@ var _ MappedNullable = &EntityContactpoint{}
 
 // EntityContactpoint struct for EntityContactpoint
 type EntityContactpoint struct {
-	AvailableLanguage    NullableEntityAddressCountryName `json:"available language,omitempty"`
-	ContactType          NullableEntityAddressCountryName `json:"contact type,omitempty"`
-	Email                NullableEntityAddressCountryName `json:"email,omitempty"`
-	Telephone            NullableEntityAddressCountryName `json:"telephone,omitempty"`
+	// This property contains information about the language used by the Contact Point. Please use one of the language codes from the IETF BCP 47 standard.
+	AvailableLanguage []string `json:"available language,omitempty"`
+	// This property contains information about the role of the Contact Point.
+	ContactType *string `json:"contact type,omitempty"`
+	// This property contains the email address of the Contact Point.
+	Email []string `json:"email,omitempty"`
+	// This property contains the telephone number of the Contact Point.
+	Telephone            []string `json:"telephone,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -46,176 +50,132 @@ func NewEntityContactpointWithDefaults() *EntityContactpoint {
 	return &this
 }
 
-// GetAvailableLanguage returns the AvailableLanguage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityContactpoint) GetAvailableLanguage() EntityAddressCountryName {
-	if o == nil || IsNil(o.AvailableLanguage.Get()) {
-		var ret EntityAddressCountryName
+// GetAvailableLanguage returns the AvailableLanguage field value if set, zero value otherwise.
+func (o *EntityContactpoint) GetAvailableLanguage() []string {
+	if o == nil || IsNil(o.AvailableLanguage) {
+		var ret []string
 		return ret
 	}
-	return *o.AvailableLanguage.Get()
+	return o.AvailableLanguage
 }
 
 // GetAvailableLanguageOk returns a tuple with the AvailableLanguage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityContactpoint) GetAvailableLanguageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityContactpoint) GetAvailableLanguageOk() ([]string, bool) {
+	if o == nil || IsNil(o.AvailableLanguage) {
 		return nil, false
 	}
-	return o.AvailableLanguage.Get(), o.AvailableLanguage.IsSet()
+	return o.AvailableLanguage, true
 }
 
 // HasAvailableLanguage returns a boolean if a field has been set.
 func (o *EntityContactpoint) HasAvailableLanguage() bool {
-	if o != nil && o.AvailableLanguage.IsSet() {
+	if o != nil && !IsNil(o.AvailableLanguage) {
 		return true
 	}
 
 	return false
 }
 
-// SetAvailableLanguage gets a reference to the given NullableEntityAddressCountryName and assigns it to the AvailableLanguage field.
-func (o *EntityContactpoint) SetAvailableLanguage(v EntityAddressCountryName) {
-	o.AvailableLanguage.Set(&v)
+// SetAvailableLanguage gets a reference to the given []string and assigns it to the AvailableLanguage field.
+func (o *EntityContactpoint) SetAvailableLanguage(v []string) {
+	o.AvailableLanguage = v
 }
 
-// SetAvailableLanguageNil sets the value for AvailableLanguage to be an explicit nil
-func (o *EntityContactpoint) SetAvailableLanguageNil() {
-	o.AvailableLanguage.Set(nil)
-}
-
-// UnsetAvailableLanguage ensures that no value is present for AvailableLanguage, not even an explicit nil
-func (o *EntityContactpoint) UnsetAvailableLanguage() {
-	o.AvailableLanguage.Unset()
-}
-
-// GetContactType returns the ContactType field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityContactpoint) GetContactType() EntityAddressCountryName {
-	if o == nil || IsNil(o.ContactType.Get()) {
-		var ret EntityAddressCountryName
+// GetContactType returns the ContactType field value if set, zero value otherwise.
+func (o *EntityContactpoint) GetContactType() string {
+	if o == nil || IsNil(o.ContactType) {
+		var ret string
 		return ret
 	}
-	return *o.ContactType.Get()
+	return *o.ContactType
 }
 
 // GetContactTypeOk returns a tuple with the ContactType field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityContactpoint) GetContactTypeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityContactpoint) GetContactTypeOk() (*string, bool) {
+	if o == nil || IsNil(o.ContactType) {
 		return nil, false
 	}
-	return o.ContactType.Get(), o.ContactType.IsSet()
+	return o.ContactType, true
 }
 
 // HasContactType returns a boolean if a field has been set.
 func (o *EntityContactpoint) HasContactType() bool {
-	if o != nil && o.ContactType.IsSet() {
+	if o != nil && !IsNil(o.ContactType) {
 		return true
 	}
 
 	return false
 }
 
-// SetContactType gets a reference to the given NullableEntityAddressCountryName and assigns it to the ContactType field.
-func (o *EntityContactpoint) SetContactType(v EntityAddressCountryName) {
-	o.ContactType.Set(&v)
+// SetContactType gets a reference to the given string and assigns it to the ContactType field.
+func (o *EntityContactpoint) SetContactType(v string) {
+	o.ContactType = &v
 }
 
-// SetContactTypeNil sets the value for ContactType to be an explicit nil
-func (o *EntityContactpoint) SetContactTypeNil() {
-	o.ContactType.Set(nil)
-}
-
-// UnsetContactType ensures that no value is present for ContactType, not even an explicit nil
-func (o *EntityContactpoint) UnsetContactType() {
-	o.ContactType.Unset()
-}
-
-// GetEmail returns the Email field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityContactpoint) GetEmail() EntityAddressCountryName {
-	if o == nil || IsNil(o.Email.Get()) {
-		var ret EntityAddressCountryName
+// GetEmail returns the Email field value if set, zero value otherwise.
+func (o *EntityContactpoint) GetEmail() []string {
+	if o == nil || IsNil(o.Email) {
+		var ret []string
 		return ret
 	}
-	return *o.Email.Get()
+	return o.Email
 }
 
 // GetEmailOk returns a tuple with the Email field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityContactpoint) GetEmailOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityContactpoint) GetEmailOk() ([]string, bool) {
+	if o == nil || IsNil(o.Email) {
 		return nil, false
 	}
-	return o.Email.Get(), o.Email.IsSet()
+	return o.Email, true
 }
 
 // HasEmail returns a boolean if a field has been set.
 func (o *EntityContactpoint) HasEmail() bool {
-	if o != nil && o.Email.IsSet() {
+	if o != nil && !IsNil(o.Email) {
 		return true
 	}
 
 	return false
 }
 
-// SetEmail gets a reference to the given NullableEntityAddressCountryName and assigns it to the Email field.
-func (o *EntityContactpoint) SetEmail(v EntityAddressCountryName) {
-	o.Email.Set(&v)
+// SetEmail gets a reference to the given []string and assigns it to the Email field.
+func (o *EntityContactpoint) SetEmail(v []string) {
+	o.Email = v
 }
 
-// SetEmailNil sets the value for Email to be an explicit nil
-func (o *EntityContactpoint) SetEmailNil() {
-	o.Email.Set(nil)
-}
-
-// UnsetEmail ensures that no value is present for Email, not even an explicit nil
-func (o *EntityContactpoint) UnsetEmail() {
-	o.Email.Unset()
-}
-
-// GetTelephone returns the Telephone field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityContactpoint) GetTelephone() EntityAddressCountryName {
-	if o == nil || IsNil(o.Telephone.Get()) {
-		var ret EntityAddressCountryName
+// GetTelephone returns the Telephone field value if set, zero value otherwise.
+func (o *EntityContactpoint) GetTelephone() []string {
+	if o == nil || IsNil(o.Telephone) {
+		var ret []string
 		return ret
 	}
-	return *o.Telephone.Get()
+	return o.Telephone
 }
 
 // GetTelephoneOk returns a tuple with the Telephone field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityContactpoint) GetTelephoneOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityContactpoint) GetTelephoneOk() ([]string, bool) {
+	if o == nil || IsNil(o.Telephone) {
 		return nil, false
 	}
-	return o.Telephone.Get(), o.Telephone.IsSet()
+	return o.Telephone, true
 }
 
 // HasTelephone returns a boolean if a field has been set.
 func (o *EntityContactpoint) HasTelephone() bool {
-	if o != nil && o.Telephone.IsSet() {
+	if o != nil && !IsNil(o.Telephone) {
 		return true
 	}
 
 	return false
 }
 
-// SetTelephone gets a reference to the given NullableEntityAddressCountryName and assigns it to the Telephone field.
-func (o *EntityContactpoint) SetTelephone(v EntityAddressCountryName) {
-	o.Telephone.Set(&v)
-}
-
-// SetTelephoneNil sets the value for Telephone to be an explicit nil
-func (o *EntityContactpoint) SetTelephoneNil() {
-	o.Telephone.Set(nil)
-}
-
-// UnsetTelephone ensures that no value is present for Telephone, not even an explicit nil
-func (o *EntityContactpoint) UnsetTelephone() {
-	o.Telephone.Unset()
+// SetTelephone gets a reference to the given []string and assigns it to the Telephone field.
+func (o *EntityContactpoint) SetTelephone(v []string) {
+	o.Telephone = v
 }
 
 func (o EntityContactpoint) MarshalJSON() ([]byte, error) {
@@ -228,17 +188,17 @@ func (o EntityContactpoint) MarshalJSON() ([]byte, error) {
 
 func (o EntityContactpoint) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.AvailableLanguage.IsSet() {
-		toSerialize["available language"] = o.AvailableLanguage.Get()
+	if !IsNil(o.AvailableLanguage) {
+		toSerialize["available language"] = o.AvailableLanguage
 	}
-	if o.ContactType.IsSet() {
-		toSerialize["contact type"] = o.ContactType.Get()
+	if !IsNil(o.ContactType) {
+		toSerialize["contact type"] = o.ContactType
 	}
-	if o.Email.IsSet() {
-		toSerialize["email"] = o.Email.Get()
+	if !IsNil(o.Email) {
+		toSerialize["email"] = o.Email
 	}
-	if o.Telephone.IsSet() {
-		toSerialize["telephone"] = o.Telephone.Get()
+	if !IsNil(o.Telephone) {
+		toSerialize["telephone"] = o.Telephone
 	}
 
 	for key, value := range o.AdditionalProperties {

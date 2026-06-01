@@ -20,20 +20,34 @@ var _ MappedNullable = &EntitySoftwareapplication{}
 
 // EntitySoftwareapplication struct for EntitySoftwareapplication
 type EntitySoftwareapplication struct {
-	ContactPoint         NullableEntityAddressCountryName `json:"contact point,omitempty"`
-	Description          NullableEntityAddressCountryName `json:"description,omitempty"`
-	DownloadUrl          NullableEntityAddressCountryName `json:"download url,omitempty"`
-	Identifier           NullableEntityAddressCountryName `json:"identifier,omitempty"`
-	InstallUrl           NullableEntityAddressCountryName `json:"install url,omitempty"`
-	Keywords             NullableEntityAddressCountryName `json:"keywords,omitempty"`
-	License              NullableEntityAddressCountryName `json:"license,omitempty"`
-	MainEntityOfPage     NullableEntityAddressCountryName `json:"main entity of page,omitempty"`
-	Name                 NullableEntityAddressCountryName `json:"name,omitempty"`
-	PotentialAction      NullableEntityAddressCountryName `json:"potential action,omitempty"`
-	Relation             NullableEntityAddressCountryName `json:"relation,omitempty"`
-	SoftwareRequirements NullableEntityAddressCountryName `json:"software requirements,omitempty"`
-	SoftwareVersion      NullableEntityAddressCountryName `json:"software version,omitempty"`
-	Theme                NullableEntityAddressCountryName `json:"theme,omitempty"`
+	// This property refers to the Contact Point defined for the Software Application.
+	ContactPoint []string `json:"contact point,omitempty"`
+	// This property contains the description of the Software Application.
+	Description *string `json:"description,omitempty"`
+	// If the Software Application can be downloaded this property contains the URL to download it.
+	DownloadUrl *string `json:"download url,omitempty"`
+	// This property contains the main identifier for the Software Application.
+	Identifier []string `json:"identifier,omitempty"`
+	// This property contains the URL at which the application may be installed.
+	InstallUrl *string `json:"install url,omitempty"`
+	// This property contains the keywords used to describe the Software Application. Multiple entries in a keywords list are typically delimited by commas.
+	Keywords []string `json:"keywords,omitempty"`
+	// This property contains the URL of the license document that applies to the Software Application.
+	License *string `json:"license,omitempty"`
+	// This property refers to the web page URL which describes the Software Application.
+	MainEntityOfPage *string `json:"main entity of page,omitempty"`
+	// This property contains the name of the Software Application.
+	Name *string `json:"name,omitempty"`
+	// This property describes the object upon which the action is carried out and the result produced in the action.
+	PotentialAction *string `json:"potential action,omitempty"`
+	// This property refers to the WebService Operation linked to the application.
+	Relation []string `json:"relation,omitempty"`
+	// Component dependency requirements for application. This includes runtime environments and shared libraries that are not included in the application distribution package, but required to run the application.
+	SoftwareRequirements *string `json:"software requirements,omitempty"`
+	// This property contains the version of the Software Application instance.
+	SoftwareVersion *string `json:"software version,omitempty"`
+	// This property refers to a category of the Software Application. A Software may be associated with multiple themes.
+	Theme                []string `json:"theme,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -56,606 +70,452 @@ func NewEntitySoftwareapplicationWithDefaults() *EntitySoftwareapplication {
 	return &this
 }
 
-// GetContactPoint returns the ContactPoint field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetContactPoint() EntityAddressCountryName {
-	if o == nil || IsNil(o.ContactPoint.Get()) {
-		var ret EntityAddressCountryName
+// GetContactPoint returns the ContactPoint field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetContactPoint() []string {
+	if o == nil || IsNil(o.ContactPoint) {
+		var ret []string
 		return ret
 	}
-	return *o.ContactPoint.Get()
+	return o.ContactPoint
 }
 
 // GetContactPointOk returns a tuple with the ContactPoint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetContactPointOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetContactPointOk() ([]string, bool) {
+	if o == nil || IsNil(o.ContactPoint) {
 		return nil, false
 	}
-	return o.ContactPoint.Get(), o.ContactPoint.IsSet()
+	return o.ContactPoint, true
 }
 
 // HasContactPoint returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasContactPoint() bool {
-	if o != nil && o.ContactPoint.IsSet() {
+	if o != nil && !IsNil(o.ContactPoint) {
 		return true
 	}
 
 	return false
 }
 
-// SetContactPoint gets a reference to the given NullableEntityAddressCountryName and assigns it to the ContactPoint field.
-func (o *EntitySoftwareapplication) SetContactPoint(v EntityAddressCountryName) {
-	o.ContactPoint.Set(&v)
+// SetContactPoint gets a reference to the given []string and assigns it to the ContactPoint field.
+func (o *EntitySoftwareapplication) SetContactPoint(v []string) {
+	o.ContactPoint = v
 }
 
-// SetContactPointNil sets the value for ContactPoint to be an explicit nil
-func (o *EntitySoftwareapplication) SetContactPointNil() {
-	o.ContactPoint.Set(nil)
-}
-
-// UnsetContactPoint ensures that no value is present for ContactPoint, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetContactPoint() {
-	o.ContactPoint.Unset()
-}
-
-// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetDescription() EntityAddressCountryName {
-	if o == nil || IsNil(o.Description.Get()) {
-		var ret EntityAddressCountryName
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetDescription() string {
+	if o == nil || IsNil(o.Description) {
+		var ret string
 		return ret
 	}
-	return *o.Description.Get()
+	return *o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetDescriptionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetDescriptionOk() (*string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return o.Description, true
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasDescription() bool {
-	if o != nil && o.Description.IsSet() {
+	if o != nil && !IsNil(o.Description) {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given NullableEntityAddressCountryName and assigns it to the Description field.
-func (o *EntitySoftwareapplication) SetDescription(v EntityAddressCountryName) {
-	o.Description.Set(&v)
+// SetDescription gets a reference to the given string and assigns it to the Description field.
+func (o *EntitySoftwareapplication) SetDescription(v string) {
+	o.Description = &v
 }
 
-// SetDescriptionNil sets the value for Description to be an explicit nil
-func (o *EntitySoftwareapplication) SetDescriptionNil() {
-	o.Description.Set(nil)
-}
-
-// UnsetDescription ensures that no value is present for Description, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetDescription() {
-	o.Description.Unset()
-}
-
-// GetDownloadUrl returns the DownloadUrl field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetDownloadUrl() EntityAddressCountryName {
-	if o == nil || IsNil(o.DownloadUrl.Get()) {
-		var ret EntityAddressCountryName
+// GetDownloadUrl returns the DownloadUrl field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetDownloadUrl() string {
+	if o == nil || IsNil(o.DownloadUrl) {
+		var ret string
 		return ret
 	}
-	return *o.DownloadUrl.Get()
+	return *o.DownloadUrl
 }
 
 // GetDownloadUrlOk returns a tuple with the DownloadUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetDownloadUrlOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetDownloadUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.DownloadUrl) {
 		return nil, false
 	}
-	return o.DownloadUrl.Get(), o.DownloadUrl.IsSet()
+	return o.DownloadUrl, true
 }
 
 // HasDownloadUrl returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasDownloadUrl() bool {
-	if o != nil && o.DownloadUrl.IsSet() {
+	if o != nil && !IsNil(o.DownloadUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetDownloadUrl gets a reference to the given NullableEntityAddressCountryName and assigns it to the DownloadUrl field.
-func (o *EntitySoftwareapplication) SetDownloadUrl(v EntityAddressCountryName) {
-	o.DownloadUrl.Set(&v)
+// SetDownloadUrl gets a reference to the given string and assigns it to the DownloadUrl field.
+func (o *EntitySoftwareapplication) SetDownloadUrl(v string) {
+	o.DownloadUrl = &v
 }
 
-// SetDownloadUrlNil sets the value for DownloadUrl to be an explicit nil
-func (o *EntitySoftwareapplication) SetDownloadUrlNil() {
-	o.DownloadUrl.Set(nil)
-}
-
-// UnsetDownloadUrl ensures that no value is present for DownloadUrl, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetDownloadUrl() {
-	o.DownloadUrl.Unset()
-}
-
-// GetIdentifier returns the Identifier field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetIdentifier() EntityAddressCountryName {
-	if o == nil || IsNil(o.Identifier.Get()) {
-		var ret EntityAddressCountryName
+// GetIdentifier returns the Identifier field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetIdentifier() []string {
+	if o == nil || IsNil(o.Identifier) {
+		var ret []string
 		return ret
 	}
-	return *o.Identifier.Get()
+	return o.Identifier
 }
 
 // GetIdentifierOk returns a tuple with the Identifier field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetIdentifierOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetIdentifierOk() ([]string, bool) {
+	if o == nil || IsNil(o.Identifier) {
 		return nil, false
 	}
-	return o.Identifier.Get(), o.Identifier.IsSet()
+	return o.Identifier, true
 }
 
 // HasIdentifier returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasIdentifier() bool {
-	if o != nil && o.Identifier.IsSet() {
+	if o != nil && !IsNil(o.Identifier) {
 		return true
 	}
 
 	return false
 }
 
-// SetIdentifier gets a reference to the given NullableEntityAddressCountryName and assigns it to the Identifier field.
-func (o *EntitySoftwareapplication) SetIdentifier(v EntityAddressCountryName) {
-	o.Identifier.Set(&v)
+// SetIdentifier gets a reference to the given []string and assigns it to the Identifier field.
+func (o *EntitySoftwareapplication) SetIdentifier(v []string) {
+	o.Identifier = v
 }
 
-// SetIdentifierNil sets the value for Identifier to be an explicit nil
-func (o *EntitySoftwareapplication) SetIdentifierNil() {
-	o.Identifier.Set(nil)
-}
-
-// UnsetIdentifier ensures that no value is present for Identifier, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetIdentifier() {
-	o.Identifier.Unset()
-}
-
-// GetInstallUrl returns the InstallUrl field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetInstallUrl() EntityAddressCountryName {
-	if o == nil || IsNil(o.InstallUrl.Get()) {
-		var ret EntityAddressCountryName
+// GetInstallUrl returns the InstallUrl field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetInstallUrl() string {
+	if o == nil || IsNil(o.InstallUrl) {
+		var ret string
 		return ret
 	}
-	return *o.InstallUrl.Get()
+	return *o.InstallUrl
 }
 
 // GetInstallUrlOk returns a tuple with the InstallUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetInstallUrlOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetInstallUrlOk() (*string, bool) {
+	if o == nil || IsNil(o.InstallUrl) {
 		return nil, false
 	}
-	return o.InstallUrl.Get(), o.InstallUrl.IsSet()
+	return o.InstallUrl, true
 }
 
 // HasInstallUrl returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasInstallUrl() bool {
-	if o != nil && o.InstallUrl.IsSet() {
+	if o != nil && !IsNil(o.InstallUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetInstallUrl gets a reference to the given NullableEntityAddressCountryName and assigns it to the InstallUrl field.
-func (o *EntitySoftwareapplication) SetInstallUrl(v EntityAddressCountryName) {
-	o.InstallUrl.Set(&v)
+// SetInstallUrl gets a reference to the given string and assigns it to the InstallUrl field.
+func (o *EntitySoftwareapplication) SetInstallUrl(v string) {
+	o.InstallUrl = &v
 }
 
-// SetInstallUrlNil sets the value for InstallUrl to be an explicit nil
-func (o *EntitySoftwareapplication) SetInstallUrlNil() {
-	o.InstallUrl.Set(nil)
-}
-
-// UnsetInstallUrl ensures that no value is present for InstallUrl, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetInstallUrl() {
-	o.InstallUrl.Unset()
-}
-
-// GetKeywords returns the Keywords field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetKeywords() EntityAddressCountryName {
-	if o == nil || IsNil(o.Keywords.Get()) {
-		var ret EntityAddressCountryName
+// GetKeywords returns the Keywords field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetKeywords() []string {
+	if o == nil || IsNil(o.Keywords) {
+		var ret []string
 		return ret
 	}
-	return *o.Keywords.Get()
+	return o.Keywords
 }
 
 // GetKeywordsOk returns a tuple with the Keywords field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetKeywordsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetKeywordsOk() ([]string, bool) {
+	if o == nil || IsNil(o.Keywords) {
 		return nil, false
 	}
-	return o.Keywords.Get(), o.Keywords.IsSet()
+	return o.Keywords, true
 }
 
 // HasKeywords returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasKeywords() bool {
-	if o != nil && o.Keywords.IsSet() {
+	if o != nil && !IsNil(o.Keywords) {
 		return true
 	}
 
 	return false
 }
 
-// SetKeywords gets a reference to the given NullableEntityAddressCountryName and assigns it to the Keywords field.
-func (o *EntitySoftwareapplication) SetKeywords(v EntityAddressCountryName) {
-	o.Keywords.Set(&v)
+// SetKeywords gets a reference to the given []string and assigns it to the Keywords field.
+func (o *EntitySoftwareapplication) SetKeywords(v []string) {
+	o.Keywords = v
 }
 
-// SetKeywordsNil sets the value for Keywords to be an explicit nil
-func (o *EntitySoftwareapplication) SetKeywordsNil() {
-	o.Keywords.Set(nil)
-}
-
-// UnsetKeywords ensures that no value is present for Keywords, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetKeywords() {
-	o.Keywords.Unset()
-}
-
-// GetLicense returns the License field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetLicense() EntityAddressCountryName {
-	if o == nil || IsNil(o.License.Get()) {
-		var ret EntityAddressCountryName
+// GetLicense returns the License field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetLicense() string {
+	if o == nil || IsNil(o.License) {
+		var ret string
 		return ret
 	}
-	return *o.License.Get()
+	return *o.License
 }
 
 // GetLicenseOk returns a tuple with the License field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetLicenseOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetLicenseOk() (*string, bool) {
+	if o == nil || IsNil(o.License) {
 		return nil, false
 	}
-	return o.License.Get(), o.License.IsSet()
+	return o.License, true
 }
 
 // HasLicense returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasLicense() bool {
-	if o != nil && o.License.IsSet() {
+	if o != nil && !IsNil(o.License) {
 		return true
 	}
 
 	return false
 }
 
-// SetLicense gets a reference to the given NullableEntityAddressCountryName and assigns it to the License field.
-func (o *EntitySoftwareapplication) SetLicense(v EntityAddressCountryName) {
-	o.License.Set(&v)
+// SetLicense gets a reference to the given string and assigns it to the License field.
+func (o *EntitySoftwareapplication) SetLicense(v string) {
+	o.License = &v
 }
 
-// SetLicenseNil sets the value for License to be an explicit nil
-func (o *EntitySoftwareapplication) SetLicenseNil() {
-	o.License.Set(nil)
-}
-
-// UnsetLicense ensures that no value is present for License, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetLicense() {
-	o.License.Unset()
-}
-
-// GetMainEntityOfPage returns the MainEntityOfPage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetMainEntityOfPage() EntityAddressCountryName {
-	if o == nil || IsNil(o.MainEntityOfPage.Get()) {
-		var ret EntityAddressCountryName
+// GetMainEntityOfPage returns the MainEntityOfPage field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetMainEntityOfPage() string {
+	if o == nil || IsNil(o.MainEntityOfPage) {
+		var ret string
 		return ret
 	}
-	return *o.MainEntityOfPage.Get()
+	return *o.MainEntityOfPage
 }
 
 // GetMainEntityOfPageOk returns a tuple with the MainEntityOfPage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetMainEntityOfPageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetMainEntityOfPageOk() (*string, bool) {
+	if o == nil || IsNil(o.MainEntityOfPage) {
 		return nil, false
 	}
-	return o.MainEntityOfPage.Get(), o.MainEntityOfPage.IsSet()
+	return o.MainEntityOfPage, true
 }
 
 // HasMainEntityOfPage returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasMainEntityOfPage() bool {
-	if o != nil && o.MainEntityOfPage.IsSet() {
+	if o != nil && !IsNil(o.MainEntityOfPage) {
 		return true
 	}
 
 	return false
 }
 
-// SetMainEntityOfPage gets a reference to the given NullableEntityAddressCountryName and assigns it to the MainEntityOfPage field.
-func (o *EntitySoftwareapplication) SetMainEntityOfPage(v EntityAddressCountryName) {
-	o.MainEntityOfPage.Set(&v)
+// SetMainEntityOfPage gets a reference to the given string and assigns it to the MainEntityOfPage field.
+func (o *EntitySoftwareapplication) SetMainEntityOfPage(v string) {
+	o.MainEntityOfPage = &v
 }
 
-// SetMainEntityOfPageNil sets the value for MainEntityOfPage to be an explicit nil
-func (o *EntitySoftwareapplication) SetMainEntityOfPageNil() {
-	o.MainEntityOfPage.Set(nil)
-}
-
-// UnsetMainEntityOfPage ensures that no value is present for MainEntityOfPage, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetMainEntityOfPage() {
-	o.MainEntityOfPage.Unset()
-}
-
-// GetName returns the Name field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetName() EntityAddressCountryName {
-	if o == nil || IsNil(o.Name.Get()) {
-		var ret EntityAddressCountryName
+// GetName returns the Name field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetName() string {
+	if o == nil || IsNil(o.Name) {
+		var ret string
 		return ret
 	}
-	return *o.Name.Get()
+	return *o.Name
 }
 
 // GetNameOk returns a tuple with the Name field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetNameOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetNameOk() (*string, bool) {
+	if o == nil || IsNil(o.Name) {
 		return nil, false
 	}
-	return o.Name.Get(), o.Name.IsSet()
+	return o.Name, true
 }
 
 // HasName returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasName() bool {
-	if o != nil && o.Name.IsSet() {
+	if o != nil && !IsNil(o.Name) {
 		return true
 	}
 
 	return false
 }
 
-// SetName gets a reference to the given NullableEntityAddressCountryName and assigns it to the Name field.
-func (o *EntitySoftwareapplication) SetName(v EntityAddressCountryName) {
-	o.Name.Set(&v)
+// SetName gets a reference to the given string and assigns it to the Name field.
+func (o *EntitySoftwareapplication) SetName(v string) {
+	o.Name = &v
 }
 
-// SetNameNil sets the value for Name to be an explicit nil
-func (o *EntitySoftwareapplication) SetNameNil() {
-	o.Name.Set(nil)
-}
-
-// UnsetName ensures that no value is present for Name, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetName() {
-	o.Name.Unset()
-}
-
-// GetPotentialAction returns the PotentialAction field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetPotentialAction() EntityAddressCountryName {
-	if o == nil || IsNil(o.PotentialAction.Get()) {
-		var ret EntityAddressCountryName
+// GetPotentialAction returns the PotentialAction field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetPotentialAction() string {
+	if o == nil || IsNil(o.PotentialAction) {
+		var ret string
 		return ret
 	}
-	return *o.PotentialAction.Get()
+	return *o.PotentialAction
 }
 
 // GetPotentialActionOk returns a tuple with the PotentialAction field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetPotentialActionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetPotentialActionOk() (*string, bool) {
+	if o == nil || IsNil(o.PotentialAction) {
 		return nil, false
 	}
-	return o.PotentialAction.Get(), o.PotentialAction.IsSet()
+	return o.PotentialAction, true
 }
 
 // HasPotentialAction returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasPotentialAction() bool {
-	if o != nil && o.PotentialAction.IsSet() {
+	if o != nil && !IsNil(o.PotentialAction) {
 		return true
 	}
 
 	return false
 }
 
-// SetPotentialAction gets a reference to the given NullableEntityAddressCountryName and assigns it to the PotentialAction field.
-func (o *EntitySoftwareapplication) SetPotentialAction(v EntityAddressCountryName) {
-	o.PotentialAction.Set(&v)
+// SetPotentialAction gets a reference to the given string and assigns it to the PotentialAction field.
+func (o *EntitySoftwareapplication) SetPotentialAction(v string) {
+	o.PotentialAction = &v
 }
 
-// SetPotentialActionNil sets the value for PotentialAction to be an explicit nil
-func (o *EntitySoftwareapplication) SetPotentialActionNil() {
-	o.PotentialAction.Set(nil)
-}
-
-// UnsetPotentialAction ensures that no value is present for PotentialAction, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetPotentialAction() {
-	o.PotentialAction.Unset()
-}
-
-// GetRelation returns the Relation field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetRelation() EntityAddressCountryName {
-	if o == nil || IsNil(o.Relation.Get()) {
-		var ret EntityAddressCountryName
+// GetRelation returns the Relation field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetRelation() []string {
+	if o == nil || IsNil(o.Relation) {
+		var ret []string
 		return ret
 	}
-	return *o.Relation.Get()
+	return o.Relation
 }
 
 // GetRelationOk returns a tuple with the Relation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetRelationOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetRelationOk() ([]string, bool) {
+	if o == nil || IsNil(o.Relation) {
 		return nil, false
 	}
-	return o.Relation.Get(), o.Relation.IsSet()
+	return o.Relation, true
 }
 
 // HasRelation returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasRelation() bool {
-	if o != nil && o.Relation.IsSet() {
+	if o != nil && !IsNil(o.Relation) {
 		return true
 	}
 
 	return false
 }
 
-// SetRelation gets a reference to the given NullableEntityAddressCountryName and assigns it to the Relation field.
-func (o *EntitySoftwareapplication) SetRelation(v EntityAddressCountryName) {
-	o.Relation.Set(&v)
+// SetRelation gets a reference to the given []string and assigns it to the Relation field.
+func (o *EntitySoftwareapplication) SetRelation(v []string) {
+	o.Relation = v
 }
 
-// SetRelationNil sets the value for Relation to be an explicit nil
-func (o *EntitySoftwareapplication) SetRelationNil() {
-	o.Relation.Set(nil)
-}
-
-// UnsetRelation ensures that no value is present for Relation, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetRelation() {
-	o.Relation.Unset()
-}
-
-// GetSoftwareRequirements returns the SoftwareRequirements field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetSoftwareRequirements() EntityAddressCountryName {
-	if o == nil || IsNil(o.SoftwareRequirements.Get()) {
-		var ret EntityAddressCountryName
+// GetSoftwareRequirements returns the SoftwareRequirements field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetSoftwareRequirements() string {
+	if o == nil || IsNil(o.SoftwareRequirements) {
+		var ret string
 		return ret
 	}
-	return *o.SoftwareRequirements.Get()
+	return *o.SoftwareRequirements
 }
 
 // GetSoftwareRequirementsOk returns a tuple with the SoftwareRequirements field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetSoftwareRequirementsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetSoftwareRequirementsOk() (*string, bool) {
+	if o == nil || IsNil(o.SoftwareRequirements) {
 		return nil, false
 	}
-	return o.SoftwareRequirements.Get(), o.SoftwareRequirements.IsSet()
+	return o.SoftwareRequirements, true
 }
 
 // HasSoftwareRequirements returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasSoftwareRequirements() bool {
-	if o != nil && o.SoftwareRequirements.IsSet() {
+	if o != nil && !IsNil(o.SoftwareRequirements) {
 		return true
 	}
 
 	return false
 }
 
-// SetSoftwareRequirements gets a reference to the given NullableEntityAddressCountryName and assigns it to the SoftwareRequirements field.
-func (o *EntitySoftwareapplication) SetSoftwareRequirements(v EntityAddressCountryName) {
-	o.SoftwareRequirements.Set(&v)
+// SetSoftwareRequirements gets a reference to the given string and assigns it to the SoftwareRequirements field.
+func (o *EntitySoftwareapplication) SetSoftwareRequirements(v string) {
+	o.SoftwareRequirements = &v
 }
 
-// SetSoftwareRequirementsNil sets the value for SoftwareRequirements to be an explicit nil
-func (o *EntitySoftwareapplication) SetSoftwareRequirementsNil() {
-	o.SoftwareRequirements.Set(nil)
-}
-
-// UnsetSoftwareRequirements ensures that no value is present for SoftwareRequirements, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetSoftwareRequirements() {
-	o.SoftwareRequirements.Unset()
-}
-
-// GetSoftwareVersion returns the SoftwareVersion field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetSoftwareVersion() EntityAddressCountryName {
-	if o == nil || IsNil(o.SoftwareVersion.Get()) {
-		var ret EntityAddressCountryName
+// GetSoftwareVersion returns the SoftwareVersion field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetSoftwareVersion() string {
+	if o == nil || IsNil(o.SoftwareVersion) {
+		var ret string
 		return ret
 	}
-	return *o.SoftwareVersion.Get()
+	return *o.SoftwareVersion
 }
 
 // GetSoftwareVersionOk returns a tuple with the SoftwareVersion field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetSoftwareVersionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetSoftwareVersionOk() (*string, bool) {
+	if o == nil || IsNil(o.SoftwareVersion) {
 		return nil, false
 	}
-	return o.SoftwareVersion.Get(), o.SoftwareVersion.IsSet()
+	return o.SoftwareVersion, true
 }
 
 // HasSoftwareVersion returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasSoftwareVersion() bool {
-	if o != nil && o.SoftwareVersion.IsSet() {
+	if o != nil && !IsNil(o.SoftwareVersion) {
 		return true
 	}
 
 	return false
 }
 
-// SetSoftwareVersion gets a reference to the given NullableEntityAddressCountryName and assigns it to the SoftwareVersion field.
-func (o *EntitySoftwareapplication) SetSoftwareVersion(v EntityAddressCountryName) {
-	o.SoftwareVersion.Set(&v)
+// SetSoftwareVersion gets a reference to the given string and assigns it to the SoftwareVersion field.
+func (o *EntitySoftwareapplication) SetSoftwareVersion(v string) {
+	o.SoftwareVersion = &v
 }
 
-// SetSoftwareVersionNil sets the value for SoftwareVersion to be an explicit nil
-func (o *EntitySoftwareapplication) SetSoftwareVersionNil() {
-	o.SoftwareVersion.Set(nil)
-}
-
-// UnsetSoftwareVersion ensures that no value is present for SoftwareVersion, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetSoftwareVersion() {
-	o.SoftwareVersion.Unset()
-}
-
-// GetTheme returns the Theme field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntitySoftwareapplication) GetTheme() EntityAddressCountryName {
-	if o == nil || IsNil(o.Theme.Get()) {
-		var ret EntityAddressCountryName
+// GetTheme returns the Theme field value if set, zero value otherwise.
+func (o *EntitySoftwareapplication) GetTheme() []string {
+	if o == nil || IsNil(o.Theme) {
+		var ret []string
 		return ret
 	}
-	return *o.Theme.Get()
+	return o.Theme
 }
 
 // GetThemeOk returns a tuple with the Theme field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntitySoftwareapplication) GetThemeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntitySoftwareapplication) GetThemeOk() ([]string, bool) {
+	if o == nil || IsNil(o.Theme) {
 		return nil, false
 	}
-	return o.Theme.Get(), o.Theme.IsSet()
+	return o.Theme, true
 }
 
 // HasTheme returns a boolean if a field has been set.
 func (o *EntitySoftwareapplication) HasTheme() bool {
-	if o != nil && o.Theme.IsSet() {
+	if o != nil && !IsNil(o.Theme) {
 		return true
 	}
 
 	return false
 }
 
-// SetTheme gets a reference to the given NullableEntityAddressCountryName and assigns it to the Theme field.
-func (o *EntitySoftwareapplication) SetTheme(v EntityAddressCountryName) {
-	o.Theme.Set(&v)
-}
-
-// SetThemeNil sets the value for Theme to be an explicit nil
-func (o *EntitySoftwareapplication) SetThemeNil() {
-	o.Theme.Set(nil)
-}
-
-// UnsetTheme ensures that no value is present for Theme, not even an explicit nil
-func (o *EntitySoftwareapplication) UnsetTheme() {
-	o.Theme.Unset()
+// SetTheme gets a reference to the given []string and assigns it to the Theme field.
+func (o *EntitySoftwareapplication) SetTheme(v []string) {
+	o.Theme = v
 }
 
 func (o EntitySoftwareapplication) MarshalJSON() ([]byte, error) {
@@ -668,47 +528,47 @@ func (o EntitySoftwareapplication) MarshalJSON() ([]byte, error) {
 
 func (o EntitySoftwareapplication) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.ContactPoint.IsSet() {
-		toSerialize["contact point"] = o.ContactPoint.Get()
+	if !IsNil(o.ContactPoint) {
+		toSerialize["contact point"] = o.ContactPoint
 	}
-	if o.Description.IsSet() {
-		toSerialize["description"] = o.Description.Get()
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
 	}
-	if o.DownloadUrl.IsSet() {
-		toSerialize["download url"] = o.DownloadUrl.Get()
+	if !IsNil(o.DownloadUrl) {
+		toSerialize["download url"] = o.DownloadUrl
 	}
-	if o.Identifier.IsSet() {
-		toSerialize["identifier"] = o.Identifier.Get()
+	if !IsNil(o.Identifier) {
+		toSerialize["identifier"] = o.Identifier
 	}
-	if o.InstallUrl.IsSet() {
-		toSerialize["install url"] = o.InstallUrl.Get()
+	if !IsNil(o.InstallUrl) {
+		toSerialize["install url"] = o.InstallUrl
 	}
-	if o.Keywords.IsSet() {
-		toSerialize["keywords"] = o.Keywords.Get()
+	if !IsNil(o.Keywords) {
+		toSerialize["keywords"] = o.Keywords
 	}
-	if o.License.IsSet() {
-		toSerialize["license"] = o.License.Get()
+	if !IsNil(o.License) {
+		toSerialize["license"] = o.License
 	}
-	if o.MainEntityOfPage.IsSet() {
-		toSerialize["main entity of page"] = o.MainEntityOfPage.Get()
+	if !IsNil(o.MainEntityOfPage) {
+		toSerialize["main entity of page"] = o.MainEntityOfPage
 	}
-	if o.Name.IsSet() {
-		toSerialize["name"] = o.Name.Get()
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
 	}
-	if o.PotentialAction.IsSet() {
-		toSerialize["potential action"] = o.PotentialAction.Get()
+	if !IsNil(o.PotentialAction) {
+		toSerialize["potential action"] = o.PotentialAction
 	}
-	if o.Relation.IsSet() {
-		toSerialize["relation"] = o.Relation.Get()
+	if !IsNil(o.Relation) {
+		toSerialize["relation"] = o.Relation
 	}
-	if o.SoftwareRequirements.IsSet() {
-		toSerialize["software requirements"] = o.SoftwareRequirements.Get()
+	if !IsNil(o.SoftwareRequirements) {
+		toSerialize["software requirements"] = o.SoftwareRequirements
 	}
-	if o.SoftwareVersion.IsSet() {
-		toSerialize["software version"] = o.SoftwareVersion.Get()
+	if !IsNil(o.SoftwareVersion) {
+		toSerialize["software version"] = o.SoftwareVersion
 	}
-	if o.Theme.IsSet() {
-		toSerialize["theme"] = o.Theme.Get()
+	if !IsNil(o.Theme) {
+		toSerialize["theme"] = o.Theme
 	}
 
 	for key, value := range o.AdditionalProperties {

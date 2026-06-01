@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityPropertyvalue{}
 
 // EntityPropertyvalue struct for EntityPropertyvalue
 type EntityPropertyvalue struct {
-	PropertyId           NullableEntityAddressCountryName `json:"property id,omitempty"`
-	Value                NullableEntityAddressCountryName `json:"value,omitempty"`
+	// A commonly used identifier for the characteristic represented by the property, e.g. a manufacturer or a standard code for a property. propertyID can be (1) a prefixed string, mainly meant to be used with standards for product properties; (2) a site-specific, non-prefixed string (e.g. the primary key of the property or the vendor-specific id of the property), or (3) a URL indicating the type of the property, either pointing to an external vocabulary, or a Web resource that describes the property (e.g. a glossary entry). Standards bodies should promote a standard prefix for the identifiers of properties from their standards.
+	PropertyId *string `json:"property id,omitempty"`
+	// The value of the quantitative value or property value node. The recommended type for values is 'Number'.
+	Value                *string `json:"value,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityPropertyvalueWithDefaults() *EntityPropertyvalue {
 	return &this
 }
 
-// GetPropertyId returns the PropertyId field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPropertyvalue) GetPropertyId() EntityAddressCountryName {
-	if o == nil || IsNil(o.PropertyId.Get()) {
-		var ret EntityAddressCountryName
+// GetPropertyId returns the PropertyId field value if set, zero value otherwise.
+func (o *EntityPropertyvalue) GetPropertyId() string {
+	if o == nil || IsNil(o.PropertyId) {
+		var ret string
 		return ret
 	}
-	return *o.PropertyId.Get()
+	return *o.PropertyId
 }
 
 // GetPropertyIdOk returns a tuple with the PropertyId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPropertyvalue) GetPropertyIdOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPropertyvalue) GetPropertyIdOk() (*string, bool) {
+	if o == nil || IsNil(o.PropertyId) {
 		return nil, false
 	}
-	return o.PropertyId.Get(), o.PropertyId.IsSet()
+	return o.PropertyId, true
 }
 
 // HasPropertyId returns a boolean if a field has been set.
 func (o *EntityPropertyvalue) HasPropertyId() bool {
-	if o != nil && o.PropertyId.IsSet() {
+	if o != nil && !IsNil(o.PropertyId) {
 		return true
 	}
 
 	return false
 }
 
-// SetPropertyId gets a reference to the given NullableEntityAddressCountryName and assigns it to the PropertyId field.
-func (o *EntityPropertyvalue) SetPropertyId(v EntityAddressCountryName) {
-	o.PropertyId.Set(&v)
+// SetPropertyId gets a reference to the given string and assigns it to the PropertyId field.
+func (o *EntityPropertyvalue) SetPropertyId(v string) {
+	o.PropertyId = &v
 }
 
-// SetPropertyIdNil sets the value for PropertyId to be an explicit nil
-func (o *EntityPropertyvalue) SetPropertyIdNil() {
-	o.PropertyId.Set(nil)
-}
-
-// UnsetPropertyId ensures that no value is present for PropertyId, not even an explicit nil
-func (o *EntityPropertyvalue) UnsetPropertyId() {
-	o.PropertyId.Unset()
-}
-
-// GetValue returns the Value field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPropertyvalue) GetValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.Value.Get()) {
-		var ret EntityAddressCountryName
+// GetValue returns the Value field value if set, zero value otherwise.
+func (o *EntityPropertyvalue) GetValue() string {
+	if o == nil || IsNil(o.Value) {
+		var ret string
 		return ret
 	}
-	return *o.Value.Get()
+	return *o.Value
 }
 
 // GetValueOk returns a tuple with the Value field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPropertyvalue) GetValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPropertyvalue) GetValueOk() (*string, bool) {
+	if o == nil || IsNil(o.Value) {
 		return nil, false
 	}
-	return o.Value.Get(), o.Value.IsSet()
+	return o.Value, true
 }
 
 // HasValue returns a boolean if a field has been set.
 func (o *EntityPropertyvalue) HasValue() bool {
-	if o != nil && o.Value.IsSet() {
+	if o != nil && !IsNil(o.Value) {
 		return true
 	}
 
 	return false
 }
 
-// SetValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the Value field.
-func (o *EntityPropertyvalue) SetValue(v EntityAddressCountryName) {
-	o.Value.Set(&v)
-}
-
-// SetValueNil sets the value for Value to be an explicit nil
-func (o *EntityPropertyvalue) SetValueNil() {
-	o.Value.Set(nil)
-}
-
-// UnsetValue ensures that no value is present for Value, not even an explicit nil
-func (o *EntityPropertyvalue) UnsetValue() {
-	o.Value.Unset()
+// SetValue gets a reference to the given string and assigns it to the Value field.
+func (o *EntityPropertyvalue) SetValue(v string) {
+	o.Value = &v
 }
 
 func (o EntityPropertyvalue) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityPropertyvalue) MarshalJSON() ([]byte, error) {
 
 func (o EntityPropertyvalue) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.PropertyId.IsSet() {
-		toSerialize["property id"] = o.PropertyId.Get()
+	if !IsNil(o.PropertyId) {
+		toSerialize["property id"] = o.PropertyId
 	}
-	if o.Value.IsSet() {
-		toSerialize["value"] = o.Value.Get()
+	if !IsNil(o.Value) {
+		toSerialize["value"] = o.Value
 	}
 
 	for key, value := range o.AdditionalProperties {

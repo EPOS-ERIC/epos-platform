@@ -20,11 +20,16 @@ var _ MappedNullable = &EntityProject{}
 
 // EntityProject struct for EntityProject
 type EntityProject struct {
-	ContactPoint         NullableEntityAddressCountryName `json:"contact point,omitempty"`
-	Description          NullableEntityAddressCountryName `json:"description,omitempty"`
-	Homepage             NullableEntityAddressCountryName `json:"homepage,omitempty"`
-	Identifier           NullableEntityAddressCountryName `json:"identifier,omitempty"`
-	Title                NullableEntityAddressCountryName `json:"title,omitempty"`
+	// This property refers to the Contact Point defined for the Project.
+	ContactPoint []string `json:"contact point,omitempty"`
+	// This property contains the description of the Project.
+	Description *string `json:"description,omitempty"`
+	// This property refers to a web page that acts as the main page for the Project.
+	Homepage *string `json:"homepage,omitempty"`
+	// This property contains the main identifier for the Project.
+	Identifier *string `json:"identifier,omitempty"`
+	// This property contains the title of the Project.
+	Title                *string `json:"title,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -47,219 +52,164 @@ func NewEntityProjectWithDefaults() *EntityProject {
 	return &this
 }
 
-// GetContactPoint returns the ContactPoint field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityProject) GetContactPoint() EntityAddressCountryName {
-	if o == nil || IsNil(o.ContactPoint.Get()) {
-		var ret EntityAddressCountryName
+// GetContactPoint returns the ContactPoint field value if set, zero value otherwise.
+func (o *EntityProject) GetContactPoint() []string {
+	if o == nil || IsNil(o.ContactPoint) {
+		var ret []string
 		return ret
 	}
-	return *o.ContactPoint.Get()
+	return o.ContactPoint
 }
 
 // GetContactPointOk returns a tuple with the ContactPoint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityProject) GetContactPointOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityProject) GetContactPointOk() ([]string, bool) {
+	if o == nil || IsNil(o.ContactPoint) {
 		return nil, false
 	}
-	return o.ContactPoint.Get(), o.ContactPoint.IsSet()
+	return o.ContactPoint, true
 }
 
 // HasContactPoint returns a boolean if a field has been set.
 func (o *EntityProject) HasContactPoint() bool {
-	if o != nil && o.ContactPoint.IsSet() {
+	if o != nil && !IsNil(o.ContactPoint) {
 		return true
 	}
 
 	return false
 }
 
-// SetContactPoint gets a reference to the given NullableEntityAddressCountryName and assigns it to the ContactPoint field.
-func (o *EntityProject) SetContactPoint(v EntityAddressCountryName) {
-	o.ContactPoint.Set(&v)
+// SetContactPoint gets a reference to the given []string and assigns it to the ContactPoint field.
+func (o *EntityProject) SetContactPoint(v []string) {
+	o.ContactPoint = v
 }
 
-// SetContactPointNil sets the value for ContactPoint to be an explicit nil
-func (o *EntityProject) SetContactPointNil() {
-	o.ContactPoint.Set(nil)
-}
-
-// UnsetContactPoint ensures that no value is present for ContactPoint, not even an explicit nil
-func (o *EntityProject) UnsetContactPoint() {
-	o.ContactPoint.Unset()
-}
-
-// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityProject) GetDescription() EntityAddressCountryName {
-	if o == nil || IsNil(o.Description.Get()) {
-		var ret EntityAddressCountryName
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *EntityProject) GetDescription() string {
+	if o == nil || IsNil(o.Description) {
+		var ret string
 		return ret
 	}
-	return *o.Description.Get()
+	return *o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityProject) GetDescriptionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityProject) GetDescriptionOk() (*string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return o.Description, true
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *EntityProject) HasDescription() bool {
-	if o != nil && o.Description.IsSet() {
+	if o != nil && !IsNil(o.Description) {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given NullableEntityAddressCountryName and assigns it to the Description field.
-func (o *EntityProject) SetDescription(v EntityAddressCountryName) {
-	o.Description.Set(&v)
+// SetDescription gets a reference to the given string and assigns it to the Description field.
+func (o *EntityProject) SetDescription(v string) {
+	o.Description = &v
 }
 
-// SetDescriptionNil sets the value for Description to be an explicit nil
-func (o *EntityProject) SetDescriptionNil() {
-	o.Description.Set(nil)
-}
-
-// UnsetDescription ensures that no value is present for Description, not even an explicit nil
-func (o *EntityProject) UnsetDescription() {
-	o.Description.Unset()
-}
-
-// GetHomepage returns the Homepage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityProject) GetHomepage() EntityAddressCountryName {
-	if o == nil || IsNil(o.Homepage.Get()) {
-		var ret EntityAddressCountryName
+// GetHomepage returns the Homepage field value if set, zero value otherwise.
+func (o *EntityProject) GetHomepage() string {
+	if o == nil || IsNil(o.Homepage) {
+		var ret string
 		return ret
 	}
-	return *o.Homepage.Get()
+	return *o.Homepage
 }
 
 // GetHomepageOk returns a tuple with the Homepage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityProject) GetHomepageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityProject) GetHomepageOk() (*string, bool) {
+	if o == nil || IsNil(o.Homepage) {
 		return nil, false
 	}
-	return o.Homepage.Get(), o.Homepage.IsSet()
+	return o.Homepage, true
 }
 
 // HasHomepage returns a boolean if a field has been set.
 func (o *EntityProject) HasHomepage() bool {
-	if o != nil && o.Homepage.IsSet() {
+	if o != nil && !IsNil(o.Homepage) {
 		return true
 	}
 
 	return false
 }
 
-// SetHomepage gets a reference to the given NullableEntityAddressCountryName and assigns it to the Homepage field.
-func (o *EntityProject) SetHomepage(v EntityAddressCountryName) {
-	o.Homepage.Set(&v)
+// SetHomepage gets a reference to the given string and assigns it to the Homepage field.
+func (o *EntityProject) SetHomepage(v string) {
+	o.Homepage = &v
 }
 
-// SetHomepageNil sets the value for Homepage to be an explicit nil
-func (o *EntityProject) SetHomepageNil() {
-	o.Homepage.Set(nil)
-}
-
-// UnsetHomepage ensures that no value is present for Homepage, not even an explicit nil
-func (o *EntityProject) UnsetHomepage() {
-	o.Homepage.Unset()
-}
-
-// GetIdentifier returns the Identifier field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityProject) GetIdentifier() EntityAddressCountryName {
-	if o == nil || IsNil(o.Identifier.Get()) {
-		var ret EntityAddressCountryName
+// GetIdentifier returns the Identifier field value if set, zero value otherwise.
+func (o *EntityProject) GetIdentifier() string {
+	if o == nil || IsNil(o.Identifier) {
+		var ret string
 		return ret
 	}
-	return *o.Identifier.Get()
+	return *o.Identifier
 }
 
 // GetIdentifierOk returns a tuple with the Identifier field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityProject) GetIdentifierOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityProject) GetIdentifierOk() (*string, bool) {
+	if o == nil || IsNil(o.Identifier) {
 		return nil, false
 	}
-	return o.Identifier.Get(), o.Identifier.IsSet()
+	return o.Identifier, true
 }
 
 // HasIdentifier returns a boolean if a field has been set.
 func (o *EntityProject) HasIdentifier() bool {
-	if o != nil && o.Identifier.IsSet() {
+	if o != nil && !IsNil(o.Identifier) {
 		return true
 	}
 
 	return false
 }
 
-// SetIdentifier gets a reference to the given NullableEntityAddressCountryName and assigns it to the Identifier field.
-func (o *EntityProject) SetIdentifier(v EntityAddressCountryName) {
-	o.Identifier.Set(&v)
+// SetIdentifier gets a reference to the given string and assigns it to the Identifier field.
+func (o *EntityProject) SetIdentifier(v string) {
+	o.Identifier = &v
 }
 
-// SetIdentifierNil sets the value for Identifier to be an explicit nil
-func (o *EntityProject) SetIdentifierNil() {
-	o.Identifier.Set(nil)
-}
-
-// UnsetIdentifier ensures that no value is present for Identifier, not even an explicit nil
-func (o *EntityProject) UnsetIdentifier() {
-	o.Identifier.Unset()
-}
-
-// GetTitle returns the Title field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityProject) GetTitle() EntityAddressCountryName {
-	if o == nil || IsNil(o.Title.Get()) {
-		var ret EntityAddressCountryName
+// GetTitle returns the Title field value if set, zero value otherwise.
+func (o *EntityProject) GetTitle() string {
+	if o == nil || IsNil(o.Title) {
+		var ret string
 		return ret
 	}
-	return *o.Title.Get()
+	return *o.Title
 }
 
 // GetTitleOk returns a tuple with the Title field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityProject) GetTitleOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityProject) GetTitleOk() (*string, bool) {
+	if o == nil || IsNil(o.Title) {
 		return nil, false
 	}
-	return o.Title.Get(), o.Title.IsSet()
+	return o.Title, true
 }
 
 // HasTitle returns a boolean if a field has been set.
 func (o *EntityProject) HasTitle() bool {
-	if o != nil && o.Title.IsSet() {
+	if o != nil && !IsNil(o.Title) {
 		return true
 	}
 
 	return false
 }
 
-// SetTitle gets a reference to the given NullableEntityAddressCountryName and assigns it to the Title field.
-func (o *EntityProject) SetTitle(v EntityAddressCountryName) {
-	o.Title.Set(&v)
-}
-
-// SetTitleNil sets the value for Title to be an explicit nil
-func (o *EntityProject) SetTitleNil() {
-	o.Title.Set(nil)
-}
-
-// UnsetTitle ensures that no value is present for Title, not even an explicit nil
-func (o *EntityProject) UnsetTitle() {
-	o.Title.Unset()
+// SetTitle gets a reference to the given string and assigns it to the Title field.
+func (o *EntityProject) SetTitle(v string) {
+	o.Title = &v
 }
 
 func (o EntityProject) MarshalJSON() ([]byte, error) {
@@ -272,20 +222,20 @@ func (o EntityProject) MarshalJSON() ([]byte, error) {
 
 func (o EntityProject) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.ContactPoint.IsSet() {
-		toSerialize["contact point"] = o.ContactPoint.Get()
+	if !IsNil(o.ContactPoint) {
+		toSerialize["contact point"] = o.ContactPoint
 	}
-	if o.Description.IsSet() {
-		toSerialize["description"] = o.Description.Get()
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
 	}
-	if o.Homepage.IsSet() {
-		toSerialize["homepage"] = o.Homepage.Get()
+	if !IsNil(o.Homepage) {
+		toSerialize["homepage"] = o.Homepage
 	}
-	if o.Identifier.IsSet() {
-		toSerialize["identifier"] = o.Identifier.Get()
+	if !IsNil(o.Identifier) {
+		toSerialize["identifier"] = o.Identifier
 	}
-	if o.Title.IsSet() {
-		toSerialize["title"] = o.Title.Get()
+	if !IsNil(o.Title) {
+		toSerialize["title"] = o.Title
 	}
 
 	for key, value := range o.AdditionalProperties {

@@ -20,10 +20,14 @@ var _ MappedNullable = &EntityAddress{}
 
 // EntityAddress struct for EntityAddress
 type EntityAddress struct {
-	CountryName          NullableEntityAddressCountryName `json:"country name,omitempty"`
-	Locality             NullableEntityAddressCountryName `json:"locality,omitempty"`
-	PostalCode           NullableEntityAddressCountryName `json:"postal code,omitempty"`
-	StreetAddress        NullableEntityAddressCountryName `json:"street address,omitempty"`
+	// The country name associated with the address of the object
+	CountryName *string `json:"country name,omitempty"`
+	// The locality (e.g. city or town) associated with the address of the object
+	Locality *string `json:"locality,omitempty"`
+	// The postal code associated with the address of the object
+	PostalCode *string `json:"postal code,omitempty"`
+	// The street address associated with the address of the object
+	StreetAddress        *string `json:"street address,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -46,176 +50,132 @@ func NewEntityAddressWithDefaults() *EntityAddress {
 	return &this
 }
 
-// GetCountryName returns the CountryName field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityAddress) GetCountryName() EntityAddressCountryName {
-	if o == nil || IsNil(o.CountryName.Get()) {
-		var ret EntityAddressCountryName
+// GetCountryName returns the CountryName field value if set, zero value otherwise.
+func (o *EntityAddress) GetCountryName() string {
+	if o == nil || IsNil(o.CountryName) {
+		var ret string
 		return ret
 	}
-	return *o.CountryName.Get()
+	return *o.CountryName
 }
 
 // GetCountryNameOk returns a tuple with the CountryName field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityAddress) GetCountryNameOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityAddress) GetCountryNameOk() (*string, bool) {
+	if o == nil || IsNil(o.CountryName) {
 		return nil, false
 	}
-	return o.CountryName.Get(), o.CountryName.IsSet()
+	return o.CountryName, true
 }
 
 // HasCountryName returns a boolean if a field has been set.
 func (o *EntityAddress) HasCountryName() bool {
-	if o != nil && o.CountryName.IsSet() {
+	if o != nil && !IsNil(o.CountryName) {
 		return true
 	}
 
 	return false
 }
 
-// SetCountryName gets a reference to the given NullableEntityAddressCountryName and assigns it to the CountryName field.
-func (o *EntityAddress) SetCountryName(v EntityAddressCountryName) {
-	o.CountryName.Set(&v)
+// SetCountryName gets a reference to the given string and assigns it to the CountryName field.
+func (o *EntityAddress) SetCountryName(v string) {
+	o.CountryName = &v
 }
 
-// SetCountryNameNil sets the value for CountryName to be an explicit nil
-func (o *EntityAddress) SetCountryNameNil() {
-	o.CountryName.Set(nil)
-}
-
-// UnsetCountryName ensures that no value is present for CountryName, not even an explicit nil
-func (o *EntityAddress) UnsetCountryName() {
-	o.CountryName.Unset()
-}
-
-// GetLocality returns the Locality field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityAddress) GetLocality() EntityAddressCountryName {
-	if o == nil || IsNil(o.Locality.Get()) {
-		var ret EntityAddressCountryName
+// GetLocality returns the Locality field value if set, zero value otherwise.
+func (o *EntityAddress) GetLocality() string {
+	if o == nil || IsNil(o.Locality) {
+		var ret string
 		return ret
 	}
-	return *o.Locality.Get()
+	return *o.Locality
 }
 
 // GetLocalityOk returns a tuple with the Locality field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityAddress) GetLocalityOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityAddress) GetLocalityOk() (*string, bool) {
+	if o == nil || IsNil(o.Locality) {
 		return nil, false
 	}
-	return o.Locality.Get(), o.Locality.IsSet()
+	return o.Locality, true
 }
 
 // HasLocality returns a boolean if a field has been set.
 func (o *EntityAddress) HasLocality() bool {
-	if o != nil && o.Locality.IsSet() {
+	if o != nil && !IsNil(o.Locality) {
 		return true
 	}
 
 	return false
 }
 
-// SetLocality gets a reference to the given NullableEntityAddressCountryName and assigns it to the Locality field.
-func (o *EntityAddress) SetLocality(v EntityAddressCountryName) {
-	o.Locality.Set(&v)
+// SetLocality gets a reference to the given string and assigns it to the Locality field.
+func (o *EntityAddress) SetLocality(v string) {
+	o.Locality = &v
 }
 
-// SetLocalityNil sets the value for Locality to be an explicit nil
-func (o *EntityAddress) SetLocalityNil() {
-	o.Locality.Set(nil)
-}
-
-// UnsetLocality ensures that no value is present for Locality, not even an explicit nil
-func (o *EntityAddress) UnsetLocality() {
-	o.Locality.Unset()
-}
-
-// GetPostalCode returns the PostalCode field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityAddress) GetPostalCode() EntityAddressCountryName {
-	if o == nil || IsNil(o.PostalCode.Get()) {
-		var ret EntityAddressCountryName
+// GetPostalCode returns the PostalCode field value if set, zero value otherwise.
+func (o *EntityAddress) GetPostalCode() string {
+	if o == nil || IsNil(o.PostalCode) {
+		var ret string
 		return ret
 	}
-	return *o.PostalCode.Get()
+	return *o.PostalCode
 }
 
 // GetPostalCodeOk returns a tuple with the PostalCode field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityAddress) GetPostalCodeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityAddress) GetPostalCodeOk() (*string, bool) {
+	if o == nil || IsNil(o.PostalCode) {
 		return nil, false
 	}
-	return o.PostalCode.Get(), o.PostalCode.IsSet()
+	return o.PostalCode, true
 }
 
 // HasPostalCode returns a boolean if a field has been set.
 func (o *EntityAddress) HasPostalCode() bool {
-	if o != nil && o.PostalCode.IsSet() {
+	if o != nil && !IsNil(o.PostalCode) {
 		return true
 	}
 
 	return false
 }
 
-// SetPostalCode gets a reference to the given NullableEntityAddressCountryName and assigns it to the PostalCode field.
-func (o *EntityAddress) SetPostalCode(v EntityAddressCountryName) {
-	o.PostalCode.Set(&v)
+// SetPostalCode gets a reference to the given string and assigns it to the PostalCode field.
+func (o *EntityAddress) SetPostalCode(v string) {
+	o.PostalCode = &v
 }
 
-// SetPostalCodeNil sets the value for PostalCode to be an explicit nil
-func (o *EntityAddress) SetPostalCodeNil() {
-	o.PostalCode.Set(nil)
-}
-
-// UnsetPostalCode ensures that no value is present for PostalCode, not even an explicit nil
-func (o *EntityAddress) UnsetPostalCode() {
-	o.PostalCode.Unset()
-}
-
-// GetStreetAddress returns the StreetAddress field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityAddress) GetStreetAddress() EntityAddressCountryName {
-	if o == nil || IsNil(o.StreetAddress.Get()) {
-		var ret EntityAddressCountryName
+// GetStreetAddress returns the StreetAddress field value if set, zero value otherwise.
+func (o *EntityAddress) GetStreetAddress() string {
+	if o == nil || IsNil(o.StreetAddress) {
+		var ret string
 		return ret
 	}
-	return *o.StreetAddress.Get()
+	return *o.StreetAddress
 }
 
 // GetStreetAddressOk returns a tuple with the StreetAddress field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityAddress) GetStreetAddressOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityAddress) GetStreetAddressOk() (*string, bool) {
+	if o == nil || IsNil(o.StreetAddress) {
 		return nil, false
 	}
-	return o.StreetAddress.Get(), o.StreetAddress.IsSet()
+	return o.StreetAddress, true
 }
 
 // HasStreetAddress returns a boolean if a field has been set.
 func (o *EntityAddress) HasStreetAddress() bool {
-	if o != nil && o.StreetAddress.IsSet() {
+	if o != nil && !IsNil(o.StreetAddress) {
 		return true
 	}
 
 	return false
 }
 
-// SetStreetAddress gets a reference to the given NullableEntityAddressCountryName and assigns it to the StreetAddress field.
-func (o *EntityAddress) SetStreetAddress(v EntityAddressCountryName) {
-	o.StreetAddress.Set(&v)
-}
-
-// SetStreetAddressNil sets the value for StreetAddress to be an explicit nil
-func (o *EntityAddress) SetStreetAddressNil() {
-	o.StreetAddress.Set(nil)
-}
-
-// UnsetStreetAddress ensures that no value is present for StreetAddress, not even an explicit nil
-func (o *EntityAddress) UnsetStreetAddress() {
-	o.StreetAddress.Unset()
+// SetStreetAddress gets a reference to the given string and assigns it to the StreetAddress field.
+func (o *EntityAddress) SetStreetAddress(v string) {
+	o.StreetAddress = &v
 }
 
 func (o EntityAddress) MarshalJSON() ([]byte, error) {
@@ -228,17 +188,17 @@ func (o EntityAddress) MarshalJSON() ([]byte, error) {
 
 func (o EntityAddress) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.CountryName.IsSet() {
-		toSerialize["country name"] = o.CountryName.Get()
+	if !IsNil(o.CountryName) {
+		toSerialize["country name"] = o.CountryName
 	}
-	if o.Locality.IsSet() {
-		toSerialize["locality"] = o.Locality.Get()
+	if !IsNil(o.Locality) {
+		toSerialize["locality"] = o.Locality
 	}
-	if o.PostalCode.IsSet() {
-		toSerialize["postal code"] = o.PostalCode.Get()
+	if !IsNil(o.PostalCode) {
+		toSerialize["postal code"] = o.PostalCode
 	}
-	if o.StreetAddress.IsSet() {
-		toSerialize["street address"] = o.StreetAddress.Get()
+	if !IsNil(o.StreetAddress) {
+		toSerialize["street address"] = o.StreetAddress
 	}
 
 	for key, value := range o.AdditionalProperties {

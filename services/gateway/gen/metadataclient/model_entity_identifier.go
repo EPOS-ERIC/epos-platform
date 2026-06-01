@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityIdentifier{}
 
 // EntityIdentifier struct for EntityIdentifier
 type EntityIdentifier struct {
-	Notation             NullableEntityAddressCountryName `json:"notation,omitempty"`
-	SchemeAgency         NullableEntityAddressCountryName `json:"scheme agency,omitempty"`
+	// This property contains a string that is an identifier in the context of the identifier scheme referenced by its datatype.
+	Notation *string `json:"notation,omitempty"`
+	// This property refers the identifier scheme referenced by its datatype (e.g., DDSS-ID, DOI, etc.).
+	SchemeAgency         *string `json:"scheme agency,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityIdentifierWithDefaults() *EntityIdentifier {
 	return &this
 }
 
-// GetNotation returns the Notation field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIdentifier) GetNotation() EntityAddressCountryName {
-	if o == nil || IsNil(o.Notation.Get()) {
-		var ret EntityAddressCountryName
+// GetNotation returns the Notation field value if set, zero value otherwise.
+func (o *EntityIdentifier) GetNotation() string {
+	if o == nil || IsNil(o.Notation) {
+		var ret string
 		return ret
 	}
-	return *o.Notation.Get()
+	return *o.Notation
 }
 
 // GetNotationOk returns a tuple with the Notation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIdentifier) GetNotationOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIdentifier) GetNotationOk() (*string, bool) {
+	if o == nil || IsNil(o.Notation) {
 		return nil, false
 	}
-	return o.Notation.Get(), o.Notation.IsSet()
+	return o.Notation, true
 }
 
 // HasNotation returns a boolean if a field has been set.
 func (o *EntityIdentifier) HasNotation() bool {
-	if o != nil && o.Notation.IsSet() {
+	if o != nil && !IsNil(o.Notation) {
 		return true
 	}
 
 	return false
 }
 
-// SetNotation gets a reference to the given NullableEntityAddressCountryName and assigns it to the Notation field.
-func (o *EntityIdentifier) SetNotation(v EntityAddressCountryName) {
-	o.Notation.Set(&v)
+// SetNotation gets a reference to the given string and assigns it to the Notation field.
+func (o *EntityIdentifier) SetNotation(v string) {
+	o.Notation = &v
 }
 
-// SetNotationNil sets the value for Notation to be an explicit nil
-func (o *EntityIdentifier) SetNotationNil() {
-	o.Notation.Set(nil)
-}
-
-// UnsetNotation ensures that no value is present for Notation, not even an explicit nil
-func (o *EntityIdentifier) UnsetNotation() {
-	o.Notation.Unset()
-}
-
-// GetSchemeAgency returns the SchemeAgency field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIdentifier) GetSchemeAgency() EntityAddressCountryName {
-	if o == nil || IsNil(o.SchemeAgency.Get()) {
-		var ret EntityAddressCountryName
+// GetSchemeAgency returns the SchemeAgency field value if set, zero value otherwise.
+func (o *EntityIdentifier) GetSchemeAgency() string {
+	if o == nil || IsNil(o.SchemeAgency) {
+		var ret string
 		return ret
 	}
-	return *o.SchemeAgency.Get()
+	return *o.SchemeAgency
 }
 
 // GetSchemeAgencyOk returns a tuple with the SchemeAgency field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIdentifier) GetSchemeAgencyOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIdentifier) GetSchemeAgencyOk() (*string, bool) {
+	if o == nil || IsNil(o.SchemeAgency) {
 		return nil, false
 	}
-	return o.SchemeAgency.Get(), o.SchemeAgency.IsSet()
+	return o.SchemeAgency, true
 }
 
 // HasSchemeAgency returns a boolean if a field has been set.
 func (o *EntityIdentifier) HasSchemeAgency() bool {
-	if o != nil && o.SchemeAgency.IsSet() {
+	if o != nil && !IsNil(o.SchemeAgency) {
 		return true
 	}
 
 	return false
 }
 
-// SetSchemeAgency gets a reference to the given NullableEntityAddressCountryName and assigns it to the SchemeAgency field.
-func (o *EntityIdentifier) SetSchemeAgency(v EntityAddressCountryName) {
-	o.SchemeAgency.Set(&v)
-}
-
-// SetSchemeAgencyNil sets the value for SchemeAgency to be an explicit nil
-func (o *EntityIdentifier) SetSchemeAgencyNil() {
-	o.SchemeAgency.Set(nil)
-}
-
-// UnsetSchemeAgency ensures that no value is present for SchemeAgency, not even an explicit nil
-func (o *EntityIdentifier) UnsetSchemeAgency() {
-	o.SchemeAgency.Unset()
+// SetSchemeAgency gets a reference to the given string and assigns it to the SchemeAgency field.
+func (o *EntityIdentifier) SetSchemeAgency(v string) {
+	o.SchemeAgency = &v
 }
 
 func (o EntityIdentifier) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityIdentifier) MarshalJSON() ([]byte, error) {
 
 func (o EntityIdentifier) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Notation.IsSet() {
-		toSerialize["notation"] = o.Notation.Get()
+	if !IsNil(o.Notation) {
+		toSerialize["notation"] = o.Notation
 	}
-	if o.SchemeAgency.IsSet() {
-		toSerialize["scheme agency"] = o.SchemeAgency.Get()
+	if !IsNil(o.SchemeAgency) {
+		toSerialize["scheme agency"] = o.SchemeAgency
 	}
 
 	for key, value := range o.AdditionalProperties {

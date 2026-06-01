@@ -487,8 +487,12 @@ paths:
             schema:
               type: object
               properties:
+                id:
+                  type: string
+                  description: Optional client-provided conceptual id (absolute URI or local id segment). If omitted, server generates one.
                 type:
                   type: string
+                  description: Optional; ignored because resource type comes from path parameter.
                 properties:
                   type: object
       responses:
@@ -702,13 +706,8 @@ paths:
     post:
       tags: [Lifecycle]
       summary: Create new draft from published
-      description: Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
+      description: Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource. The new version number is auto-incremented from the current published version.
       parameters:
-        - name: version
-          in: query
-          schema:
-            type: string
-            default: "2.0"
         - name: X-Agent
           in: header
           required: true
@@ -3524,7 +3523,7 @@ components:
             - "https://metadata.epos-eu.org/api/v2/dataset/123"
         fields:
           type: object
-          description: SHACL-selected property values returned only when includeConstraints=true (includes `name`)
+          description: SHACL-selected property values returned only when includeConstraints=true. Relation properties are returned as object(s) with `id`, `type`, and `href`; literal properties remain scalar/array values.
           additionalProperties: true
 
     AccessListItem:
@@ -3601,304 +3600,6 @@ components:
         href:
           type: string
           description: Absolute URL of the typed detail endpoint
-
-    # -----------------------------------------------------------------------
-    # Detail schemas
-    # -----------------------------------------------------------------------
-
-    TemporalExtent:
-      type: object
-      description: Temporal coverage of a resource
-      properties:
-        start:
-          type: string
-          format: date-time
-          description: Start of the temporal coverage (inclusive), ISO 8601 UTC
-          examples:
-            - "2010-01-01T00:00:00Z"
-        end:
-          type: string
-          format: date-time
-          description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
-          examples:
-            - "2023-12-31T23:59:59Z"
-
-    Dataset:
-      type: object
-      required:
-        - id
-        - title
-        - status
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        keywords:
-          type: array
-          items:
-            type: string
-          examples:
-            - ["seismology", "stations", "Irpinia"]
-        categories:
-          type: array
-          description: Category labels assigned to this dataset
-          items:
-            type: string
-          examples:
-            - ["Seismology", "Strong Motion"]
-        publisher:
-          type: array
-          description: Names of the organisations publishing this dataset
-          items:
-            type: string
-          examples:
-            - ["UNINA", "INGV"]
-        spatial:
-          type: string
-          description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
-          examples:
-            - "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
-        temporal:
-          $ref: '#/components/schemas/TemporalExtent'
-        status:
-          $ref: '#/components/schemas/VersioningStatus'
-        distributions:
-          type: array
-          description: Distributions that provide access to this dataset
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-        related:
-          type: array
-          description: Outbound related entities referenced by this dataset
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-        relatedBy:
-          type: array
-          description: Inbound related entities that reference this dataset
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-
-    Distribution:
-      type: object
-      required:
-        - id
-        - title
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        accessUrl:
-          type: string
-          format: uri
-          description: URL used to access the distribution
-          examples:
-            - "https://service.example.org/fdsnws/station/1/query"
-        operation:
-          type: string
-          description: Operation ID describing the service operation exposed by this distribution
-          examples:
-            - "getFDSNStationXML"
-        related:
-          type: array
-          description: Outbound related entities referenced by this distribution
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-        relatedBy:
-          type: array
-          description: Inbound related entities that reference this distribution
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-
-    SoftwareApplication:
-      type: object
-      required:
-        - id
-        - title
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        keywords:
-          type: array
-          items:
-            type: string
-          examples:
-            - ["portal", "seismology", "data access"]
-        categories:
-          type: array
-          description: Category labels assigned to this application
-          items:
-            type: string
-          examples:
-            - ["Seismology", "Data Services"]
-        downloadUrl:
-          type: string
-          format: uri
-          description: URL to download or install the application
-          examples:
-            - "https://example.org/application/download"
-        related:
-          type: array
-          description: Outbound related entities referenced by this application
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-        relatedBy:
-          type: array
-          description: Inbound related entities that reference this application
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-
-    SoftwareSourceCode:
-      type: object
-      required:
-        - id
-        - title
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        programmingLanguage:
-          type: string
-          description: Primary programming language of the source code
-          examples:
-            - "Java"
-        keywords:
-          type: array
-          items:
-            type: string
-          examples:
-            - ["portal", "seismology", "open source"]
-        categories:
-          type: array
-          description: Category labels assigned to this source code
-          items:
-            type: string
-          examples:
-            - ["Seismology", "Data Services"]
-        repository:
-          type: string
-          format: uri
-          description: URL of the source code repository
-          examples:
-            - "https://github.com/example/epos-portal"
-        related:
-          type: array
-          description: Outbound related entities referenced by this source code
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-        relatedBy:
-          type: array
-          description: Inbound related entities that reference this source code
-          items:
-            $ref: '#/components/schemas/ResourceRef'
-
-    # -----------------------------------------------------------------------
-    # Category schemas
-    # -----------------------------------------------------------------------
-
-    Category:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: string
-          examples:
-            - "cat-seismology"
-        name:
-          type: string
-          examples:
-            - "Seismology"
-        description:
-          type: string
-          examples:
-            - "Resources related to seismic monitoring and analysis."
-        children:
-          type: array
-          description: Nested child categories
-          items:
-            $ref: '#/components/schemas/Category'
-
-    CategoryScheme:
-      type: object
-      required:
-        - id
-        - label
-        - type
-      properties:
-        id:
-          type: string
-          examples:
-            - "scheme-solid-earth"
-        label:
-          type: string
-          examples:
-            - "Solid Earth"
-        title:
-          type: string
-          examples:
-            - "Solid Earth Science Categories"
-        description:
-          type: string
-          examples:
-            - "Top-level grouping for all solid earth science resources."
-        logo:
-          type: string
-          format: uri
-          examples:
-            - "https://www.epos-eu.org/logos/solid-earth.png"
-        homepage:
-          type: string
-          format: uri
-          examples:
-            - "https://www.epos-eu.org/solid-earth"
-        color:
-          type: string
-          description: Hex colour code used for UI rendering
-          examples:
-            - "#3A7BD5"
-        orderNumber:
-          type: integer
-          description: Display order among sibling category schemes
-          examples:
-            - 1
-        type:
-          type: string
-          enum:
-            - DATA
-            - FACILITY
-            - SOFTWARE
-          examples:
-            - "DATA"
-        children:
-          type: array
-          description: Top-level categories within this scheme
-          items:
-            $ref: '#/components/schemas/Category'
-
-    CategoryTreeResponse:
-      type: object
-      required:
-        - schemes
-      properties:
-        schemes:
-          type: array
-          description: Ordered list of category schemes, each carrying its full category subtree
-          items:
-            $ref: '#/components/schemas/CategoryScheme'
 
     # -----------------------------------------------------------------------
     # Error response
@@ -4118,13 +3819,21 @@ components:
       type: object
       properties:
         country name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The country name associated with the address of the object"
         locality:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The locality (e.g. city or town) associated with the address of the object"
         postal code:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The postal code associated with the address of the object"
         street address:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The street address associated with the address of the object"
       additionalProperties: true
     ResolvedEntityResponse_Entity_address:
       allOf:
@@ -4142,9 +3851,16 @@ components:
       type: object
       properties:
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains the name of Agent."
         type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to a type of the agent that makes the Catalogue or Dataset available"
       additionalProperties: true
     ResolvedEntityResponse_Entity_agent:
       allOf:
@@ -4162,9 +3878,19 @@ components:
       type: object
       properties:
         has body:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "The object of the relationship is a resource that is a body of the Annotation."
         has target:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "The relationship between an Annotation and its Target."
       additionalProperties: true
     ResolvedEntityResponse_Entity_annotation:
       allOf:
@@ -4182,11 +3908,18 @@ components:
       type: object
       properties:
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a description of the Api documentation."
         entrypoint:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the API entry point."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the title of the Api documentation."
       additionalProperties: true
     ResolvedEntityResponse_Entity_apidocumentation:
       allOf:
@@ -4204,37 +3937,98 @@ components:
       type: object
       properties:
         dataset:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property links the Catalogue with a Dataset that is part of the Catalogue."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains a free-text account of the Catalogue. This property can be repeated for parallel language versions of the description."
         has part:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a related Catalogue that is part of the described Catalogue"
         homepage:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to a web page that acts as the main page for the Catalogue."
         is part of:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers to a related Catalogue in which the described Catalogue is physically or logically included."
         issued:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the date of formal issuance (e.g., publication) of the Catalogue."
         language:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property refers to a language used in the textual metadata describing titles, descriptions, etc. of the Datasets in the Catalogue. This property can be repeated if the metadata is provided in multiple languages."
         license:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the licence under which the Catalogue can be used or reused."
         modified:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the most recent date on which the Catalogue was modified."
         publisher:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to an entity (organisation) responsible for making the Catalogue available."
         record:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a Catalogue Record that is part of the Catalogue"
         resource:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property links the Catalogue with a Resource."
         rights:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to a statement that specifies rights associated with the Catalogue."
         spatial:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a geographical area covered by the Catalogue."
         theme taxonomy:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property refers to a knowledge organization system used to classify the Catalogue's Datasets."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains a name given to the Catalogue. This property can be repeated for parallel language versions of the name."
       additionalProperties: true
     ResolvedEntityResponse_Entity_catalog:
       allOf:
@@ -4252,25 +4046,55 @@ components:
       type: object
       properties:
         conforms to:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to an Application Profile that the Dataset’s metadata conforms to"
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains a free-text account of the record. This property can be repeated for parallel language versions of the description."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property contains the main identifier for the Catalog Record."
         issued:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the date on which the description of the Dataset was included in the Catalogue."
         language:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a language used in the textual metadata describing titles, descriptions, etc. of the Dataset. This property can be repeated if the metadata is provided in multiple languages."
         modified:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the most recent date on which the Catalog Record was modified."
         primary topic:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property links the Catalogue Record to the Dataset described in the record."
         source:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers to the original metadata that was used in creating metadata for the Dataset"
         status:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the type of the latest revision of a Dataset's entry in the Catalogue. It MUST take one of the values :created, :updated or :deleted depending on whether this latest revision is a result of a creation, update or deletion."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains a name given to the Catalogue Record. This property can be repeated for parallel language versions of the name."
       additionalProperties: true
     ResolvedEntityResponse_Entity_catalogrecord:
       allOf:
@@ -4288,11 +4112,17 @@ components:
       type: object
       properties:
         definition:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a statement or formal explanation of the meaning of a concept."
         in scheme:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "Relates a resource (for example a concept) to a concept scheme in which it is included."
         pref label:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a preferred label of the category. This property can be repeated for parallel language versions of the label."
       additionalProperties: true
     ResolvedEntityResponse_Entity_concept:
       allOf:
@@ -4310,9 +4140,13 @@ components:
       type: object
       properties:
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a description of the category scheme."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a name of the category scheme."
       additionalProperties: true
     ResolvedEntityResponse_Entity_conceptscheme:
       allOf:
@@ -4330,13 +4164,27 @@ components:
       type: object
       properties:
         available language:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains information about the language used by the Contact Point. Please use one of the language codes from the IETF BCP 47 standard."
         contact type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains information about the role of the Contact Point."
         email:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the email address of the Contact Point."
         telephone:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the telephone number of the Contact Point."
       additionalProperties: true
     ResolvedEntityResponse_Entity_contactpoint:
       allOf:
@@ -4370,9 +4218,17 @@ components:
       type: object
       properties:
         object:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "The object upon which the action is carried out, whose state is kept intact or changed. Also known as the semantic roles patient, affected or undergoer (which change their state) or theme (which doesn't). e.g. John read a book."
         result:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "The result produced in the action. e.g. John wrote a book."
       additionalProperties: true
     ResolvedEntityResponse_Entity_controlaction:
       allOf:
@@ -4390,9 +4246,19 @@ components:
       type: object
       properties:
         conforms to:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to an established standard or specification that the resource conforms to."
         encoding format:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "Media type typically expressed using a MIME format (see IANA site and MDN reference) e.g. application/zip for a SoftwareApplication binary, audio/mpeg for .mp3 etc.)."
       additionalProperties: true
     ResolvedEntityResponse_Entity_creativework:
       allOf:
@@ -4410,69 +4276,200 @@ components:
       type: object
       properties:
         access rights:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to information that indicates whether the Dataset is open data, has access restrictions or is not public. A controlled vocabulary with three members (:public, :restricted, :non-public) will be created and maintained by the Publications Office of the EU."
         accrual periodicity:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the frequency at which the Dataset is updated."
         annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "Human-oriented description for the Annotation property in this shape."
         conforms to:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to an implementing rule or other specification."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains contact information that can be used for sending comments about the Dataset."
         created:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the date on which the Dataset was created."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains a free-text account of the Dataset. This property can be repeated for parallel language versions of the description"
         distribution:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property links the Dataset to an available Distribution."
         has part:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a related Dataset that is part of the described Dataset."
         has quality annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a statement related to quality of the Dataset, including rating, quality certificate that can be associated to the Dataset."
         has version:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a related Dataset that is a version, edition, or adaptation of the described Dataset."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property contains the main identifier for the Dataset, e.g. the URI or other unique identifier in the context of the Catalogue."
         is part of:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a related Dataset in which the described Dataset is physically or logically included."
         is version of:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a related Dataset of which the described Dataset is a version, edition, or adaptation."
         issued:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the date of formal issuance (e.g., publication) of the Dataset."
         keyword:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains a keyword or tag describing the Dataset."
         landing page:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a web page that provides access to the Dataset, its Distributions and/or additional information. It is intended to point to a landing page at the original data provider, not to a page on a site of a third party, such as an aggregator."
         language:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a language of the Dataset. This property can be repeated if there are multiple languages in the Dataset."
         modified:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the most recent date on which the Dataset was changed or modified."
         page:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a page or document about this Dataset."
         provenance:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property contains a statement about the lineage of a Dataset."
         publisher:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property refers to an entity (organisation) responsible for making the Dataset available."
         relation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a related resource."
         sample:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a sample distribution of the dataset"
         source:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a related Dataset from which the described Dataset is derived."
         spatial:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a geographic region that is covered by the Dataset."
         temporal:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a temporal period that the Dataset covers."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property refers to a category of the Dataset. A Dataset may be associated with multiple themes."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains a name given to the Dataset. This property can be repeated for parallel language versions of the name."
         type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the type of the Dataset. A controlled vocabulary for the values has not been established."
         version info:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains a version number or other version designation of the Dataset."
         version notes:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains a description of the differences between this version and a previous version of the Dataset. This property can be repeated for parallel language versions of the version notes."
       additionalProperties: true
     ResolvedEntityResponse_Entity_dataset:
       allOf:
@@ -4506,43 +4503,113 @@ components:
       type: object
       properties:
         access url:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains a URL that gives access to a Distribution of the Dataset. The resource at the access URL may contain information about how to get the Dataset."
         annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "Human-oriented description for the Annotation property in this shape."
         byte size:
-          type: [string, array, object, number, boolean, 'null']
+          type: number
+          nullable: true
+          description: "This property contains the size of a Distribution in bytes."
         checksum:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property provides a mechanism that can be used to verify that the contents of a distribution have not changed"
         conforms to:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property refers to an established schema to which the described Distribution conforms."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property contains a free-text account of the Distribution. This property can be repeated for parallel language versions of the description."
         download url:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property contains a URL that is a direct link to a downloadable file in a given format."
         format:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the file format of the Distribution."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property contains the main identifier for the Distribution."
         issued:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the date of formal issuance (e.g., publication) of the Distribution."
         language:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a language used in the Distribution. This property can be repeated if the metadata is provided in multiple languages."
         license:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the licence under which the Distribution is made available."
         media type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the media type of the Distribution as defined in the official register of media types managed by IANA."
         modified:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the most recent date on which the Distribution was changed or modified."
         page:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a page or document about this Distribution."
         rights:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to a statement that specifies rights associated with the Distribution."
         status:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers to the maturity of the Distribution"
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains a name given to the Distribution. This property can be repeated for parallel language versions of the description."
         type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the type of the Distribution."
       additionalProperties: true
     ResolvedEntityResponse_Entity_distribution:
       allOf:
@@ -4560,43 +4627,102 @@ components:
       type: object
       properties:
         annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "Human-oriented description for the Annotation property in this shape."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property contains contact information that can be used for sending comments about the Equipment."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a free-text description of the Equipment."
         dynamic range:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the full-scale measuring ability, in nT (unit and value)."
         filter:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property describes the filter that the instrument uses to produce data."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property contains the main identifier for the Equipment."
         is part of:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to an Equipment or a Facility in which the described Equipment is included."
         manufacturer:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to an Organisation responsible for manufacturing the Equipment."
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a name given to the Equipment."
         orientation:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property describes how the instrument is oriented."
         page:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a web page about this Equipment."
         relation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a related resource (e.g., Dataset, WebService, etc.)."
         resolution:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the resolution in nT."
         sample period:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the sample period in mS (unit and value)"
         serial number:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the serial number for the Equipment."
         spatial:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers to a geographical location of the Equipment."
         temporal:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the start and the end of the period."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a category of the Equipment. An Equipment may be associated with multiple themes."
         type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the type of the Equipment."
       additionalProperties: true
     ResolvedEntityResponse_Entity_equipment:
       allOf:
@@ -4614,29 +4740,71 @@ components:
       type: object
       properties:
         annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "Human-oriented description for the Annotation property in this shape."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property contains contact information that can be used for sending comments about the Facility."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a free-text description of the Facility."
         has address:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the physical address of the Facility."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property contains the main identifier for the Facility."
         is part of:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a Facility in which the described Facility is included."
         page:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a page or document about this Facility."
         relation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a related resource (e.g., Dataset, WebService, etc)."
         spatial:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers to the geographical coordinates of the facility."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property refers to a category of the Facility. A Facility may be associated with multiple themes."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a name given to the Facility."
         type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the type of the Facility."
       additionalProperties: true
     ResolvedEntityResponse_Entity_facility:
       allOf:
@@ -4654,9 +4822,13 @@ components:
       type: object
       properties:
         notation:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains a string that is an identifier in the context of the identifier scheme referenced by its datatype."
         scheme agency:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers the identifier scheme referenced by its datatype (e.g., DDSS-ID, DOI, etc.)."
       additionalProperties: true
     ResolvedEntityResponse_Entity_identifier:
       allOf:
@@ -4674,9 +4846,15 @@ components:
       type: object
       properties:
         mapping:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "A variable-to-property mapping of the IRI template."
         template:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The syntax of the template literal is specified by the [ RFC6570] URI Template syntax."
       additionalProperties: true
     ResolvedEntityResponse_Entity_iritemplate:
       allOf:
@@ -4694,29 +4872,59 @@ components:
       type: object
       properties:
         default value:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the default value of the parameter."
         label:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a short string used to describe the meaning of the parameter."
         max value:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the maximum value of the parameter."
         min value:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the minimum value of the parameter."
         multiple values:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: boolean
+          nullable: true
+          description: "Whether multiple values are allowed for the property. Default is false."
         param value:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains one of the possible values which should be used in the web service query. It could be repeated as many times as needed."
         property:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the vocabulary term which indicates the semantic description of parameter."
         range:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the type of parameter (e.g., xsd:string, xsd:Boolean, xsd:date, xsd:dateTime)."
         readonly value:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: boolean
+          nullable: true
+          description: "Whether or not a property is mutable. Default is false. Specifying this for a property that also has a value makes it act similar to a hidden input in an HTML form."
         required:
-          type: [string, array, object, number, boolean, 'null']
+          type: boolean
+          nullable: false
+          description: "This property contains true if the property is required, false otherwise."
         value pattern:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the regular expression for testing values according to the parameter's specification."
         variable:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the name of the parameter as required by web service specifications."
       additionalProperties: true
     ResolvedEntityResponse_Entity_iritemplatemapping:
       allOf:
@@ -4734,7 +4942,12 @@ components:
       type: object
       properties:
         geometry:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property associates any resource with the corresponding geometry."
       additionalProperties: true
     ResolvedEntityResponse_Entity_location:
       allOf:
@@ -4752,11 +4965,20 @@ components:
       type: object
       properties:
         method:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "The HTTP method"
         property:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to the IriTemplate of the Web Service operation. This describes the endpoint and parameters mapping for the operation."
         returns:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property is used to specify the output format of the Operation. The possible values are listed here: https://www.iana.org/assignments/media-types/media-types.xhtml"
       additionalProperties: true
     ResolvedEntityResponse_Entity_operation:
       allOf:
@@ -4774,31 +4996,79 @@ components:
       type: object
       properties:
         address:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the physical address of the Organization."
         annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "Human-oriented description for the Annotation property in this shape."
         associated project:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a Project in which the Organization is involved."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to the Contact Point defined for the Organization."
         email:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the email address of the Organization."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Organization (e.g.,PIC, ISNI, etc.)."
         legal name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the official name of the Organization."
         lei code:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the Organization identifier that uniquely identifies a legal entity as defined in ISO 17442."
         logo:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the URL of the Organization logo."
         member of:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to an Organization to which this Organization belongs."
         owns:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to a Facility or Equipment of which it is the owner."
         telephone:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the telephone number of the Organization."
         url:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the URL of the Organization website."
       additionalProperties: true
     ResolvedEntityResponse_Entity_organization:
       allOf:
@@ -4816,9 +5086,13 @@ components:
       type: object
       properties:
         end date:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the end of the period."
         start date:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the start of the period."
       additionalProperties: true
     ResolvedEntityResponse_Entity_periodoftime:
       allOf:
@@ -4836,27 +5110,64 @@ components:
       type: object
       properties:
         address:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the physical address of the Person."
         affiliation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to the organization to which the person is affiliated."
         annotation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "Human-oriented description for the Annotation property in this shape."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to the Contact Point role defined for the Person."
         email:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the email address of the Person."
         family name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the last name of the Person."
         given name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the first name of the Person."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Person (e.g.,ORCID, ScopusID, etc.)."
         qualifications:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the specific qualifications of the Person."
         telephone:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the telephone number of the Person."
         url:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the URL of the Person curriculum vitae."
       additionalProperties: true
     ResolvedEntityResponse_Entity_person:
       allOf:
@@ -4874,13 +5185,21 @@ components:
       type: object
       properties:
         address country:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The country. For example, USA. You can also provide the two-letter ISO 3166-1 alpha-2 country code."
         address locality:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The locality in which the street address is, and which is in the region. For example, Mountain View."
         postal code:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The postal code. For example, 94043."
         street address:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The street address. For example, 1600 Amphitheatre Pkwy."
       additionalProperties: true
     ResolvedEntityResponse_Entity_postaladdress:
       allOf:
@@ -4898,15 +5217,31 @@ components:
       type: object
       properties:
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property refers to the Contact Point defined for the Project."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the description of the Project."
         homepage:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to a web page that acts as the main page for the Project."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property contains the main identifier for the Project."
         title:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the title of the Project."
       additionalProperties: true
     ResolvedEntityResponse_Entity_project:
       allOf:
@@ -4924,9 +5259,13 @@ components:
       type: object
       properties:
         property id:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "A commonly used identifier for the characteristic represented by the property, e.g. a manufacturer or a standard code for a property. propertyID can be (1) a prefixed string, mainly meant to be used with standards for product properties; (2) a site-specific, non-prefixed string (e.g. the primary key of the property or the vendor-specific id of the property), or (3) a URL indicating the type of the property, either pointing to an external vocabulary, or a Web resource that describes the property (e.g. a glossary entry). Standards bodies should promote a standard prefix for the identifiers of properties from their standards."
         value:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The value of the quantitative value or property value node. The recommended type for values is 'Number'."
       additionalProperties: true
     ResolvedEntityResponse_Entity_propertyvalue:
       allOf:
@@ -4944,31 +5283,67 @@ components:
       type: object
       properties:
         abstract:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the abstract of the Publication."
         author:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to a Person which is the author of the Publication."
         contributor:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property refers to a Person which is a contributor of the Publication."
         date published:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the date of first Publication."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Publication."
         issn:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the International Standard Serial Number (ISSN) that identifies the Publication."
         keywords:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the keywords used to describe the Publication. Multiple entries in a keywords list are typically delimited by commas."
         license:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the URL of the license document that applies to the Publication."
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the name of the Publication."
         number of pages:
-          type: [string, array, object, number, boolean, 'null']
+          type: integer
+          nullable: true
+          description: "This property contains the number of pages of the Publication."
         publisher:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to an organization or person or agent which is the publisher of the Publication."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a category of the Publication. A Publication may be associated with multiple themes."
         volume number:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the volume identifier of the Publication."
       additionalProperties: true
     ResolvedEntityResponse_Entity_publication:
       allOf:
@@ -4986,9 +5361,13 @@ components:
       type: object
       properties:
         unit code:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "The unit of measurement given using the UN/CEFACT Common Code (3 characters) or a URL. Other codes than the UN/CEFACT Common Code may be used with a prefix followed by a colon."
         value:
-          type: [string, array, object, number, boolean, 'null']
+          type: number
+          nullable: false
+          description: "The value of the quantitative value or property value node.The recommended type for values is 'Number'."
       additionalProperties: true
     ResolvedEntityResponse_Entity_quantitativevalue:
       allOf:
@@ -5006,27 +5385,63 @@ components:
       type: object
       properties:
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property refers to the Contact Point defined for the Service."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the description of the Service."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Service."
         keywords:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the keywords used to describe the Service. Multiple entries in a keywords list are typically delimited by commas."
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the name of the Service."
         provider:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to an Organisation or Person responsible for making the Service available."
         service type:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the type of service being offered."
         spatial:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a geographical area covered by the Service."
         temporal:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a temporal period that the Service covers."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a category of the Service. A Service may be associated with multiple themes."
         url:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the URL of the Service."
       additionalProperties: true
     ResolvedEntityResponse_Entity_service:
       allOf:
@@ -5044,33 +5459,80 @@ components:
       type: object
       properties:
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property refers to the Contact Point defined for the Software Application."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the description of the Software Application."
         download url:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "If the Software Application can be downloaded this property contains the URL to download it."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Software Application."
         install url:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the URL at which the application may be installed."
         keywords:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the keywords used to describe the Software Application. Multiple entries in a keywords list are typically delimited by commas."
         license:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the URL of the license document that applies to the Software Application."
         main entity of page:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the web page URL which describes the Software Application."
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the name of the Software Application."
         potential action:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property describes the object upon which the action is carried out and the result produced in the action."
         relation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          nullable: true
+          description: "This property refers to the WebService Operation linked to the application."
         software requirements:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "Component dependency requirements for application. This includes runtime environments and shared libraries that are not included in the application distribution package, but required to run the application."
         software version:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the version of the Software Application instance."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a category of the Software Application. A Software may be associated with multiple themes."
       additionalProperties: true
     ResolvedEntityResponse_Entity_softwareapplication:
       allOf:
@@ -5088,31 +5550,75 @@ components:
       type: object
       properties:
         code repository:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the link to the repository where the uncompiled, human readable code and related code is located (SVN, GitHub, CodePlex)."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          minItems: 1
+          nullable: false
+          description: "This property refers to the Contact Point defined for the Software Source Code."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the description of the Software Source Code."
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Software Source Code."
         keywords:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the keywords used to describe the Software Source Code. Multiple entries in a keywords list are typically delimited by commas."
         license:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property contains the URL of the license document that applies to the Software Source Code."
         main entity of page:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the web page URL which describes the Software Source Code."
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the name of the Software Source Code."
         programming language:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the computer programming language used to develop the Software Source Code."
         runtime platform:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property refers to the runtime platform or script interpreter dependencies (Example - Java v1, Python2.3, .Net Framework 3.0)."
         software version:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: true
+          description: "This property contains the version of the Software Source Code instance."
         target product:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers the target Operating System / Product to which the code applies. If applies to several versions, just the product name can be used."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a category of the Software Source Code. A Software may be associated with multiple themes."
       additionalProperties: true
     ResolvedEntityResponse_Entity_softwaresourcecode:
       allOf:
@@ -5130,35 +5636,89 @@ components:
       type: object
       properties:
         conforms to:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to the API documentation."
         contact point:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains contact information that can be used for sending comments about the Web Service."
         date modified:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the most recent date on which the Web Service was modified."
         date published:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains the date of publication of the Web Service."
         description:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a free-text description of the Web Service."
         entrypoint:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: false
+          description: "This property refers to the API definitions (e.g., WSDL, WADL)"
         identifier:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property contains the main identifier for the Web Service."
         keywords:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property contains the keywords used to describe the Web Service. Multiple entries in a keywords list are typically delimited by commas."
         license:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          format: uri
+          nullable: true
+          description: "This property refers to the licence under which the Web Service can be used or reused."
         name:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property contains a name given to the Web Service."
         provider:
-          type: [string, array, object, number, boolean, 'null']
+          type: string
+          nullable: false
+          description: "This property refers to an Organisation responsible for making the Web Service available."
         spatial:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a geographical area covered by the Web Service."
         supported operation:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a web service operation supported by the Web Service."
         temporal:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: "This property refers to a temporal period that the Web Service covers."
         theme:
-          type: [string, array, object, number, boolean, 'null']
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          nullable: false
+          description: "This property refers to a category of the Web Service. A Web Service may be associated with multiple themes."
       additionalProperties: true
     ResolvedEntityResponse_Entity_webservice:
       allOf:

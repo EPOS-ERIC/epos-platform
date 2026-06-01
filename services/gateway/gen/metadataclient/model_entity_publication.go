@@ -20,19 +20,32 @@ var _ MappedNullable = &EntityPublication{}
 
 // EntityPublication struct for EntityPublication
 type EntityPublication struct {
-	Abstract             NullableEntityAddressCountryName `json:"abstract,omitempty"`
-	Author               NullableEntityAddressCountryName `json:"author,omitempty"`
-	Contributor          NullableEntityAddressCountryName `json:"contributor,omitempty"`
-	DatePublished        NullableEntityAddressCountryName `json:"date published,omitempty"`
-	Identifier           NullableEntityAddressCountryName `json:"identifier,omitempty"`
-	Issn                 NullableEntityAddressCountryName `json:"issn,omitempty"`
-	Keywords             NullableEntityAddressCountryName `json:"keywords,omitempty"`
-	License              NullableEntityAddressCountryName `json:"license,omitempty"`
-	Name                 NullableEntityAddressCountryName `json:"name,omitempty"`
-	NumberOfPages        NullableEntityAddressCountryName `json:"number of pages,omitempty"`
-	Publisher            NullableEntityAddressCountryName `json:"publisher,omitempty"`
-	Theme                NullableEntityAddressCountryName `json:"theme,omitempty"`
-	VolumeNumber         NullableEntityAddressCountryName `json:"volume number,omitempty"`
+	// This property contains the abstract of the Publication.
+	Abstract *string `json:"abstract,omitempty"`
+	// This property refers to a Person which is the author of the Publication.
+	Author *string `json:"author,omitempty"`
+	// This property refers to a Person which is a contributor of the Publication.
+	Contributor []string `json:"contributor,omitempty"`
+	// This property contains the date of first Publication.
+	DatePublished *string `json:"date published,omitempty"`
+	// This property contains the main identifier for the Publication.
+	Identifier []string `json:"identifier,omitempty"`
+	// This property contains the International Standard Serial Number (ISSN) that identifies the Publication.
+	Issn *string `json:"issn,omitempty"`
+	// This property contains the keywords used to describe the Publication. Multiple entries in a keywords list are typically delimited by commas.
+	Keywords *string `json:"keywords,omitempty"`
+	// This property contains the URL of the license document that applies to the Publication.
+	License *string `json:"license,omitempty"`
+	// This property contains the name of the Publication.
+	Name *string `json:"name,omitempty"`
+	// This property contains the number of pages of the Publication.
+	NumberOfPages *int32 `json:"number of pages,omitempty"`
+	// This property refers to an organization or person or agent which is the publisher of the Publication.
+	Publisher *string `json:"publisher,omitempty"`
+	// This property refers to a category of the Publication. A Publication may be associated with multiple themes.
+	Theme []string `json:"theme,omitempty"`
+	// This property contains the volume identifier of the Publication.
+	VolumeNumber         *string `json:"volume number,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -55,563 +68,420 @@ func NewEntityPublicationWithDefaults() *EntityPublication {
 	return &this
 }
 
-// GetAbstract returns the Abstract field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetAbstract() EntityAddressCountryName {
-	if o == nil || IsNil(o.Abstract.Get()) {
-		var ret EntityAddressCountryName
+// GetAbstract returns the Abstract field value if set, zero value otherwise.
+func (o *EntityPublication) GetAbstract() string {
+	if o == nil || IsNil(o.Abstract) {
+		var ret string
 		return ret
 	}
-	return *o.Abstract.Get()
+	return *o.Abstract
 }
 
 // GetAbstractOk returns a tuple with the Abstract field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetAbstractOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetAbstractOk() (*string, bool) {
+	if o == nil || IsNil(o.Abstract) {
 		return nil, false
 	}
-	return o.Abstract.Get(), o.Abstract.IsSet()
+	return o.Abstract, true
 }
 
 // HasAbstract returns a boolean if a field has been set.
 func (o *EntityPublication) HasAbstract() bool {
-	if o != nil && o.Abstract.IsSet() {
+	if o != nil && !IsNil(o.Abstract) {
 		return true
 	}
 
 	return false
 }
 
-// SetAbstract gets a reference to the given NullableEntityAddressCountryName and assigns it to the Abstract field.
-func (o *EntityPublication) SetAbstract(v EntityAddressCountryName) {
-	o.Abstract.Set(&v)
+// SetAbstract gets a reference to the given string and assigns it to the Abstract field.
+func (o *EntityPublication) SetAbstract(v string) {
+	o.Abstract = &v
 }
 
-// SetAbstractNil sets the value for Abstract to be an explicit nil
-func (o *EntityPublication) SetAbstractNil() {
-	o.Abstract.Set(nil)
-}
-
-// UnsetAbstract ensures that no value is present for Abstract, not even an explicit nil
-func (o *EntityPublication) UnsetAbstract() {
-	o.Abstract.Unset()
-}
-
-// GetAuthor returns the Author field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetAuthor() EntityAddressCountryName {
-	if o == nil || IsNil(o.Author.Get()) {
-		var ret EntityAddressCountryName
+// GetAuthor returns the Author field value if set, zero value otherwise.
+func (o *EntityPublication) GetAuthor() string {
+	if o == nil || IsNil(o.Author) {
+		var ret string
 		return ret
 	}
-	return *o.Author.Get()
+	return *o.Author
 }
 
 // GetAuthorOk returns a tuple with the Author field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetAuthorOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetAuthorOk() (*string, bool) {
+	if o == nil || IsNil(o.Author) {
 		return nil, false
 	}
-	return o.Author.Get(), o.Author.IsSet()
+	return o.Author, true
 }
 
 // HasAuthor returns a boolean if a field has been set.
 func (o *EntityPublication) HasAuthor() bool {
-	if o != nil && o.Author.IsSet() {
+	if o != nil && !IsNil(o.Author) {
 		return true
 	}
 
 	return false
 }
 
-// SetAuthor gets a reference to the given NullableEntityAddressCountryName and assigns it to the Author field.
-func (o *EntityPublication) SetAuthor(v EntityAddressCountryName) {
-	o.Author.Set(&v)
+// SetAuthor gets a reference to the given string and assigns it to the Author field.
+func (o *EntityPublication) SetAuthor(v string) {
+	o.Author = &v
 }
 
-// SetAuthorNil sets the value for Author to be an explicit nil
-func (o *EntityPublication) SetAuthorNil() {
-	o.Author.Set(nil)
-}
-
-// UnsetAuthor ensures that no value is present for Author, not even an explicit nil
-func (o *EntityPublication) UnsetAuthor() {
-	o.Author.Unset()
-}
-
-// GetContributor returns the Contributor field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetContributor() EntityAddressCountryName {
-	if o == nil || IsNil(o.Contributor.Get()) {
-		var ret EntityAddressCountryName
+// GetContributor returns the Contributor field value if set, zero value otherwise.
+func (o *EntityPublication) GetContributor() []string {
+	if o == nil || IsNil(o.Contributor) {
+		var ret []string
 		return ret
 	}
-	return *o.Contributor.Get()
+	return o.Contributor
 }
 
 // GetContributorOk returns a tuple with the Contributor field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetContributorOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetContributorOk() ([]string, bool) {
+	if o == nil || IsNil(o.Contributor) {
 		return nil, false
 	}
-	return o.Contributor.Get(), o.Contributor.IsSet()
+	return o.Contributor, true
 }
 
 // HasContributor returns a boolean if a field has been set.
 func (o *EntityPublication) HasContributor() bool {
-	if o != nil && o.Contributor.IsSet() {
+	if o != nil && !IsNil(o.Contributor) {
 		return true
 	}
 
 	return false
 }
 
-// SetContributor gets a reference to the given NullableEntityAddressCountryName and assigns it to the Contributor field.
-func (o *EntityPublication) SetContributor(v EntityAddressCountryName) {
-	o.Contributor.Set(&v)
+// SetContributor gets a reference to the given []string and assigns it to the Contributor field.
+func (o *EntityPublication) SetContributor(v []string) {
+	o.Contributor = v
 }
 
-// SetContributorNil sets the value for Contributor to be an explicit nil
-func (o *EntityPublication) SetContributorNil() {
-	o.Contributor.Set(nil)
-}
-
-// UnsetContributor ensures that no value is present for Contributor, not even an explicit nil
-func (o *EntityPublication) UnsetContributor() {
-	o.Contributor.Unset()
-}
-
-// GetDatePublished returns the DatePublished field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetDatePublished() EntityAddressCountryName {
-	if o == nil || IsNil(o.DatePublished.Get()) {
-		var ret EntityAddressCountryName
+// GetDatePublished returns the DatePublished field value if set, zero value otherwise.
+func (o *EntityPublication) GetDatePublished() string {
+	if o == nil || IsNil(o.DatePublished) {
+		var ret string
 		return ret
 	}
-	return *o.DatePublished.Get()
+	return *o.DatePublished
 }
 
 // GetDatePublishedOk returns a tuple with the DatePublished field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetDatePublishedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetDatePublishedOk() (*string, bool) {
+	if o == nil || IsNil(o.DatePublished) {
 		return nil, false
 	}
-	return o.DatePublished.Get(), o.DatePublished.IsSet()
+	return o.DatePublished, true
 }
 
 // HasDatePublished returns a boolean if a field has been set.
 func (o *EntityPublication) HasDatePublished() bool {
-	if o != nil && o.DatePublished.IsSet() {
+	if o != nil && !IsNil(o.DatePublished) {
 		return true
 	}
 
 	return false
 }
 
-// SetDatePublished gets a reference to the given NullableEntityAddressCountryName and assigns it to the DatePublished field.
-func (o *EntityPublication) SetDatePublished(v EntityAddressCountryName) {
-	o.DatePublished.Set(&v)
+// SetDatePublished gets a reference to the given string and assigns it to the DatePublished field.
+func (o *EntityPublication) SetDatePublished(v string) {
+	o.DatePublished = &v
 }
 
-// SetDatePublishedNil sets the value for DatePublished to be an explicit nil
-func (o *EntityPublication) SetDatePublishedNil() {
-	o.DatePublished.Set(nil)
-}
-
-// UnsetDatePublished ensures that no value is present for DatePublished, not even an explicit nil
-func (o *EntityPublication) UnsetDatePublished() {
-	o.DatePublished.Unset()
-}
-
-// GetIdentifier returns the Identifier field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetIdentifier() EntityAddressCountryName {
-	if o == nil || IsNil(o.Identifier.Get()) {
-		var ret EntityAddressCountryName
+// GetIdentifier returns the Identifier field value if set, zero value otherwise.
+func (o *EntityPublication) GetIdentifier() []string {
+	if o == nil || IsNil(o.Identifier) {
+		var ret []string
 		return ret
 	}
-	return *o.Identifier.Get()
+	return o.Identifier
 }
 
 // GetIdentifierOk returns a tuple with the Identifier field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetIdentifierOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetIdentifierOk() ([]string, bool) {
+	if o == nil || IsNil(o.Identifier) {
 		return nil, false
 	}
-	return o.Identifier.Get(), o.Identifier.IsSet()
+	return o.Identifier, true
 }
 
 // HasIdentifier returns a boolean if a field has been set.
 func (o *EntityPublication) HasIdentifier() bool {
-	if o != nil && o.Identifier.IsSet() {
+	if o != nil && !IsNil(o.Identifier) {
 		return true
 	}
 
 	return false
 }
 
-// SetIdentifier gets a reference to the given NullableEntityAddressCountryName and assigns it to the Identifier field.
-func (o *EntityPublication) SetIdentifier(v EntityAddressCountryName) {
-	o.Identifier.Set(&v)
+// SetIdentifier gets a reference to the given []string and assigns it to the Identifier field.
+func (o *EntityPublication) SetIdentifier(v []string) {
+	o.Identifier = v
 }
 
-// SetIdentifierNil sets the value for Identifier to be an explicit nil
-func (o *EntityPublication) SetIdentifierNil() {
-	o.Identifier.Set(nil)
-}
-
-// UnsetIdentifier ensures that no value is present for Identifier, not even an explicit nil
-func (o *EntityPublication) UnsetIdentifier() {
-	o.Identifier.Unset()
-}
-
-// GetIssn returns the Issn field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetIssn() EntityAddressCountryName {
-	if o == nil || IsNil(o.Issn.Get()) {
-		var ret EntityAddressCountryName
+// GetIssn returns the Issn field value if set, zero value otherwise.
+func (o *EntityPublication) GetIssn() string {
+	if o == nil || IsNil(o.Issn) {
+		var ret string
 		return ret
 	}
-	return *o.Issn.Get()
+	return *o.Issn
 }
 
 // GetIssnOk returns a tuple with the Issn field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetIssnOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetIssnOk() (*string, bool) {
+	if o == nil || IsNil(o.Issn) {
 		return nil, false
 	}
-	return o.Issn.Get(), o.Issn.IsSet()
+	return o.Issn, true
 }
 
 // HasIssn returns a boolean if a field has been set.
 func (o *EntityPublication) HasIssn() bool {
-	if o != nil && o.Issn.IsSet() {
+	if o != nil && !IsNil(o.Issn) {
 		return true
 	}
 
 	return false
 }
 
-// SetIssn gets a reference to the given NullableEntityAddressCountryName and assigns it to the Issn field.
-func (o *EntityPublication) SetIssn(v EntityAddressCountryName) {
-	o.Issn.Set(&v)
+// SetIssn gets a reference to the given string and assigns it to the Issn field.
+func (o *EntityPublication) SetIssn(v string) {
+	o.Issn = &v
 }
 
-// SetIssnNil sets the value for Issn to be an explicit nil
-func (o *EntityPublication) SetIssnNil() {
-	o.Issn.Set(nil)
-}
-
-// UnsetIssn ensures that no value is present for Issn, not even an explicit nil
-func (o *EntityPublication) UnsetIssn() {
-	o.Issn.Unset()
-}
-
-// GetKeywords returns the Keywords field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetKeywords() EntityAddressCountryName {
-	if o == nil || IsNil(o.Keywords.Get()) {
-		var ret EntityAddressCountryName
+// GetKeywords returns the Keywords field value if set, zero value otherwise.
+func (o *EntityPublication) GetKeywords() string {
+	if o == nil || IsNil(o.Keywords) {
+		var ret string
 		return ret
 	}
-	return *o.Keywords.Get()
+	return *o.Keywords
 }
 
 // GetKeywordsOk returns a tuple with the Keywords field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetKeywordsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetKeywordsOk() (*string, bool) {
+	if o == nil || IsNil(o.Keywords) {
 		return nil, false
 	}
-	return o.Keywords.Get(), o.Keywords.IsSet()
+	return o.Keywords, true
 }
 
 // HasKeywords returns a boolean if a field has been set.
 func (o *EntityPublication) HasKeywords() bool {
-	if o != nil && o.Keywords.IsSet() {
+	if o != nil && !IsNil(o.Keywords) {
 		return true
 	}
 
 	return false
 }
 
-// SetKeywords gets a reference to the given NullableEntityAddressCountryName and assigns it to the Keywords field.
-func (o *EntityPublication) SetKeywords(v EntityAddressCountryName) {
-	o.Keywords.Set(&v)
+// SetKeywords gets a reference to the given string and assigns it to the Keywords field.
+func (o *EntityPublication) SetKeywords(v string) {
+	o.Keywords = &v
 }
 
-// SetKeywordsNil sets the value for Keywords to be an explicit nil
-func (o *EntityPublication) SetKeywordsNil() {
-	o.Keywords.Set(nil)
-}
-
-// UnsetKeywords ensures that no value is present for Keywords, not even an explicit nil
-func (o *EntityPublication) UnsetKeywords() {
-	o.Keywords.Unset()
-}
-
-// GetLicense returns the License field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetLicense() EntityAddressCountryName {
-	if o == nil || IsNil(o.License.Get()) {
-		var ret EntityAddressCountryName
+// GetLicense returns the License field value if set, zero value otherwise.
+func (o *EntityPublication) GetLicense() string {
+	if o == nil || IsNil(o.License) {
+		var ret string
 		return ret
 	}
-	return *o.License.Get()
+	return *o.License
 }
 
 // GetLicenseOk returns a tuple with the License field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetLicenseOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetLicenseOk() (*string, bool) {
+	if o == nil || IsNil(o.License) {
 		return nil, false
 	}
-	return o.License.Get(), o.License.IsSet()
+	return o.License, true
 }
 
 // HasLicense returns a boolean if a field has been set.
 func (o *EntityPublication) HasLicense() bool {
-	if o != nil && o.License.IsSet() {
+	if o != nil && !IsNil(o.License) {
 		return true
 	}
 
 	return false
 }
 
-// SetLicense gets a reference to the given NullableEntityAddressCountryName and assigns it to the License field.
-func (o *EntityPublication) SetLicense(v EntityAddressCountryName) {
-	o.License.Set(&v)
+// SetLicense gets a reference to the given string and assigns it to the License field.
+func (o *EntityPublication) SetLicense(v string) {
+	o.License = &v
 }
 
-// SetLicenseNil sets the value for License to be an explicit nil
-func (o *EntityPublication) SetLicenseNil() {
-	o.License.Set(nil)
-}
-
-// UnsetLicense ensures that no value is present for License, not even an explicit nil
-func (o *EntityPublication) UnsetLicense() {
-	o.License.Unset()
-}
-
-// GetName returns the Name field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetName() EntityAddressCountryName {
-	if o == nil || IsNil(o.Name.Get()) {
-		var ret EntityAddressCountryName
+// GetName returns the Name field value if set, zero value otherwise.
+func (o *EntityPublication) GetName() string {
+	if o == nil || IsNil(o.Name) {
+		var ret string
 		return ret
 	}
-	return *o.Name.Get()
+	return *o.Name
 }
 
 // GetNameOk returns a tuple with the Name field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetNameOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetNameOk() (*string, bool) {
+	if o == nil || IsNil(o.Name) {
 		return nil, false
 	}
-	return o.Name.Get(), o.Name.IsSet()
+	return o.Name, true
 }
 
 // HasName returns a boolean if a field has been set.
 func (o *EntityPublication) HasName() bool {
-	if o != nil && o.Name.IsSet() {
+	if o != nil && !IsNil(o.Name) {
 		return true
 	}
 
 	return false
 }
 
-// SetName gets a reference to the given NullableEntityAddressCountryName and assigns it to the Name field.
-func (o *EntityPublication) SetName(v EntityAddressCountryName) {
-	o.Name.Set(&v)
+// SetName gets a reference to the given string and assigns it to the Name field.
+func (o *EntityPublication) SetName(v string) {
+	o.Name = &v
 }
 
-// SetNameNil sets the value for Name to be an explicit nil
-func (o *EntityPublication) SetNameNil() {
-	o.Name.Set(nil)
-}
-
-// UnsetName ensures that no value is present for Name, not even an explicit nil
-func (o *EntityPublication) UnsetName() {
-	o.Name.Unset()
-}
-
-// GetNumberOfPages returns the NumberOfPages field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetNumberOfPages() EntityAddressCountryName {
-	if o == nil || IsNil(o.NumberOfPages.Get()) {
-		var ret EntityAddressCountryName
+// GetNumberOfPages returns the NumberOfPages field value if set, zero value otherwise.
+func (o *EntityPublication) GetNumberOfPages() int32 {
+	if o == nil || IsNil(o.NumberOfPages) {
+		var ret int32
 		return ret
 	}
-	return *o.NumberOfPages.Get()
+	return *o.NumberOfPages
 }
 
 // GetNumberOfPagesOk returns a tuple with the NumberOfPages field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetNumberOfPagesOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetNumberOfPagesOk() (*int32, bool) {
+	if o == nil || IsNil(o.NumberOfPages) {
 		return nil, false
 	}
-	return o.NumberOfPages.Get(), o.NumberOfPages.IsSet()
+	return o.NumberOfPages, true
 }
 
 // HasNumberOfPages returns a boolean if a field has been set.
 func (o *EntityPublication) HasNumberOfPages() bool {
-	if o != nil && o.NumberOfPages.IsSet() {
+	if o != nil && !IsNil(o.NumberOfPages) {
 		return true
 	}
 
 	return false
 }
 
-// SetNumberOfPages gets a reference to the given NullableEntityAddressCountryName and assigns it to the NumberOfPages field.
-func (o *EntityPublication) SetNumberOfPages(v EntityAddressCountryName) {
-	o.NumberOfPages.Set(&v)
+// SetNumberOfPages gets a reference to the given int32 and assigns it to the NumberOfPages field.
+func (o *EntityPublication) SetNumberOfPages(v int32) {
+	o.NumberOfPages = &v
 }
 
-// SetNumberOfPagesNil sets the value for NumberOfPages to be an explicit nil
-func (o *EntityPublication) SetNumberOfPagesNil() {
-	o.NumberOfPages.Set(nil)
-}
-
-// UnsetNumberOfPages ensures that no value is present for NumberOfPages, not even an explicit nil
-func (o *EntityPublication) UnsetNumberOfPages() {
-	o.NumberOfPages.Unset()
-}
-
-// GetPublisher returns the Publisher field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetPublisher() EntityAddressCountryName {
-	if o == nil || IsNil(o.Publisher.Get()) {
-		var ret EntityAddressCountryName
+// GetPublisher returns the Publisher field value if set, zero value otherwise.
+func (o *EntityPublication) GetPublisher() string {
+	if o == nil || IsNil(o.Publisher) {
+		var ret string
 		return ret
 	}
-	return *o.Publisher.Get()
+	return *o.Publisher
 }
 
 // GetPublisherOk returns a tuple with the Publisher field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetPublisherOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetPublisherOk() (*string, bool) {
+	if o == nil || IsNil(o.Publisher) {
 		return nil, false
 	}
-	return o.Publisher.Get(), o.Publisher.IsSet()
+	return o.Publisher, true
 }
 
 // HasPublisher returns a boolean if a field has been set.
 func (o *EntityPublication) HasPublisher() bool {
-	if o != nil && o.Publisher.IsSet() {
+	if o != nil && !IsNil(o.Publisher) {
 		return true
 	}
 
 	return false
 }
 
-// SetPublisher gets a reference to the given NullableEntityAddressCountryName and assigns it to the Publisher field.
-func (o *EntityPublication) SetPublisher(v EntityAddressCountryName) {
-	o.Publisher.Set(&v)
+// SetPublisher gets a reference to the given string and assigns it to the Publisher field.
+func (o *EntityPublication) SetPublisher(v string) {
+	o.Publisher = &v
 }
 
-// SetPublisherNil sets the value for Publisher to be an explicit nil
-func (o *EntityPublication) SetPublisherNil() {
-	o.Publisher.Set(nil)
-}
-
-// UnsetPublisher ensures that no value is present for Publisher, not even an explicit nil
-func (o *EntityPublication) UnsetPublisher() {
-	o.Publisher.Unset()
-}
-
-// GetTheme returns the Theme field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetTheme() EntityAddressCountryName {
-	if o == nil || IsNil(o.Theme.Get()) {
-		var ret EntityAddressCountryName
+// GetTheme returns the Theme field value if set, zero value otherwise.
+func (o *EntityPublication) GetTheme() []string {
+	if o == nil || IsNil(o.Theme) {
+		var ret []string
 		return ret
 	}
-	return *o.Theme.Get()
+	return o.Theme
 }
 
 // GetThemeOk returns a tuple with the Theme field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetThemeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetThemeOk() ([]string, bool) {
+	if o == nil || IsNil(o.Theme) {
 		return nil, false
 	}
-	return o.Theme.Get(), o.Theme.IsSet()
+	return o.Theme, true
 }
 
 // HasTheme returns a boolean if a field has been set.
 func (o *EntityPublication) HasTheme() bool {
-	if o != nil && o.Theme.IsSet() {
+	if o != nil && !IsNil(o.Theme) {
 		return true
 	}
 
 	return false
 }
 
-// SetTheme gets a reference to the given NullableEntityAddressCountryName and assigns it to the Theme field.
-func (o *EntityPublication) SetTheme(v EntityAddressCountryName) {
-	o.Theme.Set(&v)
+// SetTheme gets a reference to the given []string and assigns it to the Theme field.
+func (o *EntityPublication) SetTheme(v []string) {
+	o.Theme = v
 }
 
-// SetThemeNil sets the value for Theme to be an explicit nil
-func (o *EntityPublication) SetThemeNil() {
-	o.Theme.Set(nil)
-}
-
-// UnsetTheme ensures that no value is present for Theme, not even an explicit nil
-func (o *EntityPublication) UnsetTheme() {
-	o.Theme.Unset()
-}
-
-// GetVolumeNumber returns the VolumeNumber field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPublication) GetVolumeNumber() EntityAddressCountryName {
-	if o == nil || IsNil(o.VolumeNumber.Get()) {
-		var ret EntityAddressCountryName
+// GetVolumeNumber returns the VolumeNumber field value if set, zero value otherwise.
+func (o *EntityPublication) GetVolumeNumber() string {
+	if o == nil || IsNil(o.VolumeNumber) {
+		var ret string
 		return ret
 	}
-	return *o.VolumeNumber.Get()
+	return *o.VolumeNumber
 }
 
 // GetVolumeNumberOk returns a tuple with the VolumeNumber field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPublication) GetVolumeNumberOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPublication) GetVolumeNumberOk() (*string, bool) {
+	if o == nil || IsNil(o.VolumeNumber) {
 		return nil, false
 	}
-	return o.VolumeNumber.Get(), o.VolumeNumber.IsSet()
+	return o.VolumeNumber, true
 }
 
 // HasVolumeNumber returns a boolean if a field has been set.
 func (o *EntityPublication) HasVolumeNumber() bool {
-	if o != nil && o.VolumeNumber.IsSet() {
+	if o != nil && !IsNil(o.VolumeNumber) {
 		return true
 	}
 
 	return false
 }
 
-// SetVolumeNumber gets a reference to the given NullableEntityAddressCountryName and assigns it to the VolumeNumber field.
-func (o *EntityPublication) SetVolumeNumber(v EntityAddressCountryName) {
-	o.VolumeNumber.Set(&v)
-}
-
-// SetVolumeNumberNil sets the value for VolumeNumber to be an explicit nil
-func (o *EntityPublication) SetVolumeNumberNil() {
-	o.VolumeNumber.Set(nil)
-}
-
-// UnsetVolumeNumber ensures that no value is present for VolumeNumber, not even an explicit nil
-func (o *EntityPublication) UnsetVolumeNumber() {
-	o.VolumeNumber.Unset()
+// SetVolumeNumber gets a reference to the given string and assigns it to the VolumeNumber field.
+func (o *EntityPublication) SetVolumeNumber(v string) {
+	o.VolumeNumber = &v
 }
 
 func (o EntityPublication) MarshalJSON() ([]byte, error) {
@@ -624,44 +494,44 @@ func (o EntityPublication) MarshalJSON() ([]byte, error) {
 
 func (o EntityPublication) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Abstract.IsSet() {
-		toSerialize["abstract"] = o.Abstract.Get()
+	if !IsNil(o.Abstract) {
+		toSerialize["abstract"] = o.Abstract
 	}
-	if o.Author.IsSet() {
-		toSerialize["author"] = o.Author.Get()
+	if !IsNil(o.Author) {
+		toSerialize["author"] = o.Author
 	}
-	if o.Contributor.IsSet() {
-		toSerialize["contributor"] = o.Contributor.Get()
+	if !IsNil(o.Contributor) {
+		toSerialize["contributor"] = o.Contributor
 	}
-	if o.DatePublished.IsSet() {
-		toSerialize["date published"] = o.DatePublished.Get()
+	if !IsNil(o.DatePublished) {
+		toSerialize["date published"] = o.DatePublished
 	}
-	if o.Identifier.IsSet() {
-		toSerialize["identifier"] = o.Identifier.Get()
+	if !IsNil(o.Identifier) {
+		toSerialize["identifier"] = o.Identifier
 	}
-	if o.Issn.IsSet() {
-		toSerialize["issn"] = o.Issn.Get()
+	if !IsNil(o.Issn) {
+		toSerialize["issn"] = o.Issn
 	}
-	if o.Keywords.IsSet() {
-		toSerialize["keywords"] = o.Keywords.Get()
+	if !IsNil(o.Keywords) {
+		toSerialize["keywords"] = o.Keywords
 	}
-	if o.License.IsSet() {
-		toSerialize["license"] = o.License.Get()
+	if !IsNil(o.License) {
+		toSerialize["license"] = o.License
 	}
-	if o.Name.IsSet() {
-		toSerialize["name"] = o.Name.Get()
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
 	}
-	if o.NumberOfPages.IsSet() {
-		toSerialize["number of pages"] = o.NumberOfPages.Get()
+	if !IsNil(o.NumberOfPages) {
+		toSerialize["number of pages"] = o.NumberOfPages
 	}
-	if o.Publisher.IsSet() {
-		toSerialize["publisher"] = o.Publisher.Get()
+	if !IsNil(o.Publisher) {
+		toSerialize["publisher"] = o.Publisher
 	}
-	if o.Theme.IsSet() {
-		toSerialize["theme"] = o.Theme.Get()
+	if !IsNil(o.Theme) {
+		toSerialize["theme"] = o.Theme
 	}
-	if o.VolumeNumber.IsSet() {
-		toSerialize["volume number"] = o.VolumeNumber.Get()
+	if !IsNil(o.VolumeNumber) {
+		toSerialize["volume number"] = o.VolumeNumber
 	}
 
 	for key, value := range o.AdditionalProperties {

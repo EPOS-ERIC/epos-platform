@@ -20,9 +20,12 @@ var _ MappedNullable = &EntityConcept{}
 
 // EntityConcept struct for EntityConcept
 type EntityConcept struct {
-	Definition           NullableEntityAddressCountryName `json:"definition,omitempty"`
-	InScheme             NullableEntityAddressCountryName `json:"in scheme,omitempty"`
-	PrefLabel            NullableEntityAddressCountryName `json:"pref label,omitempty"`
+	// This property contains a statement or formal explanation of the meaning of a concept.
+	Definition *string `json:"definition,omitempty"`
+	// Relates a resource (for example a concept) to a concept scheme in which it is included.
+	InScheme *string `json:"in scheme,omitempty"`
+	// This property contains a preferred label of the category. This property can be repeated for parallel language versions of the label.
+	PrefLabel            *string `json:"pref label,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -45,133 +48,100 @@ func NewEntityConceptWithDefaults() *EntityConcept {
 	return &this
 }
 
-// GetDefinition returns the Definition field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityConcept) GetDefinition() EntityAddressCountryName {
-	if o == nil || IsNil(o.Definition.Get()) {
-		var ret EntityAddressCountryName
+// GetDefinition returns the Definition field value if set, zero value otherwise.
+func (o *EntityConcept) GetDefinition() string {
+	if o == nil || IsNil(o.Definition) {
+		var ret string
 		return ret
 	}
-	return *o.Definition.Get()
+	return *o.Definition
 }
 
 // GetDefinitionOk returns a tuple with the Definition field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityConcept) GetDefinitionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityConcept) GetDefinitionOk() (*string, bool) {
+	if o == nil || IsNil(o.Definition) {
 		return nil, false
 	}
-	return o.Definition.Get(), o.Definition.IsSet()
+	return o.Definition, true
 }
 
 // HasDefinition returns a boolean if a field has been set.
 func (o *EntityConcept) HasDefinition() bool {
-	if o != nil && o.Definition.IsSet() {
+	if o != nil && !IsNil(o.Definition) {
 		return true
 	}
 
 	return false
 }
 
-// SetDefinition gets a reference to the given NullableEntityAddressCountryName and assigns it to the Definition field.
-func (o *EntityConcept) SetDefinition(v EntityAddressCountryName) {
-	o.Definition.Set(&v)
+// SetDefinition gets a reference to the given string and assigns it to the Definition field.
+func (o *EntityConcept) SetDefinition(v string) {
+	o.Definition = &v
 }
 
-// SetDefinitionNil sets the value for Definition to be an explicit nil
-func (o *EntityConcept) SetDefinitionNil() {
-	o.Definition.Set(nil)
-}
-
-// UnsetDefinition ensures that no value is present for Definition, not even an explicit nil
-func (o *EntityConcept) UnsetDefinition() {
-	o.Definition.Unset()
-}
-
-// GetInScheme returns the InScheme field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityConcept) GetInScheme() EntityAddressCountryName {
-	if o == nil || IsNil(o.InScheme.Get()) {
-		var ret EntityAddressCountryName
+// GetInScheme returns the InScheme field value if set, zero value otherwise.
+func (o *EntityConcept) GetInScheme() string {
+	if o == nil || IsNil(o.InScheme) {
+		var ret string
 		return ret
 	}
-	return *o.InScheme.Get()
+	return *o.InScheme
 }
 
 // GetInSchemeOk returns a tuple with the InScheme field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityConcept) GetInSchemeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityConcept) GetInSchemeOk() (*string, bool) {
+	if o == nil || IsNil(o.InScheme) {
 		return nil, false
 	}
-	return o.InScheme.Get(), o.InScheme.IsSet()
+	return o.InScheme, true
 }
 
 // HasInScheme returns a boolean if a field has been set.
 func (o *EntityConcept) HasInScheme() bool {
-	if o != nil && o.InScheme.IsSet() {
+	if o != nil && !IsNil(o.InScheme) {
 		return true
 	}
 
 	return false
 }
 
-// SetInScheme gets a reference to the given NullableEntityAddressCountryName and assigns it to the InScheme field.
-func (o *EntityConcept) SetInScheme(v EntityAddressCountryName) {
-	o.InScheme.Set(&v)
+// SetInScheme gets a reference to the given string and assigns it to the InScheme field.
+func (o *EntityConcept) SetInScheme(v string) {
+	o.InScheme = &v
 }
 
-// SetInSchemeNil sets the value for InScheme to be an explicit nil
-func (o *EntityConcept) SetInSchemeNil() {
-	o.InScheme.Set(nil)
-}
-
-// UnsetInScheme ensures that no value is present for InScheme, not even an explicit nil
-func (o *EntityConcept) UnsetInScheme() {
-	o.InScheme.Unset()
-}
-
-// GetPrefLabel returns the PrefLabel field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityConcept) GetPrefLabel() EntityAddressCountryName {
-	if o == nil || IsNil(o.PrefLabel.Get()) {
-		var ret EntityAddressCountryName
+// GetPrefLabel returns the PrefLabel field value if set, zero value otherwise.
+func (o *EntityConcept) GetPrefLabel() string {
+	if o == nil || IsNil(o.PrefLabel) {
+		var ret string
 		return ret
 	}
-	return *o.PrefLabel.Get()
+	return *o.PrefLabel
 }
 
 // GetPrefLabelOk returns a tuple with the PrefLabel field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityConcept) GetPrefLabelOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityConcept) GetPrefLabelOk() (*string, bool) {
+	if o == nil || IsNil(o.PrefLabel) {
 		return nil, false
 	}
-	return o.PrefLabel.Get(), o.PrefLabel.IsSet()
+	return o.PrefLabel, true
 }
 
 // HasPrefLabel returns a boolean if a field has been set.
 func (o *EntityConcept) HasPrefLabel() bool {
-	if o != nil && o.PrefLabel.IsSet() {
+	if o != nil && !IsNil(o.PrefLabel) {
 		return true
 	}
 
 	return false
 }
 
-// SetPrefLabel gets a reference to the given NullableEntityAddressCountryName and assigns it to the PrefLabel field.
-func (o *EntityConcept) SetPrefLabel(v EntityAddressCountryName) {
-	o.PrefLabel.Set(&v)
-}
-
-// SetPrefLabelNil sets the value for PrefLabel to be an explicit nil
-func (o *EntityConcept) SetPrefLabelNil() {
-	o.PrefLabel.Set(nil)
-}
-
-// UnsetPrefLabel ensures that no value is present for PrefLabel, not even an explicit nil
-func (o *EntityConcept) UnsetPrefLabel() {
-	o.PrefLabel.Unset()
+// SetPrefLabel gets a reference to the given string and assigns it to the PrefLabel field.
+func (o *EntityConcept) SetPrefLabel(v string) {
+	o.PrefLabel = &v
 }
 
 func (o EntityConcept) MarshalJSON() ([]byte, error) {
@@ -184,14 +154,14 @@ func (o EntityConcept) MarshalJSON() ([]byte, error) {
 
 func (o EntityConcept) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Definition.IsSet() {
-		toSerialize["definition"] = o.Definition.Get()
+	if !IsNil(o.Definition) {
+		toSerialize["definition"] = o.Definition
 	}
-	if o.InScheme.IsSet() {
-		toSerialize["in scheme"] = o.InScheme.Get()
+	if !IsNil(o.InScheme) {
+		toSerialize["in scheme"] = o.InScheme
 	}
-	if o.PrefLabel.IsSet() {
-		toSerialize["pref label"] = o.PrefLabel.Get()
+	if !IsNil(o.PrefLabel) {
+		toSerialize["pref label"] = o.PrefLabel
 	}
 
 	for key, value := range o.AdditionalProperties {

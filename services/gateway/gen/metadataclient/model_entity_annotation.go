@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityAnnotation{}
 
 // EntityAnnotation struct for EntityAnnotation
 type EntityAnnotation struct {
-	HasBody              NullableEntityAddressCountryName `json:"has body,omitempty"`
-	HasTarget            NullableEntityAddressCountryName `json:"has target,omitempty"`
+	// The object of the relationship is a resource that is a body of the Annotation.
+	HasBody []string `json:"has body,omitempty"`
+	// The relationship between an Annotation and its Target.
+	HasTarget            []string `json:"has target,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityAnnotationWithDefaults() *EntityAnnotation {
 	return &this
 }
 
-// GetHasBody returns the HasBody field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityAnnotation) GetHasBody() EntityAddressCountryName {
-	if o == nil || IsNil(o.HasBody.Get()) {
-		var ret EntityAddressCountryName
+// GetHasBody returns the HasBody field value if set, zero value otherwise.
+func (o *EntityAnnotation) GetHasBody() []string {
+	if o == nil || IsNil(o.HasBody) {
+		var ret []string
 		return ret
 	}
-	return *o.HasBody.Get()
+	return o.HasBody
 }
 
 // GetHasBodyOk returns a tuple with the HasBody field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityAnnotation) GetHasBodyOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityAnnotation) GetHasBodyOk() ([]string, bool) {
+	if o == nil || IsNil(o.HasBody) {
 		return nil, false
 	}
-	return o.HasBody.Get(), o.HasBody.IsSet()
+	return o.HasBody, true
 }
 
 // HasHasBody returns a boolean if a field has been set.
 func (o *EntityAnnotation) HasHasBody() bool {
-	if o != nil && o.HasBody.IsSet() {
+	if o != nil && !IsNil(o.HasBody) {
 		return true
 	}
 
 	return false
 }
 
-// SetHasBody gets a reference to the given NullableEntityAddressCountryName and assigns it to the HasBody field.
-func (o *EntityAnnotation) SetHasBody(v EntityAddressCountryName) {
-	o.HasBody.Set(&v)
+// SetHasBody gets a reference to the given []string and assigns it to the HasBody field.
+func (o *EntityAnnotation) SetHasBody(v []string) {
+	o.HasBody = v
 }
 
-// SetHasBodyNil sets the value for HasBody to be an explicit nil
-func (o *EntityAnnotation) SetHasBodyNil() {
-	o.HasBody.Set(nil)
-}
-
-// UnsetHasBody ensures that no value is present for HasBody, not even an explicit nil
-func (o *EntityAnnotation) UnsetHasBody() {
-	o.HasBody.Unset()
-}
-
-// GetHasTarget returns the HasTarget field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityAnnotation) GetHasTarget() EntityAddressCountryName {
-	if o == nil || IsNil(o.HasTarget.Get()) {
-		var ret EntityAddressCountryName
+// GetHasTarget returns the HasTarget field value if set, zero value otherwise.
+func (o *EntityAnnotation) GetHasTarget() []string {
+	if o == nil || IsNil(o.HasTarget) {
+		var ret []string
 		return ret
 	}
-	return *o.HasTarget.Get()
+	return o.HasTarget
 }
 
 // GetHasTargetOk returns a tuple with the HasTarget field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityAnnotation) GetHasTargetOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityAnnotation) GetHasTargetOk() ([]string, bool) {
+	if o == nil || IsNil(o.HasTarget) {
 		return nil, false
 	}
-	return o.HasTarget.Get(), o.HasTarget.IsSet()
+	return o.HasTarget, true
 }
 
 // HasHasTarget returns a boolean if a field has been set.
 func (o *EntityAnnotation) HasHasTarget() bool {
-	if o != nil && o.HasTarget.IsSet() {
+	if o != nil && !IsNil(o.HasTarget) {
 		return true
 	}
 
 	return false
 }
 
-// SetHasTarget gets a reference to the given NullableEntityAddressCountryName and assigns it to the HasTarget field.
-func (o *EntityAnnotation) SetHasTarget(v EntityAddressCountryName) {
-	o.HasTarget.Set(&v)
-}
-
-// SetHasTargetNil sets the value for HasTarget to be an explicit nil
-func (o *EntityAnnotation) SetHasTargetNil() {
-	o.HasTarget.Set(nil)
-}
-
-// UnsetHasTarget ensures that no value is present for HasTarget, not even an explicit nil
-func (o *EntityAnnotation) UnsetHasTarget() {
-	o.HasTarget.Unset()
+// SetHasTarget gets a reference to the given []string and assigns it to the HasTarget field.
+func (o *EntityAnnotation) SetHasTarget(v []string) {
+	o.HasTarget = v
 }
 
 func (o EntityAnnotation) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityAnnotation) MarshalJSON() ([]byte, error) {
 
 func (o EntityAnnotation) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.HasBody.IsSet() {
-		toSerialize["has body"] = o.HasBody.Get()
+	if !IsNil(o.HasBody) {
+		toSerialize["has body"] = o.HasBody
 	}
-	if o.HasTarget.IsSet() {
-		toSerialize["has target"] = o.HasTarget.Get()
+	if !IsNil(o.HasTarget) {
+		toSerialize["has target"] = o.HasTarget
 	}
 
 	for key, value := range o.AdditionalProperties {

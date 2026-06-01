@@ -20,25 +20,44 @@ var _ MappedNullable = &EntityDistribution{}
 
 // EntityDistribution struct for EntityDistribution
 type EntityDistribution struct {
-	AccessUrl            NullableEntityAddressCountryName `json:"access url,omitempty"`
-	Annotation           NullableEntityAddressCountryName `json:"annotation,omitempty"`
-	ByteSize             NullableEntityAddressCountryName `json:"byte size,omitempty"`
-	Checksum             NullableEntityAddressCountryName `json:"checksum,omitempty"`
-	ConformsTo           NullableEntityAddressCountryName `json:"conforms to,omitempty"`
-	Description          NullableEntityAddressCountryName `json:"description,omitempty"`
-	DownloadUrl          NullableEntityAddressCountryName `json:"download url,omitempty"`
-	Format               NullableEntityAddressCountryName `json:"format,omitempty"`
-	Identifier           NullableEntityAddressCountryName `json:"identifier,omitempty"`
-	Issued               NullableEntityAddressCountryName `json:"issued,omitempty"`
-	Language             NullableEntityAddressCountryName `json:"language,omitempty"`
-	License              NullableEntityAddressCountryName `json:"license,omitempty"`
-	MediaType            NullableEntityAddressCountryName `json:"media type,omitempty"`
-	Modified             NullableEntityAddressCountryName `json:"modified,omitempty"`
-	Page                 NullableEntityAddressCountryName `json:"page,omitempty"`
-	Rights               NullableEntityAddressCountryName `json:"rights,omitempty"`
-	Status               NullableEntityAddressCountryName `json:"status,omitempty"`
-	Title                NullableEntityAddressCountryName `json:"title,omitempty"`
-	Type                 NullableEntityAddressCountryName `json:"type,omitempty"`
+	// This property contains a URL that gives access to a Distribution of the Dataset. The resource at the access URL may contain information about how to get the Dataset.
+	AccessUrl []string `json:"access url,omitempty"`
+	// Human-oriented description for the Annotation property in this shape.
+	Annotation []string `json:"annotation,omitempty"`
+	// This property contains the size of a Distribution in bytes.
+	ByteSize *float32 `json:"byte size,omitempty"`
+	// This property provides a mechanism that can be used to verify that the contents of a distribution have not changed
+	Checksum *string `json:"checksum,omitempty"`
+	// This property refers to an established schema to which the described Distribution conforms.
+	ConformsTo []string `json:"conforms to,omitempty"`
+	// This property contains a free-text account of the Distribution. This property can be repeated for parallel language versions of the description.
+	Description []string `json:"description,omitempty"`
+	// This property contains a URL that is a direct link to a downloadable file in a given format.
+	DownloadUrl []string `json:"download url,omitempty"`
+	// This property refers to the file format of the Distribution.
+	Format *string `json:"format,omitempty"`
+	// This property contains the main identifier for the Distribution.
+	Identifier *string `json:"identifier,omitempty"`
+	// This property contains the date of formal issuance (e.g., publication) of the Distribution.
+	Issued *string `json:"issued,omitempty"`
+	// This property refers to a language used in the Distribution. This property can be repeated if the metadata is provided in multiple languages.
+	Language []string `json:"language,omitempty"`
+	// This property refers to the licence under which the Distribution is made available.
+	License *string `json:"license,omitempty"`
+	// This property refers to the media type of the Distribution as defined in the official register of media types managed by IANA.
+	MediaType *string `json:"media type,omitempty"`
+	// This property contains the most recent date on which the Distribution was changed or modified.
+	Modified *string `json:"modified,omitempty"`
+	// This property refers to a page or document about this Distribution.
+	Page []string `json:"page,omitempty"`
+	// This property refers to a statement that specifies rights associated with the Distribution.
+	Rights *string `json:"rights,omitempty"`
+	// This property refers to the maturity of the Distribution
+	Status *string `json:"status,omitempty"`
+	// This property contains a name given to the Distribution. This property can be repeated for parallel language versions of the description.
+	Title []string `json:"title,omitempty"`
+	// This property refers to the type of the Distribution.
+	Type                 *string `json:"type,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -61,821 +80,612 @@ func NewEntityDistributionWithDefaults() *EntityDistribution {
 	return &this
 }
 
-// GetAccessUrl returns the AccessUrl field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetAccessUrl() EntityAddressCountryName {
-	if o == nil || IsNil(o.AccessUrl.Get()) {
-		var ret EntityAddressCountryName
+// GetAccessUrl returns the AccessUrl field value if set, zero value otherwise.
+func (o *EntityDistribution) GetAccessUrl() []string {
+	if o == nil || IsNil(o.AccessUrl) {
+		var ret []string
 		return ret
 	}
-	return *o.AccessUrl.Get()
+	return o.AccessUrl
 }
 
 // GetAccessUrlOk returns a tuple with the AccessUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetAccessUrlOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetAccessUrlOk() ([]string, bool) {
+	if o == nil || IsNil(o.AccessUrl) {
 		return nil, false
 	}
-	return o.AccessUrl.Get(), o.AccessUrl.IsSet()
+	return o.AccessUrl, true
 }
 
 // HasAccessUrl returns a boolean if a field has been set.
 func (o *EntityDistribution) HasAccessUrl() bool {
-	if o != nil && o.AccessUrl.IsSet() {
+	if o != nil && !IsNil(o.AccessUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetAccessUrl gets a reference to the given NullableEntityAddressCountryName and assigns it to the AccessUrl field.
-func (o *EntityDistribution) SetAccessUrl(v EntityAddressCountryName) {
-	o.AccessUrl.Set(&v)
+// SetAccessUrl gets a reference to the given []string and assigns it to the AccessUrl field.
+func (o *EntityDistribution) SetAccessUrl(v []string) {
+	o.AccessUrl = v
 }
 
-// SetAccessUrlNil sets the value for AccessUrl to be an explicit nil
-func (o *EntityDistribution) SetAccessUrlNil() {
-	o.AccessUrl.Set(nil)
-}
-
-// UnsetAccessUrl ensures that no value is present for AccessUrl, not even an explicit nil
-func (o *EntityDistribution) UnsetAccessUrl() {
-	o.AccessUrl.Unset()
-}
-
-// GetAnnotation returns the Annotation field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetAnnotation() EntityAddressCountryName {
-	if o == nil || IsNil(o.Annotation.Get()) {
-		var ret EntityAddressCountryName
+// GetAnnotation returns the Annotation field value if set, zero value otherwise.
+func (o *EntityDistribution) GetAnnotation() []string {
+	if o == nil || IsNil(o.Annotation) {
+		var ret []string
 		return ret
 	}
-	return *o.Annotation.Get()
+	return o.Annotation
 }
 
 // GetAnnotationOk returns a tuple with the Annotation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetAnnotationOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetAnnotationOk() ([]string, bool) {
+	if o == nil || IsNil(o.Annotation) {
 		return nil, false
 	}
-	return o.Annotation.Get(), o.Annotation.IsSet()
+	return o.Annotation, true
 }
 
 // HasAnnotation returns a boolean if a field has been set.
 func (o *EntityDistribution) HasAnnotation() bool {
-	if o != nil && o.Annotation.IsSet() {
+	if o != nil && !IsNil(o.Annotation) {
 		return true
 	}
 
 	return false
 }
 
-// SetAnnotation gets a reference to the given NullableEntityAddressCountryName and assigns it to the Annotation field.
-func (o *EntityDistribution) SetAnnotation(v EntityAddressCountryName) {
-	o.Annotation.Set(&v)
+// SetAnnotation gets a reference to the given []string and assigns it to the Annotation field.
+func (o *EntityDistribution) SetAnnotation(v []string) {
+	o.Annotation = v
 }
 
-// SetAnnotationNil sets the value for Annotation to be an explicit nil
-func (o *EntityDistribution) SetAnnotationNil() {
-	o.Annotation.Set(nil)
-}
-
-// UnsetAnnotation ensures that no value is present for Annotation, not even an explicit nil
-func (o *EntityDistribution) UnsetAnnotation() {
-	o.Annotation.Unset()
-}
-
-// GetByteSize returns the ByteSize field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetByteSize() EntityAddressCountryName {
-	if o == nil || IsNil(o.ByteSize.Get()) {
-		var ret EntityAddressCountryName
+// GetByteSize returns the ByteSize field value if set, zero value otherwise.
+func (o *EntityDistribution) GetByteSize() float32 {
+	if o == nil || IsNil(o.ByteSize) {
+		var ret float32
 		return ret
 	}
-	return *o.ByteSize.Get()
+	return *o.ByteSize
 }
 
 // GetByteSizeOk returns a tuple with the ByteSize field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetByteSizeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetByteSizeOk() (*float32, bool) {
+	if o == nil || IsNil(o.ByteSize) {
 		return nil, false
 	}
-	return o.ByteSize.Get(), o.ByteSize.IsSet()
+	return o.ByteSize, true
 }
 
 // HasByteSize returns a boolean if a field has been set.
 func (o *EntityDistribution) HasByteSize() bool {
-	if o != nil && o.ByteSize.IsSet() {
+	if o != nil && !IsNil(o.ByteSize) {
 		return true
 	}
 
 	return false
 }
 
-// SetByteSize gets a reference to the given NullableEntityAddressCountryName and assigns it to the ByteSize field.
-func (o *EntityDistribution) SetByteSize(v EntityAddressCountryName) {
-	o.ByteSize.Set(&v)
+// SetByteSize gets a reference to the given float32 and assigns it to the ByteSize field.
+func (o *EntityDistribution) SetByteSize(v float32) {
+	o.ByteSize = &v
 }
 
-// SetByteSizeNil sets the value for ByteSize to be an explicit nil
-func (o *EntityDistribution) SetByteSizeNil() {
-	o.ByteSize.Set(nil)
-}
-
-// UnsetByteSize ensures that no value is present for ByteSize, not even an explicit nil
-func (o *EntityDistribution) UnsetByteSize() {
-	o.ByteSize.Unset()
-}
-
-// GetChecksum returns the Checksum field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetChecksum() EntityAddressCountryName {
-	if o == nil || IsNil(o.Checksum.Get()) {
-		var ret EntityAddressCountryName
+// GetChecksum returns the Checksum field value if set, zero value otherwise.
+func (o *EntityDistribution) GetChecksum() string {
+	if o == nil || IsNil(o.Checksum) {
+		var ret string
 		return ret
 	}
-	return *o.Checksum.Get()
+	return *o.Checksum
 }
 
 // GetChecksumOk returns a tuple with the Checksum field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetChecksumOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetChecksumOk() (*string, bool) {
+	if o == nil || IsNil(o.Checksum) {
 		return nil, false
 	}
-	return o.Checksum.Get(), o.Checksum.IsSet()
+	return o.Checksum, true
 }
 
 // HasChecksum returns a boolean if a field has been set.
 func (o *EntityDistribution) HasChecksum() bool {
-	if o != nil && o.Checksum.IsSet() {
+	if o != nil && !IsNil(o.Checksum) {
 		return true
 	}
 
 	return false
 }
 
-// SetChecksum gets a reference to the given NullableEntityAddressCountryName and assigns it to the Checksum field.
-func (o *EntityDistribution) SetChecksum(v EntityAddressCountryName) {
-	o.Checksum.Set(&v)
+// SetChecksum gets a reference to the given string and assigns it to the Checksum field.
+func (o *EntityDistribution) SetChecksum(v string) {
+	o.Checksum = &v
 }
 
-// SetChecksumNil sets the value for Checksum to be an explicit nil
-func (o *EntityDistribution) SetChecksumNil() {
-	o.Checksum.Set(nil)
-}
-
-// UnsetChecksum ensures that no value is present for Checksum, not even an explicit nil
-func (o *EntityDistribution) UnsetChecksum() {
-	o.Checksum.Unset()
-}
-
-// GetConformsTo returns the ConformsTo field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetConformsTo() EntityAddressCountryName {
-	if o == nil || IsNil(o.ConformsTo.Get()) {
-		var ret EntityAddressCountryName
+// GetConformsTo returns the ConformsTo field value if set, zero value otherwise.
+func (o *EntityDistribution) GetConformsTo() []string {
+	if o == nil || IsNil(o.ConformsTo) {
+		var ret []string
 		return ret
 	}
-	return *o.ConformsTo.Get()
+	return o.ConformsTo
 }
 
 // GetConformsToOk returns a tuple with the ConformsTo field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetConformsToOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetConformsToOk() ([]string, bool) {
+	if o == nil || IsNil(o.ConformsTo) {
 		return nil, false
 	}
-	return o.ConformsTo.Get(), o.ConformsTo.IsSet()
+	return o.ConformsTo, true
 }
 
 // HasConformsTo returns a boolean if a field has been set.
 func (o *EntityDistribution) HasConformsTo() bool {
-	if o != nil && o.ConformsTo.IsSet() {
+	if o != nil && !IsNil(o.ConformsTo) {
 		return true
 	}
 
 	return false
 }
 
-// SetConformsTo gets a reference to the given NullableEntityAddressCountryName and assigns it to the ConformsTo field.
-func (o *EntityDistribution) SetConformsTo(v EntityAddressCountryName) {
-	o.ConformsTo.Set(&v)
+// SetConformsTo gets a reference to the given []string and assigns it to the ConformsTo field.
+func (o *EntityDistribution) SetConformsTo(v []string) {
+	o.ConformsTo = v
 }
 
-// SetConformsToNil sets the value for ConformsTo to be an explicit nil
-func (o *EntityDistribution) SetConformsToNil() {
-	o.ConformsTo.Set(nil)
-}
-
-// UnsetConformsTo ensures that no value is present for ConformsTo, not even an explicit nil
-func (o *EntityDistribution) UnsetConformsTo() {
-	o.ConformsTo.Unset()
-}
-
-// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetDescription() EntityAddressCountryName {
-	if o == nil || IsNil(o.Description.Get()) {
-		var ret EntityAddressCountryName
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *EntityDistribution) GetDescription() []string {
+	if o == nil || IsNil(o.Description) {
+		var ret []string
 		return ret
 	}
-	return *o.Description.Get()
+	return o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetDescriptionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetDescriptionOk() ([]string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return o.Description, true
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *EntityDistribution) HasDescription() bool {
-	if o != nil && o.Description.IsSet() {
+	if o != nil && !IsNil(o.Description) {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given NullableEntityAddressCountryName and assigns it to the Description field.
-func (o *EntityDistribution) SetDescription(v EntityAddressCountryName) {
-	o.Description.Set(&v)
+// SetDescription gets a reference to the given []string and assigns it to the Description field.
+func (o *EntityDistribution) SetDescription(v []string) {
+	o.Description = v
 }
 
-// SetDescriptionNil sets the value for Description to be an explicit nil
-func (o *EntityDistribution) SetDescriptionNil() {
-	o.Description.Set(nil)
-}
-
-// UnsetDescription ensures that no value is present for Description, not even an explicit nil
-func (o *EntityDistribution) UnsetDescription() {
-	o.Description.Unset()
-}
-
-// GetDownloadUrl returns the DownloadUrl field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetDownloadUrl() EntityAddressCountryName {
-	if o == nil || IsNil(o.DownloadUrl.Get()) {
-		var ret EntityAddressCountryName
+// GetDownloadUrl returns the DownloadUrl field value if set, zero value otherwise.
+func (o *EntityDistribution) GetDownloadUrl() []string {
+	if o == nil || IsNil(o.DownloadUrl) {
+		var ret []string
 		return ret
 	}
-	return *o.DownloadUrl.Get()
+	return o.DownloadUrl
 }
 
 // GetDownloadUrlOk returns a tuple with the DownloadUrl field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetDownloadUrlOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetDownloadUrlOk() ([]string, bool) {
+	if o == nil || IsNil(o.DownloadUrl) {
 		return nil, false
 	}
-	return o.DownloadUrl.Get(), o.DownloadUrl.IsSet()
+	return o.DownloadUrl, true
 }
 
 // HasDownloadUrl returns a boolean if a field has been set.
 func (o *EntityDistribution) HasDownloadUrl() bool {
-	if o != nil && o.DownloadUrl.IsSet() {
+	if o != nil && !IsNil(o.DownloadUrl) {
 		return true
 	}
 
 	return false
 }
 
-// SetDownloadUrl gets a reference to the given NullableEntityAddressCountryName and assigns it to the DownloadUrl field.
-func (o *EntityDistribution) SetDownloadUrl(v EntityAddressCountryName) {
-	o.DownloadUrl.Set(&v)
+// SetDownloadUrl gets a reference to the given []string and assigns it to the DownloadUrl field.
+func (o *EntityDistribution) SetDownloadUrl(v []string) {
+	o.DownloadUrl = v
 }
 
-// SetDownloadUrlNil sets the value for DownloadUrl to be an explicit nil
-func (o *EntityDistribution) SetDownloadUrlNil() {
-	o.DownloadUrl.Set(nil)
-}
-
-// UnsetDownloadUrl ensures that no value is present for DownloadUrl, not even an explicit nil
-func (o *EntityDistribution) UnsetDownloadUrl() {
-	o.DownloadUrl.Unset()
-}
-
-// GetFormat returns the Format field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetFormat() EntityAddressCountryName {
-	if o == nil || IsNil(o.Format.Get()) {
-		var ret EntityAddressCountryName
+// GetFormat returns the Format field value if set, zero value otherwise.
+func (o *EntityDistribution) GetFormat() string {
+	if o == nil || IsNil(o.Format) {
+		var ret string
 		return ret
 	}
-	return *o.Format.Get()
+	return *o.Format
 }
 
 // GetFormatOk returns a tuple with the Format field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetFormatOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetFormatOk() (*string, bool) {
+	if o == nil || IsNil(o.Format) {
 		return nil, false
 	}
-	return o.Format.Get(), o.Format.IsSet()
+	return o.Format, true
 }
 
 // HasFormat returns a boolean if a field has been set.
 func (o *EntityDistribution) HasFormat() bool {
-	if o != nil && o.Format.IsSet() {
+	if o != nil && !IsNil(o.Format) {
 		return true
 	}
 
 	return false
 }
 
-// SetFormat gets a reference to the given NullableEntityAddressCountryName and assigns it to the Format field.
-func (o *EntityDistribution) SetFormat(v EntityAddressCountryName) {
-	o.Format.Set(&v)
+// SetFormat gets a reference to the given string and assigns it to the Format field.
+func (o *EntityDistribution) SetFormat(v string) {
+	o.Format = &v
 }
 
-// SetFormatNil sets the value for Format to be an explicit nil
-func (o *EntityDistribution) SetFormatNil() {
-	o.Format.Set(nil)
-}
-
-// UnsetFormat ensures that no value is present for Format, not even an explicit nil
-func (o *EntityDistribution) UnsetFormat() {
-	o.Format.Unset()
-}
-
-// GetIdentifier returns the Identifier field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetIdentifier() EntityAddressCountryName {
-	if o == nil || IsNil(o.Identifier.Get()) {
-		var ret EntityAddressCountryName
+// GetIdentifier returns the Identifier field value if set, zero value otherwise.
+func (o *EntityDistribution) GetIdentifier() string {
+	if o == nil || IsNil(o.Identifier) {
+		var ret string
 		return ret
 	}
-	return *o.Identifier.Get()
+	return *o.Identifier
 }
 
 // GetIdentifierOk returns a tuple with the Identifier field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetIdentifierOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetIdentifierOk() (*string, bool) {
+	if o == nil || IsNil(o.Identifier) {
 		return nil, false
 	}
-	return o.Identifier.Get(), o.Identifier.IsSet()
+	return o.Identifier, true
 }
 
 // HasIdentifier returns a boolean if a field has been set.
 func (o *EntityDistribution) HasIdentifier() bool {
-	if o != nil && o.Identifier.IsSet() {
+	if o != nil && !IsNil(o.Identifier) {
 		return true
 	}
 
 	return false
 }
 
-// SetIdentifier gets a reference to the given NullableEntityAddressCountryName and assigns it to the Identifier field.
-func (o *EntityDistribution) SetIdentifier(v EntityAddressCountryName) {
-	o.Identifier.Set(&v)
+// SetIdentifier gets a reference to the given string and assigns it to the Identifier field.
+func (o *EntityDistribution) SetIdentifier(v string) {
+	o.Identifier = &v
 }
 
-// SetIdentifierNil sets the value for Identifier to be an explicit nil
-func (o *EntityDistribution) SetIdentifierNil() {
-	o.Identifier.Set(nil)
-}
-
-// UnsetIdentifier ensures that no value is present for Identifier, not even an explicit nil
-func (o *EntityDistribution) UnsetIdentifier() {
-	o.Identifier.Unset()
-}
-
-// GetIssued returns the Issued field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetIssued() EntityAddressCountryName {
-	if o == nil || IsNil(o.Issued.Get()) {
-		var ret EntityAddressCountryName
+// GetIssued returns the Issued field value if set, zero value otherwise.
+func (o *EntityDistribution) GetIssued() string {
+	if o == nil || IsNil(o.Issued) {
+		var ret string
 		return ret
 	}
-	return *o.Issued.Get()
+	return *o.Issued
 }
 
 // GetIssuedOk returns a tuple with the Issued field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetIssuedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetIssuedOk() (*string, bool) {
+	if o == nil || IsNil(o.Issued) {
 		return nil, false
 	}
-	return o.Issued.Get(), o.Issued.IsSet()
+	return o.Issued, true
 }
 
 // HasIssued returns a boolean if a field has been set.
 func (o *EntityDistribution) HasIssued() bool {
-	if o != nil && o.Issued.IsSet() {
+	if o != nil && !IsNil(o.Issued) {
 		return true
 	}
 
 	return false
 }
 
-// SetIssued gets a reference to the given NullableEntityAddressCountryName and assigns it to the Issued field.
-func (o *EntityDistribution) SetIssued(v EntityAddressCountryName) {
-	o.Issued.Set(&v)
+// SetIssued gets a reference to the given string and assigns it to the Issued field.
+func (o *EntityDistribution) SetIssued(v string) {
+	o.Issued = &v
 }
 
-// SetIssuedNil sets the value for Issued to be an explicit nil
-func (o *EntityDistribution) SetIssuedNil() {
-	o.Issued.Set(nil)
-}
-
-// UnsetIssued ensures that no value is present for Issued, not even an explicit nil
-func (o *EntityDistribution) UnsetIssued() {
-	o.Issued.Unset()
-}
-
-// GetLanguage returns the Language field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetLanguage() EntityAddressCountryName {
-	if o == nil || IsNil(o.Language.Get()) {
-		var ret EntityAddressCountryName
+// GetLanguage returns the Language field value if set, zero value otherwise.
+func (o *EntityDistribution) GetLanguage() []string {
+	if o == nil || IsNil(o.Language) {
+		var ret []string
 		return ret
 	}
-	return *o.Language.Get()
+	return o.Language
 }
 
 // GetLanguageOk returns a tuple with the Language field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetLanguageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetLanguageOk() ([]string, bool) {
+	if o == nil || IsNil(o.Language) {
 		return nil, false
 	}
-	return o.Language.Get(), o.Language.IsSet()
+	return o.Language, true
 }
 
 // HasLanguage returns a boolean if a field has been set.
 func (o *EntityDistribution) HasLanguage() bool {
-	if o != nil && o.Language.IsSet() {
+	if o != nil && !IsNil(o.Language) {
 		return true
 	}
 
 	return false
 }
 
-// SetLanguage gets a reference to the given NullableEntityAddressCountryName and assigns it to the Language field.
-func (o *EntityDistribution) SetLanguage(v EntityAddressCountryName) {
-	o.Language.Set(&v)
+// SetLanguage gets a reference to the given []string and assigns it to the Language field.
+func (o *EntityDistribution) SetLanguage(v []string) {
+	o.Language = v
 }
 
-// SetLanguageNil sets the value for Language to be an explicit nil
-func (o *EntityDistribution) SetLanguageNil() {
-	o.Language.Set(nil)
-}
-
-// UnsetLanguage ensures that no value is present for Language, not even an explicit nil
-func (o *EntityDistribution) UnsetLanguage() {
-	o.Language.Unset()
-}
-
-// GetLicense returns the License field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetLicense() EntityAddressCountryName {
-	if o == nil || IsNil(o.License.Get()) {
-		var ret EntityAddressCountryName
+// GetLicense returns the License field value if set, zero value otherwise.
+func (o *EntityDistribution) GetLicense() string {
+	if o == nil || IsNil(o.License) {
+		var ret string
 		return ret
 	}
-	return *o.License.Get()
+	return *o.License
 }
 
 // GetLicenseOk returns a tuple with the License field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetLicenseOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetLicenseOk() (*string, bool) {
+	if o == nil || IsNil(o.License) {
 		return nil, false
 	}
-	return o.License.Get(), o.License.IsSet()
+	return o.License, true
 }
 
 // HasLicense returns a boolean if a field has been set.
 func (o *EntityDistribution) HasLicense() bool {
-	if o != nil && o.License.IsSet() {
+	if o != nil && !IsNil(o.License) {
 		return true
 	}
 
 	return false
 }
 
-// SetLicense gets a reference to the given NullableEntityAddressCountryName and assigns it to the License field.
-func (o *EntityDistribution) SetLicense(v EntityAddressCountryName) {
-	o.License.Set(&v)
+// SetLicense gets a reference to the given string and assigns it to the License field.
+func (o *EntityDistribution) SetLicense(v string) {
+	o.License = &v
 }
 
-// SetLicenseNil sets the value for License to be an explicit nil
-func (o *EntityDistribution) SetLicenseNil() {
-	o.License.Set(nil)
-}
-
-// UnsetLicense ensures that no value is present for License, not even an explicit nil
-func (o *EntityDistribution) UnsetLicense() {
-	o.License.Unset()
-}
-
-// GetMediaType returns the MediaType field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetMediaType() EntityAddressCountryName {
-	if o == nil || IsNil(o.MediaType.Get()) {
-		var ret EntityAddressCountryName
+// GetMediaType returns the MediaType field value if set, zero value otherwise.
+func (o *EntityDistribution) GetMediaType() string {
+	if o == nil || IsNil(o.MediaType) {
+		var ret string
 		return ret
 	}
-	return *o.MediaType.Get()
+	return *o.MediaType
 }
 
 // GetMediaTypeOk returns a tuple with the MediaType field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetMediaTypeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetMediaTypeOk() (*string, bool) {
+	if o == nil || IsNil(o.MediaType) {
 		return nil, false
 	}
-	return o.MediaType.Get(), o.MediaType.IsSet()
+	return o.MediaType, true
 }
 
 // HasMediaType returns a boolean if a field has been set.
 func (o *EntityDistribution) HasMediaType() bool {
-	if o != nil && o.MediaType.IsSet() {
+	if o != nil && !IsNil(o.MediaType) {
 		return true
 	}
 
 	return false
 }
 
-// SetMediaType gets a reference to the given NullableEntityAddressCountryName and assigns it to the MediaType field.
-func (o *EntityDistribution) SetMediaType(v EntityAddressCountryName) {
-	o.MediaType.Set(&v)
+// SetMediaType gets a reference to the given string and assigns it to the MediaType field.
+func (o *EntityDistribution) SetMediaType(v string) {
+	o.MediaType = &v
 }
 
-// SetMediaTypeNil sets the value for MediaType to be an explicit nil
-func (o *EntityDistribution) SetMediaTypeNil() {
-	o.MediaType.Set(nil)
-}
-
-// UnsetMediaType ensures that no value is present for MediaType, not even an explicit nil
-func (o *EntityDistribution) UnsetMediaType() {
-	o.MediaType.Unset()
-}
-
-// GetModified returns the Modified field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetModified() EntityAddressCountryName {
-	if o == nil || IsNil(o.Modified.Get()) {
-		var ret EntityAddressCountryName
+// GetModified returns the Modified field value if set, zero value otherwise.
+func (o *EntityDistribution) GetModified() string {
+	if o == nil || IsNil(o.Modified) {
+		var ret string
 		return ret
 	}
-	return *o.Modified.Get()
+	return *o.Modified
 }
 
 // GetModifiedOk returns a tuple with the Modified field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetModifiedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetModifiedOk() (*string, bool) {
+	if o == nil || IsNil(o.Modified) {
 		return nil, false
 	}
-	return o.Modified.Get(), o.Modified.IsSet()
+	return o.Modified, true
 }
 
 // HasModified returns a boolean if a field has been set.
 func (o *EntityDistribution) HasModified() bool {
-	if o != nil && o.Modified.IsSet() {
+	if o != nil && !IsNil(o.Modified) {
 		return true
 	}
 
 	return false
 }
 
-// SetModified gets a reference to the given NullableEntityAddressCountryName and assigns it to the Modified field.
-func (o *EntityDistribution) SetModified(v EntityAddressCountryName) {
-	o.Modified.Set(&v)
+// SetModified gets a reference to the given string and assigns it to the Modified field.
+func (o *EntityDistribution) SetModified(v string) {
+	o.Modified = &v
 }
 
-// SetModifiedNil sets the value for Modified to be an explicit nil
-func (o *EntityDistribution) SetModifiedNil() {
-	o.Modified.Set(nil)
-}
-
-// UnsetModified ensures that no value is present for Modified, not even an explicit nil
-func (o *EntityDistribution) UnsetModified() {
-	o.Modified.Unset()
-}
-
-// GetPage returns the Page field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetPage() EntityAddressCountryName {
-	if o == nil || IsNil(o.Page.Get()) {
-		var ret EntityAddressCountryName
+// GetPage returns the Page field value if set, zero value otherwise.
+func (o *EntityDistribution) GetPage() []string {
+	if o == nil || IsNil(o.Page) {
+		var ret []string
 		return ret
 	}
-	return *o.Page.Get()
+	return o.Page
 }
 
 // GetPageOk returns a tuple with the Page field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetPageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetPageOk() ([]string, bool) {
+	if o == nil || IsNil(o.Page) {
 		return nil, false
 	}
-	return o.Page.Get(), o.Page.IsSet()
+	return o.Page, true
 }
 
 // HasPage returns a boolean if a field has been set.
 func (o *EntityDistribution) HasPage() bool {
-	if o != nil && o.Page.IsSet() {
+	if o != nil && !IsNil(o.Page) {
 		return true
 	}
 
 	return false
 }
 
-// SetPage gets a reference to the given NullableEntityAddressCountryName and assigns it to the Page field.
-func (o *EntityDistribution) SetPage(v EntityAddressCountryName) {
-	o.Page.Set(&v)
+// SetPage gets a reference to the given []string and assigns it to the Page field.
+func (o *EntityDistribution) SetPage(v []string) {
+	o.Page = v
 }
 
-// SetPageNil sets the value for Page to be an explicit nil
-func (o *EntityDistribution) SetPageNil() {
-	o.Page.Set(nil)
-}
-
-// UnsetPage ensures that no value is present for Page, not even an explicit nil
-func (o *EntityDistribution) UnsetPage() {
-	o.Page.Unset()
-}
-
-// GetRights returns the Rights field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetRights() EntityAddressCountryName {
-	if o == nil || IsNil(o.Rights.Get()) {
-		var ret EntityAddressCountryName
+// GetRights returns the Rights field value if set, zero value otherwise.
+func (o *EntityDistribution) GetRights() string {
+	if o == nil || IsNil(o.Rights) {
+		var ret string
 		return ret
 	}
-	return *o.Rights.Get()
+	return *o.Rights
 }
 
 // GetRightsOk returns a tuple with the Rights field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetRightsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetRightsOk() (*string, bool) {
+	if o == nil || IsNil(o.Rights) {
 		return nil, false
 	}
-	return o.Rights.Get(), o.Rights.IsSet()
+	return o.Rights, true
 }
 
 // HasRights returns a boolean if a field has been set.
 func (o *EntityDistribution) HasRights() bool {
-	if o != nil && o.Rights.IsSet() {
+	if o != nil && !IsNil(o.Rights) {
 		return true
 	}
 
 	return false
 }
 
-// SetRights gets a reference to the given NullableEntityAddressCountryName and assigns it to the Rights field.
-func (o *EntityDistribution) SetRights(v EntityAddressCountryName) {
-	o.Rights.Set(&v)
+// SetRights gets a reference to the given string and assigns it to the Rights field.
+func (o *EntityDistribution) SetRights(v string) {
+	o.Rights = &v
 }
 
-// SetRightsNil sets the value for Rights to be an explicit nil
-func (o *EntityDistribution) SetRightsNil() {
-	o.Rights.Set(nil)
-}
-
-// UnsetRights ensures that no value is present for Rights, not even an explicit nil
-func (o *EntityDistribution) UnsetRights() {
-	o.Rights.Unset()
-}
-
-// GetStatus returns the Status field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetStatus() EntityAddressCountryName {
-	if o == nil || IsNil(o.Status.Get()) {
-		var ret EntityAddressCountryName
+// GetStatus returns the Status field value if set, zero value otherwise.
+func (o *EntityDistribution) GetStatus() string {
+	if o == nil || IsNil(o.Status) {
+		var ret string
 		return ret
 	}
-	return *o.Status.Get()
+	return *o.Status
 }
 
 // GetStatusOk returns a tuple with the Status field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetStatusOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetStatusOk() (*string, bool) {
+	if o == nil || IsNil(o.Status) {
 		return nil, false
 	}
-	return o.Status.Get(), o.Status.IsSet()
+	return o.Status, true
 }
 
 // HasStatus returns a boolean if a field has been set.
 func (o *EntityDistribution) HasStatus() bool {
-	if o != nil && o.Status.IsSet() {
+	if o != nil && !IsNil(o.Status) {
 		return true
 	}
 
 	return false
 }
 
-// SetStatus gets a reference to the given NullableEntityAddressCountryName and assigns it to the Status field.
-func (o *EntityDistribution) SetStatus(v EntityAddressCountryName) {
-	o.Status.Set(&v)
+// SetStatus gets a reference to the given string and assigns it to the Status field.
+func (o *EntityDistribution) SetStatus(v string) {
+	o.Status = &v
 }
 
-// SetStatusNil sets the value for Status to be an explicit nil
-func (o *EntityDistribution) SetStatusNil() {
-	o.Status.Set(nil)
-}
-
-// UnsetStatus ensures that no value is present for Status, not even an explicit nil
-func (o *EntityDistribution) UnsetStatus() {
-	o.Status.Unset()
-}
-
-// GetTitle returns the Title field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetTitle() EntityAddressCountryName {
-	if o == nil || IsNil(o.Title.Get()) {
-		var ret EntityAddressCountryName
+// GetTitle returns the Title field value if set, zero value otherwise.
+func (o *EntityDistribution) GetTitle() []string {
+	if o == nil || IsNil(o.Title) {
+		var ret []string
 		return ret
 	}
-	return *o.Title.Get()
+	return o.Title
 }
 
 // GetTitleOk returns a tuple with the Title field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetTitleOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetTitleOk() ([]string, bool) {
+	if o == nil || IsNil(o.Title) {
 		return nil, false
 	}
-	return o.Title.Get(), o.Title.IsSet()
+	return o.Title, true
 }
 
 // HasTitle returns a boolean if a field has been set.
 func (o *EntityDistribution) HasTitle() bool {
-	if o != nil && o.Title.IsSet() {
+	if o != nil && !IsNil(o.Title) {
 		return true
 	}
 
 	return false
 }
 
-// SetTitle gets a reference to the given NullableEntityAddressCountryName and assigns it to the Title field.
-func (o *EntityDistribution) SetTitle(v EntityAddressCountryName) {
-	o.Title.Set(&v)
+// SetTitle gets a reference to the given []string and assigns it to the Title field.
+func (o *EntityDistribution) SetTitle(v []string) {
+	o.Title = v
 }
 
-// SetTitleNil sets the value for Title to be an explicit nil
-func (o *EntityDistribution) SetTitleNil() {
-	o.Title.Set(nil)
-}
-
-// UnsetTitle ensures that no value is present for Title, not even an explicit nil
-func (o *EntityDistribution) UnsetTitle() {
-	o.Title.Unset()
-}
-
-// GetType returns the Type field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityDistribution) GetType() EntityAddressCountryName {
-	if o == nil || IsNil(o.Type.Get()) {
-		var ret EntityAddressCountryName
+// GetType returns the Type field value if set, zero value otherwise.
+func (o *EntityDistribution) GetType() string {
+	if o == nil || IsNil(o.Type) {
+		var ret string
 		return ret
 	}
-	return *o.Type.Get()
+	return *o.Type
 }
 
 // GetTypeOk returns a tuple with the Type field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityDistribution) GetTypeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityDistribution) GetTypeOk() (*string, bool) {
+	if o == nil || IsNil(o.Type) {
 		return nil, false
 	}
-	return o.Type.Get(), o.Type.IsSet()
+	return o.Type, true
 }
 
 // HasType returns a boolean if a field has been set.
 func (o *EntityDistribution) HasType() bool {
-	if o != nil && o.Type.IsSet() {
+	if o != nil && !IsNil(o.Type) {
 		return true
 	}
 
 	return false
 }
 
-// SetType gets a reference to the given NullableEntityAddressCountryName and assigns it to the Type field.
-func (o *EntityDistribution) SetType(v EntityAddressCountryName) {
-	o.Type.Set(&v)
-}
-
-// SetTypeNil sets the value for Type to be an explicit nil
-func (o *EntityDistribution) SetTypeNil() {
-	o.Type.Set(nil)
-}
-
-// UnsetType ensures that no value is present for Type, not even an explicit nil
-func (o *EntityDistribution) UnsetType() {
-	o.Type.Unset()
+// SetType gets a reference to the given string and assigns it to the Type field.
+func (o *EntityDistribution) SetType(v string) {
+	o.Type = &v
 }
 
 func (o EntityDistribution) MarshalJSON() ([]byte, error) {
@@ -888,62 +698,62 @@ func (o EntityDistribution) MarshalJSON() ([]byte, error) {
 
 func (o EntityDistribution) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.AccessUrl.IsSet() {
-		toSerialize["access url"] = o.AccessUrl.Get()
+	if !IsNil(o.AccessUrl) {
+		toSerialize["access url"] = o.AccessUrl
 	}
-	if o.Annotation.IsSet() {
-		toSerialize["annotation"] = o.Annotation.Get()
+	if !IsNil(o.Annotation) {
+		toSerialize["annotation"] = o.Annotation
 	}
-	if o.ByteSize.IsSet() {
-		toSerialize["byte size"] = o.ByteSize.Get()
+	if !IsNil(o.ByteSize) {
+		toSerialize["byte size"] = o.ByteSize
 	}
-	if o.Checksum.IsSet() {
-		toSerialize["checksum"] = o.Checksum.Get()
+	if !IsNil(o.Checksum) {
+		toSerialize["checksum"] = o.Checksum
 	}
-	if o.ConformsTo.IsSet() {
-		toSerialize["conforms to"] = o.ConformsTo.Get()
+	if !IsNil(o.ConformsTo) {
+		toSerialize["conforms to"] = o.ConformsTo
 	}
-	if o.Description.IsSet() {
-		toSerialize["description"] = o.Description.Get()
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
 	}
-	if o.DownloadUrl.IsSet() {
-		toSerialize["download url"] = o.DownloadUrl.Get()
+	if !IsNil(o.DownloadUrl) {
+		toSerialize["download url"] = o.DownloadUrl
 	}
-	if o.Format.IsSet() {
-		toSerialize["format"] = o.Format.Get()
+	if !IsNil(o.Format) {
+		toSerialize["format"] = o.Format
 	}
-	if o.Identifier.IsSet() {
-		toSerialize["identifier"] = o.Identifier.Get()
+	if !IsNil(o.Identifier) {
+		toSerialize["identifier"] = o.Identifier
 	}
-	if o.Issued.IsSet() {
-		toSerialize["issued"] = o.Issued.Get()
+	if !IsNil(o.Issued) {
+		toSerialize["issued"] = o.Issued
 	}
-	if o.Language.IsSet() {
-		toSerialize["language"] = o.Language.Get()
+	if !IsNil(o.Language) {
+		toSerialize["language"] = o.Language
 	}
-	if o.License.IsSet() {
-		toSerialize["license"] = o.License.Get()
+	if !IsNil(o.License) {
+		toSerialize["license"] = o.License
 	}
-	if o.MediaType.IsSet() {
-		toSerialize["media type"] = o.MediaType.Get()
+	if !IsNil(o.MediaType) {
+		toSerialize["media type"] = o.MediaType
 	}
-	if o.Modified.IsSet() {
-		toSerialize["modified"] = o.Modified.Get()
+	if !IsNil(o.Modified) {
+		toSerialize["modified"] = o.Modified
 	}
-	if o.Page.IsSet() {
-		toSerialize["page"] = o.Page.Get()
+	if !IsNil(o.Page) {
+		toSerialize["page"] = o.Page
 	}
-	if o.Rights.IsSet() {
-		toSerialize["rights"] = o.Rights.Get()
+	if !IsNil(o.Rights) {
+		toSerialize["rights"] = o.Rights
 	}
-	if o.Status.IsSet() {
-		toSerialize["status"] = o.Status.Get()
+	if !IsNil(o.Status) {
+		toSerialize["status"] = o.Status
 	}
-	if o.Title.IsSet() {
-		toSerialize["title"] = o.Title.Get()
+	if !IsNil(o.Title) {
+		toSerialize["title"] = o.Title
 	}
-	if o.Type.IsSet() {
-		toSerialize["type"] = o.Type.Get()
+	if !IsNil(o.Type) {
+		toSerialize["type"] = o.Type
 	}
 
 	for key, value := range o.AdditionalProperties {

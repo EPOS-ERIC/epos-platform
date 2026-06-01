@@ -20,7 +20,8 @@ var _ MappedNullable = &EntityLocation{}
 
 // EntityLocation struct for EntityLocation
 type EntityLocation struct {
-	Geometry             NullableEntityAddressCountryName `json:"geometry,omitempty"`
+	// This property associates any resource with the corresponding geometry.
+	Geometry             []string `json:"geometry,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -43,47 +44,36 @@ func NewEntityLocationWithDefaults() *EntityLocation {
 	return &this
 }
 
-// GetGeometry returns the Geometry field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityLocation) GetGeometry() EntityAddressCountryName {
-	if o == nil || IsNil(o.Geometry.Get()) {
-		var ret EntityAddressCountryName
+// GetGeometry returns the Geometry field value if set, zero value otherwise.
+func (o *EntityLocation) GetGeometry() []string {
+	if o == nil || IsNil(o.Geometry) {
+		var ret []string
 		return ret
 	}
-	return *o.Geometry.Get()
+	return o.Geometry
 }
 
 // GetGeometryOk returns a tuple with the Geometry field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityLocation) GetGeometryOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityLocation) GetGeometryOk() ([]string, bool) {
+	if o == nil || IsNil(o.Geometry) {
 		return nil, false
 	}
-	return o.Geometry.Get(), o.Geometry.IsSet()
+	return o.Geometry, true
 }
 
 // HasGeometry returns a boolean if a field has been set.
 func (o *EntityLocation) HasGeometry() bool {
-	if o != nil && o.Geometry.IsSet() {
+	if o != nil && !IsNil(o.Geometry) {
 		return true
 	}
 
 	return false
 }
 
-// SetGeometry gets a reference to the given NullableEntityAddressCountryName and assigns it to the Geometry field.
-func (o *EntityLocation) SetGeometry(v EntityAddressCountryName) {
-	o.Geometry.Set(&v)
-}
-
-// SetGeometryNil sets the value for Geometry to be an explicit nil
-func (o *EntityLocation) SetGeometryNil() {
-	o.Geometry.Set(nil)
-}
-
-// UnsetGeometry ensures that no value is present for Geometry, not even an explicit nil
-func (o *EntityLocation) UnsetGeometry() {
-	o.Geometry.Unset()
+// SetGeometry gets a reference to the given []string and assigns it to the Geometry field.
+func (o *EntityLocation) SetGeometry(v []string) {
+	o.Geometry = v
 }
 
 func (o EntityLocation) MarshalJSON() ([]byte, error) {
@@ -96,8 +86,8 @@ func (o EntityLocation) MarshalJSON() ([]byte, error) {
 
 func (o EntityLocation) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Geometry.IsSet() {
-		toSerialize["geometry"] = o.Geometry.Get()
+	if !IsNil(o.Geometry) {
+		toSerialize["geometry"] = o.Geometry
 	}
 
 	for key, value := range o.AdditionalProperties {

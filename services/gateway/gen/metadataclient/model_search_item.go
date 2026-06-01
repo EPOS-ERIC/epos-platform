@@ -26,7 +26,7 @@ type SearchItem struct {
 	Id   string       `json:"id"`
 	// Absolute URL of the typed detail endpoint. Follow this link; do not construct URLs.
 	Href string `json:"href"`
-	// SHACL-selected property values returned only when includeConstraints=true (includes `name`)
+	// SHACL-selected property values returned only when includeConstraints=true. Relation properties are returned as object(s) with `id`, `type`, and `href`; literal properties remain scalar/array values.
 	Fields map[string]interface{} `json:"fields,omitempty"`
 }
 

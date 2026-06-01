@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityQuantitativevalue{}
 
 // EntityQuantitativevalue struct for EntityQuantitativevalue
 type EntityQuantitativevalue struct {
-	UnitCode             NullableEntityAddressCountryName `json:"unit code,omitempty"`
-	Value                NullableEntityAddressCountryName `json:"value,omitempty"`
+	// The unit of measurement given using the UN/CEFACT Common Code (3 characters) or a URL. Other codes than the UN/CEFACT Common Code may be used with a prefix followed by a colon.
+	UnitCode *string `json:"unit code,omitempty"`
+	// The value of the quantitative value or property value node.The recommended type for values is 'Number'.
+	Value                *float32 `json:"value,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityQuantitativevalueWithDefaults() *EntityQuantitativevalue {
 	return &this
 }
 
-// GetUnitCode returns the UnitCode field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityQuantitativevalue) GetUnitCode() EntityAddressCountryName {
-	if o == nil || IsNil(o.UnitCode.Get()) {
-		var ret EntityAddressCountryName
+// GetUnitCode returns the UnitCode field value if set, zero value otherwise.
+func (o *EntityQuantitativevalue) GetUnitCode() string {
+	if o == nil || IsNil(o.UnitCode) {
+		var ret string
 		return ret
 	}
-	return *o.UnitCode.Get()
+	return *o.UnitCode
 }
 
 // GetUnitCodeOk returns a tuple with the UnitCode field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityQuantitativevalue) GetUnitCodeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityQuantitativevalue) GetUnitCodeOk() (*string, bool) {
+	if o == nil || IsNil(o.UnitCode) {
 		return nil, false
 	}
-	return o.UnitCode.Get(), o.UnitCode.IsSet()
+	return o.UnitCode, true
 }
 
 // HasUnitCode returns a boolean if a field has been set.
 func (o *EntityQuantitativevalue) HasUnitCode() bool {
-	if o != nil && o.UnitCode.IsSet() {
+	if o != nil && !IsNil(o.UnitCode) {
 		return true
 	}
 
 	return false
 }
 
-// SetUnitCode gets a reference to the given NullableEntityAddressCountryName and assigns it to the UnitCode field.
-func (o *EntityQuantitativevalue) SetUnitCode(v EntityAddressCountryName) {
-	o.UnitCode.Set(&v)
+// SetUnitCode gets a reference to the given string and assigns it to the UnitCode field.
+func (o *EntityQuantitativevalue) SetUnitCode(v string) {
+	o.UnitCode = &v
 }
 
-// SetUnitCodeNil sets the value for UnitCode to be an explicit nil
-func (o *EntityQuantitativevalue) SetUnitCodeNil() {
-	o.UnitCode.Set(nil)
-}
-
-// UnsetUnitCode ensures that no value is present for UnitCode, not even an explicit nil
-func (o *EntityQuantitativevalue) UnsetUnitCode() {
-	o.UnitCode.Unset()
-}
-
-// GetValue returns the Value field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityQuantitativevalue) GetValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.Value.Get()) {
-		var ret EntityAddressCountryName
+// GetValue returns the Value field value if set, zero value otherwise.
+func (o *EntityQuantitativevalue) GetValue() float32 {
+	if o == nil || IsNil(o.Value) {
+		var ret float32
 		return ret
 	}
-	return *o.Value.Get()
+	return *o.Value
 }
 
 // GetValueOk returns a tuple with the Value field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityQuantitativevalue) GetValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityQuantitativevalue) GetValueOk() (*float32, bool) {
+	if o == nil || IsNil(o.Value) {
 		return nil, false
 	}
-	return o.Value.Get(), o.Value.IsSet()
+	return o.Value, true
 }
 
 // HasValue returns a boolean if a field has been set.
 func (o *EntityQuantitativevalue) HasValue() bool {
-	if o != nil && o.Value.IsSet() {
+	if o != nil && !IsNil(o.Value) {
 		return true
 	}
 
 	return false
 }
 
-// SetValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the Value field.
-func (o *EntityQuantitativevalue) SetValue(v EntityAddressCountryName) {
-	o.Value.Set(&v)
-}
-
-// SetValueNil sets the value for Value to be an explicit nil
-func (o *EntityQuantitativevalue) SetValueNil() {
-	o.Value.Set(nil)
-}
-
-// UnsetValue ensures that no value is present for Value, not even an explicit nil
-func (o *EntityQuantitativevalue) UnsetValue() {
-	o.Value.Unset()
+// SetValue gets a reference to the given float32 and assigns it to the Value field.
+func (o *EntityQuantitativevalue) SetValue(v float32) {
+	o.Value = &v
 }
 
 func (o EntityQuantitativevalue) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityQuantitativevalue) MarshalJSON() ([]byte, error) {
 
 func (o EntityQuantitativevalue) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.UnitCode.IsSet() {
-		toSerialize["unit code"] = o.UnitCode.Get()
+	if !IsNil(o.UnitCode) {
+		toSerialize["unit code"] = o.UnitCode
 	}
-	if o.Value.IsSet() {
-		toSerialize["value"] = o.Value.Get()
+	if !IsNil(o.Value) {
+		toSerialize["value"] = o.Value
 	}
 
 	for key, value := range o.AdditionalProperties {

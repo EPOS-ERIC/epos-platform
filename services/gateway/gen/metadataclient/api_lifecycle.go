@@ -39,7 +39,7 @@ type LifecycleAPI interface {
 	/*
 		ApiV2ResourceTypeIdDraftPost Create new draft from published
 
-		Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
+		Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource. The new version number is auto-incremented from the current published version.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param resourceType
@@ -208,7 +208,6 @@ type ApiApiV2ResourceTypeIdDraftPostRequest struct {
 	xGroup       *string
 	resourceType string
 	id           string
-	version      *string
 }
 
 func (r ApiApiV2ResourceTypeIdDraftPostRequest) XAgent(xAgent string) ApiApiV2ResourceTypeIdDraftPostRequest {
@@ -221,11 +220,6 @@ func (r ApiApiV2ResourceTypeIdDraftPostRequest) XGroup(xGroup string) ApiApiV2Re
 	return r
 }
 
-func (r ApiApiV2ResourceTypeIdDraftPostRequest) Version(version string) ApiApiV2ResourceTypeIdDraftPostRequest {
-	r.version = &version
-	return r
-}
-
 func (r ApiApiV2ResourceTypeIdDraftPostRequest) Execute() (*http.Response, error) {
 	return r.ApiService.ApiV2ResourceTypeIdDraftPostExecute(r)
 }
@@ -233,7 +227,7 @@ func (r ApiApiV2ResourceTypeIdDraftPostRequest) Execute() (*http.Response, error
 /*
 ApiV2ResourceTypeIdDraftPost Create new draft from published
 
-Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
+Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource. The new version number is auto-incremented from the current published version.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param resourceType
@@ -276,13 +270,6 @@ func (a *LifecycleAPIService) ApiV2ResourceTypeIdDraftPostExecute(r ApiApiV2Reso
 		return nil, reportError("xGroup is required and must be specified")
 	}
 
-	if r.version != nil {
-		parameterAddToHeaderOrQuery(localVarQueryParams, "version", r.version, "form", "")
-	} else {
-		var defaultValue string = "2.0"
-		parameterAddToHeaderOrQuery(localVarQueryParams, "version", defaultValue, "form", "")
-		r.version = &defaultValue
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

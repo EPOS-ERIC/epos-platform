@@ -899,16 +899,9 @@ paths:
     post:
       description: "Creates a new draft version from a published entity. Path id may\
         \ be conceptual id, version id, or identifier and is resolved to conceptual\
-        \ resource."
+        \ resource. The new version number is auto-incremented from the current published\
+        \ version."
       parameters:
-      - explode: true
-        in: query
-        name: version
-        required: false
-        schema:
-          default: "2.0"
-          type: string
-        style: form
       - explode: false
         in: header
         name: X-Agent
@@ -4282,8 +4275,9 @@ components:
           type: string
         fields:
           additionalProperties: true
-          description: SHACL-selected property values returned only when includeConstraints=true
-            (includes `name`)
+          description: "SHACL-selected property values returned only when includeConstraints=true.\
+            \ Relation properties are returned as object(s) with `id`, `type`, and\
+            \ `href`; literal properties remain scalar/array values."
           type: object
       required:
       - href
@@ -4377,229 +4371,6 @@ components:
       required:
       - href
       - id
-    TemporalExtent:
-      description: Temporal coverage of a resource
-      properties:
-        start:
-          description: "Start of the temporal coverage (inclusive), ISO 8601 UTC"
-          format: date-time
-          type: string
-        end:
-          description: "End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted\
-            \ for open-ended coverage."
-          format: date-time
-          type: string
-    Dataset:
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        keywords:
-          items:
-            type: string
-          type: array
-        categories:
-          description: Category labels assigned to this dataset
-          items:
-            type: string
-          type: array
-        publisher:
-          description: Names of the organisations publishing this dataset
-          items:
-            type: string
-          type: array
-        spatial:
-          description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
-          type: string
-        temporal:
-          $ref: "#/components/schemas/TemporalExtent"
-        status:
-          $ref: "#/components/schemas/VersioningStatus"
-        distributions:
-          description: Distributions that provide access to this dataset
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-        related:
-          description: Outbound related entities referenced by this dataset
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-        relatedBy:
-          description: Inbound related entities that reference this dataset
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-      required:
-      - id
-      - status
-      - title
-    Distribution:
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        accessUrl:
-          description: URL used to access the distribution
-          format: uri
-          type: string
-        operation:
-          description: Operation ID describing the service operation exposed by this
-            distribution
-          type: string
-        related:
-          description: Outbound related entities referenced by this distribution
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-        relatedBy:
-          description: Inbound related entities that reference this distribution
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-      required:
-      - id
-      - title
-    SoftwareApplication:
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        keywords:
-          items:
-            type: string
-          type: array
-        categories:
-          description: Category labels assigned to this application
-          items:
-            type: string
-          type: array
-        downloadUrl:
-          description: URL to download or install the application
-          format: uri
-          type: string
-        related:
-          description: Outbound related entities referenced by this application
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-        relatedBy:
-          description: Inbound related entities that reference this application
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-      required:
-      - id
-      - title
-    SoftwareSourceCode:
-      properties:
-        id:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        programmingLanguage:
-          description: Primary programming language of the source code
-          type: string
-        keywords:
-          items:
-            type: string
-          type: array
-        categories:
-          description: Category labels assigned to this source code
-          items:
-            type: string
-          type: array
-        repository:
-          description: URL of the source code repository
-          format: uri
-          type: string
-        related:
-          description: Outbound related entities referenced by this source code
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-        relatedBy:
-          description: Inbound related entities that reference this source code
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-          type: array
-      required:
-      - id
-      - title
-    Category:
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        children:
-          description: Nested child categories
-          items:
-            $ref: "#/components/schemas/Category"
-          type: array
-      required:
-      - id
-      - name
-    CategoryScheme:
-      properties:
-        id:
-          type: string
-        label:
-          type: string
-        title:
-          type: string
-        description:
-          type: string
-        logo:
-          format: uri
-          type: string
-        homepage:
-          format: uri
-          type: string
-        color:
-          description: Hex colour code used for UI rendering
-          type: string
-        orderNumber:
-          description: Display order among sibling category schemes
-          type: integer
-        type:
-          enum:
-          - DATA
-          - FACILITY
-          - SOFTWARE
-          type: string
-        children:
-          description: Top-level categories within this scheme
-          items:
-            $ref: "#/components/schemas/Category"
-          type: array
-      required:
-      - id
-      - label
-      - type
-    CategoryTreeResponse:
-      properties:
-        schemes:
-          description: "Ordered list of category schemes, each carrying its full category\
-            \ subtree"
-          items:
-            $ref: "#/components/schemas/CategoryScheme"
-          type: array
-      required:
-      - schemes
     ErrorResponse:
       example:
         errorMessage: errorMessage
@@ -4958,19 +4729,28 @@ components:
     Entity_address:
       additionalProperties: true
       example:
-        country name: Entity_address_country_name
-        postal code: null
-        locality: null
-        street address: null
+        country name: country name
+        postal code: postal code
+        locality: locality
+        street address: street address
       properties:
         country name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The country name associated with the address of the object
+          type: string
+          nullable: false
         locality:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The locality (e.g. city or town) associated with the address
+            of the object
+          type: string
+          nullable: false
         postal code:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The postal code associated with the address of the object
+          type: string
+          nullable: false
         street address:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The street address associated with the address of the object
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_address:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -4985,21 +4765,31 @@ components:
           uri: uri
           version: version
           properties:
-            country name: Entity_address_country_name
-            postal code: null
-            locality: null
-            street address: null
+            country name: country name
+            postal code: postal code
+            locality: locality
+            street address: street address
           status: status
     Entity_agent:
       additionalProperties: true
       example:
-        name: Entity_address_country_name
-        type: null
+        name:
+        - name
+        - name
+        type: type
       properties:
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the name of Agent.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a type of the agent that makes the
+            Catalogue or Dataset available
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_agent:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5014,19 +4804,36 @@ components:
           uri: uri
           version: version
           properties:
-            name: Entity_address_country_name
-            type: null
+            name:
+            - name
+            - name
+            type: type
           status: status
     Entity_annotation:
       additionalProperties: true
       example:
-        has target: null
-        has body: Entity_address_country_name
+        has target:
+        - has target
+        - has target
+        has body:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
       properties:
         has body:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The object of the relationship is a resource that is a body
+            of the Annotation.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         has target:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The relationship between an Annotation and its Target.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_annotation:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5041,22 +4848,33 @@ components:
           uri: uri
           version: version
           properties:
-            has target: null
-            has body: Entity_address_country_name
+            has target:
+            - has target
+            - has target
+            has body:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
           status: status
     Entity_apidocumentation:
       additionalProperties: true
       example:
-        entrypoint: null
-        description: Entity_address_country_name
-        title: null
+        entrypoint: https://openapi-generator.tech
+        description: description
+        title: title
       properties:
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a description of the Api documentation.
+          type: string
+          nullable: false
         entrypoint:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the API entry point.
+          format: uri
+          type: string
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the title of the Api documentation.
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_apidocumentation:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5071,62 +4889,158 @@ components:
           uri: uri
           version: version
           properties:
-            entrypoint: null
-            description: Entity_address_country_name
-            title: null
+            entrypoint: https://openapi-generator.tech
+            description: description
+            title: title
           status: status
     Entity_catalog:
       additionalProperties: true
       example:
-        resource: null
-        description: null
-        language: null
-        title: null
-        is part of: null
-        license: null
-        has part: null
-        record: null
-        rights: null
-        modified: null
-        publisher: null
-        theme taxonomy: null
-        issued: null
-        spatial: null
-        dataset: Entity_address_country_name
-        homepage: null
+        resource:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        description:
+        - description
+        - description
+        language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        title:
+        - title
+        - title
+        is part of: is part of
+        license: https://openapi-generator.tech
+        has part:
+        - has part
+        - has part
+        record:
+        - record
+        - record
+        rights: https://openapi-generator.tech
+        modified: modified
+        publisher: publisher
+        theme taxonomy:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        issued: issued
+        spatial:
+        - spatial
+        - spatial
+        dataset:
+        - dataset
+        - dataset
+        homepage: https://openapi-generator.tech
       properties:
         dataset:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property links the Catalogue with a Dataset that is part
+            of the Catalogue.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text account of the Catalogue.
+            This property can be repeated for parallel language versions of the description.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         has part:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a related Catalogue that is part of
+            the described Catalogue
+          items:
+            type: string
+          type: array
+          nullable: true
         homepage:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a web page that acts as the main page
+            for the Catalogue.
+          format: uri
+          type: string
+          nullable: false
         is part of:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a related Catalogue in which the described
+            Catalogue is physically or logically included.
+          type: string
+          nullable: true
         issued:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the date of formal issuance (e.g.,\
+            \ publication) of the Catalogue."
+          type: string
+          nullable: false
         language:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a language used in the textual metadata\
+            \ describing titles, descriptions, etc. of the Datasets in the Catalogue.\
+            \ This property can be repeated if the metadata is provided in multiple\
+            \ languages."
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         license:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the licence under which the Catalogue
+            can be used or reused.
+          format: uri
+          type: string
+          nullable: false
         modified:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the most recent date on which the Catalogue
+            was modified.
+          type: string
+          nullable: false
         publisher:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an entity (organisation) responsible
+            for making the Catalogue available.
+          type: string
+          nullable: false
         record:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a Catalogue Record that is part of
+            the Catalogue
+          items:
+            type: string
+          type: array
+          nullable: true
         resource:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property links the Catalogue with a Resource.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         rights:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a statement that specifies rights associated
+            with the Catalogue.
+          format: uri
+          type: string
+          nullable: true
         spatial:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a geographical area covered by the
+            Catalogue.
+          items:
+            type: string
+          type: array
+          nullable: true
         theme taxonomy:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a knowledge organization system used
+            to classify the Catalogue's Datasets.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Catalogue. This
+            property can be repeated for parallel language versions of the name.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
     ResolvedEntityResponse_Entity_catalog:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5141,57 +5055,124 @@ components:
           uri: uri
           version: version
           properties:
-            resource: null
-            description: null
-            language: null
-            title: null
-            is part of: null
-            license: null
-            has part: null
-            record: null
-            rights: null
-            modified: null
-            publisher: null
-            theme taxonomy: null
-            issued: null
-            spatial: null
-            dataset: Entity_address_country_name
-            homepage: null
+            resource:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            description:
+            - description
+            - description
+            language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            title:
+            - title
+            - title
+            is part of: is part of
+            license: https://openapi-generator.tech
+            has part:
+            - has part
+            - has part
+            record:
+            - record
+            - record
+            rights: https://openapi-generator.tech
+            modified: modified
+            publisher: publisher
+            theme taxonomy:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            issued: issued
+            spatial:
+            - spatial
+            - spatial
+            dataset:
+            - dataset
+            - dataset
+            homepage: https://openapi-generator.tech
           status: status
     Entity_catalogrecord:
       additionalProperties: true
       example:
-        identifier: null
-        conforms to: Entity_address_country_name
-        description: null
-        modified: null
-        primary topic: null
-        language: null
-        source: null
-        issued: null
-        title: null
-        status: null
+        identifier: https://openapi-generator.tech
+        conforms to: https://openapi-generator.tech
+        description:
+        - description
+        - description
+        modified: modified
+        primary topic: primary topic
+        language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        source: source
+        issued: issued
+        title:
+        - title
+        - title
+        status: https://openapi-generator.tech
       properties:
         conforms to:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an Application Profile that the Dataset’s
+            metadata conforms to
+          format: uri
+          type: string
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text account of the record. This
+            property can be repeated for parallel language versions of the description.
+          items:
+            type: string
+          type: array
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Catalog
+            Record.
+          format: uri
+          type: string
+          nullable: false
         issued:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the date on which the description of
+            the Dataset was included in the Catalogue.
+          type: string
+          nullable: false
         language:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a language used in the textual metadata\
+            \ describing titles, descriptions, etc. of the Dataset. This property\
+            \ can be repeated if the metadata is provided in multiple languages."
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         modified:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the most recent date on which the Catalog
+            Record was modified.
+          type: string
+          nullable: false
         primary topic:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property links the Catalogue Record to the Dataset described
+            in the record.
+          type: string
+          nullable: false
         source:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the original metadata that was used
+            in creating metadata for the Dataset
+          type: string
+          nullable: true
         status:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to the type of the latest revision of\
+            \ a Dataset's entry in the Catalogue. It MUST take one of the values :created,\
+            \ :updated or :deleted depending on whether this latest revision is a\
+            \ result of a creation, update or deletion."
+          format: uri
+          type: string
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Catalogue Record.
+            This property can be repeated for parallel language versions of the name.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_catalogrecord:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5206,30 +5187,45 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            conforms to: Entity_address_country_name
-            description: null
-            modified: null
-            primary topic: null
-            language: null
-            source: null
-            issued: null
-            title: null
-            status: null
+            identifier: https://openapi-generator.tech
+            conforms to: https://openapi-generator.tech
+            description:
+            - description
+            - description
+            modified: modified
+            primary topic: primary topic
+            language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            source: source
+            issued: issued
+            title:
+            - title
+            - title
+            status: https://openapi-generator.tech
           status: status
     Entity_concept:
       additionalProperties: true
       example:
-        pref label: null
-        definition: Entity_address_country_name
-        in scheme: null
+        pref label: pref label
+        definition: definition
+        in scheme: in scheme
       properties:
         definition:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a statement or formal explanation of
+            the meaning of a concept.
+          type: string
+          nullable: false
         in scheme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Relates a resource (for example a concept) to a concept scheme
+            in which it is included.
+          type: string
+          nullable: false
         pref label:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a preferred label of the category. This
+            property can be repeated for parallel language versions of the label.
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_concept:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5244,20 +5240,24 @@ components:
           uri: uri
           version: version
           properties:
-            pref label: null
-            definition: Entity_address_country_name
-            in scheme: null
+            pref label: pref label
+            definition: definition
+            in scheme: in scheme
           status: status
     Entity_conceptscheme:
       additionalProperties: true
       example:
-        description: Entity_address_country_name
-        title: null
+        description: description
+        title: title
       properties:
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a description of the category scheme.
+          type: string
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name of the category scheme.
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_conceptscheme:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5272,25 +5272,49 @@ components:
           uri: uri
           version: version
           properties:
-            description: Entity_address_country_name
-            title: null
+            description: description
+            title: title
           status: status
     Entity_contactpoint:
       additionalProperties: true
       example:
-        contact type: null
-        telephone: null
-        available language: Entity_address_country_name
-        email: null
+        contact type: contact type
+        telephone:
+        - telephone
+        - telephone
+        available language:
+        - available language
+        - available language
+        email:
+        - email
+        - email
       properties:
         available language:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains information about the language used
+            by the Contact Point. Please use one of the language codes from the IETF
+            BCP 47 standard.
+          items:
+            type: string
+          type: array
+          nullable: true
         contact type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains information about the role of the Contact
+            Point.
+          type: string
+          nullable: false
         email:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the email address of the Contact Point.
+          items:
+            type: string
+          type: array
+          nullable: true
         telephone:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the telephone number of the Contact
+            Point.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_contactpoint:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5305,10 +5329,16 @@ components:
           uri: uri
           version: version
           properties:
-            contact type: null
-            telephone: null
-            available language: Entity_address_country_name
-            email: null
+            contact type: contact type
+            telephone:
+            - telephone
+            - telephone
+            available language:
+            - available language
+            - available language
+            email:
+            - email
+            - email
           status: status
     Entity_contactpointtype:
       additionalProperties: true
@@ -5333,13 +5363,28 @@ components:
     Entity_controlaction:
       additionalProperties: true
       example:
-        result: null
-        object: Entity_address_country_name
+        result:
+        - result
+        - result
+        object:
+        - object
+        - object
       properties:
         object:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "The object upon which the action is carried out, whose state\
+            \ is kept intact or changed. Also known as the semantic roles patient,\
+            \ affected or undergoer (which change their state) or theme (which doesn't).\
+            \ e.g. John read a book."
+          items:
+            type: string
+          type: array
+          nullable: true
         result:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The result produced in the action. e.g. John wrote a book.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_controlaction:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5354,19 +5399,40 @@ components:
           uri: uri
           version: version
           properties:
-            result: null
-            object: Entity_address_country_name
+            result:
+            - result
+            - result
+            object:
+            - object
+            - object
           status: status
     Entity_creativework:
       additionalProperties: true
       example:
-        conforms to: Entity_address_country_name
-        encoding format: null
+        conforms to:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        encoding format:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
       properties:
         conforms to:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an established standard or specification
+            that the resource conforms to.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         encoding format:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "Media type typically expressed using a MIME format (see IANA\
+            \ site and MDN reference) e.g. application/zip for a SoftwareApplication\
+            \ binary, audio/mpeg for .mp3 etc.)."
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_creativework:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5381,109 +5447,322 @@ components:
           uri: uri
           version: version
           properties:
-            conforms to: Entity_address_country_name
-            encoding format: null
+            conforms to:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            encoding format:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
           status: status
     Entity_dataset:
       additionalProperties: true
       example:
-        has version: null
-        description: null
-        language: null
-        source: null
-        distribution: null
-        title: null
-        type: null
-        relation: null
-        is part of: null
-        version info: null
-        has part: null
-        provenance: null
-        modified: null
-        theme: null
-        contact point: null
-        issued: null
-        keyword: null
-        spatial: null
-        landing page: null
-        temporal: null
-        annotation: null
-        identifier: null
-        access rights: Entity_address_country_name
-        created: null
-        sample: null
-        has quality annotation: null
-        accrual periodicity: null
-        version notes: null
-        conforms to: null
-        publisher: null
-        page: null
-        is version of: null
+        has version:
+        - has version
+        - has version
+        description:
+        - description
+        - description
+        language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        source:
+        - source
+        - source
+        distribution:
+        - distribution
+        - distribution
+        title:
+        - title
+        - title
+        type: https://openapi-generator.tech
+        relation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        is part of:
+        - is part of
+        - is part of
+        version info: version info
+        has part:
+        - has part
+        - has part
+        provenance:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        modified: modified
+        theme:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        contact point:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        issued: issued
+        keyword:
+        - keyword
+        - keyword
+        spatial:
+        - spatial
+        - spatial
+        landing page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        temporal:
+        - temporal
+        - temporal
+        annotation:
+        - annotation
+        - annotation
+        identifier: https://openapi-generator.tech
+        access rights: https://openapi-generator.tech
+        created: created
+        sample:
+        - sample
+        - sample
+        has quality annotation:
+        - has quality annotation
+        - has quality annotation
+        accrual periodicity: https://openapi-generator.tech
+        version notes:
+        - version notes
+        - version notes
+        conforms to:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        publisher:
+        - publisher
+        - publisher
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        is version of:
+        - is version of
+        - is version of
       properties:
         access rights:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to information that indicates whether\
+            \ the Dataset is open data, has access restrictions or is not public.\
+            \ A controlled vocabulary with three members (:public, :restricted, :non-public)\
+            \ will be created and maintained by the Publications Office of the EU."
+          format: uri
+          type: string
+          nullable: true
         accrual periodicity:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the frequency at which the Dataset
+            is updated.
+          format: uri
+          type: string
+          nullable: true
         annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Human-oriented description for the Annotation property in this
+            shape.
+          items:
+            type: string
+          type: array
+          nullable: true
         conforms to:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an implementing rule or other specification.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains contact information that can be used
+            for sending comments about the Dataset.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         created:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the date on which the Dataset was created.
+          type: string
+          nullable: true
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text account of the Dataset.
+            This property can be repeated for parallel language versions of the description
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         distribution:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property links the Dataset to an available Distribution.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         has part:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a related Dataset that is part of the
+            described Dataset.
+          items:
+            type: string
+          type: array
+          nullable: true
         has quality annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a statement related to quality of\
+            \ the Dataset, including rating, quality certificate that can be associated\
+            \ to the Dataset."
+          items:
+            type: string
+          type: array
+          nullable: true
         has version:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a related Dataset that is a version,\
+            \ edition, or adaptation of the described Dataset."
+          items:
+            type: string
+          type: array
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the main identifier for the Dataset,\
+            \ e.g. the URI or other unique identifier in the context of the Catalogue."
+          format: uri
+          type: string
+          nullable: false
         is part of:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a related Dataset in which the described
+            Dataset is physically or logically included.
+          items:
+            type: string
+          type: array
+          nullable: true
         is version of:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a related Dataset of which the described\
+            \ Dataset is a version, edition, or adaptation."
+          items:
+            type: string
+          type: array
+          nullable: true
         issued:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the date of formal issuance (e.g.,\
+            \ publication) of the Dataset."
+          type: string
+          nullable: true
         keyword:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a keyword or tag describing the Dataset.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         landing page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a web page that provides access to\
+            \ the Dataset, its Distributions and/or additional information. It is\
+            \ intended to point to a landing page at the original data provider, not\
+            \ to a page on a site of a third party, such as an aggregator."
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         language:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a language of the Dataset. This property
+            can be repeated if there are multiple languages in the Dataset.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         modified:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the most recent date on which the Dataset
+            was changed or modified.
+          type: string
+          nullable: true
         page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a page or document about this Dataset.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         provenance:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a statement about the lineage of a Dataset.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         publisher:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an entity (organisation) responsible
+            for making the Dataset available.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         relation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a related resource.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         sample:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a sample distribution of the dataset
+          items:
+            type: string
+          type: array
+          nullable: true
         source:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a related Dataset from which the described
+            Dataset is derived.
+          items:
+            type: string
+          type: array
+          nullable: true
         spatial:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a geographic region that is covered
+            by the Dataset.
+          items:
+            type: string
+          type: array
+          nullable: true
         temporal:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a temporal period that the Dataset
+            covers.
+          items:
+            type: string
+          type: array
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Dataset. A Dataset
+            may be associated with multiple themes.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Dataset. This property
+            can be repeated for parallel language versions of the name.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the type of the Dataset. A controlled
+            vocabulary for the values has not been established.
+          format: uri
+          type: string
+          nullable: true
         version info:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a version number or other version designation
+            of the Dataset.
+          type: string
+          nullable: true
         version notes:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a description of the differences between
+            this version and a previous version of the Dataset. This property can
+            be repeated for parallel language versions of the version notes.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_dataset:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5498,38 +5777,86 @@ components:
           uri: uri
           version: version
           properties:
-            has version: null
-            description: null
-            language: null
-            source: null
-            distribution: null
-            title: null
-            type: null
-            relation: null
-            is part of: null
-            version info: null
-            has part: null
-            provenance: null
-            modified: null
-            theme: null
-            contact point: null
-            issued: null
-            keyword: null
-            spatial: null
-            landing page: null
-            temporal: null
-            annotation: null
-            identifier: null
-            access rights: Entity_address_country_name
-            created: null
-            sample: null
-            has quality annotation: null
-            accrual periodicity: null
-            version notes: null
-            conforms to: null
-            publisher: null
-            page: null
-            is version of: null
+            has version:
+            - has version
+            - has version
+            description:
+            - description
+            - description
+            language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            source:
+            - source
+            - source
+            distribution:
+            - distribution
+            - distribution
+            title:
+            - title
+            - title
+            type: https://openapi-generator.tech
+            relation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            is part of:
+            - is part of
+            - is part of
+            version info: version info
+            has part:
+            - has part
+            - has part
+            provenance:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            modified: modified
+            theme:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            contact point:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            issued: issued
+            keyword:
+            - keyword
+            - keyword
+            spatial:
+            - spatial
+            - spatial
+            landing page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            temporal:
+            - temporal
+            - temporal
+            annotation:
+            - annotation
+            - annotation
+            identifier: https://openapi-generator.tech
+            access rights: https://openapi-generator.tech
+            created: created
+            sample:
+            - sample
+            - sample
+            has quality annotation:
+            - has quality annotation
+            - has quality annotation
+            accrual periodicity: https://openapi-generator.tech
+            version notes:
+            - version notes
+            - version notes
+            conforms to:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            publisher:
+            - publisher
+            - publisher
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            is version of:
+            - is version of
+            - is version of
           status: status
     Entity_dateordatetimedatatype:
       additionalProperties: true
@@ -5554,64 +5881,165 @@ components:
     Entity_distribution:
       additionalProperties: true
       example:
-        annotation: null
-        identifier: null
-        access url: Entity_address_country_name
-        format: null
-        description: null
-        language: null
-        title: null
-        type: null
-        license: null
-        download url: null
-        conforms to: null
-        rights: null
-        checksum: null
-        modified: null
-        page: null
-        byte size: null
-        issued: null
-        media type: null
-        status: null
+        annotation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        identifier: https://openapi-generator.tech
+        access url:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        format: https://openapi-generator.tech
+        description:
+        - description
+        - description
+        language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        title:
+        - title
+        - title
+        type: https://openapi-generator.tech
+        license: https://openapi-generator.tech
+        download url:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        conforms to:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        rights: https://openapi-generator.tech
+        checksum: https://openapi-generator.tech
+        modified: modified
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        byte size: 0.8008281904610115
+        issued: issued
+        media type: https://openapi-generator.tech
+        status: status
       properties:
         access url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a URL that gives access to a Distribution
+            of the Dataset. The resource at the access URL may contain information
+            about how to get the Dataset.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Human-oriented description for the Annotation property in this
+            shape.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         byte size:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the size of a Distribution in bytes.
+          type: number
+          nullable: true
         checksum:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property provides a mechanism that can be used to verify
+            that the contents of a distribution have not changed
+          format: uri
+          type: string
+          nullable: true
         conforms to:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an established schema to which the
+            described Distribution conforms.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text account of the Distribution.
+            This property can be repeated for parallel language versions of the description.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         download url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a URL that is a direct link to a downloadable
+            file in a given format.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         format:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the file format of the Distribution.
+          format: uri
+          type: string
+          nullable: false
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Distribution.
+          format: uri
+          type: string
+          nullable: false
         issued:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the date of formal issuance (e.g.,\
+            \ publication) of the Distribution."
+          type: string
+          nullable: true
         language:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a language used in the Distribution.
+            This property can be repeated if the metadata is provided in multiple
+            languages.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         license:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the licence under which the Distribution
+            is made available.
+          format: uri
+          type: string
+          nullable: true
         media type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the media type of the Distribution
+            as defined in the official register of media types managed by IANA.
+          format: uri
+          type: string
+          nullable: true
         modified:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the most recent date on which the Distribution
+            was changed or modified.
+          type: string
+          nullable: true
         page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a page or document about this Distribution.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         rights:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a statement that specifies rights associated
+            with the Distribution.
+          format: uri
+          type: string
+          nullable: true
         status:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the maturity of the Distribution
+          type: string
+          nullable: true
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Distribution. This
+            property can be repeated for parallel language versions of the description.
+          items:
+            type: string
+          type: array
+          nullable: true
         type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the type of the Distribution.
+          format: uri
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_distribution:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5626,87 +6054,184 @@ components:
           uri: uri
           version: version
           properties:
-            annotation: null
-            identifier: null
-            access url: Entity_address_country_name
-            format: null
-            description: null
-            language: null
-            title: null
-            type: null
-            license: null
-            download url: null
-            conforms to: null
-            rights: null
-            checksum: null
-            modified: null
-            page: null
-            byte size: null
-            issued: null
-            media type: null
-            status: null
+            annotation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            identifier: https://openapi-generator.tech
+            access url:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            format: https://openapi-generator.tech
+            description:
+            - description
+            - description
+            language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            title:
+            - title
+            - title
+            type: https://openapi-generator.tech
+            license: https://openapi-generator.tech
+            download url:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            conforms to:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            rights: https://openapi-generator.tech
+            checksum: https://openapi-generator.tech
+            modified: modified
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            byte size: 0.8008281904610115
+            issued: issued
+            media type: https://openapi-generator.tech
+            status: status
           status: status
     Entity_equipment:
       additionalProperties: true
       example:
-        annotation: Entity_address_country_name
-        identifier: null
-        orientation: null
-        serial number: null
-        description: null
-        dynamic range: null
-        type: null
-        resolution: null
-        manufacturer: null
-        relation: null
-        filter: null
-        is part of: null
-        name: null
-        sample period: null
-        theme: null
-        page: null
-        contact point: null
-        spatial: null
-        temporal: null
+        annotation:
+        - annotation
+        - annotation
+        identifier: https://openapi-generator.tech
+        orientation: orientation
+        serial number: serial number
+        description: description
+        dynamic range: https://openapi-generator.tech
+        type: https://openapi-generator.tech
+        resolution: resolution
+        manufacturer: manufacturer
+        relation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        filter: filter
+        is part of:
+        - is part of
+        - is part of
+        name: name
+        sample period: https://openapi-generator.tech
+        theme:
+        - theme
+        - theme
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        contact point:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        spatial: spatial
+        temporal:
+        - temporal
+        - temporal
       properties:
         annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Human-oriented description for the Annotation property in this
+            shape.
+          items:
+            type: string
+          type: array
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains contact information that can be used
+            for sending comments about the Equipment.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text description of the Equipment.
+          type: string
+          nullable: false
         dynamic range:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the full-scale measuring ability, in\
+            \ nT (unit and value)."
+          format: uri
+          type: string
+          nullable: true
         filter:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property describes the filter that the instrument uses
+            to produce data.
+          type: string
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Equipment.
+          format: uri
+          type: string
+          nullable: false
         is part of:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an Equipment or a Facility in which
+            the described Equipment is included.
+          items:
+            type: string
+          type: array
+          nullable: true
         manufacturer:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an Organisation responsible for manufacturing
+            the Equipment.
+          type: string
+          nullable: false
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Equipment.
+          type: string
+          nullable: false
         orientation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property describes how the instrument is oriented.
+          type: string
+          nullable: true
         page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a web page about this Equipment.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         relation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a related resource (e.g., Dataset,\
+            \ WebService, etc.)."
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         resolution:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the resolution in nT.
+          type: string
+          nullable: true
         sample period:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the sample period in mS (unit and value)
+          format: uri
+          type: string
+          nullable: true
         serial number:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the serial number for the Equipment.
+          type: string
+          nullable: false
         spatial:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a geographical location of the Equipment.
+          type: string
+          nullable: true
         temporal:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the start and the end of the period.
+          items:
+            type: string
+          type: array
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Equipment. An Equipment
+            may be associated with multiple themes.
+          items:
+            type: string
+          type: array
+          nullable: true
         type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the type of the Equipment.
+          format: uri
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_equipment:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5721,66 +6246,140 @@ components:
           uri: uri
           version: version
           properties:
-            annotation: Entity_address_country_name
-            identifier: null
-            orientation: null
-            serial number: null
-            description: null
-            dynamic range: null
-            type: null
-            resolution: null
-            manufacturer: null
-            relation: null
-            filter: null
-            is part of: null
-            name: null
-            sample period: null
-            theme: null
-            page: null
-            contact point: null
-            spatial: null
-            temporal: null
+            annotation:
+            - annotation
+            - annotation
+            identifier: https://openapi-generator.tech
+            orientation: orientation
+            serial number: serial number
+            description: description
+            dynamic range: https://openapi-generator.tech
+            type: https://openapi-generator.tech
+            resolution: resolution
+            manufacturer: manufacturer
+            relation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            filter: filter
+            is part of:
+            - is part of
+            - is part of
+            name: name
+            sample period: https://openapi-generator.tech
+            theme:
+            - theme
+            - theme
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            contact point:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            spatial: spatial
+            temporal:
+            - temporal
+            - temporal
           status: status
     Entity_facility:
       additionalProperties: true
       example:
-        annotation: Entity_address_country_name
-        is part of: null
-        identifier: null
-        description: null
-        has address: null
-        theme: null
-        page: null
-        contact point: null
-        spatial: null
-        title: null
-        type: null
-        relation: null
+        annotation:
+        - annotation
+        - annotation
+        is part of:
+        - is part of
+        - is part of
+        identifier: https://openapi-generator.tech
+        description: description
+        has address: has address
+        theme:
+        - theme
+        - theme
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        contact point:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        spatial: spatial
+        title: title
+        type: https://openapi-generator.tech
+        relation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
       properties:
         annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Human-oriented description for the Annotation property in this
+            shape.
+          items:
+            type: string
+          type: array
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains contact information that can be used
+            for sending comments about the Facility.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text description of the Facility.
+          type: string
+          nullable: false
         has address:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the physical address of the Facility.
+          type: string
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Facility.
+          format: uri
+          type: string
+          nullable: false
         is part of:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a Facility in which the described Facility
+            is included.
+          items:
+            type: string
+          type: array
+          nullable: true
         page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a page or document about this Facility.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         relation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to a related resource (e.g., Dataset,\
+            \ WebService, etc)."
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         spatial:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the geographical coordinates of the
+            facility.
+          type: string
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Facility. A Facility
+            may be associated with multiple themes.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Facility.
+          type: string
+          nullable: false
         type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the type of the Facility.
+          format: uri
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_facility:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5795,29 +6394,47 @@ components:
           uri: uri
           version: version
           properties:
-            annotation: Entity_address_country_name
-            is part of: null
-            identifier: null
-            description: null
-            has address: null
-            theme: null
-            page: null
-            contact point: null
-            spatial: null
-            title: null
-            type: null
-            relation: null
+            annotation:
+            - annotation
+            - annotation
+            is part of:
+            - is part of
+            - is part of
+            identifier: https://openapi-generator.tech
+            description: description
+            has address: has address
+            theme:
+            - theme
+            - theme
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            contact point:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            spatial: spatial
+            title: title
+            type: https://openapi-generator.tech
+            relation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
           status: status
     Entity_identifier:
       additionalProperties: true
       example:
-        scheme agency: null
-        notation: Entity_address_country_name
+        scheme agency: scheme agency
+        notation: notation
       properties:
         notation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a string that is an identifier in the
+            context of the identifier scheme referenced by its datatype.
+          type: string
+          nullable: true
         scheme agency:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers the identifier scheme referenced by its\
+            \ datatype (e.g., DDSS-ID, DOI, etc.)."
+          type: string
+          nullable: true
     ResolvedEntityResponse_Entity_identifier:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5832,19 +6449,28 @@ components:
           uri: uri
           version: version
           properties:
-            scheme agency: null
-            notation: Entity_address_country_name
+            scheme agency: scheme agency
+            notation: notation
           status: status
     Entity_iritemplate:
       additionalProperties: true
       example:
-        template: null
-        mapping: Entity_address_country_name
+        template: template
+        mapping:
+        - mapping
+        - mapping
       properties:
         mapping:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: A variable-to-property mapping of the IRI template.
+          items:
+            type: string
+          type: array
+          nullable: true
         template:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "The syntax of the template literal is specified by the [ RFC6570]\
+            \ URI Template syntax."
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_iritemplate:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5859,49 +6485,98 @@ components:
           uri: uri
           version: version
           properties:
-            template: null
-            mapping: Entity_address_country_name
+            template: template
+            mapping:
+            - mapping
+            - mapping
           status: status
     Entity_iritemplatemapping:
       additionalProperties: true
       example:
-        min value: null
-        readonly value: null
-        multiple values: null
-        param value: null
-        property: null
-        variable: null
-        range: null
-        default value: Entity_address_country_name
-        label: null
-        max value: null
-        required: null
-        value pattern: null
+        min value: min value
+        readonly value:
+        - true
+        - true
+        multiple values:
+        - true
+        - true
+        param value:
+        - param value
+        - param value
+        property: property
+        variable: variable
+        range: range
+        default value: default value
+        label: label
+        max value: max value
+        required: true
+        value pattern: value pattern
       properties:
         default value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the default value of the parameter.
+          type: string
+          nullable: true
         label:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a short string used to describe the
+            meaning of the parameter.
+          type: string
+          nullable: false
         max value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the maximum value of the parameter.
+          type: string
+          nullable: true
         min value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the minimum value of the parameter.
+          type: string
+          nullable: true
         multiple values:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Whether multiple values are allowed for the property. Default
+            is false.
+          items:
+            type: boolean
+          type: array
+          nullable: true
         param value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains one of the possible values which should
+            be used in the web service query. It could be repeated as many times as
+            needed.
+          items:
+            type: string
+          type: array
+          nullable: true
         property:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the vocabulary term which indicates
+            the semantic description of parameter.
+          type: string
+          nullable: true
         range:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the type of parameter (e.g., xsd:string,\
+            \ xsd:Boolean, xsd:date, xsd:dateTime)."
+          type: string
+          nullable: false
         readonly value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Whether or not a property is mutable. Default is false. Specifying
+            this for a property that also has a value makes it act similar to a hidden
+            input in an HTML form.
+          items:
+            type: boolean
+          type: array
+          nullable: true
         required:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains true if the property is required, false\
+            \ otherwise."
+          type: boolean
+          nullable: false
         value pattern:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the regular expression for testing values
+            according to the parameter's specification.
+          type: string
+          nullable: true
         variable:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the name of the parameter as required
+            by web service specifications.
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_iritemplatemapping:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5916,26 +6591,40 @@ components:
           uri: uri
           version: version
           properties:
-            min value: null
-            readonly value: null
-            multiple values: null
-            param value: null
-            property: null
-            variable: null
-            range: null
-            default value: Entity_address_country_name
-            label: null
-            max value: null
-            required: null
-            value pattern: null
+            min value: min value
+            readonly value:
+            - true
+            - true
+            multiple values:
+            - true
+            - true
+            param value:
+            - param value
+            - param value
+            property: property
+            variable: variable
+            range: range
+            default value: default value
+            label: label
+            max value: max value
+            required: true
+            value pattern: value pattern
           status: status
     Entity_location:
       additionalProperties: true
       example:
-        geometry: Entity_address_country_name
+        geometry:
+        - geometry
+        - geometry
       properties:
         geometry:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property associates any resource with the corresponding
+            geometry.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
     ResolvedEntityResponse_Entity_location:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5950,21 +6639,37 @@ components:
           uri: uri
           version: version
           properties:
-            geometry: Entity_address_country_name
+            geometry:
+            - geometry
+            - geometry
           status: status
     Entity_operation:
       additionalProperties: true
       example:
-        method: Entity_address_country_name
-        property: null
-        returns: null
+        method: method
+        property: property
+        returns:
+        - returns
+        - returns
       properties:
         method:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The HTTP method
+          type: string
+          nullable: true
         property:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the IriTemplate of the Web Service
+            operation. This describes the endpoint and parameters mapping for the
+            operation.
+          type: string
+          nullable: false
         returns:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property is used to specify the output format of the\
+            \ Operation. The possible values are listed here: https://www.iana.org/assignments/media-types/media-types.xhtml"
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
     ResolvedEntityResponse_Entity_operation:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5979,53 +6684,125 @@ components:
           uri: uri
           version: version
           properties:
-            method: Entity_address_country_name
-            property: null
-            returns: null
+            method: method
+            property: property
+            returns:
+            - returns
+            - returns
           status: status
     Entity_organization:
       additionalProperties: true
       example:
-        annotation: null
-        legal name: null
-        identifier: null
-        associated project: null
-        member of: null
-        address: Entity_address_country_name
-        telephone: null
-        url: null
-        lei code: null
-        logo: null
-        owns: null
-        contact point: null
-        email: null
+        annotation:
+        - annotation
+        - annotation
+        legal name: legal name
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        associated project:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        member of:
+        - member of
+        - member of
+        address: address
+        telephone:
+        - telephone
+        - telephone
+        url: https://openapi-generator.tech
+        lei code: lei code
+        logo: https://openapi-generator.tech
+        owns:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        contact point:
+        - contact point
+        - contact point
+        email:
+        - email
+        - email
       properties:
         address:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the physical address of the Organization.
+          type: string
+          nullable: true
         annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Human-oriented description for the Annotation property in this
+            shape.
+          items:
+            type: string
+          type: array
+          nullable: true
         associated project:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a Project in which the Organization
+            is involved.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the Contact Point defined for the Organization.
+          items:
+            type: string
+          type: array
+          nullable: true
         email:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the email address of the Organization.
+          items:
+            type: string
+          type: array
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the main identifier for the Organization\
+            \ (e.g.,PIC, ISNI, etc.)."
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         legal name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the official name of the Organization.
+          type: string
+          nullable: false
         lei code:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the Organization identifier that uniquely
+            identifies a legal entity as defined in ISO 17442.
+          type: string
+          nullable: false
         logo:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the URL of the Organization logo.
+          format: uri
+          type: string
+          nullable: true
         member of:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an Organization to which this Organization
+            belongs.
+          items:
+            type: string
+          type: array
+          nullable: true
         owns:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a Facility or Equipment of which it
+            is the owner.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         telephone:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the telephone number of the Organization.
+          items:
+            type: string
+          type: array
+          nullable: true
         url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the URL of the Organization website.
+          format: uri
+          type: string
+          nullable: true
     ResolvedEntityResponse_Entity_organization:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6040,30 +6817,50 @@ components:
           uri: uri
           version: version
           properties:
-            annotation: null
-            legal name: null
-            identifier: null
-            associated project: null
-            member of: null
-            address: Entity_address_country_name
-            telephone: null
-            url: null
-            lei code: null
-            logo: null
-            owns: null
-            contact point: null
-            email: null
+            annotation:
+            - annotation
+            - annotation
+            legal name: legal name
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            associated project:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            member of:
+            - member of
+            - member of
+            address: address
+            telephone:
+            - telephone
+            - telephone
+            url: https://openapi-generator.tech
+            lei code: lei code
+            logo: https://openapi-generator.tech
+            owns:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            contact point:
+            - contact point
+            - contact point
+            email:
+            - email
+            - email
           status: status
     Entity_periodoftime:
       additionalProperties: true
       example:
-        start date: null
-        end date: Entity_address_country_name
+        start date: start date
+        end date: end date
       properties:
         end date:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the end of the period.
+          type: string
+          nullable: true
         start date:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the start of the period.
+          type: string
+          nullable: true
     ResolvedEntityResponse_Entity_periodoftime:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6078,46 +6875,99 @@ components:
           uri: uri
           version: version
           properties:
-            start date: null
-            end date: Entity_address_country_name
+            start date: start date
+            end date: end date
           status: status
     Entity_person:
       additionalProperties: true
       example:
-        annotation: null
-        identifier: null
-        qualifications: null
-        address: Entity_address_country_name
-        family name: null
-        affiliation: null
-        given name: null
-        telephone: null
-        contact point: null
-        email: null
-        url: null
+        annotation:
+        - annotation
+        - annotation
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        qualifications: qualifications
+        address: address
+        family name: family name
+        affiliation:
+        - affiliation
+        - affiliation
+        given name: given name
+        telephone:
+        - telephone
+        - telephone
+        contact point:
+        - contact point
+        - contact point
+        email:
+        - email
+        - email
+        url: https://openapi-generator.tech
       properties:
         address:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the physical address of the Person.
+          type: string
+          nullable: true
         affiliation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the organization to which the person
+            is affiliated.
+          items:
+            type: string
+          type: array
+          nullable: true
         annotation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: Human-oriented description for the Annotation property in this
+            shape.
+          items:
+            type: string
+          type: array
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the Contact Point role defined for
+            the Person.
+          items:
+            type: string
+          type: array
+          nullable: true
         email:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the email address of the Person.
+          items:
+            type: string
+          type: array
+          nullable: true
         family name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the last name of the Person.
+          type: string
+          nullable: true
         given name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the first name of the Person.
+          type: string
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the main identifier for the Person\
+            \ (e.g.,ORCID, ScopusID, etc.)."
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         qualifications:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the specific qualifications of the Person.
+          type: string
+          nullable: true
         telephone:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the telephone number of the Person.
+          items:
+            type: string
+          type: array
+          nullable: true
         url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the URL of the Person curriculum vitae.
+          format: uri
+          type: string
+          nullable: true
     ResolvedEntityResponse_Entity_person:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6132,34 +6982,56 @@ components:
           uri: uri
           version: version
           properties:
-            annotation: null
-            identifier: null
-            qualifications: null
-            address: Entity_address_country_name
-            family name: null
-            affiliation: null
-            given name: null
-            telephone: null
-            contact point: null
-            email: null
-            url: null
+            annotation:
+            - annotation
+            - annotation
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            qualifications: qualifications
+            address: address
+            family name: family name
+            affiliation:
+            - affiliation
+            - affiliation
+            given name: given name
+            telephone:
+            - telephone
+            - telephone
+            contact point:
+            - contact point
+            - contact point
+            email:
+            - email
+            - email
+            url: https://openapi-generator.tech
           status: status
     Entity_postaladdress:
       additionalProperties: true
       example:
-        postal code: null
-        street address: null
-        address country: Entity_address_country_name
-        address locality: null
+        postal code: postal code
+        street address: street address
+        address country: address country
+        address locality: address locality
       properties:
         address country:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "The country. For example, USA. You can also provide the two-letter\
+            \ ISO 3166-1 alpha-2 country code."
+          type: string
+          nullable: false
         address locality:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "The locality in which the street address is, and which is\
+            \ in the region. For example, Mountain View."
+          type: string
+          nullable: false
         postal code:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "The postal code. For example, 94043."
+          type: string
+          nullable: false
         street address:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "The street address. For example, 1600 Amphitheatre Pkwy."
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_postaladdress:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6174,30 +7046,49 @@ components:
           uri: uri
           version: version
           properties:
-            postal code: null
-            street address: null
-            address country: Entity_address_country_name
-            address locality: null
+            postal code: postal code
+            street address: street address
+            address country: address country
+            address locality: address locality
           status: status
     Entity_project:
       additionalProperties: true
       example:
-        identifier: null
-        description: null
-        contact point: Entity_address_country_name
-        title: null
-        homepage: null
+        identifier: https://openapi-generator.tech
+        description: description
+        contact point:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        title: title
+        homepage: https://openapi-generator.tech
       properties:
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the Contact Point defined for the Project.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the description of the Project.
+          type: string
+          nullable: false
         homepage:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a web page that acts as the main page
+            for the Project.
+          format: uri
+          type: string
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Project.
+          format: uri
+          type: string
+          nullable: false
         title:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the title of the Project.
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_project:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6212,22 +7103,37 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            description: null
-            contact point: Entity_address_country_name
-            title: null
-            homepage: null
+            identifier: https://openapi-generator.tech
+            description: description
+            contact point:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            title: title
+            homepage: https://openapi-generator.tech
           status: status
     Entity_propertyvalue:
       additionalProperties: true
       example:
-        property id: Entity_address_country_name
-        value: null
+        property id: property id
+        value: value
       properties:
         property id:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "A commonly used identifier for the characteristic represented\
+            \ by the property, e.g. a manufacturer or a standard code for a property.\
+            \ propertyID can be (1) a prefixed string, mainly meant to be used with\
+            \ standards for product properties; (2) a site-specific, non-prefixed\
+            \ string (e.g. the primary key of the property or the vendor-specific\
+            \ id of the property), or (3) a URL indicating the type of the property,\
+            \ either pointing to an external vocabulary, or a Web resource that describes\
+            \ the property (e.g. a glossary entry). Standards bodies should promote\
+            \ a standard prefix for the identifiers of properties from their standards."
+          type: string
+          nullable: false
         value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The value of the quantitative value or property value node.
+            The recommended type for values is 'Number'.
+          type: string
+          nullable: false
     ResolvedEntityResponse_Entity_propertyvalue:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6242,52 +7148,101 @@ components:
           uri: uri
           version: version
           properties:
-            property id: Entity_address_country_name
-            value: null
+            property id: property id
+            value: value
           status: status
     Entity_publication:
       additionalProperties: true
       example:
-        identifier: null
-        keywords: null
-        author: null
-        date published: null
-        abstract: Entity_address_country_name
-        number of pages: null
-        license: null
-        contributor: null
-        issn: null
-        name: null
-        publisher: null
-        theme: null
-        volume number: null
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        keywords: keywords
+        author: author
+        date published: date published
+        abstract: abstract
+        number of pages: 0
+        license: https://openapi-generator.tech
+        contributor:
+        - contributor
+        - contributor
+        issn: issn
+        name: name
+        publisher: publisher
+        theme:
+        - theme
+        - theme
+        volume number: volume number
       properties:
         abstract:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the abstract of the Publication.
+          type: string
+          nullable: false
         author:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a Person which is the author of the
+            Publication.
+          type: string
+          nullable: false
         contributor:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a Person which is a contributor of
+            the Publication.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         date published:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the date of first Publication.
+          type: string
+          nullable: false
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Publication.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         issn:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the International Standard Serial Number
+            (ISSN) that identifies the Publication.
+          type: string
+          nullable: true
         keywords:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the keywords used to describe the Publication.
+            Multiple entries in a keywords list are typically delimited by commas.
+          type: string
+          nullable: true
         license:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the URL of the license document that
+            applies to the Publication.
+          format: uri
+          type: string
+          nullable: true
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the name of the Publication.
+          type: string
+          nullable: false
         number of pages:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the number of pages of the Publication.
+          type: integer
+          nullable: true
         publisher:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an organization or person or agent
+            which is the publisher of the Publication.
+          type: string
+          nullable: false
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Publication. A Publication
+            may be associated with multiple themes.
+          items:
+            type: string
+          type: array
+          nullable: true
         volume number:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the volume identifier of the Publication.
+          type: string
+          nullable: true
     ResolvedEntityResponse_Entity_publication:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6302,30 +7257,43 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            keywords: null
-            author: null
-            date published: null
-            abstract: Entity_address_country_name
-            number of pages: null
-            license: null
-            contributor: null
-            issn: null
-            name: null
-            publisher: null
-            theme: null
-            volume number: null
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            keywords: keywords
+            author: author
+            date published: date published
+            abstract: abstract
+            number of pages: 0
+            license: https://openapi-generator.tech
+            contributor:
+            - contributor
+            - contributor
+            issn: issn
+            name: name
+            publisher: publisher
+            theme:
+            - theme
+            - theme
+            volume number: volume number
           status: status
     Entity_quantitativevalue:
       additionalProperties: true
       example:
-        unit code: Entity_address_country_name
-        value: null
+        unit code: unit code
+        value: 0.8008281904610115
       properties:
         unit code:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The unit of measurement given using the UN/CEFACT Common Code
+            (3 characters) or a URL. Other codes than the UN/CEFACT Common Code may
+            be used with a prefix followed by a colon.
+          type: string
+          nullable: false
         value:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: The value of the quantitative value or property value node.The
+            recommended type for values is 'Number'.
+          type: number
+          nullable: false
     ResolvedEntityResponse_Entity_quantitativevalue:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6340,46 +7308,97 @@ components:
           uri: uri
           version: version
           properties:
-            unit code: Entity_address_country_name
-            value: null
+            unit code: unit code
+            value: 0.8008281904610115
           status: status
     Entity_service:
       additionalProperties: true
       example:
-        identifier: null
-        keywords: null
-        provider: null
-        name: null
-        description: null
-        theme: null
-        service type: null
-        contact point: Entity_address_country_name
-        spatial: null
-        temporal: null
-        url: null
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        keywords: keywords
+        provider: provider
+        name: name
+        description: description
+        theme:
+        - theme
+        - theme
+        service type: service type
+        contact point:
+        - contact point
+        - contact point
+        spatial:
+        - spatial
+        - spatial
+        temporal:
+        - temporal
+        - temporal
+        url: https://openapi-generator.tech
       properties:
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the Contact Point defined for the Service.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the description of the Service.
+          type: string
+          nullable: false
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Service.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         keywords:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the keywords used to describe the Service.
+            Multiple entries in a keywords list are typically delimited by commas.
+          type: string
+          nullable: true
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the name of the Service.
+          type: string
+          nullable: false
         provider:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an Organisation or Person responsible
+            for making the Service available.
+          type: string
+          nullable: false
         service type:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the type of service being offered.
+          type: string
+          nullable: true
         spatial:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a geographical area covered by the
+            Service.
+          items:
+            type: string
+          type: array
+          nullable: true
         temporal:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a temporal period that the Service
+            covers.
+          items:
+            type: string
+          type: array
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Service. A Service
+            may be associated with multiple themes.
+          items:
+            type: string
+          type: array
+          nullable: true
         url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the URL of the Service.
+          format: uri
+          type: string
+          nullable: true
     ResolvedEntityResponse_Entity_service:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6394,64 +7413,145 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            keywords: null
-            provider: null
-            name: null
-            description: null
-            theme: null
-            service type: null
-            contact point: Entity_address_country_name
-            spatial: null
-            temporal: null
-            url: null
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            keywords: keywords
+            provider: provider
+            name: name
+            description: description
+            theme:
+            - theme
+            - theme
+            service type: service type
+            contact point:
+            - contact point
+            - contact point
+            spatial:
+            - spatial
+            - spatial
+            temporal:
+            - temporal
+            - temporal
+            url: https://openapi-generator.tech
           status: status
     Entity_softwareapplication:
       additionalProperties: true
       example:
-        identifier: null
-        keywords: null
-        install url: null
-        potential action: null
-        description: null
-        software requirements: null
-        software version: null
-        relation: null
-        license: null
-        main entity of page: null
-        download url: null
-        name: null
-        theme: null
-        contact point: Entity_address_country_name
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        keywords:
+        - keywords
+        - keywords
+        install url: https://openapi-generator.tech
+        potential action: potential action
+        description: description
+        software requirements: https://openapi-generator.tech
+        software version: software version
+        relation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        license: https://openapi-generator.tech
+        main entity of page: https://openapi-generator.tech
+        download url: https://openapi-generator.tech
+        name: name
+        theme:
+        - theme
+        - theme
+        contact point:
+        - contact point
+        - contact point
       properties:
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the Contact Point defined for the Software
+            Application.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the description of the Software Application.
+          type: string
+          nullable: true
         download url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: If the Software Application can be downloaded this property
+            contains the URL to download it.
+          format: uri
+          type: string
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Software
+            Application.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         install url:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the URL at which the application may
+            be installed.
+          format: uri
+          type: string
+          nullable: true
         keywords:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the keywords used to describe the Software
+            Application. Multiple entries in a keywords list are typically delimited
+            by commas.
+          items:
+            type: string
+          type: array
+          nullable: true
         license:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the URL of the license document that
+            applies to the Software Application.
+          format: uri
+          type: string
+          nullable: true
         main entity of page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the web page URL which describes the
+            Software Application.
+          format: uri
+          type: string
+          nullable: true
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the name of the Software Application.
+          type: string
+          nullable: false
         potential action:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property describes the object upon which the action is
+            carried out and the result produced in the action.
+          type: string
+          nullable: true
         relation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the WebService Operation linked to
+            the application.
+          items:
+            format: uri
+            type: string
+          type: array
+          nullable: true
         software requirements:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "Component dependency requirements for application. This includes\
+            \ runtime environments and shared libraries that are not included in the\
+            \ application distribution package, but required to run the application."
+          format: uri
+          type: string
+          nullable: true
         software version:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the version of the Software Application
+            instance.
+          type: string
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Software Application.
+            A Software may be associated with multiple themes.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_softwareapplication:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6466,64 +7566,145 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            keywords: null
-            install url: null
-            potential action: null
-            description: null
-            software requirements: null
-            software version: null
-            relation: null
-            license: null
-            main entity of page: null
-            download url: null
-            name: null
-            theme: null
-            contact point: Entity_address_country_name
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            keywords:
+            - keywords
+            - keywords
+            install url: https://openapi-generator.tech
+            potential action: potential action
+            description: description
+            software requirements: https://openapi-generator.tech
+            software version: software version
+            relation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            license: https://openapi-generator.tech
+            main entity of page: https://openapi-generator.tech
+            download url: https://openapi-generator.tech
+            name: name
+            theme:
+            - theme
+            - theme
+            contact point:
+            - contact point
+            - contact point
           status: status
     Entity_softwaresourcecode:
       additionalProperties: true
       example:
-        identifier: null
-        keywords: null
-        description: null
-        software version: null
-        license: null
-        runtime platform: null
-        main entity of page: null
-        target product: null
-        name: null
-        programming language: null
-        theme: null
-        code repository: Entity_address_country_name
-        contact point: null
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        keywords:
+        - keywords
+        - keywords
+        description: description
+        software version: software version
+        license: https://openapi-generator.tech
+        runtime platform: runtime platform
+        main entity of page: https://openapi-generator.tech
+        target product:
+        - target product
+        - target product
+        name: name
+        programming language:
+        - programming language
+        - programming language
+        theme:
+        - theme
+        - theme
+        code repository: https://openapi-generator.tech
+        contact point:
+        - contact point
+        - contact point
       properties:
         code repository:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property contains the link to the repository where the\
+            \ uncompiled, human readable code and related code is located (SVN, GitHub,\
+            \ CodePlex)."
+          format: uri
+          type: string
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the Contact Point defined for the Software
+            Source Code.
+          items:
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the description of the Software Source
+            Code.
+          type: string
+          nullable: true
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Software
+            Source Code.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         keywords:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the keywords used to describe the Software
+            Source Code. Multiple entries in a keywords list are typically delimited
+            by commas.
+          items:
+            type: string
+          type: array
+          nullable: true
         license:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the URL of the license document that
+            applies to the Software Source Code.
+          format: uri
+          type: string
+          nullable: true
         main entity of page:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the web page URL which describes the
+            Software Source Code.
+          format: uri
+          type: string
+          nullable: true
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the name of the Software Source Code.
+          type: string
+          nullable: false
         programming language:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the computer programming language used
+            to develop the Software Source Code.
+          items:
+            type: string
+          type: array
+          nullable: true
         runtime platform:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to the runtime platform or script interpreter\
+            \ dependencies (Example - Java v1, Python2.3, .Net Framework 3.0)."
+          type: string
+          nullable: true
         software version:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the version of the Software Source Code
+            instance.
+          type: string
+          nullable: true
         target product:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers the target Operating System / Product\
+            \ to which the code applies. If applies to several versions, just the\
+            \ product name can be used."
+          items:
+            type: string
+          type: array
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Software Source Code.
+            A Software may be associated with multiple themes.
+          items:
+            type: string
+          type: array
+          nullable: true
     ResolvedEntityResponse_Entity_softwaresourcecode:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6538,69 +7719,161 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            keywords: null
-            description: null
-            software version: null
-            license: null
-            runtime platform: null
-            main entity of page: null
-            target product: null
-            name: null
-            programming language: null
-            theme: null
-            code repository: Entity_address_country_name
-            contact point: null
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            keywords:
+            - keywords
+            - keywords
+            description: description
+            software version: software version
+            license: https://openapi-generator.tech
+            runtime platform: runtime platform
+            main entity of page: https://openapi-generator.tech
+            target product:
+            - target product
+            - target product
+            name: name
+            programming language:
+            - programming language
+            - programming language
+            theme:
+            - theme
+            - theme
+            code repository: https://openapi-generator.tech
+            contact point:
+            - contact point
+            - contact point
           status: status
     Entity_webservice:
       additionalProperties: true
       example:
-        identifier: null
-        keywords: null
-        supported operation: null
-        date published: null
-        description: null
-        date modified: null
-        license: null
-        provider: null
-        entrypoint: null
-        conforms to: Entity_address_country_name
-        name: null
-        theme: null
-        contact point: null
-        spatial: null
-        temporal: null
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        keywords:
+        - keywords
+        - keywords
+        supported operation:
+        - supported operation
+        - supported operation
+        date published: date published
+        description: description
+        date modified: date modified
+        license: https://openapi-generator.tech
+        provider: provider
+        entrypoint: https://openapi-generator.tech
+        conforms to:
+        - conforms to
+        - conforms to
+        name: name
+        theme:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        contact point:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        spatial:
+        - spatial
+        - spatial
+        temporal:
+        - temporal
+        - temporal
       properties:
         conforms to:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the API documentation.
+          items:
+            type: string
+          type: array
+          nullable: true
         contact point:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains contact information that can be used
+            for sending comments about the Web Service.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         date modified:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the most recent date on which the Web
+            Service was modified.
+          type: string
+          nullable: false
         date published:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the date of publication of the Web Service.
+          type: string
+          nullable: false
         description:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a free-text description of the Web Service.
+          type: string
+          nullable: false
         entrypoint:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: "This property refers to the API definitions (e.g., WSDL, WADL)"
+          format: uri
+          type: string
+          nullable: false
         identifier:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the main identifier for the Web Service.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
         keywords:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains the keywords used to describe the Web
+            Service. Multiple entries in a keywords list are typically delimited by
+            commas.
+          items:
+            type: string
+          type: array
+          nullable: true
         license:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to the licence under which the Web Service
+            can be used or reused.
+          format: uri
+          type: string
+          nullable: true
         name:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property contains a name given to the Web Service.
+          type: string
+          nullable: false
         provider:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to an Organisation responsible for making
+            the Web Service available.
+          type: string
+          nullable: false
         spatial:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a geographical area covered by the
+            Web Service.
+          items:
+            type: string
+          type: array
+          nullable: true
         supported operation:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a web service operation supported by
+            the Web Service.
+          items:
+            type: string
+          type: array
+          nullable: true
         temporal:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a temporal period that the Web Service
+            covers.
+          items:
+            type: string
+          type: array
+          nullable: true
         theme:
-          $ref: "#/components/schemas/Entity_address_country_name"
+          description: This property refers to a category of the Web Service. A Web
+            Service may be associated with multiple themes.
+          items:
+            format: uri
+            type: string
+          minItems: 1
+          type: array
+          nullable: false
     ResolvedEntityResponse_Entity_webservice:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6615,21 +7888,37 @@ components:
           uri: uri
           version: version
           properties:
-            identifier: null
-            keywords: null
-            supported operation: null
-            date published: null
-            description: null
-            date modified: null
-            license: null
-            provider: null
-            entrypoint: null
-            conforms to: Entity_address_country_name
-            name: null
-            theme: null
-            contact point: null
-            spatial: null
-            temporal: null
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            keywords:
+            - keywords
+            - keywords
+            supported operation:
+            - supported operation
+            - supported operation
+            date published: date published
+            description: description
+            date modified: date modified
+            license: https://openapi-generator.tech
+            provider: provider
+            entrypoint: https://openapi-generator.tech
+            conforms to:
+            - conforms to
+            - conforms to
+            name: name
+            theme:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            contact point:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            spatial:
+            - spatial
+            - spatial
+            temporal:
+            - temporal
+            - temporal
           status: status
     ResourceTypesEnvelope:
       description: Returned when includeShapeDefinitions or includeTransitiveShapeDefinitions
@@ -6952,7 +8241,12 @@ components:
           type: string
     _api_v2__resourceType__post_request:
       properties:
+        id:
+          description: "Optional client-provided conceptual id (absolute URI or local\
+            \ id segment). If omitted, server generates one."
+          type: string
         type:
+          description: Optional; ignored because resource type comes from path parameter.
           type: string
         properties:
           type: object
@@ -7028,12 +8322,6 @@ components:
           type: string
         data:
           $ref: "#/components/schemas/_api_v2_admin_populate_content_post_200_response_data"
-    Entity_address_country_name:
-      anyOf:
-      - type: string
-      - type: number
-      - type: boolean
-      nullable: true
     ResolvedEntityResponse_Entity_address_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -7046,10 +8334,10 @@ components:
         uri: uri
         version: version
         properties:
-          country name: Entity_address_country_name
-          postal code: null
-          locality: null
-          street address: null
+          country name: country name
+          postal code: postal code
+          locality: locality
+          street address: street address
         status: status
     ResolvedEntityResponse_Entity_agent_allOf_entity:
       allOf:
@@ -7063,8 +8351,10 @@ components:
         uri: uri
         version: version
         properties:
-          name: Entity_address_country_name
-          type: null
+          name:
+          - name
+          - name
+          type: type
         status: status
     ResolvedEntityResponse_Entity_annotation_allOf_entity:
       allOf:
@@ -7078,8 +8368,12 @@ components:
         uri: uri
         version: version
         properties:
-          has target: null
-          has body: Entity_address_country_name
+          has target:
+          - has target
+          - has target
+          has body:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_apidocumentation_allOf_entity:
       allOf:
@@ -7093,9 +8387,9 @@ components:
         uri: uri
         version: version
         properties:
-          entrypoint: null
-          description: Entity_address_country_name
-          title: null
+          entrypoint: https://openapi-generator.tech
+          description: description
+          title: title
         status: status
     ResolvedEntityResponse_Entity_catalog_allOf_entity:
       allOf:
@@ -7109,22 +8403,40 @@ components:
         uri: uri
         version: version
         properties:
-          resource: null
-          description: null
-          language: null
-          title: null
-          is part of: null
-          license: null
-          has part: null
-          record: null
-          rights: null
-          modified: null
-          publisher: null
-          theme taxonomy: null
-          issued: null
-          spatial: null
-          dataset: Entity_address_country_name
-          homepage: null
+          resource:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          description:
+          - description
+          - description
+          language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          title:
+          - title
+          - title
+          is part of: is part of
+          license: https://openapi-generator.tech
+          has part:
+          - has part
+          - has part
+          record:
+          - record
+          - record
+          rights: https://openapi-generator.tech
+          modified: modified
+          publisher: publisher
+          theme taxonomy:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          issued: issued
+          spatial:
+          - spatial
+          - spatial
+          dataset:
+          - dataset
+          - dataset
+          homepage: https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_catalogrecord_allOf_entity:
       allOf:
@@ -7138,16 +8450,22 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          conforms to: Entity_address_country_name
-          description: null
-          modified: null
-          primary topic: null
-          language: null
-          source: null
-          issued: null
-          title: null
-          status: null
+          identifier: https://openapi-generator.tech
+          conforms to: https://openapi-generator.tech
+          description:
+          - description
+          - description
+          modified: modified
+          primary topic: primary topic
+          language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          source: source
+          issued: issued
+          title:
+          - title
+          - title
+          status: https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_concept_allOf_entity:
       allOf:
@@ -7161,9 +8479,9 @@ components:
         uri: uri
         version: version
         properties:
-          pref label: null
-          definition: Entity_address_country_name
-          in scheme: null
+          pref label: pref label
+          definition: definition
+          in scheme: in scheme
         status: status
     ResolvedEntityResponse_Entity_conceptscheme_allOf_entity:
       allOf:
@@ -7177,8 +8495,8 @@ components:
         uri: uri
         version: version
         properties:
-          description: Entity_address_country_name
-          title: null
+          description: description
+          title: title
         status: status
     ResolvedEntityResponse_Entity_contactpoint_allOf_entity:
       allOf:
@@ -7192,10 +8510,16 @@ components:
         uri: uri
         version: version
         properties:
-          contact type: null
-          telephone: null
-          available language: Entity_address_country_name
-          email: null
+          contact type: contact type
+          telephone:
+          - telephone
+          - telephone
+          available language:
+          - available language
+          - available language
+          email:
+          - email
+          - email
         status: status
     ResolvedEntityResponse_Entity_contactpointtype_allOf_entity:
       allOf:
@@ -7222,8 +8546,12 @@ components:
         uri: uri
         version: version
         properties:
-          result: null
-          object: Entity_address_country_name
+          result:
+          - result
+          - result
+          object:
+          - object
+          - object
         status: status
     ResolvedEntityResponse_Entity_creativework_allOf_entity:
       allOf:
@@ -7237,8 +8565,12 @@ components:
         uri: uri
         version: version
         properties:
-          conforms to: Entity_address_country_name
-          encoding format: null
+          conforms to:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          encoding format:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_dataset_allOf_entity:
       allOf:
@@ -7252,38 +8584,86 @@ components:
         uri: uri
         version: version
         properties:
-          has version: null
-          description: null
-          language: null
-          source: null
-          distribution: null
-          title: null
-          type: null
-          relation: null
-          is part of: null
-          version info: null
-          has part: null
-          provenance: null
-          modified: null
-          theme: null
-          contact point: null
-          issued: null
-          keyword: null
-          spatial: null
-          landing page: null
-          temporal: null
-          annotation: null
-          identifier: null
-          access rights: Entity_address_country_name
-          created: null
-          sample: null
-          has quality annotation: null
-          accrual periodicity: null
-          version notes: null
-          conforms to: null
-          publisher: null
-          page: null
-          is version of: null
+          has version:
+          - has version
+          - has version
+          description:
+          - description
+          - description
+          language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          source:
+          - source
+          - source
+          distribution:
+          - distribution
+          - distribution
+          title:
+          - title
+          - title
+          type: https://openapi-generator.tech
+          relation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          is part of:
+          - is part of
+          - is part of
+          version info: version info
+          has part:
+          - has part
+          - has part
+          provenance:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          modified: modified
+          theme:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          contact point:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          issued: issued
+          keyword:
+          - keyword
+          - keyword
+          spatial:
+          - spatial
+          - spatial
+          landing page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          temporal:
+          - temporal
+          - temporal
+          annotation:
+          - annotation
+          - annotation
+          identifier: https://openapi-generator.tech
+          access rights: https://openapi-generator.tech
+          created: created
+          sample:
+          - sample
+          - sample
+          has quality annotation:
+          - has quality annotation
+          - has quality annotation
+          accrual periodicity: https://openapi-generator.tech
+          version notes:
+          - version notes
+          - version notes
+          conforms to:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          publisher:
+          - publisher
+          - publisher
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          is version of:
+          - is version of
+          - is version of
         status: status
     ResolvedEntityResponse_Entity_dateordatetimedatatype_allOf_entity:
       allOf:
@@ -7310,25 +8690,41 @@ components:
         uri: uri
         version: version
         properties:
-          annotation: null
-          identifier: null
-          access url: Entity_address_country_name
-          format: null
-          description: null
-          language: null
-          title: null
-          type: null
-          license: null
-          download url: null
-          conforms to: null
-          rights: null
-          checksum: null
-          modified: null
-          page: null
-          byte size: null
-          issued: null
-          media type: null
-          status: null
+          annotation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          identifier: https://openapi-generator.tech
+          access url:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          format: https://openapi-generator.tech
+          description:
+          - description
+          - description
+          language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          title:
+          - title
+          - title
+          type: https://openapi-generator.tech
+          license: https://openapi-generator.tech
+          download url:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          conforms to:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          rights: https://openapi-generator.tech
+          checksum: https://openapi-generator.tech
+          modified: modified
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          byte size: 0.8008281904610115
+          issued: issued
+          media type: https://openapi-generator.tech
+          status: status
         status: status
     ResolvedEntityResponse_Entity_equipment_allOf_entity:
       allOf:
@@ -7342,25 +8738,39 @@ components:
         uri: uri
         version: version
         properties:
-          annotation: Entity_address_country_name
-          identifier: null
-          orientation: null
-          serial number: null
-          description: null
-          dynamic range: null
-          type: null
-          resolution: null
-          manufacturer: null
-          relation: null
-          filter: null
-          is part of: null
-          name: null
-          sample period: null
-          theme: null
-          page: null
-          contact point: null
-          spatial: null
-          temporal: null
+          annotation:
+          - annotation
+          - annotation
+          identifier: https://openapi-generator.tech
+          orientation: orientation
+          serial number: serial number
+          description: description
+          dynamic range: https://openapi-generator.tech
+          type: https://openapi-generator.tech
+          resolution: resolution
+          manufacturer: manufacturer
+          relation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          filter: filter
+          is part of:
+          - is part of
+          - is part of
+          name: name
+          sample period: https://openapi-generator.tech
+          theme:
+          - theme
+          - theme
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          contact point:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          spatial: spatial
+          temporal:
+          - temporal
+          - temporal
         status: status
     ResolvedEntityResponse_Entity_facility_allOf_entity:
       allOf:
@@ -7374,18 +8784,30 @@ components:
         uri: uri
         version: version
         properties:
-          annotation: Entity_address_country_name
-          is part of: null
-          identifier: null
-          description: null
-          has address: null
-          theme: null
-          page: null
-          contact point: null
-          spatial: null
-          title: null
-          type: null
-          relation: null
+          annotation:
+          - annotation
+          - annotation
+          is part of:
+          - is part of
+          - is part of
+          identifier: https://openapi-generator.tech
+          description: description
+          has address: has address
+          theme:
+          - theme
+          - theme
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          contact point:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          spatial: spatial
+          title: title
+          type: https://openapi-generator.tech
+          relation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_identifier_allOf_entity:
       allOf:
@@ -7399,8 +8821,8 @@ components:
         uri: uri
         version: version
         properties:
-          scheme agency: null
-          notation: Entity_address_country_name
+          scheme agency: scheme agency
+          notation: notation
         status: status
     ResolvedEntityResponse_Entity_iritemplate_allOf_entity:
       allOf:
@@ -7414,8 +8836,10 @@ components:
         uri: uri
         version: version
         properties:
-          template: null
-          mapping: Entity_address_country_name
+          template: template
+          mapping:
+          - mapping
+          - mapping
         status: status
     ResolvedEntityResponse_Entity_iritemplatemapping_allOf_entity:
       allOf:
@@ -7429,18 +8853,24 @@ components:
         uri: uri
         version: version
         properties:
-          min value: null
-          readonly value: null
-          multiple values: null
-          param value: null
-          property: null
-          variable: null
-          range: null
-          default value: Entity_address_country_name
-          label: null
-          max value: null
-          required: null
-          value pattern: null
+          min value: min value
+          readonly value:
+          - true
+          - true
+          multiple values:
+          - true
+          - true
+          param value:
+          - param value
+          - param value
+          property: property
+          variable: variable
+          range: range
+          default value: default value
+          label: label
+          max value: max value
+          required: true
+          value pattern: value pattern
         status: status
     ResolvedEntityResponse_Entity_location_allOf_entity:
       allOf:
@@ -7454,7 +8884,9 @@ components:
         uri: uri
         version: version
         properties:
-          geometry: Entity_address_country_name
+          geometry:
+          - geometry
+          - geometry
         status: status
     ResolvedEntityResponse_Entity_operation_allOf_entity:
       allOf:
@@ -7468,9 +8900,11 @@ components:
         uri: uri
         version: version
         properties:
-          method: Entity_address_country_name
-          property: null
-          returns: null
+          method: method
+          property: property
+          returns:
+          - returns
+          - returns
         status: status
     ResolvedEntityResponse_Entity_organization_allOf_entity:
       allOf:
@@ -7484,19 +8918,35 @@ components:
         uri: uri
         version: version
         properties:
-          annotation: null
-          legal name: null
-          identifier: null
-          associated project: null
-          member of: null
-          address: Entity_address_country_name
-          telephone: null
-          url: null
-          lei code: null
-          logo: null
-          owns: null
-          contact point: null
-          email: null
+          annotation:
+          - annotation
+          - annotation
+          legal name: legal name
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          associated project:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          member of:
+          - member of
+          - member of
+          address: address
+          telephone:
+          - telephone
+          - telephone
+          url: https://openapi-generator.tech
+          lei code: lei code
+          logo: https://openapi-generator.tech
+          owns:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          contact point:
+          - contact point
+          - contact point
+          email:
+          - email
+          - email
         status: status
     ResolvedEntityResponse_Entity_periodoftime_allOf_entity:
       allOf:
@@ -7510,8 +8960,8 @@ components:
         uri: uri
         version: version
         properties:
-          start date: null
-          end date: Entity_address_country_name
+          start date: start date
+          end date: end date
         status: status
     ResolvedEntityResponse_Entity_person_allOf_entity:
       allOf:
@@ -7525,17 +8975,29 @@ components:
         uri: uri
         version: version
         properties:
-          annotation: null
-          identifier: null
-          qualifications: null
-          address: Entity_address_country_name
-          family name: null
-          affiliation: null
-          given name: null
-          telephone: null
-          contact point: null
-          email: null
-          url: null
+          annotation:
+          - annotation
+          - annotation
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          qualifications: qualifications
+          address: address
+          family name: family name
+          affiliation:
+          - affiliation
+          - affiliation
+          given name: given name
+          telephone:
+          - telephone
+          - telephone
+          contact point:
+          - contact point
+          - contact point
+          email:
+          - email
+          - email
+          url: https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_postaladdress_allOf_entity:
       allOf:
@@ -7549,10 +9011,10 @@ components:
         uri: uri
         version: version
         properties:
-          postal code: null
-          street address: null
-          address country: Entity_address_country_name
-          address locality: null
+          postal code: postal code
+          street address: street address
+          address country: address country
+          address locality: address locality
         status: status
     ResolvedEntityResponse_Entity_project_allOf_entity:
       allOf:
@@ -7566,11 +9028,13 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          description: null
-          contact point: Entity_address_country_name
-          title: null
-          homepage: null
+          identifier: https://openapi-generator.tech
+          description: description
+          contact point:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          title: title
+          homepage: https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_propertyvalue_allOf_entity:
       allOf:
@@ -7584,8 +9048,8 @@ components:
         uri: uri
         version: version
         properties:
-          property id: Entity_address_country_name
-          value: null
+          property id: property id
+          value: value
         status: status
     ResolvedEntityResponse_Entity_publication_allOf_entity:
       allOf:
@@ -7599,19 +9063,25 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          keywords: null
-          author: null
-          date published: null
-          abstract: Entity_address_country_name
-          number of pages: null
-          license: null
-          contributor: null
-          issn: null
-          name: null
-          publisher: null
-          theme: null
-          volume number: null
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          keywords: keywords
+          author: author
+          date published: date published
+          abstract: abstract
+          number of pages: 0
+          license: https://openapi-generator.tech
+          contributor:
+          - contributor
+          - contributor
+          issn: issn
+          name: name
+          publisher: publisher
+          theme:
+          - theme
+          - theme
+          volume number: volume number
         status: status
     ResolvedEntityResponse_Entity_quantitativevalue_allOf_entity:
       allOf:
@@ -7625,8 +9095,8 @@ components:
         uri: uri
         version: version
         properties:
-          unit code: Entity_address_country_name
-          value: null
+          unit code: unit code
+          value: 0.8008281904610115
         status: status
     ResolvedEntityResponse_Entity_service_allOf_entity:
       allOf:
@@ -7640,17 +9110,27 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          keywords: null
-          provider: null
-          name: null
-          description: null
-          theme: null
-          service type: null
-          contact point: Entity_address_country_name
-          spatial: null
-          temporal: null
-          url: null
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          keywords: keywords
+          provider: provider
+          name: name
+          description: description
+          theme:
+          - theme
+          - theme
+          service type: service type
+          contact point:
+          - contact point
+          - contact point
+          spatial:
+          - spatial
+          - spatial
+          temporal:
+          - temporal
+          - temporal
+          url: https://openapi-generator.tech
         status: status
     ResolvedEntityResponse_Entity_softwareapplication_allOf_entity:
       allOf:
@@ -7664,20 +9144,30 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          keywords: null
-          install url: null
-          potential action: null
-          description: null
-          software requirements: null
-          software version: null
-          relation: null
-          license: null
-          main entity of page: null
-          download url: null
-          name: null
-          theme: null
-          contact point: Entity_address_country_name
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          keywords:
+          - keywords
+          - keywords
+          install url: https://openapi-generator.tech
+          potential action: potential action
+          description: description
+          software requirements: https://openapi-generator.tech
+          software version: software version
+          relation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          license: https://openapi-generator.tech
+          main entity of page: https://openapi-generator.tech
+          download url: https://openapi-generator.tech
+          name: name
+          theme:
+          - theme
+          - theme
+          contact point:
+          - contact point
+          - contact point
         status: status
     ResolvedEntityResponse_Entity_softwaresourcecode_allOf_entity:
       allOf:
@@ -7691,19 +9181,31 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          keywords: null
-          description: null
-          software version: null
-          license: null
-          runtime platform: null
-          main entity of page: null
-          target product: null
-          name: null
-          programming language: null
-          theme: null
-          code repository: Entity_address_country_name
-          contact point: null
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          keywords:
+          - keywords
+          - keywords
+          description: description
+          software version: software version
+          license: https://openapi-generator.tech
+          runtime platform: runtime platform
+          main entity of page: https://openapi-generator.tech
+          target product:
+          - target product
+          - target product
+          name: name
+          programming language:
+          - programming language
+          - programming language
+          theme:
+          - theme
+          - theme
+          code repository: https://openapi-generator.tech
+          contact point:
+          - contact point
+          - contact point
         status: status
     ResolvedEntityResponse_Entity_webservice_allOf_entity:
       allOf:
@@ -7717,21 +9219,37 @@ components:
         uri: uri
         version: version
         properties:
-          identifier: null
-          keywords: null
-          supported operation: null
-          date published: null
-          description: null
-          date modified: null
-          license: null
-          provider: null
-          entrypoint: null
-          conforms to: Entity_address_country_name
-          name: null
-          theme: null
-          contact point: null
-          spatial: null
-          temporal: null
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          keywords:
+          - keywords
+          - keywords
+          supported operation:
+          - supported operation
+          - supported operation
+          date published: date published
+          description: description
+          date modified: date modified
+          license: https://openapi-generator.tech
+          provider: provider
+          entrypoint: https://openapi-generator.tech
+          conforms to:
+          - conforms to
+          - conforms to
+          name: name
+          theme:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          contact point:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          spatial:
+          - spatial
+          - spatial
+          temporal:
+          - temporal
+          - temporal
         status: status
 x-runtime-shapes:
 - name: address
