@@ -137,6 +137,34 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
     }
 
     @Test
+    fun `organization search should return non-empty fields when constraints are requested`() = testApplication {
+        application {
+            module()
+        }
+
+        val organizationUri = "http://example.org/organization/test-org-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val organization = vf.createIRI(organizationUri)
+        model.add(organization, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://schema.org/Organization"))
+        model.add(organization, vf.createIRI("http://schema.org/name"), vf.createLiteral("Test Organization"))
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
+
+        val response = client.get("/api/v2/access/search?type=organization&includeConstraints=true&versioningStatus=PUBLISHED")
+        response.status shouldBe HttpStatusCode.OK
+
+        val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val items = json["items"] as List<Map<String, Any>>
+        (items.isNotEmpty()) shouldBe true
+        val item = items.first { it["id"] == organizationUri }
+
+        @Suppress("UNCHECKED_CAST")
+        val fields = item["fields"] as Map<String, Any>
+        (fields.isNotEmpty()) shouldBe true
+    }
+
+    @Test
     fun `legacy search endpoint should return 404`() = testApplication {
         application {
             module()

@@ -225,8 +225,8 @@ private fun buildAccessDetail(
         val predicateIri = prop(edge["predicateIri"])
         val target = row["t"] as? Map<*, *> ?: return@forEach
         val targetId =
-            (prop(target["identifier"])?.takeIf { it.isNotBlank() }
-                ?: prop(target["id"])?.takeIf { it.isNotBlank() })
+            (prop(target["id"])?.takeIf { it.isNotBlank() }
+                ?: prop(target["identifier"])?.takeIf { it.isNotBlank() })
                 ?: return@forEach
 
         if (targetId == requestedId) return@forEach
@@ -249,10 +249,11 @@ private fun buildAccessDetail(
 
         val href = resolvedLink?.href
         val resolvedType = objectType ?: resolvedLink?.resolvedShape
+        val resolvedId = resolvedLink?.resolvedVersionId ?: targetId
 
         val relationValue =
             AccessPropertyValue(
-                id = targetId,
+                id = resolvedId,
                 type = resolvedType,
                 title = null,
                 href = href,
@@ -264,6 +265,10 @@ private fun buildAccessDetail(
         if (!alreadyPresent) {
             bucket.add(relationValue)
         }
+    }
+
+    groupedProperties.replaceAll { _, values ->
+        deduplicateLiteralAndResolvedValues(values)
     }
 
     val normalizedProperties = groupedProperties.mapValues { (property, values) ->
@@ -291,6 +296,64 @@ private fun normalizeAccessPropertyValues(values: List<AccessPropertyValue>, for
     if (forceArray) return values
     return if (values.size == 1) values.first() else values
 }
+
+private fun deduplicateLiteralAndResolvedValues(values: MutableList<AccessPropertyValue>): MutableList<AccessPropertyValue> {
+    if (values.isEmpty()) return values
+
+    val dedupedResolved = deduplicateResolvedValues(values)
+
+    val resolvedIds =
+        dedupedResolved
+            .mapNotNull { it.id }
+            .map { canonicalRelationIdentifier(it) }
+            .toSet()
+    if (resolvedIds.isEmpty()) return dedupedResolved
+
+    return dedupedResolved
+        .filterNot { value ->
+            value.id == null && value.value != null && canonicalRelationIdentifier(value.value) in resolvedIds
+        }.toMutableList()
+}
+
+private fun deduplicateResolvedValues(values: List<AccessPropertyValue>): MutableList<AccessPropertyValue> {
+    val selected = linkedMapOf<String, AccessPropertyValue>()
+    values.forEach { value ->
+        val resolvedId = value.id
+        if (resolvedId.isNullOrBlank()) {
+            selected["raw:${selected.size}"] = value
+            return@forEach
+        }
+
+        val key =
+            listOf(
+                canonicalRelationIdentifier(resolvedId),
+                value.type.orEmpty(),
+                value.predicateIri.orEmpty(),
+            ).joinToString("|")
+        val existing = selected[key]
+        selected[key] =
+            if (existing == null || isPreferredResolvedValue(value, existing)) {
+                value
+            } else {
+                existing
+            }
+    }
+    return selected.values.toMutableList()
+}
+
+private fun isPreferredResolvedValue(candidate: AccessPropertyValue, current: AccessPropertyValue): Boolean {
+    val candidateHasVersionSuffix = candidate.id?.let { hasVersionSuffix(it) } ?: false
+    val currentHasVersionSuffix = current.id?.let { hasVersionSuffix(it) } ?: false
+    if (candidateHasVersionSuffix != currentHasVersionSuffix) {
+        return candidateHasVersionSuffix
+    }
+    return candidate.href?.length ?: Int.MAX_VALUE < current.href?.length ?: Int.MAX_VALUE
+}
+
+private fun hasVersionSuffix(value: String): Boolean = value.trim().matches(Regex(".*?/v\\d+(?:\\.\\d+)*$"))
+
+private fun canonicalRelationIdentifier(value: String): String =
+    value.trim().replace(Regex("/v\\d+(?:\\.\\d+)*$"), "")
 
 private fun shouldBeArrayByShacl(
     propertyName: String,
@@ -381,16 +444,17 @@ private fun buildAccessPropertyValue(
         }
     val href = resolvedLink?.href
     val resolvedType = objectType ?: resolvedLink?.resolvedShape
+    val resolvedId = resolvedLink?.resolvedVersionId ?: objectId
     val fallbackHref =
         if (!resolvedType.isNullOrBlank()) {
-            ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, objectId)
+            ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, resolvedId)
         } else {
             null
         }
 
     return if (!resolvedType.isNullOrBlank() || href != null || fallbackHref != null) {
         AccessPropertyValue(
-            id = objectId,
+            id = resolvedId,
             type = resolvedType,
             title = null,
             href = href ?: fallbackHref,

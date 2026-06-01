@@ -83,10 +83,10 @@ private suspend fun executeSearch(
 
     val matchedResourceTypes =
         if (types.isNotEmpty()) {
-            val normalizedTypes = types.map { normalizeTypeName(it) }
+            val normalizedTypes = types.map { canonicalSearchType(normalizeTypeName(it)) }
             val matchingTypes =
                 resourceTypeInfos.filter { typeInfo ->
-                    normalizeTypeName(typeInfo.name) in normalizedTypes
+                    canonicalSearchType(normalizeTypeName(typeInfo.name)) in normalizedTypes
                 }
             if (matchingTypes.isEmpty()) {
                 call.respond(
@@ -215,16 +215,25 @@ private suspend fun executeSearch(
                 val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
                 val v = row["v"] as? Map<*, *> ?: return@mapNotNull null
 
-                val id = prop(c["id"]) ?: return@mapNotNull null
+                val id = prop(v["id"]) ?: prop(c["id"]) ?: return@mapNotNull null
                 val typeUri = prop(c["type"]) ?: ""
                 val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
 
                 @Suppress("UNCHECKED_CAST")
-                val data =
+                val conceptualData =
+                    c
+                        .filterKeys { it is String && it !in structuralKeys }
+                        .mapKeys { (k, _) -> k as String }
+                        .mapValues { (_, v2) -> propAny(v2) }
+
+                @Suppress("UNCHECKED_CAST")
+                val versionData =
                     v
                         .filterKeys { it is String && it !in structuralKeys }
                         .mapKeys { (k, _) -> k as String }
                         .mapValues { (_, v2) -> propAny(v2) }
+
+                val data = conceptualData + versionData
 
                 val inferredFromId =
                     shapeByNormalizedName[normalizeTypeName(extractTypeName(id))]?.name
@@ -308,7 +317,14 @@ private fun mapSearchTypeUriToApiType(typeUri: String): String? =
         .takeIf { it.isNotBlank() }
         ?.lowercase()
 
-private fun canonicalApiType(typeName: String): String = normalizeTypeName(typeName).ifBlank { "resource" }
+internal fun canonicalApiType(typeName: String): String =
+    canonicalSearchType(normalizeTypeName(typeName)).ifBlank { "resource" }
+
+internal fun canonicalSearchType(typeName: String): String =
+    when (normalizeTypeName(typeName)) {
+        "publisher", "provider", "organization" -> "organization"
+        else -> normalizeTypeName(typeName)
+    }
 
 private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
@@ -321,17 +337,22 @@ private fun buildSearchItemFields(
     publicBaseUrl: String,
     shaclPrefixes: Map<String, String>,
 ): Map<String, Any?> {
-    val normalizedApiType = normalizeTypeName(apiType)
+    val normalizedApiType = canonicalSearchType(apiType)
     val resourceType =
         resourceTypeInfos.firstOrNull {
-            normalizeTypeName(it.name) == normalizedApiType || it.targetClass.equals(typeUri, ignoreCase = true)
+            canonicalSearchType(it.name) == normalizedApiType ||
+                canonicalSearchType(it.targetClass.substringAfterLast('/').substringAfterLast('#')) == normalizedApiType ||
+                it.targetClass.equals(typeUri, ignoreCase = true)
         } ?: return emptyMap()
 
     val resourceTypeMap = resourceTypeInfos.associate { it.targetClass to it.name }
     val knownShapeNames = resourceTypeInfos.map { it.name }.toSet()
 
     val selected = linkedMapOf<String, Any?>()
-    val selectedProps = resourceType.properties.filter { it.required || it.recommended }
+    val selectedProps =
+        resourceType.properties
+            .filter { it.required || it.recommended }
+            .ifEmpty { resourceType.properties }
     selectedProps.forEach { prop ->
         val field = extractFieldValue(data, prop, shaclPrefixes)
         if (field != null) {
@@ -349,8 +370,16 @@ private fun buildSearchItemFields(
                 )
         }
     }
+    if (shouldUseRawFieldsFallback(normalizedApiType, selected)) {
+        return data.filterValues { it != null }
+    }
     return selected
 }
+
+private fun shouldUseRawFieldsFallback(
+    normalizedApiType: String,
+    selected: Map<String, Any?>,
+): Boolean = normalizedApiType == "organization" && selected.isEmpty()
 
 private fun selectFieldKey(
     property: org.epos.api.shacl.PropertyInfo,
@@ -390,7 +419,7 @@ private fun normalizeSearchFieldValue(
     val relationShapeCandidates = relationShapeCandidates(property, resourceTypeMap, knownShapeNames)
     val relationValues = relationValues(value)
     if (relationShapeCandidates.isNotEmpty() && relationValues.isNotEmpty()) {
-        val mapped =
+            val mapped =
             relationValues.map { objectId ->
                 val link =
                     ResourceLinkResolver.resolveLink(
@@ -401,15 +430,16 @@ private fun normalizeSearchFieldValue(
                         publicBaseUrl = publicBaseUrl,
                         preferredShape = null,
                     )
+                val resolvedId = link?.resolvedVersionId ?: objectId
                 val resolvedType = resolveRelationType(link?.resolvedShape, relationShapeCandidates)
                 val href =
                     if (resolvedType != null) {
-                        ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, objectId)
+                        ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, resolvedId)
                     } else {
                         link?.href
                     }
                 linkedMapOf(
-                    "id" to objectId,
+                    "id" to resolvedId,
                     "type" to resolvedType,
                     "href" to href,
                 )
