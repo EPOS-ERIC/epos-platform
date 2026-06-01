@@ -132,7 +132,11 @@ services:
       - EPOS_GRAPH_BOOTSTRAP_MODE=skip-cypher
       - EPOS_SERVER_HOST=0.0.0.0
       - EPOS_SERVER_PORT=8080
-      - JAVA_TOOL_OPTIONS=-Dio.ktor.development=true
+      - JAVA_TOOL_OPTIONS=-javaagent:/otel/opentelemetry-javaagent.jar -Dio.ktor.development=true
+      - OTEL_SERVICE_NAME=metadata-lifecycle
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     ports:
       - "8080:8080"
     volumes:
@@ -151,8 +155,12 @@ services:
       - "32000:5000"
     environment:
       - LOG_LEVEL=DEBUG
-      - LOG_LEVEL_GATEWAY_HTTP_CLIENT=INFO
-      # - LOG_LEVEL_GATEWAY_HTTP_CLIENT=DEBUG
+      - LOG_LEVEL_GATEWAY_HTTP_CLIENT=DEBUG
+
+      - OTEL_SERVICE_NAME=gateway
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     user: 0:0 # run as root indev for intercting with system volumes
     volumes:
       - gateway-gomod-cache:/go/pkg/mod
@@ -175,6 +183,10 @@ services:
       - USER_GROUP_DB_NAME=user_group
       - USER_GROUP_DB_USER=user_group
       - USER_GROUP_DB_PASSWORD=user_group
+      - OTEL_SERVICE_NAME=user-group
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     volumes:
       - user-group-gomod-cache:/go/pkg/mod
       - user-group-gobuild-cache:/root/.cache/go-build
@@ -197,10 +209,26 @@ services:
       - DATA_RETRIEVER_DB_USER=data_retriever
       - DATA_RETRIEVER_DB_PASSWORD=data_retriever
       - DATA_RETRIEVER_HTTP_TIMEOUT=30s
+      - OTEL_SERVICE_NAME=data-retriever
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     volumes:
       - data-retriever-gomod-cache:/go/pkg/mod
       - data-retriever-gobuild-cache:/root/.cache/go-build
     restart: on-failure
+    networks:
+      - epos-network
+
+  otel-lgtm:
+    image: grafana/otel-lgtm
+
+    ports:
+      - 3000:3000
+      - 4040:4040
+      - 4317:4317
+      - 4318:4318
+      - 9090:9090
     networks:
       - epos-network
 

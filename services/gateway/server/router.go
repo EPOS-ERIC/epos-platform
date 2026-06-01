@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
@@ -52,7 +53,7 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 		r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
 	})
 
-	return r
+	return observability.NewHTTPHandler(r, "/")
 }
 
 func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {

@@ -1,4 +1,4 @@
-// Package metadatareader provides tolerant accessors over heterogeneous metadata-lifecycle property maps to isolate gateway mappers from upstream schema variations.
+// Package metadatareader parses metadata-lifecycle property maps into typed values used by gateway mappers.
 package metadatareader
 
 import (

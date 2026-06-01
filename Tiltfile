@@ -7,11 +7,13 @@ docker_build(
     only=[
         'services/gateway',
         'packages/go/logging',
+        'packages/go/observability',
         'docker/gateway-config.dev.yaml',
     ],
     live_update=[
         sync('services/gateway', '/workspace/services/gateway'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('docker/gateway-config.dev.yaml', '/workspace/docker/gateway-config.dev.yaml'),
         restart_container(),
     ],
@@ -27,6 +29,7 @@ docker_build(
         'services/metadata-lifecycle/gradlew',
         'services/metadata-lifecycle/build.gradle.kts',
         'services/metadata-lifecycle/settings.gradle.kts',
+        'packages/assets/otel/opentelemetry-javaagent.jar',
     ],
     live_update=[
         sync('services/metadata-lifecycle/src', '/workspace/services/metadata-lifecycle/src'),
@@ -34,6 +37,7 @@ docker_build(
         sync('services/metadata-lifecycle/gradlew', '/workspace/services/metadata-lifecycle/gradlew'),
         sync('services/metadata-lifecycle/build.gradle.kts', '/workspace/services/metadata-lifecycle/build.gradle.kts'),
         sync('services/metadata-lifecycle/settings.gradle.kts', '/workspace/services/metadata-lifecycle/settings.gradle.kts'),
+        sync('packages/assets/otel/opentelemetry-javaagent.jar', '/otel/opentelemetry-javaagent.jar'),
         restart_container(),
     ],
 )
@@ -45,12 +49,14 @@ docker_build(
     only=[
         'services/user-group',
         'packages/go/logging',
+        'packages/go/observability',
         'packages/go/migrations',
         'packages/go/postgres',
     ],
     live_update=[
         sync('services/user-group', '/workspace/services/user-group'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/migrations', '/workspace/packages/go/migrations'),
         sync('packages/go/postgres', '/workspace/packages/go/postgres'),
         restart_container(),
@@ -64,12 +70,14 @@ docker_build(
     only=[
         'services/data-retriever',
         'packages/go/logging',
+        'packages/go/observability',
         'packages/go/migrations',
         'packages/go/postgres',
     ],
     live_update=[
         sync('services/data-retriever', '/workspace/services/data-retriever'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
+        sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/migrations', '/workspace/packages/go/migrations'),
         sync('packages/go/postgres', '/workspace/packages/go/postgres'),
         restart_container(),
@@ -82,7 +90,10 @@ dc_resource('user-group-db', labels=['infra'])
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('janusgraph', labels=['infra'], resource_deps=['cassandra', 'elasticsearch'])
 dc_resource('janusgraph-visualizer', labels=['infra'], resource_deps=['janusgraph'])
+
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['janusgraph'])
 dc_resource('user-group-service', labels=['app'], resource_deps=['user-group-db'])
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['metadata-lifecycle-service'])
+
+dc_resource('otel-lgtm', labels=['observability'])

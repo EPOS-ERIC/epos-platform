@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/repository"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/retriever"
@@ -43,7 +44,7 @@ func NewRouter(repo repository.RetrievalRepository, client retrievalClient, heal
 	mux.HandleFunc("POST /api/v2/retrieve", h.retrieve)
 	mux.HandleFunc("GET /api/v2/retrieve/{id}", h.getByID)
 	mux.HandleFunc("GET /api/v2/search", h.search)
-	return mux
+	return observability.NewHTTPHandler(mux, "/")
 }
 
 func (h *Handler) health(w http.ResponseWriter, r *http.Request) {
