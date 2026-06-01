@@ -25,6 +25,12 @@ fmt:
 lint: fmt
 	golangci-lint run ./...
 
+test-schemathesis:
+	schemathesis run \
+		--url "http://localhost:32000/v1" \
+		--exclude-checks unsupported_method \
+		docs/openapi.yaml
+
 GATEWAY_SPEC := swagger/openapi.yaml
 METADATA_SPEC := ../metadata-lifecycle/openapi.yaml
 METADATA_CLIENT_GEN_DIR := gen/metadataclient
@@ -40,4 +46,4 @@ generate: clean
 clean:
 	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR)
 
-.PHONY: build build-docker generate test test-fixtures-refresh fmt lint clean
+.PHONY: build build-docker generate test test-fixtures-refresh fmt lint clean test-schemathesis

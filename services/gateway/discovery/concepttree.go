@@ -179,43 +179,7 @@ func (b *conceptTreeBuilder) buildConceptScheme(ctx context.Context, id string) 
 }
 
 func (b *conceptTreeBuilder) buildTopConceptTrees(ctx context.Context, topConcepts []api.ResourceRef) ([]api.ConceptTreeNode, error) {
-	if len(topConcepts) == 0 {
-		return nil, nil
-	}
-
-	children := make([]api.ConceptTreeNode, len(topConcepts))
-	g, groupCtx := errgroup.WithContext(ctx)
-	g.SetLimit(b.service.fanOutLimit)
-
-	for i, topConcept := range topConcepts {
-		g.Go(func() error {
-			child, err := b.buildConceptTree(groupCtx, topConcept.ID, nil)
-			if err != nil {
-				if errors.Is(err, errConceptTreeParse) {
-					b.service.log.WarnContext(groupCtx, "skip malformed top concept", "concept_id", topConcept.ID, "error", err)
-					return nil
-				}
-				return fmt.Errorf("build top concept '%s': %w", topConcept.ID, err)
-			}
-
-			children[i] = child
-			return nil
-		})
-	}
-
-	if err := g.Wait(); err != nil {
-		return nil, fmt.Errorf("build top concept trees: %w", err)
-	}
-
-	filteredChildren := make([]api.ConceptTreeNode, 0, len(children))
-	for _, child := range children {
-		if child.ID == "" {
-			continue
-		}
-		filteredChildren = append(filteredChildren, child)
-	}
-
-	return filteredChildren, nil
+	return b.buildConceptTrees(ctx, topConcepts, nil, "top", "build top concept trees")
 }
 
 func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, ancestors []string) (api.ConceptTreeNode, error) {
@@ -266,23 +230,27 @@ func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, an
 }
 
 func (b *conceptTreeBuilder) buildChildConceptTrees(ctx context.Context, childRefs []api.ResourceRef, ancestors []string) ([]api.ConceptTreeNode, error) {
-	if len(childRefs) == 0 {
+	return b.buildConceptTrees(ctx, childRefs, ancestors, "child", "build child concept trees")
+}
+
+func (b *conceptTreeBuilder) buildConceptTrees(ctx context.Context, refs []api.ResourceRef, ancestors []string, conceptType, treeErr string) ([]api.ConceptTreeNode, error) {
+	if len(refs) == 0 {
 		return nil, nil
 	}
 
-	children := make([]api.ConceptTreeNode, len(childRefs))
+	children := make([]api.ConceptTreeNode, len(refs))
 	g, groupCtx := errgroup.WithContext(ctx)
 	g.SetLimit(b.service.fanOutLimit)
 
-	for i, childRef := range childRefs {
+	for i, ref := range refs {
 		g.Go(func() error {
-			child, err := b.buildConceptTree(groupCtx, childRef.ID, ancestors)
+			child, err := b.buildConceptTree(groupCtx, ref.ID, ancestors)
 			if err != nil {
 				if errors.Is(err, errConceptTreeParse) {
-					b.service.log.WarnContext(groupCtx, "skip malformed child concept", "concept_id", childRef.ID, "error", err)
+					b.service.log.WarnContext(groupCtx, "skip malformed concept", "concept_type", conceptType, "concept_id", ref.ID, "error", err)
 					return nil
 				}
-				return fmt.Errorf("build child concept '%s': %w", childRef.ID, err)
+				return fmt.Errorf("build %s concept '%s': %w", conceptType, ref.ID, err)
 			}
 
 			children[i] = child
@@ -291,7 +259,7 @@ func (b *conceptTreeBuilder) buildChildConceptTrees(ctx context.Context, childRe
 	}
 
 	if err := g.Wait(); err != nil {
-		return nil, fmt.Errorf("build child concept trees: %w", err)
+		return nil, fmt.Errorf("%s: %w", treeErr, err)
 	}
 
 	filteredChildren := make([]api.ConceptTreeNode, 0, len(children))

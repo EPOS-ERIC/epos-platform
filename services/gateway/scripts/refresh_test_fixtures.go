@@ -96,12 +96,12 @@ func refreshFixture(client *http.Client, baseURL, root string, fixture fixture) 
 func resolveURL(baseURL, path string) (string, error) {
 	base, err := url.Parse(baseURL)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse base url '%s': %w", baseURL, err)
 	}
 
 	ref, err := url.Parse(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("parse relative path '%s': %w", path, err)
 	}
 
 	return base.ResolveReference(ref).String(), nil

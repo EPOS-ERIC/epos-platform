@@ -26,6 +26,9 @@ linters:
       - linters:
           - errcheck
         source: "^\\s*defer\\s+"
+      - linters:
+          - errcheck
+        path: ".*_test\\.go"
   settings:
     goconst:
       ignore-string-values:

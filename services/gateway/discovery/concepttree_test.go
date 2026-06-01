@@ -59,9 +59,9 @@ func TestGetConceptTree(t *testing.T) {
 				"shape": "conceptscheme",
 				"href":  "http://example.test/scheme-a",
 				"properties": map[string]any{
-					"skos:prefLabel":       "Scheme A",
-					"dct:title":            "Scheme A Title",
-					"dct:description":      "Scheme A Description",
+					"skos:prefLabel":         "Scheme A",
+					"dct:title":              "Scheme A Title",
+					"dct:description":        "Scheme A Description",
 					"schema:orderItemNumber": "2",
 					"skos:hasTopConcept": []map[string]any{
 						{"id": "concept-a", "type": "concept"},

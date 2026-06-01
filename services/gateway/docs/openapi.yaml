@@ -119,7 +119,7 @@ paths:
 
   /dataset/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/DatasetId"
     get:
       tags:
         - Resources
@@ -178,7 +178,7 @@ paths:
 
   /distribution/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/DistributionId"
     get:
       tags:
         - Resources
@@ -224,7 +224,7 @@ paths:
 
   /softwareapplication/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/SoftwareApplicationId"
     get:
       tags:
         - Resources
@@ -246,7 +246,7 @@ paths:
 
   /softwaresourcecode/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/SoftwareSourceCodeId"
     get:
       tags:
         - Resources
@@ -268,7 +268,7 @@ paths:
 
   /webservice/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/WebserviceId"
     get:
       tags:
         - Resources
@@ -329,7 +329,7 @@ paths:
 
   /organization/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/OrganizationId"
     get:
       tags:
         - Resources
@@ -413,7 +413,7 @@ paths:
 
   /concept/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/ConceptId"
     get:
       tags:
         - Resources
@@ -451,7 +451,7 @@ paths:
 
   /conceptscheme/{id}:
     parameters:
-      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/ConceptSchemeId"
     get:
       tags:
         - Resources
@@ -497,7 +497,79 @@ components:
       description: Local identifier of the resource
       schema:
         type: string
-        example: "123"
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0"
+
+    DatasetId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded dataset identifier.
+      schema:
+        type: string
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0"
+
+    DistributionId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded distribution identifier.
+      schema:
+        type: string
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDistribution%2Fv1.0"
+
+    SoftwareApplicationId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded software application identifier.
+      schema:
+        type: string
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0"
+
+    SoftwareSourceCodeId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded software source code identifier.
+      schema:
+        type: string
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0"
+
+    WebserviceId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded webservice identifier.
+      schema:
+        type: string
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0"
+
+    OrganizationId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded organization identifier.
+      schema:
+        type: string
+        example: "ISNI%3Ahttp%3A%2F%2Fisni.org%2Fisni%2F0000000121596200%2Fv1.0"
+
+    ConceptId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded concept identifier.
+      schema:
+        type: string
+        example: "category%3Ageomagneticdata%2Fv1.0"
+
+    ConceptSchemeId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded concept scheme identifier.
+      schema:
+        type: string
+        example: "category%3Aseismology%2Fv1.0"
 
     Q:
       name: q
@@ -733,7 +805,7 @@ components:
           example: 1
         page_size:
           type: integer
-          minimum: 1
+          minimum: 0
           maximum: 100
           description: Number of items returned in this response page
           example: 10
@@ -1051,7 +1123,7 @@ components:
             spatial:
               type: string
               description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
-              example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
+              example: "POLYGON((-25 34, 45 34, 45 72, -25 72, -25 34))"
             identifiers:
               type: array
               description: External or domain-specific identifiers for this dataset

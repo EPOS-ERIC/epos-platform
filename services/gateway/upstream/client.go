@@ -3,6 +3,7 @@ package upstream
 import (
 	"container/list"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -64,6 +65,17 @@ type inflightCall struct {
 	stale    bool
 }
 
+type upstreamStatusError struct {
+	method   string
+	url      string
+	status   string
+	response *cachedResponse
+}
+
+func (e *upstreamStatusError) Error() string {
+	return fmt.Sprintf("unexpected upstream status for %s %s: %s", e.method, e.url, e.status)
+}
+
 // NewClient creates a cached upstream HTTP client from Config.
 func NewClient(cfg Config) (*Client, error) {
 	if cfg.Timeout <= 0 {
@@ -116,6 +128,10 @@ func (c *Client) StandardClient() *nethttp.Client {
 func (c *Client) RoundTrip(req *nethttp.Request) (*nethttp.Response, error) {
 	resp, err := c.Do(req)
 	if err != nil {
+		if statusErr, ok := errors.AsType[*upstreamStatusError](err); ok {
+			return buildResponse(statusErr.response, CacheMetadata{}).Response, nil
+		}
+
 		return nil, err
 	}
 
@@ -304,13 +320,17 @@ func (c *Client) cacheableResponse(ctx context.Context, prepared preparedRequest
 	}
 
 	if resp.StatusCode < nethttp.StatusOK || resp.StatusCode >= nethttp.StatusMultipleChoices {
-		err = fmt.Errorf("unexpected upstream status for %s %s: %s", prepared.method, prepared.url, resp.Status)
 		c.deleteCache(prepared.key)
 		c.log.WarnContext(ctx, "upstream returned non-cacheable status",
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
 			slog.Group("response", "status", resp.StatusCode),
 		)
-		return nil, err
+		return nil, &upstreamStatusError{
+			method:   prepared.method,
+			url:      prepared.url,
+			status:   resp.Status,
+			response: newCachedResponse(resp, body),
+		}
 	}
 
 	return newCachedResponse(resp, body), nil
