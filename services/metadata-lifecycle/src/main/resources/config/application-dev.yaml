@@ -24,7 +24,7 @@ server:
 # Verbose logging for development
 logging:
   level: "DEBUG"
-  format: "text"
+  format: "json"
   includeTimestamp: true
 
 # All features enabled for testing

@@ -1,0 +1,14 @@
+<configuration>
+    <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timeZone>UTC</timeZone>
+            <customFields>{"service":"metadata-lifecycle"}</customFields>
+        </encoder>
+    </appender>
+
+    <property name="ROOT_LOG_LEVEL" value="${EPOS_LOGGING_LEVEL:-INFO}" />
+
+    <root level="${ROOT_LOG_LEVEL}">
+        <appender-ref ref="STDOUT_JSON" />
+    </root>
+</configuration>
