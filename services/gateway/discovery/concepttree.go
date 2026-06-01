@@ -17,6 +17,8 @@ import (
 
 const conceptSchemeSearchPageSize int32 = 100
 
+var errConceptTreeParse = errors.New("concept tree parse")
+
 func (s *Service) GetConceptTree(ctx context.Context) (api.ConceptTreeResponse, error) {
 	builder := conceptTreeBuilder{
 		service:        s,
@@ -39,6 +41,10 @@ func (s *Service) GetConceptTree(ctx context.Context) (api.ConceptTreeResponse, 
 		g.Go(func() error {
 			scheme, err := builder.buildConceptScheme(groupCtx, schemeID)
 			if err != nil {
+				if errors.Is(err, errConceptTreeParse) {
+					s.log.WarnContext(groupCtx, "skip malformed concept scheme", "scheme_id", schemeID, "error", err)
+					return nil
+				}
 				return fmt.Errorf("build concept scheme '%s': %w", schemeID, err)
 			}
 
@@ -55,19 +61,27 @@ func (s *Service) GetConceptTree(ctx context.Context) (api.ConceptTreeResponse, 
 		return api.ConceptTreeResponse{}, fmt.Errorf("build concept tree request failed: %w: %w", ErrUpstreamRequestFailed, err)
 	}
 
-	sort.SliceStable(schemes, func(i, j int) bool {
-		leftHasOrder := schemes[i].OrderNumber > 0
-		rightHasOrder := schemes[j].OrderNumber > 0
+	filteredSchemes := make([]api.ConceptScheme, 0, len(schemes))
+	for _, scheme := range schemes {
+		if scheme.ID == "" {
+			continue
+		}
+		filteredSchemes = append(filteredSchemes, scheme)
+	}
+
+	sort.SliceStable(filteredSchemes, func(i, j int) bool {
+		leftHasOrder := filteredSchemes[i].OrderNumber > 0
+		rightHasOrder := filteredSchemes[j].OrderNumber > 0
 		if leftHasOrder != rightHasOrder {
 			return leftHasOrder
 		}
 		if !leftHasOrder {
 			return false
 		}
-		return schemes[i].OrderNumber < schemes[j].OrderNumber
+		return filteredSchemes[i].OrderNumber < filteredSchemes[j].OrderNumber
 	})
 
-	return api.ConceptTreeResponse{Schemes: schemes}, nil
+	return api.ConceptTreeResponse{Schemes: filteredSchemes}, nil
 }
 
 type conceptTreeBuilder struct {
@@ -125,24 +139,24 @@ func (b *conceptTreeBuilder) buildConceptScheme(ctx context.Context, id string) 
 
 	reader := metadatareader.New(detail.GetProperties())
 
-	label, err := reader.RequiredStringOneOf("prefLabel", "label")
+	label, err := reader.RequiredString("skos:prefLabel")
 	if err != nil {
-		return api.ConceptScheme{}, fmt.Errorf("get concept scheme label: %w", err)
+		return api.ConceptScheme{}, fmt.Errorf("%w: get concept scheme label: %w", errConceptTreeParse, err)
 	}
 
-	name, err := reader.RequiredStringOneOf("title", "name")
+	name, err := reader.RequiredString("dct:title")
 	if err != nil {
-		return api.ConceptScheme{}, fmt.Errorf("get concept scheme name: %w", err)
+		return api.ConceptScheme{}, fmt.Errorf("%w: get concept scheme name: %w", errConceptTreeParse, err)
 	}
 
-	topConcepts, err := reader.ResourceRefs("hasTopConcept", api.ConceptType)
+	topConcepts, err := reader.ResourceRefs("skos:hasTopConcept", api.ConceptType)
 	if err != nil {
-		return api.ConceptScheme{}, fmt.Errorf("get concept scheme top concepts: %w", err)
+		return api.ConceptScheme{}, fmt.Errorf("%w: get concept scheme top concepts: %w", errConceptTreeParse, err)
 	}
 
-	orderNumber, err := metadatareader.ParseOptionalInt32(reader.OptionalString("orderItemNumber"))
+	orderNumber, err := metadatareader.ParseOptionalInt32(reader.OptionalString("schema:orderItemNumber"))
 	if err != nil {
-		return api.ConceptScheme{}, fmt.Errorf("get concept scheme order number: %w", err)
+		return api.ConceptScheme{}, fmt.Errorf("%w: get concept scheme order number: %w", errConceptTreeParse, err)
 	}
 
 	children, err := b.buildTopConceptTrees(ctx, topConcepts)
@@ -154,10 +168,10 @@ func (b *conceptTreeBuilder) buildConceptScheme(ctx context.Context, id string) 
 		ID:          detail.GetId(),
 		Label:       label,
 		Name:        name,
-		Description: reader.OptionalString("description"),
-		Logo:        reader.OptionalString("logo"),
-		Homepage:    reader.OptionalString("homepage"),
-		Color:       reader.OptionalString("color"),
+		Description: reader.OptionalString("dct:description"),
+		Logo:        reader.OptionalString("foaf:logo"),
+		Homepage:    reader.OptionalString("foaf:homepage"),
+		Color:       reader.OptionalString("schema:color"),
 		OrderNumber: orderNumber,
 		TopConcepts: topConcepts,
 		Children:    children,
@@ -177,6 +191,10 @@ func (b *conceptTreeBuilder) buildTopConceptTrees(ctx context.Context, topConcep
 		g.Go(func() error {
 			child, err := b.buildConceptTree(groupCtx, topConcept.ID, nil)
 			if err != nil {
+				if errors.Is(err, errConceptTreeParse) {
+					b.service.log.WarnContext(groupCtx, "skip malformed top concept", "concept_id", topConcept.ID, "error", err)
+					return nil
+				}
 				return fmt.Errorf("build top concept '%s': %w", topConcept.ID, err)
 			}
 
@@ -189,7 +207,15 @@ func (b *conceptTreeBuilder) buildTopConceptTrees(ctx context.Context, topConcep
 		return nil, fmt.Errorf("build top concept trees: %w", err)
 	}
 
-	return children, nil
+	filteredChildren := make([]api.ConceptTreeNode, 0, len(children))
+	for _, child := range children {
+		if child.ID == "" {
+			continue
+		}
+		filteredChildren = append(filteredChildren, child)
+	}
+
+	return filteredChildren, nil
 }
 
 func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, ancestors []string) (api.ConceptTreeNode, error) {
@@ -210,14 +236,14 @@ func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, an
 	}
 
 	reader := metadatareader.New(detail.GetProperties())
-	name, err := reader.RequiredStringOneOf("prefLabel", "name")
+	name, err := reader.RequiredString("skos:prefLabel")
 	if err != nil {
-		return api.ConceptTreeNode{}, fmt.Errorf("get concept name: %w", err)
+		return api.ConceptTreeNode{}, fmt.Errorf("%w: get concept name: %w", errConceptTreeParse, err)
 	}
 
-	childRefs, err := reader.ResourceRefs("narrower", api.ConceptType)
+	childRefs, err := reader.ResourceRefs("skos:narrower", api.ConceptType)
 	if err != nil {
-		return api.ConceptTreeNode{}, fmt.Errorf("get concept children: %w", err)
+		return api.ConceptTreeNode{}, fmt.Errorf("%w: get concept children: %w", errConceptTreeParse, err)
 	}
 
 	children, err := b.buildChildConceptTrees(ctx, childRefs, append(ancestors, id))
@@ -228,7 +254,7 @@ func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, an
 	concept := api.ConceptTreeNode{
 		ID:          detail.GetId(),
 		Name:        name,
-		Description: reader.OptionalString("definition"),
+		Description: reader.OptionalString("skos:definition"),
 		Children:    children,
 	}
 
@@ -252,6 +278,10 @@ func (b *conceptTreeBuilder) buildChildConceptTrees(ctx context.Context, childRe
 		g.Go(func() error {
 			child, err := b.buildConceptTree(groupCtx, childRef.ID, ancestors)
 			if err != nil {
+				if errors.Is(err, errConceptTreeParse) {
+					b.service.log.WarnContext(groupCtx, "skip malformed child concept", "concept_id", childRef.ID, "error", err)
+					return nil
+				}
 				return fmt.Errorf("build child concept '%s': %w", childRef.ID, err)
 			}
 
@@ -264,7 +294,15 @@ func (b *conceptTreeBuilder) buildChildConceptTrees(ctx context.Context, childRe
 		return nil, fmt.Errorf("build child concept trees: %w", err)
 	}
 
-	return children, nil
+	filteredChildren := make([]api.ConceptTreeNode, 0, len(children))
+	for _, child := range children {
+		if child.ID == "" {
+			continue
+		}
+		filteredChildren = append(filteredChildren, child)
+	}
+
+	return filteredChildren, nil
 }
 
 func (b *conceptTreeBuilder) fetchConceptDetail(ctx context.Context, id string) (*metadataclient.AccessDetailResponse, error) {

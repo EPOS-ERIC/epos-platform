@@ -68,3 +68,18 @@ func TestMapConceptSchemeMissingLabel(t *testing.T) {
 		t.Fatal("mapConceptScheme() error = nil")
 	}
 }
+
+func TestMapConceptSchemeMissingPrefLabelDoesNotFallBackToTitle(t *testing.T) {
+	t.Parallel()
+
+	_, err := mapConceptScheme(&metadataclient.AccessDetailResponse{
+		Id:    "category:icsdprocessing/v1.0",
+		Shape: "conceptscheme",
+		Properties: map[string]any{
+			"dct:title": "Processing",
+		},
+	})
+	if err == nil {
+		t.Fatal("mapConceptScheme() error = nil")
+	}
+}
