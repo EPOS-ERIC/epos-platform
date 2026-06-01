@@ -82,10 +82,10 @@ internal object ResourceLinkResolver {
 
     private fun Map<String, Any?>?.toPreferredId(): String? {
         if (this == null) return null
-        val identifier = this["identifier"]?.toString()?.trim().orEmpty()
-        if (identifier.isNotBlank()) return identifier
         val id = this["id"]?.toString()?.trim().orEmpty()
         if (id.isNotBlank()) return id
+        val identifier = this["identifier"]?.toString()?.trim().orEmpty()
+        if (identifier.isNotBlank()) return identifier
         val fallback = this["value"]?.toString()?.trim().orEmpty()
         return fallback.ifBlank { null }
     }
@@ -181,7 +181,7 @@ internal object ResourceLinkResolver {
     ): ResolvedLink? {
         val versionId = resolveAccessEntityId(client, objectId) ?: return null
         val shape = preferredShape ?: resolveEntityShapeFromGraph(client, objectId, resourceTypeMap, normalizeShapeName)
-        val href = buildNavigableAccessHref(publicBaseUrl, shape, objectId)
+        val href = buildNavigableAccessHref(publicBaseUrl, shape, versionId)
         return ResolvedLink(
             resolvedVersionId = versionId,
             resolvedShape = shape,
