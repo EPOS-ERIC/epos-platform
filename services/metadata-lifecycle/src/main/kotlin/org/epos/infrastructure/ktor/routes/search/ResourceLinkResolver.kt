@@ -25,14 +25,8 @@ internal object ResourceLinkResolver {
         val versionId =
             queryPreferredVersionId(
                 client = client,
-                query =
-                    """
-                    g.V().hasLabel('Version').has('id', ${gStr(requestedId)})
-                      .project('identifier','id')
-                      .by(coalesce(values('identifier'), constant('')))
-                      .by(coalesce(values('id'), constant('')))
-                      .limit(1).toList()
-                    """.trimIndent(),
+                query = "MATCH (v:Version {id: ${'$'}requestedId}) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                parameters = mapOf("requestedId" to requestedId),
             )
         if (!versionId.isNullOrBlank()) return versionId
 
@@ -40,15 +34,8 @@ internal object ResourceLinkResolver {
             val versionFromIdentifierWithinConceptual =
                 queryPreferredVersionId(
                     client = client,
-                    query =
-                        """
-                        g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualFromVersion)})
-                          .out('HAS_VERSION').hasLabel('Version').has('identifier', ${gStr(requestedId)})
-                          .project('identifier','id')
-                          .by(coalesce(values('identifier'), constant('')))
-                          .by(coalesce(values('id'), constant('')))
-                          .limit(1).toList()
-                        """.trimIndent(),
+                    query = "MATCH (:Conceptual {id: ${'$'}conceptualId})-[:HAS_VERSION]->(v:Version {identifier: ${'$'}requestedId}) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                    parameters = mapOf("conceptualId" to conceptualFromVersion, "requestedId" to requestedId),
                 )
             if (!versionFromIdentifierWithinConceptual.isNullOrBlank()) return versionFromIdentifierWithinConceptual
         }
@@ -58,30 +45,16 @@ internal object ResourceLinkResolver {
         val conceptualCurrentVersion =
             queryPreferredVersionId(
                 client = client,
-                query =
-                    """
-                    g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
-                      .out('CURRENT_VERSION').hasLabel('Version')
-                      .project('identifier','id')
-                      .by(coalesce(values('identifier'), constant('')))
-                      .by(coalesce(values('id'), constant('')))
-                      .limit(1).toList()
-                    """.trimIndent(),
+                query = "MATCH (:Conceptual {id: ${'$'}conceptualId})-[:CURRENT_VERSION]->(v:Version) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                parameters = mapOf("conceptualId" to conceptualId),
             )
         if (!conceptualCurrentVersion.isNullOrBlank()) return conceptualCurrentVersion
 
         val conceptualAnyVersion =
             queryPreferredVersionId(
                 client = client,
-                query =
-                    """
-                    g.V().hasLabel('Conceptual').has('id', ${gStr(conceptualId)})
-                      .out('HAS_VERSION').hasLabel('Version')
-                      .project('identifier','id')
-                      .by(coalesce(values('identifier'), constant('')))
-                      .by(coalesce(values('id'), constant('')))
-                      .limit(1).toList()
-                    """.trimIndent(),
+                query = "MATCH (:Conceptual {id: ${'$'}conceptualId})-[:HAS_VERSION]->(v:Version) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                parameters = mapOf("conceptualId" to conceptualId),
             )
         if (!conceptualAnyVersion.isNullOrBlank()) return conceptualAnyVersion
 
@@ -89,32 +62,20 @@ internal object ResourceLinkResolver {
             val conceptualCurrentVersionFromIdentifier =
                 queryPreferredVersionId(
                     client = client,
-                    query =
-                        """
-                        g.V().hasLabel('Conceptual').has('identifier', ${gStr(requestedId)})
-                          .out('CURRENT_VERSION').hasLabel('Version')
-                          .project('identifier','id')
-                          .by(coalesce(values('identifier'), constant('')))
-                          .by(coalesce(values('id'), constant('')))
-                          .limit(1).toList()
-                        """.trimIndent(),
+                    query = "MATCH (:Conceptual {identifier: ${'$'}requestedId})-[:CURRENT_VERSION]->(v:Version) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                    parameters = mapOf("requestedId" to requestedId),
                 )
             if (!conceptualCurrentVersionFromIdentifier.isNullOrBlank()) return conceptualCurrentVersionFromIdentifier
         }
 
-        val versionIdFromIdentifier = runCatching {
-            queryPreferredVersionId(
-                client = client,
-                query =
-                    """
-                    g.V().hasLabel('Version').has('identifier', ${gStr(requestedId)})
-                      .project('identifier','id')
-                      .by(coalesce(values('identifier'), constant('')))
-                      .by(coalesce(values('id'), constant('')))
-                      .limit(1).toList()
-                    """.trimIndent(),
-            )
-        }.getOrNull()
+        val versionIdFromIdentifier =
+            runCatching {
+                queryPreferredVersionId(
+                    client = client,
+                    query = "MATCH (v:Version {identifier: ${'$'}requestedId}) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                    parameters = mapOf("requestedId" to requestedId),
+                )
+            }.getOrNull()
 
         return versionIdFromIdentifier
     }
@@ -132,7 +93,8 @@ internal object ResourceLinkResolver {
     private fun queryPreferredVersionId(
         client: PropertyGraphClient,
         query: String,
-    ): String? = client.runQuery(query).firstOrNull().toPreferredId()
+        parameters: Map<String, Any> = emptyMap(),
+    ): String? = client.runQuery(query, parameters).firstOrNull().toPreferredId()
 
     fun resolveEntityShapeFromGraph(
         client: PropertyGraphClient,
@@ -141,25 +103,57 @@ internal object ResourceLinkResolver {
         normalizeShapeName: (String) -> String,
     ): String? {
         val versionId = resolveAccessEntityId(client, entityId) ?: return null
+        val conceptualFromVersion =
+            if (UriUtils.hasVersion(versionId)) {
+                UriUtils.extractConceptualUri(versionId)
+            } else {
+                null
+            }
         val conceptualType =
-            client.runQuery(
-                """
-                g.V().hasLabel('Version').has('id', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
-                  .values('type').limit(1).toList()
-                """.trimIndent(),
-            ).firstOrNull()?.get("value")?.toString()
-                ?: client.runQuery(
-                    """
-                    g.V().hasLabel('Version').has('identifier', ${gStr(versionId)}).in('HAS_VERSION').hasLabel('Conceptual')
-                      .values('type').limit(1).toList()
-                    """.trimIndent(),
-                ).firstOrNull()?.get("value")?.toString()
+            client
+                .runQuery(
+                    "MATCH (c:Conceptual {id: ${'$'}entityId}) RETURN c.type AS value LIMIT 1",
+                    mapOf("entityId" to entityId),
+                ).firstOrNull()
+                ?.get("value")
+                ?.toString()
+                ?: client
+                    .runQuery(
+                        "MATCH (c:Conceptual {id: ${'$'}versionId}) RETURN c.type AS value LIMIT 1",
+                        mapOf("versionId" to versionId),
+                    ).firstOrNull()
+                    ?.get("value")
+                    ?.toString()
+                ?: conceptualFromVersion?.let { conceptualId ->
+                    client
+                        .runQuery(
+                            "MATCH (c:Conceptual {id: ${'$'}conceptualId}) RETURN c.type AS value LIMIT 1",
+                            mapOf("conceptualId" to conceptualId),
+                        ).firstOrNull()
+                        ?.get("value")
+                        ?.toString()
+                }
+                ?: client
+                    .runQuery(
+                        "MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version {id: ${'$'}versionId}) RETURN c.type AS value LIMIT 1",
+                        mapOf("versionId" to versionId),
+                    ).firstOrNull()
+                    ?.get("value")
+                    ?.toString()
+                ?: client
+                    .runQuery(
+                        "MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version {identifier: ${'$'}versionId}) RETURN c.type AS value LIMIT 1",
+                        mapOf("versionId" to versionId),
+                    ).firstOrNull()
+                    ?.get("value")
+                    ?.toString()
                 ?: return null
 
-        return resourceTypeMap.entries.firstOrNull { (typeUri, shapeName) ->
-            normalizeShapeName(shapeName) == normalizeShapeName(conceptualType) ||
-                normalizeShapeName(typeUri.substringAfterLast('/').substringAfterLast('#')) == normalizeShapeName(conceptualType)
-        }?.value
+        return resourceTypeMap.entries
+            .firstOrNull { (typeUri, shapeName) ->
+                normalizeShapeName(shapeName) == normalizeShapeName(conceptualType) ||
+                    normalizeShapeName(typeUri.substringAfterLast('/').substringAfterLast('#')) == normalizeShapeName(conceptualType)
+            }?.value
     }
 
     fun isPotentialResourceIdentifier(value: String): Boolean {
@@ -195,5 +189,4 @@ internal object ResourceLinkResolver {
         )
     }
 
-    private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 }

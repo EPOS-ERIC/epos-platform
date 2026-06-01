@@ -13,13 +13,12 @@ import kotlinx.html.div
 import kotlinx.html.head
 import kotlinx.html.id
 import kotlinx.html.link
-import kotlinx.html.style
 import kotlinx.html.script
+import kotlinx.html.style
 import kotlinx.html.title
 import kotlinx.html.unsafe
-import org.epos.services.ShaclService
 
-fun Application.configureOpenApi(shaclService: ShaclService) {
+fun Application.configureOpenApi() {
     routing {
         get("/openapi.runtime.yaml") {
             call.response.header(HttpHeaders.CacheControl, "no-store, no-cache, must-revalidate")
@@ -34,10 +33,11 @@ fun Application.configureOpenApi(shaclService: ShaclService) {
                     link(rel = "stylesheet", href = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css")
                     style {
                         unsafe {
-                            +"""
-                            html, body { margin: 0; padding: 0; }
-                            #swagger-ui { min-height: 100vh; }
-                            """.trimIndent()
+                            +
+                                """
+                                html, body { margin: 0; padding: 0; }
+                                #swagger-ui { min-height: 100vh; }
+                                """.trimIndent()
                         }
                     }
                 }

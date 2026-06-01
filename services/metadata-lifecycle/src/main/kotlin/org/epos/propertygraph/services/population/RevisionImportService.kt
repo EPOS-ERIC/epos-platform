@@ -13,8 +13,8 @@ import org.eclipse.rdf4j.rio.Rio
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
-import org.epos.propertygraph.Config
 import org.epos.api.models.ResourceTypeInfo
+import org.epos.propertygraph.Config
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.services.EntityLifecycleService
 import org.epos.propertygraph.utils.UriUtils
@@ -215,6 +215,12 @@ class RevisionImportService(
         val entityDataMap = mutableMapOf<String, MutableMap<String, Any>>()
         val entityEdgeMap = mutableMapOf<String, MutableList<EdgeDraft>>()
         val resourceTypesByName = shaclService.getResourceTypes().associateBy { normalizeShapeName(it.name) }
+        val shaclPrefixes =
+            shaclService
+                .getParser()
+                .getCachedShapesGraph()
+                ?.prefixes
+                .orEmpty()
         val subjectTypeByVersionUri = extractSubjectTypeByVersionUri(rewrittenModel)
 
         rewrittenModel.forEach { stmt ->
@@ -225,9 +231,10 @@ class RevisionImportService(
             val predicate = stmt.predicate.stringValue()
             val obj = stmt.`object`
 
-            val propName = sanitizeKey(predicate.substringAfterLast("/").substringAfterLast("#"))
+            val propName = propertyKeyFromPredicate(predicate, shaclPrefixes)
             if (predicate.endsWith("type") || predicate == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" ||
-                predicate.endsWith("version") || predicate.endsWith("isVersionOf")) {
+                predicate.endsWith("version") || predicate.endsWith("isVersionOf")
+            ) {
                 return@forEach
             }
 
@@ -249,39 +256,49 @@ class RevisionImportService(
                     }
 
                     val existing = data[propName]
-                    data[propName] = when (existing) {
-                        null -> obj.stringValue()
-                        is List<*> -> existing + obj.stringValue()
-                        else -> listOf(existing, obj.stringValue())
-                    }
+                    data[propName] =
+                        when (existing) {
+                            null -> obj.stringValue()
+                            is List<*> -> existing + obj.stringValue()
+                            else -> listOf(existing, obj.stringValue())
+                        }
                 }
+
                 is org.eclipse.rdf4j.model.Literal -> {
                     val value = obj.stringValue()
                     val existing = data[propName]
-                    data[propName] = when (existing) {
-                        null -> value
-                        is List<*> -> existing + value
-                        else -> listOf(existing, value)
-                    }
+                    data[propName] =
+                        when (existing) {
+                            null -> value
+                            is List<*> -> existing + value
+                            else -> listOf(existing, value)
+                        }
                 }
+
                 is org.eclipse.rdf4j.model.BNode -> {
                     val bnodeProps = mutableMapOf<String, Any>()
                     rewrittenModel.filter { it.subject == obj }.forEach { bStmt ->
-                        val bProp = bStmt.predicate.stringValue().substringAfterLast("/").substringAfterLast("#")
+                        val bProp =
+                            bStmt.predicate
+                                .stringValue()
+                                .substringAfterLast("/")
+                                .substringAfterLast("#")
                         val bObj = bStmt.`object`
-                        bnodeProps[bProp] = when (bObj) {
-                            is IRI -> bObj.stringValue()
-                            is org.eclipse.rdf4j.model.Literal -> bObj.stringValue()
-                            else -> bObj.stringValue()
-                        }
+                        bnodeProps[bProp] =
+                            when (bObj) {
+                                is IRI -> bObj.stringValue()
+                                is org.eclipse.rdf4j.model.Literal -> bObj.stringValue()
+                                else -> bObj.stringValue()
+                            }
                     }
                     if (bnodeProps.isNotEmpty()) {
                         val existing = data[propName]
-                        data[propName] = when (existing) {
-                            null -> bnodeProps
-                            is List<*> -> existing + bnodeProps
-                            else -> listOf(existing, bnodeProps)
-                        }
+                        data[propName] =
+                            when (existing) {
+                                null -> bnodeProps
+                                is List<*> -> existing + bnodeProps
+                                else -> listOf(existing, bnodeProps)
+                            }
                     }
                 }
             }
@@ -291,27 +308,32 @@ class RevisionImportService(
         if (!options.dryRun) {
             entityDataMap.forEach { (draftUri, data) ->
                 val setClauses =
-                    data.entries.flatMap { (key, value) ->
-                        val safeKey = gStr(sanitizeKey(key))
-                        when (value) {
-                            is List<*> -> listOf("v.property($safeKey, ${gVal(value)})")
-                            else -> listOf("v.property($safeKey, ${gVal(value)})")
-                        }
-                    }.joinToString("\n")
-                val timestamp = java.time.Instant.now().toString()
+                    data.entries
+                        .map { (key, value) -> sanitizeKey(key) to value }
+                val timestamp =
+                    java.time.Instant
+                        .now()
+                        .toString()
 
-                client.runWrite("""
-                    def v = g.V().hasLabel('Version').has('id', ${gStr(draftUri)}).has('status','draft').next()
-                    $setClauses
-                    v.property('updatedAt', ${gStr(timestamp)})
-                """.trimIndent())
+                client.runWrite(
+                    "MATCH (v:Version {id: ${'$'}draftUri}) WHERE toLower(v.status) = 'draft' SET v.updatedAt = ${'$'}timestamp",
+                    mapOf("draftUri" to draftUri, "timestamp" to timestamp),
+                )
+
+                setClauses.forEach { (key, value) ->
+                    val safeKey = key.replace("`", "")
+                    client.runWrite(
+                        "MATCH (v:Version {id: ${'$'}draftUri}) WHERE toLower(v.status) = 'draft' SET v.`$safeKey` = ${'$'}value",
+                        mapOf("draftUri" to draftUri, "value" to toPropertyValue(value)),
+                    )
+                }
 
                 triplesInserted += data.size
             }
 
             entityEdgeMap.forEach { (sourceVersionId, edges) ->
                 if (edges.isNotEmpty()) {
-                    client.runWrite(buildAttachEdgesScript(sourceVersionId, edges))
+                    attachEdges(sourceVersionId, edges)
                 }
             }
         }
@@ -356,7 +378,11 @@ class RevisionImportService(
 
         val draftUri = "$conceptualUri/$targetVersion-draft"
 
-        val draftExists = client.exists("g.V().hasLabel('Version').has('id', ${gStr(draftUri)}).has('status','draft').limit(1).toList()")
+        val draftExists =
+            client.exists(
+                "MATCH (v:Version {id: ${'$'}draftUri}) WHERE toLower(v.status) = 'draft' RETURN v.id AS value LIMIT 1",
+                mapOf("draftUri" to draftUri),
+            )
 
         if (draftExists && !options.replaceDraftIfExists) {
             throw IllegalStateException("Draft already exists for target version ($targetVersion)")
@@ -380,8 +406,15 @@ class RevisionImportService(
         model: Model,
         importedToDraft: Map<String, String>,
     ): Model {
-        val remap = importedToDraft.mapKeys { org.eclipse.rdf4j.model.util.Values.iri(it.key) }
-            .mapValues { org.eclipse.rdf4j.model.util.Values.iri(it.value) }
+        val remap =
+            importedToDraft
+                .mapKeys {
+                    org.eclipse.rdf4j.model.util.Values
+                        .iri(it.key)
+                }.mapValues {
+                    org.eclipse.rdf4j.model.util.Values
+                        .iri(it.value)
+                }
         val rewritten = LinkedHashModel()
 
         model.forEach { statement ->
@@ -407,18 +440,23 @@ class RevisionImportService(
         model: Model,
         importedToDraft: Map<String, String>,
     ): Int {
-        val remapKeys = importedToDraft.keys.map { org.eclipse.rdf4j.model.util.Values.iri(it) }.toSet()
+        val remapKeys =
+            importedToDraft.keys
+                .map {
+                    org.eclipse.rdf4j.model.util.Values
+                        .iri(it)
+                }.toSet()
         return model.count { statement -> statement.`object` is IRI && remapKeys.contains(statement.`object`) }
     }
 
-    private fun extractSubjects(model: Model): List<String> {
-        return model.asSequence()
+    private fun extractSubjects(model: Model): List<String> =
+        model
+            .asSequence()
             .filter { it.subject is org.eclipse.rdf4j.model.IRI }
             .map { it.subject.stringValue() }
             .filterNot { it.startsWith("genid-") || it.startsWith("_:") }
             .distinct()
             .toList()
-    }
 
     private fun nextVersionFrom(currentVersionUri: String): String {
         val segment = currentVersionUri.substringAfterLast("/").removeSuffix("-draft")
@@ -482,41 +520,46 @@ class RevisionImportService(
             .filter { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE && it.`object` is org.eclipse.rdf4j.model.IRI }
             .associate { stmt ->
                 val subject = stmt.subject.stringValue()
-                val typeShort = stmt.`object`.stringValue().substringAfterLast('/').substringAfterLast('#')
+                val typeShort =
+                    stmt.`object`
+                        .stringValue()
+                        .substringAfterLast('/')
+                        .substringAfterLast('#')
                 subject to typeShort
             }
 
-    private fun buildAttachEdgesScript(
+    private fun attachEdges(
         sourceVersionId: String,
         edges: List<EdgeDraft>,
-    ): String {
-        val edgeAssignments =
-            edges.distinct().joinToString("\n") { edge ->
+    ) {
+        edges.distinct().forEach { edge ->
+            val edgeType = sanitizeEdgeLabel(edge.label).replace("-", "_")
+            client.runWrite(
                 """
-                def t_${edge.safeVarName()} = g.V().hasLabel('Version').has('id', ${gStr(edge.targetVersionUri)}).limit(1).toList()
-                if (t_${edge.safeVarName()}.isEmpty()) {
-                    t_${edge.safeVarName()} = g.V().hasLabel('Conceptual').has('id', ${gStr(edge.targetVersionUri)})
-                        .out('CURRENT_VERSION').hasLabel('Version').limit(1).toList()
-                }
-                if (!t_${edge.safeVarName()}.isEmpty()) {
-                    def tId_${edge.safeVarName()} = t_${edge.safeVarName()}[0].value('id')
-                    if (!g.V(v.id()).out(${gStr(edge.label)}).has('id', tId_${edge.safeVarName()}).hasNext()) {
-                        g.V(v.id()).addE(${gStr(edge.label)}).to(t_${edge.safeVarName()}[0])
-                            .property('predicateIri', ${gStr(edge.predicateIri)})
-                            .property('predicateKey', ${gStr(edge.predicateKey)})
-                            .iterate()
-                    }
-                }
-                """.trimIndent()
-            }
+                MATCH (s:Version {id: ${'$'}sourceVersionId})
+                OPTIONAL MATCH (tv:Version {id: ${'$'}targetVersionUri})
+                OPTIONAL MATCH (tc:Conceptual {id: ${'$'}targetVersionUri})-[:CURRENT_VERSION]->(tcv:Version)
+                WITH s, coalesce(tv, tcv) AS t
+                WHERE t IS NOT NULL
+                MERGE (s)-[r:$edgeType]->(t)
+                SET r.predicateIri = ${'$'}predicateIri,
+                    r.predicateKey = ${'$'}predicateKey
+                """.trimIndent(),
+                mapOf(
+                    "sourceVersionId" to sourceVersionId,
+                    "targetVersionUri" to edge.targetVersionUri,
+                    "predicateIri" to edge.predicateIri,
+                    "predicateKey" to edge.predicateKey,
+                ),
+            )
+        }
+    }
 
-        return """
-            def vs = g.V().hasLabel('Version').has('id', ${gStr(sourceVersionId)}).limit(1).toList()
-            if (!vs.isEmpty()) {
-                def v = vs[0]
-                ${edgeAssignments}
-            }
-        """.trimIndent()
+    private fun toPropertyValue(value: Any?): Any = when (value) {
+        null -> ""
+        is String, is Number, is Boolean -> value
+        is List<*>, is Map<*, *> -> com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value)
+        else -> value.toString()
     }
 
     private fun shouldCreateRelationEdge(
@@ -528,13 +571,16 @@ class RevisionImportService(
     ): Boolean {
         val subjectType = subjectTypeByVersionUri[subjectVersionUri] ?: return true
         val resourceType = resourceTypesByName[normalizeShapeName(subjectType)] ?: return true
-        val normalizedKey = normalizeShapeName(predicateKey)
+        val normalizedKeyCandidates = predicateKeyLookupCandidates(predicateKey).map { normalizeShapeName(it) }
 
-        val property = resourceType.properties.firstOrNull { prop ->
-            normalizeShapeName(prop.name) == normalizedKey ||
-                normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedKey ||
+        val property =
+            resourceType.properties.firstOrNull { prop ->
                 prop.path.equals(predicateIri, ignoreCase = true)
-        } ?: return true
+            } ?: resourceType.properties.firstOrNull { prop ->
+                val propName = normalizeShapeName(prop.name)
+                val propPathLocal = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+                normalizedKeyCandidates.any { it == propName || it == propPathLocal }
+            } ?: return true
 
         return !property.classConstraint.isNullOrBlank() ||
             !property.classConstraints.isNullOrEmpty() ||
@@ -568,15 +614,81 @@ private data class EdgeDraft(
 
 private fun gStr(value: String): String =
     "'${value.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")}'"
-private fun gVal(value: Any): String = when (value) {
-    is String -> gStr(value)
-    is Number, is Boolean -> value.toString()
-    is Map<*, *>, is List<*> -> gStr(com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value))
-    else -> gStr(value.toString())
-}
+
+private fun gVal(value: Any): String =
+    when (value) {
+        is String -> {
+            gStr(value)
+        }
+
+        is Number, is Boolean -> {
+            value.toString()
+        }
+
+        is Map<*, *>, is List<*> -> {
+            gStr(
+                com.fasterxml.jackson.databind
+                    .ObjectMapper()
+                    .writeValueAsString(value),
+            )
+        }
+
+        else -> {
+            gStr(value.toString())
+        }
+    }
+
 private fun sanitizeKey(key: String): String {
     val reserved = setOf("id", "label", "key", "value", "property")
     return if (key in reserved) "pg_$key" else key
+}
+
+private fun propertyKeyFromPredicate(
+    predicate: String,
+    shaclPrefixes: Map<String, String>,
+): String {
+    val local = predicate.substringAfterLast('/').substringAfterLast('#').trim()
+    if (local.isBlank()) return sanitizeKey("prop")
+
+    val namespace = predicate.substringBeforeLast('#', predicate.substringBeforeLast('/') + "/")
+    val namespaceToken =
+        preferredShaclPrefix(namespace, shaclPrefixes)
+            ?: predicate
+                .substringBeforeLast('#', predicate)
+                .substringBeforeLast('/', predicate)
+                .substringAfterLast('/')
+                .substringAfterLast('#')
+                .lowercase()
+                .replace(Regex("[^a-z0-9]"), "")
+
+    val localKey = sanitizeKey(local)
+    if (namespaceToken.isBlank() || !namespaceToken.first().isLetter()) return localKey
+    return "$namespaceToken:$localKey"
+}
+
+private fun preferredShaclPrefix(
+    namespace: String,
+    shaclPrefixes: Map<String, String>,
+): String? {
+    val normalizedNamespace = normalizeNamespace(namespace)
+    val candidates =
+        shaclPrefixes
+            .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+            .keys
+            .filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+    return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+}
+
+private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
+
+private fun predicateKeyLookupCandidates(predicateKey: String): List<String> {
+    val candidates = linkedSetOf(predicateKey)
+    predicateKey.substringAfter(':', predicateKey).takeIf { it != predicateKey }?.let { candidates.add(it) }
+    predicateKey.substringAfter('_', predicateKey).takeIf { it != predicateKey }?.let { candidates.add(it) }
+    return candidates.toList()
 }
 
 private fun sanitizeEdgeLabel(label: String): String {

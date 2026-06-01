@@ -88,9 +88,10 @@ class RelationReconciliationService(
                     val hasEdge =
                         client.exists(
                             """
-                            g.V().hasLabel('Version').has('id', ${gStr(sourceId)})
-                              .outE(${gStr(edgeLabel)}).inV().has('id', ${gStr(resolvedTargetId)}).limit(1).toList()
+                            MATCH (s:Version {id: ${'$'}sourceId})-[e:$edgeLabel]->(t:Version {id: ${'$'}targetId})
+                            RETURN t.id AS value LIMIT 1
                             """.trimIndent(),
+                            mapOf("sourceId" to sourceId, "targetId" to resolvedTargetId),
                         )
 
                     if (!hasEdge) {
@@ -98,12 +99,11 @@ class RelationReconciliationService(
                         if (!dryRun) {
                             client.runWrite(
                                 """
-                                def s = g.V().hasLabel('Version').has('id', ${gStr(sourceId)}).limit(1).next()
-                                def t = g.V().hasLabel('Version').has('id', ${gStr(resolvedTargetId)}).limit(1).next()
-                                g.V(s.id()).addE(${gStr(edgeLabel)}).to(t)
-                                  .property('predicateKey', ${gStr(propertyName)})
-                                  .iterate()
+                                MATCH (s:Version {id: ${'$'}sourceId}), (t:Version {id: ${'$'}targetId})
+                                MERGE (s)-[r:$edgeLabel]->(t)
+                                SET r.predicateKey = ${'$'}predicateKey
                                 """.trimIndent(),
+                                mapOf("sourceId" to sourceId, "targetId" to resolvedTargetId, "predicateKey" to propertyName),
                             )
                             edgesCreated++
                         }
@@ -113,42 +113,48 @@ class RelationReconciliationService(
         }
 
         val legacyEdgesScanned =
-            client.runQuery(
-                """
-                g.E().filter{ !['HAS_VERSION','CURRENT_VERSION','REVISION_OF','SUPERSEDED_BY','AFFECTED'].contains(it.get().label()) }
-                  .count().toList()
-                """.trimIndent(),
-            ).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
+            client
+                .runQuery(
+                    """
+                    MATCH ()-[e]->()
+                    WHERE NOT type(e) IN ['HAS_VERSION','CURRENT_VERSION','REVISION_OF','SUPERSEDED_BY','AFFECTED']
+                    RETURN count(e) AS value
+                    """.trimIndent(),
+                ).firstOrNull()
+                ?.get("value")
+                ?.toString()
+                ?.toIntOrNull() ?: 0
 
         val legacyEdgesBackfilledCandidates =
-            client.runQuery(
-                """
-                g.E().hasLabel(org.apache.tinkerpop.gremlin.process.traversal.TextP.startingWith('rel_'))
-                  .filter{ !it.get().property('predicateKey').isPresent() || !it.get().property('predicateIri').isPresent() }
-                  .count().toList()
-                """.trimIndent(),
-            ).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
+            client
+                .runQuery(
+                    """
+                    MATCH ()-[e]->()
+                    WHERE startsWith(type(e), 'rel_')
+                      AND (e.predicateKey IS NULL OR e.predicateIri IS NULL)
+                    RETURN count(e) AS value
+                    """.trimIndent(),
+                ).firstOrNull()
+                ?.get("value")
+                ?.toString()
+                ?.toIntOrNull() ?: 0
 
         val legacyEdgesBackfilled =
             if (dryRun) {
                 legacyEdgesBackfilledCandidates
             } else {
-                client.runWriteReturning(
-                    """
-                    def updated = 0
-                    g.E().hasLabel(org.apache.tinkerpop.gremlin.process.traversal.TextP.startingWith('rel_')).toList().each { e ->
-                      def changed = false
-                      if (!e.property('predicateKey').isPresent()) {
-                        e.property('predicateKey', e.label().substring(4))
-                        changed = true
-                      }
-                      if (changed) {
-                        updated = updated + 1
-                      }
-                    }
-                    updated
-                    """.trimIndent(),
-                ).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
+                client
+                    .runWriteReturning(
+                        """
+                        MATCH ()-[e]->()
+                        WHERE startsWith(type(e), 'rel_') AND e.predicateKey IS NULL
+                        SET e.predicateKey = replace(type(e), 'rel_', '')
+                        RETURN count(e) AS value
+                        """.trimIndent(),
+                    ).firstOrNull()
+                    ?.get("value")
+                    ?.toString()
+                    ?.toIntOrNull() ?: 0
             }
 
         return RelationReconciliationResult(
@@ -173,36 +179,50 @@ class RelationReconciliationService(
 
     private fun sanitizeEdgeLabel(label: String): String {
         val cleaned = label.trim().ifBlank { "relatedTo" }
-        val normalized = cleaned.replace(Regex("[^A-Za-z0-9_\\-]"), "_")
+        val normalized = cleaned.replace(Regex("[^A-Za-z0-9_]"), "_")
         return "rel_$normalized"
     }
 
     private fun resolveTargetVersionId(targetId: String): String? {
         val exact =
-            client.runQuery(
-                "g.V().hasLabel('Version').has('id', ${gStr(targetId)}).values('id').limit(1).toList()",
-            ).firstOrNull()?.get("value")?.toString()
+            client
+                .runQuery(
+                    "MATCH (v:Version {id: ${'$'}targetId}) RETURN v.id AS value LIMIT 1",
+                    mapOf("targetId" to targetId),
+                ).firstOrNull()
+                ?.get("value")
+                ?.toString()
         if (!exact.isNullOrBlank()) return exact
 
-        return client.runQuery(
-            """
-            g.V().hasLabel('Conceptual').has('id', ${gStr(targetId)})
-              .out('CURRENT_VERSION').hasLabel('Version')
-              .values('id').limit(1).toList()
-            """.trimIndent(),
-        ).firstOrNull()?.get("value")?.toString()
+        return client
+            .runQuery(
+                """
+                MATCH (:Conceptual {id: ${'$'}targetId})-[:CURRENT_VERSION]->(v:Version)
+                RETURN v.id AS value LIMIT 1
+                """.trimIndent(),
+                mapOf("targetId" to targetId),
+            ).firstOrNull()
+            ?.get("value")
+            ?.toString()
     }
 
-    private fun fetchAllVersionIds(pageSize: Int = 50, maxVersions: Int? = null): List<String> {
+    private fun fetchAllVersionIds(
+        pageSize: Int = 50,
+        maxVersions: Int? = null,
+    ): List<String> {
         val ids = mutableListOf<String>()
         var offset = 0
         while (true) {
-            val batch = client.runQuery(
-                """
-                g.V().hasLabel('Version').range($offset, ${offset + pageSize}).values('id').toList()
-                """.trimIndent(),
-            )
-                .mapNotNull { row -> row["value"]?.toString() }
+            val batch =
+                client
+                    .runQuery(
+                        """
+                        MATCH (v:Version)
+                        RETURN v.id AS value
+                        SKIP ${'$'}offset LIMIT ${'$'}limit
+                        """.trimIndent(),
+                        mapOf("offset" to offset, "limit" to pageSize),
+                    ).mapNotNull { row -> row["value"]?.toString() }
 
             if (batch.isEmpty()) break
             ids.addAll(batch)
@@ -216,16 +236,17 @@ class RelationReconciliationService(
     }
 
     private fun fetchVersionData(versionId: String): Map<*, *>? {
-        val row = client.runQuery(
-            """
-            g.V().hasLabel('Version').has('id', ${gStr(versionId)}).valueMap().limit(1).toList()
-            """.trimIndent(),
-        ).firstOrNull() ?: return null
+        val row =
+            client
+                .runQuery(
+                    """
+                    MATCH (v:Version {id: ${'$'}versionId}) RETURN properties(v) AS value LIMIT 1
+                    """.trimIndent(),
+                    mapOf("versionId" to versionId),
+                ).firstOrNull() ?: return null
 
         return (row["value"] as? Map<*, *>) ?: row as? Map<*, *>
     }
-
-    private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
     companion object {
         private val STRUCTURAL_KEYS = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")

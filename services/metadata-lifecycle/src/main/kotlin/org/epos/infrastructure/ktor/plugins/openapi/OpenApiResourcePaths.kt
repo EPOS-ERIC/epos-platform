@@ -67,8 +67,12 @@ object OpenApiResourcePaths {
             schema:
               type: object
               properties:
+                id:
+                  type: string
+                  description: Optional client-provided conceptual id (absolute URI or local id segment). If omitted, server generates one.
                 type:
                   type: string
+                  description: Optional; ignored because resource type comes from path parameter.
                 properties:
                   type: object
       responses:

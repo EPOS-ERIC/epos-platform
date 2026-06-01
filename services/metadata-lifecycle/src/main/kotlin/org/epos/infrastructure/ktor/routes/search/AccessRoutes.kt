@@ -59,6 +59,7 @@ fun Route.accessRoutes(
                 resourceTypeMap = resourceTypes.associate { it.targetClass to it.name },
                 knownShapeNames = resourceTypes.map { it.name }.toSet(),
                 shapeProperties = resourceType?.properties.orEmpty(),
+                shaclPrefixes = shaclService.getParser().getCachedShapesGraph()?.prefixes.orEmpty(),
                 shape = resolvedShapeName,
                 entityId = resolvedEntityId,
                 requestedId = decodedId,
@@ -87,17 +88,14 @@ private fun buildAccessList(
     publicBaseUrl: String,
 ): AccessListResponse {
     val candidateTypes = typeCandidatesForShape(shape, resourceTypes).ifEmpty { listOf(shape.lowercase()) }
-    val typeList = candidateTypes.joinToString(",") { gStr(it) }
-    val results = client.runQuery("""
-        g.V().hasLabel('Conceptual').has('type', within($typeList)).as('c').out('CURRENT_VERSION').hasLabel('Version').as('v')
-          .select('c','v')
-          .by(project('id','type')
-            .by(coalesce(values('id'), constant('')))
-            .by(coalesce(values('type'), constant(''))))
-          .by(project('title')
-            .by(coalesce(values('title'), constant(''))))
-          .toList()
-    """.trimIndent())
+    val results = client.runQuery(
+        """
+        MATCH (c:Conceptual)-[:CURRENT_VERSION]->(v:Version)
+        WHERE toLower(c.type) IN ${'$'}typeList
+        RETURN {id: c.id, type: c.type} AS c, {title: coalesce(v.title, '')} AS v
+        """.trimIndent(),
+        mapOf("typeList" to candidateTypes.map { it.lowercase() }),
+    )
 
     val items = results.mapNotNull { row ->
         val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
@@ -122,6 +120,7 @@ private fun buildAccessDetail(
     resourceTypeMap: Map<String, String>,
     knownShapeNames: Set<String>,
     shapeProperties: List<PropertyInfo>,
+    shaclPrefixes: Map<String, String>,
     shape: String,
     entityId: String,
     requestedId: String,
@@ -129,9 +128,18 @@ private fun buildAccessDetail(
 ): AccessDetailResponse {
     // Load version payload with progressively looser id/identifier fallbacks.
     val result =
-        client.runQuery("g.V().hasLabel('Version').has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
-            ?: client.runQuery("g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
-            ?: client.runQuery("g.V().has('id', ${gStr(entityId)}).valueMap().limit(1).toList()").firstOrNull()
+        client.runQuery(
+            "MATCH (v:Version {id: ${'$'}entityId}) RETURN properties(v) AS value LIMIT 1",
+            mapOf("entityId" to entityId),
+        ).firstOrNull()
+            ?: client.runQuery(
+                "MATCH (v:Version {identifier: ${'$'}entityId}) RETURN properties(v) AS value LIMIT 1",
+                mapOf("entityId" to entityId),
+            ).firstOrNull()
+            ?: client.runQuery(
+                "MATCH (v:Version) WHERE v.id = ${'$'}entityId RETURN properties(v) AS value LIMIT 1",
+                mapOf("entityId" to entityId),
+            ).firstOrNull()
 
     val rawMap = (result?.get("value") as? Map<*, *>) ?: (result as? Map<*, *>) ?: emptyMap<String, Any?>()
     val v = rawMap
@@ -143,12 +151,18 @@ private fun buildAccessDetail(
     val existenceCache = mutableMapOf<String, Boolean>()
 
     data.forEach { (key, value) ->
-        val propName = key
+        val propName = canonicalPropertyKeyFromShacl(key, shapeProperties, shaclPrefixes)
+        if (isStructuralProperty(propName)) return@forEach
+        val relationByShacl = isRelationPropertyByShacl(propName, shapeProperties)
         val values = expandAccessValues(value)
         propertyWasArray[propName] = value is List<*> || shouldBeArrayByShacl(propName, shapeProperties)
 
         values.forEach { item ->
             val obj = item?.toString() ?: return@forEach
+            if (!relationByShacl) {
+                groupedProperties.getOrPut(propName) { mutableListOf() }.add(AccessPropertyValue(value = obj))
+                return@forEach
+            }
             val predicateIri = resolvePredicateIriFromShacl(propName, shapeProperties)
             val objectType = resolveKnownObjectShape(obj, propName, shapeProperties, resourceTypeMap, knownShapeNames)
             val accessValue = buildAccessPropertyValue(
@@ -168,33 +182,33 @@ private fun buildAccessDetail(
     val relationRows =
         client.runQuery(
             """
-            g.V().hasLabel('Version').has('id', ${gStr(entityId)}).as('s')
-              .outE().as('e').inV().as('t')
-              .select('e','t')
-              .by(project('label','predicateIri','predicateKey')
-                .by(label)
-                .by(coalesce(values('predicateIri'), constant('')))
-                .by(coalesce(values('predicateKey'), constant(''))))
-              .by(project('identifier','id')
-                .by(coalesce(values('identifier'), constant('')))
-                .by(coalesce(values('id'), constant(''))))
-              .toList()
+            MATCH (s:Version {id: ${'$'}entityId})-[e]->(t:Version)
+            RETURN {
+              label: type(e),
+              predicateIri: coalesce(e.predicateIri, ''),
+              predicateKey: coalesce(e.predicateKey, '')
+            } AS e,
+            {
+              identifier: coalesce(t.identifier, ''),
+              id: coalesce(t.id, '')
+            } AS t
             """.trimIndent(),
+            mapOf("entityId" to entityId),
         ).ifEmpty {
             client.runQuery(
                 """
-                g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).as('s')
-                  .outE().as('e').inV().as('t')
-                  .select('e','t')
-                  .by(project('label','predicateIri','predicateKey')
-                    .by(label)
-                    .by(coalesce(values('predicateIri'), constant('')))
-                    .by(coalesce(values('predicateKey'), constant(''))))
-                  .by(project('identifier','id')
-                    .by(coalesce(values('identifier'), constant('')))
-                    .by(coalesce(values('id'), constant(''))))
-                  .toList()
+                MATCH (s:Version {identifier: ${'$'}entityId})-[e]->(t:Version)
+                RETURN {
+                  label: type(e),
+                  predicateIri: coalesce(e.predicateIri, ''),
+                  predicateKey: coalesce(e.predicateKey, '')
+                } AS e,
+                {
+                  identifier: coalesce(t.identifier, ''),
+                  id: coalesce(t.id, '')
+                } AS t
                 """.trimIndent(),
+                mapOf("entityId" to entityId),
             )
         }
 
@@ -203,7 +217,8 @@ private fun buildAccessDetail(
         val edgeLabel = prop(edge["label"]) ?: return@forEach
         if (!edgeLabel.startsWith("rel_")) return@forEach
 
-        val propertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
+        val rawPropertyName = prop(edge["predicateKey"]) ?: edgeLabel.removePrefix("rel_")
+        val propertyName = canonicalPropertyKeyFromShacl(rawPropertyName, shapeProperties, shaclPrefixes)
         if (shouldBeArrayByShacl(propertyName, shapeProperties)) {
             propertyWasArray[propertyName] = true
         }
@@ -281,13 +296,31 @@ private fun shouldBeArrayByShacl(
     propertyName: String,
     shapeProperties: List<PropertyInfo>,
 ): Boolean {
-    val normalizedProperty = normalizeShapeName(localPropertyName(propertyName))
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(localPropertyName(it)) }
     val property = shapeProperties.firstOrNull { prop ->
-        normalizeShapeName(localPropertyName(prop.name)) == normalizedProperty ||
-            normalizeShapeName(localPropertyName(prop.path)) == normalizedProperty
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
     } ?: return false
 
     return property.maxCount != 1
+}
+
+private fun isRelationPropertyByShacl(
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+): Boolean {
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(localPropertyName(it)) }
+    val property = shapeProperties.firstOrNull { prop ->
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
+    } ?: return false
+
+    return !property.classConstraint.isNullOrBlank() ||
+        !property.classConstraints.isNullOrEmpty() ||
+        !property.nodeShapeRef.isNullOrBlank() ||
+        !property.nodeShapeRefs.isNullOrEmpty()
 }
 
 private fun localPropertyName(value: String): String =
@@ -348,13 +381,19 @@ private fun buildAccessPropertyValue(
         }
     val href = resolvedLink?.href
     val resolvedType = objectType ?: resolvedLink?.resolvedShape
+    val fallbackHref =
+        if (!resolvedType.isNullOrBlank()) {
+            ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, objectId)
+        } else {
+            null
+        }
 
-    return if (!resolvedType.isNullOrBlank() || href != null) {
+    return if (!resolvedType.isNullOrBlank() || href != null || fallbackHref != null) {
         AccessPropertyValue(
             id = objectId,
             type = resolvedType,
             title = null,
-            href = href,
+            href = href ?: fallbackHref,
             predicateIri = predicateIri,
         )
     } else {
@@ -375,7 +414,6 @@ private fun resolveObjectShape(
 
     val normalizedProperty = propertyName.lowercase()
     when (normalizedProperty) {
-        "identifier" -> return "identifier"
         "publisher", "provider" -> return "organization"
         "theme" -> return "category"
         "spatial" -> return "location"
@@ -403,10 +441,11 @@ private fun resolveObjectShapeFromShacl(
     shapeProperties: List<PropertyInfo>,
     resourceTypeMap: Map<String, String>,
 ): String? {
-    val normalizedProperty = normalizeShapeName(propertyName)
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(it) }
     val property = shapeProperties.firstOrNull { prop ->
-        normalizeShapeName(prop.name) == normalizedProperty ||
-            normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedProperty
+        val propName = normalizeShapeName(prop.name)
+        val propPath = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+        normalizedCandidates.any { it == propName || it == propPath }
     } ?: return null
 
     val candidates = mutableListOf<String>()
@@ -427,10 +466,11 @@ private fun resolvePredicateIriFromShacl(
     propertyName: String,
     shapeProperties: List<PropertyInfo>,
 ): String? {
-    val normalizedProperty = normalizeShapeName(propertyName)
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(it) }
     val property = shapeProperties.firstOrNull { prop ->
-        normalizeShapeName(prop.name) == normalizedProperty ||
-            normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#')) == normalizedProperty
+        val propName = normalizeShapeName(prop.name)
+        val propPath = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+        normalizedCandidates.any { it == propName || it == propPath }
     } ?: return null
 
     return property.path.takeIf { it.startsWith("http://") || it.startsWith("https://") }
@@ -460,15 +500,35 @@ private fun shapeMatchesEntityType(
     val conceptualType =
         client.runQuery(
             """
-            g.V().hasLabel('Version').has('id', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
-              .values('type').limit(1).toList()
+            MATCH (c:Conceptual {id: ${'$'}entityId})
+            RETURN c.type AS value
+            LIMIT 1
             """.trimIndent(),
+            mapOf("entityId" to entityId),
         ).firstOrNull()?.get("value")?.toString()
             ?: client.runQuery(
                 """
-                g.V().hasLabel('Version').has('identifier', ${gStr(entityId)}).in('HAS_VERSION').hasLabel('Conceptual')
-                  .values('type').limit(1).toList()
+                MATCH (c:Conceptual {identifier: ${'$'}entityId})
+                RETURN c.type AS value
+                LIMIT 1
                 """.trimIndent(),
+                mapOf("entityId" to entityId),
+            ).firstOrNull()?.get("value")?.toString()
+            ?: client.runQuery(
+            """
+            MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version {id: ${'$'}entityId})
+            RETURN c.type AS value
+            LIMIT 1
+            """.trimIndent(),
+            mapOf("entityId" to entityId),
+        ).firstOrNull()?.get("value")?.toString()
+            ?: client.runQuery(
+                """
+                MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version {identifier: ${'$'}entityId})
+                RETURN c.type AS value
+                LIMIT 1
+                """.trimIndent(),
+                mapOf("entityId" to entityId),
             ).firstOrNull()?.get("value")?.toString()
             ?: return false
 
@@ -490,10 +550,65 @@ private fun resolveShapeNameFromConceptualType(
         ?: conceptualType
 }
 
-private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 private fun prop(value: Any?): String? = when (value) {
     is List<*> -> value.firstOrNull()?.toString()
     else -> value?.toString()
+}
+
+private fun propertyLookupCandidates(propertyName: String): List<String> {
+    val values = linkedSetOf(propertyName)
+    propertyName.substringAfter(':', propertyName).takeIf { it != propertyName }?.let { values.add(it) }
+    propertyName.substringAfter('_', propertyName).takeIf { it != propertyName }?.let { values.add(it) }
+    return values.toList()
+}
+
+private fun canonicalPropertyKeyFromShacl(
+    propertyName: String,
+    shapeProperties: List<PropertyInfo>,
+    shaclPrefixes: Map<String, String>,
+): String {
+    if (propertyName.contains(':')) return propertyName
+    val normalizedCandidates = propertyLookupCandidates(propertyName).map { normalizeShapeName(localPropertyName(it)) }
+    val property = shapeProperties.firstOrNull { prop ->
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
+    } ?: return propertyName
+
+    val matches = shapeProperties.filter { prop ->
+        val propName = normalizeShapeName(localPropertyName(prop.name))
+        val propPath = normalizeShapeName(localPropertyName(prop.path))
+        normalizedCandidates.any { it == propName || it == propPath }
+    }
+    if (matches.size > 1) return propertyName
+    return namespacedPropertyKey(property.path, shaclPrefixes)
+}
+
+private fun namespacedPropertyKey(path: String, shaclPrefixes: Map<String, String>): String {
+    val local = path.substringAfterLast('/').substringAfterLast('#').lowercase()
+    val namespace = path.substringBeforeLast('#', path.substringBeforeLast('/') + "/")
+    val prefix = preferredShaclPrefix(namespace, shaclPrefixes)
+    return if (prefix != null) "$prefix:$local" else local
+}
+
+private fun preferredShaclPrefix(namespace: String, shaclPrefixes: Map<String, String>): String? {
+    val normalizedNamespace = normalizeNamespace(namespace)
+    val candidates =
+        shaclPrefixes
+            .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+            .keys
+            .filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+    return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+}
+
+private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
+
+private fun isStructuralProperty(key: String): Boolean {
+    val normalized = normalizeShapeName(localPropertyName(key))
+    return normalized in setOf("id", "status", "versionnumber", "createdat", "updatedat")
 }
 
 private val accessJsonMapper = ObjectMapper()

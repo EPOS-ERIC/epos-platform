@@ -8,7 +8,7 @@ import org.epos.api.shacl.ShaclParser
 import org.epos.propertygraph.Config
 import org.slf4j.LoggerFactory
 import java.io.StringReader
-import java.net.URL
+import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -63,7 +63,7 @@ class ShaclService(
             if (!shaclUrlResolved.isNullOrBlank()) {
                 val urlStartedAt = System.currentTimeMillis()
                 logger.info("SHACL loading from URL: {}", shaclUrlResolved)
-                val ttl = URL(shaclUrlResolved).readText()
+                val ttl = URI(shaclUrlResolved).toURL().readText()
                 val shapesGraph = shaclParser.parseShapesGraphFromString(ttl)
                 resourceTypes = shaclParser.toResourceTypes(shapesGraph)
                 initialized = true

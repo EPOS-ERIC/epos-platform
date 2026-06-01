@@ -1,7 +1,7 @@
 package org.epos.infrastructure.ktor.routes
 
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
@@ -36,10 +36,11 @@ fun Route.entitiesRoutes(
             val status = call.request.queryParameters["status"] ?: "published"
             val page = call.request.queryParameters["page"]?.toIntOrNull() ?: 1
             val pageSize =
-                (call.request.queryParameters["resultsPerPage"]?.toIntOrNull()
-                    ?: call.request.queryParameters["pageSize"]?.toIntOrNull()
-                    ?: 20)
-                    .coerceIn(1, 100)
+                (
+                    call.request.queryParameters["resultsPerPage"]?.toIntOrNull()
+                        ?: call.request.queryParameters["pageSize"]?.toIntOrNull()
+                        ?: 20
+                ).coerceIn(1, 100)
 
             val response = resourceController.listEntities(resourceType, status, page, pageSize)
             call.respond(response)
@@ -54,7 +55,10 @@ fun Route.entitiesRoutes(
             if (idParam.all { it.isDigit() }) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ErrorResponse("BAD_REQUEST", "Numeric internal graph IDs are not accepted; provide a conceptual/version resource identifier"),
+                    ErrorResponse(
+                        "BAD_REQUEST",
+                        "Numeric internal graph IDs are not accepted; provide a conceptual/version resource identifier",
+                    ),
                 )
                 return@get
             }
@@ -70,14 +74,17 @@ fun Route.entitiesRoutes(
             val formatParam = call.request.queryParameters["format"]?.lowercase()
             val acceptHeader = call.request.header("Accept")?.lowercase() ?: "application/json"
             val requestedFormat = formatParam ?: acceptHeader
-            val resolvedEntityId = org.epos.infrastructure.ktor.routes.search.ResourceLinkResolver.resolveAccessEntityId(client, decodedId)
+            val resolvedEntityId =
+                org.epos.infrastructure.ktor.routes.search.ResourceLinkResolver
+                    .resolveAccessEntityId(client, decodedId)
             if (resolvedEntityId == null) {
                 call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Resource not found: $decodedId"))
                 return@get
             }
 
-            val entity = resourceController.getEntity(resolvedEntityId, status)
-                ?: resourceController.getEntityByConceptualId(decodedId, status)
+            val entity =
+                resourceController.getEntity(resolvedEntityId, status)
+                    ?: resourceController.getEntityByConceptualId(decodedId, status)
             if (entity == null) {
                 call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Resolved resource not found: $resolvedEntityId"))
                 return@get
@@ -114,18 +121,21 @@ private fun enrichEntityWithOutboundRelations(
     client: PropertyGraphClient,
     entity: EntityResponse,
 ): EntityResponse {
-    val rows = client.runQuery(
-        """
-        g.V().hasLabel('Version').has('id', ${gStr(entity.uri)}).as('s')
-          .outE().as('e').inV().as('t')
-          .select('e','t')
-          .by(project('label','predicateKey').by(label).by(coalesce(values('predicateKey'), constant(''))))
-          .by(project('identifier','id')
-            .by(coalesce(values('identifier'), constant('')))
-            .by(coalesce(values('id'), constant(''))))
-          .toList()
-        """.trimIndent(),
-    )
+    val rows =
+        client.runQuery(
+            """
+            MATCH (s:Version {id: ${'$'}id})-[e]->(t:Version)
+            RETURN {
+                label: type(e),
+                predicateKey: coalesce(e.predicateKey, '')
+            } AS e,
+            {
+                identifier: coalesce(t.identifier, ''),
+                id: coalesce(t.id, '')
+            } AS t
+            """.trimIndent(),
+            mapOf("id" to entity.uri),
+        )
 
     if (rows.isEmpty()) return entity
 
@@ -136,19 +146,20 @@ private fun enrichEntityWithOutboundRelations(
         if (!edgeLabel.startsWith("rel_")) return@forEach
         val target = row["t"] as? Map<*, *> ?: return@forEach
         val targetId =
-            (target["identifier"]?.toString()?.takeIf { it.isNotBlank() }
-                ?: target["id"]?.toString()?.takeIf { it.isNotBlank() })
+            (
+                target["identifier"]?.toString()?.takeIf { it.isNotBlank() }
+                    ?: target["id"]?.toString()?.takeIf { it.isNotBlank() }
+            )
                 ?: return@forEach
         val key = (edge["predicateKey"]?.toString()?.takeIf { it.isNotBlank() } ?: edgeLabel.removePrefix("rel_")).lowercase()
         val existing = props[key]
-        props[key] = when (existing) {
-            null -> listOf(targetId)
-            is List<*> -> existing + targetId
-            else -> listOf(existing, targetId)
-        }
+        props[key] =
+            when (existing) {
+                null -> listOf(targetId)
+                is List<*> -> existing + targetId
+                else -> listOf(existing, targetId)
+            }
     }
 
     return entity.copy(properties = props)
 }
-
-private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"

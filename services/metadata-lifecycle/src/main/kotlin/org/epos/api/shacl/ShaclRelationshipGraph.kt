@@ -321,11 +321,14 @@ class PropertyGraphClientAdapter(
     private val propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient
 ) : SparqlClient {
     override fun query(sparql: String): Sequence<Map<String, String>> {
-        val results = propertyGraphClient.runQuery("""
-            g.V().hasLabel('Version').as('source').out().hasLabel('Version').as('target')
-              .where('source', neq('target'))
-              .select('source','target').by(valueMap(true)).by(valueMap(true)).limit(1000).toList()
-        """.trimIndent())
+        val results = propertyGraphClient.runQuery(
+            """
+            MATCH (source:Version)-[rel]->(target:Version)
+            WHERE source.id <> target.id
+            RETURN properties(source) AS source, type(rel) AS property, properties(target) AS target
+            LIMIT 1000
+            """.trimIndent(),
+        )
 
         return results.map { row ->
             val source = row["source"] as? Map<*, *> ?: emptyMap<Any, Any>()

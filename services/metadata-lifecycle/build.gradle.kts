@@ -12,9 +12,10 @@ plugins {
 
 group       = "org.epos"
 version     = "1.0-SNAPSHOT"
-description = "Kotlin application for managing metadata lifecycle in JanusGraph with versioning and provenance"
+description = "Kotlin application for managing metadata lifecycle in Neo4j with versioning and provenance"
 
 val gremlinDriverVersion        = "3.7.3"
+val neo4jDriverVersion          = "5.28.5"
 val rdf4jVersion            = "5.2.2"
 val ktorVersion             = "3.0.3"
 val coroutinesVersion       = "1.10.2"
@@ -61,6 +62,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
 
     implementation("org.apache.tinkerpop:gremlin-driver:$gremlinDriverVersion")
+    implementation("org.neo4j.driver:neo4j-java-driver:$neo4jDriverVersion")
 
     implementation("org.eclipse.rdf4j:rdf4j-model:$rdf4jVersion")
     implementation("org.eclipse.rdf4j:rdf4j-model-api:$rdf4jVersion")

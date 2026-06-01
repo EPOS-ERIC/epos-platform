@@ -9,30 +9,32 @@ import org.epos.module
 import org.junit.jupiter.api.Test
 
 class CrudRoutesTest {
-
     @Test
-    fun `search endpoint should return result envelope`() = testApplication {
-        application {
-            module()
+    fun `search endpoint should return result envelope`() =
+        testApplication {
+            application {
+                module()
+            }
+
+            val response = client.get("/api/v2/access/search")
+
+            response.status shouldBe HttpStatusCode.OK
+            val body = response.bodyAsText()
+            body shouldContain "\"total\""
+            body shouldContain "\"items\""
         }
 
-        val response = client.get("/api/v2/access/search")
-
-        response.status shouldBe HttpStatusCode.OK
-        val body = response.bodyAsText()
-        body shouldContain "\"total\""
-        body shouldContain "\"items\""
-    }
     @Test
-    fun `should return 404 for non-existent entity`() = testApplication {
-        application {
-            module()
+    fun `should return 404 for non-existent entity`() =
+        testApplication {
+            application {
+                module()
+            }
+
+            val missingEntity = java.net.URLEncoder.encode("http://example.org/nonexistent", "UTF-8")
+            val response = client.get("/api/v2/dataset/$missingEntity")
+
+            response.status shouldBe HttpStatusCode.NotFound
+            response.bodyAsText() shouldContain "error"
         }
-
-        val missingEntity = java.net.URLEncoder.encode("http://example.org/nonexistent", "UTF-8")
-        val response = client.get("/api/v2/dataset/$missingEntity")
-
-        response.status shouldBe HttpStatusCode.NotFound
-        response.bodyAsText() shouldContain "error"
-    }
 }

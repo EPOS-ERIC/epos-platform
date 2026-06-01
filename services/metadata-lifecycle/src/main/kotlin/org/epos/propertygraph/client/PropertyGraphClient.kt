@@ -1,105 +1,176 @@
 package org.epos.propertygraph.client
 
-import org.apache.tinkerpop.gremlin.driver.Client
-import org.apache.tinkerpop.gremlin.driver.Cluster
-import org.apache.tinkerpop.gremlin.driver.Result
 import org.epos.propertygraph.Config
+import org.neo4j.driver.AuthTokens
+import org.neo4j.driver.Driver
+import org.neo4j.driver.GraphDatabase
+import org.neo4j.driver.Record
+import org.neo4j.driver.Values
+import org.neo4j.driver.types.Node
+import org.neo4j.driver.types.Relationship
+import org.slf4j.LoggerFactory
 
 class PropertyGraphClient {
-    private val cluster: Cluster
-    private val client: Client
+    @Volatile
+    private var driver: Driver? = null
+
+    private val connectionLock = Any()
+
+    private val logger = LoggerFactory.getLogger(PropertyGraphClient::class.java)
 
     init {
-        cluster = if (Config.JANUSGRAPH_USERNAME.isNotBlank() && Config.JANUSGRAPH_PASSWORD.isNotBlank()) {
-            Cluster.build()
-                .addContactPoint(Config.JANUSGRAPH_HOST)
-                .port(Config.JANUSGRAPH_PORT)
-                .credentials(Config.JANUSGRAPH_USERNAME, Config.JANUSGRAPH_PASSWORD)
-                .create()
-        } else {
-            Cluster.build()
-                .addContactPoint(Config.JANUSGRAPH_HOST)
-                .port(Config.JANUSGRAPH_PORT)
-                .create()
+        connect()
+    }
+
+    fun runQuery(
+        cypher: String,
+        parameters: Map<String, Any> = emptyMap(),
+    ): List<Map<String, Any?>> {
+        val activeDriver = ensureDriver()
+        val session = activeDriver.session()
+        return session.use {
+            it.run(cypher, Values.value(parameters)).list().map(::mapRecord)
         }
-        client = cluster.connect()
-        println("JanusGraph connected: ${Config.JANUSGRAPH_HOST}:${Config.JANUSGRAPH_PORT}/${Config.JANUSGRAPH_TRAVERSAL_SOURCE}")
     }
 
-    fun runQuery(cypher: String, parameters: Map<String, Any> = emptyMap()): List<Map<String, Any?>> {
-        val script = resolveParameters(cypher, parameters)
-        val results = client.submit(script).all().get()
-        return results.map { result -> mapResult(result) }
-    }
+    fun runSingle(
+        cypher: String,
+        parameters: Map<String, Any> = emptyMap(),
+    ): Map<String, Any?>? = runQuery(cypher, parameters).firstOrNull()
 
-    fun runSingle(cypher: String, parameters: Map<String, Any> = emptyMap()): Map<String, Any?>? {
-        val results = runQuery(cypher, parameters)
-        return results.firstOrNull()
-    }
-
-    fun runWrite(cypher: String, parameters: Map<String, Any> = emptyMap()) {
-        val script = resolveParameters(cypher, parameters)
-        client.submit(script).all().get()
-    }
-
-    fun runWriteReturning(cypher: String, parameters: Map<String, Any> = emptyMap()): List<Map<String, Any?>> {
-        val script = resolveParameters(cypher, parameters)
-        val results = client.submit(script).all().get()
-        return results.map { result -> mapResult(result) }
-    }
-
-    fun exists(cypher: String, parameters: Map<String, Any> = emptyMap()): Boolean {
-        return runQuery(cypher, parameters).isNotEmpty()
-    }
-
-    fun close() {
-        client.close()
-        cluster.close()
-    }
-
-    private fun resolveParameters(cypher: String, parameters: Map<String, Any>): String {
-        return Regex("""\$([a-zA-Z_][a-zA-Z0-9_]*)""").replace(cypher) { match ->
-            val key = match.groupValues[1]
-            val value = parameters[key] ?: return@replace match.value
-            when (value) {
-                is String -> "'${escapeString(value)}'"
-                is Number -> value.toString()
-                is Boolean -> value.toString()
-                else -> "'${escapeString(value.toString())}'"
+    fun runWrite(
+        cypher: String,
+        parameters: Map<String, Any> = emptyMap(),
+    ) {
+        val activeDriver = ensureDriver()
+        val session = activeDriver.session()
+        session.use {
+            it.executeWrite { tx ->
+                tx.run(cypher, Values.value(parameters)).consume()
+                null
             }
         }
     }
 
-    private fun mapResult(result: Result): Map<String, Any?> {
-        val value = result.`object`
-        return when (value) {
-            is Map<*, *> -> value.entries.associate { (k, v) -> k.toString() to toJavaValue(v) }
-            else -> mapOf("value" to toJavaValue(value))
+    fun runWriteReturning(
+        cypher: String,
+        parameters: Map<String, Any> = emptyMap(),
+    ): List<Map<String, Any?>> {
+        val activeDriver = ensureDriver()
+        val session = activeDriver.session()
+        return session.use {
+            it.executeWrite { tx ->
+                tx.run(cypher, Values.value(parameters)).list().map(::mapRecord)
+            }
         }
     }
 
-    private fun escapeString(value: String): String {
-        return value.replace("\\", "\\\\")
-            .replace("'", "\\'")
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t")
+    fun exists(
+        cypher: String,
+        parameters: Map<String, Any> = emptyMap(),
+    ): Boolean = runQuery(cypher, parameters).isNotEmpty()
+
+    fun close() {
+        synchronized(connectionLock) {
+            try {
+                driver?.close()
+            } catch (e: Exception) {
+                logger.warn("Failed to close Neo4j driver: {}", e.message, e)
+            }
+            driver = null
+        }
     }
 
-    private val jsonMapper = com.fasterxml.jackson.databind.ObjectMapper()
+    private fun ensureDriver(): Driver {
+        val current = driver
+        if (current != null) {
+            return current
+        }
 
-    private fun toJavaValue(value: Any?): Any? {
-        return when (value) {
+        synchronized(connectionLock) {
+            val existing = driver
+            if (existing != null) {
+                return existing
+            }
+
+            connect()
+            return requireNotNull(driver) { "Neo4j driver is not initialized" }
+        }
+    }
+
+    private fun connect() {
+        val auth =
+            if (Config.NEO4J_USERNAME.isNotBlank()) {
+                AuthTokens.basic(Config.NEO4J_USERNAME, Config.NEO4J_PASSWORD)
+            } else {
+                AuthTokens.none()
+            }
+
+        var lastError: Exception? = null
+        repeat(Config.NEO4J_CONNECT_MAX_ATTEMPTS) { attemptIndex ->
+            val attempt = attemptIndex + 1
+            try {
+                val candidate = GraphDatabase.driver(Config.NEO4J_URI, auth)
+                candidate.verifyConnectivity()
+                driver = candidate
+                logger.info(
+                    "Neo4j connected: {} (database={}, attempt={}/{})",
+                    Config.NEO4J_URI,
+                    Config.NEO4J_DATABASE,
+                    attempt,
+                    Config.NEO4J_CONNECT_MAX_ATTEMPTS,
+                )
+                return
+            } catch (e: Exception) {
+                lastError = e
+                logger.warn(
+                    "Neo4j connection attempt {}/{} failed: {}",
+                    attempt,
+                    Config.NEO4J_CONNECT_MAX_ATTEMPTS,
+                    e.message,
+                )
+                if (attempt < Config.NEO4J_CONNECT_MAX_ATTEMPTS) {
+                    Thread.sleep(Config.NEO4J_CONNECT_RETRY_DELAY_MS)
+                }
+            }
+        }
+
+        throw IllegalStateException(
+            "Failed to connect to Neo4j after ${Config.NEO4J_CONNECT_MAX_ATTEMPTS} attempts",
+            lastError,
+        )
+    }
+
+    private fun mapRecord(record: Record): Map<String, Any?> = record.keys().associateWith { key -> toJavaValue(record[key].asObject()) }
+
+    private val jsonMapper =
+        com.fasterxml.jackson.databind
+            .ObjectMapper()
+
+    private fun toJavaValue(value: Any?): Any? =
+        when (value) {
             null -> null
             is Number -> value
             is Boolean -> value
             is String -> tryParseJson(value)
+            is Node -> {
+                val props = value.asMap { raw -> toJavaValue(raw) }
+                props + mapOf("_id" to value.id(), "_labels" to value.labels().toList())
+            }
+            is Relationship -> {
+                val props = value.asMap { raw -> toJavaValue(raw) }
+                props +
+                    mapOf(
+                        "_id" to value.id(),
+                        "_type" to value.type(),
+                        "_start" to value.startNodeId(),
+                        "_end" to value.endNodeId(),
+                    )
+            }
             is List<*> -> value.map { toJavaValue(it) }
             is Map<*, *> -> value.mapValues { toJavaValue(it.value) }
             else -> value.toString()
         }
-    }
 
     private fun tryParseJson(value: String): Any? {
         if (!value.startsWith("{") && !value.startsWith("[")) return value

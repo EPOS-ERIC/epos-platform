@@ -1,6 +1,6 @@
 # EPOS Metadata Lifecycle Service
 
-Kotlin service for managing metadata lifecycle in JanusGraph (Property Graph), with SHACL-driven resource typing, provenance tracking, versioning, search, and admin population tools.
+Kotlin service for managing metadata lifecycle in Neo4j Community (Property Graph), with SHACL-driven resource typing, provenance tracking, versioning, search, and admin population tools.
 
 ## What this application does
 
@@ -10,7 +10,13 @@ Kotlin service for managing metadata lifecycle in JanusGraph (Property Graph), w
 - Parses SHACL shapes to expose resource types and constraints (`/api/v2/resource-types`)
 - Provides search/discovery, Cypher passthrough, OAI-PMH harvesting, and admin population endpoints
 
-## JanusGraph Property Graph Data Model
+## Migration status
+
+- Runtime graph backend is Neo4j Community only (Bolt/Cypher)
+- Legacy JanusGraph/FalkorDB compatibility aliases were removed from runtime config
+- Local development stack uses Neo4j service wiring in Docker/Tilt
+
+## Neo4j Property Graph Data Model
 
 ### Node Types
 
@@ -53,7 +59,7 @@ Run modes:
 
 - JDK 21
 - Gradle 9.0.0 via the included wrapper (`./gradlew`)
-- JanusGraph + Cassandra + Elasticsearch
+- Neo4j Community
 
 ## Build and local run commands
 
@@ -67,10 +73,10 @@ make fmt
 make lint
 ```
 
-Start JanusGraph stack for development:
+Start Neo4j stack for development:
 
 ```bash
-docker compose -f docker-compose.janusgraph.yml up -d
+docker compose -f docker-compose.neo4j.yml up -d
 ```
 
 ## Configuration
@@ -84,12 +90,11 @@ Configuration is profile-based and loaded from YAML files under `src/main/resour
 
 ### Important environment variables
 
-- `EPOS_JANUSGRAPH_HOST` (default `localhost`)
-- `EPOS_JANUSGRAPH_PORT` (default `8182`)
-- `EPOS_JANUSGRAPH_TRAVERSAL_SOURCE` (default `g`)
-- `EPOS_JANUSGRAPH_USERNAME` (default empty)
-- `EPOS_JANUSGRAPH_PASSWORD` (default empty)
-- `EPOS_GRAPH_BOOTSTRAP_MODE` (set `skip-cypher` when JanusGraph has no Cypher plugin)
+- `EPOS_NEO4J_URI` (default `bolt://localhost:7687`)
+- `EPOS_NEO4J_USERNAME` (default empty)
+- `EPOS_NEO4J_PASSWORD` (default empty)
+- `EPOS_NEO4J_DATABASE` (default `neo4j`)
+- `NEO4J_dbms_usage__report_enabled=false` (recommended in local Docker to disable Neo4j usage reporting)
 - `EPOS_INDEX_URL` (TTL index URL for population)
 - `EPOS_BASE_URI` (default `https://epos-eu.org`)
 - `PORT` (default `8080`)
@@ -101,7 +106,7 @@ Configuration is profile-based and loaded from YAML files under `src/main/resour
 - Swagger UI: `http://localhost:8080/swagger`
 - OpenAPI runtime YAML: `http://localhost:8080/openapi.runtime.yaml`
 - Health: `http://localhost:8080/health`
-- JanusGraph Visualizer UI: `http://localhost:3001`
+- Neo4j Browser: `http://localhost:7474`
 
 ### Required mutation headers
 
@@ -221,6 +226,8 @@ curl -X POST "http://localhost:8080/oai-pmh" \
 - Keep `resultsPerPage` between `1` and `100` (server clamps values outside this range).
 - For stable pagination, prefer `page` + `resultsPerPage`; use `offset` only for cursor-like clients.
 - Use `type` filters when possible to reduce full-graph scans and improve response time.
+- Text matching is case-insensitive and uses Cypher `CONTAINS` over title/description/label fields.
+- Type filtering accepts values resolved from conceptual type, version type, and `rdf:type` data fields.
 
 Search endpoint examples:
 
@@ -326,10 +333,10 @@ curl "http://localhost:8080/api/v2/dataset/http%3A%2F%2Fexample.org%2Fdataset%2F
 
 ## Docker
 
-### Start JanusGraph stack for development
+### Start Neo4j stack for development
 
 ```bash
-docker compose -f docker-compose.janusgraph.yml up -d
+docker compose -f docker-compose.neo4j.yml up -d
 ```
 
 ### Build API image
@@ -342,9 +349,9 @@ make build-docker
 
 ```bash
 docker run --rm -p 8080:8080 \
-  -e EPOS_JANUSGRAPH_HOST=host.docker.internal \
-  -e EPOS_JANUSGRAPH_PORT=8182 \
-  -e EPOS_JANUSGRAPH_TRAVERSAL_SOURCE=g \
+  -e EPOS_NEO4J_URI=bolt://host.docker.internal:7687 \
+  -e EPOS_NEO4J_USERNAME=neo4j \
+  -e EPOS_NEO4J_PASSWORD=neo4jpassword \
   epos-metadata-lifecycle:latest
 ```
 

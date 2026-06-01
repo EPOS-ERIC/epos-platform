@@ -90,13 +90,8 @@ object OpenApiLifecyclePaths {
     post:
       tags: [Lifecycle]
       summary: Create new draft from published
-      description: Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource.
+      description: Creates a new draft version from a published entity. Path id may be conceptual id, version id, or identifier and is resolved to conceptual resource. The new version number is auto-incremented from the current published version.
       parameters:
-        - name: version
-          in: query
-          schema:
-            type: string
-            default: "2.0"
         - name: X-Agent
           in: header
           required: true

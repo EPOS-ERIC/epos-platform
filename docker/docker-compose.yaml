@@ -35,91 +35,34 @@ services:
       timeout: 5s
       retries: 20
 
-  cassandra:
-    image: cassandra:4.1
+  neo4j:
+    image: neo4j:2026.04.0-community
     environment:
-      - MAX_HEAP_SIZE=512M
-      - HEAP_NEWSIZE=128M
+      - NEO4J_AUTH=neo4j/neo4jpassword
+      - NEO4J_dbms_usage__report_enabled=false
     ports:
-      - "9042:9042"
+      - "7474:7474"
+      - "7687:7687"
     volumes:
-      - cassandra-data:/var/lib/cassandra
+      - neo4j-data:/data
     networks:
       - epos-network
     healthcheck:
-      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 20
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ports:
-      - "9200:9200"
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
-    networks:
-      - epos-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-
-  janusgraph:
-    image: janusgraph/janusgraph:1.1.0
-    depends_on:
-      cassandra:
-        condition: service_healthy
-      elasticsearch:
-        condition: service_healthy
-    environment:
-      - JANUS_PROPS_TEMPLATE=cql-es
-      - janusgraph.storage.hostname=cassandra
-      - janusgraph.index.search.hostname=elasticsearch
-      - janusgraph.graphname=epos
-      - JANUS_STORAGE_TIMEOUT=60000
-      - JAVA_OPTIONS=-Xms256m -Xmx512m
-    ports:
-      - "8182:8182"
-    networks:
-      - epos-network
-    healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'echo > /dev/tcp/localhost/8182' || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 20
-
-  janusgraph-visualizer:
-    image: janusgraph/janusgraph-visualizer:latest
-    depends_on:
-      janusgraph:
-        condition: service_started
-    environment:
-      - GREMLIN_HOST=janusgraph
-      - GREMLIN_PORT=8182
-      - GREMLIN_TRAVERSAL_SOURCE=g
-    ports:
-      - "3001:3001"
-    restart: on-failure
-    networks:
-      - epos-network
 
   metadata-lifecycle-service:
     image: epos-metadata-lifecycle:latest
     depends_on:
-      janusgraph:
+      neo4j:
         condition: service_healthy
     environment:
-      - EPOS_JANUSGRAPH_HOST=janusgraph
-      - EPOS_JANUSGRAPH_PORT=8182
-      - EPOS_JANUSGRAPH_TRAVERSAL_SOURCE=g
-      - EPOS_JANUSGRAPH_USERNAME=
-      - EPOS_JANUSGRAPH_PASSWORD=
+      - EPOS_NEO4J_URI=bolt://neo4j:7687
+      - EPOS_NEO4J_USERNAME=neo4j
+      - EPOS_NEO4J_PASSWORD=neo4jpassword
+      - EPOS_NEO4J_DATABASE=neo4j
       - EPOS_GRAPH_BOOTSTRAP_MODE=skip-cypher
       - EPOS_SERVER_HOST=0.0.0.0
       - EPOS_SERVER_PORT=8080
@@ -181,8 +124,7 @@ services:
 volumes:
   user-group-db-data:
   data-retriever-db-data:
-  cassandra-data:
-  elasticsearch-data:
+  neo4j-data:
 
 networks:
   epos-network:

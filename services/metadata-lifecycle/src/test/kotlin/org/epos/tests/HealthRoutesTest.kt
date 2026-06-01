@@ -10,20 +10,19 @@ import org.epos.module
 import org.junit.jupiter.api.Test
 
 class HealthRoutesTest {
-
     @Test
-    fun `health endpoint returns ok and janusgraph config`() = testApplication {
-        application {
-            module()
+    fun `health endpoint returns ok and neo4j config`() =
+        testApplication {
+            application {
+                module()
+            }
+
+            val response = client.get("/health")
+
+            response.status shouldBe HttpStatusCode.OK
+            val body = response.bodyAsText()
+            body shouldContain "\"status\" : \"ok\""
+            body shouldContain "neo4jUri"
+            body shouldContain "neo4jDatabase"
         }
-
-        val response = client.get("/health")
-
-        response.status shouldBe HttpStatusCode.OK
-        val body = response.bodyAsText()
-        body shouldContain "\"status\" : \"ok\""
-        body shouldContain "janusgraphHost"
-        body shouldContain "janusgraphPort"
-        body shouldContain "traversalSource"
-    }
 }

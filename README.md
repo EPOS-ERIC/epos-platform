@@ -6,7 +6,7 @@ Monorepo for EPOS platform services, shared packages, and local development tool
 
 The repository currently contains four active backend services used in local development:
 
-- `services/metadata-lifecycle` (Kotlin): metadata lifecycle and versioning APIs backed by JanusGraph.
+- `services/metadata-lifecycle` (Kotlin): metadata lifecycle and versioning APIs backed by Neo4j.
 - `services/gateway` (Go): API gateway/aggregation layer.
 - `services/user-group` (Go): users, groups, memberships, and authorization-oriented data.
 - `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
@@ -26,11 +26,9 @@ flowchart TB
         MLE[metadata-lifecycle-service :8080]
         UGE[user-group-service :8090]
         DRE[data-retriever-service :8100]
-        JVE[janusgraph-visualizer :3001]
+        N4J[neo4j :7474/7687]
         PUG[user-group-db :5432]
         PDR[data-retriever-db :5433]
-        ESE[elasticsearch :9200]
-        CSE[cassandra :9042]
     end
 
     subgraph NET["epos-network - docker compose"]
@@ -39,10 +37,7 @@ flowchart TB
         UG[user-group-service]
         DR[data-retriever-service]
 
-        JG[janusgraph]
-        JV[janusgraph-visualizer]
-        ES[(elasticsearch)]
-        CS[(cassandra)]
+        NEO[(neo4j)]
         UGDB[(user-group-db)]
         DRDB[(data-retriever-db)]
     end
@@ -57,26 +52,20 @@ flowchart TB
     DEV --> MLE
     DEV --> UGE
     DEV --> DRE
-    DEV --> JVE
+    DEV --> N4J
 
     GWE --- GW
     MLE --- ML
     UGE --- UG
     DRE --- DR
-    JVE --- JV
+    N4J --- NEO
     PUG --- UGDB
     PDR --- DRDB
-    ESE --- ES
-    CSE --- CS
 
     GW -->|depends_on started| ML
     UG -->|depends_on healthy| UGDB
     DR -->|depends_on healthy| DRDB
-    ML -->|depends_on healthy| JG
-    JV -->|depends_on started| JG
-
-    JG --> CS
-    JG --> ES
+    ML -->|depends_on healthy| NEO
 
     GW -. uses .-> LOG
     UG -. uses .-> LOG
@@ -92,11 +81,11 @@ flowchart TB
     classDef shared fill:#6f4b1f,stroke:#4f3516,color:#ffffff,stroke-width:1px;
     classDef edge fill:#39424e,stroke:#1f252d,color:#ffffff,stroke-width:1px;
 
-    class GW,ML,UG,DR,JV svc;
-    class JG,ES,CS infra;
+    class GW,ML,UG,DR svc;
+    class NEO infra;
     class UGDB,DRDB db;
     class LOG,PG,MIG shared;
-    class GWE,MLE,UGE,DRE,JVE,PUG,PDR,ESE,CSE edge;
+    class GWE,MLE,UGE,DRE,N4J,PUG,PDR edge;
 ```
 
 ## Shared Go packages
@@ -143,7 +132,7 @@ Common local endpoints:
 - Gateway API: `http://localhost:32000`
 - User Group API: `http://localhost:8090`
 - Data Retriever API: `http://localhost:8100`
-- JanusGraph Visualizer: `http://localhost:3001`
+- Neo4j Browser: `http://localhost:7474`
 
 Stop local development stack:
 

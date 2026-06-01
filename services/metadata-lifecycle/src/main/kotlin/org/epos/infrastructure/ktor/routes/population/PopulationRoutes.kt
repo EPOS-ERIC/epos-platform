@@ -217,9 +217,8 @@ fun Route.populationRoutes(
             call.respond(
                 mapOf(
                     "indexUrl" to Config.INDEX_URL,
-                    "janusgraphHost" to Config.JANUSGRAPH_HOST,
-                    "janusgraphPort" to Config.JANUSGRAPH_PORT,
-                    "traversalSource" to Config.JANUSGRAPH_TRAVERSAL_SOURCE
+                    "neo4jUri" to Config.NEO4J_URI,
+                    "neo4jDatabase" to Config.NEO4J_DATABASE,
                 )
             )
         }

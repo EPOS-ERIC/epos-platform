@@ -11,9 +11,8 @@ fun Route.healthRoutes() {
                 "status" to "ok",
                 "timestamp" to System.currentTimeMillis(),
                 "config" to mapOf(
-                    "janusgraphHost" to Config.JANUSGRAPH_HOST,
-                    "janusgraphPort" to Config.JANUSGRAPH_PORT,
-                    "traversalSource" to Config.JANUSGRAPH_TRAVERSAL_SOURCE
+                    "neo4jUri" to Config.NEO4J_URI,
+                    "neo4jDatabase" to Config.NEO4J_DATABASE
                 )
             )
         )

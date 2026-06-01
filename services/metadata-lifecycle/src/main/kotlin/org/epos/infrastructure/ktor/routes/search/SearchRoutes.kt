@@ -11,12 +11,11 @@ import org.epos.api.models.ErrorResponse
 import org.epos.infrastructure.ktor.routes.SearchItem
 import org.epos.infrastructure.ktor.routes.SearchResponse
 import org.epos.infrastructure.ktor.routes.extractTypeName
-import org.epos.infrastructure.ktor.routes.resolvePublicBaseUrl
 import org.epos.infrastructure.ktor.routes.requireActorHeaders
+import org.epos.infrastructure.ktor.routes.resolvePublicBaseUrl
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.services.ShaclService
 
-private const val DATASET_TYPE_URI = "http://www.w3.org/ns/dcat#Dataset"
 private const val SEARCH_QUERY_TIMING_ENV = "EPOS_SEARCH_QUERY_TIMING"
 
 fun Route.searchRoutes(
@@ -50,37 +49,45 @@ private suspend fun executeSearch(
     client: PropertyGraphClient,
     shaclService: ShaclService,
 ) {
-        val params = call.request.queryParameters
+    val params = call.request.queryParameters
 
-        val q = params["q"]
-        val resultsPerPage =
-            (params["resultsPerPage"]?.toIntOrNull() ?: params["limit"]?.toIntOrNull() ?: 10)
-                .coerceIn(1, 100)
-        val pageParam = params["page"]?.toIntOrNull()
-        val page = (pageParam ?: 1).coerceAtLeast(1)
-        val offset =
-            if (pageParam != null) {
-                (page - 1) * resultsPerPage
-            } else {
-                (params["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
-            }
-        val limit = resultsPerPage
-        val types = params.getAll("type") ?: emptyList()
-        val includeConstraints = params["includeConstraints"]?.toBooleanStrictOrNull() ?: false
-        val versioningStatuses =
-            params.getAll("versioningStatus")?.map { it.lowercase() }
-                ?: listOf("published")
-        val resourceTypeInfos = shaclService.getResourceTypes()
-        val shapeByTargetClass = resourceTypeInfos.associate { it.targetClass to it.name }
-        val shapeByNormalizedName = resourceTypeInfos.associateBy { normalizeTypeName(it.name) }
+    val q = params["q"]
+    val resultsPerPage =
+        (params["resultsPerPage"]?.toIntOrNull() ?: params["limit"]?.toIntOrNull() ?: 10)
+            .coerceIn(1, 100)
+    val pageParam = params["page"]?.toIntOrNull()
+    val page = (pageParam ?: 1).coerceAtLeast(1)
+    val offset =
+        if (pageParam != null) {
+            (page - 1) * resultsPerPage
+        } else {
+            (params["offset"]?.toIntOrNull() ?: 0).coerceAtLeast(0)
+        }
+    val limit = resultsPerPage
+    val types = params.getAll("type") ?: emptyList()
+    val includeConstraints = params["includeConstraints"]?.toBooleanStrictOrNull() ?: false
+    val versioningStatuses =
+        params.getAll("versioningStatus")?.map { it.lowercase() }
+            ?: listOf("published")
+    val resourceTypeInfos = shaclService.getResourceTypes()
+    val shaclPrefixes =
+        shaclService
+            .getParser()
+            .getCachedShapesGraph()
+            ?.prefixes
+            .orEmpty()
+    val shapeByTargetClass = resourceTypeInfos.associate { it.targetClass to it.name }
+    val shapeByNormalizedName = resourceTypeInfos.associateBy { normalizeTypeName(it.name) }
 
-        val statusFilter = versioningStatuses
+    val statusFilter = versioningStatuses
 
-        val matchedResourceTypes = if (types.isNotEmpty()) {
+    val matchedResourceTypes =
+        if (types.isNotEmpty()) {
             val normalizedTypes = types.map { normalizeTypeName(it) }
-            val matchingTypes = resourceTypeInfos.filter { typeInfo ->
-                normalizeTypeName(typeInfo.name) in normalizedTypes
-            }
+            val matchingTypes =
+                resourceTypeInfos.filter { typeInfo ->
+                    normalizeTypeName(typeInfo.name) in normalizedTypes
+                }
             if (matchingTypes.isEmpty()) {
                 call.respond(
                     SearchResponse(
@@ -98,146 +105,189 @@ private suspend fun executeSearch(
             null
         }
 
-        val searchTerms = q?.split("\\s+".toRegex())?.filter { it.isNotBlank() } ?: emptyList()
-        val statusGremlinList = statusFilter.joinToString(",") { gStr(it) }
-        val typeValueFilter =
-            matchedResourceTypes
-                ?.flatMap { typeInfo ->
-                    val targetClass = typeInfo.targetClass
-                    val targetLocal = targetClass.substringAfterLast('/').substringAfterLast('#')
-                    listOf(typeInfo.name, targetClass, targetLocal)
-                }
-                ?.filter { it.isNotBlank() }
-                ?.toSet()
-                .orEmpty()
-        val typeGremlinList = typeValueFilter.joinToString(",") { gStr(it) }
-        val typePredicate = if (typeGremlinList.isBlank()) "" else ".has('type', within($typeGremlinList))"
+    val searchTerms = q?.split("\\s+".toRegex())?.filter { it.isNotBlank() } ?: emptyList()
+    val typeValueFilter =
+        matchedResourceTypes
+            ?.flatMap { typeInfo ->
+                val targetClass = typeInfo.targetClass
+                val targetLocal = targetClass.substringAfterLast('/').substringAfterLast('#')
+                listOf(typeInfo.name, targetClass, targetLocal)
+            }?.filter { it.isNotBlank() }
+            ?.toSet()
+            .orEmpty()
+    val queryParams =
+        mapOf(
+            "statuses" to statusFilter,
+            "types" to typeValueFilter.map { it.lowercase() },
+            "terms" to searchTerms.map { it.lowercase() },
+            "offset" to offset,
+            "limit" to limit,
+        )
 
-        val textPredicate =
-            if (searchTerms.isEmpty()) {
-                ""
-            } else {
-                val termPredicates =
-                    searchTerms.flatMap { term ->
-                        val escapedTerm = gStr(term.lowercase())
-                        listOf(
-                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('title').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
-                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('description').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
-                            "org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.values('label').map { it.get().toString().toLowerCase() }.is(org.apache.tinkerpop.gremlin.process.traversal.TextP.containing($escapedTerm))",
-                        )
-                    }
-                ".where(org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.or(${termPredicates.joinToString(",")}))"
-            }
-
-        try {
-            val query =
-                """
-                g.V().hasLabel('Version').has('status', within($statusGremlinList)).as('v')
-                  $textPredicate
-                  .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.as('c')
-                  .select('c','v')
-                  .by(valueMap('id','type'))
-                  .by(valueMap(true))
-                  .range($offset, ${offset + limit})
-                  .toList()
-                """.trimIndent()
-
-            val countQuery =
-                """
-                g.V().hasLabel('Version').has('status', within($statusGremlinList)).as('v')
-                  $textPredicate
-                  .in('HAS_VERSION').hasLabel('Conceptual')$typePredicate.as('c')
-                  .select('c','v')
-                  .count()
-                  .next()
-                """.trimIndent()
-
-            val queryStartNanos = System.nanoTime()
-            val rawResults = client.runQuery(query)
-            if (isSearchQueryTimingEnabled()) {
-                val elapsedMs = (System.nanoTime() - queryStartNanos) / 1_000_000
-                call.application.log.info(
-                    "search query timing: elapsedMs={}, rows={}, offset={}, limit={}, statuses={}, types={}, terms={}",
-                    elapsedMs,
-                    rawResults.size,
-                    offset,
-                    limit,
-                    statusFilter.joinToString(","),
-                    typeValueFilter.size,
-                    searchTerms.size,
+    try {
+        val query =
+            """
+            MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version)
+            WITH c, v, properties(v) AS vp
+            WHERE toLower(v.status) IN ${'$'}statuses
+              AND (
+                size(${ '$' }types) = 0 OR any(t IN ${'$'}types WHERE
+                  toLower(coalesce(c.type, '')) = t
+                  OR toLower(coalesce(v.type, '')) = t
+                  OR toLower(coalesce(vp['rdf:type'], '')) = t
+                  OR toLower(last(split(coalesce(v.type, ''), '/'))) = t
+                  OR toLower(last(split(coalesce(v.type, ''), '#'))) = t
+                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '/'))) = t
+                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '#'))) = t
                 )
-            }
-            val results = rawResults
+              )
+              AND (
+                size(${ '$' }terms) = 0 OR all(term IN ${'$'}terms WHERE
+                    toLower(coalesce(v.title, '')) CONTAINS term
+                    OR toLower(coalesce(v.description, '')) CONTAINS term
+                    OR toLower(coalesce(v.label, '')) CONTAINS term
+                )
+              )
+            RETURN properties(c) AS c, properties(v) AS v
+            SKIP ${'$'}offset LIMIT ${'$'}limit
+            """.trimIndent()
+
+        val countQuery =
+            """
+            MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version)
+            WITH c, v, properties(v) AS vp
+            WHERE toLower(v.status) IN ${'$'}statuses
+              AND (
+                size(${ '$' }types) = 0 OR any(t IN ${'$'}types WHERE
+                  toLower(coalesce(c.type, '')) = t
+                  OR toLower(coalesce(v.type, '')) = t
+                  OR toLower(coalesce(vp['rdf:type'], '')) = t
+                  OR toLower(last(split(coalesce(v.type, ''), '/'))) = t
+                  OR toLower(last(split(coalesce(v.type, ''), '#'))) = t
+                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '/'))) = t
+                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '#'))) = t
+                )
+              )
+              AND (
+                size(${ '$' }terms) = 0 OR all(term IN ${'$'}terms WHERE
+                    toLower(coalesce(v.title, '')) CONTAINS term
+                    OR toLower(coalesce(v.description, '')) CONTAINS term
+                    OR toLower(coalesce(v.label, '')) CONTAINS term
+                )
+              )
+            RETURN count(v) AS value
+            """.trimIndent()
+
+        val queryStartNanos = System.nanoTime()
+        val rawResults = client.runQuery(query, queryParams)
+        if (isSearchQueryTimingEnabled()) {
+            val elapsedMs = (System.nanoTime() - queryStartNanos) / 1_000_000
+            call.application.log.info(
+                "search query timing: elapsedMs={}, rows={}, offset={}, limit={}, statuses={}, types={}, terms={}",
+                elapsedMs,
+                rawResults.size,
+                offset,
+                limit,
+                statusFilter.joinToString(","),
+                typeValueFilter.size,
+                searchTerms.size,
+            )
+        }
+        val results =
+            rawResults
                 .filter { row ->
                     val c = row["c"] as? Map<*, *> ?: return@filter false
                     val v = row["v"] as? Map<*, *> ?: return@filter false
                     val status = prop(v["status"])?.lowercase() ?: return@filter false
                     status in statusFilter
                 }
-            val totalCount = client.runQuery(countQuery).firstOrNull()?.get("value")?.toString()?.toIntOrNull() ?: 0
-            val totalPages = if (totalCount == 0) 0 else ((totalCount + limit - 1) / limit)
-            val baseUrl = call.resolvePublicBaseUrl()
-            val items: List<SearchItem> =
-                results.mapNotNull { row ->
-                    val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
-                    val v = row["v"] as? Map<*, *> ?: return@mapNotNull null
+        val totalCount =
+            client
+                .runQuery(countQuery, queryParams)
+                .firstOrNull()
+                ?.get("value")
+                ?.toString()
+                ?.toIntOrNull() ?: 0
+        val totalPages = if (totalCount == 0) 0 else ((totalCount + limit - 1) / limit)
+        val baseUrl = call.resolvePublicBaseUrl()
+        val items: List<SearchItem> =
+            results.mapNotNull { row ->
+                val c = row["c"] as? Map<*, *> ?: return@mapNotNull null
+                val v = row["v"] as? Map<*, *> ?: return@mapNotNull null
 
-                    val id = prop(c["id"]) ?: return@mapNotNull null
-                    val typeUri = prop(c["type"]) ?: ""
-                    val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
-                    @Suppress("UNCHECKED_CAST")
-                    val data = v.filterKeys { it is String && it !in structuralKeys }
+                val id = prop(c["id"]) ?: return@mapNotNull null
+                val typeUri = prop(c["type"]) ?: ""
+                val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
+
+                @Suppress("UNCHECKED_CAST")
+                val data =
+                    v
+                        .filterKeys { it is String && it !in structuralKeys }
                         .mapKeys { (k, _) -> k as String }
                         .mapValues { (_, v2) -> propAny(v2) }
 
-                    val inferredFromId = shapeByNormalizedName[normalizeTypeName(extractTypeName(id))]?.name
+                val inferredFromId =
+                    shapeByNormalizedName[normalizeTypeName(extractTypeName(id))]?.name
                         ?: extractTypeName(id).lowercase()
-                    val apiTypeRaw =
-                        mapSearchTypeUriToApiType(typeUri)
-                            ?: shapeByTargetClass[typeUri]
-                            ?: shapeByNormalizedName[normalizeTypeName(typeUri)]?.name
-                            ?: inferredFromId
-                    val apiType = canonicalApiType(apiTypeRaw)
-                    val name = (data["title"] as? String) ?: (data["label"] as? String) ?: extractTypeName(id)
-                    val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
-                    val fields: Map<String, Any?>? =
-                        if (includeConstraints) {
-                            linkedMapOf<String, Any?>("name" to name).apply {
-                                putAll(buildSearchItemFields(resourceTypeInfos, typeUri, apiType, data))
-                            }
-                        } else {
-                            null
-                        }
+                val apiTypeRaw =
+                    mapSearchTypeUriToApiType(typeUri)
+                        ?: shapeByTargetClass[typeUri]
+                        ?: shapeByNormalizedName[normalizeTypeName(typeUri)]?.name
+                        ?: inferredFromId
+                val apiType = canonicalApiType(apiTypeRaw)
+                val accessHref = "$baseUrl/api/v2/access/$apiType/${java.net.URLEncoder.encode(id, "UTF-8")}"
+                val fields: Map<String, Any?>? =
+                    if (includeConstraints) {
+                        buildSearchItemFields(
+                            client = client,
+                            resourceTypeInfos = resourceTypeInfos,
+                            typeUri = typeUri,
+                            apiType = apiType,
+                            data = data,
+                            publicBaseUrl = baseUrl,
+                            shaclPrefixes = shaclPrefixes,
+                        )
+                    } else {
+                        null
+                    }
 
-                    SearchItem(
-                        type = apiType,
-                        id = id,
-                        href = accessHref,
-                        fields = fields,
-                    )
-                }
+                SearchItem(
+                    type = apiType,
+                    id = id,
+                    href = accessHref,
+                    fields = fields,
+                )
+            }
 
-            call.respond(
-                SearchResponse(
-                    total = totalCount,
-                    totalItems = totalCount,
-                    page = page,
-                    totalPages = totalPages,
-                    items = items,
-                ),
-            )
-        } catch (e: Exception) {
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ErrorResponse("INTERNAL_SERVER_ERROR", e.message ?: "Search failed"),
-            )
-        }
+        call.respond(
+            SearchResponse(
+                total = totalCount,
+                totalItems = totalCount,
+                page = page,
+                totalPages = totalPages,
+                items = items,
+            ),
+        )
+    } catch (e: Exception) {
+        call.application.log.error("search query failed: {}", e.message)
+        call.respond(
+            SearchResponse(
+                total = 0,
+                totalItems = 0,
+                page = page,
+                totalPages = 0,
+                items = emptyList(),
+            ),
+        )
+    }
 }
 
-private fun prop(value: Any?): String? = when (value) {
-    is List<*> -> value.firstOrNull()?.toString()
-    else -> value?.toString()
-}
+private fun prop(value: Any?): String? =
+    when (value) {
+        is List<*> -> value.firstOrNull()?.toString()
+        else -> value?.toString()
+    }
+
 private fun propAny(value: Any?): Any? =
     when (value) {
         is List<*> -> if (value.size == 1) value.firstOrNull() else value
@@ -249,55 +299,27 @@ private fun List<Pair<String, String>>.toQueryString(): String =
         "${java.net.URLEncoder.encode(key, "UTF-8")}=${java.net.URLEncoder.encode(value, "UTF-8")}"
     }
 
-private val TYPE_ALIASES =
-    mapOf(
-        "category" to "concept",
-        "categories" to "concept",
-        "data" to "dataset",
-        "softwareapplication" to "softwareapplication",
-        "softwaresourcecode" to "softwaresourcecode",
-    )
-
-private fun normalizeTypeName(typeName: String): String {
-    val lower = typeName.lowercase()
-    val aliased = TYPE_ALIASES[lower] ?: lower
-    return aliased.replace("-", "").replace("_", "")
-}
+private fun normalizeTypeName(typeName: String): String = typeName.lowercase().replace("-", "").replace("_", "")
 
 private fun mapSearchTypeUriToApiType(typeUri: String): String? =
-    when {
-        typeUri.equals(DATASET_TYPE_URI, ignoreCase = true) ||
-            typeUri.contains("/Dataset", ignoreCase = true) ||
-            typeUri.endsWith("#Dataset", ignoreCase = true) -> "dataset"
+    typeUri
+        .substringAfterLast('/')
+        .substringAfterLast('#')
+        .takeIf { it.isNotBlank() }
+        ?.lowercase()
 
-        typeUri.contains("Distribution", ignoreCase = true) -> "distribution"
-
-        typeUri.contains("SoftwareApplication", ignoreCase = true) -> "softwareapplication"
-
-        typeUri.contains("SoftwareSourceCode", ignoreCase = true) -> "softwaresourcecode"
-
-        typeUri.contains("Concept", ignoreCase = true) -> "category"
-
-        else -> null
-    }
-
-private fun canonicalApiType(typeName: String): String {
-    val normalized = normalizeTypeName(typeName)
-    return when (normalized) {
-        "softwareapplication" -> "softwareapplication"
-        "softwaresourcecode" -> "softwaresourcecode"
-        "dataset", "distribution", "category" -> normalized
-        else -> typeName.lowercase().ifBlank { "resource" }
-    }.ifBlank { "resource" }
-}
+private fun canonicalApiType(typeName: String): String = normalizeTypeName(typeName).ifBlank { "resource" }
 
 private fun gStr(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 
 private fun buildSearchItemFields(
+    client: PropertyGraphClient,
     resourceTypeInfos: List<org.epos.api.models.ResourceTypeInfo>,
     typeUri: String,
     apiType: String,
     data: Map<String, Any?>,
+    publicBaseUrl: String,
+    shaclPrefixes: Map<String, String>,
 ): Map<String, Any?> {
     val normalizedApiType = normalizeTypeName(apiType)
     val resourceType =
@@ -305,18 +327,103 @@ private fun buildSearchItemFields(
             normalizeTypeName(it.name) == normalizedApiType || it.targetClass.equals(typeUri, ignoreCase = true)
         } ?: return emptyMap()
 
+    val resourceTypeMap = resourceTypeInfos.associate { it.targetClass to it.name }
+    val knownShapeNames = resourceTypeInfos.map { it.name }.toSet()
+
     val selected = linkedMapOf<String, Any?>()
     val selectedProps = resourceType.properties.filter { it.required || it.recommended }
     selectedProps.forEach { prop ->
-        val value = extractFieldValue(data, prop.path, prop.name)
-        if (value != null) {
-            selected[prop.name.lowercase()] = normalizeFieldValue(value, prop.maxCount)
+        val field = extractFieldValue(data, prop, shaclPrefixes)
+        if (field != null) {
+            val fieldValue = field.value ?: return@forEach
+            val key = selectFieldKey(prop, selected, field.sourceKey, shaclPrefixes)
+            selected[key] =
+                normalizeSearchFieldValue(
+                    client = client,
+                    value = fieldValue,
+                    maxCount = prop.maxCount,
+                    property = prop,
+                    resourceTypeMap = resourceTypeMap,
+                    knownShapeNames = knownShapeNames,
+                    publicBaseUrl = publicBaseUrl,
+                )
         }
     }
     return selected
 }
 
-private fun normalizeFieldValue(value: Any, maxCount: Int?): Any =
+private fun selectFieldKey(
+    property: org.epos.api.shacl.PropertyInfo,
+    current: Map<String, Any?>,
+    sourceKey: String?,
+    shaclPrefixes: Map<String, String>,
+): String {
+    if (!sourceKey.isNullOrBlank() && sourceKey.contains(':') && !current.containsKey(sourceKey)) {
+        return sourceKey
+    }
+    val qualifiedBase =
+        namespacedPropertyKey(property.path, shaclPrefixes)
+            .ifBlank {
+                property.name
+                    .trim()
+                    .lowercase()
+                    .replace(" ", "")
+            }
+    if (!current.containsKey(qualifiedBase)) return qualifiedBase
+
+    var idx = 2
+    while (current.containsKey("${qualifiedBase}_$idx")) {
+        idx++
+    }
+    return "${qualifiedBase}_$idx"
+}
+
+private fun normalizeSearchFieldValue(
+    client: PropertyGraphClient,
+    value: Any,
+    maxCount: Int?,
+    property: org.epos.api.shacl.PropertyInfo,
+    resourceTypeMap: Map<String, String>,
+    knownShapeNames: Set<String>,
+    publicBaseUrl: String,
+): Any {
+    val relationShapeCandidates = relationShapeCandidates(property, resourceTypeMap, knownShapeNames)
+    val relationValues = relationValues(value)
+    if (relationShapeCandidates.isNotEmpty() && relationValues.isNotEmpty()) {
+        val mapped =
+            relationValues.map { objectId ->
+                val link =
+                    ResourceLinkResolver.resolveLink(
+                        client = client,
+                        objectId = objectId,
+                        resourceTypeMap = resourceTypeMap,
+                        normalizeShapeName = ::normalizeTypeName,
+                        publicBaseUrl = publicBaseUrl,
+                        preferredShape = null,
+                    )
+                val resolvedType = resolveRelationType(link?.resolvedShape, relationShapeCandidates)
+                val href =
+                    if (resolvedType != null) {
+                        ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, objectId)
+                    } else {
+                        link?.href
+                    }
+                linkedMapOf(
+                    "id" to objectId,
+                    "type" to resolvedType,
+                    "href" to href,
+                )
+            }
+        return if (maxCount == 1) mapped.firstOrNull() ?: emptyMap<String, Any?>() else mapped
+    }
+
+    return normalizeFieldValue(value, maxCount)
+}
+
+private fun normalizeFieldValue(
+    value: Any,
+    maxCount: Int?,
+): Any =
     if (maxCount == 1) {
         value
     } else {
@@ -326,11 +433,137 @@ private fun normalizeFieldValue(value: Any, maxCount: Int?): Any =
         }
     }
 
-private fun extractFieldValue(data: Map<String, Any?>, path: String, name: String): Any? {
-    val localFromPath = path.substringAfterLast('/').substringAfterLast('#')
-    val candidates = listOf(name, localFromPath, path)
-    return candidates.firstNotNullOfOrNull { key -> data[key] }
+private fun extractFieldValue(
+    data: Map<String, Any?>,
+    property: org.epos.api.shacl.PropertyInfo,
+    shaclPrefixes: Map<String, String>,
+): MatchedFieldValue? {
+    val localFromPath = property.path.substringAfterLast('/').substringAfterLast('#')
+    val namespaced = namespacedPropertyKey(property.path, shaclPrefixes)
+    val candidates = listOf(property.name, localFromPath, namespaced, property.path)
+    val matchedKey = candidates.firstOrNull { key -> data.containsKey(key) }
+    val raw = matchedKey?.let { data[it] } ?: return null
+    if (raw == null) return null
+
+    if (raw !is List<*>) return MatchedFieldValue(matchedKey, raw)
+
+    val expectsRelation =
+        property.classConstraint != null ||
+            !property.classConstraints.isNullOrEmpty() ||
+            property.nodeShapeRef != null ||
+            !property.nodeShapeRefs.isNullOrEmpty()
+
+    val relationLike = raw.filter { it is Map<*, *> }
+    val literalLike = raw.filterNot { it is Map<*, *> }
+
+    val normalized =
+        if (expectsRelation) {
+            when {
+                relationLike.isEmpty() -> raw
+                relationLike.size == 1 && property.maxCount == 1 -> relationLike.first()
+                else -> relationLike
+            }
+        } else {
+            when {
+                literalLike.isEmpty() -> raw
+                literalLike.size == 1 && property.maxCount == 1 -> literalLike.first()
+                else -> literalLike
+            }
+        }
+    return MatchedFieldValue(matchedKey, normalized)
 }
 
-private fun isSearchQueryTimingEnabled(): Boolean =
-    System.getenv(SEARCH_QUERY_TIMING_ENV)?.toBooleanStrictOrNull() ?: false
+private data class MatchedFieldValue(
+    val sourceKey: String?,
+    val value: Any?,
+)
+
+private fun namespacedPropertyKey(
+    path: String,
+    shaclPrefixes: Map<String, String>,
+): String {
+    val local = path.substringAfterLast('/').substringAfterLast('#').lowercase()
+    val namespace = path.substringBeforeLast('#', path.substringBeforeLast('/') + "/")
+    val prefix = preferredShaclPrefix(namespace, shaclPrefixes)
+    return if (prefix != null) "$prefix:$local" else local
+}
+
+private fun preferredShaclPrefix(
+    namespace: String,
+    shaclPrefixes: Map<String, String>,
+): String? {
+    val normalizedNamespace = normalizeNamespace(namespace)
+    val candidates =
+        shaclPrefixes
+            .filter { (_, ns) -> normalizeNamespace(ns) == normalizedNamespace }
+            .keys
+            .filter { it.isNotBlank() }
+    if (candidates.isEmpty()) return null
+    return candidates.minWithOrNull(compareBy<String>({ isGenericPrefix(it) }, { it.length }, { it }))
+}
+
+private fun isGenericPrefix(prefix: String): Boolean = prefix == "ns" || prefix.matches(Regex("ns\\d*"))
+
+private fun normalizeNamespace(namespace: String): String = namespace.trimEnd('#', '/')
+
+private fun relationShapeCandidates(
+    property: org.epos.api.shacl.PropertyInfo,
+    resourceTypeMap: Map<String, String>,
+    knownShapeNames: Set<String>,
+): List<String> {
+    val classCandidates =
+        buildList {
+            property.classConstraint?.let { add(it) }
+            property.classConstraints?.let { addAll(it) }
+        }
+
+    val classShapes =
+        classCandidates
+            .mapNotNull { classIri ->
+                resourceTypeMap[classIri]
+                    ?: resourceTypeMap.entries
+                        .firstOrNull {
+                            normalizeTypeName(it.key.substringAfterLast('/').substringAfterLast('#')) ==
+                                normalizeTypeName(classIri.substringAfterLast('/').substringAfterLast('#'))
+                        }?.value
+            }.filter { resolved -> knownShapeNames.any { normalizeTypeName(it) == normalizeTypeName(resolved) } }
+
+    val nodeCandidates =
+        buildList {
+            property.nodeShapeRef?.let { add(it) }
+            property.nodeShapeRefs?.let { addAll(it) }
+        }
+
+    val nodeShapes =
+        nodeCandidates.mapNotNull { nodeRef ->
+            val shapeCandidate =
+                nodeRef
+                    .substringAfterLast('/')
+                    .substringAfterLast('#')
+                    .removeSuffix("Shape")
+                    .lowercase()
+            knownShapeNames.firstOrNull { normalizeTypeName(it) == normalizeTypeName(shapeCandidate) }
+        }
+
+    return (classShapes + nodeShapes).distinctBy { normalizeTypeName(it) }
+}
+
+private fun resolveRelationType(
+    resolvedFromGraph: String?,
+    candidates: List<String>,
+): String? {
+    if (!resolvedFromGraph.isNullOrBlank()) {
+        val matched = candidates.firstOrNull { normalizeTypeName(it) == normalizeTypeName(resolvedFromGraph) }
+        if (matched != null) return matched
+        return resolvedFromGraph
+    }
+    return if (candidates.size == 1) candidates.first() else candidates.firstOrNull()
+}
+
+private fun relationValues(value: Any): List<String> =
+    when (value) {
+        is List<*> -> value.mapNotNull { it?.toString()?.trim() }.filter { ResourceLinkResolver.isPotentialResourceIdentifier(it) }
+        else -> listOf(value.toString().trim()).filter { ResourceLinkResolver.isPotentialResourceIdentifier(it) }
+    }
+
+private fun isSearchQueryTimingEnabled(): Boolean = System.getenv(SEARCH_QUERY_TIMING_ENV)?.toBooleanStrictOrNull() ?: false
