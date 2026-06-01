@@ -3,6 +3,7 @@ package org.epos.tests
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import org.epos.infrastructure.ktor.routes.search.ResourceLinkResolver
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.junit.jupiter.api.Test
@@ -12,14 +13,24 @@ class ResourceLinkResolverTest {
     fun `should build href for PIC-like resolvable identifiers`() {
         val client = mockk<PropertyGraphClient>()
         val resourceTypeMap = mapOf("http://example.org/Organization" to "organization")
+        val querySlot = slot<String>()
+        val paramsSlot = slot<Map<String, Any>>()
 
-        every {
-            client.runQuery(match { it.contains("hasLabel('Version')") && it.contains("PIC:999591306/v1.0") }, any())
-        } returns listOf(mapOf("value" to "PIC:999591306/v1.0"))
+        every { client.runQuery(capture(querySlot), capture(paramsSlot)) } answers {
+            val query = querySlot.captured
+            val entityId = paramsSlot.captured["entityId"]?.toString()
+            val requestedId = paramsSlot.captured["requestedId"]?.toString()
 
-        every {
-            client.runQuery(match { it.contains("hasLabel('Conceptual')") && it.contains("PIC:999591306/v1.0") }, any())
-        } returns listOf(mapOf("value" to "Organization"))
+            when {
+                query.contains("MATCH (v:Version {id:") && requestedId == "PIC:999591306/v1.0" -> {
+                    listOf(mapOf("id" to "PIC:999591306/v1.0", "identifier" to "PIC:999591306/v1.0"))
+                }
+                query.contains("MATCH (c:Conceptual {id:") && entityId == "PIC:999591306/v1.0" -> {
+                    listOf(mapOf("value" to "Organization"))
+                }
+                else -> emptyList()
+            }
+        }
 
         val shape =
             ResourceLinkResolver.resolveEntityShapeFromGraph(
