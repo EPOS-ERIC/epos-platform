@@ -8,7 +8,7 @@ import io.ktor.server.testing.testApplication
 import org.epos.module
 import org.junit.jupiter.api.Test
 
-class CrudRoutesTest {
+class CrudRoutesTest : Neo4jTestContainerSupport() {
     @Test
     fun `search endpoint should return result envelope`() =
         testApplication {

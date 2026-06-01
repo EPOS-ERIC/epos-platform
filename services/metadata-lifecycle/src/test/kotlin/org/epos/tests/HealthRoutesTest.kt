@@ -9,7 +9,7 @@ import io.ktor.server.testing.testApplication
 import org.epos.module
 import org.junit.jupiter.api.Test
 
-class HealthRoutesTest {
+class HealthRoutesTest : Neo4jTestContainerSupport() {
     @Test
     fun `health endpoint returns ok and neo4j config`() =
         testApplication {
