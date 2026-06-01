@@ -2,7 +2,8 @@
 
 ## Build and Test Workflow
 
-- `make generate` regenerates `gen/metadataclient` from metadata-lifecycle OpenAPI spec.
+- `make generate` regenerates `gen/metadataclient` from metadata-lifecycle OpenAPI spec
+- `make lint test` formats + checks if changes ok
 
 ## Service Conventions
 
@@ -68,6 +69,7 @@ log.Info(...)
 - If similar functionality already exists, **extend it** instead of creating parallel implementation.
 - Use `context.Context` for cancellable or long-running operations.
 - Prefer simple, idiomatic Go over clever or complex abstractions.
+- Use loop variables directly in closures. Do not add `idx := i` or `v := value` shadowing unless non-range variable actually needs rebinding.
 - Maintain strong type safety:
   - Use typed enums (custom types with `const` values).
   - Avoid `interface{}` or `any` unless absolutely necessary; if used, document why.

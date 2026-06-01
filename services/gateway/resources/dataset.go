@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -32,29 +33,29 @@ func (s *Service) GetDatasetByID(ctx context.Context, id string) (api.Dataset, e
 
 func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Dataset, error) {
 	properties := detail.GetProperties()
-	reader := newPropertyReader(properties)
+	reader := metadatareader.New(properties)
 
-	name, err := reader.requiredString("title")
+	name, err := reader.RequiredString("title")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset title: %w", err)
 	}
 
-	status, err := reader.optionalVersioningStatus("status")
+	status, err := reader.OptionalVersioningStatus("status")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset status: %w", err)
 	}
 
-	created, err := reader.optionalTime("created")
+	created, err := reader.OptionalTime("created")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset created: %w", err)
 	}
 
-	modified, err := reader.optionalTime("modified")
+	modified, err := reader.OptionalTime("modified")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset modified: %w", err)
 	}
 
-	issued, err := reader.optionalTime("issued")
+	issued, err := reader.OptionalTime("issued")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset issued: %w", err)
 	}
@@ -64,32 +65,32 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		return api.Dataset{}, err
 	}
 
-	contactPoints, err := reader.passthroughRefs("contact point")
+	contactPoints, err := reader.PassthroughRefs("contact point")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset contact points: %w", err)
 	}
 
-	concepts, err := reader.resourceRefs("theme", api.ConceptType)
+	concepts, err := reader.ResourceRefs("theme", api.ConceptType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset concepts: %w", err)
 	}
 
-	publisher, err := reader.resourceRefs("publisher", api.OrganizationType)
+	publisher, err := reader.ResourceRefs("publisher", api.OrganizationType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset publisher: %w", err)
 	}
 
-	distributions, err := reader.resourceRefs("distribution", api.DistributionType)
+	distributions, err := reader.ResourceRefs("distribution", api.DistributionType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset distributions: %w", err)
 	}
 
-	isVersionOf, err := reader.optionalResourceRef("is version of", api.DatasetType)
+	isVersionOf, err := reader.OptionalResourceRef("is version of", api.DatasetType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset is version of: %w", err)
 	}
 
-	keywords, err := reader.strings("keyword")
+	keywords, err := reader.Strings("keyword")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset keywords: %w", err)
 	}
@@ -98,11 +99,11 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		BaseDetailResource: api.BaseDetailResource{
 			ID:          detail.GetId(),
 			Name:        name,
-			Description: reader.optionalString("description"),
+			Description: reader.OptionalString("description"),
 		},
 		Created:            created,
 		Modified:           modified,
-		VersionInfo:        reader.optionalString("version info"),
+		VersionInfo:        reader.OptionalString("version info"),
 		ContactPoints:      contactPoints,
 		Keywords:           keywords,
 		Concepts:           concepts,
@@ -113,11 +114,11 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		Temporal:           temporal,
 		Status:             status,
 		Distributions:      distributions,
-		AccessRights:       reader.optionalString("access rights"),
-		AccrualPeriodicity: reader.optionalString("accrual periodicity"),
+		AccessRights:       reader.OptionalString("access rights"),
+		AccrualPeriodicity: reader.OptionalString("accrual periodicity"),
 		IsVersionOf:        isVersionOf,
 		QualityAnnotation:  qualityAnnotation,
-		Version:            reader.optionalString("version"),
+		Version:            reader.OptionalString("version"),
 	}, nil
 }
 

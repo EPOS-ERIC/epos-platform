@@ -6,11 +6,12 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 	"golang.org/x/sync/errgroup"
 )
 
 func mapOperation(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Operation, error) {
-	reader := newPropertyReader(detail.GetProperties())
+	reader := metadatareader.New(detail.GetProperties())
 
 	iriTemplate, err := aggregateIriTemplate(ctx, reader, fetch)
 	if err != nil {
@@ -22,24 +23,24 @@ func mapOperation(ctx context.Context, detail *metadataclient.AccessDetailRespon
 		return api.Operation{}, fmt.Errorf("get operation api documentation: %w", err)
 	}
 
-	returns, err := reader.strings("returns")
+	returns, err := reader.Strings("returns")
 	if err != nil {
 		return api.Operation{}, fmt.Errorf("get operation returns: %w", err)
 	}
 
 	return api.Operation{
 		ID:               detail.GetId(),
-		Method:           reader.optionalString("method"),
+		Method:           reader.OptionalString("method"),
 		Returns:          returns,
 		IriTemplate:      iriTemplate,
 		APIDocumentation: apiDocumentation,
 	}, nil
 }
 
-func aggregateIriTemplate(ctx context.Context, reader propertyReader, fetch accessDetailFetcher) (*api.IriTemplate, error) {
-	items, err := reader.itemsOneOf("pg_property", "property")
+func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher) (*api.IriTemplate, error) {
+	items, err := reader.ItemsOneOf("pg_property", "property")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get iri template items: %w", err)
 	}
 	if len(items) == 0 {
 		return nil, nil
@@ -47,7 +48,7 @@ func aggregateIriTemplate(ctx context.Context, reader propertyReader, fetch acce
 
 	item := items[0]
 	if item.ID == "" {
-		template := firstNonEmpty(item.Value, item.Title)
+		template := metadatareader.FirstNonEmpty(item.Value, item.Title)
 		if template == "" {
 			return nil, nil
 		}
@@ -60,8 +61,8 @@ func aggregateIriTemplate(ctx context.Context, reader propertyReader, fetch acce
 		return nil, err
 	}
 
-	iriTemplateReader := newPropertyReader(iriTemplateDetail.GetProperties())
-	template, err := iriTemplateReader.requiredString("template")
+	iriTemplateReader := metadatareader.New(iriTemplateDetail.GetProperties())
+	template, err := iriTemplateReader.RequiredString("template")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template template: %w", err)
 	}
@@ -74,24 +75,25 @@ func aggregateIriTemplate(ctx context.Context, reader propertyReader, fetch acce
 	return &api.IriTemplate{Template: template, Mappings: mappings}, nil
 }
 
-func aggregateIriTemplateMappings(ctx context.Context, reader propertyReader, fetch accessDetailFetcher) ([]api.IriTemplateMapping, error) {
-	items, err := reader.items("mapping")
-	if err != nil || len(items) == 0 {
-		return nil, err
+func aggregateIriTemplateMappings(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher) ([]api.IriTemplateMapping, error) {
+	items, err := reader.Items("mapping")
+	if err != nil {
+		return nil, fmt.Errorf("get iri template mappings: %w", err)
+	}
+	if len(items) == 0 {
+		return nil, nil
 	}
 
 	mappings := make([]api.IriTemplateMapping, len(items))
 	g, groupCtx := errgroup.WithContext(ctx)
 
 	for i, item := range items {
-		idx := i
-		it := item
 		g.Go(func() error {
-			mapping, err := mapIriTemplateMapping(groupCtx, it, fetch)
+			mapping, err := mapIriTemplateMapping(groupCtx, item, fetch)
 			if err != nil {
-				return fmt.Errorf("mapping %d: %w", idx, err)
+				return fmt.Errorf("mapping %d: %w", i, err)
 			}
-			mappings[idx] = mapping
+			mappings[i] = mapping
 			return nil
 		})
 	}
@@ -103,7 +105,7 @@ func aggregateIriTemplateMappings(ctx context.Context, reader propertyReader, fe
 	return mappings, nil
 }
 
-func mapIriTemplateMapping(ctx context.Context, item propertyItem, fetch accessDetailFetcher) (api.IriTemplateMapping, error) {
+func mapIriTemplateMapping(ctx context.Context, item metadatareader.Item, fetch accessDetailFetcher) (api.IriTemplateMapping, error) {
 	if item.ID == "" {
 		return api.IriTemplateMapping{}, fmt.Errorf("missing id")
 	}
@@ -113,38 +115,38 @@ func mapIriTemplateMapping(ctx context.Context, item propertyItem, fetch accessD
 		return api.IriTemplateMapping{}, err
 	}
 
-	reader := newPropertyReader(detail.GetProperties())
-	variable, err := reader.requiredString("variable")
+	reader := metadatareader.New(detail.GetProperties())
+	variable, err := reader.RequiredString("variable")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping variable: %w", err)
 	}
 
-	label, err := reader.requiredStringOneOf("pg_label", "label")
+	label, err := reader.RequiredStringOneOf("pg_label", "label")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping label: %w", err)
 	}
 
-	rangeValue, err := reader.requiredString("range")
+	rangeValue, err := reader.RequiredString("range")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping range: %w", err)
 	}
 
-	required, err := reader.requiredBool("required")
+	required, err := reader.RequiredBool("required")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping required: %w", err)
 	}
 
-	paramValue, err := reader.strings("paramValue")
+	paramValue, err := reader.Strings("paramValue")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping param value: %w", err)
 	}
 
-	multipleValues, err := reader.optionalBool("multipleValues")
+	multipleValues, err := reader.OptionalBool("multipleValues")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping multiple values: %w", err)
 	}
 
-	readonlyValue, err := reader.optionalBool("readonlyValue")
+	readonlyValue, err := reader.OptionalBool("readonlyValue")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping readonly value: %w", err)
 	}
@@ -153,22 +155,22 @@ func mapIriTemplateMapping(ctx context.Context, item propertyItem, fetch accessD
 		Variable:       variable,
 		Label:          label,
 		Range:          rangeValue,
-		Property:       reader.optionalString("property"),
+		Property:       reader.OptionalString("property"),
 		Required:       required,
-		DefaultValue:   reader.optionalString("defaultValue"),
-		MinValue:       reader.optionalString("minValue"),
-		MaxValue:       reader.optionalString("maxValue"),
+		DefaultValue:   reader.OptionalString("defaultValue"),
+		MinValue:       reader.OptionalString("minValue"),
+		MaxValue:       reader.OptionalString("maxValue"),
 		ParamValue:     paramValue,
 		MultipleValues: multipleValues != nil && *multipleValues,
 		ReadonlyValue:  readonlyValue != nil && *readonlyValue,
-		ValuePattern:   reader.optionalString("valuePattern"),
+		ValuePattern:   reader.OptionalString("valuePattern"),
 	}, nil
 }
 
-func aggregateAPIDocumentationByKeys(ctx context.Context, reader propertyReader, fetch accessDetailFetcher, keys ...string) (*api.APIDocumentation, error) {
-	items, err := reader.itemsOneOf(keys...)
+func aggregateAPIDocumentationByKeys(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher, keys ...string) (*api.APIDocumentation, error) {
+	items, err := reader.ItemsOneOf(keys...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get api documentation refs: %w", err)
 	}
 	if len(items) == 0 {
 		return nil, nil
@@ -187,34 +189,35 @@ func aggregateAPIDocumentationByKeys(ctx context.Context, reader propertyReader,
 	return mapAPIDocumentation(detail)
 }
 
-func aggregateOperations(ctx context.Context, reader propertyReader, key string, fetch accessDetailFetcher) ([]api.Operation, error) {
-	items, err := reader.items(key)
-	if err != nil || len(items) == 0 {
-		return nil, err
+func aggregateOperations(ctx context.Context, reader metadatareader.Reader, key string, fetch accessDetailFetcher) ([]api.Operation, error) {
+	items, err := reader.Items(key)
+	if err != nil {
+		return nil, fmt.Errorf("get operations: %w", err)
+	}
+	if len(items) == 0 {
+		return nil, nil
 	}
 
 	operations := make([]api.Operation, len(items))
 	g, groupCtx := errgroup.WithContext(ctx)
 
 	for i, item := range items {
-		idx := i
-		it := item
 		g.Go(func() error {
-			if it.ID == "" {
-				return fmt.Errorf("operation %d: missing id", idx)
+			if item.ID == "" {
+				return fmt.Errorf("operation %d: missing id", i)
 			}
 
-			detail, err := fetch(groupCtx, "operation", it.ID)
+			detail, err := fetch(groupCtx, "operation", item.ID)
 			if err != nil {
-				return fmt.Errorf("operation %d: %w", idx, err)
+				return fmt.Errorf("operation %d: %w", i, err)
 			}
 
 			operation, err := mapOperation(groupCtx, detail, fetch)
 			if err != nil {
-				return fmt.Errorf("operation %d: %w", idx, err)
+				return fmt.Errorf("operation %d: %w", i, err)
 			}
 
-			operations[idx] = operation
+			operations[i] = operation
 			return nil
 		})
 	}
@@ -227,18 +230,18 @@ func aggregateOperations(ctx context.Context, reader propertyReader, key string,
 }
 
 func mapAPIDocumentation(detail *metadataclient.AccessDetailResponse) (*api.APIDocumentation, error) {
-	docReader := newPropertyReader(detail.GetProperties())
-	title, err := docReader.requiredString("title")
+	docReader := metadatareader.New(detail.GetProperties())
+	title, err := docReader.RequiredString("title")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation title: %w", err)
 	}
 
-	description, err := docReader.requiredString("description")
+	description, err := docReader.RequiredString("description")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation description: %w", err)
 	}
 
-	entrypoint, err := docReader.requiredString("entrypoint")
+	entrypoint, err := docReader.RequiredString("entrypoint")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation entrypoint: %w", err)
 	}

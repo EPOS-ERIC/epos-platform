@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -33,7 +35,7 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	}
 }
 
-func writeError(w http.ResponseWriter, status int, code, message string) {
+func writeError(ctx context.Context, w http.ResponseWriter, status int, code, message string, internalErr error) {
 	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
 	w.WriteHeader(status)
 
@@ -42,18 +44,21 @@ func writeError(w http.ResponseWriter, status int, code, message string) {
 		Status: status,
 		Detail: message,
 	}
+	if internalErr != nil && log.Enabled(ctx, slog.LevelDebug) {
+		problem.DebugDetail = internalErr.Error()
+	}
 
 	if err := json.NewEncoder(w).Encode(problem); err != nil {
-		log.Error("failed to encode problem response", "status", status, "error", err)
+		log.ErrorContext(ctx, "failed to encode problem response", "status", status, "error", err)
 	}
 }
 
-func writeBadRequest(w http.ResponseWriter, err error) {
-	writeError(w, http.StatusBadRequest, "bad_request", err.Error())
+func writeBadRequest(ctx context.Context, w http.ResponseWriter, err error) {
+	writeError(ctx, w, http.StatusBadRequest, "bad_request", err.Error(), nil)
 }
 
-func writeNotImplemented(w http.ResponseWriter) {
-	writeError(w, http.StatusNotImplemented, "not_implemented", "endpoint not implemented")
+func writeNotImplemented(ctx context.Context, w http.ResponseWriter) {
+	writeError(ctx, w, http.StatusNotImplemented, "not_implemented", "endpoint not implemented", nil)
 }
 
 func parsePageSize(values url.Values) (int32, error) {

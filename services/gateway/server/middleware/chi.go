@@ -11,6 +11,8 @@ import (
 
 var log = logging.Get("http")
 
+// TODO: see if this package makes sense as a shared library for different services
+
 type responseWriter struct {
 	http.ResponseWriter
 	status int
@@ -33,27 +35,25 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestID := r.Header.Get("X-Request-Id")
+
+		ctx := logging.WithRequest(r.Context(), logging.Request{
+			RequestID: requestID,
+			Method:    r.Method,
+			Path:      r.URL.Path,
+			Query:     r.URL.RawQuery,
+		})
+		r = r.WithContext(ctx)
+		if requestID != "" {
+			w.Header().Set("X-Request-Id", requestID)
+		}
+
 		startedAt := time.Now()
 		rw := &responseWriter{ResponseWriter: w, status: 200}
 		next.ServeHTTP(rw, r)
 		duration := time.Since(startedAt)
 
-		if r.URL.RawQuery == "" {
-			log.Info("http request",
-				"method", r.Method,
-				"path", r.URL.Path,
-				"status", rw.status,
-				"duration", duration,
-			)
-		} else {
-			log.Info("http request",
-				"method", r.Method,
-				"path", r.URL.Path,
-				"query", r.URL.RawQuery,
-				"status", rw.status,
-				"duration", duration,
-			)
-		}
+		log.InfoContext(r.Context(), "http request", "status", rw.status, "duration", duration)
 	})
 }
 
@@ -62,11 +62,11 @@ func Recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Error("panic recovered", "error", err, "path", r.URL.Path)
+				log.ErrorContext(r.Context(), "panic recovered", "error", err)
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				if _, err := w.Write([]byte(`{"error": "Internal Server Error"}`)); err != nil {
-					log.Error("failed to write error response", "error", err)
+					log.ErrorContext(r.Context(), "failed to write error response", "error", err)
 				}
 			}
 		}()

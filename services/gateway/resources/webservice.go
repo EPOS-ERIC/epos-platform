@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -30,19 +31,19 @@ func (s *Service) GetWebserviceByID(ctx context.Context, id string) (api.Webserv
 
 func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Webservice, error) {
 	properties := detail.GetProperties()
-	reader := newPropertyReader(properties)
+	reader := metadatareader.New(properties)
 
-	name, err := reader.requiredStringOneOf("name", "title")
+	name, err := reader.RequiredStringOneOf("name", "title")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice name: %w", err)
 	}
 
-	issued, err := reader.optionalTimeOneOf("datePublished", "issued")
+	issued, err := reader.OptionalTimeOneOf("datePublished", "issued")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice issued: %w", err)
 	}
 
-	modified, err := reader.optionalTimeOneOf("dateModified", "modified")
+	modified, err := reader.OptionalTimeOneOf("dateModified", "modified")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice modified: %w", err)
 	}
@@ -52,12 +53,12 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		return api.Webservice{}, err
 	}
 
-	contactPoints, err := reader.passthroughRefs("contactPoint")
+	contactPoints, err := reader.PassthroughRefs("contactPoint")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice contact points: %w", err)
 	}
 
-	providers, err := reader.resourceRefs("provider", api.OrganizationType)
+	providers, err := reader.ResourceRefs("provider", api.OrganizationType)
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice provider: %w", err)
 	}
@@ -66,12 +67,12 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		provider = providers[0]
 	}
 
-	concepts, err := reader.resourceRefs("theme", api.ConceptType)
+	concepts, err := reader.ResourceRefs("theme", api.ConceptType)
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice concepts: %w", err)
 	}
 
-	keywords, err := reader.strings("keywords")
+	keywords, err := reader.Strings("keywords")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice keywords: %w", err)
 	}
@@ -80,10 +81,10 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		BaseDetailResource: api.BaseDetailResource{
 			ID:          detail.GetId(),
 			Name:        name,
-			Description: reader.optionalString("description"),
+			Description: reader.OptionalString("description"),
 		},
 		Identifiers:      identifiers,
-		Entrypoint:       reader.optionalString("entrypoint"),
+		Entrypoint:       reader.OptionalString("entrypoint"),
 		ContactPoints:    contactPoints,
 		Provider:         provider,
 		Issued:           issued,
@@ -92,14 +93,14 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		Temporal:         temporal,
 		Keywords:         keywords,
 		Concepts:         concepts,
-		License:          reader.optionalString("license"),
+		License:          reader.OptionalString("license"),
 		Operations:       operations,
 		APIDocumentation: apiDocumentation,
 	}, nil
 }
 
 func aggregateWebserviceEntities(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) ([]api.Identifier, *api.TemporalExtent, string, []api.Operation, *api.APIDocumentation, error) {
-	reader := newPropertyReader(properties)
+	reader := metadatareader.New(properties)
 
 	var (
 		identifiers      []api.Identifier

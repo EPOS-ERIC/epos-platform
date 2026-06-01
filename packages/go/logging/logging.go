@@ -1,7 +1,13 @@
-// Package logging provides structured logging utilities with configurable levels and output destinations.
+// Package logging provides structured logging with configurable levels and output destinations.
+//
+// It emits JSON logs to stdout or a configured file and, when OTEL_SERVICE_NAME is set,
+// also attaches an OpenTelemetry slog bridge handler.
+//
+// This package does not configure OpenTelemetry SDK exporters.
 package logging
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
@@ -10,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 )
 
 var (
@@ -20,6 +28,16 @@ var (
 )
 
 var nonAlphaNum = regexp.MustCompile(`[^A-Z0-9]+`)
+
+type requestContextKey struct{}
+
+// Request carries request-scoped metadata that should be attached to context-aware log records.
+type Request struct {
+	RequestID string
+	Method    string
+	Path      string
+	Query     string
+}
 
 func parseLevel(value string) (slog.Level, bool) {
 	switch strings.ToUpper(value) {
@@ -74,9 +92,8 @@ func configuredComponentLevel(component string) (slog.Level, bool) {
 }
 
 func newHandler(writer io.Writer, level slog.Level) slog.Handler {
-	return slog.NewJSONHandler(writer, &slog.HandlerOptions{
+	jsonHandler := slog.NewJSONHandler(writer, &slog.HandlerOptions{
 		Level: level,
-		// Format time to second precision only
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey {
 				if t, ok := a.Value.Any().(time.Time); ok {
@@ -89,6 +106,15 @@ func newHandler(writer io.Writer, level slog.Level) slog.Handler {
 			return a
 		},
 	})
+
+	serviceName, ok := os.LookupEnv("OTEL_SERVICE_NAME")
+	if !ok {
+		return &contextHandler{next: jsonHandler}
+	}
+
+	otelHandler := otelslog.NewHandler(serviceName)
+
+	return &contextHandler{next: newMultiHandler(jsonHandler, otelHandler)}
 }
 
 func initBase() {
@@ -146,4 +172,106 @@ func Close() error {
 		return logFile.Close()
 	}
 	return nil
+}
+
+// WithRequest returns a context enriched with request-scoped logging metadata.
+func WithRequest(ctx context.Context, request Request) context.Context {
+	return context.WithValue(ctx, requestContextKey{}, request)
+}
+
+// RequestFromContext returns request-scoped logging metadata stored in ctx, if present.
+func RequestFromContext(ctx context.Context) (Request, bool) {
+	request, ok := ctx.Value(requestContextKey{}).(Request)
+	return request, ok
+}
+
+type contextHandler struct {
+	next slog.Handler
+}
+
+func (h *contextHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	return h.next.Enabled(ctx, level)
+}
+
+func (h *contextHandler) Handle(ctx context.Context, record slog.Record) error {
+	request, ok := RequestFromContext(ctx)
+	if !ok {
+		return h.next.Handle(ctx, record)
+	}
+
+	enriched := record.Clone()
+	attrs := make([]slog.Attr, 0, 1)
+	requestAttrs := make([]any, 0, 4)
+	if request.RequestID != "" {
+		requestAttrs = append(requestAttrs, slog.String("id", request.RequestID))
+	}
+	if request.Method != "" {
+		requestAttrs = append(requestAttrs, slog.String("method", request.Method))
+	}
+	if request.Path != "" {
+		requestAttrs = append(requestAttrs, slog.String("path", request.Path))
+	}
+	if request.Query != "" {
+		requestAttrs = append(requestAttrs, slog.String("query", request.Query))
+	}
+	if len(requestAttrs) > 0 {
+		attrs = append(attrs, slog.Group("request", requestAttrs...))
+	}
+	if len(attrs) > 0 {
+		enriched.AddAttrs(attrs...)
+	}
+
+	return h.next.Handle(ctx, enriched)
+}
+
+func (h *contextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &contextHandler{next: h.next.WithAttrs(attrs)}
+}
+
+func (h *contextHandler) WithGroup(name string) slog.Handler {
+	return &contextHandler{next: h.next.WithGroup(name)}
+}
+
+type multiHandler struct {
+	handlers []slog.Handler
+}
+
+func newMultiHandler(handlers ...slog.Handler) slog.Handler {
+	return &multiHandler{handlers: handlers}
+}
+
+func (m *multiHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	for _, h := range m.handlers {
+		if h.Enabled(ctx, level) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *multiHandler) Handle(ctx context.Context, record slog.Record) error {
+	for _, h := range m.handlers {
+		if h.Enabled(ctx, record.Level) {
+			if err := h.Handle(ctx, record); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m *multiHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	handlers := make([]slog.Handler, len(m.handlers))
+	for i, h := range m.handlers {
+		handlers[i] = h.WithAttrs(attrs)
+	}
+	return &multiHandler{handlers: handlers}
+}
+
+func (m *multiHandler) WithGroup(name string) slog.Handler {
+	handlers := make([]slog.Handler, len(m.handlers))
+	for i, h := range m.handlers {
+		handlers[i] = h.WithGroup(name)
+	}
+	return &multiHandler{handlers: handlers}
 }

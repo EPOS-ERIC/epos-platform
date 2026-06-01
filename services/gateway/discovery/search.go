@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 
@@ -131,24 +132,30 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 			}
 		}
 
+		attrs := []any{"error", err}
 		if requestURL != "" {
-			s.log.Error("metadata search request failed", "method", requestMethod, "url", requestURL, "error", err)
-		} else {
-			s.log.Error("metadata search request failed", "error", err)
+			attrs = append(attrs, slog.Group("upstream", "method", requestMethod, "url", requestURL))
 		}
+		s.log.ErrorContext(ctx, "metadata search request failed", attrs...)
 
 		if errors.Is(err, context.DeadlineExceeded) {
-			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w", ErrUpstreamTimeout)
+			return api.SearchResponse{}, fmt.Errorf("search metadata timeout: %w: %w", ErrUpstreamTimeout, err)
 		}
 
 		if errors.Is(err, context.Canceled) {
-			return api.SearchResponse{}, fmt.Errorf("search metadata canceled: %w", ErrUpstreamTimeout)
+			return api.SearchResponse{}, fmt.Errorf("search metadata canceled: %w: %w", ErrUpstreamTimeout, err)
 		}
 
-		return api.SearchResponse{}, fmt.Errorf("search metadata request failed: %w", ErrUpstreamRequestFailed)
+		return api.SearchResponse{}, fmt.Errorf("search metadata request failed: %w: %w", ErrUpstreamRequestFailed, err)
 	}
 
-	s.log.Debug("metadata search response received", "total", resp.Total, "items_count", len(resp.Items), "page", resp.Page)
+	s.log.DebugContext(ctx, "metadata search response received",
+		slog.Group("search",
+			"page", resp.Page,
+			"total", resp.Total,
+			"items_count", len(resp.Items),
+		),
+	)
 
 	searchResp := api.SearchResponse{
 		PageNumber: int(resp.Page),
@@ -163,13 +170,20 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 	g.SetLimit(s.fanOutLimit)
 	for i, item := range resp.Items {
 		g.Go(func() error {
-			searchItem, err := s.toAPISearchItem(groupCtx, item)
+			mappedItem, err := s.toAPISearchItem(groupCtx, item)
 			if err != nil {
-				s.log.Warn("metadata search item parse failed", "index", i, "item id", item.Id, "item type", item.GetType(), "error", err)
+				s.log.WarnContext(groupCtx, "metadata search item parse failed",
+					slog.Group("item",
+						"index", i,
+						"id", item.Id,
+						"type", item.GetType(),
+					),
+					"error", err,
+				)
 				return nil
 			}
 
-			mappedItems[i] = searchItem
+			mappedItems[i] = mappedItem
 			return nil
 		})
 	}

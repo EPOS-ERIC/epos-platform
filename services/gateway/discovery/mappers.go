@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
@@ -10,6 +11,8 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
 	"golang.org/x/sync/errgroup"
 )
+
+var errMissingField = errors.New("missing field")
 
 func (s *Service) mapDatasetItem(ctx context.Context, item metadataclient.SearchItem) (api.DatasetItem, error) {
 	baseItem, err := mapBaseItem(item)
@@ -144,12 +147,16 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 
 	themes, err := getStringSliceField(item.Fields, "theme")
 	if err != nil {
-		return api.WebServiceItem{}, fmt.Errorf("get webservice concepts: %w", err)
+		if !errors.Is(err, errMissingField) {
+			return api.WebServiceItem{}, fmt.Errorf("get webservice concepts: %w", err)
+		}
+
+		themes = nil
 	}
 
 	var (
-		providers []api.ResourceRef
-		concepts  []api.ResourceRef
+		provider api.ResourceRef
+		concepts []api.ResourceRef
 	)
 
 	g, groupCtx := errgroup.WithContext(ctx)
@@ -158,7 +165,9 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 		if err != nil {
 			return fmt.Errorf("map webservice providers: %w", err)
 		}
-		providers = mappedProviders
+		if len(mappedProviders) > 0 {
+			provider = mappedProviders[0]
+		}
 		return nil
 	})
 	g.Go(func() error {
@@ -176,7 +185,7 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 
 	return api.WebServiceItem{
 		BaseSearchItem: baseItem,
-		Provider:       providers,
+		Provider:       provider,
 		Concepts:       concepts,
 	}, nil
 }
@@ -307,7 +316,7 @@ func getField[T any](fields map[string]any, key string) (T, error) {
 	var zero T
 	raw, ok := fields[key]
 	if !ok {
-		return zero, fmt.Errorf("missing field '%s'", key)
+		return zero, fmt.Errorf("%w '%s'", errMissingField, key)
 	}
 
 	val, ok := raw.(T)
@@ -321,7 +330,7 @@ func getField[T any](fields map[string]any, key string) (T, error) {
 func getStringSliceField(fields map[string]any, key string) ([]string, error) {
 	raw, ok := fields[key]
 	if !ok {
-		return nil, fmt.Errorf("missing field '%s'", key)
+		return nil, fmt.Errorf("%w '%s'", errMissingField, key)
 	}
 
 	if val, ok := raw.([]string); ok {
@@ -349,7 +358,7 @@ func getStringSliceField(fields map[string]any, key string) ([]string, error) {
 func getLinkedRefsField(fields map[string]any, key string, resourceType api.ResourceType) ([]api.ResourceRef, error) {
 	raw, ok := fields[key]
 	if !ok {
-		return nil, fmt.Errorf("missing field '%s'", key)
+		return nil, fmt.Errorf("%w '%s'", errMissingField, key)
 	}
 	values, ok := raw.([]any)
 	if !ok {

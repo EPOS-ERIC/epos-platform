@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 )
 
 const genericDistributionTypeIRI = "http://www.w3.org/ns/dcat#Distribution"
@@ -31,19 +32,19 @@ func (s *Service) GetDistributionByID(ctx context.Context, id string) (api.Distr
 
 func mapDistribution(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Distribution, error) {
 	properties := detail.GetProperties()
-	reader := newPropertyReader(properties)
+	reader := metadatareader.New(properties)
 
-	name, err := reader.requiredString("title")
+	name, err := reader.RequiredString("title")
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution title: %w", err)
 	}
 
-	issued, err := reader.optionalTime("issued")
+	issued, err := reader.OptionalTime("issued")
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution issued: %w", err)
 	}
 
-	modified, err := reader.optionalTime("modified")
+	modified, err := reader.OptionalTime("modified")
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution modified: %w", err)
 	}
@@ -53,7 +54,7 @@ func mapDistribution(ctx context.Context, detail *metadataclient.AccessDetailRes
 		return api.Distribution{}, fmt.Errorf("get distribution type: %w", err)
 	}
 
-	webservice, err := reader.optionalResourceRef("conformsTo", api.WebserviceType)
+	webservice, err := reader.OptionalResourceRef("conformsTo", api.WebserviceType)
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution webservice: %w", err)
 	}
@@ -70,23 +71,23 @@ func mapDistribution(ctx context.Context, detail *metadataclient.AccessDetailRes
 		BaseDetailResource: api.BaseDetailResource{
 			ID:          detail.GetId(),
 			Name:        name,
-			Description: reader.optionalString("description"),
+			Description: reader.OptionalString("description"),
 		},
 		DownloadURL: downloadURL,
 		Operation:   operation,
 		Webservice:  webservice,
-		Format:      reader.optionalString("format"),
+		Format:      reader.OptionalString("format"),
 		Issued:      issued,
 		Modified:    modified,
-		License:     reader.optionalString("license"),
+		License:     reader.OptionalString("license"),
 		Type:        distributionType,
 	}, nil
 }
 
-func mapDistributionKind(reader propertyReader) (api.DistributionKind, error) {
-	types, err := reader.strings("type")
+func mapDistributionKind(reader metadatareader.Reader) (api.DistributionKind, error) {
+	types, err := reader.Strings("type")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get distribution types: %w", err)
 	}
 	if len(types) == 0 {
 		return "", nil
@@ -114,10 +115,10 @@ func mapDistributionKind(reader propertyReader) (api.DistributionKind, error) {
 }
 
 func aggregateDistributionOperation(ctx context.Context, properties map[string]any, fetch accessDetailFetcher, distributionType api.DistributionKind) (*api.Operation, string, error) {
-	reader := newPropertyReader(properties)
-	items, err := reader.items("accessURL")
+	reader := metadatareader.New(properties)
+	items, err := reader.Items("accessURL")
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("get access url items: %w", err)
 	}
 	if len(items) == 0 {
 		return nil, "", nil
@@ -125,7 +126,7 @@ func aggregateDistributionOperation(ctx context.Context, properties map[string]a
 
 	item := items[0]
 	if distributionType == api.DistributionKindDownloadableFile {
-		return nil, firstNonEmpty(item.Value, item.Href, item.ID), nil
+		return nil, metadatareader.FirstNonEmpty(item.Value, item.Href, item.ID), nil
 	}
 
 	if item.ID == "" {

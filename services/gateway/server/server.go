@@ -4,13 +4,14 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
@@ -18,55 +19,60 @@ import (
 )
 
 func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	log := logging.Get("server")
+
+	// Set up OpenTelemetry.
+	otelShutdown, err := observability.Start(ctx, observability.Config{
+		MetricsExportInterval: 5 * time.Second,
+	})
+	if err != nil {
+		return fmt.Errorf("setup observability: %w", err)
+	}
+	defer func() {
+		if shutdownErr := otelShutdown(context.Background()); shutdownErr != nil {
+			log.Error("otel shutdown failed", "error", shutdownErr)
+		}
+	}()
 
 	requestTimeout := cfg.Server.RequestTimeout
 	if requestTimeout <= 0 {
 		requestTimeout = 30 * time.Second
 	}
 
-	discoveryService := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
-	resourcesService := resources.NewService(metadataClient)
+	discoverySvc := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
+	resourcesSvc := resources.NewService(metadataClient)
 
-	httpServer := &http.Server{
+	srv := &http.Server{
+		BaseContext: func(net.Listener) context.Context { return ctx },
 		Addr:        cfg.Server.Listen,
-		Handler:     NewRouter(discoveryService, resourcesService),
+		Handler:     NewRouter(discoverySvc, resourcesSvc),
 		ReadTimeout: requestTimeout,
 		IdleTimeout: requestTimeout,
 	}
 
-	listenErr := make(chan error, 1)
+	srvErr := make(chan error, 1)
 	go func() {
 		log.Info("starting server", "listen", cfg.Server.Listen)
-		listenErr <- httpServer.ListenAndServe()
+		srvErr <- srv.ListenAndServe()
 	}()
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	defer signal.Stop(sigChan)
-
 	select {
-	case err := <-listenErr:
-		if err != nil && err != http.ErrServerClosed {
-			log.Error("server failed", "error", err)
-			return fmt.Errorf("listen and serve: %w", err)
-		}
-		return nil
-	case sig := <-sigChan:
-		log.Info("received signal", "signal", sig)
+	case err := <-srvErr:
+		log.Error("server failed", "error", err)
+		return fmt.Errorf("listen and serve: %w", err)
+	case <-ctx.Done():
+		log.Info("server terminated: stopping")
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Error("server shutdown failed", "error", err)
 		return fmt.Errorf("shutdown server: %w", err)
-	}
-
-	if err := <-listenErr; err != nil && err != http.ErrServerClosed {
-		log.Error("server stopped with error", "error", err)
-		return fmt.Errorf("server stopped with error: %w", err)
 	}
 
 	log.Info("server shutdown complete")
