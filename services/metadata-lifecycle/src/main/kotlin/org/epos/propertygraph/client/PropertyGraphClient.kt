@@ -72,7 +72,11 @@ class PropertyGraphClient {
 
     fun close() {
         synchronized(connectionLock) {
-            runCatching { driver?.close() }
+            try {
+                driver?.close()
+            } catch (e: Exception) {
+                logger.warn("Failed to close Neo4j driver: {}", e.message, e)
+            }
             driver = null
         }
     }
