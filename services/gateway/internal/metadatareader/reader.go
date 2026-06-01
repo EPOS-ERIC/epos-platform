@@ -153,6 +153,18 @@ func (r Reader) RequiredStringOneOf(keys ...string) (string, error) {
 	return "", fmt.Errorf("missing fields %v", keys)
 }
 
+// OptionalStringOneOf returns first non-empty value among keys.
+func (r Reader) OptionalStringOneOf(keys ...string) string {
+	for _, key := range keys {
+		value := r.OptionalString(key)
+		if value != "" {
+			return value
+		}
+	}
+
+	return ""
+}
+
 // OptionalString returns first normalized string value for key.
 func (r Reader) OptionalString(key string) string {
 	items, err := r.Items(key)
@@ -181,6 +193,21 @@ func (r Reader) Strings(key string) ([]string, error) {
 	}
 
 	return values, nil
+}
+
+// StringsOneOf returns first non-empty string slice among keys.
+func (r Reader) StringsOneOf(keys ...string) ([]string, error) {
+	for _, key := range keys {
+		values, err := r.Strings(key)
+		if err != nil {
+			return nil, err
+		}
+		if len(values) > 0 {
+			return values, nil
+		}
+	}
+
+	return nil, nil
 }
 
 // OptionalTime parses an optional time value for key.
@@ -253,6 +280,34 @@ func (r Reader) RequiredBool(key string) (bool, error) {
 	}
 	if value == nil {
 		return false, fmt.Errorf("missing field '%s'", key)
+	}
+
+	return *value, nil
+}
+
+// OptionalBoolOneOf parses first present boolean value among keys.
+func (r Reader) OptionalBoolOneOf(keys ...string) (*bool, error) {
+	for _, key := range keys {
+		value, err := r.OptionalBool(key)
+		if err != nil {
+			return nil, err
+		}
+		if value != nil {
+			return value, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// RequiredBoolOneOf parses first present required boolean value among keys.
+func (r Reader) RequiredBoolOneOf(keys ...string) (bool, error) {
+	value, err := r.OptionalBoolOneOf(keys...)
+	if err != nil {
+		return false, err
+	}
+	if value == nil {
+		return false, fmt.Errorf("missing fields %v", keys)
 	}
 
 	return *value, nil

@@ -28,6 +28,8 @@
 - Prefer **table-driven tests** where practical. Follow existing patterns in repository.
 - Add unit tests for new logic or bug fixes when feasible without excessive mocking.
 - Do not add tests for pure refactors unless behavior changes.
+- Metadata-lifecycle-backed gateway endpoint tests prefer committed JSON fixtures in `testdata/metadata-lifecycle/` over inline payload.
+- When adding fixture-backed tests, record source URLs in `testdata/metadata-lifecycle-fixtures.json` so fixtures can be regenerated consistently.
 - Keep tests **deterministic**:
   - No `time.Sleep`.
   - No randomness.

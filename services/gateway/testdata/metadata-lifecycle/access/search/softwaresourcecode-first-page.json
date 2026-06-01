@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "fields": {
+        "schema:identifier": [
+          {
+            "href": "http://localhost:8080/api/v2/access/softwaresourcecode/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2FSSC%2Fv1.0",
+            "id": "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
+            "type": "softwaresourcecode"
+          }
+        ],
+        "schema:name": "Analyze earthquakes, permanent displacement and geology"
+      },
+      "href": "http://localhost:8080/api/v2/access/softwaresourcecode/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2FSSC%2Fv1.0",
+      "id": "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
+      "type": "softwaresourcecode"
+    }
+  ],
+  "page": 1,
+  "total": 27,
+  "totalItems": 27,
+  "totalPages": 27
+}

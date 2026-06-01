@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "fields": {
+        "hydra:entrypoint": "https://imag-data.bgs.ac.uk/GIN_V1/",
+        "schema:description": "The INTERMAGNET web service makes available data from INTERMAGNET observatories. Data are available in community formats(INTERMAGNET Minute Mean Format, IAGA 2002 format, World Data Centre Format), interoperable formats (JSON, XML,INTERMAGNET CDF format). All observatories provide 1 minute data, and may also provide 1 second data. Publication status is refined over time as sources are recorded, combined and verified. Query options allow for selection of provisional, reported, adjusted, quasi-def (quasi-definitive), adj-or-rep (best available of adjusted or reported or quasi-def) and definitive publication states. Not all combinations of query parameters will necessarily return results as this depends on the availability of data at any particular observatory. Data queries are restricted to a maximum of 7 days for any individual request.",
+        "schema:identifier": [
+          {
+            "href": "http://localhost:8080/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0",
+            "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0",
+            "type": "webservice"
+          }
+        ],
+        "schema:name": "Web service for INTERMAGNET data",
+        "schema:provider": {
+          "href": "http://localhost:8080/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0",
+          "id": "http://viaf.org/viaf/136554353//v1.0",
+          "type": "organization"
+        }
+      },
+      "href": "http://localhost:8080/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0",
+      "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0",
+      "type": "webservice"
+    }
+  ],
+  "page": 1,
+  "total": 258,
+  "totalItems": 258,
+  "totalPages": 258
+}

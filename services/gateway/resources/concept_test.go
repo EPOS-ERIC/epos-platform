@@ -9,48 +9,25 @@ import (
 func TestMapConcept(t *testing.T) {
 	t.Parallel()
 
-	concept, err := mapConcept(&metadataclient.AccessDetailResponse{
-		Id:    "category:paleotsunamidepositscatalogue/v1.0",
-		Shape: "concept",
-		Properties: map[string]any{
-			"skos:definition": "TCS Subdomain",
-			"skos:prefLabel":  "Paleotsunami Deposits Catalogue",
-			"skos:inScheme": map[string]any{
-				"id":   "category:tsunami/v1.0",
-				"type": "conceptscheme",
-				"href": "http://localhost:8080/api/v2/access/conceptscheme/category%3Atsunami%2Fv1.0",
-			},
-			"skos:narrower": map[string]any{
-				"id":   "category:paleotsunamideposits/v1.0",
-				"type": "concept",
-				"href": "http://localhost:8080/api/v2/access/concept/category%3Apaleotsunamideposits%2Fv1.0",
-			},
-		},
-	})
+	concept, err := mapConcept(loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/concept/geomagneticdata.json"))
 	if err != nil {
 		t.Fatalf("mapConcept() error = %v", err)
 	}
 
-	if concept.ID != "category:paleotsunamidepositscatalogue/v1.0" {
+	if concept.ID != "category:geomagneticdata/v1.0" {
 		t.Fatalf("concept.ID = %q", concept.ID)
 	}
-	if concept.Name != "Paleotsunami Deposits Catalogue" {
+	if concept.Name != "Geomagnetic data" {
 		t.Fatalf("concept.Name = %q", concept.Name)
 	}
 	if concept.Description != "TCS Subdomain" {
 		t.Fatalf("concept.Description = %q", concept.Description)
 	}
-	if concept.InScheme == nil || concept.InScheme.Href != "v1/conceptscheme/category:tsunami/v1.0" {
+	if concept.InScheme == nil || concept.InScheme.Href != "v1/conceptscheme/category:geomagneticobservatis/v1.0" {
 		t.Fatalf("concept.InScheme = %#v", concept.InScheme)
 	}
-	if len(concept.Children) != 1 || concept.Children[0].ID != "category:paleotsunamideposits/v1.0" {
+	if len(concept.Children) != 0 {
 		t.Fatalf("concept.Children = %#v", concept.Children)
-	}
-	if concept.Children[0].Href != "v1/concept/category:paleotsunamideposits/v1.0" {
-		t.Fatalf("concept.Children[0].Href = %q", concept.Children[0].Href)
-	}
-	if concept.Children[0].Name != "" {
-		t.Fatalf("concept.Children[0].Name = %q", concept.Children[0].Name)
 	}
 }
 

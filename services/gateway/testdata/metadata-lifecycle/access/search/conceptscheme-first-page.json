@@ -1,0 +1,13 @@
+{
+  "items": [
+    {
+      "href": "http://localhost:8080/api/v2/access/conceptscheme/category%3Aanthropogenichazards%2Fv1.0",
+      "id": "category:anthropogenichazards/v1.0",
+      "type": "conceptscheme"
+    }
+  ],
+  "page": 1,
+  "total": 20,
+  "totalItems": 20,
+  "totalPages": 20
+}

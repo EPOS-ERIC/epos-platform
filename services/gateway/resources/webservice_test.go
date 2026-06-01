@@ -11,112 +11,67 @@ import (
 func TestMapWebservice(t *testing.T) {
 	t.Parallel()
 
-	detail := &metadataclient.AccessDetailResponse{
-		Id:    "webservice-1",
-		Shape: "webservice",
-		Href:  "/api/v2/access/webservice/webservice-1",
-		Properties: map[string]any{
-			"schema:name":          "Webservice title",
-			"schema:description":   "Webservice description",
-			"schema:datePublished": "2024-03-04T05:06:07Z",
-			"schema:dateModified":  "2024-04-05T06:07:08Z",
-			"dct:license":          "https://creativecommons.org/licenses/by-nc/4.0/",
-			"hydra:entrypoint":     "https://example.org/api",
-			"schema:keywords":      []any{"geomagnetism", "magnetism"},
-			"schema:identifier":    []any{"identifier-1"},
-			"schema:provider": []any{
-				map[string]any{"id": "org-1", titleKey: "Org 1"},
-				map[string]any{"id": "org-2", titleKey: "Org 2"},
-			},
-			"dcat:contactPoint": []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
-			"dct:temporal":      map[string]any{"id": "temporal-1", typeKey: "periodoftime"},
-			"dct:spatial":       map[string]any{"id": "location-1", typeKey: "location"},
-			"dcat:theme":        []any{map[string]any{"id": "concept-1", titleKey: "Concept 1"}},
-			"dct:conformsTo":    map[string]any{"id": "api-doc-1", "type": "apidocumentation"},
-			"hydra:supportedOperation": []any{
-				map[string]any{"id": "operation-1", "type": "operation"},
-			},
-		},
-	}
-
-	webservice, err := mapWebservice(context.Background(), detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
-		_ = ctx
-		switch {
-		case shape == "periodoftime" && id == "temporal-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"schema:startDate": "2020-01-01T00:00:00Z", "schema:endDate": "2020-12-31T00:00:00Z"}}, nil
-		case shape == "location" && id == "location-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"locn:geometry": "POINT(1 2)"}}, nil
-		case shape == "apidocumentation" && id == "api-doc-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"hydra:title":       "API docs",
-				"hydra:description": "Operation documentation",
-				"hydra:entrypoint":  "https://example.org/docs",
-			}}, nil
-		case shape == "operation" && id == "operation-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"hydra:method":      "GET",
-				"hydra:returns":     []any{"text/csv", "application/json"},
-				"hydra:pg_property": map[string]any{"id": "iri-template-1", "type": "iritemplate"},
-			}}, nil
-		case shape == "iritemplate" && id == "iri-template-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"template": "https://example.org/query{?station}",
-				"mapping":  []any{map[string]any{"id": "mapping-1", "type": "iritemplatemapping"}},
-			}}, nil
-		case shape == "iritemplatemapping" && id == "mapping-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"variable":   "station",
-				"label":      "Station code",
-				"range":      "xsd:string",
-				"required":   "true",
-				"paramValue": []any{"AAA", "BBB"},
-			}}, nil
-		default:
-			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
-		}
+	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/webservice/intermagnet.json")
+	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
+		fixtureKey("webservice", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0"):                    "testdata/metadata-lifecycle/access/webservice/intermagnet.json",
+		fixtureKey("periodoftime", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-periodoftime-0f4b2f01/v1.0"): "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",
+		fixtureKey("location", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-location-630d862a/v1.0"):         "testdata/metadata-lifecycle/access/location/intermagnet.json",
+		fixtureKey("apidocumentation", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/APIDocumentation/v1.0"):        "testdata/metadata-lifecycle/access/apidocumentation/intermagnet.json",
+		fixtureKey("operation", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Operation/v1.0"):                      "testdata/metadata-lifecycle/access/operation/intermagnet.json",
+		fixtureKey("iritemplate", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-iritemplate-2ff35bd4/v1.0"):   "testdata/metadata-lifecycle/access/iritemplate/intermagnet.json",
+		fixtureKey("iritemplatemapping", "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-afe775b2/v1.0"):                                             "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-format.json",
+		fixtureKey("iritemplatemapping", "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-d1713110/v1.0"):                                             "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-publication-state.json",
+		fixtureKey("iritemplatemapping", "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-25a4198f/v1.0"):                                             "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-end-date.json",
+		fixtureKey("iritemplatemapping", "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-73bc40eb/v1.0"):                                             "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-start-date.json",
+		fixtureKey("iritemplatemapping", "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-e890a680/v1.0"):                                             "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-samples-per-day.json",
+		fixtureKey("iritemplatemapping", "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-44b3a135/v1.0"):                                             "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-observatory-iaga-code.json",
 	})
+
+	webservice, err := mapWebservice(context.Background(), detail, fetch)
 	if err != nil {
 		t.Fatalf("mapWebservice() error = %v", err)
 	}
 
-	if webservice.ID != "webservice-1" {
+	if webservice.ID != "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0" {
 		t.Fatalf("webservice.ID = %q", webservice.ID)
 	}
-	if webservice.Name != "Webservice title" {
+	if webservice.Name != "Web service for INTERMAGNET data" {
 		t.Fatalf("webservice.Name = %q", webservice.Name)
 	}
-	if webservice.Description != "Webservice description" {
+	if webservice.Description == "" {
 		t.Fatalf("webservice.Description = %q", webservice.Description)
 	}
-	if webservice.Entrypoint != "https://example.org/api" {
+	if webservice.Entrypoint != "https://imag-data.bgs.ac.uk/GIN_V1/" {
 		t.Fatalf("webservice.Entrypoint = %q", webservice.Entrypoint)
 	}
 	if webservice.License != "https://creativecommons.org/licenses/by-nc/4.0/" {
 		t.Fatalf("webservice.License = %q", webservice.License)
 	}
-	assertTimeEqual(t, webservice.Issued, "2024-03-04T05:06:07Z")
-	assertTimeEqual(t, webservice.Modified, "2024-04-05T06:07:08Z")
-	if webservice.Provider.Href != "v1/organization/org-1" {
+	assertTimeEqual(t, webservice.Issued, "2018-08-31T00:00:00Z")
+	assertTimeEqual(t, webservice.Modified, "2018-08-31T00:00:00Z")
+	if webservice.Provider.Href != "v1/organization/http://viaf.org/viaf/136554353//v1.0" {
 		t.Fatalf("webservice.Provider = %#v", webservice.Provider)
 	}
-	if len(webservice.ContactPoints) != 1 || webservice.ContactPoints[0].Href != "http://upstream/contact/1" {
+	if len(webservice.ContactPoints) != 1 || webservice.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/mailto%3Aochambers%40bgs.ac.uk%2FcontactPoint%2Fv1.0" {
 		t.Fatalf("webservice.ContactPoints = %#v", webservice.ContactPoints)
 	}
-	if webservice.Spatial != "POINT(1 2)" {
+	if webservice.Spatial != "POLYGON((180.0 -90.0, -180.0 -90.0, -180.0 90.0, 180.0 90.0, 180.0 -90.0))" {
 		t.Fatalf("webservice.Spatial = %q", webservice.Spatial)
 	}
 	if webservice.Temporal == nil {
 		t.Fatal("webservice.Temporal = nil")
 	}
-	assertTimeEqual(t, webservice.Temporal.Start, "2020-01-01T00:00:00Z")
-	assertTimeEqual(t, webservice.Temporal.End, "2020-12-31T00:00:00Z")
-	if len(webservice.Concepts) != 1 || webservice.Concepts[0].Href != "v1/concept/concept-1" {
+	assertTimeEqual(t, webservice.Temporal.Start, "1991-01-01T00:00:00Z")
+	if webservice.Temporal.End != nil {
+		t.Fatalf("webservice.Temporal.End = %#v", webservice.Temporal.End)
+	}
+	if len(webservice.Concepts) != 0 {
 		t.Fatalf("webservice.Concepts = %#v", webservice.Concepts)
 	}
-	if len(webservice.Identifiers) != 1 || webservice.Identifiers[0].Value != "identifier-1" {
+	if len(webservice.Identifiers) != 0 {
 		t.Fatalf("webservice.Identifiers = %#v", webservice.Identifiers)
 	}
-	if webservice.APIDocumentation == nil || webservice.APIDocumentation.Entrypoint != "https://example.org/docs" {
+	if webservice.APIDocumentation == nil || webservice.APIDocumentation.Title != "INTERMAGNET web service documentation" {
 		t.Fatalf("webservice.APIDocumentation = %#v", webservice.APIDocumentation)
 	}
 	if len(webservice.Operations) != 1 {
@@ -125,13 +80,13 @@ func TestMapWebservice(t *testing.T) {
 	if webservice.Operations[0].Method != "GET" {
 		t.Fatalf("webservice.Operations[0] = %#v", webservice.Operations[0])
 	}
-	if len(webservice.Operations[0].Returns) != 2 {
+	if len(webservice.Operations[0].Returns) != 6 {
 		t.Fatalf("webservice.Operations[0].Returns = %#v", webservice.Operations[0].Returns)
 	}
-	if webservice.Operations[0].IriTemplate == nil || webservice.Operations[0].IriTemplate.Template != "https://example.org/query{?station}" {
+	if webservice.Operations[0].IriTemplate == nil || webservice.Operations[0].IriTemplate.Template == "" {
 		t.Fatalf("webservice.Operations[0].IriTemplate = %#v", webservice.Operations[0].IriTemplate)
 	}
-	if len(webservice.Operations[0].IriTemplate.Mappings) != 1 || webservice.Operations[0].IriTemplate.Mappings[0].Label != "Station code" {
+	if len(webservice.Operations[0].IriTemplate.Mappings) != 6 {
 		t.Fatalf("webservice.Operations[0].IriTemplate.Mappings = %#v", webservice.Operations[0].IriTemplate.Mappings)
 	}
 }

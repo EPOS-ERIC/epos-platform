@@ -12,63 +12,30 @@ import (
 func TestMapOrganization(t *testing.T) {
 	t.Parallel()
 
-	detail := &metadataclient.AccessDetailResponse{
-		Id:    "org-1",
-		Shape: "organization",
-		Href:  "/api/v2/access/organization/org-1",
-		Properties: map[string]any{
-			"schema:legalName": "BGS - British Geological Survey",
-			"schema:logo":      "https://example.org/logo.png",
-			"schema:url":       "https://example.org",
-			"schema:email":     []any{"info@example.org"},
-			"schema:telephone": []any{"+44 131 667 1000"},
-			"schema:identifier": []any{
-				map[string]any{"id": "propertyvalue-1", "type": "propertyvalue"},
-			},
-			"schema:address":      map[string]any{"id": "postaladdress-1", "type": "postaladdress"},
-			"schema:memberOf":     []any{map[string]any{"id": "org-parent", titleKey: "Parent org"}},
-			"schema:contactPoint": []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
-		},
-	}
-
-	organization, err := mapOrganization(context.Background(), detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
-		_ = ctx
-		switch {
-		case shape == "propertyvalue" && id == "propertyvalue-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"schema:propertyID": "viaf",
-				"schema:value": []any{
-					map[string]any{"id": "http://viaf.org/viaf/136554353/", "type": "organization"},
-				},
-			}}, nil
-		case shape == "postaladdress" && id == "postaladdress-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"schema:streetAddress":   "The Lyell Centre, Research Avenue South",
-				"schema:addressLocality": "Edinburgh",
-				"schema:postalCode":      "EH14 4AP",
-				"schema:addressCountry":  "GB",
-			}}, nil
-		default:
-			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
-		}
+	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/organization/bgs.json")
+	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
+		fixtureKey("propertyvalue", "http://viaf.org/viaf/136554353/bnode-propertyvalue-5bbce760/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/bgs-viaf.json",
+		fixtureKey("postaladdress", "http://viaf.org/viaf/136554353/bnode-postaladdress-064b9034/v1.0"): "testdata/metadata-lifecycle/access/postaladdress/bgs.json",
 	})
+
+	organization, err := mapOrganization(context.Background(), detail, fetch)
 	if err != nil {
 		t.Fatalf("mapOrganization() error = %v", err)
 	}
 
-	if organization.ID != "org-1" {
+	if organization.ID != "http://viaf.org/viaf/136554353//v1.0" {
 		t.Fatalf("organization.ID = %q", organization.ID)
 	}
-	if organization.Name != "BGS - British Geological Survey" {
+	if organization.Name != "BGS - British Geological Survey, UK Research and Innovation" {
 		t.Fatalf("organization.Name = %q", organization.Name)
 	}
-	if organization.Logo != "https://example.org/logo.png" {
+	if organization.Logo != "https://www.bgs.ac.uk/wp-content/uploads/2020/03/BGS-logo-large.png" {
 		t.Fatalf("organization.Logo = %q", organization.Logo)
 	}
-	if organization.URL != "https://example.org" {
+	if organization.URL != "https://www.bgs.ac.uk/" {
 		t.Fatalf("organization.URL = %q", organization.URL)
 	}
-	if len(organization.Email) != 1 || organization.Email[0] != "info@example.org" {
+	if len(organization.Email) != 1 || organization.Email[0] != "enquiries@bgs.ac.uk" {
 		t.Fatalf("organization.Email = %#v", organization.Email)
 	}
 	if len(organization.Telephone) != 1 || organization.Telephone[0] != "+44 131 667 1000" {
@@ -80,10 +47,10 @@ func TestMapOrganization(t *testing.T) {
 	if organization.Address != "The Lyell Centre, Research Avenue South, Edinburgh, EH14 4AP, GB" {
 		t.Fatalf("organization.Address = %q", organization.Address)
 	}
-	if len(organization.MemberOf) != 1 || organization.MemberOf[0].Href != "v1/organization/org-parent" {
+	if len(organization.MemberOf) != 1 || organization.MemberOf[0].Href != "v1/organization/http://viaf.org/viaf/148537429//v1.0" {
 		t.Fatalf("organization.MemberOf = %#v", organization.MemberOf)
 	}
-	if len(organization.ContactPoints) != 1 || organization.ContactPoints[0].Href != "http://upstream/contact/1" {
+	if len(organization.ContactPoints) != 0 {
 		t.Fatalf("organization.ContactPoints = %#v", organization.ContactPoints)
 	}
 }

@@ -1,0 +1,10 @@
+{
+  "href": "http://localhost:8080/api/v2/access/identifier/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-identifier-34096b33%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-34096b33/v1.0",
+  "properties": {
+    "adms:schemeAgency": "DOI",
+    "rdf:type": "http://www.w3.org/ns/adms#Identifier",
+    "skos:notation": "10.5880/INTERMAGNET.2013"
+  },
+  "shape": "identifier"
+}

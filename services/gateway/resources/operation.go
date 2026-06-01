@@ -62,7 +62,7 @@ func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fet
 	}
 
 	iriTemplateReader := metadatareader.New(iriTemplateDetail.GetProperties())
-	template, err := iriTemplateReader.RequiredString("template")
+	template, err := iriTemplateReader.RequiredStringOneOf("template", "hydra:template")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template template: %w", err)
 	}
@@ -76,7 +76,7 @@ func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fet
 }
 
 func aggregateIriTemplateMappings(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher) ([]api.IriTemplateMapping, error) {
-	items, err := reader.Items("mapping")
+	items, err := reader.ItemsOneOf("mapping", "hydra:mapping")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template mappings: %w", err)
 	}
@@ -116,27 +116,27 @@ func mapIriTemplateMapping(ctx context.Context, item metadatareader.Item, fetch 
 	}
 
 	reader := metadatareader.New(detail.GetProperties())
-	variable, err := reader.RequiredString("variable")
+	variable, err := reader.RequiredStringOneOf("variable", "hydra:variable")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping variable: %w", err)
 	}
 
-	label, err := reader.RequiredStringOneOf("pg_label", "label")
+	label, err := reader.RequiredStringOneOf("pg_label", "rdfs:pg_label", "label")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping label: %w", err)
 	}
 
-	rangeValue, err := reader.RequiredString("range")
+	rangeValue, err := reader.RequiredStringOneOf("range", "rdfs:range")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping range: %w", err)
 	}
 
-	required, err := reader.RequiredBool("required")
+	required, err := reader.RequiredBoolOneOf("required", "hydra:required")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping required: %w", err)
 	}
 
-	paramValue, err := reader.Strings("paramValue")
+	paramValue, err := reader.StringsOneOf("paramValue", "http:paramValue")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping param value: %w", err)
 	}
@@ -155,15 +155,15 @@ func mapIriTemplateMapping(ctx context.Context, item metadatareader.Item, fetch 
 		Variable:       variable,
 		Label:          label,
 		Range:          rangeValue,
-		Property:       reader.OptionalString("property"),
+		Property:       reader.OptionalStringOneOf("property", "hydra:pg_property"),
 		Required:       required,
-		DefaultValue:   reader.OptionalString("defaultValue"),
-		MinValue:       reader.OptionalString("minValue"),
-		MaxValue:       reader.OptionalString("maxValue"),
+		DefaultValue:   reader.OptionalStringOneOf("defaultValue", "schema:defaultValue"),
+		MinValue:       reader.OptionalStringOneOf("minValue", "schema:minValue"),
+		MaxValue:       reader.OptionalStringOneOf("maxValue", "schema:maxValue"),
 		ParamValue:     paramValue,
 		MultipleValues: multipleValues != nil && *multipleValues,
 		ReadonlyValue:  readonlyValue != nil && *readonlyValue,
-		ValuePattern:   reader.OptionalString("valuePattern"),
+		ValuePattern:   reader.OptionalStringOneOf("valuePattern", "schema:valuePattern"),
 	}, nil
 }
 

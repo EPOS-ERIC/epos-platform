@@ -68,7 +68,7 @@ func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch acce
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 	if shape == propertyValueShape {
-		values, err := reader.ItemsOneOf("schema:value", "hydra:pg_value", "pg_value")
+		values, err := reader.ItemsOneOf("schema:value", "schema:pg_value", "hydra:pg_value", "pg_value")
 		if err != nil {
 			return api.Identifier{}, fmt.Errorf("get property value identifier value: %w", err)
 		}
@@ -85,7 +85,7 @@ func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch acce
 	}
 
 	return api.Identifier{
-		Type:  reader.OptionalString("epos:schemeAgency"),
+		Type:  reader.OptionalStringOneOf("adms:schemeAgency", "epos:schemeAgency"),
 		Value: reader.OptionalString("skos:notation"),
 	}, nil
 }

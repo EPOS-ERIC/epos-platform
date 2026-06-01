@@ -16,6 +16,9 @@ build-docker: build
 test:
 	go test ./...
 
+test-fixtures-refresh:
+	go run ./scripts/refresh_test_fixtures.go
+
 fmt:
 	golangci-lint fmt
 
@@ -37,4 +40,4 @@ generate: clean
 clean:
 	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR)
 
-.PHONY: build build-docker generate test fmt lint clean
+.PHONY: build build-docker generate test test-fixtures-refresh fmt lint clean

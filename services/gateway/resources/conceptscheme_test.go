@@ -9,53 +9,36 @@ import (
 func TestMapConceptScheme(t *testing.T) {
 	t.Parallel()
 
-	conceptScheme, err := mapConceptScheme(&metadataclient.AccessDetailResponse{
-		Id:    "category:tsunami/v1.0",
-		Shape: "conceptscheme",
-		Properties: map[string]any{
-			"type":                   "http://www.w3.org/2004/02/skos/core#ConceptScheme",
-			"foaf:logo":              "assets/img/logo/TSU_logo.png",
-			"skos:prefLabel":         "TSU",
-			"dct:title":              "Tsunami",
-			"dct:description":        "TCS Domain",
-			"foaf:homepage":          "https://www.epos-eu.org/tcs/tsunami",
-			"schema:color":           "#6f9ea8",
-			"schema:orderItemNumber": "10",
-			"skos:hasTopConcept": []any{
-				map[string]any{"id": "category:facets/dataset-theme", "type": "concept"},
-				map[string]any{"id": "category:facets/dataset-theme/v1.0", "type": "concept"},
-			},
-		},
-	})
+	conceptScheme, err := mapConceptScheme(loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/conceptscheme/geomagneticobservations.json"))
 	if err != nil {
 		t.Fatalf("mapConceptScheme() error = %v", err)
 	}
 
-	if conceptScheme.ID != "category:tsunami/v1.0" {
+	if conceptScheme.ID != "category:geomagneticobservatis/v1.0" {
 		t.Fatalf("conceptScheme.ID = %q", conceptScheme.ID)
 	}
-	if conceptScheme.Label != "TSU" {
+	if conceptScheme.Label != "GEO" {
 		t.Fatalf("conceptScheme.Label = %q", conceptScheme.Label)
 	}
-	if conceptScheme.Name != "Tsunami" {
+	if conceptScheme.Name != "Geomagnetic Observations" {
 		t.Fatalf("conceptScheme.Name = %q", conceptScheme.Name)
 	}
 	if conceptScheme.Description != "TCS Domain" {
 		t.Fatalf("conceptScheme.Description = %q", conceptScheme.Description)
 	}
-	if conceptScheme.Logo != "assets/img/logo/TSU_logo.png" {
+	if conceptScheme.Logo != "assets/img/logo/GEOMAG_logo.png" {
 		t.Fatalf("conceptScheme.Logo = %q", conceptScheme.Logo)
 	}
-	if conceptScheme.Homepage != "https://www.epos-eu.org/tcs/tsunami" {
+	if conceptScheme.Homepage != "https://www.epos-eu.org/tcs/geomagnetic-observations" {
 		t.Fatalf("conceptScheme.Homepage = %q", conceptScheme.Homepage)
 	}
-	if conceptScheme.Color != "#6f9ea8" {
+	if conceptScheme.Color != "#2e3486" {
 		t.Fatalf("conceptScheme.Color = %q", conceptScheme.Color)
 	}
-	if conceptScheme.OrderNumber != 10 {
+	if conceptScheme.OrderNumber != 6 {
 		t.Fatalf("conceptScheme.OrderNumber = %d", conceptScheme.OrderNumber)
 	}
-	if len(conceptScheme.TopConcepts) != 2 || conceptScheme.TopConcepts[1].Href != "v1/concept/category:facets/dataset-theme/v1.0" {
+	if len(conceptScheme.TopConcepts) != 1 || conceptScheme.TopConcepts[0].Href != "v1/concept/category:facets/dataset-theme/v1.0" {
 		t.Fatalf("conceptScheme.TopConcepts = %#v", conceptScheme.TopConcepts)
 	}
 }

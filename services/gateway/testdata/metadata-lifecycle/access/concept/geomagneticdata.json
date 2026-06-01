@@ -1,0 +1,21 @@
+{
+  "href": "http://localhost:8080/api/v2/access/concept/category%3Ageomagneticdata%2Fv1.0",
+  "id": "category:geomagneticdata/v1.0",
+  "properties": {
+    "rdf:type": "http://www.w3.org/2004/02/skos/core#Concept",
+    "skos:definition": "TCS Subdomain",
+    "skos:inScheme": {
+      "href": "http://localhost:8080/api/v2/access/conceptscheme/category%3Ageomagneticobservatis%2Fv1.0",
+      "id": "category:geomagneticobservatis/v1.0",
+      "predicateIri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "type": "conceptscheme"
+    },
+    "skos:notation": [
+      "WP13-DDSS-001",
+      "WP13-DDSS-002",
+      "WP13-DDSS-003"
+    ],
+    "skos:prefLabel": "Geomagnetic data"
+  },
+  "shape": "concept"
+}

@@ -1,0 +1,47 @@
+{
+  "href": "http://localhost:8080/api/v2/access/iritemplate/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-iritemplate-2ff35bd4%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-iritemplate-2ff35bd4/v1.0",
+  "properties": {
+    "hydra:mapping": [
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-afe775b2%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-afe775b2/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-d1713110%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-d1713110/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-25a4198f%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-25a4198f/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-73bc40eb%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-73bc40eb/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-e890a680%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-e890a680/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-44b3a135%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-44b3a135/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      }
+    ],
+    "hydra:template": "https://imag-data.bgs.ac.uk/GIN_V1/GINServices?request=GetData\u0026recordTermination=native\u0026traceList=1234\u0026colourTraces=True{\u0026observatoryIagaCode, SamplesPerDay, dataStartDate, dataEndDate, publicationState, pictureSize, pdfSize, dataScale, Format}",
+    "rdf:type": "http://www.w3.org/ns/hydra/core#IriTemplate"
+  },
+  "shape": "iritemplate"
+}
