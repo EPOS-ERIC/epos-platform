@@ -858,7 +858,7 @@ class ShaclParser(private val httpClient: HttpClient) {
                     }?.`object`?.stringValue()
 
                 select?.let {
-                    targets.add(TargetSparql())
+                    targets.add(TargetSparql(query = it))
                 }
             }
 
