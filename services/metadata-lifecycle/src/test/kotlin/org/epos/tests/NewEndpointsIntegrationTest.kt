@@ -3,6 +3,7 @@ package org.epos.tests
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.string.shouldContain
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -162,6 +163,95 @@ class NewEndpointsIntegrationTest : BaseIntegrationTest() {
         @Suppress("UNCHECKED_CAST")
         val fields = item["fields"] as Map<String, Any>
         (fields.isNotEmpty()) shouldBe true
+    }
+
+    @Test
+    fun `search endpoint should not return intruder types for requested type`() = testApplication {
+        application {
+            module()
+        }
+
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+
+        val datasetUri = "http://example.org/dataset/type-check-1"
+        val dataset = vf.createIRI(datasetUri)
+        model.add(dataset, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://www.w3.org/ns/dcat#Dataset"))
+        model.add(dataset, vf.createIRI("http://purl.org/dc/terms/title"), vf.createLiteral("Type Check Dataset"))
+
+        val webserviceUri = "http://example.org/webservice/type-check-1"
+        val webservice = vf.createIRI(webserviceUri)
+        model.add(webservice, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("https://schema.org/WebService"))
+        model.add(webservice, vf.createIRI("http://schema.org/name"), vf.createLiteral("Type Check WebService"))
+
+        val softwareApplicationUri = "http://example.org/softwareapplication/type-check-1"
+        val softwareApplication = vf.createIRI(softwareApplicationUri)
+        model.add(softwareApplication, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("https://schema.org/SoftwareApplication"))
+        model.add(softwareApplication, vf.createIRI("http://schema.org/name"), vf.createLiteral("Type Check Software Application"))
+
+        val softwareSourceCodeUri = "http://example.org/softwaresourcecode/type-check-1"
+        val softwareSourceCode = vf.createIRI(softwareSourceCodeUri)
+        model.add(softwareSourceCode, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("https://schema.org/SoftwareSourceCode"))
+        model.add(softwareSourceCode, vf.createIRI("http://schema.org/name"), vf.createLiteral("Type Check Software Source Code"))
+
+        val organizationUri = "http://example.org/organization/type-check-1"
+        val organization = vf.createIRI(organizationUri)
+        model.add(organization, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://schema.org/Organization"))
+        model.add(organization, vf.createIRI("http://schema.org/name"), vf.createLiteral("Type Check Organization"))
+
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
+
+        assertAllItemsMatchType("dataset")
+        assertAllItemsMatchType("webservice")
+        assertAllItemsMatchType("softwareapplication")
+        assertAllItemsMatchType("softwaresourcecode")
+        assertAllItemsMatchType("organization")
+        assertAllItemsMatchType("publisher", expectedType = "organization")
+        assertAllItemsMatchType("provider", expectedType = "organization")
+    }
+
+    @Test
+    fun `access endpoint should resolve organization aliases`() = testApplication {
+        application {
+            module()
+        }
+
+        val organizationUri = "http://example.org/organization/access-alias-1"
+        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val model = org.eclipse.rdf4j.model.impl.LinkedHashModel()
+        val organization = vf.createIRI(organizationUri)
+        model.add(organization, org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, vf.createIRI("http://schema.org/Organization"))
+        model.add(organization, vf.createIRI("http://schema.org/name"), vf.createLiteral("Access Alias Organization"))
+        graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
+
+        val encodedId = java.net.URLEncoder.encode(organizationUri, "UTF-8")
+
+        val publisherResponse = client.get("/api/v2/access/publisher/$encodedId")
+        publisherResponse.status shouldBe HttpStatusCode.OK
+        val publisherJson = objectMapper.readValue<Map<String, Any>>(publisherResponse.bodyAsText())
+        publisherJson["shape"] shouldBe "organization"
+
+        val providerResponse = client.get("/api/v2/access/provider/$encodedId")
+        providerResponse.status shouldBe HttpStatusCode.OK
+        val providerJson = objectMapper.readValue<Map<String, Any>>(providerResponse.bodyAsText())
+        providerJson["shape"] shouldBe "organization"
+    }
+
+    private suspend fun ApplicationTestBuilder.assertAllItemsMatchType(
+        requestedType: String,
+        expectedType: String = requestedType,
+    ) {
+        val response = client.get("/api/v2/access/search?type=$requestedType&versioningStatus=PUBLISHED")
+        response.status shouldBe HttpStatusCode.OK
+
+        val json = objectMapper.readValue<Map<String, Any>>(response.bodyAsText())
+        @Suppress("UNCHECKED_CAST")
+        val items = json["items"] as List<Map<String, Any>>
+        items.shouldNotBeEmpty()
+
+        items.forEach { item ->
+            item["type"] shouldBe expectedType
+        }
     }
 
     @Test

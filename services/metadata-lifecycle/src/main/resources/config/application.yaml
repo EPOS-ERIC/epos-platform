@@ -60,7 +60,7 @@ agents:
 # -----------------------------------------------------------------------------
 logging:
   level: "INFO"          # DEBUG, INFO, WARN, ERROR
-  format: "text"         # "text" or "json"
+  format: "json"         # "json"
   includeTimestamp: true
 
 # -----------------------------------------------------------------------------
