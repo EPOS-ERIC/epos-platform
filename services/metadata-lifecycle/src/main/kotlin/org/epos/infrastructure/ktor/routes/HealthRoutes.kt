@@ -11,8 +11,8 @@ fun Route.healthRoutes() {
                 "status" to "ok",
                 "timestamp" to System.currentTimeMillis(),
                 "config" to mapOf(
-                    "neo4jUri" to Config.NEO4J_URI,
-                    "neo4jDatabase" to Config.NEO4J_DATABASE
+                    "neo4jUri" to (System.getenv("EPOS_NEO4J_URI") ?: Config.neo4j.uri),
+                    "neo4jDatabase" to (System.getenv("EPOS_NEO4J_DATABASE") ?: "neo4j")
                 )
             )
         )
