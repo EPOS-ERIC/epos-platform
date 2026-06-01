@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityCreativework{}
 
 // EntityCreativework struct for EntityCreativework
 type EntityCreativework struct {
-	ConformsTo           NullableEntityAddressCountryName `json:"conforms to,omitempty"`
-	EncodingFormat       NullableEntityAddressCountryName `json:"encoding format,omitempty"`
+	// This property refers to an established standard or specification that the resource conforms to.
+	ConformsTo []string `json:"conforms to,omitempty"`
+	// Media type typically expressed using a MIME format (see IANA site and MDN reference) e.g. application/zip for a SoftwareApplication binary, audio/mpeg for .mp3 etc.).
+	EncodingFormat       []string `json:"encoding format,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityCreativeworkWithDefaults() *EntityCreativework {
 	return &this
 }
 
-// GetConformsTo returns the ConformsTo field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCreativework) GetConformsTo() EntityAddressCountryName {
-	if o == nil || IsNil(o.ConformsTo.Get()) {
-		var ret EntityAddressCountryName
+// GetConformsTo returns the ConformsTo field value if set, zero value otherwise.
+func (o *EntityCreativework) GetConformsTo() []string {
+	if o == nil || IsNil(o.ConformsTo) {
+		var ret []string
 		return ret
 	}
-	return *o.ConformsTo.Get()
+	return o.ConformsTo
 }
 
 // GetConformsToOk returns a tuple with the ConformsTo field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCreativework) GetConformsToOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCreativework) GetConformsToOk() ([]string, bool) {
+	if o == nil || IsNil(o.ConformsTo) {
 		return nil, false
 	}
-	return o.ConformsTo.Get(), o.ConformsTo.IsSet()
+	return o.ConformsTo, true
 }
 
 // HasConformsTo returns a boolean if a field has been set.
 func (o *EntityCreativework) HasConformsTo() bool {
-	if o != nil && o.ConformsTo.IsSet() {
+	if o != nil && !IsNil(o.ConformsTo) {
 		return true
 	}
 
 	return false
 }
 
-// SetConformsTo gets a reference to the given NullableEntityAddressCountryName and assigns it to the ConformsTo field.
-func (o *EntityCreativework) SetConformsTo(v EntityAddressCountryName) {
-	o.ConformsTo.Set(&v)
+// SetConformsTo gets a reference to the given []string and assigns it to the ConformsTo field.
+func (o *EntityCreativework) SetConformsTo(v []string) {
+	o.ConformsTo = v
 }
 
-// SetConformsToNil sets the value for ConformsTo to be an explicit nil
-func (o *EntityCreativework) SetConformsToNil() {
-	o.ConformsTo.Set(nil)
-}
-
-// UnsetConformsTo ensures that no value is present for ConformsTo, not even an explicit nil
-func (o *EntityCreativework) UnsetConformsTo() {
-	o.ConformsTo.Unset()
-}
-
-// GetEncodingFormat returns the EncodingFormat field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCreativework) GetEncodingFormat() EntityAddressCountryName {
-	if o == nil || IsNil(o.EncodingFormat.Get()) {
-		var ret EntityAddressCountryName
+// GetEncodingFormat returns the EncodingFormat field value if set, zero value otherwise.
+func (o *EntityCreativework) GetEncodingFormat() []string {
+	if o == nil || IsNil(o.EncodingFormat) {
+		var ret []string
 		return ret
 	}
-	return *o.EncodingFormat.Get()
+	return o.EncodingFormat
 }
 
 // GetEncodingFormatOk returns a tuple with the EncodingFormat field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCreativework) GetEncodingFormatOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCreativework) GetEncodingFormatOk() ([]string, bool) {
+	if o == nil || IsNil(o.EncodingFormat) {
 		return nil, false
 	}
-	return o.EncodingFormat.Get(), o.EncodingFormat.IsSet()
+	return o.EncodingFormat, true
 }
 
 // HasEncodingFormat returns a boolean if a field has been set.
 func (o *EntityCreativework) HasEncodingFormat() bool {
-	if o != nil && o.EncodingFormat.IsSet() {
+	if o != nil && !IsNil(o.EncodingFormat) {
 		return true
 	}
 
 	return false
 }
 
-// SetEncodingFormat gets a reference to the given NullableEntityAddressCountryName and assigns it to the EncodingFormat field.
-func (o *EntityCreativework) SetEncodingFormat(v EntityAddressCountryName) {
-	o.EncodingFormat.Set(&v)
-}
-
-// SetEncodingFormatNil sets the value for EncodingFormat to be an explicit nil
-func (o *EntityCreativework) SetEncodingFormatNil() {
-	o.EncodingFormat.Set(nil)
-}
-
-// UnsetEncodingFormat ensures that no value is present for EncodingFormat, not even an explicit nil
-func (o *EntityCreativework) UnsetEncodingFormat() {
-	o.EncodingFormat.Unset()
+// SetEncodingFormat gets a reference to the given []string and assigns it to the EncodingFormat field.
+func (o *EntityCreativework) SetEncodingFormat(v []string) {
+	o.EncodingFormat = v
 }
 
 func (o EntityCreativework) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityCreativework) MarshalJSON() ([]byte, error) {
 
 func (o EntityCreativework) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.ConformsTo.IsSet() {
-		toSerialize["conforms to"] = o.ConformsTo.Get()
+	if !IsNil(o.ConformsTo) {
+		toSerialize["conforms to"] = o.ConformsTo
 	}
-	if o.EncodingFormat.IsSet() {
-		toSerialize["encoding format"] = o.EncodingFormat.Get()
+	if !IsNil(o.EncodingFormat) {
+		toSerialize["encoding format"] = o.EncodingFormat
 	}
 
 	for key, value := range o.AdditionalProperties {

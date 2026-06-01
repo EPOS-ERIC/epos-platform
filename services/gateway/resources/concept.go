@@ -31,12 +31,12 @@ func (s *Service) GetConceptByID(ctx context.Context, id string) (api.Concept, e
 func mapConcept(detail *metadataclient.AccessDetailResponse) (api.Concept, error) {
 	reader := metadatareader.New(detail.GetProperties())
 
-	name, err := reader.RequiredStringOneOf("prefLabel", "name")
+	name, err := reader.RequiredString("skos:prefLabel")
 	if err != nil {
 		return api.Concept{}, fmt.Errorf("get concept name: %w", err)
 	}
 
-	inScheme, err := reader.OptionalResourceRef("inScheme", api.ConceptSchemeType)
+	inScheme, err := reader.OptionalResourceRef("skos:inScheme", api.ConceptSchemeType)
 	if err != nil {
 		return api.Concept{}, fmt.Errorf("get concept in scheme: %w", err)
 	}
@@ -49,14 +49,14 @@ func mapConcept(detail *metadataclient.AccessDetailResponse) (api.Concept, error
 	return api.Concept{
 		ID:          detail.GetId(),
 		Name:        name,
-		Description: reader.OptionalString("definition"),
+		Description: reader.OptionalString("skos:definition"),
 		InScheme:    inScheme,
 		Children:    children,
 	}, nil
 }
 
 func mapConceptChildren(reader metadatareader.Reader) ([]api.ResourceRef, error) {
-	children, err := reader.ResourceRefs("narrower", api.ConceptType)
+	children, err := reader.ResourceRefs("skos:narrower", api.ConceptType)
 	if err != nil {
 		return nil, fmt.Errorf("get narrower refs: %w", err)
 	}

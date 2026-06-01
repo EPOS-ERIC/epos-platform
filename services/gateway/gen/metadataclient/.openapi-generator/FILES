@@ -32,13 +32,7 @@ model_access_detail_response.go
 model_access_list_item.go
 model_access_list_response.go
 model_access_property_value.go
-model_category.go
-model_category_scheme.go
-model_category_tree_response.go
-model_dataset.go
-model_distribution.go
 model_entity_address.go
-model_entity_address_country_name.go
 model_entity_agent.go
 model_entity_annotation.go
 model_entity_apidocumentation.go
@@ -154,9 +148,6 @@ model_revision_import_response_data.go
 model_search_item.go
 model_search_response.go
 model_shape_definition_info.go
-model_software_application.go
-model_software_source_code.go
-model_temporal_extent.go
 model_version_history_response.go
 model_version_info.go
 model_versioning_status.go

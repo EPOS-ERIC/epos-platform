@@ -34,7 +34,7 @@ func mapOrganization(ctx context.Context, detail *metadataclient.AccessDetailRes
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 
-	name, err := reader.RequiredStringOneOf("legalName", "legal name", "name")
+	name, err := reader.RequiredString("schema:legalName")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization name: %w", err)
 	}
@@ -44,22 +44,22 @@ func mapOrganization(ctx context.Context, detail *metadataclient.AccessDetailRes
 		return api.Organization{}, err
 	}
 
-	contactPoints, err := reader.PassthroughRefs("contactPoint")
+	contactPoints, err := reader.PassthroughRefs("schema:contactPoint")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization contact points: %w", err)
 	}
 
-	memberOf, err := reader.ResourceRefs("memberOf", api.OrganizationType)
+	memberOf, err := reader.ResourceRefs("schema:memberOf", api.OrganizationType)
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization member of: %w", err)
 	}
 
-	email, err := reader.Strings("email")
+	email, err := reader.Strings("schema:email")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization email: %w", err)
 	}
 
-	telephone, err := reader.Strings("telephone")
+	telephone, err := reader.Strings("schema:telephone")
 	if err != nil {
 		return api.Organization{}, fmt.Errorf("get organization telephone: %w", err)
 	}
@@ -68,10 +68,10 @@ func mapOrganization(ctx context.Context, detail *metadataclient.AccessDetailRes
 		ID:            detail.GetId(),
 		Identifiers:   identifiers,
 		Name:          name,
-		LeiCode:       reader.OptionalString("leiCode"),
+		LeiCode:       reader.OptionalString("epos:leiCode"),
 		Address:       address,
-		Logo:          reader.OptionalString("logo"),
-		URL:           reader.OptionalString("url"),
+		Logo:          reader.OptionalString("schema:logo"),
+		URL:           reader.OptionalString("schema:url"),
 		Email:         email,
 		Telephone:     telephone,
 		ContactPoints: contactPoints,
@@ -112,7 +112,7 @@ func aggregateOrganizationEntities(ctx context.Context, properties map[string]an
 
 func aggregateOrganizationAddress(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (string, error) {
 	reader := metadatareader.New(properties)
-	items, err := reader.Items("address")
+	items, err := reader.Items("schema:address")
 	if err != nil {
 		return "", fmt.Errorf("get address items: %w", err)
 	}
@@ -135,10 +135,10 @@ func aggregateOrganizationAddress(ctx context.Context, properties map[string]any
 
 	addressReader := metadatareader.New(detail.GetProperties())
 	parts := []string{
-		addressReader.OptionalString("streetAddress"),
-		addressReader.OptionalString("addressLocality"),
-		addressReader.OptionalString("postalCode"),
-		addressReader.OptionalString("addressCountry"),
+		addressReader.OptionalString("schema:streetAddress"),
+		addressReader.OptionalString("schema:addressLocality"),
+		addressReader.OptionalString("schema:postalCode"),
+		addressReader.OptionalString("schema:addressCountry"),
 	}
 
 	nonEmpty := make([]string, 0, len(parts))

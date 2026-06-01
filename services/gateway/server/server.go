@@ -42,7 +42,7 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 	router := NewRouter(discoverySvc, resourcesSvc)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
-	srv := &http.Server{
+	srv := &http.Server{ //nolint:exhaustruct
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         cfg.Server.Listen,
 		Handler:      handler,

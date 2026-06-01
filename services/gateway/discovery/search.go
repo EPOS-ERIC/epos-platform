@@ -51,7 +51,7 @@ type SearchParams struct {
 
 func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiApiV2AccessSearchGetRequest, error) {
 	if err := ValidateSearchTypes(p.Types); err != nil {
-		return metadataclient.ApiApiV2AccessSearchGetRequest{}, err
+		return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("validate search types: %w", err)
 	}
 
 	versioningStatus := make([]metadataclient.VersioningStatus, len(p.VersioningStatus))

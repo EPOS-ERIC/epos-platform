@@ -12,9 +12,8 @@ import (
 const propertyValueShape = "propertyvalue"
 
 func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) ([]api.Identifier, error) {
-	// TODO: fix/semplify this once the metadata-lifecycle fixes the identifiers in all the entities
 	reader := metadatareader.New(properties)
-	items, err := reader.Items("identifier")
+	items, err := reader.ItemsOneOf("adms:identifier", "schema:identifier")
 	if err != nil {
 		return nil, fmt.Errorf("get identifiers: %w", err)
 	}
@@ -53,11 +52,11 @@ func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch 
 
 func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch accessDetailFetcher) (api.Identifier, error) {
 	if item.Value != "" {
-		return api.Identifier{Value: item.Value}, nil
+		return api.Identifier{Type: "", Value: item.Value}, nil
 	}
 
 	if item.ID == "" {
-		return api.Identifier{}, nil
+		return api.Identifier{Type: "", Value: ""}, nil
 	}
 
 	shape := metadatareader.FirstNonEmpty(item.Type, "identifier")
@@ -69,7 +68,7 @@ func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch acce
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 	if shape == propertyValueShape {
-		values, err := reader.Items("pg_value")
+		values, err := reader.ItemsOneOf("schema:value", "schema:pg_value", "hydra:pg_value", "pg_value")
 		if err != nil {
 			return api.Identifier{}, fmt.Errorf("get property value identifier value: %w", err)
 		}
@@ -80,20 +79,20 @@ func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch acce
 		}
 
 		return api.Identifier{
-			Type:  reader.OptionalString("propertyID"),
+			Type:  reader.OptionalString("schema:propertyID"),
 			Value: value,
 		}, nil
 	}
 
 	return api.Identifier{
-		Type:  reader.OptionalString("scheme agency"),
-		Value: reader.OptionalString("notation"),
+		Type:  reader.OptionalStringOneOf("adms:schemeAgency", "epos:schemeAgency"),
+		Value: reader.OptionalString("skos:notation"),
 	}, nil
 }
 
 func aggregateTemporal(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (*api.TemporalExtent, error) {
 	reader := metadatareader.New(properties)
-	items, err := reader.Items("temporal")
+	items, err := reader.Items("dct:temporal")
 	if err != nil {
 		return nil, fmt.Errorf("get temporal items: %w", err)
 	}
@@ -113,12 +112,12 @@ func aggregateTemporal(ctx context.Context, properties map[string]any, fetch acc
 
 	temporalProperties := detail.GetProperties()
 	temporalReader := metadatareader.New(temporalProperties)
-	start, err := temporalReader.OptionalTime("start date")
+	start, err := temporalReader.OptionalTime("schema:startDate")
 	if err != nil {
 		return nil, fmt.Errorf("get temporal start date: %w", err)
 	}
 
-	end, err := temporalReader.OptionalTime("end date")
+	end, err := temporalReader.OptionalTime("schema:endDate")
 	if err != nil {
 		return nil, fmt.Errorf("get temporal end date: %w", err)
 	}
@@ -132,7 +131,7 @@ func aggregateTemporal(ctx context.Context, properties map[string]any, fetch acc
 
 func aggregateAnnotationBody(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (string, error) {
 	reader := metadatareader.New(properties)
-	items, err := reader.Items("has quality annotation")
+	items, err := reader.Items("dqv:hasQualityAnnotation")
 	if err != nil {
 		return "", fmt.Errorf("get quality annotation items: %w", err)
 	}
@@ -154,12 +153,12 @@ func aggregateAnnotationBody(ctx context.Context, properties map[string]any, fet
 		return "", err
 	}
 
-	return metadatareader.New(detail.GetProperties()).OptionalString("has body"), nil
+	return metadatareader.New(detail.GetProperties()).OptionalString("oa:hasBody"), nil
 }
 
 func aggregateSpatial(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) (string, error) {
 	reader := metadatareader.New(properties)
-	items, err := reader.Items("spatial")
+	items, err := reader.Items("dct:spatial")
 	if err != nil {
 		return "", fmt.Errorf("get spatial items: %w", err)
 	}
@@ -181,5 +180,5 @@ func aggregateSpatial(ctx context.Context, properties map[string]any, fetch acce
 		return "", err
 	}
 
-	return metadatareader.New(detail.GetProperties()).OptionalString("geometry"), nil
+	return metadatareader.New(detail.GetProperties()).OptionalString("locn:geometry"), nil
 }

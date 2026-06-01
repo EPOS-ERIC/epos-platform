@@ -59,11 +59,11 @@ func TestGetConceptTree(t *testing.T) {
 				"shape": "conceptscheme",
 				"href":  "http://example.test/scheme-a",
 				"properties": map[string]any{
-					"prefLabel":       "Scheme A",
-					"title":           "Scheme A Title",
-					"description":     "Scheme A Description",
-					"orderItemNumber": "2",
-					"hasTopConcept": []map[string]any{
+					"skos:prefLabel":         "Scheme A",
+					"dct:title":              "Scheme A Title",
+					"dct:description":        "Scheme A Description",
+					"schema:orderItemNumber": "2",
+					"skos:hasTopConcept": []map[string]any{
 						{"id": "concept-a", "type": "concept"},
 					},
 				},
@@ -74,9 +74,9 @@ func TestGetConceptTree(t *testing.T) {
 				"shape": "conceptscheme",
 				"href":  "http://example.test/scheme-b",
 				"properties": map[string]any{
-					"prefLabel": "Scheme B",
-					"title":     "Scheme B Title",
-					"hasTopConcept": []map[string]any{
+					"skos:prefLabel": "Scheme B",
+					"dct:title":      "Scheme B Title",
+					"skos:hasTopConcept": []map[string]any{
 						{"id": "concept-b", "type": "concept"},
 					},
 				},
@@ -91,9 +91,9 @@ func TestGetConceptTree(t *testing.T) {
 				"shape": "concept",
 				"href":  "http://example.test/concept-a",
 				"properties": map[string]any{
-					"prefLabel":  "Concept A",
-					"definition": "Concept A Description",
-					"narrower": []map[string]any{
+					"skos:prefLabel":  "Concept A",
+					"skos:definition": "Concept A Description",
+					"skos:narrower": []map[string]any{
 						{"id": "concept-a-child", "type": "concept"},
 					},
 				},
@@ -108,8 +108,8 @@ func TestGetConceptTree(t *testing.T) {
 				"shape": "concept",
 				"href":  "http://example.test/concept-a-child",
 				"properties": map[string]any{
-					"prefLabel":  "Concept A Child",
-					"definition": "Concept A Child Description",
+					"skos:prefLabel":  "Concept A Child",
+					"skos:definition": "Concept A Child Description",
 				},
 			})
 		case "/api/v2/access/concept/concept-b":
@@ -122,7 +122,7 @@ func TestGetConceptTree(t *testing.T) {
 				"shape": "concept",
 				"href":  "http://example.test/concept-b",
 				"properties": map[string]any{
-					"prefLabel": "Concept B",
+					"skos:prefLabel": "Concept B",
 				},
 			})
 		default:
@@ -193,9 +193,9 @@ func TestGetConceptTreeCycle(t *testing.T) {
 				"shape": "conceptscheme",
 				"href":  "http://example.test/scheme-a",
 				"properties": map[string]any{
-					"prefLabel": "Scheme A",
-					"title":     "Scheme A Title",
-					"hasTopConcept": []map[string]any{
+					"skos:prefLabel": "Scheme A",
+					"dct:title":      "Scheme A Title",
+					"skos:hasTopConcept": []map[string]any{
 						{"id": "concept-a", "type": "concept"},
 					},
 				},
@@ -206,8 +206,8 @@ func TestGetConceptTreeCycle(t *testing.T) {
 				"shape": "concept",
 				"href":  "http://example.test/concept-a",
 				"properties": map[string]any{
-					"prefLabel": "Concept A",
-					"narrower": []map[string]any{
+					"skos:prefLabel": "Concept A",
+					"skos:narrower": []map[string]any{
 						{"id": "concept-b", "type": "concept"},
 					},
 				},
@@ -218,8 +218,8 @@ func TestGetConceptTreeCycle(t *testing.T) {
 				"shape": "concept",
 				"href":  "http://example.test/concept-b",
 				"properties": map[string]any{
-					"prefLabel": "Concept B",
-					"narrower": []map[string]any{
+					"skos:prefLabel": "Concept B",
+					"skos:narrower": []map[string]any{
 						{"id": "concept-a", "type": "concept"},
 					},
 				},
@@ -238,6 +238,50 @@ func TestGetConceptTreeCycle(t *testing.T) {
 	}
 	if !errors.Is(err, ErrUpstreamRequestFailed) {
 		t.Fatalf("errors.Is(err, ErrUpstreamRequestFailed) = false, err = %v", err)
+	}
+}
+
+func TestGetConceptTreeSkipsSchemeWhenPrefLabelMissing(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/api/v2/access/search/conceptscheme":
+			writeTestJSON(t, w, map[string]any{
+				"total":      1,
+				"totalItems": 1,
+				"page":       1,
+				"totalPages": 1,
+				"items": []map[string]any{
+					{"type": "conceptscheme", "id": "scheme-a", "href": "http://example.test/scheme-a"},
+				},
+			})
+		case "/api/v2/access/conceptscheme/scheme-a":
+			writeTestJSON(t, w, map[string]any{
+				"id":    "scheme-a",
+				"shape": "conceptscheme",
+				"href":  "http://example.test/scheme-a",
+				"properties": map[string]any{
+					"dct:title": "Scheme A Title",
+				},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	service := NewService(newTestMetadataClient(server.URL), 8)
+
+	tree, err := service.GetConceptTree(context.Background())
+	if err != nil {
+		t.Fatalf("GetConceptTree() error = %v", err)
+	}
+
+	if len(tree.Schemes) != 0 {
+		t.Fatalf("len(tree.Schemes) = %d", len(tree.Schemes))
 	}
 }
 

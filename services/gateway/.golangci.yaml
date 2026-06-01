@@ -13,23 +13,24 @@ linters:
     - errcheck
     - misspell
     - dupl
-    - goconst
     - gocritic
     - godoclint
     - contextcheck
     - containedctx
     - copyloopvar
     - wrapcheck
+    - exhaustruct
   exclusions:
-    paths: 
+    paths:
       - ".*gen/.*"
     rules:
       - linters:
           - errcheck
         source: "^\\s*defer\\s+"
-      - path: ".*_test\\.go"
-        linters:
-          - goconst
+      - linters:
+          - errcheck
+          - exhaustruct
+        path: ".*_test\\.go"
   settings:
     goconst:
       ignore-string-values:

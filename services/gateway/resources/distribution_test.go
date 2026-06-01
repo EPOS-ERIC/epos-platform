@@ -12,93 +12,36 @@ import (
 func TestMapDistribution(t *testing.T) {
 	t.Parallel()
 
-	detail := &metadataclient.AccessDetailResponse{
-		Id:    "distribution-1",
-		Shape: "distribution",
-		Href:  "/api/v2/access/distribution/distribution-1",
-		Properties: map[string]any{
-			titleKey:       distributionTitle,
-			descriptionKey: "Distribution description",
-			"issued":       "2024-03-04T05:06:07Z",
-			"modified":     "2024-04-05T06:07:08Z",
-			"license":      "https://creativecommons.org/licenses/by-nc/4.0/",
-			"format":       "application/xml",
-			typeKey: []any{
-				genericDistributionTypeIRI,
-				string(api.DistributionKindWebService),
-			},
-			"conformsTo": map[string]any{"id": "webservice-1", titleKey: "Webservice 1"},
-			accessURLKey: map[string]any{"id": operationID1, typeKey: operationType},
-		},
-	}
-
-	distribution, err := mapDistribution(context.Background(), detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
-		_ = ctx
-		switch {
-		case shape == operationType && id == operationID1:
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"method":        "GET",
-				"returns":       []any{"text/csv", "application/json"},
-				"pgProperty":    map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
-				"documentation": map[string]any{"id": "api-doc-1", titleKey: "API docs"},
-			}}, nil
-		case shape == iriTemplateType && id == iriTemplateID:
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"template": "https://example.org/query{?station}",
-				"mapping": []any{
-					map[string]any{"id": mappingID1, typeKey: iriTemplateMappingType},
-					map[string]any{"id": "mapping-2", typeKey: iriTemplateMappingType},
-				},
-			}}, nil
-		case shape == iriTemplateMappingType && id == mappingID1:
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				variableKey:    "station",
-				"pg_label":     stationCodeLabel,
-				rangeKey:       xsdStringRange,
-				requiredKey:    "true",
-				"defaultValue": "ABC",
-				"paramValue":   []any{"ABC", "DEF"},
-			}}, nil
-		case shape == iriTemplateMappingType && id == "mapping-2":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				variableKey:      "channel",
-				"label":          "Channel",
-				rangeKey:         xsdStringRange,
-				"property":       "http://schema.org/name",
-				requiredKey:      "false",
-				"minValue":       "1",
-				"maxValue":       "3",
-				"multipleValues": "true",
-				"readonlyValue":  "false",
-				"valuePattern":   "^[A-Z]+$",
-			}}, nil
-		case shape == "apidocumentation" && id == "api-doc-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				titleKey:       "API docs",
-				descriptionKey: "Operation documentation",
-				"entrypoint":   "https://example.org/docs",
-			}}, nil
-		default:
-			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
-		}
+	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/distribution/intermagnet.json")
+	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
+		fixtureKey(operationType, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Operation/v1.0"):                    "testdata/metadata-lifecycle/access/operation/intermagnet.json",
+		fixtureKey(iriTemplateType, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-iritemplate-2ff35bd4/v1.0"): "testdata/metadata-lifecycle/access/iritemplate/intermagnet.json",
+		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-afe775b2/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-format.json",
+		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-d1713110/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-publication-state.json",
+		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-25a4198f/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-end-date.json",
+		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-73bc40eb/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-start-date.json",
+		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-e890a680/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-samples-per-day.json",
+		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-44b3a135/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-observatory-iaga-code.json",
 	})
+
+	distribution, err := mapDistribution(context.Background(), detail, fetch)
 	if err != nil {
 		t.Fatalf("mapDistribution() error = %v", err)
 	}
 
-	if distribution.ID != "distribution-1" {
+	if distribution.ID != "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0" {
 		t.Fatalf("distribution.ID = %q", distribution.ID)
 	}
-	if distribution.Name != distributionTitle {
+	if distribution.Name != "INTERMAGNET Geomagnetic Observatory Data" {
 		t.Fatalf("distribution.Name = %q", distribution.Name)
 	}
-	if distribution.Description != "Distribution description" {
+	if distribution.Description == "" {
 		t.Fatalf("distribution.Description = %q", distribution.Description)
 	}
 	if distribution.DownloadURL != "" {
 		t.Fatalf("distribution.DownloadURL = %q", distribution.DownloadURL)
 	}
-	if distribution.Format != "application/xml" {
+	if distribution.Format != "http://publications.europa.eu/resource/authority/file-type/XML" {
 		t.Fatalf("distribution.Format = %q", distribution.Format)
 	}
 	if distribution.License != "https://creativecommons.org/licenses/by-nc/4.0/" {
@@ -107,9 +50,9 @@ func TestMapDistribution(t *testing.T) {
 	if distribution.Type != api.DistributionKindWebService {
 		t.Fatalf("distribution.Type = %q", distribution.Type)
 	}
-	assertTimeEqual(t, distribution.Issued, "2024-03-04T05:06:07Z")
-	assertTimeEqual(t, distribution.Modified, "2024-04-05T06:07:08Z")
-	if distribution.Webservice == nil || distribution.Webservice.Href != "v1/webservice/webservice-1" {
+	assertTimeEqual(t, distribution.Issued, "2018-08-31T00:00:00Z")
+	assertTimeEqual(t, distribution.Modified, "2018-08-31T00:00:00Z")
+	if distribution.Webservice == nil || distribution.Webservice.Href != "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0" {
 		t.Fatalf("distribution.Webservice = %#v", distribution.Webservice)
 	}
 	if distribution.Operation == nil {
@@ -118,22 +61,28 @@ func TestMapDistribution(t *testing.T) {
 	if distribution.Operation.Method != "GET" {
 		t.Fatalf("distribution.Operation.Method = %q", distribution.Operation.Method)
 	}
-	if len(distribution.Operation.Returns) != 2 || distribution.Operation.Returns[0] != "text/csv" || distribution.Operation.Returns[1] != "application/json" {
+	if len(distribution.Operation.Returns) != 6 {
 		t.Fatalf("distribution.Operation.Returns = %#v", distribution.Operation.Returns)
 	}
 	if distribution.Operation.IriTemplate == nil {
 		t.Fatal("distribution.Operation.IriTemplate = nil")
 	}
-	if len(distribution.Operation.IriTemplate.Mappings) != 2 {
+	if distribution.Operation.IriTemplate.Template == "" {
+		t.Fatalf("distribution.Operation.IriTemplate = %#v", distribution.Operation.IriTemplate)
+	}
+	if len(distribution.Operation.IriTemplate.Mappings) != 6 {
 		t.Fatalf("distribution.Operation.IriTemplate.Mappings = %#v", distribution.Operation.IriTemplate.Mappings)
 	}
-	if distribution.Operation.IriTemplate.Mappings[0].Label != "Station code" {
-		t.Fatalf("distribution.Operation.IriTemplate.Mappings[0] = %#v", distribution.Operation.IriTemplate.Mappings[0])
+	var foundRequired bool
+	for _, mapping := range distribution.Operation.IriTemplate.Mappings {
+		if mapping.Variable == "observatoryIagaCode" {
+			foundRequired = mapping.Required && mapping.Label == "Observatory IAGA code"
+		}
 	}
-	if !distribution.Operation.IriTemplate.Mappings[1].MultipleValues {
-		t.Fatalf("distribution.Operation.IriTemplate.Mappings[1] = %#v", distribution.Operation.IriTemplate.Mappings[1])
+	if !foundRequired {
+		t.Fatalf("distribution.Operation.IriTemplate.Mappings = %#v", distribution.Operation.IriTemplate.Mappings)
 	}
-	if distribution.Operation.APIDocumentation == nil || distribution.Operation.APIDocumentation.Entrypoint != "https://example.org/docs" {
+	if distribution.Operation.APIDocumentation != nil {
 		t.Fatalf("distribution.Operation.APIDocumentation = %#v", distribution.Operation.APIDocumentation)
 	}
 }
@@ -152,8 +101,8 @@ func TestMapDistributionInvalidType(t *testing.T) {
 
 	_, err := mapDistribution(context.Background(), &metadataclient.AccessDetailResponse{
 		Properties: map[string]any{
-			titleKey: distributionTitle,
-			typeKey:  []any{genericDistributionTypeIRI, "unsupported-type"},
+			titleKey:   distributionTitle,
+			"dct:type": []any{genericDistributionTypeIRI, "unsupported-type"},
 		},
 	}, nil)
 	if err == nil {
@@ -168,7 +117,7 @@ func TestMapDistributionDownloadableFileDownloadURL(t *testing.T) {
 		Id: "distribution-download-1",
 		Properties: map[string]any{
 			titleKey:     "Downloadable distribution",
-			typeKey:      []any{string(api.DistributionKindDownloadableFile)},
+			"dct:type":   []any{string(api.DistributionKindDownloadableFile)},
 			accessURLKey: []any{"https://example.org/download/file.xml"},
 		},
 	}, nil)
@@ -200,7 +149,7 @@ func TestMapDistributionInvalidMappingRequired(t *testing.T) {
 		switch {
 		case shape == operationType && id == operationID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"pg_property": map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
+				"hydra:pg_property": map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
 			}}, nil
 		case shape == iriTemplateType && id == iriTemplateID:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
@@ -210,7 +159,7 @@ func TestMapDistributionInvalidMappingRequired(t *testing.T) {
 		case shape == iriTemplateMappingType && id == mappingID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				variableKey: "station",
-				"pg_label":  "Station code",
+				"label":     "Station code",
 				rangeKey:    xsdStringRange,
 				requiredKey: "not-a-bool",
 			}}, nil

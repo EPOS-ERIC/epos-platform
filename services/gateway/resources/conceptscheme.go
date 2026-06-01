@@ -31,22 +31,22 @@ func (s *Service) GetConceptSchemeByID(ctx context.Context, id string) (api.Conc
 func mapConceptScheme(detail *metadataclient.AccessDetailResponse) (api.ConceptScheme, error) {
 	reader := metadatareader.New(detail.GetProperties())
 
-	label, err := reader.RequiredStringOneOf("prefLabel", "label")
+	label, err := reader.RequiredString("skos:prefLabel")
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme label: %w", err)
 	}
 
-	name, err := reader.RequiredStringOneOf("title", "name")
+	name, err := reader.RequiredString("dct:title")
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme name: %w", err)
 	}
 
-	topConcepts, err := reader.ResourceRefs("hasTopConcept", api.ConceptType)
+	topConcepts, err := reader.ResourceRefs("skos:hasTopConcept", api.ConceptType)
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme top concepts: %w", err)
 	}
 
-	orderNumber, err := metadatareader.ParseOptionalInt32(reader.OptionalString("orderItemNumber"))
+	orderNumber, err := metadatareader.ParseOptionalInt32(reader.OptionalString("schema:orderItemNumber"))
 	if err != nil {
 		return api.ConceptScheme{}, fmt.Errorf("get concept scheme order number: %w", err)
 	}
@@ -55,11 +55,12 @@ func mapConceptScheme(detail *metadataclient.AccessDetailResponse) (api.ConceptS
 		ID:          detail.GetId(),
 		Label:       label,
 		Name:        name,
-		Description: reader.OptionalString("description"),
-		Logo:        reader.OptionalString("logo"),
-		Homepage:    reader.OptionalString("homepage"),
-		Color:       reader.OptionalString("color"),
+		Description: reader.OptionalString("dct:description"),
+		Logo:        reader.OptionalString("foaf:logo"),
+		Homepage:    reader.OptionalString("foaf:homepage"),
+		Color:       reader.OptionalString("schema:color"),
 		OrderNumber: orderNumber,
 		TopConcepts: topConcepts,
+		Children:    nil,
 	}, nil
 }

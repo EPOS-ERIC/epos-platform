@@ -2,19 +2,17 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
 const (
-	titleKey               = "title"
+	titleKey               = "dct:title"
 	typeKey                = "type"
-	descriptionKey         = "description"
-	accessURLKey           = "accessURL"
+	descriptionKey         = "dct:description"
+	accessURLKey           = "dcat:accessURL"
 	operationID1           = "operation-1"
 	operationType          = "operation"
 	iriTemplateType        = "iritemplate"
@@ -33,99 +31,74 @@ const (
 func TestMapDataset(t *testing.T) {
 	t.Parallel()
 
-	detail := &metadataclient.AccessDetailResponse{
-		Id:    "dataset-1",
-		Shape: "dataset",
-		Href:  "/api/v2/access/dataset/dataset-1",
-		Properties: map[string]any{
-			titleKey:               "Dataset title",
-			descriptionKey:         "Dataset description",
-			"created":              "2024-01-02T03:04:05Z",
-			"modified":             "2024-02-03T04:05:06Z",
-			"issued":               "2024-03-04T05:06:07Z",
-			"versionInfo":          "v1 info",
-			"keyword":              []any{"a", "b"},
-			"theme":                []any{map[string]any{"id": "concept-1", titleKey: "Concept 1"}},
-			"publisher":            []any{map[string]any{"id": "org-1", titleKey: "Org 1"}},
-			"contactPoint":         []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
-			"distribution":         []any{map[string]any{"id": "dist-1", titleKey: "Distribution 1"}},
-			"accessRights":         "open",
-			"accrualPeriodicity":   "monthly",
-			"isVersionOf":          map[string]any{"id": "dataset-parent", titleKey: "Parent"},
-			identifierShape:        []any{map[string]any{"id": "identifier-1", typeKey: identifierShape}},
-			"temporal":             map[string]any{"id": "temporal-1", typeKey: "periodoftime"},
-			"spatial":              map[string]any{"id": "location-1", typeKey: "location"},
-			"hasQualityAnnotation": map[string]any{"id": "annotation-1", typeKey: "annotation"},
-		},
-	}
-
-	dataset, err := mapDataset(context.Background(), detail, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
-		_ = ctx
-		switch {
-		case shape == identifierShape && id == "identifier-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"scheme agency": "doi", "notation": "10.1234/test"}}, nil
-		case shape == "periodoftime" && id == "temporal-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"start date": "2020-01-01T00:00:00Z", "end date": "2020-12-31T00:00:00Z"}}, nil
-		case shape == "location" && id == "location-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"geometry": "POINT(1 2)"}}, nil
-		case shape == "annotation" && id == "annotation-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"has body": "QA body"}}, nil
-		default:
-			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
-		}
+	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/dataset/intermagnet.json")
+	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
+		fixtureKey(identifierShape, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-34096b33/v1.0"):  "testdata/metadata-lifecycle/access/identifier/intermagnet-doi.json",
+		fixtureKey(identifierShape, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-70ea05a7/v1.0"):  "testdata/metadata-lifecycle/access/identifier/intermagnet-timespan-doi.json",
+		fixtureKey(identifierShape, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-b1f9aa83/v1.0"):  "testdata/metadata-lifecycle/access/identifier/intermagnet-ddss-id.json",
+		fixtureKey("periodoftime", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-periodoftime-0f4b2f01/v1.0"): "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",
+		fixtureKey("location", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-location-630d862a/v1.0"):         "testdata/metadata-lifecycle/access/location/intermagnet.json",
+		fixtureKey("annotation", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-annotation-0970cbef/v1.0"):     "testdata/metadata-lifecycle/access/annotation/intermagnet.json",
 	})
+
+	dataset, err := mapDataset(context.Background(), detail, fetch)
 	if err != nil {
 		t.Fatalf("mapDataset() error = %v", err)
 	}
 
-	if dataset.ID != "dataset-1" {
+	if dataset.ID != "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Dataset/v1.0" {
 		t.Fatalf("dataset.ID = %q", dataset.ID)
 	}
-	if dataset.Name != "Dataset title" {
+	if dataset.Name != "INTERMAGNET Geomagnetic Observatory Data" {
 		t.Fatalf("dataset.Name = %q", dataset.Name)
 	}
-	if dataset.Description != "Dataset description" {
+	if dataset.Description == "" {
 		t.Fatalf("dataset.Description = %q", dataset.Description)
 	}
-	if dataset.VersionInfo != "v1 info" {
+	if dataset.VersionInfo != "1.0.0" {
 		t.Fatalf("dataset.VersionInfo = %q", dataset.VersionInfo)
 	}
-	if dataset.AccessRights != "open" {
+	if dataset.AccessRights != "https://publications.europa.eu/resource/authority/access-right/PUBLIC" {
 		t.Fatalf("dataset.AccessRights = %q", dataset.AccessRights)
 	}
-	if dataset.AccrualPeriodicity != "monthly" {
+	if dataset.AccrualPeriodicity != "http://purl.org/cld/freq/continuous" {
 		t.Fatalf("dataset.AccrualPeriodicity = %q", dataset.AccrualPeriodicity)
 	}
-	if dataset.QualityAnnotation != "QA body" {
+	if dataset.QualityAnnotation != "https://intermagnet.github.io/docs/Technical-Manual/technical_manual.pdf" {
 		t.Fatalf("dataset.QualityAnnotation = %q", dataset.QualityAnnotation)
 	}
-	if dataset.Spatial != "POINT(1 2)" {
+	if dataset.Spatial != "POLYGON((180.0 -90.0, -180.0 -90.0, -180.0 90.0, 180.0 90.0, 180.0 -90.0))" {
 		t.Fatalf("dataset.Spatial = %q", dataset.Spatial)
 	}
-	if len(dataset.Identifiers) != 1 || dataset.Identifiers[0] != (api.Identifier{Type: "doi", Value: "10.1234/test"}) {
+	if len(dataset.Identifiers) != 3 {
 		t.Fatalf("dataset.Identifiers = %#v", dataset.Identifiers)
+	}
+	if dataset.Identifiers[0] != (api.Identifier{Type: "DOI", Value: "10.5880/INTERMAGNET.2013"}) {
+		t.Fatalf("dataset.Identifiers[0] = %#v", dataset.Identifiers[0])
 	}
 	if dataset.Temporal == nil {
 		t.Fatal("dataset.Temporal = nil")
 	}
-	assertTimeEqual(t, dataset.Created, "2024-01-02T03:04:05Z")
-	assertTimeEqual(t, dataset.Modified, "2024-02-03T04:05:06Z")
-	assertTimeEqual(t, dataset.Issued, "2024-03-04T05:06:07Z")
-	assertTimeEqual(t, dataset.Temporal.Start, "2020-01-01T00:00:00Z")
-	assertTimeEqual(t, dataset.Temporal.End, "2020-12-31T00:00:00Z")
-	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/concept/concept-1" {
+	assertTimeEqual(t, dataset.Created, "2018-08-31T00:00:00Z")
+	assertTimeEqual(t, dataset.Modified, "2018-08-31T00:00:00Z")
+	assertTimeEqual(t, dataset.Issued, "2018-08-31T00:00:00Z")
+	assertTimeEqual(t, dataset.Temporal.Start, "1991-01-01T00:00:00Z")
+	if dataset.Temporal.End != nil {
+		t.Fatalf("dataset.Temporal.End = %#v", dataset.Temporal.End)
+	}
+	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/concept/category:geomagneticdata/v1.0" {
 		t.Fatalf("dataset.Concepts = %#v", dataset.Concepts)
 	}
-	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != "v1/organization/org-1" {
+	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != "v1/organization/http://viaf.org/viaf/136554353//v1.0" {
 		t.Fatalf("dataset.Publisher = %#v", dataset.Publisher)
 	}
-	if len(dataset.Distributions) != 1 || dataset.Distributions[0].Href != "v1/distribution/dist-1" {
+	if len(dataset.Distributions) != 1 || dataset.Distributions[0].Href != "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0" {
 		t.Fatalf("dataset.Distributions = %#v", dataset.Distributions)
 	}
-	if len(dataset.ContactPoints) != 1 || dataset.ContactPoints[0].Href != "http://upstream/contact/1" {
+	if len(dataset.ContactPoints) != 1 || dataset.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/mailto%3Aochambers%40bgs.ac.uk%2FcontactPoint%2Fv1.0" {
 		t.Fatalf("dataset.ContactPoints = %#v", dataset.ContactPoints)
 	}
-	if dataset.IsVersionOf == nil || dataset.IsVersionOf.Href != "v1/dataset/dataset-parent" {
+	if dataset.IsVersionOf != nil {
 		t.Fatalf("dataset.IsVersionOf = %#v", dataset.IsVersionOf)
 	}
 }

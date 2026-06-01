@@ -20,22 +20,38 @@ var _ MappedNullable = &EntityCatalog{}
 
 // EntityCatalog struct for EntityCatalog
 type EntityCatalog struct {
-	Dataset              NullableEntityAddressCountryName `json:"dataset,omitempty"`
-	Description          NullableEntityAddressCountryName `json:"description,omitempty"`
-	HasPart              NullableEntityAddressCountryName `json:"has part,omitempty"`
-	Homepage             NullableEntityAddressCountryName `json:"homepage,omitempty"`
-	IsPartOf             NullableEntityAddressCountryName `json:"is part of,omitempty"`
-	Issued               NullableEntityAddressCountryName `json:"issued,omitempty"`
-	Language             NullableEntityAddressCountryName `json:"language,omitempty"`
-	License              NullableEntityAddressCountryName `json:"license,omitempty"`
-	Modified             NullableEntityAddressCountryName `json:"modified,omitempty"`
-	Publisher            NullableEntityAddressCountryName `json:"publisher,omitempty"`
-	Record               NullableEntityAddressCountryName `json:"record,omitempty"`
-	Resource             NullableEntityAddressCountryName `json:"resource,omitempty"`
-	Rights               NullableEntityAddressCountryName `json:"rights,omitempty"`
-	Spatial              NullableEntityAddressCountryName `json:"spatial,omitempty"`
-	ThemeTaxonomy        NullableEntityAddressCountryName `json:"theme taxonomy,omitempty"`
-	Title                NullableEntityAddressCountryName `json:"title,omitempty"`
+	// This property links the Catalogue with a Dataset that is part of the Catalogue.
+	Dataset []string `json:"dataset,omitempty"`
+	// This property contains a free-text account of the Catalogue. This property can be repeated for parallel language versions of the description.
+	Description []string `json:"description,omitempty"`
+	// This property refers to a related Catalogue that is part of the described Catalogue
+	HasPart []string `json:"has part,omitempty"`
+	// This property refers to a web page that acts as the main page for the Catalogue.
+	Homepage *string `json:"homepage,omitempty"`
+	// This property refers to a related Catalogue in which the described Catalogue is physically or logically included.
+	IsPartOf *string `json:"is part of,omitempty"`
+	// This property contains the date of formal issuance (e.g., publication) of the Catalogue.
+	Issued *string `json:"issued,omitempty"`
+	// This property refers to a language used in the textual metadata describing titles, descriptions, etc. of the Datasets in the Catalogue. This property can be repeated if the metadata is provided in multiple languages.
+	Language []string `json:"language,omitempty"`
+	// This property refers to the licence under which the Catalogue can be used or reused.
+	License *string `json:"license,omitempty"`
+	// This property contains the most recent date on which the Catalogue was modified.
+	Modified *string `json:"modified,omitempty"`
+	// This property refers to an entity (organisation) responsible for making the Catalogue available.
+	Publisher *string `json:"publisher,omitempty"`
+	// This property refers to a Catalogue Record that is part of the Catalogue
+	Record []string `json:"record,omitempty"`
+	// This property links the Catalogue with a Resource.
+	Resource []string `json:"resource,omitempty"`
+	// This property refers to a statement that specifies rights associated with the Catalogue.
+	Rights *string `json:"rights,omitempty"`
+	// This property refers to a geographical area covered by the Catalogue.
+	Spatial []string `json:"spatial,omitempty"`
+	// This property refers to a knowledge organization system used to classify the Catalogue's Datasets.
+	ThemeTaxonomy []string `json:"theme taxonomy,omitempty"`
+	// This property contains a name given to the Catalogue. This property can be repeated for parallel language versions of the name.
+	Title                []string `json:"title,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -58,692 +74,516 @@ func NewEntityCatalogWithDefaults() *EntityCatalog {
 	return &this
 }
 
-// GetDataset returns the Dataset field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetDataset() EntityAddressCountryName {
-	if o == nil || IsNil(o.Dataset.Get()) {
-		var ret EntityAddressCountryName
+// GetDataset returns the Dataset field value if set, zero value otherwise.
+func (o *EntityCatalog) GetDataset() []string {
+	if o == nil || IsNil(o.Dataset) {
+		var ret []string
 		return ret
 	}
-	return *o.Dataset.Get()
+	return o.Dataset
 }
 
 // GetDatasetOk returns a tuple with the Dataset field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetDatasetOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetDatasetOk() ([]string, bool) {
+	if o == nil || IsNil(o.Dataset) {
 		return nil, false
 	}
-	return o.Dataset.Get(), o.Dataset.IsSet()
+	return o.Dataset, true
 }
 
 // HasDataset returns a boolean if a field has been set.
 func (o *EntityCatalog) HasDataset() bool {
-	if o != nil && o.Dataset.IsSet() {
+	if o != nil && !IsNil(o.Dataset) {
 		return true
 	}
 
 	return false
 }
 
-// SetDataset gets a reference to the given NullableEntityAddressCountryName and assigns it to the Dataset field.
-func (o *EntityCatalog) SetDataset(v EntityAddressCountryName) {
-	o.Dataset.Set(&v)
+// SetDataset gets a reference to the given []string and assigns it to the Dataset field.
+func (o *EntityCatalog) SetDataset(v []string) {
+	o.Dataset = v
 }
 
-// SetDatasetNil sets the value for Dataset to be an explicit nil
-func (o *EntityCatalog) SetDatasetNil() {
-	o.Dataset.Set(nil)
-}
-
-// UnsetDataset ensures that no value is present for Dataset, not even an explicit nil
-func (o *EntityCatalog) UnsetDataset() {
-	o.Dataset.Unset()
-}
-
-// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetDescription() EntityAddressCountryName {
-	if o == nil || IsNil(o.Description.Get()) {
-		var ret EntityAddressCountryName
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *EntityCatalog) GetDescription() []string {
+	if o == nil || IsNil(o.Description) {
+		var ret []string
 		return ret
 	}
-	return *o.Description.Get()
+	return o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetDescriptionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetDescriptionOk() ([]string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return o.Description, true
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *EntityCatalog) HasDescription() bool {
-	if o != nil && o.Description.IsSet() {
+	if o != nil && !IsNil(o.Description) {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given NullableEntityAddressCountryName and assigns it to the Description field.
-func (o *EntityCatalog) SetDescription(v EntityAddressCountryName) {
-	o.Description.Set(&v)
+// SetDescription gets a reference to the given []string and assigns it to the Description field.
+func (o *EntityCatalog) SetDescription(v []string) {
+	o.Description = v
 }
 
-// SetDescriptionNil sets the value for Description to be an explicit nil
-func (o *EntityCatalog) SetDescriptionNil() {
-	o.Description.Set(nil)
-}
-
-// UnsetDescription ensures that no value is present for Description, not even an explicit nil
-func (o *EntityCatalog) UnsetDescription() {
-	o.Description.Unset()
-}
-
-// GetHasPart returns the HasPart field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetHasPart() EntityAddressCountryName {
-	if o == nil || IsNil(o.HasPart.Get()) {
-		var ret EntityAddressCountryName
+// GetHasPart returns the HasPart field value if set, zero value otherwise.
+func (o *EntityCatalog) GetHasPart() []string {
+	if o == nil || IsNil(o.HasPart) {
+		var ret []string
 		return ret
 	}
-	return *o.HasPart.Get()
+	return o.HasPart
 }
 
 // GetHasPartOk returns a tuple with the HasPart field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetHasPartOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetHasPartOk() ([]string, bool) {
+	if o == nil || IsNil(o.HasPart) {
 		return nil, false
 	}
-	return o.HasPart.Get(), o.HasPart.IsSet()
+	return o.HasPart, true
 }
 
 // HasHasPart returns a boolean if a field has been set.
 func (o *EntityCatalog) HasHasPart() bool {
-	if o != nil && o.HasPart.IsSet() {
+	if o != nil && !IsNil(o.HasPart) {
 		return true
 	}
 
 	return false
 }
 
-// SetHasPart gets a reference to the given NullableEntityAddressCountryName and assigns it to the HasPart field.
-func (o *EntityCatalog) SetHasPart(v EntityAddressCountryName) {
-	o.HasPart.Set(&v)
+// SetHasPart gets a reference to the given []string and assigns it to the HasPart field.
+func (o *EntityCatalog) SetHasPart(v []string) {
+	o.HasPart = v
 }
 
-// SetHasPartNil sets the value for HasPart to be an explicit nil
-func (o *EntityCatalog) SetHasPartNil() {
-	o.HasPart.Set(nil)
-}
-
-// UnsetHasPart ensures that no value is present for HasPart, not even an explicit nil
-func (o *EntityCatalog) UnsetHasPart() {
-	o.HasPart.Unset()
-}
-
-// GetHomepage returns the Homepage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetHomepage() EntityAddressCountryName {
-	if o == nil || IsNil(o.Homepage.Get()) {
-		var ret EntityAddressCountryName
+// GetHomepage returns the Homepage field value if set, zero value otherwise.
+func (o *EntityCatalog) GetHomepage() string {
+	if o == nil || IsNil(o.Homepage) {
+		var ret string
 		return ret
 	}
-	return *o.Homepage.Get()
+	return *o.Homepage
 }
 
 // GetHomepageOk returns a tuple with the Homepage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetHomepageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetHomepageOk() (*string, bool) {
+	if o == nil || IsNil(o.Homepage) {
 		return nil, false
 	}
-	return o.Homepage.Get(), o.Homepage.IsSet()
+	return o.Homepage, true
 }
 
 // HasHomepage returns a boolean if a field has been set.
 func (o *EntityCatalog) HasHomepage() bool {
-	if o != nil && o.Homepage.IsSet() {
+	if o != nil && !IsNil(o.Homepage) {
 		return true
 	}
 
 	return false
 }
 
-// SetHomepage gets a reference to the given NullableEntityAddressCountryName and assigns it to the Homepage field.
-func (o *EntityCatalog) SetHomepage(v EntityAddressCountryName) {
-	o.Homepage.Set(&v)
+// SetHomepage gets a reference to the given string and assigns it to the Homepage field.
+func (o *EntityCatalog) SetHomepage(v string) {
+	o.Homepage = &v
 }
 
-// SetHomepageNil sets the value for Homepage to be an explicit nil
-func (o *EntityCatalog) SetHomepageNil() {
-	o.Homepage.Set(nil)
-}
-
-// UnsetHomepage ensures that no value is present for Homepage, not even an explicit nil
-func (o *EntityCatalog) UnsetHomepage() {
-	o.Homepage.Unset()
-}
-
-// GetIsPartOf returns the IsPartOf field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetIsPartOf() EntityAddressCountryName {
-	if o == nil || IsNil(o.IsPartOf.Get()) {
-		var ret EntityAddressCountryName
+// GetIsPartOf returns the IsPartOf field value if set, zero value otherwise.
+func (o *EntityCatalog) GetIsPartOf() string {
+	if o == nil || IsNil(o.IsPartOf) {
+		var ret string
 		return ret
 	}
-	return *o.IsPartOf.Get()
+	return *o.IsPartOf
 }
 
 // GetIsPartOfOk returns a tuple with the IsPartOf field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetIsPartOfOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetIsPartOfOk() (*string, bool) {
+	if o == nil || IsNil(o.IsPartOf) {
 		return nil, false
 	}
-	return o.IsPartOf.Get(), o.IsPartOf.IsSet()
+	return o.IsPartOf, true
 }
 
 // HasIsPartOf returns a boolean if a field has been set.
 func (o *EntityCatalog) HasIsPartOf() bool {
-	if o != nil && o.IsPartOf.IsSet() {
+	if o != nil && !IsNil(o.IsPartOf) {
 		return true
 	}
 
 	return false
 }
 
-// SetIsPartOf gets a reference to the given NullableEntityAddressCountryName and assigns it to the IsPartOf field.
-func (o *EntityCatalog) SetIsPartOf(v EntityAddressCountryName) {
-	o.IsPartOf.Set(&v)
+// SetIsPartOf gets a reference to the given string and assigns it to the IsPartOf field.
+func (o *EntityCatalog) SetIsPartOf(v string) {
+	o.IsPartOf = &v
 }
 
-// SetIsPartOfNil sets the value for IsPartOf to be an explicit nil
-func (o *EntityCatalog) SetIsPartOfNil() {
-	o.IsPartOf.Set(nil)
-}
-
-// UnsetIsPartOf ensures that no value is present for IsPartOf, not even an explicit nil
-func (o *EntityCatalog) UnsetIsPartOf() {
-	o.IsPartOf.Unset()
-}
-
-// GetIssued returns the Issued field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetIssued() EntityAddressCountryName {
-	if o == nil || IsNil(o.Issued.Get()) {
-		var ret EntityAddressCountryName
+// GetIssued returns the Issued field value if set, zero value otherwise.
+func (o *EntityCatalog) GetIssued() string {
+	if o == nil || IsNil(o.Issued) {
+		var ret string
 		return ret
 	}
-	return *o.Issued.Get()
+	return *o.Issued
 }
 
 // GetIssuedOk returns a tuple with the Issued field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetIssuedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetIssuedOk() (*string, bool) {
+	if o == nil || IsNil(o.Issued) {
 		return nil, false
 	}
-	return o.Issued.Get(), o.Issued.IsSet()
+	return o.Issued, true
 }
 
 // HasIssued returns a boolean if a field has been set.
 func (o *EntityCatalog) HasIssued() bool {
-	if o != nil && o.Issued.IsSet() {
+	if o != nil && !IsNil(o.Issued) {
 		return true
 	}
 
 	return false
 }
 
-// SetIssued gets a reference to the given NullableEntityAddressCountryName and assigns it to the Issued field.
-func (o *EntityCatalog) SetIssued(v EntityAddressCountryName) {
-	o.Issued.Set(&v)
+// SetIssued gets a reference to the given string and assigns it to the Issued field.
+func (o *EntityCatalog) SetIssued(v string) {
+	o.Issued = &v
 }
 
-// SetIssuedNil sets the value for Issued to be an explicit nil
-func (o *EntityCatalog) SetIssuedNil() {
-	o.Issued.Set(nil)
-}
-
-// UnsetIssued ensures that no value is present for Issued, not even an explicit nil
-func (o *EntityCatalog) UnsetIssued() {
-	o.Issued.Unset()
-}
-
-// GetLanguage returns the Language field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetLanguage() EntityAddressCountryName {
-	if o == nil || IsNil(o.Language.Get()) {
-		var ret EntityAddressCountryName
+// GetLanguage returns the Language field value if set, zero value otherwise.
+func (o *EntityCatalog) GetLanguage() []string {
+	if o == nil || IsNil(o.Language) {
+		var ret []string
 		return ret
 	}
-	return *o.Language.Get()
+	return o.Language
 }
 
 // GetLanguageOk returns a tuple with the Language field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetLanguageOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetLanguageOk() ([]string, bool) {
+	if o == nil || IsNil(o.Language) {
 		return nil, false
 	}
-	return o.Language.Get(), o.Language.IsSet()
+	return o.Language, true
 }
 
 // HasLanguage returns a boolean if a field has been set.
 func (o *EntityCatalog) HasLanguage() bool {
-	if o != nil && o.Language.IsSet() {
+	if o != nil && !IsNil(o.Language) {
 		return true
 	}
 
 	return false
 }
 
-// SetLanguage gets a reference to the given NullableEntityAddressCountryName and assigns it to the Language field.
-func (o *EntityCatalog) SetLanguage(v EntityAddressCountryName) {
-	o.Language.Set(&v)
+// SetLanguage gets a reference to the given []string and assigns it to the Language field.
+func (o *EntityCatalog) SetLanguage(v []string) {
+	o.Language = v
 }
 
-// SetLanguageNil sets the value for Language to be an explicit nil
-func (o *EntityCatalog) SetLanguageNil() {
-	o.Language.Set(nil)
-}
-
-// UnsetLanguage ensures that no value is present for Language, not even an explicit nil
-func (o *EntityCatalog) UnsetLanguage() {
-	o.Language.Unset()
-}
-
-// GetLicense returns the License field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetLicense() EntityAddressCountryName {
-	if o == nil || IsNil(o.License.Get()) {
-		var ret EntityAddressCountryName
+// GetLicense returns the License field value if set, zero value otherwise.
+func (o *EntityCatalog) GetLicense() string {
+	if o == nil || IsNil(o.License) {
+		var ret string
 		return ret
 	}
-	return *o.License.Get()
+	return *o.License
 }
 
 // GetLicenseOk returns a tuple with the License field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetLicenseOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetLicenseOk() (*string, bool) {
+	if o == nil || IsNil(o.License) {
 		return nil, false
 	}
-	return o.License.Get(), o.License.IsSet()
+	return o.License, true
 }
 
 // HasLicense returns a boolean if a field has been set.
 func (o *EntityCatalog) HasLicense() bool {
-	if o != nil && o.License.IsSet() {
+	if o != nil && !IsNil(o.License) {
 		return true
 	}
 
 	return false
 }
 
-// SetLicense gets a reference to the given NullableEntityAddressCountryName and assigns it to the License field.
-func (o *EntityCatalog) SetLicense(v EntityAddressCountryName) {
-	o.License.Set(&v)
+// SetLicense gets a reference to the given string and assigns it to the License field.
+func (o *EntityCatalog) SetLicense(v string) {
+	o.License = &v
 }
 
-// SetLicenseNil sets the value for License to be an explicit nil
-func (o *EntityCatalog) SetLicenseNil() {
-	o.License.Set(nil)
-}
-
-// UnsetLicense ensures that no value is present for License, not even an explicit nil
-func (o *EntityCatalog) UnsetLicense() {
-	o.License.Unset()
-}
-
-// GetModified returns the Modified field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetModified() EntityAddressCountryName {
-	if o == nil || IsNil(o.Modified.Get()) {
-		var ret EntityAddressCountryName
+// GetModified returns the Modified field value if set, zero value otherwise.
+func (o *EntityCatalog) GetModified() string {
+	if o == nil || IsNil(o.Modified) {
+		var ret string
 		return ret
 	}
-	return *o.Modified.Get()
+	return *o.Modified
 }
 
 // GetModifiedOk returns a tuple with the Modified field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetModifiedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetModifiedOk() (*string, bool) {
+	if o == nil || IsNil(o.Modified) {
 		return nil, false
 	}
-	return o.Modified.Get(), o.Modified.IsSet()
+	return o.Modified, true
 }
 
 // HasModified returns a boolean if a field has been set.
 func (o *EntityCatalog) HasModified() bool {
-	if o != nil && o.Modified.IsSet() {
+	if o != nil && !IsNil(o.Modified) {
 		return true
 	}
 
 	return false
 }
 
-// SetModified gets a reference to the given NullableEntityAddressCountryName and assigns it to the Modified field.
-func (o *EntityCatalog) SetModified(v EntityAddressCountryName) {
-	o.Modified.Set(&v)
+// SetModified gets a reference to the given string and assigns it to the Modified field.
+func (o *EntityCatalog) SetModified(v string) {
+	o.Modified = &v
 }
 
-// SetModifiedNil sets the value for Modified to be an explicit nil
-func (o *EntityCatalog) SetModifiedNil() {
-	o.Modified.Set(nil)
-}
-
-// UnsetModified ensures that no value is present for Modified, not even an explicit nil
-func (o *EntityCatalog) UnsetModified() {
-	o.Modified.Unset()
-}
-
-// GetPublisher returns the Publisher field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetPublisher() EntityAddressCountryName {
-	if o == nil || IsNil(o.Publisher.Get()) {
-		var ret EntityAddressCountryName
+// GetPublisher returns the Publisher field value if set, zero value otherwise.
+func (o *EntityCatalog) GetPublisher() string {
+	if o == nil || IsNil(o.Publisher) {
+		var ret string
 		return ret
 	}
-	return *o.Publisher.Get()
+	return *o.Publisher
 }
 
 // GetPublisherOk returns a tuple with the Publisher field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetPublisherOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetPublisherOk() (*string, bool) {
+	if o == nil || IsNil(o.Publisher) {
 		return nil, false
 	}
-	return o.Publisher.Get(), o.Publisher.IsSet()
+	return o.Publisher, true
 }
 
 // HasPublisher returns a boolean if a field has been set.
 func (o *EntityCatalog) HasPublisher() bool {
-	if o != nil && o.Publisher.IsSet() {
+	if o != nil && !IsNil(o.Publisher) {
 		return true
 	}
 
 	return false
 }
 
-// SetPublisher gets a reference to the given NullableEntityAddressCountryName and assigns it to the Publisher field.
-func (o *EntityCatalog) SetPublisher(v EntityAddressCountryName) {
-	o.Publisher.Set(&v)
+// SetPublisher gets a reference to the given string and assigns it to the Publisher field.
+func (o *EntityCatalog) SetPublisher(v string) {
+	o.Publisher = &v
 }
 
-// SetPublisherNil sets the value for Publisher to be an explicit nil
-func (o *EntityCatalog) SetPublisherNil() {
-	o.Publisher.Set(nil)
-}
-
-// UnsetPublisher ensures that no value is present for Publisher, not even an explicit nil
-func (o *EntityCatalog) UnsetPublisher() {
-	o.Publisher.Unset()
-}
-
-// GetRecord returns the Record field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetRecord() EntityAddressCountryName {
-	if o == nil || IsNil(o.Record.Get()) {
-		var ret EntityAddressCountryName
+// GetRecord returns the Record field value if set, zero value otherwise.
+func (o *EntityCatalog) GetRecord() []string {
+	if o == nil || IsNil(o.Record) {
+		var ret []string
 		return ret
 	}
-	return *o.Record.Get()
+	return o.Record
 }
 
 // GetRecordOk returns a tuple with the Record field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetRecordOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetRecordOk() ([]string, bool) {
+	if o == nil || IsNil(o.Record) {
 		return nil, false
 	}
-	return o.Record.Get(), o.Record.IsSet()
+	return o.Record, true
 }
 
 // HasRecord returns a boolean if a field has been set.
 func (o *EntityCatalog) HasRecord() bool {
-	if o != nil && o.Record.IsSet() {
+	if o != nil && !IsNil(o.Record) {
 		return true
 	}
 
 	return false
 }
 
-// SetRecord gets a reference to the given NullableEntityAddressCountryName and assigns it to the Record field.
-func (o *EntityCatalog) SetRecord(v EntityAddressCountryName) {
-	o.Record.Set(&v)
+// SetRecord gets a reference to the given []string and assigns it to the Record field.
+func (o *EntityCatalog) SetRecord(v []string) {
+	o.Record = v
 }
 
-// SetRecordNil sets the value for Record to be an explicit nil
-func (o *EntityCatalog) SetRecordNil() {
-	o.Record.Set(nil)
-}
-
-// UnsetRecord ensures that no value is present for Record, not even an explicit nil
-func (o *EntityCatalog) UnsetRecord() {
-	o.Record.Unset()
-}
-
-// GetResource returns the Resource field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetResource() EntityAddressCountryName {
-	if o == nil || IsNil(o.Resource.Get()) {
-		var ret EntityAddressCountryName
+// GetResource returns the Resource field value if set, zero value otherwise.
+func (o *EntityCatalog) GetResource() []string {
+	if o == nil || IsNil(o.Resource) {
+		var ret []string
 		return ret
 	}
-	return *o.Resource.Get()
+	return o.Resource
 }
 
 // GetResourceOk returns a tuple with the Resource field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetResourceOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetResourceOk() ([]string, bool) {
+	if o == nil || IsNil(o.Resource) {
 		return nil, false
 	}
-	return o.Resource.Get(), o.Resource.IsSet()
+	return o.Resource, true
 }
 
 // HasResource returns a boolean if a field has been set.
 func (o *EntityCatalog) HasResource() bool {
-	if o != nil && o.Resource.IsSet() {
+	if o != nil && !IsNil(o.Resource) {
 		return true
 	}
 
 	return false
 }
 
-// SetResource gets a reference to the given NullableEntityAddressCountryName and assigns it to the Resource field.
-func (o *EntityCatalog) SetResource(v EntityAddressCountryName) {
-	o.Resource.Set(&v)
+// SetResource gets a reference to the given []string and assigns it to the Resource field.
+func (o *EntityCatalog) SetResource(v []string) {
+	o.Resource = v
 }
 
-// SetResourceNil sets the value for Resource to be an explicit nil
-func (o *EntityCatalog) SetResourceNil() {
-	o.Resource.Set(nil)
-}
-
-// UnsetResource ensures that no value is present for Resource, not even an explicit nil
-func (o *EntityCatalog) UnsetResource() {
-	o.Resource.Unset()
-}
-
-// GetRights returns the Rights field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetRights() EntityAddressCountryName {
-	if o == nil || IsNil(o.Rights.Get()) {
-		var ret EntityAddressCountryName
+// GetRights returns the Rights field value if set, zero value otherwise.
+func (o *EntityCatalog) GetRights() string {
+	if o == nil || IsNil(o.Rights) {
+		var ret string
 		return ret
 	}
-	return *o.Rights.Get()
+	return *o.Rights
 }
 
 // GetRightsOk returns a tuple with the Rights field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetRightsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetRightsOk() (*string, bool) {
+	if o == nil || IsNil(o.Rights) {
 		return nil, false
 	}
-	return o.Rights.Get(), o.Rights.IsSet()
+	return o.Rights, true
 }
 
 // HasRights returns a boolean if a field has been set.
 func (o *EntityCatalog) HasRights() bool {
-	if o != nil && o.Rights.IsSet() {
+	if o != nil && !IsNil(o.Rights) {
 		return true
 	}
 
 	return false
 }
 
-// SetRights gets a reference to the given NullableEntityAddressCountryName and assigns it to the Rights field.
-func (o *EntityCatalog) SetRights(v EntityAddressCountryName) {
-	o.Rights.Set(&v)
+// SetRights gets a reference to the given string and assigns it to the Rights field.
+func (o *EntityCatalog) SetRights(v string) {
+	o.Rights = &v
 }
 
-// SetRightsNil sets the value for Rights to be an explicit nil
-func (o *EntityCatalog) SetRightsNil() {
-	o.Rights.Set(nil)
-}
-
-// UnsetRights ensures that no value is present for Rights, not even an explicit nil
-func (o *EntityCatalog) UnsetRights() {
-	o.Rights.Unset()
-}
-
-// GetSpatial returns the Spatial field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetSpatial() EntityAddressCountryName {
-	if o == nil || IsNil(o.Spatial.Get()) {
-		var ret EntityAddressCountryName
+// GetSpatial returns the Spatial field value if set, zero value otherwise.
+func (o *EntityCatalog) GetSpatial() []string {
+	if o == nil || IsNil(o.Spatial) {
+		var ret []string
 		return ret
 	}
-	return *o.Spatial.Get()
+	return o.Spatial
 }
 
 // GetSpatialOk returns a tuple with the Spatial field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetSpatialOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetSpatialOk() ([]string, bool) {
+	if o == nil || IsNil(o.Spatial) {
 		return nil, false
 	}
-	return o.Spatial.Get(), o.Spatial.IsSet()
+	return o.Spatial, true
 }
 
 // HasSpatial returns a boolean if a field has been set.
 func (o *EntityCatalog) HasSpatial() bool {
-	if o != nil && o.Spatial.IsSet() {
+	if o != nil && !IsNil(o.Spatial) {
 		return true
 	}
 
 	return false
 }
 
-// SetSpatial gets a reference to the given NullableEntityAddressCountryName and assigns it to the Spatial field.
-func (o *EntityCatalog) SetSpatial(v EntityAddressCountryName) {
-	o.Spatial.Set(&v)
+// SetSpatial gets a reference to the given []string and assigns it to the Spatial field.
+func (o *EntityCatalog) SetSpatial(v []string) {
+	o.Spatial = v
 }
 
-// SetSpatialNil sets the value for Spatial to be an explicit nil
-func (o *EntityCatalog) SetSpatialNil() {
-	o.Spatial.Set(nil)
-}
-
-// UnsetSpatial ensures that no value is present for Spatial, not even an explicit nil
-func (o *EntityCatalog) UnsetSpatial() {
-	o.Spatial.Unset()
-}
-
-// GetThemeTaxonomy returns the ThemeTaxonomy field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetThemeTaxonomy() EntityAddressCountryName {
-	if o == nil || IsNil(o.ThemeTaxonomy.Get()) {
-		var ret EntityAddressCountryName
+// GetThemeTaxonomy returns the ThemeTaxonomy field value if set, zero value otherwise.
+func (o *EntityCatalog) GetThemeTaxonomy() []string {
+	if o == nil || IsNil(o.ThemeTaxonomy) {
+		var ret []string
 		return ret
 	}
-	return *o.ThemeTaxonomy.Get()
+	return o.ThemeTaxonomy
 }
 
 // GetThemeTaxonomyOk returns a tuple with the ThemeTaxonomy field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetThemeTaxonomyOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetThemeTaxonomyOk() ([]string, bool) {
+	if o == nil || IsNil(o.ThemeTaxonomy) {
 		return nil, false
 	}
-	return o.ThemeTaxonomy.Get(), o.ThemeTaxonomy.IsSet()
+	return o.ThemeTaxonomy, true
 }
 
 // HasThemeTaxonomy returns a boolean if a field has been set.
 func (o *EntityCatalog) HasThemeTaxonomy() bool {
-	if o != nil && o.ThemeTaxonomy.IsSet() {
+	if o != nil && !IsNil(o.ThemeTaxonomy) {
 		return true
 	}
 
 	return false
 }
 
-// SetThemeTaxonomy gets a reference to the given NullableEntityAddressCountryName and assigns it to the ThemeTaxonomy field.
-func (o *EntityCatalog) SetThemeTaxonomy(v EntityAddressCountryName) {
-	o.ThemeTaxonomy.Set(&v)
+// SetThemeTaxonomy gets a reference to the given []string and assigns it to the ThemeTaxonomy field.
+func (o *EntityCatalog) SetThemeTaxonomy(v []string) {
+	o.ThemeTaxonomy = v
 }
 
-// SetThemeTaxonomyNil sets the value for ThemeTaxonomy to be an explicit nil
-func (o *EntityCatalog) SetThemeTaxonomyNil() {
-	o.ThemeTaxonomy.Set(nil)
-}
-
-// UnsetThemeTaxonomy ensures that no value is present for ThemeTaxonomy, not even an explicit nil
-func (o *EntityCatalog) UnsetThemeTaxonomy() {
-	o.ThemeTaxonomy.Unset()
-}
-
-// GetTitle returns the Title field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityCatalog) GetTitle() EntityAddressCountryName {
-	if o == nil || IsNil(o.Title.Get()) {
-		var ret EntityAddressCountryName
+// GetTitle returns the Title field value if set, zero value otherwise.
+func (o *EntityCatalog) GetTitle() []string {
+	if o == nil || IsNil(o.Title) {
+		var ret []string
 		return ret
 	}
-	return *o.Title.Get()
+	return o.Title
 }
 
 // GetTitleOk returns a tuple with the Title field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityCatalog) GetTitleOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityCatalog) GetTitleOk() ([]string, bool) {
+	if o == nil || IsNil(o.Title) {
 		return nil, false
 	}
-	return o.Title.Get(), o.Title.IsSet()
+	return o.Title, true
 }
 
 // HasTitle returns a boolean if a field has been set.
 func (o *EntityCatalog) HasTitle() bool {
-	if o != nil && o.Title.IsSet() {
+	if o != nil && !IsNil(o.Title) {
 		return true
 	}
 
 	return false
 }
 
-// SetTitle gets a reference to the given NullableEntityAddressCountryName and assigns it to the Title field.
-func (o *EntityCatalog) SetTitle(v EntityAddressCountryName) {
-	o.Title.Set(&v)
-}
-
-// SetTitleNil sets the value for Title to be an explicit nil
-func (o *EntityCatalog) SetTitleNil() {
-	o.Title.Set(nil)
-}
-
-// UnsetTitle ensures that no value is present for Title, not even an explicit nil
-func (o *EntityCatalog) UnsetTitle() {
-	o.Title.Unset()
+// SetTitle gets a reference to the given []string and assigns it to the Title field.
+func (o *EntityCatalog) SetTitle(v []string) {
+	o.Title = v
 }
 
 func (o EntityCatalog) MarshalJSON() ([]byte, error) {
@@ -756,53 +596,53 @@ func (o EntityCatalog) MarshalJSON() ([]byte, error) {
 
 func (o EntityCatalog) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Dataset.IsSet() {
-		toSerialize["dataset"] = o.Dataset.Get()
+	if !IsNil(o.Dataset) {
+		toSerialize["dataset"] = o.Dataset
 	}
-	if o.Description.IsSet() {
-		toSerialize["description"] = o.Description.Get()
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
 	}
-	if o.HasPart.IsSet() {
-		toSerialize["has part"] = o.HasPart.Get()
+	if !IsNil(o.HasPart) {
+		toSerialize["has part"] = o.HasPart
 	}
-	if o.Homepage.IsSet() {
-		toSerialize["homepage"] = o.Homepage.Get()
+	if !IsNil(o.Homepage) {
+		toSerialize["homepage"] = o.Homepage
 	}
-	if o.IsPartOf.IsSet() {
-		toSerialize["is part of"] = o.IsPartOf.Get()
+	if !IsNil(o.IsPartOf) {
+		toSerialize["is part of"] = o.IsPartOf
 	}
-	if o.Issued.IsSet() {
-		toSerialize["issued"] = o.Issued.Get()
+	if !IsNil(o.Issued) {
+		toSerialize["issued"] = o.Issued
 	}
-	if o.Language.IsSet() {
-		toSerialize["language"] = o.Language.Get()
+	if !IsNil(o.Language) {
+		toSerialize["language"] = o.Language
 	}
-	if o.License.IsSet() {
-		toSerialize["license"] = o.License.Get()
+	if !IsNil(o.License) {
+		toSerialize["license"] = o.License
 	}
-	if o.Modified.IsSet() {
-		toSerialize["modified"] = o.Modified.Get()
+	if !IsNil(o.Modified) {
+		toSerialize["modified"] = o.Modified
 	}
-	if o.Publisher.IsSet() {
-		toSerialize["publisher"] = o.Publisher.Get()
+	if !IsNil(o.Publisher) {
+		toSerialize["publisher"] = o.Publisher
 	}
-	if o.Record.IsSet() {
-		toSerialize["record"] = o.Record.Get()
+	if !IsNil(o.Record) {
+		toSerialize["record"] = o.Record
 	}
-	if o.Resource.IsSet() {
-		toSerialize["resource"] = o.Resource.Get()
+	if !IsNil(o.Resource) {
+		toSerialize["resource"] = o.Resource
 	}
-	if o.Rights.IsSet() {
-		toSerialize["rights"] = o.Rights.Get()
+	if !IsNil(o.Rights) {
+		toSerialize["rights"] = o.Rights
 	}
-	if o.Spatial.IsSet() {
-		toSerialize["spatial"] = o.Spatial.Get()
+	if !IsNil(o.Spatial) {
+		toSerialize["spatial"] = o.Spatial
 	}
-	if o.ThemeTaxonomy.IsSet() {
-		toSerialize["theme taxonomy"] = o.ThemeTaxonomy.Get()
+	if !IsNil(o.ThemeTaxonomy) {
+		toSerialize["theme taxonomy"] = o.ThemeTaxonomy
 	}
-	if o.Title.IsSet() {
-		toSerialize["title"] = o.Title.Get()
+	if !IsNil(o.Title) {
+		toSerialize["title"] = o.Title
 	}
 
 	for key, value := range o.AdditionalProperties {

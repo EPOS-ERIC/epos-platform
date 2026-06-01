@@ -124,5 +124,6 @@ func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWrite
 		return
 	}
 
+	log.ErrorContext(ctx, "resource request failed", "error", err)
 	writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", "resource request failed", err)
 }

@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityIritemplate{}
 
 // EntityIritemplate struct for EntityIritemplate
 type EntityIritemplate struct {
-	Mapping              NullableEntityAddressCountryName `json:"mapping,omitempty"`
-	Template             NullableEntityAddressCountryName `json:"template,omitempty"`
+	// A variable-to-property mapping of the IRI template.
+	Mapping []string `json:"mapping,omitempty"`
+	// The syntax of the template literal is specified by the [ RFC6570] URI Template syntax.
+	Template             *string `json:"template,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityIritemplateWithDefaults() *EntityIritemplate {
 	return &this
 }
 
-// GetMapping returns the Mapping field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplate) GetMapping() EntityAddressCountryName {
-	if o == nil || IsNil(o.Mapping.Get()) {
-		var ret EntityAddressCountryName
+// GetMapping returns the Mapping field value if set, zero value otherwise.
+func (o *EntityIritemplate) GetMapping() []string {
+	if o == nil || IsNil(o.Mapping) {
+		var ret []string
 		return ret
 	}
-	return *o.Mapping.Get()
+	return o.Mapping
 }
 
 // GetMappingOk returns a tuple with the Mapping field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplate) GetMappingOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplate) GetMappingOk() ([]string, bool) {
+	if o == nil || IsNil(o.Mapping) {
 		return nil, false
 	}
-	return o.Mapping.Get(), o.Mapping.IsSet()
+	return o.Mapping, true
 }
 
 // HasMapping returns a boolean if a field has been set.
 func (o *EntityIritemplate) HasMapping() bool {
-	if o != nil && o.Mapping.IsSet() {
+	if o != nil && !IsNil(o.Mapping) {
 		return true
 	}
 
 	return false
 }
 
-// SetMapping gets a reference to the given NullableEntityAddressCountryName and assigns it to the Mapping field.
-func (o *EntityIritemplate) SetMapping(v EntityAddressCountryName) {
-	o.Mapping.Set(&v)
+// SetMapping gets a reference to the given []string and assigns it to the Mapping field.
+func (o *EntityIritemplate) SetMapping(v []string) {
+	o.Mapping = v
 }
 
-// SetMappingNil sets the value for Mapping to be an explicit nil
-func (o *EntityIritemplate) SetMappingNil() {
-	o.Mapping.Set(nil)
-}
-
-// UnsetMapping ensures that no value is present for Mapping, not even an explicit nil
-func (o *EntityIritemplate) UnsetMapping() {
-	o.Mapping.Unset()
-}
-
-// GetTemplate returns the Template field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplate) GetTemplate() EntityAddressCountryName {
-	if o == nil || IsNil(o.Template.Get()) {
-		var ret EntityAddressCountryName
+// GetTemplate returns the Template field value if set, zero value otherwise.
+func (o *EntityIritemplate) GetTemplate() string {
+	if o == nil || IsNil(o.Template) {
+		var ret string
 		return ret
 	}
-	return *o.Template.Get()
+	return *o.Template
 }
 
 // GetTemplateOk returns a tuple with the Template field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplate) GetTemplateOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplate) GetTemplateOk() (*string, bool) {
+	if o == nil || IsNil(o.Template) {
 		return nil, false
 	}
-	return o.Template.Get(), o.Template.IsSet()
+	return o.Template, true
 }
 
 // HasTemplate returns a boolean if a field has been set.
 func (o *EntityIritemplate) HasTemplate() bool {
-	if o != nil && o.Template.IsSet() {
+	if o != nil && !IsNil(o.Template) {
 		return true
 	}
 
 	return false
 }
 
-// SetTemplate gets a reference to the given NullableEntityAddressCountryName and assigns it to the Template field.
-func (o *EntityIritemplate) SetTemplate(v EntityAddressCountryName) {
-	o.Template.Set(&v)
-}
-
-// SetTemplateNil sets the value for Template to be an explicit nil
-func (o *EntityIritemplate) SetTemplateNil() {
-	o.Template.Set(nil)
-}
-
-// UnsetTemplate ensures that no value is present for Template, not even an explicit nil
-func (o *EntityIritemplate) UnsetTemplate() {
-	o.Template.Unset()
+// SetTemplate gets a reference to the given string and assigns it to the Template field.
+func (o *EntityIritemplate) SetTemplate(v string) {
+	o.Template = &v
 }
 
 func (o EntityIritemplate) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityIritemplate) MarshalJSON() ([]byte, error) {
 
 func (o EntityIritemplate) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Mapping.IsSet() {
-		toSerialize["mapping"] = o.Mapping.Get()
+	if !IsNil(o.Mapping) {
+		toSerialize["mapping"] = o.Mapping
 	}
-	if o.Template.IsSet() {
-		toSerialize["template"] = o.Template.Get()
+	if !IsNil(o.Template) {
+		toSerialize["template"] = o.Template
 	}
 
 	for key, value := range o.AdditionalProperties {

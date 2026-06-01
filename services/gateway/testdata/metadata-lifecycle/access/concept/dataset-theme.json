@@ -1,0 +1,10 @@
+{
+  "href": "http://localhost:8080/api/v2/access/concept/category%3Afacets%2Fdataset-theme%2Fv1.0",
+  "id": "category:facets/dataset-theme/v1.0",
+  "properties": {
+    "rdf:type": "http://www.w3.org/2004/02/skos/core#Concept",
+    "skos:definition": "Dataset",
+    "skos:prefLabel": "Dataset"
+  },
+  "shape": "concept"
+}

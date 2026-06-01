@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityControlaction{}
 
 // EntityControlaction struct for EntityControlaction
 type EntityControlaction struct {
-	Object               NullableEntityAddressCountryName `json:"object,omitempty"`
-	Result               NullableEntityAddressCountryName `json:"result,omitempty"`
+	// The object upon which the action is carried out, whose state is kept intact or changed. Also known as the semantic roles patient, affected or undergoer (which change their state) or theme (which doesn't). e.g. John read a book.
+	Object []string `json:"object,omitempty"`
+	// The result produced in the action. e.g. John wrote a book.
+	Result               []string `json:"result,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityControlactionWithDefaults() *EntityControlaction {
 	return &this
 }
 
-// GetObject returns the Object field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityControlaction) GetObject() EntityAddressCountryName {
-	if o == nil || IsNil(o.Object.Get()) {
-		var ret EntityAddressCountryName
+// GetObject returns the Object field value if set, zero value otherwise.
+func (o *EntityControlaction) GetObject() []string {
+	if o == nil || IsNil(o.Object) {
+		var ret []string
 		return ret
 	}
-	return *o.Object.Get()
+	return o.Object
 }
 
 // GetObjectOk returns a tuple with the Object field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityControlaction) GetObjectOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityControlaction) GetObjectOk() ([]string, bool) {
+	if o == nil || IsNil(o.Object) {
 		return nil, false
 	}
-	return o.Object.Get(), o.Object.IsSet()
+	return o.Object, true
 }
 
 // HasObject returns a boolean if a field has been set.
 func (o *EntityControlaction) HasObject() bool {
-	if o != nil && o.Object.IsSet() {
+	if o != nil && !IsNil(o.Object) {
 		return true
 	}
 
 	return false
 }
 
-// SetObject gets a reference to the given NullableEntityAddressCountryName and assigns it to the Object field.
-func (o *EntityControlaction) SetObject(v EntityAddressCountryName) {
-	o.Object.Set(&v)
+// SetObject gets a reference to the given []string and assigns it to the Object field.
+func (o *EntityControlaction) SetObject(v []string) {
+	o.Object = v
 }
 
-// SetObjectNil sets the value for Object to be an explicit nil
-func (o *EntityControlaction) SetObjectNil() {
-	o.Object.Set(nil)
-}
-
-// UnsetObject ensures that no value is present for Object, not even an explicit nil
-func (o *EntityControlaction) UnsetObject() {
-	o.Object.Unset()
-}
-
-// GetResult returns the Result field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityControlaction) GetResult() EntityAddressCountryName {
-	if o == nil || IsNil(o.Result.Get()) {
-		var ret EntityAddressCountryName
+// GetResult returns the Result field value if set, zero value otherwise.
+func (o *EntityControlaction) GetResult() []string {
+	if o == nil || IsNil(o.Result) {
+		var ret []string
 		return ret
 	}
-	return *o.Result.Get()
+	return o.Result
 }
 
 // GetResultOk returns a tuple with the Result field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityControlaction) GetResultOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityControlaction) GetResultOk() ([]string, bool) {
+	if o == nil || IsNil(o.Result) {
 		return nil, false
 	}
-	return o.Result.Get(), o.Result.IsSet()
+	return o.Result, true
 }
 
 // HasResult returns a boolean if a field has been set.
 func (o *EntityControlaction) HasResult() bool {
-	if o != nil && o.Result.IsSet() {
+	if o != nil && !IsNil(o.Result) {
 		return true
 	}
 
 	return false
 }
 
-// SetResult gets a reference to the given NullableEntityAddressCountryName and assigns it to the Result field.
-func (o *EntityControlaction) SetResult(v EntityAddressCountryName) {
-	o.Result.Set(&v)
-}
-
-// SetResultNil sets the value for Result to be an explicit nil
-func (o *EntityControlaction) SetResultNil() {
-	o.Result.Set(nil)
-}
-
-// UnsetResult ensures that no value is present for Result, not even an explicit nil
-func (o *EntityControlaction) UnsetResult() {
-	o.Result.Unset()
+// SetResult gets a reference to the given []string and assigns it to the Result field.
+func (o *EntityControlaction) SetResult(v []string) {
+	o.Result = v
 }
 
 func (o EntityControlaction) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityControlaction) MarshalJSON() ([]byte, error) {
 
 func (o EntityControlaction) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Object.IsSet() {
-		toSerialize["object"] = o.Object.Get()
+	if !IsNil(o.Object) {
+		toSerialize["object"] = o.Object
 	}
-	if o.Result.IsSet() {
-		toSerialize["result"] = o.Result.Get()
+	if !IsNil(o.Result) {
+		toSerialize["result"] = o.Result
 	}
 
 	for key, value := range o.AdditionalProperties {

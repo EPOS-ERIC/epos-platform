@@ -1,0 +1,11 @@
+{
+  "href": "http://localhost:8080/api/v2/access/location/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-location-630d862a%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-location-630d862a/v1.0",
+  "properties": {
+    "locn:geometry": [
+      "POLYGON((180.0 -90.0, -180.0 -90.0, -180.0 90.0, 180.0 90.0, 180.0 -90.0))"
+    ],
+    "rdf:type": "http://purl.org/dc/terms/Location"
+  },
+  "shape": "location"
+}

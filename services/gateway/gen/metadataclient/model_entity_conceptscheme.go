@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityConceptscheme{}
 
 // EntityConceptscheme struct for EntityConceptscheme
 type EntityConceptscheme struct {
-	Description          NullableEntityAddressCountryName `json:"description,omitempty"`
-	Title                NullableEntityAddressCountryName `json:"title,omitempty"`
+	// This property contains a description of the category scheme.
+	Description *string `json:"description,omitempty"`
+	// This property contains a name of the category scheme.
+	Title                *string `json:"title,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityConceptschemeWithDefaults() *EntityConceptscheme {
 	return &this
 }
 
-// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityConceptscheme) GetDescription() EntityAddressCountryName {
-	if o == nil || IsNil(o.Description.Get()) {
-		var ret EntityAddressCountryName
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *EntityConceptscheme) GetDescription() string {
+	if o == nil || IsNil(o.Description) {
+		var ret string
 		return ret
 	}
-	return *o.Description.Get()
+	return *o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityConceptscheme) GetDescriptionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityConceptscheme) GetDescriptionOk() (*string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return o.Description, true
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *EntityConceptscheme) HasDescription() bool {
-	if o != nil && o.Description.IsSet() {
+	if o != nil && !IsNil(o.Description) {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given NullableEntityAddressCountryName and assigns it to the Description field.
-func (o *EntityConceptscheme) SetDescription(v EntityAddressCountryName) {
-	o.Description.Set(&v)
+// SetDescription gets a reference to the given string and assigns it to the Description field.
+func (o *EntityConceptscheme) SetDescription(v string) {
+	o.Description = &v
 }
 
-// SetDescriptionNil sets the value for Description to be an explicit nil
-func (o *EntityConceptscheme) SetDescriptionNil() {
-	o.Description.Set(nil)
-}
-
-// UnsetDescription ensures that no value is present for Description, not even an explicit nil
-func (o *EntityConceptscheme) UnsetDescription() {
-	o.Description.Unset()
-}
-
-// GetTitle returns the Title field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityConceptscheme) GetTitle() EntityAddressCountryName {
-	if o == nil || IsNil(o.Title.Get()) {
-		var ret EntityAddressCountryName
+// GetTitle returns the Title field value if set, zero value otherwise.
+func (o *EntityConceptscheme) GetTitle() string {
+	if o == nil || IsNil(o.Title) {
+		var ret string
 		return ret
 	}
-	return *o.Title.Get()
+	return *o.Title
 }
 
 // GetTitleOk returns a tuple with the Title field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityConceptscheme) GetTitleOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityConceptscheme) GetTitleOk() (*string, bool) {
+	if o == nil || IsNil(o.Title) {
 		return nil, false
 	}
-	return o.Title.Get(), o.Title.IsSet()
+	return o.Title, true
 }
 
 // HasTitle returns a boolean if a field has been set.
 func (o *EntityConceptscheme) HasTitle() bool {
-	if o != nil && o.Title.IsSet() {
+	if o != nil && !IsNil(o.Title) {
 		return true
 	}
 
 	return false
 }
 
-// SetTitle gets a reference to the given NullableEntityAddressCountryName and assigns it to the Title field.
-func (o *EntityConceptscheme) SetTitle(v EntityAddressCountryName) {
-	o.Title.Set(&v)
-}
-
-// SetTitleNil sets the value for Title to be an explicit nil
-func (o *EntityConceptscheme) SetTitleNil() {
-	o.Title.Set(nil)
-}
-
-// UnsetTitle ensures that no value is present for Title, not even an explicit nil
-func (o *EntityConceptscheme) UnsetTitle() {
-	o.Title.Unset()
+// SetTitle gets a reference to the given string and assigns it to the Title field.
+func (o *EntityConceptscheme) SetTitle(v string) {
+	o.Title = &v
 }
 
 func (o EntityConceptscheme) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityConceptscheme) MarshalJSON() ([]byte, error) {
 
 func (o EntityConceptscheme) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Description.IsSet() {
-		toSerialize["description"] = o.Description.Get()
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
 	}
-	if o.Title.IsSet() {
-		toSerialize["title"] = o.Title.Get()
+	if !IsNil(o.Title) {
+		toSerialize["title"] = o.Title
 	}
 
 	for key, value := range o.AdditionalProperties {

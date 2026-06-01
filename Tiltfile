@@ -10,6 +10,9 @@ docker_build(
         'packages/go/observability',
         'docker/gateway-config.dev.yaml',
     ],
+	ignore=[
+        'services/gateway/.hypothesis',
+    ],
     live_update=[
         sync('services/gateway', '/workspace/services/gateway'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),

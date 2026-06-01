@@ -18,19 +18,19 @@ func mapOperation(ctx context.Context, detail *metadataclient.AccessDetailRespon
 		return api.Operation{}, fmt.Errorf("get operation iri template: %w", err)
 	}
 
-	apiDocumentation, err := aggregateAPIDocumentationByKeys(ctx, reader, fetch, "apiDocumentation", "api documentation", "documentation")
+	apiDocumentation, err := aggregateAPIDocumentationByKeys(ctx, reader, fetch, "dct:conformsTo", "schema:documentation")
 	if err != nil {
 		return api.Operation{}, fmt.Errorf("get operation api documentation: %w", err)
 	}
 
-	returns, err := reader.Strings("returns")
+	returns, err := reader.Strings("hydra:returns")
 	if err != nil {
 		return api.Operation{}, fmt.Errorf("get operation returns: %w", err)
 	}
 
 	return api.Operation{
 		ID:               detail.GetId(),
-		Method:           reader.OptionalString("method"),
+		Method:           reader.OptionalString("hydra:method"),
 		Returns:          returns,
 		IriTemplate:      iriTemplate,
 		APIDocumentation: apiDocumentation,
@@ -38,7 +38,7 @@ func mapOperation(ctx context.Context, detail *metadataclient.AccessDetailRespon
 }
 
 func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher) (*api.IriTemplate, error) {
-	items, err := reader.ItemsOneOf("pg_property", "property")
+	items, err := reader.ItemsOneOf("hydra:pg_property", "hydra:property")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template items: %w", err)
 	}
@@ -53,7 +53,7 @@ func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fet
 			return nil, nil
 		}
 
-		return &api.IriTemplate{Template: template}, nil
+		return &api.IriTemplate{Template: template, Mappings: nil}, nil
 	}
 
 	iriTemplateDetail, err := fetch(ctx, "iritemplate", item.ID)
@@ -62,7 +62,7 @@ func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fet
 	}
 
 	iriTemplateReader := metadatareader.New(iriTemplateDetail.GetProperties())
-	template, err := iriTemplateReader.RequiredString("template")
+	template, err := iriTemplateReader.RequiredStringOneOf("template", "hydra:template")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template template: %w", err)
 	}
@@ -76,7 +76,7 @@ func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fet
 }
 
 func aggregateIriTemplateMappings(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher) ([]api.IriTemplateMapping, error) {
-	items, err := reader.Items("mapping")
+	items, err := reader.ItemsOneOf("mapping", "hydra:mapping")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template mappings: %w", err)
 	}
@@ -116,27 +116,27 @@ func mapIriTemplateMapping(ctx context.Context, item metadatareader.Item, fetch 
 	}
 
 	reader := metadatareader.New(detail.GetProperties())
-	variable, err := reader.RequiredString("variable")
+	variable, err := reader.RequiredStringOneOf("variable", "hydra:variable")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping variable: %w", err)
 	}
 
-	label, err := reader.RequiredStringOneOf("pg_label", "label")
+	label, err := reader.RequiredStringOneOf("pg_label", "rdfs:pg_label", "label")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping label: %w", err)
 	}
 
-	rangeValue, err := reader.RequiredString("range")
+	rangeValue, err := reader.RequiredStringOneOf("range", "rdfs:range")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping range: %w", err)
 	}
 
-	required, err := reader.RequiredBool("required")
+	required, err := reader.RequiredBoolOneOf("required", "hydra:required")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping required: %w", err)
 	}
 
-	paramValue, err := reader.Strings("paramValue")
+	paramValue, err := reader.StringsOneOf("paramValue", "http:paramValue")
 	if err != nil {
 		return api.IriTemplateMapping{}, fmt.Errorf("get iri template mapping param value: %w", err)
 	}
@@ -155,15 +155,15 @@ func mapIriTemplateMapping(ctx context.Context, item metadatareader.Item, fetch 
 		Variable:       variable,
 		Label:          label,
 		Range:          rangeValue,
-		Property:       reader.OptionalString("property"),
+		Property:       reader.OptionalStringOneOf("property", "hydra:pg_property"),
 		Required:       required,
-		DefaultValue:   reader.OptionalString("defaultValue"),
-		MinValue:       reader.OptionalString("minValue"),
-		MaxValue:       reader.OptionalString("maxValue"),
+		DefaultValue:   reader.OptionalStringOneOf("defaultValue", "schema:defaultValue"),
+		MinValue:       reader.OptionalStringOneOf("minValue", "schema:minValue"),
+		MaxValue:       reader.OptionalStringOneOf("maxValue", "schema:maxValue"),
 		ParamValue:     paramValue,
 		MultipleValues: multipleValues != nil && *multipleValues,
 		ReadonlyValue:  readonlyValue != nil && *readonlyValue,
-		ValuePattern:   reader.OptionalString("valuePattern"),
+		ValuePattern:   reader.OptionalStringOneOf("valuePattern", "schema:valuePattern"),
 	}, nil
 }
 
@@ -231,17 +231,17 @@ func aggregateOperations(ctx context.Context, reader metadatareader.Reader, key 
 
 func mapAPIDocumentation(detail *metadataclient.AccessDetailResponse) (*api.APIDocumentation, error) {
 	docReader := metadatareader.New(detail.GetProperties())
-	title, err := docReader.RequiredString("title")
+	title, err := docReader.RequiredString("hydra:title")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation title: %w", err)
 	}
 
-	description, err := docReader.RequiredString("description")
+	description, err := docReader.RequiredString("hydra:description")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation description: %w", err)
 	}
 
-	entrypoint, err := docReader.RequiredString("entrypoint")
+	entrypoint, err := docReader.RequiredString("hydra:entrypoint")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation entrypoint: %w", err)
 	}

@@ -20,21 +20,36 @@ var _ MappedNullable = &EntityWebservice{}
 
 // EntityWebservice struct for EntityWebservice
 type EntityWebservice struct {
-	ConformsTo           NullableEntityAddressCountryName `json:"conforms to,omitempty"`
-	ContactPoint         NullableEntityAddressCountryName `json:"contact point,omitempty"`
-	DateModified         NullableEntityAddressCountryName `json:"date modified,omitempty"`
-	DatePublished        NullableEntityAddressCountryName `json:"date published,omitempty"`
-	Description          NullableEntityAddressCountryName `json:"description,omitempty"`
-	Entrypoint           NullableEntityAddressCountryName `json:"entrypoint,omitempty"`
-	Identifier           NullableEntityAddressCountryName `json:"identifier,omitempty"`
-	Keywords             NullableEntityAddressCountryName `json:"keywords,omitempty"`
-	License              NullableEntityAddressCountryName `json:"license,omitempty"`
-	Name                 NullableEntityAddressCountryName `json:"name,omitempty"`
-	Provider             NullableEntityAddressCountryName `json:"provider,omitempty"`
-	Spatial              NullableEntityAddressCountryName `json:"spatial,omitempty"`
-	SupportedOperation   NullableEntityAddressCountryName `json:"supported operation,omitempty"`
-	Temporal             NullableEntityAddressCountryName `json:"temporal,omitempty"`
-	Theme                NullableEntityAddressCountryName `json:"theme,omitempty"`
+	// This property refers to the API documentation.
+	ConformsTo []string `json:"conforms to,omitempty"`
+	// This property contains contact information that can be used for sending comments about the Web Service.
+	ContactPoint []string `json:"contact point,omitempty"`
+	// This property contains the most recent date on which the Web Service was modified.
+	DateModified *string `json:"date modified,omitempty"`
+	// This property contains the date of publication of the Web Service.
+	DatePublished *string `json:"date published,omitempty"`
+	// This property contains a free-text description of the Web Service.
+	Description *string `json:"description,omitempty"`
+	// This property refers to the API definitions (e.g., WSDL, WADL)
+	Entrypoint *string `json:"entrypoint,omitempty"`
+	// This property contains the main identifier for the Web Service.
+	Identifier []string `json:"identifier,omitempty"`
+	// This property contains the keywords used to describe the Web Service. Multiple entries in a keywords list are typically delimited by commas.
+	Keywords []string `json:"keywords,omitempty"`
+	// This property refers to the licence under which the Web Service can be used or reused.
+	License *string `json:"license,omitempty"`
+	// This property contains a name given to the Web Service.
+	Name *string `json:"name,omitempty"`
+	// This property refers to an Organisation responsible for making the Web Service available.
+	Provider *string `json:"provider,omitempty"`
+	// This property refers to a geographical area covered by the Web Service.
+	Spatial []string `json:"spatial,omitempty"`
+	// This property refers to a web service operation supported by the Web Service.
+	SupportedOperation []string `json:"supported operation,omitempty"`
+	// This property refers to a temporal period that the Web Service covers.
+	Temporal []string `json:"temporal,omitempty"`
+	// This property refers to a category of the Web Service. A Web Service may be associated with multiple themes.
+	Theme                []string `json:"theme,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -57,649 +72,484 @@ func NewEntityWebserviceWithDefaults() *EntityWebservice {
 	return &this
 }
 
-// GetConformsTo returns the ConformsTo field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetConformsTo() EntityAddressCountryName {
-	if o == nil || IsNil(o.ConformsTo.Get()) {
-		var ret EntityAddressCountryName
+// GetConformsTo returns the ConformsTo field value if set, zero value otherwise.
+func (o *EntityWebservice) GetConformsTo() []string {
+	if o == nil || IsNil(o.ConformsTo) {
+		var ret []string
 		return ret
 	}
-	return *o.ConformsTo.Get()
+	return o.ConformsTo
 }
 
 // GetConformsToOk returns a tuple with the ConformsTo field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetConformsToOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetConformsToOk() ([]string, bool) {
+	if o == nil || IsNil(o.ConformsTo) {
 		return nil, false
 	}
-	return o.ConformsTo.Get(), o.ConformsTo.IsSet()
+	return o.ConformsTo, true
 }
 
 // HasConformsTo returns a boolean if a field has been set.
 func (o *EntityWebservice) HasConformsTo() bool {
-	if o != nil && o.ConformsTo.IsSet() {
+	if o != nil && !IsNil(o.ConformsTo) {
 		return true
 	}
 
 	return false
 }
 
-// SetConformsTo gets a reference to the given NullableEntityAddressCountryName and assigns it to the ConformsTo field.
-func (o *EntityWebservice) SetConformsTo(v EntityAddressCountryName) {
-	o.ConformsTo.Set(&v)
+// SetConformsTo gets a reference to the given []string and assigns it to the ConformsTo field.
+func (o *EntityWebservice) SetConformsTo(v []string) {
+	o.ConformsTo = v
 }
 
-// SetConformsToNil sets the value for ConformsTo to be an explicit nil
-func (o *EntityWebservice) SetConformsToNil() {
-	o.ConformsTo.Set(nil)
-}
-
-// UnsetConformsTo ensures that no value is present for ConformsTo, not even an explicit nil
-func (o *EntityWebservice) UnsetConformsTo() {
-	o.ConformsTo.Unset()
-}
-
-// GetContactPoint returns the ContactPoint field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetContactPoint() EntityAddressCountryName {
-	if o == nil || IsNil(o.ContactPoint.Get()) {
-		var ret EntityAddressCountryName
+// GetContactPoint returns the ContactPoint field value if set, zero value otherwise.
+func (o *EntityWebservice) GetContactPoint() []string {
+	if o == nil || IsNil(o.ContactPoint) {
+		var ret []string
 		return ret
 	}
-	return *o.ContactPoint.Get()
+	return o.ContactPoint
 }
 
 // GetContactPointOk returns a tuple with the ContactPoint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetContactPointOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetContactPointOk() ([]string, bool) {
+	if o == nil || IsNil(o.ContactPoint) {
 		return nil, false
 	}
-	return o.ContactPoint.Get(), o.ContactPoint.IsSet()
+	return o.ContactPoint, true
 }
 
 // HasContactPoint returns a boolean if a field has been set.
 func (o *EntityWebservice) HasContactPoint() bool {
-	if o != nil && o.ContactPoint.IsSet() {
+	if o != nil && !IsNil(o.ContactPoint) {
 		return true
 	}
 
 	return false
 }
 
-// SetContactPoint gets a reference to the given NullableEntityAddressCountryName and assigns it to the ContactPoint field.
-func (o *EntityWebservice) SetContactPoint(v EntityAddressCountryName) {
-	o.ContactPoint.Set(&v)
+// SetContactPoint gets a reference to the given []string and assigns it to the ContactPoint field.
+func (o *EntityWebservice) SetContactPoint(v []string) {
+	o.ContactPoint = v
 }
 
-// SetContactPointNil sets the value for ContactPoint to be an explicit nil
-func (o *EntityWebservice) SetContactPointNil() {
-	o.ContactPoint.Set(nil)
-}
-
-// UnsetContactPoint ensures that no value is present for ContactPoint, not even an explicit nil
-func (o *EntityWebservice) UnsetContactPoint() {
-	o.ContactPoint.Unset()
-}
-
-// GetDateModified returns the DateModified field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetDateModified() EntityAddressCountryName {
-	if o == nil || IsNil(o.DateModified.Get()) {
-		var ret EntityAddressCountryName
+// GetDateModified returns the DateModified field value if set, zero value otherwise.
+func (o *EntityWebservice) GetDateModified() string {
+	if o == nil || IsNil(o.DateModified) {
+		var ret string
 		return ret
 	}
-	return *o.DateModified.Get()
+	return *o.DateModified
 }
 
 // GetDateModifiedOk returns a tuple with the DateModified field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetDateModifiedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetDateModifiedOk() (*string, bool) {
+	if o == nil || IsNil(o.DateModified) {
 		return nil, false
 	}
-	return o.DateModified.Get(), o.DateModified.IsSet()
+	return o.DateModified, true
 }
 
 // HasDateModified returns a boolean if a field has been set.
 func (o *EntityWebservice) HasDateModified() bool {
-	if o != nil && o.DateModified.IsSet() {
+	if o != nil && !IsNil(o.DateModified) {
 		return true
 	}
 
 	return false
 }
 
-// SetDateModified gets a reference to the given NullableEntityAddressCountryName and assigns it to the DateModified field.
-func (o *EntityWebservice) SetDateModified(v EntityAddressCountryName) {
-	o.DateModified.Set(&v)
+// SetDateModified gets a reference to the given string and assigns it to the DateModified field.
+func (o *EntityWebservice) SetDateModified(v string) {
+	o.DateModified = &v
 }
 
-// SetDateModifiedNil sets the value for DateModified to be an explicit nil
-func (o *EntityWebservice) SetDateModifiedNil() {
-	o.DateModified.Set(nil)
-}
-
-// UnsetDateModified ensures that no value is present for DateModified, not even an explicit nil
-func (o *EntityWebservice) UnsetDateModified() {
-	o.DateModified.Unset()
-}
-
-// GetDatePublished returns the DatePublished field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetDatePublished() EntityAddressCountryName {
-	if o == nil || IsNil(o.DatePublished.Get()) {
-		var ret EntityAddressCountryName
+// GetDatePublished returns the DatePublished field value if set, zero value otherwise.
+func (o *EntityWebservice) GetDatePublished() string {
+	if o == nil || IsNil(o.DatePublished) {
+		var ret string
 		return ret
 	}
-	return *o.DatePublished.Get()
+	return *o.DatePublished
 }
 
 // GetDatePublishedOk returns a tuple with the DatePublished field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetDatePublishedOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetDatePublishedOk() (*string, bool) {
+	if o == nil || IsNil(o.DatePublished) {
 		return nil, false
 	}
-	return o.DatePublished.Get(), o.DatePublished.IsSet()
+	return o.DatePublished, true
 }
 
 // HasDatePublished returns a boolean if a field has been set.
 func (o *EntityWebservice) HasDatePublished() bool {
-	if o != nil && o.DatePublished.IsSet() {
+	if o != nil && !IsNil(o.DatePublished) {
 		return true
 	}
 
 	return false
 }
 
-// SetDatePublished gets a reference to the given NullableEntityAddressCountryName and assigns it to the DatePublished field.
-func (o *EntityWebservice) SetDatePublished(v EntityAddressCountryName) {
-	o.DatePublished.Set(&v)
+// SetDatePublished gets a reference to the given string and assigns it to the DatePublished field.
+func (o *EntityWebservice) SetDatePublished(v string) {
+	o.DatePublished = &v
 }
 
-// SetDatePublishedNil sets the value for DatePublished to be an explicit nil
-func (o *EntityWebservice) SetDatePublishedNil() {
-	o.DatePublished.Set(nil)
-}
-
-// UnsetDatePublished ensures that no value is present for DatePublished, not even an explicit nil
-func (o *EntityWebservice) UnsetDatePublished() {
-	o.DatePublished.Unset()
-}
-
-// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetDescription() EntityAddressCountryName {
-	if o == nil || IsNil(o.Description.Get()) {
-		var ret EntityAddressCountryName
+// GetDescription returns the Description field value if set, zero value otherwise.
+func (o *EntityWebservice) GetDescription() string {
+	if o == nil || IsNil(o.Description) {
+		var ret string
 		return ret
 	}
-	return *o.Description.Get()
+	return *o.Description
 }
 
 // GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetDescriptionOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetDescriptionOk() (*string, bool) {
+	if o == nil || IsNil(o.Description) {
 		return nil, false
 	}
-	return o.Description.Get(), o.Description.IsSet()
+	return o.Description, true
 }
 
 // HasDescription returns a boolean if a field has been set.
 func (o *EntityWebservice) HasDescription() bool {
-	if o != nil && o.Description.IsSet() {
+	if o != nil && !IsNil(o.Description) {
 		return true
 	}
 
 	return false
 }
 
-// SetDescription gets a reference to the given NullableEntityAddressCountryName and assigns it to the Description field.
-func (o *EntityWebservice) SetDescription(v EntityAddressCountryName) {
-	o.Description.Set(&v)
+// SetDescription gets a reference to the given string and assigns it to the Description field.
+func (o *EntityWebservice) SetDescription(v string) {
+	o.Description = &v
 }
 
-// SetDescriptionNil sets the value for Description to be an explicit nil
-func (o *EntityWebservice) SetDescriptionNil() {
-	o.Description.Set(nil)
-}
-
-// UnsetDescription ensures that no value is present for Description, not even an explicit nil
-func (o *EntityWebservice) UnsetDescription() {
-	o.Description.Unset()
-}
-
-// GetEntrypoint returns the Entrypoint field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetEntrypoint() EntityAddressCountryName {
-	if o == nil || IsNil(o.Entrypoint.Get()) {
-		var ret EntityAddressCountryName
+// GetEntrypoint returns the Entrypoint field value if set, zero value otherwise.
+func (o *EntityWebservice) GetEntrypoint() string {
+	if o == nil || IsNil(o.Entrypoint) {
+		var ret string
 		return ret
 	}
-	return *o.Entrypoint.Get()
+	return *o.Entrypoint
 }
 
 // GetEntrypointOk returns a tuple with the Entrypoint field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetEntrypointOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetEntrypointOk() (*string, bool) {
+	if o == nil || IsNil(o.Entrypoint) {
 		return nil, false
 	}
-	return o.Entrypoint.Get(), o.Entrypoint.IsSet()
+	return o.Entrypoint, true
 }
 
 // HasEntrypoint returns a boolean if a field has been set.
 func (o *EntityWebservice) HasEntrypoint() bool {
-	if o != nil && o.Entrypoint.IsSet() {
+	if o != nil && !IsNil(o.Entrypoint) {
 		return true
 	}
 
 	return false
 }
 
-// SetEntrypoint gets a reference to the given NullableEntityAddressCountryName and assigns it to the Entrypoint field.
-func (o *EntityWebservice) SetEntrypoint(v EntityAddressCountryName) {
-	o.Entrypoint.Set(&v)
+// SetEntrypoint gets a reference to the given string and assigns it to the Entrypoint field.
+func (o *EntityWebservice) SetEntrypoint(v string) {
+	o.Entrypoint = &v
 }
 
-// SetEntrypointNil sets the value for Entrypoint to be an explicit nil
-func (o *EntityWebservice) SetEntrypointNil() {
-	o.Entrypoint.Set(nil)
-}
-
-// UnsetEntrypoint ensures that no value is present for Entrypoint, not even an explicit nil
-func (o *EntityWebservice) UnsetEntrypoint() {
-	o.Entrypoint.Unset()
-}
-
-// GetIdentifier returns the Identifier field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetIdentifier() EntityAddressCountryName {
-	if o == nil || IsNil(o.Identifier.Get()) {
-		var ret EntityAddressCountryName
+// GetIdentifier returns the Identifier field value if set, zero value otherwise.
+func (o *EntityWebservice) GetIdentifier() []string {
+	if o == nil || IsNil(o.Identifier) {
+		var ret []string
 		return ret
 	}
-	return *o.Identifier.Get()
+	return o.Identifier
 }
 
 // GetIdentifierOk returns a tuple with the Identifier field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetIdentifierOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetIdentifierOk() ([]string, bool) {
+	if o == nil || IsNil(o.Identifier) {
 		return nil, false
 	}
-	return o.Identifier.Get(), o.Identifier.IsSet()
+	return o.Identifier, true
 }
 
 // HasIdentifier returns a boolean if a field has been set.
 func (o *EntityWebservice) HasIdentifier() bool {
-	if o != nil && o.Identifier.IsSet() {
+	if o != nil && !IsNil(o.Identifier) {
 		return true
 	}
 
 	return false
 }
 
-// SetIdentifier gets a reference to the given NullableEntityAddressCountryName and assigns it to the Identifier field.
-func (o *EntityWebservice) SetIdentifier(v EntityAddressCountryName) {
-	o.Identifier.Set(&v)
+// SetIdentifier gets a reference to the given []string and assigns it to the Identifier field.
+func (o *EntityWebservice) SetIdentifier(v []string) {
+	o.Identifier = v
 }
 
-// SetIdentifierNil sets the value for Identifier to be an explicit nil
-func (o *EntityWebservice) SetIdentifierNil() {
-	o.Identifier.Set(nil)
-}
-
-// UnsetIdentifier ensures that no value is present for Identifier, not even an explicit nil
-func (o *EntityWebservice) UnsetIdentifier() {
-	o.Identifier.Unset()
-}
-
-// GetKeywords returns the Keywords field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetKeywords() EntityAddressCountryName {
-	if o == nil || IsNil(o.Keywords.Get()) {
-		var ret EntityAddressCountryName
+// GetKeywords returns the Keywords field value if set, zero value otherwise.
+func (o *EntityWebservice) GetKeywords() []string {
+	if o == nil || IsNil(o.Keywords) {
+		var ret []string
 		return ret
 	}
-	return *o.Keywords.Get()
+	return o.Keywords
 }
 
 // GetKeywordsOk returns a tuple with the Keywords field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetKeywordsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetKeywordsOk() ([]string, bool) {
+	if o == nil || IsNil(o.Keywords) {
 		return nil, false
 	}
-	return o.Keywords.Get(), o.Keywords.IsSet()
+	return o.Keywords, true
 }
 
 // HasKeywords returns a boolean if a field has been set.
 func (o *EntityWebservice) HasKeywords() bool {
-	if o != nil && o.Keywords.IsSet() {
+	if o != nil && !IsNil(o.Keywords) {
 		return true
 	}
 
 	return false
 }
 
-// SetKeywords gets a reference to the given NullableEntityAddressCountryName and assigns it to the Keywords field.
-func (o *EntityWebservice) SetKeywords(v EntityAddressCountryName) {
-	o.Keywords.Set(&v)
+// SetKeywords gets a reference to the given []string and assigns it to the Keywords field.
+func (o *EntityWebservice) SetKeywords(v []string) {
+	o.Keywords = v
 }
 
-// SetKeywordsNil sets the value for Keywords to be an explicit nil
-func (o *EntityWebservice) SetKeywordsNil() {
-	o.Keywords.Set(nil)
-}
-
-// UnsetKeywords ensures that no value is present for Keywords, not even an explicit nil
-func (o *EntityWebservice) UnsetKeywords() {
-	o.Keywords.Unset()
-}
-
-// GetLicense returns the License field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetLicense() EntityAddressCountryName {
-	if o == nil || IsNil(o.License.Get()) {
-		var ret EntityAddressCountryName
+// GetLicense returns the License field value if set, zero value otherwise.
+func (o *EntityWebservice) GetLicense() string {
+	if o == nil || IsNil(o.License) {
+		var ret string
 		return ret
 	}
-	return *o.License.Get()
+	return *o.License
 }
 
 // GetLicenseOk returns a tuple with the License field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetLicenseOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetLicenseOk() (*string, bool) {
+	if o == nil || IsNil(o.License) {
 		return nil, false
 	}
-	return o.License.Get(), o.License.IsSet()
+	return o.License, true
 }
 
 // HasLicense returns a boolean if a field has been set.
 func (o *EntityWebservice) HasLicense() bool {
-	if o != nil && o.License.IsSet() {
+	if o != nil && !IsNil(o.License) {
 		return true
 	}
 
 	return false
 }
 
-// SetLicense gets a reference to the given NullableEntityAddressCountryName and assigns it to the License field.
-func (o *EntityWebservice) SetLicense(v EntityAddressCountryName) {
-	o.License.Set(&v)
+// SetLicense gets a reference to the given string and assigns it to the License field.
+func (o *EntityWebservice) SetLicense(v string) {
+	o.License = &v
 }
 
-// SetLicenseNil sets the value for License to be an explicit nil
-func (o *EntityWebservice) SetLicenseNil() {
-	o.License.Set(nil)
-}
-
-// UnsetLicense ensures that no value is present for License, not even an explicit nil
-func (o *EntityWebservice) UnsetLicense() {
-	o.License.Unset()
-}
-
-// GetName returns the Name field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetName() EntityAddressCountryName {
-	if o == nil || IsNil(o.Name.Get()) {
-		var ret EntityAddressCountryName
+// GetName returns the Name field value if set, zero value otherwise.
+func (o *EntityWebservice) GetName() string {
+	if o == nil || IsNil(o.Name) {
+		var ret string
 		return ret
 	}
-	return *o.Name.Get()
+	return *o.Name
 }
 
 // GetNameOk returns a tuple with the Name field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetNameOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetNameOk() (*string, bool) {
+	if o == nil || IsNil(o.Name) {
 		return nil, false
 	}
-	return o.Name.Get(), o.Name.IsSet()
+	return o.Name, true
 }
 
 // HasName returns a boolean if a field has been set.
 func (o *EntityWebservice) HasName() bool {
-	if o != nil && o.Name.IsSet() {
+	if o != nil && !IsNil(o.Name) {
 		return true
 	}
 
 	return false
 }
 
-// SetName gets a reference to the given NullableEntityAddressCountryName and assigns it to the Name field.
-func (o *EntityWebservice) SetName(v EntityAddressCountryName) {
-	o.Name.Set(&v)
+// SetName gets a reference to the given string and assigns it to the Name field.
+func (o *EntityWebservice) SetName(v string) {
+	o.Name = &v
 }
 
-// SetNameNil sets the value for Name to be an explicit nil
-func (o *EntityWebservice) SetNameNil() {
-	o.Name.Set(nil)
-}
-
-// UnsetName ensures that no value is present for Name, not even an explicit nil
-func (o *EntityWebservice) UnsetName() {
-	o.Name.Unset()
-}
-
-// GetProvider returns the Provider field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetProvider() EntityAddressCountryName {
-	if o == nil || IsNil(o.Provider.Get()) {
-		var ret EntityAddressCountryName
+// GetProvider returns the Provider field value if set, zero value otherwise.
+func (o *EntityWebservice) GetProvider() string {
+	if o == nil || IsNil(o.Provider) {
+		var ret string
 		return ret
 	}
-	return *o.Provider.Get()
+	return *o.Provider
 }
 
 // GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetProviderOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetProviderOk() (*string, bool) {
+	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
-	return o.Provider.Get(), o.Provider.IsSet()
+	return o.Provider, true
 }
 
 // HasProvider returns a boolean if a field has been set.
 func (o *EntityWebservice) HasProvider() bool {
-	if o != nil && o.Provider.IsSet() {
+	if o != nil && !IsNil(o.Provider) {
 		return true
 	}
 
 	return false
 }
 
-// SetProvider gets a reference to the given NullableEntityAddressCountryName and assigns it to the Provider field.
-func (o *EntityWebservice) SetProvider(v EntityAddressCountryName) {
-	o.Provider.Set(&v)
+// SetProvider gets a reference to the given string and assigns it to the Provider field.
+func (o *EntityWebservice) SetProvider(v string) {
+	o.Provider = &v
 }
 
-// SetProviderNil sets the value for Provider to be an explicit nil
-func (o *EntityWebservice) SetProviderNil() {
-	o.Provider.Set(nil)
-}
-
-// UnsetProvider ensures that no value is present for Provider, not even an explicit nil
-func (o *EntityWebservice) UnsetProvider() {
-	o.Provider.Unset()
-}
-
-// GetSpatial returns the Spatial field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetSpatial() EntityAddressCountryName {
-	if o == nil || IsNil(o.Spatial.Get()) {
-		var ret EntityAddressCountryName
+// GetSpatial returns the Spatial field value if set, zero value otherwise.
+func (o *EntityWebservice) GetSpatial() []string {
+	if o == nil || IsNil(o.Spatial) {
+		var ret []string
 		return ret
 	}
-	return *o.Spatial.Get()
+	return o.Spatial
 }
 
 // GetSpatialOk returns a tuple with the Spatial field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetSpatialOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetSpatialOk() ([]string, bool) {
+	if o == nil || IsNil(o.Spatial) {
 		return nil, false
 	}
-	return o.Spatial.Get(), o.Spatial.IsSet()
+	return o.Spatial, true
 }
 
 // HasSpatial returns a boolean if a field has been set.
 func (o *EntityWebservice) HasSpatial() bool {
-	if o != nil && o.Spatial.IsSet() {
+	if o != nil && !IsNil(o.Spatial) {
 		return true
 	}
 
 	return false
 }
 
-// SetSpatial gets a reference to the given NullableEntityAddressCountryName and assigns it to the Spatial field.
-func (o *EntityWebservice) SetSpatial(v EntityAddressCountryName) {
-	o.Spatial.Set(&v)
+// SetSpatial gets a reference to the given []string and assigns it to the Spatial field.
+func (o *EntityWebservice) SetSpatial(v []string) {
+	o.Spatial = v
 }
 
-// SetSpatialNil sets the value for Spatial to be an explicit nil
-func (o *EntityWebservice) SetSpatialNil() {
-	o.Spatial.Set(nil)
-}
-
-// UnsetSpatial ensures that no value is present for Spatial, not even an explicit nil
-func (o *EntityWebservice) UnsetSpatial() {
-	o.Spatial.Unset()
-}
-
-// GetSupportedOperation returns the SupportedOperation field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetSupportedOperation() EntityAddressCountryName {
-	if o == nil || IsNil(o.SupportedOperation.Get()) {
-		var ret EntityAddressCountryName
+// GetSupportedOperation returns the SupportedOperation field value if set, zero value otherwise.
+func (o *EntityWebservice) GetSupportedOperation() []string {
+	if o == nil || IsNil(o.SupportedOperation) {
+		var ret []string
 		return ret
 	}
-	return *o.SupportedOperation.Get()
+	return o.SupportedOperation
 }
 
 // GetSupportedOperationOk returns a tuple with the SupportedOperation field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetSupportedOperationOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetSupportedOperationOk() ([]string, bool) {
+	if o == nil || IsNil(o.SupportedOperation) {
 		return nil, false
 	}
-	return o.SupportedOperation.Get(), o.SupportedOperation.IsSet()
+	return o.SupportedOperation, true
 }
 
 // HasSupportedOperation returns a boolean if a field has been set.
 func (o *EntityWebservice) HasSupportedOperation() bool {
-	if o != nil && o.SupportedOperation.IsSet() {
+	if o != nil && !IsNil(o.SupportedOperation) {
 		return true
 	}
 
 	return false
 }
 
-// SetSupportedOperation gets a reference to the given NullableEntityAddressCountryName and assigns it to the SupportedOperation field.
-func (o *EntityWebservice) SetSupportedOperation(v EntityAddressCountryName) {
-	o.SupportedOperation.Set(&v)
+// SetSupportedOperation gets a reference to the given []string and assigns it to the SupportedOperation field.
+func (o *EntityWebservice) SetSupportedOperation(v []string) {
+	o.SupportedOperation = v
 }
 
-// SetSupportedOperationNil sets the value for SupportedOperation to be an explicit nil
-func (o *EntityWebservice) SetSupportedOperationNil() {
-	o.SupportedOperation.Set(nil)
-}
-
-// UnsetSupportedOperation ensures that no value is present for SupportedOperation, not even an explicit nil
-func (o *EntityWebservice) UnsetSupportedOperation() {
-	o.SupportedOperation.Unset()
-}
-
-// GetTemporal returns the Temporal field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetTemporal() EntityAddressCountryName {
-	if o == nil || IsNil(o.Temporal.Get()) {
-		var ret EntityAddressCountryName
+// GetTemporal returns the Temporal field value if set, zero value otherwise.
+func (o *EntityWebservice) GetTemporal() []string {
+	if o == nil || IsNil(o.Temporal) {
+		var ret []string
 		return ret
 	}
-	return *o.Temporal.Get()
+	return o.Temporal
 }
 
 // GetTemporalOk returns a tuple with the Temporal field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetTemporalOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetTemporalOk() ([]string, bool) {
+	if o == nil || IsNil(o.Temporal) {
 		return nil, false
 	}
-	return o.Temporal.Get(), o.Temporal.IsSet()
+	return o.Temporal, true
 }
 
 // HasTemporal returns a boolean if a field has been set.
 func (o *EntityWebservice) HasTemporal() bool {
-	if o != nil && o.Temporal.IsSet() {
+	if o != nil && !IsNil(o.Temporal) {
 		return true
 	}
 
 	return false
 }
 
-// SetTemporal gets a reference to the given NullableEntityAddressCountryName and assigns it to the Temporal field.
-func (o *EntityWebservice) SetTemporal(v EntityAddressCountryName) {
-	o.Temporal.Set(&v)
+// SetTemporal gets a reference to the given []string and assigns it to the Temporal field.
+func (o *EntityWebservice) SetTemporal(v []string) {
+	o.Temporal = v
 }
 
-// SetTemporalNil sets the value for Temporal to be an explicit nil
-func (o *EntityWebservice) SetTemporalNil() {
-	o.Temporal.Set(nil)
-}
-
-// UnsetTemporal ensures that no value is present for Temporal, not even an explicit nil
-func (o *EntityWebservice) UnsetTemporal() {
-	o.Temporal.Unset()
-}
-
-// GetTheme returns the Theme field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityWebservice) GetTheme() EntityAddressCountryName {
-	if o == nil || IsNil(o.Theme.Get()) {
-		var ret EntityAddressCountryName
+// GetTheme returns the Theme field value if set, zero value otherwise.
+func (o *EntityWebservice) GetTheme() []string {
+	if o == nil || IsNil(o.Theme) {
+		var ret []string
 		return ret
 	}
-	return *o.Theme.Get()
+	return o.Theme
 }
 
 // GetThemeOk returns a tuple with the Theme field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityWebservice) GetThemeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityWebservice) GetThemeOk() ([]string, bool) {
+	if o == nil || IsNil(o.Theme) {
 		return nil, false
 	}
-	return o.Theme.Get(), o.Theme.IsSet()
+	return o.Theme, true
 }
 
 // HasTheme returns a boolean if a field has been set.
 func (o *EntityWebservice) HasTheme() bool {
-	if o != nil && o.Theme.IsSet() {
+	if o != nil && !IsNil(o.Theme) {
 		return true
 	}
 
 	return false
 }
 
-// SetTheme gets a reference to the given NullableEntityAddressCountryName and assigns it to the Theme field.
-func (o *EntityWebservice) SetTheme(v EntityAddressCountryName) {
-	o.Theme.Set(&v)
-}
-
-// SetThemeNil sets the value for Theme to be an explicit nil
-func (o *EntityWebservice) SetThemeNil() {
-	o.Theme.Set(nil)
-}
-
-// UnsetTheme ensures that no value is present for Theme, not even an explicit nil
-func (o *EntityWebservice) UnsetTheme() {
-	o.Theme.Unset()
+// SetTheme gets a reference to the given []string and assigns it to the Theme field.
+func (o *EntityWebservice) SetTheme(v []string) {
+	o.Theme = v
 }
 
 func (o EntityWebservice) MarshalJSON() ([]byte, error) {
@@ -712,50 +562,50 @@ func (o EntityWebservice) MarshalJSON() ([]byte, error) {
 
 func (o EntityWebservice) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.ConformsTo.IsSet() {
-		toSerialize["conforms to"] = o.ConformsTo.Get()
+	if !IsNil(o.ConformsTo) {
+		toSerialize["conforms to"] = o.ConformsTo
 	}
-	if o.ContactPoint.IsSet() {
-		toSerialize["contact point"] = o.ContactPoint.Get()
+	if !IsNil(o.ContactPoint) {
+		toSerialize["contact point"] = o.ContactPoint
 	}
-	if o.DateModified.IsSet() {
-		toSerialize["date modified"] = o.DateModified.Get()
+	if !IsNil(o.DateModified) {
+		toSerialize["date modified"] = o.DateModified
 	}
-	if o.DatePublished.IsSet() {
-		toSerialize["date published"] = o.DatePublished.Get()
+	if !IsNil(o.DatePublished) {
+		toSerialize["date published"] = o.DatePublished
 	}
-	if o.Description.IsSet() {
-		toSerialize["description"] = o.Description.Get()
+	if !IsNil(o.Description) {
+		toSerialize["description"] = o.Description
 	}
-	if o.Entrypoint.IsSet() {
-		toSerialize["entrypoint"] = o.Entrypoint.Get()
+	if !IsNil(o.Entrypoint) {
+		toSerialize["entrypoint"] = o.Entrypoint
 	}
-	if o.Identifier.IsSet() {
-		toSerialize["identifier"] = o.Identifier.Get()
+	if !IsNil(o.Identifier) {
+		toSerialize["identifier"] = o.Identifier
 	}
-	if o.Keywords.IsSet() {
-		toSerialize["keywords"] = o.Keywords.Get()
+	if !IsNil(o.Keywords) {
+		toSerialize["keywords"] = o.Keywords
 	}
-	if o.License.IsSet() {
-		toSerialize["license"] = o.License.Get()
+	if !IsNil(o.License) {
+		toSerialize["license"] = o.License
 	}
-	if o.Name.IsSet() {
-		toSerialize["name"] = o.Name.Get()
+	if !IsNil(o.Name) {
+		toSerialize["name"] = o.Name
 	}
-	if o.Provider.IsSet() {
-		toSerialize["provider"] = o.Provider.Get()
+	if !IsNil(o.Provider) {
+		toSerialize["provider"] = o.Provider
 	}
-	if o.Spatial.IsSet() {
-		toSerialize["spatial"] = o.Spatial.Get()
+	if !IsNil(o.Spatial) {
+		toSerialize["spatial"] = o.Spatial
 	}
-	if o.SupportedOperation.IsSet() {
-		toSerialize["supported operation"] = o.SupportedOperation.Get()
+	if !IsNil(o.SupportedOperation) {
+		toSerialize["supported operation"] = o.SupportedOperation
 	}
-	if o.Temporal.IsSet() {
-		toSerialize["temporal"] = o.Temporal.Get()
+	if !IsNil(o.Temporal) {
+		toSerialize["temporal"] = o.Temporal
 	}
-	if o.Theme.IsSet() {
-		toSerialize["theme"] = o.Theme.Get()
+	if !IsNil(o.Theme) {
+		toSerialize["theme"] = o.Theme
 	}
 
 	for key, value := range o.AdditionalProperties {

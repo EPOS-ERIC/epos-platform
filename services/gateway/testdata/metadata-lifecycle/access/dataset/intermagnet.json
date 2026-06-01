@@ -1,0 +1,106 @@
+{
+  "href": "http://localhost:8080/api/v2/access/dataset/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Dataset/v1.0",
+  "properties": {
+    "adms:identifier": [
+      {
+        "href": "http://localhost:8080/api/v2/access/identifier/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-identifier-34096b33%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-34096b33/v1.0",
+        "predicateIri": "http://www.w3.org/ns/adms#identifier",
+        "type": "identifier"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/identifier/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-identifier-70ea05a7%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-70ea05a7/v1.0",
+        "predicateIri": "http://www.w3.org/ns/adms#identifier",
+        "type": "identifier"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/identifier/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-identifier-b1f9aa83%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-b1f9aa83/v1.0",
+        "predicateIri": "http://www.w3.org/ns/adms#identifier",
+        "type": "identifier"
+      }
+    ],
+    "dcat:contactPoint": [
+      {
+        "href": "http://localhost:8080/api/v2/access/contactpoint/mailto%3Aochambers%40bgs.ac.uk%2FcontactPoint%2Fv1.0",
+        "id": "mailto:ochambers@bgs.ac.uk/contactPoint/v1.0",
+        "predicateIri": "http://www.w3.org/ns/dcat#contactPoint",
+        "type": "contactpoint"
+      }
+    ],
+    "dcat:distribution": [
+      {
+        "href": "http://localhost:8080/api/v2/access/distribution/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDistribution%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0",
+        "predicateIri": "http://www.w3.org/ns/dcat#distribution",
+        "type": "distribution"
+      }
+    ],
+    "dcat:keyword": [
+      "geomagnetic observatory",
+      "magnetism",
+      "geomagnetism",
+      "observatory",
+      "magnetic data provisional",
+      "real time magnetic data"
+    ],
+    "dcat:theme": [
+      {
+        "href": "http://localhost:8080/api/v2/access/concept/category%3Ageomagneticdata%2Fv1.0",
+        "id": "category:geomagneticdata/v1.0",
+        "predicateIri": "http://www.w3.org/ns/dcat#theme",
+        "type": "concept"
+      }
+    ],
+    "dct:accessRights": "https://publications.europa.eu/resource/authority/access-right/PUBLIC",
+    "dct:accrualPeriodicity": "http://purl.org/cld/freq/continuous",
+    "dct:created": "2018-08-31",
+    "dct:description": [
+      "The INTERMAGNET programme exists to establish a global network of cooperating digital magnetic observatories, adopting modern standard specifications for measuring and recording equipment, in order to facilitate data exchanges and the production of geomagnetic products in close to real time. To be admitted to INTERMAGNET, observatories must meet certain standards. INTERMAGNET's data sets contain continuous, provisional and definitive recordings of the Earth's magnetic field at second and minute sample periods."
+    ],
+    "dct:identifier": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Dataset",
+    "dct:issued": "2018-08-31",
+    "dct:modified": "2018-08-31",
+    "dct:publisher": [
+      {
+        "href": "http://localhost:8080/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0",
+        "id": "http://viaf.org/viaf/136554353//v1.0",
+        "predicateIri": "http://purl.org/dc/terms/publisher",
+        "type": "organization"
+      }
+    ],
+    "dct:spatial": [
+      {
+        "href": "http://localhost:8080/api/v2/access/location/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-location-630d862a%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-location-630d862a/v1.0",
+        "predicateIri": "http://purl.org/dc/terms/spatial",
+        "type": "location"
+      }
+    ],
+    "dct:temporal": [
+      {
+        "href": "http://localhost:8080/api/v2/access/periodoftime/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-periodoftime-0f4b2f01%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-periodoftime-0f4b2f01/v1.0",
+        "predicateIri": "http://purl.org/dc/terms/temporal",
+        "type": "periodoftime"
+      }
+    ],
+    "dct:title": [
+      "INTERMAGNET Geomagnetic Observatory Data"
+    ],
+    "dct:type": "http://purl.org/dc/dcmitype/Collection",
+    "dqv:hasQualityAnnotation": [
+      {
+        "href": "http://localhost:8080/api/v2/access/annotation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-annotation-0970cbef%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-annotation-0970cbef/v1.0",
+        "predicateIri": "http://www.w3.org/ns/dqv#hasQualityAnnotation",
+        "type": "annotation"
+      }
+    ],
+    "owl:versionInfo": "1.0.0",
+    "rdf:type": "http://www.w3.org/ns/dcat#Dataset"
+  },
+  "shape": "dataset"
+}

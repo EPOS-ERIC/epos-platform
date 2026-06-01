@@ -20,8 +20,10 @@ var _ MappedNullable = &EntityPeriodoftime{}
 
 // EntityPeriodoftime struct for EntityPeriodoftime
 type EntityPeriodoftime struct {
-	EndDate              NullableEntityAddressCountryName `json:"end date,omitempty"`
-	StartDate            NullableEntityAddressCountryName `json:"start date,omitempty"`
+	// This property contains the end of the period.
+	EndDate *string `json:"end date,omitempty"`
+	// This property contains the start of the period.
+	StartDate            *string `json:"start date,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -44,90 +46,68 @@ func NewEntityPeriodoftimeWithDefaults() *EntityPeriodoftime {
 	return &this
 }
 
-// GetEndDate returns the EndDate field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPeriodoftime) GetEndDate() EntityAddressCountryName {
-	if o == nil || IsNil(o.EndDate.Get()) {
-		var ret EntityAddressCountryName
+// GetEndDate returns the EndDate field value if set, zero value otherwise.
+func (o *EntityPeriodoftime) GetEndDate() string {
+	if o == nil || IsNil(o.EndDate) {
+		var ret string
 		return ret
 	}
-	return *o.EndDate.Get()
+	return *o.EndDate
 }
 
 // GetEndDateOk returns a tuple with the EndDate field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPeriodoftime) GetEndDateOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPeriodoftime) GetEndDateOk() (*string, bool) {
+	if o == nil || IsNil(o.EndDate) {
 		return nil, false
 	}
-	return o.EndDate.Get(), o.EndDate.IsSet()
+	return o.EndDate, true
 }
 
 // HasEndDate returns a boolean if a field has been set.
 func (o *EntityPeriodoftime) HasEndDate() bool {
-	if o != nil && o.EndDate.IsSet() {
+	if o != nil && !IsNil(o.EndDate) {
 		return true
 	}
 
 	return false
 }
 
-// SetEndDate gets a reference to the given NullableEntityAddressCountryName and assigns it to the EndDate field.
-func (o *EntityPeriodoftime) SetEndDate(v EntityAddressCountryName) {
-	o.EndDate.Set(&v)
+// SetEndDate gets a reference to the given string and assigns it to the EndDate field.
+func (o *EntityPeriodoftime) SetEndDate(v string) {
+	o.EndDate = &v
 }
 
-// SetEndDateNil sets the value for EndDate to be an explicit nil
-func (o *EntityPeriodoftime) SetEndDateNil() {
-	o.EndDate.Set(nil)
-}
-
-// UnsetEndDate ensures that no value is present for EndDate, not even an explicit nil
-func (o *EntityPeriodoftime) UnsetEndDate() {
-	o.EndDate.Unset()
-}
-
-// GetStartDate returns the StartDate field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityPeriodoftime) GetStartDate() EntityAddressCountryName {
-	if o == nil || IsNil(o.StartDate.Get()) {
-		var ret EntityAddressCountryName
+// GetStartDate returns the StartDate field value if set, zero value otherwise.
+func (o *EntityPeriodoftime) GetStartDate() string {
+	if o == nil || IsNil(o.StartDate) {
+		var ret string
 		return ret
 	}
-	return *o.StartDate.Get()
+	return *o.StartDate
 }
 
 // GetStartDateOk returns a tuple with the StartDate field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityPeriodoftime) GetStartDateOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityPeriodoftime) GetStartDateOk() (*string, bool) {
+	if o == nil || IsNil(o.StartDate) {
 		return nil, false
 	}
-	return o.StartDate.Get(), o.StartDate.IsSet()
+	return o.StartDate, true
 }
 
 // HasStartDate returns a boolean if a field has been set.
 func (o *EntityPeriodoftime) HasStartDate() bool {
-	if o != nil && o.StartDate.IsSet() {
+	if o != nil && !IsNil(o.StartDate) {
 		return true
 	}
 
 	return false
 }
 
-// SetStartDate gets a reference to the given NullableEntityAddressCountryName and assigns it to the StartDate field.
-func (o *EntityPeriodoftime) SetStartDate(v EntityAddressCountryName) {
-	o.StartDate.Set(&v)
-}
-
-// SetStartDateNil sets the value for StartDate to be an explicit nil
-func (o *EntityPeriodoftime) SetStartDateNil() {
-	o.StartDate.Set(nil)
-}
-
-// UnsetStartDate ensures that no value is present for StartDate, not even an explicit nil
-func (o *EntityPeriodoftime) UnsetStartDate() {
-	o.StartDate.Unset()
+// SetStartDate gets a reference to the given string and assigns it to the StartDate field.
+func (o *EntityPeriodoftime) SetStartDate(v string) {
+	o.StartDate = &v
 }
 
 func (o EntityPeriodoftime) MarshalJSON() ([]byte, error) {
@@ -140,11 +120,11 @@ func (o EntityPeriodoftime) MarshalJSON() ([]byte, error) {
 
 func (o EntityPeriodoftime) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.EndDate.IsSet() {
-		toSerialize["end date"] = o.EndDate.Get()
+	if !IsNil(o.EndDate) {
+		toSerialize["end date"] = o.EndDate
 	}
-	if o.StartDate.IsSet() {
-		toSerialize["start date"] = o.StartDate.Get()
+	if !IsNil(o.StartDate) {
+		toSerialize["start date"] = o.StartDate
 	}
 
 	for key, value := range o.AdditionalProperties {

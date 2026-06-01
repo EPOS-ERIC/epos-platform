@@ -46,6 +46,7 @@ type Services struct {
 func Default() Config {
 	return Config{
 		Server: Server{
+			Listen:         ":5000",
 			RequestTimeout: 30 * time.Second,
 			ReadTimeout:    15 * time.Second,
 			WriteTimeout:   30 * time.Second,
@@ -58,6 +59,9 @@ func Default() Config {
 			MaxEntries:  128,
 		},
 		Discovery: Discovery{FanOutLimit: 64},
+		Services: Services{
+			MetadataLifecycle: Service{URL: ""},
+		},
 	}
 }
 

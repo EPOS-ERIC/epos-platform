@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
@@ -58,5 +60,25 @@ func TestParseSearchParamsAcceptsSupportedSearchTypes(t *testing.T) {
 		if params.Types[i] != want[i] {
 			t.Fatalf("unexpected type at index %d: got %q want %q", i, params.Types[i], want[i])
 		}
+	}
+}
+
+func TestGetConceptTreeUsesFixtureResponses(t *testing.T) {
+	t.Parallel()
+
+	handler := newDiscoveryHandler(t, conceptTreeFixtureRoutes())
+	req := httptest.NewRequest(http.MethodGet, "/v1/concept", nil)
+	rec := httptest.NewRecorder()
+
+	handler.GetConceptTree(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Anthropogenic Hazards") {
+		t.Fatalf("body = %s", rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Dataset") {
+		t.Fatalf("body = %s", rec.Body.String())
 	}
 }

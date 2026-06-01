@@ -1,0 +1,23 @@
+{
+  "href": "http://localhost:8080/api/v2/access/operation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FOperation%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Operation/v1.0",
+  "properties": {
+    "hydra:method": "GET",
+    "hydra:pg_property": {
+      "href": "http://localhost:8080/api/v2/access/iritemplate/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-iritemplate-2ff35bd4%2Fv1.0",
+      "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-iritemplate-2ff35bd4/v1.0",
+      "predicateIri": "http://www.w3.org/ns/hydra/core#property",
+      "type": "iritemplate"
+    },
+    "hydra:returns": [
+      "text/csv",
+      "text/html",
+      "text/xml",
+      "application/json",
+      "application/covJson",
+      "text/plain"
+    ],
+    "rdf:type": "http://www.w3.org/ns/hydra/core#Operation"
+  },
+  "shape": "operation"
+}

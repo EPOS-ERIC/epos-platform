@@ -20,9 +20,12 @@ var _ MappedNullable = &EntityOperation{}
 
 // EntityOperation struct for EntityOperation
 type EntityOperation struct {
-	Method               NullableEntityAddressCountryName `json:"method,omitempty"`
-	Property             NullableEntityAddressCountryName `json:"property,omitempty"`
-	Returns              NullableEntityAddressCountryName `json:"returns,omitempty"`
+	// The HTTP method
+	Method *string `json:"method,omitempty"`
+	// This property refers to the IriTemplate of the Web Service operation. This describes the endpoint and parameters mapping for the operation.
+	Property *string `json:"property,omitempty"`
+	// This property is used to specify the output format of the Operation. The possible values are listed here: https://www.iana.org/assignments/media-types/media-types.xhtml
+	Returns              []string `json:"returns,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -45,133 +48,100 @@ func NewEntityOperationWithDefaults() *EntityOperation {
 	return &this
 }
 
-// GetMethod returns the Method field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityOperation) GetMethod() EntityAddressCountryName {
-	if o == nil || IsNil(o.Method.Get()) {
-		var ret EntityAddressCountryName
+// GetMethod returns the Method field value if set, zero value otherwise.
+func (o *EntityOperation) GetMethod() string {
+	if o == nil || IsNil(o.Method) {
+		var ret string
 		return ret
 	}
-	return *o.Method.Get()
+	return *o.Method
 }
 
 // GetMethodOk returns a tuple with the Method field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityOperation) GetMethodOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityOperation) GetMethodOk() (*string, bool) {
+	if o == nil || IsNil(o.Method) {
 		return nil, false
 	}
-	return o.Method.Get(), o.Method.IsSet()
+	return o.Method, true
 }
 
 // HasMethod returns a boolean if a field has been set.
 func (o *EntityOperation) HasMethod() bool {
-	if o != nil && o.Method.IsSet() {
+	if o != nil && !IsNil(o.Method) {
 		return true
 	}
 
 	return false
 }
 
-// SetMethod gets a reference to the given NullableEntityAddressCountryName and assigns it to the Method field.
-func (o *EntityOperation) SetMethod(v EntityAddressCountryName) {
-	o.Method.Set(&v)
+// SetMethod gets a reference to the given string and assigns it to the Method field.
+func (o *EntityOperation) SetMethod(v string) {
+	o.Method = &v
 }
 
-// SetMethodNil sets the value for Method to be an explicit nil
-func (o *EntityOperation) SetMethodNil() {
-	o.Method.Set(nil)
-}
-
-// UnsetMethod ensures that no value is present for Method, not even an explicit nil
-func (o *EntityOperation) UnsetMethod() {
-	o.Method.Unset()
-}
-
-// GetProperty returns the Property field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityOperation) GetProperty() EntityAddressCountryName {
-	if o == nil || IsNil(o.Property.Get()) {
-		var ret EntityAddressCountryName
+// GetProperty returns the Property field value if set, zero value otherwise.
+func (o *EntityOperation) GetProperty() string {
+	if o == nil || IsNil(o.Property) {
+		var ret string
 		return ret
 	}
-	return *o.Property.Get()
+	return *o.Property
 }
 
 // GetPropertyOk returns a tuple with the Property field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityOperation) GetPropertyOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityOperation) GetPropertyOk() (*string, bool) {
+	if o == nil || IsNil(o.Property) {
 		return nil, false
 	}
-	return o.Property.Get(), o.Property.IsSet()
+	return o.Property, true
 }
 
 // HasProperty returns a boolean if a field has been set.
 func (o *EntityOperation) HasProperty() bool {
-	if o != nil && o.Property.IsSet() {
+	if o != nil && !IsNil(o.Property) {
 		return true
 	}
 
 	return false
 }
 
-// SetProperty gets a reference to the given NullableEntityAddressCountryName and assigns it to the Property field.
-func (o *EntityOperation) SetProperty(v EntityAddressCountryName) {
-	o.Property.Set(&v)
+// SetProperty gets a reference to the given string and assigns it to the Property field.
+func (o *EntityOperation) SetProperty(v string) {
+	o.Property = &v
 }
 
-// SetPropertyNil sets the value for Property to be an explicit nil
-func (o *EntityOperation) SetPropertyNil() {
-	o.Property.Set(nil)
-}
-
-// UnsetProperty ensures that no value is present for Property, not even an explicit nil
-func (o *EntityOperation) UnsetProperty() {
-	o.Property.Unset()
-}
-
-// GetReturns returns the Returns field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityOperation) GetReturns() EntityAddressCountryName {
-	if o == nil || IsNil(o.Returns.Get()) {
-		var ret EntityAddressCountryName
+// GetReturns returns the Returns field value if set, zero value otherwise.
+func (o *EntityOperation) GetReturns() []string {
+	if o == nil || IsNil(o.Returns) {
+		var ret []string
 		return ret
 	}
-	return *o.Returns.Get()
+	return o.Returns
 }
 
 // GetReturnsOk returns a tuple with the Returns field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityOperation) GetReturnsOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityOperation) GetReturnsOk() ([]string, bool) {
+	if o == nil || IsNil(o.Returns) {
 		return nil, false
 	}
-	return o.Returns.Get(), o.Returns.IsSet()
+	return o.Returns, true
 }
 
 // HasReturns returns a boolean if a field has been set.
 func (o *EntityOperation) HasReturns() bool {
-	if o != nil && o.Returns.IsSet() {
+	if o != nil && !IsNil(o.Returns) {
 		return true
 	}
 
 	return false
 }
 
-// SetReturns gets a reference to the given NullableEntityAddressCountryName and assigns it to the Returns field.
-func (o *EntityOperation) SetReturns(v EntityAddressCountryName) {
-	o.Returns.Set(&v)
-}
-
-// SetReturnsNil sets the value for Returns to be an explicit nil
-func (o *EntityOperation) SetReturnsNil() {
-	o.Returns.Set(nil)
-}
-
-// UnsetReturns ensures that no value is present for Returns, not even an explicit nil
-func (o *EntityOperation) UnsetReturns() {
-	o.Returns.Unset()
+// SetReturns gets a reference to the given []string and assigns it to the Returns field.
+func (o *EntityOperation) SetReturns(v []string) {
+	o.Returns = v
 }
 
 func (o EntityOperation) MarshalJSON() ([]byte, error) {
@@ -184,14 +154,14 @@ func (o EntityOperation) MarshalJSON() ([]byte, error) {
 
 func (o EntityOperation) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Method.IsSet() {
-		toSerialize["method"] = o.Method.Get()
+	if !IsNil(o.Method) {
+		toSerialize["method"] = o.Method
 	}
-	if o.Property.IsSet() {
-		toSerialize["property"] = o.Property.Get()
+	if !IsNil(o.Property) {
+		toSerialize["property"] = o.Property
 	}
-	if o.Returns.IsSet() {
-		toSerialize["returns"] = o.Returns.Get()
+	if !IsNil(o.Returns) {
+		toSerialize["returns"] = o.Returns
 	}
 
 	for key, value := range o.AdditionalProperties {

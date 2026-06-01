@@ -1,0 +1,39 @@
+{
+  "href": "http://localhost:8080/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0",
+  "id": "http://viaf.org/viaf/136554353//v1.0",
+  "properties": {
+    "rdf:type": "http://schema.org/Organization",
+    "schema:address": {
+      "href": "http://localhost:8080/api/v2/access/postaladdress/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2Fbnode-postaladdress-064b9034%2Fv1.0",
+      "id": "http://viaf.org/viaf/136554353/bnode-postaladdress-064b9034/v1.0",
+      "predicateIri": "http://schema.org/address",
+      "type": "postaladdress"
+    },
+    "schema:email": [
+      "enquiries@bgs.ac.uk"
+    ],
+    "schema:identifier": [
+      {
+        "href": "http://localhost:8080/api/v2/access/propertyvalue/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2Fbnode-propertyvalue-5bbce760%2Fv1.0",
+        "id": "http://viaf.org/viaf/136554353/bnode-propertyvalue-5bbce760/v1.0",
+        "predicateIri": "http://schema.org/identifier",
+        "type": "propertyvalue"
+      }
+    ],
+    "schema:legalName": "BGS - British Geological Survey, UK Research and Innovation",
+    "schema:logo": "https://www.bgs.ac.uk/wp-content/uploads/2020/03/BGS-logo-large.png",
+    "schema:memberOf": [
+      {
+        "href": "http://localhost:8080/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F148537429%2F%2Fv1.0",
+        "id": "http://viaf.org/viaf/148537429//v1.0",
+        "predicateIri": "http://schema.org/memberOf",
+        "type": "organization"
+      }
+    ],
+    "schema:telephone": [
+      "+44 131 667 1000"
+    ],
+    "schema:url": "https://www.bgs.ac.uk/"
+  },
+  "shape": "organization"
+}

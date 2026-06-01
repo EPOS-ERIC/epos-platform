@@ -1,0 +1,12 @@
+{
+  "href": "http://localhost:8080/api/v2/access/postaladdress/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2Fbnode-postaladdress-064b9034%2Fv1.0",
+  "id": "http://viaf.org/viaf/136554353/bnode-postaladdress-064b9034/v1.0",
+  "properties": {
+    "rdf:type": "http://schema.org/PostalAddress",
+    "schema:addressCountry": "GB",
+    "schema:addressLocality": "Edinburgh",
+    "schema:postalCode": "EH14 4AP",
+    "schema:streetAddress": "The Lyell Centre, Research Avenue South"
+  },
+  "shape": "postaladdress"
+}

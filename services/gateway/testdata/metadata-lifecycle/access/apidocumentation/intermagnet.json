@@ -1,0 +1,11 @@
+{
+  "href": "http://localhost:8080/api/v2/access/apidocumentation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FAPIDocumentation%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/APIDocumentation/v1.0",
+  "properties": {
+    "hydra:description": "Brief description of how to use the INTERMAGNET web service",
+    "hydra:entrypoint": "https://imag-data.bgs.ac.uk/GIN_V1/",
+    "hydra:title": "INTERMAGNET web service documentation",
+    "rdf:type": "http://www.w3.org/ns/hydra/core#ApiDocumentation"
+  },
+  "shape": "apidocumentation"
+}

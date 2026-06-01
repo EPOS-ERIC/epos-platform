@@ -20,18 +20,30 @@ var _ MappedNullable = &EntityIritemplatemapping{}
 
 // EntityIritemplatemapping struct for EntityIritemplatemapping
 type EntityIritemplatemapping struct {
-	DefaultValue         NullableEntityAddressCountryName `json:"default value,omitempty"`
-	Label                NullableEntityAddressCountryName `json:"label,omitempty"`
-	MaxValue             NullableEntityAddressCountryName `json:"max value,omitempty"`
-	MinValue             NullableEntityAddressCountryName `json:"min value,omitempty"`
-	MultipleValues       NullableEntityAddressCountryName `json:"multiple values,omitempty"`
-	ParamValue           NullableEntityAddressCountryName `json:"param value,omitempty"`
-	Property             NullableEntityAddressCountryName `json:"property,omitempty"`
-	Range                NullableEntityAddressCountryName `json:"range,omitempty"`
-	ReadonlyValue        NullableEntityAddressCountryName `json:"readonly value,omitempty"`
-	Required             NullableEntityAddressCountryName `json:"required,omitempty"`
-	ValuePattern         NullableEntityAddressCountryName `json:"value pattern,omitempty"`
-	Variable             NullableEntityAddressCountryName `json:"variable,omitempty"`
+	// This property contains the default value of the parameter.
+	DefaultValue *string `json:"default value,omitempty"`
+	// This property contains a short string used to describe the meaning of the parameter.
+	Label *string `json:"label,omitempty"`
+	// This property contains the maximum value of the parameter.
+	MaxValue *string `json:"max value,omitempty"`
+	// This property contains the minimum value of the parameter.
+	MinValue *string `json:"min value,omitempty"`
+	// Whether multiple values are allowed for the property. Default is false.
+	MultipleValues []bool `json:"multiple values,omitempty"`
+	// This property contains one of the possible values which should be used in the web service query. It could be repeated as many times as needed.
+	ParamValue []string `json:"param value,omitempty"`
+	// This property contains the vocabulary term which indicates the semantic description of parameter.
+	Property *string `json:"property,omitempty"`
+	// This property contains the type of parameter (e.g., xsd:string, xsd:Boolean, xsd:date, xsd:dateTime).
+	Range *string `json:"range,omitempty"`
+	// Whether or not a property is mutable. Default is false. Specifying this for a property that also has a value makes it act similar to a hidden input in an HTML form.
+	ReadonlyValue []bool `json:"readonly value,omitempty"`
+	// This property contains true if the property is required, false otherwise.
+	Required *bool `json:"required,omitempty"`
+	// This property contains the regular expression for testing values according to the parameter's specification.
+	ValuePattern *string `json:"value pattern,omitempty"`
+	// This property contains the name of the parameter as required by web service specifications.
+	Variable             *string `json:"variable,omitempty"`
 	AdditionalProperties map[string]interface{}
 }
 
@@ -54,520 +66,388 @@ func NewEntityIritemplatemappingWithDefaults() *EntityIritemplatemapping {
 	return &this
 }
 
-// GetDefaultValue returns the DefaultValue field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetDefaultValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.DefaultValue.Get()) {
-		var ret EntityAddressCountryName
+// GetDefaultValue returns the DefaultValue field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetDefaultValue() string {
+	if o == nil || IsNil(o.DefaultValue) {
+		var ret string
 		return ret
 	}
-	return *o.DefaultValue.Get()
+	return *o.DefaultValue
 }
 
 // GetDefaultValueOk returns a tuple with the DefaultValue field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetDefaultValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetDefaultValueOk() (*string, bool) {
+	if o == nil || IsNil(o.DefaultValue) {
 		return nil, false
 	}
-	return o.DefaultValue.Get(), o.DefaultValue.IsSet()
+	return o.DefaultValue, true
 }
 
 // HasDefaultValue returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasDefaultValue() bool {
-	if o != nil && o.DefaultValue.IsSet() {
+	if o != nil && !IsNil(o.DefaultValue) {
 		return true
 	}
 
 	return false
 }
 
-// SetDefaultValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the DefaultValue field.
-func (o *EntityIritemplatemapping) SetDefaultValue(v EntityAddressCountryName) {
-	o.DefaultValue.Set(&v)
+// SetDefaultValue gets a reference to the given string and assigns it to the DefaultValue field.
+func (o *EntityIritemplatemapping) SetDefaultValue(v string) {
+	o.DefaultValue = &v
 }
 
-// SetDefaultValueNil sets the value for DefaultValue to be an explicit nil
-func (o *EntityIritemplatemapping) SetDefaultValueNil() {
-	o.DefaultValue.Set(nil)
-}
-
-// UnsetDefaultValue ensures that no value is present for DefaultValue, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetDefaultValue() {
-	o.DefaultValue.Unset()
-}
-
-// GetLabel returns the Label field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetLabel() EntityAddressCountryName {
-	if o == nil || IsNil(o.Label.Get()) {
-		var ret EntityAddressCountryName
+// GetLabel returns the Label field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetLabel() string {
+	if o == nil || IsNil(o.Label) {
+		var ret string
 		return ret
 	}
-	return *o.Label.Get()
+	return *o.Label
 }
 
 // GetLabelOk returns a tuple with the Label field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetLabelOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetLabelOk() (*string, bool) {
+	if o == nil || IsNil(o.Label) {
 		return nil, false
 	}
-	return o.Label.Get(), o.Label.IsSet()
+	return o.Label, true
 }
 
 // HasLabel returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasLabel() bool {
-	if o != nil && o.Label.IsSet() {
+	if o != nil && !IsNil(o.Label) {
 		return true
 	}
 
 	return false
 }
 
-// SetLabel gets a reference to the given NullableEntityAddressCountryName and assigns it to the Label field.
-func (o *EntityIritemplatemapping) SetLabel(v EntityAddressCountryName) {
-	o.Label.Set(&v)
+// SetLabel gets a reference to the given string and assigns it to the Label field.
+func (o *EntityIritemplatemapping) SetLabel(v string) {
+	o.Label = &v
 }
 
-// SetLabelNil sets the value for Label to be an explicit nil
-func (o *EntityIritemplatemapping) SetLabelNil() {
-	o.Label.Set(nil)
-}
-
-// UnsetLabel ensures that no value is present for Label, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetLabel() {
-	o.Label.Unset()
-}
-
-// GetMaxValue returns the MaxValue field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetMaxValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.MaxValue.Get()) {
-		var ret EntityAddressCountryName
+// GetMaxValue returns the MaxValue field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetMaxValue() string {
+	if o == nil || IsNil(o.MaxValue) {
+		var ret string
 		return ret
 	}
-	return *o.MaxValue.Get()
+	return *o.MaxValue
 }
 
 // GetMaxValueOk returns a tuple with the MaxValue field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetMaxValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetMaxValueOk() (*string, bool) {
+	if o == nil || IsNil(o.MaxValue) {
 		return nil, false
 	}
-	return o.MaxValue.Get(), o.MaxValue.IsSet()
+	return o.MaxValue, true
 }
 
 // HasMaxValue returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasMaxValue() bool {
-	if o != nil && o.MaxValue.IsSet() {
+	if o != nil && !IsNil(o.MaxValue) {
 		return true
 	}
 
 	return false
 }
 
-// SetMaxValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the MaxValue field.
-func (o *EntityIritemplatemapping) SetMaxValue(v EntityAddressCountryName) {
-	o.MaxValue.Set(&v)
+// SetMaxValue gets a reference to the given string and assigns it to the MaxValue field.
+func (o *EntityIritemplatemapping) SetMaxValue(v string) {
+	o.MaxValue = &v
 }
 
-// SetMaxValueNil sets the value for MaxValue to be an explicit nil
-func (o *EntityIritemplatemapping) SetMaxValueNil() {
-	o.MaxValue.Set(nil)
-}
-
-// UnsetMaxValue ensures that no value is present for MaxValue, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetMaxValue() {
-	o.MaxValue.Unset()
-}
-
-// GetMinValue returns the MinValue field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetMinValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.MinValue.Get()) {
-		var ret EntityAddressCountryName
+// GetMinValue returns the MinValue field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetMinValue() string {
+	if o == nil || IsNil(o.MinValue) {
+		var ret string
 		return ret
 	}
-	return *o.MinValue.Get()
+	return *o.MinValue
 }
 
 // GetMinValueOk returns a tuple with the MinValue field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetMinValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetMinValueOk() (*string, bool) {
+	if o == nil || IsNil(o.MinValue) {
 		return nil, false
 	}
-	return o.MinValue.Get(), o.MinValue.IsSet()
+	return o.MinValue, true
 }
 
 // HasMinValue returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasMinValue() bool {
-	if o != nil && o.MinValue.IsSet() {
+	if o != nil && !IsNil(o.MinValue) {
 		return true
 	}
 
 	return false
 }
 
-// SetMinValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the MinValue field.
-func (o *EntityIritemplatemapping) SetMinValue(v EntityAddressCountryName) {
-	o.MinValue.Set(&v)
+// SetMinValue gets a reference to the given string and assigns it to the MinValue field.
+func (o *EntityIritemplatemapping) SetMinValue(v string) {
+	o.MinValue = &v
 }
 
-// SetMinValueNil sets the value for MinValue to be an explicit nil
-func (o *EntityIritemplatemapping) SetMinValueNil() {
-	o.MinValue.Set(nil)
-}
-
-// UnsetMinValue ensures that no value is present for MinValue, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetMinValue() {
-	o.MinValue.Unset()
-}
-
-// GetMultipleValues returns the MultipleValues field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetMultipleValues() EntityAddressCountryName {
-	if o == nil || IsNil(o.MultipleValues.Get()) {
-		var ret EntityAddressCountryName
+// GetMultipleValues returns the MultipleValues field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetMultipleValues() []bool {
+	if o == nil || IsNil(o.MultipleValues) {
+		var ret []bool
 		return ret
 	}
-	return *o.MultipleValues.Get()
+	return o.MultipleValues
 }
 
 // GetMultipleValuesOk returns a tuple with the MultipleValues field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetMultipleValuesOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetMultipleValuesOk() ([]bool, bool) {
+	if o == nil || IsNil(o.MultipleValues) {
 		return nil, false
 	}
-	return o.MultipleValues.Get(), o.MultipleValues.IsSet()
+	return o.MultipleValues, true
 }
 
 // HasMultipleValues returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasMultipleValues() bool {
-	if o != nil && o.MultipleValues.IsSet() {
+	if o != nil && !IsNil(o.MultipleValues) {
 		return true
 	}
 
 	return false
 }
 
-// SetMultipleValues gets a reference to the given NullableEntityAddressCountryName and assigns it to the MultipleValues field.
-func (o *EntityIritemplatemapping) SetMultipleValues(v EntityAddressCountryName) {
-	o.MultipleValues.Set(&v)
+// SetMultipleValues gets a reference to the given []bool and assigns it to the MultipleValues field.
+func (o *EntityIritemplatemapping) SetMultipleValues(v []bool) {
+	o.MultipleValues = v
 }
 
-// SetMultipleValuesNil sets the value for MultipleValues to be an explicit nil
-func (o *EntityIritemplatemapping) SetMultipleValuesNil() {
-	o.MultipleValues.Set(nil)
-}
-
-// UnsetMultipleValues ensures that no value is present for MultipleValues, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetMultipleValues() {
-	o.MultipleValues.Unset()
-}
-
-// GetParamValue returns the ParamValue field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetParamValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.ParamValue.Get()) {
-		var ret EntityAddressCountryName
+// GetParamValue returns the ParamValue field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetParamValue() []string {
+	if o == nil || IsNil(o.ParamValue) {
+		var ret []string
 		return ret
 	}
-	return *o.ParamValue.Get()
+	return o.ParamValue
 }
 
 // GetParamValueOk returns a tuple with the ParamValue field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetParamValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetParamValueOk() ([]string, bool) {
+	if o == nil || IsNil(o.ParamValue) {
 		return nil, false
 	}
-	return o.ParamValue.Get(), o.ParamValue.IsSet()
+	return o.ParamValue, true
 }
 
 // HasParamValue returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasParamValue() bool {
-	if o != nil && o.ParamValue.IsSet() {
+	if o != nil && !IsNil(o.ParamValue) {
 		return true
 	}
 
 	return false
 }
 
-// SetParamValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the ParamValue field.
-func (o *EntityIritemplatemapping) SetParamValue(v EntityAddressCountryName) {
-	o.ParamValue.Set(&v)
+// SetParamValue gets a reference to the given []string and assigns it to the ParamValue field.
+func (o *EntityIritemplatemapping) SetParamValue(v []string) {
+	o.ParamValue = v
 }
 
-// SetParamValueNil sets the value for ParamValue to be an explicit nil
-func (o *EntityIritemplatemapping) SetParamValueNil() {
-	o.ParamValue.Set(nil)
-}
-
-// UnsetParamValue ensures that no value is present for ParamValue, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetParamValue() {
-	o.ParamValue.Unset()
-}
-
-// GetProperty returns the Property field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetProperty() EntityAddressCountryName {
-	if o == nil || IsNil(o.Property.Get()) {
-		var ret EntityAddressCountryName
+// GetProperty returns the Property field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetProperty() string {
+	if o == nil || IsNil(o.Property) {
+		var ret string
 		return ret
 	}
-	return *o.Property.Get()
+	return *o.Property
 }
 
 // GetPropertyOk returns a tuple with the Property field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetPropertyOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetPropertyOk() (*string, bool) {
+	if o == nil || IsNil(o.Property) {
 		return nil, false
 	}
-	return o.Property.Get(), o.Property.IsSet()
+	return o.Property, true
 }
 
 // HasProperty returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasProperty() bool {
-	if o != nil && o.Property.IsSet() {
+	if o != nil && !IsNil(o.Property) {
 		return true
 	}
 
 	return false
 }
 
-// SetProperty gets a reference to the given NullableEntityAddressCountryName and assigns it to the Property field.
-func (o *EntityIritemplatemapping) SetProperty(v EntityAddressCountryName) {
-	o.Property.Set(&v)
+// SetProperty gets a reference to the given string and assigns it to the Property field.
+func (o *EntityIritemplatemapping) SetProperty(v string) {
+	o.Property = &v
 }
 
-// SetPropertyNil sets the value for Property to be an explicit nil
-func (o *EntityIritemplatemapping) SetPropertyNil() {
-	o.Property.Set(nil)
-}
-
-// UnsetProperty ensures that no value is present for Property, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetProperty() {
-	o.Property.Unset()
-}
-
-// GetRange returns the Range field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetRange() EntityAddressCountryName {
-	if o == nil || IsNil(o.Range.Get()) {
-		var ret EntityAddressCountryName
+// GetRange returns the Range field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetRange() string {
+	if o == nil || IsNil(o.Range) {
+		var ret string
 		return ret
 	}
-	return *o.Range.Get()
+	return *o.Range
 }
 
 // GetRangeOk returns a tuple with the Range field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetRangeOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetRangeOk() (*string, bool) {
+	if o == nil || IsNil(o.Range) {
 		return nil, false
 	}
-	return o.Range.Get(), o.Range.IsSet()
+	return o.Range, true
 }
 
 // HasRange returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasRange() bool {
-	if o != nil && o.Range.IsSet() {
+	if o != nil && !IsNil(o.Range) {
 		return true
 	}
 
 	return false
 }
 
-// SetRange gets a reference to the given NullableEntityAddressCountryName and assigns it to the Range field.
-func (o *EntityIritemplatemapping) SetRange(v EntityAddressCountryName) {
-	o.Range.Set(&v)
+// SetRange gets a reference to the given string and assigns it to the Range field.
+func (o *EntityIritemplatemapping) SetRange(v string) {
+	o.Range = &v
 }
 
-// SetRangeNil sets the value for Range to be an explicit nil
-func (o *EntityIritemplatemapping) SetRangeNil() {
-	o.Range.Set(nil)
-}
-
-// UnsetRange ensures that no value is present for Range, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetRange() {
-	o.Range.Unset()
-}
-
-// GetReadonlyValue returns the ReadonlyValue field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetReadonlyValue() EntityAddressCountryName {
-	if o == nil || IsNil(o.ReadonlyValue.Get()) {
-		var ret EntityAddressCountryName
+// GetReadonlyValue returns the ReadonlyValue field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetReadonlyValue() []bool {
+	if o == nil || IsNil(o.ReadonlyValue) {
+		var ret []bool
 		return ret
 	}
-	return *o.ReadonlyValue.Get()
+	return o.ReadonlyValue
 }
 
 // GetReadonlyValueOk returns a tuple with the ReadonlyValue field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetReadonlyValueOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetReadonlyValueOk() ([]bool, bool) {
+	if o == nil || IsNil(o.ReadonlyValue) {
 		return nil, false
 	}
-	return o.ReadonlyValue.Get(), o.ReadonlyValue.IsSet()
+	return o.ReadonlyValue, true
 }
 
 // HasReadonlyValue returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasReadonlyValue() bool {
-	if o != nil && o.ReadonlyValue.IsSet() {
+	if o != nil && !IsNil(o.ReadonlyValue) {
 		return true
 	}
 
 	return false
 }
 
-// SetReadonlyValue gets a reference to the given NullableEntityAddressCountryName and assigns it to the ReadonlyValue field.
-func (o *EntityIritemplatemapping) SetReadonlyValue(v EntityAddressCountryName) {
-	o.ReadonlyValue.Set(&v)
+// SetReadonlyValue gets a reference to the given []bool and assigns it to the ReadonlyValue field.
+func (o *EntityIritemplatemapping) SetReadonlyValue(v []bool) {
+	o.ReadonlyValue = v
 }
 
-// SetReadonlyValueNil sets the value for ReadonlyValue to be an explicit nil
-func (o *EntityIritemplatemapping) SetReadonlyValueNil() {
-	o.ReadonlyValue.Set(nil)
-}
-
-// UnsetReadonlyValue ensures that no value is present for ReadonlyValue, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetReadonlyValue() {
-	o.ReadonlyValue.Unset()
-}
-
-// GetRequired returns the Required field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetRequired() EntityAddressCountryName {
-	if o == nil || IsNil(o.Required.Get()) {
-		var ret EntityAddressCountryName
+// GetRequired returns the Required field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetRequired() bool {
+	if o == nil || IsNil(o.Required) {
+		var ret bool
 		return ret
 	}
-	return *o.Required.Get()
+	return *o.Required
 }
 
 // GetRequiredOk returns a tuple with the Required field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetRequiredOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetRequiredOk() (*bool, bool) {
+	if o == nil || IsNil(o.Required) {
 		return nil, false
 	}
-	return o.Required.Get(), o.Required.IsSet()
+	return o.Required, true
 }
 
 // HasRequired returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasRequired() bool {
-	if o != nil && o.Required.IsSet() {
+	if o != nil && !IsNil(o.Required) {
 		return true
 	}
 
 	return false
 }
 
-// SetRequired gets a reference to the given NullableEntityAddressCountryName and assigns it to the Required field.
-func (o *EntityIritemplatemapping) SetRequired(v EntityAddressCountryName) {
-	o.Required.Set(&v)
+// SetRequired gets a reference to the given bool and assigns it to the Required field.
+func (o *EntityIritemplatemapping) SetRequired(v bool) {
+	o.Required = &v
 }
 
-// SetRequiredNil sets the value for Required to be an explicit nil
-func (o *EntityIritemplatemapping) SetRequiredNil() {
-	o.Required.Set(nil)
-}
-
-// UnsetRequired ensures that no value is present for Required, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetRequired() {
-	o.Required.Unset()
-}
-
-// GetValuePattern returns the ValuePattern field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetValuePattern() EntityAddressCountryName {
-	if o == nil || IsNil(o.ValuePattern.Get()) {
-		var ret EntityAddressCountryName
+// GetValuePattern returns the ValuePattern field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetValuePattern() string {
+	if o == nil || IsNil(o.ValuePattern) {
+		var ret string
 		return ret
 	}
-	return *o.ValuePattern.Get()
+	return *o.ValuePattern
 }
 
 // GetValuePatternOk returns a tuple with the ValuePattern field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetValuePatternOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetValuePatternOk() (*string, bool) {
+	if o == nil || IsNil(o.ValuePattern) {
 		return nil, false
 	}
-	return o.ValuePattern.Get(), o.ValuePattern.IsSet()
+	return o.ValuePattern, true
 }
 
 // HasValuePattern returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasValuePattern() bool {
-	if o != nil && o.ValuePattern.IsSet() {
+	if o != nil && !IsNil(o.ValuePattern) {
 		return true
 	}
 
 	return false
 }
 
-// SetValuePattern gets a reference to the given NullableEntityAddressCountryName and assigns it to the ValuePattern field.
-func (o *EntityIritemplatemapping) SetValuePattern(v EntityAddressCountryName) {
-	o.ValuePattern.Set(&v)
+// SetValuePattern gets a reference to the given string and assigns it to the ValuePattern field.
+func (o *EntityIritemplatemapping) SetValuePattern(v string) {
+	o.ValuePattern = &v
 }
 
-// SetValuePatternNil sets the value for ValuePattern to be an explicit nil
-func (o *EntityIritemplatemapping) SetValuePatternNil() {
-	o.ValuePattern.Set(nil)
-}
-
-// UnsetValuePattern ensures that no value is present for ValuePattern, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetValuePattern() {
-	o.ValuePattern.Unset()
-}
-
-// GetVariable returns the Variable field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EntityIritemplatemapping) GetVariable() EntityAddressCountryName {
-	if o == nil || IsNil(o.Variable.Get()) {
-		var ret EntityAddressCountryName
+// GetVariable returns the Variable field value if set, zero value otherwise.
+func (o *EntityIritemplatemapping) GetVariable() string {
+	if o == nil || IsNil(o.Variable) {
+		var ret string
 		return ret
 	}
-	return *o.Variable.Get()
+	return *o.Variable
 }
 
 // GetVariableOk returns a tuple with the Variable field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EntityIritemplatemapping) GetVariableOk() (*EntityAddressCountryName, bool) {
-	if o == nil {
+func (o *EntityIritemplatemapping) GetVariableOk() (*string, bool) {
+	if o == nil || IsNil(o.Variable) {
 		return nil, false
 	}
-	return o.Variable.Get(), o.Variable.IsSet()
+	return o.Variable, true
 }
 
 // HasVariable returns a boolean if a field has been set.
 func (o *EntityIritemplatemapping) HasVariable() bool {
-	if o != nil && o.Variable.IsSet() {
+	if o != nil && !IsNil(o.Variable) {
 		return true
 	}
 
 	return false
 }
 
-// SetVariable gets a reference to the given NullableEntityAddressCountryName and assigns it to the Variable field.
-func (o *EntityIritemplatemapping) SetVariable(v EntityAddressCountryName) {
-	o.Variable.Set(&v)
-}
-
-// SetVariableNil sets the value for Variable to be an explicit nil
-func (o *EntityIritemplatemapping) SetVariableNil() {
-	o.Variable.Set(nil)
-}
-
-// UnsetVariable ensures that no value is present for Variable, not even an explicit nil
-func (o *EntityIritemplatemapping) UnsetVariable() {
-	o.Variable.Unset()
+// SetVariable gets a reference to the given string and assigns it to the Variable field.
+func (o *EntityIritemplatemapping) SetVariable(v string) {
+	o.Variable = &v
 }
 
 func (o EntityIritemplatemapping) MarshalJSON() ([]byte, error) {
@@ -580,41 +460,41 @@ func (o EntityIritemplatemapping) MarshalJSON() ([]byte, error) {
 
 func (o EntityIritemplatemapping) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.DefaultValue.IsSet() {
-		toSerialize["default value"] = o.DefaultValue.Get()
+	if !IsNil(o.DefaultValue) {
+		toSerialize["default value"] = o.DefaultValue
 	}
-	if o.Label.IsSet() {
-		toSerialize["label"] = o.Label.Get()
+	if !IsNil(o.Label) {
+		toSerialize["label"] = o.Label
 	}
-	if o.MaxValue.IsSet() {
-		toSerialize["max value"] = o.MaxValue.Get()
+	if !IsNil(o.MaxValue) {
+		toSerialize["max value"] = o.MaxValue
 	}
-	if o.MinValue.IsSet() {
-		toSerialize["min value"] = o.MinValue.Get()
+	if !IsNil(o.MinValue) {
+		toSerialize["min value"] = o.MinValue
 	}
-	if o.MultipleValues.IsSet() {
-		toSerialize["multiple values"] = o.MultipleValues.Get()
+	if !IsNil(o.MultipleValues) {
+		toSerialize["multiple values"] = o.MultipleValues
 	}
-	if o.ParamValue.IsSet() {
-		toSerialize["param value"] = o.ParamValue.Get()
+	if !IsNil(o.ParamValue) {
+		toSerialize["param value"] = o.ParamValue
 	}
-	if o.Property.IsSet() {
-		toSerialize["property"] = o.Property.Get()
+	if !IsNil(o.Property) {
+		toSerialize["property"] = o.Property
 	}
-	if o.Range.IsSet() {
-		toSerialize["range"] = o.Range.Get()
+	if !IsNil(o.Range) {
+		toSerialize["range"] = o.Range
 	}
-	if o.ReadonlyValue.IsSet() {
-		toSerialize["readonly value"] = o.ReadonlyValue.Get()
+	if !IsNil(o.ReadonlyValue) {
+		toSerialize["readonly value"] = o.ReadonlyValue
 	}
-	if o.Required.IsSet() {
-		toSerialize["required"] = o.Required.Get()
+	if !IsNil(o.Required) {
+		toSerialize["required"] = o.Required
 	}
-	if o.ValuePattern.IsSet() {
-		toSerialize["value pattern"] = o.ValuePattern.Get()
+	if !IsNil(o.ValuePattern) {
+		toSerialize["value pattern"] = o.ValuePattern
 	}
-	if o.Variable.IsSet() {
-		toSerialize["variable"] = o.Variable.Get()
+	if !IsNil(o.Variable) {
+		toSerialize["variable"] = o.Variable
 	}
 
 	for key, value := range o.AdditionalProperties {

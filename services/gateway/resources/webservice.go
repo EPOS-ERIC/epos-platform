@@ -33,17 +33,17 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 
-	name, err := reader.RequiredStringOneOf("name", "title")
+	name, err := reader.RequiredString("schema:name")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice name: %w", err)
 	}
 
-	issued, err := reader.OptionalTimeOneOf("datePublished", "issued")
+	issued, err := reader.OptionalTimeOneOf("schema:datePublished", "dct:issued")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice issued: %w", err)
 	}
 
-	modified, err := reader.OptionalTimeOneOf("dateModified", "modified")
+	modified, err := reader.OptionalTimeOneOf("schema:dateModified", "dct:modified")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice modified: %w", err)
 	}
@@ -53,26 +53,26 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		return api.Webservice{}, err
 	}
 
-	contactPoints, err := reader.PassthroughRefs("contactPoint")
+	contactPoints, err := reader.PassthroughRefs("dcat:contactPoint")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice contact points: %w", err)
 	}
 
-	providers, err := reader.ResourceRefs("provider", api.OrganizationType)
+	providers, err := reader.ResourceRefs("schema:provider", api.OrganizationType)
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice provider: %w", err)
 	}
-	provider := api.ResourceRef{}
+	provider := api.ResourceRef{ID: "", Name: "", Href: ""}
 	if len(providers) > 0 {
 		provider = providers[0]
 	}
 
-	concepts, err := reader.ResourceRefs("theme", api.ConceptType)
+	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice concepts: %w", err)
 	}
 
-	keywords, err := reader.Strings("keywords")
+	keywords, err := reader.Strings("schema:keywords")
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice keywords: %w", err)
 	}
@@ -81,10 +81,10 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		BaseDetailResource: api.BaseDetailResource{
 			ID:          detail.GetId(),
 			Name:        name,
-			Description: reader.OptionalString("description"),
+			Description: reader.OptionalString("schema:description"),
 		},
 		Identifiers:      identifiers,
-		Entrypoint:       reader.OptionalString("entrypoint"),
+		Entrypoint:       reader.OptionalString("hydra:entrypoint"),
 		ContactPoints:    contactPoints,
 		Provider:         provider,
 		Issued:           issued,
@@ -93,7 +93,7 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		Temporal:         temporal,
 		Keywords:         keywords,
 		Concepts:         concepts,
-		License:          reader.OptionalString("license"),
+		License:          reader.OptionalString("dct:license"),
 		Operations:       operations,
 		APIDocumentation: apiDocumentation,
 	}, nil
@@ -136,7 +136,7 @@ func aggregateWebserviceEntities(ctx context.Context, properties map[string]any,
 		return nil
 	})
 	g.Go(func() error {
-		mappedOperations, err := aggregateOperations(groupCtx, reader, "supportedOperation", fetch)
+		mappedOperations, err := aggregateOperations(groupCtx, reader, "hydra:supportedOperation", fetch)
 		if err != nil {
 			return fmt.Errorf("get webservice operations: %w", err)
 		}
@@ -144,7 +144,7 @@ func aggregateWebserviceEntities(ctx context.Context, properties map[string]any,
 		return nil
 	})
 	g.Go(func() error {
-		mappedAPIDocumentation, err := aggregateAPIDocumentationByKeys(groupCtx, reader, fetch, "conformsTo")
+		mappedAPIDocumentation, err := aggregateAPIDocumentationByKeys(groupCtx, reader, fetch, "dct:conformsTo")
 		if err != nil {
 			return fmt.Errorf("get webservice api documentation: %w", err)
 		}

@@ -292,6 +292,28 @@ func TestClientReturnsStaleImmediatelyWhileRefreshContinues(t *testing.T) {
 	transport.waitIdle()
 }
 
+func TestRoundTripReturnsResponseForNonSuccessStatus(t *testing.T) {
+	transport := newStubTransport()
+	transport.queueResponse(&http.Response{
+		Status:     "404 Not Found",
+		StatusCode: http.StatusNotFound,
+		Header:     http.Header{contentTypeHeader: {jsonContentType}},
+		Body:       io.NopCloser(strings.NewReader(`{"error":"not found"}`)),
+	})
+
+	client := newTestClient(t, transport, time.Second, time.Minute)
+	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v2/access/concept/concept-seismology", nil)
+
+	resp, err := client.RoundTrip(request)
+	if err != nil {
+		t.Fatalf("round trip failed: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("status code = %d", resp.StatusCode)
+	}
+}
+
 func TestClientColdMissIgnoresShortTimeout(t *testing.T) {
 	t.Parallel()
 

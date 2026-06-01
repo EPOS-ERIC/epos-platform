@@ -8,9 +8,12 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
 )
+
+var log = logging.Get("metadata-reader")
 
 // Item represents one normalized property value from a metadata-lifecycle property map.
 type Item struct {
@@ -41,9 +44,11 @@ func New(properties map[string]any) Reader {
 func (r Reader) Items(key string) ([]Item, error) {
 	raw, ok := r.properties[key]
 	if !ok {
+		log.Debug("items direct key miss, trying normalized lookup", "key", key, "properties", r.properties)
 		raw, ok = r.lookup[normalizePropertyKey(key)]
 	}
 	if !ok {
+		log.Debug("items key not found", "key", key, "properties", r.properties)
 		return nil, nil
 	}
 
@@ -58,7 +63,7 @@ func (r Reader) Items(key string) ([]Item, error) {
 	for i, value := range values {
 		switch typed := value.(type) {
 		case string:
-			items = append(items, Item{Value: typed})
+			items = append(items, Item{ID: "", Type: "", Title: "", Href: "", Value: typed})
 		case map[string]any:
 			items = append(items, Item{
 				ID:    mapString(typed, "id"),
@@ -68,6 +73,7 @@ func (r Reader) Items(key string) ([]Item, error) {
 				Value: mapString(typed, "value"),
 			})
 		default:
+			log.Debug("items parse failed: unexpected value type", "key", key, "index", i, "type", fmt.Sprintf("%T", value))
 			return nil, fmt.Errorf("item %d: expected string or object, got %T", i, value)
 		}
 	}
@@ -79,12 +85,18 @@ func (r Reader) Items(key string) ([]Item, error) {
 func (r Reader) ResourceRefs(key string, resourceType api.ResourceType) ([]api.ResourceRef, error) {
 	items, err := r.Items(key)
 	if err != nil || len(items) == 0 {
+		if err != nil {
+			log.Debug("resource refs parse failed", "key", key, "resourceType", resourceType, "error", err)
+		} else {
+			log.Debug("resource refs empty", "key", key, "resourceType", resourceType)
+		}
 		return nil, err
 	}
 
 	refs := make([]api.ResourceRef, 0, len(items))
 	for i, item := range items {
 		if item.ID == "" {
+			log.Debug("resource refs item missing id", "key", key, "index", i)
 			return nil, fmt.Errorf("item %d: missing id", i)
 		}
 
@@ -102,12 +114,18 @@ func (r Reader) ResourceRefs(key string, resourceType api.ResourceType) ([]api.R
 func (r Reader) PassthroughRefs(key string) ([]api.ResourceRef, error) {
 	items, err := r.Items(key)
 	if err != nil || len(items) == 0 {
+		if err != nil {
+			log.Debug("passthrough refs parse failed", "key", key, "error", err)
+		} else {
+			log.Debug("passthrough refs empty", "key", key)
+		}
 		return nil, err
 	}
 
 	refs := make([]api.ResourceRef, 0, len(items))
 	for i, item := range items {
 		if item.ID == "" {
+			log.Debug("passthrough refs item missing id", "key", key, "index", i)
 			return nil, fmt.Errorf("item %d: missing id", i)
 		}
 
@@ -153,6 +171,18 @@ func (r Reader) RequiredStringOneOf(keys ...string) (string, error) {
 	return "", fmt.Errorf("missing fields %v", keys)
 }
 
+// OptionalStringOneOf returns first non-empty value among keys.
+func (r Reader) OptionalStringOneOf(keys ...string) string {
+	for _, key := range keys {
+		value := r.OptionalString(key)
+		if value != "" {
+			return value
+		}
+	}
+
+	return ""
+}
+
 // OptionalString returns first normalized string value for key.
 func (r Reader) OptionalString(key string) string {
 	items, err := r.Items(key)
@@ -183,6 +213,21 @@ func (r Reader) Strings(key string) ([]string, error) {
 	return values, nil
 }
 
+// StringsOneOf returns first non-empty string slice among keys.
+func (r Reader) StringsOneOf(keys ...string) ([]string, error) {
+	for _, key := range keys {
+		values, err := r.Strings(key)
+		if err != nil {
+			return nil, err
+		}
+		if len(values) > 0 {
+			return values, nil
+		}
+	}
+
+	return nil, nil
+}
+
 // OptionalTime parses an optional time value for key.
 func (r Reader) OptionalTime(key string) (*time.Time, error) {
 	value := r.OptionalString(key)
@@ -197,6 +242,7 @@ func (r Reader) OptionalTime(key string) (*time.Time, error) {
 		}
 	}
 
+	log.Debug("optional time parse failed", "key", key, "value", value)
 	return nil, fmt.Errorf("parse '%s': unsupported time format '%s'", key, value)
 }
 
@@ -224,6 +270,7 @@ func (r Reader) OptionalVersioningStatus(key string) (api.VersioningStatus, erro
 
 	status, err := api.NewVersioningStatusFromValue(value)
 	if err != nil {
+		log.Debug("optional versioning status parse failed", "key", key, "value", value, "error", err)
 		return "", fmt.Errorf("parse '%s' versioning status: %w", key, err)
 	}
 
@@ -239,6 +286,7 @@ func (r Reader) OptionalBool(key string) (*bool, error) {
 
 	parsedValue, err := strconv.ParseBool(value)
 	if err != nil {
+		log.Debug("optional bool parse failed", "key", key, "value", value, "error", err)
 		return nil, fmt.Errorf("parse '%s' bool: %w", key, err)
 	}
 
@@ -253,6 +301,34 @@ func (r Reader) RequiredBool(key string) (bool, error) {
 	}
 	if value == nil {
 		return false, fmt.Errorf("missing field '%s'", key)
+	}
+
+	return *value, nil
+}
+
+// OptionalBoolOneOf parses first present boolean value among keys.
+func (r Reader) OptionalBoolOneOf(keys ...string) (*bool, error) {
+	for _, key := range keys {
+		value, err := r.OptionalBool(key)
+		if err != nil {
+			return nil, err
+		}
+		if value != nil {
+			return value, nil
+		}
+	}
+
+	return nil, nil
+}
+
+// RequiredBoolOneOf parses first present required boolean value among keys.
+func (r Reader) RequiredBoolOneOf(keys ...string) (bool, error) {
+	value, err := r.OptionalBoolOneOf(keys...)
+	if err != nil {
+		return false, err
+	}
+	if value == nil {
+		return false, fmt.Errorf("missing fields %v", keys)
 	}
 
 	return *value, nil
@@ -281,6 +357,7 @@ func ParseOptionalInt32(value string) (int32, error) {
 
 	parsedValue, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
+		log.Debug("optional int32 parse failed", "value", value, "error", err)
 		return 0, fmt.Errorf("parse int32 '%s': %w", value, err)
 	}
 

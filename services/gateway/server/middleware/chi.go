@@ -49,7 +49,7 @@ func Logger(next http.Handler) http.Handler {
 		}
 
 		startedAt := time.Now()
-		rw := &responseWriter{ResponseWriter: w, status: 200}
+		rw := &responseWriter{ResponseWriter: w, status: 200, size: 0}
 		next.ServeHTTP(rw, r)
 		duration := time.Since(startedAt)
 

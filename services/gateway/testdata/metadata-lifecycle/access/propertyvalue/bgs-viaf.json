@@ -1,0 +1,10 @@
+{
+  "href": "http://localhost:8080/api/v2/access/propertyvalue/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2Fbnode-propertyvalue-5bbce760%2Fv1.0",
+  "id": "http://viaf.org/viaf/136554353/bnode-propertyvalue-5bbce760/v1.0",
+  "properties": {
+    "rdf:type": "http://schema.org/PropertyValue",
+    "schema:pg_value": "http://viaf.org/viaf/136554353/",
+    "schema:propertyID": "viaf"
+  },
+  "shape": "propertyvalue"
+}
