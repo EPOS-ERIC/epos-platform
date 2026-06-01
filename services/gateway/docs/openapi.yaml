@@ -1001,6 +1001,10 @@ components:
         id:
           type: string
           example: "distribution1"
+        name:
+          type: string
+          description: Optional human-readable distribution title.
+          example: "Strong motion waveform archive"
         href:
           type: string
           format: uri-reference

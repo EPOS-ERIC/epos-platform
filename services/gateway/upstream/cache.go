@@ -40,6 +40,7 @@ func (c *Client) storeCache(key string, response *cachedResponse) {
 		key:       key,
 		response:  response,
 		expiresAt: c.now().Add(c.cacheTTL),
+		element:   nil,
 	}
 	entry.element = c.order.PushFront(entry)
 	c.cache[key] = entry

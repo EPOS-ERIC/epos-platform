@@ -21,6 +21,8 @@ func NewMetadatalifecycle(baseURL string, upstreamCfg config.Upstream) (*metadat
 		RealTimeout: upstreamCfg.RealTimeout,
 		CacheTTL:    upstreamCfg.CacheTTL,
 		MaxEntries:  upstreamCfg.MaxEntries,
+		Transport:   nil,
+		Logger:      nil,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create upstream client: %w", err)
@@ -30,6 +32,7 @@ func NewMetadatalifecycle(baseURL string, upstreamCfg config.Upstream) (*metadat
 	cfg.Servers = metadataclient.ServerConfigurations{{
 		URL:         normalizedBaseURL,
 		Description: "metadata-lifecycle",
+		Variables:   nil,
 	}}
 	cfg.HTTPClient = upstreamClient.StandardClient()
 

@@ -40,9 +40,11 @@ func writeError(ctx context.Context, w http.ResponseWriter, status int, code, me
 	w.WriteHeader(status)
 
 	problem := api.Problem{
-		Title:  code,
-		Status: status,
-		Detail: message,
+		Title:       code,
+		Status:      status,
+		Detail:      message,
+		DebugDetail: "",
+		Instance:    "",
 	}
 	if internalErr != nil && log.Enabled(ctx, slog.LevelDebug) {
 		problem.DebugDetail = internalErr.Error()

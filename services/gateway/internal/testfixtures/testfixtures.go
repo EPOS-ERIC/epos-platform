@@ -58,7 +58,7 @@ func LoadAccessDetail(t testing.TB, relativePath string) *metadataclient.AccessD
 
 func NewMetadataClient(baseURL string) *metadataclient.APIClient {
 	config := metadataclient.NewConfiguration()
-	config.Servers = metadataclient.ServerConfigurations{{URL: baseURL}}
+	config.Servers = metadataclient.ServerConfigurations{{URL: baseURL, Description: "", Variables: nil}}
 	return metadataclient.NewAPIClient(config)
 }
 

@@ -88,14 +88,12 @@ func mapOrganizationItem(item metadataclient.SearchItem) (api.OrganizationItem, 
 }
 
 func (s *Service) mapSoftwareApplicationItem(ctx context.Context, item metadataclient.SearchItem) (api.SoftwareApplicationItem, error) {
-	reader := metadatareader.New(item.Fields)
-
 	baseItem, err := mapBaseItem(item)
 	if err != nil {
 		return api.SoftwareApplicationItem{}, fmt.Errorf("map software application base item: %w", err)
 	}
 
-	publishers, err := getLinkedIDs(reader, "schema:provider")
+	publishers, err := s.getSoftwareCreators(ctx, string(api.SoftwareApplicationType), baseItem.ID)
 	if err != nil {
 		return api.SoftwareApplicationItem{}, fmt.Errorf("get software application providers: %w", err)
 	}
@@ -112,14 +110,12 @@ func (s *Service) mapSoftwareApplicationItem(ctx context.Context, item metadatac
 }
 
 func (s *Service) mapSoftwareSourceCodeItem(ctx context.Context, item metadataclient.SearchItem) (api.SoftwareSourceCodeItem, error) {
-	reader := metadatareader.New(item.Fields)
-
 	baseItem, err := mapBaseItem(item)
 	if err != nil {
 		return api.SoftwareSourceCodeItem{}, fmt.Errorf("map software source code base item: %w", err)
 	}
 
-	publishers, err := getLinkedIDs(reader, "schema:provider")
+	publishers, err := s.getSoftwareCreators(ctx, string(api.SoftwareSourceCodeType), baseItem.ID)
 	if err != nil {
 		return api.SoftwareSourceCodeItem{}, fmt.Errorf("get software source code providers: %w", err)
 	}
@@ -242,6 +238,7 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 		g.Go(func() error {
 			provider := api.ResourceRef{
 				ID:   providerID,
+				Name: "",
 				Href: gatewayhref.Build(api.OrganizationType, providerID),
 			}
 
@@ -271,7 +268,6 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 }
 
 func (s *Service) mapDistributions(ctx context.Context, distributionID string) ([]api.DatasetDistributionSearchItem, error) {
-	distributions := []api.DatasetDistributionSearchItem{}
 	detail, err := metadataaccess.FetchDetail(ctx, s.metadataClient, string(api.DatasetType), distributionID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch dataset '%s' details: %w", distributionID, err)
@@ -285,12 +281,38 @@ func (s *Service) mapDistributions(ctx context.Context, distributionID string) (
 		return []api.DatasetDistributionSearchItem{}, nil
 	}
 
-	for _, distribution := range refs {
-		distributions = append(distributions, api.DatasetDistributionSearchItem{
-			ID:   distribution.ID,
-			Name: distribution.Name,
-			Href: gatewayhref.Build(api.DistributionType, distribution.ID),
+	distributions := make([]api.DatasetDistributionSearchItem, len(refs))
+	g, groupCtx := errgroup.WithContext(ctx)
+	g.SetLimit(s.fanOutLimit)
+
+	for i, distribution := range refs {
+		g.Go(func() error {
+			name := distribution.Name
+			if name == "" {
+				distributionDetail, err := metadataaccess.FetchDetail(groupCtx, s.metadataClient, string(api.DistributionType), distribution.ID)
+				if err != nil {
+					s.log.Warn("distribution details fetch failed", "distribution_id", distribution.ID, "error", err)
+				} else {
+					name, err = metadatareader.New(distributionDetail.GetProperties()).RequiredString("dct:title")
+					if err != nil {
+						s.log.Warn("distribution title extraction failed", "distribution_id", distribution.ID, "error", err)
+						name = ""
+					}
+				}
+			}
+
+			distributions[i] = api.DatasetDistributionSearchItem{
+				ID:   distribution.ID,
+				Name: name,
+				Href: gatewayhref.Build(api.DistributionType, distribution.ID),
+			}
+
+			return nil
 		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("map dataset '%s' distributions: %w", distributionID, err)
 	}
 
 	return distributions, nil
@@ -305,6 +327,7 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 		g.Go(func() error {
 			concept := api.ResourceRef{
 				ID:   conceptID,
+				Name: "",
 				Href: gatewayhref.Build(api.ConceptType, conceptID),
 			}
 
@@ -329,6 +352,23 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 	}
 
 	return concepts, nil
+}
+
+func (s *Service) getSoftwareCreators(ctx context.Context, softwareType string, softwareID string) ([]string, error) {
+	detail, err := metadataaccess.FetchDetail(ctx, s.metadataClient, softwareType, softwareID)
+	if err != nil {
+		return nil, fmt.Errorf("fetch software '%s' details: %w", softwareID, err)
+	}
+
+	creators, err := getLinkedIDs(metadatareader.New(detail.GetProperties()), "schema:creator")
+	if err != nil {
+		if errors.Is(err, errMissingField) {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("extract software '%s' creators: %w", softwareID, err)
+	}
+
+	return creators, nil
 }
 
 func getLinkedIDs(reader metadatareader.Reader, key string) ([]string, error) {

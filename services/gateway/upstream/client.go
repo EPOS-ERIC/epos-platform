@@ -106,13 +106,14 @@ func NewClient(cfg Config) (*Client, error) {
 	}
 
 	return &Client{
-		httpClient:  &nethttp.Client{Transport: transport},
+		httpClient:  &nethttp.Client{Transport: transport, CheckRedirect: nil, Jar: nil, Timeout: 0},
 		timeout:     cfg.Timeout,
 		realTimeout: cfg.RealTimeout,
 		cacheTTL:    cfg.CacheTTL,
 		maxEntries:  cfg.MaxEntries,
 		log:         logger,
 		now:         time.Now,
+		mu:          sync.Mutex{},
 		cache:       make(map[string]*cacheEntry),
 		order:       list.New(),
 		inflight:    make(map[string]*inflightCall),
@@ -121,7 +122,7 @@ func NewClient(cfg Config) (*Client, error) {
 
 // StandardClient returns a standard net/http client that uses this cache-aware transport.
 func (c *Client) StandardClient() *nethttp.Client {
-	return &nethttp.Client{Transport: c}
+	return &nethttp.Client{Transport: c, CheckRedirect: nil, Jar: nil, Timeout: 0}
 }
 
 // RoundTrip implements net/http.RoundTripper.
@@ -129,7 +130,7 @@ func (c *Client) RoundTrip(req *nethttp.Request) (*nethttp.Response, error) {
 	resp, err := c.Do(req)
 	if err != nil {
 		if statusErr, ok := errors.AsType[*upstreamStatusError](err); ok {
-			return buildResponse(statusErr.response, CacheMetadata{}).Response, nil
+			return buildResponse(statusErr.response, CacheMetadata{Hit: false, Stale: false, Reason: cacheReasonNone}).Response, nil
 		}
 
 		return nil, err
@@ -140,7 +141,7 @@ func (c *Client) RoundTrip(req *nethttp.Request) (*nethttp.Response, error) {
 
 // Do executes req using client defaults.
 func (c *Client) Do(req *nethttp.Request) (*Response, error) {
-	return c.DoWithOptions(req, RequestOptions{})
+	return c.DoWithOptions(req, RequestOptions{Timeout: 0})
 }
 
 // DoWithOptions executes req with optional per-request overrides.
@@ -169,7 +170,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 			slog.Group("cache", "mode", "cache-hit-fresh"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
 		)
-		return buildResponse(entry.response, CacheMetadata{Hit: true}), nil
+		return buildResponse(entry.response, CacheMetadata{Hit: true, Stale: false, Reason: cacheReasonNone}), nil
 	}
 
 	staleEntry := c.getCache(prepared.key)
@@ -243,7 +244,7 @@ func (c *Client) finishForeground(call *inflightCall) (*Response, error) {
 		return nil, call.err
 	}
 
-	return buildResponse(call.response, CacheMetadata{}), nil
+	return buildResponse(call.response, CacheMetadata{Hit: false, Stale: false, Reason: cacheReasonNone}), nil
 }
 
 func (c *Client) getOrStartInflight(ctx context.Context, key string, prepared preparedRequest) (*inflightCall, bool) {
@@ -254,7 +255,7 @@ func (c *Client) getOrStartInflight(ctx context.Context, key string, prepared pr
 		return call, true
 	}
 
-	call := &inflightCall{done: make(chan struct{})}
+	call := &inflightCall{done: make(chan struct{}), response: nil, err: nil, staleMu: sync.Mutex{}, stale: false}
 	c.inflight[key] = call
 	c.mu.Unlock()
 

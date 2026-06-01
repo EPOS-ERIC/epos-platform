@@ -46,7 +46,7 @@ func main() {
 		baseURL = defaultBaseURL
 	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Transport: nil, CheckRedirect: nil, Jar: nil, Timeout: 30 * time.Second}
 	for _, fixture := range cfg.Fixtures {
 		if err := refreshFixture(client, baseURL, root, fixture); err != nil {
 			fail(err)

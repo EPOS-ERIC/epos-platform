@@ -29,7 +29,7 @@ type ResourceRef struct {
 type DatasetDistributionSearchItem struct {
 	// TODO: add more fields here when necessary necessary
 	ID   string `json:"id"`
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 	Href string `json:"href"`
 }
 

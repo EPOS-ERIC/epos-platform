@@ -53,7 +53,7 @@ func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fet
 			return nil, nil
 		}
 
-		return &api.IriTemplate{Template: template}, nil
+		return &api.IriTemplate{Template: template, Mappings: nil}, nil
 	}
 
 	iriTemplateDetail, err := fetch(ctx, "iritemplate", item.ID)

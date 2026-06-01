@@ -22,6 +22,7 @@ var errConceptTreeParse = errors.New("concept tree parse")
 func (s *Service) GetConceptTree(ctx context.Context) (api.ConceptTreeResponse, error) {
 	builder := conceptTreeBuilder{
 		service:        s,
+		mu:             sync.Mutex{},
 		conceptDetails: make(map[string]*metadataclient.AccessDetailResponse),
 		conceptTrees:   make(map[string]api.ConceptTreeNode),
 	}

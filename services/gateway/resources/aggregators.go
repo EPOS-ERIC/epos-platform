@@ -52,11 +52,11 @@ func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch 
 
 func mapIdentifierItem(ctx context.Context, item metadatareader.Item, fetch accessDetailFetcher) (api.Identifier, error) {
 	if item.Value != "" {
-		return api.Identifier{Value: item.Value}, nil
+		return api.Identifier{Type: "", Value: item.Value}, nil
 	}
 
 	if item.ID == "" {
-		return api.Identifier{}, nil
+		return api.Identifier{Type: "", Value: ""}, nil
 	}
 
 	shape := metadatareader.FirstNonEmpty(item.Type, "identifier")

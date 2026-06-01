@@ -62,7 +62,7 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice provider: %w", err)
 	}
-	provider := api.ResourceRef{}
+	provider := api.ResourceRef{ID: "", Name: "", Href: ""}
 	if len(providers) > 0 {
 		provider = providers[0]
 	}

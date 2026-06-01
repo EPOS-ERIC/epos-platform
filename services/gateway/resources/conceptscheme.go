@@ -61,5 +61,6 @@ func mapConceptScheme(detail *metadataclient.AccessDetailResponse) (api.ConceptS
 		Color:       reader.OptionalString("schema:color"),
 		OrderNumber: orderNumber,
 		TopConcepts: topConcepts,
+		Children:    nil,
 	}, nil
 }
