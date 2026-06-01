@@ -8,8 +8,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
-const defaultFanOutLimit = 64
-
 type Service struct {
 	metadataClient *metadataclient.APIClient
 	fanOutLimit    int
@@ -17,10 +15,6 @@ type Service struct {
 }
 
 func NewService(metadataClient *metadataclient.APIClient, fanOutLimit int) *Service {
-	if fanOutLimit <= 0 {
-		fanOutLimit = defaultFanOutLimit
-	}
-
 	return &Service{
 		metadataClient: metadataClient,
 		fanOutLimit:    fanOutLimit,

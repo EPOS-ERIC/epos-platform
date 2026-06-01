@@ -14,7 +14,6 @@ func TestNewMetadataClient(t *testing.T) {
 	tests := []struct {
 		name        string
 		baseURL     string
-		timeout     time.Duration
 		upstreamCfg config.Upstream
 		wantErr     bool
 		wantBaseURL string
@@ -32,31 +31,21 @@ func TestNewMetadataClient(t *testing.T) {
 		{
 			name:        "normalizes base URL and sets default timeout",
 			baseURL:     metadataLifecycleBaseURL + "/",
-			timeout:     0,
 			wantBaseURL: metadataLifecycleBaseURL,
 		},
 		{
 			name:        "trims whitespace around base URL",
 			baseURL:     "  " + metadataLifecycleBaseURL + "/  ",
-			timeout:     0,
 			wantBaseURL: metadataLifecycleBaseURL,
 		},
 		{
 			name:        "preserves path and trims trailing slash",
 			baseURL:     metadataLifecycleBaseURL + "/api/v2/",
-			timeout:     0,
 			wantBaseURL: metadataLifecycleBaseURL + "/api/v2",
-		},
-		{
-			name:        "uses provided timeout",
-			baseURL:     metadataLifecycleBaseURL,
-			timeout:     2 * time.Second,
-			wantBaseURL: metadataLifecycleBaseURL,
 		},
 		{
 			name:    "accepts upstream configuration",
 			baseURL: metadataLifecycleBaseURL,
-			timeout: 2 * time.Second,
 			upstreamCfg: config.Upstream{
 				Timeout:     3 * time.Second,
 				RealTimeout: 4 * time.Second,
@@ -69,7 +58,12 @@ func TestNewMetadataClient(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			client, err := NewMetadatalifecycle(tc.baseURL, tc.timeout, tc.upstreamCfg)
+			upstreamCfg := tc.upstreamCfg
+			if upstreamCfg == (config.Upstream{}) {
+				upstreamCfg = config.Default().Upstream
+			}
+
+			client, err := NewMetadatalifecycle(tc.baseURL, upstreamCfg)
 			if tc.wantErr {
 				if err == nil {
 					t.Fatal("expected error")
