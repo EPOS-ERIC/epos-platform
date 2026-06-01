@@ -942,7 +942,7 @@ class ShaclParser(private val httpClient: HttpClient) {
             is Literal -> Value.LiteralValue(
                 value = value.stringValue()
             )
-            is BNode -> Value.BlankNodeValue()
+            is BNode -> Value.BlankNodeValue(value.id)
             else -> Value.LiteralValue(value.stringValue())
         }
     }
