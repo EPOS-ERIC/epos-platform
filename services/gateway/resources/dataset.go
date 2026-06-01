@@ -35,7 +35,7 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 
-	name, err := reader.RequiredString("title")
+	name, err := reader.RequiredString("dct:title")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset title: %w", err)
 	}
@@ -45,17 +45,17 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		return api.Dataset{}, fmt.Errorf("get dataset status: %w", err)
 	}
 
-	created, err := reader.OptionalTime("created")
+	created, err := reader.OptionalTime("dct:created")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset created: %w", err)
 	}
 
-	modified, err := reader.OptionalTime("modified")
+	modified, err := reader.OptionalTime("dct:modified")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset modified: %w", err)
 	}
 
-	issued, err := reader.OptionalTime("issued")
+	issued, err := reader.OptionalTime("dct:issued")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset issued: %w", err)
 	}
@@ -65,32 +65,32 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		return api.Dataset{}, err
 	}
 
-	contactPoints, err := reader.PassthroughRefs("contact point")
+	contactPoints, err := reader.PassthroughRefs("dcat:contactPoint")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset contact points: %w", err)
 	}
 
-	concepts, err := reader.ResourceRefs("theme", api.ConceptType)
+	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset concepts: %w", err)
 	}
 
-	publisher, err := reader.ResourceRefs("publisher", api.OrganizationType)
+	publisher, err := reader.ResourceRefs("dct:publisher", api.OrganizationType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset publisher: %w", err)
 	}
 
-	distributions, err := reader.ResourceRefs("distribution", api.DistributionType)
+	distributions, err := reader.ResourceRefs("dcat:distribution", api.DistributionType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset distributions: %w", err)
 	}
 
-	isVersionOf, err := reader.OptionalResourceRef("is version of", api.DatasetType)
+	isVersionOf, err := reader.OptionalResourceRef("dct:isVersionOf", api.DatasetType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset is version of: %w", err)
 	}
 
-	keywords, err := reader.Strings("keyword")
+	keywords, err := reader.Strings("dcat:keyword")
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset keywords: %w", err)
 	}
@@ -99,11 +99,11 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		BaseDetailResource: api.BaseDetailResource{
 			ID:          detail.GetId(),
 			Name:        name,
-			Description: reader.OptionalString("description"),
+			Description: reader.OptionalString("dct:description"),
 		},
 		Created:            created,
 		Modified:           modified,
-		VersionInfo:        reader.OptionalString("version info"),
+		VersionInfo:        reader.OptionalString("owl:versionInfo"),
 		ContactPoints:      contactPoints,
 		Keywords:           keywords,
 		Concepts:           concepts,
@@ -114,8 +114,8 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		Temporal:           temporal,
 		Status:             status,
 		Distributions:      distributions,
-		AccessRights:       reader.OptionalString("access rights"),
-		AccrualPeriodicity: reader.OptionalString("accrual periodicity"),
+		AccessRights:       reader.OptionalString("dct:accessRights"),
+		AccrualPeriodicity: reader.OptionalString("dct:accrualPeriodicity"),
 		IsVersionOf:        isVersionOf,
 		QualityAnnotation:  qualityAnnotation,
 		Version:            reader.OptionalString("version"),

@@ -17,17 +17,17 @@ func TestMapOrganization(t *testing.T) {
 		Shape: "organization",
 		Href:  "/api/v2/access/organization/org-1",
 		Properties: map[string]any{
-			"legalName": "BGS - British Geological Survey",
-			"logo":      "https://example.org/logo.png",
-			"url":       "https://example.org",
-			"email":     []any{"info@example.org"},
-			"telephone": []any{"+44 131 667 1000"},
-			"identifier": []any{
+			"schema:legalName": "BGS - British Geological Survey",
+			"schema:logo":      "https://example.org/logo.png",
+			"schema:url":       "https://example.org",
+			"schema:email":     []any{"info@example.org"},
+			"schema:telephone": []any{"+44 131 667 1000"},
+			"schema:identifier": []any{
 				map[string]any{"id": "propertyvalue-1", "type": "propertyvalue"},
 			},
-			"address":      map[string]any{"id": "postaladdress-1", "type": "postaladdress"},
-			"memberOf":     []any{map[string]any{"id": "org-parent", titleKey: "Parent org"}},
-			"contactPoint": []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
+			"schema:address":      map[string]any{"id": "postaladdress-1", "type": "postaladdress"},
+			"schema:memberOf":     []any{map[string]any{"id": "org-parent", titleKey: "Parent org"}},
+			"schema:contactPoint": []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
 		},
 	}
 
@@ -36,17 +36,17 @@ func TestMapOrganization(t *testing.T) {
 		switch {
 		case shape == "propertyvalue" && id == "propertyvalue-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"propertyID": "viaf",
-				"pg_value": []any{
+				"schema:propertyID": "viaf",
+				"schema:value": []any{
 					map[string]any{"id": "http://viaf.org/viaf/136554353/", "type": "organization"},
 				},
 			}}, nil
 		case shape == "postaladdress" && id == "postaladdress-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"streetAddress":   "The Lyell Centre, Research Avenue South",
-				"addressLocality": "Edinburgh",
-				"postalCode":      "EH14 4AP",
-				"addressCountry":  "GB",
+				"schema:streetAddress":   "The Lyell Centre, Research Avenue South",
+				"schema:addressLocality": "Edinburgh",
+				"schema:postalCode":      "EH14 4AP",
+				"schema:addressCountry":  "GB",
 			}}, nil
 		default:
 			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
@@ -102,15 +102,15 @@ func TestMapOrganizationPartialAddress(t *testing.T) {
 
 	organization, err := mapOrganization(context.Background(), &metadataclient.AccessDetailResponse{
 		Properties: map[string]any{
-			"legalName": "BGS",
-			"address":   map[string]any{"id": "postaladdress-1", "type": "postaladdress"},
+			"schema:legalName": "BGS",
+			"schema:address":   map[string]any{"id": "postaladdress-1", "type": "postaladdress"},
 		},
 	}, func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
 		_ = ctx
 		if shape == "postaladdress" && id == "postaladdress-1" {
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"addressLocality": "Edinburgh",
-				"addressCountry":  "GB",
+				"schema:addressLocality": "Edinburgh",
+				"schema:addressCountry":  "GB",
 			}}, nil
 		}
 

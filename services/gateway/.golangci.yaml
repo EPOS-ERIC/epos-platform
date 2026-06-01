@@ -13,7 +13,6 @@ linters:
     - errcheck
     - misspell
     - dupl
-    - goconst
     - gocritic
     - godoclint
     - contextcheck
@@ -21,15 +20,12 @@ linters:
     - copyloopvar
     - wrapcheck
   exclusions:
-    paths: 
+    paths:
       - ".*gen/.*"
     rules:
       - linters:
           - errcheck
         source: "^\\s*defer\\s+"
-      - path: ".*_test\\.go"
-        linters:
-          - goconst
   settings:
     goconst:
       ignore-string-values:

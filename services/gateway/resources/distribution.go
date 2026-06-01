@@ -34,17 +34,17 @@ func mapDistribution(ctx context.Context, detail *metadataclient.AccessDetailRes
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 
-	name, err := reader.RequiredString("title")
+	name, err := reader.RequiredString("dct:title")
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution title: %w", err)
 	}
 
-	issued, err := reader.OptionalTime("issued")
+	issued, err := reader.OptionalTime("dct:issued")
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution issued: %w", err)
 	}
 
-	modified, err := reader.OptionalTime("modified")
+	modified, err := reader.OptionalTime("dct:modified")
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution modified: %w", err)
 	}
@@ -54,7 +54,7 @@ func mapDistribution(ctx context.Context, detail *metadataclient.AccessDetailRes
 		return api.Distribution{}, fmt.Errorf("get distribution type: %w", err)
 	}
 
-	webservice, err := reader.OptionalResourceRef("conformsTo", api.WebserviceType)
+	webservice, err := reader.OptionalResourceRef("dct:conformsTo", api.WebserviceType)
 	if err != nil {
 		return api.Distribution{}, fmt.Errorf("get distribution webservice: %w", err)
 	}
@@ -71,21 +71,21 @@ func mapDistribution(ctx context.Context, detail *metadataclient.AccessDetailRes
 		BaseDetailResource: api.BaseDetailResource{
 			ID:          detail.GetId(),
 			Name:        name,
-			Description: reader.OptionalString("description"),
+			Description: reader.OptionalString("dct:description"),
 		},
 		DownloadURL: downloadURL,
 		Operation:   operation,
 		Webservice:  webservice,
-		Format:      reader.OptionalString("format"),
+		Format:      reader.OptionalString("dct:format"),
 		Issued:      issued,
 		Modified:    modified,
-		License:     reader.OptionalString("license"),
+		License:     reader.OptionalString("dct:license"),
 		Type:        distributionType,
 	}, nil
 }
 
 func mapDistributionKind(reader metadatareader.Reader) (api.DistributionKind, error) {
-	types, err := reader.Strings("type")
+	types, err := reader.Strings("dct:type")
 	if err != nil {
 		return "", fmt.Errorf("get distribution types: %w", err)
 	}
@@ -116,7 +116,7 @@ func mapDistributionKind(reader metadatareader.Reader) (api.DistributionKind, er
 
 func aggregateDistributionOperation(ctx context.Context, properties map[string]any, fetch accessDetailFetcher, distributionType api.DistributionKind) (*api.Operation, string, error) {
 	reader := metadatareader.New(properties)
-	items, err := reader.Items("accessURL")
+	items, err := reader.Items("dcat:accessURL")
 	if err != nil {
 		return nil, "", fmt.Errorf("get access url items: %w", err)
 	}
@@ -133,7 +133,7 @@ func aggregateDistributionOperation(ctx context.Context, properties map[string]a
 		return nil, item.Value, nil
 	}
 
-	operations, err := aggregateOperations(ctx, reader, "accessURL", fetch)
+	operations, err := aggregateOperations(ctx, reader, "dcat:accessURL", fetch)
 	if err != nil {
 		return nil, "", err
 	}

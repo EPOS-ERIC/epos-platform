@@ -26,7 +26,7 @@ func (s *Service) GetConceptTree(ctx context.Context) (api.ConceptTreeResponse, 
 
 	schemeIDs, err := builder.listConceptSchemeIDs(ctx)
 	if err != nil {
-		return api.ConceptTreeResponse{}, err
+		return api.ConceptTreeResponse{}, fmt.Errorf("list concept scheme ids: %w", err)
 	}
 
 	s.log.Debug("building concept tree", "scheme_count", len(schemeIDs))
@@ -147,7 +147,7 @@ func (b *conceptTreeBuilder) buildConceptScheme(ctx context.Context, id string) 
 
 	children, err := b.buildTopConceptTrees(ctx, topConcepts)
 	if err != nil {
-		return api.ConceptScheme{}, err
+		return api.ConceptScheme{}, fmt.Errorf("build concept scheme '%s' top concept trees: %w", id, err)
 	}
 
 	return api.ConceptScheme{
@@ -206,7 +206,7 @@ func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, an
 
 	detail, err := b.fetchConceptDetail(ctx, id)
 	if err != nil {
-		return api.ConceptTreeNode{}, err
+		return api.ConceptTreeNode{}, fmt.Errorf("fetch concept tree node '%s': %w", id, err)
 	}
 
 	reader := metadatareader.New(detail.GetProperties())
@@ -222,7 +222,7 @@ func (b *conceptTreeBuilder) buildConceptTree(ctx context.Context, id string, an
 
 	children, err := b.buildChildConceptTrees(ctx, childRefs, append(ancestors, id))
 	if err != nil {
-		return api.ConceptTreeNode{}, err
+		return api.ConceptTreeNode{}, fmt.Errorf("build concept '%s' child trees: %w", id, err)
 	}
 
 	concept := api.ConceptTreeNode{

@@ -19,16 +19,16 @@ func TestMapDistribution(t *testing.T) {
 		Properties: map[string]any{
 			titleKey:       distributionTitle,
 			descriptionKey: "Distribution description",
-			"issued":       "2024-03-04T05:06:07Z",
-			"modified":     "2024-04-05T06:07:08Z",
-			"license":      "https://creativecommons.org/licenses/by-nc/4.0/",
-			"format":       "application/xml",
-			typeKey: []any{
+			"dct:issued":   "2024-03-04T05:06:07Z",
+			"dct:modified": "2024-04-05T06:07:08Z",
+			"dct:license":  "https://creativecommons.org/licenses/by-nc/4.0/",
+			"dct:format":   "application/xml",
+			"dct:type": []any{
 				genericDistributionTypeIRI,
 				string(api.DistributionKindWebService),
 			},
-			"conformsTo": map[string]any{"id": "webservice-1", titleKey: "Webservice 1"},
-			accessURLKey: map[string]any{"id": operationID1, typeKey: operationType},
+			"dct:conformsTo": map[string]any{"id": "webservice-1", titleKey: "Webservice 1"},
+			accessURLKey:     map[string]any{"id": operationID1, typeKey: operationType},
 		},
 	}
 
@@ -37,10 +37,10 @@ func TestMapDistribution(t *testing.T) {
 		switch {
 		case shape == operationType && id == operationID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"method":        "GET",
-				"returns":       []any{"text/csv", "application/json"},
-				"pgProperty":    map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
-				"documentation": map[string]any{"id": "api-doc-1", titleKey: "API docs"},
+				"hydra:method":      "GET",
+				"hydra:returns":     []any{"text/csv", "application/json"},
+				"hydra:pg_property": map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
+				"dct:conformsTo":    map[string]any{"id": "api-doc-1", titleKey: "API docs"},
 			}}, nil
 		case shape == iriTemplateType && id == iriTemplateID:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
@@ -53,7 +53,7 @@ func TestMapDistribution(t *testing.T) {
 		case shape == iriTemplateMappingType && id == mappingID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				variableKey:    "station",
-				"pg_label":     stationCodeLabel,
+				"label":        stationCodeLabel,
 				rangeKey:       xsdStringRange,
 				requiredKey:    "true",
 				"defaultValue": "ABC",
@@ -74,9 +74,9 @@ func TestMapDistribution(t *testing.T) {
 			}}, nil
 		case shape == "apidocumentation" && id == "api-doc-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				titleKey:       "API docs",
-				descriptionKey: "Operation documentation",
-				"entrypoint":   "https://example.org/docs",
+				"hydra:title":       "API docs",
+				"hydra:description": "Operation documentation",
+				"hydra:entrypoint":  "https://example.org/docs",
 			}}, nil
 		default:
 			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
@@ -152,8 +152,8 @@ func TestMapDistributionInvalidType(t *testing.T) {
 
 	_, err := mapDistribution(context.Background(), &metadataclient.AccessDetailResponse{
 		Properties: map[string]any{
-			titleKey: distributionTitle,
-			typeKey:  []any{genericDistributionTypeIRI, "unsupported-type"},
+			titleKey:   distributionTitle,
+			"dct:type": []any{genericDistributionTypeIRI, "unsupported-type"},
 		},
 	}, nil)
 	if err == nil {
@@ -168,7 +168,7 @@ func TestMapDistributionDownloadableFileDownloadURL(t *testing.T) {
 		Id: "distribution-download-1",
 		Properties: map[string]any{
 			titleKey:     "Downloadable distribution",
-			typeKey:      []any{string(api.DistributionKindDownloadableFile)},
+			"dct:type":   []any{string(api.DistributionKindDownloadableFile)},
 			accessURLKey: []any{"https://example.org/download/file.xml"},
 		},
 	}, nil)
@@ -200,7 +200,7 @@ func TestMapDistributionInvalidMappingRequired(t *testing.T) {
 		switch {
 		case shape == operationType && id == operationID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"pg_property": map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
+				"hydra:pg_property": map[string]any{"id": iriTemplateID, typeKey: iriTemplateType},
 			}}, nil
 		case shape == iriTemplateType && id == iriTemplateID:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
@@ -210,7 +210,7 @@ func TestMapDistributionInvalidMappingRequired(t *testing.T) {
 		case shape == iriTemplateMappingType && id == mappingID1:
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				variableKey: "station",
-				"pg_label":  "Station code",
+				"label":     "Station code",
 				rangeKey:    xsdStringRange,
 				requiredKey: "not-a-bool",
 			}}, nil

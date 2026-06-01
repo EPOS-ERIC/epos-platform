@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	titleKey               = "title"
+	titleKey               = "dct:title"
 	typeKey                = "type"
-	descriptionKey         = "description"
-	accessURLKey           = "accessURL"
+	descriptionKey         = "dct:description"
+	accessURLKey           = "dcat:accessURL"
 	operationID1           = "operation-1"
 	operationType          = "operation"
 	iriTemplateType        = "iritemplate"
@@ -38,24 +38,24 @@ func TestMapDataset(t *testing.T) {
 		Shape: "dataset",
 		Href:  "/api/v2/access/dataset/dataset-1",
 		Properties: map[string]any{
-			titleKey:               "Dataset title",
-			descriptionKey:         "Dataset description",
-			"created":              "2024-01-02T03:04:05Z",
-			"modified":             "2024-02-03T04:05:06Z",
-			"issued":               "2024-03-04T05:06:07Z",
-			"versionInfo":          "v1 info",
-			"keyword":              []any{"a", "b"},
-			"theme":                []any{map[string]any{"id": "concept-1", titleKey: "Concept 1"}},
-			"publisher":            []any{map[string]any{"id": "org-1", titleKey: "Org 1"}},
-			"contactPoint":         []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
-			"distribution":         []any{map[string]any{"id": "dist-1", titleKey: "Distribution 1"}},
-			"accessRights":         "open",
-			"accrualPeriodicity":   "monthly",
-			"isVersionOf":          map[string]any{"id": "dataset-parent", titleKey: "Parent"},
-			identifierShape:        []any{map[string]any{"id": "identifier-1", typeKey: identifierShape}},
-			"temporal":             map[string]any{"id": "temporal-1", typeKey: "periodoftime"},
-			"spatial":              map[string]any{"id": "location-1", typeKey: "location"},
-			"hasQualityAnnotation": map[string]any{"id": "annotation-1", typeKey: "annotation"},
+			titleKey:                   "Dataset title",
+			descriptionKey:             "Dataset description",
+			"dct:created":              "2024-01-02T03:04:05Z",
+			"dct:modified":             "2024-02-03T04:05:06Z",
+			"dct:issued":               "2024-03-04T05:06:07Z",
+			"owl:versionInfo":          "v1 info",
+			"dcat:keyword":             []any{"a", "b"},
+			"dcat:theme":               []any{map[string]any{"id": "concept-1", titleKey: "Concept 1"}},
+			"dct:publisher":            []any{map[string]any{"id": "org-1", titleKey: "Org 1"}},
+			"dcat:contactPoint":        []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
+			"dcat:distribution":        []any{map[string]any{"id": "dist-1", titleKey: "Distribution 1"}},
+			"dct:accessRights":         "open",
+			"dct:accrualPeriodicity":   "monthly",
+			"dct:isVersionOf":          map[string]any{"id": "dataset-parent", titleKey: "Parent"},
+			"adms:identifier":          []any{map[string]any{"id": "identifier-1", typeKey: identifierShape}},
+			"dct:temporal":             map[string]any{"id": "temporal-1", typeKey: "periodoftime"},
+			"dct:spatial":              map[string]any{"id": "location-1", typeKey: "location"},
+			"dqv:hasQualityAnnotation": map[string]any{"id": "annotation-1", typeKey: "annotation"},
 		},
 	}
 
@@ -63,13 +63,13 @@ func TestMapDataset(t *testing.T) {
 		_ = ctx
 		switch {
 		case shape == identifierShape && id == "identifier-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"scheme agency": "doi", "notation": "10.1234/test"}}, nil
+			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"epos:schemeAgency": "doi", "skos:notation": "10.1234/test"}}, nil
 		case shape == "periodoftime" && id == "temporal-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"start date": "2020-01-01T00:00:00Z", "end date": "2020-12-31T00:00:00Z"}}, nil
+			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"schema:startDate": "2020-01-01T00:00:00Z", "schema:endDate": "2020-12-31T00:00:00Z"}}, nil
 		case shape == "location" && id == "location-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"geometry": "POINT(1 2)"}}, nil
+			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"locn:geometry": "POINT(1 2)"}}, nil
 		case shape == "annotation" && id == "annotation-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"has body": "QA body"}}, nil
+			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"oa:hasBody": "QA body"}}, nil
 		default:
 			return nil, fmt.Errorf("unexpected fetch %s %s", shape, id)
 		}

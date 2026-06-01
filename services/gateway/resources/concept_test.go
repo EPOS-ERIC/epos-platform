@@ -13,14 +13,14 @@ func TestMapConcept(t *testing.T) {
 		Id:    "category:paleotsunamidepositscatalogue/v1.0",
 		Shape: "concept",
 		Properties: map[string]any{
-			"definition": "TCS Subdomain",
-			"prefLabel":  "Paleotsunami Deposits Catalogue",
-			"inScheme": map[string]any{
+			"skos:definition": "TCS Subdomain",
+			"skos:prefLabel":  "Paleotsunami Deposits Catalogue",
+			"skos:inScheme": map[string]any{
 				"id":   "category:tsunami/v1.0",
 				"type": "conceptscheme",
 				"href": "http://localhost:8080/api/v2/access/conceptscheme/category%3Atsunami%2Fv1.0",
 			},
-			"narrower": map[string]any{
+			"skos:narrower": map[string]any{
 				"id":   "category:paleotsunamideposits/v1.0",
 				"type": "concept",
 				"href": "http://localhost:8080/api/v2/access/concept/category%3Apaleotsunamideposits%2Fv1.0",

@@ -16,24 +16,24 @@ func TestMapWebservice(t *testing.T) {
 		Shape: "webservice",
 		Href:  "/api/v2/access/webservice/webservice-1",
 		Properties: map[string]any{
-			"name":          "Webservice title",
-			"description":   "Webservice description",
-			"datePublished": "2024-03-04T05:06:07Z",
-			"dateModified":  "2024-04-05T06:07:08Z",
-			"license":       "https://creativecommons.org/licenses/by-nc/4.0/",
-			"entrypoint":    "https://example.org/api",
-			"keywords":      []any{"geomagnetism", "magnetism"},
-			"identifier":    []any{"identifier-1"},
-			"provider": []any{
+			"schema:name":          "Webservice title",
+			"schema:description":   "Webservice description",
+			"schema:datePublished": "2024-03-04T05:06:07Z",
+			"schema:dateModified":  "2024-04-05T06:07:08Z",
+			"dct:license":          "https://creativecommons.org/licenses/by-nc/4.0/",
+			"hydra:entrypoint":     "https://example.org/api",
+			"schema:keywords":      []any{"geomagnetism", "magnetism"},
+			"schema:identifier":    []any{"identifier-1"},
+			"schema:provider": []any{
 				map[string]any{"id": "org-1", titleKey: "Org 1"},
 				map[string]any{"id": "org-2", titleKey: "Org 2"},
 			},
-			"contactPoint": []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
-			"temporal":     map[string]any{"id": "temporal-1", typeKey: "periodoftime"},
-			"spatial":      map[string]any{"id": "location-1", typeKey: "location"},
-			"theme":        []any{map[string]any{"id": "concept-1", titleKey: "Concept 1"}},
-			"conformsTo":   map[string]any{"id": "api-doc-1", "type": "apidocumentation"},
-			"supportedOperation": []any{
+			"dcat:contactPoint": []any{map[string]any{"id": "cp-1", titleKey: "Contact 1", "href": "http://upstream/contact/1"}},
+			"dct:temporal":      map[string]any{"id": "temporal-1", typeKey: "periodoftime"},
+			"dct:spatial":       map[string]any{"id": "location-1", typeKey: "location"},
+			"dcat:theme":        []any{map[string]any{"id": "concept-1", titleKey: "Concept 1"}},
+			"dct:conformsTo":    map[string]any{"id": "api-doc-1", "type": "apidocumentation"},
+			"hydra:supportedOperation": []any{
 				map[string]any{"id": "operation-1", "type": "operation"},
 			},
 		},
@@ -43,20 +43,20 @@ func TestMapWebservice(t *testing.T) {
 		_ = ctx
 		switch {
 		case shape == "periodoftime" && id == "temporal-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"start date": "2020-01-01T00:00:00Z", "end date": "2020-12-31T00:00:00Z"}}, nil
+			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"schema:startDate": "2020-01-01T00:00:00Z", "schema:endDate": "2020-12-31T00:00:00Z"}}, nil
 		case shape == "location" && id == "location-1":
-			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"geometry": "POINT(1 2)"}}, nil
+			return &metadataclient.AccessDetailResponse{Properties: map[string]any{"locn:geometry": "POINT(1 2)"}}, nil
 		case shape == "apidocumentation" && id == "api-doc-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				titleKey:      "API docs",
-				"description": "Operation documentation",
-				"entrypoint":  "https://example.org/docs",
+				"hydra:title":       "API docs",
+				"hydra:description": "Operation documentation",
+				"hydra:entrypoint":  "https://example.org/docs",
 			}}, nil
 		case shape == "operation" && id == "operation-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"method":     "GET",
-				"returns":    []any{"text/csv", "application/json"},
-				"pgProperty": map[string]any{"id": "iri-template-1", "type": "iritemplate"},
+				"hydra:method":      "GET",
+				"hydra:returns":     []any{"text/csv", "application/json"},
+				"hydra:pg_property": map[string]any{"id": "iri-template-1", "type": "iritemplate"},
 			}}, nil
 		case shape == "iritemplate" && id == "iri-template-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
@@ -66,7 +66,7 @@ func TestMapWebservice(t *testing.T) {
 		case shape == "iritemplatemapping" && id == "mapping-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				"variable":   "station",
-				"pg_label":   "Station code",
+				"label":      "Station code",
 				"range":      "xsd:string",
 				"required":   "true",
 				"paramValue": []any{"AAA", "BBB"},
@@ -150,8 +150,8 @@ func TestMapWebserviceInvalidOperationMappingRequired(t *testing.T) {
 
 	_, err := mapWebservice(context.Background(), &metadataclient.AccessDetailResponse{
 		Properties: map[string]any{
-			"name": "Webservice title",
-			"supportedOperation": []any{
+			"schema:name": "Webservice title",
+			"hydra:supportedOperation": []any{
 				map[string]any{"id": "operation-1", "type": "operation"},
 			},
 		},
@@ -160,7 +160,7 @@ func TestMapWebserviceInvalidOperationMappingRequired(t *testing.T) {
 		switch {
 		case shape == "operation" && id == "operation-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
-				"pg_property": map[string]any{"id": "iri-template-1", "type": "iritemplate"},
+				"hydra:pg_property": map[string]any{"id": "iri-template-1", "type": "iritemplate"},
 			}}, nil
 		case shape == "iritemplate" && id == "iri-template-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
@@ -170,7 +170,7 @@ func TestMapWebserviceInvalidOperationMappingRequired(t *testing.T) {
 		case shape == "iritemplatemapping" && id == "mapping-1":
 			return &metadataclient.AccessDetailResponse{Properties: map[string]any{
 				"variable": "station",
-				"pg_label": "Station code",
+				"label":    "Station code",
 				"range":    "xsd:string",
 				"required": "not-a-bool",
 			}}, nil

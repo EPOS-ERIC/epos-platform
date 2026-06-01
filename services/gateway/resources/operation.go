@@ -18,19 +18,19 @@ func mapOperation(ctx context.Context, detail *metadataclient.AccessDetailRespon
 		return api.Operation{}, fmt.Errorf("get operation iri template: %w", err)
 	}
 
-	apiDocumentation, err := aggregateAPIDocumentationByKeys(ctx, reader, fetch, "apiDocumentation", "api documentation", "documentation")
+	apiDocumentation, err := aggregateAPIDocumentationByKeys(ctx, reader, fetch, "dct:conformsTo", "schema:documentation")
 	if err != nil {
 		return api.Operation{}, fmt.Errorf("get operation api documentation: %w", err)
 	}
 
-	returns, err := reader.Strings("returns")
+	returns, err := reader.Strings("hydra:returns")
 	if err != nil {
 		return api.Operation{}, fmt.Errorf("get operation returns: %w", err)
 	}
 
 	return api.Operation{
 		ID:               detail.GetId(),
-		Method:           reader.OptionalString("method"),
+		Method:           reader.OptionalString("hydra:method"),
 		Returns:          returns,
 		IriTemplate:      iriTemplate,
 		APIDocumentation: apiDocumentation,
@@ -38,7 +38,7 @@ func mapOperation(ctx context.Context, detail *metadataclient.AccessDetailRespon
 }
 
 func aggregateIriTemplate(ctx context.Context, reader metadatareader.Reader, fetch accessDetailFetcher) (*api.IriTemplate, error) {
-	items, err := reader.ItemsOneOf("pg_property", "property")
+	items, err := reader.ItemsOneOf("hydra:pg_property", "hydra:property")
 	if err != nil {
 		return nil, fmt.Errorf("get iri template items: %w", err)
 	}
@@ -231,17 +231,17 @@ func aggregateOperations(ctx context.Context, reader metadatareader.Reader, key 
 
 func mapAPIDocumentation(detail *metadataclient.AccessDetailResponse) (*api.APIDocumentation, error) {
 	docReader := metadatareader.New(detail.GetProperties())
-	title, err := docReader.RequiredString("title")
+	title, err := docReader.RequiredString("hydra:title")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation title: %w", err)
 	}
 
-	description, err := docReader.RequiredString("description")
+	description, err := docReader.RequiredString("hydra:description")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation description: %w", err)
 	}
 
-	entrypoint, err := docReader.RequiredString("entrypoint")
+	entrypoint, err := docReader.RequiredString("hydra:entrypoint")
 	if err != nil {
 		return nil, fmt.Errorf("get api documentation entrypoint: %w", err)
 	}
