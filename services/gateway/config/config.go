@@ -19,6 +19,9 @@ type Config struct {
 type Server struct {
 	Listen         string        `yaml:"listen"`
 	RequestTimeout time.Duration `yaml:"request_timeout"`
+	ReadTimeout    time.Duration `yaml:"read_timeout"`
+	WriteTimeout   time.Duration `yaml:"write_timeout"`
+	IdleTimeout    time.Duration `yaml:"idle_timeout"`
 }
 
 type Service struct {
@@ -40,6 +43,24 @@ type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
 }
 
+func Default() Config {
+	return Config{
+		Server: Server{
+			RequestTimeout: 30 * time.Second,
+			ReadTimeout:    15 * time.Second,
+			WriteTimeout:   30 * time.Second,
+			IdleTimeout:    60 * time.Second,
+		},
+		Upstream: Upstream{
+			Timeout:     5 * time.Second,
+			RealTimeout: 15 * time.Second,
+			CacheTTL:    0 * time.Second,
+			MaxEntries:  128,
+		},
+		Discovery: Discovery{FanOutLimit: 64},
+	}
+}
+
 // Load loads configuration from file
 func Load(cfgPath string) (*Config, error) {
 	// Load from file if it exists
@@ -52,7 +73,7 @@ func Load(cfgPath string) (*Config, error) {
 		return nil, fmt.Errorf("read config file %s: %w", cfgPath, err)
 	}
 
-	var cfg Config
+	cfg := Default()
 	if err := yaml.Unmarshal(rawCfg, &cfg); err != nil {
 		return nil, fmt.Errorf("unmarshal config file %s: %w", cfgPath, err)
 	}
@@ -70,28 +91,44 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("server.listen is required")
 	}
 
+	if c.Server.RequestTimeout <= 0 {
+		return fmt.Errorf("server.request_timeout must be greater than zero")
+	}
+
+	if c.Server.ReadTimeout <= 0 {
+		return fmt.Errorf("server.read_timeout must be greater than zero")
+	}
+
+	if c.Server.WriteTimeout <= 0 {
+		return fmt.Errorf("server.write_timeout must be greater than zero")
+	}
+
+	if c.Server.IdleTimeout <= 0 {
+		return fmt.Errorf("server.idle_timeout must be greater than zero")
+	}
+
 	if c.Services.MetadataLifecycle.URL == "" {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
 	}
 
-	if c.Upstream.Timeout < 0 {
-		return fmt.Errorf("upstream.timeout must be zero or greater")
+	if c.Upstream.Timeout <= 0 {
+		return fmt.Errorf("upstream.timeout must be greater than zero")
 	}
 
-	if c.Upstream.RealTimeout < 0 {
-		return fmt.Errorf("upstream.real_timeout must be zero or greater")
+	if c.Upstream.RealTimeout <= 0 {
+		return fmt.Errorf("upstream.real_timeout must be greater than zero")
 	}
 
 	if c.Upstream.CacheTTL < 0 {
 		return fmt.Errorf("upstream.cache_ttl must be zero or greater")
 	}
 
-	if c.Upstream.MaxEntries < 0 {
-		return fmt.Errorf("upstream.max_entries must be zero or greater")
+	if c.Upstream.MaxEntries <= 0 {
+		return fmt.Errorf("upstream.max_entries must be greater than zero")
 	}
 
-	if c.Discovery.FanOutLimit < 0 {
-		return fmt.Errorf("discovery.fan_out_limit must be zero or greater")
+	if c.Discovery.FanOutLimit <= 0 {
+		return fmt.Errorf("discovery.fan_out_limit must be greater than zero")
 	}
 
 	return nil

@@ -37,20 +37,18 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 		}
 	}()
 
-	requestTimeout := cfg.Server.RequestTimeout
-	if requestTimeout <= 0 {
-		requestTimeout = 30 * time.Second
-	}
-
 	discoverySvc := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
 	resourcesSvc := resources.NewService(metadataClient)
+	router := NewRouter(discoverySvc, resourcesSvc)
+	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{
-		BaseContext: func(net.Listener) context.Context { return ctx },
-		Addr:        cfg.Server.Listen,
-		Handler:     NewRouter(discoverySvc, resourcesSvc),
-		ReadTimeout: requestTimeout,
-		IdleTimeout: requestTimeout,
+		BaseContext:  func(net.Listener) context.Context { return ctx },
+		Addr:         cfg.Server.Listen,
+		Handler:      handler,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	srvErr := make(chan error, 1)
@@ -78,4 +76,8 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 	log.Info("server shutdown complete")
 
 	return nil
+}
+
+func requestTimeoutHandler(next http.Handler, timeout time.Duration) http.Handler {
+	return http.TimeoutHandler(next, timeout, "request timeout\n")
 }

@@ -385,6 +385,7 @@ func newTestClient(t *testing.T, transport *stubTransport, timeout, ttl time.Dur
 		Timeout:     timeout,
 		RealTimeout: time.Second,
 		CacheTTL:    ttl,
+		MaxEntries:  128,
 		Transport:   transport,
 	})
 	if err != nil {

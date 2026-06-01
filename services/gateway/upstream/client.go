@@ -14,20 +14,16 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-const defaultMaxEntries = 128
-
 // Config configures a cached upstream HTTP client.
 type Config struct {
 	// Timeout is caller-facing max wait time per request.
 	Timeout time.Duration
 	// RealTimeout is max upstream time for background refresh requests.
-	// If zero, Timeout is used.
 	RealTimeout time.Duration
 	// CacheTTL is in-memory cache validity duration.
 	// Zero disables cache persistence.
 	CacheTTL time.Duration
 	// MaxEntries is max number of cached responses kept in memory.
-	// If zero or less, a safe default is used.
 	MaxEntries int
 	// Transport is optional custom HTTP transport.
 	// If nil, net/http.DefaultTransport is used.
@@ -78,14 +74,12 @@ func NewClient(cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("cache TTL must be zero or greater")
 	}
 
-	realTimeout := cfg.RealTimeout
-	if realTimeout <= 0 {
-		realTimeout = cfg.Timeout
+	if cfg.RealTimeout <= 0 {
+		return nil, fmt.Errorf("real timeout must be greater than zero")
 	}
 
-	maxEntries := cfg.MaxEntries
-	if maxEntries <= 0 {
-		maxEntries = defaultMaxEntries
+	if cfg.MaxEntries <= 0 {
+		return nil, fmt.Errorf("max entries must be greater than zero")
 	}
 
 	transport := cfg.Transport
@@ -102,9 +96,9 @@ func NewClient(cfg Config) (*Client, error) {
 	return &Client{
 		httpClient:  &nethttp.Client{Transport: transport},
 		timeout:     cfg.Timeout,
-		realTimeout: realTimeout,
+		realTimeout: cfg.RealTimeout,
 		cacheTTL:    cfg.CacheTTL,
-		maxEntries:  maxEntries,
+		maxEntries:  cfg.MaxEntries,
 		log:         logger,
 		now:         time.Now,
 		cache:       make(map[string]*cacheEntry),
