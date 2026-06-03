@@ -30,6 +30,17 @@ internal object ResourceLinkResolver {
             )
         if (!versionId.isNullOrBlank()) return versionId
 
+        if (!UriUtils.hasVersion(requestedId)) {
+            val defaultVersionedId = UriUtils.ensureVersioned(requestedId)
+            val defaultVersionId =
+                queryPreferredVersionId(
+                    client = client,
+                    query = "MATCH (v:Version {id: ${'$'}requestedId}) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                    parameters = mapOf("requestedId" to defaultVersionedId),
+                )
+            if (!defaultVersionId.isNullOrBlank()) return defaultVersionId
+        }
+
         if (!conceptualFromVersion.isNullOrBlank()) {
             val versionFromIdentifierWithinConceptual =
                 queryPreferredVersionId(

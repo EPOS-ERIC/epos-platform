@@ -452,19 +452,13 @@ private fun buildAccessPropertyValue(
     val href = resolvedLink?.href
     val resolvedType = resolvedLink?.resolvedShape ?: objectType
     val resolvedId = resolvedLink?.resolvedVersionId ?: objectId
-    val fallbackHref =
-        if (!resolvedType.isNullOrBlank()) {
-            ResourceLinkResolver.buildNavigableAccessHref(publicBaseUrl, resolvedType, resolvedId)
-        } else {
-            null
-        }
 
-    return if (!resolvedType.isNullOrBlank() || href != null || fallbackHref != null) {
+    return if (resolvedLink != null && (!resolvedType.isNullOrBlank() || href != null)) {
         AccessPropertyValue(
             id = resolvedId,
             type = resolvedType,
             title = null,
-            href = href ?: fallbackHref,
+            href = href,
             predicateIri = predicateIri,
         )
     } else {
@@ -499,6 +493,7 @@ private fun resolveObjectShape(
         lowered.contains("/dataset/") -> "dataset"
         lowered.contains("softwareapplication") -> "softwareapplication"
         lowered.contains("softwaresourcecode") -> "softwaresourcecode"
+        lowered.contains("bnode-propertyvalue") || lowered.contains("/propertyvalue/") -> "propertyvalue"
         lowered.contains("bnode-identifier") || lowered.contains("/identifier/") -> "identifier"
         lowered.contains("bnode-location") || lowered.contains("/location/") -> "location"
         lowered.contains("bnode-periodoftime") || lowered.contains("periodoftime") -> "periodoftime"
@@ -568,6 +563,17 @@ private fun shapeMatchesEntityType(
     entityId: String,
     resourceTypes: List<ResourceTypeInfo>,
 ): Boolean {
+    val graphShape =
+        ResourceLinkResolver.resolveEntityShapeFromGraph(
+            client = client,
+            entityId = entityId,
+            resourceTypeMap = resourceTypes.associate { it.targetClass to it.name },
+            normalizeShapeName = ::normalizeShapeName,
+        )
+    if (!graphShape.isNullOrBlank()) {
+        return normalizeShapeName(graphShape) == normalizeShapeName(requestedShape)
+    }
+
     val conceptualType =
         client.runQuery(
             """

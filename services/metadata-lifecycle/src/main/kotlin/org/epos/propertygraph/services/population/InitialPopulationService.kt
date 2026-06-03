@@ -254,7 +254,10 @@ class InitialPopulationService(
     private fun isSkolemParentUri(uri: String): Boolean {
         return try {
             val parsed = URI(uri)
-            parsed.scheme.equals("http", ignoreCase = true) || parsed.scheme.equals("https", ignoreCase = true)
+            if (!parsed.scheme.equals("http", ignoreCase = true) && !parsed.scheme.equals("https", ignoreCase = true)) {
+                return false
+            }
+            uri.trimEnd('/').startsWith(Config.BASE_URI.trimEnd('/'))
         } catch (_: Exception) {
             false
         }
