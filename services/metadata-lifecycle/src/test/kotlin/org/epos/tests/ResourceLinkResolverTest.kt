@@ -106,4 +106,32 @@ class ResourceLinkResolverTest {
         link?.resolvedShape shouldBe "identifier"
         link?.href shouldBe "http://localhost:8080/api/v2/access/identifier/https%3A%2F%2Fexample.org%2Fbnode-identifier-1%2Fv1.0"
     }
+
+    @Test
+    fun `should resolve unversioned blank node id to default version id`() {
+        val client = mockk<PropertyGraphClient>()
+        val querySlot = slot<String>()
+        val paramsSlot = slot<Map<String, Any>>()
+
+        every { client.runQuery(capture(querySlot), capture(paramsSlot)) } answers {
+            val requestedId = paramsSlot.captured["requestedId"]?.toString()
+            when (requestedId) {
+                "https://example.org/bnode-propertyvalue-1/v1.0" -> {
+                    listOf(mapOf("id" to "https://example.org/bnode-propertyvalue-1/v1.0"))
+                }
+
+                else -> {
+                    emptyList()
+                }
+            }
+        }
+
+        val resolved =
+            ResourceLinkResolver.resolveAccessEntityId(
+                client = client,
+                requestedId = "https://example.org/bnode-propertyvalue-1",
+            )
+
+        resolved shouldBe "https://example.org/bnode-propertyvalue-1/v1.0"
+    }
 }
