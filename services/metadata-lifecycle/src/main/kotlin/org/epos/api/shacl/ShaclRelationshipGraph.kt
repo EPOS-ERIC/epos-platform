@@ -1,5 +1,7 @@
 package org.epos.api.shacl
 
+import org.slf4j.LoggerFactory
+
 /**
  * =============================================================================
  * Generalized Relationship Graph
@@ -352,6 +354,8 @@ class PropertyGraphClientAdapter(
 class RelationshipGraph(
     private val config: RelationshipGraphConfig = RelationshipGraphConfig.DEFAULT
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     // Graph storage
     private val relationshipGraph = mutableMapOf<String, MutableList<PropertyRelationship>>()
     private val typeNameToUri = mutableMapOf<String, String>()
@@ -399,7 +403,7 @@ class RelationshipGraph(
         """.trimIndent()
 
         if (config.verbose) {
-            println("🔍 Executing relationship discovery query...")
+            logger.debug("Executing relationship discovery query...")
         }
 
         processQueryResults(client.query(query))
@@ -529,7 +533,7 @@ class RelationshipGraph(
         }
 
         if (config.verbose) {
-            println("📊 Built relationship graph from SHACL: ${typeNameToUri.size} types, ${forwardCount + inverseCount} relationships")
+            logger.debug("Built relationship graph from SHACL: {} types, {} relationships", typeNameToUri.size, forwardCount + inverseCount)
         }
     }
 
@@ -546,9 +550,7 @@ class RelationshipGraph(
 
         if (fromTypeUri == null || toTypeUri == null) {
             if (config.verbose) {
-                println("⚠️ Cannot find path: Unknown type(s)")
-                if (fromTypeUri == null) println("  - Unknown source: $fromTypeName")
-                if (toTypeUri == null) println("  - Unknown target: $toTypeName")
+                logger.debug("Cannot find path: Unknown type(s) - source: {}, target: {}", fromTypeName, toTypeName)
             }
             return null
         }
@@ -558,7 +560,7 @@ class RelationshipGraph(
         val allPaths = findAllPathsBFS(fromTypeUri, toTypeUri)
         if (allPaths.isEmpty()) {
             if (config.verbose) {
-                println("⚠️ No path found from $fromTypeName to $toTypeName")
+                logger.debug("No path found from {} to {}", fromTypeName, toTypeName)
             }
             return null
         }
@@ -569,12 +571,12 @@ class RelationshipGraph(
             .sortedByDescending { it.second }
 
         if (config.verbose && allPaths.size > 1) {
-            println("  🔍 Found ${allPaths.size} possible paths:")
+            logger.debug("Found {} possible paths:", allPaths.size)
             scoredPaths.take(3).forEach { (path, score) ->
-                val desc = path.joinToString(" → ") {
+                val desc = path.joinToString(" -> ") {
                     "${it.sourceTypeName}.${it.propertyName}"
-                } + " → $toTypeName"
-                println("    - [score: ${"%.1f".format(score)}] $desc")
+                } + " -> $toTypeName"
+                logger.debug("  - [score: {:.1f}] {}", score, desc)
             }
         }
 
@@ -709,10 +711,8 @@ class RelationshipGraph(
         }
 
         if (config.verbose) {
-            println("📊 Relationship graph built:")
-            println("  - Resource types: ${typeNameToUri.size}")
-            println("  - Forward relationships: $forwardCount")
-            println("  - Inverse relationships: $inverseCount")
+            logger.debug("Relationship graph built: {} types, {} forward, {} inverse",
+                typeNameToUri.size, forwardCount, inverseCount)
         }
     }
 
@@ -814,34 +814,18 @@ class RelationshipGraph(
      * Print the relationship graph
      */
     fun printGraph() {
-        println("\n📊 Relationship Graph:")
-        println("=".repeat(60))
-
+        logger.info("Relationship Graph ({} types, {} relationships):",
+            typeNameToUri.size, forwardCount + inverseCount)
         relationshipGraph.entries
             .sortedBy { typeUriToName[it.key] }
             .forEach { (sourceType, relationships) ->
                 val typeName = typeUriToName[sourceType] ?: "unknown"
-                println("\n$typeName:")
-
                 val forward = relationships.filter { !it.isInverse }
                 val inverse = relationships.filter { it.isInverse }
-
-                if (forward.isNotEmpty()) {
-                    println("  Forward:")
-                    forward.forEach { rel ->
-                        println("    └─ ${rel.propertyName} → ${rel.targetClassName}")
-                    }
-                }
-
-                if (inverse.isNotEmpty()) {
-                    println("  Inverse:")
-                    inverse.forEach { rel ->
-                        println("    └─ ${rel.propertyName} ← ${rel.targetClassName}")
-                    }
+                if (forward.isNotEmpty() || inverse.isNotEmpty()) {
+                    logger.debug("{}: {} forward, {} inverse", typeName, forward.size, inverse.size)
                 }
             }
-
-        println("\n" + "=".repeat(60))
     }
 
     /**

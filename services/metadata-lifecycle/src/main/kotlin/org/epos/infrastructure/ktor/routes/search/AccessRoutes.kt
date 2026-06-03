@@ -255,7 +255,7 @@ private fun buildAccessDetail(
             }
 
         val href = resolvedLink?.href
-        val resolvedType = objectType ?: resolvedLink?.resolvedShape
+        val resolvedType = resolvedLink?.resolvedShape ?: objectType
         val resolvedId = resolvedLink?.resolvedVersionId ?: targetId
 
         val relationValue =
@@ -450,7 +450,7 @@ private fun buildAccessPropertyValue(
             null
         }
     val href = resolvedLink?.href
-    val resolvedType = objectType ?: resolvedLink?.resolvedShape
+    val resolvedType = resolvedLink?.resolvedShape ?: objectType
     val resolvedId = resolvedLink?.resolvedVersionId ?: objectId
     val fallbackHref =
         if (!resolvedType.isNullOrBlank()) {

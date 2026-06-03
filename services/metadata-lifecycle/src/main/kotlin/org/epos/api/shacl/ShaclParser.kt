@@ -14,6 +14,7 @@ import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.epos.api.models.ResourceTypeInfo
 import org.epos.api.models.ShapeDefinitionInfo
+import org.slf4j.LoggerFactory
 import java.io.StringReader
 
 // =============================================================================
@@ -365,6 +366,7 @@ data class PropertyInfo(
  * - Shape inheritance via sh:node
  */
 class ShaclParser(private val httpClient: HttpClient) {
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     private val vf: ValueFactory = SimpleValueFactory.getInstance()
 
@@ -450,11 +452,11 @@ class ShaclParser(private val httpClient: HttpClient) {
     ): List<ResourceTypeInfo> {
         val shapesGraph = parseShapesGraph(shaclUrl)
 
-        println("Building relationship graph from SHACL schema...")
+        logger.info("Building relationship graph from SHACL schema...")
         relationshipGraph.buildFromShacl(shapesGraph)
 
         if (propertyGraphClient != null) {
-            println("Enriching relationship graph from actual data...")
+            logger.info("Enriching relationship graph from actual data...")
             relationshipGraph.buildFromData(
                 propertyGraphClient,
                 clearExisting = false

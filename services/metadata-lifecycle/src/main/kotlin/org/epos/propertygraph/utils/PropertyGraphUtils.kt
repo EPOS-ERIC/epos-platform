@@ -1,11 +1,13 @@
 package org.epos.propertygraph.utils
 
 import org.epos.propertygraph.Config
+import org.slf4j.LoggerFactory
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.UUID
 
 object UriUtils {
+    private val logger = LoggerFactory.getLogger("org.epos.propertygraph.utils.UriUtils")
     private val VERSION_PATTERN = Regex(".*/(v\\d+\\.\\d+.*|\\d+\\.\\d+.*)$")
     private val ABSOLUTE_URI_PATTERN = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:.+")
 
@@ -26,7 +28,7 @@ object UriUtils {
         context: String,
     ): String {
         if (isAbsolute(value)) return value
-        println("  WARNING: '$value' is not an absolute URI ($context). Converting.")
+        logger.warn("'{}' is not an absolute URI ({}). Converting.", value, context)
         val sanitized = value.replace(Regex("[^a-zA-Z0-9_-]"), "_")
         return "${Config.BASE_URI}/$context/$sanitized"
     }

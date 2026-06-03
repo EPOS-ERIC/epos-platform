@@ -7,6 +7,7 @@ import org.epos.propertygraph.services.EntityLifecycleService
 import org.epos.propertygraph.services.ProvenanceService
 import org.epos.propertygraph.utils.UriUtils
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
 import java.util.UUID
 
 @Suppress("UNCHECKED_CAST")
@@ -27,6 +28,7 @@ class ResourceController(
     }
 
     private val mapper = ObjectMapper()
+    private val logger = LoggerFactory.getLogger(javaClass)
     var resourceTypes: List<ResourceTypeInfo> = listOf()
 
     fun setResourceType(resourceTypes: List<ResourceTypeInfo>) {
@@ -735,7 +737,7 @@ class ResourceController(
 
                 dependencyGraph[uri]?.addAll(deps)
             } catch (e: Exception) {
-                println("Warning: Could not determine dependencies for $uri: ${e.message}")
+                logger.warn("Could not determine dependencies for {}: {}", uri, e.message)
             }
         }
 

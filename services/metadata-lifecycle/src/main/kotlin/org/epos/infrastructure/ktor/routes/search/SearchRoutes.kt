@@ -109,11 +109,8 @@ private suspend fun executeSearch(
     val searchTerms = q?.split("\\s+".toRegex())?.filter { it.isNotBlank() } ?: emptyList()
     val typeValueFilter =
         matchedResourceTypes
-            ?.flatMap { typeInfo ->
-                val targetClass = typeInfo.targetClass
-                val targetLocal = targetClass.substringAfterLast('/').substringAfterLast('#')
-                listOf(typeInfo.name, targetClass, targetLocal)
-            }?.filter { it.isNotBlank() }
+            ?.flatMap { typeInfo -> searchTypeFilterValues(typeInfo.name) }
+            ?.filter { it.isNotBlank() }
             ?.toSet()
             .orEmpty()
     val queryParams =
@@ -130,23 +127,13 @@ private suspend fun executeSearch(
             """
             MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version)
             WITH c, v, properties(v) AS vp
+            WITH c, v, vp, coalesce(v.type, vp['rdf:type'], c.type, '') AS rawType
+            WITH c, v, vp, toLower(replace(replace(last(split(last(split(toString(rawType), '/')), '#')), '-', ''), '_', '')) AS rowType
             WHERE toLower(v.status) IN ${'$'}statuses
-              AND (
-                size(${ '$' }types) = 0 OR any(t IN ${'$'}types WHERE
-                  toLower(coalesce(c.type, '')) = t
-                  OR toLower(coalesce(v.type, '')) = t
-                  OR toLower(coalesce(vp['rdf:type'], '')) = t
-                  OR toLower(last(split(coalesce(v.type, ''), '/'))) = t
-                  OR toLower(last(split(coalesce(v.type, ''), '#'))) = t
-                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '/'))) = t
-                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '#'))) = t
-                )
-              )
+              AND (size(${ '$' }types) = 0 OR rowType IN ${'$'}types)
               AND (
                 size(${ '$' }terms) = 0 OR all(term IN ${'$'}terms WHERE
-                    toLower(coalesce(v.title, '')) CONTAINS term
-                    OR toLower(coalesce(v.description, '')) CONTAINS term
-                    OR toLower(coalesce(v.label, '')) CONTAINS term
+                    any(key IN keys(vp) WHERE toLower(coalesce(toString(vp[key]), '')) CONTAINS term)
                 )
               )
             RETURN properties(c) AS c, properties(v) AS v
@@ -157,23 +144,13 @@ private suspend fun executeSearch(
             """
             MATCH (c:Conceptual)-[:HAS_VERSION]->(v:Version)
             WITH c, v, properties(v) AS vp
+            WITH c, v, vp, coalesce(v.type, vp['rdf:type'], c.type, '') AS rawType
+            WITH c, v, vp, toLower(replace(replace(last(split(last(split(toString(rawType), '/')), '#')), '-', ''), '_', '')) AS rowType
             WHERE toLower(v.status) IN ${'$'}statuses
-              AND (
-                size(${ '$' }types) = 0 OR any(t IN ${'$'}types WHERE
-                  toLower(coalesce(c.type, '')) = t
-                  OR toLower(coalesce(v.type, '')) = t
-                  OR toLower(coalesce(vp['rdf:type'], '')) = t
-                  OR toLower(last(split(coalesce(v.type, ''), '/'))) = t
-                  OR toLower(last(split(coalesce(v.type, ''), '#'))) = t
-                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '/'))) = t
-                  OR toLower(last(split(coalesce(vp['rdf:type'], ''), '#'))) = t
-                )
-              )
+              AND (size(${ '$' }types) = 0 OR rowType IN ${'$'}types)
               AND (
                 size(${ '$' }terms) = 0 OR all(term IN ${'$'}terms WHERE
-                    toLower(coalesce(v.title, '')) CONTAINS term
-                    OR toLower(coalesce(v.description, '')) CONTAINS term
-                    OR toLower(coalesce(v.label, '')) CONTAINS term
+                    any(key IN keys(vp) WHERE toLower(coalesce(toString(vp[key]), '')) CONTAINS term)
                 )
               )
             RETURN count(v) AS value
@@ -217,7 +194,7 @@ private suspend fun executeSearch(
                 val v = row["v"] as? Map<*, *> ?: return@mapNotNull null
 
                 val id = prop(v["id"]) ?: prop(c["id"]) ?: return@mapNotNull null
-                val typeUri = prop(c["type"]) ?: ""
+                val typeUri = resolveSearchTypeValue(v, c, id)
                 val structuralKeys = setOf("id", "status", "versionNumber", "createdAt", "updatedAt")
 
                 @Suppress("UNCHECKED_CAST")
@@ -312,15 +289,27 @@ private fun List<Pair<String, String>>.toQueryString(): String =
 
 private fun normalizeTypeName(typeName: String): String = typeName.lowercase().replace("-", "").replace("_", "")
 
-private fun mapSearchTypeUriToApiType(typeUri: String): String? =
-    typeUri
-        .substringAfterLast('/')
-        .substringAfterLast('#')
-        .takeIf { it.isNotBlank() }
-        ?.lowercase()
+internal fun normalizedSearchRowType(typeName: String): String = normalizeTypeName(typeName.substringAfterLast('/').substringAfterLast('#'))
 
-internal fun canonicalApiType(typeName: String): String =
-    canonicalSearchType(normalizeTypeName(typeName)).ifBlank { "resource" }
+private fun searchTypeFilterValues(typeName: String): Set<String> =
+    when (canonicalSearchType(typeName)) {
+        "organization" -> setOf("organization", "publisher", "provider")
+        else -> setOf(canonicalSearchType(typeName))
+    }
+
+private fun mapSearchTypeUriToApiType(typeUri: String): String? = normalizedSearchRowType(typeUri).takeIf { it.isNotBlank() }
+
+private fun resolveSearchTypeValue(
+    versionData: Map<*, *>,
+    conceptualData: Map<*, *>,
+    id: String,
+): String =
+    prop(versionData["type"])
+        ?: prop(versionData["rdf:type"])
+        ?: prop(conceptualData["type"])
+        ?: extractTypeName(id)
+
+internal fun canonicalApiType(typeName: String): String = canonicalSearchType(normalizeTypeName(typeName)).ifBlank { "resource" }
 
 internal fun canonicalSearchType(typeName: String): String =
     when (normalizeTypeName(typeName)) {
@@ -428,7 +417,7 @@ private fun normalizeSearchFieldValue(
     val relationShapeCandidates = relationShapeCandidates(property, resourceTypeMap, knownShapeNames)
     val relationValues = relationValues(value)
     if (relationShapeCandidates.isNotEmpty() && relationValues.isNotEmpty()) {
-            val mapped =
+        val mapped =
             relationValues.map { objectId ->
                 val link =
                     ResourceLinkResolver.resolveLink(
