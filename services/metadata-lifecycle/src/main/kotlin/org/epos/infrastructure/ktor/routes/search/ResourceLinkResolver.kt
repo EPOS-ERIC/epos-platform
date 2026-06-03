@@ -103,6 +103,8 @@ internal object ResourceLinkResolver {
         normalizeShapeName: (String) -> String,
     ): String? {
         val versionId = resolveAccessEntityId(client, entityId) ?: return null
+        resolveVersionShapeFromGraph(client, versionId, resourceTypeMap, normalizeShapeName)?.let { return it }
+
         val conceptualFromVersion =
             if (UriUtils.hasVersion(versionId)) {
                 UriUtils.extractConceptualUri(versionId)
@@ -156,6 +158,37 @@ internal object ResourceLinkResolver {
             }?.value
     }
 
+    private fun resolveVersionShapeFromGraph(
+        client: PropertyGraphClient,
+        versionId: String,
+        resourceTypeMap: Map<String, String>,
+        normalizeShapeName: (String) -> String,
+    ): String? {
+        val versionType =
+            client
+                .runQuery(
+                    "MATCH (v:Version {id: ${'$'}versionId}) RETURN coalesce(v.type, v.`rdf:type`) AS value LIMIT 1",
+                    mapOf("versionId" to versionId),
+                ).firstOrNull()
+                ?.get("value")
+                ?.toString()
+                ?: client
+                    .runQuery(
+                        "MATCH (v:Version {identifier: ${'$'}versionId}) RETURN coalesce(v.type, v.`rdf:type`) AS value LIMIT 1",
+                        mapOf("versionId" to versionId),
+                    ).firstOrNull()
+                    ?.get("value")
+                    ?.toString()
+                ?: return null
+
+        val normalizedType = normalizeShapeName(versionType.substringAfterLast('/').substringAfterLast('#'))
+        return resourceTypeMap.entries
+            .firstOrNull { (typeUri, shapeName) ->
+                normalizeShapeName(shapeName) == normalizedType ||
+                    normalizeShapeName(typeUri.substringAfterLast('/').substringAfterLast('#')) == normalizedType
+            }?.value
+    }
+
     fun isPotentialResourceIdentifier(value: String): Boolean {
         if (value.startsWith("http://") || value.startsWith("https://")) return true
         if (value.startsWith("category:")) return true
@@ -180,7 +213,7 @@ internal object ResourceLinkResolver {
         preferredShape: String? = null,
     ): ResolvedLink? {
         val versionId = resolveAccessEntityId(client, objectId) ?: return null
-        val shape = preferredShape ?: resolveEntityShapeFromGraph(client, objectId, resourceTypeMap, normalizeShapeName)
+        val shape = resolveEntityShapeFromGraph(client, objectId, resourceTypeMap, normalizeShapeName) ?: preferredShape
         val href = buildNavigableAccessHref(publicBaseUrl, shape, versionId)
         return ResolvedLink(
             resolvedVersionId = versionId,

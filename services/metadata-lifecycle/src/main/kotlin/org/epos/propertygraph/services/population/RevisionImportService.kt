@@ -20,6 +20,7 @@ import org.epos.propertygraph.services.EntityLifecycleService
 import org.epos.propertygraph.utils.UriUtils
 import org.epos.propertygraph.utils.VersionRecord
 import org.epos.services.ShaclService
+import org.slf4j.LoggerFactory
 import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.Path
@@ -77,6 +78,7 @@ class RevisionImportService(
     private val lifecycleService: EntityLifecycleService,
     private val shaclService: ShaclService,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
     suspend fun importFromContent(
         ttlContent: String,
         sourceName: String,
@@ -232,7 +234,7 @@ class RevisionImportService(
             val obj = stmt.`object`
 
             val propName = propertyKeyFromPredicate(predicate, shaclPrefixes)
-            if (predicate.endsWith("type") || predicate == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" ||
+            if (predicate == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" ||
                 predicate.endsWith("version") || predicate.endsWith("isVersionOf")
             ) {
                 return@forEach
@@ -476,8 +478,8 @@ class RevisionImportService(
         try {
             Rio.parse(StringReader(ttlContent), Config.BASE_URI, RDFFormat.TURTLE)
         } catch (e: Exception) {
-            println("  WARNING: strict Turtle parsing failed for '$source': ${e.message}")
-            println("  Retrying with relaxed parser and IRI recovery...")
+            logger.warn("Strict Turtle parsing failed for '{}': {}", source, e.message)
+            logger.warn("Retrying with relaxed parser and IRI recovery...")
 
             try {
                 val recovered = LinkedHashModel()
@@ -488,8 +490,8 @@ class RevisionImportService(
                 parser.parse(StringReader(ttlContent), Config.BASE_URI)
                 recovered
             } catch (relaxedError: Exception) {
-                println("  WARNING: relaxed parsing also failed: ${relaxedError.message}")
-                println("  Rewriting non-absolute IRI tokens and retrying...")
+                logger.warn("Relaxed parsing also failed: {}", relaxedError.message)
+                logger.warn("Rewriting non-absolute IRI tokens and retrying...")
 
                 val sanitized = sanitizeNonAbsoluteIriTokens(ttlContent)
                 Rio.parse(StringReader(sanitized), Config.BASE_URI, RDFFormat.TURTLE)
@@ -555,12 +557,26 @@ class RevisionImportService(
         }
     }
 
-    private fun toPropertyValue(value: Any?): Any = when (value) {
-        null -> ""
-        is String, is Number, is Boolean -> value
-        is List<*>, is Map<*, *> -> com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value)
-        else -> value.toString()
-    }
+    private fun toPropertyValue(value: Any?): Any =
+        when (value) {
+            null -> {
+                ""
+            }
+
+            is String, is Number, is Boolean -> {
+                value
+            }
+
+            is List<*>, is Map<*, *> -> {
+                com.fasterxml.jackson.databind
+                    .ObjectMapper()
+                    .writeValueAsString(value)
+            }
+
+            else -> {
+                value.toString()
+            }
+        }
 
     private fun shouldCreateRelationEdge(
         subjectVersionUri: String,
