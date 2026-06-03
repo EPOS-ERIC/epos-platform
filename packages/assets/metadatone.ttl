@@ -970,8 +970,8 @@
 		schema:softwareVersion "1.0";
 		schema:keywords "format conversion, data download, data export" ;
   		dcat:theme <category:software_appl_conc_multi>;
-        schema:downloadUrl "URL"^^xsd:anyURI;
-        schema:softwareRequirements "URL"^^xsd:anyURI;
+		schema:downloadUrl "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0/download"^^xsd:anyURI;
+		schema:softwareRequirements "Windows 7";
         schema:creator <ROR:048a87296>;
         schema:operatingSystem "Windows 7";
 .
@@ -1108,4 +1108,3 @@ schema:serialNumber "not available";
          skos:inScheme    <epos:Facility_Type> ;
          skos:prefLabel   "Access to Volcano Observatories and Volcano Research Institutions"
 .
-

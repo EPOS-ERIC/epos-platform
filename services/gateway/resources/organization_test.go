@@ -12,10 +12,10 @@ import (
 func TestMapOrganization(t *testing.T) {
 	t.Parallel()
 
-	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/organization/bgs.json")
+	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/organization/uppsala.json")
 	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
-		fixtureKey("propertyvalue", "http://viaf.org/viaf/136554353/bnode-propertyvalue-5bbce760/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/bgs-viaf.json",
-		fixtureKey("postaladdress", "http://viaf.org/viaf/136554353/bnode-postaladdress-064b9034/v1.0"): "testdata/metadata-lifecycle/access/postaladdress/bgs.json",
+		fixtureKey("propertyvalue", "ROR:048a87296/bnode-propertyvalue-14ab692e/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/uppsala-url.json",
+		fixtureKey("postaladdress", "ROR:048a87296/bnode-postaladdress-be765c92/v1.0"): "testdata/metadata-lifecycle/access/postaladdress/uppsala.json",
 	})
 
 	organization, err := mapOrganization(context.Background(), detail, fetch)
@@ -23,34 +23,34 @@ func TestMapOrganization(t *testing.T) {
 		t.Fatalf("mapOrganization() error = %v", err)
 	}
 
-	if organization.ID != "http://viaf.org/viaf/136554353//v1.0" {
+	if organization.ID != "ROR:048a87296/v1.0" {
 		t.Fatalf("organization.ID = %q", organization.ID)
 	}
-	if organization.Name != "BGS - British Geological Survey, UK Research and Innovation" {
+	if organization.Name != "Uppsala University" {
 		t.Fatalf("organization.Name = %q", organization.Name)
 	}
-	if organization.Logo != "https://www.bgs.ac.uk/wp-content/uploads/2020/03/BGS-logo-large.png" {
+	if organization.Logo != "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg" {
 		t.Fatalf("organization.Logo = %q", organization.Logo)
 	}
-	if organization.URL != "https://www.bgs.ac.uk/" {
+	if organization.URL != "http://www.uu.se" {
 		t.Fatalf("organization.URL = %q", organization.URL)
 	}
-	if len(organization.Email) != 1 || organization.Email[0] != "enquiries@bgs.ac.uk" {
+	if len(organization.Email) != 0 {
 		t.Fatalf("organization.Email = %#v", organization.Email)
 	}
-	if len(organization.Telephone) != 1 || organization.Telephone[0] != "+44 131 667 1000" {
+	if len(organization.Telephone) != 0 {
 		t.Fatalf("organization.Telephone = %#v", organization.Telephone)
 	}
-	if len(organization.Identifiers) != 1 || organization.Identifiers[0] != (api.Identifier{Type: "viaf", Value: "http://viaf.org/viaf/136554353/"}) {
+	if len(organization.Identifiers) != 1 || organization.Identifiers[0] != (api.Identifier{Type: "URL", Value: "https://ror.org/048a87296"}) {
 		t.Fatalf("organization.Identifiers = %#v", organization.Identifiers)
 	}
-	if organization.Address != "The Lyell Centre, Research Avenue South, Edinburgh, EH14 4AP, GB" {
+	if organization.Address != "Dag Hammarskjölds väg 7, Uppsala, 751 05, Sweden" {
 		t.Fatalf("organization.Address = %q", organization.Address)
 	}
-	if len(organization.MemberOf) != 1 || organization.MemberOf[0].Href != "v1/organization/http://viaf.org/viaf/148537429//v1.0" {
+	if len(organization.MemberOf) != 0 {
 		t.Fatalf("organization.MemberOf = %#v", organization.MemberOf)
 	}
-	if len(organization.ContactPoints) != 0 {
+	if len(organization.ContactPoints) != 1 || organization.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fror.org%2F048a87296%2FlegalContact%2Fv1.0" {
 		t.Fatalf("organization.ContactPoints = %#v", organization.ContactPoints)
 	}
 }

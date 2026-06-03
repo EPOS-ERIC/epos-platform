@@ -3,8 +3,8 @@
   "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-b54da560/v1.0",
   "properties": {
     "rdf:type": "http://schema.org/PropertyValue",
-    "schema:pg_value": "10.13127/epos.ah-app.catalog-to-xls",
-    "schema:propertyID": "doi"
+    "schema:pg_value": "WP14-DDSS-A01",
+    "schema:propertyID": "DDSS-ID"
   },
   "shape": "propertyvalue"
 }

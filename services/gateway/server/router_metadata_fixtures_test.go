@@ -15,13 +15,15 @@ func TestRouterSearchUsesFixtureResponses(t *testing.T) {
 	t.Parallel()
 
 	router := newFixtureRouter(t, map[string]string{
-		"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/dataset-first-page.json",
-		"/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0":                                                           "testdata/metadata-lifecycle/access/organization/bgs.json",
-		"/api/v2/access/concept/category%3Ageomagneticdata%2Fv1.0":                                                                                 "testdata/metadata-lifecycle/access/concept/geomagneticdata.json",
-		"/api/v2/access/dataset/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0": "testdata/metadata-lifecycle/access/dataset/intermagnet.json",
+		"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/softwareapplication-first-page.json",
+		"/api/v2/access/softwareapplication/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0":           "testdata/metadata-lifecycle/access/softwareapplication/catalog-to-xls.json",
+		"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0": "testdata/metadata-lifecycle/access/propertyvalue/catalog-to-xls-doi.json",
+		"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-b54da560%2Fv1.0": "testdata/metadata-lifecycle/access/propertyvalue/catalog-to-xls-ddss-id.json",
+		"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                                                              "testdata/metadata-lifecycle/access/organization/uppsala.json",
+		"/api/v2/access/concept/category%3Asoftware_appl_conc_multi%2Fv1.0":                                                               "testdata/metadata-lifecycle/access/concept/software-appl-conc-multi.json",
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/search?type=dataset", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/search?type=softwareapplication", nil)
 	rec := httptest.NewRecorder()
 
 	router.ServeHTTP(rec, req)
@@ -29,10 +31,10 @@ func TestRouterSearchUsesFixtureResponses(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), "INTERMAGNET Geomagnetic Observatory Data") {
+	if !strings.Contains(rec.Body.String(), "Catalog to XLS converter") {
 		t.Fatalf("body = %s", rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), "Geomagnetic data") {
+	if !strings.Contains(rec.Body.String(), "Uppsala University") {
 		t.Fatalf("body = %s", rec.Body.String())
 	}
 }

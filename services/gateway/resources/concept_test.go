@@ -9,21 +9,21 @@ import (
 func TestMapConcept(t *testing.T) {
 	t.Parallel()
 
-	concept, err := mapConcept(loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/concept/geomagneticdata.json"))
+	concept, err := mapConcept(loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json"))
 	if err != nil {
 		t.Fatalf("mapConcept() error = %v", err)
 	}
 
-	if concept.ID != "category:geomagneticdata/v1.0" {
+	if concept.ID != "category:software_jup_conc_multi/v1.0" {
 		t.Fatalf("concept.ID = %q", concept.ID)
 	}
-	if concept.Name != "Geomagnetic data" {
+	if concept.Name != "Multidisciplinary software" {
 		t.Fatalf("concept.Name = %q", concept.Name)
 	}
-	if concept.Description != "TCS Subdomain" {
+	if concept.Description != "Multidisciplinary software" {
 		t.Fatalf("concept.Description = %q", concept.Description)
 	}
-	if concept.InScheme == nil || concept.InScheme.Href != "v1/conceptscheme/category:geomagneticobservatis/v1.0" {
+	if concept.InScheme == nil || concept.InScheme.Href != "v1/conceptscheme/category:software_jup/v1.0" {
 		t.Fatalf("concept.InScheme = %#v", concept.InScheme)
 	}
 	if len(concept.Children) != 0 {

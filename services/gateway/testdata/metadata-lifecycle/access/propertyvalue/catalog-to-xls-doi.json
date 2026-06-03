@@ -3,8 +3,8 @@
   "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-4c77d796/v1.0",
   "properties": {
     "rdf:type": "http://schema.org/PropertyValue",
-    "schema:pg_value": "CatalogToXls",
-    "schema:propertyID": "internal_id"
+    "schema:pg_value": "10.5281/zenodo.17598403",
+    "schema:propertyID": "DOI"
   },
   "shape": "propertyvalue"
 }

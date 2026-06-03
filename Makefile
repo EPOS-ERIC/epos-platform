@@ -28,4 +28,11 @@ lint:
 	$(MAKE) -C services/data-retriever lint
 	$(MAKE) -C services/metadata-lifecycle lint
 
-.PHONY: up down populate populate-metadatone test fmt lint
+test-schemathesis:
+	SCHEMATHESIS_HOOKS=tests/schemathesis/hooks.py schemathesis run \
+		--url "http://localhost:32000/v1" \
+		--suppress-health-check=filter_too_much \
+		--exclude-checks unsupported_method \
+		services/gateway/docs/openapi.yaml
+
+.PHONY: up down populate populate-metadatone test fmt lint test-schemathesis

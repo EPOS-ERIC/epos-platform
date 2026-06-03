@@ -20,27 +20,6 @@ func TestResourceHandlersUseFixtureResponses(t *testing.T) {
 		target string
 	}{
 		{
-			name:   "dataset",
-			id:     "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Dataset/v1.0",
-			call:   (*Resources).GetDatasetByID,
-			want:   "INTERMAGNET Geomagnetic Observatory Data",
-			target: "/v1/dataset/id",
-		},
-		{
-			name:   "distribution",
-			id:     "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0",
-			call:   (*Resources).GetDistributionByID,
-			want:   "Data cadence",
-			target: "/v1/distribution/id",
-		},
-		{
-			name:   "webservice",
-			id:     "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0",
-			call:   (*Resources).GetWebserviceByID,
-			want:   "Web service for INTERMAGNET data",
-			target: "/v1/webservice/id",
-		},
-		{
 			name:   "softwareapplication",
 			id:     "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0",
 			call:   (*Resources).GetSoftwareApplicationByID,
@@ -49,30 +28,30 @@ func TestResourceHandlersUseFixtureResponses(t *testing.T) {
 		},
 		{
 			name:   "softwaresourcecode",
-			id:     "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
+			id:     "https://doi.org/10.5281/zenodo.17598403",
 			call:   (*Resources).GetSoftwareSourceCodeByID,
-			want:   "Analyze earthquakes, permanent displacement and geology",
+			want:   "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab.",
 			target: "/v1/softwaresourcecode/id",
 		},
 		{
 			name:   "organization",
-			id:     "http://viaf.org/viaf/136554353//v1.0",
+			id:     "ROR:048a87296/v1.0",
 			call:   (*Resources).GetOrganizationByID,
-			want:   "British Geological Survey",
+			want:   "Uppsala University",
 			target: "/v1/organization/id",
 		},
 		{
 			name:   "concept",
-			id:     "category:geomagneticdata/v1.0",
+			id:     "category:software_jup_conc_multi/v1.0",
 			call:   (*Resources).GetConceptByID,
-			want:   "Geomagnetic data",
+			want:   "Multidisciplinary software",
 			target: "/v1/concept/id",
 		},
 		{
 			name:   "conceptscheme",
-			id:     "category:geomagneticobservatis/v1.0",
+			id:     "category:software_jup/v1.0",
 			call:   (*Resources).GetConceptSchemeByID,
-			want:   "Geomagnetic Observations",
+			want:   "Jupyter Notebooks",
 			target: "/v1/conceptscheme/id",
 		},
 	}

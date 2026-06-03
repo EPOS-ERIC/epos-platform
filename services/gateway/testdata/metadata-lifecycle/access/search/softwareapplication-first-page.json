@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "fields": {
+        "schema:name": "Catalog to XLS converter"
+      },
+      "href": "http://localhost:8080/api/v2/access/softwareapplication/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0",
+      "id": "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0",
+      "type": "softwareapplication"
+    }
+  ],
+  "page": 1,
+  "total": 1,
+  "totalItems": 1,
+  "totalPages": 1
+}

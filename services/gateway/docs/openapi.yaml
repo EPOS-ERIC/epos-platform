@@ -343,16 +343,14 @@ paths:
                 organization:
                   summary: Organization detail
                   value:
-                    id: "PIC:999472675/v1.0"
+                    id: "ROR:048a87296/v1.0"
                     identifiers:
-                      - type: "pic"
-                        value: "999472675"
-                    name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                    address: "Via di Vigna Murata 605, Rome, 00143, IT"
-                    logo: "https://www.ingv.it/templates/g5_helium/custom/images/INGV_logo_colore3.png"
-                    url: "http://www.ingv.it"
-                    email:
-                      - "ufficiostampa@ingv.it"
+                      - type: "URL"
+                        value: "https://ror.org/048a87296"
+                    name: "Uppsala University"
+                    address: "Dag Hammarskjölds väg 7, Uppsala, 751 05, Sweden"
+                    logo: "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg"
+                    url: "http://www.uu.se"
         "404":
           $ref: "#/components/responses/NotFound"
         "504":
@@ -382,21 +380,21 @@ paths:
                   summary: Concept tree with one scheme
                   value:
                     schemes:
-                      - id: "category:seismology/v1.0"
-                        label: "SEI"
-                        name: "Seismology"
-                        description: "TCS Domain"
-                        logo: "assets/img/logo/SEISM_logo.png"
-                        homepage: "https://www.epos-eu.org/tcs/seismology"
-                        color: "#476f57"
+                      - id: "category:software_jup/v1.0"
+                        label: "Jupyter Notebooks"
+                        name: "Jupyter Notebooks"
+                        description: "Jupyter Notebook Domain"
+                        logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
+                        homepage: ""
+                        color: "#F37726"
                         order_number: 1
                         top_concepts:
-                          - id: "category:facets/dataset-theme/v1.0"
-                            href: "v1/concept/category:facets/dataset-theme/v1.0"
+                          - id: "category:facets/software-theme/v1.0"
+                            href: "v1/concept/category:facets/software-theme/v1.0"
                         children:
-                          - id: "category:facets/dataset-theme/v1.0"
-                            name: "Dataset"
-                            description: "Dataset"
+                          - id: "category:facets/software-theme/v1.0"
+                            name: "Software"
+                            description: "Software"
                             children: []
         "504":
           $ref: "#/components/responses/GatewayTimeout"
@@ -425,17 +423,14 @@ paths:
                 concept:
                   summary: Concept detail
                   value:
-                    id: "category:seismologicalproductsservices/v1.0"
-                    name: "Seismological products services"
-                    description: "TCS Subdomain"
+                    id: "category:software_jup_conc_multi/v1.0"
+                    name: "Multidisciplinary software"
+                    description: "Multidisciplinary software"
                     in_scheme:
-                      id: "category:seismology/v1.0"
-                      name: "Seismology"
-                      href: "v1/conceptscheme/category:seismology/v1.0"
-                    children:
-                      - id: "category:earthquakeparameters/v1.0"
-                        name: "Earthquake parameters"
-                        href: "v1/concept/category:earthquakeparameters/v1.0"
+                      id: "category:software_jup/v1.0"
+                      name: "Jupyter Notebooks"
+                      href: "v1/conceptscheme/category:software_jup/v1.0"
+                    children: []
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -463,18 +458,18 @@ paths:
                 conceptScheme:
                   summary: Concept scheme detail
                   value:
-                    id: "category:seismology/v1.0"
-                    label: "SEI"
-                    name: "Seismology"
-                    description: "TCS Domain"
-                    logo: "assets/img/logo/SEISM_logo.png"
-                    homepage: "https://www.epos-eu.org/tcs/seismology"
-                    color: "#476f57"
+                    id: "category:software_jup/v1.0"
+                    label: "JUP"
+                    name: "Jupyter Notebooks"
+                    description: "Jupyter Notebook Domain"
+                    logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
+                    homepage: ""
+                    color: "#F37726"
                     order_number: 1
                     top_concepts:
-                      - id: "category:facets/dataset-theme/v1.0"
-                        name: "Dataset"
-                        href: "v1/concept/category:facets/dataset-theme/v1.0"
+                      - id: "category:facets/software-theme/v1.0"
+                        name: "Software"
+                        href: "v1/concept/category:facets/software-theme/v1.0"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -543,7 +538,7 @@ components:
       description: Organization identifier.
       schema:
         type: string
-        example: "PIC%3A999472675%2Fv1.0"
+        example: "ROR%3A048a87296%2Fv1.0"
 
     ConceptId:
       name: id
@@ -552,7 +547,7 @@ components:
       description: Concept identifier.
       schema:
         type: string
-        example: "category%3Aearthquakeparameters%2Fv1.0"
+        example: "category%3Asoftware_jup_conc_multi%2Fv1.0"
 
     ConceptSchemeId:
       name: id
@@ -561,7 +556,7 @@ components:
       description: Concept scheme identifier.
       schema:
         type: string
-        example: "category%3Aseismology%2Fv1.0"
+        example: "category%3Asoftware_jup%2Fv1.0"
 
     Q:
       name: q
@@ -850,16 +845,16 @@ components:
         id:
           type: string
           description: Identifier of resource within this API.
-          example: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
+          example: "https://doi.org/10.5281/zenodo.17598403"
         name:
           description: Human-readable display name used in search results.
           type: string
-          example: "TEST1 - Historical earthquakes 1000-1899"
+          example: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
         href:
           type: string
           format: uri-reference
           description: Relative URI reference to resource detail endpoint.
-          example: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
+          example: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
 
     DatasetSearchItem:
       allOf:
@@ -878,9 +873,6 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "PIC:999472675/v1.0"
-                  name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                  href: "v1/organization/PIC:999472675/v1.0"
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
                   href: "v1/organization/ROR:048a87296/v1.0"
@@ -890,10 +882,8 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "category:seismologicalproductsservices/v1.0"
-                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
-                - id: "category:earthquakeparameters/v1.0"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                - id: "category:software_jup_conc_multi/v1.0"
+                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
             distributions:
               type: array
               description: Distribution references for this dataset
@@ -1020,16 +1010,16 @@ components:
       properties:
         id:
           type: string
-          example: "PIC:999472675/v1.0"
+          example: "ROR:048a87296/v1.0"
         name:
           type: string
           description: Optional human-readable label for referenced resource.
-          example: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+          example: "Uppsala University"
         href:
           type: string
           format: uri-reference
           description: Relative URI reference to referenced resource detail endpoint
-          example: "v1/organization/PIC:999472675/v1.0"
+          example: "v1/organization/ROR:048a87296/v1.0"
 
     # -------------------------------------------------------------------------
     # Detail schemas
@@ -1682,13 +1672,13 @@ components:
       properties:
         id:
           type: string
-          example: "category:earthquakeparameters/v1.0"
+          example: "category:software_jup_conc_multi/v1.0"
         name:
           type: string
-          example: "Earthquake parameters"
+          example: "Multidisciplinary software"
         description:
           type: string
-          example: "TCS Subdomain"
+          example: "Multidisciplinary software"
         children:
           type: array
           description: Nested child concepts directly below this concept
@@ -1704,28 +1694,28 @@ components:
       properties:
         id:
           type: string
-          example: "category:seismology/v1.0"
+          example: "category:software_jup/v1.0"
         label:
           type: string
-          example: "SEI"
+          example: "Jupyter Notebooks"
         name:
           type: string
-          example: "Seismology"
+          example: "Jupyter Notebooks"
         description:
           type: string
-          example: "TCS Domain"
+          example: "Jupyter Notebook Domain"
         logo:
           type: string
           format: uri
-          example: "assets/img/logo/SEISM_logo.png"
+          example: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
         homepage:
           type: string
           format: uri
-          example: "https://www.epos-eu.org/tcs/seismology"
+          example: ""
         color:
           type: string
           description: Hex colour code used for UI rendering
-          example: "#476f57"
+          example: "#F37726"
         order_number:
           type: integer
           description: Display order among sibling concept schemes

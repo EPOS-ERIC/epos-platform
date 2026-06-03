@@ -1,0 +1,34 @@
+{
+  "href": "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0",
+  "id": "ROR:048a87296/v1.0",
+  "properties": {
+    "rdf:type": "http://schema.org/Organization",
+    "schema:address": {
+      "href": "http://localhost:8080/api/v2/access/postaladdress/ROR%3A048a87296%2Fbnode-postaladdress-be765c92%2Fv1.0",
+      "id": "ROR:048a87296/bnode-postaladdress-be765c92/v1.0",
+      "predicateIri": "http://schema.org/address",
+      "type": "postaladdress"
+    },
+    "schema:contactPoint": [
+      {
+        "href": "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fror.org%2F048a87296%2FlegalContact%2Fv1.0",
+        "id": "https://ror.org/048a87296/legalContact/v1.0",
+        "predicateIri": "http://schema.org/contactPoint",
+        "type": "contactpoint"
+      }
+    ],
+    "schema:identifier": [
+      {
+        "href": "http://localhost:8080/api/v2/access/propertyvalue/ROR%3A048a87296%2Fbnode-propertyvalue-14ab692e%2Fv1.0",
+        "id": "ROR:048a87296/bnode-propertyvalue-14ab692e/v1.0",
+        "predicateIri": "http://schema.org/identifier",
+        "type": "propertyvalue"
+      }
+    ],
+    "schema:legalName": "Uppsala University",
+    "schema:leiCode": "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search",
+    "schema:logo": "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg",
+    "schema:url": "http://www.uu.se"
+  },
+  "shape": "organization"
+}

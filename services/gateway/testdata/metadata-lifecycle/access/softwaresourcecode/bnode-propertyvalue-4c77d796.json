@@ -1,0 +1,10 @@
+{
+  "href": "http://localhost:8080/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-4c77d796",
+  "id": "https://doi.org/10.5281/bnode-propertyvalue-4c77d796",
+  "properties": {
+    "rdf:type": "http://schema.org/PropertyValue",
+    "schema:pg_value": "10.5281/zenodo.17598403",
+    "schema:propertyID": "DOI"
+  },
+  "shape": "softwaresourcecode"
+}

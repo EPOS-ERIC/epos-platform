@@ -75,10 +75,10 @@ func TestGetConceptTreeUsesFixtureResponses(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), "Anthropogenic Hazards") {
+	if !strings.Contains(rec.Body.String(), "Jupyter Notebooks") {
 		t.Fatalf("body = %s", rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), "Dataset") {
+	if !strings.Contains(rec.Body.String(), "Software") {
 		t.Fatalf("body = %s", rec.Body.String())
 	}
 }
