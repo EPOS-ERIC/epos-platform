@@ -41,6 +41,13 @@ func TestResourceHandlersUseFixtureResponses(t *testing.T) {
 			target: "/v1/webservice/id",
 		},
 		{
+			name:   "softwaresourcecode",
+			id:     "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
+			call:   (*Resources).GetSoftwareSourceCodeByID,
+			want:   "Analyze earthquakes, permanent displacement and geology",
+			target: "/v1/softwaresourcecode/id",
+		},
+		{
 			name:   "organization",
 			id:     "http://viaf.org/viaf/136554353//v1.0",
 			call:   (*Resources).GetOrganizationByID,
@@ -91,7 +98,6 @@ func TestResourceHandlersReturnNotImplementedForSoftwareEndpoints(t *testing.T) 
 		target string
 	}{
 		{name: "softwareapplication", call: (*Resources).GetSoftwareApplicationByID, target: "/v1/softwareapplication/id"},
-		{name: "softwaresourcecode", call: (*Resources).GetSoftwareSourceCodeByID, target: "/v1/softwaresourcecode/id"},
 	}
 
 	for _, tt := range tests {

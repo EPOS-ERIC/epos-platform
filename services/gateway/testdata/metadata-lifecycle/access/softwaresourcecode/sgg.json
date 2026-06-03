@@ -1,0 +1,54 @@
+{
+  "id": "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
+  "shape": "softwaresourcecode",
+  "href": "http://localhost:8080/api/v2/access/softwaresourcecode/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2FSSC%2Fv1.0",
+  "properties": {
+    "schema:keywords": [
+      "Jupyter notebook, GNSS, GIM, seismology, geodesy, displacement, map view, geology, moment tensor, stations"
+    ],
+    "schema:creator": {
+      "id": "PIC:999974456/v1.0",
+      "type": "organization",
+      "href": "http://localhost:8080/api/v2/access/organization/PIC%3A999974456%2Fv1.0",
+      "predicateIri": "http://schema.org/creator"
+    },
+    "rdf:type": "http://schema.org/SoftwareSourceCode",
+    "schema:identifier": [
+      {
+        "id": "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
+        "type": "softwaresourcecode",
+        "href": "http://localhost:8080/api/v2/access/softwaresourcecode/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2FSSC%2Fv1.0",
+        "predicateIri": "http://schema.org/identifier"
+      },
+      {
+        "id": "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/bnode-propertyvalue-3f006d06/v1.0",
+        "type": "propertyvalue",
+        "href": "http://localhost:8080/api/v2/access/propertyvalue/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2Fbnode-propertyvalue-3f006d06%2Fv1.0",
+        "predicateIri": "http://schema.org/identifier"
+      }
+    ],
+    "schema:programmingLanguage": [
+      "Python"
+    ],
+    "schema:license": "https://creativecommons.org/licenses/by/4.0/",
+    "schema:description": "This notebook is exploring earthquakes, geodetic observations and geological map in user defined bounding box. The focus is on simple analysis of moment tensors, their alignment with known crustal faults and investigation of permanent displacement retrieved from GNSS stations. The data is plot in an interactive map together with geology. This is a basic example of multiple service usage and analysis.",
+    "dcat:theme": [
+      {
+        "id": "category:software_jup_conc_multi/v1.0",
+        "type": "concept",
+        "href": "http://localhost:8080/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0",
+        "predicateIri": "http://www.w3.org/ns/dcat#theme"
+      }
+    ],
+    "schema:name": "Analyze earthquakes, permanent displacement and geology",
+    "schema:codeRepository": "https://raw.githubusercontent.com/epos-eu/jupyter-notebooks/main/SEIS%2BGNSS%2BGIM_2025-06-24.ipynb",
+    "schema:contactPoint": [
+      {
+        "id": "http://www.epos-eu.org/epos-dcat-ap/jupyter/ContactPoint/sgg/001/v1.0",
+        "type": "contactpoint",
+        "href": "http://localhost:8080/api/v2/access/contactpoint/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fjupyter%2FContactPoint%2Fsgg%2F001%2Fv1.0",
+        "predicateIri": "http://schema.org/contactPoint"
+      }
+    ]
+  }
+}
