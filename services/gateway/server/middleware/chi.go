@@ -35,18 +35,12 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := r.Header.Get("X-Request-Id")
-
 		ctx := logging.WithRequest(r.Context(), logging.Request{
-			RequestID: requestID,
-			Method:    r.Method,
-			Path:      r.URL.Path,
-			Query:     r.URL.RawQuery,
+			Method: r.Method,
+			Path:   r.URL.Path,
+			Query:  r.URL.RawQuery,
 		})
 		r = r.WithContext(ctx)
-		if requestID != "" {
-			w.Header().Set("X-Request-Id", requestID)
-		}
 
 		startedAt := time.Now()
 		rw := &responseWriter{ResponseWriter: w, status: 200, size: 0}
@@ -55,6 +49,15 @@ func Logger(next http.Handler) http.Handler {
 
 		log.InfoContext(r.Context(), "http request", "status", rw.status, "duration", duration)
 	})
+}
+
+func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // Recoverer handles panics and returns an internal server error response.

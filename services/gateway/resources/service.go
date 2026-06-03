@@ -25,7 +25,3 @@ func NewService(metadataClient *metadataclient.APIClient) *Service {
 func (s *Service) GetSoftwareApplicationByID(id string) (api.SoftwareApplication, error) {
 	return api.SoftwareApplication{}, domain.ErrNotImplemented
 }
-
-func (s *Service) GetSoftwareSourceCodeByID(id string) (api.SoftwareSourceCode, error) {
-	return api.SoftwareSourceCode{}, domain.ErrNotImplemented
-}

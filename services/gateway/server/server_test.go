@@ -36,7 +36,7 @@ func TestScalarRoute(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/scalar", nil)
 	rec := httptest.NewRecorder()
 
-	NewRouter(nil, nil).ServeHTTP(rec, req)
+	NewRouter(nil, nil, "").ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusMovedPermanently {
 		t.Fatalf("expected status %d, got %d", http.StatusMovedPermanently, rec.Code)
@@ -50,7 +50,7 @@ func TestScalarRoute(t *testing.T) {
 func TestScalarRouteServesEmbeddedAssets(t *testing.T) {
 	t.Parallel()
 
-	router := NewRouter(nil, nil)
+	router := NewRouter(nil, nil, "")
 
 	htmlReq := httptest.NewRequest(http.MethodGet, "/scalar/", nil)
 	htmlRec := httptest.NewRecorder()

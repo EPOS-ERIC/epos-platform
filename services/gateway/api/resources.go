@@ -47,17 +47,18 @@ type SoftwareApplication struct {
 
 type SoftwareSourceCode struct {
 	BaseDetailResource
-	ContactPoints       []ResourceRef `json:"contact_points,omitempty"`
-	ProgrammingLanguage string        `json:"programming_language,omitempty"`
-	Keywords            []string      `json:"keywords,omitempty"`
-	Concepts            []ResourceRef `json:"concepts,omitempty"`
-	Repository          string        `json:"repository,omitempty"`
-	License             string        `json:"license,omitempty"`
-	SoftwareVersion     string        `json:"software_version,omitempty"`
-	RuntimePlatform     string        `json:"runtime_platform,omitempty"`
-	TargetProducts      []ResourceRef `json:"target_products,omitempty"`
-	Provider            []ResourceRef `json:"provider,omitempty"`
-	MainEntityOfPage    string        `json:"main_entity_of_page,omitempty"`
+	// TODO: see if we should even return these, even if just returning the ids, they could expose the emails
+	ContactPoints        []ResourceRef `json:"contact_points,omitempty"`
+	ProgrammingLanguage  string        `json:"programming_language,omitempty"`
+	Keywords             []string      `json:"keywords,omitempty"`
+	Concepts             []ResourceRef `json:"concepts,omitempty"`
+	Repository           string        `json:"repository,omitempty"`
+	License              string        `json:"license,omitempty"`
+	SoftwareRequirements string        `json:"software_requirements,omitempty"`
+	RuntimePlatform      string        `json:"runtime_platform,omitempty"`
+	Creator              []ResourceRef `json:"creator,omitempty"`
+	MainEntityOfPage     string        `json:"main_entity_of_page,omitempty"`
+	Version              string        `json:"version,omitempty"`
 }
 
 type Distribution struct {

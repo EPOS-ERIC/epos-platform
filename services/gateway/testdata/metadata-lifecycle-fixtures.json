@@ -9,6 +9,10 @@
       "url": "/api/v2/access/search?type=webservice&resultsPerPage=1&includeConstraints=true"
     },
     {
+      "path": "testdata/metadata-lifecycle/access/softwaresourcecode/sgg.json",
+      "url": "/api/v2/access/softwaresourcecode/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2FSSC%2Fv1.0"
+    },
+    {
       "path": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
       "url": "/api/v2/access/search?type=softwaresourcecode&resultsPerPage=1&includeConstraints=true"
     },

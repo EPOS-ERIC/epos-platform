@@ -69,10 +69,9 @@ func TestContextHandlerAddsRequest(t *testing.T) {
 	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
 
 	ctx := WithRequest(context.Background(), Request{
-		RequestID: "req-123",
-		Method:    "GET",
-		Path:      "/v1/search",
-		Query:     "q=tsunami",
+		Method: "GET",
+		Path:   "/v1/search",
+		Query:  "q=tsunami",
 	})
 
 	logger.InfoContext(ctx, "request log")
@@ -85,9 +84,6 @@ func TestContextHandlerAddsRequest(t *testing.T) {
 	request, ok := payload["request"].(map[string]any)
 	if !ok {
 		t.Fatalf("request field = %#v", payload["request"])
-	}
-	if request["id"] != "req-123" {
-		t.Fatalf("request.id = %#v", request["id"])
 	}
 	if request["method"] != "GET" {
 		t.Fatalf("request.method = %#v", request["method"])
