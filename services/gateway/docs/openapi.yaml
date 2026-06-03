@@ -69,47 +69,44 @@ paths:
                     total_pages: 5
                     items:
                       - type: dataset
-                        id: "123"
-                        name: "IRPINIA Seismic Stations"
-                        href: "v1/dataset/123"
+                        id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
+                        name: "TEST1 - Historical earthquakes 1000-1899"
+                        href: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
                         providers:
-                          - id: "org-123"
-                            name: "INGV"
-                            href: "v1/organization/org-123"
+                          - id: "PIC:999472675/v1.0"
+                            name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                            href: "v1/organization/PIC:999472675/v1.0"
                         concepts:
-                          - id: "concept-seismology"
-                            name: "Seismology"
-                            href: "v1/concept/concept-seismology"
-                          - id: "concept-strong-motion"
-                            name: "Strong Motion"
-                            href: "v1/concept/concept-strong-motion"
+                          - id: "category:earthquakeparameters/v1.0"
+                            name: "Earthquake parameters"
+                            href: "v1/concept/category:earthquakeparameters/v1.0"
                         distributions:
-                          - id: "distribution1"
-                            href: "v1/distribution/distribution1"
+                          - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                            href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                       - type: organization
-                        id: "org-456"
-                        name: "University of Naples Federico II"
-                        href: "v1/organization/org-456"
+                        id: "PIC:999472675/v1.0"
+                        name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                        href: "v1/organization/PIC:999472675/v1.0"
                       - type: webservice
-                        id: "ws-789"
-                        name: "FDSN Station Web Service"
-                        href: "v1/webservice/ws-789"
+                        id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
+                        name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
+                        href: "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
                         provider:
-                          id: "org-456"
-                          name: "University of Naples Federico II"
-                          href: "v1/organization/org-456"
+                          id: "PIC:999472675/v1.0"
+                          name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                          href: "v1/organization/PIC:999472675/v1.0"
                         concepts:
-                          - id: "concept-seismology"
-                            name: "Seismology"
-                            href: "v1/concept/concept-seismology"
+                          - id: "category:earthquakeparameters/v1.0"
+                            name: "Earthquake parameters"
+                            href: "v1/concept/category:earthquakeparameters/v1.0"
                       - type: softwaresourcecode
-                        id: "sc-101"
-                        name: "EPOS Data Toolkit"
-                        href: "v1/softwaresourcecode/sc-101"
+                        id: "https://doi.org/10.5281/zenodo.17598403"
+                        name: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
+                        href: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
                         provider:
-                          - id: "org-123"
-                            name: "INGV"
-                            href: "v1/organization/org-123"
+                          - id: "ROR:048a87296/v1.0"
+                            name: "Uppsala University"
+                            href: "v1/organization/ROR:048a87296/v1.0"
         "400":
           $ref: "#/components/responses/BadRequest"
         "504":
@@ -139,36 +136,33 @@ paths:
                 dataset:
                   summary: Seismology dataset detail
                   value:
-                    id: "dataset-123"
-                    name: "IRPINIA Seismic Stations"
-                    description: "Station metadata and access information for seismic monitoring in the Irpinia area."
-                    created: "2024-01-15T10:30:00Z"
-                    modified: "2024-03-01T08:45:00Z"
-                    version_info: "Revision reviewed by EPOS TCS Seismology"
+                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
+                    name: "TEST1 - Historical earthquakes 1000-1899"
+                    description: "Event data (e.g. epicentre, magnitude) for earthquakes archived in AHEAD"
+                    created: "2010-06-01T00:00:00Z"
+                    modified: "2018-09-10T00:00:00Z"
                     keywords:
-                      - "seismology"
-                      - "stations"
-                      - "Irpinia"
+                      - "event"
+                      - "earthquake"
+                      - "magnitude"
                     concepts:
-                      - id: "concept-seismology"
-                        name: "Seismology"
-                        href: "v1/concept/concept-seismology"
+                      - id: "category:earthquakeparameters/v1.0"
+                        name: "Earthquake parameters"
+                        href: "v1/concept/category:earthquakeparameters/v1.0"
                     publisher:
-                      - id: "org-123"
-                        name: "INGV"
-                        href: "v1/organization/org-123"
-                    issued: "2024-02-01T00:00:00Z"
-                    spatial: "POLYGON((14.8 40.7, 15.6 40.7, 15.6 41.3, 14.8 41.3, 14.8 40.7))"
+                      - id: "PIC:999472675/v1.0"
+                        name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                        href: "v1/organization/PIC:999472675/v1.0"
+                    spatial: "POLYGON((-34 74,45 74,45 33,-34 33,-34 74))"
                     temporal:
-                      start: "2010-01-01T00:00:00Z"
-                    status: "PUBLISHED"
+                      start: "1000-01-01T00:00:00Z"
+                      end: "1899-12-31T23:59:59Z"
                     distributions:
-                      - id: "distribution-456"
-                        name: "FDSN Station Access"
-                        href: "v1/distribution/distribution-456"
-                    access_rights: "open"
-                    accrual_periodicity: "monthly"
-                    version: "3.1.0"
+                      - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                        name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
+                        href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                    access_rights: "https://publications.europa.eu/resource/authority/access-right/PUBLIC"
+                    accrual_periodicity: "http://purl.org/cld/freq/irregular"
         "404":
           $ref: "#/components/responses/NotFound"
         "504":
@@ -198,20 +192,20 @@ paths:
                 webserviceDistribution:
                   summary: Distribution backed by webservice operation
                   value:
-                    id: "distribution-456"
-                    name: "FDSN Station Access"
-                    description: "Distribution exposing station metadata through FDSN web service operations."
+                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                    name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
+                    description: "The distribution of event parameters via the FDSN-event web service is the main and preferred way to access historical earthquake data archived in AHEAD."
                     type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-                    format: "application/xml"
-                    issued: "2024-02-01T00:00:00Z"
-                    modified: "2024-03-01T08:45:00Z"
+                    format: "http://publications.europa.eu/resource/authority/file-type/XML"
+                    issued: "2017-10-25T00:00:00Z"
+                    modified: "2017-10-25T00:00:00Z"
                     license: "https://creativecommons.org/licenses/by/4.0/"
                     webservice:
-                      id: "ws-789"
-                      name: "FDSN Station Web Service"
-                      href: "v1/webservice/ws-789"
+                      id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
+                      name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
+                      href: "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
                     operation:
-                      id: "operation-get-station"
+                      id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
                       method: "GET"
                       returns:
                         - "application/xml"
@@ -288,38 +282,38 @@ paths:
                 webservice:
                   summary: Webservice detail
                   value:
-                    id: "ws-789"
-                    name: "FDSN Station Web Service"
-                    description: "Web service exposing seismic station metadata through FDSN-compatible endpoints."
-                    entrypoint: "https://webservices.ingv.it/fdsnws/station/1"
+                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
+                    name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
+                    description: "FDSN-event web service providing event parameters for historical earthquakes from AHEAD, the European Archive of Historical Earthquake Data"
+                    entrypoint: "https://www.emidius.eu/fdsnws/event/1/application.wadl"
                     provider:
-                      id: "org-123"
-                      name: "INGV"
-                      href: "v1/organization/org-123"
-                    issued: "2024-02-01T00:00:00Z"
-                    modified: "2024-03-01T08:45:00Z"
-                    spatial: "POLYGON((6.6 36.6, 18.6 36.6, 18.6 47.1, 6.6 47.1, 6.6 36.6))"
+                      id: "PIC:999472675/v1.0"
+                      name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                      href: "v1/organization/PIC:999472675/v1.0"
+                    issued: "2012-12-01T00:00:00Z"
+                    modified: "2018-09-10T00:00:00Z"
+                    spatial: "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"
                     temporal:
-                      start: "2010-01-01T00:00:00Z"
+                      start: "1000-01-01T00:00:00Z"
+                      end: "1899-12-31T23:59:59Z"
                     keywords:
-                      - "fdsn"
-                      - "station"
+                      - "seismology, seismicity, catalogue, earthquake, magnitude"
                     concepts:
-                      - id: "concept-seismology"
-                        name: "Seismology"
-                        href: "v1/concept/concept-seismology"
-                    license: "open"
+                      - id: "category:earthquakeparameters/v1.0"
+                        name: "Earthquake parameters"
+                        href: "v1/concept/category:earthquakeparameters/v1.0"
+                    license: "https://creativecommons.org/licenses/by/4.0/"
                     operations:
-                      - id: "operation-get-station"
+                      - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
                         method: "GET"
                         returns:
                           - "application/xml"
                         iri_template:
-                          template: "https://webservices.ingv.it/fdsnws/station/1/query?network={network}&station={station}"
+                          template: "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"
                     api_documentation:
-                      title: "FDSN Station Service API"
-                      description: "OpenAPI-style reference for station query operations."
-                      entrypoint: "https://webservices.ingv.it/fdsnws/station/1/application.wadl"
+                      title: "ahead-fdsnws-event documentation"
+                      description: "Documentation for the fdsnws-event webservice"
+                      entrypoint: "https://www.emidius.eu/AHEAD/services/epos_events.php"
         "404":
           $ref: "#/components/responses/NotFound"
         "504":
@@ -349,18 +343,14 @@ paths:
                 organization:
                   summary: Organization detail
                   value:
-                    id: "org-123"
+                    id: "ROR:048a87296/v1.0"
                     identifiers:
-                      - type: "ror"
-                        value: "https://ror.org/02jbv0t02"
-                    name: "Istituto Nazionale di Geofisica e Vulcanologia"
-                    address: "Via di Vigna Murata 605, 00143 Rome, Italy"
-                    logo: "https://www.ingv.it/images/logo-ingv.png"
-                    url: "https://www.ingv.it"
-                    email:
-                      - "info@ingv.it"
-                    telephone:
-                      - "+39-06-518601"
+                      - type: "URL"
+                        value: "https://ror.org/048a87296"
+                    name: "Uppsala University"
+                    address: "Dag Hammarskjölds väg 7, Uppsala, 751 05, Sweden"
+                    logo: "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg"
+                    url: "http://www.uu.se"
         "404":
           $ref: "#/components/responses/NotFound"
         "504":
@@ -390,22 +380,22 @@ paths:
                   summary: Concept tree with one scheme
                   value:
                     schemes:
-                      - id: "scheme-solid-earth"
-                        label: "Solid Earth"
-                        name: "Solid Earth Science Concepts"
-                        description: "Top-level grouping for solid earth science resources."
-                        logo: "https://www.epos-eu.org/logos/solid-earth.png"
-                        homepage: "https://www.epos-eu.org/solid-earth"
-                        color: "#3A7BD5"
+                      - id: "category:software_jup/v1.0"
+                        label: "Jupyter Notebooks"
+                        name: "Jupyter Notebooks"
+                        description: "Jupyter Notebook Domain"
+                        logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
+                        homepage: ""
+                        color: "#F37726"
                         order_number: 1
+                        top_concepts:
+                          - id: "category:facets/software-theme/v1.0"
+                            href: "v1/concept/category:facets/software-theme/v1.0"
                         children:
-                          - id: "concept-seismology"
-                            name: "Seismology"
-                            description: "Resources related to seismic monitoring."
-                            children:
-                              - id: "concept-strong-motion"
-                                name: "Strong Motion"
-                                children: []
+                          - id: "category:facets/software-theme/v1.0"
+                            name: "Software"
+                            description: "Software"
+                            children: []
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -433,17 +423,14 @@ paths:
                 concept:
                   summary: Concept detail
                   value:
-                    id: "concept-seismology"
-                    name: "Seismology"
-                    description: "Resources related to seismic monitoring and analysis."
+                    id: "category:software_jup_conc_multi/v1.0"
+                    name: "Multidisciplinary software"
+                    description: "Multidisciplinary software"
                     in_scheme:
-                      id: "scheme-solid-earth"
-                      name: "Solid Earth Science Concepts"
-                      href: "v1/conceptscheme/scheme-solid-earth"
-                    children:
-                      - id: "concept-strong-motion"
-                        name: "Strong Motion"
-                        href: "v1/concept/concept-strong-motion"
+                      id: "category:software_jup/v1.0"
+                      name: "Jupyter Notebooks"
+                      href: "v1/conceptscheme/category:software_jup/v1.0"
+                    children: []
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -471,18 +458,18 @@ paths:
                 conceptScheme:
                   summary: Concept scheme detail
                   value:
-                    id: "scheme-solid-earth"
-                    label: "Solid Earth"
-                    name: "Solid Earth Science Concepts"
-                    description: "Top-level grouping for solid earth science resources."
-                    logo: "https://www.epos-eu.org/logos/solid-earth.png"
-                    homepage: "https://www.epos-eu.org/tcs/seismology"
-                    color: "#3A7BD5"
+                    id: "category:software_jup/v1.0"
+                    label: "JUP"
+                    name: "Jupyter Notebooks"
+                    description: "Jupyter Notebook Domain"
+                    logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
+                    homepage: ""
+                    color: "#F37726"
                     order_number: 1
                     top_concepts:
-                      - id: "concept-seismology"
-                        name: "Seismology"
-                        href: "v1/concept/concept-seismology"
+                      - id: "category:facets/software-theme/v1.0"
+                        name: "Software"
+                        href: "v1/concept/category:facets/software-theme/v1.0"
         "404":
           $ref: "#/components/responses/NotFound"
         "500":
@@ -497,25 +484,25 @@ components:
       description: Local identifier of the resource
       schema:
         type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0"
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
 
     DatasetId:
       name: id
       in: path
       required: true
-      description: URL-encoded dataset identifier.
+      description: Dataset identifier.
       schema:
         type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0"
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
 
     DistributionId:
       name: id
       in: path
       required: true
-      description: URL-encoded distribution identifier.
+      description: Distribution identifier.
       schema:
         type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDistribution%2Fv1.0"
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fdistribution%2Frestful%2Fv1.0"
 
     SoftwareApplicationId:
       name: id
@@ -524,52 +511,52 @@ components:
       description: URL-encoded software application identifier.
       schema:
         type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0"
+        example: "https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0"
 
     SoftwareSourceCodeId:
       name: id
       in: path
       required: true
-      description: URL-encoded software source code identifier.
+      description: Software source code identifier.
       schema:
         type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0"
+        example: "https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403"
 
     WebserviceId:
       name: id
       in: path
       required: true
-      description: URL-encoded webservice identifier.
+      description: Webservice identifier.
       schema:
         type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0"
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0"
 
     OrganizationId:
       name: id
       in: path
       required: true
-      description: URL-encoded organization identifier.
+      description: Organization identifier.
       schema:
         type: string
-        example: "ISNI%3Ahttp%3A%2F%2Fisni.org%2Fisni%2F0000000121596200%2Fv1.0"
+        example: "ROR%3A048a87296%2Fv1.0"
 
     ConceptId:
       name: id
       in: path
       required: true
-      description: URL-encoded concept identifier.
+      description: Concept identifier.
       schema:
         type: string
-        example: "category%3Ageomagneticdata%2Fv1.0"
+        example: "category%3Asoftware_jup_conc_multi%2Fv1.0"
 
     ConceptSchemeId:
       name: id
       in: path
       required: true
-      description: URL-encoded concept scheme identifier.
+      description: Concept scheme identifier.
       schema:
         type: string
-        example: "category%3Aseismology%2Fv1.0"
+        example: "category%3Asoftware_jup%2Fv1.0"
 
     Q:
       name: q
@@ -578,7 +565,7 @@ components:
       description: Free-text query used to search catalogue resources.
       schema:
         type: string
-        example: "seismic stations"
+        example: "historical earthquakes"
 
     PageSize:
       name: pageSize
@@ -587,6 +574,7 @@ components:
       description: Maximum number of search items requested per page.
       schema:
         type: integer
+        format: int32
         minimum: 1
         maximum: 100
         default: 10
@@ -599,7 +587,9 @@ components:
       description: 1-based result page index to return.
       schema:
         type: integer
+        format: int32
         minimum: 1
+        maximum: 2147483647
         default: 1
         example: 1
 
@@ -638,6 +628,7 @@ components:
       description: |
         Start of the temporal filter (inclusive). ISO 8601 date-time (UTC).
         Resources with temporal coverage overlapping this range are returned.
+        Must be less than or equal to `dateTo` when both are supplied.
       schema:
         type: string
         format: date-time
@@ -649,6 +640,7 @@ components:
       required: false
       description: |
         End of the temporal filter (inclusive). ISO 8601 date-time (UTC).
+        Resources with temporal coverage overlapping this range are returned.
         Must be greater than or equal to `dateFrom` when both are supplied.
       schema:
         type: string
@@ -664,7 +656,7 @@ components:
         Use this filter to restrict results to resources associated with one of the
         specified provider organizations.
         Pass comma-separated values in a single parameter:
-        `?provider=org-123,org-456`.
+        `?provider=PIC:999472675/v1.0,ROR:048a87296/v1.0`.
       schema:
         type: array
         items:
@@ -853,16 +845,16 @@ components:
         id:
           type: string
           description: Identifier of resource within this API.
-          example: "123"
+          example: "https://doi.org/10.5281/zenodo.17598403"
         name:
           description: Human-readable display name used in search results.
           type: string
-          example: "IRPINIA Seismic Stations"
+          example: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
         href:
           type: string
           format: uri-reference
           description: Relative URI reference to resource detail endpoint.
-          example: "v1/dataset/123"
+          example: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
 
     DatasetSearchItem:
       allOf:
@@ -881,32 +873,27 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
-                - id: "org-456"
-                  name: "UNINA"
-                  href: "v1/organization/org-456"
+                - id: "ROR:048a87296/v1.0"
+                  name: "Uppsala University"
+                  href: "v1/organization/ROR:048a87296/v1.0"
             concepts:
               type: array
               description: Concept references assigned to this dataset
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "concept-seismology"
-                  href: "v1/concept/concept-seismology"
-                - id: "concept-strong-motion"
-                  href: "v1/concept/concept-strong-motion"
+                - id: "category:software_jup_conc_multi/v1.0"
+                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
             distributions:
               type: array
               description: Distribution references for this dataset
               items:
                 $ref: "#/components/schemas/DatasetDistributionSearchItem"
               example:
-                - id: "distribution1"
-                  href: "v1/distribution/distribution1"
-                - id: "distribution2"
-                  href: "v1/distribution/distribution2"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
 
     OrganizationSearchItem:
       allOf:
@@ -937,9 +924,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                - id: "ROR:048a87296/v1.0"
+                  name: "Uppsala University"
+                  href: "v1/organization/ROR:048a87296/v1.0"
 
     SoftwareSourceCodeSearchItem:
       allOf:
@@ -958,9 +945,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                - id: "ROR:048a87296/v1.0"
+                  name: "Uppsala University"
+                  href: "v1/organization/ROR:048a87296/v1.0"
 
     WebserviceSearchItem:
       allOf:
@@ -978,19 +965,19 @@ components:
               allOf:
                 - $ref: "#/components/schemas/ResourceRef"
               example:
-                id: "org-456"
-                name: "University of Naples Federico II"
-                href: "v1/organization/org-456"
+                id: "PIC:999472675/v1.0"
+                name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                href: "v1/organization/PIC:999472675/v1.0"
             concepts:
               type: array
               description: Concept references assigned to this webservice
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "concept-seismology"
-                  href: "v1/concept/concept-seismology"
-                - id: "concept-data-services"
-                  href: "v1/concept/concept-data-services"
+                - id: "category:seismologicalproductsservices/v1.0"
+                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
+                - id: "category:earthquakeparameters/v1.0"
+                  href: "v1/concept/category:earthquakeparameters/v1.0"
 
     DatasetDistributionSearchItem:
       type: object
@@ -1000,16 +987,16 @@ components:
       properties:
         id:
           type: string
-          example: "distribution1"
+          example: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
         name:
           type: string
           description: Optional human-readable distribution title.
-          example: "Strong motion waveform archive"
+          example: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
         href:
           type: string
           format: uri-reference
           description: API-base-relative URI reference to distribution detail endpoint
-          example: "v1/distribution/distribution1"
+          example: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
 
     # -------------------------------------------------------------------------
     # Resource references
@@ -1023,16 +1010,16 @@ components:
       properties:
         id:
           type: string
-          example: "123"
+          example: "ROR:048a87296/v1.0"
         name:
           type: string
           description: Optional human-readable label for referenced resource.
-          example: "IRPINIA Seismic Stations"
+          example: "Uppsala University"
         href:
           type: string
           format: uri-reference
           description: Relative URI reference to referenced resource detail endpoint
-          example: "v1/dataset/123"
+          example: "v1/organization/ROR:048a87296/v1.0"
 
     # -------------------------------------------------------------------------
     # Detail schemas
@@ -1081,44 +1068,41 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "contact-point-1"
-                  name: "Dataset support desk"
-                  href: "v1/contact-point/contact-point-1"
-                - id: "contact-point-2"
-                  name: "Scientific curator"
-                  href: "v1/contact-point/contact-point-2"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0"
+                  name: "Manager"
+                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact/v1.0"
+                  name: "Scientific contact"
+                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FscientificContact%2Fv1.0"
             keywords:
               type: array
               items:
                 type: string
               example:
-                - "seismology"
-                - "stations"
-                - "Irpinia"
+                - "event"
+                - "earthquake"
+                - "magnitude"
             concepts:
               type: array
               description: Concept references assigned to this dataset
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "concept-seismology"
-                  name: "Seismology"
-                  href: "v1/concept/concept-seismology"
-                - id: "concept-strong-motion"
-                  name: "Strong Motion"
-                  href: "v1/concept/concept-strong-motion"
+                - id: "category:seismologicalproductsservices/v1.0"
+                  name: "Seismological products services"
+                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
+                - id: "category:earthquakeparameters/v1.0"
+                  name: "Earthquake parameters"
+                  href: "v1/concept/category:earthquakeparameters/v1.0"
             publisher:
               type: array
               description: Organizations publishing this dataset; exposed as `providers` in search results
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-1"
-                  name: "UNINA"
-                  href: "v1/organization/org-1"
-                - id: "org-2"
-                  name: "INGV"
-                  href: "v1/organization/org-2"
+                - id: "PIC:999472675/v1.0"
+                  name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                  href: "v1/organization/PIC:999472675/v1.0"
             issued:
               type: string
               format: date-time
@@ -1143,12 +1127,12 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "456"
-                  name: "FDSN Station Service"
-                  href: "v1/distribution/456"
-                - id: "457"
-                  name: "FDSN Event Service"
-                  href: "v1/distribution/457"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                  name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
+                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+                  name: "TEST2 - Bibliography for historical earthquakes"
+                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
             access_rights:
               type: string
               description: Access rights statement for this dataset
@@ -1162,9 +1146,9 @@ components:
               allOf:
                 - $ref: "#/components/schemas/ResourceRef"
               example:
-                id: "dataset-root-123"
-                name: "IRPINIA Seismic Stations"
-                href: "v1/dataset/dataset-root-123"
+                id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
+                name: "TEST2 - Bibliography metadata for historical earthquakes"
+                href: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
             quality_annotation:
               type: string
               description: Aggregated quality annotation summary associated with this dataset
@@ -1258,9 +1242,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "contact-point-1"
-                  name: "Application support desk"
-                  href: "v1/contact-point/contact-point-1"
+                - id: "https://orcid.org/0000-0001-6095-2941/v1.0"
+                  name: "Author"
+                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Forcid.org%2F0000-0001-6095-2941%2Fv1.0"
             keywords:
               type: array
               items:
@@ -1275,12 +1259,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "concept-seismology"
-                  name: "Seismology"
-                  href: "v1/concept/concept-seismology"
-                - id: "concept-data-services"
-                  name: "Data Services"
-                  href: "v1/concept/concept-data-services"
+                - id: "category:software_appl_conc_multi/v1.0"
+                  name: "Multidisciplinary software"
+                  href: "v1/concept/category:software_appl_conc_multi/v1.0"
             download_url:
               type: string
               format: uri
@@ -1315,9 +1296,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                - id: "ROR:048a87296/v1.0"
+                  name: "Uppsala University"
+                  href: "v1/organization/ROR:048a87296/v1.0"
             operations:
               type: array
               description: Web service operations linked to this software application
@@ -1335,9 +1316,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "contact-point-1"
-                  name: "Source code maintainer"
-                  href: "v1/contact-point/contact-point-1"
+                - id: "https://orcid.org/0000-0001-6095-2941/v1.0"
+                  name: "Author"
+                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Forcid.org%2F0000-0001-6095-2941%2Fv1.0"
             programming_language:
               type: string
               description: Primary programming language of the source code
@@ -1356,12 +1337,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "concept-seismology"
-                  name: "Seismology"
-                  href: "v1/concept/concept-seismology"
-                - id: "concept-data-services"
-                  name: "Data Services"
-                  href: "v1/concept/concept-data-services"
+                - id: "category:software_jup_conc_multi/v1.0"
+                  name: "Multidisciplinary software"
+                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
             repository:
               type: string
               format: uri
@@ -1391,9 +1369,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "org-123"
-                  name: "INGV"
-                  href: "v1/organization/org-123"
+                - id: "ROR:048a87296/v1.0"
+                  name: "Uppsala University"
+                  href: "v1/organization/ROR:048a87296/v1.0"
             main_entity_of_page:
               type: string
               format: uri
@@ -1408,7 +1386,7 @@ components:
       properties:
         id:
           type: string
-          example: "org-123"
+          example: "PIC:999472675/v1.0"
         identifiers:
           type: array
           description: External or domain-specific identifiers for this organization
@@ -1417,7 +1395,7 @@ components:
         name:
           type: string
           description: Human-readable display name of the organization
-          example: "University of Naples Federico II"
+          example: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
         lei_code:
           type: string
           description: Legal Entity Identifier code
@@ -1425,7 +1403,7 @@ components:
         address:
           type: string
           description: Physical address of the organization
-          example: "Corso Umberto I, 40, 80138 Napoli NA, Italy"
+          example: "Via di Vigna Murata 605, Rome, 00143, IT"
         logo:
           type: string
           format: uri
@@ -1435,30 +1413,28 @@ components:
           type: string
           format: uri
           description: URL of the organization website
-          example: "https://www.unina.it"
+          example: "http://www.ingv.it"
         email:
           type: array
           description: Email addresses of the organization
           items:
             type: string
           example:
-            - "info@ingv.it"
+            - "ufficiostampa@ingv.it"
         telephone:
           type: array
           description: Telephone numbers of the organization
           items:
             type: string
-          example:
-            - "+39-081-2531111"
         contact_points:
           type: array
           description: Contact point references associated with this organization
           items:
             $ref: "#/components/schemas/ResourceRef"
           example:
-            - id: "contact-point-1"
-              name: "Organization help desk"
-              href: "v1/contact-point/contact-point-1"
+            - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0"
+              name: "Manager"
+              href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0"
         member_of:
           type: array
           description: Parent organizations to which this organization belongs
@@ -1486,17 +1462,17 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "contact-point-1"
-                  name: "Webservice support desk"
-                  href: "v1/contact-point/contact-point-1"
+                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0"
+                  name: "Manager"
+                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0"
             provider:
               description: Organization providing this webservice
               allOf:
                 - $ref: "#/components/schemas/ResourceRef"
               example:
-                id: "org-456"
-                name: "University of Naples Federico II"
-                href: "v1/organization/org-456"
+                id: "PIC:999472675/v1.0"
+                name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+                href: "v1/organization/PIC:999472675/v1.0"
             issued:
               type: string
               format: date-time
@@ -1526,9 +1502,9 @@ components:
               items:
                 $ref: "#/components/schemas/ResourceRef"
               example:
-                - id: "concept-seismology"
-                  name: "Seismology"
-                  href: "v1/concept/concept-seismology"
+                - id: "category:earthquakeparameters/v1.0"
+                  name: "Earthquake parameters"
+                  href: "v1/concept/category:earthquakeparameters/v1.0"
             license:
               type: string
               description: License under which the webservice can be used or reused
@@ -1548,7 +1524,7 @@ components:
       properties:
         id:
           type: string
-          example: "operation-get-station"
+          example: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
         method:
           type: string
           description: HTTP method used by the operation
@@ -1574,7 +1550,7 @@ components:
         template:
           type: string
           description: URI template describing the operation endpoint
-          example: "https://webservices.ingv.it/fdsnws/station/1/query?network={network}&station={station}"
+          example: "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"
         mappings:
           type: array
           description: Parameter mappings supported by the URI template
@@ -1652,16 +1628,16 @@ components:
         title:
           type: string
           description: Title of the API documentation
-          example: "FDSN Station Service API"
+          example: "ahead-fdsnws-event documentation"
         description:
           type: string
           description: Description of the API documentation
-          example: "API documentation for the FDSN station web service."
+          example: "Documentation for the fdsnws-event webservice"
         entrypoint:
           type: string
           format: uri
           description: API documentation entry point
-          example: "https://webservices.ingv.it/fdsnws/station/1/application.wadl"
+          example: "https://www.emidius.eu/AHEAD/services/epos_events.php"
 
     Concept:
       type: object
@@ -1671,13 +1647,13 @@ components:
       properties:
         id:
           type: string
-          example: "concept-seismology"
+          example: "category:seismologicalproductsservices/v1.0"
         name:
           type: string
-          example: "Seismology"
+          example: "Seismological products services"
         description:
           type: string
-          example: "Resources related to seismic monitoring and analysis."
+          example: "TCS Subdomain"
         in_scheme:
           description: Concept scheme containing this concept
           allOf:
@@ -1696,13 +1672,13 @@ components:
       properties:
         id:
           type: string
-          example: "concept-seismology"
+          example: "category:software_jup_conc_multi/v1.0"
         name:
           type: string
-          example: "Seismology"
+          example: "Multidisciplinary software"
         description:
           type: string
-          example: "Resources related to seismic monitoring and analysis."
+          example: "Multidisciplinary software"
         children:
           type: array
           description: Nested child concepts directly below this concept
@@ -1718,28 +1694,28 @@ components:
       properties:
         id:
           type: string
-          example: "scheme-solid-earth"
+          example: "category:software_jup/v1.0"
         label:
           type: string
-          example: "Solid Earth"
+          example: "Jupyter Notebooks"
         name:
           type: string
-          example: "Solid Earth Science Concepts"
+          example: "Jupyter Notebooks"
         description:
           type: string
-          example: "Top-level grouping for all solid earth science resources."
+          example: "Jupyter Notebook Domain"
         logo:
           type: string
           format: uri
-          example: "https://www.epos-eu.org/logos/solid-earth.png"
+          example: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
         homepage:
           type: string
           format: uri
-          example: "https://www.epos-eu.org/solid-earth"
+          example: ""
         color:
           type: string
           description: Hex colour code used for UI rendering
-          example: "#3A7BD5"
+          example: "#F37726"
         order_number:
           type: integer
           description: Display order among sibling concept schemes

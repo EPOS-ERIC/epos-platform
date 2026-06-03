@@ -1,0 +1,20 @@
+{
+  "href": "http://localhost:8080/api/v2/access/conceptscheme/category%3Asoftware_jup%2Fv1.0",
+  "id": "category:software_jup/v1.0",
+  "properties": {
+    "dct:description": "Jupyter Notebook Domain",
+    "dct:title": "Jupyter Notebooks",
+    "foaf:logo": "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg",
+    "rdf:type": "http://www.w3.org/2004/02/skos/core#ConceptScheme",
+    "schema:color": "#F37726",
+    "schema:orderItemNumber": "1",
+    "skos:hasTopConcept": {
+      "href": "http://localhost:8080/api/v2/access/concept/category%3Afacets%2Fsoftware-theme%2Fv1.0",
+      "id": "category:facets/software-theme/v1.0",
+      "predicateIri": "http://www.w3.org/2004/02/skos/core#hasTopConcept",
+      "type": "concept"
+    },
+    "skos:prefLabel": "Jupyter Notebooks"
+  },
+  "shape": "conceptscheme"
+}

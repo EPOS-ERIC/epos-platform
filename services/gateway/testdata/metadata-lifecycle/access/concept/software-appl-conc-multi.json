@@ -1,0 +1,16 @@
+{
+  "href": "http://localhost:8080/api/v2/access/concept/category%3Asoftware_appl_conc_multi%2Fv1.0",
+  "id": "category:software_appl_conc_multi/v1.0",
+  "properties": {
+    "rdf:type": "http://www.w3.org/2004/02/skos/core#Concept",
+    "skos:definition": "Multidisciplinary software",
+    "skos:inScheme": {
+      "href": "http://localhost:8080/api/v2/access/conceptscheme/category%3Asoftware_appl%2Fv1.0",
+      "id": "category:software_appl/v1.0",
+      "predicateIri": "http://www.w3.org/2004/02/skos/core#inScheme",
+      "type": "conceptscheme"
+    },
+    "skos:prefLabel": "Multidisciplinary software"
+  },
+  "shape": "concept"
+}

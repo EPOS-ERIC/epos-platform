@@ -11,10 +11,10 @@ import (
 func TestMapSoftwareSourceCode(t *testing.T) {
 	t.Parallel()
 
-	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/softwaresourcecode/sgg.json")
+	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json")
 	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
-		fixtureKey("propertyvalue", "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/bnode-propertyvalue-3f006d06/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/sgg-id-1.json",
-		fixtureKey("softwaresourcecode", "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0"):                     "testdata/metadata-lifecycle/access/softwaresourcecode/sgg.json",
+		fixtureKey("softwaresourcecode", "https://doi.org/10.5281/bnode-propertyvalue-0ebd586f"): "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
+		fixtureKey("softwaresourcecode", "https://doi.org/10.5281/bnode-propertyvalue-4c77d796"): "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
 	})
 
 	softwareSourceCode, err := mapSoftwareSourceCode(context.Background(), detail, fetch, logging.Get("test"))
@@ -22,10 +22,10 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 		t.Fatalf("mapSoftwareSourceCode() error = %v", err)
 	}
 
-	if softwareSourceCode.ID != "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0" {
+	if softwareSourceCode.ID != "https://doi.org/10.5281/zenodo.17598403" {
 		t.Fatalf("softwareSourceCode.ID = %q", softwareSourceCode.ID)
 	}
-	if softwareSourceCode.Name != "Analyze earthquakes, permanent displacement and geology" {
+	if softwareSourceCode.Name != "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab." {
 		t.Fatalf("softwareSourceCode.Name = %q", softwareSourceCode.Name)
 	}
 	if softwareSourceCode.Description == "" {
@@ -34,39 +34,42 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 	if softwareSourceCode.ProgrammingLanguage != "Python" {
 		t.Fatalf("softwareSourceCode.ProgrammingLanguage = %q", softwareSourceCode.ProgrammingLanguage)
 	}
-	if softwareSourceCode.Repository != "https://raw.githubusercontent.com/epos-eu/jupyter-notebooks/main/SEIS%2BGNSS%2BGIM_2025-06-24.ipynb" {
+	if softwareSourceCode.Repository != "https://raw.githubusercontent.com/daoane/epos-multidisciplinary-service-integration/refs/heads/main/Basic_workflows_service_integration.ipynb" {
 		t.Fatalf("softwareSourceCode.Repository = %q", softwareSourceCode.Repository)
 	}
-	if softwareSourceCode.License != "https://creativecommons.org/licenses/by/4.0/" {
+	if softwareSourceCode.License != "https://spdx.org/licenses/GPL-3.0-or-later.html" {
 		t.Fatalf("softwareSourceCode.License = %q", softwareSourceCode.License)
 	}
-	if len(softwareSourceCode.ContactPoints) != 1 || softwareSourceCode.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fjupyter%2FContactPoint%2Fsgg%2F001%2Fv1.0" {
+	if len(softwareSourceCode.ContactPoints) != 1 || softwareSourceCode.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Forcid.org%2F0000-0001-6095-2941%2Fv1.0" {
 		t.Fatalf("softwareSourceCode.ContactPoints = %#v", softwareSourceCode.ContactPoints)
 	}
 	if len(softwareSourceCode.Concepts) != 1 || softwareSourceCode.Concepts[0].Href != "v1/concept/category:software_jup_conc_multi/v1.0" {
 		t.Fatalf("softwareSourceCode.Concepts = %#v", softwareSourceCode.Concepts)
 	}
-	if len(softwareSourceCode.Creator) != 1 || softwareSourceCode.Creator[0].Href != "http://localhost:8080/api/v2/access/organization/PIC%3A999974456%2Fv1.0" {
+	if len(softwareSourceCode.Creator) != 0 {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
 	}
 	if len(softwareSourceCode.Identifiers) != 1 {
 		t.Fatalf("softwareSourceCode.Identifiers = %#v", softwareSourceCode.Identifiers)
 	}
-	if softwareSourceCode.Identifiers[0].Type != "doi" || softwareSourceCode.Identifiers[0].Value != "10.13127/epos.ics-software.sgg-ssc" {
+	if softwareSourceCode.Identifiers[0].Type != "" || softwareSourceCode.Identifiers[0].Value != "https://doi.org/10.5281/zenodo.17598403" {
 		t.Fatalf("softwareSourceCode.Identifiers[0] = %#v", softwareSourceCode.Identifiers[0])
 	}
 
 	wantKeywords := map[string]bool{
-		"Jupyter notebook": true,
-		"GNSS":             true,
-		"GIM":              true,
-		"seismology":       true,
-		"geodesy":          true,
-		"displacement":     true,
-		"map view":         true,
-		"geology":          true,
-		"moment tensor":    true,
-		"stations":         true,
+		"EPOS":            true,
+		"JupyterLab":      true,
+		"notebook":        true,
+		"introduction":    true,
+		"GIM":             true,
+		"GNSS":            true,
+		"seismology":      true,
+		"OGC":             true,
+		"OWS":             true,
+		"EIDA":            true,
+		"GLASS framework": true,
+		"web mapping":     true,
+		"web services":    true,
 	}
 	if len(softwareSourceCode.Keywords) != len(wantKeywords) {
 		t.Fatalf("softwareSourceCode.Keywords = %#v", softwareSourceCode.Keywords)
@@ -95,11 +98,8 @@ func TestMapSoftwareSourceCodeSkipsUnsupportedCreatorType(t *testing.T) {
 		t.Fatalf("mapSoftwareSourceCode() error = %v", err)
 	}
 
-	if len(softwareSourceCode.Creator) != 1 {
+	if len(softwareSourceCode.Creator) != 0 {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
-	}
-	if softwareSourceCode.Creator[0].ID != "org-1" {
-		t.Fatalf("softwareSourceCode.Creator[0] = %#v", softwareSourceCode.Creator[0])
 	}
 }
 

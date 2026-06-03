@@ -21,6 +21,7 @@
 
 - Use `make populate` when local dev data/bootstrap population needed.
 - Use root `make test`, `make fmt`, and `make lint` for repo-wide verification across current services.
+- Use root `make test-schemathesis` for gateway API integration tests under `tests/schemathesis/`.
 - For targeted work inside one service, run that service's local `make build`, `make test`, `make fmt`, and `make lint` from its directory.
 - Do not assume root `Makefile` has per-service build targets. Service-specific build and Docker targets live in each module `Makefile`.
 - Tilt is default local dev orchestrator for this repo. Prefer existing `Tiltfile` and `docker/compose.dev.yaml` workflow over ad hoc local startup commands.

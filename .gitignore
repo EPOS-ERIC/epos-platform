@@ -26,6 +26,7 @@ temp/
 coverage/
 coverage.out
 htmlcov/
+tests/schemathesis/.hypothesis/
 
 ### Binaries / shared libs ###
 *.exe
@@ -79,3 +80,5 @@ dist/
 .settings/
 .springBeans
 .sts4-cache
+
+*__pycache__

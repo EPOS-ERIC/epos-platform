@@ -8,78 +8,95 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/testfixtures"
 )
 
-func TestSearchMapsDatasetFixture(t *testing.T) {
-	t.Parallel()
-
-	server := testfixtures.NewMetadataServer(t, map[string]string{
-		"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/dataset-first-page.json",
-		"/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0":                                                           "testdata/metadata-lifecycle/access/organization/bgs.json",
-		"/api/v2/access/concept/category%3Ageomagneticdata%2Fv1.0":                                                                                 "testdata/metadata-lifecycle/access/concept/geomagneticdata.json",
-		"/api/v2/access/dataset/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FDataset%2Fv1.0": "testdata/metadata-lifecycle/access/dataset/intermagnet.json",
-	})
-	defer server.Close()
-
-	service := NewService(testfixtures.NewMetadataClient(server.URL), 8)
-
-	resp, err := service.Search(context.Background(), SearchParams{Types: []api.ResourceType{api.DatasetType}})
-	if err != nil {
-		t.Fatalf("Search() error = %v", err)
-	}
-
-	if len(resp.Items) != 1 {
-		t.Fatalf("len(resp.Items) = %d", len(resp.Items))
-	}
-
-	dataset, ok := resp.Items[0].(api.DatasetItem)
-	if !ok {
-		t.Fatalf("resp.Items[0] type = %T", resp.Items[0])
-	}
-	if dataset.Name != "INTERMAGNET Geomagnetic Observatory Data" {
-		t.Fatalf("dataset.Name = %q", dataset.Name)
-	}
-	if len(dataset.Providers) != 1 || dataset.Providers[0].Name != "BGS - British Geological Survey, UK Research and Innovation" {
-		t.Fatalf("dataset.Providers = %#v", dataset.Providers)
-	}
-	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Name != "Geomagnetic data" {
-		t.Fatalf("dataset.Concepts = %#v", dataset.Concepts)
-	}
-	if len(dataset.Distributions) != 1 || dataset.Distributions[0].ID != "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0" {
-		t.Fatalf("dataset.Distributions = %#v", dataset.Distributions)
-	}
+type searchFixtureCase struct {
+	name         string
+	routes       map[string]string
+	resourceType api.ResourceType
+	wantName     string
+	wantHref     string
 }
 
-func TestSearchMapsWebserviceFixture(t *testing.T) {
+func TestSearchMapsFixtures(t *testing.T) {
 	t.Parallel()
 
-	server := testfixtures.NewMetadataServer(t, map[string]string{
-		"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/webservice-first-page.json",
-		"/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0": "testdata/metadata-lifecycle/access/organization/bgs.json",
-	})
-	defer server.Close()
-
-	service := NewService(testfixtures.NewMetadataClient(server.URL), 8)
-
-	resp, err := service.Search(context.Background(), SearchParams{Types: []api.ResourceType{api.WebserviceType}})
-	if err != nil {
-		t.Fatalf("Search() error = %v", err)
+	tests := []searchFixtureCase{
+		{
+			name: "software application",
+			routes: map[string]string{
+				"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/softwareapplication-first-page.json",
+				"/api/v2/access/softwareapplication/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0":           "testdata/metadata-lifecycle/access/softwareapplication/catalog-to-xls.json",
+				"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0": "testdata/metadata-lifecycle/access/propertyvalue/catalog-to-xls-doi.json",
+				"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-b54da560%2Fv1.0": "testdata/metadata-lifecycle/access/propertyvalue/catalog-to-xls-ddss-id.json",
+				"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                                                              "testdata/metadata-lifecycle/access/organization/uppsala.json",
+				"/api/v2/access/concept/category%3Asoftware_appl_conc_multi%2Fv1.0":                                                               "testdata/metadata-lifecycle/access/concept/software-appl-conc-multi.json",
+			},
+			resourceType: api.SoftwareApplicationType,
+			wantName:     "Catalog to XLS converter",
+			wantHref:     "v1/softwareapplication/https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0",
+		},
+		{
+			name: "software source code",
+			routes: map[string]string{
+				"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
+				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403":              "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json",
+				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-0ebd586f": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
+				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-4c77d796": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
+				"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                               "testdata/metadata-lifecycle/access/organization/uppsala.json",
+				"/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0":                                 "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json",
+			},
+			resourceType: api.SoftwareSourceCodeType,
+			wantName:     "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab.",
+			wantHref:     "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403",
+		},
 	}
 
-	if len(resp.Items) != 1 {
-		t.Fatalf("len(resp.Items) = %d", len(resp.Items))
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	webservice, ok := resp.Items[0].(api.WebServiceItem)
-	if !ok {
-		t.Fatalf("resp.Items[0] type = %T", resp.Items[0])
-	}
-	if webservice.Name != "Web service for INTERMAGNET data" {
-		t.Fatalf("webservice.Name = %q", webservice.Name)
-	}
-	if webservice.Provider.Name != "BGS - British Geological Survey, UK Research and Innovation" {
-		t.Fatalf("webservice.Provider = %#v", webservice.Provider)
-	}
-	if len(webservice.Concepts) != 0 {
-		t.Fatalf("webservice.Concepts = %#v", webservice.Concepts)
+			server := testfixtures.NewMetadataServer(t, tt.routes)
+			defer server.Close()
+
+			service := NewService(testfixtures.NewMetadataClient(server.URL), 8)
+
+			resp, err := service.Search(context.Background(), SearchParams{Types: []api.ResourceType{tt.resourceType}})
+			if err != nil {
+				t.Fatalf("Search() error = %v", err)
+			}
+
+			if len(resp.Items) != 1 {
+				t.Fatalf("len(resp.Items) = %d", len(resp.Items))
+			}
+
+			item := resp.Items[0]
+
+			var name string
+			var href string
+			var provider []api.ResourceRef
+
+			switch v := item.(type) {
+			case api.SoftwareApplicationItem:
+				name = v.Name
+				href = v.Href
+				provider = v.Provider
+			case api.SoftwareSourceCodeItem:
+				name = v.Name
+				href = v.Href
+				provider = v.Provider
+			default:
+				t.Fatalf("unexpected item type %T", item)
+			}
+
+			if name != tt.wantName {
+				t.Fatalf("item.Name = '%s'", name)
+			}
+			if len(provider) != 1 || provider[0].Name != "Uppsala University" {
+				t.Fatalf("item.Provider = %#v", provider)
+			}
+			if href != tt.wantHref {
+				t.Fatalf("item.Href = '%s'", href)
+			}
+		})
 	}
 }
 
@@ -88,6 +105,11 @@ func TestSearchSkipsMalformedSoftwareSourceCodeFixture(t *testing.T) {
 
 	server := testfixtures.NewMetadataServer(t, map[string]string{
 		"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
+		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403":              "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json",
+		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-0ebd586f": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
+		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-4c77d796": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
+		"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                               "testdata/metadata-lifecycle/access/organization/uppsala.json",
+		"/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0":                                 "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json",
 	})
 	defer server.Close()
 
@@ -98,7 +120,7 @@ func TestSearchSkipsMalformedSoftwareSourceCodeFixture(t *testing.T) {
 		t.Fatalf("Search() error = %v", err)
 	}
 
-	if len(resp.Items) != 0 {
+	if len(resp.Items) != 1 {
 		t.Fatalf("len(resp.Items) = %d", len(resp.Items))
 	}
 }

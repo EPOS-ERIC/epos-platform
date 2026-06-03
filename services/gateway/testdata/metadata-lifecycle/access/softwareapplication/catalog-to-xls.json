@@ -1,55 +1,55 @@
 {
-  "id": "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0",
-  "shape": "softwareapplication",
   "href": "http://localhost:8080/api/v2/access/softwareapplication/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0",
   "properties": {
-    "schema:downloadUrl": "URL",
-    "schema:operatingSystem": "Windows 7",
-    "schema:mainEntityOfPage": "https://episodesplatform.eu/#app:CatalogToXls",
-    "schema:softwareRequirements": "URL",
+    "dcat:theme": [
+      {
+        "href": "http://localhost:8080/api/v2/access/concept/category%3Asoftware_appl_conc_multi%2Fv1.0",
+        "id": "category:software_appl_conc_multi/v1.0",
+        "predicateIri": "http://www.w3.org/ns/dcat#theme",
+        "type": "concept"
+      }
+    ],
+    "rdf:type": "http://schema.org/SoftwareApplication",
+    "schema:contactPoint": [
+      {
+        "href": "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fror.org%2F048a87296%2FlegalContact%2Fv1.0",
+        "id": "https://ror.org/048a87296/legalContact/v1.0",
+        "predicateIri": "http://schema.org/contactPoint",
+        "type": "contactpoint"
+      }
+    ],
+    "schema:creator": {
+      "href": "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0",
+      "id": "ROR:048a87296/v1.0",
+      "predicateIri": "http://schema.org/creator",
+      "type": "organization"
+    },
+    "schema:description": "Exports a Catalog MATLAB file as a spreadsheet file (in XLSX format)",
+    "schema:downloadUrl": "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0/download",
+    "schema:identifier": [
+      {
+        "href": "http://localhost:8080/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-4c77d796/v1.0",
+        "predicateIri": "http://schema.org/identifier",
+        "type": "propertyvalue"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-b54da560%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-b54da560/v1.0",
+        "predicateIri": "http://schema.org/identifier",
+        "type": "propertyvalue"
+      }
+    ],
     "schema:keywords": [
       "format conversion, data download, data export"
     ],
-    "rdf:type": "http://schema.org/SoftwareApplication",
     "schema:license": "https://creativecommons.org/licenses/by/4.0/",
-    "schema:description": "Exports a Catalog MATLAB file as a spreadsheet file (in XLSX format)",
+    "schema:mainEntityOfPage": "https://episodesplatform.eu/#app:CatalogToXls",
     "schema:name": "Catalog to XLS converter",
-    "schema:softwareVersion": "1.0",
-    "schema:creator": {
-      "id": "ROR:048a87296/v1.0",
-      "type": "organization",
-      "href": "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0",
-      "predicateIri": "http://schema.org/creator"
-    },
-    "dcat:theme": [
-      {
-        "id": "category:software_appl_conc_multi/v1.0",
-        "type": "concept",
-        "href": "http://localhost:8080/api/v2/access/concept/category%3Asoftware_appl_conc_multi%2Fv1.0",
-        "predicateIri": "http://www.w3.org/ns/dcat#theme"
-      }
-    ],
-    "schema:contactPoint": [
-      {
-        "id": "https://ror.org/048a87296/legalContact/v1.0",
-        "type": "contactpoint",
-        "href": "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fror.org%2F048a87296%2FlegalContact%2Fv1.0",
-        "predicateIri": "http://schema.org/contactPoint"
-      }
-    ],
-    "schema:identifier": [
-      {
-        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-4c77d796/v1.0",
-        "type": "propertyvalue",
-        "href": "http://localhost:8080/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0",
-        "predicateIri": "http://schema.org/identifier"
-      },
-      {
-        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-b54da560/v1.0",
-        "type": "propertyvalue",
-        "href": "http://localhost:8080/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-b54da560%2Fv1.0",
-        "predicateIri": "http://schema.org/identifier"
-      }
-    ]
-  }
+    "schema:operatingSystem": "Windows 7",
+    "schema:softwareRequirements": "Windows 7",
+    "schema:softwareVersion": "1.0"
+  },
+  "shape": "softwareapplication"
 }
