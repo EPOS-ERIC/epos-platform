@@ -41,6 +41,13 @@ func TestResourceHandlersUseFixtureResponses(t *testing.T) {
 			target: "/v1/webservice/id",
 		},
 		{
+			name:   "softwareapplication",
+			id:     "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0",
+			call:   (*Resources).GetSoftwareApplicationByID,
+			want:   "Catalog to XLS converter",
+			target: "/v1/softwareapplication/id",
+		},
+		{
 			name:   "softwaresourcecode",
 			id:     "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0",
 			call:   (*Resources).GetSoftwareSourceCodeByID,
@@ -82,33 +89,6 @@ func TestResourceHandlersUseFixtureResponses(t *testing.T) {
 			}
 			if !strings.Contains(rec.Body.String(), tt.want) {
 				t.Fatalf("body = %s", rec.Body.String())
-			}
-		})
-	}
-}
-
-func TestResourceHandlersReturnNotImplementedForSoftwareEndpoints(t *testing.T) {
-	t.Parallel()
-
-	handler := newResourcesHandler(t, nil)
-
-	tests := []struct {
-		name   string
-		call   func(*Resources, http.ResponseWriter, *http.Request)
-		target string
-	}{
-		{name: "softwareapplication", call: (*Resources).GetSoftwareApplicationByID, target: "/v1/softwareapplication/id"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := requestWithURLParam(http.MethodGet, tt.target, "id", "example")
-			rec := httptest.NewRecorder()
-
-			tt.call(handler, rec, req)
-
-			if rec.Code != http.StatusNotImplemented {
-				t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
 			}
 		})
 	}

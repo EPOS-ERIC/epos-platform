@@ -32,17 +32,18 @@ type Identifier struct {
 
 type SoftwareApplication struct {
 	BaseDetailResource
-	ContactPoints        []ResourceRef `json:"contact_points,omitempty"`
-	Keywords             []string      `json:"keywords,omitempty"`
-	Concepts             []ResourceRef `json:"concepts,omitempty"`
-	DownloadURL          string        `json:"download_url,omitempty"`
-	InstallURL           string        `json:"install_url,omitempty"`
-	License              string        `json:"license,omitempty"`
-	SoftwareVersion      string        `json:"software_version,omitempty"`
-	SoftwareRequirements string        `json:"software_requirements,omitempty"`
-	MainEntityOfPage     string        `json:"main_entity_of_page,omitempty"`
-	Provider             []ResourceRef `json:"provider,omitempty"`
-	Operations           []ResourceRef `json:"operations,omitempty"`
+	// TODO: see if we should even return these, even if just returning the ids, they could expose the emails
+	ContactPoints    []ResourceRef `json:"contact_points,omitempty"`
+	MainEntityOfPage string        `json:"main_entity_of_page,omitempty"`
+	License          string        `json:"license,omitempty"`
+	Version          string        `json:"version,omitempty"`
+	Keywords         []string      `json:"keywords,omitempty"`
+	Concepts         []ResourceRef `json:"concepts,omitempty"`
+	DownloadURL      string        `json:"download_url,omitempty"`
+	Requirements     string        `json:"requirements,omitempty"`
+	Creator          []ResourceRef `json:"creator,omitempty"`
+	Identifiers      []Identifier  `json:"identifiers,omitempty"`
+	OperatingSystem  string        `json:"operating_system,omitempty"`
 }
 
 type SoftwareSourceCode struct {
@@ -59,6 +60,7 @@ type SoftwareSourceCode struct {
 	Creator              []ResourceRef `json:"creator,omitempty"`
 	MainEntityOfPage     string        `json:"main_entity_of_page,omitempty"`
 	Version              string        `json:"version,omitempty"`
+	Identifiers          []Identifier  `json:"identifiers,omitempty"`
 }
 
 type Distribution struct {

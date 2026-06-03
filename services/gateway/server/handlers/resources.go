@@ -65,7 +65,7 @@ func (h *Resources) GetDistributionByID(w http.ResponseWriter, r *http.Request) 
 
 func (h *Resources) GetSoftwareApplicationByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	softwareApplication, err := h.service.GetSoftwareApplicationByID(id)
+	softwareApplication, err := h.service.GetSoftwareApplicationByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err)
 		return

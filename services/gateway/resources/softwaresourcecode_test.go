@@ -12,8 +12,12 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 	t.Parallel()
 
 	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/softwaresourcecode/sgg.json")
+	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
+		fixtureKey("propertyvalue", "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/bnode-propertyvalue-3f006d06/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/sgg-id-1.json",
+		fixtureKey("softwaresourcecode", "http://www.epos-eu.org/epos-dcat-ap/software/Dataset/001/sgg/SSC/v1.0"):                     "testdata/metadata-lifecycle/access/softwaresourcecode/sgg.json",
+	})
 
-	softwareSourceCode, err := mapSoftwareSourceCode(context.Background(), detail, logging.Get("test"))
+	softwareSourceCode, err := mapSoftwareSourceCode(context.Background(), detail, fetch, logging.Get("test"))
 	if err != nil {
 		t.Fatalf("mapSoftwareSourceCode() error = %v", err)
 	}
@@ -44,6 +48,12 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 	}
 	if len(softwareSourceCode.Creator) != 1 || softwareSourceCode.Creator[0].Href != "http://localhost:8080/api/v2/access/organization/PIC%3A999974456%2Fv1.0" {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
+	}
+	if len(softwareSourceCode.Identifiers) != 1 {
+		t.Fatalf("softwareSourceCode.Identifiers = %#v", softwareSourceCode.Identifiers)
+	}
+	if softwareSourceCode.Identifiers[0].Type != "doi" || softwareSourceCode.Identifiers[0].Value != "10.13127/epos.ics-software.sgg-ssc" {
+		t.Fatalf("softwareSourceCode.Identifiers[0] = %#v", softwareSourceCode.Identifiers[0])
 	}
 
 	wantKeywords := map[string]bool{
@@ -80,7 +90,7 @@ func TestMapSoftwareSourceCodeSkipsUnsupportedCreatorType(t *testing.T) {
 				map[string]any{"id": "person-1", "type": "person", "href": "http://example.org/person-1"},
 			},
 		},
-	}, logging.Get("test"))
+	}, nil, logging.Get("test"))
 	if err != nil {
 		t.Fatalf("mapSoftwareSourceCode() error = %v", err)
 	}
@@ -96,7 +106,7 @@ func TestMapSoftwareSourceCodeSkipsUnsupportedCreatorType(t *testing.T) {
 func TestMapSoftwareSourceCodeMissingName(t *testing.T) {
 	t.Parallel()
 
-	_, err := mapSoftwareSourceCode(context.Background(), &metadataclient.AccessDetailResponse{Properties: map[string]any{}}, logging.Get("test"))
+	_, err := mapSoftwareSourceCode(context.Background(), &metadataclient.AccessDetailResponse{Properties: map[string]any{}}, nil, logging.Get("test"))
 	if err == nil {
 		t.Fatal("mapSoftwareSourceCode() error = nil")
 	}
