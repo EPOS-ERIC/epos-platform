@@ -1,0 +1,10 @@
+{
+  "href": "http://localhost:8080/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-b54da560%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-b54da560/v1.0",
+  "properties": {
+    "rdf:type": "http://schema.org/PropertyValue",
+    "schema:pg_value": "10.13127/epos.ah-app.catalog-to-xls",
+    "schema:propertyID": "doi"
+  },
+  "shape": "propertyvalue"
+}

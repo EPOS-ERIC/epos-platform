@@ -5,8 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 )
 
@@ -20,8 +18,4 @@ func NewService(metadataClient *metadataclient.APIClient) *Service {
 		log:            logging.Get("resources-service"),
 		metadataClient: metadataClient,
 	}
-}
-
-func (s *Service) GetSoftwareApplicationByID(id string) (api.SoftwareApplication, error) {
-	return api.SoftwareApplication{}, domain.ErrNotImplemented
 }

@@ -9,8 +9,24 @@
       "url": "/api/v2/access/search?type=webservice&resultsPerPage=1&includeConstraints=true"
     },
     {
+      "path": "testdata/metadata-lifecycle/access/softwareapplication/catalog-to-xls.json",
+      "url": "/api/v2/access/softwareapplication/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/propertyvalue/catalog-to-xls-id-1.json",
+      "url": "/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/propertyvalue/catalog-to-xls-id-2.json",
+      "url": "/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-b54da560%2Fv1.0"
+    },
+    {
       "path": "testdata/metadata-lifecycle/access/softwaresourcecode/sgg.json",
       "url": "/api/v2/access/softwaresourcecode/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2FSSC%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/propertyvalue/sgg-id-1.json",
+      "url": "/api/v2/access/propertyvalue/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2Fsoftware%2FDataset%2F001%2Fsgg%2Fbnode-propertyvalue-3f006d06%2Fv1.0"
     },
     {
       "path": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
