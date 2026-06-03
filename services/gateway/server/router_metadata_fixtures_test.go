@@ -44,5 +44,5 @@ func newFixtureRouter(t *testing.T, routes map[string]string) http.Handler {
 	t.Cleanup(server.Close)
 
 	client := testfixtures.NewMetadataClient(server.URL)
-	return NewRouter(discovery.NewService(client, 8), resources.NewService(client))
+	return NewRouter(discovery.NewService(client, 8), resources.NewService(client), "")
 }

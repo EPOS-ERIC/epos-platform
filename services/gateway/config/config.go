@@ -17,11 +17,12 @@ type Config struct {
 }
 
 type Server struct {
-	Listen         string        `yaml:"listen"`
-	RequestTimeout time.Duration `yaml:"request_timeout"`
-	ReadTimeout    time.Duration `yaml:"read_timeout"`
-	WriteTimeout   time.Duration `yaml:"write_timeout"`
-	IdleTimeout    time.Duration `yaml:"idle_timeout"`
+	Listen          string        `yaml:"listen"`
+	CORSAllowOrigin string        `yaml:"cors_allow_origin"`
+	RequestTimeout  time.Duration `yaml:"request_timeout"`
+	ReadTimeout     time.Duration `yaml:"read_timeout"`
+	WriteTimeout    time.Duration `yaml:"write_timeout"`
+	IdleTimeout     time.Duration `yaml:"idle_timeout"`
 }
 
 type Service struct {
@@ -46,11 +47,12 @@ type Services struct {
 func Default() Config {
 	return Config{
 		Server: Server{
-			Listen:         ":5000",
-			RequestTimeout: 30 * time.Second,
-			ReadTimeout:    15 * time.Second,
-			WriteTimeout:   30 * time.Second,
-			IdleTimeout:    60 * time.Second,
+			Listen:          ":5000",
+			RequestTimeout:  30 * time.Second,
+			ReadTimeout:     15 * time.Second,
+			WriteTimeout:    30 * time.Second,
+			IdleTimeout:     60 * time.Second,
+			CORSAllowOrigin: "",
 		},
 		Upstream: Upstream{
 			Timeout:     5 * time.Second,

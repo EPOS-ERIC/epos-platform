@@ -1,5 +1,6 @@
 server:
   listen: ":5000"
+  cors_allow_origin: "http://localhost:4200"
   request_timeout: "30s"
   read_timeout: "15s"
   write_timeout: "30s"

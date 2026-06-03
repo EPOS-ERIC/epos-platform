@@ -15,11 +15,14 @@ import (
 
 var log = logging.Get("routes")
 
-func NewRouter(discoveryService *discovery.Service, resourcesService *resources.Service) http.Handler {
+func NewRouter(discoveryService *discovery.Service, resourcesService *resources.Service, corsAllowOrigin string) http.Handler {
 	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
 
+	if corsAllowOrigin != "" {
+		r.Use(middleware.CORSAllowOrigin(corsAllowOrigin))
+	}
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 

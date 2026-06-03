@@ -33,10 +33,9 @@ type requestContextKey struct{}
 
 // Request carries request-scoped metadata that should be attached to context-aware log records.
 type Request struct {
-	RequestID string
-	Method    string
-	Path      string
-	Query     string
+	Method string
+	Path   string
+	Query  string
 }
 
 func parseLevel(value string) (slog.Level, bool) {
@@ -202,9 +201,6 @@ func (h *contextHandler) Handle(ctx context.Context, record slog.Record) error {
 	enriched := record.Clone()
 	attrs := make([]slog.Attr, 0, 1)
 	requestAttrs := make([]any, 0, 4)
-	if request.RequestID != "" {
-		requestAttrs = append(requestAttrs, slog.String("id", request.RequestID))
-	}
 	if request.Method != "" {
 		requestAttrs = append(requestAttrs, slog.String("method", request.Method))
 	}

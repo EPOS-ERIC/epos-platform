@@ -39,7 +39,7 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 
 	discoverySvc := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
 	resourcesSvc := resources.NewService(metadataClient)
-	router := NewRouter(discoverySvc, resourcesSvc)
+	router := NewRouter(discoverySvc, resourcesSvc, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct
