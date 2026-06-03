@@ -22,7 +22,7 @@ baseUri: "https://test.epos-eu.org"
 # Minimal logging during tests
 logging:
   level: "WARN"
-  format: "text"
+  format: "json"
 
 # Disable external integrations
 features:

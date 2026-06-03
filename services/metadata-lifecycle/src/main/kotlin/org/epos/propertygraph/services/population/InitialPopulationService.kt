@@ -20,6 +20,7 @@ import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.services.ProvenanceService
 import org.epos.propertygraph.utils.UriUtils
 import org.epos.services.ShaclService
+import org.slf4j.LoggerFactory
 import java.io.StringReader
 import java.net.URI
 import java.nio.file.Files
@@ -40,15 +41,16 @@ class InitialPopulationService(
     private val provenanceService: ProvenanceService,
     private val shaclService: ShaclService,
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     suspend fun populateInitial(indexUrl: String = Config.INDEX_URL) {
-        println("=== Initial Population Started ===")
+        logger.info("=== Initial Population Started ===")
 
         ensureNeo4jSupport()
         ensureIndexesReadyForPopulation()
 
         val urls = fetchIndex(indexUrl)
-        println("Found ${urls.size} TTL files to process")
+        logger.info("Found {} TTL files to process", urls.size)
 
         val results = downloadAll(urls)
 
@@ -57,21 +59,20 @@ class InitialPopulationService(
         val failures = mutableListOf<String>()
 
         results.forEachIndexed { index, (url, model) ->
-            println("\n[${index + 1}/${results.size}] Processing: $url")
+            logger.info("[{}/{}] Processing: {}", index + 1, results.size, url)
 
             try {
                 processModelWithStats(url, model)
                 successCount++
             } catch (e: Exception) {
                 errorCount++
-                println("  ERROR: ${e.message}")
+                logger.error("ERROR processing {}: {}", url, e.message)
                 failures += "$url :: ${e.message ?: e::class.simpleName ?: "Unknown error"}"
-                e.printStackTrace()
             }
         }
 
-        println("\n=== Initial Population Completed ===")
-        println("Total: ${results.size} | Success: $successCount | Errors: $errorCount")
+        logger.info("=== Initial Population Completed ===")
+        logger.info("Total: {} | Success: {} | Errors: {}", results.size, successCount, errorCount)
 
         if (errorCount > 0) {
             val preview = failures.take(10).joinToString(" | ")
@@ -92,7 +93,7 @@ class InitialPopulationService(
 
     private fun ensureIndexesReadyForPopulation() {
         try {
-            println("  Ensuring Neo4j constraints and indexes for population...")
+            logger.info("Ensuring Neo4j constraints and indexes for population...")
             val statements = listOf(
                 "CREATE CONSTRAINT conceptual_id_unique IF NOT EXISTS FOR (c:Conceptual) REQUIRE c.id IS UNIQUE",
                 "CREATE CONSTRAINT version_id_unique IF NOT EXISTS FOR (v:Version) REQUIRE v.id IS UNIQUE",
@@ -101,7 +102,7 @@ class InitialPopulationService(
                 "CREATE INDEX conceptual_id_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.id)",
             )
             statements.forEach { client.runWrite(it) }
-            println("  Neo4j indexes are ready; starting population")
+            logger.info("Neo4j indexes are ready; starting population")
         } catch (e: Exception) {
             throw IllegalStateException("Could not ensure Neo4j indexes before population: ${e.message}", e)
         }
@@ -118,7 +119,7 @@ class InitialPopulationService(
         withContext(Dispatchers.IO) {
             urls.map { url ->
                 async {
-                    println("Downloading: $url")
+                    logger.debug("Downloading: {}", url)
                     val ttl = httpClient.get(url).bodyAsText()
                     val model = parseTurtleWithRecovery(ttl, url)
                     url to model
@@ -130,8 +131,8 @@ class InitialPopulationService(
         return try {
             Rio.parse(StringReader(ttlContent), Config.BASE_URI, RDFFormat.TURTLE)
         } catch (e: Exception) {
-            println("  Strict Turtle parsing failed for '$source': ${e.message}")
-            println("  Retrying with relaxed parser and IRI recovery...")
+            logger.warn("Strict Turtle parsing failed for '{}': {}", source, e.message)
+            logger.warn("Retrying with relaxed parser and IRI recovery...")
 
             try {
                 val recovered = LinkedHashModel()
@@ -142,8 +143,8 @@ class InitialPopulationService(
                 parser.parse(StringReader(ttlContent), Config.BASE_URI)
                 normalizeNonAbsoluteIris(recovered, "imported-iri")
             } catch (relaxedError: Exception) {
-                println("  Relaxed parsing also failed: ${relaxedError.message}")
-                println("  Rewriting non-absolute IRI tokens and retrying...")
+                logger.warn("Relaxed parsing also failed: {}", relaxedError.message)
+                logger.warn("Rewriting non-absolute IRI tokens and retrying...")
 
                 val sanitized = sanitizeNonAbsoluteIriTokens(ttlContent)
                 Rio.parse(StringReader(sanitized), Config.BASE_URI, RDFFormat.TURTLE)
@@ -284,12 +285,12 @@ class InitialPopulationService(
 
     suspend fun populateFromSingleFile(ttlUrl: String, authorization: String? = null): PopulationResult {
         return runPopulationJob("Single File", ttlUrl) {
-            println("Downloading TTL file...")
+            logger.info("Downloading TTL file...")
             val ttlContent = httpClient.get(ttlUrl) {
                 authorization?.let { header("Authorization", it) }
             }.bodyAsText()
 
-            println("Parsing TTL content...")
+            logger.debug("Parsing TTL content...")
             val model = parseTurtleWithRecovery(ttlContent, ttlUrl)
             ttlUrl to processModelWithStats(ttlUrl, model)
         }
@@ -303,11 +304,11 @@ class InitialPopulationService(
             require(Files.isRegularFile(path)) { "Path is not a regular file: $filePath" }
             require(Files.isReadable(path)) { "Local file is not readable: $filePath" }
 
-            println("Reading local TTL file...")
+            logger.info("Reading local TTL file...")
             val ttlContent = Files.readString(path)
             val sourceLabel = "file://${path.toAbsolutePath()}"
 
-            println("Parsing TTL content...")
+            logger.debug("Parsing TTL content...")
             val model = parseTurtleWithRecovery(ttlContent, sourceLabel)
             sourceLabel to processModelWithStats(sourceLabel, model)
         }
@@ -315,7 +316,7 @@ class InitialPopulationService(
 
     suspend fun populateFromContent(ttlContent: String, sourceName: String = "direct-upload"): PopulationResult {
         return runPopulationJob("Direct Content", sourceName) {
-            println("Parsing TTL content (${ttlContent.length} chars)...")
+            logger.info("Parsing TTL content ({} chars)...", ttlContent.length)
             val model = parseTurtleWithRecovery(ttlContent, sourceName)
             sourceName to processModelWithStats(sourceName, model)
         }
@@ -326,15 +327,15 @@ class InitialPopulationService(
         sourceIdentifier: String,
         operation: suspend () -> Pair<String, ProcessingStats>
     ): PopulationResult = withContext(Dispatchers.IO) {
-        println("=== $sourceType Population Started ===")
-        println("Source: $sourceIdentifier")
+        logger.info("=== {} Population Started ===", sourceType)
+        logger.info("Source: {}", sourceIdentifier)
 
         try {
             val (sourceUrl, stats) = operation()
 
-            println("\n=== $sourceType Population Completed ===")
-            println("Subjects processed: ${stats.subjectsProcessed}")
-            println("Triples inserted: ${stats.triplesInserted}")
+            logger.info("=== {} Population Completed ===", sourceType)
+            logger.info("Subjects processed: {}", stats.subjectsProcessed)
+            logger.info("Triples inserted: {}", stats.triplesInserted)
 
             PopulationResult(
                 success = true,
@@ -344,7 +345,7 @@ class InitialPopulationService(
                 message = "Population completed successfully"
             )
         } catch (e: Exception) {
-            println("ERROR: ${e.message}")
+            logger.error("ERROR: {}", e.message)
             PopulationResult(
                 success = false,
                 sourceUrl = sourceIdentifier,
@@ -359,21 +360,21 @@ class InitialPopulationService(
     private fun processModelWithStats(sourceUrl: String, originalModel: Model): ProcessingStats {
         val subjects = extractSubjects(originalModel)
         if (subjects.isEmpty()) {
-            println("  No subjects found, skipping")
+            logger.warn("No subjects found, skipping")
             return ProcessingStats(0, 0)
         }
-        println("  Found ${subjects.size} subject(s)")
+        logger.info("Found {} subject(s)", subjects.size)
 
         val skolemized = skolemizeBlankNodes(originalModel, subjects)
         val allSubjects = extractSubjects(skolemized)
-        println("  After skolemization: ${allSubjects.size} subjects")
+        logger.info("After skolemization: {} subjects", allSubjects.size)
 
         val uriMappings = allSubjects.associate { uri ->
             val hasVersion = UriUtils.hasVersion(uri)
             val conceptual = if (hasVersion) UriUtils.extractConceptualUri(uri) else uri
             val versioned = if (hasVersion) uri else UriUtils.ensureVersioned(uri)
 
-            if (!hasVersion) println("  $uri -> $versioned")
+            if (!hasVersion) logger.debug("{} -> {}", uri, versioned)
 
             uri to Pair(conceptual, versioned)
         }
@@ -441,7 +442,7 @@ class InitialPopulationService(
         // Phase 2: create/update Conceptual + Version vertices.
         uriMappings.values.forEach { (conceptual, versioned) ->
             val typeUri = processedModel.filter { it.subject.stringValue() == versioned }
-                .find { it.predicate.stringValue().endsWith("type") || it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
+                .find { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
                 ?.`object`?.stringValue() ?: "Resource"
 
             val typeShortName = typeUri.substringAfterLast("/").substringAfterLast("#").lowercase()
@@ -465,14 +466,14 @@ class InitialPopulationService(
                 attachEdges(sourceVersionId, edges)
             }
         }
-        println("  Inserted into Property Graph ($triplesInserted property sets)")
+        logger.info("Inserted into Property Graph ({} property sets)", triplesInserted)
 
         uriMappings.values.forEach { (conceptual, versioned) ->
             provenanceService.recordInitialCreation(
                 versionUri = versioned
             )
         }
-        println("  Recorded provenance (${uriMappings.size} entities)")
+        logger.info("Recorded provenance ({} entities)", uriMappings.size)
 
         return ProcessingStats(uriMappings.size, triplesInserted)
     }

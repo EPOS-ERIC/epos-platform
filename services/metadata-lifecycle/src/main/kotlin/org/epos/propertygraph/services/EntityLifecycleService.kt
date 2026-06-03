@@ -5,12 +5,14 @@ import org.epos.propertygraph.Config
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.utils.UriUtils
 import org.epos.propertygraph.utils.VersionRecord
+import org.slf4j.LoggerFactory
 
 class EntityLifecycleService(
     private val client: PropertyGraphClient,
     private val provenanceService: ProvenanceService,
 ) {
     private val mapper = ObjectMapper()
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     fun getCurrentPublishedVersion(conceptualUri: String): VersionRecord? {
         val current =
@@ -104,7 +106,7 @@ class EntityLifecycleService(
             group = group,
         )
 
-        println("Created DRAFT: $newDraftUri (based on ${currentVersion.id})")
+        logger.info("Created DRAFT: {} (based on {})", newDraftUri, currentVersion.id)
         return newDraftUri
     }
 
@@ -137,7 +139,7 @@ class EntityLifecycleService(
         )
 
         provenanceService.recordStateTransition(draftUri, "DRAFT", "SUBMITTED", agent, group)
-        println("Submitted: $draftUri (DRAFT -> SUBMITTED)")
+        logger.info("Submitted: {} (DRAFT -> SUBMITTED)", draftUri)
     }
 
     fun publish(
@@ -168,8 +170,8 @@ class EntityLifecycleService(
         linkSupersededVersion(currentPublished?.id, finalUri)
 
         provenanceService.recordStateTransition(finalUri, "SUBMITTED", "PUBLISHED", agent, group)
-        println("Published: $finalUri (SUBMITTED -> PUBLISHED)")
-        println("  Updated conceptual pointer: $conceptualUri -> $finalUri")
+        logger.info("Published: {} (SUBMITTED -> PUBLISHED)", finalUri)
+        logger.info("Updated conceptual pointer: {} -> {}", conceptualUri, finalUri)
         return finalUri
     }
 
@@ -234,7 +236,7 @@ class EntityLifecycleService(
             val archivedId = row["id"]?.toString()?.trim().orEmpty()
             if (archivedId.isBlank()) return@forEach
             provenanceService.recordStateTransition(archivedId, "PUBLISHED", "ARCHIVED", agent, group)
-            println("  Archived old version: $archivedId")
+            logger.info("Archived old version: {}", archivedId)
         }
     }
 
@@ -288,7 +290,7 @@ class EntityLifecycleService(
         )
 
         provenanceService.recordStateTransition(submittedUri, "SUBMITTED", "DRAFT", agent, group)
-        println("Rejected: $submittedUri (SUBMITTED -> DRAFT)")
+        logger.info("Rejected: {} (SUBMITTED -> DRAFT)", submittedUri)
     }
 
     fun discard(
@@ -316,7 +318,7 @@ class EntityLifecycleService(
         )
 
         provenanceService.recordStateTransition(versionUri, normalizedFrom.uppercase(), "DISCARDED", agent, group)
-        println("Discarded: $versionUri (${normalizedFrom.uppercase()} -> DISCARDED)")
+        logger.info("Discarded: {} ({} -> DISCARDED)", versionUri, normalizedFrom.uppercase())
     }
 
     fun deleteDraft(draftUri: String) {
@@ -327,7 +329,7 @@ class EntityLifecycleService(
             """.trimIndent(),
             mapOf("draftUri" to draftUri),
         )
-        println("Deleted DRAFT: $draftUri")
+        logger.info("Deleted DRAFT: {}", draftUri)
     }
 
     private fun getConceptualUri(versionUri: String): String? {

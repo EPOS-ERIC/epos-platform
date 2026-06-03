@@ -149,14 +149,27 @@ class PropertyGraphClient {
 
     private fun toJavaValue(value: Any?): Any? =
         when (value) {
-            null -> null
-            is Number -> value
-            is Boolean -> value
-            is String -> tryParseJson(value)
+            null -> {
+                null
+            }
+
+            is Number -> {
+                value
+            }
+
+            is Boolean -> {
+                value
+            }
+
+            is String -> {
+                tryParseJson(value)
+            }
+
             is Node -> {
                 val props = value.asMap { raw -> toJavaValue(raw) }
                 props + mapOf("_id" to value.id(), "_labels" to value.labels().toList())
             }
+
             is Relationship -> {
                 val props = value.asMap { raw -> toJavaValue(raw) }
                 props +
@@ -167,9 +180,18 @@ class PropertyGraphClient {
                         "_end" to value.endNodeId(),
                     )
             }
-            is List<*> -> value.map { toJavaValue(it) }
-            is Map<*, *> -> value.mapValues { toJavaValue(it.value) }
-            else -> value.toString()
+
+            is List<*> -> {
+                value.map { toJavaValue(it) }
+            }
+
+            is Map<*, *> -> {
+                value.mapValues { toJavaValue(it.value) }
+            }
+
+            else -> {
+                value.toString()
+            }
         }
 
     private fun tryParseJson(value: String): Any? {

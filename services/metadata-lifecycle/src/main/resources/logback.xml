@@ -2,7 +2,7 @@
     <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <timeZone>UTC</timeZone>
-            <customFields>{"service":"metadata-lifecycle"}</customFields>
+            <customFields>{"service":"${otel.service.name:-metadata-lifecycle}"}</customFields>
         </encoder>
     </appender>
 

@@ -163,8 +163,8 @@ class ProvenanceService(
         group: String,
         timestamp: String,
         extraProperties: Map<String, String> = emptyMap(),
-    ): Map<String, Any> {
-        return mapOf(
+    ): Map<String, Any> =
+        mapOf(
             "activityUri" to activityUri,
             "type" to type,
             "versionUri" to versionUri,
@@ -175,7 +175,6 @@ class ProvenanceService(
             "timestamp" to timestamp,
             "extraProperties" to extraProperties,
         )
-    }
 
     private fun toGremlinString(value: String): String = "'${value.replace("\\", "\\\\").replace("'", "\\'")}'"
 }

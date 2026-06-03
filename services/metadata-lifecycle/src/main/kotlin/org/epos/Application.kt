@@ -6,6 +6,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.runBlocking
+import net.logstash.logback.argument.StructuredArguments.entries
 import org.epos.api.controllers.ResourceController
 import org.epos.di.appModule
 import org.epos.propertygraph.Config
@@ -32,24 +33,24 @@ fun main(args: Array<String>) = runBlocking {
 
     when (mode) {
         "server", "serve" -> {
-            println("Starting EPOS API Server...")
+            logger.info("Starting EPOS API Server...")
             startServer()
         }
         "populate", "init" -> {
-            println("Running Initial Population...")
+            logger.info("Running Initial Population...")
             runPopulation()
         }
         "populate-and-serve", "init-and-serve", "all" -> {
-            println("Running Initial Population...")
+            logger.info("Running Initial Population...")
             runPopulation()
-            println("\nStarting EPOS API Server...")
+            logger.info("Starting EPOS API Server...")
             startServer()
         }
         "--help", "-h", "help" -> {
             printHelp()
         }
         else -> {
-            println("Unknown mode: $mode")
+            logger.warn("Unknown mode: {}", mode)
             printHelp()
         }
     }
@@ -102,20 +103,16 @@ private suspend fun runPopulation() {
     val populationService = InitialPopulationService(client, httpClient, provenanceService, shaclService)
 
     try {
-        println("======================================================================")
-        println("   EPOS Neo4j Initial Population")
-        println("======================================================================\n")
+        logger.info("=== EPOS Neo4j Initial Population ===")
 
         Config.printConfig()
-        println()
 
         populationService.populateInitial()
 
-        println("\nPopulation completed successfully!")
+        logger.info("Population completed successfully!")
 
     } catch (e: Exception) {
-        println("\nError during population: ${e.message}")
-        e.printStackTrace()
+        logger.error("Error during population: {}", e.message, e)
         throw e
     } finally {
         httpClient.close()
@@ -162,11 +159,24 @@ private fun printBanner(host: String, port: Int) {
         |Neo4j Community | Ktor API
         |Copyright (c) 2026 EPOS ERIC
         |https://www.epos-eu.org/
-        |Database    ${Config.NEO4J_URI} (db=${Config.NEO4J_DATABASE})
-        |Server      http://$host:$port
-        |Swagger UI  http://$host:$port/swagger
         |------------------------------------------------------------
-        """.trimMargin()
+        """.trimMargin(),
+    )
+
+    logger.info(
+        "metadata_lifecycle_startup",
+        entries(
+            mapOf(
+                "event" to "metadata_lifecycle_startup",
+                "service.name" to "EPOS Metadata Lifecycle Service",
+                "runtime" to "Neo4j Community | Ktor API",
+                "website" to "https://www.epos-eu.org/",
+                "database.uri" to Config.NEO4J_URI,
+                "database.name" to Config.NEO4J_DATABASE,
+                "server.url" to "http://$host:$port",
+                "swagger.url" to "http://$host:$port/swagger",
+            ),
+        ),
     )
 }
 

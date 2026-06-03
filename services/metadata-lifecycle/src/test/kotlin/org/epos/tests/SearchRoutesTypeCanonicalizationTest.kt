@@ -4,6 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.epos.infrastructure.ktor.routes.search.canonicalApiType
 import org.epos.infrastructure.ktor.routes.search.canonicalSearchType
 import org.epos.infrastructure.ktor.routes.search.matchesRequestedTypes
+import org.epos.infrastructure.ktor.routes.search.normalizedSearchRowType
 import org.junit.jupiter.api.Test
 
 class SearchRoutesTypeCanonicalizationTest {
@@ -19,6 +20,13 @@ class SearchRoutesTypeCanonicalizationTest {
         canonicalApiType("Publisher") shouldBe "organization"
         canonicalApiType("PROVIDER") shouldBe "organization"
         canonicalApiType("organization") shouldBe "organization"
+    }
+
+    @Test
+    fun `row type should normalize uri type values`() {
+        normalizedSearchRowType("https://schema.org/SoftwareSourceCode") shouldBe "softwaresourcecode"
+        normalizedSearchRowType("http://schema.org/PropertyValue") shouldBe "propertyvalue"
+        normalizedSearchRowType("http://www.w3.org/ns/dcat#Dataset") shouldBe "dataset"
     }
 
     @Test

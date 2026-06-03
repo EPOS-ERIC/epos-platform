@@ -23,7 +23,10 @@ private object SharedNeo4jTestRuntime {
     fun startIfNeeded() {
         if (started) return
         neo4jContainer.start()
-        configDir = kotlin.io.path.createTempDirectory("metadata-lifecycle-test-config").toFile()
+        configDir =
+            kotlin.io.path
+                .createTempDirectory("metadata-lifecycle-test-config")
+                .toFile()
         configDir.resolve("application-test.yaml").writeText(
             """
             neo4j:
@@ -54,7 +57,6 @@ private object SharedNeo4jTestRuntime {
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class Neo4jTestContainerSupport {
-
     @BeforeAll
     fun startNeo4jContainer() {
         SharedNeo4jTestRuntime.startIfNeeded()

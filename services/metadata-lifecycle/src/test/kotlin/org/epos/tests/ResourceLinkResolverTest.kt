@@ -25,10 +25,14 @@ class ResourceLinkResolverTest {
                 query.contains("MATCH (v:Version {id:") && requestedId == "PIC:999591306/v1.0" -> {
                     listOf(mapOf("id" to "PIC:999591306/v1.0", "identifier" to "PIC:999591306/v1.0"))
                 }
+
                 query.contains("MATCH (c:Conceptual {id:") && entityId == "PIC:999591306/v1.0" -> {
                     listOf(mapOf("value" to "Organization"))
                 }
-                else -> emptyList()
+
+                else -> {
+                    emptyList()
+                }
             }
         }
 

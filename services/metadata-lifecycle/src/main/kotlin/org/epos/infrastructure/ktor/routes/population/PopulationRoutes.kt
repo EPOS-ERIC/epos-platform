@@ -15,6 +15,7 @@ import org.epos.propertygraph.services.population.RelationReconciliationService
 import org.epos.propertygraph.services.population.RevisionImportOptions
 import org.epos.propertygraph.services.population.RevisionImportService
 import org.epos.propertygraph.services.population.VersionMode
+import org.slf4j.LoggerFactory
 
 /**
  * Routes for database population operations.
@@ -24,6 +25,7 @@ fun Route.populationRoutes(
     revisionImportService: RevisionImportService,
     relationReconciliationService: RelationReconciliationService,
 ) {
+    val logger = LoggerFactory.getLogger("org.epos.infrastructure.ktor.routes.populationRoutes")
     route("/api/v2/admin") {
         
         /**
@@ -56,12 +58,11 @@ fun Route.populationRoutes(
             val sourceAuthorization = call.request.header("X-Source-Authorization")
 
             try {
-                println("Population triggered by agent: ${actorHeaders.agent}")
-                println("Population group: ${actorHeaders.group}")
+                logger.info("Population triggered by agent: {}, group: {}", actorHeaders.agent, actorHeaders.group)
 
                 when {
                     ttlUrl.isNullOrBlank() && localPath.isNullOrBlank() && indexUrl.isNullOrBlank() -> {
-                        println("Using INDEX_URL: ${Config.INDEX_URL}")
+                        logger.info("Using INDEX_URL: {}", Config.INDEX_URL)
                         withContext(Dispatchers.IO) {
                             populationService.populateInitial()
                         }
@@ -75,7 +76,7 @@ fun Route.populationRoutes(
                         )
                     }
                     !indexUrl.isNullOrBlank() -> {
-                        println("Using request indexUrl: $indexUrl")
+                        logger.info("Using request indexUrl: {}", indexUrl)
                         withContext(Dispatchers.IO) {
                             populationService.populateInitial(indexUrl)
                         }
@@ -247,10 +248,8 @@ fun Route.populationRoutes(
             val sourceName = request.sourceName ?: "direct-upload-${System.currentTimeMillis()}"
 
             try {
-                println("Direct content population triggered by agent: ${actorHeaders.agent}")
-                println("Population group: ${actorHeaders.group}")
-                println("Source name: $sourceName")
-                println("Content length: ${ttlContent.length} characters")
+                logger.info("Direct content population triggered by agent: {}, group: {}", actorHeaders.agent, actorHeaders.group)
+                logger.info("Source name: {}, content length: {} chars", sourceName, ttlContent.length)
 
                 val result = withContext(Dispatchers.IO) {
                     populationService.populateFromContent(ttlContent, sourceName)

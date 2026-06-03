@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
 
@@ -82,10 +83,10 @@ class ResolvedAgents(
 }
 
 object Config {
-    private val mapper =
-        ObjectMapper(YAMLFactory())
-            .registerKotlinModule()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val logger = LoggerFactory.getLogger("org.epos.propertygraph.Config")
+    private val mapper: ObjectMapper = ObjectMapper(YAMLFactory())
+        .registerKotlinModule()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
     private val rawConfig: AppConfig by lazy { loadConfiguration() }
 
@@ -143,7 +144,7 @@ object Config {
                 ?: System.getProperty("epos.profile")
                 ?: "default"
 
-        println("Loading configuration with profile: $profile")
+        logger.info("Loading configuration with profile: {}", profile)
 
         val baseConfig =
             loadConfigFile("application.yaml")
@@ -180,7 +181,7 @@ object Config {
         for (path in paths) {
             val file = File(path)
             if (file.exists() && file.canRead()) {
-                println("Loading: ${file.absolutePath}")
+                logger.info("Loading config file: {}", file.absolutePath)
                 return mapper.readValue(file, AppConfig::class.java)
             }
         }
@@ -190,7 +191,7 @@ object Config {
     private fun loadConfigFromClasspath(filename: String): AppConfig? {
         val stream: InputStream? = javaClass.classLoader.getResourceAsStream(filename)
         return stream?.let {
-            println("Loading from classpath: $filename")
+            logger.info("Loading config from classpath: {}", filename)
             mapper.readValue(it, AppConfig::class.java)
         }
     }
@@ -358,17 +359,10 @@ object Config {
     private fun envOverride(key: String): String? = System.getenv(key)?.takeIf { it.isNotBlank() }
 
     fun printConfig() {
-        println(
-            """
-            |Startup Configuration
-            |Neo4j       $NEO4J_URI (db=$NEO4J_DATABASE, user=${NEO4J_USERNAME.ifBlank { "<none>" }})
-            |Retry       attempts=$NEO4J_CONNECT_MAX_ATTEMPTS, delayMs=$NEO4J_CONNECT_RETRY_DELAY_MS
-            |Server      ${server.host}:${server.port}
-            |Base URI    $BASE_URI
-            |Index URL   $INDEX_URL
-            |Agent       system=$AGENT_SYSTEM
-            |Features    swagger=${features.enableSwagger}, cors=${features.enableCors}, metrics=${features.enableMetrics}
-            """.trimMargin(),
+        logger.info(
+            "Startup Config - Neo4j: {} (db={}) | Server: {}:{} | BaseURI: {} | Index: {} | Swagger: {} | CORS: {} | Metrics: {}",
+            NEO4J_URI, NEO4J_DATABASE, server.host, server.port,
+            BASE_URI, INDEX_URL, features.enableSwagger, features.enableCors, features.enableMetrics,
         )
     }
 
@@ -403,5 +397,4 @@ object Config {
                     "metrics" to features.enableMetrics,
                 ),
         )
-
 }
