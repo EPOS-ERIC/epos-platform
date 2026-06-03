@@ -7,6 +7,9 @@ down:
 populate:
 	./packages/scripts/populatescript.sh
 
+populate-metadatone:
+	./packages/scripts/metadatone.sh
+
 test:
 	$(MAKE) -C services/gateway test
 	$(MAKE) -C services/user-group test
@@ -25,4 +28,4 @@ lint:
 	$(MAKE) -C services/data-retriever lint
 	$(MAKE) -C services/metadata-lifecycle lint
 
-.PHONY: up down populate test fmt lint
+.PHONY: up down populate populate-metadatone test fmt lint

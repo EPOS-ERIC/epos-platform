@@ -26,7 +26,7 @@ lint: fmt
 	golangci-lint run ./...
 
 test-schemathesis:
-	schemathesis run \
+	SCHEMATHESIS_HOOKS=schemathesis/hooks.py schemathesis run \
 		--url "http://localhost:32000/v1" \
 		--exclude-checks unsupported_method \
 		docs/openapi.yaml

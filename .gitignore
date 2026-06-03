@@ -79,3 +79,5 @@ dist/
 .settings/
 .springBeans
 .sts4-cache
+
+*__pycache__
