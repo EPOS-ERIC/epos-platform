@@ -217,10 +217,7 @@ class InitialPopulationService(
         if (blankNodes.isEmpty()) return model
 
         val mapping = blankNodes.associateWith { bnode ->
-            val parent = model.find { it.`object` == bnode && it.subject is org.eclipse.rdf4j.model.IRI }
-                ?.subject?.stringValue()
-                ?: parentUris.firstOrNull()
-                ?: Config.ID_BASE
+            val parent = resolveBlankNodeParentUri(bnode, model, parentUris)
             generateBlankNodeUri(bnode, model, parent)
         }
 
@@ -241,12 +238,41 @@ class InitialPopulationService(
         }
     }
 
+    private fun resolveBlankNodeParentUri(
+        bnode: org.eclipse.rdf4j.model.BNode,
+        model: Model,
+        parentUris: List<String>,
+    ): String =
+        model
+            .asSequence()
+            .filter { it.`object` == bnode && it.subject is org.eclipse.rdf4j.model.IRI }
+            .map { it.subject.stringValue() }
+            .firstOrNull(::isSkolemParentUri)
+            ?: parentUris.firstOrNull(::isSkolemParentUri)
+            ?: Config.ID_BASE
+
+    private fun isSkolemParentUri(uri: String): Boolean {
+        return try {
+            val parsed = URI(uri)
+            parsed.scheme.equals("http", ignoreCase = true) || parsed.scheme.equals("https", ignoreCase = true)
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     private fun generateBlankNodeUri(bnode: org.eclipse.rdf4j.model.BNode, model: Model, parentUri: String): String {
         val triples = model.filter { it.subject == bnode }.sortedBy { "${it.predicate}${it.`object`}" }
         val typeName = triples.find { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
             ?.`object`?.let { (it as? org.eclipse.rdf4j.model.IRI)?.localName?.lowercase() } ?: "resource"
         val hash = UriUtils.generateHash(triples.joinToString("|") { "${it.predicate}=${it.`object`}" })
-        return "${parentUri.substringBeforeLast("/")}/bnode-$typeName-$hash"
+        return "${blankNodeBaseUri(parentUri)}/bnode-$typeName-$hash"
+    }
+
+    private fun blankNodeBaseUri(parentUri: String): String {
+        val normalizedParent = parentUri.trimEnd('/')
+        val normalizedIdBase = Config.ID_BASE.trimEnd('/')
+        if (normalizedParent == normalizedIdBase) return normalizedIdBase
+        return normalizedParent.substringBeforeLast("/", normalizedParent)
     }
 
     private fun replaceUri(model: Model, oldUri: String, newUri: String): Model {
