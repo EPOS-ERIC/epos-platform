@@ -16,6 +16,9 @@ test:
 	$(MAKE) -C services/data-retriever test
 	$(MAKE) -C services/metadata-lifecycle test
 
+test-hurl:
+	$(MAKE) -C services/gateway test-hurl
+
 fmt:
 	$(MAKE) -C services/gateway fmt
 	$(MAKE) -C services/user-group fmt
@@ -35,4 +38,4 @@ test-schemathesis:
 		--exclude-checks unsupported_method \
 		services/gateway/docs/openapi.yaml
 
-.PHONY: up down populate populate-metadatone test fmt lint test-schemathesis
+.PHONY: up down populate populate-metadatone test test-hurl fmt lint test-schemathesis

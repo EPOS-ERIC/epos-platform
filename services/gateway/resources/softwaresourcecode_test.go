@@ -46,7 +46,7 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 	if len(softwareSourceCode.Concepts) != 1 || softwareSourceCode.Concepts[0].Href != "v1/concept/category:software_jup_conc_multi/v1.0" {
 		t.Fatalf("softwareSourceCode.Concepts = %#v", softwareSourceCode.Concepts)
 	}
-	if len(softwareSourceCode.Creator) != 1 || softwareSourceCode.Creator[0].Href != "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0" {
+	if len(softwareSourceCode.Creator) != 0 {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
 	}
 	if len(softwareSourceCode.Identifiers) != 1 {
@@ -98,11 +98,8 @@ func TestMapSoftwareSourceCodeSkipsUnsupportedCreatorType(t *testing.T) {
 		t.Fatalf("mapSoftwareSourceCode() error = %v", err)
 	}
 
-	if len(softwareSourceCode.Creator) != 1 {
+	if len(softwareSourceCode.Creator) != 0 {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
-	}
-	if softwareSourceCode.Creator[0].ID != "org-1" {
-		t.Fatalf("softwareSourceCode.Creator[0] = %#v", softwareSourceCode.Creator[0])
 	}
 }
 

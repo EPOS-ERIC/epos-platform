@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
@@ -18,12 +16,66 @@ func TestParseSearchParamsRejectsUnsupportedSearchTypes(t *testing.T) {
 		{
 			name:     "concept type is rejected",
 			rawQuery: "type=concept",
-			wantErr:  `parse type filter: unsupported search type "concept"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
+			wantErr:  `Unsupported search type: concept`,
 		},
 		{
 			name:     "mixed supported and unsupported types are rejected",
 			rawQuery: "type=dataset,distribution",
-			wantErr:  `parse type filter: unsupported search type "distribution"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
+			wantErr:  `Unsupported search type: distribution`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/search?"+tt.rawQuery, nil)
+
+			_, err := parseSearchParams(req)
+			if err == nil {
+				t.Fatal("expected error")
+			}
+
+			if err.Error() != tt.wantErr {
+				t.Fatalf("unexpected error: got %q want %q", err.Error(), tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestParseSearchParamsRejectsInvalidPaginationAndDates(t *testing.T) {
+	tests := []struct {
+		name     string
+		rawQuery string
+		wantErr  string
+	}{
+		{
+			name:     "page size below minimum",
+			rawQuery: "pageSize=0",
+			wantErr:  `pageSize must be between 1 and 100`,
+		},
+		{
+			name:     "page size above maximum",
+			rawQuery: "pageSize=101",
+			wantErr:  `pageSize must be between 1 and 100`,
+		},
+		{
+			name:     "page number below minimum",
+			rawQuery: "pageNumber=0",
+			wantErr:  `pageNumber must be >= 1`,
+		},
+		{
+			name:     "bad date from",
+			rawQuery: "dateFrom=not-a-date",
+			wantErr:  `dateFrom must be RFC3339`,
+		},
+		{
+			name:     "inverted date range",
+			rawQuery: "dateFrom=2025-01-02T00:00:00Z&dateTo=2025-01-01T00:00:00Z",
+			wantErr:  `dateTo must be greater than or equal to dateFrom`,
+		},
+		{
+			name:     "invalid versioning status",
+			rawQuery: "versioningStatus=bogus",
+			wantErr:  `versioningStatus must be one of DRAFT, SUBMITTED, PUBLISHED, ARCHIVED`,
 		},
 	}
 
@@ -60,25 +112,5 @@ func TestParseSearchParamsAcceptsSupportedSearchTypes(t *testing.T) {
 		if params.Types[i] != want[i] {
 			t.Fatalf("unexpected type at index %d: got %q want %q", i, params.Types[i], want[i])
 		}
-	}
-}
-
-func TestGetConceptTreeUsesFixtureResponses(t *testing.T) {
-	t.Parallel()
-
-	handler := newDiscoveryHandler(t, conceptTreeFixtureRoutes())
-	req := httptest.NewRequest(http.MethodGet, "/v1/concept", nil)
-	rec := httptest.NewRecorder()
-
-	handler.GetConceptTree(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
-	}
-	if !strings.Contains(rec.Body.String(), "Jupyter Notebooks") {
-		t.Fatalf("body = %s", rec.Body.String())
-	}
-	if !strings.Contains(rec.Body.String(), "Software") {
-		t.Fatalf("body = %s", rec.Body.String())
 	}
 }

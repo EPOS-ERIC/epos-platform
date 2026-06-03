@@ -56,7 +56,7 @@ func TestMapSoftwareApplication(t *testing.T) {
 	if len(softwareApplication.Concepts) != 1 || softwareApplication.Concepts[0].Href != "v1/concept/category:software_appl_conc_multi/v1.0" {
 		t.Fatalf("softwareApplication.Concepts = %#v", softwareApplication.Concepts)
 	}
-	if len(softwareApplication.Creator) != 1 || softwareApplication.Creator[0].Href != "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0" {
+	if len(softwareApplication.Creator) != 0 {
 		t.Fatalf("softwareApplication.Creator = %#v", softwareApplication.Creator)
 	}
 

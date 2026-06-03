@@ -16,6 +16,9 @@ build-docker: build
 test:
 	go test ./...
 
+test-hurl:
+	hurl --variable baseUrl=http://localhost:32000 --test ../../tests/hurl
+
 test-fixtures-refresh:
 	go run ./scripts/refresh_test_fixtures.go
 
@@ -40,4 +43,4 @@ generate: clean
 clean:
 	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR)
 
-.PHONY: build build-docker generate test test-fixtures-refresh fmt lint clean
+.PHONY: build build-docker generate test test-hurl test-fixtures-refresh fmt lint clean
