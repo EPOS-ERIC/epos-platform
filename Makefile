@@ -10,6 +10,9 @@ populate:
 populate-metadatone:
 	./packages/scripts/metadatone.sh
 
+clean: down
+	docker volume rm -f docker_neo4j-data docker_user-group-db-data docker_data-retriever-db-data
+
 test:
 	$(MAKE) -C services/gateway test
 	$(MAKE) -C services/user-group test
@@ -38,4 +41,4 @@ test-schemathesis:
 		--exclude-checks unsupported_method \
 		services/gateway/docs/openapi.yaml
 
-.PHONY: up down populate populate-metadatone test test-hurl fmt lint test-schemathesis
+.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint test-schemathesis
