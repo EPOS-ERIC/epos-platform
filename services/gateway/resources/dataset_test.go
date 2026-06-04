@@ -31,6 +31,7 @@ func TestMapDataset(t *testing.T) {
 
 	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/dataset/intermagnet.json")
 	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
+		fixtureKey("organization", currentAHEADPublisherID):            "testdata/metadata-lifecycle/access/organization/pic.json",
 		fixtureKey(identifierShape, currentAHEADDatasetIdentifierDDSS): "testdata/metadata-lifecycle/access/identifier/intermagnet-ddss-id.json",
 		fixtureKey(identifierShape, currentAHEADDatasetIdentifierDOI):  "testdata/metadata-lifecycle/access/identifier/intermagnet-doi.json",
 		fixtureKey("periodoftime", currentAHEADPeriodOfTimeID):         "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",
@@ -89,7 +90,7 @@ func TestMapDataset(t *testing.T) {
 	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/concept/category:earthquakeparameters/v1.0" {
 		t.Fatalf("dataset.Concepts = %#v", dataset.Concepts)
 	}
-	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != currentAHEADPublisherHref {
+	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != currentAHEADPublisherHref || dataset.Publisher[0].Name != "INGV - Istituto Nazionale di Geofisica e Vulcanologia" {
 		t.Fatalf("dataset.Publisher = %#v", dataset.Publisher)
 	}
 	if len(dataset.Distributions) != 1 || dataset.Distributions[0].Href != currentAHEADDistributionHref {

@@ -266,7 +266,7 @@ func assertDatasetSearchItem(t *testing.T, item api.SearchItem) {
 	if len(dataset.Concepts) != 1 {
 		t.Fatalf("Concepts = %#v", dataset.Concepts)
 	}
-	assertResourceRef(t, dataset.Concepts[0], datasetThemeID, "Earthquake parameters", datasetThemeHref)
+	assertResourceRef(t, dataset.Concepts[0], datasetThemeID, "", datasetThemeHref)
 	if len(dataset.Distributions) != 1 {
 		t.Fatalf("Distributions = %#v", dataset.Distributions)
 	}
@@ -393,9 +393,6 @@ func fdsnEventFixturePaths() map[string]string {
 		accessPath("iritemplatemapping", "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-2f9a6fda/v1.0"):                    "testdata/metadata-lifecycle/access/iritemplatemapping/endtime.json",
 		accessPath("iritemplatemapping", "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-9f1f2b7f/v1.0"):                    "testdata/metadata-lifecycle/access/iritemplatemapping/starttime.json",
 		accessPath("apidocumentation", "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/fdsnws-event/v1.0"):            "testdata/metadata-lifecycle/access/apidocumentation/intermagnet.json",
-		accessPath("concept", "category:earthquakeparameters/v1.0"):                                                                                      "testdata/metadata-lifecycle/access/concept/earthquakeparameters.json",
-		accessPath("concept", "category:seismologicalproductsservices/v1.0"):                                                                             "testdata/metadata-lifecycle/access/concept/seismologicalproductsservices.json",
-		accessPath("concept", "category:tsuteststrgmotiparameters/v1.0"):                                                                                 "testdata/metadata-lifecycle/access/concept/tsuteststrgmotiparameters.json",
 	}
 }
 

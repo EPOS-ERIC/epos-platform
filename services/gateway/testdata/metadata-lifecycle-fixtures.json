@@ -85,18 +85,6 @@
             "url": "/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0"
         },
         {
-            "path": "testdata/metadata-lifecycle/access/concept/earthquakeparameters.json",
-            "url": "/api/v2/access/concept/category%3Aearthquakeparameters%2Fv1.0"
-        },
-        {
-            "path": "testdata/metadata-lifecycle/access/concept/seismologicalproductsservices.json",
-            "url": "/api/v2/access/concept/category%3Aseismologicalproductsservices%2Fv1.0"
-        },
-        {
-            "path": "testdata/metadata-lifecycle/access/concept/tsuteststrgmotiparameters.json",
-            "url": "/api/v2/access/concept/category%3Atsuteststrgmotiparameters%2Fv1.0"
-        },
-        {
             "path": "testdata/metadata-lifecycle/access/concept/software-theme.json",
             "url": "/api/v2/access/concept/category%3Afacets%2Fsoftware-theme%2Fv1.0"
         },
