@@ -156,6 +156,66 @@ make populate
 - `make test|fmt|lint` fan out to all current services.
 - Service-specific build and Docker targets stay in each service `Makefile`.
 
+## Helm Chart
+
+The platform Helm chart lives under `helm/epos-platform` and deploys the four backend services plus optional development datastores:
+
+- `gateway`
+- `metadata-lifecycle`
+- `user-group`
+- `data-retriever`
+- optional PostgreSQL instances for `user-group` and `data-retriever`
+- optional Neo4j instance for `metadata-lifecycle`
+
+Validate the chart locally:
+
+```bash
+helm lint helm/epos-platform
+helm template epos-platform helm/epos-platform
+```
+
+Package the chart locally:
+
+```bash
+helm package helm/epos-platform --destination dist
+```
+
+For deployments using external datastores, disable the bundled datastore resources and provide connection settings through values:
+
+```bash
+helm template epos-platform helm/epos-platform \
+  --set postgresql.userGroup.enabled=false \
+  --set postgresql.userGroup.host=user-group-db.example \
+  --set postgresql.dataRetriever.enabled=false \
+  --set postgresql.dataRetriever.host=data-retriever-db.example \
+  --set neo4j.enabled=false \
+  --set neo4j.uri=bolt://neo4j.example:7687
+```
+
+## CI/CD Pipelines
+
+GitHub Actions workflows live under `.github/workflows/`:
+
+- `services-ci.yml`: runs Go/Gradle tests, lint, service builds, Docker image builds, Docker image publishing, and integration tests.
+- `helm-ci.yml`: runs Helm lint/render validation, packages the chart, uploads chart artifacts, and attaches release chart packages to GitHub Releases.
+
+Pipeline behavior:
+
+- Pull requests validate services, Docker builds, integration tests, and Helm chart rendering without publishing images.
+- Branch pushes publish Docker images to GitHub Container Registry using the branch name as the image tag.
+- Version tag pushes, such as `v1.2.3`, publish Docker images with both `v1.2.3` and `latest` tags.
+- Helm chart packages are uploaded as workflow artifacts for PR, branch, and tag runs.
+- Version tag pushes also attach the packaged Helm chart to the matching GitHub Release.
+
+Published Docker image names:
+
+- `ghcr.io/epos-eric/epos-platform/gateway`
+- `ghcr.io/epos-eric/epos-platform/metadata-lifecycle`
+- `ghcr.io/epos-eric/epos-platform/user-group`
+- `ghcr.io/epos-eric/epos-platform/data-retriever`
+
+Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Hurl tests under `tests/hurl/` and Schemathesis tests against the gateway OpenAPI contract.
+
 ## Service documentation
 
 - Metadata Lifecycle: `services/metadata-lifecycle/README.md`
