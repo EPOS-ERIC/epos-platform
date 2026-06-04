@@ -16,57 +16,37 @@ import (
 var errMissingField = errors.New("missing field")
 
 func (s *Service) mapDatasetItem(ctx context.Context, item metadataclient.SearchItem) (api.DatasetItem, error) {
-	reader := metadatareader.New(item.Fields)
-
 	baseItem, err := mapBaseItem(item)
 	if err != nil {
 		return api.DatasetItem{}, fmt.Errorf("map dataset base item: %w", err)
 	}
 
-	themes, err := getLinkedIDs(reader, "dcat:theme")
+	detail, err := metadataaccess.FetchDetail(ctx, s.metadataClient, string(api.DatasetType), baseItem.ID)
+	if err != nil {
+		return api.DatasetItem{}, fmt.Errorf("fetch dataset '%s' details: %w", baseItem.ID, err)
+	}
+
+	reader := metadatareader.New(detail.GetProperties())
+
+	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {
 		return api.DatasetItem{}, fmt.Errorf("get dataset concepts: %w", err)
 	}
 
-	publishers, err := getLinkedIDs(reader, "dct:publisher")
+	publishers, err := reader.ResourceRefs("dct:publisher", api.OrganizationType)
 	if err != nil {
 		return api.DatasetItem{}, fmt.Errorf("get dataset providers: %w", err)
 	}
 
-	var (
-		providers     []api.ResourceRef
-		concepts      []api.ResourceRef
-		distributions []api.DatasetDistributionSearchItem
-	)
+	providerIDs := resourceRefIDs(publishers)
+	providers, err := s.mapProviders(ctx, providerIDs)
+	if err != nil {
+		return api.DatasetItem{}, fmt.Errorf("map dataset providers: %w", err)
+	}
 
-	g, groupCtx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		mappedProviders, err := s.mapProviders(groupCtx, publishers)
-		if err != nil {
-			return fmt.Errorf("map dataset providers: %w", err)
-		}
-		providers = mappedProviders
-		return nil
-	})
-	g.Go(func() error {
-		mappedConcepts, err := s.mapConcepts(groupCtx, themes)
-		if err != nil {
-			return fmt.Errorf("map dataset concepts: %w", err)
-		}
-		concepts = mappedConcepts
-		return nil
-	})
-	g.Go(func() error {
-		mappedDistributions, err := s.mapDistributions(groupCtx, baseItem.ID)
-		if err != nil {
-			return fmt.Errorf("map dataset distributions: %w", err)
-		}
-		distributions = mappedDistributions
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		return api.DatasetItem{}, fmt.Errorf("map dataset item dependencies: %w", err)
+	distributions, err := s.mapDistributions(ctx, baseItem.ID)
+	if err != nil {
+		return api.DatasetItem{}, fmt.Errorf("map dataset distributions: %w", err)
 	}
 
 	return api.DatasetItem{
@@ -132,16 +112,26 @@ func (s *Service) mapSoftwareSourceCodeItem(ctx context.Context, item metadatacl
 }
 
 func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.SearchItem) (api.WebServiceItem, error) {
-	reader := metadatareader.New(item.Fields)
-
 	baseItem, err := mapBaseItem(item)
 	if err != nil {
 		return api.WebServiceItem{}, fmt.Errorf("map webservice base item: %w", err)
 	}
 
-	publishers, err := getLinkedIDs(reader, "schema:provider")
+	detail, err := metadataaccess.FetchDetail(ctx, s.metadataClient, string(api.WebserviceType), baseItem.ID)
+	if err != nil {
+		return api.WebServiceItem{}, fmt.Errorf("fetch webservice '%s' details: %w", baseItem.ID, err)
+	}
+
+	reader := metadatareader.New(detail.GetProperties())
+
+	publishers, err := reader.ResourceRefs("schema:provider", api.OrganizationType)
 	if err != nil {
 		return api.WebServiceItem{}, fmt.Errorf("get webservice providers: %w", err)
+	}
+
+	providerRefs, err := s.mapProviders(ctx, resourceRefIDs(publishers))
+	if err != nil {
+		return api.WebServiceItem{}, fmt.Errorf("map webservice providers: %w", err)
 	}
 
 	themes, err := getLinkedIDs(reader, "dcat:theme")
@@ -153,22 +143,9 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 		themes = nil
 	}
 
-	var (
-		provider api.ResourceRef
-		concepts []api.ResourceRef
-	)
+	var concepts []api.ResourceRef
 
 	g, groupCtx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		mappedProviders, err := s.mapProviders(groupCtx, publishers)
-		if err != nil {
-			return fmt.Errorf("map webservice providers: %w", err)
-		}
-		if len(mappedProviders) > 0 {
-			provider = mappedProviders[0]
-		}
-		return nil
-	})
 	g.Go(func() error {
 		mappedConcepts, err := s.mapConcepts(groupCtx, themes)
 		if err != nil {
@@ -180,6 +157,11 @@ func (s *Service) mapWebServiceItem(ctx context.Context, item metadataclient.Sea
 
 	if err := g.Wait(); err != nil {
 		return api.WebServiceItem{}, fmt.Errorf("map webservice item dependencies: %w", err)
+	}
+
+	provider := api.ResourceRef{ID: "", Name: "", Href: ""}
+	if len(providerRefs) > 0 {
+		provider = providerRefs[0]
 	}
 
 	return api.WebServiceItem{
@@ -213,6 +195,16 @@ func mapBaseItem(item metadataclient.SearchItem) (api.BaseSearchItem, error) {
 		Name: name,
 		Href: gatewayhref.Build(resourceType, item.Id),
 	}, nil
+}
+
+func resourceRefIDs(refs []api.ResourceRef) []string {
+	ids := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		if ref.ID != "" {
+			ids = append(ids, ref.ID)
+		}
+	}
+	return ids
 }
 
 func getSearchItemNameKey(resourceType metadataclient.ResourceType) (string, error) {
@@ -354,7 +346,7 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 	return concepts, nil
 }
 
-func (s *Service) getSoftwareCreators(ctx context.Context, softwareType string, softwareID string) ([]string, error) {
+func (s *Service) getSoftwareCreators(ctx context.Context, softwareType, softwareID string) ([]string, error) {
 	detail, err := metadataaccess.FetchDetail(ctx, s.metadataClient, softwareType, softwareID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch software '%s' details: %w", softwareID, err)

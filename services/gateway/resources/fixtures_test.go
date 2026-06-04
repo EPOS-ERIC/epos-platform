@@ -22,6 +22,7 @@ const (
 	currentAHEADLocationID            = "https://epos-eu.org/anthropogenic_hazards/software/bnode-location-f75195ba/v1.0"
 	currentAHEADAnnotationID          = "https://epos-eu.org/anthropogenic_hazards/software/bnode-annotation-bb2b59f0/v1.0"
 	currentAHEADPublisherID           = "PIC:999472675/v1.0"
+	currentAHEADUppsalaID             = "ROR:048a87296/v1.0"
 	currentAHEADDatasetIdentifierDDSS = "https://epos-eu.org/anthropogenic_hazards/software/bnode-identifier-c4177063/v1.0"
 	currentAHEADDatasetIdentifierDOI  = "https://epos-eu.org/anthropogenic_hazards/software/bnode-identifier-c4212fb5/v1.0"
 )
@@ -45,7 +46,7 @@ func newFixtureAccessDetailFetcher(t *testing.T, fixtures map[string]string) acc
 		loaded[key] = loadAccessDetailFixture(t, fixturePath)
 	}
 
-	return func(ctx context.Context, shape string, id string) (*metadataclient.AccessDetailResponse, error) {
+	return func(ctx context.Context, shape, id string) (*metadataclient.AccessDetailResponse, error) {
 		_ = ctx
 
 		key := fixtureKey(shape, id)
@@ -58,11 +59,11 @@ func newFixtureAccessDetailFetcher(t *testing.T, fixtures map[string]string) acc
 	}
 }
 
-func fixtureKey(shape string, id string) string {
+func fixtureKey(shape, id string) string {
 	return shape + "::" + id
 }
 
-func assertContactPointHrefs(t *testing.T, got []api.ResourceRef, wantA string, wantB string) {
+func assertContactPointHrefs(t *testing.T, got []api.ResourceRef, wantA, wantB string) {
 	t.Helper()
 
 	if len(got) != 2 {
@@ -88,6 +89,8 @@ func assertContactPointHrefs(t *testing.T, got []api.ResourceRef, wantA string, 
 
 func fdsnEventFixturePaths() map[string]string {
 	return map[string]string{
+		fixtureKey("dataset", currentAHEADDatasetID):                                                                                  "testdata/metadata-lifecycle/access/dataset/intermagnet.json",
+		fixtureKey("webservice", currentAHEADWebserviceID):                                                                            "testdata/metadata-lifecycle/access/webservice/intermagnet.json",
 		fixtureKey("operation", currentAHEADOperationID):                                                                              "testdata/metadata-lifecycle/access/operation/intermagnet.json",
 		fixtureKey("iritemplate", currentAHEADIriTemplateID):                                                                          "testdata/metadata-lifecycle/access/iritemplate/intermagnet.json",
 		fixtureKey("periodoftime", currentAHEADPeriodOfTimeID):                                                                        "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",

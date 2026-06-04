@@ -1,0 +1,10 @@
+{
+  "href": "http://localhost:8080/api/v2/access/concept/category%3Atsuteststrgmotiparameters%2Fv1.0",
+  "id": "category:tsuteststrgmotiparameters/v1.0",
+  "properties": {
+    "rdf:type": "http://www.w3.org/2004/02/skos/core#Concept",
+    "skos:prefLabel": "TEST Strong motion parameters",
+    "skos:definition": "TCS Subdomain"
+  },
+  "shape": "concept"
+}
