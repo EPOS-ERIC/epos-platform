@@ -1,7 +1,8 @@
 package org.epos.infrastructure.ktor.routes
 
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import org.epos.propertygraph.Config
 
 fun Route.healthRoutes() {
@@ -10,11 +11,12 @@ fun Route.healthRoutes() {
             mapOf(
                 "status" to "ok",
                 "timestamp" to System.currentTimeMillis(),
-                "config" to mapOf(
-                    "neo4jUri" to (System.getenv("EPOS_NEO4J_URI") ?: Config.neo4j.uri),
-                    "neo4jDatabase" to (System.getenv("EPOS_NEO4J_DATABASE") ?: "neo4j")
-                )
-            )
+                "config" to
+                    mapOf(
+                        "neo4jUri" to (System.getenv("EPOS_NEO4J_URI") ?: Config.neo4j.uri),
+                        "neo4jDatabase" to (System.getenv("EPOS_NEO4J_DATABASE") ?: "neo4j"),
+                    ),
+            ),
         )
     }
 }

@@ -1,8 +1,9 @@
 package org.epos.propertygraph.services.population
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -14,8 +15,8 @@ import org.eclipse.rdf4j.rio.Rio
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger
 import org.eclipse.rdf4j.rio.helpers.StatementCollector
-import org.epos.propertygraph.Config
 import org.epos.api.models.ResourceTypeInfo
+import org.epos.propertygraph.Config
 import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.services.ProvenanceService
 import org.epos.propertygraph.utils.UriUtils
@@ -32,7 +33,7 @@ data class PopulationResult(
     val subjectsProcessed: Int,
     val triplesInserted: Int,
     val message: String,
-    val error: String? = null
+    val error: String? = null,
 )
 
 class InitialPopulationService(
@@ -94,13 +95,14 @@ class InitialPopulationService(
     private fun ensureIndexesReadyForPopulation() {
         try {
             logger.info("Ensuring Neo4j constraints and indexes for population...")
-            val statements = listOf(
-                "CREATE CONSTRAINT conceptual_id_unique IF NOT EXISTS FOR (c:Conceptual) REQUIRE c.id IS UNIQUE",
-                "CREATE CONSTRAINT version_id_unique IF NOT EXISTS FOR (v:Version) REQUIRE v.id IS UNIQUE",
-                "CREATE INDEX version_status_idx IF NOT EXISTS FOR (v:Version) ON (v.status)",
-                "CREATE INDEX conceptual_type_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.type)",
-                "CREATE INDEX conceptual_id_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.id)",
-            )
+            val statements =
+                listOf(
+                    "CREATE CONSTRAINT conceptual_id_unique IF NOT EXISTS FOR (c:Conceptual) REQUIRE c.id IS UNIQUE",
+                    "CREATE CONSTRAINT version_id_unique IF NOT EXISTS FOR (v:Version) REQUIRE v.id IS UNIQUE",
+                    "CREATE INDEX version_status_idx IF NOT EXISTS FOR (v:Version) ON (v.status)",
+                    "CREATE INDEX conceptual_type_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.type)",
+                    "CREATE INDEX conceptual_id_idx IF NOT EXISTS FOR (c:Conceptual) ON (c.id)",
+                )
             statements.forEach { client.runWrite(it) }
             logger.info("Neo4j indexes are ready; starting population")
         } catch (e: Exception) {
@@ -108,27 +110,34 @@ class InitialPopulationService(
         }
     }
 
-    private suspend fun fetchIndex(indexUrl: String): List<String> = withContext(Dispatchers.IO) {
-        httpClient.get(indexUrl).bodyAsText()
-            .lines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() && !it.startsWith("#") }
-    }
+    private suspend fun fetchIndex(indexUrl: String): List<String> =
+        withContext(Dispatchers.IO) {
+            httpClient
+                .get(indexUrl)
+                .bodyAsText()
+                .lines()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() && !it.startsWith("#") }
+        }
 
     private suspend fun downloadAll(urls: List<String>): List<Pair<String, Model>> =
         withContext(Dispatchers.IO) {
-            urls.map { url ->
-                async {
-                    logger.debug("Downloading: {}", url)
-                    val ttl = httpClient.get(url).bodyAsText()
-                    val model = parseTurtleWithRecovery(ttl, url)
-                    url to model
-                }
-            }.awaitAll()
+            urls
+                .map { url ->
+                    async {
+                        logger.debug("Downloading: {}", url)
+                        val ttl = httpClient.get(url).bodyAsText()
+                        val model = parseTurtleWithRecovery(ttl, url)
+                        url to model
+                    }
+                }.awaitAll()
         }
 
-    private fun parseTurtleWithRecovery(ttlContent: String, source: String): Model {
-        return try {
+    private fun parseTurtleWithRecovery(
+        ttlContent: String,
+        source: String,
+    ): Model =
+        try {
             Rio.parse(StringReader(ttlContent), Config.BASE_URI, RDFFormat.TURTLE)
         } catch (e: Exception) {
             logger.warn("Strict Turtle parsing failed for '{}': {}", source, e.message)
@@ -150,30 +159,35 @@ class InitialPopulationService(
                 Rio.parse(StringReader(sanitized), Config.BASE_URI, RDFFormat.TURTLE)
             }
         }
-    }
 
-    private fun normalizeNonAbsoluteIris(model: Model, context: String): Model {
+    private fun normalizeNonAbsoluteIris(
+        model: Model,
+        context: String,
+    ): Model {
         val iriMap = mutableMapOf<String, org.eclipse.rdf4j.model.IRI>()
 
         fun normalizeIri(iri: org.eclipse.rdf4j.model.IRI): org.eclipse.rdf4j.model.IRI {
             val value = iri.stringValue()
             return iriMap.getOrPut(value) {
                 val absolute = UriUtils.ensureAbsolute(value, context)
-                org.eclipse.rdf4j.model.util.Values.iri(absolute)
+                org.eclipse.rdf4j.model.util.Values
+                    .iri(absolute)
             }
         }
 
-        fun normalizeValue(value: org.eclipse.rdf4j.model.Value): org.eclipse.rdf4j.model.Value = when (value) {
-            is org.eclipse.rdf4j.model.IRI -> normalizeIri(value)
-            else -> value
-        }
+        fun normalizeValue(value: org.eclipse.rdf4j.model.Value): org.eclipse.rdf4j.model.Value =
+            when (value) {
+                is org.eclipse.rdf4j.model.IRI -> normalizeIri(value)
+                else -> value
+            }
 
         return LinkedHashModel().apply {
             model.forEach { stmt ->
-                val subject = when (val subj = stmt.subject) {
-                    is org.eclipse.rdf4j.model.IRI -> normalizeIri(subj)
-                    else -> subj
-                }
+                val subject =
+                    when (val subj = stmt.subject) {
+                        is org.eclipse.rdf4j.model.IRI -> normalizeIri(subj)
+                        else -> subj
+                    }
                 val predicate = normalizeIri(stmt.predicate)
                 val obj = normalizeValue(stmt.`object`)
                 val contextValue = stmt.context
@@ -193,45 +207,58 @@ class InitialPopulationService(
         val iriToken = Regex("<([^<>]+)>")
         return iriToken.replace(ttlContent) { match ->
             val raw = match.groupValues[1].trim()
-            if (UriUtils.isAbsolute(raw)) match.value
-            else "<${UriUtils.ensureAbsolute(raw, "imported-iri")}>"
+            if (UriUtils.isAbsolute(raw)) {
+                match.value
+            } else {
+                "<${UriUtils.ensureAbsolute(raw, "imported-iri")}>"
+            }
         }
     }
 
-    private fun extractSubjects(model: Model): List<String> {
-        return model.asSequence()
+    private fun extractSubjects(model: Model): List<String> =
+        model
+            .asSequence()
             .filter { it.subject is org.eclipse.rdf4j.model.IRI }
             .map { it.subject.stringValue() }
             .filterNot { it.startsWith("genid-") || it.startsWith("_:") }
             .distinct()
             .toList()
-    }
 
-    private fun skolemizeBlankNodes(model: Model, parentUris: List<String>): Model {
-        val blankNodes = model.asSequence()
-            .flatMap { sequenceOf(it.subject, it.`object`) }
-            .filterIsInstance<org.eclipse.rdf4j.model.BNode>()
-            .distinct()
-            .toList()
+    private fun skolemizeBlankNodes(
+        model: Model,
+        parentUris: List<String>,
+    ): Model {
+        val blankNodes =
+            model
+                .asSequence()
+                .flatMap { sequenceOf(it.subject, it.`object`) }
+                .filterIsInstance<org.eclipse.rdf4j.model.BNode>()
+                .distinct()
+                .toList()
 
         if (blankNodes.isEmpty()) return model
 
-        val mapping = blankNodes.associateWith { bnode ->
-            val parent = resolveBlankNodeParentUri(bnode, model, parentUris)
-            generateBlankNodeUri(bnode, model, parent)
-        }
+        val mapping =
+            blankNodes.associateWith { bnode ->
+                val parent = resolveBlankNodeParentUri(bnode, model, parentUris)
+                generateBlankNodeUri(bnode, model, parent)
+            }
 
-        val vf = org.eclipse.rdf4j.model.util.Values.getValueFactory()
+        val vf =
+            org.eclipse.rdf4j.model.util.Values
+                .getValueFactory()
         return LinkedHashModel().apply {
             model.forEach { stmt ->
-                val newSubject = (stmt.subject as? org.eclipse.rdf4j.model.BNode)?.let {
-                    vf.createIRI(mapping[it] ?: it.toString())
-                } ?: stmt.subject
+                val newSubject =
+                    (stmt.subject as? org.eclipse.rdf4j.model.BNode)?.let {
+                        vf.createIRI(mapping[it] ?: it.toString())
+                    } ?: stmt.subject
 
-                val newObject = when (val obj = stmt.`object`) {
-                    is org.eclipse.rdf4j.model.BNode -> vf.createIRI(mapping[obj] ?: obj.toString())
-                    else -> obj
-                }
+                val newObject =
+                    when (val obj = stmt.`object`) {
+                        is org.eclipse.rdf4j.model.BNode -> vf.createIRI(mapping[obj] ?: obj.toString())
+                        else -> obj
+                    }
 
                 add(newSubject, stmt.predicate, newObject)
             }
@@ -263,10 +290,17 @@ class InitialPopulationService(
         }
     }
 
-    private fun generateBlankNodeUri(bnode: org.eclipse.rdf4j.model.BNode, model: Model, parentUri: String): String {
+    private fun generateBlankNodeUri(
+        bnode: org.eclipse.rdf4j.model.BNode,
+        model: Model,
+        parentUri: String,
+    ): String {
         val triples = model.filter { it.subject == bnode }.sortedBy { "${it.predicate}${it.`object`}" }
-        val typeName = triples.find { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
-            ?.`object`?.let { (it as? org.eclipse.rdf4j.model.IRI)?.localName?.lowercase() } ?: "resource"
+        val typeName =
+            triples
+                .find { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
+                ?.`object`
+                ?.let { (it as? org.eclipse.rdf4j.model.IRI)?.localName?.lowercase() } ?: "resource"
         val hash = UriUtils.generateHash(triples.joinToString("|") { "${it.predicate}=${it.`object`}" })
         return "${blankNodeBaseUri(parentUri)}/bnode-$typeName-$hash"
     }
@@ -278,21 +312,29 @@ class InitialPopulationService(
         return normalizedParent.substringBeforeLast("/", normalizedParent)
     }
 
-    private fun replaceUri(model: Model, oldUri: String, newUri: String): Model {
+    private fun replaceUri(
+        model: Model,
+        oldUri: String,
+        newUri: String,
+    ): Model {
         if (!isAbsoluteIri(oldUri) || !isAbsoluteIri(newUri)) {
             return model
         }
 
-        val oldIRI = try {
-            org.eclipse.rdf4j.model.util.Values.iri(oldUri)
-        } catch (_: IllegalArgumentException) {
-            return model
-        }
-        val newIRI = try {
-            org.eclipse.rdf4j.model.util.Values.iri(newUri)
-        } catch (_: IllegalArgumentException) {
-            return model
-        }
+        val oldIRI =
+            try {
+                org.eclipse.rdf4j.model.util.Values
+                    .iri(oldUri)
+            } catch (_: IllegalArgumentException) {
+                return model
+            }
+        val newIRI =
+            try {
+                org.eclipse.rdf4j.model.util.Values
+                    .iri(newUri)
+            } catch (_: IllegalArgumentException) {
+                return model
+            }
 
         return LinkedHashModel().apply {
             model.forEach { stmt ->
@@ -304,29 +346,32 @@ class InitialPopulationService(
         }
     }
 
-    private fun isAbsoluteIri(value: String): Boolean {
-        return try {
+    private fun isAbsoluteIri(value: String): Boolean =
+        try {
             URI(value).isAbsolute
         } catch (_: Exception) {
             false
         }
-    }
 
-    suspend fun populateFromSingleFile(ttlUrl: String, authorization: String? = null): PopulationResult {
-        return runPopulationJob("Single File", ttlUrl) {
+    suspend fun populateFromSingleFile(
+        ttlUrl: String,
+        authorization: String? = null,
+    ): PopulationResult =
+        runPopulationJob("Single File", ttlUrl) {
             logger.info("Downloading TTL file...")
-            val ttlContent = httpClient.get(ttlUrl) {
-                authorization?.let { header("Authorization", it) }
-            }.bodyAsText()
+            val ttlContent =
+                httpClient
+                    .get(ttlUrl) {
+                        authorization?.let { header("Authorization", it) }
+                    }.bodyAsText()
 
             logger.debug("Parsing TTL content...")
             val model = parseTurtleWithRecovery(ttlContent, ttlUrl)
             ttlUrl to processModelWithStats(ttlUrl, model)
         }
-    }
 
-    suspend fun populateFromLocalFile(filePath: String): PopulationResult {
-        return runPopulationJob("Local File", filePath) {
+    suspend fun populateFromLocalFile(filePath: String): PopulationResult =
+        runPopulationJob("Local File", filePath) {
             val path = Path.of(filePath)
 
             require(Files.exists(path)) { "Local file not found: $filePath" }
@@ -341,52 +386,57 @@ class InitialPopulationService(
             val model = parseTurtleWithRecovery(ttlContent, sourceLabel)
             sourceLabel to processModelWithStats(sourceLabel, model)
         }
-    }
 
-    suspend fun populateFromContent(ttlContent: String, sourceName: String = "direct-upload"): PopulationResult {
-        return runPopulationJob("Direct Content", sourceName) {
+    suspend fun populateFromContent(
+        ttlContent: String,
+        sourceName: String = "direct-upload",
+    ): PopulationResult =
+        runPopulationJob("Direct Content", sourceName) {
             logger.info("Parsing TTL content ({} chars)...", ttlContent.length)
             val model = parseTurtleWithRecovery(ttlContent, sourceName)
             sourceName to processModelWithStats(sourceName, model)
         }
-    }
 
     private suspend fun runPopulationJob(
         sourceType: String,
         sourceIdentifier: String,
-        operation: suspend () -> Pair<String, ProcessingStats>
-    ): PopulationResult = withContext(Dispatchers.IO) {
-        logger.info("=== {} Population Started ===", sourceType)
-        logger.info("Source: {}", sourceIdentifier)
+        operation: suspend () -> Pair<String, ProcessingStats>,
+    ): PopulationResult =
+        withContext(Dispatchers.IO) {
+            logger.info("=== {} Population Started ===", sourceType)
+            logger.info("Source: {}", sourceIdentifier)
 
-        try {
-            val (sourceUrl, stats) = operation()
+            try {
+                val (sourceUrl, stats) = operation()
 
-            logger.info("=== {} Population Completed ===", sourceType)
-            logger.info("Subjects processed: {}", stats.subjectsProcessed)
-            logger.info("Triples inserted: {}", stats.triplesInserted)
+                logger.info("=== {} Population Completed ===", sourceType)
+                logger.info("Subjects processed: {}", stats.subjectsProcessed)
+                logger.info("Triples inserted: {}", stats.triplesInserted)
 
-            PopulationResult(
-                success = true,
-                sourceUrl = sourceUrl,
-                subjectsProcessed = stats.subjectsProcessed,
-                triplesInserted = stats.triplesInserted,
-                message = "Population completed successfully"
-            )
-        } catch (e: Exception) {
-            logger.error("ERROR: {}", e.message)
-            PopulationResult(
-                success = false,
-                sourceUrl = sourceIdentifier,
-                subjectsProcessed = 0,
-                triplesInserted = 0,
-                message = "Population failed: ${e.message}",
-                error = e.message
-            )
+                PopulationResult(
+                    success = true,
+                    sourceUrl = sourceUrl,
+                    subjectsProcessed = stats.subjectsProcessed,
+                    triplesInserted = stats.triplesInserted,
+                    message = "Population completed successfully",
+                )
+            } catch (e: Exception) {
+                logger.error("ERROR: {}", e.message)
+                PopulationResult(
+                    success = false,
+                    sourceUrl = sourceIdentifier,
+                    subjectsProcessed = 0,
+                    triplesInserted = 0,
+                    message = "Population failed: ${e.message}",
+                    error = e.message,
+                )
+            }
         }
-    }
 
-    private fun processModelWithStats(sourceUrl: String, originalModel: Model): ProcessingStats {
+    private fun processModelWithStats(
+        sourceUrl: String,
+        originalModel: Model,
+    ): ProcessingStats {
         val subjects = extractSubjects(originalModel)
         if (subjects.isEmpty()) {
             logger.warn("No subjects found, skipping")
@@ -398,15 +448,16 @@ class InitialPopulationService(
         val allSubjects = extractSubjects(skolemized)
         logger.info("After skolemization: {} subjects", allSubjects.size)
 
-        val uriMappings = allSubjects.associate { uri ->
-            val hasVersion = UriUtils.hasVersion(uri)
-            val conceptual = if (hasVersion) UriUtils.extractConceptualUri(uri) else uri
-            val versioned = if (hasVersion) uri else UriUtils.ensureVersioned(uri)
+        val uriMappings =
+            allSubjects.associate { uri ->
+                val hasVersion = UriUtils.hasVersion(uri)
+                val conceptual = if (hasVersion) UriUtils.extractConceptualUri(uri) else uri
+                val versioned = if (hasVersion) uri else UriUtils.ensureVersioned(uri)
 
-            if (!hasVersion) logger.debug("{} -> {}", uri, versioned)
+                if (!hasVersion) logger.debug("{} -> {}", uri, versioned)
 
-            uri to Pair(conceptual, versioned)
-        }
+                uri to Pair(conceptual, versioned)
+            }
 
         var processedModel = skolemized
         uriMappings.forEach { (oldUri, mapping) ->
@@ -420,7 +471,12 @@ class InitialPopulationService(
         val entityEdgeMap = mutableMapOf<String, MutableList<EdgeDraft>>()
         val importedVersionUris = uriMappings.values.map { it.second }.toSet()
         val resourceTypesByName = shaclService.getResourceTypes().associateBy { normalizeShapeName(it.name) }
-        val shaclPrefixes = shaclService.getParser().getCachedShapesGraph()?.prefixes.orEmpty()
+        val shaclPrefixes =
+            shaclService
+                .getParser()
+                .getCachedShapesGraph()
+                ?.prefixes
+                .orEmpty()
         val subjectTypeByVersionUri = extractSubjectTypeByVersionUri(processedModel)
 
         processedModel.forEach { stmt ->
@@ -453,10 +509,12 @@ class InitialPopulationService(
                         appendPropertyValue(data, propName, targetUri)
                     }
                 }
+
                 is org.eclipse.rdf4j.model.Literal -> {
                     val value = obj.stringValue()
                     appendPropertyValue(data, propName, value)
                 }
+
                 is org.eclipse.rdf4j.model.BNode -> {
                     val bnodeProps = extractBNodeProperties(processedModel, obj)
                     if (bnodeProps.isNotEmpty()) {
@@ -470,14 +528,20 @@ class InitialPopulationService(
 
         // Phase 2: create/update Conceptual + Version vertices.
         uriMappings.values.forEach { (conceptual, versioned) ->
-            val typeUri = processedModel.filter { it.subject.stringValue() == versioned }
-                .find { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
-                ?.`object`?.stringValue() ?: "Resource"
+            val typeUri =
+                processedModel
+                    .filter { it.subject.stringValue() == versioned }
+                    .find { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE }
+                    ?.`object`
+                    ?.stringValue() ?: "Resource"
 
             val typeShortName = typeUri.substringAfterLast("/").substringAfterLast("#").lowercase()
 
             val data = entityDataMap[versioned] ?: emptyMap()
-            val timestamp = java.time.Instant.now().toString()
+            val timestamp =
+                java.time.Instant
+                    .now()
+                    .toString()
             upsertVersion(
                 conceptual = conceptual,
                 versioned = versioned,
@@ -499,7 +563,7 @@ class InitialPopulationService(
 
         uriMappings.values.forEach { (conceptual, versioned) ->
             provenanceService.recordInitialCreation(
-                versionUri = versioned
+                versionUri = versioned,
             )
         }
         logger.info("Recorded provenance ({} entities)", uriMappings.size)
@@ -513,11 +577,12 @@ class InitialPopulationService(
         value: Any,
     ) {
         val existing = data[propName]
-        data[propName] = when (existing) {
-            null -> value
-            is List<*> -> existing + value
-            else -> listOf(existing, value)
-        }
+        data[propName] =
+            when (existing) {
+                null -> value
+                is List<*> -> existing + value
+                else -> listOf(existing, value)
+            }
     }
 
     private fun extractBNodeProperties(
@@ -526,7 +591,11 @@ class InitialPopulationService(
     ): Map<String, Any> {
         val bnodeProps = mutableMapOf<String, Any>()
         model.filter { it.subject == bNode }.forEach { bStmt ->
-            val bProp = bStmt.predicate.stringValue().substringAfterLast("/").substringAfterLast("#")
+            val bProp =
+                bStmt.predicate
+                    .stringValue()
+                    .substringAfterLast("/")
+                    .substringAfterLast("#")
             bnodeProps[bProp] = bStmt.`object`.stringValue()
         }
         return bnodeProps
@@ -615,10 +684,23 @@ class InitialPopulationService(
 
     private fun toNeo4jPropertyValue(value: Any?): Any =
         when (value) {
-            null -> ""
-            is String, is Number, is Boolean -> value
-            is List<*>, is Map<*, *> -> com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(value)
-            else -> value.toString()
+            null -> {
+                ""
+            }
+
+            is String, is Number, is Boolean -> {
+                value
+            }
+
+            is List<*>, is Map<*, *> -> {
+                com.fasterxml.jackson.databind
+                    .ObjectMapper()
+                    .writeValueAsString(value)
+            }
+
+            else -> {
+                value.toString()
+            }
         }
 
     private fun sanitizePropertyKey(key: String): String {
@@ -627,26 +709,33 @@ class InitialPopulationService(
         return if (cleaned in reserved) "pg_$cleaned" else cleaned
     }
 
-    private fun propertyKeyFromPredicate(predicate: String, shaclPrefixes: Map<String, String>): String {
+    private fun propertyKeyFromPredicate(
+        predicate: String,
+        shaclPrefixes: Map<String, String>,
+    ): String {
         val local = predicate.substringAfterLast('/').substringAfterLast('#').trim()
         if (local.isBlank()) return sanitizePropertyKey("prop")
 
         val namespace = predicate.substringBeforeLast('#', predicate.substringBeforeLast('/') + "/")
-        val namespaceToken = preferredShaclPrefix(namespace, shaclPrefixes)
-            ?: predicate
-                .substringBeforeLast('#', predicate)
-                .substringBeforeLast('/', predicate)
-                .substringAfterLast('/')
-                .substringAfterLast('#')
-                .lowercase()
-                .replace(Regex("[^a-z0-9]"), "")
+        val namespaceToken =
+            preferredShaclPrefix(namespace, shaclPrefixes)
+                ?: predicate
+                    .substringBeforeLast('#', predicate)
+                    .substringBeforeLast('/', predicate)
+                    .substringAfterLast('/')
+                    .substringAfterLast('#')
+                    .lowercase()
+                    .replace(Regex("[^a-z0-9]"), "")
 
         val localKey = sanitizePropertyKey(local)
         if (namespaceToken.isBlank() || !namespaceToken.first().isLetter()) return localKey
         return "$namespaceToken:$localKey"
     }
 
-    private fun preferredShaclPrefix(namespace: String, shaclPrefixes: Map<String, String>): String? {
+    private fun preferredShaclPrefix(
+        namespace: String,
+        shaclPrefixes: Map<String, String>,
+    ): String? {
         val normalizedNamespace = normalizeNamespace(namespace)
         val candidates =
             shaclPrefixes
@@ -679,7 +768,11 @@ class InitialPopulationService(
             .filter { it.predicate == org.eclipse.rdf4j.model.vocabulary.RDF.TYPE && it.`object` is org.eclipse.rdf4j.model.IRI }
             .associate { stmt ->
                 val subject = stmt.subject.stringValue()
-                val typeShort = stmt.`object`.stringValue().substringAfterLast('/').substringAfterLast('#')
+                val typeShort =
+                    stmt.`object`
+                        .stringValue()
+                        .substringAfterLast('/')
+                        .substringAfterLast('#')
                 subject to typeShort
             }
 
@@ -694,13 +787,14 @@ class InitialPopulationService(
         val resourceType = resourceTypesByName[normalizeShapeName(subjectType)] ?: return true
         val normalizedKeyCandidates = predicateKeyLookupCandidates(predicateKey).map { normalizeShapeName(it) }
 
-        val property = resourceType.properties.firstOrNull { prop ->
-            prop.path.equals(predicateIri, ignoreCase = true)
-        } ?: resourceType.properties.firstOrNull { prop ->
-            val propName = normalizeShapeName(prop.name)
-            val propPathLocal = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
-            normalizedKeyCandidates.any { it == propName || it == propPathLocal }
-        } ?: return true
+        val property =
+            resourceType.properties.firstOrNull { prop ->
+                prop.path.equals(predicateIri, ignoreCase = true)
+            } ?: resourceType.properties.firstOrNull { prop ->
+                val propName = normalizeShapeName(prop.name)
+                val propPathLocal = normalizeShapeName(prop.path.substringAfterLast('/').substringAfterLast('#'))
+                normalizedKeyCandidates.any { it == propName || it == propPathLocal }
+            } ?: return true
 
         return !property.classConstraint.isNullOrBlank() ||
             !property.classConstraints.isNullOrEmpty() ||
@@ -736,5 +830,8 @@ class InitialPopulationService(
         val predicateKey: String,
     )
 
-    private data class ProcessingStats(val subjectsProcessed: Int, val triplesInserted: Int)
+    private data class ProcessingStats(
+        val subjectsProcessed: Int,
+        val triplesInserted: Int,
+    )
 }

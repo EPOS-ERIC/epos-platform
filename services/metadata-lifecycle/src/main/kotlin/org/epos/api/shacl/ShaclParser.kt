@@ -1,15 +1,21 @@
 package org.epos.api.shacl
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import com.fasterxml.jackson.annotation.JsonInclude
-import org.eclipse.rdf4j.model.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import org.eclipse.rdf4j.model.BNode
+import org.eclipse.rdf4j.model.IRI
+import org.eclipse.rdf4j.model.Literal
+import org.eclipse.rdf4j.model.Model
+import org.eclipse.rdf4j.model.Resource
+import org.eclipse.rdf4j.model.Statement
+import org.eclipse.rdf4j.model.ValueFactory
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory
+import org.eclipse.rdf4j.model.vocabulary.OWL
 import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.model.vocabulary.RDFS
 import org.eclipse.rdf4j.model.vocabulary.SHACL
-import org.eclipse.rdf4j.model.vocabulary.OWL
 import org.eclipse.rdf4j.rio.RDFFormat
 import org.eclipse.rdf4j.rio.Rio
 import org.epos.api.models.ResourceTypeInfo
@@ -27,7 +33,7 @@ import java.io.StringReader
 data class ShaclShapesGraph(
     val shapes: List<Shape>,
     val prefixes: Map<String, String> = emptyMap(),
-    val ontologySchema: OntologySchema = OntologySchema()
+    val ontologySchema: OntologySchema = OntologySchema(),
 ) {
     /** Get all node shapes */
     val nodeShapes: List<NodeShape> get() = shapes.filterIsInstance<NodeShape>()
@@ -47,7 +53,7 @@ data class ShaclShapesGraph(
 
 data class OntologySchema(
     val classes: Map<String, OntologyClassInfo> = emptyMap(),
-    val properties: Map<String, OntologyPropertyInfo> = emptyMap()
+    val properties: Map<String, OntologyPropertyInfo> = emptyMap(),
 )
 
 data class OntologyClassInfo(
@@ -55,7 +61,7 @@ data class OntologyClassInfo(
     val labels: Map<String, String> = emptyMap(),
     val descriptions: Map<String, String> = emptyMap(),
     val equivalentClasses: List<String> = emptyList(),
-    val subClassOf: List<String> = emptyList()
+    val subClassOf: List<String> = emptyList(),
 )
 
 data class OntologyPropertyInfo(
@@ -66,7 +72,7 @@ data class OntologyPropertyInfo(
     val domains: List<String> = emptyList(),
     val ranges: List<String> = emptyList(),
     val equivalentProperties: List<String> = emptyList(),
-    val subPropertyOf: List<String> = emptyList()
+    val subPropertyOf: List<String> = emptyList(),
 )
 
 /**
@@ -77,7 +83,7 @@ sealed class Shape {
     abstract val targets: List<Target>
     abstract val severity: Severity
     abstract val deactivated: Boolean
-    abstract val message: Map<String, String>  // Language-tagged messages
+    abstract val message: Map<String, String> // Language-tagged messages
     abstract val name: Map<String, String>
     abstract val description: Map<String, String>
     abstract val group: String?
@@ -100,7 +106,7 @@ data class NodeShape(
     val properties: List<PropertyShape> = emptyList(),
     val nodeConstraints: NodeConstraints = NodeConstraints(),
     val closed: Boolean = false,
-    val ignoredProperties: List<String> = emptyList()
+    val ignoredProperties: List<String> = emptyList(),
 ) : Shape()
 
 /**
@@ -120,7 +126,7 @@ data class PropertyShape(
     val nodeConstraints: NodeConstraints = NodeConstraints(),
     val stringConstraints: StringConstraints = StringConstraints(),
     val cardinalityConstraints: CardinalityConstraints = CardinalityConstraints(),
-    val qualifiedConstraints: QualifiedConstraints? = null
+    val qualifiedConstraints: QualifiedConstraints? = null,
 ) : Shape()
 
 // =============================================================================
@@ -129,14 +135,30 @@ data class PropertyShape(
 
 sealed class Target
 
-data class TargetClass(val targetClass: String) : Target()
-data class TargetNode(val targetNode: String? = null) : Target()
-data class TargetSubjectsOf(val predicate: String? = null) : Target()
-data class TargetObjectsOf(val predicate: String? = null) : Target()
-data class TargetSparql(val query: String? = null) : Target()  // SHACL-AF
+data class TargetClass(
+    val targetClass: String,
+) : Target()
+
+data class TargetNode(
+    val targetNode: String? = null,
+) : Target()
+
+data class TargetSubjectsOf(
+    val predicate: String? = null,
+) : Target()
+
+data class TargetObjectsOf(
+    val predicate: String? = null,
+) : Target()
+
+data class TargetSparql(
+    val query: String? = null,
+) : Target() // SHACL-AF
 
 /** Implicit target when shape is also an rdfs:Class */
-data class ImplicitClassTarget(val classIri: String) : Target()
+data class ImplicitClassTarget(
+    val classIri: String,
+) : Target()
 
 // =============================================================================
 // SHACL Property Paths
@@ -151,44 +173,65 @@ sealed class PropertyPath {
 }
 
 /** Simple predicate path: ex:property */
-data class PredicatePath(val predicate: String) : PropertyPath() {
+data class PredicatePath(
+    val predicate: String,
+) : PropertyPath() {
     override fun toSparql() = "<$predicate>"
+
     override fun getPredicates() = setOf(predicate)
 }
 
 /** Inverse path: ^ex:property */
-data class InversePath(val inner: PropertyPath) : PropertyPath() {
+data class InversePath(
+    val inner: PropertyPath,
+) : PropertyPath() {
     override fun toSparql() = "^(${inner.toSparql()})"
+
     override fun getPredicates() = inner.getPredicates()
 }
 
 /** Sequence path: ex:a / ex:b */
-data class SequencePath(val paths: List<PropertyPath>) : PropertyPath() {
+data class SequencePath(
+    val paths: List<PropertyPath>,
+) : PropertyPath() {
     override fun toSparql() = paths.joinToString("/") { it.toSparql() }
+
     override fun getPredicates() = paths.flatMap { it.getPredicates() }.toSet()
 }
 
 /** Alternative path: ex:a | ex:b */
-data class AlternativePath(val paths: List<PropertyPath>) : PropertyPath() {
+data class AlternativePath(
+    val paths: List<PropertyPath>,
+) : PropertyPath() {
     override fun toSparql() = paths.joinToString("|") { "(${it.toSparql()})" }
+
     override fun getPredicates() = paths.flatMap { it.getPredicates() }.toSet()
 }
 
 /** Zero-or-more path: ex:a* */
-data class ZeroOrMorePath(val inner: PropertyPath) : PropertyPath() {
+data class ZeroOrMorePath(
+    val inner: PropertyPath,
+) : PropertyPath() {
     override fun toSparql() = "(${inner.toSparql()})*"
+
     override fun getPredicates() = inner.getPredicates()
 }
 
 /** One-or-more path: ex:a+ */
-data class OneOrMorePath(val inner: PropertyPath) : PropertyPath() {
+data class OneOrMorePath(
+    val inner: PropertyPath,
+) : PropertyPath() {
     override fun toSparql() = "(${inner.toSparql()})+"
+
     override fun getPredicates() = inner.getPredicates()
 }
 
 /** Zero-or-one path: ex:a? */
-data class ZeroOrOnePath(val inner: PropertyPath) : PropertyPath() {
+data class ZeroOrOnePath(
+    val inner: PropertyPath,
+) : PropertyPath() {
     override fun toSparql() = "(${inner.toSparql()})?"
+
     override fun getPredicates() = inner.getPredicates()
 }
 
@@ -202,21 +245,21 @@ data class ZeroOrOnePath(val inner: PropertyPath) : PropertyPath() {
 data class NodeConstraints(
     val nodeKind: NodeKind? = null,
     val nodeKinds: List<NodeKind> = emptyList(),
-    val classConstraint: List<String> = emptyList(),  // sh:class
-    val datatype: String? = null,                      // sh:datatype
+    val classConstraint: List<String> = emptyList(),
+    val datatype: String? = null,
     val datatypes: List<String> = emptyList(),
-    val node: List<String> = emptyList(),             // sh:node (reference to other shapes)
-    val hasValue: List<Value> = emptyList(),          // sh:hasValue
-    val inValues: List<Value>? = null                 // sh:in
+    val node: List<String> = emptyList(),
+    val hasValue: List<Value> = emptyList(),
+    val inValues: List<Value>? = null,
 )
 
 enum class NodeKind {
-    BLANK_NODE,          // sh:BlankNode
-    IRI,                 // sh:IRI
-    LITERAL,             // sh:Literal
-    BLANK_NODE_OR_IRI,   // sh:BlankNodeOrIRI
+    BLANK_NODE, // sh:BlankNode
+    IRI, // sh:IRI
+    LITERAL, // sh:Literal
+    BLANK_NODE_OR_IRI, // sh:BlankNodeOrIRI
     BLANK_NODE_OR_LITERAL, // sh:BlankNodeOrLiteral
-    IRI_OR_LITERAL       // sh:IRIOrLiteral
+    IRI_OR_LITERAL, // sh:IRIOrLiteral
 }
 
 /**
@@ -228,7 +271,7 @@ data class StringConstraints(
     val pattern: String? = null,
     val flags: String? = null,
     val languageIn: List<String>? = null,
-    val uniqueLang: Boolean = false
+    val uniqueLang: Boolean = false,
 )
 
 /**
@@ -236,7 +279,7 @@ data class StringConstraints(
  */
 data class CardinalityConstraints(
     val minCount: Int? = null,
-    val maxCount: Int? = null
+    val maxCount: Int? = null,
 ) {
     val isRequired: Boolean get() = minCount != null && minCount > 0
     val isSingleton: Boolean get() = maxCount == 1
@@ -249,7 +292,7 @@ data class ValueConstraints(
     val minInclusive: Number? = null,
     val maxInclusive: Number? = null,
     val minExclusive: Number? = null,
-    val maxExclusive: Number? = null
+    val maxExclusive: Number? = null,
 )
 
 /**
@@ -259,17 +302,17 @@ data class ComparisonConstraints(
     val equals: List<String> = emptyList(),
     val disjoint: List<String> = emptyList(),
     val lessThan: List<String> = emptyList(),
-    val lessThanOrEquals: List<String> = emptyList()
+    val lessThanOrEquals: List<String> = emptyList(),
 )
 
 /**
  * Logical constraints
  */
 data class LogicalConstraints(
-    val and: List<String> = emptyList(),  // Shape references
+    val and: List<String> = emptyList(), // Shape references
     val or: List<String> = emptyList(),
     val xone: List<String> = emptyList(),
-    val not: List<String> = emptyList()
+    val not: List<String> = emptyList(),
 )
 
 /**
@@ -279,7 +322,7 @@ data class QualifiedConstraints(
     val qualifiedValueShape: String,
     val qualifiedMinCount: Int? = null,
     val qualifiedMaxCount: Int? = null,
-    val qualifiedValueShapesDisjoint: Boolean = false
+    val qualifiedValueShapesDisjoint: Boolean = false,
 )
 
 /**
@@ -289,7 +332,7 @@ data class SparqlConstraint(
     val select: String? = null,
     val ask: String? = null,
     val message: Map<String, String> = emptyMap(),
-    val prefixes: Map<String, String> = emptyMap()
+    val prefixes: Map<String, String> = emptyMap(),
 )
 
 /**
@@ -298,18 +341,24 @@ data class SparqlConstraint(
 enum class Severity {
     INFO,
     WARNING,
-    VIOLATION
+    VIOLATION,
 }
 
 /**
  * RDF Value wrapper for sh:hasValue and sh:in
  */
 sealed class Value {
-    data class IriValue(val iri: String) : Value()
-    data class LiteralValue(
-        val value: String
+    data class IriValue(
+        val iri: String,
     ) : Value()
-    data class BlankNodeValue(val id: String? = null) : Value()
+
+    data class LiteralValue(
+        val value: String,
+    ) : Value()
+
+    data class BlankNodeValue(
+        val id: String? = null,
+    ) : Value()
 }
 
 // =============================================================================
@@ -346,7 +395,7 @@ data class PropertyInfo(
     val severity: String? = null,
     val severities: List<String>? = null,
     val helpText: String? = null,
-    val description: String? = null
+    val description: String? = null,
 )
 
 // =============================================================================
@@ -365,7 +414,9 @@ data class PropertyInfo(
  * - Nested shapes
  * - Shape inheritance via sh:node
  */
-class ShaclParser(private val httpClient: HttpClient) {
+class ShaclParser(
+    private val httpClient: HttpClient,
+) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     private val vf: ValueFactory = SimpleValueFactory.getInstance()
@@ -379,7 +430,10 @@ class ShaclParser(private val httpClient: HttpClient) {
     private var cachedModel: Model? = null
     private val parseCache = ThreadLocal<ParseCache?>()
 
-    private data class SubjectPredicateKey(val subject: Resource, val predicate: IRI)
+    private data class SubjectPredicateKey(
+        val subject: Resource,
+        val predicate: IRI,
+    )
 
     private data class ParseCache(
         val statementsBySubjectPredicate: MutableMap<SubjectPredicateKey, List<Statement>> = mutableMapOf(),
@@ -411,10 +465,11 @@ class ShaclParser(private val httpClient: HttpClient) {
         cachedModel = model
         val parsedGraph = parseModel(model)
         val declaredPrefixes = extractDeclaredPrefixes(content)
-        val mergedPrefixes = linkedMapOf<String, String>().apply {
-            putAll(parsedGraph.prefixes)
-            putAll(declaredPrefixes)
-        }
+        val mergedPrefixes =
+            linkedMapOf<String, String>().apply {
+                putAll(parsedGraph.prefixes)
+                putAll(declaredPrefixes)
+            }
         val shapesGraph = parsedGraph.copy(prefixes = mergedPrefixes)
         cachedShapesGraph = shapesGraph
         return shapesGraph
@@ -448,7 +503,7 @@ class ShaclParser(private val httpClient: HttpClient) {
      */
     suspend fun parseShacl(
         shaclUrl: String,
-        propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient? = null
+        propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient? = null,
     ): List<ResourceTypeInfo> {
         val shapesGraph = parseShapesGraph(shaclUrl)
 
@@ -459,7 +514,7 @@ class ShaclParser(private val httpClient: HttpClient) {
             logger.info("Enriching relationship graph from actual data...")
             relationshipGraph.buildFromData(
                 propertyGraphClient,
-                clearExisting = false
+                clearExisting = false,
             )
             relationshipGraph.printGraph()
         }
@@ -485,53 +540,61 @@ class ShaclParser(private val httpClient: HttpClient) {
      */
     fun getShapeDefinitions(
         onlyReachableFromResourceTypes: Boolean = false,
-        includeResolvedRefs: Boolean = false
+        includeResolvedRefs: Boolean = false,
     ): Map<String, ShapeDefinitionInfo> {
         val shapesGraph = cachedShapesGraph ?: return emptyMap()
 
-        val allDefinitions = shapesGraph.nodeShapes
-            .filter { !it.id.isNullOrBlank() }
-            .associate { shape ->
-                val targetClasses = shape.targets.filterIsInstance<TargetClass>().map { it.targetClass } +
-                    shape.targets.filterIsInstance<ImplicitClassTarget>().map { it.classIri }
+        val allDefinitions =
+            shapesGraph.nodeShapes
+                .filter { !it.id.isNullOrBlank() }
+                .associate { shape ->
+                    val targetClasses =
+                        shape.targets.filterIsInstance<TargetClass>().map { it.targetClass } +
+                            shape.targets.filterIsInstance<ImplicitClassTarget>().map { it.classIri }
 
-                val nodeKinds = shape.nodeConstraints.nodeKinds.map { it.name }.distinct()
-                val datatypes = shape.nodeConstraints.datatypes.distinct()
-                val classConstraints = shape.nodeConstraints.classConstraint.distinct()
-                val nodeShapeRefs = shape.nodeConstraints.node.distinct()
+                    val nodeKinds =
+                        shape.nodeConstraints.nodeKinds
+                            .map { it.name }
+                            .distinct()
+                    val datatypes = shape.nodeConstraints.datatypes.distinct()
+                    val classConstraints = shape.nodeConstraints.classConstraint.distinct()
+                    val nodeShapeRefs = shape.nodeConstraints.node.distinct()
 
-                val ontologyClass = shape.id?.let { shapesGraph.ontologySchema.classes[it] }
+                    val ontologyClass = shape.id?.let { shapesGraph.ontologySchema.classes[it] }
 
-                val description = shape.description[""] ?: shape.description.values.firstOrNull()
-                val name = shape.name[""] ?: shape.name.values.firstOrNull()
+                    val description = shape.description[""] ?: shape.description.values.firstOrNull()
+                    val name = shape.name[""] ?: shape.name.values.firstOrNull()
 
-                shape.id!! to ShapeDefinitionInfo(
-                    id = shape.id,
-                    targetClasses = targetClasses.distinct().ifEmpty {
-                        if (shape.id in shapesGraph.ontologySchema.classes) listOf(shape.id) else emptyList()
-                    },
-                    properties = aggregateProperties(shape.properties, shapesGraph.ontologySchema, targetClasses.firstOrNull()),
-                    closed = shape.closed,
-                    description = description,
-                    name = name,
-                    datatype = if (datatypes.size == 1) datatypes.first() else null,
-                    datatypes = if (datatypes.size > 1) datatypes else null,
-                    nodeKind = if (nodeKinds.size == 1) nodeKinds.first() else null,
-                    nodeKinds = if (nodeKinds.size > 1) nodeKinds else null,
-                    classConstraint = if (classConstraints.size == 1) classConstraints.first() else null,
-                    classConstraints = if (classConstraints.size > 1) classConstraints else null,
-                    nodeShapeRef = if (nodeShapeRefs.size == 1) nodeShapeRefs.first() else null,
-                    nodeShapeRefs = if (nodeShapeRefs.size > 1) nodeShapeRefs else null,
-                    ontologyEquivalentClasses = ontologyClass?.equivalentClasses?.ifEmpty { null },
-                    ontologySubClassesOf = ontologyClass?.subClassOf?.ifEmpty { null }
-                )
+                    shape.id!! to
+                        ShapeDefinitionInfo(
+                            id = shape.id,
+                            targetClasses =
+                                targetClasses.distinct().ifEmpty {
+                                    if (shape.id in shapesGraph.ontologySchema.classes) listOf(shape.id) else emptyList()
+                                },
+                            properties = aggregateProperties(shape.properties, shapesGraph.ontologySchema, targetClasses.firstOrNull()),
+                            closed = shape.closed,
+                            description = description,
+                            name = name,
+                            datatype = if (datatypes.size == 1) datatypes.first() else null,
+                            datatypes = if (datatypes.size > 1) datatypes else null,
+                            nodeKind = if (nodeKinds.size == 1) nodeKinds.first() else null,
+                            nodeKinds = if (nodeKinds.size > 1) nodeKinds else null,
+                            classConstraint = if (classConstraints.size == 1) classConstraints.first() else null,
+                            classConstraints = if (classConstraints.size > 1) classConstraints else null,
+                            nodeShapeRef = if (nodeShapeRefs.size == 1) nodeShapeRefs.first() else null,
+                            nodeShapeRefs = if (nodeShapeRefs.size > 1) nodeShapeRefs else null,
+                            ontologyEquivalentClasses = ontologyClass?.equivalentClasses?.ifEmpty { null },
+                            ontologySubClassesOf = ontologyClass?.subClassOf?.ifEmpty { null },
+                        )
+                }
+
+        val selectedDefinitions =
+            if (onlyReachableFromResourceTypes) {
+                filterReachableShapeDefinitions(shapesGraph, allDefinitions)
+            } else {
+                allDefinitions
             }
-
-        val selectedDefinitions = if (onlyReachableFromResourceTypes) {
-            filterReachableShapeDefinitions(shapesGraph, allDefinitions)
-        } else {
-            allDefinitions
-        }
 
         if (!includeResolvedRefs) {
             return selectedDefinitions
@@ -544,14 +607,16 @@ class ShaclParser(private val httpClient: HttpClient) {
 
     private fun filterReachableShapeDefinitions(
         shapesGraph: ShaclShapesGraph,
-        allDefinitions: Map<String, ShapeDefinitionInfo>
+        allDefinitions: Map<String, ShapeDefinitionInfo>,
     ): Map<String, ShapeDefinitionInfo> {
         val resourceTypes = convertToResourceTypes(shapesGraph)
-        val seeds = resourceTypes.flatMap { type ->
-            type.properties.flatMap { property ->
-                listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty()
-            }
-        }.toSet()
+        val seeds =
+            resourceTypes
+                .flatMap { type ->
+                    type.properties.flatMap { property ->
+                        listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty()
+                    }
+                }.toSet()
 
         if (seeds.isEmpty()) return emptyMap()
 
@@ -566,11 +631,13 @@ class ShaclParser(private val httpClient: HttpClient) {
             if (!visited.add(current)) continue
 
             val definition = allDefinitions[current] ?: continue
-            val refs = definition.properties.flatMap { property ->
-                listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty()
-            }
+            val refs =
+                definition.properties.flatMap { property ->
+                    listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty()
+                }
 
-            refs.filter { it in allDefinitions && it !in visited }
+            refs
+                .filter { it in allDefinitions && it !in visited }
                 .forEach { queue.add(it) }
         }
 
@@ -579,16 +646,17 @@ class ShaclParser(private val httpClient: HttpClient) {
 
     private fun resolveTransitiveRefs(
         shapeId: String,
-        definitions: Map<String, ShapeDefinitionInfo>
+        definitions: Map<String, ShapeDefinitionInfo>,
     ): List<String> {
         val visited = mutableSetOf<String>()
         val queue = ArrayDeque<String>()
 
-        val firstLevel = definitions[shapeId]
-            ?.properties
-            ?.flatMap { property -> listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty() }
-            .orEmpty()
-            .distinct()
+        val firstLevel =
+            definitions[shapeId]
+                ?.properties
+                ?.flatMap { property -> listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty() }
+                .orEmpty()
+                .distinct()
 
         firstLevel.filter { it in definitions && it != shapeId }.forEach { queue.add(it) }
 
@@ -596,12 +664,14 @@ class ShaclParser(private val httpClient: HttpClient) {
             val current = queue.removeFirst()
             if (!visited.add(current)) continue
 
-            val refs = definitions[current]
-                ?.properties
-                ?.flatMap { property -> listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty() }
-                .orEmpty()
+            val refs =
+                definitions[current]
+                    ?.properties
+                    ?.flatMap { property -> listOfNotNull(property.nodeShapeRef) + property.nodeShapeRefs.orEmpty() }
+                    .orEmpty()
 
-            refs.filter { it in definitions && it != shapeId && it !in visited }
+            refs
+                .filter { it in definitions && it != shapeId && it !in visited }
                 .forEach { queue.add(it) }
         }
 
@@ -619,26 +689,30 @@ class ShaclParser(private val httpClient: HttpClient) {
             val prefixes = model.namespaces.associate { it.prefix to it.name }
 
             // Find explicit NodeShapes
-            val explicitNodeShapes = subjectsForPredicate(model, RDF.TYPE)
-                .filter { subject -> valuesForSubjectPredicate(model, subject, RDF.TYPE).any { it == SHACL.NODE_SHAPE } }
-                .toSet()
+            val explicitNodeShapes =
+                subjectsForPredicate(model, RDF.TYPE)
+                    .filter { subject -> valuesForSubjectPredicate(model, subject, RDF.TYPE).any { it == SHACL.NODE_SHAPE } }
+                    .toSet()
 
             // Find explicit PropertyShapes
-            val explicitPropertyShapes = subjectsForPredicate(model, RDF.TYPE)
-                .filter { subject -> valuesForSubjectPredicate(model, subject, RDF.TYPE).any { it == SHACL.PROPERTY_SHAPE } }
-                .toSet()
+            val explicitPropertyShapes =
+                subjectsForPredicate(model, RDF.TYPE)
+                    .filter { subject -> valuesForSubjectPredicate(model, subject, RDF.TYPE).any { it == SHACL.PROPERTY_SHAPE } }
+                    .toSet()
 
             // Find implicit shapes (have sh:targetClass but no explicit type)
-            val implicitShapes = subjectsForPredicate(model, SHACL.TARGET_CLASS)
-                .filter { it !in explicitNodeShapes && it !in explicitPropertyShapes }
-                .toSet()
+            val implicitShapes =
+                subjectsForPredicate(model, SHACL.TARGET_CLASS)
+                    .filter { it !in explicitNodeShapes && it !in explicitPropertyShapes }
+                    .toSet()
 
             // Find shapes that are also classes (implicit class targets)
-            val classShapes = subjectsForPredicate(model, RDF.TYPE)
-                .filter { subj ->
-                    val rdfTypes = valuesForSubjectPredicate(model, subj, RDF.TYPE)
-                    (rdfTypes.any { it == RDFS.CLASS } || rdfTypes.any { it == OWL.CLASS }) && hasShaclPredicates(model, subj)
-                }.toSet()
+            val classShapes =
+                subjectsForPredicate(model, RDF.TYPE)
+                    .filter { subj ->
+                        val rdfTypes = valuesForSubjectPredicate(model, subj, RDF.TYPE)
+                        (rdfTypes.any { it == RDFS.CLASS } || rdfTypes.any { it == OWL.CLASS }) && hasShaclPredicates(model, subj)
+                    }.toSet()
 
             // Parse all node shapes
             val allNodeShapeSubjects = explicitNodeShapes + implicitShapes + classShapes
@@ -665,22 +739,30 @@ class ShaclParser(private val httpClient: HttpClient) {
         }
     }
 
-    private fun isShaclProperty(predicate: IRI): Boolean {
-        return predicate.namespace == SHACL.NAMESPACE
-    }
+    private fun isShaclProperty(predicate: IRI): Boolean = predicate.namespace == SHACL.NAMESPACE
 
-    private fun hasTargets(model: Model, subject: Resource): Boolean {
-        return statementsForSubjectPredicate(model, subject, SHACL.TARGET_CLASS).isNotEmpty() ||
+    private fun hasTargets(
+        model: Model,
+        subject: Resource,
+    ): Boolean =
+        statementsForSubjectPredicate(model, subject, SHACL.TARGET_CLASS).isNotEmpty() ||
             statementsForSubjectPredicate(model, subject, SHACL.TARGET_NODE).isNotEmpty() ||
             statementsForSubjectPredicate(model, subject, SHACL.TARGET_SUBJECTS_OF).isNotEmpty() ||
             statementsForSubjectPredicate(model, subject, SHACL.TARGET_OBJECTS_OF).isNotEmpty()
-    }
 
-    private fun hasShaclPredicates(model: Model, subject: Resource): Boolean {
-        return statementsForSubject(model, subject).any { isShaclProperty(it.predicate) }
-    }
+    private fun hasShaclPredicates(
+        model: Model,
+        subject: Resource,
+    ): Boolean =
+        statementsForSubject(model, subject).any {
+            isShaclProperty(it.predicate)
+        }
 
-    private fun statementsForSubjectPredicate(model: Model, subject: Resource, predicate: IRI): List<Statement> {
+    private fun statementsForSubjectPredicate(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): List<Statement> {
         val cache = parseCache.get() ?: return model.filter { it.subject == subject && it.predicate == predicate }.toList()
         val key = SubjectPredicateKey(subject, predicate)
         return cache.statementsBySubjectPredicate.getOrPut(key) {
@@ -688,22 +770,35 @@ class ShaclParser(private val httpClient: HttpClient) {
         }
     }
 
-    private fun valuesForSubjectPredicate(model: Model, subject: Resource, predicate: IRI): List<org.eclipse.rdf4j.model.Value> {
-        return statementsForSubjectPredicate(model, subject, predicate).map { it.`object` }
-    }
+    private fun valuesForSubjectPredicate(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): List<org.eclipse.rdf4j.model.Value> =
+        statementsForSubjectPredicate(model, subject, predicate).map {
+            it.`object`
+        }
 
-    private fun firstValueForSubjectPredicate(model: Model, subject: Resource, predicate: IRI): org.eclipse.rdf4j.model.Value? {
-        return statementsForSubjectPredicate(model, subject, predicate).firstOrNull()?.`object`
-    }
+    private fun firstValueForSubjectPredicate(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): org.eclipse.rdf4j.model.Value? = statementsForSubjectPredicate(model, subject, predicate).firstOrNull()?.`object`
 
-    private fun subjectsForPredicate(model: Model, predicate: IRI): List<Resource> {
+    private fun subjectsForPredicate(
+        model: Model,
+        predicate: IRI,
+    ): List<Resource> {
         val cache = parseCache.get() ?: return model.filter { it.predicate == predicate }.map { it.subject }.toList()
         return cache.subjectsByPredicate.getOrPut(predicate) {
             model.filter { it.predicate == predicate }.map { it.subject }.toList()
         }
     }
 
-    private fun statementsForSubject(model: Model, subject: Resource): List<Statement> {
+    private fun statementsForSubject(
+        model: Model,
+        subject: Resource,
+    ): List<Statement> {
         val cache = parseCache.get() ?: return model.filter { it.subject == subject }.toList()
         return cache.statementsBySubject.getOrPut(subject) {
             model.filter { it.subject == subject }.toList()
@@ -714,8 +809,12 @@ class ShaclParser(private val httpClient: HttpClient) {
     // Node Shape Parsing
     // ==========================================================================
 
-    private fun parseNodeShape(model: Model, subject: Resource, isClassShape: Boolean): NodeShape {
-        return NodeShape(
+    private fun parseNodeShape(
+        model: Model,
+        subject: Resource,
+        isClassShape: Boolean,
+    ): NodeShape =
+        NodeShape(
             id = (subject as? IRI)?.stringValue(),
             targets = parseTargets(model, subject, isClassShape),
             name = parseLanguageMap(model, subject, SHACL.NAME),
@@ -723,22 +822,26 @@ class ShaclParser(private val httpClient: HttpClient) {
             properties = parsePropertyShapes(model, subject),
             nodeConstraints = parseNodeConstraints(model, subject),
             closed = parseBoolean(model, subject, SHACL.CLOSED) ?: false,
-            ignoredProperties = parseIriList(model, subject, SHACL.IGNORED_PROPERTIES)
+            ignoredProperties = parseIriList(model, subject, SHACL.IGNORED_PROPERTIES),
         )
-    }
 
     // ==========================================================================
     // Property Shape Parsing
     // ==========================================================================
 
-    private fun parsePropertyShapes(model: Model, nodeShape: Resource): List<PropertyShape> {
-        return statementsForSubjectPredicate(model, nodeShape, SHACL.PROPERTY)
+    private fun parsePropertyShapes(
+        model: Model,
+        nodeShape: Resource,
+    ): List<PropertyShape> =
+        statementsForSubjectPredicate(model, nodeShape, SHACL.PROPERTY)
             .mapNotNull { stmt ->
                 (stmt.`object` as? Resource)?.let { parsePropertyShape(model, it) }
             }
-    }
 
-    private fun parsePropertyShape(model: Model, subject: Resource): PropertyShape? {
+    private fun parsePropertyShape(
+        model: Model,
+        subject: Resource,
+    ): PropertyShape? {
         val path = parsePath(model, subject) ?: return null
 
         return PropertyShape(
@@ -750,7 +853,7 @@ class ShaclParser(private val httpClient: HttpClient) {
             nodeConstraints = parseNodeConstraints(model, subject),
             stringConstraints = parseStringConstraints(model, subject),
             cardinalityConstraints = parseCardinalityConstraints(model, subject),
-            qualifiedConstraints = parseQualifiedConstraints(model, subject)
+            qualifiedConstraints = parseQualifiedConstraints(model, subject),
         )
     }
 
@@ -758,21 +861,29 @@ class ShaclParser(private val httpClient: HttpClient) {
     // Path Parsing
     // ==========================================================================
 
-    private fun parsePath(model: Model, subject: Resource): PropertyPath? {
+    private fun parsePath(
+        model: Model,
+        subject: Resource,
+    ): PropertyPath? {
         val pathValue = firstValueForSubjectPredicate(model, subject, SHACL.PATH) ?: return null
 
         return parsePathValue(model, pathValue)
     }
 
-    private fun parsePathValue(model: Model, value: org.eclipse.rdf4j.model.Value): PropertyPath? {
-        return when (value) {
+    private fun parsePathValue(
+        model: Model,
+        value: org.eclipse.rdf4j.model.Value,
+    ): PropertyPath? =
+        when (value) {
             is IRI -> PredicatePath(value.stringValue())
             is BNode -> parseComplexPath(model, value)
             else -> null
         }
-    }
 
-    private fun parseComplexPath(model: Model, bnode: BNode): PropertyPath? {
+    private fun parseComplexPath(
+        model: Model,
+        bnode: BNode,
+    ): PropertyPath? {
         // Check for inverse path: [ sh:inversePath <predicate> ]
         val inversePath = firstValueForSubjectPredicate(model, bnode, SHACL.INVERSE_PATH)
         if (inversePath != null) {
@@ -822,7 +933,11 @@ class ShaclParser(private val httpClient: HttpClient) {
     // Target Parsing
     // ==========================================================================
 
-    private fun parseTargets(model: Model, subject: Resource, isClassShape: Boolean): List<Target> {
+    private fun parseTargets(
+        model: Model,
+        subject: Resource,
+        isClassShape: Boolean,
+    ): List<Target> {
         val targets = mutableListOf<Target>()
 
         // sh:targetClass
@@ -854,10 +969,13 @@ class ShaclParser(private val httpClient: HttpClient) {
         (statementsForSubjectPredicate(model, subject, SHACL.TARGET) + statementsForSubjectPredicate(model, subject, shTarget))
             .forEach { stmt ->
                 val target = stmt.`object` as? Resource ?: return@forEach
-                val select = parseString(model, target, SHACL.SELECT)
-                    ?: statementsForSubject(model, target).firstOrNull {
-                        it.subject == target && it.predicate.localName.equals("select", ignoreCase = true)
-                    }?.`object`?.stringValue()
+                val select =
+                    parseString(model, target, SHACL.SELECT)
+                        ?: statementsForSubject(model, target)
+                            .firstOrNull {
+                                it.subject == target && it.predicate.localName.equals("select", ignoreCase = true)
+                            }?.`object`
+                            ?.stringValue()
 
                 select?.let {
                     targets.add(TargetSparql(query = it))
@@ -876,31 +994,40 @@ class ShaclParser(private val httpClient: HttpClient) {
     // Constraint Parsing
     // ==========================================================================
 
-    private fun parseNodeConstraints(model: Model, subject: Resource): NodeConstraints {
+    private fun parseNodeConstraints(
+        model: Model,
+        subject: Resource,
+    ): NodeConstraints {
         val directNodeKind = parseNodeKind(model, subject)
         val directNodeKinds = listOfNotNull(directNodeKind)
-        val directClassConstraints = statementsForSubjectPredicate(model, subject, SHACL.CLASS)
-            .mapNotNull { (it.`object` as? IRI)?.stringValue() }
+        val directClassConstraints =
+            statementsForSubjectPredicate(model, subject, SHACL.CLASS)
+                .mapNotNull { (it.`object` as? IRI)?.stringValue() }
         val directDatatype = parseIri(model, subject, SHACL.DATATYPE)
         val directDatatypes = listOfNotNull(directDatatype)
-        val directNodeRefs = statementsForSubjectPredicate(model, subject, SHACL.NODE)
-            .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
+        val directNodeRefs =
+            statementsForSubjectPredicate(model, subject, SHACL.NODE)
+                .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
 
         val orAlternatives = parseListResources(model, subject, SHACL.OR)
-        val orClassConstraints = orAlternatives.flatMap { alternative ->
-            statementsForSubjectPredicate(model, alternative, SHACL.CLASS)
-                .mapNotNull { (it.`object` as? IRI)?.stringValue() }
-        }
-        val orDatatypes = orAlternatives.mapNotNull { alternative ->
-            parseIri(model, alternative, SHACL.DATATYPE)
-        }
-        val orNodeKinds = orAlternatives.mapNotNull { alternative ->
-            parseNodeKind(model, alternative)
-        }
-        val orNodeRefs = orAlternatives.flatMap { alternative ->
-            statementsForSubjectPredicate(model, alternative, SHACL.NODE)
-                .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
-        }
+        val orClassConstraints =
+            orAlternatives.flatMap { alternative ->
+                statementsForSubjectPredicate(model, alternative, SHACL.CLASS)
+                    .mapNotNull { (it.`object` as? IRI)?.stringValue() }
+            }
+        val orDatatypes =
+            orAlternatives.mapNotNull { alternative ->
+                parseIri(model, alternative, SHACL.DATATYPE)
+            }
+        val orNodeKinds =
+            orAlternatives.mapNotNull { alternative ->
+                parseNodeKind(model, alternative)
+            }
+        val orNodeRefs =
+            orAlternatives.flatMap { alternative ->
+                statementsForSubjectPredicate(model, alternative, SHACL.NODE)
+                    .mapNotNull { (it.`object` as? Resource)?.let { res -> resourceRef(res) } }
+            }
 
         val allNodeKinds = (directNodeKinds + orNodeKinds).distinct()
         val allDatatypes = (directDatatypes + orDatatypes).distinct()
@@ -912,13 +1039,17 @@ class ShaclParser(private val httpClient: HttpClient) {
             datatype = allDatatypes.firstOrNull(),
             datatypes = allDatatypes,
             node = (directNodeRefs + orNodeRefs).distinct(),
-            hasValue = statementsForSubjectPredicate(model, subject, SHACL.HAS_VALUE)
-                .map { parseValue(it.`object`) },
-            inValues = parseInConstraint(model, subject)
+            hasValue =
+                statementsForSubjectPredicate(model, subject, SHACL.HAS_VALUE)
+                    .map { parseValue(it.`object`) },
+            inValues = parseInConstraint(model, subject),
         )
     }
 
-    private fun parseNodeKind(model: Model, subject: Resource): NodeKind? {
+    private fun parseNodeKind(
+        model: Model,
+        subject: Resource,
+    ): NodeKind? {
         val nodeKindValue = firstValueForSubjectPredicate(model, subject, SHACL.NODE_KIND) as? IRI ?: return null
 
         return when (nodeKindValue) {
@@ -932,104 +1063,141 @@ class ShaclParser(private val httpClient: HttpClient) {
         }
     }
 
-    private fun parseInConstraint(model: Model, subject: Resource): List<Value>? {
+    private fun parseInConstraint(
+        model: Model,
+        subject: Resource,
+    ): List<Value>? {
         val inValue = firstValueForSubjectPredicate(model, subject, SHACL.IN) ?: return null
 
         return parseRdfList(model, inValue).map { parseValue(it) }
     }
 
-    private fun parseValue(value: org.eclipse.rdf4j.model.Value): Value {
-        return when (value) {
-            is IRI -> Value.IriValue(value.stringValue())
-            is Literal -> Value.LiteralValue(
-                value = value.stringValue()
-            )
-            is BNode -> Value.BlankNodeValue(value.id)
-            else -> Value.LiteralValue(value.stringValue())
-        }
-    }
+    private fun parseValue(value: org.eclipse.rdf4j.model.Value): Value =
+        when (value) {
+            is IRI -> {
+                Value.IriValue(value.stringValue())
+            }
 
-    private fun parseStringConstraints(model: Model, subject: Resource): StringConstraints {
-        return StringConstraints(
+            is Literal -> {
+                Value.LiteralValue(
+                    value = value.stringValue(),
+                )
+            }
+
+            is BNode -> {
+                Value.BlankNodeValue(value.id)
+            }
+
+            else -> {
+                Value.LiteralValue(value.stringValue())
+            }
+        }
+
+    private fun parseStringConstraints(
+        model: Model,
+        subject: Resource,
+    ): StringConstraints =
+        StringConstraints(
             minLength = parseInt(model, subject, SHACL.MIN_LENGTH),
             maxLength = parseInt(model, subject, SHACL.MAX_LENGTH),
             pattern = parseString(model, subject, SHACL.PATTERN),
             flags = parseString(model, subject, SHACL.FLAGS),
             languageIn = parseStringList(model, subject, SHACL.LANGUAGE_IN),
-            uniqueLang = parseBoolean(model, subject, SHACL.UNIQUE_LANG) ?: false
+            uniqueLang = parseBoolean(model, subject, SHACL.UNIQUE_LANG) ?: false,
         )
-    }
 
-    private fun parseCardinalityConstraints(model: Model, subject: Resource): CardinalityConstraints {
-        return CardinalityConstraints(
+    private fun parseCardinalityConstraints(
+        model: Model,
+        subject: Resource,
+    ): CardinalityConstraints =
+        CardinalityConstraints(
             minCount = parseInt(model, subject, SHACL.MIN_COUNT),
-            maxCount = parseInt(model, subject, SHACL.MAX_COUNT)
+            maxCount = parseInt(model, subject, SHACL.MAX_COUNT),
         )
-    }
 
-    private fun parseValueConstraints(model: Model, subject: Resource): ValueConstraints {
-        return ValueConstraints(
+    private fun parseValueConstraints(
+        model: Model,
+        subject: Resource,
+    ): ValueConstraints =
+        ValueConstraints(
             minInclusive = parseNumber(model, subject, SHACL.MIN_INCLUSIVE),
             maxInclusive = parseNumber(model, subject, SHACL.MAX_INCLUSIVE),
             minExclusive = parseNumber(model, subject, SHACL.MIN_EXCLUSIVE),
-            maxExclusive = parseNumber(model, subject, SHACL.MAX_EXCLUSIVE)
+            maxExclusive = parseNumber(model, subject, SHACL.MAX_EXCLUSIVE),
         )
-    }
 
-    private fun parseComparisonConstraints(model: Model, subject: Resource): ComparisonConstraints {
-        return ComparisonConstraints(
+    private fun parseComparisonConstraints(
+        model: Model,
+        subject: Resource,
+    ): ComparisonConstraints =
+        ComparisonConstraints(
             equals = parseIriList(model, subject, SHACL.EQUALS),
             disjoint = parseIriList(model, subject, SHACL.DISJOINT),
             lessThan = parseIriList(model, subject, SHACL.LESS_THAN),
-            lessThanOrEquals = parseIriList(model, subject, SHACL.LESS_THAN_OR_EQUALS)
+            lessThanOrEquals = parseIriList(model, subject, SHACL.LESS_THAN_OR_EQUALS),
         )
-    }
 
-    private fun parseLogicalConstraints(model: Model, subject: Resource): LogicalConstraints {
-        return LogicalConstraints(
+    private fun parseLogicalConstraints(
+        model: Model,
+        subject: Resource,
+    ): LogicalConstraints =
+        LogicalConstraints(
             and = parseShapeListConstraint(model, subject, SHACL.AND),
             or = parseShapeListConstraint(model, subject, SHACL.OR),
             xone = parseShapeListConstraint(model, subject, SHACL.XONE),
-            not = statementsForSubjectPredicate(model, subject, SHACL.NOT)
-                .mapNotNull { (it.`object` as? IRI)?.stringValue() }
+            not =
+                statementsForSubjectPredicate(model, subject, SHACL.NOT)
+                    .mapNotNull { (it.`object` as? IRI)?.stringValue() },
         )
-    }
 
-    private fun parseShapeListConstraint(model: Model, subject: Resource, predicate: IRI): List<String> {
+    private fun parseShapeListConstraint(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): List<String> {
         val listHead = firstValueForSubjectPredicate(model, subject, predicate) ?: return emptyList()
 
         return parseRdfList(model, listHead)
             .mapNotNull { value -> (value as? Resource)?.let { resourceRef(it) } }
     }
 
-    private fun parseQualifiedConstraints(model: Model, subject: Resource): QualifiedConstraints? {
-        val qualifiedShape = firstValueForSubjectPredicate(model, subject, SHACL.QUALIFIED_VALUE_SHAPE)
-            ?.let { value -> (value as? Resource)?.let { resourceRef(it) } }
-            ?: return null
+    private fun parseQualifiedConstraints(
+        model: Model,
+        subject: Resource,
+    ): QualifiedConstraints? {
+        val qualifiedShape =
+            firstValueForSubjectPredicate(model, subject, SHACL.QUALIFIED_VALUE_SHAPE)
+                ?.let { value -> (value as? Resource)?.let { resourceRef(it) } }
+                ?: return null
 
         return QualifiedConstraints(
             qualifiedValueShape = qualifiedShape,
             qualifiedMinCount = parseInt(model, subject, SHACL.QUALIFIED_MIN_COUNT),
             qualifiedMaxCount = parseInt(model, subject, SHACL.QUALIFIED_MAX_COUNT),
-            qualifiedValueShapesDisjoint = parseBoolean(model, subject, SHACL.QUALIFIED_VALUE_SHAPES_DISJOINT) ?: false
+            qualifiedValueShapesDisjoint = parseBoolean(model, subject, SHACL.QUALIFIED_VALUE_SHAPES_DISJOINT) ?: false,
         )
     }
 
-    private fun parseSparqlConstraints(model: Model, subject: Resource): List<SparqlConstraint> {
-        return statementsForSubjectPredicate(model, subject, SHACL.SPARQL)
+    private fun parseSparqlConstraints(
+        model: Model,
+        subject: Resource,
+    ): List<SparqlConstraint> =
+        statementsForSubjectPredicate(model, subject, SHACL.SPARQL)
             .mapNotNull { stmt ->
                 (stmt.`object` as? Resource)?.let { constraintNode ->
                     SparqlConstraint(
                         select = parseString(model, constraintNode, SHACL.SELECT),
                         ask = parseString(model, constraintNode, SHACL.ASK),
                         message = parseLanguageMap(model, constraintNode, SHACL.MESSAGE),
-                        prefixes = parsePrefixes(model, constraintNode)
+                        prefixes = parsePrefixes(model, constraintNode),
                     )
                 }
             }
-    }
 
-    private fun parseSeverity(model: Model, subject: Resource): Severity {
+    private fun parseSeverity(
+        model: Model,
+        subject: Resource,
+    ): Severity {
         val severityValue = firstValueForSubjectPredicate(model, subject, SHACL.SEVERITY) as? IRI
 
         return when (severityValue) {
@@ -1039,7 +1207,10 @@ class ShaclParser(private val httpClient: HttpClient) {
         }
     }
 
-    private fun parsePrefixes(model: Model, subject: Resource): Map<String, String> {
+    private fun parsePrefixes(
+        model: Model,
+        subject: Resource,
+    ): Map<String, String> {
         val prefixes = mutableMapOf<String, String>()
         statementsForSubjectPredicate(model, subject, SHACL.PREFIXES)
             .forEach { stmt ->
@@ -1065,123 +1236,180 @@ class ShaclParser(private val httpClient: HttpClient) {
     }
 
     private fun parseOntologySchema(model: Model): OntologySchema {
-        val classIris = model.filter {
-            it.predicate == RDF.TYPE && (it.`object` == RDFS.CLASS || it.`object` == OWL.CLASS)
-        }.mapNotNull { (it.subject as? IRI)?.stringValue() }.toSet()
+        val classIris =
+            model
+                .filter {
+                    it.predicate == RDF.TYPE && (it.`object` == RDFS.CLASS || it.`object` == OWL.CLASS)
+                }.mapNotNull { (it.subject as? IRI)?.stringValue() }
+                .toSet()
 
-        val classes = classIris.associateWith { classIri ->
-            val classResource = vf.createIRI(classIri)
-            OntologyClassInfo(
-                iri = classIri,
-                labels = parseLanguageMap(model, classResource, RDFS.LABEL),
-                descriptions = parseLanguageMap(model, classResource, RDFS.COMMENT),
-                equivalentClasses = parseIriList(model, classResource, OWL.EQUIVALENTCLASS).distinct(),
-                subClassOf = model.filter { it.subject == classResource && it.predicate == RDFS.SUBCLASSOF }
-                    .flatMap { parseClassExpression(it.`object`, model) }
-                    .distinct()
-            )
-        }
+        val classes =
+            classIris.associateWith { classIri ->
+                val classResource = vf.createIRI(classIri)
+                OntologyClassInfo(
+                    iri = classIri,
+                    labels = parseLanguageMap(model, classResource, RDFS.LABEL),
+                    descriptions = parseLanguageMap(model, classResource, RDFS.COMMENT),
+                    equivalentClasses = parseIriList(model, classResource, OWL.EQUIVALENTCLASS).distinct(),
+                    subClassOf =
+                        model
+                            .filter { it.subject == classResource && it.predicate == RDFS.SUBCLASSOF }
+                            .flatMap { parseClassExpression(it.`object`, model) }
+                            .distinct(),
+                )
+            }
 
-        val propertyIris = model.filter {
-            it.predicate == RDF.TYPE && it.`object` in setOf(
-                OWL.OBJECTPROPERTY,
-                OWL.DATATYPEPROPERTY,
-                OWL.ANNOTATIONPROPERTY,
-                RDF.PROPERTY
-            )
-        }.mapNotNull { (it.subject as? IRI)?.stringValue() }.toSet()
+        val propertyIris =
+            model
+                .filter {
+                    it.predicate == RDF.TYPE && it.`object` in
+                        setOf(
+                            OWL.OBJECTPROPERTY,
+                            OWL.DATATYPEPROPERTY,
+                            OWL.ANNOTATIONPROPERTY,
+                            RDF.PROPERTY,
+                        )
+                }.mapNotNull { (it.subject as? IRI)?.stringValue() }
+                .toSet()
 
-        val properties = propertyIris.associateWith { propertyIri ->
-            val propertyResource = vf.createIRI(propertyIri)
-            val propertyTypes = model.filter { it.subject == propertyResource && it.predicate == RDF.TYPE }
-                .mapNotNull { (it.`object` as? IRI)?.stringValue() }
-                .distinct()
+        val properties =
+            propertyIris.associateWith { propertyIri ->
+                val propertyResource = vf.createIRI(propertyIri)
+                val propertyTypes =
+                    model
+                        .filter { it.subject == propertyResource && it.predicate == RDF.TYPE }
+                        .mapNotNull { (it.`object` as? IRI)?.stringValue() }
+                        .distinct()
 
-            OntologyPropertyInfo(
-                iri = propertyIri,
-                labels = parseLanguageMap(model, propertyResource, RDFS.LABEL),
-                descriptions = parseLanguageMap(model, propertyResource, RDFS.COMMENT),
-                propertyTypes = propertyTypes,
-                domains = model.filter { it.subject == propertyResource && it.predicate == RDFS.DOMAIN }
-                    .flatMap { parseClassExpression(it.`object`, model) }
-                    .distinct(),
-                ranges = model.filter { it.subject == propertyResource && it.predicate == RDFS.RANGE }
-                    .flatMap { parseClassExpression(it.`object`, model) }
-                    .distinct(),
-                equivalentProperties = parseIriList(model, propertyResource, OWL.EQUIVALENTPROPERTY).distinct(),
-                subPropertyOf = parseIriList(model, propertyResource, RDFS.SUBPROPERTYOF).distinct()
-            )
-        }
+                OntologyPropertyInfo(
+                    iri = propertyIri,
+                    labels = parseLanguageMap(model, propertyResource, RDFS.LABEL),
+                    descriptions = parseLanguageMap(model, propertyResource, RDFS.COMMENT),
+                    propertyTypes = propertyTypes,
+                    domains =
+                        model
+                            .filter { it.subject == propertyResource && it.predicate == RDFS.DOMAIN }
+                            .flatMap { parseClassExpression(it.`object`, model) }
+                            .distinct(),
+                    ranges =
+                        model
+                            .filter { it.subject == propertyResource && it.predicate == RDFS.RANGE }
+                            .flatMap { parseClassExpression(it.`object`, model) }
+                            .distinct(),
+                    equivalentProperties = parseIriList(model, propertyResource, OWL.EQUIVALENTPROPERTY).distinct(),
+                    subPropertyOf = parseIriList(model, propertyResource, RDFS.SUBPROPERTYOF).distinct(),
+                )
+            }
 
         return OntologySchema(classes = classes, properties = properties)
     }
 
-    private fun parseClassExpression(value: org.eclipse.rdf4j.model.Value, model: Model): List<String> {
+    private fun parseClassExpression(
+        value: org.eclipse.rdf4j.model.Value,
+        model: Model,
+    ): List<String> {
         return when (value) {
-            is IRI -> listOf(value.stringValue())
+            is IRI -> {
+                listOf(value.stringValue())
+            }
+
             is BNode -> {
                 val unionOf = firstValueForSubjectPredicate(model, value, OWL.UNIONOF) ?: return emptyList()
                 parseRdfList(model, unionOf).flatMap { parseClassExpression(it, model) }
             }
-            else -> emptyList()
+
+            else -> {
+                emptyList()
+            }
         }
     }
 
-    private fun parseListResources(model: Model, subject: Resource, predicate: IRI): List<Resource> {
+    private fun parseListResources(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): List<Resource> {
         val listHead = firstValueForSubjectPredicate(model, subject, predicate) ?: return emptyList()
 
         return parseRdfList(model, listHead).mapNotNull { it as? Resource }
     }
 
-    private fun resourceRef(resource: Resource): String {
-        return when (resource) {
+    private fun resourceRef(resource: Resource): String =
+        when (resource) {
             is IRI -> resource.stringValue()
             is BNode -> "_:${resource.id}"
             else -> resource.stringValue()
         }
-    }
 
     // ==========================================================================
     // Utility Parsing Methods
     // ==========================================================================
 
-    private fun parseString(model: Model, subject: Resource, predicate: IRI): String? {
-        return firstValueForSubjectPredicate(model, subject, predicate)?.stringValue()
-    }
+    private fun parseString(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): String? = firstValueForSubjectPredicate(model, subject, predicate)?.stringValue()
 
-    private fun parseIri(model: Model, subject: Resource, predicate: IRI): String? {
-        return firstValueForSubjectPredicate(model, subject, predicate)?.let { (it as? IRI)?.stringValue() }
-    }
+    private fun parseIri(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): String? =
+        firstValueForSubjectPredicate(model, subject, predicate)?.let {
+            (it as? IRI)?.stringValue()
+        }
 
-    private fun parseInt(model: Model, subject: Resource, predicate: IRI): Int? {
-        return parseString(model, subject, predicate)?.toIntOrNull()
-    }
+    private fun parseInt(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): Int? = parseString(model, subject, predicate)?.toIntOrNull()
 
-    private fun parseDouble(model: Model, subject: Resource, predicate: IRI): Double? {
-        return parseString(model, subject, predicate)?.toDoubleOrNull()
-    }
+    private fun parseDouble(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): Double? = parseString(model, subject, predicate)?.toDoubleOrNull()
 
-    private fun parseNumber(model: Model, subject: Resource, predicate: IRI): Number? {
+    private fun parseNumber(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): Number? {
         val str = parseString(model, subject, predicate) ?: return null
         return str.toIntOrNull() ?: str.toLongOrNull() ?: str.toDoubleOrNull()
     }
 
-    private fun parseBoolean(model: Model, subject: Resource, predicate: IRI): Boolean? {
-        return parseString(model, subject, predicate)?.toBooleanStrictOrNull()
-    }
+    private fun parseBoolean(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): Boolean? = parseString(model, subject, predicate)?.toBooleanStrictOrNull()
 
-    private fun parseIriList(model: Model, subject: Resource, predicate: IRI): List<String> {
-        return statementsForSubjectPredicate(model, subject, predicate)
+    private fun parseIriList(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): List<String> =
+        statementsForSubjectPredicate(model, subject, predicate)
             .mapNotNull { (it.`object` as? IRI)?.stringValue() }
-    }
 
-    private fun parseStringList(model: Model, subject: Resource, predicate: IRI): List<String>? {
+    private fun parseStringList(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): List<String>? {
         val listHead = firstValueForSubjectPredicate(model, subject, predicate) ?: return null
 
         return parseRdfList(model, listHead).map { it.stringValue() }
     }
 
-    private fun parseLanguageMap(model: Model, subject: Resource, predicate: IRI): Map<String, String> {
+    private fun parseLanguageMap(
+        model: Model,
+        subject: Resource,
+        predicate: IRI,
+    ): Map<String, String> {
         val result = mutableMapOf<String, String>()
         statementsForSubjectPredicate(model, subject, predicate)
             .forEach { stmt ->
@@ -1194,7 +1422,10 @@ class ShaclParser(private val httpClient: HttpClient) {
         return result
     }
 
-    private fun parseRdfList(model: Model, listHead: org.eclipse.rdf4j.model.Value): List<org.eclipse.rdf4j.model.Value> {
+    private fun parseRdfList(
+        model: Model,
+        listHead: org.eclipse.rdf4j.model.Value,
+    ): List<org.eclipse.rdf4j.model.Value> {
         val result = mutableListOf<org.eclipse.rdf4j.model.Value>()
         var current: org.eclipse.rdf4j.model.Value? = listHead
 
@@ -1219,13 +1450,16 @@ class ShaclParser(private val httpClient: HttpClient) {
     private fun convertToResourceTypes(shapesGraph: ShaclShapesGraph): List<ResourceTypeInfo> {
         return shapesGraph.nodeShapes.mapNotNull { nodeShape ->
             // Get target class
-            val targetClass = nodeShape.targets
-                .filterIsInstance<TargetClass>()
-                .firstOrNull()?.targetClass
-                ?: nodeShape.targets
-                    .filterIsInstance<ImplicitClassTarget>()
-                    .firstOrNull()?.classIri
-                ?: return@mapNotNull null
+            val targetClass =
+                nodeShape.targets
+                    .filterIsInstance<TargetClass>()
+                    .firstOrNull()
+                    ?.targetClass
+                    ?: nodeShape.targets
+                        .filterIsInstance<ImplicitClassTarget>()
+                        .firstOrNull()
+                        ?.classIri
+                    ?: return@mapNotNull null
 
             val resourceName = extractResourceName(targetClass)
             val description = nodeShape.description[""] ?: nodeShape.description.values.firstOrNull()
@@ -1235,7 +1469,7 @@ class ShaclParser(private val httpClient: HttpClient) {
                 targetClass = targetClass,
                 properties = aggregateProperties(nodeShape.properties, shapesGraph.ontologySchema, targetClass),
                 closed = nodeShape.closed,
-                description = description
+                description = description,
             )
         }
     }
@@ -1243,7 +1477,7 @@ class ShaclParser(private val httpClient: HttpClient) {
     private fun aggregateProperties(
         properties: List<PropertyShape>,
         ontologySchema: OntologySchema = OntologySchema(),
-        sourceClass: String? = null
+        sourceClass: String? = null,
     ): List<PropertyInfo> {
         val pathOrder = mutableListOf<String>()
         val groupedByPath = linkedMapOf<String, MutableList<PropertyShape>>()
@@ -1263,47 +1497,59 @@ class ShaclParser(private val httpClient: HttpClient) {
         }
     }
 
-    private fun toPropertyPathString(path: PropertyPath): String {
-        return when (path) {
+    private fun toPropertyPathString(path: PropertyPath): String =
+        when (path) {
             is PredicatePath -> path.predicate
             else -> path.toSparql()
         }
-    }
 
     private fun aggregatePropertyVariants(
         path: String,
         variants: List<PropertyShape>,
         ontologySchema: OntologySchema,
-        sourceClass: String?
+        sourceClass: String?,
     ): PropertyInfo {
-        val names = variants.mapNotNull { shape ->
-            shape.name[""] ?: shape.name.values.firstOrNull()
-        }.map { it.trim() }.filter { it.isNotBlank() }
+        val names =
+            variants
+                .mapNotNull { shape ->
+                    shape.name[""] ?: shape.name.values.firstOrNull()
+                }.map { it.trim() }
+                .filter { it.isNotBlank() }
 
-        val descriptions = variants.mapNotNull { shape ->
-            shape.description[""] ?: shape.description.values.firstOrNull()
-        }.map { it.trim() }.filter { it.isNotBlank() }
+        val descriptions =
+            variants
+                .mapNotNull { shape ->
+                    shape.description[""] ?: shape.description.values.firstOrNull()
+                }.map { it.trim() }
+                .filter { it.isNotBlank() }
 
-        val datatypes = variants.flatMap { shape ->
-            if (shape.nodeConstraints.datatypes.isNotEmpty()) {
-                shape.nodeConstraints.datatypes
-            } else {
-                listOfNotNull(shape.nodeConstraints.datatype)
-            }
-        }.distinct()
-        val nodeKinds = variants.flatMap { shape ->
-            if (shape.nodeConstraints.nodeKinds.isNotEmpty()) {
-                shape.nodeConstraints.nodeKinds.map { it.name }
-            } else {
-                listOfNotNull(shape.nodeConstraints.nodeKind?.name)
-            }
-        }.distinct()
+        val datatypes =
+            variants
+                .flatMap { shape ->
+                    if (shape.nodeConstraints.datatypes.isNotEmpty()) {
+                        shape.nodeConstraints.datatypes
+                    } else {
+                        listOfNotNull(shape.nodeConstraints.datatype)
+                    }
+                }.distinct()
+        val nodeKinds =
+            variants
+                .flatMap { shape ->
+                    if (shape.nodeConstraints.nodeKinds.isNotEmpty()) {
+                        shape.nodeConstraints.nodeKinds.map { it.name }
+                    } else {
+                        listOfNotNull(shape.nodeConstraints.nodeKind?.name)
+                    }
+                }.distinct()
         val classConstraints = variants.flatMap { it.nodeConstraints.classConstraint }.distinct()
         val nodeShapeRefs = variants.flatMap { it.nodeConstraints.node }.distinct()
         val severities = variants.map { it.severity.name }.distinct()
-        val messages = variants.mapNotNull { shape ->
-            shape.message[""] ?: shape.message.values.firstOrNull()
-        }.map { it.trim() }.filter { it.isNotBlank() }
+        val messages =
+            variants
+                .mapNotNull { shape ->
+                    shape.message[""] ?: shape.message.values.firstOrNull()
+                }.map { it.trim() }
+                .filter { it.isNotBlank() }
 
         val minCount = variants.mapNotNull { it.cardinalityConstraints.minCount }.maxOrNull()
         val maxCount = variants.mapNotNull { it.cardinalityConstraints.maxCount }.minOrNull()
@@ -1312,22 +1558,28 @@ class ShaclParser(private val httpClient: HttpClient) {
         val minLength = variants.mapNotNull { it.stringConstraints.minLength }.maxOrNull()
         val maxLength = variants.mapNotNull { it.stringConstraints.maxLength }.minOrNull()
 
-        val hasValueIn = variants.flatMap { shape ->
-            shape.nodeConstraints.inValues.orEmpty().mapNotNull { value ->
-                when (value) {
-                    is Value.IriValue -> value.iri
-                    is Value.LiteralValue -> value.value
-                    else -> null
-                }
-            }
-        }.distinct().ifEmpty { null }
+        val hasValueIn =
+            variants
+                .flatMap { shape ->
+                    shape.nodeConstraints.inValues.orEmpty().mapNotNull { value ->
+                        when (value) {
+                            is Value.IriValue -> value.iri
+                            is Value.LiteralValue -> value.value
+                            else -> null
+                        }
+                    }
+                }.distinct()
+                .ifEmpty { null }
 
         val ontologyProperty = ontologySchema.properties[path]
-        val ontologyRanges = if (sourceClass == null || ontologyProperty == null || ontologyProperty.domains.isEmpty() || sourceClass in ontologyProperty.domains) {
-            ontologyProperty?.ranges.orEmpty()
-        } else {
-            emptyList()
-        }
+        val ontologyRanges =
+            if (sourceClass == null || ontologyProperty == null || ontologyProperty.domains.isEmpty() ||
+                sourceClass in ontologyProperty.domains
+            ) {
+                ontologyProperty?.ranges.orEmpty()
+            } else {
+                emptyList()
+            }
 
         val ontologyDatatypes = ontologyRanges.filter { isDatatypeIri(it) }
         val ontologyClassRanges = ontologyRanges.filterNot { isDatatypeIri(it) }
@@ -1357,7 +1609,7 @@ class ShaclParser(private val httpClient: HttpClient) {
             severity = if (severities.size == 1) severities.first() else null,
             severities = if (severities.size > 1) severities else null,
             helpText = messages.firstOrNull(),
-            description = descriptions.firstOrNull()
+            description = descriptions.firstOrNull(),
         )
     }
 
@@ -1368,14 +1620,18 @@ class ShaclParser(private val httpClient: HttpClient) {
 
     private fun extractPropertyName(uri: String): String {
         // Handle SPARQL path syntax - clean up wrapper characters first
-        val cleanUri = uri.trim()
-            .removePrefix("<").removeSuffix(">")
-            .removePrefix("^")
+        val cleanUri =
+            uri
+                .trim()
+                .removePrefix("<")
+                .removeSuffix(">")
+                .removePrefix("^")
 
         // Split by / and # to get the local name
-        val localName = cleanUri
-            .substringAfterLast("/")
-            .substringAfterLast("#")
+        val localName =
+            cleanUri
+                .substringAfterLast("/")
+                .substringAfterLast("#")
 
         // Clean up any remaining SPARQL path syntax characters from the local name only
         val cleanName = localName.replace(Regex("[()*/+?|<>]"), "").trim()

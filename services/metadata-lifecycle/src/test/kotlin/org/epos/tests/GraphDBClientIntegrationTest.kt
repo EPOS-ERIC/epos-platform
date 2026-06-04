@@ -1,19 +1,20 @@
 package org.epos.tests
 
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.collections.shouldHaveSize
 import org.eclipse.rdf4j.model.impl.LinkedHashModel
 import org.eclipse.rdf4j.model.util.Values
 import org.eclipse.rdf4j.model.vocabulary.RDF
 import org.eclipse.rdf4j.model.vocabulary.RDFS
 import org.epos.graphdb.Config
-import org.junit.jupiter.api.*
 import org.epos.tests.BaseIntegrationTest
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GraphDBClientIntegrationTest : BaseIntegrationTest() {
-
     @BeforeEach
     fun setup() {
         clearAllGraphs()
@@ -32,13 +33,16 @@ class GraphDBClientIntegrationTest : BaseIntegrationTest() {
         graphDBClient.insertIntoGraph(model, Config.GRAPH_PUBLISHED)
 
         // Query
-        val results = graphDBClient.query("""
-            SELECT ?label
-            FROM <${Config.GRAPH_PUBLISHED}>
-            WHERE {
-                <http://example.org/resource/1> <${RDFS.LABEL}> ?label .
-            }
-        """.trimIndent())
+        val results =
+            graphDBClient.query(
+                """
+                SELECT ?label
+                FROM <${Config.GRAPH_PUBLISHED}>
+                WHERE {
+                    <http://example.org/resource/1> <${RDFS.LABEL}> ?label .
+                }
+                """.trimIndent(),
+            )
 
         results shouldHaveSize 1
         results[0]["label"] shouldBe "Test Resource"
@@ -53,23 +57,29 @@ class GraphDBClientIntegrationTest : BaseIntegrationTest() {
 
         graphDBClient.insertIntoGraph(model, Config.GRAPH_DRAFT)
 
-        val exists = graphDBClient.ask("""
-            ASK {
-                GRAPH <${Config.GRAPH_DRAFT}> {
-                    <http://example.org/resource/2> ?p ?o .
+        val exists =
+            graphDBClient.ask(
+                """
+                ASK {
+                    GRAPH <${Config.GRAPH_DRAFT}> {
+                        <http://example.org/resource/2> ?p ?o .
+                    }
                 }
-            }
-        """.trimIndent())
+                """.trimIndent(),
+            )
 
         exists shouldBe true
 
-        val notExists = graphDBClient.ask("""
-            ASK {
-                GRAPH <${Config.GRAPH_DRAFT}> {
-                    <http://example.org/nonexistent> ?p ?o .
+        val notExists =
+            graphDBClient.ask(
+                """
+                ASK {
+                    GRAPH <${Config.GRAPH_DRAFT}> {
+                        <http://example.org/nonexistent> ?p ?o .
+                    }
                 }
-            }
-        """.trimIndent())
+                """.trimIndent(),
+            )
 
         notExists shouldBe false
     }
@@ -85,18 +95,24 @@ class GraphDBClientIntegrationTest : BaseIntegrationTest() {
         graphDBClient.insertIntoGraph(model, Config.GRAPH_DRAFT)
 
         // Verify inserted
-        var exists = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <http://example.org/resource/3> ?p ?o . } }
-        """.trimIndent())
+        var exists =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <http://example.org/resource/3> ?p ?o . } }
+                """.trimIndent(),
+            )
         exists shouldBe true
 
         // Delete
         graphDBClient.deleteFromGraph("http://example.org/resource/3", Config.GRAPH_DRAFT)
 
         // Verify deleted
-        exists = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <http://example.org/resource/3> ?p ?o . } }
-        """.trimIndent())
+        exists =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <http://example.org/resource/3> ?p ?o . } }
+                """.trimIndent(),
+            )
         exists shouldBe false
     }
 
@@ -114,25 +130,34 @@ class GraphDBClientIntegrationTest : BaseIntegrationTest() {
         graphDBClient.moveSubject("http://example.org/resource/4", Config.GRAPH_DRAFT, Config.GRAPH_SUBMITTED)
 
         // Verify not in DRAFT
-        val inDraft = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <http://example.org/resource/4> ?p ?o . } }
-        """.trimIndent())
+        val inDraft =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <http://example.org/resource/4> ?p ?o . } }
+                """.trimIndent(),
+            )
         inDraft shouldBe false
 
         // Verify in SUBMITTED
-        val inSubmitted = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_SUBMITTED}> { <http://example.org/resource/4> ?p ?o . } }
-        """.trimIndent())
+        val inSubmitted =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_SUBMITTED}> { <http://example.org/resource/4> ?p ?o . } }
+                """.trimIndent(),
+            )
         inSubmitted shouldBe true
 
         // Verify label preserved
-        val results = graphDBClient.query("""
-            SELECT ?label
-            FROM <${Config.GRAPH_SUBMITTED}>
-            WHERE {
-                <http://example.org/resource/4> <${RDFS.LABEL}> ?label .
-            }
-        """.trimIndent())
+        val results =
+            graphDBClient.query(
+                """
+                SELECT ?label
+                FROM <${Config.GRAPH_SUBMITTED}>
+                WHERE {
+                    <http://example.org/resource/4> <${RDFS.LABEL}> ?label .
+                }
+                """.trimIndent(),
+            )
 
         results[0]["label"] shouldBe "Moving Resource"
     }

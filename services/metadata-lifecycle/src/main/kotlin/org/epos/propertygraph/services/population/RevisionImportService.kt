@@ -79,6 +79,7 @@ class RevisionImportService(
     private val shaclService: ShaclService,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
+
     suspend fun importFromContent(
         ttlContent: String,
         sourceName: String,

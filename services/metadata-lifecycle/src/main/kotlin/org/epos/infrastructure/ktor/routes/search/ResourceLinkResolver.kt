@@ -45,7 +45,11 @@ internal object ResourceLinkResolver {
             val versionFromIdentifierWithinConceptual =
                 queryPreferredVersionId(
                     client = client,
-                    query = "MATCH (:Conceptual {id: ${'$'}conceptualId})-[:HAS_VERSION]->(v:Version {identifier: ${'$'}requestedId}) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                    query =
+                        """
+                        MATCH (:Conceptual {id: ${'$'}conceptualId})-[:HAS_VERSION]->(v:Version {identifier: ${'$'}requestedId})
+                        RETURN v.identifier AS identifier, v.id AS id LIMIT 1
+                        """.trimIndent(),
                     parameters = mapOf("conceptualId" to conceptualFromVersion, "requestedId" to requestedId),
                 )
             if (!versionFromIdentifierWithinConceptual.isNullOrBlank()) return versionFromIdentifierWithinConceptual
@@ -56,7 +60,11 @@ internal object ResourceLinkResolver {
         val conceptualCurrentVersion =
             queryPreferredVersionId(
                 client = client,
-                query = "MATCH (:Conceptual {id: ${'$'}conceptualId})-[:CURRENT_VERSION]->(v:Version) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                query =
+                    """
+                    MATCH (:Conceptual {id: ${'$'}conceptualId})-[:CURRENT_VERSION]->(v:Version)
+                    RETURN v.identifier AS identifier, v.id AS id LIMIT 1
+                    """.trimIndent(),
                 parameters = mapOf("conceptualId" to conceptualId),
             )
         if (!conceptualCurrentVersion.isNullOrBlank()) return conceptualCurrentVersion
@@ -64,7 +72,11 @@ internal object ResourceLinkResolver {
         val conceptualAnyVersion =
             queryPreferredVersionId(
                 client = client,
-                query = "MATCH (:Conceptual {id: ${'$'}conceptualId})-[:HAS_VERSION]->(v:Version) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                query =
+                    """
+                    MATCH (:Conceptual {id: ${'$'}conceptualId})-[:HAS_VERSION]->(v:Version)
+                    RETURN v.identifier AS identifier, v.id AS id LIMIT 1
+                    """.trimIndent(),
                 parameters = mapOf("conceptualId" to conceptualId),
             )
         if (!conceptualAnyVersion.isNullOrBlank()) return conceptualAnyVersion
@@ -73,7 +85,11 @@ internal object ResourceLinkResolver {
             val conceptualCurrentVersionFromIdentifier =
                 queryPreferredVersionId(
                     client = client,
-                    query = "MATCH (:Conceptual {identifier: ${'$'}requestedId})-[:CURRENT_VERSION]->(v:Version) RETURN v.identifier AS identifier, v.id AS id LIMIT 1",
+                    query =
+                        """
+                        MATCH (:Conceptual {identifier: ${'$'}requestedId})-[:CURRENT_VERSION]->(v:Version)
+                        RETURN v.identifier AS identifier, v.id AS id LIMIT 1
+                        """.trimIndent(),
                     parameters = mapOf("requestedId" to requestedId),
                 )
             if (!conceptualCurrentVersionFromIdentifier.isNullOrBlank()) return conceptualCurrentVersionFromIdentifier
@@ -232,5 +248,4 @@ internal object ResourceLinkResolver {
             href = href,
         )
     }
-
 }
