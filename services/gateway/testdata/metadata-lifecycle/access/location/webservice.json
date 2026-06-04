@@ -1,0 +1,11 @@
+{
+  "href": "http://localhost:8080/api/v2/access/location/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-location-2df7160e%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-location-2df7160e/v1.0",
+  "properties": {
+    "locn:geometry": [
+      "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"
+    ],
+    "rdf:type": "http://purl.org/dc/terms/Location"
+  },
+  "shape": "location"
+}

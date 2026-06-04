@@ -80,6 +80,11 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		return api.Dataset{}, fmt.Errorf("get dataset publisher: %w", err)
 	}
 
+	publisherRefs, err := resolveOrganizationRefs(ctx, fetch, publisher)
+	if err != nil {
+		return api.Dataset{}, fmt.Errorf("map dataset publishers: %w", err)
+	}
+
 	distributions, err := reader.ResourceRefs("dcat:distribution", api.DistributionType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset distributions: %w", err)
@@ -107,7 +112,7 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		ContactPoints:      contactPoints,
 		Keywords:           keywords,
 		Concepts:           concepts,
-		Publisher:          publisher,
+		Publisher:          publisherRefs,
 		Issued:             issued,
 		Spatial:            spatial,
 		Identifiers:        identifiers,
@@ -120,6 +125,45 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		QualityAnnotation:  qualityAnnotation,
 		Version:            reader.OptionalString("version"),
 	}, nil
+}
+
+func resolveOrganizationRefs(ctx context.Context, fetch accessDetailFetcher, refs []api.ResourceRef) ([]api.ResourceRef, error) {
+	if len(refs) == 0 {
+		return nil, nil
+	}
+
+	resolved := make([]api.ResourceRef, len(refs))
+	g, groupCtx := errgroup.WithContext(ctx)
+
+	for i, ref := range refs {
+		g.Go(func() error {
+			if ref.ID == "" {
+				return nil
+			}
+
+			detail, err := fetch(groupCtx, string(api.OrganizationType), ref.ID)
+			if err != nil {
+				return fmt.Errorf("fetch provider '%s' details: %w", ref.ID, err)
+			}
+
+			name, err := metadatareader.New(detail.GetProperties()).RequiredString("schema:legalName")
+			if err != nil {
+				return fmt.Errorf("extract provider '%s' legal name: %w", ref.ID, err)
+			}
+
+			resolved[i] = api.ResourceRef{ID: ref.ID, Name: name, Href: ref.Href}
+			if resolved[i].Href == "" {
+				resolved[i].Href = "v1/organization/" + ref.ID
+			}
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("resolve organization refs: %w", err)
+	}
+
+	return resolved, nil
 }
 
 func aggregateDatasetEntities(ctx context.Context, properties map[string]any, fetch accessDetailFetcher) ([]api.Identifier, *api.TemporalExtent, string, string, error) {

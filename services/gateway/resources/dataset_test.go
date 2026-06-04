@@ -11,7 +11,6 @@ import (
 const (
 	titleKey               = "dct:title"
 	typeKey                = "type"
-	descriptionKey         = "dct:description"
 	accessURLKey           = "dcat:accessURL"
 	operationID1           = "operation-1"
 	operationType          = "operation"
@@ -20,7 +19,6 @@ const (
 	iriTemplateMappingType = "iritemplatemapping"
 	mappingID1             = "mapping-1"
 	variableKey            = "variable"
-	stationCodeLabel       = "Station code"
 	rangeKey               = "range"
 	xsdStringRange         = "xsd:string"
 	requiredKey            = "required"
@@ -33,12 +31,12 @@ func TestMapDataset(t *testing.T) {
 
 	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/dataset/intermagnet.json")
 	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
-		fixtureKey(identifierShape, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-34096b33/v1.0"):  "testdata/metadata-lifecycle/access/identifier/intermagnet-doi.json",
-		fixtureKey(identifierShape, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-70ea05a7/v1.0"):  "testdata/metadata-lifecycle/access/identifier/intermagnet-timespan-doi.json",
-		fixtureKey(identifierShape, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-identifier-b1f9aa83/v1.0"):  "testdata/metadata-lifecycle/access/identifier/intermagnet-ddss-id.json",
-		fixtureKey("periodoftime", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-periodoftime-0f4b2f01/v1.0"): "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",
-		fixtureKey("location", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-location-630d862a/v1.0"):         "testdata/metadata-lifecycle/access/location/intermagnet.json",
-		fixtureKey("annotation", "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-annotation-0970cbef/v1.0"):     "testdata/metadata-lifecycle/access/annotation/intermagnet.json",
+		fixtureKey("organization", currentAHEADPublisherID):            "testdata/metadata-lifecycle/access/organization/pic.json",
+		fixtureKey(identifierShape, currentAHEADDatasetIdentifierDDSS): "testdata/metadata-lifecycle/access/identifier/intermagnet-ddss-id.json",
+		fixtureKey(identifierShape, currentAHEADDatasetIdentifierDOI):  "testdata/metadata-lifecycle/access/identifier/intermagnet-doi.json",
+		fixtureKey("periodoftime", currentAHEADPeriodOfTimeID):         "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",
+		fixtureKey("location", currentAHEADLocationID):                 "testdata/metadata-lifecycle/access/location/intermagnet.json",
+		fixtureKey("annotation", currentAHEADAnnotationID):             "testdata/metadata-lifecycle/access/annotation/intermagnet.json",
 	})
 
 	dataset, err := mapDataset(context.Background(), detail, fetch)
@@ -46,58 +44,65 @@ func TestMapDataset(t *testing.T) {
 		t.Fatalf("mapDataset() error = %v", err)
 	}
 
-	if dataset.ID != "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Dataset/v1.0" {
+	if dataset.ID != currentAHEADDatasetID {
 		t.Fatalf("dataset.ID = %q", dataset.ID)
 	}
-	if dataset.Name != "INTERMAGNET Geomagnetic Observatory Data" {
+	if dataset.Name != "TEST1 - Historical earthquakes 1000-1899" {
 		t.Fatalf("dataset.Name = %q", dataset.Name)
 	}
 	if dataset.Description == "" {
 		t.Fatalf("dataset.Description = %q", dataset.Description)
 	}
-	if dataset.VersionInfo != "1.0.0" {
+	if dataset.VersionInfo != "" {
 		t.Fatalf("dataset.VersionInfo = %q", dataset.VersionInfo)
 	}
 	if dataset.AccessRights != "https://publications.europa.eu/resource/authority/access-right/PUBLIC" {
 		t.Fatalf("dataset.AccessRights = %q", dataset.AccessRights)
 	}
-	if dataset.AccrualPeriodicity != "http://purl.org/cld/freq/continuous" {
+	if dataset.AccrualPeriodicity != "http://purl.org/cld/freq/irregular" {
 		t.Fatalf("dataset.AccrualPeriodicity = %q", dataset.AccrualPeriodicity)
 	}
-	if dataset.QualityAnnotation != "https://intermagnet.github.io/docs/Technical-Manual/technical_manual.pdf" {
+	if dataset.QualityAnnotation != "https://www.emidius.eu/AHEAD/data_quality_assurance.php" {
 		t.Fatalf("dataset.QualityAnnotation = %q", dataset.QualityAnnotation)
 	}
-	if dataset.Spatial != "POLYGON((180.0 -90.0, -180.0 -90.0, -180.0 90.0, 180.0 90.0, 180.0 -90.0))" {
+	if dataset.Spatial != "POLYGON((-34 74,45 74,45 33,-34 33,-34 74))" {
 		t.Fatalf("dataset.Spatial = %q", dataset.Spatial)
 	}
-	if len(dataset.Identifiers) != 3 {
+	if len(dataset.Identifiers) != 2 {
 		t.Fatalf("dataset.Identifiers = %#v", dataset.Identifiers)
 	}
-	if dataset.Identifiers[0] != (api.Identifier{Type: "DOI", Value: "10.5880/INTERMAGNET.2013"}) {
+	if dataset.Identifiers[0] != (api.Identifier{Type: "DDSS-ID", Value: "WP08-DDSS-024"}) {
 		t.Fatalf("dataset.Identifiers[0] = %#v", dataset.Identifiers[0])
+	}
+	if dataset.Identifiers[1] != (api.Identifier{Type: "DOI", Value: "10.6092/INGV.IT-AHEAD"}) {
+		t.Fatalf("dataset.Identifiers[1] = %#v", dataset.Identifiers[1])
 	}
 	if dataset.Temporal == nil {
 		t.Fatal("dataset.Temporal = nil")
 	}
-	assertTimeEqual(t, dataset.Created, "2018-08-31T00:00:00Z")
-	assertTimeEqual(t, dataset.Modified, "2018-08-31T00:00:00Z")
-	assertTimeEqual(t, dataset.Issued, "2018-08-31T00:00:00Z")
-	assertTimeEqual(t, dataset.Temporal.Start, "1991-01-01T00:00:00Z")
-	if dataset.Temporal.End != nil {
-		t.Fatalf("dataset.Temporal.End = %#v", dataset.Temporal.End)
+	assertTimeEqual(t, dataset.Created, "2010-06-01T00:00:00Z")
+	assertTimeEqual(t, dataset.Modified, "2018-09-10T00:00:00Z")
+	if dataset.Issued != nil {
+		t.Fatalf("dataset.Issued = %#v", dataset.Issued)
 	}
-	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/concept/category:geomagneticdata/v1.0" {
+	assertTimeEqual(t, dataset.Temporal.Start, "1000-01-01T00:00:00Z")
+	assertTimeEqual(t, dataset.Temporal.End, "1899-12-31T23:59:59Z")
+	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/concept/category:earthquakeparameters/v1.0" {
 		t.Fatalf("dataset.Concepts = %#v", dataset.Concepts)
 	}
-	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != "v1/organization/http://viaf.org/viaf/136554353//v1.0" {
+	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != currentAHEADPublisherHref || dataset.Publisher[0].Name != "INGV - Istituto Nazionale di Geofisica e Vulcanologia" {
 		t.Fatalf("dataset.Publisher = %#v", dataset.Publisher)
 	}
-	if len(dataset.Distributions) != 1 || dataset.Distributions[0].Href != "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0" {
+	if len(dataset.Distributions) != 1 || dataset.Distributions[0].Href != currentAHEADDistributionHref {
 		t.Fatalf("dataset.Distributions = %#v", dataset.Distributions)
 	}
-	if len(dataset.ContactPoints) != 1 || dataset.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/mailto%3Aochambers%40bgs.ac.uk%2FcontactPoint%2Fv1.0" {
+	if len(dataset.ContactPoints) != 2 {
 		t.Fatalf("dataset.ContactPoints = %#v", dataset.ContactPoints)
 	}
+	assertContactPointHrefs(t, dataset.ContactPoints,
+		"http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0",
+		"http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FscientificContact%2Fv1.0",
+	)
 	if dataset.IsVersionOf != nil {
 		t.Fatalf("dataset.IsVersionOf = %#v", dataset.IsVersionOf)
 	}

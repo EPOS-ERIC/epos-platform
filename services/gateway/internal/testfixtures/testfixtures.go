@@ -66,7 +66,10 @@ func NewMetadataServer(t testing.TB, routes map[string]string) *httptest.Server 
 	t.Helper()
 
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fixturePath, ok := routes[r.URL.Path]
+		fixturePath, ok := routes[r.URL.RequestURI()]
+		if !ok {
+			fixturePath, ok = routes[r.URL.Path]
+		}
 		if !ok {
 			fixturePath, ok = routes[strings.ReplaceAll(r.URL.Path, ":", "%3A")]
 		}

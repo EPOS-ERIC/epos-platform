@@ -871,7 +871,7 @@ components:
               type: array
               description: Organization references associated with this dataset
               items:
-                $ref: "#/components/schemas/ResourceRef"
+                $ref: "#/components/schemas/DatasetProviderRef"
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
@@ -1021,6 +1021,13 @@ components:
           description: Relative URI reference to referenced resource detail endpoint
           example: "v1/organization/ROR:048a87296/v1.0"
 
+    DatasetProviderRef:
+      allOf:
+        - $ref: "#/components/schemas/ResourceRef"
+        - type: object
+          required:
+            - name
+
     # -------------------------------------------------------------------------
     # Detail schemas
     # -------------------------------------------------------------------------
@@ -1098,7 +1105,11 @@ components:
               type: array
               description: Organizations publishing this dataset; exposed as `providers` in search results
               items:
-                $ref: "#/components/schemas/ResourceRef"
+                allOf:
+                  - $ref: "#/components/schemas/ResourceRef"
+                  - type: object
+                    required:
+                      - name
               example:
                 - id: "PIC:999472675/v1.0"
                   name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"

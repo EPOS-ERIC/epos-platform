@@ -13,8 +13,8 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 
 	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json")
 	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
-		fixtureKey("softwaresourcecode", "https://doi.org/10.5281/bnode-propertyvalue-0ebd586f"): "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
-		fixtureKey("softwaresourcecode", "https://doi.org/10.5281/bnode-propertyvalue-4c77d796"): "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
+		fixtureKey("propertyvalue", "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-0ebd586f/v1.0"): "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
+		fixtureKey("propertyvalue", "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-4c77d796/v1.0"): "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
 	})
 
 	softwareSourceCode, err := mapSoftwareSourceCode(context.Background(), detail, fetch, logging.Get("test"))
@@ -46,14 +46,20 @@ func TestMapSoftwareSourceCode(t *testing.T) {
 	if len(softwareSourceCode.Concepts) != 1 || softwareSourceCode.Concepts[0].Href != "v1/concept/category:software_jup_conc_multi/v1.0" {
 		t.Fatalf("softwareSourceCode.Concepts = %#v", softwareSourceCode.Concepts)
 	}
-	if len(softwareSourceCode.Creator) != 0 {
+	if len(softwareSourceCode.Creator) != 1 || softwareSourceCode.Creator[0].Href != "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0" {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
 	}
-	if len(softwareSourceCode.Identifiers) != 1 {
+	if len(softwareSourceCode.Identifiers) != 3 {
 		t.Fatalf("softwareSourceCode.Identifiers = %#v", softwareSourceCode.Identifiers)
 	}
 	if softwareSourceCode.Identifiers[0].Type != "" || softwareSourceCode.Identifiers[0].Value != "https://doi.org/10.5281/zenodo.17598403" {
 		t.Fatalf("softwareSourceCode.Identifiers[0] = %#v", softwareSourceCode.Identifiers[0])
+	}
+	if softwareSourceCode.Identifiers[1].Type != "DDSS-ID" || softwareSourceCode.Identifiers[1].Value != "WP" {
+		t.Fatalf("softwareSourceCode.Identifiers[1] = %#v", softwareSourceCode.Identifiers[1])
+	}
+	if softwareSourceCode.Identifiers[2].Type != "DOI" || softwareSourceCode.Identifiers[2].Value != "10.5281/zenodo.17598403" {
+		t.Fatalf("softwareSourceCode.Identifiers[2] = %#v", softwareSourceCode.Identifiers[2])
 	}
 
 	wantKeywords := map[string]bool{
@@ -98,7 +104,7 @@ func TestMapSoftwareSourceCodeSkipsUnsupportedCreatorType(t *testing.T) {
 		t.Fatalf("mapSoftwareSourceCode() error = %v", err)
 	}
 
-	if len(softwareSourceCode.Creator) != 0 {
+	if len(softwareSourceCode.Creator) != 1 || softwareSourceCode.Creator[0].Href != "http://example.org/org-1" {
 		t.Fatalf("softwareSourceCode.Creator = %#v", softwareSourceCode.Creator)
 	}
 }
