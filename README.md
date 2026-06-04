@@ -125,6 +125,12 @@ make up
 
 This starts Tilt and the local stack (service + infra containers).
 
+If you are using a Kubernetes-backed Tilt setup, pass the target Kubernetes context explicitly:
+
+```bash
+make up KUBE_CONTEXT=kind-epos
+```
+
 Common local endpoints:
 
 - Metadata Lifecycle API: `http://localhost:8080`
@@ -140,6 +146,12 @@ Stop local development stack:
 make down
 ```
 
+Use the same context when stopping a Kubernetes-backed Tilt stack:
+
+```bash
+make down KUBE_CONTEXT=kind-epos
+```
+
 ## Repository commands
 
 From repository root:
@@ -151,10 +163,16 @@ make test
 make fmt
 make lint
 make populate
+make helm-lint
+make helm-template
+make helm-deploy
+make helm-status
+make helm-uninstall
 ```
 
 - `make test|fmt|lint` fan out to all current services.
 - Service-specific build and Docker targets stay in each service `Makefile`.
+- Helm targets use `helm/epos-platform` by default and can share `KUBE_CONTEXT` with Tilt targets.
 
 ## Helm Chart
 
@@ -170,9 +188,37 @@ The platform Helm chart lives under `helm/epos-platform` and deploys the four ba
 Validate the chart locally:
 
 ```bash
-helm lint helm/epos-platform
-helm template epos-platform helm/epos-platform
+make helm-lint
+make helm-template
 ```
+
+Deploy or update the chart in the current Kubernetes context:
+
+```bash
+make helm-deploy
+```
+
+Deploy to a specific context and namespace:
+
+```bash
+make helm-deploy KUBE_CONTEXT=kind-epos HELM_NAMESPACE=epos-platform
+```
+
+Inspect or remove the release:
+
+```bash
+make helm-status KUBE_CONTEXT=kind-epos HELM_NAMESPACE=epos-platform
+make helm-uninstall KUBE_CONTEXT=kind-epos HELM_NAMESPACE=epos-platform
+```
+
+Useful Helm Make variables:
+
+- `HELM_RELEASE`: Helm release name, default `epos-platform`.
+- `HELM_CHART`: chart path, default `helm/epos-platform`.
+- `HELM_NAMESPACE`: target namespace, default `epos-platform`.
+- `HELM_VALUES`: values file, default `helm/epos-platform/values.yaml`.
+- `HELM_SET_ARGS`: additional Helm CLI arguments, such as `--set gateway.image.tag=dev`.
+- `KUBE_CONTEXT`: Kubernetes context passed to Helm as `--kube-context` and Tilt as `--context`.
 
 Package the chart locally:
 
@@ -183,13 +229,7 @@ helm package helm/epos-platform --destination dist
 For deployments using external datastores, disable the bundled datastore resources and provide connection settings through values:
 
 ```bash
-helm template epos-platform helm/epos-platform \
-  --set postgresql.userGroup.enabled=false \
-  --set postgresql.userGroup.host=user-group-db.example \
-  --set postgresql.dataRetriever.enabled=false \
-  --set postgresql.dataRetriever.host=data-retriever-db.example \
-  --set neo4j.enabled=false \
-  --set neo4j.uri=bolt://neo4j.example:7687
+make helm-template HELM_SET_ARGS='--set postgresql.userGroup.enabled=false --set postgresql.userGroup.host=user-group-db.example --set postgresql.dataRetriever.enabled=false --set postgresql.dataRetriever.host=data-retriever-db.example --set neo4j.enabled=false --set neo4j.uri=bolt://neo4j.example:7687'
 ```
 
 ## CI/CD Pipelines

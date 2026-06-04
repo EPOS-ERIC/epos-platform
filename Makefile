@@ -1,8 +1,19 @@
+HELM_RELEASE ?= epos-platform
+HELM_CHART ?= helm/epos-platform
+HELM_NAMESPACE ?= epos-platform
+HELM_VALUES ?= $(HELM_CHART)/values.yaml
+HELM_SET_ARGS ?=
+KUBE_CONTEXT ?=
+
+HELM_CONTEXT_ARG := $(if $(KUBE_CONTEXT),--kube-context $(KUBE_CONTEXT),)
+HELM_VALUES_ARG := $(if $(HELM_VALUES),--values $(HELM_VALUES),)
+TILT_CONTEXT_ARG := $(if $(KUBE_CONTEXT),--context $(KUBE_CONTEXT),)
+
 up: 
-	tilt up
+	tilt up $(TILT_CONTEXT_ARG)
 
 down:
-	tilt down
+	tilt down $(TILT_CONTEXT_ARG)
 
 populate:
 	./packages/scripts/populatescript.sh
@@ -34,6 +45,21 @@ lint:
 	$(MAKE) -C services/data-retriever lint
 	$(MAKE) -C services/metadata-lifecycle lint
 
+helm-lint:
+	helm lint $(HELM_CHART) $(HELM_VALUES_ARG)
+
+helm-template:
+	helm template $(HELM_RELEASE) $(HELM_CHART) --namespace $(HELM_NAMESPACE) $(HELM_VALUES_ARG) $(HELM_SET_ARGS)
+
+helm-deploy:
+	helm upgrade --install $(HELM_RELEASE) $(HELM_CHART) --namespace $(HELM_NAMESPACE) --create-namespace $(HELM_CONTEXT_ARG) $(HELM_VALUES_ARG) $(HELM_SET_ARGS)
+
+helm-status:
+	helm status $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
+
+helm-uninstall:
+	helm uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
+
 test-schemathesis:
 	SCHEMATHESIS_HOOKS=tests/schemathesis/hooks.py schemathesis run \
 		--url "http://localhost:32000/v1" \
@@ -41,4 +67,4 @@ test-schemathesis:
 		--exclude-checks unsupported_method \
 		services/gateway/docs/openapi.yaml
 
-.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint test-schemathesis
+.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis
