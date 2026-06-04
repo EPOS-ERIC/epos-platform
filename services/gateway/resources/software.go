@@ -8,6 +8,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
 )
@@ -182,7 +183,7 @@ func mapSoftwareCreators(ctx context.Context, reader metadatareader.Reader, log 
 		creators = append(creators, api.ResourceRef{
 			ID:   item.ID,
 			Name: item.Title,
-			Href: metadatareader.FirstNonEmpty(item.Href, item.ID),
+			Href: gatewayhref.Build(api.OrganizationType, item.ID),
 		})
 	}
 

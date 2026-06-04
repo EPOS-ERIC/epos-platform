@@ -16,9 +16,6 @@ build-docker: build
 test:
 	go test ./...
 
-test-hurl:
-	hurl --variable baseUrl=http://localhost:32000 --test ../../tests/hurl
-
 test-fixtures-refresh:
 	go run ./scripts/refresh_test_fixtures.go
 

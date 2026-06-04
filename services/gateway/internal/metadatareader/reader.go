@@ -293,19 +293,6 @@ func (r Reader) OptionalBool(key string) (*bool, error) {
 	return &parsedValue, nil
 }
 
-// RequiredBool parses a required boolean value for key.
-func (r Reader) RequiredBool(key string) (bool, error) {
-	value, err := r.OptionalBool(key)
-	if err != nil {
-		return false, err
-	}
-	if value == nil {
-		return false, fmt.Errorf("missing field '%s'", key)
-	}
-
-	return *value, nil
-}
-
 // OptionalBoolOneOf parses first present boolean value among keys.
 func (r Reader) OptionalBoolOneOf(keys ...string) (*bool, error) {
 	for _, key := range keys {

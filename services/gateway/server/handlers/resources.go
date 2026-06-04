@@ -23,7 +23,7 @@ func (h *Resources) GetConceptByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	concept, err := h.service.GetConceptByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "concept")
 		return
 	}
 
@@ -34,7 +34,7 @@ func (h *Resources) GetConceptSchemeByID(w http.ResponseWriter, r *http.Request)
 	id := chi.URLParam(r, "id")
 	conceptScheme, err := h.service.GetConceptSchemeByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "conceptscheme")
 		return
 	}
 
@@ -45,7 +45,7 @@ func (h *Resources) GetDatasetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	dataset, err := h.service.GetDatasetByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "dataset")
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h *Resources) GetDistributionByID(w http.ResponseWriter, r *http.Request) 
 	id := chi.URLParam(r, "id")
 	distribution, err := h.service.GetDistributionByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "distribution")
 		return
 	}
 
@@ -67,7 +67,7 @@ func (h *Resources) GetSoftwareApplicationByID(w http.ResponseWriter, r *http.Re
 	id := chi.URLParam(r, "id")
 	softwareApplication, err := h.service.GetSoftwareApplicationByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "software application")
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *Resources) GetSoftwareSourceCodeByID(w http.ResponseWriter, r *http.Req
 	id := chi.URLParam(r, "id")
 	softwareSourceCode, err := h.service.GetSoftwareSourceCodeByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "software source code")
 		return
 	}
 
@@ -89,7 +89,7 @@ func (h *Resources) GetWebserviceByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	webservice, err := h.service.GetWebserviceByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "webservice")
 		return
 	}
 
@@ -100,16 +100,21 @@ func (h *Resources) GetOrganizationByID(w http.ResponseWriter, r *http.Request) 
 	id := chi.URLParam(r, "id")
 	organization, err := h.service.GetOrganizationByID(r.Context(), id)
 	if err != nil {
-		h.writeResourceError(r.Context(), w, err)
+		h.writeResourceError(r.Context(), w, err, "organization")
 		return
 	}
 
 	writeJSON(w, http.StatusOK, organization)
 }
 
-func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWriter, err error) {
+func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWriter, err error, resource string) {
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(ctx, w, http.StatusNotFound, "not_found", "resource not found", nil)
+		writeError(ctx, w, http.StatusNotFound, "resource_not_found", resource+" not found", nil)
+		return
+	}
+
+	if errors.Is(err, domain.ErrBadRequest) {
+		writeError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by metadata service", nil)
 		return
 	}
 
