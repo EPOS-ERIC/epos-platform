@@ -47,5 +47,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 
 ### Improved
 
+- metadata-lifecycle: improved operator log tracking by removing the raw startup banner, making request logs uncolored, and adding structured population event fields.
 - metadata-lifecycle: improved cold-start and early-request latency with startup warmup queries.
 - metadata-lifecycle: improved search/discovery performance by adding JanusGraph composite indexes for `Conceptual.type`, `Conceptual.identifier`, and `Version.identifier` and reducing broad `valueMap(true)` projections on hot access-list paths.
