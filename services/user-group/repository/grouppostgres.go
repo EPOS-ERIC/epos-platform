@@ -21,8 +21,11 @@ func (r *GroupPostgresRepository) List() []domain.Group {
 	if err != nil {
 		return []domain.Group{}
 	}
-	defer rows.Close()
-    groups := []domain.Group{}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	groups := []domain.Group{}
 	for rows.Next() {
 		var g domain.Group
 		if err := rows.Scan(&g.ID, &g.Slug, &g.Name, &g.Description, &g.IsSystem, &g.CreatedAt, &g.UpdatedAt); err == nil {
