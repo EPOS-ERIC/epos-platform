@@ -45,11 +45,6 @@ func mapSoftwareApplication(ctx context.Context, detail *metadataclient.AccessDe
 		return api.SoftwareApplication{}, fmt.Errorf("get software application identifiers: %w", err)
 	}
 
-	contactPoints, err := reader.PassthroughRefs("schema:contactPoint")
-	if err != nil {
-		return api.SoftwareApplication{}, fmt.Errorf("get software application contact points: %w", err)
-	}
-
 	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {
 		return api.SoftwareApplication{}, fmt.Errorf("get software application concepts: %w", err)
@@ -71,7 +66,6 @@ func mapSoftwareApplication(ctx context.Context, detail *metadataclient.AccessDe
 			Name:        name,
 			Description: reader.OptionalString("schema:description"),
 		},
-		ContactPoints:    contactPoints,
 		MainEntityOfPage: reader.OptionalString("schema:mainEntityOfPage"),
 		License:          reader.OptionalString("schema:license"),
 		Version:          reader.OptionalStringOneOf("schema:softwareVersion", "version"),
@@ -117,11 +111,6 @@ func mapSoftwareSourceCode(ctx context.Context, detail *metadataclient.AccessDet
 		return api.SoftwareSourceCode{}, fmt.Errorf("get software source code identifiers: %w", err)
 	}
 
-	contactPoints, err := reader.PassthroughRefs("schema:contactPoint")
-	if err != nil {
-		return api.SoftwareSourceCode{}, fmt.Errorf("get software source code contact points: %w", err)
-	}
-
 	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {
 		return api.SoftwareSourceCode{}, fmt.Errorf("get software source code concepts: %w", err)
@@ -143,7 +132,6 @@ func mapSoftwareSourceCode(ctx context.Context, detail *metadataclient.AccessDet
 			Name:        name,
 			Description: reader.OptionalString("schema:description"),
 		},
-		ContactPoints:        contactPoints,
 		ProgrammingLanguage:  reader.OptionalString("schema:programmingLanguage"),
 		Keywords:             keywords,
 		Concepts:             concepts,

@@ -65,11 +65,6 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		return api.Dataset{}, err
 	}
 
-	contactPoints, err := reader.PassthroughRefs("dcat:contactPoint")
-	if err != nil {
-		return api.Dataset{}, fmt.Errorf("get dataset contact points: %w", err)
-	}
-
 	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("get dataset concepts: %w", err)
@@ -109,7 +104,6 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 		Created:            created,
 		Modified:           modified,
 		VersionInfo:        reader.OptionalString("owl:versionInfo"),
-		ContactPoints:      contactPoints,
 		Keywords:           keywords,
 		Concepts:           concepts,
 		Publisher:          publisherRefs,

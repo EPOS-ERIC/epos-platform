@@ -96,13 +96,6 @@ func TestMapDataset(t *testing.T) {
 	if len(dataset.Distributions) != 1 || dataset.Distributions[0].Href != currentAHEADDistributionHref {
 		t.Fatalf("dataset.Distributions = %#v", dataset.Distributions)
 	}
-	if len(dataset.ContactPoints) != 2 {
-		t.Fatalf("dataset.ContactPoints = %#v", dataset.ContactPoints)
-	}
-	assertContactPointHrefs(t, dataset.ContactPoints,
-		"http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0",
-		"http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FscientificContact%2Fv1.0",
-	)
 	if dataset.IsVersionOf != nil {
 		t.Fatalf("dataset.IsVersionOf = %#v", dataset.IsVersionOf)
 	}

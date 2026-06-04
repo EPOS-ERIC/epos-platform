@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/testfixtures"
 )
@@ -22,7 +21,6 @@ const (
 	currentAHEADLocationID            = "https://epos-eu.org/anthropogenic_hazards/software/bnode-location-f75195ba/v1.0"
 	currentAHEADAnnotationID          = "https://epos-eu.org/anthropogenic_hazards/software/bnode-annotation-bb2b59f0/v1.0"
 	currentAHEADPublisherID           = "PIC:999472675/v1.0"
-	currentAHEADUppsalaID             = "ROR:048a87296/v1.0"
 	currentAHEADDatasetIdentifierDDSS = "https://epos-eu.org/anthropogenic_hazards/software/bnode-identifier-c4177063/v1.0"
 	currentAHEADDatasetIdentifierDOI  = "https://epos-eu.org/anthropogenic_hazards/software/bnode-identifier-c4212fb5/v1.0"
 )
@@ -61,30 +59,6 @@ func newFixtureAccessDetailFetcher(t *testing.T, fixtures map[string]string) acc
 
 func fixtureKey(shape, id string) string {
 	return shape + "::" + id
-}
-
-func assertContactPointHrefs(t *testing.T, got []api.ResourceRef, wantA, wantB string) {
-	t.Helper()
-
-	if len(got) != 2 {
-		t.Fatalf("contact points = %#v", got)
-	}
-
-	seen := map[string]int{
-		wantA: 1,
-		wantB: 1,
-	}
-
-	for _, contactPoint := range got {
-		if seen[contactPoint.Href] == 0 {
-			t.Fatalf("contact points = %#v", got)
-		}
-		seen[contactPoint.Href]--
-	}
-
-	if seen[wantA] != 0 || seen[wantB] != 0 {
-		t.Fatalf("contact points = %#v", got)
-	}
 }
 
 func fdsnEventFixturePaths() map[string]string {

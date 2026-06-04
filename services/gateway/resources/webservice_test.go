@@ -41,13 +41,6 @@ func TestMapWebservice(t *testing.T) {
 	if webservice.Provider.Href != currentAHEADPublisherHref {
 		t.Fatalf("webservice.Provider = %#v", webservice.Provider)
 	}
-	if len(webservice.ContactPoints) != 2 {
-		t.Fatalf("webservice.ContactPoints = %#v", webservice.ContactPoints)
-	}
-	assertContactPointHrefs(t, webservice.ContactPoints,
-		"http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0",
-		"http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FscientificContact%2Fv1.0",
-	)
 	if webservice.Spatial != "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))" {
 		t.Fatalf("webservice.Spatial = %q", webservice.Spatial)
 	}
