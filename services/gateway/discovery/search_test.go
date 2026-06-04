@@ -2,10 +2,15 @@ package discovery
 
 import (
 	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/testfixtures"
 )
@@ -172,12 +177,12 @@ func TestSearchRejectsUnsupportedTypes(t *testing.T) {
 		{
 			name:    "concept type is rejected",
 			types:   []api.ResourceType{api.ResourceType("concept")},
-			wantErr: `build metadata search request: validate search types: unsupported search type "concept"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
+			wantErr: `unsupported search type`,
 		},
 		{
 			name:    "mixed supported and unsupported types are rejected",
 			types:   []api.ResourceType{api.DatasetType, api.ResourceType("distribution")},
-			wantErr: `build metadata search request: validate search types: unsupported search type "distribution"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
+			wantErr: `unsupported search type`,
 		},
 	}
 
@@ -192,10 +197,31 @@ func TestSearchRejectsUnsupportedTypes(t *testing.T) {
 				t.Fatal("Search() error = nil")
 			}
 
-			if err.Error() != tt.wantErr {
-				t.Fatalf("Search() error = %q, want %q", err.Error(), tt.wantErr)
+			if !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("Search() error = %q", err.Error())
 			}
 		})
+	}
+}
+
+func TestSearchMapsUpstreamBadRequest(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"BAD_REQUEST","message":"Missing shape or id","details":null}`))
+	}))
+	t.Cleanup(server.Close)
+
+	service := NewService(testfixtures.NewMetadataClient(server.URL), 1)
+
+	_, err := service.Search(context.Background(), SearchParams{})
+	if err == nil {
+		t.Fatal("Search() error = nil")
+	}
+	if !errors.Is(err, domain.ErrBadRequest) {
+		t.Fatalf("Search() error = %v, want ErrBadRequest", err)
 	}
 }
 

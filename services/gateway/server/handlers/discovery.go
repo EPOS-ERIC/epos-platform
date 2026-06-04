@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
 type Discovery struct {
@@ -62,6 +63,11 @@ func (h *Discovery) writeDiscoveryError(ctx context.Context, w http.ResponseWrit
 		return
 	}
 
+	if errors.Is(err, domain.ErrBadRequest) {
+		writeError(ctx, w, http.StatusBadRequest, "invalid_request", operation+" request rejected by metadata service", nil)
+		return
+	}
+
 	if errors.Is(err, discovery.ErrUpstreamRequestFailed) {
 		writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" request failed", err)
 		return
@@ -76,40 +82,41 @@ func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {
 
 	pageSize, err := parsePageSize(query)
 	if err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse page size: %w", err)
+		return discovery.SearchParams{}, err
 	}
 
 	pageNumber, err := parsePageNumber(query)
 	if err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse page number: %w", err)
+		return discovery.SearchParams{}, err
 	}
 
 	types, err := parseCSVResourceTypes(query, "type")
 	if err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse type filter: %w", err)
+		return discovery.SearchParams{}, err
 	}
 	if err := discovery.ValidateSearchTypes(types); err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse type filter: %w", err)
+		// keep raw validation message for api contract
+		return discovery.SearchParams{}, err //nolint:wrapcheck
 	}
 
 	dateFrom, err := parseDateTime(query, "dateFrom")
 	if err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse dateFrom: %w", err)
+		return discovery.SearchParams{}, err
 	}
 
 	dateTo, err := parseDateTime(query, "dateTo")
 	if err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse dateTo: %w", err)
+		return discovery.SearchParams{}, err
 	}
 
 	if !dateFrom.IsZero() && !dateTo.IsZero() && dateTo.Before(dateFrom) {
 		log.Debug("invalid search params date range", "date_from", dateFrom, "date_to", dateTo)
-		return discovery.SearchParams{}, fmt.Errorf("validate date range: dateTo must be >= dateFrom")
+		return discovery.SearchParams{}, fmt.Errorf("date to must be greater than or equal to date from")
 	}
 
 	versioningStatus, err := parseCSVVersioningStatuses(query, "versioningStatus", []api.VersioningStatus{api.PublishedStatus})
 	if err != nil {
-		return discovery.SearchParams{}, fmt.Errorf("parse versioning status filter: %w", err)
+		return discovery.SearchParams{}, err
 	}
 
 	params := discovery.SearchParams{

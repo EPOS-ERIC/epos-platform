@@ -19,9 +19,6 @@ test:
 	$(MAKE) -C services/data-retriever test
 	$(MAKE) -C services/metadata-lifecycle test
 
-test-hurl:
-	$(MAKE) -C services/gateway test-hurl
-
 fmt:
 	$(MAKE) -C services/gateway fmt
 	$(MAKE) -C services/user-group fmt
@@ -34,11 +31,16 @@ lint:
 	$(MAKE) -C services/data-retriever lint
 	$(MAKE) -C services/metadata-lifecycle lint
 
+test-integration: test-schemathesis test-hurl
+
 test-schemathesis:
 	SCHEMATHESIS_HOOKS=tests/schemathesis/hooks.py schemathesis run \
 		--url "http://localhost:32000/v1" \
 		--suppress-health-check=filter_too_much \
 		--exclude-checks unsupported_method \
 		services/gateway/docs/openapi.yaml
+
+test-hurl:
+	hurl --variable baseUrl=http://localhost:32000 --test tests/hurl
 
 .PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint test-schemathesis

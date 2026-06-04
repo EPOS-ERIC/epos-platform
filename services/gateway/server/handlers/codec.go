@@ -56,7 +56,7 @@ func writeError(ctx context.Context, w http.ResponseWriter, status int, code, me
 }
 
 func writeBadRequest(ctx context.Context, w http.ResponseWriter, err error) {
-	writeError(ctx, w, http.StatusBadRequest, "bad_request", err.Error(), nil)
+	writeError(ctx, w, http.StatusBadRequest, "invalid_query_parameter", err.Error(), nil)
 }
 
 func writeNotImplemented(ctx context.Context, w http.ResponseWriter) {
@@ -81,15 +81,15 @@ func parseInt32(values url.Values, name string, defaultValue int32, minValue, ma
 
 	parsedValue, err := strconv.ParseInt(values.Get(name), 10, 32)
 	if err != nil {
-		return 0, fmt.Errorf("parse %s: %w", name, err)
+		return 0, fmt.Errorf("%s must be an integer", queryParamLabel(name))
 	}
 
 	value := int32(parsedValue)
 	if minValue != nil && value < *minValue {
-		return 0, fmt.Errorf("%s must be >= %d", name, *minValue)
+		return 0, fmt.Errorf("%s must be >= %d", queryParamLabel(name), *minValue)
 	}
 	if maxValue != nil && value > *maxValue {
-		return 0, fmt.Errorf("%s must be <= %d", name, *maxValue)
+		return 0, fmt.Errorf("%s must be <= %d", queryParamLabel(name), *maxValue)
 	}
 
 	return value, nil
@@ -102,7 +102,7 @@ func parseDateTime(values url.Values, name string) (time.Time, error) {
 
 	value, err := time.Parse(time.RFC3339, values.Get(name))
 	if err != nil {
-		return time.Time{}, fmt.Errorf("parse %s: %w", name, err)
+		return time.Time{}, fmt.Errorf("%s must be rfc3339", queryParamLabel(name))
 	}
 
 	return value, nil
@@ -140,7 +140,7 @@ func parseCSVResourceTypes(values url.Values, name string) ([]api.ResourceType, 
 	for _, rawValue := range rawValues {
 		value, err := api.NewResourceTypeFromValue(rawValue)
 		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", name, err)
+			return nil, fmt.Errorf("unsupported search type: %s", rawValue)
 		}
 		parsed = append(parsed, value)
 	}
@@ -164,10 +164,27 @@ func parseCSVVersioningStatuses(values url.Values, name string, defaultValues []
 	for _, rawValue := range rawValues {
 		value, err := api.NewVersioningStatusFromValue(rawValue)
 		if err != nil {
-			return nil, fmt.Errorf("parse %s: %w", name, err)
+			return nil, fmt.Errorf("versioning status must be one of draft, submitted, published, archived")
 		}
 		parsed = append(parsed, value)
 	}
 
 	return parsed, nil
+}
+
+func queryParamLabel(name string) string {
+	switch name {
+	case "pageSize":
+		return "page size"
+	case "pageNumber":
+		return "page number"
+	case "dateFrom":
+		return "date from"
+	case "dateTo":
+		return "date to"
+	case "versioningStatus":
+		return "versioning status"
+	default:
+		return name
+	}
 }

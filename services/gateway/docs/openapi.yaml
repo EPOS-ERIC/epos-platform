@@ -165,6 +165,8 @@ paths:
                     accrual_periodicity: "http://purl.org/cld/freq/irregular"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -211,6 +213,8 @@ paths:
                         - "application/xml"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -233,6 +237,8 @@ paths:
                 $ref: "#/components/schemas/SoftwareApplication"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -255,6 +261,8 @@ paths:
                 $ref: "#/components/schemas/SoftwareSourceCode"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -316,6 +324,8 @@ paths:
                       entrypoint: "https://www.emidius.eu/AHEAD/services/epos_events.php"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -353,6 +363,8 @@ paths:
                     url: "http://www.uu.se"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -433,6 +445,8 @@ paths:
                     children: []
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -472,6 +486,8 @@ paths:
                         href: "v1/concept/category:facets/software-theme/v1.0"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -708,9 +724,9 @@ components:
             invalidQuery:
               summary: Invalid query parameter
               value:
-                title: "Invalid query parameter"
+                title: "invalid_query_parameter"
                 status: 400
-                detail: "One or more query parameters are invalid."
+                detail: "unsupported search type: concept"
 
     NotFound:
       description: Resource not found
@@ -722,9 +738,9 @@ components:
             resourceNotFound:
               summary: Missing resource
               value:
-                title: "Resource not found"
+                title: "resource_not_found"
                 status: 404
-                detail: "Dataset not found."
+                detail: "dataset not found"
 
     InternalServerError:
       description: Internal server error
