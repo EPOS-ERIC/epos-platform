@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/):
 
 ### Added
 
+- helm: added an initial `epos-platform` chart for gateway, metadata-lifecycle, user-group, data-retriever, and optional development datastores.
+- ci: added GitHub Actions pipelines for service build/test/lint, integration tests, Docker image publishing, and Helm chart packaging/release artifacts.
 - data-retriever: added a new backend service under `services/data-retriever` with `/api/v2` retrieval and search endpoints, strict URL placeholder validation, optional bearer authentication for outbound requests, PostgreSQL persistence, and Swagger/OpenAPI documentation endpoints.
 - user-group: added a new backend service scaffold under `services/user-group` with `/api/v2` API contract, initial PostgreSQL migrations for users/groups/memberships/permissions, and baseline build/test/lint integration in the root Makefile.
 - user-group: added built-in API documentation endpoints (`/openapi.yaml` and `/swagger`) to expose the OpenAPI contract and interactive Swagger UI.

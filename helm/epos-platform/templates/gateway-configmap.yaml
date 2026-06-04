@@ -1,0 +1,30 @@
+{{- if .Values.gateway.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "epos-platform.fullname" . }}-gateway-config
+  labels:
+    {{- include "epos-platform.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    server:
+      listen: ":{{ .Values.gateway.port }}"
+      cors_allow_origin: {{ .Values.gateway.corsAllowOrigin | quote }}
+      request_timeout: "5s"
+      read_timeout: "15s"
+      write_timeout: "30s"
+      idle_timeout: "60s"
+
+    upstream:
+      timeout: "5s"
+      real_timeout: "30s"
+      cache_ttl: "5m"
+      max_entries: 2048
+
+    discovery:
+      fan_out_limit: 64
+
+    services:
+      metadata-lifecycle:
+        url: "http://{{ include "epos-platform.fullname" . }}-metadata-lifecycle:{{ .Values.metadataLifecycle.service.port }}/"
+{{- end }}
