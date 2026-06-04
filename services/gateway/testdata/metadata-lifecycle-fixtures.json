@@ -26,11 +26,11 @@
     },
     {
       "path": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
-      "url": "/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-0ebd586f"
+      "url": "/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-0ebd586f%2Fv1.0"
     },
     {
       "path": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
-      "url": "/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-4c77d796"
+      "url": "/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0"
     },
     {
       "path": "testdata/metadata-lifecycle/access/organization/uppsala.json",
@@ -38,11 +38,11 @@
     },
     {
       "path": "testdata/metadata-lifecycle/access/propertyvalue/uppsala-url.json",
-      "url": "/api/v2/access/propertyvalue/ROR%3A048a87296%2Fbnode-propertyvalue-14ab692e%2Fv1.0"
+      "url": "/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-14ab692e%2Fv1.0"
     },
     {
       "path": "testdata/metadata-lifecycle/access/postaladdress/uppsala.json",
-      "url": "/api/v2/access/postaladdress/ROR%3A048a87296%2Fbnode-postaladdress-be765c92%2Fv1.0"
+      "url": "/api/v2/access/postaladdress/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-postaladdress-be765c92%2Fv1.0"
     },
     {
       "path": "testdata/metadata-lifecycle/access/conceptscheme/software-jup.json",
@@ -55,6 +55,122 @@
     {
       "path": "testdata/metadata-lifecycle/access/concept/software-theme.json",
       "url": "/api/v2/access/concept/category%3Afacets%2Fsoftware-theme%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/dataset/intermagnet.json",
+      "url": "/api/v2/access/dataset/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/identifier/intermagnet-doi.json",
+      "url": "/api/v2/access/identifier/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-identifier-c4212fb5%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/identifier/intermagnet-ddss-id.json",
+      "url": "/api/v2/access/identifier/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-identifier-c4177063%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/periodoftime/intermagnet.json",
+      "url": "/api/v2/access/periodoftime/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-periodoftime-854f13c1%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/location/intermagnet.json",
+      "url": "/api/v2/access/location/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-location-f75195ba%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/location/webservice.json",
+      "url": "/api/v2/access/location/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-location-2df7160e%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/annotation/intermagnet.json",
+      "url": "/api/v2/access/annotation/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-annotation-bb2b59f0%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/distribution/intermagnet.json",
+      "url": "/api/v2/access/distribution/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fdistribution%2Frestful%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/webservice/intermagnet.json",
+      "url": "/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/operation/intermagnet.json",
+      "url": "/api/v2/access/operation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2FOperation%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/apidocumentation/intermagnet.json",
+      "url": "/api/v2/access/apidocumentation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2FAPIDocumentation%2Ffdsnws-event%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplate/intermagnet.json",
+      "url": "/api/v2/access/iritemplate/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplate-383ba416%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/nodata.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-bec6757f%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/limit.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-6e1d03bf%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/includeallmagnitudes.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-cc040606%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/includeallorigins.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-ae32613b%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/orderby.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-e296da48%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/maxmagnitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-c6edf57b%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/minmagnitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-01f77125%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/maxradiuskm.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-79219970%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/longitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-acd0818a%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/latitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-2fa4d342%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/maxlongitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-99212efd%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/minlongitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-59522638%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/maxlatitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-c2ea443d%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/minlatitude.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-c19cb3e0%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/eventid.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-b0c41f63%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/endtime.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-2f9a6fda%2Fv1.0"
+    },
+    {
+      "path": "testdata/metadata-lifecycle/access/iritemplatemapping/starttime.json",
+      "url": "/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-9f1f2b7f%2Fv1.0"
     }
   ]
 }

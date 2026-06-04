@@ -1,9 +1,10 @@
 {
-  "href": "http://localhost:8080/api/v2/access/periodoftime/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-periodoftime-0f4b2f01%2Fv1.0",
-  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-periodoftime-0f4b2f01/v1.0",
+  "href": "http://localhost:8080/api/v2/access/periodoftime/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-periodoftime-854f13c1%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-periodoftime-854f13c1/v1.0",
   "properties": {
     "rdf:type": "http://purl.org/dc/terms/PeriodOfTime",
-    "schema:startDate": "1991-01-01T00:00:00Z"
+    "schema:endDate": "1899-12-31T23:59:59Z",
+    "schema:startDate": "1000-01-01T00:00:00Z"
   },
   "shape": "periodoftime"
 }

@@ -1,6 +1,6 @@
 {
-  "href": "http://localhost:8080/api/v2/access/postaladdress/ROR%3A048a87296%2Fbnode-postaladdress-be765c92%2Fv1.0",
-  "id": "ROR:048a87296/bnode-postaladdress-be765c92/v1.0",
+  "href": "http://localhost:8080/api/v2/access/postaladdress/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-postaladdress-be765c92%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-postaladdress-be765c92/v1.0",
   "properties": {
     "rdf:type": "http://schema.org/PostalAddress",
     "schema:addressCountry": "Sweden",

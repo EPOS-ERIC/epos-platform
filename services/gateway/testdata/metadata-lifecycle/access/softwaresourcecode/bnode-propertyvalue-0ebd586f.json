@@ -1,10 +1,10 @@
 {
-  "href": "http://localhost:8080/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-0ebd586f",
-  "id": "https://doi.org/10.5281/bnode-propertyvalue-0ebd586f",
+  "href": "http://localhost:8080/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-0ebd586f%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-0ebd586f/v1.0",
   "properties": {
     "rdf:type": "http://schema.org/PropertyValue",
     "schema:pg_value": "WP",
     "schema:propertyID": "DDSS-ID"
   },
-  "shape": "softwaresourcecode"
+  "shape": "propertyvalue"
 }

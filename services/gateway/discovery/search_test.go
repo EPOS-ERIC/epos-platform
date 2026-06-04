@@ -38,11 +38,11 @@ func TestSearchMapsFixtures(t *testing.T) {
 			name: "software source code",
 			routes: map[string]string{
 				"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
-				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403":              "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json",
-				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-0ebd586f": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
-				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-4c77d796": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
-				"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                               "testdata/metadata-lifecycle/access/organization/uppsala.json",
-				"/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0":                                 "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json",
+				"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403":                                             "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json",
+				"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-0ebd586f%2Fv1.0": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
+				"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
+				"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                                                              "testdata/metadata-lifecycle/access/organization/uppsala.json",
+				"/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0":                                                                "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json",
 			},
 			resourceType: api.SoftwareSourceCodeType,
 			wantName:     "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab.",
@@ -105,11 +105,11 @@ func TestSearchSkipsMalformedSoftwareSourceCodeFixture(t *testing.T) {
 
 	server := testfixtures.NewMetadataServer(t, map[string]string{
 		"/api/v2/access/search": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
-		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403":              "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json",
-		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-0ebd586f": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
-		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fbnode-propertyvalue-4c77d796": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
-		"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                               "testdata/metadata-lifecycle/access/organization/uppsala.json",
-		"/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0":                                 "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json",
+		"/api/v2/access/softwaresourcecode/https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403":                                             "testdata/metadata-lifecycle/access/softwaresourcecode/zenodo.json",
+		"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-0ebd586f%2Fv1.0": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-0ebd586f.json",
+		"/api/v2/access/propertyvalue/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-propertyvalue-4c77d796%2Fv1.0": "testdata/metadata-lifecycle/access/softwaresourcecode/bnode-propertyvalue-4c77d796.json",
+		"/api/v2/access/organization/ROR%3A048a87296%2Fv1.0":                                                                              "testdata/metadata-lifecycle/access/organization/uppsala.json",
+		"/api/v2/access/concept/category%3Asoftware_jup_conc_multi%2Fv1.0":                                                                "testdata/metadata-lifecycle/access/concept/software-jup-conc-multi.json",
 	})
 	defer server.Close()
 

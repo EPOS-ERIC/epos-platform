@@ -16,12 +16,12 @@ func TestParseSearchParamsRejectsUnsupportedSearchTypes(t *testing.T) {
 		{
 			name:     "concept type is rejected",
 			rawQuery: "type=concept",
-			wantErr:  `Unsupported search type: concept`,
+			wantErr:  `parse type filter: unsupported search type "concept"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
 		},
 		{
 			name:     "mixed supported and unsupported types are rejected",
 			rawQuery: "type=dataset,distribution",
-			wantErr:  `Unsupported search type: distribution`,
+			wantErr:  `parse type filter: unsupported search type "distribution"; allowed values: [dataset organization softwareapplication softwaresourcecode webservice]`,
 		},
 	}
 
@@ -50,32 +50,32 @@ func TestParseSearchParamsRejectsInvalidPaginationAndDates(t *testing.T) {
 		{
 			name:     "page size below minimum",
 			rawQuery: "pageSize=0",
-			wantErr:  `pageSize must be between 1 and 100`,
+			wantErr:  `parse page size: pageSize must be >= 1`,
 		},
 		{
 			name:     "page size above maximum",
 			rawQuery: "pageSize=101",
-			wantErr:  `pageSize must be between 1 and 100`,
+			wantErr:  `parse page size: pageSize must be <= 100`,
 		},
 		{
 			name:     "page number below minimum",
 			rawQuery: "pageNumber=0",
-			wantErr:  `pageNumber must be >= 1`,
+			wantErr:  `parse page number: pageNumber must be >= 1`,
 		},
 		{
 			name:     "bad date from",
 			rawQuery: "dateFrom=not-a-date",
-			wantErr:  `dateFrom must be RFC3339`,
+			wantErr:  `parse dateFrom: parse dateFrom: parsing time "not-a-date" as "2006-01-02T15:04:05Z07:00": cannot parse "not-a-date" as "2006"`,
 		},
 		{
 			name:     "inverted date range",
 			rawQuery: "dateFrom=2025-01-02T00:00:00Z&dateTo=2025-01-01T00:00:00Z",
-			wantErr:  `dateTo must be greater than or equal to dateFrom`,
+			wantErr:  `validate date range: dateTo must be >= dateFrom`,
 		},
 		{
 			name:     "invalid versioning status",
 			rawQuery: "versioningStatus=bogus",
-			wantErr:  `versioningStatus must be one of DRAFT, SUBMITTED, PUBLISHED, ARCHIVED`,
+			wantErr:  `parse versioning status filter: parse versioningStatus: invalid value 'bogus' for VersioningStatus`,
 		},
 	}
 

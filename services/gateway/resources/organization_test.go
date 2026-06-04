@@ -14,8 +14,8 @@ func TestMapOrganization(t *testing.T) {
 
 	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/organization/uppsala.json")
 	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
-		fixtureKey("propertyvalue", "ROR:048a87296/bnode-propertyvalue-14ab692e/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/uppsala-url.json",
-		fixtureKey("postaladdress", "ROR:048a87296/bnode-postaladdress-be765c92/v1.0"): "testdata/metadata-lifecycle/access/postaladdress/uppsala.json",
+		fixtureKey("propertyvalue", "https://epos-eu.org/anthropogenic_hazards/software/bnode-propertyvalue-14ab692e/v1.0"): "testdata/metadata-lifecycle/access/propertyvalue/uppsala-url.json",
+		fixtureKey("postaladdress", "https://epos-eu.org/anthropogenic_hazards/software/bnode-postaladdress-be765c92/v1.0"): "testdata/metadata-lifecycle/access/postaladdress/uppsala.json",
 	})
 
 	organization, err := mapOrganization(context.Background(), detail, fetch)
