@@ -1,0 +1,12 @@
+FROM golang:1.26.3-alpine
+
+WORKDIR /workspace/services/oss-aai-service
+
+COPY services/oss-aai-service/go.mod services/oss-aai-service/go.sum ./
+RUN go mod download
+
+COPY services/oss-aai-service/ ./
+
+EXPOSE 8080
+
+CMD ["go", "run", "."]

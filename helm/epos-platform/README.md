@@ -6,6 +6,7 @@ This chart deploys the current EPOS platform backend services:
 - `metadata-lifecycle`
 - `user-group`
 - `data-retriever`
+- `oss-aai`
 
 It also includes optional in-chart PostgreSQL and Neo4j instances for development-style deployments. For production, set the relevant datastore `enabled` flags to `false` and provide external connection settings in `values.yaml` or an environment-specific values file.
 

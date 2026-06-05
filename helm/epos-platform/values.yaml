@@ -76,6 +76,28 @@ dataRetriever:
     port: 8100
   resources: {}
 
+ossAai:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/epos-eric/epos-platform/oss-aai-service
+    tag: latest
+  port: 8080
+  service:
+    type: ClusterIP
+    port: 8080
+  corsAllowOrigin: "*"
+  oidcIssuer: ""
+  initialAdmin:
+    name: Admin
+    surname: Admin
+    email: admin@admin.org
+    password: adminadmin
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources: {}
+
 postgresql:
   userGroup:
     enabled: true

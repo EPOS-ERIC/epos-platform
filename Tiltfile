@@ -87,11 +87,25 @@ docker_build(
     ],
 )
 
+docker_build(
+    'epos-oss-aai-dev:local',
+    '.',
+    dockerfile='services/oss-aai-service/Dockerfile.dev',
+    only=[
+        'services/oss-aai-service',
+    ],
+    live_update=[
+        sync('services/oss-aai-service', '/workspace/services/oss-aai-service'),
+        restart_container(),
+    ],
+)
+
 dc_resource('user-group-db', labels=['infra'])
 dc_resource('data-retriever-db', labels=['infra'])
 dc_resource('neo4j', labels=['infra'])
 dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['neo4j'])
 dc_resource('user-group-service', labels=['app'], resource_deps=['user-group-db'])
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
+dc_resource('oss-aai-service', labels=['app'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['metadata-lifecycle-service'])
 dc_resource('otel-lgtm', labels=['observability'])
