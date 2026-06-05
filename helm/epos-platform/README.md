@@ -1,7 +1,8 @@
 # EPOS Platform Helm Chart
 
-This chart deploys the current EPOS platform backend services:
+This chart deploys the current EPOS platform apps and backend services:
 
+- `platform`
 - `gateway`
 - `metadata-lifecycle`
 - `user-group`
@@ -9,6 +10,8 @@ This chart deploys the current EPOS platform backend services:
 - `oss-aai`
 
 It also includes optional in-chart PostgreSQL and Neo4j instances for development-style deployments. For production, set the relevant datastore `enabled` flags to `false` and provide external connection settings in `values.yaml` or an environment-specific values file.
+
+The `platform` frontend expects the gateway API at `/v1`. When `platform.ingress.enabled=true`, the chart routes `/v1` to the gateway service and `/` to the frontend service on the same host.
 
 ## Validate
 

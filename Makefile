@@ -25,6 +25,7 @@ clean: down
 	docker volume rm -f docker_neo4j-data docker_user-group-db-data docker_data-retriever-db-data docker_oss-aai-data
 
 test:
+	$(MAKE) -C apps/platform test
 	$(MAKE) -C services/gateway test
 	$(MAKE) -C services/user-group test
 	$(MAKE) -C services/data-retriever test
@@ -32,6 +33,7 @@ test:
 	$(MAKE) -C services/oss-aai-service test
 
 fmt:
+	$(MAKE) -C apps/platform fmt
 	$(MAKE) -C services/gateway fmt
 	$(MAKE) -C services/user-group fmt
 	$(MAKE) -C services/data-retriever fmt
@@ -39,6 +41,7 @@ fmt:
 	$(MAKE) -C services/oss-aai-service fmt
 
 lint:
+	$(MAKE) -C apps/platform lint
 	$(MAKE) -C services/gateway lint
 	$(MAKE) -C services/user-group lint
 	$(MAKE) -C services/data-retriever lint
@@ -73,4 +76,3 @@ test-hurl:
 	hurl --variable baseUrl=http://localhost:32000 --test tests/hurl
 
 .PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis
-

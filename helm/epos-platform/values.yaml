@@ -10,6 +10,31 @@ serviceAccount:
   create: true
   name: ""
 
+platform:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/epos-eric/epos-platform/platform
+    tag: latest
+  port: 80
+  service:
+    type: ClusterIP
+    port: 80
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: platform.local
+        gatewayPaths:
+          - path: /v1
+            pathType: Prefix
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  resources: {}
+
 gateway:
   enabled: true
   replicaCount: 1

@@ -1,6 +1,29 @@
 docker_compose('docker/compose.dev.yaml')
 
 docker_build(
+    'epos-platform-dev:local',
+    '.',
+    dockerfile='apps/platform/Dockerfile.dev',
+    only=[
+        'apps/platform',
+        'services/gateway/docs/openapi.yaml',
+    ],
+    ignore=[
+        'apps/platform/.angular',
+        'apps/platform/dist',
+        'apps/platform/node_modules',
+    ],
+    live_update=[
+        sync('apps/platform/src', '/workspace/apps/platform/src'),
+        sync('apps/platform/public', '/workspace/apps/platform/public'),
+        sync('apps/platform/angular.json', '/workspace/apps/platform/angular.json'),
+        sync('apps/platform/package.json', '/workspace/apps/platform/package.json'),
+        sync('services/gateway/docs/openapi.yaml', '/workspace/services/gateway/docs/openapi.yaml'),
+        restart_container(),
+    ],
+)
+
+docker_build(
     'epos-gateway-dev:local',
     '.',
     dockerfile='services/gateway/Dockerfile.dev',
@@ -108,4 +131,5 @@ dc_resource('user-group-service', labels=['app'], resource_deps=['user-group-db'
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
 dc_resource('oss-aai-service', labels=['app'])
 dc_resource('gateway-service', labels=['app'], resource_deps=['metadata-lifecycle-service'])
+dc_resource('platform-app', labels=['app'], resource_deps=['gateway-service'])
 dc_resource('otel-lgtm', labels=['observability'])
