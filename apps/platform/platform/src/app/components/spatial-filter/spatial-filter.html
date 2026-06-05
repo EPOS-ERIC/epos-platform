@@ -1,0 +1,70 @@
+<section class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-950/60">
+  <div class="mb-3 flex items-start justify-between gap-3">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Spatial range</p>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Bounding box coordinates.</p>
+    </div>
+
+    <button
+      type="button"
+      class="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+      (click)="filterState.clearSpatialFilter()"
+    >
+      Clear
+    </button>
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <label class="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+      <span>Min lat</span>
+      <input
+        type="number"
+        name="spatialFilterMinLat"
+        [ngModel]="filterState.spatialFilterMinLat()"
+        (ngModelChange)="filterState.setSpatialFilterMinLat($event)"
+        step="0.000001"
+        placeholder="-90.0"
+        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-sky-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+      <span>Max lat</span>
+      <input
+        type="number"
+        name="spatialFilterMaxLat"
+        [ngModel]="filterState.spatialFilterMaxLat()"
+        (ngModelChange)="filterState.setSpatialFilterMaxLat($event)"
+        step="0.000001"
+        placeholder="90.0"
+        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-sky-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+      <span>Min lon</span>
+      <input
+        type="number"
+        name="spatialFilterMinLon"
+        [ngModel]="filterState.spatialFilterMinLon()"
+        (ngModelChange)="filterState.setSpatialFilterMinLon($event)"
+        step="0.000001"
+        placeholder="-180.0"
+        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-sky-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+      />
+    </label>
+
+    <label class="flex flex-col gap-1 text-xs text-slate-600 dark:text-slate-300">
+      <span>Max lon</span>
+      <input
+        type="number"
+        name="spatialFilterMaxLon"
+        [ngModel]="filterState.spatialFilterMaxLon()"
+        (ngModelChange)="filterState.setSpatialFilterMaxLon($event)"
+        step="0.000001"
+        placeholder="180.0"
+        class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-sky-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+      />
+    </label>
+  </div>
+</section>
