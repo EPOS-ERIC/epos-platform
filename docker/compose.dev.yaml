@@ -109,6 +109,17 @@ services:
     networks:
       - epos-network
 
+  platform-app:
+    image: epos-platform-dev:local
+    depends_on:
+      gateway-service:
+        condition: service_started
+    ports:
+      - "4200:4200"
+    restart: on-failure
+    networks:
+      - epos-network
+
   user-group-service:
     image: epos-user-group-dev:local
     depends_on:
