@@ -1,19 +1,20 @@
 package org.epos.tests
 
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.collections.shouldNotBeEmpty
-import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.string.shouldContain
 import org.epos.graphdb.Config
 import org.epos.graphdb.services.ProvenanceService
-import org.junit.jupiter.api.*
 import org.epos.tests.BaseIntegrationTest
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import java.util.UUID
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProvenanceServiceIntegrationTest : BaseIntegrationTest() {
-
     private lateinit var provenanceService: ProvenanceService
 
     @BeforeEach
@@ -32,20 +33,23 @@ class ProvenanceServiceIntegrationTest : BaseIntegrationTest() {
             versionUri = versionUri,
             conceptualUri = conceptualUri,
             source = source,
-            agent = "mailto:test@example.org"
+            agent = "mailto:test@example.org",
         )
 
         // Verify provenance was recorded
-        val hasProvenance = graphDBClient.ask("""
-            PREFIX prov: <http://www.w3.org/ns/prov#>
-            ASK {
-                GRAPH <${Config.GRAPH_PROVENANCE}> {
-                    <$versionUri> prov:wasGeneratedBy ?activity .
-                    <$versionUri> prov:generatedAtTime ?time .
-                    <$versionUri> prov:wasAttributedTo ?agent .
+        val hasProvenance =
+            graphDBClient.ask(
+                """
+                PREFIX prov: <http://www.w3.org/ns/prov#>
+                ASK {
+                    GRAPH <${Config.GRAPH_PROVENANCE}> {
+                        <$versionUri> prov:wasGeneratedBy ?activity .
+                        <$versionUri> prov:generatedAtTime ?time .
+                        <$versionUri> prov:wasAttributedTo ?agent .
+                    }
                 }
-            }
-        """.trimIndent())
+                """.trimIndent(),
+            )
 
         hasProvenance shouldBe true
     }
@@ -60,18 +64,21 @@ class ProvenanceServiceIntegrationTest : BaseIntegrationTest() {
             newVersionUri = newVersionUri,
             basedOnVersionUri = basedOnUri,
             conceptualUri = conceptualUri,
-            agent = "mailto:test@example.org"
+            agent = "mailto:test@example.org",
         )
 
         // Verify revision link
-        val hasRevision = graphDBClient.ask("""
-            PREFIX prov: <http://www.w3.org/ns/prov#>
-            ASK {
-                GRAPH <${Config.GRAPH_PROVENANCE}> {
-                    <$newVersionUri> prov:wasRevisionOf <$basedOnUri> .
+        val hasRevision =
+            graphDBClient.ask(
+                """
+                PREFIX prov: <http://www.w3.org/ns/prov#>
+                ASK {
+                    GRAPH <${Config.GRAPH_PROVENANCE}> {
+                        <$newVersionUri> prov:wasRevisionOf <$basedOnUri> .
+                    }
                 }
-            }
-        """.trimIndent())
+                """.trimIndent(),
+            )
 
         hasRevision shouldBe true
     }
@@ -84,20 +91,23 @@ class ProvenanceServiceIntegrationTest : BaseIntegrationTest() {
             versionUri = versionUri,
             fromStatus = "DRAFT",
             toStatus = "SUBMITTED",
-            agent = "mailto:test@example.org"
+            agent = "mailto:test@example.org",
         )
 
         // Verify state transition activity was recorded
-        val results = graphDBClient.query("""
-            PREFIX prov: <http://www.w3.org/ns/prov#>
-            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            SELECT ?label
-            FROM <${Config.GRAPH_PROVENANCE}>
-            WHERE {
-                ?activity prov:used <$versionUri> ;
-                         rdfs:label ?label .
-            }
-        """.trimIndent())
+        val results =
+            graphDBClient.query(
+                """
+                PREFIX prov: <http://www.w3.org/ns/prov#>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                SELECT ?label
+                FROM <${Config.GRAPH_PROVENANCE}>
+                WHERE {
+                    ?activity prov:used <$versionUri> ;
+                             rdfs:label ?label .
+                }
+                """.trimIndent(),
+            )
 
         results.shouldNotBeEmpty()
         val labels = results.mapNotNull { it["label"] }
@@ -133,18 +143,21 @@ class ProvenanceServiceIntegrationTest : BaseIntegrationTest() {
             versionUri = versionUri,
             conceptualUri = conceptualUri,
             source = "relative-source", // Will be converted
-            agent = "relative-agent"    // Will be converted
+            agent = "relative-agent", // Will be converted
         )
 
         // Verify it was recorded (conversion happened)
-        val hasProvenance = graphDBClient.ask("""
-            PREFIX prov: <http://www.w3.org/ns/prov#>
-            ASK {
-                GRAPH <${Config.GRAPH_PROVENANCE}> {
-                    <$versionUri> prov:wasGeneratedBy ?activity .
+        val hasProvenance =
+            graphDBClient.ask(
+                """
+                PREFIX prov: <http://www.w3.org/ns/prov#>
+                ASK {
+                    GRAPH <${Config.GRAPH_PROVENANCE}> {
+                        <$versionUri> prov:wasGeneratedBy ?activity .
+                    }
                 }
-            }
-        """.trimIndent())
+                """.trimIndent(),
+            )
 
         hasProvenance shouldBe true
     }

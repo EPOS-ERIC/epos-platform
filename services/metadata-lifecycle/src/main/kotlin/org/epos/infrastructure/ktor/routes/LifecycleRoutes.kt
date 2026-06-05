@@ -1,8 +1,12 @@
 package org.epos.infrastructure.ktor.routes
 
-import io.ktor.http.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.patch
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import org.epos.api.controllers.ResourceController
 import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
@@ -13,7 +17,7 @@ import java.net.URLDecoder
 fun Route.lifecycleRoutes(
     resourceController: ResourceController,
     client: PropertyGraphClient,
-    provenanceService: ProvenanceService
+    provenanceService: ProvenanceService,
 ) {
     route("/api/v2/{resourceType}") {
         post("/{id}/submit") {
@@ -72,7 +76,7 @@ fun Route.lifecycleRoutes(
                 if (!exists) {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        ErrorResponse("NotFound", "Entity not found in PUBLISHED")
+                        ErrorResponse("NotFound", "Entity not found in PUBLISHED"),
                     )
                     return@post
                 }
@@ -89,7 +93,13 @@ fun Route.lifecycleRoutes(
                 if (!conceptualExists) {
                     client.runWrite(
                         "MERGE (c:Conceptual {id: ${'$'}id}) ON CREATE SET c.type = 'Resource', c.createdAt = ${'$'}createdAt",
-                        mapOf("id" to conceptualUri, "createdAt" to java.time.Instant.now().toString()),
+                        mapOf(
+                            "id" to conceptualUri,
+                            "createdAt" to
+                                java.time.Instant
+                                    .now()
+                                    .toString(),
+                        ),
                     )
                 }
 
@@ -115,7 +125,7 @@ fun Route.lifecycleRoutes(
                     provenanceService.recordInitialCreation(
                         versionUri = versionUri,
                         agent = actorHeaders.agent,
-                        group = actorHeaders.group
+                        group = actorHeaders.group,
                     )
                 }
 
@@ -123,18 +133,19 @@ fun Route.lifecycleRoutes(
                     ApiResponse(
                         success = true,
                         message = "Entity repaired successfully",
-                        data = mapOf(
-                            "uri" to entityUri,
-                            "conceptualUri" to conceptualUri,
-                            "conceptualCreated" to !conceptualExists,
-                            "provenanceCreated" to !hasProvenance
-                        )
-                    )
+                        data =
+                            mapOf(
+                                "uri" to entityUri,
+                                "conceptualUri" to conceptualUri,
+                                "conceptualCreated" to !conceptualExists,
+                                "provenanceCreated" to !hasProvenance,
+                            ),
+                    ),
                 )
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    ErrorResponse("Error", "Failed to repair entity: ${e.message}")
+                    ErrorResponse("Error", "Failed to repair entity: ${e.message}"),
                 )
             }
         }
@@ -154,10 +165,11 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondLifecycleR
     }
 
     val message = response.message.lowercase()
-    val status = when {
-        message.contains("not found") -> HttpStatusCode.NotFound
-        message.contains("create/use a draft") || message.contains("only drafts") -> HttpStatusCode.Conflict
-        else -> HttpStatusCode.BadRequest
-    }
+    val status =
+        when {
+            message.contains("not found") -> HttpStatusCode.NotFound
+            message.contains("create/use a draft") || message.contains("only drafts") -> HttpStatusCode.Conflict
+            else -> HttpStatusCode.BadRequest
+        }
     respond(status, response)
 }

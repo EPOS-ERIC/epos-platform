@@ -1,7 +1,7 @@
 package org.epos.tests
 
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
 import org.epos.graphdb.Config
 import org.epos.graphdb.client.GraphDBClient
 import org.junit.jupiter.api.AfterAll
@@ -16,22 +16,23 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 
 abstract class BaseIntegrationTest {
-
     companion object {
         private const val GRAPHDB_PORT = 7200
 
-        class GraphDBContainer : GenericContainer<GraphDBContainer>(
-            DockerImageName.parse("ontotext/graphdb:10.8.1")
-        ) {
+        class GraphDBContainer :
+            GenericContainer<GraphDBContainer>(
+                DockerImageName.parse("ontotext/graphdb:10.8.1"),
+            ) {
             init {
                 withExposedPorts(GRAPHDB_PORT)
                 withEnv("GDB_HEAP_SIZE", "1g")
                 withEnv("GDB_MIN_MEM", "512m")
                 withEnv("GDB_MAX_MEM", "1g")
                 waitingFor(
-                    Wait.forHttp("/rest/repositories")
+                    Wait
+                        .forHttp("/rest/repositories")
                         .forStatusCode(200)
-                        .withStartupTimeout(Duration.ofMinutes(3))
+                        .withStartupTimeout(Duration.ofMinutes(3)),
                 )
             }
         }
@@ -88,7 +89,8 @@ abstract class BaseIntegrationTest {
                 Thread.sleep(3000)
 
                 // NativeStore configuration - supports SPARQL UPDATE
-                val config = """
+                val config =
+                    """
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix rep: <http://www.openrdf.org/config/repository#>.
 @prefix sr: <http://www.openrdf.org/config/repository/sail#>.
@@ -105,7 +107,7 @@ abstract class BaseIntegrationTest {
          ns:tripleIndexes "spoc,posc"
       ]
    ].
-""".trimIndent()
+                    """.trimIndent()
 
                 val boundary = "----Boundary${System.currentTimeMillis()}"
                 val url = URL("$testEndpoint/rest/repositories")
@@ -128,19 +130,22 @@ abstract class BaseIntegrationTest {
                 }
 
                 val responseCode = connection.responseCode
-                val responseBody = if (responseCode in 200..299) {
-                    connection.inputStream?.bufferedReader()?.use { it.readText() } ?: ""
-                } else {
-                    connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                }
+                val responseBody =
+                    if (responseCode in 200..299) {
+                        connection.inputStream?.bufferedReader()?.use { it.readText() } ?: ""
+                    } else {
+                        connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                    }
 
                 when {
                     responseCode in 200..299 -> {
                         println("✓ Test repository created successfully")
                     }
+
                     responseBody.contains("already exists") || responseBody.contains("A repository") -> {
                         println("✓ Test repository already exists")
                     }
+
                     else -> {
                         println("❌ Repository creation failed: $responseCode")
                         println("Response: $responseBody")
@@ -163,7 +168,6 @@ abstract class BaseIntegrationTest {
                 } else {
                     throw Exception("Repository verification failed: $verifyCode")
                 }
-
             } catch (e: Exception) {
                 println("❌ Error creating test repository: ${e.message}")
                 e.printStackTrace()
@@ -172,14 +176,15 @@ abstract class BaseIntegrationTest {
         }
 
         fun clearAllGraphs() {
-            val graphs = listOf(
-                Config.GRAPH_CONCEPTUAL,
-                Config.GRAPH_DRAFT,
-                Config.GRAPH_SUBMITTED,
-                Config.GRAPH_PUBLISHED,
-                Config.GRAPH_ARCHIVED,
-                Config.GRAPH_PROVENANCE
-            )
+            val graphs =
+                listOf(
+                    Config.GRAPH_CONCEPTUAL,
+                    Config.GRAPH_DRAFT,
+                    Config.GRAPH_SUBMITTED,
+                    Config.GRAPH_PUBLISHED,
+                    Config.GRAPH_ARCHIVED,
+                    Config.GRAPH_PROVENANCE,
+                )
 
             graphs.forEach { graph ->
                 try {

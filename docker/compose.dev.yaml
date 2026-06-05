@@ -160,6 +160,22 @@ services:
     networks:
       - epos-network
 
+  oss-aai-service:
+    image: epos-oss-aai-dev:local
+    ports:
+      - "8110:8080"
+    environment:
+      - OSS_AAI_LISTEN_ADDR=:8080
+      - APP_CORS_ALLOW_ORIGIN=*
+      - OIDC_ISSUER=http://localhost:8110/oauth2
+    volumes:
+      - oss-aai-gomod-cache:/go/pkg/mod
+      - oss-aai-gobuild-cache:/root/.cache/go-build
+      - oss-aai-data:/workspace/services/oss-aai-service/data
+    restart: on-failure
+    networks:
+      - epos-network
+
   otel-lgtm:
     image: grafana/otel-lgtm
 
@@ -183,6 +199,9 @@ volumes:
   data-retriever-gomod-cache:
   data-retriever-gobuild-cache:
   data-retriever-db-data:
+  oss-aai-gomod-cache:
+  oss-aai-gobuild-cache:
+  oss-aai-data:
 
 networks:
   epos-network:

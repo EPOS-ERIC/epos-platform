@@ -1,7 +1,8 @@
 package org.epos.infrastructure.ktor.routes
 
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 
 /**
  * Routes for Swagger UI redirect.

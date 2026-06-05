@@ -20,7 +20,9 @@ func (r *UserPostgresRepository) List() []domain.User {
 	if err != nil {
 		return []domain.User{}
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	users := []domain.User{}
 	for rows.Next() {

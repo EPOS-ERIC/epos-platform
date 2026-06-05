@@ -1,7 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.tasks.SourceSetContainer
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "2.3.0"
@@ -10,23 +10,23 @@ plugins {
     id("com.diffplug.spotless") version "8.4.0"
 }
 
-group       = "org.epos"
-version     = "1.0-SNAPSHOT"
+group = "org.epos"
+version = "1.0-SNAPSHOT"
 description = "Kotlin application for managing metadata lifecycle in Neo4j with versioning and provenance"
 
-val gremlinDriverVersion        = "3.7.3"
-val neo4jDriverVersion          = "5.28.5"
-val rdf4jVersion            = "5.2.2"
-val ktorVersion             = "3.0.3"
-val coroutinesVersion       = "1.10.2"
-val jacksonVersion          = "2.21.2"
-val slf4jVersion            = "2.0.9"
+val gremlinDriverVersion = "3.7.3"
+val neo4jDriverVersion = "5.28.5"
+val rdf4jVersion = "5.2.2"
+val ktorVersion = "3.0.3"
+val coroutinesVersion = "1.10.2"
+val jacksonVersion = "2.21.2"
+val slf4jVersion = "2.0.9"
 val ktorOpenApiToolsVersion = "5.4.0"
-val serializationVersion    = "1.6.2"
-val koinVersion             = "4.0.2"
-val junitVersion            = "5.14.3"
-val testcontainersVersion   = "1.21.4"
-val kotestVersion           = "5.8.0"
+val serializationVersion = "1.6.2"
+val koinVersion = "4.0.2"
+val junitVersion = "5.14.3"
+val testcontainersVersion = "1.21.4"
+val kotestVersion = "5.8.0"
 
 java {
     toolchain {

@@ -34,7 +34,7 @@ Agents must:
 - Keep changes as small as possible.
 - Ask for clarification when ambiguity could affect correctness, behavior, or structure.
 - Get approval before introducing new dependency, runtime or test.
-- Ask for explicit approval before creating or modifying GitHub workflow files.
+- Ask for explicit approval before creating or modifying GitHub workflow files, even when adding a new app or service.
 - Handle errors explicitly and gracefully.
 - Keep code strongly typed by default.
 
@@ -84,6 +84,37 @@ Standard `Makefile` targets per app/service:
 - `lint` and it must run `fmt` first
 
 If module behavior differs meaningfully from this standard, document only that difference in module `AGENTS.md`.
+
+## CI/CD And Deployment Manifests
+
+When adding a new app or service under `apps/` or `services/`, also check whether repository automation and deployment assets need to be created or updated.
+
+For each new app/service, consider:
+
+- GitHub Actions workflow under `.github/workflows/`.
+- Helm chart or chart values under `helm/`.
+- Root `Makefile` targets if repo-wide commands need to include the new module.
+- `Tiltfile` and `docker/compose.dev.yaml` if the module participates in local development.
+- Module-level `README.md` and `AGENTS.md`.
+
+GitHub workflow files must not be created or modified without explicit user approval.
+
+Before creating or updating a GitHub workflow, ask the user for approval and clarify:
+
+- Workflow name.
+- Trigger policy, such as pull request, push to main, tag, or manual dispatch.
+- Required jobs, such as build, test, lint, Docker image build, Helm lint, or deploy.
+- Target environments, such as dev, staging, or production.
+- Required secrets or repository variables.
+
+When adding or changing Helm charts:
+
+- Prefer extending the existing chart structure under `helm/`.
+- Keep chart names aligned with app/service directory names.
+- Add or update values for image repository, tag, ports, environment variables, probes, resources, ingress, and service account settings as needed.
+- Avoid duplicating chart templates if an existing shared pattern can be extended cleanly.
+- Run Helm validation where practical, such as `helm lint`, and document if validation could not be run.
+- Keep local development wiring, Helm values, and service ports consistent.
 
 ## Packages Conventions
 

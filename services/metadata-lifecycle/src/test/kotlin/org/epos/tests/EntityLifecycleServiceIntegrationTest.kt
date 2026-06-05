@@ -11,12 +11,13 @@ import org.eclipse.rdf4j.model.vocabulary.RDFS
 import org.epos.graphdb.Config
 import org.epos.graphdb.services.EntityLifecycleService
 import org.epos.graphdb.services.ProvenanceService
-import org.junit.jupiter.api.*
 import org.epos.tests.BaseIntegrationTest
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
-
     private lateinit var provenanceService: ProvenanceService
     private lateinit var lifecycleService: EntityLifecycleService
 
@@ -27,7 +28,10 @@ class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
         lifecycleService = EntityLifecycleService(graphDBClient, provenanceService)
     }
 
-    private fun createPublishedEntity(conceptualUri: String, version: String = "1.0"): String {
+    private fun createPublishedEntity(
+        conceptualUri: String,
+        version: String = "1.0",
+    ): String {
         val vf = Values.getValueFactory()
         val model = LinkedHashModel()
         val versionUri = "$conceptualUri/v$version"
@@ -57,28 +61,35 @@ class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
         val conceptualUri = "http://example.org/dataset/123"
         val publishedUri = createPublishedEntity(conceptualUri, "1.0")
 
-        val draftUri = lifecycleService.createDraft(
-            conceptualUri = conceptualUri,
-            newVersionNumber = "2.0",
-            agent = "mailto:test@example.org"
-        )
+        val draftUri =
+            lifecycleService.createDraft(
+                conceptualUri = conceptualUri,
+                newVersionNumber = "2.0",
+                agent = "mailto:test@example.org",
+            )
 
         draftUri shouldBe "$conceptualUri/2.0-draft"
 
         // Verify draft exists
-        val inDraft = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
-        """.trimIndent())
+        val inDraft =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
+                """.trimIndent(),
+            )
         inDraft shouldBe true
 
         // Verify label was copied
-        val results = graphDBClient.query("""
-            SELECT ?label
-            FROM <${Config.GRAPH_DRAFT}>
-            WHERE {
-                <$draftUri> <${RDFS.LABEL}> ?label .
-            }
-        """.trimIndent())
+        val results =
+            graphDBClient.query(
+                """
+                SELECT ?label
+                FROM <${Config.GRAPH_DRAFT}>
+                WHERE {
+                    <$draftUri> <${RDFS.LABEL}> ?label .
+                }
+                """.trimIndent(),
+            )
         results[0]["label"] shouldBe "Test Dataset"
     }
 
@@ -91,15 +102,21 @@ class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
         lifecycleService.submitDraft(draftUri, "mailto:test@example.org")
 
         // Verify not in DRAFT
-        val inDraft = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
-        """.trimIndent())
+        val inDraft =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
+                """.trimIndent(),
+            )
         inDraft shouldBe false
 
         // Verify in SUBMITTED
-        val inSubmitted = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_SUBMITTED}> { <$draftUri> ?p ?o . } }
-        """.trimIndent())
+        val inSubmitted =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_SUBMITTED}> { <$draftUri> ?p ?o . } }
+                """.trimIndent(),
+            )
         inSubmitted shouldBe true
     }
 
@@ -115,26 +132,35 @@ class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
         val finalUri = draftUri.removeSuffix("-draft")
 
         // Verify v1 is archived
-        val v1Archived = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_ARCHIVED}> { <$v1Uri> ?p ?o . } }
-        """.trimIndent())
+        val v1Archived =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_ARCHIVED}> { <$v1Uri> ?p ?o . } }
+                """.trimIndent(),
+            )
         v1Archived shouldBe true
 
         // Verify v2 is published
-        val v2Published = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_PUBLISHED}> { <$finalUri> ?p ?o . } }
-        """.trimIndent())
+        val v2Published =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_PUBLISHED}> { <$finalUri> ?p ?o . } }
+                """.trimIndent(),
+            )
         v2Published shouldBe true
 
         // Verify conceptual points to new version
-        val results = graphDBClient.query("""
-            PREFIX pav: <http://purl.org/pav/>
-            SELECT ?current
-            FROM <${Config.GRAPH_CONCEPTUAL}>
-            WHERE {
-                <$conceptualUri> pav:hasCurrentVersion ?current .
-            }
-        """.trimIndent())
+        val results =
+            graphDBClient.query(
+                """
+                PREFIX pav: <http://purl.org/pav/>
+                SELECT ?current
+                FROM <${Config.GRAPH_CONCEPTUAL}>
+                WHERE {
+                    <$conceptualUri> pav:hasCurrentVersion ?current .
+                }
+                """.trimIndent(),
+            )
         results[0]["current"] shouldBe finalUri
     }
 
@@ -148,9 +174,12 @@ class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
         lifecycleService.rejectSubmission(draftUri, "mailto:test@example.org")
 
         // Verify back in DRAFT
-        val inDraft = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
-        """.trimIndent())
+        val inDraft =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
+                """.trimIndent(),
+            )
         inDraft shouldBe true
     }
 
@@ -162,9 +191,12 @@ class EntityLifecycleServiceIntegrationTest : BaseIntegrationTest() {
 
         lifecycleService.deleteDraft(draftUri)
 
-        val exists = graphDBClient.ask("""
-            ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
-        """.trimIndent())
+        val exists =
+            graphDBClient.ask(
+                """
+                ASK { GRAPH <${Config.GRAPH_DRAFT}> { <$draftUri> ?p ?o . } }
+                """.trimIndent(),
+            )
         exists shouldBe false
     }
 

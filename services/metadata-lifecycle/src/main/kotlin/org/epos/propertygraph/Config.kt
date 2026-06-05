@@ -84,9 +84,10 @@ class ResolvedAgents(
 
 object Config {
     private val logger = LoggerFactory.getLogger("org.epos.propertygraph.Config")
-    private val mapper: ObjectMapper = ObjectMapper(YAMLFactory())
-        .registerKotlinModule()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    private val mapper: ObjectMapper =
+        ObjectMapper(YAMLFactory())
+            .registerKotlinModule()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
     private val rawConfig: AppConfig by lazy { loadConfiguration() }
 
@@ -361,8 +362,15 @@ object Config {
     fun printConfig() {
         logger.info(
             "Startup Config - Neo4j: {} (db={}) | Server: {}:{} | BaseURI: {} | Index: {} | Swagger: {} | CORS: {} | Metrics: {}",
-            NEO4J_URI, NEO4J_DATABASE, server.host, server.port,
-            BASE_URI, INDEX_URL, features.enableSwagger, features.enableCors, features.enableMetrics,
+            NEO4J_URI,
+            NEO4J_DATABASE,
+            server.host,
+            server.port,
+            BASE_URI,
+            INDEX_URL,
+            features.enableSwagger,
+            features.enableCors,
+            features.enableMetrics,
         )
     }
 

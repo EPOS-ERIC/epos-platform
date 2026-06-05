@@ -1,0 +1,84 @@
+{{- if .Values.dataRetriever.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "epos-platform.fullname" . }}-data-retriever
+  labels:
+    {{- include "epos-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: data-retriever
+spec:
+  type: {{ .Values.dataRetriever.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.dataRetriever.service.port }}
+      targetPort: http
+  selector:
+    {{- include "epos-platform.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: data-retriever
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "epos-platform.fullname" . }}-data-retriever
+  labels:
+    {{- include "epos-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: data-retriever
+spec:
+  replicas: {{ .Values.dataRetriever.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "epos-platform.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: data-retriever
+  template:
+    metadata:
+      labels:
+        {{- include "epos-platform.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: data-retriever
+    spec:
+      serviceAccountName: {{ include "epos-platform.serviceAccountName" . }}
+      containers:
+        - name: data-retriever
+          image: "{{ .Values.dataRetriever.image.repository }}:{{ .Values.dataRetriever.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dataRetriever.port }}
+          env:
+            - name: DATA_RETRIEVER_LISTEN_ADDR
+              value: ":{{ .Values.dataRetriever.port }}"
+            - name: DATA_RETRIEVER_DB_HOST
+              value: {{ default (printf "%s-data-retriever-db" (include "epos-platform.fullname" .)) .Values.postgresql.dataRetriever.host | quote }}
+            - name: DATA_RETRIEVER_DB_PORT
+              value: {{ .Values.postgresql.dataRetriever.port | quote }}
+            - name: DATA_RETRIEVER_DB_NAME
+              value: {{ .Values.postgresql.dataRetriever.database | quote }}
+            - name: DATA_RETRIEVER_DB_USER
+              value: {{ .Values.postgresql.dataRetriever.username | quote }}
+            - name: DATA_RETRIEVER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "epos-platform.fullname" . }}-secrets
+                  key: data-retriever-db-password
+            - name: DATA_RETRIEVER_HTTP_TIMEOUT
+              value: {{ .Values.dataRetriever.httpTimeout | quote }}
+            {{- if .Values.global.otel.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: data-retriever
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.global.otel.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.global.otel.protocol | quote }}
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: {{ .Values.global.otel.metricExportInterval | quote }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            {{- toYaml .Values.dataRetriever.resources | nindent 12 }}
+{{- end }}

@@ -20,7 +20,9 @@ func (r *MembershipPostgresRepository) ListByGroupID(groupID string) []domain.Me
 	if err != nil {
 		return []domain.Membership{}
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	items := []domain.Membership{}
 	for rows.Next() {

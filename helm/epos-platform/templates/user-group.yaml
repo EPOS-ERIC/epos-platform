@@ -1,0 +1,82 @@
+{{- if .Values.userGroup.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "epos-platform.fullname" . }}-user-group
+  labels:
+    {{- include "epos-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: user-group
+spec:
+  type: {{ .Values.userGroup.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.userGroup.service.port }}
+      targetPort: http
+  selector:
+    {{- include "epos-platform.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: user-group
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "epos-platform.fullname" . }}-user-group
+  labels:
+    {{- include "epos-platform.labels" . | nindent 4 }}
+    app.kubernetes.io/component: user-group
+spec:
+  replicas: {{ .Values.userGroup.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "epos-platform.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: user-group
+  template:
+    metadata:
+      labels:
+        {{- include "epos-platform.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: user-group
+    spec:
+      serviceAccountName: {{ include "epos-platform.serviceAccountName" . }}
+      containers:
+        - name: user-group
+          image: "{{ .Values.userGroup.image.repository }}:{{ .Values.userGroup.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.userGroup.port }}
+          env:
+            - name: USER_GROUP_LISTEN_ADDR
+              value: ":{{ .Values.userGroup.port }}"
+            - name: USER_GROUP_DB_HOST
+              value: {{ default (printf "%s-user-group-db" (include "epos-platform.fullname" .)) .Values.postgresql.userGroup.host | quote }}
+            - name: USER_GROUP_DB_PORT
+              value: {{ .Values.postgresql.userGroup.port | quote }}
+            - name: USER_GROUP_DB_NAME
+              value: {{ .Values.postgresql.userGroup.database | quote }}
+            - name: USER_GROUP_DB_USER
+              value: {{ .Values.postgresql.userGroup.username | quote }}
+            - name: USER_GROUP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "epos-platform.fullname" . }}-secrets
+                  key: user-group-db-password
+            {{- if .Values.global.otel.enabled }}
+            - name: OTEL_SERVICE_NAME
+              value: user-group
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.global.otel.endpoint | quote }}
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: {{ .Values.global.otel.protocol | quote }}
+            - name: OTEL_METRIC_EXPORT_INTERVAL
+              value: {{ .Values.global.otel.metricExportInterval | quote }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            {{- toYaml .Values.userGroup.resources | nindent 12 }}
+{{- end }}

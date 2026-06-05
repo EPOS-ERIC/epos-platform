@@ -1,0 +1,85 @@
+name: Helm Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "helm/**"
+      - ".github/workflows/helm-ci.yml"
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+    paths:
+      - "helm/**"
+      - ".github/workflows/helm-ci.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  helm:
+    name: Helm chart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint chart
+        run: helm lint helm/epos-platform
+
+      - name: Render chart
+        run: helm template epos-platform helm/epos-platform
+
+      - name: Render chart with external datastores
+        run: >-
+          helm template epos-platform helm/epos-platform
+          --set postgresql.userGroup.enabled=false
+          --set postgresql.userGroup.host=user-group-db.example
+          --set postgresql.dataRetriever.enabled=false
+          --set postgresql.dataRetriever.host=data-retriever-db.example
+          --set neo4j.enabled=false
+          --set neo4j.uri=bolt://neo4j.example:7687
+
+      - name: Resolve chart package metadata
+        id: chart
+        run: |
+          mkdir -p dist
+          ref_name="${GITHUB_REF_NAME}"
+          safe_ref="$(printf '%s' "${ref_name}" | tr '/[:upper:]' '-[:lower:]' | tr -c 'a-z0-9._-' '-')"
+          echo "safe_ref=${safe_ref}" >> "${GITHUB_OUTPUT}"
+
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            chart_version="${ref_name#v}"
+            if ! printf '%s' "${chart_version}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-.+][0-9A-Za-z.-]+)?$'; then
+              echo "Tag '${ref_name}' does not resolve to a valid Helm SemVer chart version" >&2
+              exit 1
+            fi
+            echo "package_args=--version ${chart_version} --app-version ${ref_name}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "package_args=--app-version ${safe_ref}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Package chart
+        run: helm package helm/epos-platform --destination dist ${{ steps.chart.outputs.package_args }}
+
+      - name: Upload chart artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: epos-platform-chart-${{ steps.chart.outputs.safe_ref }}
+          path: dist/*.tgz
+          if-no-files-found: error
+
+      - name: Publish chart to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/*.tgz --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/*.tgz --generate-notes
+          fi

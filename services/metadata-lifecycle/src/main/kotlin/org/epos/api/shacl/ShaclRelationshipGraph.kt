@@ -2,7 +2,7 @@ package org.epos.api.shacl
 
 import org.slf4j.LoggerFactory
 
-/**
+/*
  * =============================================================================
  * Generalized Relationship Graph
  * =============================================================================
@@ -35,7 +35,7 @@ data class PropertyRelationship(
     val targetClass: String,
     val targetClassName: String,
     val isInverse: Boolean = false,
-    val metadata: Map<String, Any> = emptyMap()  // Extensible metadata
+    val metadata: Map<String, Any> = emptyMap(),
 )
 
 /**
@@ -48,14 +48,15 @@ data class RelationshipPath(
     val toTypeName: String,
     val steps: List<PathStep>,
     val sparqlPropertyPath: String,
-    val score: Double = 0.0
+    val score: Double = 0.0,
 ) {
     val length: Int get() = steps.size
 
     val pathDescription: String
-        get() = steps.joinToString(" → ") {
-            if (it.isInverse) "←${it.propertyName}" else it.propertyName
-        }
+        get() =
+            steps.joinToString(" → ") {
+                if (it.isInverse) "←${it.propertyName}" else it.propertyName
+            }
 
     val typePathDescription: String
         get() = fromTypeName + " → " + steps.joinToString(" → ") { it.toTypeName }
@@ -71,7 +72,7 @@ data class PathStep(
     val fromTypeName: String,
     val toType: String,
     val toTypeName: String,
-    val isInverse: Boolean = false
+    val isInverse: Boolean = false,
 ) {
     fun toSparql(): String = if (isInverse) "^<$propertyUri>" else "<$propertyUri>"
 }
@@ -89,54 +90,57 @@ data class RelationshipGraphConfig(
     val excludedTypes: Set<String> = DEFAULT_EXCLUDED_TYPES,
     val datatypePatterns: Set<String> = DEFAULT_DATATYPE_PATTERNS,
     val maxQueryResults: Int = 10000,
-
     // Path finding configuration
     val maxPathDepth: Int = 5,
     val maxPathsToConsider: Int = 100,
     val includeBidirectional: Boolean = true,
-
     // Scoring configuration
     val scoringStrategy: PathScoringStrategy = DefaultPathScoringStrategy(),
-
     // Debug configuration
-    val verbose: Boolean = false
+    val verbose: Boolean = false,
 ) {
     companion object {
-        val DEFAULT_EXCLUDED_PROPERTIES = setOf(
-            "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-            "http://purl.org/dc/terms/isVersionOf",
-            "http://purl.org/pav/version",
-            "http://www.w3.org/ns/prov#wasGeneratedBy",
-            "http://www.w3.org/ns/prov#wasRevisionOf",
-            "http://www.w3.org/2002/07/owl#sameAs",
-            "http://www.w3.org/2000/01/rdf-schema#seeAlso"
-        )
+        val DEFAULT_EXCLUDED_PROPERTIES =
+            setOf(
+                "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                "http://purl.org/dc/terms/isVersionOf",
+                "http://purl.org/pav/version",
+                "http://www.w3.org/ns/prov#wasGeneratedBy",
+                "http://www.w3.org/ns/prov#wasRevisionOf",
+                "http://www.w3.org/2002/07/owl#sameAs",
+                "http://www.w3.org/2000/01/rdf-schema#seeAlso",
+            )
 
-        val DEFAULT_EXCLUDED_TYPES = setOf(
-            "http://www.w3.org/2002/07/owl#Thing",
-            "http://www.w3.org/2000/01/rdf-schema#Resource"
-        )
+        val DEFAULT_EXCLUDED_TYPES =
+            setOf(
+                "http://www.w3.org/2002/07/owl#Thing",
+                "http://www.w3.org/2000/01/rdf-schema#Resource",
+            )
 
-        val DEFAULT_DATATYPE_PATTERNS = setOf(
-            "XMLSchema#",
-            "datatype",
-            "Literal",
-            "/xsd#",
-            "/xsd/"
-        )
+        val DEFAULT_DATATYPE_PATTERNS =
+            setOf(
+                "XMLSchema#",
+                "datatype",
+                "Literal",
+                "/xsd#",
+                "/xsd/",
+            )
 
         /** Default configuration */
         val DEFAULT = RelationshipGraphConfig()
 
         /** Configuration optimized for EPOS/DCAT data */
-        val EPOS = RelationshipGraphConfig(
-            excludedProperties = DEFAULT_EXCLUDED_PROPERTIES + setOf(
-                "http://purl.org/dc/terms/identifier",
-                "http://purl.org/dc/terms/created",
-                "http://purl.org/dc/terms/modified"
-            ),
-            scoringStrategy = EposPathScoringStrategy()
-        )
+        val EPOS =
+            RelationshipGraphConfig(
+                excludedProperties =
+                    DEFAULT_EXCLUDED_PROPERTIES +
+                        setOf(
+                            "http://purl.org/dc/terms/identifier",
+                            "http://purl.org/dc/terms/created",
+                            "http://purl.org/dc/terms/modified",
+                        ),
+                scoringStrategy = EposPathScoringStrategy(),
+            )
     }
 }
 
@@ -182,12 +186,11 @@ class DefaultPathScoringStrategy : PathScoringStrategy {
 class ConfigurablePathScoringStrategy(
     val lengthPenalty: Double = 10.0,
     val inversePenalty: Double = 2.0,
-    val preferredProperties: Map<String, Double> = emptyMap(),  // property pattern -> bonus
-    val avoidedProperties: Map<String, Double> = emptyMap(),    // property pattern -> penalty
+    val preferredProperties: Map<String, Double> = emptyMap(), // property pattern -> bonus
+    val avoidedProperties: Map<String, Double> = emptyMap(), // property pattern -> penalty
     val preferredIntermediateTypes: Map<String, Double> = emptyMap(),
-    val avoidedIntermediateTypes: Map<String, Double> = emptyMap()
+    val avoidedIntermediateTypes: Map<String, Double> = emptyMap(),
 ) : PathScoringStrategy {
-
     override fun score(path: List<PropertyRelationship>): Double {
         var score = 100.0
 
@@ -201,14 +204,16 @@ class ConfigurablePathScoringStrategy(
             // Property bonuses/penalties
             preferredProperties.forEach { (pattern, bonus) ->
                 if (rel.propertyName.contains(pattern, ignoreCase = true) ||
-                    rel.propertyUri.contains(pattern, ignoreCase = true)) {
+                    rel.propertyUri.contains(pattern, ignoreCase = true)
+                ) {
                     score += bonus
                 }
             }
 
             avoidedProperties.forEach { (pattern, penalty) ->
                 if (rel.propertyName.contains(pattern, ignoreCase = true) ||
-                    rel.propertyUri.contains(pattern, ignoreCase = true)) {
+                    rel.propertyUri.contains(pattern, ignoreCase = true)
+                ) {
                     score -= penalty
                 }
             }
@@ -233,6 +238,7 @@ class ConfigurablePathScoringStrategy(
     }
 
     override fun getPreferredProperties() = preferredProperties.keys
+
     override fun getAvoidedProperties() = avoidedProperties.keys
 }
 
@@ -240,19 +246,34 @@ class ConfigurablePathScoringStrategy(
  * EPOS-specific scoring strategy
  */
 class EposPathScoringStrategy : PathScoringStrategy {
+    private val semanticProperties =
+        setOf(
+            "theme",
+            "category",
+            "concept",
+            "inScheme",
+            "broader",
+            "narrower",
+            "distribution",
+            "dataset",
+            "accessService",
+        )
 
-    private val semanticProperties = setOf(
-        "theme", "category", "concept", "inScheme", "broader",
-        "narrower", "distribution", "dataset", "accessService"
-    )
+    private val avoidedTypes =
+        setOf(
+            "contactpoint",
+            "person",
+            "postaladdress",
+            "address",
+        )
 
-    private val avoidedTypes = setOf(
-        "contactpoint", "person", "postaladdress", "address"
-    )
-
-    private val preferredIntermediates = setOf(
-        "dataset", "distribution", "webservice", "dataservice"
-    )
+    private val preferredIntermediates =
+        setOf(
+            "dataset",
+            "distribution",
+            "webservice",
+            "dataservice",
+        )
 
     override fun score(path: List<PropertyRelationship>): Double {
         var score = 100.0
@@ -294,6 +315,7 @@ class EposPathScoringStrategy : PathScoringStrategy {
     }
 
     override fun getPreferredProperties() = semanticProperties
+
     override fun getAvoidedProperties() = setOf("contactPoint")
 }
 
@@ -320,27 +342,29 @@ interface SparqlClient {
  * Adapter for PropertyGraphClient to discover relationships from data
  */
 class PropertyGraphClientAdapter(
-    private val propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient
+    private val propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient,
 ) : SparqlClient {
     override fun query(sparql: String): Sequence<Map<String, String>> {
-        val results = propertyGraphClient.runQuery(
-            """
-            MATCH (source:Version)-[rel]->(target:Version)
-            WHERE source.id <> target.id
-            RETURN properties(source) AS source, type(rel) AS property, properties(target) AS target
-            LIMIT 1000
-            """.trimIndent(),
-        )
-
-        return results.map { row ->
-            val source = row["source"] as? Map<*, *> ?: emptyMap<Any, Any>()
-            val target = row["target"] as? Map<*, *> ?: emptyMap<Any, Any>()
-            mapOf(
-                "sourceType" to (((source["type"] as? List<*>)?.firstOrNull() ?: source["type"])?.toString() ?: ""),
-                "property" to (row["property"] as? String ?: ""),
-                "targetType" to (((target["type"] as? List<*>)?.firstOrNull() ?: target["type"])?.toString() ?: "")
+        val results =
+            propertyGraphClient.runQuery(
+                """
+                MATCH (source:Version)-[rel]->(target:Version)
+                WHERE source.id <> target.id
+                RETURN properties(source) AS source, type(rel) AS property, properties(target) AS target
+                LIMIT 1000
+                """.trimIndent(),
             )
-        }.asSequence()
+
+        return results
+            .map { row ->
+                val source = row["source"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                val target = row["target"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                mapOf(
+                    "sourceType" to (((source["type"] as? List<*>)?.firstOrNull() ?: source["type"])?.toString() ?: ""),
+                    "property" to (row["property"] as? String ?: ""),
+                    "targetType" to (((target["type"] as? List<*>)?.firstOrNull() ?: target["type"])?.toString() ?: ""),
+                )
+            }.asSequence()
     }
 }
 
@@ -352,7 +376,7 @@ class PropertyGraphClientAdapter(
  * Generalized relationship graph with configurable behavior
  */
 class RelationshipGraph(
-    private val config: RelationshipGraphConfig = RelationshipGraphConfig.DEFAULT
+    private val config: RelationshipGraphConfig = RelationshipGraphConfig.DEFAULT,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -376,14 +400,15 @@ class RelationshipGraph(
         client: SparqlClient,
         graphUri: String? = null,
         additionalFilters: String = "",
-        clearExisting: Boolean = true
+        clearExisting: Boolean = true,
     ) {
         if (clearExisting) clear()
 
         val graphClause = if (graphUri != null) "FROM <$graphUri>" else ""
         val excludedPropsFilter = config.excludedProperties.joinToString(", ") { "<$it>" }
 
-        val query = """
+        val query =
+            """
             PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             
             SELECT DISTINCT ?sourceType ?property ?targetType
@@ -400,7 +425,7 @@ class RelationshipGraph(
                 $additionalFilters
             }
             LIMIT ${config.maxQueryResults}
-        """.trimIndent()
+            """.trimIndent()
 
         if (config.verbose) {
             logger.debug("Executing relationship discovery query...")
@@ -413,7 +438,11 @@ class RelationshipGraph(
      * Build from a SPARQL endpoint using custom query
      * Query must return ?sourceType, ?property, ?targetType bindings
      */
-    fun buildFromCustomQuery(client: SparqlClient, customQuery: String, clearExisting: Boolean = true) {
+    fun buildFromCustomQuery(
+        client: SparqlClient,
+        customQuery: String,
+        clearExisting: Boolean = true,
+    ) {
         if (clearExisting) clear()
         processQueryResults(client.query(customQuery))
     }
@@ -423,12 +452,12 @@ class RelationshipGraph(
      */
     fun buildFromData(
         propertyGraphClient: org.epos.propertygraph.client.PropertyGraphClient,
-        clearExisting: Boolean = true
+        clearExisting: Boolean = true,
     ) {
         buildFromSparql(
             PropertyGraphClientAdapter(propertyGraphClient),
             additionalFilters = "",
-            clearExisting = clearExisting
+            clearExisting = clearExisting,
         )
     }
 
@@ -439,7 +468,7 @@ class RelationshipGraph(
         sourceTypeUri: String,
         propertyUri: String,
         targetTypeUri: String,
-        bidirectional: Boolean = config.includeBidirectional
+        bidirectional: Boolean = config.includeBidirectional,
     ) {
         if (isDatatype(sourceTypeUri) || isDatatype(targetTypeUri)) return
         if (sourceTypeUri in config.excludedTypes || targetTypeUri in config.excludedTypes) return
@@ -453,48 +482,59 @@ class RelationshipGraph(
         registerType(targetTypeUri, targetTypeName)
 
         // Forward relationship
-        addForwardRelationship(PropertyRelationship(
-            propertyUri = propertyUri,
-            propertyName = propertyName,
-            sourceType = sourceTypeUri,
-            sourceTypeName = sourceTypeName,
-            targetClass = targetTypeUri,
-            targetClassName = targetTypeName,
-            isInverse = false
-        ))
+        addForwardRelationship(
+            PropertyRelationship(
+                propertyUri = propertyUri,
+                propertyName = propertyName,
+                sourceType = sourceTypeUri,
+                sourceTypeName = sourceTypeName,
+                targetClass = targetTypeUri,
+                targetClassName = targetTypeName,
+                isInverse = false,
+            ),
+        )
 
         // Inverse relationship
         if (bidirectional) {
-            addInverseRelationship(PropertyRelationship(
-                propertyUri = propertyUri,
-                propertyName = "^$propertyName",
-                sourceType = targetTypeUri,
-                sourceTypeName = targetTypeName,
-                targetClass = sourceTypeUri,
-                targetClassName = sourceTypeName,
-                isInverse = true
-            ))
+            addInverseRelationship(
+                PropertyRelationship(
+                    propertyUri = propertyUri,
+                    propertyName = "^$propertyName",
+                    sourceType = targetTypeUri,
+                    sourceTypeName = targetTypeName,
+                    targetClass = sourceTypeUri,
+                    targetClassName = sourceTypeName,
+                    isInverse = true,
+                ),
+            )
         }
     }
 
     /**
      * Build from SHACL shapes (schema-level relationships)
      */
-    fun buildFromShacl(shapesGraph: ShaclShapesGraph, clearExisting: Boolean = true) {
+    fun buildFromShacl(
+        shapesGraph: ShaclShapesGraph,
+        clearExisting: Boolean = true,
+    ) {
         if (clearExisting) clear()
 
-        val shapeById = shapesGraph.nodeShapes
-            .filter { !it.id.isNullOrBlank() }
-            .associateBy { it.id!! }
+        val shapeById =
+            shapesGraph.nodeShapes
+                .filter { !it.id.isNullOrBlank() }
+                .associateBy { it.id!! }
 
         for (nodeShape in shapesGraph.nodeShapes) {
-            val sourceClass = nodeShape.targets
-                .filterIsInstance<TargetClass>()
-                .firstOrNull()?.targetClass
-                ?: nodeShape.targets
-                    .filterIsInstance<ImplicitClassTarget>()
-                    .firstOrNull()?.classIri
-                ?: continue
+            val sourceClass =
+                nodeShape.targets
+                    .filterIsInstance<TargetClass>()
+                    .firstOrNull()
+                    ?.targetClass
+                    ?: nodeShape.targets
+                        .filterIsInstance<ImplicitClassTarget>()
+                        .firstOrNull()
+                        ?.classIri
+                    ?: continue
 
             for (propShape in nodeShape.properties) {
                 val targetClasses = mutableSetOf<String>()
@@ -544,7 +584,10 @@ class RelationshipGraph(
     /**
      * Find the best path from one resource type to another
      */
-    fun findPath(fromTypeName: String, toTypeName: String): RelationshipPath? {
+    fun findPath(
+        fromTypeName: String,
+        toTypeName: String,
+    ): RelationshipPath? {
         val fromTypeUri = typeNameToUri[fromTypeName.lowercase()]
         val toTypeUri = typeNameToUri[toTypeName.lowercase()]
 
@@ -566,16 +609,18 @@ class RelationshipGraph(
         }
 
         // Score and sort paths
-        val scoredPaths = allPaths
-            .map { path -> path to config.scoringStrategy.score(path) }
-            .sortedByDescending { it.second }
+        val scoredPaths =
+            allPaths
+                .map { path -> path to config.scoringStrategy.score(path) }
+                .sortedByDescending { it.second }
 
         if (config.verbose && allPaths.size > 1) {
             logger.debug("Found {} possible paths:", allPaths.size)
             scoredPaths.take(3).forEach { (path, score) ->
-                val desc = path.joinToString(" -> ") {
-                    "${it.sourceTypeName}.${it.propertyName}"
-                } + " -> $toTypeName"
+                val desc =
+                    path.joinToString(" -> ") {
+                        "${it.sourceTypeName}.${it.propertyName}"
+                    } + " -> $toTypeName"
                 logger.debug("  - [score: {:.1f}] {}", score, desc)
             }
         }
@@ -590,7 +635,7 @@ class RelationshipGraph(
     fun findAllPaths(
         fromTypeName: String,
         toTypeName: String,
-        maxDepth: Int = config.maxPathDepth
+        maxDepth: Int = config.maxPathDepth,
     ): List<RelationshipPath> {
         val fromTypeUri = typeNameToUri[fromTypeName.lowercase()] ?: return emptyList()
         val toTypeUri = typeNameToUri[toTypeName.lowercase()] ?: return emptyList()
@@ -601,14 +646,13 @@ class RelationshipGraph(
             .map { path ->
                 val score = config.scoringStrategy.score(path)
                 buildRelationshipPath(path, fromTypeName, toTypeName, score)
-            }
-            .sortedByDescending { it.score }
+            }.sortedByDescending { it.score }
     }
 
     private fun findAllPathsBFS(
         fromType: String,
         toType: String,
-        maxDepth: Int = config.maxPathDepth
+        maxDepth: Int = config.maxPathDepth,
     ): List<List<PropertyRelationship>> {
         val allPaths = mutableListOf<List<PropertyRelationship>>()
         val queue = ArrayDeque<Triple<String, List<PropertyRelationship>, Set<String>>>()
@@ -651,16 +695,12 @@ class RelationshipGraph(
     /**
      * Get forward (non-inverse) relationships only
      */
-    fun getForwardRelationships(typeName: String): List<PropertyRelationship> {
-        return getOutgoingRelationships(typeName).filter { !it.isInverse }
-    }
+    fun getForwardRelationships(typeName: String): List<PropertyRelationship> = getOutgoingRelationships(typeName).filter { !it.isInverse }
 
     /**
      * Get inverse relationships only
      */
-    fun getInverseRelationships(typeName: String): List<PropertyRelationship> {
-        return getOutgoingRelationships(typeName).filter { it.isInverse }
-    }
+    fun getInverseRelationships(typeName: String): List<PropertyRelationship> = getOutgoingRelationships(typeName).filter { it.isInverse }
 
     /**
      * Get type URI from type name
@@ -690,12 +730,13 @@ class RelationshipGraph(
     /**
      * Get statistics about the graph
      */
-    fun getStatistics(): GraphStatistics = GraphStatistics(
-        typeCount = typeNameToUri.size,
-        forwardRelationshipCount = forwardCount,
-        inverseRelationshipCount = inverseCount,
-        totalRelationshipCount = forwardCount + inverseCount
-    )
+    fun getStatistics(): GraphStatistics =
+        GraphStatistics(
+            typeCount = typeNameToUri.size,
+            forwardRelationshipCount = forwardCount,
+            inverseRelationshipCount = inverseCount,
+            totalRelationshipCount = forwardCount + inverseCount,
+        )
 
     // =========================================================================
     // Internal Helpers
@@ -711,12 +752,19 @@ class RelationshipGraph(
         }
 
         if (config.verbose) {
-            logger.debug("Relationship graph built: {} types, {} forward, {} inverse",
-                typeNameToUri.size, forwardCount, inverseCount)
+            logger.debug(
+                "Relationship graph built: {} types, {} forward, {} inverse",
+                typeNameToUri.size,
+                forwardCount,
+                inverseCount,
+            )
         }
     }
 
-    private fun registerType(uri: String, name: String) {
+    private fun registerType(
+        uri: String,
+        name: String,
+    ) {
         typeNameToUri[name.lowercase()] = uri
         typeUriToName[uri] = name
     }
@@ -741,19 +789,20 @@ class RelationshipGraph(
         relationships: List<PropertyRelationship>,
         fromTypeName: String,
         toTypeName: String,
-        score: Double = 0.0
+        score: Double = 0.0,
     ): RelationshipPath {
-        val steps = relationships.map { rel ->
-            PathStep(
-                propertyUri = rel.propertyUri,
-                propertyName = rel.propertyName.removePrefix("^"),
-                fromType = rel.sourceType,
-                fromTypeName = rel.sourceTypeName,
-                toType = rel.targetClass,
-                toTypeName = rel.targetClassName,
-                isInverse = rel.isInverse
-            )
-        }
+        val steps =
+            relationships.map { rel ->
+                PathStep(
+                    propertyUri = rel.propertyUri,
+                    propertyName = rel.propertyName.removePrefix("^"),
+                    fromType = rel.sourceType,
+                    fromTypeName = rel.sourceTypeName,
+                    toType = rel.targetClass,
+                    toTypeName = rel.targetClassName,
+                    isInverse = rel.isInverse,
+                )
+            }
 
         val sparqlPath = steps.joinToString("/") { it.toSparql() }
 
@@ -764,36 +813,49 @@ class RelationshipGraph(
             toTypeName = toTypeName,
             steps = steps,
             sparqlPropertyPath = sparqlPath,
-            score = score
+            score = score,
         )
     }
 
-    private fun isDatatype(uri: String): Boolean {
-        return config.datatypePatterns.any { uri.contains(it, ignoreCase = true) }
-    }
+    private fun isDatatype(uri: String): Boolean = config.datatypePatterns.any { uri.contains(it, ignoreCase = true) }
 
-    private fun extractPathVariants(path: PropertyPath): List<Pair<String, Boolean>> {
-        return when (path) {
-            is PredicatePath -> listOf(path.predicate to false)
-            is InversePath -> when (val inner = path.inner) {
-                is PredicatePath -> listOf(inner.predicate to true)
-                else -> emptyList()
+    private fun extractPathVariants(path: PropertyPath): List<Pair<String, Boolean>> =
+        when (path) {
+            is PredicatePath -> {
+                listOf(path.predicate to false)
             }
-            is AlternativePath -> path.paths.flatMap { extractPathVariants(it) }.distinct()
-            is ZeroOrMorePath -> extractPathVariants(path.inner)
-            is OneOrMorePath -> extractPathVariants(path.inner)
-            is ZeroOrOnePath -> extractPathVariants(path.inner)
-            else -> emptyList()
+
+            is InversePath -> {
+                when (val inner = path.inner) {
+                    is PredicatePath -> listOf(inner.predicate to true)
+                    else -> emptyList()
+                }
+            }
+
+            is AlternativePath -> {
+                path.paths.flatMap { extractPathVariants(it) }.distinct()
+            }
+
+            is ZeroOrMorePath -> {
+                extractPathVariants(path.inner)
+            }
+
+            is OneOrMorePath -> {
+                extractPathVariants(path.inner)
+            }
+
+            is ZeroOrOnePath -> {
+                extractPathVariants(path.inner)
+            }
+
+            else -> {
+                emptyList()
+            }
         }
-    }
 
-    private fun extractTypeName(uri: String): String {
-        return uri.substringAfterLast("/").substringAfterLast("#").lowercase()
-    }
+    private fun extractTypeName(uri: String): String = uri.substringAfterLast("/").substringAfterLast("#").lowercase()
 
-    private fun extractPropertyName(uri: String): String {
-        return uri.substringAfterLast("/").substringAfterLast("#")
-    }
+    private fun extractPropertyName(uri: String): String = uri.substringAfterLast("/").substringAfterLast("#")
 
     /**
      * Clear all data
@@ -814,8 +876,11 @@ class RelationshipGraph(
      * Print the relationship graph
      */
     fun printGraph() {
-        logger.info("Relationship Graph ({} types, {} relationships):",
-            typeNameToUri.size, forwardCount + inverseCount)
+        logger.info(
+            "Relationship Graph ({} types, {} relationships):",
+            typeNameToUri.size,
+            forwardCount + inverseCount,
+        )
         relationshipGraph.entries
             .sortedBy { typeUriToName[it.key] }
             .forEach { (sourceType, relationships) ->
@@ -831,36 +896,39 @@ class RelationshipGraph(
     /**
      * Export as Mermaid diagram
      */
-    fun toMermaid(): String = buildString {
-        appendLine("graph LR")
-        relationshipGraph.forEach { (sourceType, relationships) ->
-            val sourceName = typeUriToName[sourceType] ?: return@forEach
-            relationships.filter { !it.isInverse }.forEach { rel ->
-                val targetName = rel.targetClassName
-                val propName = rel.propertyName
-                appendLine("    $sourceName -->|$propName| $targetName")
+    fun toMermaid(): String =
+        buildString {
+            appendLine("graph LR")
+            relationshipGraph.forEach { (sourceType, relationships) ->
+                val sourceName = typeUriToName[sourceType] ?: return@forEach
+                relationships.filter { !it.isInverse }.forEach { rel ->
+                    val targetName = rel.targetClassName
+                    val propName = rel.propertyName
+                    appendLine("    $sourceName -->|$propName| $targetName")
+                }
             }
         }
-    }
 
     /**
      * Export as JSON-friendly map
      */
-    fun toMap(): Map<String, Any> = mapOf(
-        "types" to typeNameToUri,
-        "relationships" to relationshipGraph.mapValues { (_, rels) ->
-            rels.map { rel ->
-                mapOf(
-                    "property" to rel.propertyUri,
-                    "propertyName" to rel.propertyName,
-                    "target" to rel.targetClass,
-                    "targetName" to rel.targetClassName,
-                    "isInverse" to rel.isInverse
-                )
-            }
-        },
-        "statistics" to getStatistics()
-    )
+    fun toMap(): Map<String, Any> =
+        mapOf(
+            "types" to typeNameToUri,
+            "relationships" to
+                relationshipGraph.mapValues { (_, rels) ->
+                    rels.map { rel ->
+                        mapOf(
+                            "property" to rel.propertyUri,
+                            "propertyName" to rel.propertyName,
+                            "target" to rel.targetClass,
+                            "targetName" to rel.targetClassName,
+                            "isInverse" to rel.isInverse,
+                        )
+                    }
+                },
+            "statistics" to getStatistics(),
+        )
 }
 
 /**
@@ -870,7 +938,7 @@ data class GraphStatistics(
     val typeCount: Int,
     val forwardRelationshipCount: Int,
     val inverseRelationshipCount: Int,
-    val totalRelationshipCount: Int
+    val totalRelationshipCount: Int,
 )
 
 // =============================================================================

@@ -1,10 +1,14 @@
 package org.epos.infrastructure.ktor.routes
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.request.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.request.header
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.logstash.logback.argument.StructuredArguments.entries
@@ -28,11 +32,6 @@ fun Route.populationRoutes(
 ) {
     val logger = LoggerFactory.getLogger("org.epos.infrastructure.ktor.routes.populationRoutes")
     route("/api/v2/admin") {
-        
-        /**
-         * POST /api/v2/admin/populate
-         * Populates from configured INDEX_URL (no body) or from {url|path} body.
-         */
         post("/populate") {
             val actorHeaders = call.requireActorHeaders() ?: return@post
             val request = runCatching { call.receive<PopulateFromFileRequest>() }.getOrNull()
@@ -87,13 +86,15 @@ fun Route.populationRoutes(
                         }
                         call.respondSuccess(
                             message = "Population completed successfully",
-                            data = mapOf(
-                                "indexUrl" to Config.INDEX_URL,
-                                "agent" to actorHeaders.agent,
-                                "group" to actorHeaders.group,
-                            ),
+                            data =
+                                mapOf(
+                                    "indexUrl" to Config.INDEX_URL,
+                                    "agent" to actorHeaders.agent,
+                                    "group" to actorHeaders.group,
+                                ),
                         )
                     }
+
                     !indexUrl.isNullOrBlank() -> {
                         logger.info(
                             "population_source_selected",
@@ -110,31 +111,35 @@ fun Route.populationRoutes(
                         }
                         call.respondSuccess(
                             message = "Population completed successfully",
-                            data = mapOf(
-                                "indexUrl" to indexUrl,
-                                "agent" to actorHeaders.agent,
-                                "group" to actorHeaders.group,
-                            ),
+                            data =
+                                mapOf(
+                                    "indexUrl" to indexUrl,
+                                    "agent" to actorHeaders.agent,
+                                    "group" to actorHeaders.group,
+                                ),
                         )
                     }
+
                     else -> {
-                        val result = withContext(Dispatchers.IO) {
-                            when {
-                                !ttlUrl.isNullOrBlank() -> populationService.populateFromSingleFile(ttlUrl, sourceAuthorization)
-                                else -> populationService.populateFromLocalFile(localPath!!)
+                        val result =
+                            withContext(Dispatchers.IO) {
+                                when {
+                                    !ttlUrl.isNullOrBlank() -> populationService.populateFromSingleFile(ttlUrl, sourceAuthorization)
+                                    else -> populationService.populateFromLocalFile(localPath!!)
+                                }
                             }
-                        }
 
                         if (result.success) {
                             call.respondSuccess(
                                 message = result.message,
-                                data = mapOf(
-                                    "sourceUrl" to result.sourceUrl,
-                                    "subjectsProcessed" to result.subjectsProcessed,
-                                    "triplesInserted" to result.triplesInserted,
-                                    "agent" to actorHeaders.agent,
-                                    "group" to actorHeaders.group,
-                                ),
+                                data =
+                                    mapOf(
+                                        "sourceUrl" to result.sourceUrl,
+                                        "subjectsProcessed" to result.subjectsProcessed,
+                                        "triplesInserted" to result.triplesInserted,
+                                        "agent" to actorHeaders.agent,
+                                        "group" to actorHeaders.group,
+                                    ),
                             )
                         } else {
                             call.respondPopulationError(
@@ -147,15 +152,11 @@ fun Route.populationRoutes(
             } catch (e: Exception) {
                 call.respondPopulationError(
                     message = "Failed to populate database: ${e.message}",
-                    details = e.stackTraceToString()
+                    details = e.stackTraceToString(),
                 )
             }
         }
 
-        /**
-         * POST /api/v2/admin/relations/reconcile
-         * Reconciles missing semantic relation edges and backfills legacy edge metadata.
-         */
         post("/relations/reconcile") {
             val actorHeaders = call.requireActorHeaders() ?: return@post
             val request = runCatching { call.receive<ReconcileRelationsRequest>() }.getOrNull()
@@ -165,28 +166,30 @@ fun Route.populationRoutes(
             val batchSize = request?.batchSize
 
             try {
-                val result = withContext(Dispatchers.IO) {
-                    relationReconciliationService.reconcile(
-                        dryRun = dryRun,
-                        resourceId = resourceId,
-                        maxVersions = maxVersions,
-                        batchSize = batchSize,
-                    )
-                }
+                val result =
+                    withContext(Dispatchers.IO) {
+                        relationReconciliationService.reconcile(
+                            dryRun = dryRun,
+                            resourceId = resourceId,
+                            maxVersions = maxVersions,
+                            batchSize = batchSize,
+                        )
+                    }
 
                 call.respondSuccess(
                     message = if (dryRun) "Relation reconciliation dry-run completed" else "Relation reconciliation completed",
-                    data = mapOf(
-                        "dryRun" to result.dryRun,
-                        "resourceId" to resourceId,
-                        "versionsScanned" to result.versionsScanned,
-                        "missingEdgesDiscovered" to result.missingEdgesDiscovered,
-                        "edgesCreated" to result.edgesCreated,
-                        "legacyEdgesScanned" to result.legacyEdgesScanned,
-                        "legacyEdgesBackfilled" to result.legacyEdgesBackfilled,
-                        "agent" to actorHeaders.agent,
-                        "group" to actorHeaders.group,
-                    ),
+                    data =
+                        mapOf(
+                            "dryRun" to result.dryRun,
+                            "resourceId" to resourceId,
+                            "versionsScanned" to result.versionsScanned,
+                            "missingEdgesDiscovered" to result.missingEdgesDiscovered,
+                            "edgesCreated" to result.edgesCreated,
+                            "legacyEdgesScanned" to result.legacyEdgesScanned,
+                            "legacyEdgesBackfilled" to result.legacyEdgesBackfilled,
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group,
+                        ),
                 )
             } catch (e: Exception) {
                 call.respondPopulationError(
@@ -196,7 +199,7 @@ fun Route.populationRoutes(
             }
         }
 
-        /**
+        /*
          * POST /api/v2/admin/relations/audit
          * Audits one resource relation/property cardinality and mixed conceptual/version values.
          */
@@ -210,9 +213,10 @@ fun Route.populationRoutes(
             }
 
             try {
-                val result = withContext(Dispatchers.IO) {
-                    relationReconciliationService.auditResource(resourceId)
-                }
+                val result =
+                    withContext(Dispatchers.IO) {
+                        relationReconciliationService.auditResource(resourceId)
+                    }
                 if (result == null) {
                     call.respond(HttpStatusCode.NotFound, ErrorResponse("RESOURCE_NOT_FOUND", "Resource not found: $resourceId"))
                     return@post
@@ -220,15 +224,16 @@ fun Route.populationRoutes(
 
                 call.respondSuccess(
                     message = "Relation audit completed",
-                    data = mapOf(
-                        "resourceId" to result.resourceId,
-                        "resolvedVersionId" to result.resolvedVersionId,
-                        "propertyCounts" to result.propertyCounts,
-                        "relationCandidates" to result.relationCandidates,
-                        "mixedConceptualAndVersionValues" to result.mixedConceptualAndVersionValues,
-                        "agent" to actorHeaders.agent,
-                        "group" to actorHeaders.group,
-                    ),
+                    data =
+                        mapOf(
+                            "resourceId" to result.resourceId,
+                            "resolvedVersionId" to result.resolvedVersionId,
+                            "propertyCounts" to result.propertyCounts,
+                            "relationCandidates" to result.relationCandidates,
+                            "mixedConceptualAndVersionValues" to result.mixedConceptualAndVersionValues,
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group,
+                        ),
                 )
             } catch (e: Exception) {
                 call.respondPopulationError(
@@ -237,8 +242,8 @@ fun Route.populationRoutes(
                 )
             }
         }
-        
-        /**
+
+        /*
          * GET /api/v2/admin/populate/status
          * Returns the current population configuration
          */
@@ -248,16 +253,16 @@ fun Route.populationRoutes(
                     "indexUrl" to Config.INDEX_URL,
                     "neo4jUri" to Config.NEO4J_URI,
                     "neo4jDatabase" to Config.NEO4J_DATABASE,
-                )
+                ),
             )
         }
-        
-        /**
+
+        /*
          * POST /api/v2/admin/populate/content
          * Populates the database from TTL content uploaded directly.
-         * 
+         *
          * Request body: { "content": "@prefix ...", "sourceName": "my-upload" }
-         * 
+         *
          * This is useful for:
          * - Uploading ttl content directly without hosting it
          * - Testing with small TTL snippets
@@ -289,36 +294,38 @@ fun Route.populationRoutes(
                     ),
                 )
 
-                val result = withContext(Dispatchers.IO) {
-                    populationService.populateFromContent(ttlContent, sourceName)
-                }
+                val result =
+                    withContext(Dispatchers.IO) {
+                        populationService.populateFromContent(ttlContent, sourceName)
+                    }
 
                 if (result.success) {
                     call.respondSuccess(
                         message = result.message,
-                        data = mapOf(
-                            "sourceName" to sourceName,
-                            "subjectsProcessed" to result.subjectsProcessed,
-                            "triplesInserted" to result.triplesInserted,
-                            "agent" to actorHeaders.agent,
-                            "group" to actorHeaders.group
-                        )
+                        data =
+                            mapOf(
+                                "sourceName" to sourceName,
+                                "subjectsProcessed" to result.subjectsProcessed,
+                                "triplesInserted" to result.triplesInserted,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
                     )
                 } else {
                     call.respondPopulationError(
                         message = result.message,
-                        details = result.error
+                        details = result.error,
                     )
                 }
             } catch (e: Exception) {
                 call.respondPopulationError(
                     message = "Failed to populate from content: ${e.message}",
-                    details = e.stackTraceToString()
+                    details = e.stackTraceToString(),
                 )
             }
         }
 
-        /**
+        /*
          * POST /api/v2/admin/import/revision/file
          * Imports a TTL source into DRAFT revisions for existing published entities.
          */
@@ -344,12 +351,13 @@ fun Route.populationRoutes(
                 return@post
             }
 
-            val options = parseRevisionImportOptions(
-                versionModeRaw = request.versionMode,
-                version = request.version,
-                replaceDraftIfExists = request.replaceDraftIfExists,
-                dryRun = request.dryRun
-            )
+            val options =
+                parseRevisionImportOptions(
+                    versionModeRaw = request.versionMode,
+                    version = request.version,
+                    replaceDraftIfExists = request.replaceDraftIfExists,
+                    dryRun = request.dryRun,
+                )
 
             if (options == null) {
                 call.respondBadRequest("Invalid versionMode. Use 'auto' or 'explicit' (requires version)")
@@ -357,45 +365,57 @@ fun Route.populationRoutes(
             }
 
             try {
-                val result = withContext(Dispatchers.IO) {
-                    when {
-                        !ttlUrl.isNullOrBlank() -> revisionImportService.importFromSingleFile(ttlUrl, options, actorHeaders.agent, actorHeaders.group)
-                        else -> revisionImportService.importFromLocalFile(localPath!!, options, actorHeaders.agent, actorHeaders.group)
+                val result =
+                    withContext(Dispatchers.IO) {
+                        when {
+                            !ttlUrl.isNullOrBlank() -> {
+                                revisionImportService.importFromSingleFile(
+                                    ttlUrl,
+                                    options,
+                                    actorHeaders.agent,
+                                    actorHeaders.group,
+                                )
+                            }
+
+                            else -> {
+                                revisionImportService.importFromLocalFile(localPath!!, options, actorHeaders.agent, actorHeaders.group)
+                            }
+                        }
                     }
-                }
 
                 if (result.success) {
                     call.respondSuccess(
                         message = result.message,
-                        data = mapOf(
-                            "source" to result.source,
-                            "dryRun" to result.dryRun,
-                            "subjectsProcessed" to result.subjectsProcessed,
-                            "triplesPrepared" to result.triplesPrepared,
-                            "triplesInserted" to result.triplesInserted,
-                            "draftsCreated" to result.draftsCreated,
-                            "draftsReused" to result.draftsReused,
-                            "linksRewritten" to result.linksRewritten,
-                            "entities" to result.entities,
-                            "agent" to actorHeaders.agent,
-                            "group" to actorHeaders.group
-                        )
+                        data =
+                            mapOf(
+                                "source" to result.source,
+                                "dryRun" to result.dryRun,
+                                "subjectsProcessed" to result.subjectsProcessed,
+                                "triplesPrepared" to result.triplesPrepared,
+                                "triplesInserted" to result.triplesInserted,
+                                "draftsCreated" to result.draftsCreated,
+                                "draftsReused" to result.draftsReused,
+                                "linksRewritten" to result.linksRewritten,
+                                "entities" to result.entities,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
                     )
                 } else {
                     call.respondPopulationError(
                         message = result.message,
-                        details = result.errors.joinToString("; ")
+                        details = result.errors.joinToString("; "),
                     )
                 }
             } catch (e: Exception) {
                 call.respondPopulationError(
                     message = "Failed to import revisions from file: ${e.message}",
-                    details = e.stackTraceToString()
+                    details = e.stackTraceToString(),
                 )
             }
         }
 
-        /**
+        /*
          * POST /api/v2/admin/import/revision/content
          * Imports TTL content into DRAFT revisions for existing published entities.
          */
@@ -409,12 +429,13 @@ fun Route.populationRoutes(
                 return@post
             }
 
-            val options = parseRevisionImportOptions(
-                versionModeRaw = request.versionMode,
-                version = request.version,
-                replaceDraftIfExists = request.replaceDraftIfExists,
-                dryRun = request.dryRun
-            )
+            val options =
+                parseRevisionImportOptions(
+                    versionModeRaw = request.versionMode,
+                    version = request.version,
+                    replaceDraftIfExists = request.replaceDraftIfExists,
+                    dryRun = request.dryRun,
+                )
 
             if (options == null) {
                 call.respondBadRequest("Invalid versionMode. Use 'auto' or 'explicit' (requires version)")
@@ -424,37 +445,39 @@ fun Route.populationRoutes(
             val sourceName = request.sourceName ?: "revision-import-${System.currentTimeMillis()}"
 
             try {
-                val result = withContext(Dispatchers.IO) {
-                    revisionImportService.importFromContent(ttlContent, sourceName, options, actorHeaders.agent, actorHeaders.group)
-                }
+                val result =
+                    withContext(Dispatchers.IO) {
+                        revisionImportService.importFromContent(ttlContent, sourceName, options, actorHeaders.agent, actorHeaders.group)
+                    }
 
                 if (result.success) {
                     call.respondSuccess(
                         message = result.message,
-                        data = mapOf(
-                            "source" to result.source,
-                            "dryRun" to result.dryRun,
-                            "subjectsProcessed" to result.subjectsProcessed,
-                            "triplesPrepared" to result.triplesPrepared,
-                            "triplesInserted" to result.triplesInserted,
-                            "draftsCreated" to result.draftsCreated,
-                            "draftsReused" to result.draftsReused,
-                            "linksRewritten" to result.linksRewritten,
-                            "entities" to result.entities,
-                            "agent" to actorHeaders.agent,
-                            "group" to actorHeaders.group
-                        )
+                        data =
+                            mapOf(
+                                "source" to result.source,
+                                "dryRun" to result.dryRun,
+                                "subjectsProcessed" to result.subjectsProcessed,
+                                "triplesPrepared" to result.triplesPrepared,
+                                "triplesInserted" to result.triplesInserted,
+                                "draftsCreated" to result.draftsCreated,
+                                "draftsReused" to result.draftsReused,
+                                "linksRewritten" to result.linksRewritten,
+                                "entities" to result.entities,
+                                "agent" to actorHeaders.agent,
+                                "group" to actorHeaders.group,
+                            ),
                     )
                 } else {
                     call.respondPopulationError(
                         message = result.message,
-                        details = result.errors.joinToString("; ")
+                        details = result.errors.joinToString("; "),
                     )
                 }
             } catch (e: Exception) {
                 call.respondPopulationError(
                     message = "Failed to import revisions from content: ${e.message}",
-                    details = e.stackTraceToString()
+                    details = e.stackTraceToString(),
                 )
             }
         }
@@ -465,13 +488,14 @@ private fun parseRevisionImportOptions(
     versionModeRaw: String?,
     version: String?,
     replaceDraftIfExists: Boolean?,
-    dryRun: Boolean?
+    dryRun: Boolean?,
 ): RevisionImportOptions? {
-    val versionMode = when (versionModeRaw?.lowercase() ?: "auto") {
-        "auto" -> VersionMode.AUTO
-        "explicit" -> VersionMode.EXPLICIT
-        else -> return null
-    }
+    val versionMode =
+        when (versionModeRaw?.lowercase() ?: "auto") {
+            "auto" -> VersionMode.AUTO
+            "explicit" -> VersionMode.EXPLICIT
+            else -> return null
+        }
 
     if (versionMode == VersionMode.EXPLICIT && version.isNullOrBlank()) {
         return null
@@ -481,11 +505,14 @@ private fun parseRevisionImportOptions(
         versionMode = versionMode,
         explicitVersion = version?.trim(),
         replaceDraftIfExists = replaceDraftIfExists ?: true,
-        dryRun = dryRun ?: false
+        dryRun = dryRun ?: false,
     )
 }
 
-private suspend fun ApplicationCall.respondSuccess(message: String, data: Any? = null) {
+private suspend fun ApplicationCall.respondSuccess(
+    message: String,
+    data: Any? = null,
+) {
     respond(ApiResponse(success = true, message = message, data = data))
 }
 
@@ -493,13 +520,16 @@ private suspend fun ApplicationCall.respondBadRequest(message: String) {
     respond(HttpStatusCode.BadRequest, ErrorResponse(error = "BadRequest", message = message))
 }
 
-private suspend fun ApplicationCall.respondPopulationError(message: String, details: String? = null) {
+private suspend fun ApplicationCall.respondPopulationError(
+    message: String,
+    details: String? = null,
+) {
     respond(
         HttpStatusCode.InternalServerError,
         ErrorResponse(
             error = "PopulationFailed",
             message = message,
-            details = details
-        )
+            details = details,
+        ),
     )
 }
