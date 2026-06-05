@@ -116,6 +116,8 @@ services:
         condition: service_started
     ports:
       - "4200:4200"
+    environment:
+      - PLATFORM_API_PROXY_TARGET=http://gateway-service:5000
     restart: on-failure
     networks:
       - epos-network

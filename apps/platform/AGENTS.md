@@ -5,7 +5,7 @@
 - Run commands from `apps/platform` with `make build`, `make test`, `make fmt`, and `make lint`.
 - The Angular project lives directly in this directory; keep app tooling aligned with repo tooling.
 - Regenerate API types with `make codegen` after gateway OpenAPI changes.
-- Local development proxies `/v1` to the gateway through `proxy.conf.json`.
+- Local development proxies `/v1` to the gateway through `proxy.conf.cjs`.
 
 ## App Conventions
 

@@ -8,10 +8,10 @@ COPY apps/platform/package.json apps/platform/pnpm-lock.yaml apps/platform/pnpm-
 RUN pnpm install --frozen-lockfile
 
 COPY apps/platform/angular.json apps/platform/tsconfig.json apps/platform/tsconfig.app.json apps/platform/tsconfig.spec.json ./
-COPY apps/platform/.postcssrc.json apps/platform/openapitools.json apps/platform/proxy.conf.json ./
+COPY apps/platform/.postcssrc.json apps/platform/openapitools.json apps/platform/proxy.conf.cjs ./
 COPY apps/platform/public ./public
 COPY apps/platform/src ./src
 RUN mkdir -p /workspace/services/gateway/docs
 COPY services/gateway/docs/openapi.yaml /workspace/services/gateway/docs/openapi.yaml
 
-CMD ["sh", "-c", "pnpm run codegen && pnpm exec ng serve --configuration development --proxy-config proxy.conf.json --host 0.0.0.0 --port 4200"]
+CMD ["sh", "-c", "pnpm run codegen && pnpm exec ng serve --configuration development --proxy-config proxy.conf.cjs --host 0.0.0.0 --port 4200"]

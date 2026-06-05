@@ -4,15 +4,15 @@
   "packageManager": "pnpm@11.4.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --proxy-config proxy.conf.json",
+    "start": "ng serve --proxy-config proxy.conf.cjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
     "fmt": "prettier --write .",
     "lint": "prettier --check .",
     "codegen": "openapi-typescript ../../services/gateway/docs/openapi.yaml -o src/app/api/generated/schema.ts",
-    "dev": "pnpm run codegen && ng serve --configuration development --proxy-config proxy.conf.json",
-    "dev-oss": "pnpm run codegen && ng serve --configuration oss-development --proxy-config proxy.conf.json"
+    "dev": "pnpm run codegen && ng serve --configuration development --proxy-config proxy.conf.cjs",
+    "dev-oss": "pnpm run codegen && ng serve --configuration oss-development --proxy-config proxy.conf.cjs"
   },
   "private": true,
   "dependencies": {
