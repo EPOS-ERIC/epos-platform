@@ -285,6 +285,31 @@ jobs:
           docker compose -f docker/compose.dev.yaml logs
           exit 1
 
+      - name: Wait for metadata lifecycle
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://localhost:8080/health >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Populate integration metadata
+        run: make populate-metadatone
+
+      - name: Wait for populated gateway data
+        run: |
+          for i in {1..90}; do
+            if curl -fsS 'http://localhost:32000/v1/search?type=softwareapplication' >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
       - name: Run Hurl integration tests
         run: >-
           docker run --rm --network host
