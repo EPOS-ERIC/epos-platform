@@ -31,9 +31,6 @@ test:
 	$(MAKE) -C services/metadata-lifecycle test
 	$(MAKE) -C services/oss-aai-service test
 
-test-hurl:
-	$(MAKE) -C services/gateway test-hurl
-
 fmt:
 	$(MAKE) -C services/gateway fmt
 	$(MAKE) -C services/user-group fmt
@@ -63,6 +60,8 @@ helm-status:
 helm-uninstall:
 	helm uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
 
+test-integration: test-schemathesis test-hurl
+
 test-schemathesis:
 	SCHEMATHESIS_HOOKS=tests/schemathesis/hooks.py schemathesis run \
 		--url "http://localhost:32000/v1" \
@@ -70,4 +69,8 @@ test-schemathesis:
 		--exclude-checks unsupported_method \
 		services/gateway/docs/openapi.yaml
 
+test-hurl:
+	hurl --variable baseUrl=http://localhost:32000 --test tests/hurl
+
 .PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis
+

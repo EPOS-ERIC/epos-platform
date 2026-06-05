@@ -1,46 +1,112 @@
 {
-  "href": "http://localhost:8080/api/v2/access/iritemplate/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-iritemplate-2ff35bd4%2Fv1.0",
-  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-iritemplate-2ff35bd4/v1.0",
+  "href": "http://localhost:8080/api/v2/access/iritemplate/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplate-383ba416%2Fv1.0",
+  "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplate-383ba416/v1.0",
   "properties": {
     "hydra:mapping": [
       {
-        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-afe775b2%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-afe775b2/v1.0",
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-bec6757f%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-bec6757f/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
         "type": "iritemplatemapping"
       },
       {
-        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-d1713110%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-d1713110/v1.0",
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-6e1d03bf%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-6e1d03bf/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
         "type": "iritemplatemapping"
       },
       {
-        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-25a4198f%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-25a4198f/v1.0",
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-cc040606%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-cc040606/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
         "type": "iritemplatemapping"
       },
       {
-        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-73bc40eb%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-73bc40eb/v1.0",
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-ae32613b%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-ae32613b/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
         "type": "iritemplatemapping"
       },
       {
-        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-e890a680%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-e890a680/v1.0",
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-e296da48%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-e296da48/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
         "type": "iritemplatemapping"
       },
       {
-        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/mailto%3Aochambers%40bgs.ac.uk%2Fbnode-iritemplatemapping-44b3a135%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-44b3a135/v1.0",
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-c6edf57b%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-c6edf57b/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-01f77125%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-01f77125/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-79219970%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-79219970/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-acd0818a%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-acd0818a/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-2fa4d342%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-2fa4d342/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-99212efd%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-99212efd/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-59522638%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-59522638/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-c2ea443d%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-c2ea443d/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-c19cb3e0%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-c19cb3e0/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-b0c41f63%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-b0c41f63/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-2f9a6fda%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-2f9a6fda/v1.0",
+        "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
+        "type": "iritemplatemapping"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/iritemplatemapping/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-iritemplatemapping-9f1f2b7f%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-iritemplatemapping-9f1f2b7f/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#mapping",
         "type": "iritemplatemapping"
       }
     ],
-    "hydra:template": "https://imag-data.bgs.ac.uk/GIN_V1/GINServices?request=GetData\u0026recordTermination=native\u0026traceList=1234\u0026colourTraces=True{\u0026observatoryIagaCode, SamplesPerDay, dataStartDate, dataEndDate, publicationState, pictureSize, pdfSize, dataScale, Format}",
+    "hydra:template": "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}",
     "rdf:type": "http://www.w3.org/ns/hydra/core#IriTemplate"
   },
   "shape": "iritemplate"

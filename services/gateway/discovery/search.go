@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"slices"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"golang.org/x/sync/errgroup"
 )
@@ -29,7 +31,7 @@ var (
 func ValidateSearchTypes(types []api.ResourceType) error {
 	for _, resourceType := range types {
 		if !slices.Contains(supportedSearchTypes, resourceType) {
-			return fmt.Errorf("unsupported search type %q; allowed values: %s", resourceType, supportedSearchTypes)
+			return fmt.Errorf("unsupported search type: %s", resourceType)
 		}
 	}
 
@@ -51,7 +53,7 @@ type SearchParams struct {
 
 func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiApiV2AccessSearchGetRequest, error) {
 	if err := ValidateSearchTypes(p.Types); err != nil {
-		return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("validate search types: %w", err)
+		return metadataclient.ApiApiV2AccessSearchGetRequest{}, err
 	}
 
 	versioningStatus := make([]metadataclient.VersioningStatus, len(p.VersioningStatus))
@@ -123,6 +125,10 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 
 	resp, httpResp, err := req.Execute()
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusBadRequest {
+			return api.SearchResponse{}, fmt.Errorf("search metadata request rejected: %w: %v", domain.ErrBadRequest, err)
+		}
+
 		requestMethod := ""
 		requestURL := ""
 		if httpResp != nil && httpResp.Request != nil {

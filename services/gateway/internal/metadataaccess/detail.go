@@ -17,6 +17,10 @@ func FetchDetail(ctx context.Context, client *metadataclient.APIClient, shape, i
 
 	resp, httpResp, err := client.AccessAPI.ApiV2AccessShapeIdGet(ctx, shape, id).Execute()
 	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusBadRequest {
+			return nil, fmt.Errorf("fetch access detail for %s '%s': %w: %v", shape, id, domain.ErrBadRequest, err)
+		}
+
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			return nil, domain.ErrNotFound
 		}

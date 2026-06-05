@@ -1,0 +1,13 @@
+{
+  "href": "http://localhost:8080/api/v2/access/organization/PIC%3A999472675%2Fv1.0",
+  "id": "PIC:999472675/v1.0",
+  "properties": {
+    "schema:url": "http://www.ingv.it",
+    "schema:legalName": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
+    "schema:leiCode": "Legal Entity Identifier Search: http://www.lei-lookup.com/#!search",
+    "rdf:type": "http://schema.org/Organization",
+    "schema:logo": "https://www.ingv.it/templates/g5_helium/custom/images/INGV_logo_colore3.png",
+    "schema:email": ["ufficiostampa@ingv.it"]
+  },
+  "shape": "organization"
+}

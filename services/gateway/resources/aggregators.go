@@ -41,7 +41,7 @@ func aggregateIdentifiers(ctx context.Context, properties map[string]any, fetch 
 
 	result := make([]api.Identifier, 0, len(identifiers))
 	for _, identifier := range identifiers {
-		if identifier.Type == "" && identifier.Value == "" {
+		if identifier.Type == "" || identifier.Value == "" {
 			continue
 		}
 		result = append(result, identifier)

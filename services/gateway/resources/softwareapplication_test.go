@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
 )
 
 func TestMapSoftwareApplication(t *testing.T) {
@@ -50,13 +51,10 @@ func TestMapSoftwareApplication(t *testing.T) {
 	if softwareApplication.Version != "1.0" {
 		t.Fatalf("softwareApplication.Version = %q", softwareApplication.Version)
 	}
-	if len(softwareApplication.ContactPoints) != 1 || softwareApplication.ContactPoints[0].Href != "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fror.org%2F048a87296%2FlegalContact%2Fv1.0" {
-		t.Fatalf("softwareApplication.ContactPoints = %#v", softwareApplication.ContactPoints)
-	}
 	if len(softwareApplication.Concepts) != 1 || softwareApplication.Concepts[0].Href != "v1/concept/category:software_appl_conc_multi/v1.0" {
 		t.Fatalf("softwareApplication.Concepts = %#v", softwareApplication.Concepts)
 	}
-	if len(softwareApplication.Creator) != 0 {
+	if len(softwareApplication.Creator) != 1 || softwareApplication.Creator[0].Href != gatewayhref.Build(api.OrganizationType, "ROR:048a87296/v1.0") {
 		t.Fatalf("softwareApplication.Creator = %#v", softwareApplication.Creator)
 	}
 

@@ -1,0 +1,8 @@
+{
+  "href": "http://localhost:8080/api/v2/access/distribution/http%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FSeismologicalProducts%2FESMFlatFile%2FDataset%2F001%2FDistribution%2F001%2Fv1.0",
+  "id": "http://www.epos-eu.org/epos-dcat-ap/Seismology/SeismologicalProducts/ESMFlatFile/Dataset/001/Distribution/001/v1.0",
+  "properties": {
+    "dct:title": ["TEST3 - Engineering Strong-Motion (ESM) Flatfile 2018"]
+  },
+  "shape": "distribution"
+}

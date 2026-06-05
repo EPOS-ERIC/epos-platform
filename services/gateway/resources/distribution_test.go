@@ -13,26 +13,19 @@ func TestMapDistribution(t *testing.T) {
 	t.Parallel()
 
 	detail := loadAccessDetailFixture(t, "testdata/metadata-lifecycle/access/distribution/intermagnet.json")
-	fetch := newFixtureAccessDetailFetcher(t, map[string]string{
-		fixtureKey(operationType, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Operation/v1.0"):                    "testdata/metadata-lifecycle/access/operation/intermagnet.json",
-		fixtureKey(iriTemplateType, "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-iritemplate-2ff35bd4/v1.0"): "testdata/metadata-lifecycle/access/iritemplate/intermagnet.json",
-		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-afe775b2/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-format.json",
-		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-d1713110/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-publication-state.json",
-		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-25a4198f/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-end-date.json",
-		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-73bc40eb/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-start-date.json",
-		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-e890a680/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-samples-per-day.json",
-		fixtureKey(iriTemplateMappingType, "mailto:ochambers@bgs.ac.uk/bnode-iritemplatemapping-44b3a135/v1.0"):                                           "testdata/metadata-lifecycle/access/iritemplatemapping/intermagnet-observatory-iaga-code.json",
-	})
+	fixtures := fdsnEventFixturePaths()
+	fixtures[fixtureKey("distribution", currentAHEADDistributionID)] = "testdata/metadata-lifecycle/access/distribution/intermagnet.json"
+	fetch := newFixtureAccessDetailFetcher(t, fixtures)
 
 	distribution, err := mapDistribution(context.Background(), detail, fetch)
 	if err != nil {
 		t.Fatalf("mapDistribution() error = %v", err)
 	}
 
-	if distribution.ID != "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Distribution/v1.0" {
+	if distribution.ID != currentAHEADDistributionID {
 		t.Fatalf("distribution.ID = %q", distribution.ID)
 	}
-	if distribution.Name != "INTERMAGNET Geomagnetic Observatory Data" {
+	if distribution.Name != "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event" {
 		t.Fatalf("distribution.Name = %q", distribution.Name)
 	}
 	if distribution.Description == "" {
@@ -44,15 +37,15 @@ func TestMapDistribution(t *testing.T) {
 	if distribution.Format != "http://publications.europa.eu/resource/authority/file-type/XML" {
 		t.Fatalf("distribution.Format = %q", distribution.Format)
 	}
-	if distribution.License != "https://creativecommons.org/licenses/by-nc/4.0/" {
+	if distribution.License != "https://creativecommons.org/licenses/by/4.0/" {
 		t.Fatalf("distribution.License = %q", distribution.License)
 	}
 	if distribution.Type != api.DistributionKindWebService {
 		t.Fatalf("distribution.Type = %q", distribution.Type)
 	}
-	assertTimeEqual(t, distribution.Issued, "2018-08-31T00:00:00Z")
-	assertTimeEqual(t, distribution.Modified, "2018-08-31T00:00:00Z")
-	if distribution.Webservice == nil || distribution.Webservice.Href != "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0" {
+	assertTimeEqual(t, distribution.Issued, "2017-10-25T00:00:00Z")
+	assertTimeEqual(t, distribution.Modified, "2017-10-25T00:00:00Z")
+	if distribution.Webservice == nil || distribution.Webservice.Href != currentAHEADWebserviceHref {
 		t.Fatalf("distribution.Webservice = %#v", distribution.Webservice)
 	}
 	if distribution.Operation == nil {
@@ -61,7 +54,7 @@ func TestMapDistribution(t *testing.T) {
 	if distribution.Operation.Method != "GET" {
 		t.Fatalf("distribution.Operation.Method = %q", distribution.Operation.Method)
 	}
-	if len(distribution.Operation.Returns) != 6 {
+	if len(distribution.Operation.Returns) != 1 || distribution.Operation.Returns[0] != "application/xml" {
 		t.Fatalf("distribution.Operation.Returns = %#v", distribution.Operation.Returns)
 	}
 	if distribution.Operation.IriTemplate == nil {
@@ -70,13 +63,13 @@ func TestMapDistribution(t *testing.T) {
 	if distribution.Operation.IriTemplate.Template == "" {
 		t.Fatalf("distribution.Operation.IriTemplate = %#v", distribution.Operation.IriTemplate)
 	}
-	if len(distribution.Operation.IriTemplate.Mappings) != 6 {
+	if len(distribution.Operation.IriTemplate.Mappings) != 17 {
 		t.Fatalf("distribution.Operation.IriTemplate.Mappings = %#v", distribution.Operation.IriTemplate.Mappings)
 	}
 	var foundRequired bool
 	for _, mapping := range distribution.Operation.IriTemplate.Mappings {
-		if mapping.Variable == "observatoryIagaCode" {
-			foundRequired = mapping.Required && mapping.Label == "Observatory IAGA code"
+		if mapping.Variable == "starttime" {
+			foundRequired = mapping.Required && mapping.Label == "Start time"
 		}
 	}
 	if !foundRequired {

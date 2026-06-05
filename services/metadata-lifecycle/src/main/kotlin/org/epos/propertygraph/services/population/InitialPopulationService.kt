@@ -21,6 +21,7 @@ import org.epos.propertygraph.client.PropertyGraphClient
 import org.epos.propertygraph.services.ProvenanceService
 import org.epos.propertygraph.utils.UriUtils
 import org.epos.services.ShaclService
+import net.logstash.logback.argument.StructuredArguments.entries
 import org.slf4j.LoggerFactory
 import java.io.StringReader
 import java.net.URI
@@ -45,13 +46,31 @@ class InitialPopulationService(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     suspend fun populateInitial(indexUrl: String = Config.INDEX_URL) {
-        logger.info("=== Initial Population Started ===")
+        logger.info(
+            "population_started",
+            entries(
+                mapOf(
+                    "event" to "population_started",
+                    "population.type" to "initial",
+                    "source.url" to indexUrl,
+                ),
+            ),
+        )
 
         ensureNeo4jSupport()
         ensureIndexesReadyForPopulation()
 
         val urls = fetchIndex(indexUrl)
-        logger.info("Found {} TTL files to process", urls.size)
+        logger.info(
+            "population_sources_discovered",
+            entries(
+                mapOf(
+                    "event" to "population_sources_discovered",
+                    "source.count" to urls.size,
+                    "source.url" to indexUrl,
+                ),
+            ),
+        )
 
         val results = downloadAll(urls)
 
@@ -60,20 +79,49 @@ class InitialPopulationService(
         val failures = mutableListOf<String>()
 
         results.forEachIndexed { index, (url, model) ->
-            logger.info("[{}/{}] Processing: {}", index + 1, results.size, url)
+            logger.info(
+                "population_source_processing",
+                entries(
+                    mapOf(
+                        "event" to "population_source_processing",
+                        "source.index" to index + 1,
+                        "source.total" to results.size,
+                        "source.url" to url,
+                    ),
+                ),
+            )
 
             try {
                 processModelWithStats(url, model)
                 successCount++
             } catch (e: Exception) {
                 errorCount++
-                logger.error("ERROR processing {}: {}", url, e.message)
+                logger.error(
+                    "population_source_failed",
+                    entries(
+                        mapOf(
+                            "event" to "population_source_failed",
+                            "source.url" to url,
+                            "error.message" to (e.message ?: "Unknown error"),
+                        ),
+                    ),
+                )
                 failures += "$url :: ${e.message ?: e::class.simpleName ?: "Unknown error"}"
             }
         }
 
-        logger.info("=== Initial Population Completed ===")
-        logger.info("Total: {} | Success: {} | Errors: {}", results.size, successCount, errorCount)
+        logger.info(
+            "population_completed",
+            entries(
+                mapOf(
+                    "event" to "population_completed",
+                    "population.type" to "initial",
+                    "source.total" to results.size,
+                    "source.success" to successCount,
+                    "source.errors" to errorCount,
+                ),
+            ),
+        )
 
         if (errorCount > 0) {
             val preview = failures.take(10).joinToString(" | ")
@@ -442,11 +490,29 @@ class InitialPopulationService(
             logger.warn("No subjects found, skipping")
             return ProcessingStats(0, 0)
         }
-        logger.info("Found {} subject(s)", subjects.size)
+        logger.info(
+            "population_subjects_extracted",
+            entries(
+                mapOf(
+                    "event" to "population_subjects_extracted",
+                    "subjects.count" to subjects.size,
+                    "source.url" to sourceUrl,
+                ),
+            ),
+        )
 
         val skolemized = skolemizeBlankNodes(originalModel, subjects)
         val allSubjects = extractSubjects(skolemized)
-        logger.info("After skolemization: {} subjects", allSubjects.size)
+        logger.info(
+            "population_subjects_skolemized",
+            entries(
+                mapOf(
+                    "event" to "population_subjects_skolemized",
+                    "subjects.count" to allSubjects.size,
+                    "source.url" to sourceUrl,
+                ),
+            ),
+        )
 
         val uriMappings =
             allSubjects.associate { uri ->
@@ -559,14 +625,32 @@ class InitialPopulationService(
                 attachEdges(sourceVersionId, edges)
             }
         }
-        logger.info("Inserted into Property Graph ({} property sets)", triplesInserted)
+        logger.info(
+            "population_graph_upserted",
+            entries(
+                mapOf(
+                    "event" to "population_graph_upserted",
+                    "property.sets" to triplesInserted,
+                    "source.url" to sourceUrl,
+                ),
+            ),
+        )
 
         uriMappings.values.forEach { (conceptual, versioned) ->
             provenanceService.recordInitialCreation(
                 versionUri = versioned,
             )
         }
-        logger.info("Recorded provenance ({} entities)", uriMappings.size)
+        logger.info(
+            "population_provenance_recorded",
+            entries(
+                mapOf(
+                    "event" to "population_provenance_recorded",
+                    "entities.count" to uriMappings.size,
+                    "source.url" to sourceUrl,
+                ),
+            ),
+        )
 
         return ProcessingStats(uriMappings.size, triplesInserted)
     }

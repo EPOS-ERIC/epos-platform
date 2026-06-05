@@ -11,6 +11,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import net.logstash.logback.argument.StructuredArguments.entries
 import org.epos.api.models.ApiResponse
 import org.epos.api.models.ErrorResponse
 import org.epos.propertygraph.Config
@@ -57,11 +58,29 @@ fun Route.populationRoutes(
             val sourceAuthorization = call.request.header("X-Source-Authorization")
 
             try {
-                logger.info("Population triggered by agent: {}, group: {}", actorHeaders.agent, actorHeaders.group)
+                logger.info(
+                    "population_triggered",
+                    entries(
+                        mapOf(
+                            "event" to "population_triggered",
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group,
+                        ),
+                    ),
+                )
 
                 when {
                     ttlUrl.isNullOrBlank() && localPath.isNullOrBlank() && indexUrl.isNullOrBlank() -> {
-                        logger.info("Using INDEX_URL: {}", Config.INDEX_URL)
+                        logger.info(
+                            "population_source_selected",
+                            entries(
+                                mapOf(
+                                    "event" to "population_source_selected",
+                                    "source.type" to "configured_index",
+                                    "source.url" to Config.INDEX_URL,
+                                ),
+                            ),
+                        )
                         withContext(Dispatchers.IO) {
                             populationService.populateInitial()
                         }
@@ -77,7 +96,16 @@ fun Route.populationRoutes(
                     }
 
                     !indexUrl.isNullOrBlank() -> {
-                        logger.info("Using request indexUrl: {}", indexUrl)
+                        logger.info(
+                            "population_source_selected",
+                            entries(
+                                mapOf(
+                                    "event" to "population_source_selected",
+                                    "source.type" to "request_index",
+                                    "source.url" to indexUrl,
+                                ),
+                            ),
+                        )
                         withContext(Dispatchers.IO) {
                             populationService.populateInitial(indexUrl)
                         }
@@ -253,8 +281,18 @@ fun Route.populationRoutes(
             val sourceName = request.sourceName ?: "direct-upload-${System.currentTimeMillis()}"
 
             try {
-                logger.info("Direct content population triggered by agent: {}, group: {}", actorHeaders.agent, actorHeaders.group)
-                logger.info("Source name: {}, content length: {} chars", sourceName, ttlContent.length)
+                logger.info(
+                    "population_content_triggered",
+                    entries(
+                        mapOf(
+                            "event" to "population_content_triggered",
+                            "agent" to actorHeaders.agent,
+                            "group" to actorHeaders.group,
+                            "source.name" to sourceName,
+                            "content.length" to ttlContent.length,
+                        ),
+                    ),
+                )
 
                 val result =
                     withContext(Dispatchers.IO) {

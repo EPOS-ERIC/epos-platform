@@ -165,6 +165,8 @@ paths:
                     accrual_periodicity: "http://purl.org/cld/freq/irregular"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -211,6 +213,8 @@ paths:
                         - "application/xml"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -233,6 +237,8 @@ paths:
                 $ref: "#/components/schemas/SoftwareApplication"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -255,6 +261,8 @@ paths:
                 $ref: "#/components/schemas/SoftwareSourceCode"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -316,6 +324,8 @@ paths:
                       entrypoint: "https://www.emidius.eu/AHEAD/services/epos_events.php"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -353,6 +363,8 @@ paths:
                     url: "http://www.uu.se"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -433,6 +445,8 @@ paths:
                     children: []
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -472,6 +486,8 @@ paths:
                         href: "v1/concept/category:facets/software-theme/v1.0"
         "404":
           $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -708,9 +724,9 @@ components:
             invalidQuery:
               summary: Invalid query parameter
               value:
-                title: "Invalid query parameter"
+                title: "invalid_query_parameter"
                 status: 400
-                detail: "One or more query parameters are invalid."
+                detail: "unsupported search type: concept"
 
     NotFound:
       description: Resource not found
@@ -722,9 +738,9 @@ components:
             resourceNotFound:
               summary: Missing resource
               value:
-                title: "Resource not found"
+                title: "resource_not_found"
                 status: 404
-                detail: "Dataset not found."
+                detail: "dataset not found"
 
     InternalServerError:
       description: Internal server error
@@ -871,7 +887,7 @@ components:
               type: array
               description: Organization references associated with this dataset
               items:
-                $ref: "#/components/schemas/ResourceRef"
+                $ref: "#/components/schemas/DatasetProviderRef"
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
@@ -1021,6 +1037,13 @@ components:
           description: Relative URI reference to referenced resource detail endpoint
           example: "v1/organization/ROR:048a87296/v1.0"
 
+    DatasetProviderRef:
+      allOf:
+        - $ref: "#/components/schemas/ResourceRef"
+        - type: object
+          required:
+            - name
+
     # -------------------------------------------------------------------------
     # Detail schemas
     # -------------------------------------------------------------------------
@@ -1062,18 +1085,6 @@ components:
               type: string
               description: Human-readable version information for this dataset
               example: "Revision 3 reviewed by EPOS"
-            contact_points:
-              type: array
-              description: Contact point references associated with this dataset
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0"
-                  name: "Manager"
-                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0"
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact/v1.0"
-                  name: "Scientific contact"
-                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FscientificContact%2Fv1.0"
             keywords:
               type: array
               items:
@@ -1098,7 +1109,11 @@ components:
               type: array
               description: Organizations publishing this dataset; exposed as `providers` in search results
               items:
-                $ref: "#/components/schemas/ResourceRef"
+                allOf:
+                  - $ref: "#/components/schemas/ResourceRef"
+                  - type: object
+                    required:
+                      - name
               example:
                 - id: "PIC:999472675/v1.0"
                   name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
@@ -1236,15 +1251,6 @@ components:
         - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
           properties:
-            contact_points:
-              type: array
-              description: Contact point references associated with this software application
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "https://orcid.org/0000-0001-6095-2941/v1.0"
-                  name: "Author"
-                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Forcid.org%2F0000-0001-6095-2941%2Fv1.0"
             keywords:
               type: array
               items:
@@ -1310,15 +1316,6 @@ components:
         - $ref: "#/components/schemas/BaseDetailResource"
         - type: object
           properties:
-            contact_points:
-              type: array
-              description: Contact point references associated with this software source code
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "https://orcid.org/0000-0001-6095-2941/v1.0"
-                  name: "Author"
-                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Forcid.org%2F0000-0001-6095-2941%2Fv1.0"
             programming_language:
               type: string
               description: Primary programming language of the source code
@@ -1456,15 +1453,6 @@ components:
               format: uri
               description: API entrypoint of the webservice
               example: "https://webservices.ingv.it/fdsnws/station/1"
-            contact_points:
-              type: array
-              description: Contact point references associated with this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0"
-                  name: "Manager"
-                  href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0"
             provider:
               description: Organization providing this webservice
               allOf:

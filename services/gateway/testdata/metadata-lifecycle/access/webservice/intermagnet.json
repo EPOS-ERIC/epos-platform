@@ -1,73 +1,74 @@
 {
-  "href": "http://localhost:8080/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0",
-  "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0",
+  "href": "http://localhost:8080/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0",
+  "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0",
   "properties": {
     "dcat:contactPoint": [
       {
-        "href": "http://localhost:8080/api/v2/access/contactpoint/mailto%3Aochambers%40bgs.ac.uk%2FcontactPoint%2Fv1.0",
-        "id": "mailto:ochambers@bgs.ac.uk/contactPoint/v1.0",
+        "href": "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FscientificContact%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/scientificContact/v1.0",
+        "predicateIri": "http://www.w3.org/ns/dcat#contactPoint",
+        "type": "contactpoint"
+      },
+      {
+        "href": "http://localhost:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0",
         "predicateIri": "http://www.w3.org/ns/dcat#contactPoint",
         "type": "contactpoint"
       }
     ],
     "dct:conformsTo": [
       {
-        "href": "http://localhost:8080/api/v2/access/apidocumentation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FAPIDocumentation%2Fv1.0",
-        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/APIDocumentation/v1.0",
+        "href": "http://localhost:8080/api/v2/access/apidocumentation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2FAPIDocumentation%2Ffdsnws-event%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/APIDocumentation/fdsnws-event/v1.0",
         "predicateIri": "http://purl.org/dc/terms/conformsTo",
         "type": "apidocumentation"
       }
     ],
-    "dct:license": "https://creativecommons.org/licenses/by-nc/4.0/",
+    "dct:license": "https://creativecommons.org/licenses/by/4.0/",
     "dct:spatial": [
       {
-        "href": "http://localhost:8080/api/v2/access/location/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-location-630d862a%2Fv1.0",
-        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-location-630d862a/v1.0",
+        "href": "http://localhost:8080/api/v2/access/location/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-location-2df7160e%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-location-2df7160e/v1.0",
         "predicateIri": "http://purl.org/dc/terms/spatial",
         "type": "location"
       }
     ],
     "dct:temporal": [
       {
-        "href": "http://localhost:8080/api/v2/access/periodoftime/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2Fbnode-periodoftime-0f4b2f01%2Fv1.0",
-        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/bnode-periodoftime-0f4b2f01/v1.0",
+        "href": "http://localhost:8080/api/v2/access/periodoftime/https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2Fbnode-periodoftime-854f13c1%2Fv1.0",
+        "id": "https://epos-eu.org/anthropogenic_hazards/software/bnode-periodoftime-854f13c1/v1.0",
         "predicateIri": "http://purl.org/dc/terms/temporal",
         "type": "periodoftime"
       }
     ],
-    "hydra:entrypoint": "https://imag-data.bgs.ac.uk/GIN_V1/",
+    "hydra:entrypoint": "https://www.emidius.eu/fdsnws/event/1/application.wadl",
     "hydra:supportedOperation": [
       {
-        "href": "http://localhost:8080/api/v2/access/operation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FOperation%2Fv1.0",
-        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Operation/v1.0",
+        "href": "http://localhost:8080/api/v2/access/operation/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2FOperation%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0",
         "predicateIri": "http://www.w3.org/ns/hydra/core#supportedOperation",
         "type": "operation"
       }
     ],
     "rdf:type": "https://www.epos-eu.org/epos-dcat-ap#WebService",
-    "schema:dateModified": "2018-08-31",
-    "schema:datePublished": "2018-08-31",
-    "schema:description": "The INTERMAGNET web service makes available data from INTERMAGNET observatories. Data are available in community formats(INTERMAGNET Minute Mean Format, IAGA 2002 format, World Data Centre Format), interoperable formats (JSON, XML,INTERMAGNET CDF format). All observatories provide 1 minute data, and may also provide 1 second data. Publication status is refined over time as sources are recorded, combined and verified. Query options allow for selection of provisional, reported, adjusted, quasi-def (quasi-definitive), adj-or-rep (best available of adjusted or reported or quasi-def) and definitive publication states. Not all combinations of query parameters will necessarily return results as this depends on the availability of data at any particular observatory. Data queries are restricted to a maximum of 7 days for any individual request.",
+    "schema:dateModified": "2018-09-10",
+    "schema:datePublished": "2012-12-01",
+    "schema:description": "FDSN-event web service providing event parameters for historical earthquakes from AHEAD, the European Archive of Historical Earthquake Data",
     "schema:identifier": [
       {
-        "href": "http://localhost:8080/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FGeoElectroMagnetism%2FWP13-DDSS-001%2FINTERMAGNET%2FWebservice%2Fv1.0",
-        "id": "https://www.epos-eu.org/epos-dcat-ap/GeoElectroMagnetism/WP13-DDSS-001/INTERMAGNET/Webservice/v1.0",
+        "href": "http://localhost:8080/api/v2/access/webservice/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0",
+        "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0",
         "predicateIri": "http://schema.org/identifier",
         "type": "webservice"
       }
     ],
     "schema:keywords": [
-      "geomagnetic observatory",
-      "magnetism",
-      "geomagnetism",
-      "observatory",
-      "magnetic data provisional",
-      "real time magnetic data"
+      "seismology, seismicity, catalogue, earthquake, magnitude"
     ],
-    "schema:name": "Web service for INTERMAGNET data",
+    "schema:name": "TEST1- Historical earthquakes 1000-1899 (FDSN-event)",
     "schema:provider": {
-      "href": "http://localhost:8080/api/v2/access/organization/http%3A%2F%2Fviaf.org%2Fviaf%2F136554353%2F%2Fv1.0",
-      "id": "http://viaf.org/viaf/136554353//v1.0",
+      "href": "http://localhost:8080/api/v2/access/organization/PIC%3A999472675%2Fv1.0",
+      "id": "PIC:999472675/v1.0",
       "predicateIri": "http://schema.org/provider",
       "type": "organization"
     }

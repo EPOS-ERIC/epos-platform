@@ -1,0 +1,56 @@
+{
+  "items": [
+    {
+      "fields": {
+        "schema:legalName": "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
+      },
+      "href": "http://localhost:8080/api/v2/access/organization/PIC%3A999472675%2Fv1.0",
+      "id": "PIC:999472675/v1.0",
+      "type": "organization"
+    },
+    {
+      "fields": {
+        "schema:legalName": "EPOS-GNSS Data Suppliers"
+      },
+      "href": "http://localhost:8080/api/v2/access/organization/MOID%3Ahttps%3A%2F%2Fgnss-metadata.eu%2FMOID%2Fdatasupplier.641dd8c7e06540da270881d8%2Fv1.0",
+      "id": "MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8/v1.0",
+      "type": "organization"
+    },
+    {
+      "fields": {
+        "schema:legalName": "AGH University of Science and Technology (AGH-UST) - POL"
+      },
+      "href": "http://localhost:8080/api/v2/access/organization/ROR%3Ahttps%3A%2F%2Fror.org%2F00bas1c41%2Fv1.0",
+      "id": "ROR:https://ror.org/00bas1c41/v1.0",
+      "type": "organization"
+    },
+    {
+      "fields": {
+        "schema:legalName": "Italian Strong Motion Network, IT, https://doi.org/10.7914/SN/IT"
+      },
+      "href": "http://localhost:8080/api/v2/access/organization/https%3A%2F%2Fdoi.org%2F10.7914%2FSN%2FIT",
+      "id": "https://doi.org/10.7914/SN/IT",
+      "type": "organization"
+    },
+    {
+      "fields": {
+        "schema:legalName": "Uppsala University"
+      },
+      "href": "http://localhost:8080/api/v2/access/organization/ROR%3A048a87296%2Fv1.0",
+      "id": "ROR:048a87296/v1.0",
+      "type": "organization"
+    },
+    {
+      "fields": {
+        "schema:legalName": "National Institute of Geophysics and Volcanology"
+      },
+      "href": "http://localhost:8080/api/v2/access/organization/ROR%3A00qps9a02%2Fv1.0",
+      "id": "ROR:00qps9a02/v1.0",
+      "type": "organization"
+    }
+  ],
+  "page": 1,
+  "total": 6,
+  "totalItems": 6,
+  "totalPages": 1
+}

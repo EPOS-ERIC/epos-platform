@@ -53,11 +53,6 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		return api.Webservice{}, err
 	}
 
-	contactPoints, err := reader.PassthroughRefs("dcat:contactPoint")
-	if err != nil {
-		return api.Webservice{}, fmt.Errorf("get webservice contact points: %w", err)
-	}
-
 	providers, err := reader.ResourceRefs("schema:provider", api.OrganizationType)
 	if err != nil {
 		return api.Webservice{}, fmt.Errorf("get webservice provider: %w", err)
@@ -85,7 +80,6 @@ func mapWebservice(ctx context.Context, detail *metadataclient.AccessDetailRespo
 		},
 		Identifiers:      identifiers,
 		Entrypoint:       reader.OptionalString("hydra:entrypoint"),
-		ContactPoints:    contactPoints,
 		Provider:         provider,
 		Issued:           issued,
 		Modified:         modified,
