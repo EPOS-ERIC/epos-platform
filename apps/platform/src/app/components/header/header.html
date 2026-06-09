@@ -4,9 +4,18 @@
   <div class="mx-auto flex items-center justify-between gap-4">
     <div>
       @if (isDarkMode) {
-        <img src="assets/img/logo-white.svg" alt="Platform logo" class="h-10 w-auto" />
+        <div class="flex items-start space-x-2">
+          <img src="assets/img/logo-white.svg" alt="Platform logo" class="h-10 w-auto" />
+          <span class="bg-orange-600 text-white text-xs font-semibold px-1 py-0.5 rounded-full">Beta</span>
+        </div>
       } @else {
-        <img src="assets/img/logo.svg" alt="Platform logo" class="h-10 w-auto" />
+        <div class="flex items-start space-x-2">
+          <!-- TODO: currently just hardcoded -->
+          <a href="https://www.epos-eu.org/" target="_blank" rel="noopener noreferrer">
+            <img src="assets/img/logo.svg" alt="Platform logo" class="h-10 w-auto" />
+          </a>
+          <span class="bg-sky-500 text-white text-xs font-semibold px-1 py-0.5 rounded-full">Beta</span>
+        </div>
       }
     </div>
     <div class="flex items-center gap-3">
