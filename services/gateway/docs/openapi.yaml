@@ -28,7 +28,7 @@ tags:
     description: Search and taxonomy bootstrap endpoints
   - name: Resources
     description: Resource detail endpoints
-  - name: Resource CRUD
+  - name: Draft Resource Operations
     description: Create, replace, and delete draft aggregates
   - name: Resource Lifecycle
     description: Submit, publish, draft, and discard aggregates
@@ -118,262 +118,6 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /dataset/{id}:
-    parameters:
-      - $ref: "#/components/parameters/DatasetId"
-    get:
-      tags:
-        - Resources
-      summary: Get dataset by id
-      description: |
-        Returns dataset detail metadata, including temporal and spatial coverage,
-        publishers, linked concepts, and linked distributions.
-      operationId: getDatasetById
-      responses:
-        "200":
-          description: Dataset found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dataset"
-              examples:
-                dataset:
-                  summary: Seismology dataset detail
-                  value:
-                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
-                    name: "TEST1 - Historical earthquakes 1000-1899"
-                    description: "Event data (e.g. epicentre, magnitude) for earthquakes archived in AHEAD"
-                    created: "2010-06-01T00:00:00Z"
-                    modified: "2018-09-10T00:00:00Z"
-                    keywords:
-                      - "event"
-                      - "earthquake"
-                      - "magnitude"
-                    concepts:
-                      - id: "category:earthquakeparameters/v1.0"
-                        name: "Earthquake parameters"
-                        href: "v1/concept/category:earthquakeparameters/v1.0"
-                    publisher:
-                      - id: "PIC:999472675/v1.0"
-                        name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                        href: "v1/organization/PIC:999472675/v1.0"
-                    spatial: "POLYGON((-34 74,45 74,45 33,-34 33,-34 74))"
-                    temporal:
-                      start: "1000-01-01T00:00:00Z"
-                      end: "1899-12-31T23:59:59Z"
-                    distributions:
-                      - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                        name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                        href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                    access_rights: "https://publications.europa.eu/resource/authority/access-right/PUBLIC"
-                    accrual_periodicity: "http://purl.org/cld/freq/irregular"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /distribution/{id}:
-    parameters:
-      - $ref: "#/components/parameters/DistributionId"
-    get:
-      tags:
-        - Resources
-      summary: Get distribution by id
-      description: |
-        Returns distribution detail metadata. Distribution payload shape depends on
-        distribution `type`, for example a downloadable file or a linked web service.
-      operationId: getDistributionById
-      responses:
-        "200":
-          description: Distribution found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Distribution"
-              examples:
-                webserviceDistribution:
-                  summary: Distribution backed by webservice operation
-                  value:
-                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                    name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                    description: "The distribution of event parameters via the FDSN-event web service is the main and preferred way to access historical earthquake data archived in AHEAD."
-                    type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-                    format: "http://publications.europa.eu/resource/authority/file-type/XML"
-                    issued: "2017-10-25T00:00:00Z"
-                    modified: "2017-10-25T00:00:00Z"
-                    license: "https://creativecommons.org/licenses/by/4.0/"
-                    webservice:
-                      id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                      name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                      href: "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                    operation:
-                      id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
-                      method: "GET"
-                      returns:
-                        - "application/xml"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /softwareapplication/{id}:
-    parameters:
-      - $ref: "#/components/parameters/SoftwareApplicationId"
-    get:
-      tags:
-        - Resources
-      summary: Get software application by id
-      operationId: getSoftwareApplicationById
-      responses:
-        "200":
-          description: Software application found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SoftwareApplication"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /softwaresourcecode/{id}:
-    parameters:
-      - $ref: "#/components/parameters/SoftwareSourceCodeId"
-    get:
-      tags:
-        - Resources
-      summary: Get software source code by id
-      operationId: getSoftwareSourceCodeById
-      responses:
-        "200":
-          description: Software source code found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SoftwareSourceCode"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /webservice/{id}:
-    parameters:
-      - $ref: "#/components/parameters/WebserviceId"
-    get:
-      tags:
-        - Resources
-      summary: Get webservice by id
-      description: |
-        Returns webservice detail metadata, including single provider organization,
-        supported operations, API documentation, and temporal or spatial coverage.
-      operationId: getWebserviceById
-      responses:
-        "200":
-          description: Webservice found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Webservice"
-              examples:
-                webservice:
-                  summary: Webservice detail
-                  value:
-                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                    name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                    description: "FDSN-event web service providing event parameters for historical earthquakes from AHEAD, the European Archive of Historical Earthquake Data"
-                    entrypoint: "https://www.emidius.eu/fdsnws/event/1/application.wadl"
-                    provider:
-                      id: "PIC:999472675/v1.0"
-                      name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                      href: "v1/organization/PIC:999472675/v1.0"
-                    issued: "2012-12-01T00:00:00Z"
-                    modified: "2018-09-10T00:00:00Z"
-                    spatial: "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"
-                    temporal:
-                      start: "1000-01-01T00:00:00Z"
-                      end: "1899-12-31T23:59:59Z"
-                    keywords:
-                      - "seismology, seismicity, catalogue, earthquake, magnitude"
-                    concepts:
-                      - id: "category:earthquakeparameters/v1.0"
-                        name: "Earthquake parameters"
-                        href: "v1/concept/category:earthquakeparameters/v1.0"
-                    license: "https://creativecommons.org/licenses/by/4.0/"
-                    operations:
-                      - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
-                        method: "GET"
-                        returns:
-                          - "application/xml"
-                        iri_template:
-                          template: "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"
-                    api_documentation:
-                      title: "ahead-fdsnws-event documentation"
-                      description: "Documentation for the fdsnws-event webservice"
-                      entrypoint: "https://www.emidius.eu/AHEAD/services/epos_events.php"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /organization/{id}:
-    parameters:
-      - $ref: "#/components/parameters/OrganizationId"
-    get:
-      tags:
-        - Resources
-      summary: Get organization by id
-      description: |
-        Returns organization detail metadata, including identifiers, contact points,
-        and parent organizations when available.
-      operationId: getOrganizationById
-      responses:
-        "200":
-          description: Organization found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Organization"
-              examples:
-                organization:
-                  summary: Organization detail
-                  value:
-                    id: "ROR:048a87296/v1.0"
-                    identifiers:
-                      - type: "URL"
-                        value: "https://ror.org/048a87296"
-                    name: "Uppsala University"
-                    address: "Dag Hammarskjölds väg 7, Uppsala, 751 05, Sweden"
-                    logo: "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg"
-                    url: "http://www.uu.se"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
   /concept:
     get:
       tags:
@@ -417,90 +161,12 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /concept/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ConceptId"
-    get:
-      tags:
-        - Resources
-      summary: Get concept by id
-      description: |
-        Returns a single concept node with its containing concept scheme and direct
-        child concept references.
-      operationId: getConceptById
-      responses:
-        "200":
-          description: Concept found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Concept"
-              examples:
-                concept:
-                  summary: Concept detail
-                  value:
-                    id: "category:software_jup_conc_multi/v1.0"
-                    name: "Multidisciplinary software"
-                    description: "Multidisciplinary software"
-                    in_scheme:
-                      id: "category:software_jup/v1.0"
-                      name: "Jupyter Notebooks"
-                      href: "v1/conceptscheme/category:software_jup/v1.0"
-                    children: []
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /conceptscheme/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ConceptSchemeId"
-    get:
-      tags:
-        - Resources
-      summary: Get concept scheme by id
-      description: |
-        Returns concept scheme detail metadata, including top concepts and optional
-        concept tree children when present.
-      operationId: getConceptSchemeById
-      responses:
-        "200":
-          description: Concept scheme found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConceptScheme"
-              examples:
-                conceptScheme:
-                  summary: Concept scheme detail
-                  value:
-                    id: "category:software_jup/v1.0"
-                    label: "JUP"
-                    name: "Jupyter Notebooks"
-                    description: "Jupyter Notebook Domain"
-                    logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
-                    homepage: ""
-                    color: "#F37726"
-                    order_number: 1
-                    top_concepts:
-                      - id: "category:facets/software-theme/v1.0"
-                        name: "Software"
-                        href: "v1/concept/category:facets/software-theme/v1.0"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
   /resources/{resourceType}:
     parameters:
       - $ref: "#/components/parameters/WriteResourceType"
     post:
       tags:
-        - Resource CRUD
+        - Draft Resource Operations
       summary: Create resource draft
       description: Create a new `draft` resource for the selected type.
       operationId: createResource
@@ -529,15 +195,39 @@ paths:
 
   /resources/{resourceType}/{id}:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
       - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get resource by id
+      description: |
+        Returns resource detail metadata for the selected resource type.
+      operationId: getResourceById
+      parameters:
+        - $ref: "#/components/parameters/ReadResourceType"
+      responses:
+        "200":
+          description: Resource found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags:
-        - Resource CRUD
+        - Draft Resource Operations
       summary: Replace resource draft
       description: Full replace semantics. Omitted writable fields are removed from the draft resource.
       operationId: updateResource
       parameters:
+        - $ref: "#/components/parameters/WriteResourceType"
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
       requestBody:
@@ -563,11 +253,12 @@ paths:
           $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
-        - Resource CRUD
+        - Draft Resource Operations
       summary: Delete resource draft
       description: Delete a `draft` resource.
       operationId: deleteResource
       parameters:
+        - $ref: "#/components/parameters/WriteResourceType"
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
       responses:
@@ -715,82 +406,10 @@ components:
       name: id
       in: path
       required: true
-      description: Local identifier of the resource
+      description: Resource identifier.
       schema:
         type: string
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
-
-    DatasetId:
-      name: id
-      in: path
-      required: true
-      description: Dataset identifier.
-      schema:
-        type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
-
-    DistributionId:
-      name: id
-      in: path
-      required: true
-      description: Distribution identifier.
-      schema:
-        type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fdistribution%2Frestful%2Fv1.0"
-
-    SoftwareApplicationId:
-      name: id
-      in: path
-      required: true
-      description: URL-encoded software application identifier.
-      schema:
-        type: string
-        example: "https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0"
-
-    SoftwareSourceCodeId:
-      name: id
-      in: path
-      required: true
-      description: Software source code identifier.
-      schema:
-        type: string
-        example: "https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403"
-
-    WebserviceId:
-      name: id
-      in: path
-      required: true
-      description: Webservice identifier.
-      schema:
-        type: string
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0"
-
-    OrganizationId:
-      name: id
-      in: path
-      required: true
-      description: Organization identifier.
-      schema:
-        type: string
-        example: "ROR%3A048a87296%2Fv1.0"
-
-    ConceptId:
-      name: id
-      in: path
-      required: true
-      description: Concept identifier.
-      schema:
-        type: string
-        example: "category%3Asoftware_jup_conc_multi%2Fv1.0"
-
-    ConceptSchemeId:
-      name: id
-      in: path
-      required: true
-      description: Concept scheme identifier.
-      schema:
-        type: string
-        example: "category%3Asoftware_jup%2Fv1.0"
 
     WriteResourceType:
       name: resourceType
@@ -799,6 +418,14 @@ components:
       description: Resource type identifier accepted by write endpoints.
       schema:
         $ref: "#/components/schemas/WriteResourceType"
+
+    ReadResourceType:
+      name: resourceType
+      in: path
+      required: true
+      description: Resource type identifier accepted by read endpoints.
+      schema:
+        $ref: "#/components/schemas/ReadResourceType"
 
     Q:
       name: q
@@ -1024,9 +651,22 @@ components:
         - softwareapplication
         - softwaresourcecode
 
+    ReadResourceType:
+      type: string
+      description: Resource type identifier used in detail read endpoints.
+      enum:
+        - dataset
+        - distribution
+        - organization
+        - softwareapplication
+        - softwaresourcecode
+        - webservice
+        - concept
+        - conceptscheme
+
     VersioningStatus:
       type: string
-      description: Publication status of resource.
+      description: Versioning state used by search, read, and write endpoints.
       enum:
         - published
         - draft
@@ -1051,6 +691,17 @@ components:
         - concept
         - conceptscheme
         - contactpoint
+
+    ResourceDetail:
+      oneOf:
+        - $ref: "#/components/schemas/Dataset"
+        - $ref: "#/components/schemas/Distribution"
+        - $ref: "#/components/schemas/Organization"
+        - $ref: "#/components/schemas/SoftwareApplication"
+        - $ref: "#/components/schemas/SoftwareSourceCode"
+        - $ref: "#/components/schemas/Webservice"
+        - $ref: "#/components/schemas/Concept"
+        - $ref: "#/components/schemas/ConceptScheme"
 
     ResourceLink:
       type: object
