@@ -68,4 +68,4 @@ HTTP 400
 header "Content-Type" contains "application/problem+json"
 jsonpath "$.title" == "invalid_query_parameter"
 jsonpath "$.status" == 400
-jsonpath "$.detail" == "versioning status must be one of draft, submitted, published, archived"
+jsonpath "$.detail" == "versioning status must be one of published, draft, submitted, archived, discarded"

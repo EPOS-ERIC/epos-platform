@@ -66,10 +66,14 @@ helm-uninstall:
 test-integration: test-schemathesis test-hurl
 
 test-schemathesis:
+# TODO: remove the exclude method flags when the backoffice endpoints are implemente
 	SCHEMATHESIS_HOOKS=tests/schemathesis/hooks.py schemathesis run \
 		--url "http://localhost:32000/v1" \
 		--suppress-health-check=filter_too_much \
 		--exclude-checks unsupported_method \
+		--exclude-method POST \
+		--exclude-method PUT \
+		--exclude-method DELETE \
 		services/gateway/docs/openapi.yaml
 
 test-hurl:

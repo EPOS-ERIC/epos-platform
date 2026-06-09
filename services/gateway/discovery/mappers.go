@@ -7,9 +7,9 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/resourcehref"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -193,7 +193,7 @@ func mapBaseItem(item metadataclient.SearchItem) (api.BaseSearchItem, error) {
 		Type: resourceType,
 		ID:   item.Id,
 		Name: name,
-		Href: gatewayhref.Build(resourceType, item.Id),
+		Href: resourcehref.Build(resourceType, item.Id),
 	}, nil
 }
 
@@ -231,7 +231,7 @@ func (s *Service) mapProviders(ctx context.Context, providerIDs []string) ([]api
 			provider := api.ResourceRef{
 				ID:   providerID,
 				Name: "",
-				Href: gatewayhref.Build(api.OrganizationType, providerID),
+				Href: resourcehref.Build(api.OrganizationType, providerID),
 			}
 
 			detail, err := metadataaccess.FetchDetail(groupCtx, s.metadataClient, string(api.OrganizationType), providerID)
@@ -296,7 +296,7 @@ func (s *Service) mapDistributions(ctx context.Context, distributionID string) (
 			distributions[i] = api.DatasetDistributionSearchItem{
 				ID:   distribution.ID,
 				Name: name,
-				Href: gatewayhref.Build(api.DistributionType, distribution.ID),
+				Href: resourcehref.Build(api.DistributionType, distribution.ID),
 			}
 
 			return nil
@@ -320,7 +320,7 @@ func (s *Service) mapConcepts(ctx context.Context, conceptIDs []string) ([]api.R
 			concept := api.ResourceRef{
 				ID:   conceptID,
 				Name: "",
-				Href: gatewayhref.Build(api.ConceptType, conceptID),
+				Href: resourcehref.Build(api.ConceptType, conceptID),
 			}
 
 			detail, err := metadataaccess.FetchDetail(groupCtx, s.metadataClient, string(api.ConceptType), conceptID)

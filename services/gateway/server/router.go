@@ -46,14 +46,7 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 		r.Get("/concept", discoveryHandler.GetConceptTree)
 
 		// resources
-		r.Get("/dataset/{id}", resourcesHandler.GetDatasetByID)
-		r.Get("/distribution/{id}", resourcesHandler.GetDistributionByID)
-		r.Get("/softwareapplication/{id}", resourcesHandler.GetSoftwareApplicationByID)
-		r.Get("/softwaresourcecode/{id}", resourcesHandler.GetSoftwareSourceCodeByID)
-		r.Get("/webservice/{id}", resourcesHandler.GetWebserviceByID)
-		r.Get("/organization/{id}", resourcesHandler.GetOrganizationByID)
-		r.Get("/concept/{id}", resourcesHandler.GetConceptByID)
-		r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
+		r.Get("/resources/{resourceType}/{id}", resourcesHandler.GetResourceByID)
 	})
 
 	return observability.NewHTTPHandler(r, "/")

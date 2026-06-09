@@ -11,7 +11,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/resourcehref"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/testfixtures"
 )
 
@@ -27,15 +27,15 @@ const (
 	softwareApplicationID    = "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0"
 	softwareSourceCodeID     = "https://doi.org/10.5281/zenodo.17598403"
 	datasetThemeID           = "category:earthquakeparameters/v1.0"
-	datasetThemeHref         = "v1/concept/category:earthquakeparameters/v1.0"
-	datasetPublisherHref     = "v1/organization/PIC:999472675/v1.0"
+	datasetThemeHref         = "v1/resources/concept/category:earthquakeparameters/v1.0"
+	datasetPublisherHref     = "v1/resources/organization/PIC:999472675/v1.0"
 	datasetDistributionID    = "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
 	datasetDistributionName  = "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-	datasetDistributionHref  = "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+	datasetDistributionHref  = "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
 	currentAHEADWebserviceID = "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
 	currentAHEADUppsalaID    = "ROR:048a87296/v1.0"
 	webserviceProviderID     = "PIC:999472675/v1.0"
-	webserviceProviderHref   = "v1/organization/PIC:999472675/v1.0"
+	webserviceProviderHref   = "v1/resources/organization/PIC:999472675/v1.0"
 	webserviceProviderName   = "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
 )
 
@@ -64,7 +64,7 @@ func TestSearchReturnsExpectedResults(t *testing.T) {
 			wantTotalPages: 2,
 			wantItems:      10,
 			wantFirstAssert: func(t *testing.T, item api.SearchItem) {
-				assertOrganizationSearchItem(t, item, "PIC:999472675/v1.0", "INGV - Istituto Nazionale di Geofisica e Vulcanologia", gatewayhref.Build(api.OrganizationType, "PIC:999472675/v1.0"))
+				assertOrganizationSearchItem(t, item, "PIC:999472675/v1.0", "INGV - Istituto Nazionale di Geofisica e Vulcanologia", resourcehref.Build(api.OrganizationType, "PIC:999472675/v1.0"))
 			},
 		},
 		{
@@ -90,7 +90,7 @@ func TestSearchReturnsExpectedResults(t *testing.T) {
 			wantTotalPages: 1,
 			wantItems:      6,
 			wantFirstAssert: func(t *testing.T, item api.SearchItem) {
-				assertOrganizationSearchItem(t, item, "PIC:999472675/v1.0", "INGV - Istituto Nazionale di Geofisica e Vulcanologia", gatewayhref.Build(api.OrganizationType, "PIC:999472675/v1.0"))
+				assertOrganizationSearchItem(t, item, "PIC:999472675/v1.0", "INGV - Istituto Nazionale di Geofisica e Vulcanologia", resourcehref.Build(api.OrganizationType, "PIC:999472675/v1.0"))
 			},
 		},
 		{
@@ -284,7 +284,7 @@ func assertDatasetSearchItem(t *testing.T, item api.SearchItem) {
 		t.Fatalf("item = %T, want api.DatasetItem", item)
 	}
 
-	assertSearchBaseItem(t, dataset.BaseSearchItem, api.DatasetType, "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0", "TEST1 - Historical earthquakes 1000-1899", gatewayhref.Build(api.DatasetType, "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"))
+	assertSearchBaseItem(t, dataset.BaseSearchItem, api.DatasetType, "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0", "TEST1 - Historical earthquakes 1000-1899", resourcehref.Build(api.DatasetType, "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"))
 	if len(dataset.Providers) != 1 {
 		t.Fatalf("Providers = %#v", dataset.Providers)
 	}
@@ -320,11 +320,11 @@ func assertSoftwareApplicationSearchItem(t *testing.T, item api.SearchItem) {
 		t.Fatalf("item = %T, want api.SoftwareApplicationItem", item)
 	}
 
-	assertSearchBaseItem(t, softwareApplication.BaseSearchItem, api.SoftwareApplicationType, softwareApplicationID, "Catalog to XLS converter", gatewayhref.Build(api.SoftwareApplicationType, softwareApplicationID))
+	assertSearchBaseItem(t, softwareApplication.BaseSearchItem, api.SoftwareApplicationType, softwareApplicationID, "Catalog to XLS converter", resourcehref.Build(api.SoftwareApplicationType, softwareApplicationID))
 	if len(softwareApplication.Provider) != 1 {
 		t.Fatalf("Provider = %#v", softwareApplication.Provider)
 	}
-	assertResourceRef(t, softwareApplication.Provider[0], currentAHEADUppsalaID, "Uppsala University", gatewayhref.Build(api.OrganizationType, currentAHEADUppsalaID))
+	assertResourceRef(t, softwareApplication.Provider[0], currentAHEADUppsalaID, "Uppsala University", resourcehref.Build(api.OrganizationType, currentAHEADUppsalaID))
 }
 
 func assertSoftwareSourceCodeSearchItem(t *testing.T, item api.SearchItem) {
@@ -335,11 +335,11 @@ func assertSoftwareSourceCodeSearchItem(t *testing.T, item api.SearchItem) {
 		t.Fatalf("item = %T, want api.SoftwareSourceCodeItem", item)
 	}
 
-	assertSearchBaseItem(t, softwareSourceCode.BaseSearchItem, api.SoftwareSourceCodeType, softwareSourceCodeID, "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab.", gatewayhref.Build(api.SoftwareSourceCodeType, softwareSourceCodeID))
+	assertSearchBaseItem(t, softwareSourceCode.BaseSearchItem, api.SoftwareSourceCodeType, softwareSourceCodeID, "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab.", resourcehref.Build(api.SoftwareSourceCodeType, softwareSourceCodeID))
 	if len(softwareSourceCode.Provider) != 1 {
 		t.Fatalf("Provider = %#v", softwareSourceCode.Provider)
 	}
-	assertResourceRef(t, softwareSourceCode.Provider[0], currentAHEADUppsalaID, "Uppsala University", gatewayhref.Build(api.OrganizationType, currentAHEADUppsalaID))
+	assertResourceRef(t, softwareSourceCode.Provider[0], currentAHEADUppsalaID, "Uppsala University", resourcehref.Build(api.OrganizationType, currentAHEADUppsalaID))
 }
 
 func assertWebserviceSearchItem(t *testing.T, item api.SearchItem) {
@@ -350,7 +350,7 @@ func assertWebserviceSearchItem(t *testing.T, item api.SearchItem) {
 		t.Fatalf("item = %T, want api.WebServiceItem", item)
 	}
 
-	assertSearchBaseItem(t, webservice.BaseSearchItem, api.WebserviceType, currentAHEADWebserviceID, "TEST1- Historical earthquakes 1000-1899 (FDSN-event)", gatewayhref.Build(api.WebserviceType, currentAHEADWebserviceID))
+	assertSearchBaseItem(t, webservice.BaseSearchItem, api.WebserviceType, currentAHEADWebserviceID, "TEST1- Historical earthquakes 1000-1899 (FDSN-event)", resourcehref.Build(api.WebserviceType, currentAHEADWebserviceID))
 	assertResourceRef(t, webservice.Provider, webserviceProviderID, webserviceProviderName, webserviceProviderHref)
 	if len(webservice.Concepts) != 0 {
 		t.Fatalf("Concepts = %#v", webservice.Concepts)

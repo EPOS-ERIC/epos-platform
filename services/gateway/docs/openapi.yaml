@@ -75,42 +75,42 @@ paths:
                       - type: dataset
                         id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
                         name: "TEST1 - Historical earthquakes 1000-1899"
-                        href: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
+                        href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
                         providers:
                           - id: "PIC:999472675/v1.0"
                             name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                            href: "v1/organization/PIC:999472675/v1.0"
+                            href: "v1/resources/organization/PIC:999472675/v1.0"
                         concepts:
                           - id: "category:earthquakeparameters/v1.0"
                             name: "Earthquake parameters"
-                            href: "v1/concept/category:earthquakeparameters/v1.0"
+                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
                         distributions:
                           - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                            href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                            href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                       - type: organization
                         id: "PIC:999472675/v1.0"
                         name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                        href: "v1/organization/PIC:999472675/v1.0"
+                        href: "v1/resources/organization/PIC:999472675/v1.0"
                       - type: webservice
                         id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
                         name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                        href: "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
+                        href: "v1/resources/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
                         provider:
                           id: "PIC:999472675/v1.0"
                           name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                          href: "v1/organization/PIC:999472675/v1.0"
+                          href: "v1/resources/organization/PIC:999472675/v1.0"
                         concepts:
                           - id: "category:earthquakeparameters/v1.0"
                             name: "Earthquake parameters"
-                            href: "v1/concept/category:earthquakeparameters/v1.0"
+                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
                       - type: softwaresourcecode
                         id: "https://doi.org/10.5281/zenodo.17598403"
                         name: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
-                        href: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
+                        href: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
                         provider:
                           - id: "ROR:048a87296/v1.0"
                             name: "Uppsala University"
-                            href: "v1/organization/ROR:048a87296/v1.0"
+                            href: "v1/resources/organization/ROR:048a87296/v1.0"
         "400":
           $ref: "#/components/responses/BadRequest"
         "504":
@@ -150,7 +150,7 @@ paths:
                         order_number: 1
                         top_concepts:
                           - id: "category:facets/software-theme/v1.0"
-                            href: "v1/concept/category:facets/software-theme/v1.0"
+                            href: "v1/resources/concept/category:facets/software-theme/v1.0"
                         children:
                           - id: "category:facets/software-theme/v1.0"
                             name: "Software"
@@ -693,7 +693,7 @@ components:
         - contactpoint
 
     ResourceDetail:
-      oneOf:
+      anyOf:
         - $ref: "#/components/schemas/Dataset"
         - $ref: "#/components/schemas/Distribution"
         - $ref: "#/components/schemas/Organization"
@@ -1251,7 +1251,7 @@ components:
           type: string
           format: uri-reference
           description: Relative URI reference to resource detail endpoint.
-          example: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
+          example: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
 
     DatasetSearchItem:
       allOf:
@@ -1272,7 +1272,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
             concepts:
               type: array
               description: Concept references assigned to this dataset
@@ -1280,7 +1280,7 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "category:software_jup_conc_multi/v1.0"
-                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
+                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
             distributions:
               type: array
               description: Distribution references for this dataset
@@ -1288,9 +1288,9 @@ components:
                 $ref: "#/components/schemas/DatasetDistributionSearchItem"
               example:
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
 
     OrganizationSearchItem:
       allOf:
@@ -1323,7 +1323,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
 
     SoftwareSourceCodeSearchItem:
       allOf:
@@ -1344,7 +1344,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
 
     WebserviceSearchItem:
       allOf:
@@ -1364,7 +1364,7 @@ components:
               example:
                 id: "PIC:999472675/v1.0"
                 name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/organization/PIC:999472675/v1.0"
+                href: "v1/resources/organization/PIC:999472675/v1.0"
             concepts:
               type: array
               description: Concept references assigned to this webservice
@@ -1372,9 +1372,9 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "category:seismologicalproductsservices/v1.0"
-                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
+                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
                 - id: "category:earthquakeparameters/v1.0"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
 
     DatasetDistributionSearchItem:
       type: object
@@ -1393,7 +1393,7 @@ components:
           type: string
           format: uri-reference
           description: API-base-relative URI reference to distribution detail endpoint
-          example: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+          example: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
 
     # -------------------------------------------------------------------------
     # Resource references
@@ -1416,7 +1416,7 @@ components:
           type: string
           format: uri-reference
           description: Relative URI reference to referenced resource detail endpoint
-          example: "v1/organization/ROR:048a87296/v1.0"
+          example: "v1/resources/organization/ROR:048a87296/v1.0"
 
     DatasetProviderRef:
       allOf:
@@ -1482,10 +1482,10 @@ components:
               example:
                 - id: "category:seismologicalproductsservices/v1.0"
                   name: "Seismological products services"
-                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
+                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
                 - id: "category:earthquakeparameters/v1.0"
                   name: "Earthquake parameters"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
             publisher:
               type: array
               description: Organizations publishing this dataset; exposed as `providers` in search results
@@ -1498,7 +1498,7 @@ components:
               example:
                 - id: "PIC:999472675/v1.0"
                   name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                  href: "v1/organization/PIC:999472675/v1.0"
+                  href: "v1/resources/organization/PIC:999472675/v1.0"
             issued:
               type: string
               format: date-time
@@ -1525,10 +1525,10 @@ components:
               example:
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                   name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
                   name: "TEST2 - Bibliography for historical earthquakes"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
             access_rights:
               type: string
               description: Access rights statement for this dataset
@@ -1544,7 +1544,7 @@ components:
               example:
                 id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
                 name: "TEST2 - Bibliography metadata for historical earthquakes"
-                href: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
+                href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
             quality_annotation:
               type: string
               description: Aggregated quality annotation summary associated with this dataset
@@ -1648,7 +1648,7 @@ components:
               example:
                 - id: "category:software_appl_conc_multi/v1.0"
                   name: "Multidisciplinary software"
-                  href: "v1/concept/category:software_appl_conc_multi/v1.0"
+                  href: "v1/resources/concept/category:software_appl_conc_multi/v1.0"
             download_url:
               type: string
               format: uri
@@ -1685,7 +1685,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
             operations:
               type: array
               description: Web service operations linked to this software application
@@ -1717,7 +1717,7 @@ components:
               example:
                 - id: "category:software_jup_conc_multi/v1.0"
                   name: "Multidisciplinary software"
-                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
+                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
             repository:
               type: string
               format: uri
@@ -1749,7 +1749,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
             main_entity_of_page:
               type: string
               format: uri
@@ -1841,7 +1841,7 @@ components:
               example:
                 id: "PIC:999472675/v1.0"
                 name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/organization/PIC:999472675/v1.0"
+                href: "v1/resources/organization/PIC:999472675/v1.0"
             issued:
               type: string
               format: date-time
@@ -1873,7 +1873,7 @@ components:
               example:
                 - id: "category:earthquakeparameters/v1.0"
                   name: "Earthquake parameters"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
             license:
               type: string
               description: License under which the webservice can be used or reused

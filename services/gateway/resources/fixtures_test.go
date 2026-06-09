@@ -26,9 +26,9 @@ const (
 )
 
 const (
-	currentAHEADWebserviceHref   = "v1/webservice/" + currentAHEADWebserviceID
-	currentAHEADDistributionHref = "v1/distribution/" + currentAHEADDistributionID
-	currentAHEADPublisherHref    = "v1/organization/" + currentAHEADPublisherID
+	currentAHEADWebserviceHref   = "v1/resources/webservice/" + currentAHEADWebserviceID
+	currentAHEADDistributionHref = "v1/resources/distribution/" + currentAHEADDistributionID
+	currentAHEADPublisherHref    = "v1/resources/organization/" + currentAHEADPublisherID
 )
 
 func loadAccessDetailFixture(t *testing.T, relativePath string) *metadataclient.AccessDetailResponse {

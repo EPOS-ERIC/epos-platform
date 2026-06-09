@@ -147,7 +147,7 @@ func TestGetConceptTree(t *testing.T) {
 	if tree.Schemes[0].Name != "Scheme A Title" {
 		t.Fatalf("tree.Schemes[0].Name = %q", tree.Schemes[0].Name)
 	}
-	if len(tree.Schemes[0].TopConcepts) != 1 || tree.Schemes[0].TopConcepts[0].Href != "v1/concept/concept-a" {
+	if len(tree.Schemes[0].TopConcepts) != 1 || tree.Schemes[0].TopConcepts[0].Href != "v1/resources/concept/concept-a" {
 		t.Fatalf("tree.Schemes[0].TopConcepts = %#v", tree.Schemes[0].TopConcepts)
 	}
 	if len(tree.Schemes[0].Children) != 1 || tree.Schemes[0].Children[0].ID != "concept-a" {
