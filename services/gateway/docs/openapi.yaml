@@ -28,6 +28,10 @@ tags:
     description: Search and taxonomy bootstrap endpoints
   - name: Resources
     description: Resource detail endpoints
+  - name: Resource CRUD
+    description: Create, replace, and delete draft aggregates
+  - name: Resource Lifecycle
+    description: Submit, publish, draft, and discard aggregates
 
 paths:
   /search:
@@ -491,8 +495,222 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /resources/{resourceType}:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+    post:
+      tags:
+        - Resource CRUD
+      summary: Create resource draft
+      description: Create a new `draft` resource for the selected type.
+      operationId: createResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceWrite"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      tags:
+        - Resource CRUD
+      summary: Replace resource draft
+      description: Full replace semantics. Omitted writable fields are removed from the draft resource.
+      operationId: updateResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceWrite"
+      responses:
+        "200":
+          description: Draft replaced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Resource CRUD
+      summary: Delete resource draft
+      description: Delete a `draft` resource.
+      operationId: deleteResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # RESOURCE LIFECYCLE ENDPOINTS
+  /resources/{resourceType}/{id}/submit:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Submit resource draft
+      description: Submit a `draft` resource for review.
+      operationId: submitResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/publish:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Publish resource draft
+      description: Publish a `submitted` resource.
+      operationId: publishResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/draft:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Create draft from published resource
+      description: Create a new draft version from a published resource.
+      operationId: draftResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/discard:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Discard resource draft
+      description: Discard a `draft` or `submitted` resource.
+      operationId: discardResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft discarded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
 components:
   parameters:
+    XAgent:
+      name: X-Agent
+      in: header
+      required: true
+      description: Absolute URI identifying acting agent.
+      schema:
+        type: string
+
+    XGroup:
+      name: X-Group
+      in: header
+      required: true
+      description: Absolute URI identifying acting group.
+      schema:
+        type: string
+
     ResourceId:
       name: id
       in: path
@@ -574,6 +792,14 @@ components:
         type: string
         example: "category%3Asoftware_jup%2Fv1.0"
 
+    WriteResourceType:
+      name: resourceType
+      in: path
+      required: true
+      description: Resource type identifier accepted by write endpoints.
+      schema:
+        $ref: "#/components/schemas/WriteResourceType"
+
     Q:
       name: q
       in: query
@@ -621,7 +847,7 @@ components:
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/ResourceType"
+          $ref: "#/components/schemas/SearchResourceType"
       style: form
       explode: false
 
@@ -685,16 +911,16 @@ components:
       in: query
       required: false
       description: |
-        Filter by one or more resource publication statuses.
-        When omitted, defaults to `PUBLISHED`.
+        Filter by one or more versioning states.
+        When omitted, defaults to `published`.
         Pass comma-separated values in a single parameter:
-        `?versioningStatus=PUBLISHED,DRAFT`.
+        `?versioningStatus=published,draft`.
       schema:
         type: array
         items:
           $ref: "#/components/schemas/VersioningStatus"
         default:
-          - PUBLISHED
+          - published
       style: form
       explode: false
 
@@ -742,6 +968,20 @@ components:
                 status: 404
                 detail: "dataset not found"
 
+    Conflict:
+      description: Request conflicts with current resource state
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            resourceConflict:
+              summary: Conflicting resource state
+              value:
+                title: "resource_conflict"
+                status: 409
+                detail: "resource is not in draft state"
+
     InternalServerError:
       description: Internal server error
       content:
@@ -774,7 +1014,7 @@ components:
     # Shared enums
     # -------------------------------------------------------------------------
 
-    ResourceType:
+    SearchResourceType:
       type: string
       description: Resource type identifier used in search results.
       enum:
@@ -788,10 +1028,500 @@ components:
       type: string
       description: Publication status of resource.
       enum:
-        - DRAFT
-        - SUBMITTED
-        - PUBLISHED
-        - ARCHIVED
+        - published
+        - draft
+        - submitted
+        - archived
+        - discarded
+
+    # -------------------------------------------------------------------------
+    # Resource write schemas
+    # -------------------------------------------------------------------------
+
+    WriteResourceType:
+      type: string
+      description: Resource type identifier accepted by write endpoints.
+      enum:
+        - dataset
+        - distribution
+        - organization
+        - softwareapplication
+        - softwaresourcecode
+        - webservice
+        - concept
+        - conceptscheme
+        - contactpoint
+
+    ResourceLink:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Identifier of referenced resource.
+        name:
+          type: string
+          description: Optional human-readable label for referenced resource.
+        href:
+          type: string
+          format: uri-reference
+          description: Optional relative URI reference to referenced resource detail endpoint.
+
+    ResourceWriteBase:
+      type: object
+      required:
+        - resourceType
+        - id
+      properties:
+        resourceType:
+          $ref: "#/components/schemas/WriteResourceType"
+        id:
+          type: string
+          description: Client-provided conceptual or version identifier.
+
+    ConceptWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - concept
+            name:
+              type: string
+            description:
+              type: string
+            in_scheme:
+              $ref: "#/components/schemas/ResourceLink"
+            children:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    ConceptSchemeWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - label
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - conceptscheme
+            label:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            logo:
+              type: string
+              format: uri
+            homepage:
+              type: string
+              format: uri
+            color:
+              type: string
+            order_number:
+              type: integer
+              format: int32
+            children:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            top_concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    ContactPointWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - contact_type
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - contactpoint
+            available_language:
+              type: array
+              items:
+                type: string
+            contact_type:
+              type: string
+            email:
+              type: array
+              items:
+                type: string
+            telephone:
+              type: array
+              items:
+                type: string
+
+    OrganizationWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - organization
+            identifiers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Identifier"
+            name:
+              type: string
+            lei_code:
+              type: string
+            address:
+              type: string
+            logo:
+              type: string
+              format: uri
+            url:
+              type: string
+              format: uri
+            email:
+              type: array
+              items:
+                type: string
+            telephone:
+              type: array
+              items:
+                type: string
+            contact_points:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            member_of:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    WebserviceWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+            - provider
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - webservice
+            identifiers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Identifier"
+            name:
+              type: string
+            description:
+              type: string
+            entrypoint:
+              type: string
+              format: uri
+            provider:
+              $ref: "#/components/schemas/ResourceLink"
+            issued:
+              type: string
+              format: date-time
+            modified:
+              type: string
+              format: date-time
+            spatial:
+              type: string
+            temporal:
+              $ref: "#/components/schemas/TemporalExtent"
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            license:
+              type: string
+            operations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Operation"
+            api_documentation:
+              $ref: "#/components/schemas/ApiDocumentation"
+
+    SoftwareApplicationWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - softwareapplication
+            name:
+              type: string
+            description:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            download_url:
+              type: string
+              format: uri
+            install_url:
+              type: string
+              format: uri
+            license:
+              type: string
+              format: uri
+            software_version:
+              type: string
+            software_requirements:
+              type: string
+            main_entity_of_page:
+              type: string
+              format: uri
+            provider:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            operations:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    SoftwareSourceCodeWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - softwaresourcecode
+            name:
+              type: string
+            description:
+              type: string
+            programming_language:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            repository:
+              type: string
+              format: uri
+            license:
+              type: string
+              format: uri
+            software_version:
+              type: string
+            runtime_platform:
+              type: string
+            target_products:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            provider:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            main_entity_of_page:
+              type: string
+              format: uri
+
+    DistributionWriteBase:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - distribution
+            name:
+              type: string
+            description:
+              type: string
+            format:
+              type: string
+            issued:
+              type: string
+              format: date-time
+            modified:
+              type: string
+              format: date-time
+            license:
+              type: string
+
+    WebServiceDistributionWrite:
+      allOf:
+        - $ref: "#/components/schemas/DistributionWriteBase"
+        - type: object
+          required:
+            - type
+            - webservice
+            - operation
+          properties:
+            type:
+              type: string
+              enum:
+                - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
+            webservice:
+              $ref: "#/components/schemas/ResourceLink"
+            operation:
+              $ref: "#/components/schemas/Operation"
+
+    DownloadableFileDistributionWrite:
+      allOf:
+        - $ref: "#/components/schemas/DistributionWriteBase"
+        - type: object
+          required:
+            - type
+            - download_url
+          properties:
+            type:
+              type: string
+              enum:
+                - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
+            download_url:
+              type: string
+              format: uri
+
+    DistributionWrite:
+      allOf:
+        - $ref: "#/components/schemas/DistributionWriteBase"
+        - oneOf:
+            - $ref: "#/components/schemas/WebServiceDistributionWrite"
+            - $ref: "#/components/schemas/DownloadableFileDistributionWrite"
+      discriminator:
+        propertyName: type
+        mapping:
+          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistributionWrite"
+          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistributionWrite"
+
+    DatasetWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+            - description
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - dataset
+            name:
+              type: string
+            description:
+              type: string
+            version_info:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            publisher:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            issued:
+              type: string
+              format: date-time
+            spatial:
+              type: string
+            identifiers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Identifier"
+            temporal:
+              $ref: "#/components/schemas/TemporalExtent"
+            distributions:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            access_rights:
+              type: string
+            accrual_periodicity:
+              type: string
+            is_version_of:
+              $ref: "#/components/schemas/ResourceLink"
+            quality_annotation:
+              type: string
+            version:
+              type: string
+
+    ResourceWrite:
+      oneOf:
+        - $ref: "#/components/schemas/DatasetWrite"
+        - $ref: "#/components/schemas/DistributionWrite"
+        - $ref: "#/components/schemas/OrganizationWrite"
+        - $ref: "#/components/schemas/WebserviceWrite"
+        - $ref: "#/components/schemas/SoftwareApplicationWrite"
+        - $ref: "#/components/schemas/SoftwareSourceCodeWrite"
+        - $ref: "#/components/schemas/ConceptWrite"
+        - $ref: "#/components/schemas/ConceptSchemeWrite"
+        - $ref: "#/components/schemas/ContactPointWrite"
+      discriminator:
+        propertyName: resourceType
+        mapping:
+          dataset: "#/components/schemas/DatasetWrite"
+          distribution: "#/components/schemas/DistributionWrite"
+          organization: "#/components/schemas/OrganizationWrite"
+          webservice: "#/components/schemas/WebserviceWrite"
+          softwareapplication: "#/components/schemas/SoftwareApplicationWrite"
+          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeWrite"
+          concept: "#/components/schemas/ConceptWrite"
+          conceptscheme: "#/components/schemas/ConceptSchemeWrite"
+          contactpoint: "#/components/schemas/ContactPointWrite"
+
+    WriteResult:
+      type: object
+      required:
+        - resourceType
+        - id
+        - status
+      properties:
+        resourceType:
+          $ref: "#/components/schemas/WriteResourceType"
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
 
     # -------------------------------------------------------------------------
     # Search
@@ -857,7 +1587,7 @@ components:
         - href
       properties:
         type:
-          $ref: "#/components/schemas/ResourceType"
+          $ref: "#/components/schemas/SearchResourceType"
         id:
           type: string
           description: Identifier of resource within this API.

@@ -233,6 +233,158 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/resources/{resourceType}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create resource draft
+         * @description Create a new `draft` resource for the selected type.
+         */
+        post: operations["createResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resources/{resourceType}/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace resource draft
+         * @description Full replace semantics. Omitted writable fields are removed from the draft resource.
+         */
+        put: operations["updateResource"];
+        post?: never;
+        /**
+         * Delete resource draft
+         * @description Delete a `draft` resource.
+         */
+        delete: operations["deleteResource"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resources/{resourceType}/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit resource draft
+         * @description Submit a `draft` resource for review.
+         */
+        post: operations["submitResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resources/{resourceType}/{id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish resource draft
+         * @description Publish a `submitted` resource.
+         */
+        post: operations["publishResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resources/{resourceType}/{id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create draft from published resource
+         * @description Create a new draft version from a published resource.
+         */
+        post: operations["draftResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resources/{resourceType}/{id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Discard resource draft
+         * @description Discard a `draft` or `submitted` resource.
+         */
+        post: operations["discardResource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -241,12 +393,247 @@ export interface components {
          * @description Resource type identifier used in search results.
          * @enum {string}
          */
-        ResourceType: "dataset" | "webservice" | "organization" | "softwareapplication" | "softwaresourcecode";
+        SearchResourceType: "dataset" | "webservice" | "organization" | "softwareapplication" | "softwaresourcecode";
         /**
-         * @description Publication status of resource.
+         * @description Versioning state used by search and write endpoints.
          * @enum {string}
          */
-        VersioningStatus: "DRAFT" | "SUBMITTED" | "PUBLISHED" | "ARCHIVED";
+        VersioningStatus: "published" | "draft" | "submitted" | "archived" | "discarded";
+        /**
+         * @description Resource type identifier accepted by write endpoints.
+         * @enum {string}
+         */
+        WriteResourceType: "dataset" | "distribution" | "organization" | "softwareapplication" | "softwaresourcecode" | "webservice" | "concept" | "conceptscheme" | "contactpoint";
+        ResourceLink: {
+            /** @description Identifier of referenced resource. */
+            id: string;
+            /** @description Optional human-readable label for referenced resource. */
+            name?: string;
+            /**
+             * Format: uri-reference
+             * @description Optional relative URI reference to referenced resource detail endpoint.
+             */
+            href?: string;
+        };
+        ResourceWriteBase: {
+            resourceType: components["schemas"]["WriteResourceType"];
+            /** @description Client-provided conceptual or version identifier. */
+            id: string;
+        };
+        ConceptWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "concept";
+            name: string;
+            description?: string;
+            in_scheme?: components["schemas"]["ResourceLink"];
+            children?: components["schemas"]["ResourceLink"][];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "concept";
+        };
+        ConceptSchemeWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "conceptscheme";
+            label: string;
+            name: string;
+            description?: string;
+            /** Format: uri */
+            logo?: string;
+            /** Format: uri */
+            homepage?: string;
+            color?: string;
+            /** Format: int32 */
+            order_number?: number;
+            children?: components["schemas"]["ResourceLink"][];
+            top_concepts?: components["schemas"]["ResourceLink"][];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "conceptscheme";
+        };
+        ContactPointWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "contactpoint";
+            available_language?: string[];
+            contact_type: string;
+            email?: string[];
+            telephone?: string[];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "contactpoint";
+        };
+        OrganizationWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "organization";
+            identifiers?: components["schemas"]["Identifier"][];
+            name: string;
+            lei_code?: string;
+            address?: string;
+            /** Format: uri */
+            logo?: string;
+            /** Format: uri */
+            url?: string;
+            email?: string[];
+            telephone?: string[];
+            contact_points?: components["schemas"]["ResourceLink"][];
+            member_of?: components["schemas"]["ResourceLink"][];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "organization";
+        };
+        WebserviceWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "webservice";
+            identifiers?: components["schemas"]["Identifier"][];
+            name: string;
+            description?: string;
+            /** Format: uri */
+            entrypoint?: string;
+            provider: components["schemas"]["ResourceLink"];
+            /** Format: date-time */
+            issued?: string;
+            /** Format: date-time */
+            modified?: string;
+            spatial?: string;
+            temporal?: components["schemas"]["TemporalExtent"];
+            keywords?: string[];
+            concepts?: components["schemas"]["ResourceLink"][];
+            license?: string;
+            operations?: components["schemas"]["Operation"][];
+            api_documentation?: components["schemas"]["ApiDocumentation"];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "webservice";
+        };
+        SoftwareApplicationWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "softwareapplication";
+            name: string;
+            description?: string;
+            keywords?: string[];
+            concepts?: components["schemas"]["ResourceLink"][];
+            /** Format: uri */
+            download_url?: string;
+            /** Format: uri */
+            install_url?: string;
+            /** Format: uri */
+            license?: string;
+            software_version?: string;
+            software_requirements?: string;
+            /** Format: uri */
+            main_entity_of_page?: string;
+            provider?: components["schemas"]["ResourceLink"][];
+            operations?: components["schemas"]["ResourceLink"][];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "softwareapplication";
+        };
+        SoftwareSourceCodeWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "softwaresourcecode";
+            name: string;
+            description?: string;
+            programming_language?: string;
+            keywords?: string[];
+            concepts?: components["schemas"]["ResourceLink"][];
+            /** Format: uri */
+            repository?: string;
+            /** Format: uri */
+            license?: string;
+            software_version?: string;
+            runtime_platform?: string;
+            target_products?: components["schemas"]["ResourceLink"][];
+            provider?: components["schemas"]["ResourceLink"][];
+            /** Format: uri */
+            main_entity_of_page?: string;
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "softwaresourcecode";
+        };
+        DistributionWriteBase: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "distribution";
+            name: string;
+            description?: string;
+            format?: string;
+            /** Format: date-time */
+            issued?: string;
+            /** Format: date-time */
+            modified?: string;
+            license?: string;
+        };
+        WebServiceDistributionWrite: components["schemas"]["DistributionWriteBase"] & {
+            /** @enum {string} */
+            type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE";
+            webservice: components["schemas"]["ResourceLink"];
+            operation: components["schemas"]["Operation"];
+        };
+        DownloadableFileDistributionWrite: components["schemas"]["DistributionWriteBase"] & {
+            /** @enum {string} */
+            type: "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE";
+            /** Format: uri */
+            download_url: string;
+        };
+        DistributionWrite: components["schemas"]["DistributionWriteBase"] & (components["schemas"]["WebServiceDistributionWrite"] | components["schemas"]["DownloadableFileDistributionWrite"]) & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "distribution";
+        };
+        DatasetWrite: components["schemas"]["ResourceWriteBase"] & {
+            /** @enum {string} */
+            resourceType?: "dataset";
+            name: string;
+            description: string;
+            version_info?: string;
+            keywords?: string[];
+            concepts?: components["schemas"]["ResourceLink"][];
+            publisher?: components["schemas"]["ResourceLink"][];
+            /** Format: date-time */
+            issued?: string;
+            spatial?: string;
+            identifiers?: components["schemas"]["Identifier"][];
+            temporal?: components["schemas"]["TemporalExtent"];
+            distributions?: components["schemas"]["ResourceLink"][];
+            access_rights?: string;
+            accrual_periodicity?: string;
+            is_version_of?: components["schemas"]["ResourceLink"];
+            quality_annotation?: string;
+            version?: string;
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            resourceType: "dataset";
+        };
+        ResourceWrite: components["schemas"]["DatasetWrite"] | components["schemas"]["DistributionWrite"] | components["schemas"]["OrganizationWrite"] | components["schemas"]["WebserviceWrite"] | components["schemas"]["SoftwareApplicationWrite"] | components["schemas"]["SoftwareSourceCodeWrite"] | components["schemas"]["ConceptWrite"] | components["schemas"]["ConceptSchemeWrite"] | components["schemas"]["ContactPointWrite"];
+        WriteResult: {
+            resourceType: components["schemas"]["WriteResourceType"];
+            id: string;
+            status: components["schemas"]["VersioningStatus"];
+        };
         SearchResponse: {
             /**
              * @description 1-based page index returned in this response
@@ -272,7 +659,7 @@ export interface components {
         };
         SearchItem: components["schemas"]["DatasetSearchItem"] | components["schemas"]["WebserviceSearchItem"] | components["schemas"]["OrganizationSearchItem"] | components["schemas"]["SoftwareApplicationSearchItem"] | components["schemas"]["SoftwareSourceCodeSearchItem"];
         BaseSearchItem: {
-            type: components["schemas"]["ResourceType"];
+            type: components["schemas"]["SearchResourceType"];
             /**
              * @description Identifier of resource within this API.
              * @example https://doi.org/10.5281/zenodo.17598403
@@ -1130,6 +1517,15 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description Request conflicts with current resource state */
+        Conflict: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Internal server error */
         InternalServerError: {
             headers: {
@@ -1150,6 +1546,10 @@ export interface components {
         };
     };
     parameters: {
+        /** @description Absolute URI identifying acting agent. */
+        XAgent: string;
+        /** @description Absolute URI identifying acting group. */
+        XGroup: string;
         /** @description Local identifier of the resource */
         ResourceId: string;
         /** @description Dataset identifier. */
@@ -1168,6 +1568,8 @@ export interface components {
         ConceptId: string;
         /** @description Concept scheme identifier. */
         ConceptSchemeId: string;
+        /** @description Resource type identifier accepted by write endpoints. */
+        WriteResourceType: components["schemas"]["WriteResourceType"];
         /** @description Free-text query used to search catalogue resources. */
         Q: string;
         /** @description Maximum number of search items requested per page. */
@@ -1180,7 +1582,7 @@ export interface components {
          *     Pass comma-separated values in a single parameter:
          *     `?type=dataset,webservice`.
          */
-        TypeFilter: components["schemas"]["ResourceType"][];
+        TypeFilter: components["schemas"]["SearchResourceType"][];
         /**
          * @description Spatial filter expressed as a WKT polygon string (EPSG:4326).
          *     Resources whose spatial coverage intersects this polygon are returned.
@@ -1208,10 +1610,10 @@ export interface components {
          */
         Provider: string[];
         /**
-         * @description Filter by one or more resource publication statuses.
-         *     When omitted, defaults to `PUBLISHED`.
+         * @description Filter by one or more versioning states.
+         *     When omitted, defaults to `published`.
          *     Pass comma-separated values in a single parameter:
-         *     `?versioningStatus=PUBLISHED,DRAFT`.
+         *     `?versioningStatus=published,draft`.
          */
         VersioningStatus: components["schemas"]["VersioningStatus"][];
         /**
@@ -1270,10 +1672,10 @@ export interface operations {
                  */
                 provider?: components["parameters"]["Provider"];
                 /**
-                 * @description Filter by one or more resource publication statuses.
-                 *     When omitted, defaults to `PUBLISHED`.
+                 * @description Filter by one or more versioning states.
+                 *     When omitted, defaults to `published`.
                  *     Pass comma-separated values in a single parameter:
-                 *     `?versioningStatus=PUBLISHED,DRAFT`.
+                 *     `?versioningStatus=published,draft`.
                  */
                 versioningStatus?: components["parameters"]["VersioningStatus"];
                 /**
@@ -1536,6 +1938,244 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    createResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceWrite"];
+            };
+        };
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    updateResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceWrite"];
+            };
+        };
+        responses: {
+            /** @description Draft replaced */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    deleteResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    submitResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft submitted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    publishResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft published */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    draftResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    discardResource: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Absolute URI identifying acting agent. */
+                "X-Agent": components["parameters"]["XAgent"];
+                /** @description Absolute URI identifying acting group. */
+                "X-Group": components["parameters"]["XGroup"];
+            };
+            path: {
+                /** @description Resource type identifier accepted by write endpoints. */
+                resourceType: components["parameters"]["WriteResourceType"];
+                /** @description Local identifier of the resource */
+                id: components["parameters"]["ResourceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Draft discarded */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteResult"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             500: components["responses"]["InternalServerError"];
         };
     };

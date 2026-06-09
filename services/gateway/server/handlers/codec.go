@@ -164,7 +164,7 @@ func parseCSVVersioningStatuses(values url.Values, name string, defaultValues []
 	for _, rawValue := range rawValues {
 		value, err := api.NewVersioningStatusFromValue(rawValue)
 		if err != nil {
-			return nil, fmt.Errorf("versioning status must be one of draft, submitted, published, archived")
+			return nil, fmt.Errorf("versioning status must be one of published, draft, submitted, archived, discarded")
 		}
 		parsed = append(parsed, value)
 	}

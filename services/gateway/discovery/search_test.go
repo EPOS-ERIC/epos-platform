@@ -16,13 +16,13 @@ import (
 )
 
 const (
-	defaultSearchPath             = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&type=organization&type=softwareapplication&type=softwaresourcecode&type=webservice&versioningStatus=PUBLISHED"
-	datasetSearchPath             = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&versioningStatus=PUBLISHED"
-	organizationSearchPath        = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=organization&versioningStatus=PUBLISHED"
-	softwareApplicationSearchPath = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwareapplication&versioningStatus=PUBLISHED"
-	softwareSourceCodeSearchPath  = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwaresourcecode&versioningStatus=PUBLISHED"
-	webserviceSearchPath          = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=webservice&versioningStatus=PUBLISHED"
-	emptyDatasetSearchPath        = "/api/v2/access/search?includeConstraints=true&page=1&q=__no_such_dataset__&resultsPerPage=10&type=dataset&versioningStatus=PUBLISHED"
+	defaultSearchPath             = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&type=organization&type=softwareapplication&type=softwaresourcecode&type=webservice&versioningStatus=published"
+	datasetSearchPath             = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&versioningStatus=published"
+	organizationSearchPath        = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=organization&versioningStatus=published"
+	softwareApplicationSearchPath = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwareapplication&versioningStatus=published"
+	softwareSourceCodeSearchPath  = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwaresourcecode&versioningStatus=published"
+	webserviceSearchPath          = "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=webservice&versioningStatus=published"
+	emptyDatasetSearchPath        = "/api/v2/access/search?includeConstraints=true&page=1&q=__no_such_dataset__&resultsPerPage=10&type=dataset&versioningStatus=published"
 
 	softwareApplicationID    = "https://epos-eu.org/anthropogenic_hazards/software/CatalogToXls/v1.0"
 	softwareSourceCodeID     = "https://doi.org/10.5281/zenodo.17598403"

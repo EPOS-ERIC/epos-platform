@@ -56,9 +56,13 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 		return metadataclient.ApiApiV2AccessSearchGetRequest{}, err
 	}
 
-	versioningStatus := make([]metadataclient.VersioningStatus, len(p.VersioningStatus))
-	for i, v := range p.VersioningStatus {
-		versioningStatus[i] = metadataclient.VersioningStatus(v)
+	versioningStatus := make([]metadataclient.VersioningStatus, 0, len(p.VersioningStatus))
+	if len(p.VersioningStatus) == 0 {
+		versioningStatus = append(versioningStatus, metadataclient.VersioningStatus(api.PublishedStatus))
+	} else {
+		for _, v := range p.VersioningStatus {
+			versioningStatus = append(versioningStatus, metadataclient.VersioningStatus(v))
+		}
 	}
 
 	types := []metadataclient.ResourceType{}
@@ -106,9 +110,7 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	if len(p.Providers) > 0 {
 		req = req.ServiceProvider(p.Providers)
 	}
-	if len(versioningStatus) > 0 {
-		req = req.VersioningStatus(versioningStatus)
-	}
+	req = req.VersioningStatus(versioningStatus)
 	if len(p.Keywords) > 0 {
 		req = req.Keywords(p.Keywords)
 	}
