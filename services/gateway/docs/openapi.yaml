@@ -26,6 +26,8 @@ servers:
 tags:
   - name: Discovery
     description: Search and taxonomy bootstrap endpoints
+  - name: Users
+    description: User profile endpoints
   - name: Resources
     description: Resource detail endpoints
   - name: Draft Resource Operations
@@ -158,6 +160,27 @@ paths:
                             children: []
         "504":
           $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags:
+        - Users
+      summary: Get user by id
+      description: Retrieve user profile details from usergroup service.
+      operationId: getUser
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
@@ -410,6 +433,15 @@ components:
       schema:
         type: string
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
+
+    UserId:
+      name: id
+      in: path
+      required: true
+      description: User identifier.
+      schema:
+        type: string
+        example: "user-123"
 
     WriteResourceType:
       name: resourceType
@@ -2145,6 +2177,42 @@ components:
           type: string
           description: Identifier value
           example: "10.13127/tsunami/neamthm18"
+
+    UserStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - BLOCKED
+
+    User:
+      type: object
+      required:
+        - id
+        - auth_identifier
+        - email
+        - given_name
+        - family_name
+        - status
+      properties:
+        id:
+          type: string
+        auth_identifier:
+          type: string
+        email:
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     Problem:
       type: object

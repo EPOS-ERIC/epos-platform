@@ -1,0 +1,651 @@
+openapi: 3.0.3
+info:
+  description: "User, group, membership and authorization APIs for orchestrated service\
+    \ access."
+  title: EPOS User Group API
+  version: 2.0.0
+servers:
+- url: /
+paths:
+  /health:
+    get:
+      responses:
+        "200":
+          description: Service healthy
+      summary: Health check
+  /api/v2/authorize:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizeRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizeResponse"
+          description: Decision computed
+      summary: Evaluate authorization decision
+  /api/v2/groups/{groupId}/memberships:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Membership"
+                type: array
+          description: Memberships listed
+      summary: List memberships by group
+  /api/v2/groups/{groupId}/memberships/{userId}:
+    delete:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Membership deleted
+      summary: Delete membership
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertMembershipRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Membership"
+          description: Membership upserted
+      summary: Create or update membership
+  /api/v2/groups:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Group"
+                type: array
+          description: Groups listed
+      summary: List groups
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group created
+      summary: Create group
+  /api/v2/groups/{groupId}:
+    delete:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Group deleted
+      summary: Delete group
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group found
+        "404":
+          description: Group not found
+      summary: Get group by id
+    patch:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchGroupRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group updated
+      summary: Patch group
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: groupId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group replaced
+      summary: Replace group
+  /api/v2/users:
+    get:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/User"
+                type: array
+          description: Users listed
+      summary: List users
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User created
+      summary: Create user
+  /api/v2/users/by-auth/{authIdentifier}:
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: authIdentifier
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User found
+        "404":
+          description: User not found
+      summary: Get user by auth identifier
+  /api/v2/users/{userId}:
+    delete:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: User deleted
+      summary: Delete user
+    get:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User found
+        "404":
+          description: User not found
+      summary: Get user by id
+    patch:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchUserRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User updated
+      summary: Patch user
+    put:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutUserRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User replaced
+      summary: Replace user
+  /api/v2/users/{userId}/friends/{friendUserId}:
+    delete:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: friendUserId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Friendship deleted
+      summary: Delete friendship between users
+    post:
+      parameters:
+      - explode: false
+        in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: friendUserId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Friendship"
+          description: Friendship created
+      summary: Create friendship between users
+components:
+  schemas:
+    Group:
+      example:
+        isSystem: true
+        name: name
+        description: description
+        id: id
+        slug: slug
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isSystem:
+          type: boolean
+      type: object
+    CreateGroupRequest:
+      example:
+        isSystem: true
+        name: name
+        description: description
+        slug: slug
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isSystem:
+          type: boolean
+      required:
+      - name
+      - slug
+      type: object
+    PatchGroupRequest:
+      example:
+        isSystem: true
+        name: name
+        description: description
+        slug: slug
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isSystem:
+          type: boolean
+      type: object
+    AuthorizeRequest:
+      example:
+        service: service
+        action: action
+        authIdentifier: authIdentifier
+        group: group
+        resourceOwnerIdentifier: resourceOwnerIdentifier
+      properties:
+        authIdentifier:
+          type: string
+        group:
+          type: string
+        service:
+          type: string
+        action:
+          type: string
+        resourceOwnerIdentifier:
+          type: string
+      required:
+      - action
+      - authIdentifier
+      - group
+      - service
+      type: object
+    AuthorizeResponse:
+      example:
+        reason: reason
+        allowed: true
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: string
+      required:
+      - allowed
+      type: object
+    Membership:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        role: VIEWER
+        groupId: groupId
+        userId: userId
+        status: PENDING
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        userId:
+          type: string
+        groupId:
+          type: string
+        role:
+          enum:
+          - VIEWER
+          - EDITOR
+          - REVIEWER
+          - ADMIN
+          type: string
+        status:
+          enum:
+          - PENDING
+          - ACTIVE
+          - REVOKED
+          - REJECTED
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    UpsertMembershipRequest:
+      example:
+        role: VIEWER
+        status: PENDING
+      properties:
+        role:
+          enum:
+          - VIEWER
+          - EDITOR
+          - REVIEWER
+          - ADMIN
+          type: string
+        status:
+          enum:
+          - PENDING
+          - ACTIVE
+          - REVOKED
+          - REJECTED
+          type: string
+      required:
+      - role
+      - status
+      type: object
+    Friendship:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        friendId: friendId
+        userId: userId
+      properties:
+        userId:
+          type: string
+        friendId:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+      type: object
+    User:
+      example:
+        createdAt: 2000-01-23T04:56:07.000+00:00
+        givenName: givenName
+        familyName: familyName
+        id: id
+        authIdentifier: authIdentifier
+        email: email
+        status: ACTIVE
+        updatedAt: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          type: string
+        authIdentifier:
+          type: string
+        email:
+          type: string
+        givenName:
+          type: string
+        familyName:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      type: object
+    CreateUserRequest:
+      example:
+        givenName: givenName
+        familyName: familyName
+        authIdentifier: authIdentifier
+        email: email
+        status: ACTIVE
+      properties:
+        authIdentifier:
+          type: string
+        email:
+          type: string
+        givenName:
+          type: string
+        familyName:
+          type: string
+        status:
+          default: ACTIVE
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+          type: string
+      required:
+      - authIdentifier
+      type: object
+    PutUserRequest:
+      example:
+        givenName: givenName
+        familyName: familyName
+        authIdentifier: authIdentifier
+        email: email
+        status: ACTIVE
+      properties:
+        authIdentifier:
+          type: string
+        email:
+          type: string
+        givenName:
+          type: string
+        familyName:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+          type: string
+      required:
+      - authIdentifier
+      - status
+      type: object
+    PatchUserRequest:
+      example:
+        givenName: givenName
+        familyName: familyName
+        authIdentifier: authIdentifier
+        email: email
+        status: ACTIVE
+      properties:
+        authIdentifier:
+          type: string
+        email:
+          type: string
+        givenName:
+          type: string
+        familyName:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+          type: string
+      type: object

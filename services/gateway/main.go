@@ -37,7 +37,13 @@ func main() {
 		panic("invalid metadata service configuration")
 	}
 
-	if err := server.Run(*cfg, metadataClient); err != nil {
+	usergroupClient, err := clients.NewUsergroup(cfg.Services.Usergroup.URL, cfg.Upstream)
+	if err != nil {
+		log.Error("invalid usergroup service configuration", "error", err)
+		panic("invalid usergroup service configuration")
+	}
+
+	if err := server.Run(*cfg, metadataClient, usergroupClient); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

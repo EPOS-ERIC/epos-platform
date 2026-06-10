@@ -7,15 +7,23 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/middleware"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 	"github.com/go-chi/chi/v5"
 )
 
 var log = logging.Get("routes")
 
-func NewRouter(discoveryService *discovery.Service, resourcesService *resources.Service, corsAllowOrigin string) http.Handler {
+func NewRouter(
+	discoveryService *discovery.Service,
+	resourcesService *resources.Service,
+	lifecycleService *lifecycle.Service,
+	usergroupService *usergroup.Service,
+	corsAllowOrigin string,
+) http.Handler {
 	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
@@ -39,14 +47,23 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 
 	discoveryHandler := handlers.NewDiscovery(discoveryService)
 	resourcesHandler := handlers.NewResources(resourcesService)
+	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
+	usersHandler := handlers.NewUsers(usergroupService)
 
 	r.Route("/v1", func(r chi.Router) {
 		// discovery
 		r.Get("/search", discoveryHandler.SearchMetadata)
 		r.Get("/concept", discoveryHandler.GetConceptTree)
 
-		// resources
-		r.Get("/resources/{resourceType}/{id}", resourcesHandler.GetResourceByID)
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/{id}", usersHandler.GetUser)
+		})
+
+		r.Route("/resources", func(r chi.Router) {
+			r.Get("/{resourceType}/{id}", resourcesHandler.GetResourceByID)
+			// lifecycle TODO
+			r.Post("/{resourceType}/{id}/draft", lifecycleHandler.DraftResource)
+		})
 	})
 
 	return observability.NewHTTPHandler(r, "/")

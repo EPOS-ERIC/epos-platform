@@ -18,3 +18,5 @@ discovery:
 services:
   metadata-lifecycle:
     url: "http://metadata-lifecycle-service:8080/"
+  usergroup:
+    url: "http://user-group-service:8090/"
