@@ -32,6 +32,7 @@ docker_build(
         'packages/go/logging',
         'packages/go/observability',
         'packages/go/middleware',
+        'packages/go/apidocs',
         'docker/gateway-config.dev.yaml',
     ],
 	ignore=[
@@ -42,6 +43,7 @@ docker_build(
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/middleware', '/workspace/packages/go/middleware'),
+        sync('packages/go/apidocs', '/workspace/packages/go/apidocs'),
         sync('docker/gateway-config.dev.yaml', '/workspace/docker/gateway-config.dev.yaml'),
         restart_container(),
     ],
@@ -79,12 +81,14 @@ docker_build(
         'packages/go/logging',
         'packages/go/observability',
         'packages/go/middleware',
+        'packages/go/apidocs',
     ],
     live_update=[
         sync('services/user-group-2', '/workspace/services/user-group-2'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/middleware', '/workspace/packages/go/middleware'),
+        sync('packages/go/apidocs', '/workspace/packages/go/apidocs'),
         restart_container(),
     ],
 )
