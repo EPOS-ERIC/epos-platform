@@ -8,7 +8,8 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/db"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/docs"
-	handlers "github.com/EPOS-ERIC/epos-platform/services/user-group/server/handlers"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/server/handlers"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -40,11 +41,17 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
-	usersHandler := handlers.NewUsers(database)
-	groupsHandler := handlers.NewGroups(database)
-	membershipsHandler := handlers.NewMemberships(database)
-	friendshipsHandler := handlers.NewFriendships(database)
-	authorizeHandler := handlers.NewAuthorize(database)
+	usersSvc := service.NewUsers(database)
+	groupsSvc := service.NewGroups(database)
+	membershipsSvc := service.NewMemberships(database)
+	friendshipsSvc := service.NewFriendships(database)
+	authorizerSvc := service.NewAuthorizer(database)
+
+	usersHandler := handlers.NewUsers(usersSvc)
+	groupsHandler := handlers.NewGroups(groupsSvc)
+	membershipsHandler := handlers.NewMemberships(membershipsSvc)
+	friendshipsHandler := handlers.NewFriendships(friendshipsSvc)
+	authorizeHandler := handlers.NewAuthorize(authorizerSvc)
 
 	r.Route("/api/v2", func(r chi.Router) {
 		r.Post("/authorize", authorizeHandler.Authorize)

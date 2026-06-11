@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -13,7 +14,9 @@ type Health struct {
 }
 
 func NewHealth(database *db.PostgresDB) *Health {
-	return &Health{db: database}
+	return &Health{
+		db: database,
+	}
 }
 
 func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -22,9 +25,17 @@ func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.db.PingContext(ctx); err != nil {
 		log.Error("health check failed", "component", "database", "error", err)
-		writeHealthDegraded(w)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		if err := json.NewEncoder(w).Encode(healthResponse{Status: "degraded", Reason: "database unreachable"}); err != nil {
+			log.Error("failed to encode health response", "status", http.StatusServiceUnavailable, "error", err)
+		}
 		return
 	}
 
-	writeHealthOK(w)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(healthResponse{Status: "ok", Reason: ""}); err != nil {
+		log.Error("failed to encode health response", "status", http.StatusOK, "error", err)
+	}
 }

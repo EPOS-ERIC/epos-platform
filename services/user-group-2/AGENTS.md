@@ -4,14 +4,15 @@
 
 - `make generate` runs `go generate ./...` and refreshes `db/sqlc`
 - `make build` runs `generate` first, then builds binary
-- `make lint` runs `gofmt` via `golangci-lint fmt`, then `golangci-lint run ./...`
+- `make lint` runs `gofumpt` via `golangci-lint fmt`, then `golangci-lint run ./...`
 - `make test` runs `go test ./...`
 
 ## Service Conventions
 
 - Keep HTTP routing in `server/router.go`; keep handler logic in `server/handlers/`.
+- Keep business rules in `service/`; handlers stay thin and do request parsing/response encoding.
 - Keep DB bootstrap in `db/`; use `db.Open(cfg)` plus embedded goose migrations and generated `sqlc` queries.
-- Keep request parsing and JSON encoding in handlers; keep route wiring thin and explicit.
+- Keep route wiring thin and explicit.
 - Use chi route groups to mirror v1 shape under `/api/v2`.
 - Keep `db/sqlc/` generated. Do not edit it manually; regenerate through `go generate`.
 - Keep config fields in `config/Config`; validate new config behavior in `Load` or a dedicated validator if added later.
@@ -52,7 +53,8 @@ log.Info(...)
 ### Service structure
 
 - `main.go` wires config, db, and server.
-- `server/` holds router and handlers only.
+- `server/` holds router, handlers, and handler-specific glue only.
+- `service/` holds business logic and orchestration across DB queries.
 - `db/` holds postgres bootstrap and query surface.
 - `db/sqlc/` is generated code only.
 - `config/` owns env loading.

@@ -1,7 +1,7 @@
+// Package handlers holds HTTP handlers for user-group.
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -31,19 +31,11 @@ func writeMessage(w http.ResponseWriter, status int, message string) {
 	}
 }
 
-func writeHealthOK(w http.ResponseWriter) {
+func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(healthResponse{Status: "ok", Reason: ""}); err != nil {
-		log.Error("failed to encode health response", "status", http.StatusOK, "error", err)
-	}
-}
-
-func writeHealthDegraded(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusServiceUnavailable)
-	if err := json.NewEncoder(w).Encode(healthResponse{Status: "degraded", Reason: "database unreachable"}); err != nil {
-		log.Error("failed to encode health response", "status", http.StatusServiceUnavailable, "error", err)
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(body); err != nil {
+		log.Error("failed to encode response", "status", status, "error", err)
 	}
 }
 
@@ -59,13 +51,4 @@ func parseUUIDParam(r *http.Request, name string) (uuid.UUID, error) {
 	}
 
 	return id, nil
-}
-
-func nullString(v string) sql.NullString {
-	trimmed := strings.TrimSpace(v)
-	if trimmed == "" {
-		return sql.NullString{String: "", Valid: false}
-	}
-
-	return sql.NullString{String: trimmed, Valid: true}
 }
