@@ -2,19 +2,39 @@ openapi: 3.0.3
 info:
   title: EPOS User Group API
   version: 2.0.0
-  description: User, group, membership and authorization APIs for orchestrated service access.
+  description: >-
+    User, group, membership, friendship, and authorization APIs for service access control.
+    The API exposes core identity records, group membership management, and the decision
+    endpoint used by downstream services to evaluate access.
 servers:
   - url: /
+tags:
+  - name: Health
+    description: Service liveness and readiness checks.
+  - name: Authorization
+    description: Evaluate access decisions for downstream services.
+  - name: Users
+    description: Manage user identities and direct user relationships.
+  - name: Groups
+    description: Manage groups and group metadata.
+  - name: Memberships
+    description: Manage group membership assignments.
+  - name: Friendships
+    description: Manage user-to-user friendships.
 paths:
   /health:
     get:
+      tags: [Health]
       summary: Health check
+      description: Returns 200 when the service can respond.
       responses:
         '200':
           description: Service healthy
   /api/v2/authorize:
     post:
+      tags: [Authorization]
       summary: Evaluate authorization decision
+      description: Evaluates whether requester can perform requested action.
       requestBody:
         required: true
         content:
@@ -30,7 +50,9 @@ paths:
                 $ref: '#/components/schemas/AuthorizeResponse'
   /api/v2/groups/{groupId}/memberships:
     get:
+      tags: [Memberships]
       summary: List memberships by group
+      description: Returns memberships currently attached to the given group.
       parameters:
         - name: groupId
           in: path
@@ -48,7 +70,9 @@ paths:
                   $ref: '#/components/schemas/Membership'
   /api/v2/groups/{groupId}/memberships/{userId}:
     put:
+      tags: [Memberships]
       summary: Create or update membership
+      description: Upserts membership role and status for a user in a group.
       parameters:
         - name: groupId
           in: path
@@ -74,7 +98,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Membership'
     delete:
+      tags: [Memberships]
       summary: Delete membership
+      description: Removes a user from a group.
       parameters:
         - name: groupId
           in: path
@@ -91,7 +117,9 @@ paths:
           description: Membership deleted
   /api/v2/groups:
     get:
+      tags: [Groups]
       summary: List groups
+      description: Returns groups newest first.
       responses:
         '200':
           description: Groups listed
@@ -102,7 +130,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/Group'
     post:
+      tags: [Groups]
       summary: Create group
+      description: Creates a new group record.
       requestBody:
         required: true
         content:
@@ -118,7 +148,9 @@ paths:
                 $ref: '#/components/schemas/Group'
   /api/v2/groups/{groupId}:
     get:
+      tags: [Groups]
       summary: Get group by id
+      description: Returns single group by UUID.
       parameters:
         - name: groupId
           in: path
@@ -135,7 +167,9 @@ paths:
         '404':
           description: Group not found
     put:
+      tags: [Groups]
       summary: Replace group
+      description: Replaces all mutable group fields.
       parameters:
         - name: groupId
           in: path
@@ -156,7 +190,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Group'
     patch:
+      tags: [Groups]
       summary: Patch group
+      description: Updates selected group fields.
       parameters:
         - name: groupId
           in: path
@@ -177,7 +213,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Group'
     delete:
+      tags: [Groups]
       summary: Delete group
+      description: Deletes a group if it exists.
       parameters:
         - name: groupId
           in: path
@@ -189,7 +227,9 @@ paths:
           description: Group deleted
   /api/v2/users:
     get:
+      tags: [Users]
       summary: List users
+      description: Returns users newest first.
       responses:
         '200':
           description: Users listed
@@ -200,7 +240,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/User'
     post:
+      tags: [Users]
       summary: Create user
+      description: Creates a new user. First created user is promoted to super admin.
       requestBody:
         required: true
         content:
@@ -216,7 +258,9 @@ paths:
                 $ref: '#/components/schemas/User'
   /api/v2/users/by-auth/{authIdentifier}:
     get:
+      tags: [Users]
       summary: Get user by auth identifier
+      description: Returns user identified by external auth identifier.
       parameters:
         - name: authIdentifier
           in: path
@@ -234,7 +278,9 @@ paths:
           description: User not found
   /api/v2/users/{userId}:
     get:
+      tags: [Users]
       summary: Get user by id
+      description: Returns single user by UUID.
       parameters:
         - name: userId
           in: path
@@ -251,7 +297,9 @@ paths:
         '404':
           description: User not found
     put:
+      tags: [Users]
       summary: Replace user
+      description: Replaces all mutable user fields.
       parameters:
         - name: userId
           in: path
@@ -272,7 +320,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
     patch:
+      tags: [Users]
       summary: Patch user
+      description: Updates selected user fields.
       parameters:
         - name: userId
           in: path
@@ -293,7 +343,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
     delete:
+      tags: [Users]
       summary: Delete user
+      description: Deletes a user and related rows.
       parameters:
         - name: userId
           in: path
@@ -305,7 +357,9 @@ paths:
           description: User deleted
   /api/v2/users/{userId}/friends/{friendUserId}:
     post:
+      tags: [Friendships]
       summary: Create friendship between users
+      description: Creates a symmetric friendship link between two users.
       parameters:
         - name: userId
           in: path
@@ -325,7 +379,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Friendship'
     delete:
+      tags: [Friendships]
       summary: Delete friendship between users
+      description: Removes the friendship link in both directions.
       parameters:
         - name: userId
           in: path
@@ -345,6 +401,7 @@ components:
   schemas:
     Group:
       type: object
+      description: Group record returned by group endpoints.
       properties:
         id:
           type: string
@@ -358,6 +415,7 @@ components:
           type: boolean
     CreateGroupRequest:
       type: object
+      description: Payload for creating a group.
       required: [slug, name]
       properties:
         slug:
@@ -370,6 +428,7 @@ components:
           type: boolean
     PatchGroupRequest:
       type: object
+      description: Partial payload for updating a group.
       properties:
         slug:
           type: string
@@ -381,6 +440,7 @@ components:
           type: boolean
     AuthorizeRequest:
       type: object
+      description: Access-check payload consumed by the authorization endpoint.
       required: [authIdentifier, group, service, action]
       properties:
         authIdentifier:
@@ -395,25 +455,37 @@ components:
           type: string
     AuthorizeResponse:
       type: object
+      description: Decision returned by authorization checks.
       required: [allowed]
       properties:
         allowed:
           type: boolean
         reason:
           type: string
+    UserStatus:
+      type: string
+      description: Lifecycle state for a user record.
+      enum: [ACTIVE, INACTIVE, BLOCKED]
+    MembershipRole:
+      type: string
+      description: Role assigned to a user inside a group.
+      enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
+    MembershipStatus:
+      type: string
+      description: Lifecycle state for a group membership.
+      enum: [PENDING, ACTIVE, REVOKED, REJECTED]
     Membership:
       type: object
+      description: Membership record linking user to group.
       properties:
         userId:
           type: string
         groupId:
           type: string
         role:
-          type: string
-          enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
+          $ref: '#/components/schemas/MembershipRole'
         status:
-          type: string
-          enum: [PENDING, ACTIVE, REVOKED, REJECTED]
+          $ref: '#/components/schemas/MembershipStatus'
         createdAt:
           type: string
           format: date-time
@@ -422,16 +494,16 @@ components:
           format: date-time
     UpsertMembershipRequest:
       type: object
+      description: Payload for creating or updating a membership.
       required: [role, status]
       properties:
         role:
-          type: string
-          enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
+          $ref: '#/components/schemas/MembershipRole'
         status:
-          type: string
-          enum: [PENDING, ACTIVE, REVOKED, REJECTED]
+          $ref: '#/components/schemas/MembershipStatus'
     Friendship:
       type: object
+      description: Symmetric friendship edge between two users.
       properties:
         userId:
           type: string
@@ -442,6 +514,7 @@ components:
           format: date-time
     User:
       type: object
+      description: User record returned by user endpoints.
       properties:
         id:
           type: string
@@ -453,9 +526,10 @@ components:
           type: string
         familyName:
           type: string
+        isSuperAdmin:
+          type: boolean
         status:
-          type: string
-          enum: [ACTIVE, INACTIVE, BLOCKED]
+          $ref: '#/components/schemas/UserStatus'
         createdAt:
           type: string
           format: date-time
@@ -464,6 +538,7 @@ components:
           format: date-time
     CreateUserRequest:
       type: object
+      description: Payload for creating a user.
       required: [authIdentifier]
       properties:
         authIdentifier:
@@ -474,12 +549,14 @@ components:
           type: string
         familyName:
           type: string
+        isSuperAdmin:
+          type: boolean
         status:
-          type: string
-          enum: [ACTIVE, INACTIVE, BLOCKED]
+          $ref: '#/components/schemas/UserStatus'
           default: ACTIVE
     PutUserRequest:
       type: object
+      description: Payload for fully replacing a user.
       required: [authIdentifier, status]
       properties:
         authIdentifier:
@@ -490,11 +567,13 @@ components:
           type: string
         familyName:
           type: string
+        isSuperAdmin:
+          type: boolean
         status:
-          type: string
-          enum: [ACTIVE, INACTIVE, BLOCKED]
+          $ref: '#/components/schemas/UserStatus'
     PatchUserRequest:
       type: object
+      description: Partial payload for updating a user.
       properties:
         authIdentifier:
           type: string
@@ -504,6 +583,7 @@ components:
           type: string
         familyName:
           type: string
+        isSuperAdmin:
+          type: boolean
         status:
-          type: string
-          enum: [ACTIVE, INACTIVE, BLOCKED]
+          $ref: '#/components/schemas/UserStatus'

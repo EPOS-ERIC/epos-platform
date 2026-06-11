@@ -41,14 +41,6 @@ func NewAuthorizer(database *db.PostgresDB) *Authorizer {
 }
 
 func (s *Authorizer) Decide(ctx context.Context, req AuthorizeRequest) (AuthorizeResult, error) {
-	groupID, err := uuid.Parse(strings.TrimSpace(req.Group))
-	if err != nil {
-		return AuthorizeResult{
-			Allowed: false,
-			Reason:  "group is invalid",
-		}, nil
-	}
-
 	requester, err := s.users.GetByAuthIdentifier(ctx, strings.TrimSpace(req.AuthIdentifier))
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -61,6 +53,20 @@ func (s *Authorizer) Decide(ctx context.Context, req AuthorizeRequest) (Authoriz
 	}
 
 	requesterID := parseUUID(requester.ID)
+	if requester.IsSuperAdmin {
+		return AuthorizeResult{
+			Allowed: true,
+			Reason:  "super admin",
+		}, nil
+	}
+
+	groupID, err := uuid.Parse(strings.TrimSpace(req.Group))
+	if err != nil {
+		return AuthorizeResult{
+			Allowed: false,
+			Reason:  "group is invalid",
+		}, nil
+	}
 
 	isRequesterMember, err := s.memberships.IsActiveMember(ctx, requesterID, groupID)
 	if err != nil {

@@ -105,14 +105,15 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Creat
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (auth_identifier, email, given_name, family_name, status)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO users (auth_identifier, email, given_name, family_name, is_super_admin, status)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING
     id,
     auth_identifier,
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -123,6 +124,7 @@ type CreateUserParams struct {
 	Email          sql.NullString
 	GivenName      sql.NullString
 	FamilyName     sql.NullString
+	IsSuperAdmin   bool
 	Status         string
 }
 
@@ -132,6 +134,7 @@ type CreateUserRow struct {
 	Email          string
 	GivenName      string
 	FamilyName     string
+	IsSuperAdmin   bool
 	Status         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -143,6 +146,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.Email,
 		arg.GivenName,
 		arg.FamilyName,
+		arg.IsSuperAdmin,
 		arg.Status,
 	)
 	var i CreateUserRow
@@ -152,6 +156,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.Email,
 		&i.GivenName,
 		&i.FamilyName,
+		&i.IsSuperAdmin,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -311,6 +316,7 @@ SELECT
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -324,6 +330,7 @@ type GetUserByAuthIdentifierRow struct {
 	Email          string
 	GivenName      string
 	FamilyName     string
+	IsSuperAdmin   bool
 	Status         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -338,6 +345,7 @@ func (q *Queries) GetUserByAuthIdentifier(ctx context.Context, authIdentifier st
 		&i.Email,
 		&i.GivenName,
 		&i.FamilyName,
+		&i.IsSuperAdmin,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -352,6 +360,7 @@ SELECT
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -365,6 +374,7 @@ type GetUserByIDRow struct {
 	Email          string
 	GivenName      string
 	FamilyName     string
+	IsSuperAdmin   bool
 	Status         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -379,6 +389,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 		&i.Email,
 		&i.GivenName,
 		&i.FamilyName,
+		&i.IsSuperAdmin,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -509,6 +520,7 @@ SELECT
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -522,6 +534,7 @@ type ListUsersRow struct {
 	Email          string
 	GivenName      string
 	FamilyName     string
+	IsSuperAdmin   bool
 	Status         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -542,6 +555,7 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 			&i.Email,
 			&i.GivenName,
 			&i.FamilyName,
+			&i.IsSuperAdmin,
 			&i.Status,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -624,15 +638,17 @@ SET
     email = $2,
     given_name = $3,
     family_name = $4,
-    status = $5,
+    is_super_admin = $5,
+    status = $6,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $6
+WHERE id = $7
 RETURNING
     id,
     auth_identifier,
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -643,6 +659,7 @@ type UpdateUserParams struct {
 	Email          sql.NullString
 	GivenName      sql.NullString
 	FamilyName     sql.NullString
+	IsSuperAdmin   bool
 	Status         string
 	ID             uuid.UUID
 }
@@ -653,6 +670,7 @@ type UpdateUserRow struct {
 	Email          string
 	GivenName      string
 	FamilyName     string
+	IsSuperAdmin   bool
 	Status         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -664,6 +682,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		arg.Email,
 		arg.GivenName,
 		arg.FamilyName,
+		arg.IsSuperAdmin,
 		arg.Status,
 		arg.ID,
 	)
@@ -674,6 +693,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		&i.Email,
 		&i.GivenName,
 		&i.FamilyName,
+		&i.IsSuperAdmin,
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,

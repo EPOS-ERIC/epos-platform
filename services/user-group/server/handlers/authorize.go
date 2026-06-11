@@ -2,19 +2,23 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
 
 type Authorize struct {
 	service *service.Authorizer
+	log     *slog.Logger
 }
 
 func NewAuthorize(svc *service.Authorizer) *Authorize {
 	return &Authorize{
 		service: svc,
+		log:     logging.Get("authorize-handler"),
 	}
 }
 
@@ -37,6 +41,7 @@ func (h *Authorize) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req AuthorizeRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.WarnContext(r.Context(), "invalid authorize request body", "error", err)
 		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
@@ -47,6 +52,7 @@ func (h *Authorize) Authorize(w http.ResponseWriter, r *http.Request) {
 	req.Action = strings.TrimSpace(req.Action)
 
 	if req.AuthIdentifier == "" || req.Group == "" || req.Service == "" || req.Action == "" {
+		h.log.WarnContext(r.Context(), "authorize request missing required fields")
 		writeMessage(w, http.StatusBadRequest, "authIdentifier, group, service and action are required")
 		return
 	}
@@ -61,6 +67,7 @@ func (h *Authorize) Authorize(w http.ResponseWriter, r *http.Request) {
 		ResourceOwnerIdentifier: req.ResourceOwnerIdentifier,
 	})
 	if err != nil {
+		h.log.ErrorContext(r.Context(), "authorize decision failed", "auth_identifier", req.AuthIdentifier, "group", req.Group, "service", req.Service, "action", req.Action, "error", err)
 		writeMessage(w, http.StatusInternalServerError, "internal error")
 		return
 	}

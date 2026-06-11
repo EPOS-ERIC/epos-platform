@@ -3,18 +3,22 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
 
 type Groups struct {
 	service *service.Groups
+	log     *slog.Logger
 }
 
 func NewGroups(svc *service.Groups) *Groups {
 	return &Groups{
 		service: svc,
+		log:     logging.Get("groups-handler"),
 	}
 }
 
@@ -35,6 +39,7 @@ type patchGroupRequest struct {
 func (h *Groups) List(w http.ResponseWriter, r *http.Request) {
 	items, err := h.service.List(r.Context())
 	if err != nil {
+		h.log.ErrorContext(r.Context(), "list groups failed", "error", err)
 		writeMessage(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -51,6 +56,10 @@ func (h *Groups) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			h.log.DebugContext(r.Context(), "group not found", "group_id", id)
+		}
+		h.log.ErrorContext(r.Context(), "get group failed", "group_id", id, "error", err)
 		writeServiceError(w, err, "group")
 		return
 	}
@@ -62,12 +71,19 @@ func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
 	var req createGroupRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.WarnContext(r.Context(), "invalid create group request body", "error", err)
 		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.service.Create(r.Context(), service.CreateGroupParams{Slug: req.Slug, Name: req.Name, Description: req.Description, IsSystem: req.IsSystem})
+	item, err := h.service.Create(r.Context(), service.CreateGroupParams{
+		Slug:        req.Slug,
+		Name:        req.Name,
+		Description: req.Description,
+		IsSystem:    req.IsSystem,
+	})
 	if err != nil {
+		h.log.ErrorContext(r.Context(), "create group failed", "error", err)
 		writeServiceError(w, err, "group")
 		return
 	}
@@ -85,12 +101,20 @@ func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
 	var req createGroupRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.WarnContext(r.Context(), "invalid replace group request body", "error", err)
 		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.service.Replace(r.Context(), service.UpdateGroupParams{ID: id, Slug: req.Slug, Name: req.Name, Description: req.Description, IsSystem: req.IsSystem})
+	item, err := h.service.Replace(r.Context(), service.UpdateGroupParams{
+		ID:          id,
+		Slug:        req.Slug,
+		Name:        req.Name,
+		Description: req.Description,
+		IsSystem:    req.IsSystem,
+	})
 	if err != nil {
+		h.log.ErrorContext(r.Context(), "replace group failed", "group_id", id, "error", err)
 		writeServiceError(w, err, "group")
 		return
 	}
@@ -108,12 +132,19 @@ func (h *Groups) Patch(w http.ResponseWriter, r *http.Request) {
 	var req patchGroupRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.WarnContext(r.Context(), "invalid patch group request body", "error", err)
 		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	item, err := h.service.Patch(r.Context(), id, service.PatchGroupParams{Slug: req.Slug, Name: req.Name, Description: req.Description, IsSystem: req.IsSystem})
+	item, err := h.service.Patch(r.Context(), id, service.PatchGroupParams{
+		Slug:        req.Slug,
+		Name:        req.Name,
+		Description: req.Description,
+		IsSystem:    req.IsSystem,
+	})
 	if err != nil {
+		h.log.ErrorContext(r.Context(), "patch group failed", "group_id", id, "error", err)
 		writeServiceError(w, err, "group")
 		return
 	}
@@ -129,6 +160,7 @@ func (h *Groups) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Delete(r.Context(), id); err != nil {
+		h.log.ErrorContext(r.Context(), "delete group failed", "group_id", id, "error", err)
 		writeServiceError(w, err, "group")
 		return
 	}

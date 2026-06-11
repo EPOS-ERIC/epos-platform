@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/db"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/db/sqlc"
 	"github.com/google/uuid"
 )
+
+var friendshipsLog = logging.Get("friendships-service")
 
 type Friendship struct {
 	UserID    string    `json:"userId"`
@@ -41,6 +44,7 @@ func (s *Friendships) Create(ctx context.Context, userID, friendID uuid.UUID) (F
 		if errors.Is(err, sql.ErrNoRows) {
 			return Friendship{}, ErrNotFound
 		}
+		friendshipsLog.ErrorContext(ctx, "get user by id failed", "user_id", userID, "error", err)
 		return Friendship{}, fmt.Errorf("get user by id: %w", err)
 	}
 
@@ -48,6 +52,7 @@ func (s *Friendships) Create(ctx context.Context, userID, friendID uuid.UUID) (F
 		if errors.Is(err, sql.ErrNoRows) {
 			return Friendship{}, ErrNotFound
 		}
+		friendshipsLog.ErrorContext(ctx, "get friend by id failed", "friend_user_id", friendID, "error", err)
 		return Friendship{}, fmt.Errorf("get friend by id: %w", err)
 	}
 
@@ -57,6 +62,7 @@ func (s *Friendships) Create(ctx context.Context, userID, friendID uuid.UUID) (F
 		UserID_2:   friendID,
 		FriendID_2: userID,
 	}); err != nil {
+		friendshipsLog.ErrorContext(ctx, "create friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		return Friendship{}, fmt.Errorf("create friendship: %w", err)
 	}
 
@@ -65,6 +71,7 @@ func (s *Friendships) Create(ctx context.Context, userID, friendID uuid.UUID) (F
 		if errors.Is(err, sql.ErrNoRows) {
 			return Friendship{}, ErrNotFound
 		}
+		friendshipsLog.ErrorContext(ctx, "get friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		return Friendship{}, fmt.Errorf("get friendship: %w", err)
 	}
 
@@ -80,6 +87,7 @@ func (s *Friendships) Delete(ctx context.Context, userID, friendID uuid.UUID) er
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNotFound
 		}
+		friendshipsLog.ErrorContext(ctx, "get friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		return fmt.Errorf("get friendship: %w", err)
 	}
 
@@ -89,6 +97,7 @@ func (s *Friendships) Delete(ctx context.Context, userID, friendID uuid.UUID) er
 		UserID_2:   friendID,
 		FriendID_2: userID,
 	}); err != nil {
+		friendshipsLog.ErrorContext(ctx, "delete friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		return fmt.Errorf("delete friendship: %w", err)
 	}
 
@@ -98,6 +107,7 @@ func (s *Friendships) Delete(ctx context.Context, userID, friendID uuid.UUID) er
 func (s *Friendships) AreFriends(ctx context.Context, userID, friendID uuid.UUID) (bool, error) {
 	result, err := s.db.AreFriends(ctx, sqlc.AreFriendsParams{UserID: userID, FriendID: friendID})
 	if err != nil {
+		friendshipsLog.ErrorContext(ctx, "check friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		return false, fmt.Errorf("check friendship: %w", err)
 	}
 

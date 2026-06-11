@@ -8,10 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/db"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/db/sqlc"
 	"github.com/google/uuid"
 )
+
+var groupsLog = logging.Get("groups-service")
 
 type Group struct {
 	ID          string    `json:"id"`
@@ -58,13 +61,22 @@ type PatchGroupParams struct {
 func (s *Groups) List(ctx context.Context) ([]Group, error) {
 	rows, err := s.db.ListGroups(ctx)
 	if err != nil {
+		groupsLog.ErrorContext(ctx, "list groups failed", "error", err)
 		return nil, fmt.Errorf("list groups: %w", err)
 	}
 
 	items := make([]Group, len(rows))
 
 	for i, row := range rows {
-		items[i] = toGroup(row.ID, row.Slug, row.Name, row.Description, row.IsSystem, row.CreatedAt, row.UpdatedAt)
+		items[i] = Group{
+			ID:          row.ID.String(),
+			Slug:        row.Slug,
+			Name:        row.Name,
+			Description: row.Description,
+			IsSystem:    row.IsSystem,
+			CreatedAt:   row.CreatedAt,
+			UpdatedAt:   row.UpdatedAt,
+		}
 	}
 
 	return items, nil
@@ -76,10 +88,19 @@ func (s *Groups) GetByID(ctx context.Context, id uuid.UUID) (Group, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			return Group{}, ErrNotFound
 		}
+		groupsLog.ErrorContext(ctx, "get group by id failed", "group_id", id, "error", err)
 		return Group{}, fmt.Errorf("get group by id: %w", err)
 	}
 
-	return toGroup(row.ID, row.Slug, row.Name, row.Description, row.IsSystem, row.CreatedAt, row.UpdatedAt), nil
+	return Group{
+		ID:          row.ID.String(),
+		Slug:        row.Slug,
+		Name:        row.Name,
+		Description: row.Description,
+		IsSystem:    row.IsSystem,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+	}, nil
 }
 
 func (s *Groups) Create(ctx context.Context, params CreateGroupParams) (Group, error) {
@@ -100,10 +121,19 @@ func (s *Groups) Create(ctx context.Context, params CreateGroupParams) (Group, e
 		if isUniqueViolation(err, "groups_slug_key") {
 			return Group{}, ErrConflict
 		}
+		groupsLog.ErrorContext(ctx, "create group failed", "slug", params.Slug, "error", err)
 		return Group{}, fmt.Errorf("create group: %w", err)
 	}
 
-	return toGroup(row.ID, row.Slug, row.Name, row.Description, row.IsSystem, row.CreatedAt, row.UpdatedAt), nil
+	return Group{
+		ID:          row.ID.String(),
+		Slug:        row.Slug,
+		Name:        row.Name,
+		Description: row.Description,
+		IsSystem:    row.IsSystem,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+	}, nil
 }
 
 func (s *Groups) Replace(ctx context.Context, params UpdateGroupParams) (Group, error) {
@@ -128,10 +158,19 @@ func (s *Groups) Replace(ctx context.Context, params UpdateGroupParams) (Group, 
 		if isUniqueViolation(err, "groups_slug_key") {
 			return Group{}, ErrConflict
 		}
+		groupsLog.ErrorContext(ctx, "update group failed", "group_id", params.ID, "error", err)
 		return Group{}, fmt.Errorf("update group: %w", err)
 	}
 
-	return toGroup(row.ID, row.Slug, row.Name, row.Description, row.IsSystem, row.CreatedAt, row.UpdatedAt), nil
+	return Group{
+		ID:          row.ID.String(),
+		Slug:        row.Slug,
+		Name:        row.Name,
+		Description: row.Description,
+		IsSystem:    row.IsSystem,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+	}, nil
 }
 
 func (s *Groups) Patch(ctx context.Context, id uuid.UUID, params PatchGroupParams) (Group, error) {
@@ -176,20 +215,9 @@ func (s *Groups) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if err := s.db.DeleteGroup(ctx, id); err != nil {
+		groupsLog.ErrorContext(ctx, "delete group failed", "group_id", id, "error", err)
 		return fmt.Errorf("delete group: %w", err)
 	}
 
 	return nil
-}
-
-func toGroup(id uuid.UUID, slug, name, description string, isSystem bool, createdAt, updatedAt time.Time) Group {
-	return Group{
-		ID:          id.String(),
-		Slug:        slug,
-		Name:        name,
-		Description: description,
-		IsSystem:    isSystem,
-		CreatedAt:   createdAt,
-		UpdatedAt:   updatedAt,
-	}
 }

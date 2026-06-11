@@ -1,18 +1,22 @@
 package handlers
 
 import (
+	"log/slog"
 	"net/http"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
 
 type Friendships struct {
 	service *service.Friendships
+	log     *slog.Logger
 }
 
 func NewFriendships(svc *service.Friendships) *Friendships {
 	return &Friendships{
 		service: svc,
+		log:     logging.Get("friendships-handler"),
 	}
 }
 
@@ -31,6 +35,7 @@ func (h *Friendships) Create(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.service.Create(r.Context(), userID, friendID)
 	if err != nil {
+		h.log.ErrorContext(r.Context(), "create friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		writeServiceError(w, err, "friendship")
 		return
 	}
@@ -52,6 +57,7 @@ func (h *Friendships) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Delete(r.Context(), userID, friendID); err != nil {
+		h.log.ErrorContext(r.Context(), "delete friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
 		writeServiceError(w, err, "friendship")
 		return
 	}

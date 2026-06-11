@@ -54,6 +54,7 @@ type User struct {
 	FamilyName     sql.NullString
 	GivenName      sql.NullString
 	Email          sql.NullString
+	IsSuperAdmin   bool
 	Status         string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time

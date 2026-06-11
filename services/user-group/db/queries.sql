@@ -5,6 +5,7 @@ SELECT
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -18,6 +19,7 @@ SELECT
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -31,6 +33,7 @@ SELECT
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at
@@ -38,14 +41,15 @@ FROM users
 WHERE auth_identifier = $1;
 
 -- name: CreateUser :one
-INSERT INTO users (auth_identifier, email, given_name, family_name, status)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO users (auth_identifier, email, given_name, family_name, is_super_admin, status)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING
     id,
     auth_identifier,
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at;
@@ -57,15 +61,17 @@ SET
     email = $2,
     given_name = $3,
     family_name = $4,
-    status = $5,
+    is_super_admin = $5,
+    status = $6,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $6
+WHERE id = $7
 RETURNING
     id,
     auth_identifier,
     COALESCE(email, '') AS email,
     COALESCE(given_name, '') AS given_name,
     COALESCE(family_name, '') AS family_name,
+    is_super_admin,
     status,
     created_at,
     updated_at;

@@ -7,11 +7,31 @@ CREATE TABLE users (
     family_name TEXT,
     given_name TEXT,
     email TEXT UNIQUE,
+    is_super_admin BOOLEAN NOT NULL DEFAULT false,
     status TEXT NOT NULL DEFAULT 'ACTIVE',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT users_status_check CHECK (status IN ('ACTIVE', 'INACTIVE', 'BLOCKED'))
 );
+
+-- First user becomes super admin so service bootstraps with one trusted account.
+-- +goose StatementBegin
+CREATE OR REPLACE FUNCTION promote_first_user_as_super_admin()
+RETURNS trigger AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM users) THEN
+        NEW.is_super_admin := TRUE;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+-- +goose StatementEnd
+
+CREATE TRIGGER users_promote_first_user_as_super_admin
+BEFORE INSERT ON users
+FOR EACH ROW
+EXECUTE FUNCTION promote_first_user_as_super_admin();
 
 CREATE TABLE groups (
     id uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
