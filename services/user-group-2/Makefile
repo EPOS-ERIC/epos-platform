@@ -7,7 +7,7 @@ BUILDFLAGS=-trimpath
 # TODO
 # LDFLAGS=-s -w -X github.com/EPOS-ERIC//common.Version=$(VERSION)
 
-build:
+build: generate
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
 
 build-docker: build
@@ -15,6 +15,9 @@ build-docker: build
 
 test:
 	go test ./...
+
+generate:
+	go generate ./...
 
 fmt:
 	golangci-lint fmt

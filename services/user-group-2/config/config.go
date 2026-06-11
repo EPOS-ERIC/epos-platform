@@ -15,10 +15,11 @@ type Config struct {
 	WriteTimeout   time.Duration `envconfig:"WRITE_TIMEOUT" default:"30s"`
 	IdleTimeout    time.Duration `envconfig:"IDLE_TIMEOUT" default:"60s"`
 
-	DBHost string `envconfig:"DB_HOST" default:"localhost"`
-	DBPort string `envconfig:"DB_PORT" default:"5432"`
-	DBname string `envconfig:"DB_NAME" default:"user_group"`
-	DBuser string `envconfig:"DB_USER" default:"user_group"`
+	DBHost     string `envconfig:"DB_HOST" default:"localhost"`
+	DBPort     string `envconfig:"DB_PORT" default:"5432"`
+	DBName     string `envconfig:"DB_NAME" default:"user_group"`
+	DBUser     string `envconfig:"DB_USER" default:"user_group"`
+	DBPassword string `envconfig:"DB_PASSWORD" default:"changeme"`
 }
 
 func Load() (Config, error) {
