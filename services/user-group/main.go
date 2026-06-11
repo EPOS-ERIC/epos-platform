@@ -14,18 +14,18 @@ func main() {
 		}
 	}()
 
-	log.Info("user-group service started")
+	log.Info("user-group service starting")
 
 	cfg, err := config.Load()
 	if err != nil {
 		log.Error("error loading config", "error", err)
-		panic("error loading config")
+		panic(err)
 	}
 
 	log.Debug("config loaded", "listen", cfg.ServerPort)
 
 	if err := server.Run(cfg); err != nil {
 		log.Error("server failed", "error", err)
-		panic("server failed")
+		panic(err)
 	}
 }

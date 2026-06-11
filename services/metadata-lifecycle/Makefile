@@ -4,7 +4,7 @@ build:
 	./gradlew --no-daemon clean shadowJar
 
 build-docker: build
-	docker build -t $(IMAGE) .
+	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
 	./gradlew --no-daemon test

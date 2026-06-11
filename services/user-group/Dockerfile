@@ -5,7 +5,11 @@ RUN apk upgrade --no-cache
 WORKDIR /app
 
 COPY services/user-group/user-group /usr/local/bin/user-group
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+
+ENV EPOS_SERVICE_NAME="User Group" \
+    EPOS_PORT="8090"
 
 EXPOSE 8090
 
-ENTRYPOINT ["/usr/local/bin/user-group"]
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh", "/usr/local/bin/user-group"]
