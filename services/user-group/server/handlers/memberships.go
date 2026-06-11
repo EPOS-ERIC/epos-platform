@@ -2,106 +2,83 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/user-group/repository"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
 
-type MembershipsHandler struct {
-	usersRepo       repository.UserRepository
-	groupsRepo      repository.GroupRepository
-	membershipsRepo repository.MembershipRepository
+type Memberships struct {
+	service *service.Memberships
 }
 
-func NewMembershipsHandler(usersRepo repository.UserRepository, groupsRepo repository.GroupRepository, membershipsRepo repository.MembershipRepository) *MembershipsHandler {
-	return &MembershipsHandler{usersRepo: usersRepo, groupsRepo: groupsRepo, membershipsRepo: membershipsRepo}
+func NewMemberships(svc *service.Memberships) *Memberships {
+	return &Memberships{
+		service: svc,
+	}
 }
 
-type upsertMembershipRequest struct {
-	Role   string `json:"role"`
-	Status string `json:"status"`
-}
+type upsertMembershipRequest struct{ Role, Status string }
 
-func (h *MembershipsHandler) ListByGroup(w http.ResponseWriter, r *http.Request) {
-	groupID := strings.TrimSpace(r.PathValue("groupId"))
-	if groupID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "groupId is required"})
+func (h *Memberships) ListByGroup(w http.ResponseWriter, r *http.Request) {
+	groupID, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	writeJSON(w, http.StatusOK, h.membershipsRepo.ListByGroupID(groupID))
+	items, err := h.service.ListByGroup(r.Context(), groupID)
+	if err != nil {
+		writeMessage(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, items)
 }
 
-func (h *MembershipsHandler) Upsert(w http.ResponseWriter, r *http.Request) {
-	groupID := strings.TrimSpace(r.PathValue("groupId"))
-	userID := strings.TrimSpace(r.PathValue("userId"))
-	if groupID == "" || userID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "groupId and userId are required"})
+func (h *Memberships) Upsert(w http.ResponseWriter, r *http.Request) {
+	groupID, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if _, err := h.groupsRepo.GetByID(groupID); err != nil {
-		if errors.Is(err, repository.ErrGroupNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "group not found"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
-		return
-	}
-	if _, err := h.usersRepo.GetByID(userID); err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "user not found"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+	userID, err := parseUUIDParam(r, "userId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	var req upsertMembershipRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid request body"})
-		return
-	}
-	req.Role = strings.ToUpper(strings.TrimSpace(req.Role))
-	req.Status = strings.ToUpper(strings.TrimSpace(req.Status))
-	if req.Role == "" || req.Status == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "role and status are required"})
+		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	m, err := h.membershipsRepo.Upsert(userID, groupID, req.Role, req.Status)
+	item, err := h.service.Upsert(r.Context(), service.UpsertMembershipParams{UserID: userID, GroupID: groupID, Role: req.Role, Status: req.Status})
 	if err != nil {
-		switch {
-		case errors.Is(err, repository.ErrMembershipInvalidRole):
-			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid role"})
-		case errors.Is(err, repository.ErrMembershipInvalidStatus):
-			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid status"})
-		default:
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
-		}
+		writeServiceError(w, err, "membership")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, m)
+	writeJSON(w, http.StatusOK, item)
 }
 
-func (h *MembershipsHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	groupID := strings.TrimSpace(r.PathValue("groupId"))
-	userID := strings.TrimSpace(r.PathValue("userId"))
-	if groupID == "" || userID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "groupId and userId are required"})
+func (h *Memberships) Delete(w http.ResponseWriter, r *http.Request) {
+	groupID, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err := h.membershipsRepo.Delete(userID, groupID)
+	userID, err := parseUUIDParam(r, "userId")
 	if err != nil {
-		if errors.Is(err, repository.ErrMembershipNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "membership not found"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), userID, groupID); err != nil {
+		writeServiceError(w, err, "membership")
 		return
 	}
 

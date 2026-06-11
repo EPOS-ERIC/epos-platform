@@ -75,16 +75,16 @@ docker_build(
 docker_build(
     'epos-user-group-dev:local',
     '.',
-    dockerfile='services/user-group-2/Dockerfile.dev',
+    dockerfile='services/user-group/Dockerfile.dev',
     only=[
-        'services/user-group-2',
+        'services/user-group',
         'packages/go/logging',
         'packages/go/observability',
         'packages/go/middleware',
         'packages/go/apidocs',
     ],
     live_update=[
-        sync('services/user-group-2', '/workspace/services/user-group-2'),
+        sync('services/user-group', '/workspace/services/user-group'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/middleware', '/workspace/packages/go/middleware'),
