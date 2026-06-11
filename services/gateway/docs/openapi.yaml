@@ -500,6 +500,7 @@ components:
       description: Local identifier of the resource
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
 
     DatasetId:
@@ -509,6 +510,7 @@ components:
       description: Dataset identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
 
     DistributionId:
@@ -518,6 +520,7 @@ components:
       description: Distribution identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fdistribution%2Frestful%2Fv1.0"
 
     SoftwareApplicationId:
@@ -527,6 +530,7 @@ components:
       description: URL-encoded software application identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0"
 
     SoftwareSourceCodeId:
@@ -536,6 +540,7 @@ components:
       description: Software source code identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403"
 
     WebserviceId:
@@ -545,6 +550,7 @@ components:
       description: Webservice identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0"
 
     OrganizationId:
@@ -554,6 +560,7 @@ components:
       description: Organization identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "ROR%3A048a87296%2Fv1.0"
 
     ConceptId:
@@ -563,6 +570,7 @@ components:
       description: Concept identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "category%3Asoftware_jup_conc_multi%2Fv1.0"
 
     ConceptSchemeId:
@@ -572,6 +580,7 @@ components:
       description: Concept scheme identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "category%3Asoftware_jup%2Fv1.0"
 
     Q:
