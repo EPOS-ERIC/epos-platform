@@ -1,0 +1,21 @@
+FROM golang:1.26-alpine3.22
+
+RUN apk add --no-cache git
+
+WORKDIR /workspace/services/gateway
+
+COPY services/gateway/go.mod services/gateway/go.sum ./
+COPY packages/go/logging /workspace/packages/go/logging
+COPY packages/go/observability /workspace/packages/go/observability
+
+RUN go mod download
+
+COPY services/gateway /workspace/services/gateway
+COPY docker/gateway-config.dev.yaml /workspace/docker/gateway-config.dev.yaml
+
+EXPOSE 5000
+
+RUN adduser -D -u 1000 appuser && chown -R 1000:1000 /workspace
+USER 1000
+
+CMD ["go", "run", ".", "-config", "/workspace/docker/gateway-config.dev.yaml"]

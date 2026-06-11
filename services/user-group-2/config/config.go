@@ -1,0 +1,31 @@
+// Package config loads and validates gateway configuration.
+package config
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/kelseyhightower/envconfig"
+)
+
+type Config struct {
+	ServerPort     string        `envconfig:"PORT" default:"8090"`
+	RequestTimeout time.Duration `envconfig:"REQUEST_TIMEOUT" default:"30s"`
+	ReadTimeout    time.Duration `envconfig:"READ_TIMEOUT" default:"15s"`
+	WriteTimeout   time.Duration `envconfig:"WRITE_TIMEOUT" default:"30s"`
+	IdleTimeout    time.Duration `envconfig:"IDLE_TIMEOUT" default:"60s"`
+
+	DBHost string `envconfig:"DB_HOST" default:"localhost"`
+	DBPort string `envconfig:"DB_PORT" default:"5432"`
+	DBname string `envconfig:"DB_NAME" default:"user_group"`
+	DBuser string `envconfig:"DB_USER" default:"user_group"`
+}
+
+func Load() (Config, error) {
+	var cfg Config
+	err := envconfig.Process("", &cfg)
+	if err != nil {
+		return Config{}, fmt.Errorf("TODO: %w", err)
+	}
+	return cfg, nil
+}
