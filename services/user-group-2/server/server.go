@@ -42,7 +42,7 @@ func Run(cfg config.Config) error {
 
 	srv := &http.Server{ //nolint:exhaustruct
 		BaseContext:  func(net.Listener) context.Context { return ctx },
-		Addr:         cfg.ServerPort,
+		Addr:         ":" + cfg.ServerPort,
 		Handler:      handler,
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,

@@ -4,17 +4,16 @@ go 1.26.2
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging
 
-replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
+replace github.com/EPOS-ERIC/epos-platform/packages/go/middleware => ../../packages/go/middleware
 
-replace github.com/EPOS-ERIC/epos-platform/services/gateway => ../gateway
+replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
 
 require github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 
-require github.com/EPOS-ERIC/epos-platform/services/gateway v0.0.0-00010101000000-000000000000
+require github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
 
 require (
 	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
-	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/kelseyhightower/envconfig v1.4.0
 )
@@ -42,9 +41,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.55.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect

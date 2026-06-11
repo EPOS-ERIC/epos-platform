@@ -31,6 +31,7 @@ docker_build(
         'services/gateway',
         'packages/go/logging',
         'packages/go/observability',
+        'packages/go/middleware',
         'docker/gateway-config.dev.yaml',
     ],
 	ignore=[
@@ -40,6 +41,7 @@ docker_build(
         sync('services/gateway', '/workspace/services/gateway'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
+        sync('packages/go/middleware', '/workspace/packages/go/middleware'),
         sync('docker/gateway-config.dev.yaml', '/workspace/docker/gateway-config.dev.yaml'),
         restart_container(),
     ],
@@ -71,20 +73,18 @@ docker_build(
 docker_build(
     'epos-user-group-dev:local',
     '.',
-    dockerfile='services/user-group/Dockerfile.dev',
+    dockerfile='services/user-group-2/Dockerfile.dev',
     only=[
-        'services/user-group',
+        'services/user-group-2',
         'packages/go/logging',
         'packages/go/observability',
-        'packages/go/migrations',
-        'packages/go/postgres',
+        'packages/go/middleware',
     ],
     live_update=[
-        sync('services/user-group', '/workspace/services/user-group'),
+        sync('services/user-group-2', '/workspace/services/user-group-2'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
-        sync('packages/go/migrations', '/workspace/packages/go/migrations'),
-        sync('packages/go/postgres', '/workspace/packages/go/postgres'),
+        sync('packages/go/middleware', '/workspace/packages/go/middleware'),
         restart_container(),
     ],
 )

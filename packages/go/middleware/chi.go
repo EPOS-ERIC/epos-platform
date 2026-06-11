@@ -1,4 +1,4 @@
-// Package middleware provides HTTP middleware functions for logging, error recovery, and content type handling.
+// Package middleware provides shared HTTP middleware for logging, recovery, and CORS.
 package middleware
 
 import (
@@ -10,8 +10,6 @@ import (
 )
 
 var log = logging.Get("http")
-
-// TODO: see if this package makes sense as a shared library for different services
 
 type responseWriter struct {
 	http.ResponseWriter
