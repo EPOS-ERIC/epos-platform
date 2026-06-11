@@ -45,7 +45,7 @@ func Logger(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 		duration := time.Since(startedAt)
 
-		log.InfoContext(r.Context(), "http request", "status", rw.status, "duration", duration)
+		log.InfoContext(r.Context(), "http request", "status", rw.status, "duration", duration.String())
 	})
 }
 
