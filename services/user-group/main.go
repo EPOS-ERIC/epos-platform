@@ -7,18 +7,18 @@ import (
 )
 
 func main() {
-	log := logging.Get("gateway")
+	log := logging.Get("user-group")
 	defer func() {
 		if err := logging.Close(); err != nil {
 			log.Error("failed to close logging", "error", err)
 		}
 	}()
 
-	log.Info("gateway service started")
+	log.Info("user-group service started")
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Error("error loading config", "err", err)
+		log.Error("error loading config", "error", err)
 		panic("error loading config")
 	}
 
