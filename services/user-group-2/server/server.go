@@ -13,6 +13,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/config"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/db"
 )
 
 func Run(cfg config.Config) error {
@@ -20,6 +21,16 @@ func Run(cfg config.Config) error {
 	defer stop()
 
 	log := logging.Get("server")
+
+	database, err := db.Open(cfg)
+	if err != nil {
+		return fmt.Errorf("open database: %w", err)
+	}
+	defer func() {
+		if closeErr := database.Close(); closeErr != nil {
+			log.Error("database close failed", "error", closeErr)
+		}
+	}()
 
 	// Set up OpenTelemetry.
 	otelShutdown, err := observability.Start(ctx, observability.Config{
@@ -34,10 +45,7 @@ func Run(cfg config.Config) error {
 		}
 	}()
 
-	// discoverySvc := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
-	// resourcesSvc := resources.NewService(metadataClient)
-	// router := NewRouter(discoverySvc, resourcesSvc, cfg.Server.CORSAllowOrigin)
-	router := NewRouter()
+	router := NewRouter(database)
 	handler := requestTimeoutHandler(router, cfg.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct

@@ -26,7 +26,7 @@ func Load() (Config, error) {
 	var cfg Config
 	err := envconfig.Process("", &cfg)
 	if err != nil {
-		return Config{}, fmt.Errorf("TODO: %w", err)
+		return Config{}, fmt.Errorf("load config: %w", err)
 	}
 	return cfg, nil
 }

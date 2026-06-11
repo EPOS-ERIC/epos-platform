@@ -18,8 +18,8 @@ import (
 var embedMigrations embed.FS
 
 type PostgresDB struct {
-	db      *sql.DB
-	queries *sqlc.Queries
+	db *sql.DB
+	*sqlc.Queries
 }
 
 func Open(cfg config.Config) (*PostgresDB, error) {
@@ -47,7 +47,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		return nil, err
 	}
 
-	return &PostgresDB{db: db, queries: sqlc.New(db)}, nil
+	return &PostgresDB{db: db, Queries: sqlc.New(db)}, nil
 }
 
 func runMigrations(db *sql.DB) error {
@@ -78,10 +78,6 @@ func runMigrations(db *sql.DB) error {
 	return nil
 }
 
-func (d *PostgresDB) Queries() *sqlc.Queries {
-	return d.queries
-}
-
 func (d *PostgresDB) Close() error {
 	if d.db == nil {
 		return nil
@@ -97,6 +93,16 @@ func (d *PostgresDB) Health() error {
 		return fmt.Errorf("database connection is nil")
 	}
 	if err := d.db.Ping(); err != nil {
+		return fmt.Errorf("ping database: %w", err)
+	}
+	return nil
+}
+
+func (d *PostgresDB) PingContext(ctx context.Context) error {
+	if d.db == nil {
+		return fmt.Errorf("database connection is nil")
+	}
+	if err := d.db.PingContext(ctx); err != nil {
 		return fmt.Errorf("ping database: %w", err)
 	}
 	return nil

@@ -6,19 +6,23 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/db"
 	"github.com/EPOS-ERIC/epos-platform/services/user-group/docs"
+	handlers "github.com/EPOS-ERIC/epos-platform/services/user-group/server/handlers"
 	"github.com/go-chi/chi/v5"
 )
 
 var log = logging.Get("routes")
 
-func NewRouter() http.Handler {
+func NewRouter(database *db.PostgresDB) http.Handler {
 	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	r.Get("/health", handlers.NewHealth(database).ServeHTTP)
 
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
@@ -36,24 +40,43 @@ func NewRouter() http.Handler {
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
-	// discoveryHandler := handlers.NewDiscovery(discoveryService)
-	// resourcesHandler := handlers.NewResources(resourcesService)
+	usersHandler := handlers.NewUsers(database)
+	groupsHandler := handlers.NewGroups(database)
+	membershipsHandler := handlers.NewMemberships(database)
+	friendshipsHandler := handlers.NewFriendships(database)
+	authorizeHandler := handlers.NewAuthorize(database)
 
-	// r.Route("/v1", func(r chi.Router) {
-	// 	// discovery
-	// 	r.Get("/search", discoveryHandler.SearchMetadata)
-	// 	r.Get("/concept", discoveryHandler.GetConceptTree)
-	//
-	// 	// resources
-	// 	r.Get("/dataset/{id}", resourcesHandler.GetDatasetByID)
-	// 	r.Get("/distribution/{id}", resourcesHandler.GetDistributionByID)
-	// 	r.Get("/softwareapplication/{id}", resourcesHandler.GetSoftwareApplicationByID)
-	// 	r.Get("/softwaresourcecode/{id}", resourcesHandler.GetSoftwareSourceCodeByID)
-	// 	r.Get("/webservice/{id}", resourcesHandler.GetWebserviceByID)
-	// 	r.Get("/organization/{id}", resourcesHandler.GetOrganizationByID)
-	// 	r.Get("/concept/{id}", resourcesHandler.GetConceptByID)
-	// 	r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
-	// })
+	r.Route("/api/v2", func(r chi.Router) {
+		r.Post("/authorize", authorizeHandler.Authorize)
+
+		r.Route("/groups", func(r chi.Router) {
+			r.Get("/", groupsHandler.List)
+			r.Post("/", groupsHandler.Create)
+			r.Route("/{groupId}", func(r chi.Router) {
+				r.Get("/", groupsHandler.GetByID)
+				r.Put("/", groupsHandler.Replace)
+				r.Patch("/", groupsHandler.Patch)
+				r.Delete("/", groupsHandler.Delete)
+				r.Get("/memberships", membershipsHandler.ListByGroup)
+				r.Put("/memberships/{userId}", membershipsHandler.Upsert)
+				r.Delete("/memberships/{userId}", membershipsHandler.Delete)
+			})
+		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/", usersHandler.List)
+			r.Post("/", usersHandler.Create)
+			r.Get("/by-auth/{authIdentifier}", usersHandler.GetByAuthIdentifier)
+			r.Route("/{userId}", func(r chi.Router) {
+				r.Get("/", usersHandler.GetByID)
+				r.Put("/", usersHandler.Replace)
+				r.Patch("/", usersHandler.Patch)
+				r.Delete("/", usersHandler.Delete)
+				r.Post("/friends/{friendUserId}", friendshipsHandler.Create)
+				r.Delete("/friends/{friendUserId}", friendshipsHandler.Delete)
+			})
+		})
+	})
 
 	return observability.NewHTTPHandler(r, "/")
 }

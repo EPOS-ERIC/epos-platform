@@ -214,6 +214,27 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getFriendship = `-- name: GetFriendship :one
+SELECT
+    user_id,
+    friend_id,
+    created_at
+FROM friendships
+WHERE user_id = $1 AND friend_id = $2
+`
+
+type GetFriendshipParams struct {
+	UserID   uuid.UUID
+	FriendID uuid.UUID
+}
+
+func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (Friendship, error) {
+	row := q.db.QueryRowContext(ctx, getFriendship, arg.UserID, arg.FriendID)
+	var i Friendship
+	err := row.Scan(&i.UserID, &i.FriendID, &i.CreatedAt)
+	return i, err
+}
+
 const getGroupByID = `-- name: GetGroupByID :one
 SELECT
     id,

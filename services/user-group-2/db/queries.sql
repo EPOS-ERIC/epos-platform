@@ -182,6 +182,14 @@ INSERT INTO friendships (user_id, friend_id)
 VALUES ($1, $2), ($3, $4)
 ON CONFLICT DO NOTHING;
 
+-- name: GetFriendship :one
+SELECT
+    user_id,
+    friend_id,
+    created_at
+FROM friendships
+WHERE user_id = $1 AND friend_id = $2;
+
 -- name: DeleteFriendship :exec
 DELETE FROM friendships
 WHERE (user_id = $1 AND friend_id = $2)
