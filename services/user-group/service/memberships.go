@@ -98,6 +98,10 @@ func (s *Memberships) Delete(ctx context.Context, userID, groupID uuid.UUID) err
 func (s *Memberships) IsActiveMember(ctx context.Context, userID, groupID uuid.UUID) (bool, error) {
 	result, err := s.db.IsActiveMember(ctx, sqlc.IsActiveMemberParams{UserID: userID, GroupID: groupID})
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+
 		membershipsLog.ErrorContext(ctx, "check active membership failed", "group_id", groupID, "user_id", userID, "error", err)
 		return false, fmt.Errorf("check active membership: %w", err)
 	}

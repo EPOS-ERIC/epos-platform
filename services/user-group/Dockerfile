@@ -4,9 +4,8 @@ RUN apk upgrade --no-cache
 
 WORKDIR /app
 
-COPY services/gateway/gateway /usr/local/bin/gateway
-COPY docker/gateway-config.yaml /etc/gateway/config.yaml
+COPY services/user-group/user-group /usr/local/bin/user-group
 
-EXPOSE 5000
+EXPOSE 8090
 
-ENTRYPOINT ["/usr/local/bin/gateway"]
+ENTRYPOINT ["/usr/local/bin/user-group"]
