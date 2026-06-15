@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -18,14 +18,14 @@ import (
 // checks if the Membership type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &Membership{}
 
-// Membership struct for Membership
+// Membership Membership record linking user to group.
 type Membership struct {
-	UserId    *string    `json:"userId,omitempty"`
-	GroupId   *string    `json:"groupId,omitempty"`
-	Role      *string    `json:"role,omitempty"`
-	Status    *string    `json:"status,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	UserId    *string           `json:"userId,omitempty"`
+	GroupId   *string           `json:"groupId,omitempty"`
+	Role      *MembershipRole   `json:"role,omitempty"`
+	Status    *MembershipStatus `json:"status,omitempty"`
+	CreatedAt *time.Time        `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time        `json:"updatedAt,omitempty"`
 }
 
 // NewMembership instantiates a new Membership object
@@ -110,9 +110,9 @@ func (o *Membership) SetGroupId(v string) {
 }
 
 // GetRole returns the Role field value if set, zero value otherwise.
-func (o *Membership) GetRole() string {
+func (o *Membership) GetRole() MembershipRole {
 	if o == nil || IsNil(o.Role) {
-		var ret string
+		var ret MembershipRole
 		return ret
 	}
 	return *o.Role
@@ -120,7 +120,7 @@ func (o *Membership) GetRole() string {
 
 // GetRoleOk returns a tuple with the Role field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Membership) GetRoleOk() (*string, bool) {
+func (o *Membership) GetRoleOk() (*MembershipRole, bool) {
 	if o == nil || IsNil(o.Role) {
 		return nil, false
 	}
@@ -136,15 +136,15 @@ func (o *Membership) HasRole() bool {
 	return false
 }
 
-// SetRole gets a reference to the given string and assigns it to the Role field.
-func (o *Membership) SetRole(v string) {
+// SetRole gets a reference to the given MembershipRole and assigns it to the Role field.
+func (o *Membership) SetRole(v MembershipRole) {
 	o.Role = &v
 }
 
 // GetStatus returns the Status field value if set, zero value otherwise.
-func (o *Membership) GetStatus() string {
+func (o *Membership) GetStatus() MembershipStatus {
 	if o == nil || IsNil(o.Status) {
-		var ret string
+		var ret MembershipStatus
 		return ret
 	}
 	return *o.Status
@@ -152,7 +152,7 @@ func (o *Membership) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Membership) GetStatusOk() (*string, bool) {
+func (o *Membership) GetStatusOk() (*MembershipStatus, bool) {
 	if o == nil || IsNil(o.Status) {
 		return nil, false
 	}
@@ -168,8 +168,8 @@ func (o *Membership) HasStatus() bool {
 	return false
 }
 
-// SetStatus gets a reference to the given string and assigns it to the Status field.
-func (o *Membership) SetStatus(v string) {
+// SetStatus gets a reference to the given MembershipStatus and assigns it to the Status field.
+func (o *Membership) SetStatus(v MembershipStatus) {
 	o.Status = &v
 }
 

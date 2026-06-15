@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -48,7 +48,17 @@ type APIClient struct {
 
 	// API Services
 
-	DefaultAPI DefaultAPI
+	AuthorizationAPI AuthorizationAPI
+
+	FriendshipsAPI FriendshipsAPI
+
+	GroupsAPI GroupsAPI
+
+	HealthAPI HealthAPI
+
+	MembershipsAPI MembershipsAPI
+
+	UsersAPI UsersAPI
 }
 
 type service struct {
@@ -67,7 +77,12 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.DefaultAPI = (*DefaultAPIService)(&c.common)
+	c.AuthorizationAPI = (*AuthorizationAPIService)(&c.common)
+	c.FriendshipsAPI = (*FriendshipsAPIService)(&c.common)
+	c.GroupsAPI = (*GroupsAPIService)(&c.common)
+	c.HealthAPI = (*HealthAPIService)(&c.common)
+	c.MembershipsAPI = (*MembershipsAPIService)(&c.common)
+	c.UsersAPI = (*UsersAPIService)(&c.common)
 
 	return c
 }

@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -19,10 +19,10 @@ import (
 // checks if the UpsertMembershipRequest type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &UpsertMembershipRequest{}
 
-// UpsertMembershipRequest struct for UpsertMembershipRequest
+// UpsertMembershipRequest Payload for creating or updating a membership.
 type UpsertMembershipRequest struct {
-	Role   string `json:"role"`
-	Status string `json:"status"`
+	Role   MembershipRole   `json:"role"`
+	Status MembershipStatus `json:"status"`
 }
 
 type _UpsertMembershipRequest UpsertMembershipRequest
@@ -31,7 +31,7 @@ type _UpsertMembershipRequest UpsertMembershipRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpsertMembershipRequest(role string, status string) *UpsertMembershipRequest {
+func NewUpsertMembershipRequest(role MembershipRole, status MembershipStatus) *UpsertMembershipRequest {
 	this := UpsertMembershipRequest{}
 	this.Role = role
 	this.Status = status
@@ -47,9 +47,9 @@ func NewUpsertMembershipRequestWithDefaults() *UpsertMembershipRequest {
 }
 
 // GetRole returns the Role field value
-func (o *UpsertMembershipRequest) GetRole() string {
+func (o *UpsertMembershipRequest) GetRole() MembershipRole {
 	if o == nil {
-		var ret string
+		var ret MembershipRole
 		return ret
 	}
 
@@ -58,7 +58,7 @@ func (o *UpsertMembershipRequest) GetRole() string {
 
 // GetRoleOk returns a tuple with the Role field value
 // and a boolean to check if the value has been set.
-func (o *UpsertMembershipRequest) GetRoleOk() (*string, bool) {
+func (o *UpsertMembershipRequest) GetRoleOk() (*MembershipRole, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -66,14 +66,14 @@ func (o *UpsertMembershipRequest) GetRoleOk() (*string, bool) {
 }
 
 // SetRole sets field value
-func (o *UpsertMembershipRequest) SetRole(v string) {
+func (o *UpsertMembershipRequest) SetRole(v MembershipRole) {
 	o.Role = v
 }
 
 // GetStatus returns the Status field value
-func (o *UpsertMembershipRequest) GetStatus() string {
+func (o *UpsertMembershipRequest) GetStatus() MembershipStatus {
 	if o == nil {
-		var ret string
+		var ret MembershipStatus
 		return ret
 	}
 
@@ -82,7 +82,7 @@ func (o *UpsertMembershipRequest) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *UpsertMembershipRequest) GetStatusOk() (*string, bool) {
+func (o *UpsertMembershipRequest) GetStatusOk() (*MembershipStatus, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -90,7 +90,7 @@ func (o *UpsertMembershipRequest) GetStatusOk() (*string, bool) {
 }
 
 // SetStatus sets field value
-func (o *UpsertMembershipRequest) SetStatus(v string) {
+func (o *UpsertMembershipRequest) SetStatus(v MembershipStatus) {
 	o.Status = v
 }
 

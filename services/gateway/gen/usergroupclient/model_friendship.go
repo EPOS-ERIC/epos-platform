@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -18,7 +18,7 @@ import (
 // checks if the Friendship type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &Friendship{}
 
-// Friendship struct for Friendship
+// Friendship Symmetric friendship edge between two users.
 type Friendship struct {
 	UserId    *string    `json:"userId,omitempty"`
 	FriendId  *string    `json:"friendId,omitempty"`

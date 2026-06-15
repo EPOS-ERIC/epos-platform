@@ -28,7 +28,7 @@ lint: fmt
 METADATA_SPEC := ../metadata-lifecycle/openapi.yaml
 METADATA_CLIENT_GEN_DIR := gen/metadataclient
 
-USERGROUP_SPEC := ../user-group/swagger/openapi.yaml
+USERGROUP_SPEC := ../user-group/docs/openapi.yaml
 USERGROUP_CLIENT_GEN_DIR := gen/usergroupclient
 generate: clean
 	openapi-generator generate -g go \

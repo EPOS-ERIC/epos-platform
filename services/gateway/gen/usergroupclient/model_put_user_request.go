@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -19,13 +19,14 @@ import (
 // checks if the PutUserRequest type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &PutUserRequest{}
 
-// PutUserRequest struct for PutUserRequest
+// PutUserRequest Payload for fully replacing a user.
 type PutUserRequest struct {
-	AuthIdentifier string  `json:"authIdentifier"`
-	Email          *string `json:"email,omitempty"`
-	GivenName      *string `json:"givenName,omitempty"`
-	FamilyName     *string `json:"familyName,omitempty"`
-	Status         string  `json:"status"`
+	AuthIdentifier string     `json:"authIdentifier"`
+	Email          *string    `json:"email,omitempty"`
+	GivenName      *string    `json:"givenName,omitempty"`
+	FamilyName     *string    `json:"familyName,omitempty"`
+	IsSuperAdmin   *bool      `json:"isSuperAdmin,omitempty"`
+	Status         UserStatus `json:"status"`
 }
 
 type _PutUserRequest PutUserRequest
@@ -34,7 +35,7 @@ type _PutUserRequest PutUserRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPutUserRequest(authIdentifier string, status string) *PutUserRequest {
+func NewPutUserRequest(authIdentifier string, status UserStatus) *PutUserRequest {
 	this := PutUserRequest{}
 	this.AuthIdentifier = authIdentifier
 	this.Status = status
@@ -169,10 +170,42 @@ func (o *PutUserRequest) SetFamilyName(v string) {
 	o.FamilyName = &v
 }
 
+// GetIsSuperAdmin returns the IsSuperAdmin field value if set, zero value otherwise.
+func (o *PutUserRequest) GetIsSuperAdmin() bool {
+	if o == nil || IsNil(o.IsSuperAdmin) {
+		var ret bool
+		return ret
+	}
+	return *o.IsSuperAdmin
+}
+
+// GetIsSuperAdminOk returns a tuple with the IsSuperAdmin field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *PutUserRequest) GetIsSuperAdminOk() (*bool, bool) {
+	if o == nil || IsNil(o.IsSuperAdmin) {
+		return nil, false
+	}
+	return o.IsSuperAdmin, true
+}
+
+// HasIsSuperAdmin returns a boolean if a field has been set.
+func (o *PutUserRequest) HasIsSuperAdmin() bool {
+	if o != nil && !IsNil(o.IsSuperAdmin) {
+		return true
+	}
+
+	return false
+}
+
+// SetIsSuperAdmin gets a reference to the given bool and assigns it to the IsSuperAdmin field.
+func (o *PutUserRequest) SetIsSuperAdmin(v bool) {
+	o.IsSuperAdmin = &v
+}
+
 // GetStatus returns the Status field value
-func (o *PutUserRequest) GetStatus() string {
+func (o *PutUserRequest) GetStatus() UserStatus {
 	if o == nil {
-		var ret string
+		var ret UserStatus
 		return ret
 	}
 
@@ -181,7 +214,7 @@ func (o *PutUserRequest) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value
 // and a boolean to check if the value has been set.
-func (o *PutUserRequest) GetStatusOk() (*string, bool) {
+func (o *PutUserRequest) GetStatusOk() (*UserStatus, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -189,7 +222,7 @@ func (o *PutUserRequest) GetStatusOk() (*string, bool) {
 }
 
 // SetStatus sets field value
-func (o *PutUserRequest) SetStatus(v string) {
+func (o *PutUserRequest) SetStatus(v UserStatus) {
 	o.Status = v
 }
 
@@ -212,6 +245,9 @@ func (o PutUserRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.FamilyName) {
 		toSerialize["familyName"] = o.FamilyName
+	}
+	if !IsNil(o.IsSuperAdmin) {
+		toSerialize["isSuperAdmin"] = o.IsSuperAdmin
 	}
 	toSerialize["status"] = o.Status
 	return toSerialize, nil

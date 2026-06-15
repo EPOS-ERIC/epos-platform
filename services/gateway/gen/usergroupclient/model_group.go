@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -17,7 +17,7 @@ import (
 // checks if the Group type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &Group{}
 
-// Group struct for Group
+// Group Group record returned by group endpoints.
 type Group struct {
 	Id          *string `json:"id,omitempty"`
 	Slug        *string `json:"slug,omitempty"`

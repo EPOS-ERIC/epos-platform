@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership and authorization APIs for orchestrated service access.
+User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -19,13 +19,14 @@ import (
 // checks if the CreateUserRequest type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &CreateUserRequest{}
 
-// CreateUserRequest struct for CreateUserRequest
+// CreateUserRequest Payload for creating a user.
 type CreateUserRequest struct {
-	AuthIdentifier string  `json:"authIdentifier"`
-	Email          *string `json:"email,omitempty"`
-	GivenName      *string `json:"givenName,omitempty"`
-	FamilyName     *string `json:"familyName,omitempty"`
-	Status         *string `json:"status,omitempty"`
+	AuthIdentifier string      `json:"authIdentifier"`
+	Email          *string     `json:"email,omitempty"`
+	GivenName      *string     `json:"givenName,omitempty"`
+	FamilyName     *string     `json:"familyName,omitempty"`
+	IsSuperAdmin   *bool       `json:"isSuperAdmin,omitempty"`
+	Status         *UserStatus `json:"status,omitempty"`
 }
 
 type _CreateUserRequest CreateUserRequest
@@ -37,8 +38,6 @@ type _CreateUserRequest CreateUserRequest
 func NewCreateUserRequest(authIdentifier string) *CreateUserRequest {
 	this := CreateUserRequest{}
 	this.AuthIdentifier = authIdentifier
-	var status string = "ACTIVE"
-	this.Status = &status
 	return &this
 }
 
@@ -47,8 +46,6 @@ func NewCreateUserRequest(authIdentifier string) *CreateUserRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCreateUserRequestWithDefaults() *CreateUserRequest {
 	this := CreateUserRequest{}
-	var status string = "ACTIVE"
-	this.Status = &status
 	return &this
 }
 
@@ -172,10 +169,42 @@ func (o *CreateUserRequest) SetFamilyName(v string) {
 	o.FamilyName = &v
 }
 
+// GetIsSuperAdmin returns the IsSuperAdmin field value if set, zero value otherwise.
+func (o *CreateUserRequest) GetIsSuperAdmin() bool {
+	if o == nil || IsNil(o.IsSuperAdmin) {
+		var ret bool
+		return ret
+	}
+	return *o.IsSuperAdmin
+}
+
+// GetIsSuperAdminOk returns a tuple with the IsSuperAdmin field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CreateUserRequest) GetIsSuperAdminOk() (*bool, bool) {
+	if o == nil || IsNil(o.IsSuperAdmin) {
+		return nil, false
+	}
+	return o.IsSuperAdmin, true
+}
+
+// HasIsSuperAdmin returns a boolean if a field has been set.
+func (o *CreateUserRequest) HasIsSuperAdmin() bool {
+	if o != nil && !IsNil(o.IsSuperAdmin) {
+		return true
+	}
+
+	return false
+}
+
+// SetIsSuperAdmin gets a reference to the given bool and assigns it to the IsSuperAdmin field.
+func (o *CreateUserRequest) SetIsSuperAdmin(v bool) {
+	o.IsSuperAdmin = &v
+}
+
 // GetStatus returns the Status field value if set, zero value otherwise.
-func (o *CreateUserRequest) GetStatus() string {
+func (o *CreateUserRequest) GetStatus() UserStatus {
 	if o == nil || IsNil(o.Status) {
-		var ret string
+		var ret UserStatus
 		return ret
 	}
 	return *o.Status
@@ -183,7 +212,7 @@ func (o *CreateUserRequest) GetStatus() string {
 
 // GetStatusOk returns a tuple with the Status field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *CreateUserRequest) GetStatusOk() (*string, bool) {
+func (o *CreateUserRequest) GetStatusOk() (*UserStatus, bool) {
 	if o == nil || IsNil(o.Status) {
 		return nil, false
 	}
@@ -199,8 +228,8 @@ func (o *CreateUserRequest) HasStatus() bool {
 	return false
 }
 
-// SetStatus gets a reference to the given string and assigns it to the Status field.
-func (o *CreateUserRequest) SetStatus(v string) {
+// SetStatus gets a reference to the given UserStatus and assigns it to the Status field.
+func (o *CreateUserRequest) SetStatus(v UserStatus) {
 	o.Status = &v
 }
 
@@ -223,6 +252,9 @@ func (o CreateUserRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.FamilyName) {
 		toSerialize["familyName"] = o.FamilyName
+	}
+	if !IsNil(o.IsSuperAdmin) {
+		toSerialize["isSuperAdmin"] = o.IsSuperAdmin
 	}
 	if !IsNil(o.Status) {
 		toSerialize["status"] = o.Status
