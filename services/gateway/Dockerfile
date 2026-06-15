@@ -6,7 +6,11 @@ WORKDIR /app
 
 COPY services/gateway/gateway /usr/local/bin/gateway
 COPY docker/gateway-config.yaml /etc/gateway/config.yaml
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+
+ENV EPOS_SERVICE_NAME="Gateway" \
+    EPOS_PORT="5000"
 
 EXPOSE 5000
 
-ENTRYPOINT ["/usr/local/bin/gateway"]
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh", "/usr/local/bin/gateway"]

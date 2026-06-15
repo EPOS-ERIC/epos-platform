@@ -2,12 +2,25 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/user-group/repository"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
+
+type Authorize struct {
+	service *service.Authorizer
+	log     *slog.Logger
+}
+
+func NewAuthorize(svc *service.Authorizer) *Authorize {
+	return &Authorize{
+		service: svc,
+		log:     logging.Get("authorize-handler"),
+	}
+}
 
 type AuthorizeRequest struct {
 	AuthIdentifier          string `json:"authIdentifier"`
@@ -24,115 +37,40 @@ type AuthorizeResponse struct {
 	Reason  string `json:"reason,omitempty"`
 }
 
-type AuthorizeHandler struct {
-	usersRepo       repository.UserRepository
-	membershipsRepo repository.MembershipRepository
-	friendshipsRepo repository.FriendshipRepository
-}
-
-func NewAuthorizeHandler(usersRepo repository.UserRepository, membershipsRepo repository.MembershipRepository, friendshipsRepo repository.FriendshipRepository) *AuthorizeHandler {
-	return &AuthorizeHandler{usersRepo: usersRepo, membershipsRepo: membershipsRepo, friendshipsRepo: friendshipsRepo}
-}
-
-func (h *AuthorizeHandler) Authorize(w http.ResponseWriter, r *http.Request) {
+func (h *Authorize) Authorize(w http.ResponseWriter, r *http.Request) {
 	var req AuthorizeRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid authorize request body", "error", err)
-		writeJSON(w, http.StatusBadRequest, AuthorizeResponse{Allowed: false, Reason: "invalid request body"})
+		h.log.WarnContext(r.Context(), "invalid authorize request body", "error", err)
+		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if strings.TrimSpace(req.AuthIdentifier) == "" || strings.TrimSpace(req.Group) == "" || strings.TrimSpace(req.Service) == "" || strings.TrimSpace(req.Action) == "" {
-		log.Warn("missing required authorize fields")
-		writeJSON(w, http.StatusBadRequest, AuthorizeResponse{Allowed: false, Reason: "authIdentifier, group, service and action are required"})
+	req.AuthIdentifier = strings.TrimSpace(req.AuthIdentifier)
+	req.Group = strings.TrimSpace(req.Group)
+	req.Service = strings.TrimSpace(req.Service)
+	req.Action = strings.TrimSpace(req.Action)
+
+	if req.AuthIdentifier == "" || req.Group == "" || req.Service == "" || req.Action == "" {
+		h.log.WarnContext(r.Context(), "authorize request missing required fields")
+		writeMessage(w, http.StatusBadRequest, "authIdentifier, group, service and action are required")
 		return
 	}
 
-	allowed, reason, err := h.decide(req)
+	result, err := h.service.Decide(r.Context(), service.AuthorizeRequest{
+		AuthIdentifier:          req.AuthIdentifier,
+		Group:                   req.Group,
+		Service:                 req.Service,
+		Action:                  req.Action,
+		ResourceType:            req.ResourceType,
+		ResourceID:              req.ResourceID,
+		ResourceOwnerIdentifier: req.ResourceOwnerIdentifier,
+	})
 	if err != nil {
-		log.Error("failed to evaluate authorization", "error", err)
-		writeJSON(w, http.StatusInternalServerError, AuthorizeResponse{Allowed: false, Reason: "internal error"})
+		h.log.ErrorContext(r.Context(), "authorize decision failed", "auth_identifier", req.AuthIdentifier, "group", req.Group, "service", req.Service, "action", req.Action, "error", err)
+		writeMessage(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, AuthorizeResponse{Allowed: allowed, Reason: reason})
-}
-
-func (h *AuthorizeHandler) decide(req AuthorizeRequest) (bool, string, error) {
-	requester, err := h.usersRepo.GetByAuthIdentifier(req.AuthIdentifier)
-	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			return false, "requesting user not found", nil
-		}
-		return false, "", err
-	}
-
-	isRequesterMember, err := h.membershipsRepo.IsActiveMember(requester.ID, req.Group)
-	if err != nil {
-		return false, "", err
-	}
-	if !isRequesterMember {
-		return false, "requesting user is not an active group member", nil
-	}
-
-	if !isDraftReadRequest(req) {
-		return false, "rule not applicable", nil
-	}
-
-	ownerIdentifier := strings.TrimSpace(req.ResourceOwnerIdentifier)
-	if ownerIdentifier == "" {
-		return false, "resourceOwnerIdentifier is required for draft access", nil
-	}
-	if ownerIdentifier == requester.AuthIdentifier {
-		return true, "same owner", nil
-	}
-
-	owner, err := h.usersRepo.GetByAuthIdentifier(ownerIdentifier)
-	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			return false, "draft owner not found", nil
-		}
-		return false, "", err
-	}
-
-	isOwnerMember, err := h.membershipsRepo.IsActiveMember(owner.ID, req.Group)
-	if err != nil {
-		return false, "", err
-	}
-	if !isOwnerMember {
-		return false, "draft owner is not an active group member", nil
-	}
-
-	areFriends, err := h.friendshipsRepo.AreFriends(requester.ID, owner.ID)
-	if err != nil {
-		return false, "", err
-	}
-	if !areFriends {
-		return false, "users are not friends", nil
-	}
-
-	return true, "friends in same group can access draft", nil
-}
-
-func isDraftReadRequest(req AuthorizeRequest) bool {
-	service := strings.ToLower(strings.TrimSpace(req.Service))
-	action := strings.ToLower(strings.TrimSpace(req.Action))
-	resourceType := strings.ToLower(strings.TrimSpace(req.ResourceType))
-
-	if service != "metadata-lifecycle" {
-		return false
-	}
-    if action != "read" && action != "view" && action != "get" {
-		return false
-	}
-
-	return strings.Contains(resourceType, "draft") || resourceType == ""
-}
-
-func writeJSON(w http.ResponseWriter, status int, body any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(body); err != nil {
-		log.Error("failed to encode JSON response", "status", status, "error", err)
-	}
+	writeJSON(w, http.StatusOK, AuthorizeResponse{Allowed: result.Allowed, Reason: result.Reason})
 }

@@ -1,75 +1,64 @@
 package handlers
 
 import (
-	"errors"
+	"log/slog"
 	"net/http"
-	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/user-group/repository"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
 
-type FriendshipsHandler struct {
-	usersRepo       repository.UserRepository
-	friendshipsRepo repository.FriendshipRepository
+type Friendships struct {
+	service *service.Friendships
+	log     *slog.Logger
 }
 
-func NewFriendshipsHandler(usersRepo repository.UserRepository, friendshipsRepo repository.FriendshipRepository) *FriendshipsHandler {
-	return &FriendshipsHandler{usersRepo: usersRepo, friendshipsRepo: friendshipsRepo}
+func NewFriendships(svc *service.Friendships) *Friendships {
+	return &Friendships{
+		service: svc,
+		log:     logging.Get("friendships-handler"),
+	}
 }
 
-func (h *FriendshipsHandler) Create(w http.ResponseWriter, r *http.Request) {
-	userID := strings.TrimSpace(r.PathValue("userId"))
-	friendID := strings.TrimSpace(r.PathValue("friendUserId"))
-	if userID == "" || friendID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "userId and friendUserId are required"})
-		return
-	}
-
-	if _, err := h.usersRepo.GetByID(userID); err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "user not found"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
-		return
-	}
-	if _, err := h.usersRepo.GetByID(friendID); err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "friend user not found"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
-		return
-	}
-
-	f, err := h.friendshipsRepo.Create(userID, friendID)
+func (h *Friendships) Create(w http.ResponseWriter, r *http.Request) {
+	userID, err := parseUUIDParam(r, "userId")
 	if err != nil {
-		if errors.Is(err, repository.ErrFriendshipInvalid) {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid friendship"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+		writeMessage(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, f)
+	friendID, err := parseUUIDParam(r, "friendUserId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	item, err := h.service.Create(r.Context(), userID, friendID)
+	if err != nil {
+		h.log.ErrorContext(r.Context(), "create friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
+		writeServiceError(w, err, "friendship")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, item)
 }
 
-func (h *FriendshipsHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	userID := strings.TrimSpace(r.PathValue("userId"))
-	friendID := strings.TrimSpace(r.PathValue("friendUserId"))
-	if userID == "" || friendID == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "userId and friendUserId are required"})
+func (h *Friendships) Delete(w http.ResponseWriter, r *http.Request) {
+	userID, err := parseUUIDParam(r, "userId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	err := h.friendshipsRepo.Delete(userID, friendID)
+	friendID, err := parseUUIDParam(r, "friendUserId")
 	if err != nil {
-		if errors.Is(err, repository.ErrFriendshipNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "friendship not found"})
-			return
-		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), userID, friendID); err != nil {
+		h.log.ErrorContext(r.Context(), "delete friendship failed", "user_id", userID, "friend_user_id", friendID, "error", err)
+		writeServiceError(w, err, "friendship")
 		return
 	}
 

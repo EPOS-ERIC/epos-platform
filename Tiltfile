@@ -7,6 +7,7 @@ docker_build(
     only=[
         'apps/platform',
         'services/gateway/docs/openapi.yaml',
+        'packages/scripts/epos-banner.sh',
     ],
     ignore=[
         'apps/platform/.angular',
@@ -19,6 +20,7 @@ docker_build(
         sync('apps/platform/angular.json', '/workspace/apps/platform/angular.json'),
         sync('apps/platform/package.json', '/workspace/apps/platform/package.json'),
         sync('services/gateway/docs/openapi.yaml', '/workspace/services/gateway/docs/openapi.yaml'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         restart_container(),
     ],
 )
@@ -31,6 +33,9 @@ docker_build(
         'services/gateway',
         'packages/go/logging',
         'packages/go/observability',
+        'packages/go/middleware',
+        'packages/go/apidocs',
+        'packages/scripts/epos-banner.sh',
         'docker/gateway-config.dev.yaml',
     ],
 	ignore=[
@@ -40,6 +45,9 @@ docker_build(
         sync('services/gateway', '/workspace/services/gateway'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
+        sync('packages/go/middleware', '/workspace/packages/go/middleware'),
+        sync('packages/go/apidocs', '/workspace/packages/go/apidocs'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         sync('docker/gateway-config.dev.yaml', '/workspace/docker/gateway-config.dev.yaml'),
         restart_container(),
     ],
@@ -55,6 +63,7 @@ docker_build(
         'services/metadata-lifecycle/gradlew',
         'services/metadata-lifecycle/build.gradle.kts',
         'services/metadata-lifecycle/settings.gradle.kts',
+        'packages/scripts/epos-banner.sh',
         'packages/assets/otel/opentelemetry-javaagent.jar',
     ],
     live_update=[
@@ -63,6 +72,7 @@ docker_build(
         sync('services/metadata-lifecycle/gradlew', '/workspace/services/metadata-lifecycle/gradlew'),
         sync('services/metadata-lifecycle/build.gradle.kts', '/workspace/services/metadata-lifecycle/build.gradle.kts'),
         sync('services/metadata-lifecycle/settings.gradle.kts', '/workspace/services/metadata-lifecycle/settings.gradle.kts'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         sync('packages/assets/otel/opentelemetry-javaagent.jar', '/otel/opentelemetry-javaagent.jar'),
         restart_container(),
     ],
@@ -76,15 +86,17 @@ docker_build(
         'services/user-group',
         'packages/go/logging',
         'packages/go/observability',
-        'packages/go/migrations',
-        'packages/go/postgres',
+        'packages/go/middleware',
+        'packages/go/apidocs',
+        'packages/scripts/epos-banner.sh',
     ],
     live_update=[
         sync('services/user-group', '/workspace/services/user-group'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
-        sync('packages/go/migrations', '/workspace/packages/go/migrations'),
-        sync('packages/go/postgres', '/workspace/packages/go/postgres'),
+        sync('packages/go/middleware', '/workspace/packages/go/middleware'),
+        sync('packages/go/apidocs', '/workspace/packages/go/apidocs'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         restart_container(),
     ],
 )
@@ -99,6 +111,7 @@ docker_build(
         'packages/go/observability',
         'packages/go/migrations',
         'packages/go/postgres',
+        'packages/scripts/epos-banner.sh',
     ],
     live_update=[
         sync('services/data-retriever', '/workspace/services/data-retriever'),
@@ -106,6 +119,7 @@ docker_build(
         sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/migrations', '/workspace/packages/go/migrations'),
         sync('packages/go/postgres', '/workspace/packages/go/postgres'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         restart_container(),
     ],
 )
@@ -116,9 +130,11 @@ docker_build(
     dockerfile='services/oss-aai-service/Dockerfile.dev',
     only=[
         'services/oss-aai-service',
+        'packages/scripts/epos-banner.sh',
     ],
     live_update=[
         sync('services/oss-aai-service', '/workspace/services/oss-aai-service'),
+        sync('packages/scripts/epos-banner.sh', '/usr/local/bin/epos-banner.sh'),
         restart_container(),
     ],
 )

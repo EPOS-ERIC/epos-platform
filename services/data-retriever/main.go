@@ -68,7 +68,6 @@ func main() {
 		retriever.NewClient(timeout, maxBodyBytes),
 		db,
 	)
-	printBanner(addr)
 	log.Info("starting http server", "addr", addr, "timeout", timeout.String())
 
 	if err := http.ListenAndServe(addr, handler); err != nil {
@@ -83,33 +82,6 @@ func getenv(key, fallback string) string {
 		return fallback
 	}
 	return v
-}
-
-func printBanner(addr string) {
-	logoHollow := `⣠⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣶⣶⣶⣶⣶⣤⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣤⣤⣶⣶⣦⣤⣤⣀⡀⠀⠀⠀
-⣿⣿⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⣿⣿⠛⠛⠛⠛⠛⠛⠛⠛⠿⠿⣿⣿⣷⣄⠀⠀⠀⣀⣴⣿⣿⡿⠿⠛⠛⠛⠛⠛⠻⢿⣿⣿⣦⣄⠀⠀⠀⣠⣾⣿⣿⠿⠟⠛⠛⠛⠿⠿⣿⣿⣷⣤⡀
-⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⢻⣿⣷⣀⣾⣿⡿⠛⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⢿⣿⣷⣄⣾⣿⡟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⣻⣿⣷
-⣿⣿⠀⠀⠀⠀⢠⣤⣤⣤⣤⣤⣤⣤⣤⣿⣿⠀⠀⠀⠀⢀⣴⣶⣷⣶⣄⠀⠀⠀⢻⣿⣿⣿⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⡟⠀⠀⠀⠀⣠⣤⣤⣤⣄⡀⣠⣾⣿⡿⠁
-⣿⣿⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⢼⣿⣟⢙⣿⣿⠀⠀⠀⠘⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⡇⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀
-⣿⣿⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⢹⣿⣿⣿⠀⠀⠀⠀⠘⢿⣿⣿⣿⠟⠀⠀⠀⢸⣿⡏⠀⠀⠀⠀⠀⠀⠀⣠⣶⣶⣶⣤⠀⠀⠀⠀⠀⠀⠀⢸⣿⣇⠀⠀⠀⠀⠈⠉⠙⠛⠛⠿⢿⣿⣷⣄⠀
-⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣿⣿⡇⠀⠀⠀⠀⠀⠀⠰⣿⣿⣋⣿⣿⡇⠀⠀⠀⠀⠀⠀⢸⣿⣿⣦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣆
-⣿⣿⠀⠀⠀⠀⢰⣶⣶⣶⣶⣶⣶⣾⣿⣿⣿⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣴⣿⣿⣿⣿⣇⠀⠀⠀⠀⠀⠀⠀⠻⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣷⣶⣶⣦⣤⡀⠀⠀⠀⢸⣿⣿
-⣿⣿⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⣿⣿⡿⠿⠿⠿⠟⠛⠁⠸⣿⣿⡄⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⢀⣿⣿⣿⣿⢿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⢠⣿⣿
-⣿⣿⠀⠀⠀⠀⠈⠉⠉⠉⠉⠉⠉⠉⠉⣿⣿⠀⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣄⠀⠀⠀⠀⠀⢸⣿⣿⣿⣇⠀⠀⠀⠀⠀⢠⣾⣿⣿⠟⠁⠀⠀⠉⠉⠉⠉⠁⠀⠀⠀⠀⣼⣿⡟
-⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠀⠀⠀⠀⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣷⣄⠀⠀⢀⣿⣿⠟⣿⣿⡄⠀⠀⣠⣴⣿⣿⣿⣷⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣾⣿⡟⠁
-⣿⣿⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣿⣿⣶⣶⣶⣶⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⣿⣿⣶⣾⣿⡿⠀⢻⣿⣷⣶⣿⣿⡿⠋⠁⠉⠻⢿⣿⣿⣷⣶⣶⣶⣶⣾⣿⣿⣿⠟⠋⠀⠀
-⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠛⠛⠋⠀⠀⠀⠙⠛⠛⠋⠁⠀⠀⠀⠀⠀⠀⠀⠉⠉⠛⠛⠛⠛⠋⠉⠁⠀⠀⠀⠀⠀`
-
-	println()
-	println(logoHollow)
-	println()
-	println("EPOS Data Retriever Service")
-	println("PostgreSQL | HTTP API")
-	println("Copyright (c) 2026 EPOS ERIC")
-	println("https://www.epos-eu.org/")
-	println("Database    " + postgresTarget())
-	println("Server      http://localhost" + addr)
-	println("------------------------------------------------------------")
 }
 
 func openPostgresWithRetry(log *slog.Logger) (*sql.DB, error) {

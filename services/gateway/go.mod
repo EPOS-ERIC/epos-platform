@@ -4,6 +4,10 @@ go 1.26.2
 
 require github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 
+require github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
+
+require github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
+
 require github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 
 require (
@@ -45,5 +49,9 @@ require (
 )
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging
+
+replace github.com/EPOS-ERIC/epos-platform/packages/go/apidocs => ../../packages/go/apidocs
+
+replace github.com/EPOS-ERIC/epos-platform/packages/go/middleware => ../../packages/go/middleware
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability

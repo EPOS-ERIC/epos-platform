@@ -13,6 +13,7 @@ import { RouterOutlet } from '@angular/router';
 import { Header } from './components/header/header';
 import { MapView } from './components/map-view/map-view';
 import { ResultsPanel } from './components/results-panel/results-panel';
+import { SearchExtraFilters } from './components/search-extra-filters/search-extra-filters';
 import { SpatialFilter } from './components/spatial-filter/spatial-filter';
 import { TemporalFilter } from './components/temporal-filter/temporal-filter';
 import { SearchFilterStateService } from './services/search-filter-state.service';
@@ -26,6 +27,7 @@ type ThemeMode = 'light' | 'dark';
     ResultsPanel,
     Header,
     MapView,
+    SearchExtraFilters,
     SpatialFilter,
     TemporalFilter,
     FormsModule,

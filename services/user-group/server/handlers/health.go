@@ -5,40 +5,37 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/db"
 )
 
-type healthPinger interface {
-	PingContext(ctx context.Context) error
+type Health struct {
+	db *db.PostgresDB
 }
 
-func NewHealthHandler(pinger healthPinger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if pinger == nil {
-			writeHealthOK(w)
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(r.Context(), time.Second)
-		defer cancel()
-
-		if err := pinger.PingContext(ctx); err != nil {
-			log.Error("health check failed", "component", "database", "error", err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			if err := json.NewEncoder(w).Encode(map[string]string{"status": "degraded", "reason": "database unreachable"}); err != nil {
-				log.Error("failed to encode JSON response", "status", http.StatusServiceUnavailable, "error", err)
-			}
-			return
-		}
-
-		writeHealthOK(w)
+func NewHealth(database *db.PostgresDB) *Health {
+	return &Health{
+		db: database,
 	}
 }
 
-func writeHealthOK(w http.ResponseWriter) {
+func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+
+	if err := h.db.PingContext(ctx); err != nil {
+		log.Error("health check failed", "component", "database", "error", err)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		if err := json.NewEncoder(w).Encode(healthResponse{Status: "degraded", Reason: "database unreachable"}); err != nil {
+			log.Error("failed to encode health response", "status", http.StatusServiceUnavailable, "error", err)
+		}
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
-		log.Error("failed to encode JSON response", "status", http.StatusOK, "error", err)
+	if err := json.NewEncoder(w).Encode(healthResponse{Status: "ok", Reason: ""}); err != nil {
+		log.Error("failed to encode health response", "status", http.StatusOK, "error", err)
 	}
 }

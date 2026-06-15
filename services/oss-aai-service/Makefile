@@ -7,7 +7,7 @@ build:
 	CGO_ENABLED=0 go build $(BUILDFLAGS) -o $(BIN) .
 
 build-docker:
-	docker build -t $(IMAGE) .
+	docker build -t $(IMAGE) -f Dockerfile ../..
 
 run:
 	go run .

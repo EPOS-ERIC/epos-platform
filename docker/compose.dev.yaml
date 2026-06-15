@@ -130,12 +130,12 @@ services:
     ports:
       - "8090:8090"
     environment:
-      - USER_GROUP_LISTEN_ADDR=:8090
-      - USER_GROUP_DB_HOST=user-group-db
-      - USER_GROUP_DB_PORT=5432
-      - USER_GROUP_DB_NAME=user_group
-      - USER_GROUP_DB_USER=user_group
-      - USER_GROUP_DB_PASSWORD=user_group
+      - PORT=8090
+      - DB_HOST=user-group-db
+      - DB_PORT=5432
+      - DB_NAME=user_group
+      - DB_USER=user_group
+      - DB_PASSWORD=user_group
       - OTEL_SERVICE_NAME=user-group
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf

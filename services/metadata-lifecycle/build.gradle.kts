@@ -94,7 +94,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
 
-    implementation("ch.qos.logback:logback-classic:1.5.18")
+    implementation("ch.qos.logback:logback-classic:1.5.19")
     implementation("net.logstash.logback:logstash-logback-encoder:8.1")
 
     implementation("io.insert-koin:koin-core:$koinVersion")
@@ -114,6 +114,14 @@ dependencies {
         implementation("commons-beanutils:commons-beanutils:1.11.0")
         implementation("org.apache.commons:commons-lang3:3.18.0")
         implementation("org.apache.commons:commons-configuration2:2.10.1")
+        implementation("io.netty:netty-resolver-dns:4.1.135.Final")
+        implementation("io.netty:netty-handler:4.1.135.Final")
+        implementation("io.netty:netty-transport-sctp:4.1.135.Final")
+        implementation("io.netty:netty-codec-redis:4.1.135.Final")
+        implementation("io.netty:netty-codec-haproxy:4.1.135.Final")
+        implementation("io.netty:netty-codec-http2:4.1.135.Final")
+        implementation("io.netty:netty-transport-native-epoll:4.1.135.Final")
+        implementation("io.netty:netty-transport-native-kqueue:4.1.135.Final")
     }
 }
 

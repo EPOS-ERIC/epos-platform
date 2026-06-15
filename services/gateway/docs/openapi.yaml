@@ -432,6 +432,7 @@ components:
       description: Resource identifier.
       schema:
         type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
 
     UserId:
@@ -442,6 +443,7 @@ components:
       schema:
         type: string
         example: "user-123"
+        pattern: '^[^\x00-\x20\x7F]+$'
 
     WriteResourceType:
       name: resourceType
@@ -458,6 +460,56 @@ components:
       description: Resource type identifier accepted by read endpoints.
       schema:
         $ref: "#/components/schemas/ReadResourceType"
+
+    SoftwareSourceCodeId:
+      name: id
+      in: path
+      required: true
+      description: Software source code identifier.
+      schema:
+        type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
+        example: "https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403"
+
+    WebserviceId:
+      name: id
+      in: path
+      required: true
+      description: Webservice identifier.
+      schema:
+        type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
+        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0"
+
+    OrganizationId:
+      name: id
+      in: path
+      required: true
+      description: Organization identifier.
+      schema:
+        type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
+        example: "ROR%3A048a87296%2Fv1.0"
+
+    ConceptId:
+      name: id
+      in: path
+      required: true
+      description: Concept identifier.
+      schema:
+        type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
+        example: "category%3Asoftware_jup_conc_multi%2Fv1.0"
+
+    ConceptSchemeId:
+      name: id
+      in: path
+      required: true
+      description: Concept scheme identifier.
+      schema:
+        type: string
+        pattern: '^[^\x00-\x20\x7F]+$'
+        example: "category%3Asoftware_jup%2Fv1.0"
 
     Q:
       name: q

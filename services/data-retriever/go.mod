@@ -12,13 +12,15 @@ require github.com/EPOS-ERIC/epos-platform/packages/go/migrations v0.0.0
 
 require github.com/EPOS-ERIC/epos-platform/packages/go/postgres v0.0.0
 
-replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => /workspace/packages/go/logging
+replace github.com/EPOS-ERIC/epos-platform/packages/go/banner => ../../packages/go/banner
 
-replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => /workspace/packages/go/observability
+replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging
 
-replace github.com/EPOS-ERIC/epos-platform/packages/go/migrations => /workspace/packages/go/migrations
+replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
 
-replace github.com/EPOS-ERIC/epos-platform/packages/go/postgres => /workspace/packages/go/postgres
+replace github.com/EPOS-ERIC/epos-platform/packages/go/migrations => ../../packages/go/migrations
+
+replace github.com/EPOS-ERIC/epos-platform/packages/go/postgres => ../../packages/go/postgres
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect

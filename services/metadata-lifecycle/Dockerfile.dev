@@ -3,6 +3,7 @@ FROM amazoncorretto:21
 RUN yum install -y tar && yum clean all
 
 COPY packages/assets/otel/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
 WORKDIR /workspace/services/metadata-lifecycle
 
@@ -17,4 +18,8 @@ COPY services/metadata-lifecycle/src ./src
 
 EXPOSE 8080
 
+ENV EPOS_SERVICE_NAME="Metadata Lifecycle" \
+    EPOS_PORT="8080"
+
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
 CMD ["./gradlew", "run", "--args=server"]
