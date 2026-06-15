@@ -3,18 +3,23 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
-	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/user-group/repository"
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/user-group/service"
 )
 
-type GroupsHandler struct {
-	repo repository.GroupRepository
+type Groups struct {
+	service *service.Groups
+	log     *slog.Logger
 }
 
-func NewGroupsHandler(repo repository.GroupRepository) *GroupsHandler {
-	return &GroupsHandler{repo: repo}
+func NewGroups(svc *service.Groups) *Groups {
+	return &Groups{
+		service: svc,
+		log:     logging.Get("groups-handler"),
+	}
 }
 
 type createGroupRequest struct {
@@ -31,155 +36,147 @@ type patchGroupRequest struct {
 	IsSystem    *bool   `json:"isSystem"`
 }
 
-func (h *GroupsHandler) List(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, h.repo.List())
-}
-
-func (h *GroupsHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("groupId")
-	group, err := h.repo.GetByID(id)
+func (h *Groups) List(w http.ResponseWriter, r *http.Request) {
+	items, err := h.service.List(r.Context())
 	if err != nil {
-		if errors.Is(err, repository.ErrGroupNotFound) {
-			log.Warn("group not found", "group_id", id)
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "group not found"})
-			return
-		}
-		log.Error("failed to get group by id", "group_id", id, "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+		h.log.ErrorContext(r.Context(), "list groups failed", "error", err)
+		writeMessage(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, group)
+	writeJSON(w, http.StatusOK, items)
 }
 
-func (h *GroupsHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *Groups) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	item, err := h.service.GetByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, service.ErrNotFound) {
+			h.log.DebugContext(r.Context(), "group not found", "group_id", id)
+		}
+		h.log.ErrorContext(r.Context(), "get group failed", "group_id", id, "error", err)
+		writeServiceError(w, err, "group")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, item)
+}
+
+func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
 	var req createGroupRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid create group request body", "error", err)
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid request body"})
+		h.log.WarnContext(r.Context(), "invalid create group request body", "error", err)
+		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	req.Slug = strings.TrimSpace(req.Slug)
-	req.Name = strings.TrimSpace(req.Name)
-	if req.Slug == "" || req.Name == "" {
-		log.Warn("missing required fields in create group request")
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "slug and name are required"})
-		return
-	}
-
-	group, err := h.repo.Create(req.Slug, req.Name, req.Description, req.IsSystem)
+	item, err := h.service.Create(r.Context(), service.CreateGroupParams{
+		Slug:        req.Slug,
+		Name:        req.Name,
+		Description: req.Description,
+		IsSystem:    req.IsSystem,
+	})
 	if err != nil {
-		if errors.Is(err, repository.ErrGroupSlugExists) {
-			log.Warn("create group conflict", "slug", req.Slug)
-			writeJSON(w, http.StatusConflict, map[string]string{"message": "group slug already exists"})
-			return
-		}
-		log.Error("failed to create group", "slug", req.Slug, "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+		h.log.ErrorContext(r.Context(), "create group failed", "error", err)
+		writeServiceError(w, err, "group")
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, group)
+	writeJSON(w, http.StatusCreated, item)
 }
 
-func (h *GroupsHandler) Replace(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("groupId")
+func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
+	id, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	var req createGroupRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid replace group request body", "group_id", id, "error", err)
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid request body"})
+		h.log.WarnContext(r.Context(), "invalid replace group request body", "error", err)
+		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	req.Slug = strings.TrimSpace(req.Slug)
-	req.Name = strings.TrimSpace(req.Name)
-	if req.Slug == "" || req.Name == "" {
-		log.Warn("missing required fields in replace group request", "group_id", id)
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "slug and name are required"})
-		return
-	}
-
-	group, err := h.repo.Replace(id, req.Slug, req.Name, req.Description, req.IsSystem)
+	item, err := h.service.Replace(r.Context(), service.UpdateGroupParams{
+		ID:          id,
+		Slug:        req.Slug,
+		Name:        req.Name,
+		Description: req.Description,
+		IsSystem:    req.IsSystem,
+	})
 	if err != nil {
-		switch {
-		case errors.Is(err, repository.ErrGroupNotFound):
-			log.Warn("replace group not found", "group_id", id)
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "group not found"})
-		case errors.Is(err, repository.ErrGroupSlugExists):
-			log.Warn("replace group conflict", "group_id", id, "slug", req.Slug)
-			writeJSON(w, http.StatusConflict, map[string]string{"message": "group slug already exists"})
-		default:
-			log.Error("failed to replace group", "group_id", id, "error", err)
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
-		}
+		h.log.ErrorContext(r.Context(), "replace group failed", "group_id", id, "error", err)
+		writeServiceError(w, err, "group")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, group)
+	writeJSON(w, http.StatusOK, item)
 }
 
-func (h *GroupsHandler) Patch(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("groupId")
+func (h *Groups) Patch(w http.ResponseWriter, r *http.Request) {
+	id, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	var req patchGroupRequest
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Warn("invalid patch group request body", "group_id", id, "error", err)
-		writeJSON(w, http.StatusBadRequest, map[string]string{"message": "invalid request body"})
+		h.log.WarnContext(r.Context(), "invalid patch group request body", "error", err)
+		writeMessage(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if req.Slug != nil {
-		trimmed := strings.TrimSpace(*req.Slug)
-		if trimmed == "" {
-			log.Warn("empty slug in patch group request", "group_id", id)
-			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "slug cannot be empty"})
-			return
-		}
-		req.Slug = &trimmed
-	}
-	if req.Name != nil {
-		trimmed := strings.TrimSpace(*req.Name)
-		if trimmed == "" {
-			log.Warn("empty name in patch group request", "group_id", id)
-			writeJSON(w, http.StatusBadRequest, map[string]string{"message": "name cannot be empty"})
-			return
-		}
-		req.Name = &trimmed
-	}
-
-	group, err := h.repo.Patch(id, req.Slug, req.Name, req.Description, req.IsSystem)
+	item, err := h.service.Patch(r.Context(), id, service.PatchGroupParams{
+		Slug:        req.Slug,
+		Name:        req.Name,
+		Description: req.Description,
+		IsSystem:    req.IsSystem,
+	})
 	if err != nil {
-		switch {
-		case errors.Is(err, repository.ErrGroupNotFound):
-			log.Warn("patch group not found", "group_id", id)
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "group not found"})
-		case errors.Is(err, repository.ErrGroupSlugExists):
-			log.Warn("patch group conflict", "group_id", id)
-			writeJSON(w, http.StatusConflict, map[string]string{"message": "group slug already exists"})
-		default:
-			log.Error("failed to patch group", "group_id", id, "error", err)
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
-		}
+		h.log.ErrorContext(r.Context(), "patch group failed", "group_id", id, "error", err)
+		writeServiceError(w, err, "group")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, group)
+	writeJSON(w, http.StatusOK, item)
 }
 
-func (h *GroupsHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("groupId")
-	if err := h.repo.Delete(id); err != nil {
-		if errors.Is(err, repository.ErrGroupNotFound) {
-			log.Warn("delete group not found", "group_id", id)
-			writeJSON(w, http.StatusNotFound, map[string]string{"message": "group not found"})
-			return
-		}
-		log.Error("failed to delete group", "group_id", id, "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"message": "internal error"})
+func (h *Groups) Delete(w http.ResponseWriter, r *http.Request) {
+	id, err := parseUUIDParam(r, "groupId")
+	if err != nil {
+		writeMessage(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), id); err != nil {
+		h.log.ErrorContext(r.Context(), "delete group failed", "group_id", id, "error", err)
+		writeServiceError(w, err, "group")
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeServiceError(w http.ResponseWriter, err error, resource string) {
+	switch {
+	case errors.Is(err, service.ErrNotFound):
+		writeMessage(w, http.StatusNotFound, resource+" not found")
+	case errors.Is(err, service.ErrConflict):
+		writeMessage(w, http.StatusConflict, resource+" already exists")
+	case errors.Is(err, service.ErrInvalid):
+		writeMessage(w, http.StatusBadRequest, "invalid request")
+	default:
+		writeMessage(w, http.StatusInternalServerError, "internal error")
+	}
 }

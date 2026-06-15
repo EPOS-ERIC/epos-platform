@@ -14,4 +14,10 @@ COPY apps/platform/src ./src
 RUN mkdir -p /workspace/services/gateway/docs
 COPY services/gateway/docs/openapi.yaml /workspace/services/gateway/docs/openapi.yaml
 
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+
+ENV EPOS_SERVICE_NAME="Platform" \
+    EPOS_PORT="4200"
+
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
 CMD ["sh", "-c", "pnpm run codegen && pnpm exec ng serve --configuration development --proxy-config proxy.conf.cjs --host 0.0.0.0 --port 4200"]

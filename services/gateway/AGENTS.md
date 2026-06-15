@@ -9,6 +9,7 @@
 
 - Keep request routing, HTTP parsing, and response encoding in `server/`; keep business logic in domain-oriented packages outside transport layer.
 - Keep service-specific outbound client wiring in `clients/`; keep reusable HTTP/cache behavior in `upstream/`.
+- Keep shared HTTP middleware in `packages/go/middleware`; do not duplicate generic chi/logging recovery plumbing in services.
 - Keep shared domain errors and contracts in `domain/`.
 - Keep helper code that should not become public package API in `internal/`.
 - Extend existing package areas when responsibility matches; create new top-level packages only when they represent genuine new gateway domain or adapter boundary.
