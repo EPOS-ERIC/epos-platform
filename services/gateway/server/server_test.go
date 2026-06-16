@@ -116,6 +116,55 @@ func TestUsersRouteListsUsers(t *testing.T) {
 	}
 }
 
+func TestUsersRoutePatchesUser(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodPatch, "/v1/users/local-1", strings.NewReader(`{"given_name":"Ada","family_name":"Lovelace","email":"ada@example.org","is_super_admin":true,"status":"ACTIVE"}`))
+	req.Header.Set("Authorization", "Bearer token-123")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var user struct {
+		ID           string `json:"id"`
+		Email        string `json:"email"`
+		IsSuperAdmin bool   `json:"is_super_admin"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&user); err != nil {
+		t.Fatalf("decode user: %v", err)
+	}
+
+	if user.ID != "local-1" || user.Email != "ada@example.org" || !user.IsSuperAdmin {
+		t.Fatalf("unexpected user response: %+v", user)
+	}
+}
+
+func TestUsersRouteRejectsPatchAuthIdentifier(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodPatch, "/v1/users/local-1", strings.NewReader(`{"auth_identifier":"nope"}`))
+	req.Header.Set("Authorization", "Bearer token-123")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+}
+
 func TestRequestTimeoutHandlerTimesOutLongRequests(t *testing.T) {
 	t.Parallel()
 

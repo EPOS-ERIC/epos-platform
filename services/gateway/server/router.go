@@ -61,6 +61,7 @@ func NewRouter(
 			r.Use(authMiddleware(authService, usergroupService))
 			r.Get("/", usersHandler.ListUsers)
 			r.Get("/{id}", usersHandler.GetUser)
+			r.Patch("/{id}", usersHandler.PatchUser)
 		})
 
 		r.Route("/resources", func(r chi.Router) {

@@ -210,6 +210,44 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Users
+      summary: Patch user
+      description: Update mutable user profile fields.
+      operationId: patchUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchUserRequest"
+            examples:
+              update:
+                summary: Update fields
+                value:
+                  given_name: "John"
+                  family_name: "Doe"
+                  is_super_admin: false
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /resources/{resourceType}:
     parameters:
@@ -2298,6 +2336,7 @@ components:
         - email
         - given_name
         - family_name
+        - is_super_admin
         - status
       properties:
         id:
@@ -2310,6 +2349,8 @@ components:
           type: string
         family_name:
           type: string
+        is_super_admin:
+          type: boolean
         status:
           $ref: "#/components/schemas/UserStatus"
         created_at:
@@ -2318,6 +2359,22 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    PatchUserRequest:
+      type: object
+      description: Mutable user fields accepted by gateway patch endpoint.
+      minProperties: 1
+      properties:
+        email:
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        is_super_admin:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/UserStatus"
 
     Problem:
       type: object

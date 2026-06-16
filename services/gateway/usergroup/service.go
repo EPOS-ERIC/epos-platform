@@ -71,9 +71,5 @@ func (s *Service) EnsureUser(ctx context.Context, identity Identity) (api.User, 
 		return api.User{}, fmt.Errorf("create user: %w", err)
 	}
 
-	if created == nil {
-		return api.User{}, domain.ErrNotFound
-	}
-
 	return mapUser(created)
 }

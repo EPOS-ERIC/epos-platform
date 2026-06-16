@@ -121,6 +121,35 @@ func newTestAuthStack(t *testing.T, active bool, failCreate bool) (*auth.Service
 				FamilyName:     "Example",
 				Status:         "ACTIVE",
 			}})
+		case r.Method == http.MethodPatch && r.URL.Path == "/api/v2/users/local-1":
+			var payload struct {
+				Email        string `json:"email"`
+				GivenName    string `json:"givenName"`
+				FamilyName   string `json:"familyName"`
+				IsSuperAdmin bool   `json:"isSuperAdmin"`
+				Status       string `json:"status"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode patch payload: %v", err)
+			}
+
+			_ = json.NewEncoder(w).Encode(struct {
+				ID             string `json:"id"`
+				AuthIdentifier string `json:"authIdentifier"`
+				Email          string `json:"email"`
+				GivenName      string `json:"givenName"`
+				FamilyName     string `json:"familyName"`
+				IsSuperAdmin   bool   `json:"isSuperAdmin"`
+				Status         string `json:"status"`
+			}{
+				ID:             "local-1",
+				AuthIdentifier: "user-123",
+				Email:          payload.Email,
+				GivenName:      payload.GivenName,
+				FamilyName:     payload.FamilyName,
+				IsSuperAdmin:   payload.IsSuperAdmin,
+				Status:         payload.Status,
+			})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/users/by-auth/user-123":
 			if failCreate {
 				w.WriteHeader(http.StatusNotFound)

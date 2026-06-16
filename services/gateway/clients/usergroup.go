@@ -19,7 +19,7 @@ func NewUsergroup(baseURL string, upstreamCfg config.Upstream) (*usergroupclient
 	upstreamClient, err := upstream.NewClient(upstream.Config{
 		Timeout:     upstreamCfg.Timeout,
 		RealTimeout: upstreamCfg.RealTimeout,
-		CacheTTL:    upstreamCfg.CacheTTL,
+		CacheTTL:    0, // Disable caching for the user group client
 		MaxEntries:  upstreamCfg.MaxEntries,
 		Transport:   nil,
 		Logger:      logging.Get("usergroup-client"),

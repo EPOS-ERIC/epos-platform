@@ -1,3 +1,4 @@
+// Package clients wires gateway outbound clients.
 package clients
 
 import (
