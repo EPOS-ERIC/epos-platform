@@ -555,6 +555,10 @@ components:
       - INACTIVE
       - BLOCKED
       type: string
+      x-enum-varnames:
+      - UserStatusActive
+      - UserStatusInactive
+      - UserStatusBlocked
     MembershipRole:
       description: Role assigned to a user inside a group.
       enum:
@@ -571,6 +575,11 @@ components:
       - REVOKED
       - REJECTED
       type: string
+      x-enum-varnames:
+      - MembershipStatusPending
+      - MembershipStatusActive
+      - MembershipStatusRevoked
+      - MembershipStatusRejected
     Membership:
       description: Membership record linking user to group.
       example:

@@ -35,7 +35,7 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	}
 }
 
-func writeError(ctx context.Context, w http.ResponseWriter, status int, code, message string, internalErr error) {
+func WriteError(ctx context.Context, w http.ResponseWriter, status int, code, message string, internalErr error) {
 	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
 	w.WriteHeader(status)
 
@@ -55,11 +55,11 @@ func writeError(ctx context.Context, w http.ResponseWriter, status int, code, me
 }
 
 func writeBadRequest(ctx context.Context, w http.ResponseWriter, err error) {
-	writeError(ctx, w, http.StatusBadRequest, "invalid_query_parameter", err.Error(), nil)
+	WriteError(ctx, w, http.StatusBadRequest, "invalid_query_parameter", err.Error(), nil)
 }
 
 func writeNotImplemented(ctx context.Context, w http.ResponseWriter) {
-	writeError(ctx, w, http.StatusNotImplemented, "not_implemented", "endpoint not implemented", nil)
+	WriteError(ctx, w, http.StatusNotImplemented, "not_implemented", "endpoint not implemented", nil)
 }
 
 func parsePageSize(values url.Values) (int32, error) {

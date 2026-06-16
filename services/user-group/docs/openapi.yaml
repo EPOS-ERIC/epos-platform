@@ -466,6 +466,10 @@ components:
       type: string
       description: Lifecycle state for a user record.
       enum: [ACTIVE, INACTIVE, BLOCKED]
+      x-enum-varnames:
+        - UserStatusActive
+        - UserStatusInactive
+        - UserStatusBlocked
     MembershipRole:
       type: string
       description: Role assigned to a user inside a group.
@@ -474,6 +478,11 @@ components:
       type: string
       description: Lifecycle state for a group membership.
       enum: [PENDING, ACTIVE, REVOKED, REJECTED]
+      x-enum-varnames:
+        - MembershipStatusPending
+        - MembershipStatusActive
+        - MembershipStatusRevoked
+        - MembershipStatusRejected
     Membership:
       type: object
       description: Membership record linking user to group.

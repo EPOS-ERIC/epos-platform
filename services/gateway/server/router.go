@@ -6,6 +6,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
@@ -21,6 +22,7 @@ func NewRouter(
 	discoveryService *discovery.Service,
 	resourcesService *resources.Service,
 	lifecycleService *lifecycle.Service,
+	authService *auth.Service,
 	usergroupService *usergroup.Service,
 	corsAllowOrigin string,
 ) http.Handler {
@@ -56,6 +58,7 @@ func NewRouter(
 		r.Get("/concept", discoveryHandler.GetConceptTree)
 
 		r.Route("/users", func(r chi.Router) {
+			r.Use(authMiddleware(authService, usergroupService))
 			r.Get("/{id}", usersHandler.GetUser)
 		})
 

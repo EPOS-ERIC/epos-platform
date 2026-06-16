@@ -20,9 +20,9 @@ type UserStatus string
 
 // List of UserStatus
 const (
-	ACTIVE   UserStatus = "ACTIVE"
-	INACTIVE UserStatus = "INACTIVE"
-	BLOCKED  UserStatus = "BLOCKED"
+	UserStatusActive   UserStatus = "ACTIVE"
+	UserStatusInactive UserStatus = "INACTIVE"
+	UserStatusBlocked  UserStatus = "BLOCKED"
 )
 
 // All allowed values of UserStatus enum

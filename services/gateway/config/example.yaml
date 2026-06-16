@@ -20,3 +20,5 @@ services:
     url: "http://metadata-lifecycle:8080/"
   usergroup:
     url: "http://usergroup:8080/"
+  auth:
+    url: "http://oss-aai-service:8080/"

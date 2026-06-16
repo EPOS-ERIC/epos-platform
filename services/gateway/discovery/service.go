@@ -14,6 +14,7 @@ type Service struct {
 	log            *slog.Logger
 }
 
+// NewService builds discovery service for metadata search and concept tree.
 func NewService(metadataClient *metadataclient.APIClient, fanOutLimit int) *Service {
 	return &Service{
 		metadataClient: metadataClient,

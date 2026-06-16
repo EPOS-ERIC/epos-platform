@@ -29,22 +29,22 @@ func (h *Users) GetUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.GetUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeError(ctx, w, http.StatusNotFound, "user_not_found", "user not found", nil)
+			WriteError(ctx, w, http.StatusNotFound, "user_not_found", "user not found", nil)
 			return
 		}
 
 		if errors.Is(err, domain.ErrBadRequest) {
-			writeError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by user service", nil)
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by user service", nil)
 			return
 		}
 
 		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			writeError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
+			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
 			return
 		}
 
 		h.log.ErrorContext(ctx, "user request failed", "error", err)
-		writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", "user request failed", err)
+		WriteError(ctx, w, http.StatusInternalServerError, "internal_server_error", "user request failed", err)
 		return
 	}
 

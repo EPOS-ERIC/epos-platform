@@ -43,6 +43,7 @@ type Discovery struct {
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
 	Usergroup         Service `yaml:"usergroup"`
+	Auth              Service `yaml:"auth"`
 }
 
 func Default() Config {
@@ -65,6 +66,7 @@ func Default() Config {
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
 			Usergroup:         Service{URL: ""},
+			Auth:              Service{URL: ""},
 		},
 	}
 }
@@ -121,6 +123,10 @@ func (c *Config) Validate() error {
 
 	if c.Services.Usergroup.URL == "" {
 		return fmt.Errorf("services.usergroup.url is required")
+	}
+
+	if c.Services.Auth.URL == "" {
+		return fmt.Errorf("services.auth.url is required")
 	}
 
 	if c.Upstream.Timeout <= 0 {

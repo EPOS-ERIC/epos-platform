@@ -13,6 +13,7 @@ type Service struct {
 	metadataClient *metadataclient.APIClient
 }
 
+// NewService builds lifecycle service for draft operations.
 func NewService(metadataClient *metadataclient.APIClient) *Service {
 	return &Service{
 		log:            logging.Get("lifecycle-service"),

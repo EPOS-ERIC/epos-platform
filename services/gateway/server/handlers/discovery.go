@@ -59,21 +59,21 @@ func (h *Discovery) GetConceptTree(w http.ResponseWriter, r *http.Request) {
 
 func (h *Discovery) writeDiscoveryError(ctx context.Context, w http.ResponseWriter, err error, operation string) {
 	if errors.Is(err, discovery.ErrUpstreamTimeout) {
-		writeError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", operation+" timed out", err)
+		WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", operation+" timed out", err)
 		return
 	}
 
 	if errors.Is(err, domain.ErrBadRequest) {
-		writeError(ctx, w, http.StatusBadRequest, "invalid_request", operation+" request rejected by metadata service", nil)
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", operation+" request rejected by metadata service", nil)
 		return
 	}
 
 	if errors.Is(err, discovery.ErrUpstreamRequestFailed) {
-		writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" request failed", err)
+		WriteError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" request failed", err)
 		return
 	}
 
-	writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" failed", err)
+	WriteError(ctx, w, http.StatusInternalServerError, "internal_server_error", operation+" failed", err)
 }
 
 func parseSearchParams(r *http.Request) (discovery.SearchParams, error) {

@@ -20,10 +20,10 @@ type MembershipStatus string
 
 // List of MembershipStatus
 const (
-	PENDING  MembershipStatus = "PENDING"
-	ACTIVE   MembershipStatus = "ACTIVE"
-	REVOKED  MembershipStatus = "REVOKED"
-	REJECTED MembershipStatus = "REJECTED"
+	MembershipStatusPending  MembershipStatus = "PENDING"
+	MembershipStatusActive   MembershipStatus = "ACTIVE"
+	MembershipStatusRevoked  MembershipStatus = "REVOKED"
+	MembershipStatusRejected MembershipStatus = "REJECTED"
 )
 
 // All allowed values of MembershipStatus enum

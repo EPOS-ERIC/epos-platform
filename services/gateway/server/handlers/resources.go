@@ -25,7 +25,7 @@ func (h *Resources) GetResourceByID(w http.ResponseWriter, r *http.Request) {
 	resourceTypeValue := chi.URLParam(r, "resourceType")
 	resourceType, err := api.NewResourceTypeFromValue(resourceTypeValue)
 	if err != nil {
-		writeError(r.Context(), w, http.StatusBadRequest, "invalid_request", fmt.Sprintf("resource type '%s' not supported", resourceTypeValue), nil)
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", fmt.Sprintf("resource type '%s' not supported", resourceTypeValue), nil)
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *Resources) GetResourceByID(w http.ResponseWriter, r *http.Request) {
 	case api.ConceptSchemeType:
 		h.GetConceptSchemeByID(w, r)
 	default:
-		writeError(r.Context(), w, http.StatusBadRequest, "invalid_request", fmt.Sprintf("resource type '%s' not supported", resourceTypeValue), nil)
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", fmt.Sprintf("resource type '%s' not supported", resourceTypeValue), nil)
 	}
 }
 
@@ -141,17 +141,17 @@ func (h *Resources) GetOrganizationByID(w http.ResponseWriter, r *http.Request) 
 
 func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWriter, err error, resource string) {
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(ctx, w, http.StatusNotFound, "resource_not_found", resource+" not found", nil)
+		WriteError(ctx, w, http.StatusNotFound, "resource_not_found", resource+" not found", nil)
 		return
 	}
 
 	if errors.Is(err, domain.ErrBadRequest) {
-		writeError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by metadata service", nil)
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by metadata service", nil)
 		return
 	}
 
 	if errors.Is(err, domain.ErrUpstreamTimeout) {
-		writeError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "resource request timed out", err)
+		WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "resource request timed out", err)
 		return
 	}
 
@@ -162,5 +162,5 @@ func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWrite
 	}
 
 	log.ErrorContext(ctx, "resource request failed", "error", err)
-	writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", "resource request failed", err)
+	WriteError(ctx, w, http.StatusInternalServerError, "internal_server_error", "resource request failed", err)
 }
