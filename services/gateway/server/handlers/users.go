@@ -50,3 +50,25 @@ func (h *Users) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, user)
 }
+
+func (h *Users) ListUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	users, err := h.service.ListUsers(ctx)
+	if err != nil {
+		if errors.Is(err, domain.ErrBadRequest) {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by user service", nil)
+			return
+		}
+
+		if errors.Is(err, domain.ErrUpstreamTimeout) {
+			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
+			return
+		}
+
+		h.log.ErrorContext(ctx, "user list request failed", "error", err)
+		WriteError(ctx, w, http.StatusInternalServerError, "internal_server_error", "user request failed", err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, users)
+}

@@ -57,6 +57,25 @@ func (s *Service) GetUserByAuthIdentifier(ctx context.Context, authIdentifier st
 	return mapUser(user)
 }
 
+// ListUsers fetches all local users.
+func (s *Service) ListUsers(ctx context.Context) ([]api.User, error) {
+	users, _, err := s.usergroupClient.UsersAPI.ApiV2UsersGet(ctx).Execute()
+	if err != nil {
+		return nil, fmt.Errorf("list users from usergroup API: %w", err)
+	}
+
+	mapped := make([]api.User, 0, len(users))
+	for i := range users {
+		user, err := mapUser(&users[i])
+		if err != nil {
+			return nil, fmt.Errorf("list users: map user %d: %w", i, err)
+		}
+		mapped = append(mapped, user)
+	}
+
+	return mapped, nil
+}
+
 func mapUser(user *usergroupclient.User) (api.User, error) {
 	status, err := api.NewUserStatusFromValue(string(user.GetStatus()))
 	if err != nil {

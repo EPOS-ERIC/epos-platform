@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -84,6 +85,34 @@ func TestScalarRouteServesEmbeddedAssets(t *testing.T) {
 
 	if !strings.Contains(scriptRec.Body.String(), "@scalar/api-reference@") {
 		t.Fatal("expected vendored scalar script body")
+	}
+}
+
+func TestUsersRouteListsUsers(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer token-123")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var users []struct {
+		ID string `json:"id"`
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&users); err != nil {
+		t.Fatalf("decode users: %v", err)
+	}
+
+	if len(users) != 1 || users[0].ID != "local-1" {
+		t.Fatalf("unexpected users response: %+v", users)
 	}
 }
 

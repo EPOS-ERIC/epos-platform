@@ -105,6 +105,22 @@ func newTestAuthStack(t *testing.T, active bool, failCreate bool) (*auth.Service
 	usergroupSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/users":
+			_ = json.NewEncoder(w).Encode([]struct {
+				ID             string `json:"id"`
+				AuthIdentifier string `json:"authIdentifier"`
+				Email          string `json:"email"`
+				GivenName      string `json:"givenName"`
+				FamilyName     string `json:"familyName"`
+				Status         string `json:"status"`
+			}{{
+				ID:             "local-1",
+				AuthIdentifier: "user-123",
+				Email:          "user@example.org",
+				GivenName:      "User",
+				FamilyName:     "Example",
+				Status:         "ACTIVE",
+			}})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/users/by-auth/user-123":
 			if failCreate {
 				w.WriteHeader(http.StatusNotFound)

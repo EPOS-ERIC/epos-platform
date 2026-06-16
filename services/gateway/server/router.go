@@ -59,6 +59,7 @@ func NewRouter(
 
 		r.Route("/users", func(r chi.Router) {
 			r.Use(authMiddleware(authService, usergroupService))
+			r.Get("/", usersHandler.ListUsers)
 			r.Get("/{id}", usersHandler.GetUser)
 		})
 
