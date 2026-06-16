@@ -96,6 +96,63 @@ func TestContextHandlerAddsRequest(t *testing.T) {
 	}
 }
 
+func TestContextHandlerAddsActor(t *testing.T) {
+	var output bytes.Buffer
+	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
+
+	ctx := WithActor(context.Background(), Actor{
+		ID:             "local-1",
+		AuthIdentifier: "user-123",
+		IsSuperAdmin:   true,
+	})
+
+	logger.WarnContext(ctx, "access denied")
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log output: %v", err)
+	}
+
+	actor, ok := payload["actor"].(map[string]any)
+	if !ok {
+		t.Fatalf("actor field = %#v", payload["actor"])
+	}
+	if actor["id"] != "local-1" {
+		t.Fatalf("actor.id = %#v", actor["id"])
+	}
+	if actor["auth_identifier"] != "user-123" {
+		t.Fatalf("actor.auth_identifier = %#v", actor["auth_identifier"])
+	}
+	if actor["is_super_admin"] != true {
+		t.Fatalf("actor.is_super_admin = %#v", actor["is_super_admin"])
+	}
+}
+
+func TestContextHandlerAddsRequestAndActor(t *testing.T) {
+	var output bytes.Buffer
+	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
+
+	ctx := WithRequest(context.Background(), Request{
+		Method: "GET",
+		Path:   "/v1/users",
+	})
+	ctx = WithActor(ctx, Actor{ID: "local-1"})
+
+	logger.InfoContext(ctx, "request log")
+
+	var payload map[string]any
+	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log output: %v", err)
+	}
+
+	if _, ok := payload["request"].(map[string]any); !ok {
+		t.Fatalf("request field = %#v", payload["request"])
+	}
+	if _, ok := payload["actor"].(map[string]any); !ok {
+		t.Fatalf("actor field = %#v", payload["actor"])
+	}
+}
+
 func TestContextHandlerSkipsMissingRequest(t *testing.T) {
 	var output bytes.Buffer
 	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")

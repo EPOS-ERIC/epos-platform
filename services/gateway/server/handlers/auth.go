@@ -4,21 +4,15 @@ import (
 	"context"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 )
-
-type AuthenticatedUser struct {
-	Identity auth.Identity
-	User     api.User
-}
 
 type authenticatedUserKey struct{}
 
-func WithAuthenticatedUser(ctx context.Context, user AuthenticatedUser) context.Context {
+func WithAuthenticatedUser(ctx context.Context, user api.User) context.Context {
 	return context.WithValue(ctx, authenticatedUserKey{}, user)
 }
 
-func AuthenticatedUserFromContext(ctx context.Context) (AuthenticatedUser, bool) {
-	user, ok := ctx.Value(authenticatedUserKey{}).(AuthenticatedUser)
+func AuthenticatedUserFromContext(ctx context.Context) (api.User, bool) {
+	user, ok := ctx.Value(authenticatedUserKey{}).(api.User)
 	return user, ok
 }

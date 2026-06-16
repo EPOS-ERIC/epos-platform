@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
@@ -17,17 +18,21 @@ import (
 func TestAuthMiddlewareAttachesAuthenticatedUser(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, true, false)
+	authService, provisioner := newTestAuthStack(t, true, false, false)
 	handler := authMiddleware(authService, provisioner)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		user, ok := handlers.AuthenticatedUserFromContext(r.Context())
 		if !ok {
 			t.Fatal("missing authenticated user in context")
 		}
-		if user.Identity.AuthIdentifier != "user-123" {
-			t.Fatalf("unexpected auth identifier: %s", user.Identity.AuthIdentifier)
+		if user.ID != "local-1" {
+			t.Fatalf("unexpected local user id: %s", user.ID)
 		}
-		if user.User.ID != "local-1" {
-			t.Fatalf("unexpected local user id: %s", user.User.ID)
+		actor, ok := logging.ActorFromContext(r.Context())
+		if !ok {
+			t.Fatal("missing actor in logging context")
+		}
+		if actor.ID != "local-1" {
+			t.Fatalf("unexpected actor id: %s", actor.ID)
 		}
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -46,7 +51,7 @@ func TestAuthMiddlewareAttachesAuthenticatedUser(t *testing.T) {
 func TestAuthMiddlewareRejectsMissingToken(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, true, false)
+	authService, provisioner := newTestAuthStack(t, true, false, false)
 	handler := authMiddleware(authService, provisioner)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		t.Fatal("next handler should not run")
 	}))
@@ -64,7 +69,7 @@ func TestAuthMiddlewareRejectsMissingToken(t *testing.T) {
 func TestAuthMiddlewareRejectsInvalidToken(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, false, false)
+	authService, provisioner := newTestAuthStack(t, false, false, false)
 	handler := authMiddleware(authService, provisioner)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		t.Fatal("next handler should not run")
 	}))
@@ -83,7 +88,7 @@ func TestAuthMiddlewareRejectsInvalidToken(t *testing.T) {
 func TestAuthMiddlewareRejectsProvisioningFailure(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, true, true)
+	authService, provisioner := newTestAuthStack(t, true, true, false)
 	handler := authMiddleware(authService, provisioner)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		t.Fatal("next handler should not run")
 	}))
@@ -99,7 +104,7 @@ func TestAuthMiddlewareRejectsProvisioningFailure(t *testing.T) {
 	}
 }
 
-func newTestAuthStack(t *testing.T, active bool, failCreate bool) (*auth.Service, *usergroup.Service) {
+func newTestAuthStack(t *testing.T, active, failCreate, superAdmin bool) (*auth.Service, *usergroup.Service) {
 	t.Helper()
 
 	usergroupSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -162,6 +167,18 @@ func newTestAuthStack(t *testing.T, active bool, failCreate bool) (*auth.Service
 				"email":          "user@example.org",
 				"givenName":      "User",
 				"familyName":     "Example",
+				"isSuperAdmin":   superAdmin,
+				"status":         "ACTIVE",
+			})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/users/local-1":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"id":             "local-1",
+				"authIdentifier": "user-123",
+				"email":          "user@example.org",
+				"givenName":      "User",
+				"familyName":     "Example",
+				"isSuperAdmin":   superAdmin,
 				"status":         "ACTIVE",
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v2/users":
@@ -176,6 +193,7 @@ func newTestAuthStack(t *testing.T, active bool, failCreate bool) (*auth.Service
 				"email":          "user@example.org",
 				"givenName":      "User",
 				"familyName":     "Example",
+				"isSuperAdmin":   superAdmin,
 				"status":         "ACTIVE",
 			})
 		default:

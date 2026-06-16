@@ -2,7 +2,6 @@ package usergroup
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,16 +10,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/usergroupclient"
 )
-
-// GetUser fetches local user by internal id.
-func (s *Service) GetUser(ctx context.Context, id string) (api.User, error) {
-	user, _, err := s.usergroupClient.UsersAPI.ApiV2UsersUserIdGet(ctx, id).Execute()
-	if err != nil {
-		return api.User{}, fmt.Errorf("get user: %w", err)
-	}
-
-	return mapUser(user)
-}
 
 // GetUserByAuthIdentifier fetches local user by external auth identifier.
 func (s *Service) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (api.User, error) {
@@ -34,25 +23,6 @@ func (s *Service) GetUserByAuthIdentifier(ctx context.Context, authIdentifier st
 	}
 
 	return mapUser(user)
-}
-
-// ListUsers fetches all local users.
-func (s *Service) ListUsers(ctx context.Context) ([]api.User, error) {
-	users, _, err := s.usergroupClient.UsersAPI.ApiV2UsersGet(ctx).Execute()
-	if err != nil {
-		return nil, fmt.Errorf("list users from usergroup API: %w", err)
-	}
-
-	mapped := make([]api.User, 0, len(users))
-	for i := range users {
-		user, err := mapUser(&users[i])
-		if err != nil {
-			return nil, fmt.Errorf("list users: map user %d: %w", i, err)
-		}
-		mapped = append(mapped, user)
-	}
-
-	return mapped, nil
 }
 
 func mapUser(user *usergroupclient.User) (api.User, error) {
@@ -76,49 +46,6 @@ func mapUser(user *usergroupclient.User) (api.User, error) {
 		CreatedAt:      formatTime(user.GetCreatedAtOk()),
 		UpdatedAt:      formatTime(user.GetUpdatedAtOk()),
 	}, nil
-}
-
-// PatchUser updates mutable local user fields.
-func (s *Service) PatchUser(ctx context.Context, id string, patch api.PatchUserRequest) (api.User, error) {
-	if patch.Status != nil && !patch.Status.IsValid() {
-		return api.User{}, fmt.Errorf("patch user: %w", domain.ErrBadRequest)
-	}
-
-	request := usergroupclient.NewPatchUserRequest()
-	if patch.Email != nil {
-		request.SetEmail(*patch.Email)
-	}
-	if patch.GivenName != nil {
-		request.SetGivenName(*patch.GivenName)
-	}
-	if patch.FamilyName != nil {
-		request.SetFamilyName(*patch.FamilyName)
-	}
-	if patch.IsSuperAdmin != nil {
-		request.SetIsSuperAdmin(*patch.IsSuperAdmin)
-	}
-	if patch.Status != nil {
-		request.SetStatus(usergroupclient.UserStatus(*patch.Status))
-	}
-
-	user, resp, err := s.usergroupClient.UsersAPI.ApiV2UsersUserIdPatch(ctx, id).PatchUserRequest(*request).Execute()
-	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return api.User{}, domain.ErrNotFound
-		}
-
-		if resp != nil && resp.StatusCode == http.StatusBadRequest {
-			return api.User{}, domain.ErrBadRequest
-		}
-
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			return api.User{}, fmt.Errorf("patch user timeout: %w: %w", domain.ErrUpstreamTimeout, err)
-		}
-
-		return api.User{}, fmt.Errorf("patch user: %w", err)
-	}
-
-	return mapUser(user)
 }
 
 func formatTime(value *time.Time, ok bool) string {

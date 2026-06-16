@@ -3,6 +3,7 @@ package usergroup
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
 func TestEnsureUserCreatesMissingUser(t *testing.T) {
@@ -128,8 +130,8 @@ func TestListUsers(t *testing.T) {
 				GivenName:      "User",
 				FamilyName:     "Example",
 				Status:         "ACTIVE",
-				CreatedAt:      new("2026-06-16T12:00:00Z"),
-				UpdatedAt:      new("2026-06-16T12:30:00Z"),
+				CreatedAt:      strPtr("2026-06-16T12:00:00Z"),
+				UpdatedAt:      strPtr("2026-06-16T12:30:00Z"),
 			},
 			{
 				ID:             "local-2",
@@ -149,7 +151,7 @@ func TestListUsers(t *testing.T) {
 	}
 
 	service := NewService(client)
-	users, err := service.ListUsers(context.Background())
+	users, err := service.ListUsers(context.Background(), api.User{IsSuperAdmin: true})
 	if err != nil {
 		t.Fatalf("list users: %v", err)
 	}
@@ -219,12 +221,12 @@ func TestPatchUser(t *testing.T) {
 	}
 
 	service := NewService(client)
-	user, err := service.PatchUser(context.Background(), "local-1", api.PatchUserRequest{
-		Email:        new("ada@example.org"),
-		GivenName:    new("Ada"),
-		FamilyName:   new("Lovelace"),
-		IsSuperAdmin: new(true),
-		Status:       new(api.ActiveStatus),
+	user, err := service.PatchUser(context.Background(), api.User{IsSuperAdmin: true}, "local-1", api.PatchUserRequest{
+		Email:        strPtr("ada@example.org"),
+		GivenName:    strPtr("Ada"),
+		FamilyName:   strPtr("Lovelace"),
+		IsSuperAdmin: boolPtr(true),
+		Status:       statusPtr(api.ActiveStatus),
 	})
 	if err != nil {
 		t.Fatalf("patch user: %v", err)
@@ -232,5 +234,107 @@ func TestPatchUser(t *testing.T) {
 
 	if user.Email != "ada@example.org" || user.GivenName != "Ada" || user.FamilyName != "Lovelace" || !user.IsSuperAdmin {
 		t.Fatalf("unexpected user: %+v", user)
+	}
+}
+
+func strPtr(value string) *string {
+	return &value
+}
+
+func boolPtr(value bool) *bool {
+	return &value
+}
+
+func statusPtr(value api.UserStatus) *api.UserStatus {
+	return &value
+}
+
+func TestAuthorizationInMethods(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/users":
+			_ = json.NewEncoder(w).Encode([]struct {
+				ID             string `json:"id"`
+				AuthIdentifier string `json:"authIdentifier"`
+				Email          string `json:"email"`
+				GivenName      string `json:"givenName"`
+				FamilyName     string `json:"familyName"`
+				Status         string `json:"status"`
+			}{{
+				ID:             "local-1",
+				AuthIdentifier: "user-123",
+				Email:          "user@example.org",
+				GivenName:      "User",
+				FamilyName:     "Example",
+				Status:         "ACTIVE",
+			}})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/users/local-1":
+			_ = json.NewEncoder(w).Encode(struct {
+				ID             string `json:"id"`
+				AuthIdentifier string `json:"authIdentifier"`
+				Email          string `json:"email"`
+				GivenName      string `json:"givenName"`
+				FamilyName     string `json:"familyName"`
+				Status         string `json:"status"`
+			}{
+				ID:             "local-1",
+				AuthIdentifier: "user-123",
+				Email:          "user@example.org",
+				GivenName:      "User",
+				FamilyName:     "Example",
+				Status:         "ACTIVE",
+			})
+		case r.Method == http.MethodPatch && r.URL.Path == "/api/v2/users/local-1":
+			_ = json.NewEncoder(w).Encode(struct {
+				ID             string `json:"id"`
+				AuthIdentifier string `json:"authIdentifier"`
+				Email          string `json:"email"`
+				GivenName      string `json:"givenName"`
+				FamilyName     string `json:"familyName"`
+				IsSuperAdmin   bool   `json:"isSuperAdmin"`
+				Status         string `json:"status"`
+			}{
+				ID:             "local-1",
+				AuthIdentifier: "user-123",
+				Email:          "user@example.org",
+				GivenName:      "User",
+				FamilyName:     "Example",
+				IsSuperAdmin:   true,
+				Status:         "ACTIVE",
+			})
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	client, err := clients.NewUsergroup(srv.URL, config.Upstream{Timeout: time.Second, RealTimeout: time.Second, CacheTTL: 0, MaxEntries: 1})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	service := NewService(client)
+
+	if _, err := service.ListUsers(context.Background(), api.User{IsSuperAdmin: true}); err != nil {
+		t.Fatalf("admin list users: %v", err)
+	}
+
+	if _, err := service.GetUser(context.Background(), api.User{ID: "local-1"}, "local-1"); err != nil {
+		t.Fatalf("self get user: %v", err)
+	}
+
+	if _, err := service.ListUsers(context.Background(), api.User{ID: "local-1"}); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("list users forbidden = %v, want ErrForbidden", err)
+	}
+
+	if _, err := service.GetUser(context.Background(), api.User{ID: "local-1"}, "local-2"); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("get user forbidden = %v, want ErrForbidden", err)
+	}
+
+	if _, err := service.PatchUser(context.Background(), api.User{ID: "local-1"}, "local-1", api.PatchUserRequest{}); !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("patch user forbidden = %v, want ErrForbidden", err)
 	}
 }

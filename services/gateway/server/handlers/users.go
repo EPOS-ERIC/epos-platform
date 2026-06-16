@@ -28,8 +28,20 @@ func NewUsers(service *usergroup.Service) *Users {
 func (h *Users) GetUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := chi.URLParam(r, "id")
-	user, err := h.service.GetUser(ctx, id)
+	authenticatedUser, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	user, err := h.service.GetUser(ctx, authenticatedUser, id)
 	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			h.log.WarnContext(ctx, "user access denied", "user_id", authenticatedUser.ID, "target_user_id", id)
+			WriteError(ctx, w, http.StatusForbidden, "forbidden", "user access denied", nil)
+			return
+		}
+
 		if errors.Is(err, domain.ErrNotFound) {
 			WriteError(ctx, w, http.StatusNotFound, "user_not_found", "user not found", nil)
 			return
@@ -55,8 +67,20 @@ func (h *Users) GetUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *Users) ListUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	users, err := h.service.ListUsers(ctx)
+	authenticatedUser, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	users, err := h.service.ListUsers(ctx, authenticatedUser)
 	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			h.log.WarnContext(ctx, "user access denied", "user_id", authenticatedUser.ID)
+			WriteError(ctx, w, http.StatusForbidden, "forbidden", "user access denied", nil)
+			return
+		}
+
 		if errors.Is(err, domain.ErrBadRequest) {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by user service", nil)
 			return
@@ -78,6 +102,12 @@ func (h *Users) ListUsers(w http.ResponseWriter, r *http.Request) {
 func (h *Users) PatchUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := chi.URLParam(r, "id")
+	authenticatedUser, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
 	var patch api.PatchUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "request body must contain only mutable user fields", nil)
@@ -89,8 +119,14 @@ func (h *Users) PatchUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.service.PatchUser(ctx, id, patch)
+	user, err := h.service.PatchUser(ctx, authenticatedUser, id, patch)
 	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			h.log.WarnContext(ctx, "user access denied", "user_id", authenticatedUser.ID, "target_user_id", id)
+			WriteError(ctx, w, http.StatusForbidden, "forbidden", "user access denied", nil)
+			return
+		}
+
 		if errors.Is(err, domain.ErrNotFound) {
 			WriteError(ctx, w, http.StatusNotFound, "user_not_found", "user not found", nil)
 			return

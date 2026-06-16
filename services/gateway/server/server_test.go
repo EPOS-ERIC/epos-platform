@@ -91,7 +91,7 @@ func TestScalarRouteServesEmbeddedAssets(t *testing.T) {
 func TestUsersRouteListsUsers(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, true, false)
+	authService, provisioner := newTestAuthStack(t, true, false, true)
 	router := NewRouter(nil, nil, nil, authService, provisioner, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/users", nil)
@@ -119,7 +119,7 @@ func TestUsersRouteListsUsers(t *testing.T) {
 func TestUsersRoutePatchesUser(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, true, false)
+	authService, provisioner := newTestAuthStack(t, true, false, true)
 	router := NewRouter(nil, nil, nil, authService, provisioner, "")
 
 	req := httptest.NewRequest(http.MethodPatch, "/v1/users/local-1", strings.NewReader(`{"given_name":"Ada","family_name":"Lovelace","email":"ada@example.org","is_super_admin":true,"status":"ACTIVE"}`))
@@ -150,7 +150,7 @@ func TestUsersRoutePatchesUser(t *testing.T) {
 func TestUsersRouteRejectsPatchAuthIdentifier(t *testing.T) {
 	t.Parallel()
 
-	authService, provisioner := newTestAuthStack(t, true, false)
+	authService, provisioner := newTestAuthStack(t, true, false, true)
 	router := NewRouter(nil, nil, nil, authService, provisioner, "")
 
 	req := httptest.NewRequest(http.MethodPatch, "/v1/users/local-1", strings.NewReader(`{"auth_identifier":"nope"}`))
@@ -162,6 +162,75 @@ func TestUsersRouteRejectsPatchAuthIdentifier(t *testing.T) {
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+}
+
+func TestUsersRouteRejectsListForNonAdmin(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/users", nil)
+	req.Header.Set("Authorization", "Bearer token-123")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
+	}
+}
+
+func TestUsersRouteAllowsSelfLookup(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/users/local-1", nil)
+	req.Header.Set("Authorization", "Bearer token-123")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestUsersRouteRejectsOtherUserLookupForNonAdmin(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/users/local-2", nil)
+	req.Header.Set("Authorization", "Bearer token-123")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
+	}
+}
+
+func TestUsersRouteRejectsPatchForNonAdmin(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false, false)
+	router := NewRouter(nil, nil, nil, authService, provisioner, "")
+
+	req := httptest.NewRequest(http.MethodPatch, "/v1/users/local-1", strings.NewReader(`{"given_name":"Ada"}`))
+	req.Header.Set("Authorization", "Bearer token-123")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rec.Code)
 	}
 }
 
