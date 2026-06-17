@@ -4,7 +4,6 @@ package clients
 import (
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
@@ -24,7 +23,6 @@ func NewMetadatalifecycle(baseURL string, upstreamCfg config.Upstream) (*metadat
 		CacheTTL:    upstreamCfg.CacheTTL,
 		MaxEntries:  upstreamCfg.MaxEntries,
 		Transport:   nil,
-		Logger:      logging.Get("metadata-lifecycle-client"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create upstream client: %w", err)

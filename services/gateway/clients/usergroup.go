@@ -3,7 +3,6 @@ package clients
 import (
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/usergroupclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
@@ -23,7 +22,6 @@ func NewUsergroup(baseURL string, upstreamCfg config.Upstream) (*usergroupclient
 		CacheTTL:    0, // Disable caching for the user group client
 		MaxEntries:  upstreamCfg.MaxEntries,
 		Transport:   nil,
-		Logger:      logging.Get("usergroup-client"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create upstream client: %w", err)

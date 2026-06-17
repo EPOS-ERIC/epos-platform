@@ -121,7 +121,10 @@ func newHandler(writer io.Writer, level slog.Level) slog.Handler {
 
 	otelHandler := otelslog.NewHandler(serviceName)
 
-	return &contextHandler{next: newMultiHandler(jsonHandler, otelHandler)}
+	return &contextHandler{next: newMultiHandler(
+		newLevelHandler(jsonHandler, level),
+		newLevelHandler(otelHandler, level),
+	)}
 }
 
 func initBase() {
@@ -261,6 +264,39 @@ func (h *contextHandler) WithGroup(name string) slog.Handler {
 
 type multiHandler struct {
 	handlers []slog.Handler
+}
+
+type levelHandler struct {
+	next  slog.Handler
+	level slog.Level
+}
+
+func newLevelHandler(next slog.Handler, level slog.Level) slog.Handler {
+	return &levelHandler{next: next, level: level}
+}
+
+func (h *levelHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	if level < h.level {
+		return false
+	}
+
+	return h.next.Enabled(ctx, level)
+}
+
+func (h *levelHandler) Handle(ctx context.Context, record slog.Record) error {
+	if record.Level < h.level {
+		return nil
+	}
+
+	return h.next.Handle(ctx, record)
+}
+
+func (h *levelHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return &levelHandler{next: h.next.WithAttrs(attrs), level: h.level}
+}
+
+func (h *levelHandler) WithGroup(name string) slog.Handler {
+	return &levelHandler{next: h.next.WithGroup(name), level: h.level}
 }
 
 func newMultiHandler(handlers ...slog.Handler) slog.Handler {

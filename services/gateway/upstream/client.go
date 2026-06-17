@@ -33,9 +33,6 @@ type Config struct {
 	// Transport is optional custom HTTP transport.
 	// If nil, net/http.DefaultTransport is used.
 	Transport nethttp.RoundTripper
-	// Logger is optional structured logger used for failure and eviction logs.
-	// If nil, package default logger is used.
-	Logger *slog.Logger
 }
 
 // RequestOptions configures one request execution.
@@ -105,11 +102,6 @@ func NewClient(cfg Config) (*Client, error) {
 	}
 	transport = otelhttp.NewTransport(transport)
 
-	logger := cfg.Logger
-	if logger == nil {
-		logger = logging.Get("gateway-http-client")
-	}
-
 	return &Client{
 		httpClient:  &nethttp.Client{Transport: transport, CheckRedirect: nil, Jar: nil, Timeout: 0},
 		service:     cfg.Service,
@@ -117,7 +109,7 @@ func NewClient(cfg Config) (*Client, error) {
 		realTimeout: cfg.RealTimeout,
 		cacheTTL:    cfg.CacheTTL,
 		maxEntries:  cfg.MaxEntries,
-		log:         logger,
+		log:         logging.Get("gateway-http-client"),
 		now:         time.Now,
 		mu:          sync.Mutex{},
 		cache:       make(map[string]*cacheEntry),

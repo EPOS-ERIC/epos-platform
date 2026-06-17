@@ -53,6 +53,18 @@ func TestGetUsesComponentLevelOverride(t *testing.T) {
 	}
 }
 
+func TestGetUsesComponentLevelOverrideWithOtel(t *testing.T) {
+	resetLoggingState(t)
+	t.Setenv("LOG_LEVEL", "DEBUG")
+	t.Setenv("LOG_LEVEL_GATEWAY_HTTP_CLIENT", "INFO")
+	t.Setenv("OTEL_SERVICE_NAME", "gateway")
+
+	logger := Get("gateway-http-client")
+	if logger.Enabled(context.Background(), slog.LevelDebug) {
+		t.Fatal("expected gateway-http-client logger to disable debug level with otel enabled")
+	}
+}
+
 func TestGetFallsBackToGlobalLevelForInvalidComponentOverride(t *testing.T) {
 	resetLoggingState(t)
 	t.Setenv("LOG_LEVEL", "DEBUG")

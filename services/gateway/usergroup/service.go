@@ -46,9 +46,7 @@ func annotateSpan(ctx context.Context, attrs ...attribute.KeyValue) {
 
 // EnsureUser returns existing local user or creates one from auth identity.
 func (s *Service) EnsureUser(ctx context.Context, identity Identity) (api.User, error) {
-	annotateSpan(ctx,
-		attribute.String("usergroup.operation", "ensure_user"),
-	)
+	annotateSpan(ctx, attribute.String("usergroup.operation", "ensure_user"))
 
 	if identity.AuthIdentifier == "" {
 		annotateSpan(ctx, attribute.String("usergroup.result", "bad_request"))
