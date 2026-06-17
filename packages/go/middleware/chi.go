@@ -33,13 +33,6 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := logging.WithRequest(r.Context(), logging.Request{
-			Method: r.Method,
-			Path:   r.URL.Path,
-			Query:  r.URL.RawQuery,
-		})
-		r = r.WithContext(ctx)
-
 		startedAt := time.Now()
 		rw := &responseWriter{ResponseWriter: w, status: 200, size: 0}
 		next.ServeHTTP(rw, r)

@@ -18,6 +18,7 @@ func NewMetadatalifecycle(baseURL string, upstreamCfg config.Upstream) (*metadat
 	}
 
 	upstreamClient, err := upstream.NewClient(upstream.Config{
+		Service:     "metadata-lifecycle",
 		Timeout:     upstreamCfg.Timeout,
 		RealTimeout: upstreamCfg.RealTimeout,
 		CacheTTL:    upstreamCfg.CacheTTL,
