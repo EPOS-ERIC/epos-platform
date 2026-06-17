@@ -19,6 +19,7 @@ func (s *Service) GetUserByAuthIdentifier(ctx context.Context, authIdentifier st
 			return api.User{}, domain.ErrNotFound
 		}
 
+		s.log.ErrorContext(ctx, "get user by auth identifier failed", "error", err)
 		return api.User{}, fmt.Errorf("get user by auth identifier: %w", err)
 	}
 
