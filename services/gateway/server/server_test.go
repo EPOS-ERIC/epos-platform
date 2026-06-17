@@ -188,7 +188,7 @@ func TestUsersRouteAllowsSelfLookup(t *testing.T) {
 	authService, provisioner := newTestAuthStack(t, true, false, false)
 	router := NewRouter(nil, nil, nil, authService, provisioner, "")
 
-	req := httptest.NewRequest(http.MethodGet, "/v1/users/local-1", nil)
+	req := httptest.NewRequest(http.MethodGet, "/v1/users/self", nil)
 	req.Header.Set("Authorization", "Bearer token-123")
 	rec := httptest.NewRecorder()
 

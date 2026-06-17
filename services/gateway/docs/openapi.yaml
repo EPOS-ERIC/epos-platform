@@ -516,7 +516,7 @@ components:
       name: id
       in: path
       required: true
-      description: User identifier.
+      description: User identifier. Use `self` to resolve authenticated user.
       schema:
         type: string
         example: "user-123"

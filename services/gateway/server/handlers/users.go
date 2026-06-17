@@ -33,6 +33,9 @@ func (h *Users) GetUser(w http.ResponseWriter, r *http.Request) {
 		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 		return
 	}
+	if id == "self" {
+		id = authenticatedUser.ID
+	}
 
 	user, err := h.service.GetUser(ctx, authenticatedUser, id)
 	if err != nil {
