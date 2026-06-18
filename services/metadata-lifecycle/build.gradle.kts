@@ -120,6 +120,7 @@ dependencies {
         implementation("io.netty:netty-codec-redis:4.1.135.Final")
         implementation("io.netty:netty-codec-haproxy:4.1.135.Final")
         implementation("io.netty:netty-codec-http2:4.1.135.Final")
+        implementation("io.netty:netty-codec-smtp:4.1.128.Final")
         implementation("io.netty:netty-transport-native-epoll:4.1.135.Final")
         implementation("io.netty:netty-transport-native-kqueue:4.1.135.Final")
     }
