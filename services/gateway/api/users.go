@@ -6,6 +6,20 @@ import (
 )
 
 type User struct {
+	ID             string                  `json:"id"`
+	AuthIdentifier string                  `json:"auth_identifier"`
+	Email          string                  `json:"email"`
+	GivenName      string                  `json:"given_name"`
+	FamilyName     string                  `json:"family_name"`
+	IsSuperAdmin   bool                    `json:"is_super_admin"`
+	Status         UserStatus              `json:"status"`
+	Memberships    []UserMembershipSummary `json:"memberships,omitempty"`
+	CreatedAt      string                  `json:"created_at,omitempty"`
+	UpdatedAt      string                  `json:"updated_at,omitempty"`
+}
+
+// UserSummary is gateway response for user list and profile fields.
+type UserSummary struct {
 	ID             string     `json:"id"`
 	AuthIdentifier string     `json:"auth_identifier"`
 	Email          string     `json:"email"`
@@ -15,6 +29,30 @@ type User struct {
 	Status         UserStatus `json:"status"`
 	CreatedAt      string     `json:"created_at,omitempty"`
 	UpdatedAt      string     `json:"updated_at,omitempty"`
+}
+
+type MembershipRole string
+
+const (
+	MembershipViewerRole   MembershipRole = "VIEWER"
+	MembershipEditorRole   MembershipRole = "EDITOR"
+	MembershipReviewerRole MembershipRole = "REVIEWER"
+	MembershipAdminRole    MembershipRole = "ADMIN"
+)
+
+type MembershipStatus string
+
+const (
+	MembershipPendingStatus  MembershipStatus = "PENDING"
+	MembershipActiveStatus   MembershipStatus = "ACTIVE"
+	MembershipRevokedStatus  MembershipStatus = "REVOKED"
+	MembershipRejectedStatus MembershipStatus = "REJECTED"
+)
+
+type UserMembershipSummary struct {
+	Group  ResourceRef      `json:"group"`
+	Role   MembershipRole   `json:"role"`
+	Status MembershipStatus `json:"status"`
 }
 
 type UserStatus string

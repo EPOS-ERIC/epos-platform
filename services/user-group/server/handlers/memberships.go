@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -36,6 +37,10 @@ func (h *Memberships) ListByGroup(w http.ResponseWriter, r *http.Request) {
 	items, err := h.service.ListByGroup(r.Context(), groupID)
 	if err != nil {
 		h.log.ErrorContext(r.Context(), "list memberships failed", "group_id", groupID, "error", err)
+		if errors.Is(err, service.ErrNotFound) {
+			writeMessage(w, http.StatusNotFound, "group not found")
+			return
+		}
 		writeMessage(w, http.StatusInternalServerError, "internal error")
 		return
 	}

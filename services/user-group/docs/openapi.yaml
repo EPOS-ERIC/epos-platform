@@ -59,6 +59,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Memberships listed
@@ -79,11 +80,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: userId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -107,11 +110,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: userId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
           description: Membership deleted
@@ -157,6 +162,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: Group found
@@ -176,6 +182,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -287,6 +294,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
           description: User found
@@ -306,6 +314,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -329,6 +338,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -352,6 +362,7 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
           description: User deleted
@@ -366,11 +377,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: friendUserId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '201':
           description: Friendship created
@@ -388,11 +401,13 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
         - name: friendUserId
           in: path
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
           description: Friendship deleted
@@ -405,6 +420,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         slug:
           type: string
         name:
@@ -489,8 +505,10 @@ components:
       properties:
         userId:
           type: string
+          format: uuid
         groupId:
           type: string
+          format: uuid
         role:
           $ref: '#/components/schemas/MembershipRole'
         status:
@@ -516,8 +534,10 @@ components:
       properties:
         userId:
           type: string
+          format: uuid
         friendId:
           type: string
+          format: uuid
         createdAt:
           type: string
           format: date-time
@@ -527,6 +547,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         authIdentifier:
           type: string
         email:

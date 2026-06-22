@@ -110,6 +110,9 @@ func (h *Users) PatchUser(w http.ResponseWriter, r *http.Request) {
 		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 		return
 	}
+	if id == "self" {
+		id = authenticatedUser.ID
+	}
 
 	var patch api.PatchUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {

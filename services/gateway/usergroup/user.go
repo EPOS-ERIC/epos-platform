@@ -44,6 +44,7 @@ func mapUser(user *usergroupclient.User) (api.User, error) {
 		FamilyName:     user.GetFamilyName(),
 		Status:         status,
 		IsSuperAdmin:   user.GetIsSuperAdmin(),
+		Memberships:    nil,
 		CreatedAt:      formatTime(user.GetCreatedAtOk()),
 		UpdatedAt:      formatTime(user.GetUpdatedAtOk()),
 	}, nil

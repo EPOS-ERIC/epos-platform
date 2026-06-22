@@ -41,6 +41,14 @@ type UpsertMembershipParams struct {
 }
 
 func (s *Memberships) ListByGroup(ctx context.Context, groupID uuid.UUID) ([]Membership, error) {
+	if _, err := s.db.GetGroupByID(ctx, groupID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		membershipsLog.ErrorContext(ctx, "get group failed", "group_id", groupID, "error", err)
+		return nil, fmt.Errorf("get group by id: %w", err)
+	}
+
 	rows, err := s.db.ListMembershipsByGroupID(ctx, groupID)
 	if err != nil {
 		membershipsLog.ErrorContext(ctx, "list memberships failed", "group_id", groupID, "error", err)
@@ -62,6 +70,22 @@ func (s *Memberships) Upsert(ctx context.Context, params UpsertMembershipParams)
 
 	if params.Role == "" || params.Status == "" || !params.Role.Valid() || !params.Status.Valid() {
 		return Membership{}, ErrInvalid
+	}
+
+	if _, err := s.db.GetUserByID(ctx, params.UserID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Membership{}, ErrNotFound
+		}
+		membershipsLog.ErrorContext(ctx, "get user failed", "user_id", params.UserID, "error", err)
+		return Membership{}, fmt.Errorf("get user by id: %w", err)
+	}
+
+	if _, err := s.db.GetGroupByID(ctx, params.GroupID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Membership{}, ErrNotFound
+		}
+		membershipsLog.ErrorContext(ctx, "get group failed", "group_id", params.GroupID, "error", err)
+		return Membership{}, fmt.Errorf("get group by id: %w", err)
 	}
 
 	row, err := s.db.UpsertMembership(ctx, sqlc.UpsertMembershipParams{

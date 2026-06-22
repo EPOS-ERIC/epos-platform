@@ -130,8 +130,8 @@ func TestListUsers(t *testing.T) {
 				GivenName:      "User",
 				FamilyName:     "Example",
 				Status:         "ACTIVE",
-				CreatedAt:      strPtr("2026-06-16T12:00:00Z"),
-				UpdatedAt:      strPtr("2026-06-16T12:30:00Z"),
+				CreatedAt:      new("2026-06-16T12:00:00Z"),
+				UpdatedAt:      new("2026-06-16T12:30:00Z"),
 			},
 			{
 				ID:             "local-2",
@@ -160,13 +160,13 @@ func TestListUsers(t *testing.T) {
 		t.Fatalf("unexpected users count: %d", len(users))
 	}
 
-	if users[0].ID != "local-1" || users[0].Status != "ACTIVE" {
+	if users[0].ID != "local-1" || users[0].Status != api.ActiveStatus {
 		t.Fatalf("unexpected first user: %+v", users[0])
 	}
 	if users[0].CreatedAt != "2026-06-16T12:00:00Z" {
 		t.Fatalf("unexpected first user created at: %s", users[0].CreatedAt)
 	}
-	if users[1].ID != "local-2" || users[1].Status != "INACTIVE" {
+	if users[1].ID != "local-2" || users[1].Status != api.InactiveStatus {
 		t.Fatalf("unexpected second user: %+v", users[1])
 	}
 }
@@ -222,11 +222,11 @@ func TestPatchUser(t *testing.T) {
 
 	service := NewService(client)
 	user, err := service.PatchUser(context.Background(), api.User{IsSuperAdmin: true}, "local-1", api.PatchUserRequest{
-		Email:        strPtr("ada@example.org"),
-		GivenName:    strPtr("Ada"),
-		FamilyName:   strPtr("Lovelace"),
-		IsSuperAdmin: boolPtr(true),
-		Status:       statusPtr(api.ActiveStatus),
+		Email:        new("ada@example.org"),
+		GivenName:    new("Ada"),
+		FamilyName:   new("Lovelace"),
+		IsSuperAdmin: new(true),
+		Status:       new(api.ActiveStatus),
 	})
 	if err != nil {
 		t.Fatalf("patch user: %v", err)
@@ -237,16 +237,81 @@ func TestPatchUser(t *testing.T) {
 	}
 }
 
-func strPtr(value string) *string {
-	return &value
+func TestPatchUserAllowsSelfProfileUpdate(t *testing.T) {
+	t.Parallel()
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch || r.URL.Path != "/api/v2/users/local-1" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+
+		var payload struct {
+			Email      string `json:"email"`
+			GivenName  string `json:"givenName"`
+			FamilyName string `json:"familyName"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode patch payload: %v", err)
+		}
+
+		if payload.GivenName != "Ada" || payload.Email != "" || payload.FamilyName != "" {
+			t.Fatalf("unexpected payload: %+v", payload)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(struct {
+			ID             string `json:"id"`
+			AuthIdentifier string `json:"authIdentifier"`
+			Email          string `json:"email"`
+			GivenName      string `json:"givenName"`
+			FamilyName     string `json:"familyName"`
+			Status         string `json:"status"`
+		}{
+			ID:             "local-1",
+			AuthIdentifier: "user-123",
+			Email:          "user@example.org",
+			GivenName:      "Ada",
+			FamilyName:     "Example",
+			Status:         "ACTIVE",
+		})
+	}))
+	t.Cleanup(srv.Close)
+
+	client, err := clients.NewUsergroup(srv.URL, config.Upstream{Timeout: time.Second, RealTimeout: time.Second, CacheTTL: 0, MaxEntries: 1})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	service := NewService(client)
+	user, err := service.PatchUser(context.Background(), api.User{ID: "local-1"}, "local-1", api.PatchUserRequest{
+		GivenName: new("Ada"),
+	})
+	if err != nil {
+		t.Fatalf("patch self user: %v", err)
+	}
+
+	if user.GivenName != "Ada" {
+		t.Fatalf("unexpected user: %+v", user)
+	}
 }
 
-func boolPtr(value bool) *bool {
-	return &value
-}
+func TestPatchUserRejectsSelfAdminFields(t *testing.T) {
+	t.Parallel()
 
-func statusPtr(value api.UserStatus) *api.UserStatus {
-	return &value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+	}))
+	t.Cleanup(srv.Close)
+
+	client, err := clients.NewUsergroup(srv.URL, config.Upstream{Timeout: time.Second, RealTimeout: time.Second, CacheTTL: 0, MaxEntries: 1})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+
+	service := NewService(client)
+	if _, err := service.PatchUser(context.Background(), api.User{ID: "local-1"}, "local-1", api.PatchUserRequest{Status: new(api.ActiveStatus)}); !errors.Is(err, domain.ErrBadRequest) {
+		t.Fatalf("patch self admin fields = %v, want ErrBadRequest", err)
+	}
 }
 
 func TestAuthorizationInMethods(t *testing.T) {
@@ -287,6 +352,18 @@ func TestAuthorizationInMethods(t *testing.T) {
 				FamilyName:     "Example",
 				Status:         "ACTIVE",
 			})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/groups":
+			_ = json.NewEncoder(w).Encode([]struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			}{
+				{ID: "group-1", Name: "Research"},
+				{ID: "group-2", Name: "Data"},
+			})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/groups/group-1/memberships":
+			_ = json.NewEncoder(w).Encode([]groupMembershipPayload{{UserID: "local-1", Role: "VIEWER", Status: "ACTIVE"}})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v2/groups/group-2/memberships":
+			_ = json.NewEncoder(w).Encode([]groupMembershipPayload{{UserID: "local-1", Role: "EDITOR", Status: "PENDING"}})
 		case r.Method == http.MethodPatch && r.URL.Path == "/api/v2/users/local-1":
 			_ = json.NewEncoder(w).Encode(struct {
 				ID             string `json:"id"`
@@ -334,7 +411,7 @@ func TestAuthorizationInMethods(t *testing.T) {
 		t.Fatalf("get user forbidden = %v, want ErrForbidden", err)
 	}
 
-	if _, err := service.PatchUser(context.Background(), api.User{ID: "local-1"}, "local-1", api.PatchUserRequest{}); !errors.Is(err, domain.ErrForbidden) {
+	if _, err := service.PatchUser(context.Background(), api.User{ID: "local-1"}, "local-2", api.PatchUserRequest{}); !errors.Is(err, domain.ErrForbidden) {
 		t.Fatalf("patch user forbidden = %v, want ErrForbidden", err)
 	}
 }
