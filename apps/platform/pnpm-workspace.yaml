@@ -13,3 +13,5 @@ minimumReleaseAgeExclude:
   - '@angular/build@21.2.13'
   - '@angular/cli@21.2.13'
   - '@schematics/angular@21.2.13'
+overrides:
+  js-yaml@<=4.2.0: 4.2.0
