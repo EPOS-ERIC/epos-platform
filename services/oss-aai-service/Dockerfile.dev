@@ -2,6 +2,8 @@ FROM golang:1.26.3-alpine
 
 WORKDIR /workspace/services/oss-aai-service
 
+RUN apk add --no-cache curl
+
 COPY services/oss-aai-service/go.mod services/oss-aai-service/go.sum ./
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 RUN go mod download

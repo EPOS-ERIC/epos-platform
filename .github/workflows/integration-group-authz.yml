@@ -59,43 +59,14 @@ jobs:
           docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
 
       - name: Start integration stack
-        run: docker compose -f docker/compose.dev.yaml up -d gateway-service user-group-service oss-aai-service
-
-      - name: Wait for gateway
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:32000/openapi.yaml >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
-
-      - name: Wait for OSS AAI
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:8110/healthz >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
-
-      - name: Wait for user-group
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:8090/health >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
+        run: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service user-group-service oss-aai-service
 
       - name: Run stateful group authz Hurl tests
         run: make test-hurl-groups
+
+      - name: Show integration logs on failure
+        if: failure()
+        run: docker compose -f docker/compose.dev.yaml logs --no-color
 
       - name: Stop integration stack
         if: always()

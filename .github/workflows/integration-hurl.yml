@@ -55,29 +55,7 @@ jobs:
           docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev .
 
       - name: Start integration stack
-        run: docker compose -f docker/compose.dev.yaml up -d gateway-service
-
-      - name: Wait for gateway
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:32000/openapi.yaml >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
-
-      - name: Wait for metadata lifecycle
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:8080/health >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
+        run: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service
 
       - name: Populate integration metadata
         run: make populate-metadatone
@@ -95,6 +73,10 @@ jobs:
 
       - name: Run Hurl integration tests
         run: make test-hurl
+
+      - name: Show integration logs on failure
+        if: failure()
+        run: docker compose -f docker/compose.dev.yaml logs --no-color
 
       - name: Stop integration stack
         if: always()

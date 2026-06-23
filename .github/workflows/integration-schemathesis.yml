@@ -63,29 +63,7 @@ jobs:
           docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
 
       - name: Start integration stack
-        run: docker compose -f docker/compose.dev.yaml up -d gateway-service user-group-service oss-aai-service
-
-      - name: Wait for gateway
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:32000/openapi.yaml >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
-
-      - name: Wait for metadata lifecycle
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:8080/health >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
+        run: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service user-group-service oss-aai-service
 
       - name: Populate integration metadata
         run: make populate-metadatone
@@ -101,30 +79,12 @@ jobs:
           docker compose -f docker/compose.dev.yaml logs
           exit 1
 
-      - name: Wait for OSS AAI
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:8110/healthz >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
-
-      - name: Wait for user-group
-        run: |
-          for i in {1..90}; do
-            if curl -fsS http://localhost:8090/health >/dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          docker compose -f docker/compose.dev.yaml logs
-          exit 1
-
       - name: Run Schemathesis integration tests
         run: make test-schemathesis
+
+      - name: Show integration logs on failure
+        if: failure()
+        run: docker compose -f docker/compose.dev.yaml logs --no-color
 
       - name: Stop integration stack
         if: always()

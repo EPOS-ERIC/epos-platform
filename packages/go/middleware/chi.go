@@ -38,8 +38,24 @@ func Logger(next http.Handler) http.Handler {
 		next.ServeHTTP(rw, r)
 		duration := time.Since(startedAt)
 
+		if shouldSkipHealthLog(r, rw.status) {
+			return
+		}
+
 		log.InfoContext(r.Context(), "http request", "status", rw.status, "duration", duration.String())
 	})
+}
+
+func shouldSkipHealthLog(r *http.Request, status int) bool {
+	if r.Method != http.MethodGet {
+		return false
+	}
+
+	if r.URL.Path != "/health" && r.URL.Path != "/healthz" {
+		return false
+	}
+
+	return status < http.StatusBadRequest
 }
 
 func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
