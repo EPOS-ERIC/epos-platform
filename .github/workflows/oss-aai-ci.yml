@@ -1,0 +1,36 @@
+name: OSS AAI Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "services/oss-aai-service/**"
+      - "packages/scripts/epos-banner.sh"
+      - "Makefile"
+      - ".github/workflows/oss-aai-ci.yml"
+      - ".github/workflows/_go-service.yml"
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - "services/oss-aai-service/**"
+      - "packages/scripts/epos-banner.sh"
+      - "Makefile"
+      - ".github/workflows/oss-aai-ci.yml"
+      - ".github/workflows/_go-service.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_go-service.yml
+    secrets: inherit
+    with:
+      service: services/oss-aai-service
+      image: oss-aai-service
+      dockerfile: services/oss-aai-service/Dockerfile
+      context: .
+      go-version-file: services/oss-aai-service/go.mod

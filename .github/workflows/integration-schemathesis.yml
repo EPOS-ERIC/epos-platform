@@ -1,0 +1,131 @@
+name: Integration Schemathesis Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "tests/schemathesis/**"
+      - "services/gateway/**"
+      - "services/metadata-lifecycle/**"
+      - "services/user-group/**"
+      - "services/oss-aai-service/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "packages/scripts/metadatone.sh"
+      - "packages/scripts/schemathesis-env.sh"
+      - "packages/assets/otel/opentelemetry-javaagent.jar"
+      - "docker/compose.dev.yaml"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/integration-schemathesis.yml"
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - "tests/schemathesis/**"
+      - "services/gateway/**"
+      - "services/metadata-lifecycle/**"
+      - "services/user-group/**"
+      - "services/oss-aai-service/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "packages/scripts/metadatone.sh"
+      - "packages/scripts/schemathesis-env.sh"
+      - "packages/assets/otel/opentelemetry-javaagent.jar"
+      - "docker/compose.dev.yaml"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/integration-schemathesis.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  schemathesis-tests:
+    name: Schemathesis tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build dev images
+        run: |
+          docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev .
+          docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev .
+          docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev .
+          docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+
+      - name: Start integration stack
+        run: docker compose -f docker/compose.dev.yaml up -d gateway-service user-group-service oss-aai-service
+
+      - name: Wait for gateway
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://localhost:32000/openapi.yaml >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Wait for metadata lifecycle
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://localhost:8080/health >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Populate integration metadata
+        run: make populate-metadatone
+
+      - name: Wait for populated gateway data
+        run: |
+          for i in {1..90}; do
+            if curl -fsS 'http://localhost:32000/v1/search?type=softwareapplication' >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Wait for OSS AAI
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://localhost:8110/healthz >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Wait for user-group
+        run: |
+          for i in {1..90}; do
+            if curl -fsS http://localhost:8090/health >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Run Schemathesis integration tests
+        run: make test-schemathesis
+
+      - name: Stop integration stack
+        if: always()
+        run: docker compose -f docker/compose.dev.yaml down -v

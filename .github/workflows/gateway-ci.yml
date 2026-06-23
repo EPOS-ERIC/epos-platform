@@ -1,0 +1,46 @@
+name: Gateway Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "services/gateway/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/gateway-ci.yml"
+      - ".github/workflows/_go-service.yml"
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - "services/gateway/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/gateway-ci.yml"
+      - ".github/workflows/_go-service.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_go-service.yml
+    secrets: inherit
+    with:
+      service: services/gateway
+      image: gateway
+      dockerfile: services/gateway/Dockerfile
+      context: .
+      go-version-file: services/gateway/go.mod
