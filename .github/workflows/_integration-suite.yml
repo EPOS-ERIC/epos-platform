@@ -67,6 +67,15 @@ jobs:
         shell: bash
         run: docker compose -f docker/compose.dev.yaml logs --no-color
 
+      - name: Show compose state on failure
+        if: failure()
+        shell: bash
+        run: |
+          docker compose -f docker/compose.dev.yaml ps -a
+          for id in $(docker compose -f docker/compose.dev.yaml ps -q); do
+            docker inspect "$id" --format '{{.Name}} {{if .State.Health}}{{json .State.Health}}{{else}}no-healthcheck{{end}}'
+          done
+
       - name: Stop integration stack
         if: always()
         shell: bash
