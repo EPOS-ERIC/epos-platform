@@ -27,142 +27,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/dataset/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Dataset identifier. */
-                id: components["parameters"]["DatasetId"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Get dataset by id
-         * @description Returns dataset detail metadata, including temporal and spatial coverage,
-         *     publishers, linked concepts, and linked distributions.
-         */
-        get: operations["getDatasetById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/distribution/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Distribution identifier. */
-                id: components["parameters"]["DistributionId"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Get distribution by id
-         * @description Returns distribution detail metadata. Distribution payload shape depends on
-         *     distribution `type`, for example a downloadable file or a linked web service.
-         */
-        get: operations["getDistributionById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/softwareapplication/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description URL-encoded software application identifier. */
-                id: components["parameters"]["SoftwareApplicationId"];
-            };
-            cookie?: never;
-        };
-        /** Get software application by id */
-        get: operations["getSoftwareApplicationById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/softwaresourcecode/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Software source code identifier. */
-                id: components["parameters"]["SoftwareSourceCodeId"];
-            };
-            cookie?: never;
-        };
-        /** Get software source code by id */
-        get: operations["getSoftwareSourceCodeById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/webservice/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Webservice identifier. */
-                id: components["parameters"]["WebserviceId"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Get webservice by id
-         * @description Returns webservice detail metadata, including single provider organization,
-         *     supported operations, API documentation, and temporal or spatial coverage.
-         */
-        get: operations["getWebserviceById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/organization/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Organization identifier. */
-                id: components["parameters"]["OrganizationId"];
-            };
-            cookie?: never;
-        };
-        /**
-         * Get organization by id
-         * @description Returns organization detail metadata, including identifiers, contact points,
-         *     and parent organizations when available.
-         */
-        get: operations["getOrganizationById"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/concept": {
         parameters: {
             query?: never;
@@ -185,22 +49,18 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/concept/{id}": {
+    "/users": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Concept identifier. */
-                id: components["parameters"]["ConceptId"];
-            };
+            path?: never;
             cookie?: never;
         };
         /**
-         * Get concept by id
-         * @description Returns a single concept node with its containing concept scheme and direct
-         *     child concept references.
+         * List users
+         * @description Retrieve all user profiles. Allowed to super admins only.
          */
-        get: operations["getConceptById"];
+        get: operations["listUsers"];
         put?: never;
         post?: never;
         delete?: never;
@@ -209,28 +69,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/conceptscheme/{id}": {
+    "/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List groups
+         * @description Retrieve all group records from usergroup service, including caller membership when present.
+         */
+        get: operations["listGroups"];
+        put?: never;
+        /**
+         * Create group
+         * @description Create a new group record in usergroup service. Allowed to super admins only.
+         */
+        post: operations["createGroup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupId}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Concept scheme identifier. */
-                id: components["parameters"]["ConceptSchemeId"];
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
             };
             cookie?: never;
         };
         /**
-         * Get concept scheme by id
-         * @description Returns concept scheme detail metadata, including top concepts and optional
-         *     concept tree children when present.
+         * Get group by id
+         * @description Retrieve group details from usergroup service, including caller membership when present.
          */
-        get: operations["getConceptSchemeById"];
+        get: operations["getGroup"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete group
+         * @description Delete a group and clean up its memberships in usergroup service. Allowed to super admins only.
+         */
+        delete: operations["deleteGroup"];
+        options?: never;
+        head?: never;
+        /**
+         * Patch group
+         * @description Update mutable group fields. Allowed to super admins and active group admins for this group.
+         */
+        patch: operations["patchGroup"];
+        trace?: never;
+    };
+    "/groups/{groupId}/memberships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List group memberships
+         * @description Retrieve all memberships for a group. Allowed to super admins and active group admins for this group; group admin scope includes membership management for that group.
+         */
+        get: operations["listGroupMemberships"];
+        put?: never;
+        /**
+         * Request group access
+         * @description Request access to a group for the authenticated user.
+         */
+        post: operations["requestGroupMembership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/groups/{groupId}/memberships/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+                /** @description User identifier for membership operations. */
+                userId: components["parameters"]["MembershipUserId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete membership
+         * @description Remove a user membership from a group. Self-service callers may leave a group or cancel a pending request for themselves. Super admins and active group admins for the target group may remove any membership in that group.
+         */
+        delete: operations["deleteGroupMembership"];
+        options?: never;
+        head?: never;
+        /**
+         * Update membership
+         * @description Accept, reject, or adjust a user membership. Allowed to super admins and active group admins for the target group.
+         */
+        patch: operations["patchGroupMembership"];
+        trace?: never;
+    };
+    "/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup. */
+                id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get user by id
+         * @description Retrieve user profile details. Use `self` to get the authenticated user profile. Super admins may also request any user id.
+         */
+        get: operations["getUser"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch user by id
+         * @description Update mutable fields for a user profile. Use `self` to update authenticated user profile. Super admins may also update any user id.
+         */
+        patch: operations["patchUser"];
         trace?: never;
     };
     "/resources/{resourceType}": {
@@ -261,14 +235,16 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                /** @description Resource type identifier accepted by write endpoints. */
-                resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get resource by id
+         * @description Returns resource detail metadata for the selected resource type.
+         */
+        get: operations["getResourceById"];
         /**
          * Replace resource draft
          * @description Full replace semantics. Omitted writable fields are removed from the draft resource.
@@ -292,7 +268,7 @@ export interface paths {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -317,7 +293,7 @@ export interface paths {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -342,7 +318,7 @@ export interface paths {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -367,7 +343,7 @@ export interface paths {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -395,7 +371,12 @@ export interface components {
          */
         SearchResourceType: "dataset" | "webservice" | "organization" | "softwareapplication" | "softwaresourcecode";
         /**
-         * @description Versioning state used by search and write endpoints.
+         * @description Resource type identifier used in detail read endpoints.
+         * @enum {string}
+         */
+        ReadResourceType: "dataset" | "distribution" | "organization" | "softwareapplication" | "softwaresourcecode" | "webservice" | "concept" | "conceptscheme";
+        /**
+         * @description Versioning state used by search, read, and write endpoints.
          * @enum {string}
          */
         VersioningStatus: "published" | "draft" | "submitted" | "archived" | "discarded";
@@ -404,6 +385,7 @@ export interface components {
          * @enum {string}
          */
         WriteResourceType: "dataset" | "distribution" | "organization" | "softwareapplication" | "softwaresourcecode" | "webservice" | "concept" | "conceptscheme" | "contactpoint";
+        ResourceDetail: components["schemas"]["Dataset"] | components["schemas"]["Distribution"] | components["schemas"]["Organization"] | components["schemas"]["SoftwareApplication"] | components["schemas"]["SoftwareSourceCode"] | components["schemas"]["Webservice"] | components["schemas"]["Concept"] | components["schemas"]["ConceptScheme"];
         ResourceLink: {
             /** @description Identifier of referenced resource. */
             id: string;
@@ -673,7 +655,7 @@ export interface components {
             /**
              * Format: uri-reference
              * @description Relative URI reference to resource detail endpoint.
-             * @example v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403
+             * @example v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403
              */
             href: string;
         };
@@ -686,7 +668,7 @@ export interface components {
              *       {
              *         "id": "ROR:048a87296/v1.0",
              *         "name": "Uppsala University",
-             *         "href": "v1/organization/ROR:048a87296/v1.0"
+             *         "href": "v1/resources/organization/ROR:048a87296/v1.0"
              *       }
              *     ]
              */
@@ -696,7 +678,7 @@ export interface components {
              * @example [
              *       {
              *         "id": "category:software_jup_conc_multi/v1.0",
-             *         "href": "v1/concept/category:software_jup_conc_multi/v1.0"
+             *         "href": "v1/resources/concept/category:software_jup_conc_multi/v1.0"
              *       }
              *     ]
              */
@@ -706,11 +688,11 @@ export interface components {
              * @example [
              *       {
              *         "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0",
-             *         "href": "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+             *         "href": "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
              *       },
              *       {
              *         "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0",
-             *         "href": "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+             *         "href": "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
              *       }
              *     ]
              */
@@ -741,7 +723,7 @@ export interface components {
              *       {
              *         "id": "ROR:048a87296/v1.0",
              *         "name": "Uppsala University",
-             *         "href": "v1/organization/ROR:048a87296/v1.0"
+             *         "href": "v1/resources/organization/ROR:048a87296/v1.0"
              *       }
              *     ]
              */
@@ -762,7 +744,7 @@ export interface components {
              *       {
              *         "id": "ROR:048a87296/v1.0",
              *         "name": "Uppsala University",
-             *         "href": "v1/organization/ROR:048a87296/v1.0"
+             *         "href": "v1/resources/organization/ROR:048a87296/v1.0"
              *       }
              *     ]
              */
@@ -782,7 +764,7 @@ export interface components {
              * @example {
              *       "id": "PIC:999472675/v1.0",
              *       "name": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
-             *       "href": "v1/organization/PIC:999472675/v1.0"
+             *       "href": "v1/resources/organization/PIC:999472675/v1.0"
              *     }
              */
             provider?: components["schemas"]["ResourceRef"];
@@ -791,11 +773,11 @@ export interface components {
              * @example [
              *       {
              *         "id": "category:seismologicalproductsservices/v1.0",
-             *         "href": "v1/concept/category:seismologicalproductsservices/v1.0"
+             *         "href": "v1/resources/concept/category:seismologicalproductsservices/v1.0"
              *       },
              *       {
              *         "id": "category:earthquakeparameters/v1.0",
-             *         "href": "v1/concept/category:earthquakeparameters/v1.0"
+             *         "href": "v1/resources/concept/category:earthquakeparameters/v1.0"
              *       }
              *     ]
              */
@@ -818,7 +800,7 @@ export interface components {
             /**
              * Format: uri-reference
              * @description API-base-relative URI reference to distribution detail endpoint
-             * @example v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0
+             * @example v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0
              */
             href: string;
         };
@@ -833,7 +815,7 @@ export interface components {
             /**
              * Format: uri-reference
              * @description Relative URI reference to referenced resource detail endpoint
-             * @example v1/organization/ROR:048a87296/v1.0
+             * @example v1/resources/organization/ROR:048a87296/v1.0
              */
             href: string;
         };
@@ -878,12 +860,12 @@ export interface components {
              *       {
              *         "id": "category:seismologicalproductsservices/v1.0",
              *         "name": "Seismological products services",
-             *         "href": "v1/concept/category:seismologicalproductsservices/v1.0"
+             *         "href": "v1/resources/concept/category:seismologicalproductsservices/v1.0"
              *       },
              *       {
              *         "id": "category:earthquakeparameters/v1.0",
              *         "name": "Earthquake parameters",
-             *         "href": "v1/concept/category:earthquakeparameters/v1.0"
+             *         "href": "v1/resources/concept/category:earthquakeparameters/v1.0"
              *       }
              *     ]
              */
@@ -894,7 +876,7 @@ export interface components {
              *       {
              *         "id": "PIC:999472675/v1.0",
              *         "name": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
-             *         "href": "v1/organization/PIC:999472675/v1.0"
+             *         "href": "v1/resources/organization/PIC:999472675/v1.0"
              *       }
              *     ]
              */
@@ -920,12 +902,12 @@ export interface components {
              *       {
              *         "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0",
              *         "name": "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event",
-             *         "href": "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+             *         "href": "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
              *       },
              *       {
              *         "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0",
              *         "name": "TEST2 - Bibliography for historical earthquakes",
-             *         "href": "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+             *         "href": "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
              *       }
              *     ]
              */
@@ -945,7 +927,7 @@ export interface components {
              * @example {
              *       "id": "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0",
              *       "name": "TEST2 - Bibliography metadata for historical earthquakes",
-             *       "href": "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
+             *       "href": "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
              *     }
              */
             is_version_of?: components["schemas"]["ResourceRef"];
@@ -1037,7 +1019,7 @@ export interface components {
              *       {
              *         "id": "category:software_appl_conc_multi/v1.0",
              *         "name": "Multidisciplinary software",
-             *         "href": "v1/concept/category:software_appl_conc_multi/v1.0"
+             *         "href": "v1/resources/concept/category:software_appl_conc_multi/v1.0"
              *       }
              *     ]
              */
@@ -1082,7 +1064,7 @@ export interface components {
              *       {
              *         "id": "ROR:048a87296/v1.0",
              *         "name": "Uppsala University",
-             *         "href": "v1/organization/ROR:048a87296/v1.0"
+             *         "href": "v1/resources/organization/ROR:048a87296/v1.0"
              *       }
              *     ]
              */
@@ -1110,7 +1092,7 @@ export interface components {
              *       {
              *         "id": "category:software_jup_conc_multi/v1.0",
              *         "name": "Multidisciplinary software",
-             *         "href": "v1/concept/category:software_jup_conc_multi/v1.0"
+             *         "href": "v1/resources/concept/category:software_jup_conc_multi/v1.0"
              *       }
              *     ]
              */
@@ -1145,7 +1127,7 @@ export interface components {
              *       {
              *         "id": "ROR:048a87296/v1.0",
              *         "name": "Uppsala University",
-             *         "href": "v1/organization/ROR:048a87296/v1.0"
+             *         "href": "v1/resources/organization/ROR:048a87296/v1.0"
              *       }
              *     ]
              */
@@ -1226,7 +1208,7 @@ export interface components {
              * @example {
              *       "id": "PIC:999472675/v1.0",
              *       "name": "INGV - Istituto Nazionale di Geofisica e Vulcanologia",
-             *       "href": "v1/organization/PIC:999472675/v1.0"
+             *       "href": "v1/resources/organization/PIC:999472675/v1.0"
              *     }
              */
             provider?: components["schemas"]["ResourceRef"];
@@ -1261,7 +1243,7 @@ export interface components {
              *       {
              *         "id": "category:earthquakeparameters/v1.0",
              *         "name": "Earthquake parameters",
-             *         "href": "v1/concept/category:earthquakeparameters/v1.0"
+             *         "href": "v1/resources/concept/category:earthquakeparameters/v1.0"
              *       }
              *     ]
              */
@@ -1474,6 +1456,107 @@ export interface components {
              */
             value: string;
         };
+        /** @enum {string} */
+        UserStatus: "ACTIVE" | "INACTIVE" | "BLOCKED";
+        /**
+         * @description Role assigned to a user inside a group.
+         * @enum {string}
+         */
+        MembershipRole: "VIEWER" | "EDITOR" | "REVIEWER" | "ADMIN";
+        /**
+         * @description Lifecycle state for a group membership.
+         * @enum {string}
+         */
+        MembershipStatus: "PENDING" | "ACTIVE" | "REVOKED" | "REJECTED";
+        User: components["schemas"]["UserSummary"] & Record<string, never>;
+        /** @description User record returned by user endpoints. */
+        UserSummary: {
+            id: string;
+            auth_identifier: string;
+            email: string;
+            given_name: string;
+            family_name: string;
+            is_super_admin: boolean;
+            status: components["schemas"]["UserStatus"];
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+            /** @description Membership previews for this user. */
+            memberships?: components["schemas"]["UserMembershipSummary"][];
+        };
+        Group: components["schemas"]["GroupSummary"] & Record<string, never>;
+        /** @description Group record returned by group endpoints. */
+        GroupSummary: {
+            id: string;
+            slug: string;
+            name: string;
+            description?: string;
+            is_system: boolean;
+            /** @description Current caller membership in this group, when present. */
+            membership?: components["schemas"]["ViewerMembershipSummary"];
+        };
+        /** @description Caller-scoped membership preview for one group. */
+        ViewerMembershipSummary: {
+            role: components["schemas"]["MembershipRole"];
+            /** @description Optional at request time. Self-service callers omit it and server creates `PENDING`. Privileged callers may set it to `ACTIVE` for direct membership creation. */
+            status: components["schemas"]["MembershipStatus"];
+        };
+        /** @description Embedded membership preview for one user-group relation. */
+        UserMembershipSummary: {
+            group: components["schemas"]["ResourceRef"];
+            role: components["schemas"]["MembershipRole"];
+            status: components["schemas"]["MembershipStatus"];
+        };
+        /** @description Embedded membership summary for one group-user relation. */
+        GroupMembershipSummary: {
+            user: components["schemas"]["ResourceRef"];
+            role: components["schemas"]["MembershipRole"];
+            status: components["schemas"]["MembershipStatus"];
+        };
+        /** @description Membership record linking user to group. */
+        Membership: {
+            user_id: string;
+            group_id: string;
+            role: components["schemas"]["MembershipRole"];
+            status: components["schemas"]["MembershipStatus"];
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        /** @description Payload for requesting access to a group. */
+        CreateMembershipRequest: {
+            role: components["schemas"]["MembershipRole"];
+        };
+        /** @description Partial payload for updating membership role or status. */
+        PatchMembershipRequest: {
+            role?: components["schemas"]["MembershipRole"];
+            status?: components["schemas"]["MembershipStatus"];
+        };
+        /** @description Mutable group fields accepted by gateway create endpoint. */
+        CreateGroupRequest: {
+            slug: string;
+            name: string;
+            description?: string;
+            is_system?: boolean;
+        };
+        /** @description Mutable group fields accepted by gateway patch endpoint. */
+        PatchGroupRequest: {
+            slug?: string;
+            name?: string;
+            description?: string;
+            is_system?: boolean;
+        };
+        /** @description Mutable self-service user fields accepted by gateway patch endpoint. */
+        PatchCurrentUserRequest: {
+            email?: string;
+            given_name?: string;
+            family_name?: string;
+            /** @description Super-admin only. */
+            is_super_admin?: boolean;
+            status?: components["schemas"]["UserStatus"];
+        };
         Problem: {
             /**
              * @description Short, human-readable summary of problem
@@ -1501,6 +1584,24 @@ export interface components {
     responses: {
         /** @description Invalid request parameters */
         BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Bearer token missing or invalid */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description Authenticated user lacks permission */
+        Forbidden: {
             headers: {
                 [name: string]: unknown;
             };
@@ -1550,14 +1651,18 @@ export interface components {
         XAgent: string;
         /** @description Absolute URI identifying acting group. */
         XGroup: string;
-        /** @description Local identifier of the resource */
+        /** @description Resource identifier. */
         ResourceId: string;
-        /** @description Dataset identifier. */
-        DatasetId: string;
-        /** @description Distribution identifier. */
-        DistributionId: string;
-        /** @description URL-encoded software application identifier. */
-        SoftwareApplicationId: string;
+        /** @description User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup. */
+        UserId: "self" | string;
+        /** @description User identifier for membership operations. */
+        MembershipUserId: string;
+        /** @description Group identifier. */
+        GroupId: string;
+        /** @description Resource type identifier accepted by write endpoints. */
+        WriteResourceType: components["schemas"]["WriteResourceType"];
+        /** @description Resource type identifier accepted by read endpoints. */
+        ReadResourceType: components["schemas"]["ReadResourceType"];
         /** @description Software source code identifier. */
         SoftwareSourceCodeId: string;
         /** @description Webservice identifier. */
@@ -1568,8 +1673,6 @@ export interface components {
         ConceptId: string;
         /** @description Concept scheme identifier. */
         ConceptSchemeId: string;
-        /** @description Resource type identifier accepted by write endpoints. */
-        WriteResourceType: components["schemas"]["WriteResourceType"];
         /** @description Free-text query used to search catalogue resources. */
         Q: string;
         /** @description Maximum number of search items requested per page. */
@@ -1705,168 +1808,6 @@ export interface operations {
             504: components["responses"]["GatewayTimeout"];
         };
     };
-    getDatasetById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Dataset identifier. */
-                id: components["parameters"]["DatasetId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Dataset found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Dataset"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalServerError"];
-            504: components["responses"]["GatewayTimeout"];
-        };
-    };
-    getDistributionById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Distribution identifier. */
-                id: components["parameters"]["DistributionId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Distribution found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Distribution"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalServerError"];
-            504: components["responses"]["GatewayTimeout"];
-        };
-    };
-    getSoftwareApplicationById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description URL-encoded software application identifier. */
-                id: components["parameters"]["SoftwareApplicationId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Software application found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SoftwareApplication"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalServerError"];
-            504: components["responses"]["GatewayTimeout"];
-        };
-    };
-    getSoftwareSourceCodeById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Software source code identifier. */
-                id: components["parameters"]["SoftwareSourceCodeId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Software source code found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SoftwareSourceCode"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalServerError"];
-            504: components["responses"]["GatewayTimeout"];
-        };
-    };
-    getWebserviceById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Webservice identifier. */
-                id: components["parameters"]["WebserviceId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Webservice found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Webservice"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalServerError"];
-            504: components["responses"]["GatewayTimeout"];
-        };
-    };
-    getOrganizationById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Organization identifier. */
-                id: components["parameters"]["OrganizationId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Organization found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Organization"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            404: components["responses"]["NotFound"];
-            500: components["responses"]["InternalServerError"];
-            504: components["responses"]["GatewayTimeout"];
-        };
-    };
     getConceptTree: {
         parameters: {
             query?: never;
@@ -1889,56 +1830,342 @@ export interface operations {
             504: components["responses"]["GatewayTimeout"];
         };
     };
-    getConceptById: {
+    listUsers: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Concept identifier. */
-                id: components["parameters"]["ConceptId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Concept found */
+            /** @description Users returned successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Concept"];
+                    "application/json": components["schemas"]["UserSummary"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listGroups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Groups returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupSummary"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    createGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Group created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"];
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Group found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Group"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
         };
     };
-    getConceptSchemeById: {
+    deleteGroup: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Concept scheme identifier. */
-                id: components["parameters"]["ConceptSchemeId"];
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Concept scheme found */
+            /** @description Group deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    patchGroup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchGroupRequest"];
+            };
+        };
+        responses: {
+            /** @description Group updated successfully */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ConceptScheme"];
+                    "application/json": components["schemas"]["Group"];
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    listGroupMemberships: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Memberships returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupMembershipSummary"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    requestGroupMembership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateMembershipRequest"];
+            };
+        };
+        responses: {
+            /** @description Membership request created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Membership"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    deleteGroupMembership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+                /** @description User identifier for membership operations. */
+                userId: components["parameters"]["MembershipUserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Membership deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    patchGroupMembership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Group identifier. */
+                groupId: components["parameters"]["GroupId"];
+                /** @description User identifier for membership operations. */
+                userId: components["parameters"]["MembershipUserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchMembershipRequest"];
+            };
+        };
+        responses: {
+            /** @description Membership patched successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Membership"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup. */
+                id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    patchUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup. */
+                id: components["parameters"]["UserId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchCurrentUserRequest"];
+            };
+        };
+        responses: {
+            /** @description User updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+            504: components["responses"]["GatewayTimeout"];
         };
     };
     createResource: {
@@ -1976,6 +2203,35 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
+    getResourceById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Resource identifier. */
+                id: components["parameters"]["ResourceId"];
+                /** @description Resource type identifier accepted by read endpoints. */
+                resourceType: components["parameters"]["ReadResourceType"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resource found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+            504: components["responses"]["GatewayTimeout"];
+        };
+    };
     updateResource: {
         parameters: {
             query?: never;
@@ -1986,10 +2242,10 @@ export interface operations {
                 "X-Group": components["parameters"]["XGroup"];
             };
             path: {
+                /** @description Resource identifier. */
+                id: components["parameters"]["ResourceId"];
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
-                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
@@ -2024,10 +2280,10 @@ export interface operations {
                 "X-Group": components["parameters"]["XGroup"];
             };
             path: {
+                /** @description Resource identifier. */
+                id: components["parameters"]["ResourceId"];
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
-                id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
         };
@@ -2059,7 +2315,7 @@ export interface operations {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -2092,7 +2348,7 @@ export interface operations {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -2125,7 +2381,7 @@ export interface operations {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
@@ -2158,7 +2414,7 @@ export interface operations {
             path: {
                 /** @description Resource type identifier accepted by write endpoints. */
                 resourceType: components["parameters"]["WriteResourceType"];
-                /** @description Local identifier of the resource */
+                /** @description Resource identifier. */
                 id: components["parameters"]["ResourceId"];
             };
             cookie?: never;
