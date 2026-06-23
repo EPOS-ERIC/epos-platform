@@ -18,6 +18,7 @@ on:
       - "docker/gateway-config.dev.yaml"
       - "Makefile"
       - ".github/workflows/integration-group-authz.yml"
+      - ".github/workflows/_integration-suite.yml"
   push:
     branches:
       - "main"
@@ -39,35 +40,17 @@ on:
       - "docker/gateway-config.dev.yaml"
       - "Makefile"
       - ".github/workflows/integration-group-authz.yml"
+      - ".github/workflows/_integration-suite.yml"
 
 permissions:
   contents: read
 
 jobs:
   group-authz-tests:
-    name: Group authz tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build dev images
-        run: |
-          docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev .
-          docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev .
-          docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev .
-          docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
-
-      - name: Start integration stack
-        run: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service user-group-service oss-aai-service
-
-      - name: Run stateful group authz Hurl tests
-        run: make test-hurl-groups
-
-      - name: Show integration logs on failure
-        if: failure()
-        run: docker compose -f docker/compose.dev.yaml logs --no-color
-
-      - name: Stop integration stack
-        if: always()
-        run: docker compose -f docker/compose.dev.yaml down -v
+    uses: ./.github/workflows/_integration-suite.yml
+    secrets: inherit
+    with:
+      job-name: Group authz tests
+      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service user-group-service oss-aai-service
+      test-command: make test-hurl-groups
