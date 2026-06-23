@@ -442,12 +442,12 @@ paths:
                 created:
                   summary: Created membership request
                   value:
-                    userId: "550e8400-e29b-41d4-a716-446655440101"
-                    groupId: "550e8400-e29b-41d4-a716-446655440001"
+                    user_id: "550e8400-e29b-41d4-a716-446655440101"
+                    group_id: "550e8400-e29b-41d4-a716-446655440001"
                     role: "VIEWER"
                     status: "PENDING"
-                    createdAt: "2026-06-17T12:48:45.574Z"
-                    updatedAt: "2026-06-17T12:48:45.574Z"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T12:48:45.574Z"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -493,12 +493,12 @@ paths:
                 patched:
                   summary: Patched membership
                   value:
-                    userId: "550e8400-e29b-41d4-a716-446655440101"
-                    groupId: "550e8400-e29b-41d4-a716-446655440001"
+                    user_id: "550e8400-e29b-41d4-a716-446655440101"
+                    group_id: "550e8400-e29b-41d4-a716-446655440001"
                     role: "VIEWER"
                     status: "ACTIVE"
-                    createdAt: "2026-06-17T12:48:45.574Z"
-                    updatedAt: "2026-06-17T13:05:45.574Z"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T13:05:45.574Z"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2914,23 +2914,23 @@ components:
       type: object
       description: Membership record linking user to group.
       required:
-        - userId
-        - groupId
+        - user_id
+        - group_id
         - role
         - status
       properties:
-        userId:
+        user_id:
           type: string
-        groupId:
+        group_id:
           type: string
         role:
           $ref: "#/components/schemas/MembershipRole"
         status:
           $ref: "#/components/schemas/MembershipStatus"
-        createdAt:
+        created_at:
           type: string
           format: date-time
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
 
