@@ -26,8 +26,18 @@ servers:
 tags:
   - name: Discovery
     description: Search and taxonomy bootstrap endpoints
+  - name: Users
+    description: User profile endpoints
+  - name: Groups
+    description: Group management endpoints
+  - name: Memberships
+    description: Group membership endpoints
   - name: Resources
     description: Resource detail endpoints
+  - name: Draft Resource Operations
+    description: Create, replace, and delete draft aggregates
+  - name: Resource Lifecycle
+    description: Submit, publish, draft, and discard aggregates
 
 paths:
   /search:
@@ -71,298 +81,42 @@ paths:
                       - type: dataset
                         id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
                         name: "TEST1 - Historical earthquakes 1000-1899"
-                        href: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
+                        href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
                         providers:
                           - id: "PIC:999472675/v1.0"
                             name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                            href: "v1/organization/PIC:999472675/v1.0"
+                            href: "v1/resources/organization/PIC:999472675/v1.0"
                         concepts:
                           - id: "category:earthquakeparameters/v1.0"
                             name: "Earthquake parameters"
-                            href: "v1/concept/category:earthquakeparameters/v1.0"
+                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
                         distributions:
                           - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                            href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                            href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                       - type: organization
                         id: "PIC:999472675/v1.0"
                         name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                        href: "v1/organization/PIC:999472675/v1.0"
+                        href: "v1/resources/organization/PIC:999472675/v1.0"
                       - type: webservice
                         id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
                         name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                        href: "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
+                        href: "v1/resources/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
                         provider:
                           id: "PIC:999472675/v1.0"
                           name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                          href: "v1/organization/PIC:999472675/v1.0"
+                          href: "v1/resources/organization/PIC:999472675/v1.0"
                         concepts:
                           - id: "category:earthquakeparameters/v1.0"
                             name: "Earthquake parameters"
-                            href: "v1/concept/category:earthquakeparameters/v1.0"
+                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
                       - type: softwaresourcecode
                         id: "https://doi.org/10.5281/zenodo.17598403"
                         name: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
-                        href: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
+                        href: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
                         provider:
                           - id: "ROR:048a87296/v1.0"
                             name: "Uppsala University"
-                            href: "v1/organization/ROR:048a87296/v1.0"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /dataset/{id}:
-    parameters:
-      - $ref: "#/components/parameters/DatasetId"
-    get:
-      tags:
-        - Resources
-      summary: Get dataset by id
-      description: |
-        Returns dataset detail metadata, including temporal and spatial coverage,
-        publishers, linked concepts, and linked distributions.
-      operationId: getDatasetById
-      responses:
-        "200":
-          description: Dataset found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dataset"
-              examples:
-                dataset:
-                  summary: Seismology dataset detail
-                  value:
-                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
-                    name: "TEST1 - Historical earthquakes 1000-1899"
-                    description: "Event data (e.g. epicentre, magnitude) for earthquakes archived in AHEAD"
-                    created: "2010-06-01T00:00:00Z"
-                    modified: "2018-09-10T00:00:00Z"
-                    keywords:
-                      - "event"
-                      - "earthquake"
-                      - "magnitude"
-                    concepts:
-                      - id: "category:earthquakeparameters/v1.0"
-                        name: "Earthquake parameters"
-                        href: "v1/concept/category:earthquakeparameters/v1.0"
-                    publisher:
-                      - id: "PIC:999472675/v1.0"
-                        name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                        href: "v1/organization/PIC:999472675/v1.0"
-                    spatial: "POLYGON((-34 74,45 74,45 33,-34 33,-34 74))"
-                    temporal:
-                      start: "1000-01-01T00:00:00Z"
-                      end: "1899-12-31T23:59:59Z"
-                    distributions:
-                      - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                        name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                        href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                    access_rights: "https://publications.europa.eu/resource/authority/access-right/PUBLIC"
-                    accrual_periodicity: "http://purl.org/cld/freq/irregular"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /distribution/{id}:
-    parameters:
-      - $ref: "#/components/parameters/DistributionId"
-    get:
-      tags:
-        - Resources
-      summary: Get distribution by id
-      description: |
-        Returns distribution detail metadata. Distribution payload shape depends on
-        distribution `type`, for example a downloadable file or a linked web service.
-      operationId: getDistributionById
-      responses:
-        "200":
-          description: Distribution found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Distribution"
-              examples:
-                webserviceDistribution:
-                  summary: Distribution backed by webservice operation
-                  value:
-                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                    name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                    description: "The distribution of event parameters via the FDSN-event web service is the main and preferred way to access historical earthquake data archived in AHEAD."
-                    type: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-                    format: "http://publications.europa.eu/resource/authority/file-type/XML"
-                    issued: "2017-10-25T00:00:00Z"
-                    modified: "2017-10-25T00:00:00Z"
-                    license: "https://creativecommons.org/licenses/by/4.0/"
-                    webservice:
-                      id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                      name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                      href: "v1/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                    operation:
-                      id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
-                      method: "GET"
-                      returns:
-                        - "application/xml"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /softwareapplication/{id}:
-    parameters:
-      - $ref: "#/components/parameters/SoftwareApplicationId"
-    get:
-      tags:
-        - Resources
-      summary: Get software application by id
-      operationId: getSoftwareApplicationById
-      responses:
-        "200":
-          description: Software application found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SoftwareApplication"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /softwaresourcecode/{id}:
-    parameters:
-      - $ref: "#/components/parameters/SoftwareSourceCodeId"
-    get:
-      tags:
-        - Resources
-      summary: Get software source code by id
-      operationId: getSoftwareSourceCodeById
-      responses:
-        "200":
-          description: Software source code found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SoftwareSourceCode"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /webservice/{id}:
-    parameters:
-      - $ref: "#/components/parameters/WebserviceId"
-    get:
-      tags:
-        - Resources
-      summary: Get webservice by id
-      description: |
-        Returns webservice detail metadata, including single provider organization,
-        supported operations, API documentation, and temporal or spatial coverage.
-      operationId: getWebserviceById
-      responses:
-        "200":
-          description: Webservice found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Webservice"
-              examples:
-                webservice:
-                  summary: Webservice detail
-                  value:
-                    id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                    name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                    description: "FDSN-event web service providing event parameters for historical earthquakes from AHEAD, the European Archive of Historical Earthquake Data"
-                    entrypoint: "https://www.emidius.eu/fdsnws/event/1/application.wadl"
-                    provider:
-                      id: "PIC:999472675/v1.0"
-                      name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                      href: "v1/organization/PIC:999472675/v1.0"
-                    issued: "2012-12-01T00:00:00Z"
-                    modified: "2018-09-10T00:00:00Z"
-                    spatial: "POLYGON((-33.5 73.5,34.0 73.5,34.0 33.5,-33.5 33.5,-33.5 73.5))"
-                    temporal:
-                      start: "1000-01-01T00:00:00Z"
-                      end: "1899-12-31T23:59:59Z"
-                    keywords:
-                      - "seismology, seismicity, catalogue, earthquake, magnitude"
-                    concepts:
-                      - id: "category:earthquakeparameters/v1.0"
-                        name: "Earthquake parameters"
-                        href: "v1/concept/category:earthquakeparameters/v1.0"
-                    license: "https://creativecommons.org/licenses/by/4.0/"
-                    operations:
-                      - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
-                        method: "GET"
-                        returns:
-                          - "application/xml"
-                        iri_template:
-                          template: "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"
-                    api_documentation:
-                      title: "ahead-fdsnws-event documentation"
-                      description: "Documentation for the fdsnws-event webservice"
-                      entrypoint: "https://www.emidius.eu/AHEAD/services/epos_events.php"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /organization/{id}:
-    parameters:
-      - $ref: "#/components/parameters/OrganizationId"
-    get:
-      tags:
-        - Resources
-      summary: Get organization by id
-      description: |
-        Returns organization detail metadata, including identifiers, contact points,
-        and parent organizations when available.
-      operationId: getOrganizationById
-      responses:
-        "200":
-          description: Organization found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Organization"
-              examples:
-                organization:
-                  summary: Organization detail
-                  value:
-                    id: "ROR:048a87296/v1.0"
-                    identifiers:
-                      - type: "URL"
-                        value: "https://ror.org/048a87296"
-                    name: "Uppsala University"
-                    address: "Dag Hammarskjölds väg 7, Uppsala, 751 05, Sweden"
-                    logo: "https://www.uu.se/images/18.17dda5f1791cdbd287d9b55/1622452923523/uu-logo-red.svg"
-                    url: "http://www.uu.se"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                            href: "v1/resources/organization/ROR:048a87296/v1.0"
         "400":
           $ref: "#/components/responses/BadRequest"
         "504":
@@ -402,7 +156,7 @@ paths:
                         order_number: 1
                         top_concepts:
                           - id: "category:facets/software-theme/v1.0"
-                            href: "v1/concept/category:facets/software-theme/v1.0"
+                            href: "v1/resources/concept/category:facets/software-theme/v1.0"
                         children:
                           - id: "category:facets/software-theme/v1.0"
                             name: "Software"
@@ -413,125 +167,804 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /concept/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ConceptId"
+  /users:
     get:
       tags:
-        - Resources
-      summary: Get concept by id
-      description: |
-        Returns a single concept node with its containing concept scheme and direct
-        child concept references.
-      operationId: getConceptById
+        - Users
+      summary: List users
+      description: Retrieve all user profiles. Allowed to super admins only.
+      operationId: listUsers
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: Concept found
+          description: Users returned successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Concept"
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserSummary"
               examples:
-                concept:
-                  summary: Concept detail
+                list:
+                  summary: User list
                   value:
-                    id: "category:software_jup_conc_multi/v1.0"
-                    name: "Multidisciplinary software"
-                    description: "Multidisciplinary software"
-                    in_scheme:
-                      id: "category:software_jup/v1.0"
-                      name: "Jupyter Notebooks"
-                      href: "v1/conceptscheme/category:software_jup/v1.0"
-                    children: []
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "400":
-          $ref: "#/components/responses/BadRequest"
+                    - id: "550e8400-e29b-41d4-a716-446655440101"
+                      auth_identifier: "auth-1"
+                      email: "alice@example.org"
+                      given_name: "Alice"
+                      family_name: "Rossi"
+                      is_super_admin: true
+                      status: "ACTIVE"
+                      created_at: "2026-06-17T12:48:45.574Z"
+                      updated_at: "2026-06-17T12:48:45.574Z"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /conceptscheme/{id}:
-    parameters:
-      - $ref: "#/components/parameters/ConceptSchemeId"
+  /groups:
     get:
       tags:
-        - Resources
-      summary: Get concept scheme by id
-      description: |
-        Returns concept scheme detail metadata, including top concepts and optional
-        concept tree children when present.
-      operationId: getConceptSchemeById
+        - Groups
+      summary: List groups
+      description: Retrieve all group records from usergroup service, including caller membership when present.
+      operationId: listGroups
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: Concept scheme found
+          description: Groups returned successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConceptScheme"
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupSummary"
               examples:
-                conceptScheme:
-                  summary: Concept scheme detail
+                list:
+                  summary: Groups with caller membership
                   value:
-                    id: "category:software_jup/v1.0"
-                    label: "JUP"
-                    name: "Jupyter Notebooks"
-                    description: "Jupyter Notebook Domain"
-                    logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
-                    homepage: ""
-                    color: "#F37726"
-                    order_number: 1
-                    top_concepts:
-                      - id: "category:facets/software-theme/v1.0"
-                        name: "Software"
-                        href: "v1/concept/category:facets/software-theme/v1.0"
+                    - id: "550e8400-e29b-41d4-a716-446655440001"
+                      slug: "satd"
+                      name: "Satellite Data"
+                      description: "Geospatial data obtained from Satellite measurements"
+                      is_system: false
+                      membership:
+                        role: "VIEWER"
+                        status: "ACTIVE"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Groups
+      summary: Create group
+      description: Create a new group record in usergroup service. Allowed to super admins only.
+      operationId: createGroup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+            examples:
+              create:
+                summary: Create group
+                value:
+                  slug: "satd"
+                  name: "Satellite Data"
+                  description: "Geospatial data obtained from Satellite measurements"
+                  is_system: false
+      responses:
+        "201":
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags:
+        - Groups
+      summary: Get group by id
+      description: Retrieve group details from usergroup service, including caller membership when present.
+      operationId: getGroup
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Group found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+              examples:
+                detail:
+                  summary: Group detail with caller membership
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440001"
+                    slug: "satd"
+                    name: "Satellite Data"
+                    description: "Geospatial data obtained from Satellite measurements"
+                    is_system: false
+                    membership:
+                      role: "ADMIN"
+                      status: "ACTIVE"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Groups
+      summary: Patch group
+      description: Update mutable group fields. Allowed to super admins and active group admins for this group.
+      operationId: patchGroup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchGroupRequest"
+            examples:
+              update:
+                summary: Update group fields
+                value:
+                  name: "Research Core Team"
+                  description: "Updated research group"
+      responses:
+        "200":
+          description: Group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Groups
+      summary: Delete group
+      description: Delete a group and clean up its memberships in usergroup service. Allowed to super admins only.
+      operationId: deleteGroup
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Group deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}/memberships:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags:
+        - Memberships
+      summary: List group memberships
+      description: Retrieve all memberships for a group. Allowed to super admins and active group admins for this group; group admin scope includes membership management for that group.
+      operationId: listGroupMemberships
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Memberships returned successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GroupMembershipSummary"
+              examples:
+                list:
+                  summary: Group memberships
+                  value:
+                    - user:
+                        id: "550e8400-e29b-41d4-a716-446655440101"
+                        name: "Alice Rossi"
+                        href: "v1/users/550e8400-e29b-41d4-a716-446655440101"
+                      role: "ADMIN"
+                      status: "ACTIVE"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    post:
+      tags:
+        - Memberships
+      summary: Request group access
+      description: Request access to a group for the authenticated user.
+      operationId: requestGroupMembership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMembershipRequest"
+            examples:
+              create:
+                summary: Request participation
+                value:
+                  role: "VIEWER"
+      responses:
+        "201":
+          description: Membership request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Membership"
+              examples:
+                created:
+                  summary: Created membership request
+                  value:
+                    user_id: "550e8400-e29b-41d4-a716-446655440101"
+                    group_id: "550e8400-e29b-41d4-a716-446655440001"
+                    role: "VIEWER"
+                    status: "PENDING"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T12:48:45.574Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /groups/{groupId}/memberships/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/MembershipUserId"
+    patch:
+      tags:
+        - Memberships
+      summary: Update membership
+      description: Accept, reject, or adjust a user membership. Allowed to super admins and active group admins for the target group.
+      operationId: patchGroupMembership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchMembershipRequest"
+            examples:
+              patch:
+                summary: Update membership status
+                value:
+                  status: "ACTIVE"
+      responses:
+        "200":
+          description: Membership patched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Membership"
+              examples:
+                patched:
+                  summary: Patched membership
+                  value:
+                    user_id: "550e8400-e29b-41d4-a716-446655440101"
+                    group_id: "550e8400-e29b-41d4-a716-446655440001"
+                    role: "VIEWER"
+                    status: "ACTIVE"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T13:05:45.574Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Memberships
+      summary: Delete membership
+      description: Remove a user membership from a group. Self-service callers may leave a group or cancel a pending request for themselves. Super admins and active group admins for the target group may remove any membership in that group.
+      operationId: deleteGroupMembership
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Membership deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags:
+        - Users
+      summary: Get user by id
+      description: Retrieve user profile details. Use `self` to get the authenticated user profile. Super admins may also request any user id.
+      operationId: getUser
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                detail:
+                  summary: User detail with memberships
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440101"
+                    auth_identifier: "auth-1"
+                    email: "alice@example.org"
+                    given_name: "Alice"
+                    family_name: "Rossi"
+                    is_super_admin: true
+                    status: "ACTIVE"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T12:48:45.574Z"
+                    memberships:
+                      - group:
+                          id: "550e8400-e29b-41d4-a716-446655440001"
+                          name: "Group Cool Name"
+                          href: "v1/groups/550e8400-e29b-41d4-a716-446655440001"
+                        role: "VIEWER"
+                        status: "ACTIVE"
+                self:
+                  summary: Self profile
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440101"
+                    auth_identifier: "auth-1"
+                    email: "alice@example.org"
+                    given_name: "Alice"
+                    family_name: "Rossi"
+                    is_super_admin: true
+                    status: "ACTIVE"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T12:48:45.574Z"
+                    memberships:
+                      - group:
+                          id: "550e8400-e29b-41d4-a716-446655440001"
+                          name: "Group Cool Name"
+                          href: "v1/groups/550e8400-e29b-41d4-a716-446655440001"
+                        role: "VIEWER"
+                        status: "ACTIVE"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Users
+      summary: Patch user by id
+      description: Update mutable fields for a user profile. Use `self` to update authenticated user profile. Super admins may also update any user id.
+      operationId: patchUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchCurrentUserRequest"
+            examples:
+              update:
+                summary: Update fields
+                value:
+                  given_name: "John"
+                  family_name: "Doe"
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                self:
+                  summary: Self profile update
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440101"
+                    auth_identifier: "auth-1"
+                    email: "alice@example.org"
+                    given_name: "John"
+                    family_name: "Doe"
+                    is_super_admin: true
+                    status: "ACTIVE"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T13:05:45.574Z"
+                uuid:
+                  summary: User update by UUID
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440102"
+                    auth_identifier: "auth-2"
+                    email: "bob@example.org"
+                    given_name: "Bob"
+                    family_name: "Meyer"
+                    is_super_admin: false
+                    status: "ACTIVE"
+                    created_at: "2026-06-17T12:48:45.574Z"
+                    updated_at: "2026-06-17T13:05:45.574Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+    post:
+      tags:
+        - Draft Resource Operations
+      summary: Create resource draft
+      description: Create a new `draft` resource for the selected type.
+      operationId: createResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceWrite"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: Get resource by id
+      description: |
+        Returns resource detail metadata for the selected resource type.
+      operationId: getResourceById
+      parameters:
+        - $ref: "#/components/parameters/ReadResourceType"
+      responses:
+        "200":
+          description: Resource found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceDetail"
         "404":
           $ref: "#/components/responses/NotFound"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    put:
+      tags:
+        - Draft Resource Operations
+      summary: Replace resource draft
+      description: Full replace semantics. Omitted writable fields are removed from the draft resource.
+      operationId: updateResource
+      parameters:
+        - $ref: "#/components/parameters/WriteResourceType"
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceWrite"
+      responses:
+        "200":
+          description: Draft replaced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Draft Resource Operations
+      summary: Delete resource draft
+      description: Delete a `draft` resource.
+      operationId: deleteResource
+      parameters:
+        - $ref: "#/components/parameters/WriteResourceType"
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # RESOURCE LIFECYCLE ENDPOINTS
+  /resources/{resourceType}/{id}/submit:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Submit resource draft
+      description: Submit a `draft` resource for review.
+      operationId: submitResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/publish:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Publish resource draft
+      description: Publish a `submitted` resource.
+      operationId: publishResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/draft:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Create draft from published resource
+      description: Create a new draft version from a published resource.
+      operationId: draftResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/discard:
+    parameters:
+      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Discard resource draft
+      description: Discard a `draft` or `submitted` resource.
+      operationId: discardResource
+      parameters:
+        - $ref: "#/components/parameters/XAgent"
+        - $ref: "#/components/parameters/XGroup"
+      responses:
+        "200":
+          description: Draft discarded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   parameters:
+    XAgent:
+      name: X-Agent
+      in: header
+      required: true
+      description: Absolute URI identifying acting agent.
+      schema:
+        type: string
+
+    XGroup:
+      name: X-Group
+      in: header
+      required: true
+      description: Absolute URI identifying acting group.
+      schema:
+        type: string
+
     ResourceId:
       name: id
       in: path
       required: true
-      description: Local identifier of the resource
+      description: Resource identifier.
       schema:
         type: string
         pattern: '^[^\x00-\x20\x7F]+$'
         example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
 
-    DatasetId:
+    UserId:
       name: id
       in: path
       required: true
-      description: Dataset identifier.
+      description: User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup.
       schema:
-        type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
+        anyOf:
+          - type: string
+            enum:
+              - self
+          - type: string
+            format: uuid
+        example: self
 
-    DistributionId:
-      name: id
+    MembershipUserId:
+      name: userId
       in: path
       required: true
-      description: Distribution identifier.
+      description: User identifier for membership operations.
       schema:
         type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fdistribution%2Frestful%2Fv1.0"
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440101"
 
-    SoftwareApplicationId:
-      name: id
+    GroupId:
+      name: groupId
       in: path
       required: true
-      description: URL-encoded software application identifier.
+      description: Group identifier.
       schema:
         type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fepos-eu.org%2Fanthropogenic_hazards%2Fsoftware%2FCatalogToXls%2Fv1.0"
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440001"
+
+    WriteResourceType:
+      name: resourceType
+      in: path
+      required: true
+      description: Resource type identifier accepted by write endpoints.
+      schema:
+        $ref: "#/components/schemas/WriteResourceType"
+
+    ReadResourceType:
+      name: resourceType
+      in: path
+      required: true
+      description: Resource type identifier accepted by read endpoints.
+      schema:
+        $ref: "#/components/schemas/ReadResourceType"
 
     SoftwareSourceCodeId:
       name: id
@@ -630,7 +1063,7 @@ components:
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/ResourceType"
+          $ref: "#/components/schemas/SearchResourceType"
       style: form
       explode: false
 
@@ -694,16 +1127,16 @@ components:
       in: query
       required: false
       description: |
-        Filter by one or more resource publication statuses.
-        When omitted, defaults to `PUBLISHED`.
+        Filter by one or more versioning states.
+        When omitted, defaults to `published`.
         Pass comma-separated values in a single parameter:
-        `?versioningStatus=PUBLISHED,DRAFT`.
+        `?versioningStatus=published,draft`.
       schema:
         type: array
         items:
           $ref: "#/components/schemas/VersioningStatus"
         default:
-          - PUBLISHED
+          - published
       style: form
       explode: false
 
@@ -737,6 +1170,40 @@ components:
                 status: 400
                 detail: "unsupported search type: concept"
 
+    Unauthorized:
+      description: Bearer token missing or invalid
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            invalidToken:
+              summary: Invalid bearer token
+              value:
+                title: "invalid_token"
+                status: 401
+                detail: "token is invalid"
+            missingToken:
+              summary: Missing bearer token
+              value:
+                title: "missing_token"
+                status: 401
+                detail: "bearer token required"
+
+    Forbidden:
+      description: Authenticated user lacks permission
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            forbidden:
+              summary: Access denied
+              value:
+                title: "forbidden"
+                status: 403
+                detail: "user access denied"
+
     NotFound:
       description: Resource not found
       content:
@@ -750,6 +1217,20 @@ components:
                 title: "resource_not_found"
                 status: 404
                 detail: "dataset not found"
+
+    Conflict:
+      description: Request conflicts with current resource state
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            resourceConflict:
+              summary: Conflicting resource state
+              value:
+                title: "resource_conflict"
+                status: 409
+                detail: "resource is not in draft state"
 
     InternalServerError:
       description: Internal server error
@@ -783,7 +1264,7 @@ components:
     # Shared enums
     # -------------------------------------------------------------------------
 
-    ResourceType:
+    SearchResourceType:
       type: string
       description: Resource type identifier used in search results.
       enum:
@@ -793,14 +1274,528 @@ components:
         - softwareapplication
         - softwaresourcecode
 
+    ReadResourceType:
+      type: string
+      description: Resource type identifier used in detail read endpoints.
+      enum:
+        - dataset
+        - distribution
+        - organization
+        - softwareapplication
+        - softwaresourcecode
+        - webservice
+        - concept
+        - conceptscheme
+
     VersioningStatus:
       type: string
-      description: Publication status of resource.
+      description: Versioning state used by search, read, and write endpoints.
       enum:
-        - DRAFT
-        - SUBMITTED
-        - PUBLISHED
-        - ARCHIVED
+        - published
+        - draft
+        - submitted
+        - archived
+        - discarded
+
+    # -------------------------------------------------------------------------
+    # Resource write schemas
+    # -------------------------------------------------------------------------
+
+    WriteResourceType:
+      type: string
+      description: Resource type identifier accepted by write endpoints.
+      enum:
+        - dataset
+        - distribution
+        - organization
+        - softwareapplication
+        - softwaresourcecode
+        - webservice
+        - concept
+        - conceptscheme
+        - contactpoint
+
+    ResourceDetail:
+      anyOf:
+        - $ref: "#/components/schemas/Dataset"
+        - $ref: "#/components/schemas/Distribution"
+        - $ref: "#/components/schemas/Organization"
+        - $ref: "#/components/schemas/SoftwareApplication"
+        - $ref: "#/components/schemas/SoftwareSourceCode"
+        - $ref: "#/components/schemas/Webservice"
+        - $ref: "#/components/schemas/Concept"
+        - $ref: "#/components/schemas/ConceptScheme"
+
+    ResourceLink:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Identifier of referenced resource.
+        name:
+          type: string
+          description: Optional human-readable label for referenced resource.
+        href:
+          type: string
+          format: uri-reference
+          description: Optional relative URI reference to referenced resource detail endpoint.
+
+    ResourceWriteBase:
+      type: object
+      required:
+        - resourceType
+        - id
+      properties:
+        resourceType:
+          $ref: "#/components/schemas/WriteResourceType"
+        id:
+          type: string
+          description: Client-provided conceptual or version identifier.
+
+    ConceptWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - concept
+            name:
+              type: string
+            description:
+              type: string
+            in_scheme:
+              $ref: "#/components/schemas/ResourceLink"
+            children:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    ConceptSchemeWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - label
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - conceptscheme
+            label:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            logo:
+              type: string
+              format: uri
+            homepage:
+              type: string
+              format: uri
+            color:
+              type: string
+            order_number:
+              type: integer
+              format: int32
+            children:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            top_concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    ContactPointWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - contact_type
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - contactpoint
+            available_language:
+              type: array
+              items:
+                type: string
+            contact_type:
+              type: string
+            email:
+              type: array
+              items:
+                type: string
+            telephone:
+              type: array
+              items:
+                type: string
+
+    OrganizationWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - organization
+            identifiers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Identifier"
+            name:
+              type: string
+            lei_code:
+              type: string
+            address:
+              type: string
+            logo:
+              type: string
+              format: uri
+            url:
+              type: string
+              format: uri
+            email:
+              type: array
+              items:
+                type: string
+            telephone:
+              type: array
+              items:
+                type: string
+            contact_points:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            member_of:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    WebserviceWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+            - provider
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - webservice
+            identifiers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Identifier"
+            name:
+              type: string
+            description:
+              type: string
+            entrypoint:
+              type: string
+              format: uri
+            provider:
+              $ref: "#/components/schemas/ResourceLink"
+            issued:
+              type: string
+              format: date-time
+            modified:
+              type: string
+              format: date-time
+            spatial:
+              type: string
+            temporal:
+              $ref: "#/components/schemas/TemporalExtent"
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            license:
+              type: string
+            operations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Operation"
+            api_documentation:
+              $ref: "#/components/schemas/ApiDocumentation"
+
+    SoftwareApplicationWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - softwareapplication
+            name:
+              type: string
+            description:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            download_url:
+              type: string
+              format: uri
+            install_url:
+              type: string
+              format: uri
+            license:
+              type: string
+              format: uri
+            software_version:
+              type: string
+            software_requirements:
+              type: string
+            main_entity_of_page:
+              type: string
+              format: uri
+            provider:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            operations:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+
+    SoftwareSourceCodeWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - softwaresourcecode
+            name:
+              type: string
+            description:
+              type: string
+            programming_language:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            repository:
+              type: string
+              format: uri
+            license:
+              type: string
+              format: uri
+            software_version:
+              type: string
+            runtime_platform:
+              type: string
+            target_products:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            provider:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            main_entity_of_page:
+              type: string
+              format: uri
+
+    DistributionWriteBase:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - distribution
+            name:
+              type: string
+            description:
+              type: string
+            format:
+              type: string
+            issued:
+              type: string
+              format: date-time
+            modified:
+              type: string
+              format: date-time
+            license:
+              type: string
+
+    WebServiceDistributionWrite:
+      allOf:
+        - $ref: "#/components/schemas/DistributionWriteBase"
+        - type: object
+          required:
+            - type
+            - webservice
+            - operation
+          properties:
+            type:
+              type: string
+              enum:
+                - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
+            webservice:
+              $ref: "#/components/schemas/ResourceLink"
+            operation:
+              $ref: "#/components/schemas/Operation"
+
+    DownloadableFileDistributionWrite:
+      allOf:
+        - $ref: "#/components/schemas/DistributionWriteBase"
+        - type: object
+          required:
+            - type
+            - download_url
+          properties:
+            type:
+              type: string
+              enum:
+                - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
+            download_url:
+              type: string
+              format: uri
+
+    DistributionWrite:
+      allOf:
+        - $ref: "#/components/schemas/DistributionWriteBase"
+        - oneOf:
+            - $ref: "#/components/schemas/WebServiceDistributionWrite"
+            - $ref: "#/components/schemas/DownloadableFileDistributionWrite"
+      discriminator:
+        propertyName: type
+        mapping:
+          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistributionWrite"
+          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistributionWrite"
+
+    DatasetWrite:
+      allOf:
+        - $ref: "#/components/schemas/ResourceWriteBase"
+        - type: object
+          required:
+            - name
+            - description
+          properties:
+            resourceType:
+              type: string
+              enum:
+                - dataset
+            name:
+              type: string
+            description:
+              type: string
+            version_info:
+              type: string
+            keywords:
+              type: array
+              items:
+                type: string
+            concepts:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            publisher:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            issued:
+              type: string
+              format: date-time
+            spatial:
+              type: string
+            identifiers:
+              type: array
+              items:
+                $ref: "#/components/schemas/Identifier"
+            temporal:
+              $ref: "#/components/schemas/TemporalExtent"
+            distributions:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceLink"
+            access_rights:
+              type: string
+            accrual_periodicity:
+              type: string
+            is_version_of:
+              $ref: "#/components/schemas/ResourceLink"
+            quality_annotation:
+              type: string
+            version:
+              type: string
+
+    ResourceWrite:
+      oneOf:
+        - $ref: "#/components/schemas/DatasetWrite"
+        - $ref: "#/components/schemas/DistributionWrite"
+        - $ref: "#/components/schemas/OrganizationWrite"
+        - $ref: "#/components/schemas/WebserviceWrite"
+        - $ref: "#/components/schemas/SoftwareApplicationWrite"
+        - $ref: "#/components/schemas/SoftwareSourceCodeWrite"
+        - $ref: "#/components/schemas/ConceptWrite"
+        - $ref: "#/components/schemas/ConceptSchemeWrite"
+        - $ref: "#/components/schemas/ContactPointWrite"
+      discriminator:
+        propertyName: resourceType
+        mapping:
+          dataset: "#/components/schemas/DatasetWrite"
+          distribution: "#/components/schemas/DistributionWrite"
+          organization: "#/components/schemas/OrganizationWrite"
+          webservice: "#/components/schemas/WebserviceWrite"
+          softwareapplication: "#/components/schemas/SoftwareApplicationWrite"
+          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeWrite"
+          concept: "#/components/schemas/ConceptWrite"
+          conceptscheme: "#/components/schemas/ConceptSchemeWrite"
+          contactpoint: "#/components/schemas/ContactPointWrite"
+
+    WriteResult:
+      type: object
+      required:
+        - resourceType
+        - id
+        - status
+      properties:
+        resourceType:
+          $ref: "#/components/schemas/WriteResourceType"
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
 
     # -------------------------------------------------------------------------
     # Search
@@ -866,7 +1861,7 @@ components:
         - href
       properties:
         type:
-          $ref: "#/components/schemas/ResourceType"
+          $ref: "#/components/schemas/SearchResourceType"
         id:
           type: string
           description: Identifier of resource within this API.
@@ -879,7 +1874,7 @@ components:
           type: string
           format: uri-reference
           description: Relative URI reference to resource detail endpoint.
-          example: "v1/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
+          example: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
 
     DatasetSearchItem:
       allOf:
@@ -900,7 +1895,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
             concepts:
               type: array
               description: Concept references assigned to this dataset
@@ -908,7 +1903,7 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "category:software_jup_conc_multi/v1.0"
-                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
+                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
             distributions:
               type: array
               description: Distribution references for this dataset
@@ -916,9 +1911,9 @@ components:
                 $ref: "#/components/schemas/DatasetDistributionSearchItem"
               example:
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
 
     OrganizationSearchItem:
       allOf:
@@ -951,7 +1946,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
 
     SoftwareSourceCodeSearchItem:
       allOf:
@@ -972,7 +1967,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
 
     WebserviceSearchItem:
       allOf:
@@ -992,7 +1987,7 @@ components:
               example:
                 id: "PIC:999472675/v1.0"
                 name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/organization/PIC:999472675/v1.0"
+                href: "v1/resources/organization/PIC:999472675/v1.0"
             concepts:
               type: array
               description: Concept references assigned to this webservice
@@ -1000,9 +1995,9 @@ components:
                 $ref: "#/components/schemas/ResourceRef"
               example:
                 - id: "category:seismologicalproductsservices/v1.0"
-                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
+                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
                 - id: "category:earthquakeparameters/v1.0"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
 
     DatasetDistributionSearchItem:
       type: object
@@ -1021,7 +2016,7 @@ components:
           type: string
           format: uri-reference
           description: API-base-relative URI reference to distribution detail endpoint
-          example: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+          example: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
 
     # -------------------------------------------------------------------------
     # Resource references
@@ -1044,7 +2039,7 @@ components:
           type: string
           format: uri-reference
           description: Relative URI reference to referenced resource detail endpoint
-          example: "v1/organization/ROR:048a87296/v1.0"
+          example: "v1/resources/organization/ROR:048a87296/v1.0"
 
     DatasetProviderRef:
       allOf:
@@ -1110,10 +2105,10 @@ components:
               example:
                 - id: "category:seismologicalproductsservices/v1.0"
                   name: "Seismological products services"
-                  href: "v1/concept/category:seismologicalproductsservices/v1.0"
+                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
                 - id: "category:earthquakeparameters/v1.0"
                   name: "Earthquake parameters"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
             publisher:
               type: array
               description: Organizations publishing this dataset; exposed as `providers` in search results
@@ -1126,7 +2121,7 @@ components:
               example:
                 - id: "PIC:999472675/v1.0"
                   name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                  href: "v1/organization/PIC:999472675/v1.0"
+                  href: "v1/resources/organization/PIC:999472675/v1.0"
             issued:
               type: string
               format: date-time
@@ -1153,10 +2148,10 @@ components:
               example:
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                   name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
                 - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
                   name: "TEST2 - Bibliography for historical earthquakes"
-                  href: "v1/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
+                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
             access_rights:
               type: string
               description: Access rights statement for this dataset
@@ -1172,7 +2167,7 @@ components:
               example:
                 id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
                 name: "TEST2 - Bibliography metadata for historical earthquakes"
-                href: "v1/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
+                href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
             quality_annotation:
               type: string
               description: Aggregated quality annotation summary associated with this dataset
@@ -1276,7 +2271,7 @@ components:
               example:
                 - id: "category:software_appl_conc_multi/v1.0"
                   name: "Multidisciplinary software"
-                  href: "v1/concept/category:software_appl_conc_multi/v1.0"
+                  href: "v1/resources/concept/category:software_appl_conc_multi/v1.0"
             download_url:
               type: string
               format: uri
@@ -1313,7 +2308,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
             operations:
               type: array
               description: Web service operations linked to this software application
@@ -1345,7 +2340,7 @@ components:
               example:
                 - id: "category:software_jup_conc_multi/v1.0"
                   name: "Multidisciplinary software"
-                  href: "v1/concept/category:software_jup_conc_multi/v1.0"
+                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
             repository:
               type: string
               format: uri
@@ -1377,7 +2372,7 @@ components:
               example:
                 - id: "ROR:048a87296/v1.0"
                   name: "Uppsala University"
-                  href: "v1/organization/ROR:048a87296/v1.0"
+                  href: "v1/resources/organization/ROR:048a87296/v1.0"
             main_entity_of_page:
               type: string
               format: uri
@@ -1469,7 +2464,7 @@ components:
               example:
                 id: "PIC:999472675/v1.0"
                 name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/organization/PIC:999472675/v1.0"
+                href: "v1/resources/organization/PIC:999472675/v1.0"
             issued:
               type: string
               format: date-time
@@ -1501,7 +2496,7 @@ components:
               example:
                 - id: "category:earthquakeparameters/v1.0"
                   name: "Earthquake parameters"
-                  href: "v1/concept/category:earthquakeparameters/v1.0"
+                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
             license:
               type: string
               description: License under which the webservice can be used or reused
@@ -1773,6 +2768,237 @@ components:
           type: string
           description: Identifier value
           example: "10.13127/tsunami/neamthm18"
+
+    UserStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - BLOCKED
+
+    MembershipRole:
+      type: string
+      description: Role assigned to a user inside a group.
+      enum:
+        - VIEWER
+        - EDITOR
+        - REVIEWER
+        - ADMIN
+
+    MembershipStatus:
+      type: string
+      description: Lifecycle state for a group membership.
+      enum:
+        - PENDING
+        - ACTIVE
+        - REVOKED
+        - REJECTED
+
+    User:
+      allOf:
+        - $ref: "#/components/schemas/UserSummary"
+        - type: object
+          description: User record returned by gateway user endpoints.
+
+    UserSummary:
+      type: object
+      description: User record returned by user endpoints.
+      required:
+        - id
+        - auth_identifier
+        - email
+        - given_name
+        - family_name
+        - is_super_admin
+        - status
+      properties:
+        id:
+          type: string
+        auth_identifier:
+          type: string
+        email:
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        is_super_admin:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/UserStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        memberships:
+          type: array
+          description: Membership previews for this user.
+          items:
+            $ref: "#/components/schemas/UserMembershipSummary"
+
+    Group:
+      allOf:
+        - $ref: "#/components/schemas/GroupSummary"
+        - type: object
+          description: Group record returned by gateway group endpoints.
+
+    GroupSummary:
+      type: object
+      description: Group record returned by group endpoints.
+      required:
+        - id
+        - slug
+        - name
+        - is_system
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        is_system:
+          type: boolean
+        membership:
+          description: Current caller membership in this group, when present.
+          $ref: "#/components/schemas/ViewerMembershipSummary"
+
+    ViewerMembershipSummary:
+      type: object
+      description: Caller-scoped membership preview for one group.
+      required:
+        - role
+        - status
+      properties:
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        status:
+          description: Optional at request time. Self-service callers omit it and server creates `PENDING`. Privileged callers may set it to `ACTIVE` for direct membership creation.
+          $ref: "#/components/schemas/MembershipStatus"
+
+    UserMembershipSummary:
+      type: object
+      description: Embedded membership preview for one user-group relation.
+      required:
+        - group
+        - role
+        - status
+      properties:
+        group:
+          $ref: "#/components/schemas/ResourceRef"
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        status:
+          $ref: "#/components/schemas/MembershipStatus"
+
+    GroupMembershipSummary:
+      type: object
+      description: Embedded membership summary for one group-user relation.
+      required:
+        - user
+        - role
+        - status
+      properties:
+        user:
+          $ref: "#/components/schemas/ResourceRef"
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        status:
+          $ref: "#/components/schemas/MembershipStatus"
+
+    Membership:
+      type: object
+      description: Membership record linking user to group.
+      required:
+        - user_id
+        - group_id
+        - role
+        - status
+      properties:
+        user_id:
+          type: string
+        group_id:
+          type: string
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        status:
+          $ref: "#/components/schemas/MembershipStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateMembershipRequest:
+      type: object
+      description: Payload for requesting access to a group.
+      required:
+        - role
+      properties:
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+
+    PatchMembershipRequest:
+      type: object
+      description: Partial payload for updating membership role or status.
+      minProperties: 1
+      properties:
+        role:
+          $ref: "#/components/schemas/MembershipRole"
+        status:
+          $ref: "#/components/schemas/MembershipStatus"
+
+    CreateGroupRequest:
+      type: object
+      description: Mutable group fields accepted by gateway create endpoint.
+      required:
+        - slug
+        - name
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        is_system:
+          type: boolean
+
+    PatchGroupRequest:
+      type: object
+      description: Mutable group fields accepted by gateway patch endpoint.
+      minProperties: 1
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        is_system:
+          type: boolean
+
+    PatchCurrentUserRequest:
+      type: object
+      description: Mutable self-service user fields accepted by gateway patch endpoint.
+      minProperties: 1
+      properties:
+        email:
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        is_super_admin:
+          type: boolean
+          description: Super-admin only.
+        status:
+          $ref: "#/components/schemas/UserStatus"
 
     Problem:
       type: object

@@ -38,7 +38,7 @@ func TestMapConceptScheme(t *testing.T) {
 	if conceptScheme.OrderNumber != 1 {
 		t.Fatalf("conceptScheme.OrderNumber = %d", conceptScheme.OrderNumber)
 	}
-	if len(conceptScheme.TopConcepts) != 1 || conceptScheme.TopConcepts[0].Href != "v1/concept/category:facets/software-theme/v1.0" {
+	if len(conceptScheme.TopConcepts) != 1 || conceptScheme.TopConcepts[0].Href != "v1/resources/concept/category:facets/software-theme/v1.0" {
 		t.Fatalf("conceptScheme.TopConcepts = %#v", conceptScheme.TopConcepts)
 	}
 }

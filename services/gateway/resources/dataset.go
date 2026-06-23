@@ -8,6 +8,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadataaccess"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/metadatareader"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/resourcehref"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -147,7 +148,7 @@ func resolveOrganizationRefs(ctx context.Context, fetch accessDetailFetcher, ref
 
 			resolved[i] = api.ResourceRef{ID: ref.ID, Name: name, Href: ref.Href}
 			if resolved[i].Href == "" {
-				resolved[i].Href = "v1/organization/" + ref.ID
+				resolved[i].Href = resourcehref.Build(api.OrganizationType, ref.ID)
 			}
 			return nil
 		})

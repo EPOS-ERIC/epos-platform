@@ -1,4 +1,4 @@
-GET {{baseUrl}}/v1/dataset/https%3A%2F%2Fexample.org%2Fmissing-dataset
+GET {{baseUrl}}/v1/resources/dataset/https%3A%2F%2Fexample.org%2Fmissing-dataset
 
 HTTP 404
 [Asserts]

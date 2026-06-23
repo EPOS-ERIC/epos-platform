@@ -13,6 +13,7 @@ type Service struct {
 	metadataClient *metadataclient.APIClient
 }
 
+// NewService builds resources service for metadata detail lookups.
 func NewService(metadataClient *metadataclient.APIClient) *Service {
 	return &Service{
 		log:            logging.Get("resources-service"),

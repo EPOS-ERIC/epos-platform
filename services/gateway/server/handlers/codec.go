@@ -35,7 +35,7 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	}
 }
 
-func writeError(ctx context.Context, w http.ResponseWriter, status int, code, message string, internalErr error) {
+func WriteError(ctx context.Context, w http.ResponseWriter, status int, code, message string, internalErr error) {
 	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
 	w.WriteHeader(status)
 
@@ -44,7 +44,6 @@ func writeError(ctx context.Context, w http.ResponseWriter, status int, code, me
 		Status:      status,
 		Detail:      message,
 		DebugDetail: "",
-		Instance:    "",
 	}
 	if internalErr != nil && log.Enabled(ctx, slog.LevelDebug) {
 		problem.DebugDetail = internalErr.Error()
@@ -56,11 +55,11 @@ func writeError(ctx context.Context, w http.ResponseWriter, status int, code, me
 }
 
 func writeBadRequest(ctx context.Context, w http.ResponseWriter, err error) {
-	writeError(ctx, w, http.StatusBadRequest, "invalid_query_parameter", err.Error(), nil)
+	WriteError(ctx, w, http.StatusBadRequest, "invalid_query_parameter", err.Error(), nil)
 }
 
 func writeNotImplemented(ctx context.Context, w http.ResponseWriter) {
-	writeError(ctx, w, http.StatusNotImplemented, "not_implemented", "endpoint not implemented", nil)
+	WriteError(ctx, w, http.StatusNotImplemented, "not_implemented", "endpoint not implemented", nil)
 }
 
 func parsePageSize(values url.Values) (int32, error) {
@@ -164,7 +163,7 @@ func parseCSVVersioningStatuses(values url.Values, name string, defaultValues []
 	for _, rawValue := range rawValues {
 		value, err := api.NewVersioningStatusFromValue(rawValue)
 		if err != nil {
-			return nil, fmt.Errorf("versioning status must be one of draft, submitted, published, archived")
+			return nil, fmt.Errorf("versioning status must be one of published, draft, submitted, archived, discarded")
 		}
 		parsed = append(parsed, value)
 	}

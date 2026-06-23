@@ -2,31 +2,31 @@
     "fixtures": [
         {
             "path": "testdata/metadata-lifecycle/access/search/default-supported-first-page.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&type=organization&type=softwareapplication&type=softwaresourcecode&type=webservice&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&type=organization&type=softwareapplication&type=softwaresourcecode&type=webservice&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/search/dataset-first-page.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=dataset&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/search/organization-first-page.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=organization&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=organization&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/search/softwareapplication-first-page.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwareapplication&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwareapplication&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/search/softwaresourcecode-first-page.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwaresourcecode&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=softwaresourcecode&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/search/webservice-first-page.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=webservice&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&resultsPerPage=10&type=webservice&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/search/dataset-empty.json",
-            "url": "/api/v2/access/search?includeConstraints=true&page=1&q=__no_such_dataset__&resultsPerPage=10&type=dataset&versioningStatus=PUBLISHED"
+            "url": "/api/v2/access/search?includeConstraints=true&page=1&q=__no_such_dataset__&resultsPerPage=10&type=dataset&versioningStatus=published"
         },
         {
             "path": "testdata/metadata-lifecycle/access/softwareapplication/catalog-to-xls.json",

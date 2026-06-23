@@ -1,4 +1,4 @@
-package gatewayhref
+package resourcehref
 
 import (
 	"fmt"
@@ -7,5 +7,5 @@ import (
 )
 
 func Build(resourceType api.ResourceType, id string) string {
-	return fmt.Sprintf("v1/%s/%s", resourceType, id)
+	return fmt.Sprintf("v1/resources/%s/%s", resourceType, id)
 }

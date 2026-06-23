@@ -13,10 +13,14 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Config configures a cached upstream HTTP client.
 type Config struct {
+	// Service identifies upstream dependency name for tracing.
+	Service string
 	// Timeout is caller-facing max wait time per request.
 	Timeout time.Duration
 	// RealTimeout is max upstream time for background refresh requests.
@@ -29,9 +33,6 @@ type Config struct {
 	// Transport is optional custom HTTP transport.
 	// If nil, net/http.DefaultTransport is used.
 	Transport nethttp.RoundTripper
-	// Logger is optional structured logger used for failure and eviction logs.
-	// If nil, package default logger is used.
-	Logger *slog.Logger
 }
 
 // RequestOptions configures one request execution.
@@ -44,6 +45,7 @@ type RequestOptions struct {
 // Client is an outbound HTTP client with in-memory response caching.
 type Client struct {
 	httpClient  *nethttp.Client
+	service     string
 	timeout     time.Duration
 	realTimeout time.Duration
 	cacheTTL    time.Duration
@@ -100,18 +102,14 @@ func NewClient(cfg Config) (*Client, error) {
 	}
 	transport = otelhttp.NewTransport(transport)
 
-	logger := cfg.Logger
-	if logger == nil {
-		logger = logging.Get("gateway-http-client")
-	}
-
 	return &Client{
 		httpClient:  &nethttp.Client{Transport: transport, CheckRedirect: nil, Jar: nil, Timeout: 0},
+		service:     cfg.Service,
 		timeout:     cfg.Timeout,
 		realTimeout: cfg.RealTimeout,
 		cacheTTL:    cfg.CacheTTL,
 		maxEntries:  cfg.MaxEntries,
-		log:         logger,
+		log:         logging.Get("gateway-http-client"),
 		now:         time.Now,
 		mu:          sync.Mutex{},
 		cache:       make(map[string]*cacheEntry),
@@ -164,8 +162,14 @@ func (c *Client) DoWithOptions(req *nethttp.Request, opts RequestOptions) (*Resp
 }
 
 func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeout time.Duration) (*Response, error) {
+	c.annotateSpan(ctx, attribute.String("upstream.service", c.service))
+	if c.cacheTTL <= 0 {
+		c.annotateSpan(ctx, attribute.String("cache.mode", "disabled"))
+	}
+
 	now := c.now()
 	if entry := c.getCache(prepared.key); entry != nil && now.Before(entry.expiresAt) {
+		c.annotateSpan(ctx, attribute.String("cache.mode", "cache-hit-fresh"))
 		c.log.DebugContext(ctx, "upstream request behavior",
 			slog.Group("cache", "mode", "cache-hit-fresh"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
@@ -175,12 +179,18 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 
 	staleEntry := c.getCache(prepared.key)
 	if staleEntry == nil {
+		mode := "cache-miss-cold"
+		if c.cacheTTL <= 0 {
+			mode = "disabled"
+		}
+		c.annotateSpan(ctx, attribute.String("cache.mode", mode))
 		c.log.DebugContext(ctx, "upstream request behavior",
-			slog.Group("cache", "mode", "cache-miss-cold"),
+			slog.Group("cache", "mode", mode),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
 			slog.Group("timeouts", "real", c.realTimeout),
 		)
 	} else {
+		c.annotateSpan(ctx, attribute.String("cache.mode", "cache-hit-stale-candidate"))
 		c.log.DebugContext(ctx, "upstream request behavior",
 			slog.Group("cache", "mode", "cache-hit-stale-candidate"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
@@ -195,6 +205,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 
 	call, existing := c.getOrStartInflight(inflightCtx, prepared.key, prepared)
 	if existing && staleEntry != nil && call.isStaleReady() {
+		c.annotateSpan(ctx, attribute.String("cache.mode", "stale-served-inflight"))
 		c.log.DebugContext(ctx, "upstream request behavior",
 			slog.Group("cache", "mode", "stale-served-inflight"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
@@ -230,6 +241,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 		return c.finishForeground(call)
 	case <-timer.C:
 		call.markStaleReady()
+		c.annotateSpan(ctx, attribute.String("cache.mode", "stale-served-timeout"))
 		c.log.DebugContext(ctx, "upstream request behavior",
 			slog.Group("cache", "mode", "stale-served-timeout"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
@@ -237,6 +249,14 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 		)
 		return staleResponse(staleEntry.response), nil
 	}
+}
+
+func (c *Client) annotateSpan(ctx context.Context, attrs ...attribute.KeyValue) {
+	if len(attrs) == 0 {
+		return
+	}
+
+	trace.SpanFromContext(ctx).SetAttributes(attrs...)
 }
 
 func (c *Client) finishForeground(call *inflightCall) (*Response, error) {

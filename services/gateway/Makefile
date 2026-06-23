@@ -25,9 +25,11 @@ fmt:
 lint: fmt
 	golangci-lint run ./...
 
-GATEWAY_SPEC := swagger/openapi.yaml
 METADATA_SPEC := ../metadata-lifecycle/openapi.yaml
 METADATA_CLIENT_GEN_DIR := gen/metadataclient
+
+USERGROUP_SPEC := ../user-group/docs/openapi.yaml
+USERGROUP_CLIENT_GEN_DIR := gen/usergroupclient
 generate: clean
 	openapi-generator generate -g go \
 		-i $(METADATA_SPEC) \
@@ -37,7 +39,22 @@ generate: clean
 	# Format generated metadata client
 	(cd $(METADATA_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
+	openapi-generator generate -g go \
+		-i $(USERGROUP_SPEC) \
+		-o $(USERGROUP_CLIENT_GEN_DIR) \
+		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
+		-p packageName=usergroupclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
+	(cd $(USERGROUP_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
+
 clean:
 	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR)
+
+get-token:
+	curl -s -X POST http://localhost:8110/oauth/token \
+		-u local-dev-client:dev-secret \
+		-d grant_type=password \
+		-d username=admin@admin.org \
+		-d password=adminadmin
+
 
 .PHONY: build build-docker generate test test-hurl test-fixtures-refresh fmt lint clean

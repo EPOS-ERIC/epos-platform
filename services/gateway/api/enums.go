@@ -1,6 +1,9 @@
 package api
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type ResourceType string
 
@@ -36,15 +39,16 @@ func NewResourceTypeFromValue(value string) (ResourceType, error) {
 type VersioningStatus string
 
 const (
-	DraftStatus     VersioningStatus = "DRAFT"
-	SubmittedStatus VersioningStatus = "SUBMITTED"
-	PublishedStatus VersioningStatus = "PUBLISHED"
-	ArchivedStatus  VersioningStatus = "ARCHIVED"
+	PublishedStatus VersioningStatus = "published"
+	DraftStatus     VersioningStatus = "draft"
+	SubmittedStatus VersioningStatus = "submitted"
+	ArchivedStatus  VersioningStatus = "archived"
+	DiscardedStatus VersioningStatus = "discarded"
 )
 
 func (s VersioningStatus) IsValid() bool {
 	switch s {
-	case DraftStatus, SubmittedStatus, PublishedStatus, ArchivedStatus:
+	case PublishedStatus, DraftStatus, SubmittedStatus, ArchivedStatus, DiscardedStatus:
 		return true
 	default:
 		return false
@@ -52,7 +56,7 @@ func (s VersioningStatus) IsValid() bool {
 }
 
 func NewVersioningStatusFromValue(value string) (VersioningStatus, error) {
-	status := VersioningStatus(value)
+	status := VersioningStatus(strings.ToLower(strings.TrimSpace(value)))
 	if status.IsValid() {
 		return status, nil
 	}

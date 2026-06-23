@@ -1,4 +1,4 @@
-GET {{baseUrl}}/v1/organization/ROR%3A048a87296%2Fv1.0
+GET {{baseUrl}}/v1/resources/organization/ROR%3A048a87296%2Fv1.0
 
 HTTP 200
 [Asserts]

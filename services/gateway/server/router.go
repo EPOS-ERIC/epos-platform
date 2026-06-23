@@ -6,16 +6,26 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 	"github.com/go-chi/chi/v5"
 )
 
 var log = logging.Get("routes")
 
-func NewRouter(discoveryService *discovery.Service, resourcesService *resources.Service, corsAllowOrigin string) http.Handler {
+func NewRouter(
+	discoveryService *discovery.Service,
+	resourcesService *resources.Service,
+	lifecycleService *lifecycle.Service,
+	authService *auth.Service,
+	usergroupService *usergroup.Service,
+	corsAllowOrigin string,
+) http.Handler {
 	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
@@ -39,21 +49,40 @@ func NewRouter(discoveryService *discovery.Service, resourcesService *resources.
 
 	discoveryHandler := handlers.NewDiscovery(discoveryService)
 	resourcesHandler := handlers.NewResources(resourcesService)
+	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
+	usersHandler := handlers.NewUsers(usergroupService)
+	groupsHandler := handlers.NewGroups(usergroupService)
 
 	r.Route("/v1", func(r chi.Router) {
 		// discovery
 		r.Get("/search", discoveryHandler.SearchMetadata)
 		r.Get("/concept", discoveryHandler.GetConceptTree)
 
-		// resources
-		r.Get("/dataset/{id}", resourcesHandler.GetDatasetByID)
-		r.Get("/distribution/{id}", resourcesHandler.GetDistributionByID)
-		r.Get("/softwareapplication/{id}", resourcesHandler.GetSoftwareApplicationByID)
-		r.Get("/softwaresourcecode/{id}", resourcesHandler.GetSoftwareSourceCodeByID)
-		r.Get("/webservice/{id}", resourcesHandler.GetWebserviceByID)
-		r.Get("/organization/{id}", resourcesHandler.GetOrganizationByID)
-		r.Get("/concept/{id}", resourcesHandler.GetConceptByID)
-		r.Get("/conceptscheme/{id}", resourcesHandler.GetConceptSchemeByID)
+		r.Route("/users", func(r chi.Router) {
+			r.Use(authMiddleware(authService, usergroupService))
+			r.Get("/", usersHandler.ListUsers)
+			r.Get("/{id}", usersHandler.GetUser)
+			r.Patch("/{id}", usersHandler.PatchUser)
+		})
+
+		r.Route("/groups", func(r chi.Router) {
+			r.Use(authMiddleware(authService, usergroupService))
+			r.Get("/", groupsHandler.ListGroups)
+			r.Get("/{groupId}", groupsHandler.GetGroup)
+			r.Get("/{groupId}/memberships", groupsHandler.ListMemberships)
+			r.Patch("/{groupId}", groupsHandler.PatchGroup)
+			r.Patch("/{groupId}/memberships/{userId}", groupsHandler.PatchMembership)
+			r.Delete("/{groupId}", groupsHandler.DeleteGroup)
+			r.Delete("/{groupId}/memberships/{userId}", groupsHandler.DeleteMembership)
+			r.Post("/{groupId}/memberships", groupsHandler.RequestMembership)
+			r.Post("/", groupsHandler.CreateGroup)
+		})
+
+		r.Route("/resources", func(r chi.Router) {
+			r.Get("/{resourceType}/{id}", resourcesHandler.GetResourceByID)
+			// lifecycle TODO
+			r.Post("/{resourceType}/{id}/draft", lifecycleHandler.DraftResource)
+		})
 	})
 
 	return observability.NewHTTPHandler(r, "/")

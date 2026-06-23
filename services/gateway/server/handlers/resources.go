@@ -4,8 +4,10 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/go-chi/chi/v5"
@@ -17,6 +19,36 @@ type Resources struct {
 
 func NewResources(service *resources.Service) *Resources {
 	return &Resources{service: service}
+}
+
+func (h *Resources) GetResourceByID(w http.ResponseWriter, r *http.Request) {
+	resourceTypeValue := chi.URLParam(r, "resourceType")
+	resourceType, err := api.NewResourceTypeFromValue(resourceTypeValue)
+	if err != nil {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", fmt.Sprintf("resource type '%s' not supported", resourceTypeValue), nil)
+		return
+	}
+
+	switch resourceType {
+	case api.DatasetType:
+		h.GetDatasetByID(w, r)
+	case api.DistributionType:
+		h.GetDistributionByID(w, r)
+	case api.SoftwareApplicationType:
+		h.GetSoftwareApplicationByID(w, r)
+	case api.SoftwareSourceCodeType:
+		h.GetSoftwareSourceCodeByID(w, r)
+	case api.WebserviceType:
+		h.GetWebserviceByID(w, r)
+	case api.OrganizationType:
+		h.GetOrganizationByID(w, r)
+	case api.ConceptType:
+		h.GetConceptByID(w, r)
+	case api.ConceptSchemeType:
+		h.GetConceptSchemeByID(w, r)
+	default:
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", fmt.Sprintf("resource type '%s' not supported", resourceTypeValue), nil)
+	}
 }
 
 func (h *Resources) GetConceptByID(w http.ResponseWriter, r *http.Request) {
@@ -109,17 +141,17 @@ func (h *Resources) GetOrganizationByID(w http.ResponseWriter, r *http.Request) 
 
 func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWriter, err error, resource string) {
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(ctx, w, http.StatusNotFound, "resource_not_found", resource+" not found", nil)
+		WriteError(ctx, w, http.StatusNotFound, "resource_not_found", resource+" not found", nil)
 		return
 	}
 
 	if errors.Is(err, domain.ErrBadRequest) {
-		writeError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by metadata service", nil)
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "request rejected by metadata service", nil)
 		return
 	}
 
 	if errors.Is(err, domain.ErrUpstreamTimeout) {
-		writeError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "resource request timed out", err)
+		WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "resource request timed out", err)
 		return
 	}
 
@@ -130,5 +162,5 @@ func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWrite
 	}
 
 	log.ErrorContext(ctx, "resource request failed", "error", err)
-	writeError(ctx, w, http.StatusInternalServerError, "internal_server_error", "resource request failed", err)
+	WriteError(ctx, w, http.StatusInternalServerError, "internal_server_error", "resource request failed", err)
 }

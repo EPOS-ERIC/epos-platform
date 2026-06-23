@@ -12,13 +12,17 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/usergroupclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 )
 
-func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
+func Run(cfg config.Config, metadataClient *metadataclient.APIClient, usergroupClient *usergroupclient.APIClient, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -39,7 +43,9 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient) error {
 
 	discoverySvc := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
 	resourcesSvc := resources.NewService(metadataClient)
-	router := NewRouter(discoverySvc, resourcesSvc, cfg.Server.CORSAllowOrigin)
+	lifecycleSvc := lifecycle.NewService(metadataClient)
+	usergroupSvc := usergroup.NewService(usergroupClient)
+	router := NewRouter(discoverySvc, resourcesSvc, lifecycleSvc, authService, usergroupSvc, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct

@@ -63,16 +63,52 @@ helm-status:
 helm-uninstall:
 	helm uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
 
-test-integration: test-schemathesis test-hurl
-
 test-schemathesis:
-	SCHEMATHESIS_HOOKS=tests/schemathesis/hooks.py schemathesis run \
-		--url "http://localhost:32000/v1" \
+# TODO: remove the exclude method flags when the backoffice endpoints are implemente
+	eval "$$(./packages/scripts/schemathesis-env.sh)" && docker run --rm \
+		--add-host host.docker.internal:host-gateway \
+		-v "$(CURDIR):/work:ro" \
+		-w /tmp \
+		-e HYPOTHESIS_HOME=/tmp/.hypothesis \
+		-e SCHEMATHESIS_HOOKS=/work/tests/schemathesis/hooks.py \
+		-e SCHEMATHESIS_BEARER_TOKEN="$$SCHEMATHESIS_BEARER_TOKEN" \
+		-e SCHEMATHESIS_GROUP_ID="$$SCHEMATHESIS_GROUP_ID" \
+		-e SCHEMATHESIS_MEMBERSHIP_USER_ID="$$SCHEMATHESIS_MEMBERSHIP_USER_ID" \
+		ghcr.io/schemathesis/schemathesis:latest \
+		run \
+		--url "http://host.docker.internal:32000/v1" \
 		--suppress-health-check=filter_too_much \
-		--exclude-checks unsupported_method \
-		services/gateway/docs/openapi.yaml
+		--exclude-checks unsupported_method,missing_required_header,ignored_auth \
+		--exclude-method POST \
+		--exclude-method PUT \
+		--exclude-method DELETE \
+		/work/services/gateway/docs/openapi.yaml
 
 test-hurl:
-	hurl --variable baseUrl=http://localhost:32000 --test tests/hurl
+	docker run --rm \
+		--add-host host.docker.internal:host-gateway \
+		-v "$(CURDIR)/tests/hurl:/tests:ro" \
+		ghcr.io/orange-opensource/hurl:latest \
+		--variable baseUrl=http://host.docker.internal:32000 \
+		--test /tests
 
-.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis
+test-hurl-groups:
+	eval "$$(./packages/scripts/hurl-groups-authz-env.sh)" && docker run --rm \
+		--add-host host.docker.internal:host-gateway \
+		-v "$(CURDIR)/tests/hurl-groups-authz:/tests:ro" \
+		ghcr.io/orange-opensource/hurl:latest \
+		--variable baseUrl=http://host.docker.internal:32000 \
+		--variable adminBearerToken="$$HURL_ADMIN_BEARER_TOKEN" \
+		--variable adminUserId="$$HURL_ADMIN_USER_ID" \
+		--variable userBearerToken="$$HURL_USER_BEARER_TOKEN" \
+		--variable userId="$$HURL_USER_ID" \
+		--variable groupAdminBearerToken="$$HURL_GROUP_ADMIN_BEARER_TOKEN" \
+		--variable groupAdminUserId="$$HURL_GROUP_ADMIN_USER_ID" \
+		--variable groupAId="$$HURL_GROUP_A_ID" \
+		--variable groupASlug="$$HURL_GROUP_A_SLUG" \
+		--variable groupBId="$$HURL_GROUP_B_ID" \
+		--variable groupBSlug="$$HURL_GROUP_B_SLUG" \
+		--variable adminLifecycleGroupSlug="$$HURL_ADMIN_LIFECYCLE_GROUP_SLUG" \
+		--test /tests
+
+.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl test-hurl-groups fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis

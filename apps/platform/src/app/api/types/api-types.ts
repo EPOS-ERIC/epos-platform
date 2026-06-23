@@ -6,21 +6,13 @@ export type SearchResponse =
   operations['searchMetadata']['responses'][200]['content']['application/json'];
 export type SearchItem = components['schemas']['SearchItem'];
 
-export type DatasetResponse =
-  operations['getDatasetById']['responses'][200]['content']['application/json'];
-export type DistributionResponse =
-  operations['getDistributionById']['responses'][200]['content']['application/json'];
-export type SoftwareApplicationResponse =
-  operations['getSoftwareApplicationById']['responses'][200]['content']['application/json'];
-export type SoftwareSourceCodeResponse =
-  operations['getSoftwareSourceCodeById']['responses'][200]['content']['application/json'];
-export type WebserviceResponse =
-  operations['getWebserviceById']['responses'][200]['content']['application/json'];
-export type OrganizationResponse =
-  operations['getOrganizationById']['responses'][200]['content']['application/json'];
+export type DatasetResponse = components['schemas']['Dataset'];
+export type DistributionResponse = components['schemas']['Distribution'];
+export type SoftwareApplicationResponse = components['schemas']['SoftwareApplication'];
+export type SoftwareSourceCodeResponse = components['schemas']['SoftwareSourceCode'];
+export type WebserviceResponse = components['schemas']['Webservice'];
+export type OrganizationResponse = components['schemas']['Organization'];
 export type ConceptTreeResponse =
   operations['getConceptTree']['responses'][200]['content']['application/json'];
-export type ConceptResponse =
-  operations['getConceptById']['responses'][200]['content']['application/json'];
-export type ConceptSchemeResponse =
-  operations['getConceptSchemeById']['responses'][200]['content']['application/json'];
+export type ConceptResponse = components['schemas']['Concept'];
+export type ConceptSchemeResponse = components['schemas']['ConceptScheme'];

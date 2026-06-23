@@ -23,7 +23,7 @@ func TestMapConcept(t *testing.T) {
 	if concept.Description != "Multidisciplinary software" {
 		t.Fatalf("concept.Description = %q", concept.Description)
 	}
-	if concept.InScheme == nil || concept.InScheme.Href != "v1/conceptscheme/category:software_jup/v1.0" {
+	if concept.InScheme == nil || concept.InScheme.Href != "v1/resources/conceptscheme/category:software_jup/v1.0" {
 		t.Fatalf("concept.InScheme = %#v", concept.InScheme)
 	}
 	if len(concept.Children) != 0 {

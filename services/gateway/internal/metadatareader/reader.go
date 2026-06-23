@@ -10,7 +10,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/gatewayhref"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/resourcehref"
 )
 
 var log = logging.Get("metadata-reader")
@@ -103,7 +103,7 @@ func (r Reader) ResourceRefs(key string, resourceType api.ResourceType) ([]api.R
 		refs = append(refs, api.ResourceRef{
 			ID:   item.ID,
 			Name: item.Title,
-			Href: gatewayhref.Build(resourceType, item.ID),
+			Href: resourcehref.Build(resourceType, item.ID),
 		})
 	}
 

@@ -87,7 +87,7 @@ func TestMapDataset(t *testing.T) {
 	}
 	assertTimeEqual(t, dataset.Temporal.Start, "1000-01-01T00:00:00Z")
 	assertTimeEqual(t, dataset.Temporal.End, "1899-12-31T23:59:59Z")
-	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/concept/category:earthquakeparameters/v1.0" {
+	if len(dataset.Concepts) != 1 || dataset.Concepts[0].Href != "v1/resources/concept/category:earthquakeparameters/v1.0" {
 		t.Fatalf("dataset.Concepts = %#v", dataset.Concepts)
 	}
 	if len(dataset.Publisher) != 1 || dataset.Publisher[0].Href != currentAHEADPublisherHref || dataset.Publisher[0].Name != "INGV - Istituto Nazionale di Geofisica e Vulcanologia" {
