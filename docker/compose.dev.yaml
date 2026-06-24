@@ -84,12 +84,22 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
 
   gateway-service:
     image: epos-gateway-dev:local
     depends_on:
       metadata-lifecycle-service:
-        condition: service_started
+        condition: service_healthy
+      user-group-service:
+        condition: service_healthy
+      oss-aai-service:
+        condition: service_healthy
     ports:
       - "32000:5000"
     environment:
@@ -108,12 +118,18 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   platform-app:
     image: epos-platform-dev:local
     depends_on:
       gateway-service:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "4200:4200"
     environment:
@@ -121,6 +137,12 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4200/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   user-group-service:
     image: epos-user-group-dev:local
@@ -146,6 +168,12 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8090/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   data-retriever-service:
     image: epos-data-retriever-dev:local
@@ -172,6 +200,12 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8100/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   oss-aai-service:
     image: epos-oss-aai-dev:local
@@ -188,6 +222,12 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   otel-lgtm:
     image: grafana/otel-lgtm

@@ -1,0 +1,56 @@
+name: Integration Group Authz Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "tests/hurl-groups-authz/**"
+      - "services/gateway/**"
+      - "services/metadata-lifecycle/**"
+      - "services/user-group/**"
+      - "services/oss-aai-service/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "packages/scripts/hurl-groups-authz-env.sh"
+      - "docker/compose.dev.yaml"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/integration-group-authz.yml"
+      - ".github/workflows/_integration-suite.yml"
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - "tests/hurl-groups-authz/**"
+      - "services/gateway/**"
+      - "services/metadata-lifecycle/**"
+      - "services/user-group/**"
+      - "services/oss-aai-service/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "packages/scripts/hurl-groups-authz-env.sh"
+      - "docker/compose.dev.yaml"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/integration-group-authz.yml"
+      - ".github/workflows/_integration-suite.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  group-authz-tests:
+    uses: ./.github/workflows/_integration-suite.yml
+    secrets: inherit
+    with:
+      job-name: Group authz tests
+      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service user-group-service oss-aai-service
+      test-command: make test-hurl-groups

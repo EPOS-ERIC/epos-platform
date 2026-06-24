@@ -30,6 +30,16 @@ type app struct {
 	oidc      *oidcSigner
 }
 
+type responseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (rw *responseWriter) WriteHeader(status int) {
+	rw.status = status
+	rw.ResponseWriter.WriteHeader(status)
+}
+
 type viewData struct {
 	Error     string
 	User      *userRecord
@@ -55,6 +65,7 @@ func main() {
 
 	a := &app{store: store, templates: tmpl, oidc: oidcSigner}
 	mux := http.NewServeMux()
+	mux.HandleFunc("/health", a.healthHandler)
 	mux.HandleFunc("/healthz", a.healthHandler)
 	mux.HandleFunc("/", a.homeHandler)
 	mux.HandleFunc("/register", a.registerHandler)
@@ -693,9 +704,19 @@ func bearerToken(r *http.Request) string {
 
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rw := &responseWriter{ResponseWriter: w, status: http.StatusOK}
+		next.ServeHTTP(rw, r)
+
+		if isQuietHealthRequest(r) && rw.status < http.StatusBadRequest {
+			return
+		}
+
 		log.Printf("%s %s", r.Method, r.URL.Path)
-		next.ServeHTTP(w, r)
 	})
+}
+
+func isQuietHealthRequest(r *http.Request) bool {
+	return r.Method == http.MethodGet && (r.URL.Path == "/health" || r.URL.Path == "/healthz")
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

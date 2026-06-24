@@ -7,7 +7,7 @@ on:
       - ".github/workflows/helm-ci.yml"
   push:
     branches:
-      - "**"
+      - "main"
     tags:
       - "v*"
     paths:

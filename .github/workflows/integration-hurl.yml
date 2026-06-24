@@ -1,0 +1,56 @@
+name: Integration Hurl Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "tests/hurl/**"
+      - "services/gateway/**"
+      - "services/metadata-lifecycle/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "packages/scripts/metadatone.sh"
+      - "packages/assets/otel/opentelemetry-javaagent.jar"
+      - "docker/compose.dev.yaml"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/integration-hurl.yml"
+      - ".github/workflows/_integration-suite.yml"
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - "tests/hurl/**"
+      - "services/gateway/**"
+      - "services/metadata-lifecycle/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "packages/scripts/metadatone.sh"
+      - "packages/assets/otel/opentelemetry-javaagent.jar"
+      - "docker/compose.dev.yaml"
+      - "docker/gateway-config.dev.yaml"
+      - "Makefile"
+      - ".github/workflows/integration-hurl.yml"
+      - ".github/workflows/_integration-suite.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  hurl-tests:
+    uses: ./.github/workflows/_integration-suite.yml
+    secrets: inherit
+    with:
+      job-name: Hurl tests
+      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service
+      populate-command: make populate-metadatone
+      wait-url: http://localhost:32000/v1/search?type=softwareapplication
+      test-command: make test-hurl

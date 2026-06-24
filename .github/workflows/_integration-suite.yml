@@ -1,0 +1,82 @@
+name: Integration Suite Workflow
+
+on:
+  workflow_call:
+    inputs:
+      job-name:
+        required: true
+        type: string
+      build-dev-images-command:
+        required: true
+        type: string
+      compose-up-command:
+        required: true
+        type: string
+      test-command:
+        required: true
+        type: string
+      populate-command:
+        required: false
+        type: string
+        default: ""
+      wait-url:
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  ci:
+    name: ${{ inputs.job-name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build dev images
+        shell: bash
+        run: ${{ inputs.build-dev-images-command }}
+
+      - name: Start integration stack
+        shell: bash
+        run: ${{ inputs.compose-up-command }}
+
+      - name: Populate integration metadata
+        if: ${{ inputs.populate-command != '' }}
+        shell: bash
+        run: ${{ inputs.populate-command }}
+
+      - name: Wait for populated gateway data
+        if: ${{ inputs.wait-url != '' }}
+        shell: bash
+        run: |
+          for i in {1..90}; do
+            if curl -fsS '${{ inputs.wait-url }}' >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose -f docker/compose.dev.yaml logs
+          exit 1
+
+      - name: Run integration tests
+        shell: bash
+        run: ${{ inputs.test-command }}
+
+      - name: Show integration logs on failure
+        if: failure()
+        shell: bash
+        run: docker compose -f docker/compose.dev.yaml logs --no-color
+
+      - name: Show compose state on failure
+        if: failure()
+        shell: bash
+        run: |
+          docker compose -f docker/compose.dev.yaml ps -a
+          for id in $(docker compose -f docker/compose.dev.yaml ps -q); do
+            docker inspect "$id" --format '{{.Name}} {{if .State.Health}}{{json .State.Health}}{{else}}no-healthcheck{{end}}'
+          done
+
+      - name: Stop integration stack
+        if: always()
+        shell: bash
+        run: docker compose -f docker/compose.dev.yaml down -v

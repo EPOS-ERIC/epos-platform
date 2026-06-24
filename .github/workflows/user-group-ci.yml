@@ -1,0 +1,44 @@
+name: User Group Pipeline
+
+on:
+  pull_request:
+    paths:
+      - "services/user-group/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "Makefile"
+      - ".github/workflows/user-group-ci.yml"
+      - ".github/workflows/_go-service.yml"
+  push:
+    branches:
+      - "main"
+    tags:
+      - "v*"
+    paths:
+      - "services/user-group/**"
+      - "packages/go/logging/**"
+      - "packages/go/observability/**"
+      - "packages/go/middleware/**"
+      - "packages/go/apidocs/**"
+      - "packages/scripts/epos-banner.sh"
+      - "Makefile"
+      - ".github/workflows/user-group-ci.yml"
+      - ".github/workflows/_go-service.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_go-service.yml
+    secrets: inherit
+    with:
+      service: services/user-group
+      image: user-group
+      dockerfile: services/user-group/Dockerfile
+      context: .
+      go-version-file: services/user-group/go.mod
