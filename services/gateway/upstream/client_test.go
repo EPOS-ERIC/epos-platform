@@ -104,6 +104,7 @@ func TestClientReturnsStaleOnTimeoutAndRefreshesCache(t *testing.T) {
 
 	close(control.release)
 	transport.waitIdle()
+	waitForNoInflight(t, client)
 
 	fresh, err := client.Do(request)
 	if err != nil {
