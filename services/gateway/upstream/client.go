@@ -168,17 +168,17 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 	}
 
 	now := c.now()
-	if entry := c.getCache(prepared.key); entry != nil && now.Before(entry.expiresAt) {
+	if snapshot := c.getCacheSnapshot(prepared.key); snapshot != nil && now.Before(snapshot.expiresAt) {
 		c.annotateSpan(ctx, attribute.String("cache.mode", "cache-hit-fresh"))
 		c.log.DebugContext(ctx, "upstream request behavior",
 			slog.Group("cache", "mode", "cache-hit-fresh"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
 		)
-		return buildResponse(entry.response, CacheMetadata{Hit: true, Stale: false, Reason: cacheReasonNone}), nil
+		return buildResponse(snapshot.response, CacheMetadata{Hit: true, Stale: false, Reason: cacheReasonNone}), nil
 	}
 
-	staleEntry := c.getCache(prepared.key)
-	if staleEntry == nil {
+	staleSnapshot := c.getCacheSnapshot(prepared.key)
+	if staleSnapshot == nil {
 		mode := "cache-miss-cold"
 		if c.cacheTTL <= 0 {
 			mode = "disabled"
@@ -199,21 +199,21 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 	}
 
 	inflightCtx := ctx
-	if staleEntry != nil {
+	if staleSnapshot != nil {
 		inflightCtx = context.WithoutCancel(ctx)
 	}
 
 	call, existing := c.getOrStartInflight(inflightCtx, prepared.key, prepared)
-	if existing && staleEntry != nil && call.isStaleReady() {
+	if existing && staleSnapshot != nil && call.isStaleReady() {
 		c.annotateSpan(ctx, attribute.String("cache.mode", "stale-served-inflight"))
 		c.log.DebugContext(ctx, "upstream request behavior",
 			slog.Group("cache", "mode", "stale-served-inflight"),
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
 		)
-		return staleResponse(staleEntry.response), nil
+		return staleResponse(staleSnapshot.response), nil
 	}
 
-	if staleEntry == nil {
+	if staleSnapshot == nil {
 		select {
 		case <-ctx.Done():
 			return nil, fmt.Errorf("wait for inflight request: %w", ctx.Err())
@@ -247,7 +247,7 @@ func (c *Client) doPrepared(ctx context.Context, prepared preparedRequest, timeo
 			slog.Group("upstream", "method", prepared.method, "url", prepared.url),
 			slog.Group("timeouts", "caller", timeout),
 		)
-		return staleResponse(staleEntry.response), nil
+		return staleResponse(staleSnapshot.response), nil
 	}
 }
 
@@ -293,6 +293,7 @@ func (c *Client) execute(ctx context.Context, key string, prepared preparedReque
 
 	req, err := prepared.newRequest(requestCtx)
 	if err != nil {
+		call.clearStaleReady()
 		call.err = err
 		c.deleteCache(key)
 		return
@@ -300,9 +301,11 @@ func (c *Client) execute(ctx context.Context, key string, prepared preparedReque
 
 	cached, err := c.fetch(requestCtx, prepared, req)
 	if err != nil {
+		call.clearStaleReady()
 		call.err = err
 		return
 	}
+	call.clearStaleReady()
 
 	if c.cacheTTL > 0 {
 		c.storeCache(key, cached)
@@ -367,6 +370,12 @@ func (c *inflightCall) markStaleReady() {
 	c.staleMu.Lock()
 	defer c.staleMu.Unlock()
 	c.stale = true
+}
+
+func (c *inflightCall) clearStaleReady() {
+	c.staleMu.Lock()
+	defer c.staleMu.Unlock()
+	c.stale = false
 }
 
 func (c *inflightCall) isStaleReady() bool {

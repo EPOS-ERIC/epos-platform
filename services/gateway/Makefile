@@ -14,7 +14,7 @@ build-docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
-	go test ./...
+	go test ./... -race -count=1
 
 test-fixtures-refresh:
 	go run ./scripts/refresh_test_fixtures.go

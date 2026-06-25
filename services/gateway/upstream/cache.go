@@ -12,7 +12,12 @@ type cacheEntry struct {
 	element   *list.Element
 }
 
-func (c *Client) getCache(key string) *cacheEntry {
+type cacheSnapshot struct {
+	response  *cachedResponse
+	expiresAt time.Time
+}
+
+func (c *Client) getCacheSnapshot(key string) *cacheSnapshot {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -22,7 +27,11 @@ func (c *Client) getCache(key string) *cacheEntry {
 	}
 
 	c.order.MoveToFront(entry.element)
-	return entry
+
+	return &cacheSnapshot{
+		response:  entry.response,
+		expiresAt: entry.expiresAt,
+	}
 }
 
 func (c *Client) storeCache(key string, response *cachedResponse) {
