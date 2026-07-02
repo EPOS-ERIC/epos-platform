@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/gateway
 
-go 1.26.2
+go 1.26
 
 require github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 
