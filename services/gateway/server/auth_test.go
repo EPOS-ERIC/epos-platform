@@ -66,6 +66,46 @@ func TestAuthMiddlewareRejectsMissingToken(t *testing.T) {
 	}
 }
 
+func TestAuthMiddlewareOptionalAllowsMissingToken(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, true, false, false)
+	handler := authMiddlewareOptional(authService, provisioner)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := handlers.AuthenticatedUserFromContext(r.Context()); ok {
+			t.Fatal("unexpected authenticated user in context")
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/search", nil)
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("unexpected status: %d", rec.Code)
+	}
+}
+
+func TestAuthMiddlewareOptionalRejectsInvalidToken(t *testing.T) {
+	t.Parallel()
+
+	authService, provisioner := newTestAuthStack(t, false, false, false)
+	handler := authMiddlewareOptional(authService, provisioner)(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("next handler should not run")
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/v1/search", nil)
+	req.Header.Set("Authorization", "Bearer token-123")
+	rec := httptest.NewRecorder()
+
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("unexpected status: %d", rec.Code)
+	}
+}
+
 func TestAuthMiddlewareRejectsInvalidToken(t *testing.T) {
 	t.Parallel()
 

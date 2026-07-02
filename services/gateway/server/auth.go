@@ -15,12 +15,29 @@ import (
 )
 
 func authMiddleware(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+	return authMiddlewareRequired(authenticator, provisioner)
+}
+
+func authMiddlewareRequired(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+	return authMiddlewareWithMode(authenticator, provisioner, true)
+}
+
+func authMiddlewareOptional(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+	return authMiddlewareWithMode(authenticator, provisioner, false)
+}
+
+func authMiddlewareWithMode(authenticator *auth.Service, provisioner *usergroup.Service, required bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			span := trace.SpanFromContext(r.Context())
 
 			token, ok := bearerTokenFromRequest(r)
 			if !ok {
+				if !required {
+					next.ServeHTTP(w, r)
+					return
+				}
+
 				span.SetAttributes(attribute.String("auth.result", "missing_token"))
 				log.WarnContext(r.Context(), "missing bearer token")
 				handlers.WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)

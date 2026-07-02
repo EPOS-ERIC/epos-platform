@@ -51,7 +51,7 @@ type SearchParams struct {
 	Keywords         []string
 }
 
-func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *metadataclient.APIClient) (metadataclient.ApiApiV2AccessSearchGetRequest, error) {
+func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, actor *api.User, client *metadataclient.APIClient) (metadataclient.ApiApiV2AccessSearchGetRequest, error) {
 	if err := ValidateSearchTypes(p.Types); err != nil {
 		return metadataclient.ApiApiV2AccessSearchGetRequest{}, err
 	}
@@ -61,6 +61,14 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 		versioningStatus = append(versioningStatus, metadataclient.VersioningStatus(api.PublishedStatus))
 	} else {
 		for _, v := range p.VersioningStatus {
+			if v != api.PublishedStatus {
+				if actor == nil {
+					return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("search metadata request rejected: %w", domain.ErrUnauthorized)
+				}
+				if !actor.IsSuperAdmin && len(actor.Memberships) == 0 {
+					return metadataclient.ApiApiV2AccessSearchGetRequest{}, fmt.Errorf("search metadata request rejected: %w", domain.ErrForbidden)
+				}
+			}
 			versioningStatus = append(versioningStatus, metadataclient.VersioningStatus(v))
 		}
 	}
@@ -119,8 +127,8 @@ func (p *SearchParams) buildMetadataSearchRequest(ctx context.Context, client *m
 	return req, nil
 }
 
-func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchResponse, error) {
-	req, err := params.buildMetadataSearchRequest(ctx, s.metadataClient)
+func (s *Service) Search(ctx context.Context, actor *api.User, params SearchParams) (api.SearchResponse, error) {
+	req, err := params.buildMetadataSearchRequest(ctx, actor, s.metadataClient)
 	if err != nil {
 		return api.SearchResponse{}, fmt.Errorf("build metadata search request: %w", err)
 	}
@@ -173,6 +181,9 @@ func (s *Service) Search(ctx context.Context, params SearchParams) (api.SearchRe
 		Items:      []api.SearchItem{},
 	}
 	mappedItems := make([]api.SearchItem, len(resp.Items))
+
+	// TODO: add actual filtering of the results based on the user access to each entity
+	// NOTE: how are we going to manage the pagination when filtering? if we do it here we break the upstream contract...
 
 	g, groupCtx := errgroup.WithContext(ctx)
 	g.SetLimit(s.fanOutLimit)

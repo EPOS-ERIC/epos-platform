@@ -36,6 +36,7 @@ func NewRouter(
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude helath logs
 	r.Get("/health", health)
 	r.Get("/openapi.yaml", serveOpenAPISpec)
 	r.Get("/scalar", func(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +57,8 @@ func NewRouter(
 
 	r.Route("/v1", func(r chi.Router) {
 		// discovery
-		r.Get("/search", discoveryHandler.SearchMetadata)
+		r.With(authMiddlewareOptional(authService, usergroupService)).
+			Get("/search", discoveryHandler.SearchMetadata)
 		r.Get("/concept", discoveryHandler.GetConceptTree)
 
 		r.Route("/users", func(r chi.Router) {
@@ -80,9 +82,11 @@ func NewRouter(
 		})
 
 		r.Route("/resources", func(r chi.Router) {
-			r.Get("/{resourceType}/{id}", resourcesHandler.GetResourceByID)
+			r.With(authMiddlewareOptional(authService, usergroupService)).
+				Get("/{resourceType}/{id}", resourcesHandler.GetResourceByID)
 			// lifecycle TODO
-			r.Post("/{resourceType}/{id}/draft", lifecycleHandler.DraftResource)
+			r.With(authMiddleware(authService, usergroupService)).
+				Post("/{resourceType}/{id}/draft", lifecycleHandler.DraftResource)
 		})
 	})
 

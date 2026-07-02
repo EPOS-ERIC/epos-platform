@@ -24,7 +24,7 @@ func (s *Service) GetDatasetByID(ctx context.Context, id string) (api.Dataset, e
 		return api.Dataset{}, fmt.Errorf("fetch dataset '%s' detail: %w", id, err)
 	}
 
-	dataset, err := mapDataset(ctx, detail, fetchDetail)
+	dataset, err := s.mapDataset(ctx, detail, fetchDetail)
 	if err != nil {
 		return api.Dataset{}, fmt.Errorf("map dataset '%s' detail: %w", id, err)
 	}
@@ -32,7 +32,7 @@ func (s *Service) GetDatasetByID(ctx context.Context, id string) (api.Dataset, e
 	return dataset, nil
 }
 
-func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Dataset, error) {
+func (s *Service) mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse, fetch accessDetailFetcher) (api.Dataset, error) {
 	properties := detail.GetProperties()
 	reader := metadatareader.New(properties)
 
@@ -63,8 +63,15 @@ func mapDataset(ctx context.Context, detail *metadataclient.AccessDetailResponse
 
 	identifiers, temporal, spatial, qualityAnnotation, err := aggregateDatasetEntities(ctx, properties, fetch)
 	if err != nil {
-		return api.Dataset{}, err
+		return api.Dataset{}, fmt.Errorf("get aggregated dataset entities: %w", err)
 	}
+
+	s.log.DebugContext(ctx, "aggregated dataset entities",
+		"identifiers", identifiers,
+		"temporal", temporal,
+		"spatial", spatial,
+		"quality_annotation", qualityAnnotation,
+	)
 
 	concepts, err := reader.ResourceRefs("dcat:theme", api.ConceptType)
 	if err != nil {

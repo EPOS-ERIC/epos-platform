@@ -51,6 +51,9 @@ paths:
         and software source codes. Each item includes an `href` that can be followed
         to retrieve the corresponding resource detail.
       operationId: searchMetadata
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/Q"
         - $ref: "#/components/parameters/PageSize"
@@ -117,6 +120,8 @@ paths:
                           - id: "ROR:048a87296/v1.0"
                             name: "Uppsala University"
                             href: "v1/resources/organization/ROR:048a87296/v1.0"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "400":
           $ref: "#/components/responses/BadRequest"
         "504":
@@ -668,6 +673,8 @@ paths:
       summary: Create resource draft
       description: Create a new `draft` resource for the selected type.
       operationId: createResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
@@ -701,6 +708,9 @@ paths:
       description: |
         Returns resource detail metadata for the selected resource type.
       operationId: getResourceById
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/ReadResourceType"
       responses:
@@ -710,6 +720,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
         "400":
@@ -724,6 +736,8 @@ paths:
       summary: Replace resource draft
       description: Full replace semantics. Omitted writable fields are removed from the draft resource.
       operationId: updateResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/WriteResourceType"
         - $ref: "#/components/parameters/XAgent"
@@ -755,6 +769,8 @@ paths:
       summary: Delete resource draft
       description: Delete a `draft` resource.
       operationId: deleteResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/WriteResourceType"
         - $ref: "#/components/parameters/XAgent"
@@ -784,6 +800,8 @@ paths:
       summary: Submit resource draft
       description: Submit a `draft` resource for review.
       operationId: submitResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
@@ -811,6 +829,8 @@ paths:
       summary: Publish resource draft
       description: Publish a `submitted` resource.
       operationId: publishResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
@@ -838,6 +858,8 @@ paths:
       summary: Create draft from published resource
       description: Create a new draft version from a published resource.
       operationId: draftResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
@@ -865,6 +887,8 @@ paths:
       summary: Discard resource draft
       description: Discard a `draft` or `submitted` resource.
       operationId: discardResource
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/XAgent"
         - $ref: "#/components/parameters/XGroup"
@@ -890,22 +914,6 @@ components:
       bearerFormat: JWT
 
   parameters:
-    XAgent:
-      name: X-Agent
-      in: header
-      required: true
-      description: Absolute URI identifying acting agent.
-      schema:
-        type: string
-
-    XGroup:
-      name: X-Group
-      in: header
-      required: true
-      description: Absolute URI identifying acting group.
-      schema:
-        type: string
-
     ResourceId:
       name: id
       in: path

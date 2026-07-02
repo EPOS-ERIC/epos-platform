@@ -39,7 +39,7 @@ func TestMapDataset(t *testing.T) {
 		fixtureKey("annotation", currentAHEADAnnotationID):             "testdata/metadata-lifecycle/access/annotation/intermagnet.json",
 	})
 
-	dataset, err := mapDataset(context.Background(), detail, fetch)
+	dataset, err := NewService(nil).mapDataset(context.Background(), detail, fetch)
 	if err != nil {
 		t.Fatalf("mapDataset() error = %v", err)
 	}

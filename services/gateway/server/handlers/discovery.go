@@ -35,7 +35,9 @@ func (h *Discovery) SearchMetadata(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, err := h.service.Search(r.Context(), params)
+	authenticatedUser := OptionalAuthenticatedUserFromContext(r.Context())
+
+	results, err := h.service.Search(r.Context(), authenticatedUser, params)
 	if err != nil {
 		h.log.ErrorContext(r.Context(), "search metadata failed", "error", err.Error())
 		h.writeDiscoveryError(r.Context(), w, err, "metadata search")
@@ -58,6 +60,16 @@ func (h *Discovery) GetConceptTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Discovery) writeDiscoveryError(ctx context.Context, w http.ResponseWriter, err error, operation string) {
+	if errors.Is(err, domain.ErrUnauthorized) {
+		WriteError(ctx, w, http.StatusUnauthorized, "unauthorized", "authentication required", nil)
+		return
+	}
+
+	if errors.Is(err, domain.ErrForbidden) {
+		WriteError(ctx, w, http.StatusForbidden, "forbidden", "user access denied", nil)
+		return
+	}
+
 	if errors.Is(err, discovery.ErrUpstreamTimeout) {
 		WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", operation+" timed out", err)
 		return

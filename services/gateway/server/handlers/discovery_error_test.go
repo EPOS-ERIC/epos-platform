@@ -23,3 +23,25 @@ func TestWriteDiscoveryErrorMapsBadRequest(t *testing.T) {
 		t.Fatalf("Content-Type = %q", got)
 	}
 }
+
+func TestWriteDiscoveryErrorMapsUnauthorized(t *testing.T) {
+	t.Parallel()
+
+	rec := httptest.NewRecorder()
+	(&Discovery{}).writeDiscoveryError(context.Background(), rec, domain.ErrUnauthorized, "metadata search")
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusUnauthorized)
+	}
+}
+
+func TestWriteDiscoveryErrorMapsForbidden(t *testing.T) {
+	t.Parallel()
+
+	rec := httptest.NewRecorder()
+	(&Discovery{}).writeDiscoveryError(context.Background(), rec, domain.ErrForbidden, "metadata search")
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
+	}
+}

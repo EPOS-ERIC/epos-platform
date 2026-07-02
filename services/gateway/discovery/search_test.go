@@ -153,7 +153,7 @@ func TestSearchReturnsExpectedResults(t *testing.T) {
 
 			service := NewService(testfixtures.NewMetadataClient(server.URL), 8)
 
-			resp, err := service.Search(context.Background(), tt.params)
+			resp, err := service.Search(context.Background(), nil, tt.params)
 			if err != nil {
 				t.Fatalf("Search() error = %v", err)
 			}
@@ -192,7 +192,7 @@ func TestSearchRejectsUnsupportedTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := service.Search(context.Background(), SearchParams{Types: tt.types})
+			_, err := service.Search(context.Background(), nil, SearchParams{Types: tt.types})
 			if err == nil {
 				t.Fatal("Search() error = nil")
 			}
@@ -216,12 +216,60 @@ func TestSearchMapsUpstreamBadRequest(t *testing.T) {
 
 	service := NewService(testfixtures.NewMetadataClient(server.URL), 1)
 
-	_, err := service.Search(context.Background(), SearchParams{})
+	_, err := service.Search(context.Background(), nil, SearchParams{})
 	if err == nil {
 		t.Fatal("Search() error = nil")
 	}
 	if !errors.Is(err, domain.ErrBadRequest) {
 		t.Fatalf("Search() error = %v, want ErrBadRequest", err)
+	}
+}
+
+func TestSearchRejectsNonPublishedVersioningStatusWithoutActor(t *testing.T) {
+	t.Parallel()
+
+	service := NewService(testfixtures.NewMetadataClient("http://localhost:8080"), 1)
+
+	_, err := service.Search(context.Background(), nil, SearchParams{VersioningStatus: []api.VersioningStatus{api.DraftStatus}})
+	if err == nil {
+		t.Fatal("Search() error = nil")
+	}
+	if !errors.Is(err, domain.ErrUnauthorized) {
+		t.Fatalf("Search() error = %v, want ErrUnauthorized", err)
+	}
+}
+
+func TestSearchAllowsNonPublishedVersioningStatusWithActor(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"total":0,"totalItems":0,"page":1,"totalPages":0,"items":[]}`))
+	}))
+	t.Cleanup(server.Close)
+
+	service := NewService(testfixtures.NewMetadataClient(server.URL), 1)
+
+	resp, err := service.Search(context.Background(), &api.User{ID: "local-1", Memberships: []api.UserMembershipSummary{{Group: api.ResourceRef{ID: "group-1"}, Role: api.MembershipViewerRole, Status: api.MembershipActiveStatus}}}, SearchParams{VersioningStatus: []api.VersioningStatus{api.DraftStatus}})
+	if err != nil {
+		t.Fatalf("Search() error = %v", err)
+	}
+	if resp.Total != 0 || len(resp.Items) != 0 {
+		t.Fatalf("Search() response = %#v, want empty result", resp)
+	}
+}
+
+func TestSearchRejectsNonPublishedVersioningStatusWithoutMembership(t *testing.T) {
+	t.Parallel()
+
+	service := NewService(testfixtures.NewMetadataClient("http://localhost:8080"), 1)
+
+	_, err := service.Search(context.Background(), &api.User{ID: "local-1"}, SearchParams{VersioningStatus: []api.VersioningStatus{api.DraftStatus}})
+	if err == nil {
+		t.Fatal("Search() error = nil")
+	}
+	if !errors.Is(err, domain.ErrForbidden) {
+		t.Fatalf("Search() error = %v, want ErrForbidden", err)
 	}
 }
 
