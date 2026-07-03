@@ -6,6 +6,7 @@ settings:
 
 overrides:
   js-yaml@<=4.2.0: 4.2.0
+  '@angular/core@<=21.2.15': 21.2.15
 
 importers:
 
@@ -175,7 +176,7 @@ packages:
     peerDependencies:
       '@angular/compiler': ^21.0.0
       '@angular/compiler-cli': ^21.0.0
-      '@angular/core': ^21.0.0
+      '@angular/core': 21.2.15
       '@angular/localize': ^21.0.0
       '@angular/platform-browser': ^21.0.0
       '@angular/platform-server': ^21.0.0
