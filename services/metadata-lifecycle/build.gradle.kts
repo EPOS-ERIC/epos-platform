@@ -16,7 +16,7 @@ description = "Kotlin application for managing metadata lifecycle in Neo4j with 
 
 val gremlinDriverVersion = "3.7.3"
 val neo4jDriverVersion = "5.28.5"
-val rdf4jVersion = "5.2.2"
+val rdf4jVersion = "5.3.0"
 val ktorVersion = "3.0.3"
 val coroutinesVersion = "1.10.2"
 val jacksonVersion = "2.21.2"

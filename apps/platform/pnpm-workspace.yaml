@@ -15,3 +15,5 @@ minimumReleaseAgeExclude:
   - '@schematics/angular@21.2.13'
 overrides:
   js-yaml@<=4.2.0: 4.2.0
+  pbf: 5.1.2
+  yargs@<18.1.0: 18.1.0
