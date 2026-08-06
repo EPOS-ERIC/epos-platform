@@ -16,6 +16,9 @@ build-docker: build
 test:
 	go test ./...
 
+dev: generate
+	go run .
+
 generate:
 	go generate ./...
 
