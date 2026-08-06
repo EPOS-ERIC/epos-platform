@@ -42,7 +42,7 @@ type Discovery struct {
 
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
-	Usergroup         Service `yaml:"usergroup"`
+	Backoffice        Service `yaml:"backoffice"`
 	Auth              Service `yaml:"auth"`
 }
 
@@ -65,7 +65,7 @@ func Default() Config {
 		Discovery: Discovery{FanOutLimit: 64},
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
-			Usergroup:         Service{URL: ""},
+			Backoffice:        Service{URL: ""},
 			Auth:              Service{URL: ""},
 		},
 	}
@@ -121,8 +121,8 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
 	}
 
-	if c.Services.Usergroup.URL == "" {
-		return fmt.Errorf("services.usergroup.url is required")
+	if c.Services.Backoffice.URL == "" {
+		return fmt.Errorf("services.backoffice.url is required")
 	}
 
 	if c.Services.Auth.URL == "" {

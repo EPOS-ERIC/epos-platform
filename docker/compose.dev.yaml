@@ -1,22 +1,4 @@
 services:
-  user-group-db:
-    image: postgres:16-alpine
-    environment:
-      - POSTGRES_DB=user_group
-      - POSTGRES_USER=user_group
-      - POSTGRES_PASSWORD=user_group
-    ports:
-      - "5432:5432"
-    volumes:
-      - user-group-db-data:/var/lib/postgresql/data
-    networks:
-      - epos-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user_group -d user_group || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-
   data-retriever-db:
     image: postgres:16-alpine
     environment:
@@ -35,6 +17,24 @@ services:
           "CMD-SHELL",
           "pg_isready -U data_retriever -d data_retriever || exit 1",
         ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  backoffice-db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      - POSTGRES_DB=backoffice
+      - POSTGRES_USER=backoffice
+      - POSTGRES_PASSWORD=backoffice
+    ports:
+      - "5434:5432"
+    volumes:
+      - backoffice-db-data:/var/lib/postgresql/data
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U backoffice -d backoffice || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -96,7 +96,7 @@ services:
     depends_on:
       metadata-lifecycle-service:
         condition: service_healthy
-      user-group-service:
+      backoffice-service:
         condition: service_healthy
       oss-aai-service:
         condition: service_healthy
@@ -126,6 +126,38 @@ services:
       retries: 20
       start_period: 20s
 
+  backoffice-service:
+    image: epos-backoffice-dev:local
+    depends_on:
+      backoffice-db:
+        condition: service_healthy
+    ports:
+      - "33000:5000"
+    environment:
+      - LOG_LEVEL=DEBUG
+      - DB_HOST=backoffice-db
+      - DB_PORT=5432
+      - DB_NAME=backoffice
+      - DB_USER=backoffice
+      - DB_PASSWORD=backoffice
+      - OTEL_SERVICE_NAME=backoffice
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+    user: 0:0
+    volumes:
+      - backoffice-gomod-cache:/go/pkg/mod
+      - backoffice-gobuild-cache:/root/.cache/go-build
+    restart: on-failure
+    networks:
+      - epos-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   platform-app:
     image: epos-platform-dev:local
     depends_on:
@@ -144,37 +176,6 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
-
-  user-group-service:
-    image: epos-user-group-dev:local
-    depends_on:
-      user-group-db:
-        condition: service_healthy
-    ports:
-      - "8090:8090"
-    environment:
-      - PORT=8090
-      - DB_HOST=user-group-db
-      - DB_PORT=5432
-      - DB_NAME=user_group
-      - DB_USER=user_group
-      - DB_PASSWORD=user_group
-      - OTEL_SERVICE_NAME=user-group
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
-      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-      - OTEL_METRIC_EXPORT_INTERVAL=5000
-    volumes:
-      - user-group-gomod-cache:/go/pkg/mod
-      - user-group-gobuild-cache:/root/.cache/go-build
-    restart: on-failure
-    networks:
-      - epos-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8090/health >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 20s
 
   data-retriever-service:
     image: epos-data-retriever-dev:local
@@ -247,9 +248,9 @@ volumes:
   metadata-gradle-cache:
   gateway-gomod-cache:
   gateway-gobuild-cache:
-  user-group-gomod-cache:
-  user-group-gobuild-cache:
-  user-group-db-data:
+  backoffice-gomod-cache:
+  backoffice-gobuild-cache:
+  backoffice-db-data:
   data-retriever-gomod-cache:
   data-retriever-gobuild-cache:
   data-retriever-db-data:

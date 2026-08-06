@@ -22,12 +22,12 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 clean: down
-	docker volume rm -f docker_neo4j-data docker_user-group-db-data docker_data-retriever-db-data docker_oss-aai-data
+	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data
 
 test:
 	$(MAKE) -C apps/platform test
 	$(MAKE) -C services/gateway test
-	$(MAKE) -C services/user-group test
+	$(MAKE) -C services/backoffice test
 	$(MAKE) -C services/data-retriever test
 	$(MAKE) -C services/metadata-lifecycle test
 	$(MAKE) -C services/oss-aai-service test
@@ -35,18 +35,18 @@ test:
 fmt:
 	$(MAKE) -C apps/platform fmt
 	$(MAKE) -C services/gateway fmt
-	$(MAKE) -C services/user-group fmt
 	$(MAKE) -C services/data-retriever fmt
 	$(MAKE) -C services/metadata-lifecycle fmt
 	$(MAKE) -C services/oss-aai-service fmt
+	$(MAKE) -C services/backoffice fmt
 
 lint:
 	$(MAKE) -C apps/platform lint
 	$(MAKE) -C services/gateway lint
-	$(MAKE) -C services/user-group lint
 	$(MAKE) -C services/data-retriever lint
 	$(MAKE) -C services/metadata-lifecycle lint
 	$(MAKE) -C services/oss-aai-service lint
+	$(MAKE) -C services/backoffice lint
 
 helm-lint:
 	helm lint $(HELM_CHART) $(HELM_VALUES_ARG)
