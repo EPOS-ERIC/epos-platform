@@ -52,12 +52,34 @@ func NewRouter(
 	discoveryHandler := handlers.NewDiscovery(discoveryService)
 	resourcesHandler := handlers.NewResources(resourcesService)
 	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
+	usersHandler := handlers.NewUsers(usergroupService)
+	groupsHandler := handlers.NewGroups(usergroupService)
 
 	r.Route("/v1", func(r chi.Router) {
 		// discovery
 		r.With(authMiddlewareOptional(authService, usergroupService)).
 			Get("/search", discoveryHandler.SearchMetadata)
 		r.Get("/concept", discoveryHandler.GetConceptTree)
+
+		r.Route("/users", func(r chi.Router) {
+			r.Use(authMiddleware(authService, usergroupService))
+			r.Get("/", usersHandler.ListUsers)
+			r.Get("/{id}", usersHandler.GetUser)
+			r.Patch("/{id}", usersHandler.PatchUser)
+		})
+
+		r.Route("/groups", func(r chi.Router) {
+			r.Use(authMiddleware(authService, usergroupService))
+			r.Get("/", groupsHandler.ListGroups)
+			r.Get("/{groupId}", groupsHandler.GetGroup)
+			r.Get("/{groupId}/memberships", groupsHandler.ListMemberships)
+			r.Patch("/{groupId}", groupsHandler.PatchGroup)
+			r.Patch("/{groupId}/memberships/{userId}", groupsHandler.PatchMembership)
+			r.Delete("/{groupId}", groupsHandler.DeleteGroup)
+			r.Delete("/{groupId}/memberships/{userId}", groupsHandler.DeleteMembership)
+			r.Post("/{groupId}/memberships", groupsHandler.RequestMembership)
+			r.Post("/", groupsHandler.CreateGroup)
+		})
 
 		r.Route("/resources", func(r chi.Router) {
 			r.With(authMiddlewareOptional(authService, usergroupService)).

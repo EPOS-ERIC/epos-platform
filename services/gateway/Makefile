@@ -28,7 +28,7 @@ lint: fmt
 METADATA_SPEC := ../metadata-lifecycle/openapi.yaml
 METADATA_CLIENT_GEN_DIR := gen/metadataclient
 
-USERGROUP_SPEC := ../user-group/docs/openapi.yaml
+BACKOFFICE_SPEC := ../backoffice/docs/openapi.yaml
 USERGROUP_CLIENT_GEN_DIR := gen/usergroupclient
 generate: clean
 	openapi-generator generate -g go \
@@ -40,7 +40,7 @@ generate: clean
 	(cd $(METADATA_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
 	openapi-generator generate -g go \
-		-i $(USERGROUP_SPEC) \
+		-i $(BACKOFFICE_SPEC) \
 		-o $(USERGROUP_CLIENT_GEN_DIR) \
 		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
 		-p packageName=usergroupclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
