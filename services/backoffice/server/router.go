@@ -46,15 +46,18 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	membershipsSvc := service.NewMemberships(database)
 	friendshipsSvc := service.NewFriendships(database)
 	authorizerSvc := service.NewAuthorizer(database)
+	metadataImporterSvc := service.NewMetadataImporter(database)
 
 	usersHandler := handlers.NewUsers(usersSvc)
 	groupsHandler := handlers.NewGroups(groupsSvc)
 	membershipsHandler := handlers.NewMemberships(membershipsSvc)
 	friendshipsHandler := handlers.NewFriendships(friendshipsSvc)
 	authorizeHandler := handlers.NewAuthorize(authorizerSvc)
+	metadataImportHandler := handlers.NewMetadataImport(metadataImporterSvc, usersSvc, groupsSvc)
 
 	r.Route("/api/v2", func(r chi.Router) {
 		r.Post("/authorize", authorizeHandler.Authorize)
+		r.Post("/import/metadata", metadataImportHandler.Import)
 
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", groupsHandler.List)

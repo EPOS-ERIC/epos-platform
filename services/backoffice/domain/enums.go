@@ -3,11 +3,11 @@ package domain
 type DatasetStatus string
 
 const (
-	DatasetStatusPublished DatasetStatus = "published"
-	DatasetStatusDraft     DatasetStatus = "draft"
-	DatasetStatusSubmitted DatasetStatus = "submitted"
-	DatasetStatusArchived  DatasetStatus = "archived"
-	DatasetStatusRejected  DatasetStatus = "rejected"
+	DatasetStatusPublished DatasetStatus = "PUBLISHED"
+	DatasetStatusDraft     DatasetStatus = "DRAFT"
+	DatasetStatusSubmitted DatasetStatus = "SUBMITTED"
+	DatasetStatusArchived  DatasetStatus = "ARCHIVED"
+	DatasetStatusRejected  DatasetStatus = "REJECTED"
 )
 
 func (s DatasetStatus) Valid() bool {
@@ -22,11 +22,11 @@ func (s DatasetStatus) Valid() bool {
 type ParameterKind string
 
 const (
-	ParameterKindString   ParameterKind = "string"
-	ParameterKindBoolean  ParameterKind = "boolean"
-	ParameterKindInteger  ParameterKind = "integer"
-	ParameterKindFloat    ParameterKind = "float"
-	ParameterKindDateTime ParameterKind = "datetime"
+	ParameterKindString   ParameterKind = "STRING"
+	ParameterKindBoolean  ParameterKind = "BOOLEAN"
+	ParameterKindInteger  ParameterKind = "INTEGER"
+	ParameterKindFloat    ParameterKind = "FLOAT"
+	ParameterKindDateTime ParameterKind = "DATETIME"
 )
 
 func (k ParameterKind) Valid() bool {
@@ -41,9 +41,9 @@ func (k ParameterKind) Valid() bool {
 type UserStatus string
 
 const (
-	UserStatusActive   UserStatus = "active"
-	UserStatusInactive UserStatus = "inactive"
-	UserStatusBlocked  UserStatus = "blocked"
+	UserStatusActive   UserStatus = "ACTIVE"
+	UserStatusInactive UserStatus = "INACTIVE"
+	UserStatusBlocked  UserStatus = "BLOCKED"
 )
 
 func (s UserStatus) Valid() bool {
@@ -58,10 +58,10 @@ func (s UserStatus) Valid() bool {
 type MembershipRole string
 
 const (
-	MembershipRoleViewer   MembershipRole = "viewer"
-	MembershipRoleEditor   MembershipRole = "editor"
-	MembershipRoleReviewer MembershipRole = "reviewer"
-	MembershipRoleAdmin    MembershipRole = "admin"
+	MembershipRoleViewer   MembershipRole = "VIEWER"
+	MembershipRoleEditor   MembershipRole = "EDITOR"
+	MembershipRoleReviewer MembershipRole = "REVIEWER"
+	MembershipRoleAdmin    MembershipRole = "ADMIN"
 )
 
 func (r MembershipRole) Valid() bool {
@@ -76,10 +76,10 @@ func (r MembershipRole) Valid() bool {
 type MembershipStatus string
 
 const (
-	MembershipStatusPending  MembershipStatus = "pending"
-	MembershipStatusActive   MembershipStatus = "active"
-	MembershipStatusRevoked  MembershipStatus = "revoked"
-	MembershipStatusRejected MembershipStatus = "rejected"
+	MembershipStatusPending  MembershipStatus = "PENDING"
+	MembershipStatusActive   MembershipStatus = "ACTIVE"
+	MembershipStatusRevoked  MembershipStatus = "REVOKED"
+	MembershipStatusRejected MembershipStatus = "REJECTED"
 )
 
 func (s MembershipStatus) Valid() bool {
@@ -94,8 +94,8 @@ func (s MembershipStatus) Valid() bool {
 type PermissionEffect string
 
 const (
-	PermissionEffectAllow PermissionEffect = "allow"
-	PermissionEffectDeny  PermissionEffect = "deny"
+	PermissionEffectAllow PermissionEffect = "ALLOW"
+	PermissionEffectDeny  PermissionEffect = "DENY"
 )
 
 func (e PermissionEffect) Valid() bool {
@@ -114,9 +114,9 @@ type ContactPointRole string
 type TopLevelConcept string
 
 const (
-	TopLevelConceptData       TopLevelConcept = "data"
-	TopLevelConceptFacilities TopLevelConcept = "facilities"
-	TopLevelConceptSoftware   TopLevelConcept = "software"
+	TopLevelConceptData       TopLevelConcept = "DATA"
+	TopLevelConceptFacilities TopLevelConcept = "FACILITIES"
+	TopLevelConceptSoftware   TopLevelConcept = "SOFTWARE"
 )
 
 func (c TopLevelConcept) Valid() bool {

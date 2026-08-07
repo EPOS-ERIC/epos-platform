@@ -17,11 +17,11 @@ import (
 type DatasetStatus string
 
 const (
-	DatasetStatusPublished DatasetStatus = "published"
-	DatasetStatusDraft     DatasetStatus = "draft"
-	DatasetStatusSubmitted DatasetStatus = "submitted"
-	DatasetStatusArchived  DatasetStatus = "archived"
-	DatasetStatusRejected  DatasetStatus = "rejected"
+	DatasetStatusPUBLISHED DatasetStatus = "PUBLISHED"
+	DatasetStatusDRAFT     DatasetStatus = "DRAFT"
+	DatasetStatusSUBMITTED DatasetStatus = "SUBMITTED"
+	DatasetStatusARCHIVED  DatasetStatus = "ARCHIVED"
+	DatasetStatusREJECTED  DatasetStatus = "REJECTED"
 )
 
 func (e *DatasetStatus) Scan(src interface{}) error {
@@ -62,10 +62,10 @@ func (ns NullDatasetStatus) Value() (driver.Value, error) {
 type MembershipRole string
 
 const (
-	MembershipRoleViewer   MembershipRole = "viewer"
-	MembershipRoleEditor   MembershipRole = "editor"
-	MembershipRoleReviewer MembershipRole = "reviewer"
-	MembershipRoleAdmin    MembershipRole = "admin"
+	MembershipRoleVIEWER   MembershipRole = "VIEWER"
+	MembershipRoleEDITOR   MembershipRole = "EDITOR"
+	MembershipRoleREVIEWER MembershipRole = "REVIEWER"
+	MembershipRoleADMIN    MembershipRole = "ADMIN"
 )
 
 func (e *MembershipRole) Scan(src interface{}) error {
@@ -106,10 +106,10 @@ func (ns NullMembershipRole) Value() (driver.Value, error) {
 type MembershipStatus string
 
 const (
-	MembershipStatusPending  MembershipStatus = "pending"
-	MembershipStatusActive   MembershipStatus = "active"
-	MembershipStatusRevoked  MembershipStatus = "revoked"
-	MembershipStatusRejected MembershipStatus = "rejected"
+	MembershipStatusPENDING  MembershipStatus = "PENDING"
+	MembershipStatusACTIVE   MembershipStatus = "ACTIVE"
+	MembershipStatusREVOKED  MembershipStatus = "REVOKED"
+	MembershipStatusREJECTED MembershipStatus = "REJECTED"
 )
 
 func (e *MembershipStatus) Scan(src interface{}) error {
@@ -150,11 +150,11 @@ func (ns NullMembershipStatus) Value() (driver.Value, error) {
 type ParameterKind string
 
 const (
-	ParameterKindString   ParameterKind = "string"
-	ParameterKindBoolean  ParameterKind = "boolean"
-	ParameterKindInteger  ParameterKind = "integer"
-	ParameterKindFloat    ParameterKind = "float"
-	ParameterKindDatetime ParameterKind = "datetime"
+	ParameterKindSTRING   ParameterKind = "STRING"
+	ParameterKindBOOLEAN  ParameterKind = "BOOLEAN"
+	ParameterKindINTEGER  ParameterKind = "INTEGER"
+	ParameterKindFLOAT    ParameterKind = "FLOAT"
+	ParameterKindDATETIME ParameterKind = "DATETIME"
 )
 
 func (e *ParameterKind) Scan(src interface{}) error {
@@ -195,8 +195,8 @@ func (ns NullParameterKind) Value() (driver.Value, error) {
 type PermissionEffect string
 
 const (
-	PermissionEffectAllow PermissionEffect = "allow"
-	PermissionEffectDeny  PermissionEffect = "deny"
+	PermissionEffectALLOW PermissionEffect = "ALLOW"
+	PermissionEffectDENY  PermissionEffect = "DENY"
 )
 
 func (e *PermissionEffect) Scan(src interface{}) error {
@@ -237,9 +237,9 @@ func (ns NullPermissionEffect) Value() (driver.Value, error) {
 type TopLevelConcept string
 
 const (
-	TopLevelConceptData       TopLevelConcept = "data"
-	TopLevelConceptFacilities TopLevelConcept = "facilities"
-	TopLevelConceptSoftware   TopLevelConcept = "software"
+	TopLevelConceptDATA       TopLevelConcept = "DATA"
+	TopLevelConceptFACILITIES TopLevelConcept = "FACILITIES"
+	TopLevelConceptSOFTWARE   TopLevelConcept = "SOFTWARE"
 )
 
 func (e *TopLevelConcept) Scan(src interface{}) error {
@@ -280,9 +280,9 @@ func (ns NullTopLevelConcept) Value() (driver.Value, error) {
 type UserStatus string
 
 const (
-	UserStatusActive   UserStatus = "active"
-	UserStatusInactive UserStatus = "inactive"
-	UserStatusBlocked  UserStatus = "blocked"
+	UserStatusACTIVE   UserStatus = "ACTIVE"
+	UserStatusINACTIVE UserStatus = "INACTIVE"
+	UserStatusBLOCKED  UserStatus = "BLOCKED"
 )
 
 func (e *UserStatus) Scan(src interface{}) error {
@@ -321,9 +321,10 @@ func (ns NullUserStatus) Value() (driver.Value, error) {
 }
 
 type Category struct {
-	ID       uuid.UUID
-	SchemeID uuid.UUID
-	Name     string
+	ID        uuid.UUID
+	SourceIri string
+	SchemeID  uuid.UUID
+	Name      string
 }
 
 type CategoryChild struct {
@@ -332,19 +333,22 @@ type CategoryChild struct {
 }
 
 type CategoryScheme struct {
-	ID      uuid.UUID
-	Name    string
-	Concept TopLevelConcept
+	ID        uuid.UUID
+	SourceIri string
+	Name      string
+	Concept   TopLevelConcept
 }
 
 type ContactPoint struct {
-	ID    uuid.UUID
-	Email string
-	Role  string
+	ID        uuid.UUID
+	SourceIri string
+	Email     string
+	Role      string
 }
 
 type Dataset struct {
 	ID                uuid.UUID
+	SourceIri         string
 	Title             string
 	Description       string
 	SpatialPoint      interface{}
@@ -381,6 +385,7 @@ type DatasetProvider struct {
 
 type Distribution struct {
 	ID                     uuid.UUID
+	SourceIri              string
 	DatasetID              uuid.UUID
 	Title                  string
 	Description            string
@@ -428,13 +433,15 @@ type GroupPermission struct {
 }
 
 type Identifier struct {
-	ID    uuid.UUID
-	Type  string
-	Value string
+	ID        uuid.UUID
+	SourceIri string
+	Type      string
+	Value     string
 }
 
 type Organization struct {
 	ID         uuid.UUID
+	SourceIri  string
 	Name       string
 	Street     sql.NullString
 	Locality   sql.NullString
@@ -469,6 +476,7 @@ type User struct {
 
 type WebService struct {
 	ID                       uuid.UUID
+	SourceIri                string
 	Name                     string
 	Description              string
 	TemplateUrl              string
@@ -489,6 +497,7 @@ type WebServiceContactPoint struct {
 
 type WebServiceParameter struct {
 	ID             uuid.UUID
+	SourceIri      string
 	WebServiceID   uuid.UUID
 	Kind           ParameterKind
 	Variable       string

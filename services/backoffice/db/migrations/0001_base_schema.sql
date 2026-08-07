@@ -9,50 +9,50 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================
 
 CREATE TYPE user_status AS ENUM (
-    'active',
-    'inactive',
-    'blocked'
+    'ACTIVE',
+    'INACTIVE',
+    'BLOCKED'
 );
 
 CREATE TYPE membership_role AS ENUM (
-    'viewer',
-    'editor',
-    'reviewer',
-    'admin'
+    'VIEWER',
+    'EDITOR',
+    'REVIEWER',
+    'ADMIN'
 );
 
 CREATE TYPE membership_status AS ENUM (
-    'pending',
-    'active',
-    'revoked',
-    'rejected'
+    'PENDING',
+    'ACTIVE',
+    'REVOKED',
+    'REJECTED'
 );
 
 CREATE TYPE permission_effect AS ENUM (
-    'allow',
-    'deny'
+    'ALLOW',
+    'DENY'
 );
 
 CREATE TYPE dataset_status AS ENUM (
-    'published',
-    'draft',
-    'submitted',
-    'archived',
-    'rejected'
+    'PUBLISHED',
+    'DRAFT',
+    'SUBMITTED',
+    'ARCHIVED',
+    'REJECTED'
 );
 
 CREATE TYPE parameter_kind AS ENUM (
-    'string',
-    'boolean',
-    'integer',
-    'float',
-    'datetime'
+    'STRING',
+    'BOOLEAN',
+    'INTEGER',
+    'FLOAT',
+    'DATETIME'
 );
 
 CREATE TYPE top_level_concept AS ENUM (
-    'data',
-    'facilities',
-    'software'
+    'DATA',
+    'FACILITIES',
+    'SOFTWARE'
 );
 
 
@@ -68,7 +68,7 @@ CREATE TABLE users (
     given_name      text,
     email           text UNIQUE,
     is_super_admin  boolean NOT NULL DEFAULT false,
-    status          user_status NOT NULL DEFAULT 'active',
+    status          user_status NOT NULL DEFAULT 'ACTIVE',
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now()
 );
@@ -133,7 +133,7 @@ CREATE TABLE group_permissions (
     action        text NOT NULL,
     resource_type text,
     resource_id   text,
-    effect        permission_effect NOT NULL DEFAULT 'allow',
+    effect        permission_effect NOT NULL DEFAULT 'ALLOW',
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz NOT NULL DEFAULT now()
 );
@@ -164,6 +164,7 @@ ON CONFLICT (slug) DO NOTHING;
 
 CREATE TABLE datasets (
     id                      uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri              text NOT NULL UNIQUE,
     title                   text NOT NULL,
     description             text NOT NULL DEFAULT '',
 
@@ -173,7 +174,7 @@ CREATE TABLE datasets (
     temporal_start          timestamptz,
     temporal_end            timestamptz,
 
-    status                  dataset_status NOT NULL DEFAULT 'draft',
+    status                  dataset_status NOT NULL DEFAULT 'DRAFT',
     editor_user_id          uuid
         REFERENCES users(id)
         ON UPDATE CASCADE
@@ -211,11 +212,12 @@ CREATE TABLE datasets (
 
 CREATE TABLE identifiers (
     id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri  text NOT NULL,
     type        text NOT NULL,
     value       text NOT NULL,
 
-    CONSTRAINT identifiers_type_value_unique
-        UNIQUE (type, value)
+    CONSTRAINT identifiers_source_type_value_unique
+        UNIQUE (source_iri, type, value)
 );
 
 CREATE TABLE dataset_identifiers (
@@ -239,6 +241,7 @@ CREATE TABLE dataset_identifiers (
 
 CREATE TABLE organizations (
     id              uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri      text NOT NULL UNIQUE,
     name            text NOT NULL,
 
     street          text,
@@ -310,12 +313,14 @@ CREATE TABLE dataset_providers (
 
 CREATE TABLE category_schemes (
     id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri  text NOT NULL UNIQUE,
     name        text NOT NULL,
     concept     top_level_concept NOT NULL
 );
 
 CREATE TABLE categories (
     id              uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri      text NOT NULL UNIQUE,
     scheme_id       uuid NOT NULL
         REFERENCES category_schemes(id)
         ON UPDATE CASCADE
@@ -368,6 +373,7 @@ CREATE TABLE dataset_categories (
 
 CREATE TABLE contact_points (
     id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri  text NOT NULL UNIQUE,
     email       text NOT NULL,
     role        text NOT NULL,
 
@@ -396,6 +402,7 @@ CREATE TABLE dataset_contact_points (
 
 CREATE TABLE distributions (
     id                          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri                  text NOT NULL,
 
     dataset_id                  uuid NOT NULL
         REFERENCES datasets(id)
@@ -423,8 +430,11 @@ CREATE TABLE distributions (
                 AND downloadable_file_format IS NULL
                 AND web_service_id IS NOT NULL
             )
-        )
-);
+         ),
+
+     CONSTRAINT distributions_source_iri_unique
+         UNIQUE (dataset_id, source_iri)
+ );
 
 
 -- ============================================================
@@ -434,6 +444,7 @@ CREATE TABLE distributions (
 
 CREATE TABLE web_services (
     id                          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri                  text NOT NULL,
 
     name                        text NOT NULL,
     description                 text NOT NULL DEFAULT '',
@@ -473,7 +484,7 @@ ALTER TABLE distributions
     FOREIGN KEY (web_service_id)
     REFERENCES web_services(id)
     ON UPDATE CASCADE
-    ON DELETE RESTRICT;
+    ON DELETE CASCADE;
 
 CREATE TABLE web_service_providers (
     web_service_id    uuid NOT NULL
@@ -510,6 +521,7 @@ CREATE TABLE web_service_contact_points (
 
 CREATE TABLE web_service_parameters (
     id                   uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri           text NOT NULL,
 
     web_service_id       uuid NOT NULL
         REFERENCES web_services(id)

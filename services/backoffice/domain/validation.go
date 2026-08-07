@@ -156,7 +156,7 @@ func validateWebService(w WebService) error {
 	variables := make(map[string]struct{}, len(w.Parameters))
 	for _, parameter := range w.Parameters {
 		if err := validateParameter(parameter); err != nil {
-			return fmt.Errorf("parameter: %w", err)
+			return fmt.Errorf("parameter %q: %w", parameter.GetMetadata().SourceIRI, err)
 		}
 		if err := addUnique(variables, parameter.GetMetadata().Variable, "parameter variable"); err != nil {
 			return err

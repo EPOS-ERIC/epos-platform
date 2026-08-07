@@ -58,7 +58,7 @@ func (s *Memberships) ListByGroup(ctx context.Context, groupID uuid.UUID) ([]Mem
 	items := make([]Membership, len(rows))
 
 	for i, row := range rows {
-		items[i] = Membership{UserID: row.UserID.String(), GroupID: row.GroupID.String(), Role: MembershipRole(row.Role), Status: MembershipStatus(row.Status), CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
+		items[i] = Membership{UserID: row.UserID.String(), GroupID: row.GroupID.String(), Role: NormalizeMembershipRole(string(row.Role)), Status: NormalizeMembershipStatus(string(row.Status)), CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
 	}
 
 	return items, nil
@@ -99,7 +99,7 @@ func (s *Memberships) Upsert(ctx context.Context, params UpsertMembershipParams)
 		return Membership{}, fmt.Errorf("upsert membership: %w", err)
 	}
 
-	return Membership{UserID: row.UserID.String(), GroupID: row.GroupID.String(), Role: MembershipRole(row.Role), Status: MembershipStatus(row.Status), CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}, nil
+	return Membership{UserID: row.UserID.String(), GroupID: row.GroupID.String(), Role: NormalizeMembershipRole(string(row.Role)), Status: NormalizeMembershipStatus(string(row.Status)), CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}, nil
 }
 
 func (s *Memberships) Delete(ctx context.Context, userID, groupID uuid.UUID) error {

@@ -22,7 +22,7 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 clean: down
-	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data
+	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data docker_backoffice-db-data
 
 test:
 	$(MAKE) -C apps/platform test

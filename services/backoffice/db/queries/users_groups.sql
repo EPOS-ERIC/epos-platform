@@ -179,7 +179,7 @@ DELETE FROM group_memberships WHERE user_id = $1 AND group_id = $2;
 
 -- name: IsActiveMember :one
 SELECT
-    status = 'active' AS active
+    status = 'ACTIVE' AS active
 FROM group_memberships
 WHERE user_id = $1 AND group_id = $2;
 

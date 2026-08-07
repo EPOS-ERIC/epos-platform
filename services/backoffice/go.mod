@@ -27,6 +27,8 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/deiu/gon3 v0.0.0-20241212124032-93153c038193 // indirect
+	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
@@ -39,6 +41,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/linkeddata/gojsonld v0.0.0-20170418210642-4f5db6791326 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/ncruces/go-sqlite3 v0.32.0 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
@@ -48,6 +51,7 @@ require (
 	github.com/pingcap/log v1.1.0 // indirect
 	github.com/pingcap/tidb/pkg/parser v0.0.0-20260418072757-ce92298d1124 // indirect
 	github.com/riza-io/grpc-go v0.2.0 // indirect
+	github.com/rychipman/easylex v0.0.0-20160129204217-49ee7767142f // indirect
 	github.com/sethvargo/go-retry v0.4.0 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect

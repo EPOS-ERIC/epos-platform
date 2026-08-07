@@ -399,7 +399,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 
 const isActiveMember = `-- name: IsActiveMember :one
 SELECT
-    status = 'active' AS active
+    status = 'ACTIVE' AS active
 FROM group_memberships
 WHERE user_id = $1 AND group_id = $2
 `

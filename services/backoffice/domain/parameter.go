@@ -15,6 +15,7 @@ type Parameter interface {
 
 type ParameterMetadata struct {
 	ID             uuid.UUID `json:"id"`
+	SourceIRI      string    `json:"source_iri"`
 	Variable       string    `json:"variable"`
 	Property       string    `json:"property"`
 	Label          string    `json:"label"`

@@ -21,6 +21,8 @@ tags:
     description: Manage group membership assignments.
   - name: Friendships
     description: Manage user-to-user friendships.
+  - name: Metadata Import
+    description: Import dataset metadata from Turtle files.
 paths:
   /health:
     get:
@@ -46,8 +48,37 @@ paths:
           description: Decision computed
           content:
             application/json:
+               schema:
+                 $ref: '#/components/schemas/AuthorizeResponse'
+  /api/v2/import/metadata:
+    post:
+      tags: [Metadata Import]
+      summary: Import dataset metadata
+      description: >-
+        Imports a Turtle file into dataset-centric backoffice records. Organizations,
+        contact points, categories, and category schemes may be shared. Other nested
+        resources are materialized per dataset tree.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MetadataImportRequest'
+      responses:
+        '201':
+          description: Metadata imported
+          content:
+            application/json:
               schema:
-                $ref: '#/components/schemas/AuthorizeResponse'
+                $ref: '#/components/schemas/MetadataImportResponse'
+        '400':
+          description: Invalid multipart request or identifiers
+        '404':
+          description: Editor or group not found
+        '422':
+          description: Turtle mapping or domain validation failed
+        '500':
+          description: Import persistence failed
   /api/v2/groups/{groupId}/memberships:
     get:
       tags: [Memberships]
@@ -414,6 +445,54 @@ paths:
 
 components:
   schemas:
+    MetadataImportRequest:
+      type: object
+      description: Multipart Turtle metadata import request.
+      required: [file, editorId, groupId]
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Turtle file to import.
+        editorId:
+          type: string
+          format: uuid
+          description: User assigned as editor for imported datasets.
+        groupId:
+          type: string
+          format: uuid
+          description: Group assigned to imported datasets.
+    MetadataImportWarning:
+      type: object
+      required: [message]
+      properties:
+        subject:
+          type: string
+        message:
+          type: string
+    MetadataImportResponse:
+      type: object
+      required: [datasets, categorySchemes, categories, organizations, contactPoints]
+      properties:
+        datasets:
+          type: integer
+          minimum: 0
+        categorySchemes:
+          type: integer
+          minimum: 0
+        categories:
+          type: integer
+          minimum: 0
+        organizations:
+          type: integer
+          minimum: 0
+        contactPoints:
+          type: integer
+          minimum: 0
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetadataImportWarning'
     Group:
       type: object
       description: Group record returned by group endpoints.

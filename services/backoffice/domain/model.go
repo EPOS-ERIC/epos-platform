@@ -8,6 +8,7 @@ import (
 
 type Dataset struct {
 	ID                    uuid.UUID      `json:"id"`
+	SourceIRI             string         `json:"source_iri"`
 	Title                 string         `json:"title"`
 	Description           string         `json:"description"`
 	Distributions         []Distribution `json:"distributions"`
@@ -29,6 +30,7 @@ type Dataset struct {
 
 type Distribution struct {
 	ID          uuid.UUID `json:"id"`
+	SourceIRI   string    `json:"source_iri"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	License     *string   `json:"license"`
@@ -45,6 +47,7 @@ type DownloadableFile struct {
 
 type WebService struct {
 	ID               uuid.UUID      `json:"id"`
+	SourceIRI        string         `json:"source_iri"`
 	Name             string         `json:"name"`
 	Description      string         `json:"description"`
 	TemplateURL      string         `json:"template_url"`
@@ -57,6 +60,7 @@ type WebService struct {
 	ContactPoints    []ContactPoint `json:"contact_points"`
 }
 type Documentation struct {
+	SourceIRI   string  `json:"source_iri"`
 	Title       *string `json:"title"`
 	Description *string `json:"description"`
 	URI         string  `json:"uri"`
@@ -64,6 +68,7 @@ type Documentation struct {
 
 type Organization struct {
 	ID          uuid.UUID    `json:"id"`
+	SourceIRI   string       `json:"source_iri"`
 	Name        string       `json:"name"`
 	Street      *string      `json:"street"`
 	Locality    *string      `json:"locality"`
@@ -76,15 +81,17 @@ type Organization struct {
 }
 
 type Category struct {
-	ID     uuid.UUID      `json:"id"`
-	Name   string         `json:"name"`
-	Scheme CategoryScheme `json:"scheme"`
+	ID        uuid.UUID      `json:"id"`
+	SourceIRI string         `json:"source_iri"`
+	Name      string         `json:"name"`
+	Scheme    CategoryScheme `json:"scheme"`
 }
 
 type CategoryScheme struct {
-	ID      uuid.UUID       `json:"id"`
-	Name    string          `json:"name"`
-	Concept TopLevelConcept `json:"concept"`
+	ID        uuid.UUID       `json:"id"`
+	SourceIRI string          `json:"source_iri"`
+	Name      string          `json:"name"`
+	Concept   TopLevelConcept `json:"concept"`
 }
 
 type User struct {
@@ -124,13 +131,15 @@ type Temporal struct {
 }
 
 type Identifier struct {
-	ID    uuid.UUID      `json:"id"`
-	Type  IdentifierType `json:"type"`
-	Value string         `json:"value"`
+	ID        uuid.UUID      `json:"id"`
+	SourceIRI string         `json:"source_iri"`
+	Type      IdentifierType `json:"type"`
+	Value     string         `json:"value"`
 }
 
 type ContactPoint struct {
-	ID    uuid.UUID        `json:"id"`
-	Email string           `json:"email"`
-	Role  ContactPointRole `json:"role"`
+	ID        uuid.UUID        `json:"id"`
+	SourceIRI string           `json:"source_iri"`
+	Email     string           `json:"email"`
+	Role      ContactPointRole `json:"role"`
 }

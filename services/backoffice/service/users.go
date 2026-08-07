@@ -82,7 +82,7 @@ func (s *Users) List(ctx context.Context) ([]User, error) {
 			GivenName:      row.GivenName,
 			FamilyName:     row.FamilyName,
 			IsSuperAdmin:   row.IsSuperAdmin,
-			Status:         UserStatus(row.Status),
+			Status:         NormalizeUserStatus(string(row.Status)),
 			CreatedAt:      row.CreatedAt,
 			UpdatedAt:      row.UpdatedAt,
 		}
@@ -108,7 +108,7 @@ func (s *Users) GetByID(ctx context.Context, id uuid.UUID) (User, error) {
 		GivenName:      row.GivenName,
 		FamilyName:     row.FamilyName,
 		IsSuperAdmin:   row.IsSuperAdmin,
-		Status:         UserStatus(row.Status),
+		Status:         NormalizeUserStatus(string(row.Status)),
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
 	}, nil
@@ -131,7 +131,7 @@ func (s *Users) GetByAuthIdentifier(ctx context.Context, authIdentifier string) 
 		GivenName:      row.GivenName,
 		FamilyName:     row.FamilyName,
 		IsSuperAdmin:   row.IsSuperAdmin,
-		Status:         UserStatus(row.Status),
+		Status:         NormalizeUserStatus(string(row.Status)),
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
 	}, nil
@@ -174,7 +174,7 @@ func (s *Users) Create(ctx context.Context, params CreateUserParams) (User, erro
 		GivenName:      row.GivenName,
 		FamilyName:     row.FamilyName,
 		IsSuperAdmin:   row.IsSuperAdmin,
-		Status:         UserStatus(row.Status),
+		Status:         NormalizeUserStatus(string(row.Status)),
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
 	}, nil
@@ -214,7 +214,7 @@ func (s *Users) Replace(ctx context.Context, params UpdateUserParams) (User, err
 		GivenName:      row.GivenName,
 		FamilyName:     row.FamilyName,
 		IsSuperAdmin:   row.IsSuperAdmin,
-		Status:         UserStatus(row.Status),
+		Status:         NormalizeUserStatus(string(row.Status)),
 		CreatedAt:      row.CreatedAt,
 		UpdatedAt:      row.UpdatedAt,
 	}, nil
