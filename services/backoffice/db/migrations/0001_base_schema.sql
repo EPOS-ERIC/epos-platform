@@ -152,6 +152,10 @@ CREATE TABLE datasets (
     source_iri              text NOT NULL UNIQUE,
     title                   text NOT NULL,
     description             text NOT NULL DEFAULT '',
+    keywords                text NOT NULL DEFAULT '',
+    accrual_periodicity     text,
+    quality_annotation      text,
+    access_right            text,
 
     spatial_point           geometry(Point, 4326),
     spatial_polygon         geometry(Polygon, 4326),
@@ -239,6 +243,7 @@ CREATE TABLE organizations (
     logo_url        text,
     page_url        text,
     email           text,
+    lei_code        text,
 
     CONSTRAINT organizations_name_unique
         UNIQUE (name)
@@ -302,7 +307,12 @@ CREATE TABLE category_schemes (
     id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     source_iri  text NOT NULL UNIQUE,
     name        text NOT NULL,
-    concept     top_level_concept NOT NULL
+    concept     top_level_concept NOT NULL,
+    label       text,
+    logo        text,
+    page        text,
+    color       text,
+    position    integer NOT NULL DEFAULT 0
 );
 
 CREATE TABLE categories (
@@ -399,7 +409,11 @@ CREATE TABLE distributions (
     title                       text NOT NULL,
     description                 text NOT NULL DEFAULT '',
     license                     text,
+    source_issued_at            timestamptz,
+    source_modified_at          timestamptz,
+    byte_size                   integer,
 
+    type                        text NOT NULL,
     downloadable_file_url       text,
     downloadable_file_format    text,
     web_service_id              uuid,
@@ -407,15 +421,18 @@ CREATE TABLE distributions (
     CONSTRAINT distributions_delivery_method_check
         CHECK (
             (
-                downloadable_file_url IS NOT NULL
-                AND downloadable_file_format IS NOT NULL
-                AND web_service_id IS NULL
-            )
-            OR
-            (
+                type = 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
+                AND
                 downloadable_file_url IS NULL
                 AND downloadable_file_format IS NULL
                 AND web_service_id IS NOT NULL
+            )
+            OR
+            (
+                type = 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE'
+                AND downloadable_file_url IS NOT NULL
+                AND downloadable_file_format IS NOT NULL
+                AND web_service_id IS NULL
             )
          ),
 

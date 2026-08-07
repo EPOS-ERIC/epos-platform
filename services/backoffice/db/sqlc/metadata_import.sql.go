@@ -67,9 +67,9 @@ func (q *Queries) DeleteDatasetWebServices(ctx context.Context, datasetID uuid.U
 }
 
 const insertDistribution = `-- name: InsertDistribution :exec
-INSERT INTO distributions (id, source_iri, dataset_id, title, description, license,
+INSERT INTO distributions (id, source_iri, dataset_id, title, description, license, type, source_issued_at, source_modified_at, byte_size,
 	downloadable_file_url, downloadable_file_format, web_service_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $11, $12, $13, $8, $9, $10)
 `
 
 type InsertDistributionParams struct {
@@ -79,9 +79,13 @@ type InsertDistributionParams struct {
 	Title                  string
 	Description            string
 	License                *string
+	Type                   string
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
 	WebServiceID           *uuid.UUID
+	SourceIssuedAt         *time.Time
+	SourceModifiedAt       *time.Time
+	ByteSize               *int32
 }
 
 func (q *Queries) InsertDistribution(ctx context.Context, arg InsertDistributionParams) error {
@@ -92,9 +96,13 @@ func (q *Queries) InsertDistribution(ctx context.Context, arg InsertDistribution
 		arg.Title,
 		arg.Description,
 		arg.License,
+		arg.Type,
 		arg.DownloadableFileUrl,
 		arg.DownloadableFileFormat,
 		arg.WebServiceID,
+		arg.SourceIssuedAt,
+		arg.SourceModifiedAt,
+		arg.ByteSize,
 	)
 	return err
 }
@@ -321,9 +329,10 @@ func (q *Queries) UpsertCategory(ctx context.Context, arg UpsertCategoryParams) 
 }
 
 const upsertCategoryScheme = `-- name: UpsertCategoryScheme :exec
-INSERT INTO category_schemes (id, source_iri, name, concept)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (source_iri) DO UPDATE SET name = excluded.name, concept = excluded.concept
+INSERT INTO category_schemes (id, source_iri, name, concept, label, logo, page, color, position)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (source_iri) DO UPDATE SET name = excluded.name, concept = excluded.concept,
+label = excluded.label, logo = excluded.logo, page = excluded.page, color = excluded.color, position = excluded.position
 `
 
 type UpsertCategorySchemeParams struct {
@@ -331,6 +340,11 @@ type UpsertCategorySchemeParams struct {
 	SourceIri string
 	Name      string
 	Concept   TopLevelConcept
+	Label     *string
+	Logo      *string
+	Page      *string
+	Color     *string
+	Position  int32
 }
 
 func (q *Queries) UpsertCategoryScheme(ctx context.Context, arg UpsertCategorySchemeParams) error {
@@ -339,6 +353,11 @@ func (q *Queries) UpsertCategoryScheme(ctx context.Context, arg UpsertCategorySc
 		arg.SourceIri,
 		arg.Name,
 		arg.Concept,
+		arg.Label,
+		arg.Logo,
+		arg.Page,
+		arg.Color,
+		arg.Position,
 	)
 	return err
 }
@@ -367,13 +386,14 @@ func (q *Queries) UpsertContactPoint(ctx context.Context, arg UpsertContactPoint
 }
 
 const upsertDataset = `-- name: UpsertDataset :exec
-INSERT INTO datasets (id, source_iri, title, description, temporal_start, temporal_end, status,
-	editor_user_id, group_id, source_created_at, source_updated_at, original_dataset_id, spatial_point, spatial_polygon)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $11, $12, $10,
-	CASE WHEN $13::text IS NULL THEN NULL ELSE ST_GeomFromText($13::text, 4326) END,
-	CASE WHEN $14::text IS NULL THEN NULL ELSE ST_GeomFromText($14::text, 4326) END)
+INSERT INTO datasets (id, source_iri, title, description, keywords, accrual_periodicity, quality_annotation, access_right,
+    temporal_start, temporal_end, status, editor_user_id, group_id, source_created_at, source_updated_at, original_dataset_id, spatial_point, spatial_polygon)
+VALUES ($1, $2, $3, $4, $5, $12, $13, $14, $6, $7, $8, $9, $10, $15, $16, $11,
+	CASE WHEN $17::text IS NULL THEN NULL ELSE ST_GeomFromText($17::text, 4326) END,
+	CASE WHEN $18::text IS NULL THEN NULL ELSE ST_GeomFromText($18::text, 4326) END)
 ON CONFLICT (source_iri) DO UPDATE SET id = excluded.id, title = excluded.title,
-description = excluded.description, temporal_start = excluded.temporal_start,
+description = excluded.description, keywords = excluded.keywords, accrual_periodicity = excluded.accrual_periodicity,
+quality_annotation = excluded.quality_annotation, access_right = excluded.access_right, temporal_start = excluded.temporal_start,
 temporal_end = excluded.temporal_end, status = excluded.status, editor_user_id = excluded.editor_user_id,
 group_id = excluded.group_id, source_created_at = excluded.source_created_at,
 source_updated_at = excluded.source_updated_at, original_dataset_id = excluded.original_dataset_id,
@@ -381,20 +401,24 @@ spatial_point = excluded.spatial_point, spatial_polygon = excluded.spatial_polyg
 `
 
 type UpsertDatasetParams struct {
-	ID                uuid.UUID
-	SourceIri         string
-	Title             string
-	Description       string
-	TemporalStart     *time.Time
-	TemporalEnd       *time.Time
-	Status            DatasetStatus
-	EditorUserID      *uuid.UUID
-	GroupID           *uuid.UUID
-	OriginalDatasetID uuid.UUID
-	SourceCreatedAt   *time.Time
-	SourceUpdatedAt   *time.Time
-	SpatialPoint      *string
-	SpatialPolygon    *string
+	ID                 uuid.UUID
+	SourceIri          string
+	Title              string
+	Description        string
+	Keywords           string
+	TemporalStart      *time.Time
+	TemporalEnd        *time.Time
+	Status             DatasetStatus
+	EditorUserID       *uuid.UUID
+	GroupID            *uuid.UUID
+	OriginalDatasetID  uuid.UUID
+	AccrualPeriodicity *string
+	QualityAnnotation  *string
+	AccessRight        *string
+	SourceCreatedAt    *time.Time
+	SourceUpdatedAt    *time.Time
+	SpatialPoint       *string
+	SpatialPolygon     *string
 }
 
 func (q *Queries) UpsertDataset(ctx context.Context, arg UpsertDatasetParams) error {
@@ -403,12 +427,16 @@ func (q *Queries) UpsertDataset(ctx context.Context, arg UpsertDatasetParams) er
 		arg.SourceIri,
 		arg.Title,
 		arg.Description,
+		arg.Keywords,
 		arg.TemporalStart,
 		arg.TemporalEnd,
 		arg.Status,
 		arg.EditorUserID,
 		arg.GroupID,
 		arg.OriginalDatasetID,
+		arg.AccrualPeriodicity,
+		arg.QualityAnnotation,
+		arg.AccessRight,
 		arg.SourceCreatedAt,
 		arg.SourceUpdatedAt,
 		arg.SpatialPoint,
@@ -441,11 +469,11 @@ func (q *Queries) UpsertIdentifier(ctx context.Context, arg UpsertIdentifierPara
 }
 
 const upsertOrganization = `-- name: UpsertOrganization :exec
-INSERT INTO organizations (id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO organizations (id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (source_iri) DO UPDATE SET name = excluded.name, street = excluded.street,
 locality = excluded.locality, postal_code = excluded.postal_code, country = excluded.country,
-logo_url = excluded.logo_url, page_url = excluded.page_url, email = excluded.email
+logo_url = excluded.logo_url, page_url = excluded.page_url, email = excluded.email, lei_code = excluded.lei_code
 `
 
 type UpsertOrganizationParams struct {
@@ -459,6 +487,7 @@ type UpsertOrganizationParams struct {
 	LogoUrl    *string
 	PageUrl    *string
 	Email      *string
+	LeiCode    *string
 }
 
 func (q *Queries) UpsertOrganization(ctx context.Context, arg UpsertOrganizationParams) error {
@@ -473,6 +502,7 @@ func (q *Queries) UpsertOrganization(ctx context.Context, arg UpsertOrganization
 		arg.LogoUrl,
 		arg.PageUrl,
 		arg.Email,
+		arg.LeiCode,
 	)
 	return err
 }

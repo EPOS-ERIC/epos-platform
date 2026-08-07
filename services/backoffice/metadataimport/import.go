@@ -16,6 +16,7 @@ import (
 var (
 	ErrMetadataImportParse   = errors.New("metadata import parse failed")
 	ErrMetadataImportPersist = errors.New("metadata import persistence failed")
+	ErrMetadataImportStatus  = errors.New("requested status requires super admin")
 )
 
 type MetadataImporter struct {
@@ -32,7 +33,7 @@ func NewMetadataImporter(database metadataRepository, users *identity.Users, gro
 	return &MetadataImporter{db: database, users: users, groups: groups}
 }
 
-func (s *MetadataImporter) Import(ctx context.Context, input io.Reader, editorID, groupID uuid.UUID) (importer.Batch, error) {
+func (s *MetadataImporter) Import(ctx context.Context, input io.Reader, editorID, groupID uuid.UUID, status domain.DatasetStatus) (importer.Batch, error) {
 	editor, err := s.users.GetByID(ctx, editorID)
 	if err != nil {
 		return importer.Batch{}, fmt.Errorf("get editor: %w", err)
@@ -50,10 +51,29 @@ func (s *MetadataImporter) Import(ctx context.Context, input io.Reader, editorID
 	if err != nil {
 		return importer.Batch{}, fmt.Errorf("%w: %w", ErrMetadataImportParse, err)
 	}
+	if err := applyStatus(&batch, editor, status); err != nil {
+		return importer.Batch{}, err
+	}
 	if err := s.db.ImportBatch(ctx, batch); err != nil {
 		return importer.Batch{}, fmt.Errorf("%w: %w", ErrMetadataImportPersist, err)
 	}
 	return batch, nil
+}
+
+func applyStatus(batch *importer.Batch, editor identity.User, status domain.DatasetStatus) error {
+	if status == "" {
+		status = domain.DatasetStatusDraft
+	}
+	if !status.Valid() {
+		return fmt.Errorf("invalid status %q", status)
+	}
+	if status != domain.DatasetStatusDraft && !editor.IsSuperAdmin {
+		return ErrMetadataImportStatus
+	}
+	for i := range batch.Datasets {
+		batch.Datasets[i].Status = status
+	}
+	return nil
 }
 
 func toDomainUser(user identity.User) domain.User {

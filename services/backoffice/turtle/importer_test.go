@@ -52,11 +52,53 @@ func TestParseMetadataOne(t *testing.T) {
 				t.Errorf("bibliography SourceUpdated = %v, want %v", dataset.SourceUpdated, updated)
 			}
 		}
+		if dataset.SourceIRI == "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events" {
+			keywords := make(map[string]bool)
+			for _, keyword := range strings.Split(dataset.Keywords, ",") {
+				keywords[keyword] = true
+			}
+			for _, keyword := range []string{"event", "earthquake", "seismicity", "catalogue", "magnitude"} {
+				if !keywords[keyword] {
+					t.Errorf("events keywords = %q", dataset.Keywords)
+				}
+			}
+			if dataset.AccrualPeriodicity == nil || *dataset.AccrualPeriodicity != "http://purl.org/cld/freq/irregular" {
+				t.Errorf("events accrual periodicity = %v", dataset.AccrualPeriodicity)
+			}
+			if dataset.QualityAnnotation == nil || *dataset.QualityAnnotation != "https://www.emidius.eu/AHEAD/data_quality_assurance.php" {
+				t.Errorf("events quality annotation = %v", dataset.QualityAnnotation)
+			}
+			if dataset.AccessRight == nil || *dataset.AccessRight != "https://publications.europa.eu/resource/authority/access-right/PUBLIC" {
+				t.Errorf("events access right = %v", dataset.AccessRight)
+			}
+		}
+		for _, distribution := range dataset.Distributions {
+			if distribution.WebService != nil && distribution.Type != domain.DistributionTypeWebService {
+				t.Errorf("web service distribution type = %q", distribution.Type)
+			}
+			if distribution.DownloadableFile != nil && distribution.Type != domain.DistributionTypeDownloadableFile {
+				t.Errorf("downloadable distribution type = %q", distribution.Type)
+			}
+			if distribution.WebService != nil && (distribution.Issued == nil || distribution.Modified == nil || !distribution.Issued.Equal(time.Date(2017, 10, 25, 0, 0, 0, 0, time.UTC)) || !distribution.Modified.Equal(time.Date(2017, 10, 25, 0, 0, 0, 0, time.UTC))) {
+				t.Errorf("web service distribution dates = (%v, %v)", distribution.Issued, distribution.Modified)
+			}
+			if distribution.DownloadableFile != nil && (distribution.ByteSize == nil || *distribution.ByteSize != 72981156) {
+				t.Errorf("downloadable distribution byte size = %v", distribution.ByteSize)
+			}
+		}
 		for _, identifier := range dataset.PersistentIdentifiers {
 			if strings.ContainsRune(identifier.SourceIRI, '\x00') {
 				t.Errorf("identifier %q contains NUL byte", identifier.SourceIRI)
 			}
 		}
+	}
+
+	schemes := make(map[string]domain.CategoryScheme, len(batch.CategorySchemes))
+	for _, scheme := range batch.CategorySchemes {
+		schemes[scheme.SourceIRI] = scheme
+	}
+	if scheme := schemes["category:seismology"]; scheme.Label == nil || *scheme.Label != "SEI" || scheme.Logo == nil || scheme.Page == nil || scheme.Color == nil || scheme.Position != 1 {
+		t.Errorf("seismology scheme fields = %#v", scheme)
 	}
 
 	organizations := make(map[string]domain.Organization, len(batch.Organizations))
@@ -81,6 +123,9 @@ func TestParseMetadataOne(t *testing.T) {
 		if *organization.Street != want.street || *organization.Locality != want.locality || *organization.PostalCode != want.postalCode || *organization.Country != want.country {
 			t.Errorf("organization %q address = (%q, %q, %q, %q)", source, *organization.Street, *organization.Locality, *organization.PostalCode, *organization.Country)
 		}
+	}
+	if organization := organizations["pic:999472675"]; organization.LEICode == nil || !strings.Contains(*organization.LEICode, "Legal Entity Identifier") {
+		t.Errorf("organization lei code = %v", organization.LEICode)
 	}
 
 	for _, dataset := range batch.Datasets {

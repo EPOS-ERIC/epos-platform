@@ -29,19 +29,19 @@ func (d Dataset) Validate() error {
 		return fmt.Errorf("dataset temporal coverage: %w", err)
 	}
 	if d.Editor != nil {
-		if err := validateUser(*d.Editor); err != nil {
+		if err := d.Editor.Validate(); err != nil {
 			return fmt.Errorf("dataset editor: %w", err)
 		}
 	}
 	if d.Group != nil {
-		if err := validateGroup(*d.Group); err != nil {
+		if err := d.Group.Validate(); err != nil {
 			return fmt.Errorf("dataset group: %w", err)
 		}
 	}
 
 	identifiers := make(map[string]struct{}, len(d.PersistentIdentifiers))
 	for _, identifier := range d.PersistentIdentifiers {
-		if err := validateIdentifier(identifier); err != nil {
+		if err := identifier.Validate(); err != nil {
 			return fmt.Errorf("dataset identifier: %w", err)
 		}
 		if err := addUnique(identifiers, identifier.ID.String(), "dataset identifier"); err != nil {
@@ -50,7 +50,7 @@ func (d Dataset) Validate() error {
 	}
 	contacts := make(map[string]struct{}, len(d.ContactPoints))
 	for _, contact := range d.ContactPoints {
-		if err := validateContactPoint(contact); err != nil {
+		if err := contact.Validate(); err != nil {
 			return fmt.Errorf("dataset contact point: %w", err)
 		}
 		if err := addUnique(contacts, contact.ID.String(), "dataset contact point"); err != nil {
@@ -59,7 +59,7 @@ func (d Dataset) Validate() error {
 	}
 	providers := make(map[string]struct{}, len(d.Providers))
 	for _, provider := range d.Providers {
-		if err := validateOrganization(provider); err != nil {
+		if err := provider.Validate(); err != nil {
 			return fmt.Errorf("dataset provider: %w", err)
 		}
 		if err := addUnique(providers, provider.ID.String(), "dataset provider"); err != nil {
@@ -68,7 +68,7 @@ func (d Dataset) Validate() error {
 	}
 	categories := make(map[string]struct{}, len(d.Categories))
 	for _, category := range d.Categories {
-		if err := validateCategory(category); err != nil {
+		if err := category.Validate(); err != nil {
 			return fmt.Errorf("dataset category: %w", err)
 		}
 		if err := addUnique(categories, category.ID.String(), "dataset category"); err != nil {
@@ -77,7 +77,7 @@ func (d Dataset) Validate() error {
 	}
 	distributions := make(map[string]struct{}, len(d.Distributions))
 	for _, distribution := range d.Distributions {
-		if err := validateDistribution(distribution); err != nil {
+		if err := distribution.Validate(); err != nil {
 			return fmt.Errorf("dataset distribution: %w", err)
 		}
 		if err := addUnique(distributions, distribution.ID.String(), "dataset distribution"); err != nil {
@@ -88,42 +88,46 @@ func (d Dataset) Validate() error {
 	return nil
 }
 
-func validateCategory(c Category) error {
+func (c Category) Validate() error {
 	if c.ID == uuid.Nil || c.Name == "" {
 		return fmt.Errorf("ID and name are required")
 	}
-	if err := validateCategoryScheme(c.Scheme); err != nil {
+	if err := c.Scheme.Validate(); err != nil {
 		return fmt.Errorf("scheme: %w", err)
 	}
 	return nil
 }
 
-func validateCategoryScheme(s CategoryScheme) error {
+func (s CategoryScheme) Validate() error {
 	if s.ID == uuid.Nil || s.Name == "" || !s.Concept.Valid() {
 		return fmt.Errorf("ID, name, and valid concept are required")
 	}
 	return nil
 }
 
-func validateDistribution(d Distribution) error {
+func (d Distribution) Validate() error {
 	if d.ID == uuid.Nil || d.Title == "" {
 		return fmt.Errorf("ID and title are required")
 	}
-	if (d.WebService == nil) == (d.DownloadableFile == nil) {
-		return fmt.Errorf("exactly one delivery method is required")
+	expectedType, err := d.DeliveryType()
+	if err != nil {
+		return err
+	}
+	if d.Type != "" && d.Type != expectedType {
+		return fmt.Errorf("type does not match delivery method")
 	}
 	if d.DownloadableFile != nil && (d.DownloadableFile.URL == "" || d.DownloadableFile.Format == "") {
 		return fmt.Errorf("downloadable file URL and format are required")
 	}
 	if d.WebService != nil {
-		if err := validateWebService(*d.WebService); err != nil {
+		if err := d.WebService.Validate(); err != nil {
 			return fmt.Errorf("web service: %w", err)
 		}
 	}
 	return nil
 }
 
-func validateWebService(w WebService) error {
+func (w WebService) Validate() error {
 	if w.ID == uuid.Nil || w.Name == "" || w.TemplateURL == "" || w.Format == "" {
 		return fmt.Errorf("ID, name, template URL, and format are required")
 	}
@@ -138,7 +142,7 @@ func validateWebService(w WebService) error {
 	}
 	providers := make(map[string]struct{}, len(w.Providers))
 	for _, provider := range w.Providers {
-		if err := validateOrganization(provider); err != nil {
+		if err := provider.Validate(); err != nil {
 			return fmt.Errorf("provider: %w", err)
 		}
 		if err := addUnique(providers, provider.ID.String(), "provider"); err != nil {
@@ -147,7 +151,7 @@ func validateWebService(w WebService) error {
 	}
 	contacts := make(map[string]struct{}, len(w.ContactPoints))
 	for _, contact := range w.ContactPoints {
-		if err := validateContactPoint(contact); err != nil {
+		if err := contact.Validate(); err != nil {
 			return fmt.Errorf("contact point: %w", err)
 		}
 		if err := addUnique(contacts, contact.ID.String(), "contact point"); err != nil {
@@ -169,27 +173,27 @@ func validateWebService(w WebService) error {
 	return nil
 }
 
-func validateUser(u User) error {
+func (u User) Validate() error {
 	if u.ID == uuid.Nil || u.AuthIdentifier == "" || !u.Status.Valid() {
 		return fmt.Errorf("ID, auth identifier, and valid status are required")
 	}
 	return nil
 }
 
-func validateGroup(g Group) error {
+func (g Group) Validate() error {
 	if g.ID == uuid.Nil || g.Slug == "" || g.Name == "" {
 		return fmt.Errorf("ID, slug, and name are required")
 	}
 	return nil
 }
 
-func validateOrganization(o Organization) error {
+func (o Organization) Validate() error {
 	if o.ID == uuid.Nil || o.Name == "" {
 		return fmt.Errorf("ID and name are required")
 	}
 	identifiers := make(map[string]struct{}, len(o.Identifiers))
 	for _, identifier := range o.Identifiers {
-		if err := validateIdentifier(identifier); err != nil {
+		if err := identifier.Validate(); err != nil {
 			return fmt.Errorf("identifier: %w", err)
 		}
 		if err := addUnique(identifiers, identifier.ID.String(), "organization identifier"); err != nil {
@@ -199,14 +203,14 @@ func validateOrganization(o Organization) error {
 	return nil
 }
 
-func validateIdentifier(i Identifier) error {
+func (i Identifier) Validate() error {
 	if i.ID == uuid.Nil || i.Type == "" || i.Value == "" {
 		return fmt.Errorf("ID, type, and value are required")
 	}
 	return nil
 }
 
-func validateContactPoint(c ContactPoint) error {
+func (c ContactPoint) Validate() error {
 	if c.ID == uuid.Nil || c.Email == "" || c.Role == "" {
 		return fmt.Errorf("ID, email, and role are required")
 	}

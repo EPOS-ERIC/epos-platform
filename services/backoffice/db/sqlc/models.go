@@ -335,6 +335,11 @@ type CategoryScheme struct {
 	SourceIri string
 	Name      string
 	Concept   TopLevelConcept
+	Label     *string
+	Logo      *string
+	Page      *string
+	Color     *string
+	Position  int32
 }
 
 type ContactPoint struct {
@@ -345,22 +350,26 @@ type ContactPoint struct {
 }
 
 type Dataset struct {
-	ID                uuid.UUID
-	SourceIri         string
-	Title             string
-	Description       string
-	SpatialPoint      []byte
-	SpatialPolygon    []byte
-	TemporalStart     *time.Time
-	TemporalEnd       *time.Time
-	Status            DatasetStatus
-	EditorUserID      *uuid.UUID
-	GroupID           *uuid.UUID
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	SourceCreatedAt   *time.Time
-	SourceUpdatedAt   *time.Time
-	OriginalDatasetID uuid.UUID
+	ID                 uuid.UUID
+	SourceIri          string
+	Title              string
+	Description        string
+	Keywords           string
+	AccrualPeriodicity *string
+	QualityAnnotation  *string
+	AccessRight        *string
+	SpatialPoint       []byte
+	SpatialPolygon     []byte
+	TemporalStart      *time.Time
+	TemporalEnd        *time.Time
+	Status             DatasetStatus
+	EditorUserID       *uuid.UUID
+	GroupID            *uuid.UUID
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	SourceCreatedAt    *time.Time
+	SourceUpdatedAt    *time.Time
+	OriginalDatasetID  uuid.UUID
 }
 
 type DatasetCategory struct {
@@ -390,6 +399,10 @@ type Distribution struct {
 	Title                  string
 	Description            string
 	License                *string
+	SourceIssuedAt         *time.Time
+	SourceModifiedAt       *time.Time
+	ByteSize               *int32
+	Type                   string
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
 	WebServiceID           *uuid.UUID
@@ -444,6 +457,7 @@ type Organization struct {
 	LogoUrl    *string
 	PageUrl    *string
 	Email      *string
+	LeiCode    *string
 }
 
 type OrganizationIdentifier struct {

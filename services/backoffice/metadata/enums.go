@@ -1,5 +1,21 @@
 package metadata
 
+type DistributionType string
+
+const (
+	DistributionTypeWebService       DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+	DistributionTypeDownloadableFile DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+)
+
+func (t DistributionType) Valid() bool {
+	switch t {
+	case DistributionTypeDownloadableFile, DistributionTypeWebService:
+		return true
+	default:
+		return false
+	}
+}
+
 type DatasetStatus string
 
 const (

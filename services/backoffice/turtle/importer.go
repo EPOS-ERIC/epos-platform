@@ -117,6 +117,10 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 		SourceIRI:             source,
 		Title:                 "",
 		Description:           "",
+		Keywords:              "",
+		AccrualPeriodicity:    nil,
+		QualityAnnotation:     nil,
+		AccessRight:           nil,
 		Distributions:         nil,
 		SpatialCoverage:       nil,
 		TemporalCoverage:      nil,
@@ -135,6 +139,18 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 	}
 	dataset.Title = m.requiredString(source, dctTitle)
 	dataset.Description = m.optionalString(source, dctDescription)
+	dataset.Keywords = strings.Join(m.strings(source, dcatKeyword), ",")
+	if value := m.optionalString(source, dctAccrualPeriodicity); value != "" {
+		dataset.AccrualPeriodicity = &value
+	}
+	if annotation, ok := m.firstString(source, dqvHasQualityAnnotation); ok {
+		if value := m.optionalString(annotation, oaHasBody); value != "" {
+			dataset.QualityAnnotation = &value
+		}
+	}
+	if value := m.optionalString(source, dctAccessRights); value != "" {
+		dataset.AccessRight = &value
+	}
 	if created := m.date(source, dctCreated); !created.IsZero() {
 		dataset.SourceCreated = &created
 	}
@@ -192,11 +208,21 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		Title:            m.requiredString(source, dctTitle),
 		Description:      m.optionalString(source, dctDescription),
 		License:          nil,
+		Type:             "",
+		Issued:           nil,
+		Modified:         nil,
+		ByteSize:         m.intPtr(source, dcatByteSize),
 		WebService:       nil,
 		DownloadableFile: nil,
 	}
 	if license, ok := m.firstString(source, dctLicense); ok {
 		distribution.License = &license
+	}
+	if issued := m.date(source, dctIssued); !issued.IsZero() {
+		distribution.Issued = &issued
+	}
+	if modified := m.date(source, dctModified); !modified.IsZero() {
+		distribution.Modified = &modified
 	}
 	if service, ok := m.firstString(source, dctConformsTo); ok && m.graph.hasType(service, "https://www.epos-eu.org/epos-dcat-ap#WebService") {
 		webService, err := m.webService(service, distribution.ID, m.optionalString(source, dctFormat))
@@ -211,6 +237,11 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		format := m.optionalString(source, dctFormat)
 		distribution.DownloadableFile = &domain.DownloadableFile{URL: url, Format: format}
 	}
+	typeValue, err := distribution.DeliveryType()
+	if err != nil {
+		return domain.Distribution{}, fmt.Errorf("distribution %q: %w", source, err)
+	}
+	distribution.Type = typeValue
 	return distribution, nil
 }
 
@@ -391,6 +422,11 @@ func (m *mapper) scheme(source string) (domain.CategoryScheme, error) {
 		ID:        sharedID("category-scheme", source),
 		SourceIRI: source,
 		Name:      m.optionalString(source, dctTitle),
+		Label:     stringPtr(m.optionalString(source, skosPrefLabel)),
+		Logo:      stringPtr(m.optionalString(source, foafLogo)),
+		Page:      stringPtr(m.optionalString(source, foafHomepage)),
+		Color:     stringPtr(m.optionalString(source, schemaColor)),
+		Position:  int32(m.int64(source, schemaOrderItemNumber)),
 		Concept:   domain.TopLevelConcept(""),
 	}
 	if result.Name == "" {
@@ -457,6 +493,7 @@ func (m *mapper) organization(source string) (domain.Organization, error) {
 		LogoURL:     stringPtr(m.optionalString(source, schemaLogo)),
 		PageURL:     stringPtr(m.optionalString(source, schemaURL)),
 		Email:       stringPtr(m.optionalString(source, schemaEmail)),
+		LEICode:     stringPtr(m.optionalString(source, schemaLEICode)),
 		Identifiers: nil,
 	}
 	if result.Name == "" {

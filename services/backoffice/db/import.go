@@ -28,6 +28,11 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			SourceIri: scheme.SourceIRI,
 			Name:      scheme.Name,
 			Concept:   sqlc.TopLevelConcept(scheme.Concept),
+			Label:     nullableStringPtr(scheme.Label),
+			Logo:      nullableStringPtr(scheme.Logo),
+			Page:      nullableStringPtr(scheme.Page),
+			Color:     nullableStringPtr(scheme.Color),
+			Position:  scheme.Position,
 		}); err != nil {
 			return fmt.Errorf("upsert category scheme %q: %w", scheme.SourceIRI, err)
 		}
@@ -54,6 +59,7 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			LogoUrl:    nullableStringPtr(organization.LogoURL),
 			PageUrl:    nullableStringPtr(organization.PageURL),
 			Email:      nullableStringPtr(organization.Email),
+			LeiCode:    nullableStringPtr(organization.LEICode),
 		}); err != nil {
 			return fmt.Errorf("upsert organization %q: %w", organization.SourceIRI, err)
 		}
@@ -120,20 +126,24 @@ func replaceDataset(ctx context.Context, queries *sqlc.Queries, dataset metadata
 	}
 
 	if err := queries.UpsertDataset(ctx, sqlc.UpsertDatasetParams{
-		ID:                dataset.ID,
-		SourceIri:         dataset.SourceIRI,
-		Title:             dataset.Title,
-		Description:       dataset.Description,
-		TemporalStart:     temporalStart(dataset),
-		TemporalEnd:       temporalEnd(dataset),
-		Status:            sqlc.DatasetStatus(dataset.Status),
-		EditorUserID:      nullableUserID(dataset),
-		GroupID:           nullableGroupID(dataset),
-		SourceCreatedAt:   dataset.SourceCreated,
-		SourceUpdatedAt:   dataset.SourceUpdated,
-		OriginalDatasetID: dataset.OriginalDatasetID,
-		SpatialPoint:      pointWKT(dataset.SpatialCoverage),
-		SpatialPolygon:    polygonWKT(dataset.SpatialCoverage),
+		ID:                 dataset.ID,
+		SourceIri:          dataset.SourceIRI,
+		Title:              dataset.Title,
+		Description:        dataset.Description,
+		Keywords:           dataset.Keywords,
+		AccrualPeriodicity: dataset.AccrualPeriodicity,
+		QualityAnnotation:  dataset.QualityAnnotation,
+		AccessRight:        dataset.AccessRight,
+		TemporalStart:      temporalStart(dataset),
+		TemporalEnd:        temporalEnd(dataset),
+		Status:             sqlc.DatasetStatus(dataset.Status),
+		EditorUserID:       nullableUserID(dataset),
+		GroupID:            nullableGroupID(dataset),
+		SourceCreatedAt:    dataset.SourceCreated,
+		SourceUpdatedAt:    dataset.SourceUpdated,
+		OriginalDatasetID:  dataset.OriginalDatasetID,
+		SpatialPoint:       pointWKT(dataset.SpatialCoverage),
+		SpatialPolygon:     polygonWKT(dataset.SpatialCoverage),
 	}); err != nil {
 		return fmt.Errorf("upsert dataset %q: %w", dataset.SourceIRI, err)
 	}
@@ -194,6 +204,10 @@ func insertDistribution(ctx context.Context, queries *sqlc.Queries, datasetID uu
 		Title:                  distribution.Title,
 		Description:            distribution.Description,
 		License:                nullableStringPtr(distribution.License),
+		Type:                   string(distribution.Type),
+		SourceIssuedAt:         distribution.Issued,
+		SourceModifiedAt:       distribution.Modified,
+		ByteSize:               nullableInt32(distribution.ByteSize),
 		DownloadableFileUrl:    downloadableURL(distribution),
 		DownloadableFileFormat: downloadableFormat(distribution),
 		WebServiceID:           webServiceID(distribution),
@@ -375,4 +389,12 @@ func nullableStringPtr(value *string) *string {
 		return nil
 	}
 	return value
+}
+
+func nullableInt32(value *int64) *int32 {
+	if value == nil {
+		return nil
+	}
+	converted := int32(*value)
+	return &converted
 }

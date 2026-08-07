@@ -2,6 +2,7 @@
 package metadata
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,6 +13,10 @@ type Dataset struct {
 	SourceIRI             string         `json:"source_iri"`
 	Title                 string         `json:"title"`
 	Description           string         `json:"description"`
+	Keywords              string         `json:"keywords"`
+	AccrualPeriodicity    *string        `json:"accrual_periodicity"`
+	QualityAnnotation     *string        `json:"quality_annotation"`
+	AccessRight           *string        `json:"access_right"`
 	Distributions         []Distribution `json:"distributions"`
 	SpatialCoverage       *Spatial       `json:"spatial_coverage"`
 	TemporalCoverage      *Temporal      `json:"temporal_coverage"`
@@ -32,15 +37,30 @@ type Dataset struct {
 }
 
 type Distribution struct {
-	ID          uuid.UUID `json:"id"`
-	SourceIRI   string    `json:"source_iri"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	License     *string   `json:"license"`
+	ID          uuid.UUID        `json:"id"`
+	SourceIRI   string           `json:"source_iri"`
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	License     *string          `json:"license"`
+	Type        DistributionType `json:"type"`
+	Issued      *time.Time       `json:"issued"`
+	Modified    *time.Time       `json:"modified"`
+	ByteSize    *int64           `json:"byte_size"`
 
 	// mutually exclusive
 	WebService       *WebService       `json:"web_service"`
 	DownloadableFile *DownloadableFile `json:"downloadable_file"`
+}
+
+func (d Distribution) DeliveryType() (DistributionType, error) {
+	switch {
+	case d.WebService != nil && d.DownloadableFile == nil:
+		return DistributionTypeWebService, nil
+	case d.WebService == nil && d.DownloadableFile != nil:
+		return DistributionTypeDownloadableFile, nil
+	default:
+		return "", fmt.Errorf("exactly one delivery method is required")
+	}
 }
 
 type DownloadableFile struct {
@@ -80,6 +100,7 @@ type Organization struct {
 	LogoURL     *string      `json:"logo_url"`
 	PageURL     *string      `json:"page_url"`
 	Email       *string      `json:"email"`
+	LEICode     *string      `json:"lei_code"`
 	Identifiers []Identifier `json:"identifiers"`
 }
 
@@ -94,6 +115,11 @@ type CategoryScheme struct {
 	ID        uuid.UUID       `json:"id"`
 	SourceIRI string          `json:"source_iri"`
 	Name      string          `json:"name"`
+	Label     *string         `json:"label"`
+	Logo      *string         `json:"logo"`
+	Page      *string         `json:"page"`
+	Color     *string         `json:"color"`
+	Position  int32           `json:"position"`
 	Concept   TopLevelConcept `json:"concept"`
 }
 

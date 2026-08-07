@@ -1,7 +1,8 @@
 -- name: UpsertCategoryScheme :exec
-INSERT INTO category_schemes (id, source_iri, name, concept)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (source_iri) DO UPDATE SET name = excluded.name, concept = excluded.concept;
+INSERT INTO category_schemes (id, source_iri, name, concept, label, logo, page, color, position)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+ON CONFLICT (source_iri) DO UPDATE SET name = excluded.name, concept = excluded.concept,
+label = excluded.label, logo = excluded.logo, page = excluded.page, color = excluded.color, position = excluded.position;
 
 -- name: UpsertCategory :exec
 INSERT INTO categories (id, source_iri, scheme_id, name)
@@ -9,11 +10,11 @@ VALUES ($1, $2, $3, $4)
 ON CONFLICT (source_iri) DO UPDATE SET scheme_id = excluded.scheme_id, name = excluded.name;
 
 -- name: UpsertOrganization :exec
-INSERT INTO organizations (id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO organizations (id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 ON CONFLICT (source_iri) DO UPDATE SET name = excluded.name, street = excluded.street,
 locality = excluded.locality, postal_code = excluded.postal_code, country = excluded.country,
-logo_url = excluded.logo_url, page_url = excluded.page_url, email = excluded.email;
+logo_url = excluded.logo_url, page_url = excluded.page_url, email = excluded.email, lei_code = excluded.lei_code;
 
 -- name: LinkOrganizationIdentifier :exec
 INSERT INTO organization_identifiers (organization_id, identifier_id)
@@ -47,13 +48,14 @@ DELETE FROM web_services WHERE id IN (SELECT web_service_id FROM distributions W
 DELETE FROM distributions WHERE dataset_id = $1;
 
 -- name: UpsertDataset :exec
-INSERT INTO datasets (id, source_iri, title, description, temporal_start, temporal_end, status,
-	editor_user_id, group_id, source_created_at, source_updated_at, original_dataset_id, spatial_point, spatial_polygon)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, sqlc.narg(source_created_at), sqlc.narg(source_updated_at), $10,
+INSERT INTO datasets (id, source_iri, title, description, keywords, accrual_periodicity, quality_annotation, access_right,
+    temporal_start, temporal_end, status, editor_user_id, group_id, source_created_at, source_updated_at, original_dataset_id, spatial_point, spatial_polygon)
+VALUES ($1, $2, $3, $4, $5, sqlc.narg(accrual_periodicity), sqlc.narg(quality_annotation), sqlc.narg(access_right), $6, $7, $8, $9, $10, sqlc.narg(source_created_at), sqlc.narg(source_updated_at), $11,
 	CASE WHEN sqlc.narg(spatial_point)::text IS NULL THEN NULL ELSE ST_GeomFromText(sqlc.narg(spatial_point)::text, 4326) END,
 	CASE WHEN sqlc.narg(spatial_polygon)::text IS NULL THEN NULL ELSE ST_GeomFromText(sqlc.narg(spatial_polygon)::text, 4326) END)
 ON CONFLICT (source_iri) DO UPDATE SET id = excluded.id, title = excluded.title,
-description = excluded.description, temporal_start = excluded.temporal_start,
+description = excluded.description, keywords = excluded.keywords, accrual_periodicity = excluded.accrual_periodicity,
+quality_annotation = excluded.quality_annotation, access_right = excluded.access_right, temporal_start = excluded.temporal_start,
 temporal_end = excluded.temporal_end, status = excluded.status, editor_user_id = excluded.editor_user_id,
 group_id = excluded.group_id, source_created_at = excluded.source_created_at,
 source_updated_at = excluded.source_updated_at, original_dataset_id = excluded.original_dataset_id,
@@ -77,9 +79,9 @@ VALUES ($1, $2, $3, $4)
 ON CONFLICT (id) DO UPDATE SET source_iri = excluded.source_iri, type = excluded.type, value = excluded.value;
 
 -- name: InsertDistribution :exec
-INSERT INTO distributions (id, source_iri, dataset_id, title, description, license,
+INSERT INTO distributions (id, source_iri, dataset_id, title, description, license, type, source_issued_at, source_modified_at, byte_size,
 	downloadable_file_url, downloadable_file_format, web_service_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+VALUES ($1, $2, $3, $4, $5, $6, $7, sqlc.narg(source_issued_at), sqlc.narg(source_modified_at), sqlc.narg(byte_size), $8, $9, $10);
 
 -- name: InsertWebService :exec
 INSERT INTO web_services (id, source_iri, name, description, template_url, format,

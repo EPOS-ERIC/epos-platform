@@ -55,13 +55,42 @@ paths:
       description: >-
         Imports a Turtle file into dataset-centric backoffice records. Organizations,
         contact points, categories, and category schemes may be shared. Other nested
-        resources are materialized per dataset tree.
+        resources are materialized per dataset tree. The imported file or Turtle body is
+        provided as the request body; identifiers and status are query parameters.
+      parameters:
+        - name: editorId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User assigned as editor.
+        - name: groupId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Group assigned to datasets.
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DRAFT, PUBLISHED, SUBMITTED, ARCHIVED, REJECTED]
+            default: DRAFT
+          description: Imported dataset status. Non-draft statuses require a super admin editor.
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/MetadataImportRequest'
+          text/turtle:
+            schema:
+              type: string
+              format: binary
+              description: Turtle metadata body.
       responses:
         '201':
           description: Metadata imported
@@ -70,7 +99,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/MetadataImportResponse'
         '400':
-          description: Invalid multipart request or identifiers
+          description: Invalid request, identifiers, or status
+        '403':
+          description: Requested non-draft status requires a super admin editor
         '404':
           description: Editor or group not found
         '422':
@@ -400,20 +431,12 @@ components:
     MetadataImportRequest:
       type: object
       description: Multipart Turtle metadata import request.
-      required: [file, editorId, groupId]
+      required: [file]
       properties:
         file:
           type: string
           format: binary
           description: Turtle file to import.
-        editorId:
-          type: string
-          format: uuid
-          description: User assigned as editor for imported datasets.
-        groupId:
-          type: string
-          format: uuid
-          description: Group assigned to imported datasets.
     MetadataImportWarning:
       type: object
       required: [message]
