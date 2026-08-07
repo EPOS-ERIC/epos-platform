@@ -4072,6 +4072,7 @@ components:
         items:
           $ref: "#/components/schemas/ResourceType"
         type: array
+        default: null
       style: form
     SpatialFilter:
       description: |
@@ -4121,6 +4122,7 @@ components:
         items:
           type: string
         type: array
+        default: null
       style: form
     VersioningStatusFilter:
       description: |
@@ -4150,6 +4152,7 @@ components:
         items:
           type: string
         type: array
+        default: null
       style: form
   responses:
     BadRequest:
@@ -4219,17 +4222,17 @@ components:
       example:
         total: 0
         totalItems: 0
-        totalPages: 0
         page: 1
+        totalPages: 0
         items:
-        - id: id
+        - type: address
+          id: id
           href: href
-          type: address
           fields:
             key: ""
-        - id: id
+        - type: address
+          id: id
           href: href
-          type: address
           fields:
             key: ""
       properties:
@@ -4251,6 +4254,7 @@ components:
           items:
             $ref: "#/components/schemas/SearchItem"
           type: array
+          default: null
       required:
       - items
       - page
@@ -4259,9 +4263,9 @@ components:
       - totalPages
     SearchItem:
       example:
+        type: address
         id: id
         href: href
-        type: address
         fields:
           key: ""
       properties:
@@ -4286,9 +4290,9 @@ components:
     AccessListItem:
       example:
         id: id
-        href: href
         type: type
         title: title
+        href: href
       properties:
         id:
           type: string
@@ -4304,17 +4308,17 @@ components:
       - type
     AccessListResponse:
       example:
-        total: 0
         shape: shape
+        total: 0
         items:
         - id: id
-          href: href
           type: type
           title: title
+          href: href
         - id: id
-          href: href
           type: type
           title: title
+          href: href
       properties:
         shape:
           type: string
@@ -4325,6 +4329,7 @@ components:
           items:
             $ref: "#/components/schemas/AccessListItem"
           type: array
+          default: null
       required:
       - items
       - shape
@@ -4373,8 +4378,8 @@ components:
       - id
     ErrorResponse:
       example:
-        errorMessage: errorMessage
         errorCode: errorCode
+        errorMessage: errorMessage
       properties:
         errorCode:
           type: string
@@ -4385,13 +4390,13 @@ components:
       - errorMessage
     EntityResponse:
       example:
-        conceptualUri: conceptualUri
-        type: type
         uri: uri
-        version: version
+        type: type
+        status: status
         properties:
           key: ""
-        status: status
+        version: version
+        conceptualUri: conceptualUri
       properties:
         uri:
           type: string
@@ -4424,40 +4429,40 @@ components:
       - resolvedId
     PropertyInfo:
       example:
-        severity: severity
-        nodeShapeRefs:
-        - nodeShapeRefs
-        - nodeShapeRefs
-        nodeShapeRef: nodeShapeRef
-        helpText: helpText
-        classConstraint: https://openapi-generator.tech
-        minLength: 1
-        pattern: pattern
-        description: description
-        maxCount: 6
-        hasValueIn:
-        - hasValueIn
-        - hasValueIn
+        path: https://openapi-generator.tech
+        name: name
+        datatype: https://openapi-generator.tech
         datatypes:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        required: true
-        classConstraints:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        recommended: true
-        path: https://openapi-generator.tech
-        datatype: https://openapi-generator.tech
-        name: name
+        nodeKind: nodeKind
         nodeKinds:
         - nodeKinds
         - nodeKinds
-        nodeKind: nodeKind
+        classConstraint: https://openapi-generator.tech
+        classConstraints:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        nodeShapeRef: nodeShapeRef
+        nodeShapeRefs:
+        - nodeShapeRefs
+        - nodeShapeRefs
         minCount: 0
+        maxCount: 6
+        required: true
+        recommended: true
+        pattern: pattern
+        minLength: 1
         maxLength: 5
+        hasValueIn:
+        - hasValueIn
+        - hasValueIn
+        severity: severity
         severities:
         - severities
         - severities
+        helpText: helpText
+        description: description
       properties:
         path:
           format: uri
@@ -4474,6 +4479,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         nodeKind:
           nullable: true
           type: string
@@ -4482,6 +4488,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         classConstraint:
           format: uri
           nullable: true
@@ -4492,6 +4499,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         nodeShapeRef:
           nullable: true
           type: string
@@ -4500,6 +4508,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         minCount:
           format: int32
           nullable: true
@@ -4528,6 +4537,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         severity:
           nullable: true
           type: string
@@ -4536,6 +4546,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         helpText:
           nullable: true
           type: string
@@ -4549,79 +4560,79 @@ components:
       - required
     ResourceTypeInfo:
       example:
-        targetClass: https://openapi-generator.tech
         name: name
+        targetClass: https://openapi-generator.tech
+        properties:
+        - path: https://openapi-generator.tech
+          name: name
+          datatype: https://openapi-generator.tech
+          datatypes:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          nodeKind: nodeKind
+          nodeKinds:
+          - nodeKinds
+          - nodeKinds
+          classConstraint: https://openapi-generator.tech
+          classConstraints:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          nodeShapeRef: nodeShapeRef
+          nodeShapeRefs:
+          - nodeShapeRefs
+          - nodeShapeRefs
+          minCount: 0
+          maxCount: 6
+          required: true
+          recommended: true
+          pattern: pattern
+          minLength: 1
+          maxLength: 5
+          hasValueIn:
+          - hasValueIn
+          - hasValueIn
+          severity: severity
+          severities:
+          - severities
+          - severities
+          helpText: helpText
+          description: description
+        - path: https://openapi-generator.tech
+          name: name
+          datatype: https://openapi-generator.tech
+          datatypes:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          nodeKind: nodeKind
+          nodeKinds:
+          - nodeKinds
+          - nodeKinds
+          classConstraint: https://openapi-generator.tech
+          classConstraints:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          nodeShapeRef: nodeShapeRef
+          nodeShapeRefs:
+          - nodeShapeRefs
+          - nodeShapeRefs
+          minCount: 0
+          maxCount: 6
+          required: true
+          recommended: true
+          pattern: pattern
+          minLength: 1
+          maxLength: 5
+          hasValueIn:
+          - hasValueIn
+          - hasValueIn
+          severity: severity
+          severities:
+          - severities
+          - severities
+          helpText: helpText
+          description: description
         closed: true
         description: description
-        properties:
-        - severity: severity
-          nodeShapeRefs:
-          - nodeShapeRefs
-          - nodeShapeRefs
-          nodeShapeRef: nodeShapeRef
-          helpText: helpText
-          classConstraint: https://openapi-generator.tech
-          minLength: 1
-          pattern: pattern
-          description: description
-          maxCount: 6
-          hasValueIn:
-          - hasValueIn
-          - hasValueIn
-          datatypes:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          required: true
-          classConstraints:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          recommended: true
-          path: https://openapi-generator.tech
-          datatype: https://openapi-generator.tech
-          name: name
-          nodeKinds:
-          - nodeKinds
-          - nodeKinds
-          nodeKind: nodeKind
-          minCount: 0
-          maxLength: 5
-          severities:
-          - severities
-          - severities
-        - severity: severity
-          nodeShapeRefs:
-          - nodeShapeRefs
-          - nodeShapeRefs
-          nodeShapeRef: nodeShapeRef
-          helpText: helpText
-          classConstraint: https://openapi-generator.tech
-          minLength: 1
-          pattern: pattern
-          description: description
-          maxCount: 6
-          hasValueIn:
-          - hasValueIn
-          - hasValueIn
-          datatypes:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          required: true
-          classConstraints:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          recommended: true
-          path: https://openapi-generator.tech
-          datatype: https://openapi-generator.tech
-          name: name
-          nodeKinds:
-          - nodeKinds
-          - nodeKinds
-          nodeKind: nodeKind
-          minCount: 0
-          maxLength: 5
-          severities:
-          - severities
-          - severities
       properties:
         name:
           type: string
@@ -4632,6 +4643,7 @@ components:
           items:
             $ref: "#/components/schemas/PropertyInfo"
           type: array
+          default: null
         closed:
           type: boolean
         description:
@@ -4647,6 +4659,7 @@ components:
       items:
         $ref: "#/components/schemas/ResourceTypeInfo"
       type: array
+      default: null
     ShapeDefinitionInfo:
       properties:
         id:
@@ -4656,15 +4669,18 @@ components:
             format: uri
             type: string
           type: array
+          default: null
         properties:
           items:
             $ref: "#/components/schemas/PropertyInfo"
           type: array
+          default: null
         resolvedRefs:
           items:
             type: string
           nullable: true
           type: array
+          default: null
         name:
           nullable: true
           type: string
@@ -4678,6 +4694,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         nodeKind:
           nullable: true
           type: string
@@ -4686,6 +4703,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         classConstraint:
           format: uri
           nullable: true
@@ -4696,6 +4714,7 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         nodeShapeRef:
           nullable: true
           type: string
@@ -4704,18 +4723,21 @@ components:
             type: string
           nullable: true
           type: array
+          default: null
         ontologyEquivalentClasses:
           items:
             format: uri
             type: string
           nullable: true
           type: array
+          default: null
         ontologySubClassesOf:
           items:
             format: uri
             type: string
           nullable: true
           type: array
+          default: null
         closed:
           type: boolean
         description:
@@ -4730,8 +4752,8 @@ components:
       additionalProperties: true
       example:
         country name: country name
-        postal code: postal code
         locality: locality
+        postal code: postal code
         street address: street address
       properties:
         country name:
@@ -4760,16 +4782,11 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             country name: country name
-            postal code: postal code
             locality: locality
+            postal code: postal code
             street address: street address
-          status: status
     Entity_agent:
       additionalProperties: true
       example:
@@ -4785,6 +4802,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         type:
           description: This property refers to a type of the agent that makes the
             Catalogue or Dataset available
@@ -4799,25 +4817,20 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             name:
             - name
             - name
             type: type
-          status: status
     Entity_annotation:
       additionalProperties: true
       example:
-        has target:
-        - has target
-        - has target
         has body:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
+        has target:
+        - has target
+        - has target
       properties:
         has body:
           description: The object of the relationship is a resource that is a body
@@ -4828,12 +4841,14 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         has target:
           description: The relationship between an Annotation and its Target.
           items:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_annotation:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -4843,23 +4858,18 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            has target:
-            - has target
-            - has target
             has body:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-          status: status
+            has target:
+            - has target
+            - has target
     Entity_apidocumentation:
       additionalProperties: true
       example:
-        entrypoint: https://openapi-generator.tech
         description: description
+        entrypoint: https://openapi-generator.tech
         title: title
       properties:
         description:
@@ -4884,52 +4894,47 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            entrypoint: https://openapi-generator.tech
             description: description
+            entrypoint: https://openapi-generator.tech
             title: title
-          status: status
     Entity_catalog:
       additionalProperties: true
       example:
-        resource:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
+        dataset:
+        - dataset
+        - dataset
         description:
         - description
         - description
+        has part:
+        - has part
+        - has part
+        homepage: https://openapi-generator.tech
+        is part of: is part of
+        issued: issued
         language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        license: https://openapi-generator.tech
+        modified: modified
+        publisher: publisher
+        record:
+        - record
+        - record
+        resource:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        rights: https://openapi-generator.tech
+        spatial:
+        - spatial
+        - spatial
+        theme taxonomy:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         title:
         - title
         - title
-        is part of: is part of
-        license: https://openapi-generator.tech
-        has part:
-        - has part
-        - has part
-        record:
-        - record
-        - record
-        rights: https://openapi-generator.tech
-        modified: modified
-        publisher: publisher
-        theme taxonomy:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        issued: issued
-        spatial:
-        - spatial
-        - spatial
-        dataset:
-        - dataset
-        - dataset
-        homepage: https://openapi-generator.tech
       properties:
         dataset:
           description: This property links the Catalogue with a Dataset that is part
@@ -4939,6 +4944,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         description:
           description: This property contains a free-text account of the Catalogue.
             This property can be repeated for parallel language versions of the description.
@@ -4947,6 +4953,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         has part:
           description: This property refers to a related Catalogue that is part of
             the described Catalogue
@@ -4954,6 +4961,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         homepage:
           description: This property refers to a web page that acts as the main page
             for the Catalogue.
@@ -4981,6 +4989,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         license:
           description: This property refers to the licence under which the Catalogue
             can be used or reused.
@@ -5004,6 +5013,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         resource:
           description: This property links the Catalogue with a Resource.
           items:
@@ -5011,6 +5021,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         rights:
           description: This property refers to a statement that specifies rights associated
             with the Catalogue.
@@ -5024,6 +5035,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         theme taxonomy:
           description: This property refers to a knowledge organization system used
             to classify the Catalogue's Datasets.
@@ -5033,6 +5045,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         title:
           description: This property contains a name given to the Catalogue. This
             property can be repeated for parallel language versions of the name.
@@ -5041,6 +5054,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
     ResolvedEntityResponse_Entity_catalog:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5050,65 +5064,60 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            resource:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
+            dataset:
+            - dataset
+            - dataset
             description:
             - description
             - description
+            has part:
+            - has part
+            - has part
+            homepage: https://openapi-generator.tech
+            is part of: is part of
+            issued: issued
             language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            license: https://openapi-generator.tech
+            modified: modified
+            publisher: publisher
+            record:
+            - record
+            - record
+            resource:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            rights: https://openapi-generator.tech
+            spatial:
+            - spatial
+            - spatial
+            theme taxonomy:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             title:
             - title
             - title
-            is part of: is part of
-            license: https://openapi-generator.tech
-            has part:
-            - has part
-            - has part
-            record:
-            - record
-            - record
-            rights: https://openapi-generator.tech
-            modified: modified
-            publisher: publisher
-            theme taxonomy:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            issued: issued
-            spatial:
-            - spatial
-            - spatial
-            dataset:
-            - dataset
-            - dataset
-            homepage: https://openapi-generator.tech
-          status: status
     Entity_catalogrecord:
       additionalProperties: true
       example:
-        identifier: https://openapi-generator.tech
         conforms to: https://openapi-generator.tech
         description:
         - description
         - description
-        modified: modified
-        primary topic: primary topic
+        identifier: https://openapi-generator.tech
+        issued: issued
         language:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
+        modified: modified
+        primary topic: primary topic
         source: source
-        issued: issued
+        status: https://openapi-generator.tech
         title:
         - title
         - title
-        status: https://openapi-generator.tech
       properties:
         conforms to:
           description: This property refers to an Application Profile that the Dataset’s
@@ -5123,6 +5132,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         identifier:
           description: This property contains the main identifier for the Catalog
             Record.
@@ -5143,6 +5153,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         modified:
           description: This property contains the most recent date on which the Catalog
             Record was modified.
@@ -5173,6 +5184,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_catalogrecord:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5182,34 +5194,29 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            identifier: https://openapi-generator.tech
             conforms to: https://openapi-generator.tech
             description:
             - description
             - description
-            modified: modified
-            primary topic: primary topic
+            identifier: https://openapi-generator.tech
+            issued: issued
             language:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
+            modified: modified
+            primary topic: primary topic
             source: source
-            issued: issued
+            status: https://openapi-generator.tech
             title:
             - title
             - title
-            status: https://openapi-generator.tech
-          status: status
     Entity_concept:
       additionalProperties: true
       example:
-        pref label: pref label
         definition: definition
         in scheme: in scheme
+        pref label: pref label
       properties:
         definition:
           description: This property contains a statement or formal explanation of
@@ -5235,15 +5242,10 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            pref label: pref label
             definition: definition
             in scheme: in scheme
-          status: status
+            pref label: pref label
     Entity_conceptscheme:
       additionalProperties: true
       example:
@@ -5267,27 +5269,22 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             description: description
             title: title
-          status: status
     Entity_contactpoint:
       additionalProperties: true
       example:
-        contact type: contact type
-        telephone:
-        - telephone
-        - telephone
         available language:
         - available language
         - available language
+        contact type: contact type
         email:
         - email
         - email
+        telephone:
+        - telephone
+        - telephone
       properties:
         available language:
           description: This property contains information about the language used
@@ -5297,6 +5294,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact type:
           description: This property contains information about the role of the Contact
             Point.
@@ -5308,6 +5306,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         telephone:
           description: This property contains the telephone number of the Contact
             Point.
@@ -5315,6 +5314,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_contactpoint:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5324,22 +5324,17 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            contact type: contact type
-            telephone:
-            - telephone
-            - telephone
             available language:
             - available language
             - available language
+            contact type: contact type
             email:
             - email
             - email
-          status: status
+            telephone:
+            - telephone
+            - telephone
     Entity_contactpointtype:
       additionalProperties: true
       example: {}
@@ -5354,21 +5349,16 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties: {}
-          status: status
     Entity_controlaction:
       additionalProperties: true
       example:
-        result:
-        - result
-        - result
         object:
         - object
         - object
+        result:
+        - result
+        - result
       properties:
         object:
           description: "The object upon which the action is carried out, whose state\
@@ -5379,12 +5369,14 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         result:
           description: The result produced in the action. e.g. John wrote a book.
           items:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_controlaction:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5394,18 +5386,13 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            result:
-            - result
-            - result
             object:
             - object
             - object
-          status: status
+            result:
+            - result
+            - result
     Entity_creativework:
       additionalProperties: true
       example:
@@ -5424,6 +5411,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         encoding format:
           description: "Media type typically expressed using a MIME format (see IANA\
             \ site and MDN reference) e.g. application/zip for a SoftwareApplication\
@@ -5433,6 +5421,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_creativework:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5442,10 +5431,6 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             conforms to:
             - https://openapi-generator.tech
@@ -5453,90 +5438,89 @@ components:
             encoding format:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-          status: status
     Entity_dataset:
       additionalProperties: true
       example:
-        has version:
-        - has version
-        - has version
-        description:
-        - description
-        - description
-        language:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        source:
-        - source
-        - source
-        distribution:
-        - distribution
-        - distribution
-        title:
-        - title
-        - title
-        type: https://openapi-generator.tech
-        relation:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        is part of:
-        - is part of
-        - is part of
-        version info: version info
-        has part:
-        - has part
-        - has part
-        provenance:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        modified: modified
-        theme:
+        access rights: https://openapi-generator.tech
+        accrual periodicity: https://openapi-generator.tech
+        annotation:
+        - annotation
+        - annotation
+        conforms to:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         contact point:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
+        created: created
+        description:
+        - description
+        - description
+        distribution:
+        - distribution
+        - distribution
+        has part:
+        - has part
+        - has part
+        has quality annotation:
+        - has quality annotation
+        - has quality annotation
+        has version:
+        - has version
+        - has version
+        identifier: https://openapi-generator.tech
+        is part of:
+        - is part of
+        - is part of
+        is version of:
+        - is version of
+        - is version of
         issued: issued
         keyword:
         - keyword
         - keyword
-        spatial:
-        - spatial
-        - spatial
         landing page:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        temporal:
-        - temporal
-        - temporal
-        annotation:
-        - annotation
-        - annotation
-        identifier: https://openapi-generator.tech
-        access rights: https://openapi-generator.tech
-        created: created
-        sample:
-        - sample
-        - sample
-        has quality annotation:
-        - has quality annotation
-        - has quality annotation
-        accrual periodicity: https://openapi-generator.tech
-        version notes:
-        - version notes
-        - version notes
-        conforms to:
+        language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        modified: modified
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        provenance:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         publisher:
         - publisher
         - publisher
-        page:
+        relation:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        is version of:
-        - is version of
-        - is version of
+        sample:
+        - sample
+        - sample
+        source:
+        - source
+        - source
+        spatial:
+        - spatial
+        - spatial
+        temporal:
+        - temporal
+        - temporal
+        theme:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        title:
+        - title
+        - title
+        type: https://openapi-generator.tech
+        version info: version info
+        version notes:
+        - version notes
+        - version notes
       properties:
         access rights:
           description: "This property refers to information that indicates whether\
@@ -5559,6 +5543,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         conforms to:
           description: This property refers to an implementing rule or other specification.
           items:
@@ -5566,6 +5551,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact point:
           description: This property contains contact information that can be used
             for sending comments about the Dataset.
@@ -5575,6 +5561,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         created:
           description: This property contains the date on which the Dataset was created.
           type: string
@@ -5587,6 +5574,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         distribution:
           description: This property links the Dataset to an available Distribution.
           items:
@@ -5594,6 +5582,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         has part:
           description: This property refers to a related Dataset that is part of the
             described Dataset.
@@ -5601,6 +5590,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         has quality annotation:
           description: "This property refers to a statement related to quality of\
             \ the Dataset, including rating, quality certificate that can be associated\
@@ -5609,6 +5599,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         has version:
           description: "This property refers to a related Dataset that is a version,\
             \ edition, or adaptation of the described Dataset."
@@ -5616,6 +5607,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         identifier:
           description: "This property contains the main identifier for the Dataset,\
             \ e.g. the URI or other unique identifier in the context of the Catalogue."
@@ -5629,6 +5621,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         is version of:
           description: "This property refers to a related Dataset of which the described\
             \ Dataset is a version, edition, or adaptation."
@@ -5636,6 +5629,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         issued:
           description: "This property contains the date of formal issuance (e.g.,\
             \ publication) of the Dataset."
@@ -5648,6 +5642,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         landing page:
           description: "This property refers to a web page that provides access to\
             \ the Dataset, its Distributions and/or additional information. It is\
@@ -5658,6 +5653,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         language:
           description: This property refers to a language of the Dataset. This property
             can be repeated if there are multiple languages in the Dataset.
@@ -5666,6 +5662,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         modified:
           description: This property contains the most recent date on which the Dataset
             was changed or modified.
@@ -5678,6 +5675,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         provenance:
           description: This property contains a statement about the lineage of a Dataset.
           items:
@@ -5685,6 +5683,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         publisher:
           description: This property refers to an entity (organisation) responsible
             for making the Dataset available.
@@ -5693,6 +5692,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         relation:
           description: This property refers to a related resource.
           items:
@@ -5700,12 +5700,14 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         sample:
           description: This property refers to a sample distribution of the dataset
           items:
             type: string
           type: array
           nullable: true
+          default: null
         source:
           description: This property refers to a related Dataset from which the described
             Dataset is derived.
@@ -5713,6 +5715,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         spatial:
           description: This property refers to a geographic region that is covered
             by the Dataset.
@@ -5720,6 +5723,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         temporal:
           description: This property refers to a temporal period that the Dataset
             covers.
@@ -5727,6 +5731,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         theme:
           description: This property refers to a category of the Dataset. A Dataset
             may be associated with multiple themes.
@@ -5736,6 +5741,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         title:
           description: This property contains a name given to the Dataset. This property
             can be repeated for parallel language versions of the name.
@@ -5744,6 +5750,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         type:
           description: This property refers to the type of the Dataset. A controlled
             vocabulary for the values has not been established.
@@ -5763,6 +5770,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_dataset:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -5772,92 +5780,87 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            has version:
-            - has version
-            - has version
-            description:
-            - description
-            - description
-            language:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            source:
-            - source
-            - source
-            distribution:
-            - distribution
-            - distribution
-            title:
-            - title
-            - title
-            type: https://openapi-generator.tech
-            relation:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            is part of:
-            - is part of
-            - is part of
-            version info: version info
-            has part:
-            - has part
-            - has part
-            provenance:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            modified: modified
-            theme:
+            access rights: https://openapi-generator.tech
+            accrual periodicity: https://openapi-generator.tech
+            annotation:
+            - annotation
+            - annotation
+            conforms to:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             contact point:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
+            created: created
+            description:
+            - description
+            - description
+            distribution:
+            - distribution
+            - distribution
+            has part:
+            - has part
+            - has part
+            has quality annotation:
+            - has quality annotation
+            - has quality annotation
+            has version:
+            - has version
+            - has version
+            identifier: https://openapi-generator.tech
+            is part of:
+            - is part of
+            - is part of
+            is version of:
+            - is version of
+            - is version of
             issued: issued
             keyword:
             - keyword
             - keyword
-            spatial:
-            - spatial
-            - spatial
             landing page:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            temporal:
-            - temporal
-            - temporal
-            annotation:
-            - annotation
-            - annotation
-            identifier: https://openapi-generator.tech
-            access rights: https://openapi-generator.tech
-            created: created
-            sample:
-            - sample
-            - sample
-            has quality annotation:
-            - has quality annotation
-            - has quality annotation
-            accrual periodicity: https://openapi-generator.tech
-            version notes:
-            - version notes
-            - version notes
-            conforms to:
+            language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            modified: modified
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            provenance:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             publisher:
             - publisher
             - publisher
-            page:
+            relation:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            is version of:
-            - is version of
-            - is version of
-          status: status
+            sample:
+            - sample
+            - sample
+            source:
+            - source
+            - source
+            spatial:
+            - spatial
+            - spatial
+            temporal:
+            - temporal
+            - temporal
+            theme:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            title:
+            - title
+            - title
+            type: https://openapi-generator.tech
+            version info: version info
+            version notes:
+            - version notes
+            - version notes
     Entity_dateordatetimedatatype:
       additionalProperties: true
       example: {}
@@ -5872,50 +5875,45 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties: {}
-          status: status
     Entity_distribution:
       additionalProperties: true
       example:
-        annotation:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        identifier: https://openapi-generator.tech
         access url:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        format: https://openapi-generator.tech
-        description:
-        - description
-        - description
-        language:
+        annotation:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        title:
-        - title
-        - title
-        type: https://openapi-generator.tech
-        license: https://openapi-generator.tech
-        download url:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
+        byte size: 0.8008281904610115
+        checksum: https://openapi-generator.tech
         conforms to:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        rights: https://openapi-generator.tech
-        checksum: https://openapi-generator.tech
+        description:
+        - description
+        - description
+        download url:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        format: https://openapi-generator.tech
+        identifier: https://openapi-generator.tech
+        issued: issued
+        language:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        license: https://openapi-generator.tech
+        media type: https://openapi-generator.tech
         modified: modified
         page:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        byte size: 0.8008281904610115
-        issued: issued
-        media type: https://openapi-generator.tech
+        rights: https://openapi-generator.tech
         status: status
+        title:
+        - title
+        - title
+        type: https://openapi-generator.tech
       properties:
         access url:
           description: This property contains a URL that gives access to a Distribution
@@ -5927,6 +5925,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         annotation:
           description: Human-oriented description for the Annotation property in this
             shape.
@@ -5935,6 +5934,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         byte size:
           description: This property contains the size of a Distribution in bytes.
           type: number
@@ -5954,6 +5954,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         description:
           description: This property contains a free-text account of the Distribution.
             This property can be repeated for parallel language versions of the description.
@@ -5962,6 +5963,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         download url:
           description: This property contains a URL that is a direct link to a downloadable
             file in a given format.
@@ -5970,6 +5972,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         format:
           description: This property refers to the file format of the Distribution.
           format: uri
@@ -5994,6 +5997,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         license:
           description: This property refers to the licence under which the Distribution
             is made available.
@@ -6018,6 +6022,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         rights:
           description: This property refers to a statement that specifies rights associated
             with the Distribution.
@@ -6035,6 +6040,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         type:
           description: This property refers to the type of the Distribution.
           format: uri
@@ -6049,83 +6055,78 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            annotation:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            identifier: https://openapi-generator.tech
             access url:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            format: https://openapi-generator.tech
-            description:
-            - description
-            - description
-            language:
+            annotation:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            title:
-            - title
-            - title
-            type: https://openapi-generator.tech
-            license: https://openapi-generator.tech
-            download url:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
+            byte size: 0.8008281904610115
+            checksum: https://openapi-generator.tech
             conforms to:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            rights: https://openapi-generator.tech
-            checksum: https://openapi-generator.tech
+            description:
+            - description
+            - description
+            download url:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            format: https://openapi-generator.tech
+            identifier: https://openapi-generator.tech
+            issued: issued
+            language:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            license: https://openapi-generator.tech
+            media type: https://openapi-generator.tech
             modified: modified
             page:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            byte size: 0.8008281904610115
-            issued: issued
-            media type: https://openapi-generator.tech
+            rights: https://openapi-generator.tech
             status: status
-          status: status
+            title:
+            - title
+            - title
+            type: https://openapi-generator.tech
     Entity_equipment:
       additionalProperties: true
       example:
         annotation:
         - annotation
         - annotation
-        identifier: https://openapi-generator.tech
-        orientation: orientation
-        serial number: serial number
-        description: description
-        dynamic range: https://openapi-generator.tech
-        type: https://openapi-generator.tech
-        resolution: resolution
-        manufacturer: manufacturer
-        relation:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        filter: filter
-        is part of:
-        - is part of
-        - is part of
-        name: name
-        sample period: https://openapi-generator.tech
-        theme:
-        - theme
-        - theme
-        page:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
         contact point:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
+        description: description
+        dynamic range: https://openapi-generator.tech
+        filter: filter
+        identifier: https://openapi-generator.tech
+        is part of:
+        - is part of
+        - is part of
+        manufacturer: manufacturer
+        name: name
+        orientation: orientation
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        relation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        resolution: resolution
+        sample period: https://openapi-generator.tech
+        serial number: serial number
         spatial: spatial
         temporal:
         - temporal
         - temporal
+        theme:
+        - theme
+        - theme
+        type: https://openapi-generator.tech
       properties:
         annotation:
           description: Human-oriented description for the Annotation property in this
@@ -6134,6 +6135,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact point:
           description: This property contains contact information that can be used
             for sending comments about the Equipment.
@@ -6142,6 +6144,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         description:
           description: This property contains a free-text description of the Equipment.
           type: string
@@ -6169,6 +6172,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         manufacturer:
           description: This property refers to an Organisation responsible for manufacturing
             the Equipment.
@@ -6189,6 +6193,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         relation:
           description: "This property refers to a related resource (e.g., Dataset,\
             \ WebService, etc.)."
@@ -6197,6 +6202,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         resolution:
           description: This property contains the resolution in nT.
           type: string
@@ -6220,6 +6226,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         theme:
           description: This property refers to a category of the Equipment. An Equipment
             may be associated with multiple themes.
@@ -6227,6 +6234,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         type:
           description: This property refers to the type of the Equipment.
           format: uri
@@ -6241,72 +6249,67 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             annotation:
             - annotation
             - annotation
-            identifier: https://openapi-generator.tech
-            orientation: orientation
-            serial number: serial number
-            description: description
-            dynamic range: https://openapi-generator.tech
-            type: https://openapi-generator.tech
-            resolution: resolution
-            manufacturer: manufacturer
-            relation:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            filter: filter
-            is part of:
-            - is part of
-            - is part of
-            name: name
-            sample period: https://openapi-generator.tech
-            theme:
-            - theme
-            - theme
-            page:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
             contact point:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
+            description: description
+            dynamic range: https://openapi-generator.tech
+            filter: filter
+            identifier: https://openapi-generator.tech
+            is part of:
+            - is part of
+            - is part of
+            manufacturer: manufacturer
+            name: name
+            orientation: orientation
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            relation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            resolution: resolution
+            sample period: https://openapi-generator.tech
+            serial number: serial number
             spatial: spatial
             temporal:
             - temporal
             - temporal
-          status: status
+            theme:
+            - theme
+            - theme
+            type: https://openapi-generator.tech
     Entity_facility:
       additionalProperties: true
       example:
         annotation:
         - annotation
         - annotation
-        is part of:
-        - is part of
-        - is part of
-        identifier: https://openapi-generator.tech
-        description: description
-        has address: has address
-        theme:
-        - theme
-        - theme
-        page:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
         contact point:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        spatial: spatial
-        title: title
-        type: https://openapi-generator.tech
+        description: description
+        has address: has address
+        identifier: https://openapi-generator.tech
+        is part of:
+        - is part of
+        - is part of
+        page:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
         relation:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
+        spatial: spatial
+        theme:
+        - theme
+        - theme
+        title: title
+        type: https://openapi-generator.tech
       properties:
         annotation:
           description: Human-oriented description for the Annotation property in this
@@ -6315,6 +6318,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact point:
           description: This property contains contact information that can be used
             for sending comments about the Facility.
@@ -6323,6 +6327,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         description:
           description: This property contains a free-text description of the Facility.
           type: string
@@ -6343,6 +6348,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         page:
           description: This property refers to a page or document about this Facility.
           items:
@@ -6350,6 +6356,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         relation:
           description: "This property refers to a related resource (e.g., Dataset,\
             \ WebService, etc)."
@@ -6358,6 +6365,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         spatial:
           description: This property refers to the geographical coordinates of the
             facility.
@@ -6371,6 +6379,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         title:
           description: This property contains a name given to the Facility.
           type: string
@@ -6389,41 +6398,36 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             annotation:
             - annotation
             - annotation
-            is part of:
-            - is part of
-            - is part of
-            identifier: https://openapi-generator.tech
-            description: description
-            has address: has address
-            theme:
-            - theme
-            - theme
-            page:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
             contact point:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            spatial: spatial
-            title: title
-            type: https://openapi-generator.tech
+            description: description
+            has address: has address
+            identifier: https://openapi-generator.tech
+            is part of:
+            - is part of
+            - is part of
+            page:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
             relation:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-          status: status
+            spatial: spatial
+            theme:
+            - theme
+            - theme
+            title: title
+            type: https://openapi-generator.tech
     Entity_identifier:
       additionalProperties: true
       example:
-        scheme agency: scheme agency
         notation: notation
+        scheme agency: scheme agency
       properties:
         notation:
           description: This property contains a string that is an identifier in the
@@ -6444,21 +6448,16 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            scheme agency: scheme agency
             notation: notation
-          status: status
+            scheme agency: scheme agency
     Entity_iritemplate:
       additionalProperties: true
       example:
-        template: template
         mapping:
         - mapping
         - mapping
+        template: template
       properties:
         mapping:
           description: A variable-to-property mapping of the IRI template.
@@ -6466,6 +6465,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         template:
           description: "The syntax of the template literal is specified by the [ RFC6570]\
             \ URI Template syntax."
@@ -6480,23 +6480,18 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            template: template
             mapping:
             - mapping
             - mapping
-          status: status
+            template: template
     Entity_iritemplatemapping:
       additionalProperties: true
       example:
+        default value: default value
+        label: label
+        max value: max value
         min value: min value
-        readonly value:
-        - true
-        - true
         multiple values:
         - true
         - true
@@ -6504,13 +6499,13 @@ components:
         - param value
         - param value
         property: property
-        variable: variable
         range: range
-        default value: default value
-        label: label
-        max value: max value
+        readonly value:
+        - true
+        - true
         required: true
         value pattern: value pattern
+        variable: variable
       properties:
         default value:
           description: This property contains the default value of the parameter.
@@ -6536,6 +6531,7 @@ components:
             type: boolean
           type: array
           nullable: true
+          default: null
         param value:
           description: This property contains one of the possible values which should
             be used in the web service query. It could be repeated as many times as
@@ -6544,6 +6540,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         property:
           description: This property contains the vocabulary term which indicates
             the semantic description of parameter.
@@ -6562,6 +6559,7 @@ components:
             type: boolean
           type: array
           nullable: true
+          default: null
         required:
           description: "This property contains true if the property is required, false\
             \ otherwise."
@@ -6586,15 +6584,11 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
+            default value: default value
+            label: label
+            max value: max value
             min value: min value
-            readonly value:
-            - true
-            - true
             multiple values:
             - true
             - true
@@ -6602,14 +6596,13 @@ components:
             - param value
             - param value
             property: property
-            variable: variable
             range: range
-            default value: default value
-            label: label
-            max value: max value
+            readonly value:
+            - true
+            - true
             required: true
             value pattern: value pattern
-          status: status
+            variable: variable
     Entity_location:
       additionalProperties: true
       example:
@@ -6625,6 +6618,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
     ResolvedEntityResponse_Entity_location:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6634,15 +6628,10 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             geometry:
             - geometry
             - geometry
-          status: status
     Entity_operation:
       additionalProperties: true
       example:
@@ -6670,6 +6659,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
     ResolvedEntityResponse_Entity_operation:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -6679,41 +6669,20 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             method: method
             property: property
             returns:
             - returns
             - returns
-          status: status
     Entity_organization:
       additionalProperties: true
       example:
+        address: address
         annotation:
         - annotation
         - annotation
-        legal name: legal name
-        identifier:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
         associated project:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        member of:
-        - member of
-        - member of
-        address: address
-        telephone:
-        - telephone
-        - telephone
-        url: https://openapi-generator.tech
-        lei code: lei code
-        logo: https://openapi-generator.tech
-        owns:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         contact point:
@@ -6722,6 +6691,22 @@ components:
         email:
         - email
         - email
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        legal name: legal name
+        lei code: lei code
+        logo: https://openapi-generator.tech
+        member of:
+        - member of
+        - member of
+        owns:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        telephone:
+        - telephone
+        - telephone
+        url: https://openapi-generator.tech
       properties:
         address:
           description: This property contains the physical address of the Organization.
@@ -6734,6 +6719,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         associated project:
           description: This property refers to a Project in which the Organization
             is involved.
@@ -6742,18 +6728,21 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact point:
           description: This property refers to the Contact Point defined for the Organization.
           items:
             type: string
           type: array
           nullable: true
+          default: null
         email:
           description: This property contains the email address of the Organization.
           items:
             type: string
           type: array
           nullable: true
+          default: null
         identifier:
           description: "This property contains the main identifier for the Organization\
             \ (e.g.,PIC, ISNI, etc.)."
@@ -6763,6 +6752,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         legal name:
           description: This property contains the official name of the Organization.
           type: string
@@ -6784,6 +6774,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         owns:
           description: This property refers to a Facility or Equipment of which it
             is the owner.
@@ -6792,12 +6783,14 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         telephone:
           description: This property contains the telephone number of the Organization.
           items:
             type: string
           type: array
           nullable: true
+          default: null
         url:
           description: This property contains the URL of the Organization website.
           format: uri
@@ -6812,32 +6805,12 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
+            address: address
             annotation:
             - annotation
             - annotation
-            legal name: legal name
-            identifier:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
             associated project:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            member of:
-            - member of
-            - member of
-            address: address
-            telephone:
-            - telephone
-            - telephone
-            url: https://openapi-generator.tech
-            lei code: lei code
-            logo: https://openapi-generator.tech
-            owns:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             contact point:
@@ -6846,12 +6819,27 @@ components:
             email:
             - email
             - email
-          status: status
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            legal name: legal name
+            lei code: lei code
+            logo: https://openapi-generator.tech
+            member of:
+            - member of
+            - member of
+            owns:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            telephone:
+            - telephone
+            - telephone
+            url: https://openapi-generator.tech
     Entity_periodoftime:
       additionalProperties: true
       example:
-        start date: start date
         end date: end date
+        start date: start date
       properties:
         end date:
           description: This property contains the end of the period.
@@ -6870,39 +6858,34 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            start date: start date
             end date: end date
-          status: status
+            start date: start date
     Entity_person:
       additionalProperties: true
       example:
-        annotation:
-        - annotation
-        - annotation
-        identifier:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        qualifications: qualifications
         address: address
-        family name: family name
         affiliation:
         - affiliation
         - affiliation
-        given name: given name
-        telephone:
-        - telephone
-        - telephone
+        annotation:
+        - annotation
+        - annotation
         contact point:
         - contact point
         - contact point
         email:
         - email
         - email
+        family name: family name
+        given name: given name
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        qualifications: qualifications
+        telephone:
+        - telephone
+        - telephone
         url: https://openapi-generator.tech
       properties:
         address:
@@ -6916,6 +6899,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         annotation:
           description: Human-oriented description for the Annotation property in this
             shape.
@@ -6923,6 +6907,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact point:
           description: This property refers to the Contact Point role defined for
             the Person.
@@ -6930,12 +6915,14 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         email:
           description: This property contains the email address of the Person.
           items:
             type: string
           type: array
           nullable: true
+          default: null
         family name:
           description: This property contains the last name of the Person.
           type: string
@@ -6953,6 +6940,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         qualifications:
           description: This property contains the specific qualifications of the Person.
           type: string
@@ -6963,6 +6951,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         url:
           description: This property refers to the URL of the Person curriculum vitae.
           format: uri
@@ -6977,42 +6966,37 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            annotation:
-            - annotation
-            - annotation
-            identifier:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            qualifications: qualifications
             address: address
-            family name: family name
             affiliation:
             - affiliation
             - affiliation
-            given name: given name
-            telephone:
-            - telephone
-            - telephone
+            annotation:
+            - annotation
+            - annotation
             contact point:
             - contact point
             - contact point
             email:
             - email
             - email
+            family name: family name
+            given name: given name
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            qualifications: qualifications
+            telephone:
+            - telephone
+            - telephone
             url: https://openapi-generator.tech
-          status: status
     Entity_postaladdress:
       additionalProperties: true
       example:
-        postal code: postal code
-        street address: street address
         address country: address country
         address locality: address locality
+        postal code: postal code
+        street address: street address
       properties:
         address country:
           description: "The country. For example, USA. You can also provide the two-letter\
@@ -7041,26 +7025,21 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            postal code: postal code
-            street address: street address
             address country: address country
             address locality: address locality
-          status: status
+            postal code: postal code
+            street address: street address
     Entity_project:
       additionalProperties: true
       example:
-        identifier: https://openapi-generator.tech
-        description: description
         contact point:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
-        title: title
+        description: description
         homepage: https://openapi-generator.tech
+        identifier: https://openapi-generator.tech
+        title: title
       properties:
         contact point:
           description: This property refers to the Contact Point defined for the Project.
@@ -7070,6 +7049,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         description:
           description: This property contains the description of the Project.
           type: string
@@ -7098,19 +7078,14 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            identifier: https://openapi-generator.tech
-            description: description
             contact point:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
-            title: title
+            description: description
             homepage: https://openapi-generator.tech
-          status: status
+            identifier: https://openapi-generator.tech
+            title: title
     Entity_propertyvalue:
       additionalProperties: true
       example:
@@ -7143,31 +7118,26 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             property id: property id
             value: value
-          status: status
     Entity_publication:
       additionalProperties: true
       example:
-        identifier:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        keywords: keywords
-        author: author
-        date published: date published
         abstract: abstract
-        number of pages: 0
-        license: https://openapi-generator.tech
+        author: author
         contributor:
         - contributor
         - contributor
+        date published: date published
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
         issn: issn
+        keywords: keywords
+        license: https://openapi-generator.tech
         name: name
+        number of pages: 0
         publisher: publisher
         theme:
         - theme
@@ -7191,6 +7161,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         date published:
           description: This property contains the date of first Publication.
           type: string
@@ -7203,6 +7174,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         issn:
           description: This property contains the International Standard Serial Number
             (ISSN) that identifies the Publication.
@@ -7239,6 +7211,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         volume number:
           description: This property contains the volume identifier of the Publication.
           type: string
@@ -7252,31 +7225,26 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            identifier:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            keywords: keywords
-            author: author
-            date published: date published
             abstract: abstract
-            number of pages: 0
-            license: https://openapi-generator.tech
+            author: author
             contributor:
             - contributor
             - contributor
+            date published: date published
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
             issn: issn
+            keywords: keywords
+            license: https://openapi-generator.tech
             name: name
+            number of pages: 0
             publisher: publisher
             theme:
             - theme
             - theme
             volume number: volume number
-          status: status
     Entity_quantitativevalue:
       additionalProperties: true
       example:
@@ -7303,37 +7271,32 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
             unit code: unit code
             value: 0.8008281904610115
-          status: status
     Entity_service:
       additionalProperties: true
       example:
+        contact point:
+        - contact point
+        - contact point
+        description: description
         identifier:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         keywords: keywords
-        provider: provider
         name: name
-        description: description
-        theme:
-        - theme
-        - theme
+        provider: provider
         service type: service type
-        contact point:
-        - contact point
-        - contact point
         spatial:
         - spatial
         - spatial
         temporal:
         - temporal
         - temporal
+        theme:
+        - theme
+        - theme
         url: https://openapi-generator.tech
       properties:
         contact point:
@@ -7343,6 +7306,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         description:
           description: This property contains the description of the Service.
           type: string
@@ -7355,6 +7319,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         keywords:
           description: This property contains the keywords used to describe the Service.
             Multiple entries in a keywords list are typically delimited by commas.
@@ -7380,6 +7345,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         temporal:
           description: This property refers to a temporal period that the Service
             covers.
@@ -7387,6 +7353,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         theme:
           description: This property refers to a category of the Service. A Service
             may be associated with multiple themes.
@@ -7394,6 +7361,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         url:
           description: This property refers to the URL of the Service.
           format: uri
@@ -7408,60 +7376,55 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
+            contact point:
+            - contact point
+            - contact point
+            description: description
             identifier:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             keywords: keywords
-            provider: provider
             name: name
-            description: description
-            theme:
-            - theme
-            - theme
+            provider: provider
             service type: service type
-            contact point:
-            - contact point
-            - contact point
             spatial:
             - spatial
             - spatial
             temporal:
             - temporal
             - temporal
+            theme:
+            - theme
+            - theme
             url: https://openapi-generator.tech
-          status: status
     Entity_softwareapplication:
       additionalProperties: true
       example:
-        identifier:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        keywords:
-        - keywords
-        - keywords
-        install url: https://openapi-generator.tech
-        potential action: potential action
-        description: description
-        software requirements: https://openapi-generator.tech
-        software version: software version
-        relation:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        license: https://openapi-generator.tech
-        main entity of page: https://openapi-generator.tech
-        download url: https://openapi-generator.tech
-        name: name
-        theme:
-        - theme
-        - theme
         contact point:
         - contact point
         - contact point
+        description: description
+        download url: https://openapi-generator.tech
+        identifier:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        install url: https://openapi-generator.tech
+        keywords:
+        - keywords
+        - keywords
+        license: https://openapi-generator.tech
+        main entity of page: https://openapi-generator.tech
+        name: name
+        potential action: potential action
+        relation:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        software requirements: https://openapi-generator.tech
+        software version: software version
+        theme:
+        - theme
+        - theme
       properties:
         contact point:
           description: This property refers to the Contact Point defined for the Software
@@ -7471,6 +7434,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         description:
           description: This property contains the description of the Software Application.
           type: string
@@ -7490,6 +7454,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         install url:
           description: This property contains the URL at which the application may
             be installed.
@@ -7504,6 +7469,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         license:
           description: This property contains the URL of the license document that
             applies to the Software Application.
@@ -7533,6 +7499,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         software requirements:
           description: "Component dependency requirements for application. This includes\
             \ runtime environments and shared libraries that are not included in the\
@@ -7552,6 +7519,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_softwareapplication:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -7561,64 +7529,59 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
-            identifier:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            keywords:
-            - keywords
-            - keywords
-            install url: https://openapi-generator.tech
-            potential action: potential action
-            description: description
-            software requirements: https://openapi-generator.tech
-            software version: software version
-            relation:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            license: https://openapi-generator.tech
-            main entity of page: https://openapi-generator.tech
-            download url: https://openapi-generator.tech
-            name: name
-            theme:
-            - theme
-            - theme
             contact point:
             - contact point
             - contact point
-          status: status
+            description: description
+            download url: https://openapi-generator.tech
+            identifier:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            install url: https://openapi-generator.tech
+            keywords:
+            - keywords
+            - keywords
+            license: https://openapi-generator.tech
+            main entity of page: https://openapi-generator.tech
+            name: name
+            potential action: potential action
+            relation:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            software requirements: https://openapi-generator.tech
+            software version: software version
+            theme:
+            - theme
+            - theme
     Entity_softwaresourcecode:
       additionalProperties: true
       example:
+        code repository: https://openapi-generator.tech
+        contact point:
+        - contact point
+        - contact point
+        description: description
         identifier:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         keywords:
         - keywords
         - keywords
-        description: description
-        software version: software version
         license: https://openapi-generator.tech
-        runtime platform: runtime platform
         main entity of page: https://openapi-generator.tech
-        target product:
-        - target product
-        - target product
         name: name
         programming language:
         - programming language
         - programming language
+        runtime platform: runtime platform
+        software version: software version
+        target product:
+        - target product
+        - target product
         theme:
         - theme
         - theme
-        code repository: https://openapi-generator.tech
-        contact point:
-        - contact point
-        - contact point
       properties:
         code repository:
           description: "This property contains the link to the repository where the\
@@ -7635,6 +7598,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         description:
           description: This property contains the description of the Software Source
             Code.
@@ -7649,6 +7613,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         keywords:
           description: This property contains the keywords used to describe the Software
             Source Code. Multiple entries in a keywords list are typically delimited
@@ -7657,6 +7622,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         license:
           description: This property contains the URL of the license document that
             applies to the Software Source Code.
@@ -7680,6 +7646,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         runtime platform:
           description: "This property refers to the runtime platform or script interpreter\
             \ dependencies (Example - Java v1, Python2.3, .Net Framework 3.0)."
@@ -7698,6 +7665,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         theme:
           description: This property refers to a category of the Software Source Code.
             A Software may be associated with multiple themes.
@@ -7705,6 +7673,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
     ResolvedEntityResponse_Entity_softwaresourcecode:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -7714,71 +7683,66 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
+            code repository: https://openapi-generator.tech
+            contact point:
+            - contact point
+            - contact point
+            description: description
             identifier:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             keywords:
             - keywords
             - keywords
-            description: description
-            software version: software version
             license: https://openapi-generator.tech
-            runtime platform: runtime platform
             main entity of page: https://openapi-generator.tech
-            target product:
-            - target product
-            - target product
             name: name
             programming language:
             - programming language
             - programming language
+            runtime platform: runtime platform
+            software version: software version
+            target product:
+            - target product
+            - target product
             theme:
             - theme
             - theme
-            code repository: https://openapi-generator.tech
-            contact point:
-            - contact point
-            - contact point
-          status: status
     Entity_webservice:
       additionalProperties: true
       example:
+        conforms to:
+        - conforms to
+        - conforms to
+        contact point:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
+        date modified: date modified
+        date published: date published
+        description: description
+        entrypoint: https://openapi-generator.tech
         identifier:
         - https://openapi-generator.tech
         - https://openapi-generator.tech
         keywords:
         - keywords
         - keywords
-        supported operation:
-        - supported operation
-        - supported operation
-        date published: date published
-        description: description
-        date modified: date modified
         license: https://openapi-generator.tech
-        provider: provider
-        entrypoint: https://openapi-generator.tech
-        conforms to:
-        - conforms to
-        - conforms to
         name: name
-        theme:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
-        contact point:
-        - https://openapi-generator.tech
-        - https://openapi-generator.tech
+        provider: provider
         spatial:
         - spatial
         - spatial
+        supported operation:
+        - supported operation
+        - supported operation
         temporal:
         - temporal
         - temporal
+        theme:
+        - https://openapi-generator.tech
+        - https://openapi-generator.tech
       properties:
         conforms to:
           description: This property refers to the API documentation.
@@ -7786,6 +7750,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         contact point:
           description: This property contains contact information that can be used
             for sending comments about the Web Service.
@@ -7795,6 +7760,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         date modified:
           description: This property contains the most recent date on which the Web
             Service was modified.
@@ -7821,6 +7787,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
         keywords:
           description: This property contains the keywords used to describe the Web
             Service. Multiple entries in a keywords list are typically delimited by
@@ -7829,6 +7796,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         license:
           description: This property refers to the licence under which the Web Service
             can be used or reused.
@@ -7851,6 +7819,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         supported operation:
           description: This property refers to a web service operation supported by
             the Web Service.
@@ -7858,6 +7827,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         temporal:
           description: This property refers to a temporal period that the Web Service
             covers.
@@ -7865,6 +7835,7 @@ components:
             type: string
           type: array
           nullable: true
+          default: null
         theme:
           description: This property refers to a category of the Web Service. A Web
             Service may be associated with multiple themes.
@@ -7874,6 +7845,7 @@ components:
           minItems: 1
           type: array
           nullable: false
+          default: null
     ResolvedEntityResponse_Entity_webservice:
       allOf:
       - $ref: "#/components/schemas/ResolvedEntityResponse"
@@ -7883,43 +7855,38 @@ components:
       example:
         resolvedId: resolvedId
         entity:
-          conceptualUri: conceptualUri
-          type: type
-          uri: uri
-          version: version
           properties:
+            conforms to:
+            - conforms to
+            - conforms to
+            contact point:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
+            date modified: date modified
+            date published: date published
+            description: description
+            entrypoint: https://openapi-generator.tech
             identifier:
             - https://openapi-generator.tech
             - https://openapi-generator.tech
             keywords:
             - keywords
             - keywords
-            supported operation:
-            - supported operation
-            - supported operation
-            date published: date published
-            description: description
-            date modified: date modified
             license: https://openapi-generator.tech
-            provider: provider
-            entrypoint: https://openapi-generator.tech
-            conforms to:
-            - conforms to
-            - conforms to
             name: name
-            theme:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
-            contact point:
-            - https://openapi-generator.tech
-            - https://openapi-generator.tech
+            provider: provider
             spatial:
             - spatial
             - spatial
+            supported operation:
+            - supported operation
+            - supported operation
             temporal:
             - temporal
             - temporal
-          status: status
+            theme:
+            - https://openapi-generator.tech
+            - https://openapi-generator.tech
     ResourceTypesEnvelope:
       description: Returned when includeShapeDefinitions or includeTransitiveShapeDefinitions
         is true
@@ -7928,6 +7895,7 @@ components:
           items:
             $ref: "#/components/schemas/ResourceTypeInfo"
           type: array
+          default: null
         shapeDefinitions:
           additionalProperties:
             $ref: "#/components/schemas/ShapeDefinitionInfo"
@@ -7936,10 +7904,10 @@ components:
       - resourceTypes
     VersionInfo:
       example:
-        agent: agent
         uri: https://openapi-generator.tech
         version: version
         timestamp: timestamp
+        agent: agent
         group: group
         status: draft
       properties:
@@ -7974,16 +7942,16 @@ components:
       example:
         conceptualUri: https://openapi-generator.tech
         versions:
-        - agent: agent
-          uri: https://openapi-generator.tech
+        - uri: https://openapi-generator.tech
           version: version
           timestamp: timestamp
+          agent: agent
           group: group
           status: draft
-        - agent: agent
-          uri: https://openapi-generator.tech
+        - uri: https://openapi-generator.tech
           version: version
           timestamp: timestamp
+          agent: agent
           group: group
           status: draft
       properties:
@@ -7994,18 +7962,19 @@ components:
           items:
             $ref: "#/components/schemas/VersionInfo"
           type: array
+          default: null
       required:
       - conceptualUri
       - versions
     RevisionImportFileRequest:
       description: Revision import from a single TTL source (URL or local path)
       example:
+        url: url
         path: path
-        dryRun: false
         versionMode: auto
         version: version
-        url: url
         replaceDraftIfExists: true
+        dryRun: false
       properties:
         url:
           description: HTTP(S) URL to a TTL file
@@ -8031,12 +8000,12 @@ components:
     RevisionImportContentRequest:
       description: Revision import from raw TTL content
       example:
-        dryRun: false
-        versionMode: auto
-        sourceName: sourceName
-        version: version
         content: content
+        sourceName: sourceName
+        versionMode: auto
+        version: version
         replaceDraftIfExists: true
+        dryRun: false
       properties:
         content:
           type: string
@@ -8061,11 +8030,11 @@ components:
       - content
     RevisionImportEntityResult:
       example:
-        conceptualUri: conceptualUri
         importedUri: importedUri
-        message: message
+        conceptualUri: conceptualUri
         draftUri: draftUri
         status: status
+        message: message
       properties:
         importedUri:
           type: string
@@ -8085,26 +8054,26 @@ components:
       - status
     RevisionImportResponseData:
       example:
-        agent: agent
+        source: source
         dryRun: true
+        subjectsProcessed: 0
+        triplesPrepared: 6
         triplesInserted: 1
         draftsCreated: 5
-        subjectsProcessed: 0
-        entities:
-        - conceptualUri: conceptualUri
-          importedUri: importedUri
-          message: message
-          draftUri: draftUri
-          status: status
-        - conceptualUri: conceptualUri
-          importedUri: importedUri
-          message: message
-          draftUri: draftUri
-          status: status
-        source: source
-        triplesPrepared: 6
-        linksRewritten: 2
         draftsReused: 5
+        linksRewritten: 2
+        entities:
+        - importedUri: importedUri
+          conceptualUri: conceptualUri
+          draftUri: draftUri
+          status: status
+          message: message
+        - importedUri: importedUri
+          conceptualUri: conceptualUri
+          draftUri: draftUri
+          status: status
+          message: message
+        agent: agent
         group: group
       properties:
         source:
@@ -8127,6 +8096,7 @@ components:
           items:
             $ref: "#/components/schemas/RevisionImportEntityResult"
           type: array
+          default: null
         agent:
           type: string
         group:
@@ -8145,30 +8115,30 @@ components:
       - triplesPrepared
     RevisionImportApiResponse:
       example:
-        data:
-          agent: agent
-          dryRun: true
-          triplesInserted: 1
-          draftsCreated: 5
-          subjectsProcessed: 0
-          entities:
-          - conceptualUri: conceptualUri
-            importedUri: importedUri
-            message: message
-            draftUri: draftUri
-            status: status
-          - conceptualUri: conceptualUri
-            importedUri: importedUri
-            message: message
-            draftUri: draftUri
-            status: status
-          source: source
-          triplesPrepared: 6
-          linksRewritten: 2
-          draftsReused: 5
-          group: group
         success: true
         message: message
+        data:
+          source: source
+          dryRun: true
+          subjectsProcessed: 0
+          triplesPrepared: 6
+          triplesInserted: 1
+          draftsCreated: 5
+          draftsReused: 5
+          linksRewritten: 2
+          entities:
+          - importedUri: importedUri
+            conceptualUri: conceptualUri
+            draftUri: draftUri
+            status: status
+            message: message
+          - importedUri: importedUri
+            conceptualUri: conceptualUri
+            draftUri: draftUri
+            status: status
+            message: message
+          agent: agent
+          group: group
       properties:
         success:
           type: boolean
@@ -8260,6 +8230,7 @@ components:
           items:
             type: string
           type: array
+          default: null
     _api_v2_admin_populate_post_request:
       properties:
         url:
@@ -8268,10 +8239,10 @@ components:
           type: string
     _api_v2_admin_populate_status_get_200_response:
       example:
-        graphs: "{}"
+        indexUrl: indexUrl
         graphdbEndpoint: graphdbEndpoint
         repositoryId: repositoryId
-        indexUrl: indexUrl
+        graphs: "{}"
       properties:
         indexUrl:
           type: string
@@ -8293,10 +8264,10 @@ components:
       - content
     _api_v2_admin_populate_content_post_200_response_data:
       example:
-        agent: agent
-        triplesInserted: 6
-        subjectsProcessed: 0
         sourceName: sourceName
+        subjectsProcessed: 0
+        triplesInserted: 6
+        agent: agent
       properties:
         sourceName:
           type: string
@@ -8308,13 +8279,13 @@ components:
           type: string
     _api_v2_admin_populate_content_post_200_response:
       example:
-        data:
-          agent: agent
-          triplesInserted: 6
-          subjectsProcessed: 0
-          sourceName: sourceName
         success: true
         message: message
+        data:
+          sourceName: sourceName
+          subjectsProcessed: 0
+          triplesInserted: 6
+          agent: agent
       properties:
         success:
           type: boolean
@@ -8329,16 +8300,11 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_address"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           country name: country name
-          postal code: postal code
           locality: locality
+          postal code: postal code
           street address: street address
-        status: status
     ResolvedEntityResponse_Entity_agent_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8346,16 +8312,11 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_agent"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           name:
           - name
           - name
           type: type
-        status: status
     ResolvedEntityResponse_Entity_annotation_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8363,18 +8324,13 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_annotation"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          has target:
-          - has target
-          - has target
           has body:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-        status: status
+          has target:
+          - has target
+          - has target
     ResolvedEntityResponse_Entity_apidocumentation_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8382,15 +8338,10 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_apidocumentation"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          entrypoint: https://openapi-generator.tech
           description: description
+          entrypoint: https://openapi-generator.tech
           title: title
-        status: status
     ResolvedEntityResponse_Entity_catalog_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8398,46 +8349,41 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_catalog"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          resource:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
+          dataset:
+          - dataset
+          - dataset
           description:
           - description
           - description
+          has part:
+          - has part
+          - has part
+          homepage: https://openapi-generator.tech
+          is part of: is part of
+          issued: issued
           language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          license: https://openapi-generator.tech
+          modified: modified
+          publisher: publisher
+          record:
+          - record
+          - record
+          resource:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          rights: https://openapi-generator.tech
+          spatial:
+          - spatial
+          - spatial
+          theme taxonomy:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           title:
           - title
           - title
-          is part of: is part of
-          license: https://openapi-generator.tech
-          has part:
-          - has part
-          - has part
-          record:
-          - record
-          - record
-          rights: https://openapi-generator.tech
-          modified: modified
-          publisher: publisher
-          theme taxonomy:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          issued: issued
-          spatial:
-          - spatial
-          - spatial
-          dataset:
-          - dataset
-          - dataset
-          homepage: https://openapi-generator.tech
-        status: status
     ResolvedEntityResponse_Entity_catalogrecord_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8445,28 +8391,23 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_catalogrecord"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          identifier: https://openapi-generator.tech
           conforms to: https://openapi-generator.tech
           description:
           - description
           - description
-          modified: modified
-          primary topic: primary topic
+          identifier: https://openapi-generator.tech
+          issued: issued
           language:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
+          modified: modified
+          primary topic: primary topic
           source: source
-          issued: issued
+          status: https://openapi-generator.tech
           title:
           - title
           - title
-          status: https://openapi-generator.tech
-        status: status
     ResolvedEntityResponse_Entity_concept_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8474,15 +8415,10 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_concept"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          pref label: pref label
           definition: definition
           in scheme: in scheme
-        status: status
+          pref label: pref label
     ResolvedEntityResponse_Entity_conceptscheme_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8490,14 +8426,9 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_conceptscheme"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           description: description
           title: title
-        status: status
     ResolvedEntityResponse_Entity_contactpoint_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8505,22 +8436,17 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_contactpoint"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          contact type: contact type
-          telephone:
-          - telephone
-          - telephone
           available language:
           - available language
           - available language
+          contact type: contact type
           email:
           - email
           - email
-        status: status
+          telephone:
+          - telephone
+          - telephone
     ResolvedEntityResponse_Entity_contactpointtype_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8528,12 +8454,7 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_contactpointtype"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties: {}
-        status: status
     ResolvedEntityResponse_Entity_controlaction_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8541,18 +8462,13 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_controlaction"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          result:
-          - result
-          - result
           object:
           - object
           - object
-        status: status
+          result:
+          - result
+          - result
     ResolvedEntityResponse_Entity_creativework_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8560,10 +8476,6 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_creativework"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           conforms to:
           - https://openapi-generator.tech
@@ -8571,7 +8483,6 @@ components:
           encoding format:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-        status: status
     ResolvedEntityResponse_Entity_dataset_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8579,92 +8490,87 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_dataset"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          has version:
-          - has version
-          - has version
-          description:
-          - description
-          - description
-          language:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          source:
-          - source
-          - source
-          distribution:
-          - distribution
-          - distribution
-          title:
-          - title
-          - title
-          type: https://openapi-generator.tech
-          relation:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          is part of:
-          - is part of
-          - is part of
-          version info: version info
-          has part:
-          - has part
-          - has part
-          provenance:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          modified: modified
-          theme:
+          access rights: https://openapi-generator.tech
+          accrual periodicity: https://openapi-generator.tech
+          annotation:
+          - annotation
+          - annotation
+          conforms to:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           contact point:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
+          created: created
+          description:
+          - description
+          - description
+          distribution:
+          - distribution
+          - distribution
+          has part:
+          - has part
+          - has part
+          has quality annotation:
+          - has quality annotation
+          - has quality annotation
+          has version:
+          - has version
+          - has version
+          identifier: https://openapi-generator.tech
+          is part of:
+          - is part of
+          - is part of
+          is version of:
+          - is version of
+          - is version of
           issued: issued
           keyword:
           - keyword
           - keyword
-          spatial:
-          - spatial
-          - spatial
           landing page:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          temporal:
-          - temporal
-          - temporal
-          annotation:
-          - annotation
-          - annotation
-          identifier: https://openapi-generator.tech
-          access rights: https://openapi-generator.tech
-          created: created
-          sample:
-          - sample
-          - sample
-          has quality annotation:
-          - has quality annotation
-          - has quality annotation
-          accrual periodicity: https://openapi-generator.tech
-          version notes:
-          - version notes
-          - version notes
-          conforms to:
+          language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          modified: modified
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          provenance:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           publisher:
           - publisher
           - publisher
-          page:
+          relation:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          is version of:
-          - is version of
-          - is version of
-        status: status
+          sample:
+          - sample
+          - sample
+          source:
+          - source
+          - source
+          spatial:
+          - spatial
+          - spatial
+          temporal:
+          - temporal
+          - temporal
+          theme:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          title:
+          - title
+          - title
+          type: https://openapi-generator.tech
+          version info: version info
+          version notes:
+          - version notes
+          - version notes
     ResolvedEntityResponse_Entity_dateordatetimedatatype_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8672,12 +8578,7 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_dateordatetimedatatype"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties: {}
-        status: status
     ResolvedEntityResponse_Entity_distribution_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8685,47 +8586,42 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_distribution"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          annotation:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          identifier: https://openapi-generator.tech
           access url:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          format: https://openapi-generator.tech
-          description:
-          - description
-          - description
-          language:
+          annotation:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          title:
-          - title
-          - title
-          type: https://openapi-generator.tech
-          license: https://openapi-generator.tech
-          download url:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
+          byte size: 0.8008281904610115
+          checksum: https://openapi-generator.tech
           conforms to:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          rights: https://openapi-generator.tech
-          checksum: https://openapi-generator.tech
+          description:
+          - description
+          - description
+          download url:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          format: https://openapi-generator.tech
+          identifier: https://openapi-generator.tech
+          issued: issued
+          language:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          license: https://openapi-generator.tech
+          media type: https://openapi-generator.tech
           modified: modified
           page:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          byte size: 0.8008281904610115
-          issued: issued
-          media type: https://openapi-generator.tech
+          rights: https://openapi-generator.tech
           status: status
-        status: status
+          title:
+          - title
+          - title
+          type: https://openapi-generator.tech
     ResolvedEntityResponse_Entity_equipment_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8733,45 +8629,40 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_equipment"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           annotation:
           - annotation
           - annotation
-          identifier: https://openapi-generator.tech
-          orientation: orientation
-          serial number: serial number
-          description: description
-          dynamic range: https://openapi-generator.tech
-          type: https://openapi-generator.tech
-          resolution: resolution
-          manufacturer: manufacturer
-          relation:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          filter: filter
-          is part of:
-          - is part of
-          - is part of
-          name: name
-          sample period: https://openapi-generator.tech
-          theme:
-          - theme
-          - theme
-          page:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
           contact point:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
+          description: description
+          dynamic range: https://openapi-generator.tech
+          filter: filter
+          identifier: https://openapi-generator.tech
+          is part of:
+          - is part of
+          - is part of
+          manufacturer: manufacturer
+          name: name
+          orientation: orientation
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          relation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          resolution: resolution
+          sample period: https://openapi-generator.tech
+          serial number: serial number
           spatial: spatial
           temporal:
           - temporal
           - temporal
-        status: status
+          theme:
+          - theme
+          - theme
+          type: https://openapi-generator.tech
     ResolvedEntityResponse_Entity_facility_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8779,36 +8670,31 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_facility"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           annotation:
           - annotation
           - annotation
-          is part of:
-          - is part of
-          - is part of
-          identifier: https://openapi-generator.tech
-          description: description
-          has address: has address
-          theme:
-          - theme
-          - theme
-          page:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
           contact point:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          spatial: spatial
-          title: title
-          type: https://openapi-generator.tech
+          description: description
+          has address: has address
+          identifier: https://openapi-generator.tech
+          is part of:
+          - is part of
+          - is part of
+          page:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
           relation:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-        status: status
+          spatial: spatial
+          theme:
+          - theme
+          - theme
+          title: title
+          type: https://openapi-generator.tech
     ResolvedEntityResponse_Entity_identifier_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8816,14 +8702,9 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_identifier"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          scheme agency: scheme agency
           notation: notation
-        status: status
+          scheme agency: scheme agency
     ResolvedEntityResponse_Entity_iritemplate_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8831,16 +8712,11 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_iritemplate"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          template: template
           mapping:
           - mapping
           - mapping
-        status: status
+          template: template
     ResolvedEntityResponse_Entity_iritemplatemapping_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8848,15 +8724,11 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_iritemplatemapping"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
+          default value: default value
+          label: label
+          max value: max value
           min value: min value
-          readonly value:
-          - true
-          - true
           multiple values:
           - true
           - true
@@ -8864,14 +8736,13 @@ components:
           - param value
           - param value
           property: property
-          variable: variable
           range: range
-          default value: default value
-          label: label
-          max value: max value
+          readonly value:
+          - true
+          - true
           required: true
           value pattern: value pattern
-        status: status
+          variable: variable
     ResolvedEntityResponse_Entity_location_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8879,15 +8750,10 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_location"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           geometry:
           - geometry
           - geometry
-        status: status
     ResolvedEntityResponse_Entity_operation_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8895,17 +8761,12 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_operation"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           method: method
           property: property
           returns:
           - returns
           - returns
-        status: status
     ResolvedEntityResponse_Entity_organization_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8913,32 +8774,12 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_organization"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
+          address: address
           annotation:
           - annotation
           - annotation
-          legal name: legal name
-          identifier:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
           associated project:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          member of:
-          - member of
-          - member of
-          address: address
-          telephone:
-          - telephone
-          - telephone
-          url: https://openapi-generator.tech
-          lei code: lei code
-          logo: https://openapi-generator.tech
-          owns:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           contact point:
@@ -8947,7 +8788,22 @@ components:
           email:
           - email
           - email
-        status: status
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          legal name: legal name
+          lei code: lei code
+          logo: https://openapi-generator.tech
+          member of:
+          - member of
+          - member of
+          owns:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          telephone:
+          - telephone
+          - telephone
+          url: https://openapi-generator.tech
     ResolvedEntityResponse_Entity_periodoftime_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8955,14 +8811,9 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_periodoftime"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          start date: start date
           end date: end date
-        status: status
+          start date: start date
     ResolvedEntityResponse_Entity_person_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -8970,35 +8821,30 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_person"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          annotation:
-          - annotation
-          - annotation
-          identifier:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          qualifications: qualifications
           address: address
-          family name: family name
           affiliation:
           - affiliation
           - affiliation
-          given name: given name
-          telephone:
-          - telephone
-          - telephone
+          annotation:
+          - annotation
+          - annotation
           contact point:
           - contact point
           - contact point
           email:
           - email
           - email
+          family name: family name
+          given name: given name
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          qualifications: qualifications
+          telephone:
+          - telephone
+          - telephone
           url: https://openapi-generator.tech
-        status: status
     ResolvedEntityResponse_Entity_postaladdress_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9006,16 +8852,11 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_postaladdress"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          postal code: postal code
-          street address: street address
           address country: address country
           address locality: address locality
-        status: status
+          postal code: postal code
+          street address: street address
     ResolvedEntityResponse_Entity_project_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9023,19 +8864,14 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_project"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          identifier: https://openapi-generator.tech
-          description: description
           contact point:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
-          title: title
+          description: description
           homepage: https://openapi-generator.tech
-        status: status
+          identifier: https://openapi-generator.tech
+          title: title
     ResolvedEntityResponse_Entity_propertyvalue_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9043,14 +8879,9 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_propertyvalue"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           property id: property id
           value: value
-        status: status
     ResolvedEntityResponse_Entity_publication_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9058,31 +8889,26 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_publication"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          identifier:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          keywords: keywords
-          author: author
-          date published: date published
           abstract: abstract
-          number of pages: 0
-          license: https://openapi-generator.tech
+          author: author
           contributor:
           - contributor
           - contributor
+          date published: date published
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
           issn: issn
+          keywords: keywords
+          license: https://openapi-generator.tech
           name: name
+          number of pages: 0
           publisher: publisher
           theme:
           - theme
           - theme
           volume number: volume number
-        status: status
     ResolvedEntityResponse_Entity_quantitativevalue_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9090,14 +8916,9 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_quantitativevalue"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
           unit code: unit code
           value: 0.8008281904610115
-        status: status
     ResolvedEntityResponse_Entity_service_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9105,33 +8926,28 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_service"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
+          contact point:
+          - contact point
+          - contact point
+          description: description
           identifier:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           keywords: keywords
-          provider: provider
           name: name
-          description: description
-          theme:
-          - theme
-          - theme
+          provider: provider
           service type: service type
-          contact point:
-          - contact point
-          - contact point
           spatial:
           - spatial
           - spatial
           temporal:
           - temporal
           - temporal
+          theme:
+          - theme
+          - theme
           url: https://openapi-generator.tech
-        status: status
     ResolvedEntityResponse_Entity_softwareapplication_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9139,36 +8955,31 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_softwareapplication"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
-          identifier:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          keywords:
-          - keywords
-          - keywords
-          install url: https://openapi-generator.tech
-          potential action: potential action
-          description: description
-          software requirements: https://openapi-generator.tech
-          software version: software version
-          relation:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          license: https://openapi-generator.tech
-          main entity of page: https://openapi-generator.tech
-          download url: https://openapi-generator.tech
-          name: name
-          theme:
-          - theme
-          - theme
           contact point:
           - contact point
           - contact point
-        status: status
+          description: description
+          download url: https://openapi-generator.tech
+          identifier:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          install url: https://openapi-generator.tech
+          keywords:
+          - keywords
+          - keywords
+          license: https://openapi-generator.tech
+          main entity of page: https://openapi-generator.tech
+          name: name
+          potential action: potential action
+          relation:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          software requirements: https://openapi-generator.tech
+          software version: software version
+          theme:
+          - theme
+          - theme
     ResolvedEntityResponse_Entity_softwaresourcecode_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9176,37 +8987,32 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_softwaresourcecode"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
+          code repository: https://openapi-generator.tech
+          contact point:
+          - contact point
+          - contact point
+          description: description
           identifier:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           keywords:
           - keywords
           - keywords
-          description: description
-          software version: software version
           license: https://openapi-generator.tech
-          runtime platform: runtime platform
           main entity of page: https://openapi-generator.tech
-          target product:
-          - target product
-          - target product
           name: name
           programming language:
           - programming language
           - programming language
+          runtime platform: runtime platform
+          software version: software version
+          target product:
+          - target product
+          - target product
           theme:
           - theme
           - theme
-          code repository: https://openapi-generator.tech
-          contact point:
-          - contact point
-          - contact point
-        status: status
     ResolvedEntityResponse_Entity_webservice_allOf_entity:
       allOf:
       - $ref: "#/components/schemas/EntityResponse"
@@ -9214,43 +9020,38 @@ components:
           properties:
             $ref: "#/components/schemas/Entity_webservice"
       example:
-        conceptualUri: conceptualUri
-        type: type
-        uri: uri
-        version: version
         properties:
+          conforms to:
+          - conforms to
+          - conforms to
+          contact point:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
+          date modified: date modified
+          date published: date published
+          description: description
+          entrypoint: https://openapi-generator.tech
           identifier:
           - https://openapi-generator.tech
           - https://openapi-generator.tech
           keywords:
           - keywords
           - keywords
-          supported operation:
-          - supported operation
-          - supported operation
-          date published: date published
-          description: description
-          date modified: date modified
           license: https://openapi-generator.tech
-          provider: provider
-          entrypoint: https://openapi-generator.tech
-          conforms to:
-          - conforms to
-          - conforms to
           name: name
-          theme:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
-          contact point:
-          - https://openapi-generator.tech
-          - https://openapi-generator.tech
+          provider: provider
           spatial:
           - spatial
           - spatial
+          supported operation:
+          - supported operation
+          - supported operation
           temporal:
           - temporal
           - temporal
-        status: status
+          theme:
+          - https://openapi-generator.tech
+          - https://openapi-generator.tech
 x-runtime-shapes:
 - name: address
   targetClass: http://www.w3.org/2006/vcard/ns#Address

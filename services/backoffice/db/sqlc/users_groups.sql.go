@@ -7,52 +7,10 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
-
-const areFriends = `-- name: AreFriends :one
-SELECT EXISTS(
-    SELECT 1 FROM friendships WHERE user_id = $1 AND friend_id = $2
-) AS are_friends
-`
-
-type AreFriendsParams struct {
-	UserID   uuid.UUID
-	FriendID uuid.UUID
-}
-
-func (q *Queries) AreFriends(ctx context.Context, arg AreFriendsParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, areFriends, arg.UserID, arg.FriendID)
-	var are_friends bool
-	err := row.Scan(&are_friends)
-	return are_friends, err
-}
-
-const createFriendship = `-- name: CreateFriendship :exec
-INSERT INTO friendships (user_id, friend_id)
-VALUES ($1, $2), ($3, $4)
-ON CONFLICT DO NOTHING
-`
-
-type CreateFriendshipParams struct {
-	UserID     uuid.UUID
-	FriendID   uuid.UUID
-	UserID_2   uuid.UUID
-	FriendID_2 uuid.UUID
-}
-
-func (q *Queries) CreateFriendship(ctx context.Context, arg CreateFriendshipParams) error {
-	_, err := q.db.ExecContext(ctx, createFriendship,
-		arg.UserID,
-		arg.FriendID,
-		arg.UserID_2,
-		arg.FriendID_2,
-	)
-	return err
-}
 
 const createGroup = `-- name: CreateGroup :one
 INSERT INTO groups (slug, name, description, is_system)
@@ -70,7 +28,7 @@ RETURNING
 type CreateGroupParams struct {
 	Slug        string
 	Name        string
-	Description sql.NullString
+	Description *string
 	IsSystem    bool
 }
 
@@ -85,7 +43,7 @@ type CreateGroupRow struct {
 }
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (CreateGroupRow, error) {
-	row := q.db.QueryRowContext(ctx, createGroup,
+	row := q.db.QueryRow(ctx, createGroup,
 		arg.Slug,
 		arg.Name,
 		arg.Description,
@@ -121,9 +79,9 @@ RETURNING
 
 type CreateUserParams struct {
 	AuthIdentifier string
-	Email          sql.NullString
-	GivenName      sql.NullString
-	FamilyName     sql.NullString
+	Email          *string
+	GivenName      *string
+	FamilyName     *string
 	IsSuperAdmin   bool
 	Status         UserStatus
 }
@@ -141,7 +99,7 @@ type CreateUserRow struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
+	row := q.db.QueryRow(ctx, createUser,
 		arg.AuthIdentifier,
 		arg.Email,
 		arg.GivenName,
@@ -164,35 +122,12 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
-const deleteFriendship = `-- name: DeleteFriendship :exec
-DELETE FROM friendships
-WHERE (user_id = $1 AND friend_id = $2)
-   OR (user_id = $3 AND friend_id = $4)
-`
-
-type DeleteFriendshipParams struct {
-	UserID     uuid.UUID
-	FriendID   uuid.UUID
-	UserID_2   uuid.UUID
-	FriendID_2 uuid.UUID
-}
-
-func (q *Queries) DeleteFriendship(ctx context.Context, arg DeleteFriendshipParams) error {
-	_, err := q.db.ExecContext(ctx, deleteFriendship,
-		arg.UserID,
-		arg.FriendID,
-		arg.UserID_2,
-		arg.FriendID_2,
-	)
-	return err
-}
-
 const deleteGroup = `-- name: DeleteGroup :exec
 DELETE FROM groups WHERE id = $1
 `
 
 func (q *Queries) DeleteGroup(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteGroup, id)
+	_, err := q.db.Exec(ctx, deleteGroup, id)
 	return err
 }
 
@@ -206,7 +141,7 @@ type DeleteMembershipParams struct {
 }
 
 func (q *Queries) DeleteMembership(ctx context.Context, arg DeleteMembershipParams) error {
-	_, err := q.db.ExecContext(ctx, deleteMembership, arg.UserID, arg.GroupID)
+	_, err := q.db.Exec(ctx, deleteMembership, arg.UserID, arg.GroupID)
 	return err
 }
 
@@ -215,29 +150,8 @@ DELETE FROM users WHERE id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
-}
-
-const getFriendship = `-- name: GetFriendship :one
-SELECT
-    user_id,
-    friend_id,
-    created_at
-FROM friendships
-WHERE user_id = $1 AND friend_id = $2
-`
-
-type GetFriendshipParams struct {
-	UserID   uuid.UUID
-	FriendID uuid.UUID
-}
-
-func (q *Queries) GetFriendship(ctx context.Context, arg GetFriendshipParams) (Friendship, error) {
-	row := q.db.QueryRowContext(ctx, getFriendship, arg.UserID, arg.FriendID)
-	var i Friendship
-	err := row.Scan(&i.UserID, &i.FriendID, &i.CreatedAt)
-	return i, err
 }
 
 const getGroupByID = `-- name: GetGroupByID :one
@@ -264,7 +178,7 @@ type GetGroupByIDRow struct {
 }
 
 func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getGroupByID, id)
+	row := q.db.QueryRow(ctx, getGroupByID, id)
 	var i GetGroupByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -296,7 +210,7 @@ type GetMembershipByIDsParams struct {
 }
 
 func (q *Queries) GetMembershipByIDs(ctx context.Context, arg GetMembershipByIDsParams) (GroupMembership, error) {
-	row := q.db.QueryRowContext(ctx, getMembershipByIDs, arg.UserID, arg.GroupID)
+	row := q.db.QueryRow(ctx, getMembershipByIDs, arg.UserID, arg.GroupID)
 	var i GroupMembership
 	err := row.Scan(
 		&i.UserID,
@@ -337,7 +251,7 @@ type GetUserByAuthIdentifierRow struct {
 }
 
 func (q *Queries) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (GetUserByAuthIdentifierRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserByAuthIdentifier, authIdentifier)
+	row := q.db.QueryRow(ctx, getUserByAuthIdentifier, authIdentifier)
 	var i GetUserByAuthIdentifierRow
 	err := row.Scan(
 		&i.ID,
@@ -381,7 +295,7 @@ type GetUserByIDRow struct {
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -410,7 +324,7 @@ type IsActiveMemberParams struct {
 }
 
 func (q *Queries) IsActiveMember(ctx context.Context, arg IsActiveMemberParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, isActiveMember, arg.UserID, arg.GroupID)
+	row := q.db.QueryRow(ctx, isActiveMember, arg.UserID, arg.GroupID)
 	var active bool
 	err := row.Scan(&active)
 	return active, err
@@ -440,7 +354,7 @@ type ListGroupsRow struct {
 }
 
 func (q *Queries) ListGroups(ctx context.Context) ([]ListGroupsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listGroups)
+	rows, err := q.db.Query(ctx, listGroups)
 	if err != nil {
 		return nil, err
 	}
@@ -460,9 +374,6 @@ func (q *Queries) ListGroups(ctx context.Context) ([]ListGroupsRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -484,7 +395,7 @@ ORDER BY created_at DESC
 `
 
 func (q *Queries) ListMembershipsByGroupID(ctx context.Context, groupID uuid.UUID) ([]GroupMembership, error) {
-	rows, err := q.db.QueryContext(ctx, listMembershipsByGroupID, groupID)
+	rows, err := q.db.Query(ctx, listMembershipsByGroupID, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -503,9 +414,6 @@ func (q *Queries) ListMembershipsByGroupID(ctx context.Context, groupID uuid.UUI
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -541,7 +449,7 @@ type ListUsersRow struct {
 }
 
 func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers)
+	rows, err := q.db.Query(ctx, listUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -563,9 +471,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -595,7 +500,7 @@ RETURNING
 type UpdateGroupParams struct {
 	Slug        string
 	Name        string
-	Description sql.NullString
+	Description *string
 	IsSystem    bool
 	ID          uuid.UUID
 }
@@ -611,7 +516,7 @@ type UpdateGroupRow struct {
 }
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (UpdateGroupRow, error) {
-	row := q.db.QueryRowContext(ctx, updateGroup,
+	row := q.db.QueryRow(ctx, updateGroup,
 		arg.Slug,
 		arg.Name,
 		arg.Description,
@@ -656,9 +561,9 @@ RETURNING
 
 type UpdateUserParams struct {
 	AuthIdentifier string
-	Email          sql.NullString
-	GivenName      sql.NullString
-	FamilyName     sql.NullString
+	Email          *string
+	GivenName      *string
+	FamilyName     *string
 	IsSuperAdmin   bool
 	Status         UserStatus
 	ID             uuid.UUID
@@ -677,7 +582,7 @@ type UpdateUserRow struct {
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, updateUser,
+	row := q.db.QueryRow(ctx, updateUser,
 		arg.AuthIdentifier,
 		arg.Email,
 		arg.GivenName,
@@ -725,7 +630,7 @@ type UpsertMembershipParams struct {
 }
 
 func (q *Queries) UpsertMembership(ctx context.Context, arg UpsertMembershipParams) (GroupMembership, error) {
-	row := q.db.QueryRowContext(ctx, upsertMembership,
+	row := q.db.QueryRow(ctx, upsertMembership,
 		arg.UserID,
 		arg.GroupID,
 		arg.Role,

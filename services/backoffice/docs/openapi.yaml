@@ -3,7 +3,7 @@ info:
   title: EPOS User Group API
   version: 2.0.0
   description: >-
-    User, group, membership, friendship, and authorization APIs for service access control.
+    User, group, membership, and authorization APIs for service access control.
     The API exposes core identity records, group membership management, and the decision
     endpoint used by downstream services to evaluate access.
 servers:
@@ -14,13 +14,11 @@ tags:
   - name: Authorization
     description: Evaluate access decisions for downstream services.
   - name: Users
-    description: Manage user identities and direct user relationships.
+    description: Manage user identities.
   - name: Groups
     description: Manage groups and group metadata.
   - name: Memberships
     description: Manage group membership assignments.
-  - name: Friendships
-    description: Manage user-to-user friendships.
   - name: Metadata Import
     description: Import dataset metadata from Turtle files.
 paths:
@@ -397,52 +395,6 @@ paths:
       responses:
         '204':
           description: User deleted
-  /api/v2/users/{userId}/friends/{friendUserId}:
-    post:
-      tags: [Friendships]
-      summary: Create friendship between users
-      description: Creates a symmetric friendship link between two users.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: friendUserId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '201':
-          description: Friendship created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Friendship'
-    delete:
-      tags: [Friendships]
-      summary: Delete friendship between users
-      description: Removes the friendship link in both directions.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: friendUserId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Friendship deleted
-
 components:
   schemas:
     MetadataImportRequest:
@@ -607,19 +559,6 @@ components:
           $ref: '#/components/schemas/MembershipRole'
         status:
           $ref: '#/components/schemas/MembershipStatus'
-    Friendship:
-      type: object
-      description: Symmetric friendship edge between two users.
-      properties:
-        userId:
-          type: string
-          format: uuid
-        friendId:
-          type: string
-          format: uuid
-        createdAt:
-          type: string
-          format: date-time
     User:
       type: object
       description: User record returned by user endpoints.

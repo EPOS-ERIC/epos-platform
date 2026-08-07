@@ -47,7 +47,7 @@ generate: clean
 	(cd $(USERGROUP_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
 clean:
-	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR)
+	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR) $(USERGROUP_CLIENT_GEN_DIR)
 
 get-token:
 	curl -s -X POST http://localhost:8110/oauth/token \

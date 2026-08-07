@@ -1,4 +1,4 @@
-// Package server provides gateway HTTP transport wiring and server runtime.
+// Package server provides HTTP server runtime and dependency wiring.
 package server
 
 import (
@@ -8,16 +8,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/config"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi"
 )
 
 func Run(cfg config.Config) error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	log := logging.Get("server")
@@ -45,13 +47,16 @@ func Run(cfg config.Config) error {
 		}
 	}()
 
-	router := NewRouter(database)
+	router := httpapi.NewRouter(database)
 	handler := requestTimeoutHandler(router, cfg.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct
-		BaseContext: func(net.Listener) context.Context { return ctx },
-		Addr:        ":" + cfg.ServerPort,
-		Handler:     handler,
+		BaseContext:  func(net.Listener) context.Context { return ctx },
+		Addr:         ":" + cfg.ServerPort,
+		Handler:      handler,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+		IdleTimeout:  cfg.IdleTimeout,
 	}
 
 	srvErr := make(chan error, 1)

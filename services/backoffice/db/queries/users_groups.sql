@@ -182,26 +182,3 @@ SELECT
     status = 'ACTIVE' AS active
 FROM group_memberships
 WHERE user_id = $1 AND group_id = $2;
-
--- name: CreateFriendship :exec
-INSERT INTO friendships (user_id, friend_id)
-VALUES ($1, $2), ($3, $4)
-ON CONFLICT DO NOTHING;
-
--- name: GetFriendship :one
-SELECT
-    user_id,
-    friend_id,
-    created_at
-FROM friendships
-WHERE user_id = $1 AND friend_id = $2;
-
--- name: DeleteFriendship :exec
-DELETE FROM friendships
-WHERE (user_id = $1 AND friend_id = $2)
-   OR (user_id = $3 AND friend_id = $4);
-
--- name: AreFriends :one
-SELECT EXISTS(
-    SELECT 1 FROM friendships WHERE user_id = $1 AND friend_id = $2
-) AS are_friends;

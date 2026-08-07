@@ -138,21 +138,6 @@ CREATE TABLE group_permissions (
     updated_at    timestamptz NOT NULL DEFAULT now()
 );
 
--- Store both directions so friendship checks stay symmetric and indexed.
-CREATE TABLE friendships (
-    user_id    uuid NOT NULL
-        REFERENCES users(id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-    friend_id  uuid NOT NULL
-        REFERENCES users(id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    PRIMARY KEY (user_id, friend_id),
-    CONSTRAINT friendships_self_check CHECK (user_id <> friend_id)
-);
-
 INSERT INTO groups (slug, name, description, is_system)
 VALUES ('all', 'ALL', 'Basic group', true)
 ON CONFLICT (slug) DO NOTHING;
@@ -646,7 +631,6 @@ CREATE INDEX group_memberships_group_status_idx ON group_memberships (group_id, 
 CREATE UNIQUE INDEX group_permissions_scope_uq
     ON group_permissions (group_id, service, action, coalesce(resource_type, ''), coalesce(resource_id, ''), effect);
 CREATE INDEX group_permissions_service_action_idx ON group_permissions (service, action);
-CREATE INDEX friendships_friend_idx ON friendships (friend_id);
 
 CREATE INDEX datasets_original_dataset_id_idx
     ON datasets(original_dataset_id);
@@ -721,7 +705,6 @@ DROP FUNCTION IF EXISTS set_dataset_original_id();
 
 DROP TABLE IF EXISTS group_permissions;
 DROP TABLE IF EXISTS group_memberships;
-DROP TABLE IF EXISTS friendships;
 DROP TABLE IF EXISTS groups;
 DROP TRIGGER IF EXISTS users_promote_first_user_as_super_admin ON users;
 DROP FUNCTION IF EXISTS promote_first_user_as_super_admin();

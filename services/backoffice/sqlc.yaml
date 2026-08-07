@@ -7,4 +7,43 @@ sql:
       go:
         package: "sqlc"
         out: "db/sqlc"
+        sql_package: "pgx/v5"
         emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "geometry"
+            go_type:
+              type: "[]byte"
+          - db_type: "uuid"
+            nullable: false
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+              pointer: true
+          - db_type: "timestamptz"
+            nullable: false
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          - column: "datasets.spatial_point"
+            go_type:
+              type: "[]byte"
+          - column: "datasets.spatial_polygon"
+            go_type:
+              type: "[]byte"
+          - column: "web_services.spatial_point"
+            go_type:
+              type: "[]byte"
+          - column: "web_services.spatial_polygon"
+            go_type:
+              type: "[]byte"

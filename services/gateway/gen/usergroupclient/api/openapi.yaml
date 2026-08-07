@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  description: "User, group, membership, friendship, and authorization APIs for service\
-    \ access control. The API exposes core identity records, group membership management,\
+  description: "User, group, membership, and authorization APIs for service access\
+    \ control. The API exposes core identity records, group membership management,\
     \ and the decision endpoint used by downstream services to evaluate access."
   title: EPOS User Group API
   version: 2.0.0
@@ -12,14 +12,14 @@ tags:
   name: Health
 - description: Evaluate access decisions for downstream services.
   name: Authorization
-- description: Manage user identities and direct user relationships.
+- description: Manage user identities.
   name: Users
 - description: Manage groups and group metadata.
   name: Groups
 - description: Manage group membership assignments.
   name: Memberships
-- description: Manage user-to-user friendships.
-  name: Friendships
+- description: Import dataset metadata from Turtle files.
+  name: Metadata Import
 paths:
   /health:
     get:
@@ -49,6 +49,35 @@ paths:
       summary: Evaluate authorization decision
       tags:
       - Authorization
+  /api/v2/import/metadata:
+    post:
+      description: "Imports a Turtle file into dataset-centric backoffice records.\
+        \ Organizations, contact points, categories, and category schemes may be shared.\
+        \ Other nested resources are materialized per dataset tree."
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/MetadataImportRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataImportResponse"
+          description: Metadata imported
+        "400":
+          description: Invalid multipart request or identifiers
+        "404":
+          description: Editor or group not found
+        "422":
+          description: Turtle mapping or domain validation failed
+        "500":
+          description: Import persistence failed
+      summary: Import dataset metadata
+      tags:
+      - Metadata Import
   /api/v2/groups/{groupId}/memberships:
     get:
       description: Returns memberships currently attached to the given group.
@@ -58,6 +87,7 @@ paths:
         name: groupId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       responses:
@@ -81,6 +111,7 @@ paths:
         name: groupId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       - explode: false
@@ -88,6 +119,7 @@ paths:
         name: userId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       responses:
@@ -104,6 +136,7 @@ paths:
         name: groupId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       - explode: false
@@ -111,6 +144,7 @@ paths:
         name: userId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       requestBody:
@@ -187,6 +221,7 @@ paths:
         name: groupId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       responses:
@@ -235,6 +270,7 @@ paths:
         name: groupId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       requestBody:
@@ -318,6 +354,7 @@ paths:
         name: userId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       responses:
@@ -334,6 +371,7 @@ paths:
         name: userId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       responses:
@@ -356,6 +394,7 @@ paths:
         name: userId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       requestBody:
@@ -382,6 +421,7 @@ paths:
         name: userId
         required: true
         schema:
+          format: uuid
           type: string
         style: simple
       requestBody:
@@ -400,69 +440,90 @@ paths:
       summary: Replace user
       tags:
       - Users
-  /api/v2/users/{userId}/friends/{friendUserId}:
-    delete:
-      description: Removes the friendship link in both directions.
-      parameters:
-      - explode: false
-        in: path
-        name: userId
-        required: true
-        schema:
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: friendUserId
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "204":
-          description: Friendship deleted
-      summary: Delete friendship between users
-      tags:
-      - Friendships
-    post:
-      description: Creates a symmetric friendship link between two users.
-      parameters:
-      - explode: false
-        in: path
-        name: userId
-        required: true
-        schema:
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: friendUserId
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Friendship"
-          description: Friendship created
-      summary: Create friendship between users
-      tags:
-      - Friendships
 components:
   schemas:
+    MetadataImportRequest:
+      description: Multipart Turtle metadata import request.
+      properties:
+        file:
+          description: Turtle file to import.
+          format: binary
+          type: string
+        editorId:
+          description: User assigned as editor for imported datasets.
+          format: uuid
+          type: string
+        groupId:
+          description: Group assigned to imported datasets.
+          format: uuid
+          type: string
+      required:
+      - editorId
+      - file
+      - groupId
+      type: object
+    MetadataImportWarning:
+      example:
+        subject: subject
+        message: message
+      properties:
+        subject:
+          type: string
+        message:
+          type: string
+      required:
+      - message
+      type: object
+    MetadataImportResponse:
+      example:
+        datasets: 0
+        categorySchemes: 0
+        categories: 0
+        organizations: 0
+        contactPoints: 0
+        warnings:
+        - subject: subject
+          message: message
+        - subject: subject
+          message: message
+      properties:
+        datasets:
+          minimum: 0
+          type: integer
+        categorySchemes:
+          minimum: 0
+          type: integer
+        categories:
+          minimum: 0
+          type: integer
+        organizations:
+          minimum: 0
+          type: integer
+        contactPoints:
+          minimum: 0
+          type: integer
+        warnings:
+          items:
+            $ref: "#/components/schemas/MetadataImportWarning"
+          type: array
+      required:
+      - categories
+      - categorySchemes
+      - contactPoints
+      - datasets
+      - organizations
+      type: object
     Group:
       description: Group record returned by group endpoints.
       example:
-        isSystem: true
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        slug: slug
         name: name
         description: description
-        id: id
-        slug: slug
+        isSystem: true
       properties:
         id:
+          format: uuid
           type: string
         slug:
           type: string
@@ -476,10 +537,10 @@ components:
     CreateGroupRequest:
       description: Payload for creating a group.
       example:
-        isSystem: true
+        slug: slug
         name: name
         description: description
-        slug: slug
+        isSystem: true
       properties:
         slug:
           type: string
@@ -496,10 +557,10 @@ components:
     PatchGroupRequest:
       description: Partial payload for updating a group.
       example:
-        isSystem: true
+        slug: slug
         name: name
         description: description
-        slug: slug
+        isSystem: true
       properties:
         slug:
           type: string
@@ -513,10 +574,10 @@ components:
     AuthorizeRequest:
       description: Access-check payload consumed by the authorization endpoint.
       example:
-        service: service
-        action: action
         authIdentifier: authIdentifier
         group: group
+        service: service
+        action: action
         resourceOwnerIdentifier: resourceOwnerIdentifier
       properties:
         authIdentifier:
@@ -538,8 +599,8 @@ components:
     AuthorizeResponse:
       description: Decision returned by authorization checks.
       example:
-        reason: reason
         allowed: true
+        reason: reason
       properties:
         allowed:
           type: boolean
@@ -583,16 +644,18 @@ components:
     Membership:
       description: Membership record linking user to group.
       example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
+        userId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        groupId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
         role: VIEWER
-        groupId: groupId
-        userId: userId
         status: PENDING
+        createdAt: 2000-01-23T04:56:07.000+00:00
         updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         userId:
+          format: uuid
           type: string
         groupId:
+          format: uuid
           type: string
         role:
           $ref: "#/components/schemas/MembershipRole"
@@ -619,35 +682,21 @@ components:
       - role
       - status
       type: object
-    Friendship:
-      description: Symmetric friendship edge between two users.
-      example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
-        friendId: friendId
-        userId: userId
-      properties:
-        userId:
-          type: string
-        friendId:
-          type: string
-        createdAt:
-          format: date-time
-          type: string
-      type: object
     User:
       description: User record returned by user endpoints.
       example:
-        createdAt: 2000-01-23T04:56:07.000+00:00
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        authIdentifier: authIdentifier
+        email: email
         givenName: givenName
         familyName: familyName
         isSuperAdmin: true
-        id: id
-        authIdentifier: authIdentifier
-        email: email
         status: ACTIVE
+        createdAt: 2000-01-23T04:56:07.000+00:00
         updatedAt: 2000-01-23T04:56:07.000+00:00
       properties:
         id:
+          format: uuid
           type: string
         authIdentifier:
           type: string
@@ -671,11 +720,11 @@ components:
     CreateUserRequest:
       description: Payload for creating a user.
       example:
+        authIdentifier: authIdentifier
+        email: email
         givenName: givenName
         familyName: familyName
         isSuperAdmin: true
-        authIdentifier: authIdentifier
-        email: email
         status: ACTIVE
       properties:
         authIdentifier:
@@ -696,11 +745,11 @@ components:
     PutUserRequest:
       description: Payload for fully replacing a user.
       example:
+        authIdentifier: authIdentifier
+        email: email
         givenName: givenName
         familyName: familyName
         isSuperAdmin: true
-        authIdentifier: authIdentifier
-        email: email
         status: ACTIVE
       properties:
         authIdentifier:
@@ -722,11 +771,11 @@ components:
     PatchUserRequest:
       description: Partial payload for updating a user.
       example:
+        authIdentifier: authIdentifier
+        email: email
         givenName: givenName
         familyName: familyName
         isSuperAdmin: true
-        authIdentifier: authIdentifier
-        email: email
         status: ACTIVE
       properties:
         authIdentifier:

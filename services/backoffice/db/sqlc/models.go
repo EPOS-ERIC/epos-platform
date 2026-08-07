@@ -5,9 +5,7 @@
 package sqlc
 
 import (
-	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -351,13 +349,13 @@ type Dataset struct {
 	SourceIri         string
 	Title             string
 	Description       string
-	SpatialPoint      interface{}
-	SpatialPolygon    interface{}
-	TemporalStart     sql.NullTime
-	TemporalEnd       sql.NullTime
+	SpatialPoint      []byte
+	SpatialPolygon    []byte
+	TemporalStart     *time.Time
+	TemporalEnd       *time.Time
 	Status            DatasetStatus
-	EditorUserID      uuid.NullUUID
-	GroupID           uuid.NullUUID
+	EditorUserID      *uuid.UUID
+	GroupID           *uuid.UUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 	OriginalDatasetID uuid.UUID
@@ -389,23 +387,17 @@ type Distribution struct {
 	DatasetID              uuid.UUID
 	Title                  string
 	Description            string
-	License                sql.NullString
-	DownloadableFileUrl    sql.NullString
-	DownloadableFileFormat sql.NullString
-	WebServiceID           uuid.NullUUID
-}
-
-type Friendship struct {
-	UserID    uuid.UUID
-	FriendID  uuid.UUID
-	CreatedAt time.Time
+	License                *string
+	DownloadableFileUrl    *string
+	DownloadableFileFormat *string
+	WebServiceID           *uuid.UUID
 }
 
 type Group struct {
 	ID          uuid.UUID
 	Slug        string
 	Name        string
-	Description sql.NullString
+	Description *string
 	IsSystem    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -425,8 +417,8 @@ type GroupPermission struct {
 	GroupID      uuid.UUID
 	Service      string
 	Action       string
-	ResourceType sql.NullString
-	ResourceID   sql.NullString
+	ResourceType *string
+	ResourceID   *string
 	Effect       PermissionEffect
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -443,13 +435,13 @@ type Organization struct {
 	ID         uuid.UUID
 	SourceIri  string
 	Name       string
-	Street     sql.NullString
-	Locality   sql.NullString
-	PostalCode sql.NullString
-	Country    sql.NullString
-	LogoUrl    sql.NullString
-	PageUrl    sql.NullString
-	Email      sql.NullString
+	Street     *string
+	Locality   *string
+	PostalCode *string
+	Country    *string
+	LogoUrl    *string
+	PageUrl    *string
+	Email      *string
 }
 
 type OrganizationIdentifier struct {
@@ -465,9 +457,9 @@ type OrganizationMembership struct {
 type User struct {
 	ID             uuid.UUID
 	AuthIdentifier string
-	FamilyName     sql.NullString
-	GivenName      sql.NullString
-	Email          sql.NullString
+	FamilyName     *string
+	GivenName      *string
+	Email          *string
 	IsSuperAdmin   bool
 	Status         UserStatus
 	CreatedAt      time.Time
@@ -481,13 +473,13 @@ type WebService struct {
 	Description              string
 	TemplateUrl              string
 	Format                   string
-	DocumentationTitle       sql.NullString
-	DocumentationDescription sql.NullString
-	DocumentationUri         sql.NullString
-	SpatialPoint             interface{}
-	SpatialPolygon           interface{}
-	TemporalStart            sql.NullTime
-	TemporalEnd              sql.NullTime
+	DocumentationTitle       *string
+	DocumentationDescription *string
+	DocumentationUri         *string
+	SpatialPoint             []byte
+	SpatialPolygon           []byte
+	TemporalStart            *time.Time
+	TemporalEnd              *time.Time
 }
 
 type WebServiceContactPoint struct {
@@ -506,7 +498,7 @@ type WebServiceParameter struct {
 	Required       bool
 	MultipleValues bool
 	ReadOnly       bool
-	Config         json.RawMessage
+	Config         []byte
 }
 
 type WebServiceProvider struct {

@@ -1,7 +1,7 @@
 /*
 EPOS User Group API
 
-User, group, membership, friendship, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
+User, group, membership, and authorization APIs for service access control. The API exposes core identity records, group membership management, and the decision endpoint used by downstream services to evaluate access.
 
 API version: 2.0.0
 */
@@ -50,13 +50,13 @@ type APIClient struct {
 
 	AuthorizationAPI AuthorizationAPI
 
-	FriendshipsAPI FriendshipsAPI
-
 	GroupsAPI GroupsAPI
 
 	HealthAPI HealthAPI
 
 	MembershipsAPI MembershipsAPI
+
+	MetadataImportAPI MetadataImportAPI
 
 	UsersAPI UsersAPI
 }
@@ -78,10 +78,10 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.AuthorizationAPI = (*AuthorizationAPIService)(&c.common)
-	c.FriendshipsAPI = (*FriendshipsAPIService)(&c.common)
 	c.GroupsAPI = (*GroupsAPIService)(&c.common)
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.MembershipsAPI = (*MembershipsAPIService)(&c.common)
+	c.MetadataImportAPI = (*MetadataImportAPIService)(&c.common)
 	c.UsersAPI = (*UsersAPIService)(&c.common)
 
 	return c
@@ -445,6 +445,15 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 	}
 	if s, ok := v.(*string); ok {
 		*s = string(b)
+		return nil
+	}
+	if r, ok := v.(*io.Reader); ok {
+		*r = bytes.NewReader(b)
+		return nil
+	}
+	// Must stay before the JSON branch: json.Unmarshal would base64-decode into *[]byte.
+	if p, ok := v.(*[]byte); ok {
+		*p = b
 		return nil
 	}
 	if f, ok := v.(*os.File); ok {

@@ -11,6 +11,7 @@ require github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
 require github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 
 require (
+	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
@@ -28,7 +29,6 @@ require (
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deiu/gon3 v0.0.0-20241212124032-93153c038193 // indirect
-	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect

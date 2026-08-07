@@ -26,6 +26,6 @@ func main() {
 
 	if err := server.Run(cfg); err != nil {
 		log.Error("server failed", "error", err)
-		panic("server failed")
+		panic(err)
 	}
 }

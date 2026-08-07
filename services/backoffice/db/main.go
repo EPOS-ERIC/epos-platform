@@ -1,3 +1,4 @@
+// Package db provides PostgreSQL connections, migrations, and persistence adapters.
 package db
 
 import (
@@ -9,6 +10,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/config"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
@@ -17,7 +19,12 @@ import (
 var embedMigrations embed.FS
 
 type PostgresDB struct {
-	db *sql.DB
+	db       *pgxpool.Pool
+	Identity *IdentityRepository
+}
+
+// IdentityRepository provides identity persistence through generated queries.
+type IdentityRepository struct {
 	*sqlc.Queries
 }
 
@@ -31,22 +38,32 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		cfg.DBPassword,
 	)
 
-	db, err := sql.Open("pgx", dsn)
+	migrationDB, err := sql.Open("pgx", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("open postgres db: %w", err)
+		return nil, fmt.Errorf("open migration db: %w", err)
 	}
-
-	if err := db.Ping(); err != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("ping postgres db: %w", err)
+	if err := migrationDB.Ping(); err != nil {
+		_ = migrationDB.Close()
+		return nil, fmt.Errorf("ping migration db: %w", err)
 	}
-
-	if err := runMigrations(db); err != nil {
-		_ = db.Close()
+	if err := runMigrations(migrationDB); err != nil {
+		_ = migrationDB.Close()
 		return nil, err
 	}
+	if err := migrationDB.Close(); err != nil {
+		return nil, fmt.Errorf("close migration db: %w", err)
+	}
 
-	return &PostgresDB{db: db, Queries: sqlc.New(db)}, nil
+	db, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		return nil, fmt.Errorf("open postgres pool: %w", err)
+	}
+	if err := db.Ping(context.Background()); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("ping postgres pool: %w", err)
+	}
+
+	return &PostgresDB{db: db, Identity: &IdentityRepository{Queries: sqlc.New(db)}}, nil
 }
 
 func runMigrations(db *sql.DB) error {
@@ -81,9 +98,7 @@ func (d *PostgresDB) Close() error {
 	if d.db == nil {
 		return nil
 	}
-	if err := d.db.Close(); err != nil {
-		return fmt.Errorf("close database: %w", err)
-	}
+	d.db.Close()
 	return nil
 }
 
@@ -91,7 +106,7 @@ func (d *PostgresDB) Health() error {
 	if d.db == nil {
 		return fmt.Errorf("database connection is nil")
 	}
-	if err := d.db.Ping(); err != nil {
+	if err := d.db.Ping(context.Background()); err != nil {
 		return fmt.Errorf("ping database: %w", err)
 	}
 	return nil
@@ -101,7 +116,7 @@ func (d *PostgresDB) PingContext(ctx context.Context) error {
 	if d.db == nil {
 		return fmt.Errorf("database connection is nil")
 	}
-	if err := d.db.PingContext(ctx); err != nil {
+	if err := d.db.Ping(ctx); err != nil {
 		return fmt.Errorf("ping database: %w", err)
 	}
 	return nil
