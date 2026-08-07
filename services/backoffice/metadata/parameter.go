@@ -14,14 +14,15 @@ type Parameter interface {
 }
 
 type ParameterMetadata struct {
-	ID             uuid.UUID `json:"id"`
-	SourceIRI      string    `json:"source_iri"`
-	Variable       string    `json:"variable"`
-	Property       string    `json:"property"`
-	Label          string    `json:"label"`
-	Required       bool      `json:"required"`
-	MultipleValues bool      `json:"multiple_values"`
-	ReadOnly       bool      `json:"read_only"`
+	ID             uuid.UUID     `json:"id"`
+	SourceIRI      string        `json:"source_iri"`
+	Kind           ParameterKind `json:"kind"`
+	Variable       string        `json:"variable"`
+	Property       string        `json:"property"`
+	Label          string        `json:"label"`
+	Required       bool          `json:"required"`
+	MultipleValues bool          `json:"multiple_values"`
+	ReadOnly       bool          `json:"read_only"`
 }
 
 type StringParameter struct {
@@ -138,6 +139,8 @@ func EncodeParameter(parameter Parameter) (ParameterRecord, error) {
 }
 
 func DecodeParameter(record ParameterRecord) (Parameter, error) {
+	record.Metadata.Kind = record.Kind
+
 	switch record.Kind {
 	case ParameterKindString:
 		var config struct {

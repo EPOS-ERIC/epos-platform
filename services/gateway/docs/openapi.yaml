@@ -918,11 +918,11 @@ components:
       name: id
       in: path
       required: true
-      description: Resource identifier.
+      description: Resource UUID.
       schema:
         type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
 
     UserId:
       name: id
@@ -2093,6 +2093,14 @@ components:
               format: date-time
               description: Resource last modification timestamp in ISO 8601 UTC
               example: "2024-03-01T08:45:00Z"
+            source_created:
+              type: string
+              format: date-time
+              description: Creation timestamp from imported metadata
+            source_updated:
+              type: string
+              format: date-time
+              description: Modification timestamp from imported metadata
             version_info:
               type: string
               description: Human-readable version information for this dataset

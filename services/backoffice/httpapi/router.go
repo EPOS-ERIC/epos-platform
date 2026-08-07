@@ -13,6 +13,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataread"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -55,10 +56,12 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	membershipsHandler := handlers.NewMemberships(membershipsSvc)
 	authorizeHandler := handlers.NewAuthorize(authorizerSvc)
 	metadataImportHandler := handlers.NewMetadataImport(metadataImporterSvc)
+	metadataReadHandler := handlers.NewMetadataRead(metadataread.New(database))
 
 	r.Route("/api/v2", func(r chi.Router) {
 		r.Post("/authorize", authorizeHandler.Authorize)
 		r.Post("/import/metadata", metadataImportHandler.Import)
+		r.Get("/resources/{resourceType}/{id}", metadataReadHandler.Get)
 
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", groupsHandler.List)

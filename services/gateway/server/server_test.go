@@ -24,7 +24,7 @@ func TestRunReturnsErrorForInvalidListenAddress(t *testing.T) {
 		},
 	}
 
-	err := Run(cfg, nil, nil, nil)
+	err := Run(cfg, nil, nil, nil, nil)
 	if err == nil {
 		t.Fatal("expected error")
 	}

@@ -21,6 +21,8 @@ tags:
     description: Manage group membership assignments.
   - name: Metadata Import
     description: Import dataset metadata from Turtle files.
+  - name: Metadata
+    description: Read materialized metadata resources.
 paths:
   /health:
     get:
@@ -108,6 +110,38 @@ paths:
           description: Turtle mapping or domain validation failed
         '500':
           description: Import persistence failed
+  /api/v2/resources/{resourceType}/{id}:
+    get:
+      tags: [Metadata]
+      summary: Get materialized metadata resource
+      description: Returns canonical Backoffice metadata for a resource identified by its UUID.
+      parameters:
+        - name: resourceType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [dataset, distribution, webservice, organization, concept, conceptscheme, softwareapplication, softwaresourcecode]
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Resource UUID.
+      responses:
+        '200':
+          description: Canonical resource representation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataResource'
+        '400':
+          description: Unsupported resource type or invalid UUID
+        '404':
+          description: Resource not found
+        '500':
+          description: Metadata read failed
   /api/v2/groups/{groupId}/memberships:
     get:
       tags: [Memberships]
@@ -437,6 +471,250 @@ components:
           type: string
           format: binary
           description: Turtle file to import.
+    MetadataResource:
+      description: Response shape selected by `resourceType`.
+      oneOf:
+        - $ref: '#/components/schemas/Dataset'
+        - $ref: '#/components/schemas/Distribution'
+        - $ref: '#/components/schemas/WebService'
+        - $ref: '#/components/schemas/Organization'
+        - $ref: '#/components/schemas/Category'
+        - $ref: '#/components/schemas/CategoryScheme'
+        - $ref: '#/components/schemas/SoftwareApplication'
+        - $ref: '#/components/schemas/SoftwareSourceCode'
+    Dataset:
+      type: object
+      required: [id, source_iri, title, description, keywords, status, created, updated, original_dataset_id]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        title: {type: string}
+        description: {type: string}
+        keywords: {type: string, description: Comma-separated keywords from imported metadata.}
+        accrual_periodicity: {type: string, nullable: true}
+        quality_annotation: {type: string, nullable: true}
+        access_right: {type: string, nullable: true}
+        distributions: {type: array, items: {$ref: '#/components/schemas/Distribution'}}
+        spatial_coverage: {$ref: '#/components/schemas/Spatial'}
+        temporal_coverage: {$ref: '#/components/schemas/Temporal'}
+        persistent_identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
+        contact_points: {type: array, items: {$ref: '#/components/schemas/ContactPoint'}}
+        providers: {type: array, items: {$ref: '#/components/schemas/Organization'}}
+        categories: {type: array, items: {$ref: '#/components/schemas/Category'}}
+        source_created: {type: string, format: date-time, nullable: true}
+        source_updated: {type: string, format: date-time, nullable: true}
+        status: {$ref: '#/components/schemas/DatasetStatus'}
+        editor: {$ref: '#/components/schemas/MetadataUser'}
+        group: {$ref: '#/components/schemas/MetadataGroup'}
+        created: {type: string, format: date-time}
+        updated: {type: string, format: date-time}
+        original_dataset_id: {type: string, format: uuid}
+    Distribution:
+      type: object
+      required: [id, source_iri, title, description, type]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        title: {type: string}
+        description: {type: string}
+        license: {type: string, nullable: true}
+        type: {$ref: '#/components/schemas/DistributionType'}
+        issued: {type: string, format: date-time, nullable: true}
+        modified: {type: string, format: date-time, nullable: true}
+        byte_size: {type: integer, format: int64, nullable: true}
+        web_service: {$ref: '#/components/schemas/WebService'}
+        downloadable_file: {$ref: '#/components/schemas/DownloadableFile'}
+    DownloadableFile:
+      type: object
+      properties:
+        url: {type: string, format: uri}
+        format: {type: string}
+    WebService:
+      type: object
+      required: [id, source_iri, name, description, template_url, format]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        name: {type: string}
+        description: {type: string}
+        template_url: {type: string}
+        parameters: {type: array, items: {$ref: '#/components/schemas/Parameter'}}
+        format: {type: string}
+        provider: {$ref: '#/components/schemas/Organization', nullable: true}
+        documentation: {$ref: '#/components/schemas/Documentation'}
+        spatial_coverage: {$ref: '#/components/schemas/Spatial'}
+        temporal_coverage: {$ref: '#/components/schemas/Temporal'}
+        contact_points: {type: array, items: {$ref: '#/components/schemas/ContactPoint'}}
+    SoftwareApplication:
+      type: object
+      required: [id, source_iri, name, description, keywords]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        name: {type: string}
+        description: {type: string}
+        main_entity_of_page: {type: string, nullable: true}
+        license: {type: string, nullable: true}
+        version: {type: string, nullable: true}
+        keywords: {type: string}
+        download_url: {type: string, format: uri, nullable: true}
+        requirements: {type: string, nullable: true}
+        operating_system: {type: string, nullable: true}
+        creators: {type: array, items: {$ref: '#/components/schemas/Organization'}}
+        identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
+        categories: {type: array, items: {$ref: '#/components/schemas/Category'}}
+    SoftwareSourceCode:
+      type: object
+      required: [id, source_iri, name, description, keywords]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        name: {type: string}
+        description: {type: string}
+        programming_language: {type: string, nullable: true}
+        keywords: {type: string}
+        repository: {type: string, format: uri, nullable: true}
+        license: {type: string, nullable: true}
+        software_requirements: {type: string, nullable: true}
+        runtime_platform: {type: string, nullable: true}
+        main_entity_of_page: {type: string, nullable: true}
+        version: {type: string, nullable: true}
+        creators: {type: array, items: {$ref: '#/components/schemas/Organization'}}
+        identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
+        categories: {type: array, items: {$ref: '#/components/schemas/Category'}}
+    Organization:
+      type: object
+      required: [id, source_iri, name]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        name: {type: string}
+        street: {type: string, nullable: true}
+        locality: {type: string, nullable: true}
+        postal_code: {type: string, nullable: true}
+        country: {type: string, nullable: true}
+        logo_url: {type: string, format: uri, nullable: true}
+        page_url: {type: string, format: uri, nullable: true}
+        email: {type: string, format: email, nullable: true}
+        lei_code: {type: string, nullable: true}
+        identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
+    Category:
+      type: object
+      required: [id, source_iri, name, scheme]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        name: {type: string}
+        scheme: {$ref: '#/components/schemas/CategoryScheme'}
+        children: {type: array, items: {$ref: '#/components/schemas/Category'}}
+    CategoryScheme:
+      type: object
+      required: [id, source_iri, name, position, concept]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        name: {type: string}
+        label: {type: string, nullable: true}
+        logo: {type: string, format: uri, nullable: true}
+        page: {type: string, format: uri, nullable: true}
+        color: {type: string, nullable: true}
+        position: {type: integer, format: int32}
+        concept: {type: string, enum: [DATA, FACILITIES, SOFTWARE]}
+        top_concepts: {type: array, items: {$ref: '#/components/schemas/Category'}}
+    Identifier:
+      type: object
+      required: [id, source_iri, type, value]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        type: {type: string}
+        value: {type: string}
+    ContactPoint:
+      type: object
+      required: [id, source_iri, email, role]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        email: {type: string, format: email}
+        role: {type: string}
+    Documentation:
+      type: object
+      required: [source_iri, uri]
+      properties:
+        source_iri: {type: string, format: uri}
+        title: {type: string, nullable: true}
+        description: {type: string, nullable: true}
+        uri: {type: string, format: uri}
+    Parameter:
+      type: object
+      description: Typed web-service parameter. Fields outside metadata vary by parameter range.
+      required: [metadata]
+      properties:
+        metadata: {$ref: '#/components/schemas/ParameterMetadata'}
+        default: {}
+        minimum: {}
+        maximum: {}
+        allowed_values: {type: array, items: {}}
+        pattern: {type: string}
+    ParameterMetadata:
+      type: object
+      required: [id, source_iri, kind, variable, property, label, required, multiple_values, read_only]
+      properties:
+        id: {type: string, format: uuid}
+        source_iri: {type: string, format: uri}
+        kind: {type: string, enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME]}
+        variable: {type: string}
+        property: {type: string}
+        label: {type: string}
+        required: {type: boolean}
+        multiple_values: {type: boolean}
+        read_only: {type: boolean}
+    Spatial:
+      type: object
+      properties:
+        point: {$ref: '#/components/schemas/Coordinate'}
+        polygon: {type: array, items: {$ref: '#/components/schemas/Coordinate'}}
+    Coordinate:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude: {type: number, format: double}
+        longitude: {type: number, format: double}
+    Temporal:
+      type: object
+      properties:
+        start: {type: string, format: date-time, nullable: true}
+        end: {type: string, format: date-time, nullable: true}
+    MetadataUser:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        auth_identifier: {type: string}
+        family_name: {type: string, nullable: true}
+        given_name: {type: string, nullable: true}
+        email: {type: string, format: email, nullable: true}
+        is_super_admin: {type: boolean}
+        status: {type: string}
+        created: {type: string, format: date-time}
+        updated: {type: string, format: date-time}
+    MetadataGroup:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        name: {type: string}
+        description: {type: string, nullable: true}
+        is_system: {type: boolean}
+        created: {type: string, format: date-time}
+        updated: {type: string, format: date-time}
+    DatasetStatus:
+      type: string
+      enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+    DistributionType:
+      type: string
+      enum:
+        - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
+        - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
     MetadataImportWarning:
       type: object
       required: [message]

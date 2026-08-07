@@ -34,8 +34,9 @@ func TestDatasetValidate(t *testing.T) {
 				Name:        "Service",
 				TemplateURL: "https://example.test/{value}",
 				Format:      "application/json",
+				Provider:    &Organization{ID: uuid.New(), Name: "Provider"},
 				Parameters: []Parameter{IntegerParameter{
-					Metadata: ParameterMetadata{ID: uuid.New(), Variable: "value", Property: "schema:value", Label: "Value"},
+					Metadata: ParameterMetadata{ID: uuid.New(), SourceIRI: "", Kind: "", Variable: "value", Property: "schema:value", Label: "Value", Required: false, MultipleValues: false, ReadOnly: false},
 					Minimum:  new(int64(0)),
 					Maximum:  new(int64(100)),
 					Default:  &defaultValue,
@@ -69,7 +70,7 @@ func TestDatasetValidateRejectsInvalidNestedValues(t *testing.T) {
 					ID:               uuid.New(),
 					Title:            "Distribution",
 					DownloadableFile: &DownloadableFile{URL: "https://example.test/file", Format: "text/plain"},
-					WebService:       &WebService{ID: uuid.New(), Name: "Service", TemplateURL: "https://example.test", Format: "text/plain"},
+					WebService:       &WebService{ID: uuid.New(), Name: "Service", TemplateURL: "https://example.test", Format: "text/plain", Provider: &Organization{ID: uuid.New(), Name: "Provider"}},
 				}},
 			},
 			want: "exactly one delivery method",
@@ -110,7 +111,7 @@ func TestDatasetValidateRejectsInvalidNestedValues(t *testing.T) {
 
 func TestParameterRecordRoundTrip(t *testing.T) {
 	parameter := StringParameter{
-		Metadata:      ParameterMetadata{ID: uuid.New(), Variable: "format", Property: "schema:format", Label: "Format"},
+		Metadata:      ParameterMetadata{ID: uuid.New(), SourceIRI: "", Kind: "", Variable: "format", Property: "schema:format", Label: "Format", Required: false, MultipleValues: false, ReadOnly: false},
 		Default:       new("json"),
 		AllowedValues: []string{"json", "csv"},
 	}

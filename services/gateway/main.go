@@ -38,6 +38,12 @@ func main() {
 		panic("invalid metadata service configuration")
 	}
 
+	resourcesClient, err := clients.NewResources(cfg.Services.Backoffice.URL, cfg.Upstream)
+	if err != nil {
+		log.Error("invalid backoffice service configuration", "error", err)
+		panic("invalid backoffice service configuration")
+	}
+
 	usergroupClient, err := clients.NewUsergroup(cfg.Services.Backoffice.URL, cfg.Upstream)
 	if err != nil {
 		log.Error("invalid usergroup service configuration", "error", err)
@@ -50,7 +56,7 @@ func main() {
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, metadataClient, usergroupClient, authService); err != nil {
+	if err := server.Run(*cfg, metadataClient, resourcesClient, usergroupClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

@@ -88,6 +88,20 @@ func (d Dataset) Validate() error {
 	return nil
 }
 
+func (s SoftwareApplication) Validate() error {
+	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
+		return fmt.Errorf("ID, source IRI, and name are required")
+	}
+	return nil
+}
+
+func (s SoftwareSourceCode) Validate() error {
+	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
+		return fmt.Errorf("ID, source IRI, and name are required")
+	}
+	return nil
+}
+
 func (c Category) Validate() error {
 	if c.ID == uuid.Nil || c.Name == "" {
 		return fmt.Errorf("ID and name are required")
@@ -140,13 +154,9 @@ func (w WebService) Validate() error {
 	if w.Documentation != nil && w.Documentation.URI == "" {
 		return fmt.Errorf("documentation URI is required when documentation is present")
 	}
-	providers := make(map[string]struct{}, len(w.Providers))
-	for _, provider := range w.Providers {
-		if err := provider.Validate(); err != nil {
+	if w.Provider != nil {
+		if err := w.Provider.Validate(); err != nil {
 			return fmt.Errorf("provider: %w", err)
-		}
-		if err := addUnique(providers, provider.ID.String(), "provider"); err != nil {
-			return err
 		}
 	}
 	contacts := make(map[string]struct{}, len(w.ContactPoints))

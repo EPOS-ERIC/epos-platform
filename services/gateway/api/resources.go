@@ -6,6 +6,8 @@ type Dataset struct {
 	BaseDetailResource
 	Created            *time.Time       `json:"created,omitempty"`
 	Modified           *time.Time       `json:"modified,omitempty"`
+	SourceCreated      *time.Time       `json:"source_created,omitempty"`
+	SourceUpdated      *time.Time       `json:"source_updated,omitempty"`
 	VersionInfo        string           `json:"version_info,omitempty"`
 	Keywords           []string         `json:"keywords,omitempty"`
 	Concepts           []ResourceRef    `json:"concepts,omitempty"`
@@ -87,7 +89,7 @@ type Webservice struct {
 	BaseDetailResource
 	Identifiers      []Identifier      `json:"identifiers,omitempty"`
 	Entrypoint       string            `json:"entrypoint,omitempty"`
-	Provider         ResourceRef       `json:"provider"`
+	Provider         *ResourceRef      `json:"provider,omitempty"`
 	Issued           *time.Time        `json:"issued,omitempty"`
 	Modified         *time.Time        `json:"modified,omitempty"`
 	Spatial          string            `json:"spatial,omitempty"`

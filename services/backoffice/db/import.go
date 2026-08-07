@@ -20,6 +20,7 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 		return fmt.Errorf("begin import transaction: %w", err)
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+
 	queries := sqlc.New(tx)
 
 	for _, scheme := range batch.CategorySchemes {
@@ -37,6 +38,7 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			return fmt.Errorf("upsert category scheme %q: %w", scheme.SourceIRI, err)
 		}
 	}
+
 	for _, category := range batch.Categories {
 		if err := queries.UpsertCategory(ctx, sqlc.UpsertCategoryParams{
 			ID:        category.ID,
@@ -47,6 +49,7 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			return fmt.Errorf("upsert category %q: %w", category.SourceIRI, err)
 		}
 	}
+
 	for _, organization := range batch.Organizations {
 		if err := queries.UpsertOrganization(ctx, sqlc.UpsertOrganizationParams{
 			ID:         organization.ID,
@@ -75,6 +78,7 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			}
 		}
 	}
+
 	for _, contact := range batch.ContactPoints {
 		if err := queries.UpsertContactPoint(ctx, sqlc.UpsertContactPointParams{
 			ID:        contact.ID,
@@ -91,6 +95,19 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			return err
 		}
 	}
+
+	for _, software := range batch.SoftwareApplications {
+		if err := replaceSoftwareApplication(ctx, queries, software); err != nil {
+			return err
+		}
+	}
+
+	for _, software := range batch.SoftwareSourceCodes {
+		if err := replaceSoftwareSourceCode(ctx, queries, software); err != nil {
+			return err
+		}
+	}
+
 	for _, edge := range batch.CategoryEdges {
 		if err := queries.LinkCategoryChild(ctx, sqlc.LinkCategoryChildParams{
 			ParentCategoryID: edge.ParentID,
@@ -99,9 +116,101 @@ func (d *PostgresDB) ImportBatch(ctx context.Context, batch turtle.Batch) error 
 			return fmt.Errorf("upsert category edge: %w", err)
 		}
 	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("commit import transaction: %w", err)
 	}
+
+	return nil
+}
+
+func replaceSoftwareApplication(ctx context.Context, queries *sqlc.Queries, software metadata.SoftwareApplication) error {
+	if err := queries.DeleteSoftwareApplicationIdentifiers(ctx, software.ID); err != nil {
+		return fmt.Errorf("clear software application identifiers %q: %w", software.SourceIRI, err)
+	}
+
+	if err := queries.DeleteSoftwareApplicationCreators(ctx, software.ID); err != nil {
+		return fmt.Errorf("clear software application creators %q: %w", software.SourceIRI, err)
+	}
+
+	if err := queries.DeleteSoftwareApplicationCategories(ctx, software.ID); err != nil {
+		return fmt.Errorf("clear software application categories %q: %w", software.SourceIRI, err)
+	}
+
+	if err := queries.UpsertSoftwareApplication(ctx, sqlc.UpsertSoftwareApplicationParams{
+		ID: software.ID, SourceIri: software.SourceIRI, Name: software.Name, Description: software.Description,
+		MainEntityOfPage: nullableStringPtr(software.MainEntityOfPage), License: nullableStringPtr(software.License), Version: nullableStringPtr(software.Version), Keywords: software.Keywords,
+		DownloadUrl: nullableStringPtr(software.DownloadURL), Requirements: nullableStringPtr(software.Requirements), OperatingSystem: nullableStringPtr(software.OperatingSystem),
+	}); err != nil {
+		return fmt.Errorf("upsert software application %q: %w", software.SourceIRI, err)
+	}
+
+	for _, identifier := range software.Identifiers {
+		if err := insertIdentifier(ctx, queries, identifier); err != nil {
+			return err
+		}
+		if err := queries.LinkSoftwareApplicationIdentifier(ctx, sqlc.LinkSoftwareApplicationIdentifierParams{SoftwareApplicationID: software.ID, IdentifierID: identifier.ID}); err != nil {
+			return fmt.Errorf("link software application identifier: %w", err)
+		}
+	}
+
+	for _, creator := range software.Creators {
+		if err := queries.LinkSoftwareApplicationCreator(ctx, sqlc.LinkSoftwareApplicationCreatorParams{SoftwareApplicationID: software.ID, OrganizationID: creator.ID}); err != nil {
+			return fmt.Errorf("link software application creator: %w", err)
+		}
+	}
+
+	for _, category := range software.Categories {
+		if err := queries.LinkSoftwareApplicationCategory(ctx, sqlc.LinkSoftwareApplicationCategoryParams{SoftwareApplicationID: software.ID, CategoryID: category.ID}); err != nil {
+			return fmt.Errorf("link software application category: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func replaceSoftwareSourceCode(ctx context.Context, queries *sqlc.Queries, software metadata.SoftwareSourceCode) error {
+	if err := queries.DeleteSoftwareSourceCodeIdentifiers(ctx, software.ID); err != nil {
+		return fmt.Errorf("clear software source code identifiers %q: %w", software.SourceIRI, err)
+	}
+
+	if err := queries.DeleteSoftwareSourceCodeCreators(ctx, software.ID); err != nil {
+		return fmt.Errorf("clear software source code creators %q: %w", software.SourceIRI, err)
+	}
+
+	if err := queries.DeleteSoftwareSourceCodeCategories(ctx, software.ID); err != nil {
+		return fmt.Errorf("clear software source code categories %q: %w", software.SourceIRI, err)
+	}
+
+	if err := queries.UpsertSoftwareSourceCode(ctx, sqlc.UpsertSoftwareSourceCodeParams{
+		ID: software.ID, SourceIri: software.SourceIRI, Name: software.Name, Description: software.Description, ProgrammingLanguage: nullableStringPtr(software.ProgrammingLanguage), Keywords: software.Keywords,
+		Repository: nullableStringPtr(software.Repository), License: nullableStringPtr(software.License), SoftwareRequirements: nullableStringPtr(software.SoftwareRequirements), RuntimePlatform: nullableStringPtr(software.RuntimePlatform),
+		MainEntityOfPage: nullableStringPtr(software.MainEntityOfPage), Version: nullableStringPtr(software.Version),
+	}); err != nil {
+		return fmt.Errorf("upsert software source code %q: %w", software.SourceIRI, err)
+	}
+
+	for _, identifier := range software.Identifiers {
+		if err := insertIdentifier(ctx, queries, identifier); err != nil {
+			return err
+		}
+		if err := queries.LinkSoftwareSourceCodeIdentifier(ctx, sqlc.LinkSoftwareSourceCodeIdentifierParams{SoftwareSourceCodeID: software.ID, IdentifierID: identifier.ID}); err != nil {
+			return fmt.Errorf("link software source code identifier: %w", err)
+		}
+	}
+
+	for _, creator := range software.Creators {
+		if err := queries.LinkSoftwareSourceCodeCreator(ctx, sqlc.LinkSoftwareSourceCodeCreatorParams{SoftwareSourceCodeID: software.ID, OrganizationID: creator.ID}); err != nil {
+			return fmt.Errorf("link software source code creator: %w", err)
+		}
+	}
+
+	for _, category := range software.Categories {
+		if err := queries.LinkSoftwareSourceCodeCategory(ctx, sqlc.LinkSoftwareSourceCodeCategoryParams{SoftwareSourceCodeID: software.ID, CategoryID: category.ID}); err != nil {
+			return fmt.Errorf("link software source code category: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -109,18 +218,23 @@ func replaceDataset(ctx context.Context, queries *sqlc.Queries, dataset metadata
 	if err := queries.DeleteDatasetIdentifiers(ctx, dataset.ID); err != nil {
 		return fmt.Errorf("clear dataset identifiers %q: %w", dataset.SourceIRI, err)
 	}
+
 	if err := queries.DeleteDatasetContactPoints(ctx, dataset.ID); err != nil {
 		return fmt.Errorf("clear dataset contacts %q: %w", dataset.SourceIRI, err)
 	}
+
 	if err := queries.DeleteDatasetProviders(ctx, dataset.ID); err != nil {
 		return fmt.Errorf("clear dataset providers %q: %w", dataset.SourceIRI, err)
 	}
+
 	if err := queries.DeleteDatasetCategories(ctx, dataset.ID); err != nil {
 		return fmt.Errorf("clear dataset categories %q: %w", dataset.SourceIRI, err)
 	}
+
 	if err := queries.DeleteDatasetWebServices(ctx, dataset.ID); err != nil {
 		return fmt.Errorf("clear dataset web services %q: %w", dataset.SourceIRI, err)
 	}
+
 	if err := queries.DeleteDatasetDistributions(ctx, dataset.ID); err != nil {
 		return fmt.Errorf("clear dataset distributions %q: %w", dataset.SourceIRI, err)
 	}
@@ -156,26 +270,31 @@ func replaceDataset(ctx context.Context, queries *sqlc.Queries, dataset metadata
 			return fmt.Errorf("link dataset identifier: %w", err)
 		}
 	}
+
 	for _, contact := range dataset.ContactPoints {
 		if err := queries.LinkDatasetContactPoint(ctx, sqlc.LinkDatasetContactPointParams{DatasetID: dataset.ID, ContactPointID: contact.ID}); err != nil {
 			return fmt.Errorf("link dataset contact point: %w", err)
 		}
 	}
+
 	for _, organization := range dataset.Providers {
 		if err := queries.LinkDatasetProvider(ctx, sqlc.LinkDatasetProviderParams{DatasetID: dataset.ID, OrganizationID: organization.ID}); err != nil {
 			return fmt.Errorf("link dataset provider: %w", err)
 		}
 	}
+
 	for _, category := range dataset.Categories {
 		if err := queries.LinkDatasetCategory(ctx, sqlc.LinkDatasetCategoryParams{DatasetID: dataset.ID, CategoryID: category.ID}); err != nil {
 			return fmt.Errorf("link dataset category: %w", err)
 		}
 	}
+
 	for _, distribution := range dataset.Distributions {
 		if err := insertDistribution(ctx, queries, dataset.ID, distribution); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -188,6 +307,7 @@ func insertIdentifier(ctx context.Context, queries *sqlc.Queries, identifier met
 	}); err != nil {
 		return fmt.Errorf("upsert identifier: %w", err)
 	}
+
 	return nil
 }
 
@@ -197,6 +317,7 @@ func insertDistribution(ctx context.Context, queries *sqlc.Queries, datasetID uu
 			return err
 		}
 	}
+
 	if err := queries.InsertDistribution(ctx, sqlc.InsertDistributionParams{
 		ID:                     distribution.ID,
 		SourceIri:              distribution.SourceIRI,
@@ -214,6 +335,7 @@ func insertDistribution(ctx context.Context, queries *sqlc.Queries, datasetID uu
 	}); err != nil {
 		return fmt.Errorf("insert distribution %q: %w", distribution.SourceIRI, err)
 	}
+
 	return nil
 }
 
@@ -225,6 +347,7 @@ func insertWebService(ctx context.Context, queries *sqlc.Queries, service metada
 		Description:              service.Description,
 		TemplateUrl:              service.TemplateURL,
 		Format:                   service.Format,
+		ProviderOrganizationID:   nullableOrganizationID(service.Provider),
 		DocumentationTitle:       documentationTitle(service),
 		DocumentationDescription: documentationDescription(service),
 		DocumentationUri:         documentationURI(service),
@@ -235,14 +358,7 @@ func insertWebService(ctx context.Context, queries *sqlc.Queries, service metada
 	}); err != nil {
 		return fmt.Errorf("insert web service %q: %w", service.SourceIRI, err)
 	}
-	for _, provider := range service.Providers {
-		if err := queries.LinkWebServiceProvider(ctx, sqlc.LinkWebServiceProviderParams{
-			WebServiceID:   service.ID,
-			OrganizationID: provider.ID,
-		}); err != nil {
-			return fmt.Errorf("link web service provider: %w", err)
-		}
-	}
+
 	for _, contact := range service.ContactPoints {
 		if err := queries.LinkWebServiceContactPoint(ctx, sqlc.LinkWebServiceContactPointParams{
 			WebServiceID:   service.ID,
@@ -251,11 +367,13 @@ func insertWebService(ctx context.Context, queries *sqlc.Queries, service metada
 			return fmt.Errorf("link web service contact point: %w", err)
 		}
 	}
+
 	for _, parameter := range service.Parameters {
 		record, err := metadata.EncodeParameter(parameter)
 		if err != nil {
 			return fmt.Errorf("encode parameter: %w", err)
 		}
+
 		if err := queries.InsertWebServiceParameter(ctx, sqlc.InsertWebServiceParameterParams{
 			ID:             record.Metadata.ID,
 			SourceIri:      record.Metadata.SourceIRI,
@@ -272,6 +390,7 @@ func insertWebService(ctx context.Context, queries *sqlc.Queries, service metada
 			return fmt.Errorf("insert web service parameter: %w", err)
 		}
 	}
+
 	return nil
 }
 
@@ -279,6 +398,7 @@ func temporalStart(dataset metadata.Dataset) *time.Time {
 	if dataset.TemporalCoverage == nil || dataset.TemporalCoverage.Start == nil {
 		return nil
 	}
+
 	return dataset.TemporalCoverage.Start
 }
 
@@ -286,6 +406,7 @@ func temporalEnd(dataset metadata.Dataset) *time.Time {
 	if dataset.TemporalCoverage == nil || dataset.TemporalCoverage.End == nil {
 		return nil
 	}
+
 	return dataset.TemporalCoverage.End
 }
 
@@ -293,6 +414,7 @@ func nullableUserID(dataset metadata.Dataset) *uuid.UUID {
 	if dataset.Editor == nil {
 		return nil
 	}
+
 	return &dataset.Editor.ID
 }
 
@@ -300,13 +422,23 @@ func nullableGroupID(dataset metadata.Dataset) *uuid.UUID {
 	if dataset.Group == nil {
 		return nil
 	}
+
 	return &dataset.Group.ID
+}
+
+func nullableOrganizationID(organization *metadata.Organization) *uuid.UUID {
+	if organization == nil {
+		return nil
+	}
+
+	return &organization.ID
 }
 
 func downloadableURL(distribution metadata.Distribution) *string {
 	if distribution.DownloadableFile == nil {
 		return nil
 	}
+
 	return nullableString(distribution.DownloadableFile.URL)
 }
 
@@ -314,6 +446,7 @@ func downloadableFormat(distribution metadata.Distribution) *string {
 	if distribution.DownloadableFile == nil {
 		return nil
 	}
+
 	return nullableString(distribution.DownloadableFile.Format)
 }
 
@@ -321,6 +454,7 @@ func webServiceID(distribution metadata.Distribution) *uuid.UUID {
 	if distribution.WebService == nil {
 		return nil
 	}
+
 	return &distribution.WebService.ID
 }
 
@@ -328,6 +462,7 @@ func documentationTitle(service metadata.WebService) *string {
 	if service.Documentation == nil || service.Documentation.Title == nil {
 		return nil
 	}
+
 	return nullableString(*service.Documentation.Title)
 }
 
@@ -335,6 +470,7 @@ func documentationDescription(service metadata.WebService) *string {
 	if service.Documentation == nil || service.Documentation.Description == nil {
 		return nil
 	}
+
 	return nullableString(*service.Documentation.Description)
 }
 
@@ -342,6 +478,7 @@ func documentationURI(service metadata.WebService) *string {
 	if service.Documentation == nil || strings.TrimSpace(service.Documentation.URI) == "" {
 		return nil
 	}
+
 	return nullableString(service.Documentation.URI)
 }
 
@@ -349,6 +486,7 @@ func pointWKT(spatial *metadata.Spatial) *string {
 	if spatial == nil || spatial.Point == nil {
 		return nil
 	}
+
 	return nullableString(fmt.Sprintf("POINT(%g %g)", spatial.Point.Longitude, spatial.Point.Latitude))
 }
 
@@ -356,10 +494,13 @@ func polygonWKT(spatial *metadata.Spatial) *string {
 	if spatial == nil || len(spatial.Polygon) == 0 {
 		return nil
 	}
+
 	coordinates := make([]string, len(spatial.Polygon))
+
 	for i, coordinate := range spatial.Polygon {
 		coordinates[i] = fmt.Sprintf("%g %g", coordinate.Longitude, coordinate.Latitude)
 	}
+
 	return nullableString("POLYGON((" + strings.Join(coordinates, ",") + "))")
 }
 
@@ -367,6 +508,7 @@ func temporalStartValue(temporal *metadata.Temporal) *time.Time {
 	if temporal == nil || temporal.Start == nil {
 		return nil
 	}
+
 	return temporal.Start
 }
 
@@ -374,6 +516,7 @@ func temporalEndValue(temporal *metadata.Temporal) *time.Time {
 	if temporal == nil || temporal.End == nil {
 		return nil
 	}
+
 	return temporal.End
 }
 
@@ -381,6 +524,7 @@ func nullableString(value string) *string {
 	if value == "" {
 		return nil
 	}
+
 	return &value
 }
 
@@ -388,6 +532,7 @@ func nullableStringPtr(value *string) *string {
 	if value == nil || *value == "" {
 		return nil
 	}
+
 	return value
 }
 
@@ -395,6 +540,8 @@ func nullableInt32(value *int64) *int32 {
 	if value == nil {
 		return nil
 	}
+
 	converted := int32(*value)
+
 	return &converted
 }

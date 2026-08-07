@@ -76,11 +76,46 @@ type WebService struct {
 	TemplateURL      string         `json:"template_url"`
 	Parameters       []Parameter    `json:"parameters"`
 	Format           string         `json:"format"`
-	Providers        []Organization `json:"providers"`
+	Provider         *Organization  `json:"provider"`
 	Documentation    *Documentation `json:"documentation"`
 	SpatialCoverage  *Spatial       `json:"spatial_coverage"`
 	TemporalCoverage *Temporal      `json:"temporal_coverage"`
 	ContactPoints    []ContactPoint `json:"contact_points"`
+}
+
+type SoftwareApplication struct {
+	ID               uuid.UUID      `json:"id"`
+	SourceIRI        string         `json:"source_iri"`
+	Name             string         `json:"name"`
+	Description      string         `json:"description"`
+	MainEntityOfPage *string        `json:"main_entity_of_page"`
+	License          *string        `json:"license"`
+	Version          *string        `json:"version"`
+	Keywords         string         `json:"keywords"`
+	DownloadURL      *string        `json:"download_url"`
+	Requirements     *string        `json:"requirements"`
+	OperatingSystem  *string        `json:"operating_system"`
+	Creators         []Organization `json:"creators"`
+	Identifiers      []Identifier   `json:"identifiers"`
+	Categories       []Category     `json:"categories"`
+}
+
+type SoftwareSourceCode struct {
+	ID                   uuid.UUID      `json:"id"`
+	SourceIRI            string         `json:"source_iri"`
+	Name                 string         `json:"name"`
+	Description          string         `json:"description"`
+	ProgrammingLanguage  *string        `json:"programming_language"`
+	Keywords             string         `json:"keywords"`
+	Repository           *string        `json:"repository"`
+	License              *string        `json:"license"`
+	SoftwareRequirements *string        `json:"software_requirements"`
+	RuntimePlatform      *string        `json:"runtime_platform"`
+	MainEntityOfPage     *string        `json:"main_entity_of_page"`
+	Version              *string        `json:"version"`
+	Creators             []Organization `json:"creators"`
+	Identifiers          []Identifier   `json:"identifiers"`
+	Categories           []Category     `json:"categories"`
 }
 type Documentation struct {
 	SourceIRI   string  `json:"source_iri"`
@@ -109,18 +144,20 @@ type Category struct {
 	SourceIRI string         `json:"source_iri"`
 	Name      string         `json:"name"`
 	Scheme    CategoryScheme `json:"scheme"`
+	Children  []Category     `json:"children"`
 }
 
 type CategoryScheme struct {
-	ID        uuid.UUID       `json:"id"`
-	SourceIRI string          `json:"source_iri"`
-	Name      string          `json:"name"`
-	Label     *string         `json:"label"`
-	Logo      *string         `json:"logo"`
-	Page      *string         `json:"page"`
-	Color     *string         `json:"color"`
-	Position  int32           `json:"position"`
-	Concept   TopLevelConcept `json:"concept"`
+	ID          uuid.UUID       `json:"id"`
+	SourceIRI   string          `json:"source_iri"`
+	Name        string          `json:"name"`
+	Label       *string         `json:"label"`
+	Logo        *string         `json:"logo"`
+	Page        *string         `json:"page"`
+	Color       *string         `json:"color"`
+	Position    int32           `json:"position"`
+	Concept     TopLevelConcept `json:"concept"`
+	TopConcepts []Category      `json:"top_concepts"`
 }
 
 type User struct {

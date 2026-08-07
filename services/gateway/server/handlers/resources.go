@@ -52,7 +52,7 @@ func (h *Resources) GetResourceByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Resources) GetConceptByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	concept, err := h.service.GetConceptByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "concept")
@@ -63,7 +63,7 @@ func (h *Resources) GetConceptByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Resources) GetConceptSchemeByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	conceptScheme, err := h.service.GetConceptSchemeByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "conceptscheme")
@@ -74,7 +74,7 @@ func (h *Resources) GetConceptSchemeByID(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *Resources) GetDatasetByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	dataset, err := h.service.GetDatasetByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "dataset")
@@ -85,7 +85,7 @@ func (h *Resources) GetDatasetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Resources) GetDistributionByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	distribution, err := h.service.GetDistributionByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "distribution")
@@ -96,7 +96,7 @@ func (h *Resources) GetDistributionByID(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Resources) GetSoftwareApplicationByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	softwareApplication, err := h.service.GetSoftwareApplicationByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "software application")
@@ -107,7 +107,7 @@ func (h *Resources) GetSoftwareApplicationByID(w http.ResponseWriter, r *http.Re
 }
 
 func (h *Resources) GetSoftwareSourceCodeByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	softwareSourceCode, err := h.service.GetSoftwareSourceCodeByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "software source code")
@@ -118,7 +118,7 @@ func (h *Resources) GetSoftwareSourceCodeByID(w http.ResponseWriter, r *http.Req
 }
 
 func (h *Resources) GetWebserviceByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	webservice, err := h.service.GetWebserviceByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "webservice")
@@ -129,7 +129,7 @@ func (h *Resources) GetWebserviceByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Resources) GetOrganizationByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := resourceID(r)
 	organization, err := h.service.GetOrganizationByID(r.Context(), id)
 	if err != nil {
 		h.writeResourceError(r.Context(), w, err, "organization")
@@ -137,6 +137,10 @@ func (h *Resources) GetOrganizationByID(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJSON(w, http.StatusOK, organization)
+}
+
+func resourceID(r *http.Request) string {
+	return chi.URLParam(r, "id")
 }
 
 func (h *Resources) writeResourceError(ctx context.Context, w http.ResponseWriter, err error, resource string) {

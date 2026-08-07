@@ -363,6 +363,76 @@ CREATE TABLE dataset_categories (
     PRIMARY KEY (dataset_id, category_id)
 );
 
+-- ============================================================
+-- Software
+-- Standalone resources with shared identifiers, organizations, and categories
+-- ============================================================
+
+CREATE TABLE software_applications (
+    id                  uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri          text NOT NULL UNIQUE,
+    name                text NOT NULL,
+    description         text NOT NULL DEFAULT '',
+    main_entity_of_page text,
+    license             text,
+    version             text,
+    keywords            text NOT NULL DEFAULT '',
+    download_url        text,
+    requirements        text,
+    operating_system    text
+);
+
+CREATE TABLE software_source_codes (
+    id                    uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    source_iri            text NOT NULL UNIQUE,
+    name                  text NOT NULL,
+    description           text NOT NULL DEFAULT '',
+    programming_language  text,
+    keywords              text NOT NULL DEFAULT '',
+    repository            text,
+    license               text,
+    software_requirements text,
+    runtime_platform      text,
+    main_entity_of_page   text,
+    version               text
+);
+
+CREATE TABLE software_application_identifiers (
+    software_application_id uuid NOT NULL REFERENCES software_applications(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    identifier_id           uuid NOT NULL REFERENCES identifiers(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    PRIMARY KEY (software_application_id, identifier_id)
+);
+
+CREATE TABLE software_source_code_identifiers (
+    software_source_code_id uuid NOT NULL REFERENCES software_source_codes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    identifier_id           uuid NOT NULL REFERENCES identifiers(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    PRIMARY KEY (software_source_code_id, identifier_id)
+);
+
+CREATE TABLE software_application_creators (
+    software_application_id uuid NOT NULL REFERENCES software_applications(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    organization_id         uuid NOT NULL REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    PRIMARY KEY (software_application_id, organization_id)
+);
+
+CREATE TABLE software_source_code_creators (
+    software_source_code_id uuid NOT NULL REFERENCES software_source_codes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    organization_id         uuid NOT NULL REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    PRIMARY KEY (software_source_code_id, organization_id)
+);
+
+CREATE TABLE software_application_categories (
+    software_application_id uuid NOT NULL REFERENCES software_applications(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    category_id             uuid NOT NULL REFERENCES categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    PRIMARY KEY (software_application_id, category_id)
+);
+
+CREATE TABLE software_source_code_categories (
+    software_source_code_id uuid NOT NULL REFERENCES software_source_codes(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    category_id             uuid NOT NULL REFERENCES categories(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    PRIMARY KEY (software_source_code_id, category_id)
+);
+
 
 -- ============================================================
 -- Contact points
@@ -437,7 +507,7 @@ CREATE TABLE distributions (
          ),
 
      CONSTRAINT distributions_source_iri_unique
-         UNIQUE (dataset_id, source_iri)
+         UNIQUE (source_iri)
  );
 
 
@@ -454,6 +524,10 @@ CREATE TABLE web_services (
     description                 text NOT NULL DEFAULT '',
     template_url                text NOT NULL,
     format                      text NOT NULL,
+    provider_organization_id   uuid
+        REFERENCES organizations(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
 
     documentation_title         text,
     documentation_description   text,
@@ -489,20 +563,6 @@ ALTER TABLE distributions
     REFERENCES web_services(id)
     ON UPDATE CASCADE
     ON DELETE CASCADE;
-
-CREATE TABLE web_service_providers (
-    web_service_id    uuid NOT NULL
-        REFERENCES web_services(id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-
-    organization_id   uuid NOT NULL
-        REFERENCES organizations(id)
-        ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    PRIMARY KEY (web_service_id, organization_id)
-);
 
 CREATE TABLE web_service_contact_points (
     web_service_id     uuid NOT NULL
@@ -667,6 +727,8 @@ CREATE INDEX dataset_identifiers_identifier_id_idx
 
 CREATE INDEX organization_identifiers_identifier_id_idx
     ON organization_identifiers(identifier_id);
+CREATE INDEX software_application_identifiers_identifier_id_idx ON software_application_identifiers(identifier_id);
+CREATE INDEX software_source_code_identifiers_identifier_id_idx ON software_source_code_identifiers(identifier_id);
 
 CREATE INDEX organization_memberships_parent_idx
     ON organization_memberships(parent_organization_id);
@@ -702,11 +764,18 @@ CREATE INDEX web_service_parameters_config_gin_idx
 
 DROP TABLE IF EXISTS web_service_parameters;
 DROP TABLE IF EXISTS web_service_contact_points;
-DROP TABLE IF EXISTS web_service_providers;
 DROP TABLE IF EXISTS distributions;
 DROP TABLE IF EXISTS web_services;
 DROP TABLE IF EXISTS dataset_contact_points;
 DROP TABLE IF EXISTS dataset_categories;
+DROP TABLE IF EXISTS software_source_code_categories;
+DROP TABLE IF EXISTS software_application_categories;
+DROP TABLE IF EXISTS software_source_code_creators;
+DROP TABLE IF EXISTS software_application_creators;
+DROP TABLE IF EXISTS software_source_code_identifiers;
+DROP TABLE IF EXISTS software_application_identifiers;
+DROP TABLE IF EXISTS software_source_codes;
+DROP TABLE IF EXISTS software_applications;
 DROP TABLE IF EXISTS dataset_providers;
 DROP TABLE IF EXISTS dataset_identifiers;
 DROP TABLE IF EXISTS organization_identifiers;

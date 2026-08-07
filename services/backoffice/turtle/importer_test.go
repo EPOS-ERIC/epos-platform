@@ -134,8 +134,8 @@ func TestParseMetadataOne(t *testing.T) {
 				continue
 			}
 			service := distribution.WebService
-			if len(service.Providers) != 1 || service.Providers[0].SourceIRI != "pic:999472675" {
-				t.Errorf("web service %q providers = %#v", service.SourceIRI, service.Providers)
+			if service.Provider == nil || service.Provider.SourceIRI != "pic:999472675" {
+				t.Errorf("web service %q provider = %#v", service.SourceIRI, service.Provider)
 			}
 			if len(service.ContactPoints) != 2 {
 				t.Errorf("web service %q contacts = %d, want 2", service.SourceIRI, len(service.ContactPoints))
@@ -233,6 +233,34 @@ func TestOwnedIDsAreDifferentForDifferentParents(t *testing.T) {
 	}
 }
 
+func TestParseStandaloneSoftware(t *testing.T) {
+	const ttl = `
+@prefix dcat: <http://www.w3.org/ns/dcat#> .
+@prefix schema: <http://schema.org/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+<scheme> skos:hasTopConcept <category:facets/software-theme>; skos:prefLabel "Software" .
+<concept> skos:inScheme <scheme>; skos:prefLabel "Tools" .
+<org> a schema:Organization; schema:name "EPOS" .
+<app> a schema:SoftwareApplication; schema:name "App"; schema:softwareVersion "1"; schema:creator <org>; dcat:theme <concept> .
+<source> a schema:SoftwareSourceCode; schema:name "Source"; schema:codeRepository "https://example.test/repo"; schema:creator <org>; dcat:theme <concept> .
+`
+	batch, err := Parse(strings.NewReader(ttl), Options{})
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if len(batch.Datasets) != 0 || len(batch.SoftwareApplications) != 1 || len(batch.SoftwareSourceCodes) != 1 {
+		t.Fatalf("resource counts = datasets:%d applications:%d source codes:%d", len(batch.Datasets), len(batch.SoftwareApplications), len(batch.SoftwareSourceCodes))
+	}
+	application := batch.SoftwareApplications[0]
+	if application.Version == nil || *application.Version != "1" || len(application.Creators) != 1 || len(application.Categories) != 1 {
+		t.Errorf("application = %#v", application)
+	}
+	source := batch.SoftwareSourceCodes[0]
+	if source.Repository == nil || *source.Repository != "https://example.test/repo" || len(source.Creators) != 1 || len(source.Categories) != 1 {
+		t.Errorf("source = %#v", source)
+	}
+}
+
 func TestParseClonesOwnedWebServicesPerDataset(t *testing.T) {
 	const ttl = `
 @prefix dcat: <http://www.w3.org/ns/dcat#> .
@@ -240,11 +268,12 @@ func TestParseClonesOwnedWebServicesPerDataset(t *testing.T) {
 @prefix epos: <https://www.epos-eu.org/epos-dcat-ap#> .
 @prefix hydra: <http://www.w3.org/ns/hydra/core#> .
 @prefix schema: <http://schema.org/> .
+<provider> a schema:Organization; schema:name "Provider" .
 <dataset-a> a dcat:Dataset; dct:title "A"; dcat:distribution <distribution-a> .
 <dataset-b> a dcat:Dataset; dct:title "B"; dcat:distribution <distribution-b> .
 <distribution-a> a dcat:Distribution; dct:title "A"; dct:format "json"; dct:conformsTo <service> .
 <distribution-b> a dcat:Distribution; dct:title "B"; dct:format "json"; dct:conformsTo <service> .
-<service> a epos:WebService; schema:name "Shared source"; hydra:supportedOperation <operation> .
+<service> a epos:WebService; schema:name "Shared source"; schema:provider <provider>; hydra:supportedOperation <operation> .
 <operation> hydra:property <template> .
 <template> hydra:template "https://example.test" .
 `

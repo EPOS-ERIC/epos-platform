@@ -470,6 +470,65 @@ type OrganizationMembership struct {
 	ParentOrganizationID uuid.UUID
 }
 
+type SoftwareApplication struct {
+	ID               uuid.UUID
+	SourceIri        string
+	Name             string
+	Description      string
+	MainEntityOfPage *string
+	License          *string
+	Version          *string
+	Keywords         string
+	DownloadUrl      *string
+	Requirements     *string
+	OperatingSystem  *string
+}
+
+type SoftwareApplicationCategory struct {
+	SoftwareApplicationID uuid.UUID
+	CategoryID            uuid.UUID
+}
+
+type SoftwareApplicationCreator struct {
+	SoftwareApplicationID uuid.UUID
+	OrganizationID        uuid.UUID
+}
+
+type SoftwareApplicationIdentifier struct {
+	SoftwareApplicationID uuid.UUID
+	IdentifierID          uuid.UUID
+}
+
+type SoftwareSourceCode struct {
+	ID                   uuid.UUID
+	SourceIri            string
+	Name                 string
+	Description          string
+	ProgrammingLanguage  *string
+	Keywords             string
+	Repository           *string
+	License              *string
+	SoftwareRequirements *string
+	RuntimePlatform      *string
+	MainEntityOfPage     *string
+	Version              *string
+}
+
+type SoftwareSourceCodeCategory struct {
+	SoftwareSourceCodeID uuid.UUID
+	CategoryID           uuid.UUID
+}
+
+type SoftwareSourceCodeCreator struct {
+	SoftwareSourceCodeID uuid.UUID
+	OrganizationID       uuid.UUID
+}
+
+type SoftwareSourceCodeIdentifier struct {
+	SoftwareSourceCodeID uuid.UUID
+	IdentifierID         uuid.UUID
+}
+
 type User struct {
 	ID             uuid.UUID
 	AuthIdentifier string
@@ -489,6 +548,7 @@ type WebService struct {
 	Description              string
 	TemplateUrl              string
 	Format                   string
+	ProviderOrganizationID   *uuid.UUID
 	DocumentationTitle       *string
 	DocumentationDescription *string
 	DocumentationUri         *string
@@ -515,9 +575,4 @@ type WebServiceParameter struct {
 	MultipleValues bool
 	ReadOnly       bool
 	Config         []byte
-}
-
-type WebServiceProvider struct {
-	WebServiceID   uuid.UUID
-	OrganizationID uuid.UUID
 }
