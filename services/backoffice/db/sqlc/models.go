@@ -358,6 +358,8 @@ type Dataset struct {
 	GroupID           *uuid.UUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
+	SourceCreatedAt   *time.Time
+	SourceUpdatedAt   *time.Time
 	OriginalDatasetID uuid.UUID
 }
 

@@ -171,6 +171,8 @@ CREATE TABLE datasets (
 
     created_at              timestamptz NOT NULL DEFAULT now(),
     updated_at              timestamptz NOT NULL DEFAULT now(),
+    source_created_at       timestamptz,
+    source_updated_at       timestamptz,
 
     original_dataset_id     uuid NOT NULL,
 

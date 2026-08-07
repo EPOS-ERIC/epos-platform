@@ -129,12 +129,18 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 		Group:                 &m.options.Group,
 		Created:               time.Time{},
 		Updated:               time.Time{},
+		SourceCreated:         nil,
+		SourceUpdated:         nil,
 		OriginalDatasetID:     id,
 	}
 	dataset.Title = m.requiredString(source, dctTitle)
 	dataset.Description = m.optionalString(source, dctDescription)
-	dataset.Created = m.date(source, dctCreated)
-	dataset.Updated = m.date(source, dctModified)
+	if created := m.date(source, dctCreated); !created.IsZero() {
+		dataset.SourceCreated = &created
+	}
+	if updated := m.date(source, dctModified); !updated.IsZero() {
+		dataset.SourceUpdated = &updated
+	}
 	dataset.PersistentIdentifiers = append(dataset.PersistentIdentifiers, m.identifiers(source, id)...)
 	for _, identifierSource := range m.graph.refs(source, admsIdentifier) {
 		identifier, ok := m.identifier(identifierSource, id, source)
@@ -300,17 +306,17 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (domain.Parameter, er
 	if metadata.Property == "" {
 		metadata.Property = metadata.Variable
 	}
-	rangeIRI := m.optionalString(source, rdfsRange)
+	rangeIRI := normalizeRange(m.optionalString(source, rdfsRange))
 	config := func() (string, []string) {
 		return m.optionalString(source, schemaDefaultValue), m.strings(source, httpParamValue)
 	}
 	switch rangeIRI {
 	case rdfsDatatypeBoolean:
 		defaultText, hasDefault := m.firstString(source, schemaDefaultValue)
-		value := strings.EqualFold(defaultText, "true")
+		defaultValueText := strings.EqualFold(defaultText, "true")
 		var defaultValue *bool
 		if hasDefault {
-			defaultValue = new(value)
+			defaultValue = &defaultValueText
 		}
 		return domain.BooleanParameter{
 			Metadata: metadata,
@@ -436,14 +442,18 @@ func (m *mapper) organization(source string) (domain.Organization, error) {
 	if value, ok := m.organizations[source]; ok {
 		return value, nil
 	}
+	address := source
+	if references := m.graph.refs(source, schemaAddress); len(references) > 0 {
+		address = references[0]
+	}
 	result := domain.Organization{
 		ID:          sharedID("organization", source),
 		SourceIRI:   source,
 		Name:        m.optionalString(source, schemaLegalName),
-		Street:      stringPtr(m.optionalString(source, schemaStreetAddress)),
-		Locality:    stringPtr(m.optionalString(source, schemaAddressLocality)),
-		PostalCode:  stringPtr(m.optionalString(source, schemaPostalCode)),
-		Country:     stringPtr(m.optionalString(source, schemaAddressCountry)),
+		Street:      stringPtr(m.optionalString(address, schemaStreetAddress)),
+		Locality:    stringPtr(m.optionalString(address, schemaAddressLocality)),
+		PostalCode:  stringPtr(m.optionalString(address, schemaPostalCode)),
+		Country:     stringPtr(m.optionalString(address, schemaAddressCountry)),
 		LogoURL:     stringPtr(m.optionalString(source, schemaLogo)),
 		PageURL:     stringPtr(m.optionalString(source, schemaURL)),
 		Email:       stringPtr(m.optionalString(source, schemaEmail)),
@@ -462,6 +472,21 @@ func (m *mapper) organization(source string) (domain.Organization, error) {
 	}
 	m.organizations[source] = result
 	return result, nil
+}
+
+func normalizeRange(value string) string {
+	switch value {
+	case "xsd:boolean":
+		return rdfsDatatypeBoolean
+	case "xsd:integer":
+		return rdfsDatatypeInteger
+	case "xsd:float":
+		return rdfsDatatypeFloat
+	case "xsd:dateTime":
+		return rdfsDatatypeDateTime
+	default:
+		return value
+	}
 }
 
 func (m *mapper) contact(source string) (domain.ContactPoint, error) {
@@ -583,8 +608,15 @@ func (m *mapper) bool(subject, predicate string) bool {
 func (m *mapper) date(subject, predicate string) time.Time { return m.time(subject, predicate) }
 func (m *mapper) time(subject, predicate string) time.Time {
 	value := m.optionalString(subject, predicate)
-	parsed, _ := time.Parse(time.RFC3339, value)
-	return parsed
+	if parsed, err := time.Parse(time.RFC3339, value); err == nil {
+		return parsed
+	}
+	for _, layout := range []string{"2006-01-02T15:04:05", "2006-01-02", "2006"} {
+		if parsed, err := time.ParseInLocation(layout, value, time.UTC); err == nil {
+			return parsed
+		}
+	}
+	return time.Time{}
 }
 
 func (m *mapper) int64(subject, predicate string) int64 {

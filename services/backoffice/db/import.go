@@ -129,8 +129,8 @@ func replaceDataset(ctx context.Context, queries *sqlc.Queries, dataset metadata
 		Status:            sqlc.DatasetStatus(dataset.Status),
 		EditorUserID:      nullableUserID(dataset),
 		GroupID:           nullableGroupID(dataset),
-		CreatedAt:         createdAt(dataset),
-		UpdatedAt:         updatedAt(dataset),
+		SourceCreatedAt:   dataset.SourceCreated,
+		SourceUpdatedAt:   dataset.SourceUpdated,
 		OriginalDatasetID: dataset.OriginalDatasetID,
 		SpatialPoint:      pointWKT(dataset.SpatialCoverage),
 		SpatialPolygon:    polygonWKT(dataset.SpatialCoverage),
@@ -221,6 +221,22 @@ func insertWebService(ctx context.Context, queries *sqlc.Queries, service metada
 	}); err != nil {
 		return fmt.Errorf("insert web service %q: %w", service.SourceIRI, err)
 	}
+	for _, provider := range service.Providers {
+		if err := queries.LinkWebServiceProvider(ctx, sqlc.LinkWebServiceProviderParams{
+			WebServiceID:   service.ID,
+			OrganizationID: provider.ID,
+		}); err != nil {
+			return fmt.Errorf("link web service provider: %w", err)
+		}
+	}
+	for _, contact := range service.ContactPoints {
+		if err := queries.LinkWebServiceContactPoint(ctx, sqlc.LinkWebServiceContactPointParams{
+			WebServiceID:   service.ID,
+			ContactPointID: contact.ID,
+		}); err != nil {
+			return fmt.Errorf("link web service contact point: %w", err)
+		}
+	}
 	for _, parameter := range service.Parameters {
 		record, err := metadata.EncodeParameter(parameter)
 		if err != nil {
@@ -250,20 +266,6 @@ func temporalStart(dataset metadata.Dataset) *time.Time {
 		return nil
 	}
 	return dataset.TemporalCoverage.Start
-}
-
-func createdAt(dataset metadata.Dataset) time.Time {
-	if dataset.Created.IsZero() {
-		return time.Now().UTC()
-	}
-	return dataset.Created
-}
-
-func updatedAt(dataset metadata.Dataset) time.Time {
-	if dataset.Updated.IsZero() {
-		return time.Now().UTC()
-	}
-	return dataset.Updated
 }
 
 func temporalEnd(dataset metadata.Dataset) *time.Time {

@@ -267,6 +267,36 @@ func (q *Queries) LinkOrganizationIdentifier(ctx context.Context, arg LinkOrgani
 	return err
 }
 
+const linkWebServiceContactPoint = `-- name: LinkWebServiceContactPoint :exec
+INSERT INTO web_service_contact_points (web_service_id, contact_point_id)
+VALUES ($1, $2) ON CONFLICT DO NOTHING
+`
+
+type LinkWebServiceContactPointParams struct {
+	WebServiceID   uuid.UUID
+	ContactPointID uuid.UUID
+}
+
+func (q *Queries) LinkWebServiceContactPoint(ctx context.Context, arg LinkWebServiceContactPointParams) error {
+	_, err := q.db.Exec(ctx, linkWebServiceContactPoint, arg.WebServiceID, arg.ContactPointID)
+	return err
+}
+
+const linkWebServiceProvider = `-- name: LinkWebServiceProvider :exec
+INSERT INTO web_service_providers (web_service_id, organization_id)
+VALUES ($1, $2) ON CONFLICT DO NOTHING
+`
+
+type LinkWebServiceProviderParams struct {
+	WebServiceID   uuid.UUID
+	OrganizationID uuid.UUID
+}
+
+func (q *Queries) LinkWebServiceProvider(ctx context.Context, arg LinkWebServiceProviderParams) error {
+	_, err := q.db.Exec(ctx, linkWebServiceProvider, arg.WebServiceID, arg.OrganizationID)
+	return err
+}
+
 const upsertCategory = `-- name: UpsertCategory :exec
 INSERT INTO categories (id, source_iri, scheme_id, name)
 VALUES ($1, $2, $3, $4)
@@ -338,14 +368,15 @@ func (q *Queries) UpsertContactPoint(ctx context.Context, arg UpsertContactPoint
 
 const upsertDataset = `-- name: UpsertDataset :exec
 INSERT INTO datasets (id, source_iri, title, description, temporal_start, temporal_end, status,
-	editor_user_id, group_id, created_at, updated_at, original_dataset_id, spatial_point, spatial_polygon)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+	editor_user_id, group_id, source_created_at, source_updated_at, original_dataset_id, spatial_point, spatial_polygon)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $11, $12, $10,
 	CASE WHEN $13::text IS NULL THEN NULL ELSE ST_GeomFromText($13::text, 4326) END,
 	CASE WHEN $14::text IS NULL THEN NULL ELSE ST_GeomFromText($14::text, 4326) END)
 ON CONFLICT (source_iri) DO UPDATE SET id = excluded.id, title = excluded.title,
 description = excluded.description, temporal_start = excluded.temporal_start,
 temporal_end = excluded.temporal_end, status = excluded.status, editor_user_id = excluded.editor_user_id,
-group_id = excluded.group_id, updated_at = excluded.updated_at, original_dataset_id = excluded.original_dataset_id,
+group_id = excluded.group_id, source_created_at = excluded.source_created_at,
+source_updated_at = excluded.source_updated_at, original_dataset_id = excluded.original_dataset_id,
 spatial_point = excluded.spatial_point, spatial_polygon = excluded.spatial_polygon
 `
 
@@ -359,9 +390,9 @@ type UpsertDatasetParams struct {
 	Status            DatasetStatus
 	EditorUserID      *uuid.UUID
 	GroupID           *uuid.UUID
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
 	OriginalDatasetID uuid.UUID
+	SourceCreatedAt   *time.Time
+	SourceUpdatedAt   *time.Time
 	SpatialPoint      *string
 	SpatialPolygon    *string
 }
@@ -377,9 +408,9 @@ func (q *Queries) UpsertDataset(ctx context.Context, arg UpsertDatasetParams) er
 		arg.Status,
 		arg.EditorUserID,
 		arg.GroupID,
-		arg.CreatedAt,
-		arg.UpdatedAt,
 		arg.OriginalDatasetID,
+		arg.SourceCreatedAt,
+		arg.SourceUpdatedAt,
 		arg.SpatialPoint,
 		arg.SpatialPolygon,
 	)

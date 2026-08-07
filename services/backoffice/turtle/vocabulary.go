@@ -36,6 +36,7 @@ const (
 	schemaName              = "http://schema.org/name"
 	schemaDescription       = "http://schema.org/description"
 	schemaProvider          = "http://schema.org/provider"
+	schemaAddress           = "http://schema.org/address"
 	schemaEmail             = "http://schema.org/email"
 	schemaContactType       = "http://schema.org/contactType"
 	schemaStreetAddress     = "http://schema.org/streetAddress"

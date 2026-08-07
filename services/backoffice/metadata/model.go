@@ -19,6 +19,8 @@ type Dataset struct {
 	ContactPoints         []ContactPoint `json:"contact_points"`
 	Providers             []Organization `json:"providers"`
 	Categories            []Category     `json:"categories"`
+	SourceCreated         *time.Time     `json:"source_created"`
+	SourceUpdated         *time.Time     `json:"source_updated"`
 
 	// versioning stuff
 	Status            DatasetStatus `json:"status"`
