@@ -5,13 +5,13 @@ import "strings"
 type UserStatus string
 
 const (
-	UserStatusActive   UserStatus = "ACTIVE"
-	UserStatusInactive UserStatus = "INACTIVE"
-	UserStatusBlocked  UserStatus = "BLOCKED"
+	UserStatusActive   UserStatus = "active"
+	UserStatusInactive UserStatus = "inactive"
+	UserStatusBlocked  UserStatus = "blocked"
 )
 
 func NormalizeUserStatus(v string) UserStatus {
-	return UserStatus(strings.ToUpper(strings.TrimSpace(v)))
+	return UserStatus(strings.ToLower(strings.TrimSpace(v)))
 }
 
 func (s UserStatus) Valid() bool {
@@ -26,14 +26,14 @@ func (s UserStatus) Valid() bool {
 type MembershipRole string
 
 const (
-	MembershipRoleViewer   MembershipRole = "VIEWER"
-	MembershipRoleEditor   MembershipRole = "EDITOR"
-	MembershipRoleReviewer MembershipRole = "REVIEWER"
-	MembershipRoleAdmin    MembershipRole = "ADMIN"
+	MembershipRoleViewer   MembershipRole = "viewer"
+	MembershipRoleEditor   MembershipRole = "editor"
+	MembershipRoleReviewer MembershipRole = "reviewer"
+	MembershipRoleAdmin    MembershipRole = "admin"
 )
 
 func NormalizeMembershipRole(v string) MembershipRole {
-	return MembershipRole(strings.ToUpper(strings.TrimSpace(v)))
+	return MembershipRole(strings.ToLower(strings.TrimSpace(v)))
 }
 
 func (r MembershipRole) Valid() bool {
@@ -48,14 +48,14 @@ func (r MembershipRole) Valid() bool {
 type MembershipStatus string
 
 const (
-	MembershipStatusPending  MembershipStatus = "PENDING"
-	MembershipStatusActive   MembershipStatus = "ACTIVE"
-	MembershipStatusRevoked  MembershipStatus = "REVOKED"
-	MembershipStatusRejected MembershipStatus = "REJECTED"
+	MembershipStatusPending  MembershipStatus = "pending"
+	MembershipStatusActive   MembershipStatus = "active"
+	MembershipStatusRevoked  MembershipStatus = "revoked"
+	MembershipStatusRejected MembershipStatus = "rejected"
 )
 
 func NormalizeMembershipStatus(v string) MembershipStatus {
-	return MembershipStatus(strings.ToUpper(strings.TrimSpace(v)))
+	return MembershipStatus(strings.ToLower(strings.TrimSpace(v)))
 }
 
 func (s MembershipStatus) Valid() bool {

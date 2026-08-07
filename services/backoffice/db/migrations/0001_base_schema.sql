@@ -9,44 +9,50 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================
 
 CREATE TYPE user_status AS ENUM (
-    'ACTIVE',
-    'INACTIVE',
-    'BLOCKED'
+    'active',
+    'inactive',
+    'blocked'
 );
 
 CREATE TYPE membership_role AS ENUM (
-    'VIEWER',
-    'EDITOR',
-    'REVIEWER',
-    'ADMIN'
+    'viewer',
+    'editor',
+    'reviewer',
+    'admin'
 );
 
 CREATE TYPE membership_status AS ENUM (
-    'PENDING',
-    'ACTIVE',
-    'REVOKED',
-    'REJECTED'
+    'pending',
+    'active',
+    'revoked',
+    'rejected'
 );
 
 CREATE TYPE permission_effect AS ENUM (
-    'ALLOW',
-    'DENY'
+    'allow',
+    'deny'
 );
 
 CREATE TYPE dataset_status AS ENUM (
-    'PUBLISHED',
-    'DRAFT',
-    'SUBMITTED',
-    'ARCHIVED',
-    'REJECTED'
+    'published',
+    'draft',
+    'submitted',
+    'archived',
+    'rejected'
 );
 
 CREATE TYPE parameter_kind AS ENUM (
-    'STRING',
-    'BOOLEAN',
-    'INTEGER',
-    'FLOAT',
-    'DATETIME'
+    'string',
+    'boolean',
+    'integer',
+    'float',
+    'datetime'
+);
+
+CREATE TYPE top_level_concept AS ENUM (
+    'data',
+    'facilities',
+    'software'
 );
 
 
@@ -62,7 +68,7 @@ CREATE TABLE users (
     given_name      text,
     email           text UNIQUE,
     is_super_admin  boolean NOT NULL DEFAULT false,
-    status          user_status NOT NULL DEFAULT 'ACTIVE',
+    status          user_status NOT NULL DEFAULT 'active',
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now()
 );
@@ -127,7 +133,7 @@ CREATE TABLE group_permissions (
     action        text NOT NULL,
     resource_type text,
     resource_id   text,
-    effect        permission_effect NOT NULL DEFAULT 'ALLOW',
+    effect        permission_effect NOT NULL DEFAULT 'allow',
     created_at    timestamptz NOT NULL DEFAULT now(),
     updated_at    timestamptz NOT NULL DEFAULT now()
 );
@@ -157,7 +163,7 @@ ON CONFLICT (slug) DO NOTHING;
 -- ============================================================
 
 CREATE TABLE datasets (
-    uid                     text PRIMARY KEY,
+    id                      uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     title                   text NOT NULL,
     description             text NOT NULL DEFAULT '',
 
@@ -180,7 +186,7 @@ CREATE TABLE datasets (
     created_at              timestamptz NOT NULL DEFAULT now(),
     updated_at              timestamptz NOT NULL DEFAULT now(),
 
-    original_dataset_uid    text NOT NULL,
+    original_dataset_id     uuid NOT NULL,
 
     CONSTRAINT datasets_temporal_range_check
         CHECK (
@@ -190,8 +196,8 @@ CREATE TABLE datasets (
         ),
 
     CONSTRAINT datasets_original_dataset_fk
-        FOREIGN KEY (original_dataset_uid)
-        REFERENCES datasets(uid)
+        FOREIGN KEY (original_dataset_id)
+        REFERENCES datasets(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT
         DEFERRABLE INITIALLY IMMEDIATE
@@ -204,7 +210,7 @@ CREATE TABLE datasets (
 -- ============================================================
 
 CREATE TABLE identifiers (
-    uid         text PRIMARY KEY,
+    id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     type        text NOT NULL,
     value       text NOT NULL,
 
@@ -213,17 +219,17 @@ CREATE TABLE identifiers (
 );
 
 CREATE TABLE dataset_identifiers (
-    dataset_uid     text NOT NULL
-        REFERENCES datasets(uid)
+    dataset_id      uuid NOT NULL
+        REFERENCES datasets(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    identifier_uid  text NOT NULL
-        REFERENCES identifiers(uid)
+    identifier_id   uuid NOT NULL
+        REFERENCES identifiers(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (dataset_uid, identifier_uid)
+    PRIMARY KEY (dataset_id, identifier_id)
 );
 
 
@@ -232,7 +238,7 @@ CREATE TABLE dataset_identifiers (
 -- ============================================================
 
 CREATE TABLE organizations (
-    uid             text PRIMARY KEY,
+    id              uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     name            text NOT NULL,
 
     street          text,
@@ -249,52 +255,52 @@ CREATE TABLE organizations (
 );
 
 CREATE TABLE organization_identifiers (
-    organization_uid  text NOT NULL
-        REFERENCES organizations(uid)
+    organization_id    uuid NOT NULL
+        REFERENCES organizations(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    identifier_uid    text NOT NULL
-        REFERENCES identifiers(uid)
+    identifier_id     uuid NOT NULL
+        REFERENCES identifiers(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (organization_uid, identifier_uid)
+    PRIMARY KEY (organization_id, identifier_id)
 );
 
--- child_organization_uid is member of parent_organization_uid.
+-- child_organization_id is member of parent_organization_id.
 CREATE TABLE organization_memberships (
-    child_organization_uid   text NOT NULL
-        REFERENCES organizations(uid)
+    child_organization_id    uuid NOT NULL
+        REFERENCES organizations(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    parent_organization_uid  text NOT NULL
-        REFERENCES organizations(uid)
+    parent_organization_id   uuid NOT NULL
+        REFERENCES organizations(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
     PRIMARY KEY (
-        child_organization_uid,
-        parent_organization_uid
+        child_organization_id,
+        parent_organization_id
     ),
 
     CONSTRAINT organization_memberships_no_self_reference
-        CHECK (child_organization_uid <> parent_organization_uid)
+        CHECK (child_organization_id <> parent_organization_id)
 );
 
 CREATE TABLE dataset_providers (
-    dataset_uid       text NOT NULL
-        REFERENCES datasets(uid)
+    dataset_id        uuid NOT NULL
+        REFERENCES datasets(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    organization_uid  text NOT NULL
-        REFERENCES organizations(uid)
+    organization_id   uuid NOT NULL
+        REFERENCES organizations(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (dataset_uid, organization_uid)
+    PRIMARY KEY (dataset_id, organization_id)
 );
 
 
@@ -302,47 +308,57 @@ CREATE TABLE dataset_providers (
 -- Categories
 -- ============================================================
 
-CREATE TABLE categories (
-    uid             text PRIMARY KEY,
-    name            text NOT NULL,
-
-    CONSTRAINT categories_name_unique
-        UNIQUE (name)
+CREATE TABLE category_schemes (
+    id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    name        text NOT NULL,
+    concept     top_level_concept NOT NULL
 );
 
--- parent_category_uid contains child_category_uid.
+CREATE TABLE categories (
+    id              uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
+    scheme_id       uuid NOT NULL
+        REFERENCES category_schemes(id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    name            text NOT NULL,
+
+    CONSTRAINT categories_scheme_name_unique
+        UNIQUE (scheme_id, name)
+);
+
+-- parent_category_id contains child_category_id.
 CREATE TABLE category_children (
-    parent_category_uid  text NOT NULL
-        REFERENCES categories(uid)
+    parent_category_id   uuid NOT NULL
+        REFERENCES categories(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    child_category_uid   text NOT NULL
-        REFERENCES categories(uid)
+    child_category_id    uuid NOT NULL
+        REFERENCES categories(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
     PRIMARY KEY (
-        parent_category_uid,
-        child_category_uid
+        parent_category_id,
+        child_category_id
     ),
 
     CONSTRAINT category_children_no_self_reference
-        CHECK (parent_category_uid <> child_category_uid)
+        CHECK (parent_category_id <> child_category_id)
 );
 
 CREATE TABLE dataset_categories (
-    dataset_uid   text NOT NULL
-        REFERENCES datasets(uid)
+    dataset_id    uuid NOT NULL
+        REFERENCES datasets(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    category_uid  text NOT NULL
-        REFERENCES categories(uid)
+    category_id   uuid NOT NULL
+        REFERENCES categories(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (dataset_uid, category_uid)
+    PRIMARY KEY (dataset_id, category_id)
 );
 
 
@@ -351,7 +367,7 @@ CREATE TABLE dataset_categories (
 -- ============================================================
 
 CREATE TABLE contact_points (
-    uid         text PRIMARY KEY,
+    id          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     email       text NOT NULL,
     role        text NOT NULL,
 
@@ -360,17 +376,17 @@ CREATE TABLE contact_points (
 );
 
 CREATE TABLE dataset_contact_points (
-    dataset_uid       text NOT NULL
-        REFERENCES datasets(uid)
+    dataset_id        uuid NOT NULL
+        REFERENCES datasets(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    contact_point_uid text NOT NULL
-        REFERENCES contact_points(uid)
+    contact_point_id  uuid NOT NULL
+        REFERENCES contact_points(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (dataset_uid, contact_point_uid)
+    PRIMARY KEY (dataset_id, contact_point_id)
 );
 
 
@@ -379,10 +395,10 @@ CREATE TABLE dataset_contact_points (
 -- ============================================================
 
 CREATE TABLE distributions (
-    uid                         text PRIMARY KEY,
+    id                          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
 
-    dataset_uid                 text NOT NULL
-        REFERENCES datasets(uid)
+    dataset_id                  uuid NOT NULL
+        REFERENCES datasets(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
@@ -392,20 +408,20 @@ CREATE TABLE distributions (
 
     downloadable_file_url       text,
     downloadable_file_format    text,
-    web_service_uid             text,
+    web_service_id              uuid,
 
     CONSTRAINT distributions_delivery_method_check
         CHECK (
             (
                 downloadable_file_url IS NOT NULL
                 AND downloadable_file_format IS NOT NULL
-                AND web_service_uid IS NULL
+                AND web_service_id IS NULL
             )
             OR
             (
                 downloadable_file_url IS NULL
                 AND downloadable_file_format IS NULL
-                AND web_service_uid IS NOT NULL
+                AND web_service_id IS NOT NULL
             )
         )
 );
@@ -417,7 +433,7 @@ CREATE TABLE distributions (
 -- ============================================================
 
 CREATE TABLE web_services (
-    uid                         text PRIMARY KEY,
+    id                          uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
 
     name                        text NOT NULL,
     description                 text NOT NULL DEFAULT '',
@@ -454,37 +470,37 @@ CREATE TABLE web_services (
 
 ALTER TABLE distributions
     ADD CONSTRAINT distributions_web_service_fk
-    FOREIGN KEY (web_service_uid)
-    REFERENCES web_services(uid)
+    FOREIGN KEY (web_service_id)
+    REFERENCES web_services(id)
     ON UPDATE CASCADE
     ON DELETE RESTRICT;
 
 CREATE TABLE web_service_providers (
-    web_service_uid   text NOT NULL
-        REFERENCES web_services(uid)
+    web_service_id    uuid NOT NULL
+        REFERENCES web_services(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    organization_uid  text NOT NULL
-        REFERENCES organizations(uid)
+    organization_id   uuid NOT NULL
+        REFERENCES organizations(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (web_service_uid, organization_uid)
+    PRIMARY KEY (web_service_id, organization_id)
 );
 
 CREATE TABLE web_service_contact_points (
-    web_service_uid    text NOT NULL
-        REFERENCES web_services(uid)
+    web_service_id     uuid NOT NULL
+        REFERENCES web_services(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
-    contact_point_uid  text NOT NULL
-        REFERENCES contact_points(uid)
+    contact_point_id   uuid NOT NULL
+        REFERENCES contact_points(id)
         ON UPDATE CASCADE
         ON DELETE RESTRICT,
 
-    PRIMARY KEY (web_service_uid, contact_point_uid)
+    PRIMARY KEY (web_service_id, contact_point_id)
 );
 
 
@@ -493,10 +509,10 @@ CREATE TABLE web_service_contact_points (
 -- ============================================================
 
 CREATE TABLE web_service_parameters (
-    uid                  text PRIMARY KEY,
+    id                   uuid PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
 
-    web_service_uid      text NOT NULL
-        REFERENCES web_services(uid)
+    web_service_id       uuid NOT NULL
+        REFERENCES web_services(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE,
 
@@ -553,7 +569,7 @@ CREATE TABLE web_service_parameters (
         CHECK (jsonb_typeof(config) = 'object'),
 
     CONSTRAINT web_service_parameters_variable_unique
-        UNIQUE (web_service_uid, variable)
+        UNIQUE (web_service_id, variable)
 );
 
 
@@ -562,14 +578,13 @@ CREATE TABLE web_service_parameters (
 -- ============================================================
 
 -- +goose StatementBegin
-CREATE FUNCTION set_dataset_original_uid()
+CREATE FUNCTION set_dataset_original_id()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF NEW.original_dataset_uid IS NULL
-       OR NEW.original_dataset_uid = '' THEN
-        NEW.original_dataset_uid := NEW.uid;
+    IF NEW.original_dataset_id IS NULL THEN
+        NEW.original_dataset_id := NEW.id;
     END IF;
 
     RETURN NEW;
@@ -577,10 +592,10 @@ END;
 $$;
 -- +goose StatementEnd
 
-CREATE TRIGGER datasets_set_original_uid
+CREATE TRIGGER datasets_set_original_id
 BEFORE INSERT ON datasets
 FOR EACH ROW
-EXECUTE FUNCTION set_dataset_original_uid();
+EXECUTE FUNCTION set_dataset_original_id();
 
 
 -- +goose StatementBegin
@@ -621,8 +636,8 @@ CREATE UNIQUE INDEX group_permissions_scope_uq
 CREATE INDEX group_permissions_service_action_idx ON group_permissions (service, action);
 CREATE INDEX friendships_friend_idx ON friendships (friend_id);
 
-CREATE INDEX datasets_original_dataset_uid_idx
-    ON datasets(original_dataset_uid);
+CREATE INDEX datasets_original_dataset_id_idx
+    ON datasets(original_dataset_id);
 
 CREATE INDEX datasets_spatial_point_gist_idx
     ON datasets
@@ -632,23 +647,23 @@ CREATE INDEX datasets_spatial_polygon_gist_idx
     ON datasets
     USING gist(spatial_polygon);
 
-CREATE INDEX dataset_identifiers_identifier_uid_idx
-    ON dataset_identifiers(identifier_uid);
+CREATE INDEX dataset_identifiers_identifier_id_idx
+    ON dataset_identifiers(identifier_id);
 
-CREATE INDEX organization_identifiers_identifier_uid_idx
-    ON organization_identifiers(identifier_uid);
+CREATE INDEX organization_identifiers_identifier_id_idx
+    ON organization_identifiers(identifier_id);
 
 CREATE INDEX organization_memberships_parent_idx
-    ON organization_memberships(parent_organization_uid);
+    ON organization_memberships(parent_organization_id);
 
 CREATE INDEX category_children_child_idx
-    ON category_children(child_category_uid);
+    ON category_children(child_category_id);
 
-CREATE INDEX distributions_dataset_uid_idx
-    ON distributions(dataset_uid);
+CREATE INDEX distributions_dataset_id_idx
+    ON distributions(dataset_id);
 
-CREATE INDEX distributions_web_service_uid_idx
-    ON distributions(web_service_uid);
+CREATE INDEX distributions_web_service_id_idx
+    ON distributions(web_service_id);
 
 CREATE INDEX web_services_spatial_point_gist_idx
     ON web_services
@@ -658,8 +673,8 @@ CREATE INDEX web_services_spatial_polygon_gist_idx
     ON web_services
     USING gist(spatial_polygon);
 
-CREATE INDEX web_service_parameters_web_service_uid_idx
-    ON web_service_parameters(web_service_uid);
+CREATE INDEX web_service_parameters_web_service_id_idx
+    ON web_service_parameters(web_service_id);
 
 CREATE INDEX web_service_parameters_property_idx
     ON web_service_parameters(property);
@@ -684,12 +699,13 @@ DROP TABLE IF EXISTS organization_memberships;
 DROP TABLE IF EXISTS category_children;
 DROP TABLE IF EXISTS contact_points;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS category_schemes;
 DROP TABLE IF EXISTS organizations;
 DROP TABLE IF EXISTS identifiers;
 DROP TABLE IF EXISTS datasets;
 
 DROP FUNCTION IF EXISTS set_updated_at();
-DROP FUNCTION IF EXISTS set_dataset_original_uid();
+DROP FUNCTION IF EXISTS set_dataset_original_id();
 
 DROP TABLE IF EXISTS group_permissions;
 DROP TABLE IF EXISTS group_memberships;
@@ -704,4 +720,5 @@ DROP TYPE IF EXISTS membership_status;
 DROP TYPE IF EXISTS membership_role;
 DROP TYPE IF EXISTS user_status;
 DROP TYPE IF EXISTS parameter_kind;
+DROP TYPE IF EXISTS top_level_concept;
 DROP TYPE IF EXISTS dataset_status;

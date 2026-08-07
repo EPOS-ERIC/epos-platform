@@ -62,10 +62,10 @@ func (ns NullDatasetStatus) Value() (driver.Value, error) {
 type MembershipRole string
 
 const (
-	MembershipRoleVIEWER   MembershipRole = "VIEWER"
-	MembershipRoleEDITOR   MembershipRole = "EDITOR"
-	MembershipRoleREVIEWER MembershipRole = "REVIEWER"
-	MembershipRoleADMIN    MembershipRole = "ADMIN"
+	MembershipRoleViewer   MembershipRole = "viewer"
+	MembershipRoleEditor   MembershipRole = "editor"
+	MembershipRoleReviewer MembershipRole = "reviewer"
+	MembershipRoleAdmin    MembershipRole = "admin"
 )
 
 func (e *MembershipRole) Scan(src interface{}) error {
@@ -106,10 +106,10 @@ func (ns NullMembershipRole) Value() (driver.Value, error) {
 type MembershipStatus string
 
 const (
-	MembershipStatusPENDING  MembershipStatus = "PENDING"
-	MembershipStatusACTIVE   MembershipStatus = "ACTIVE"
-	MembershipStatusREVOKED  MembershipStatus = "REVOKED"
-	MembershipStatusREJECTED MembershipStatus = "REJECTED"
+	MembershipStatusPending  MembershipStatus = "pending"
+	MembershipStatusActive   MembershipStatus = "active"
+	MembershipStatusRevoked  MembershipStatus = "revoked"
+	MembershipStatusRejected MembershipStatus = "rejected"
 )
 
 func (e *MembershipStatus) Scan(src interface{}) error {
@@ -195,8 +195,8 @@ func (ns NullParameterKind) Value() (driver.Value, error) {
 type PermissionEffect string
 
 const (
-	PermissionEffectALLOW PermissionEffect = "ALLOW"
-	PermissionEffectDENY  PermissionEffect = "DENY"
+	PermissionEffectAllow PermissionEffect = "allow"
+	PermissionEffectDeny  PermissionEffect = "deny"
 )
 
 func (e *PermissionEffect) Scan(src interface{}) error {
@@ -234,12 +234,55 @@ func (ns NullPermissionEffect) Value() (driver.Value, error) {
 	return string(ns.PermissionEffect), nil
 }
 
+type TopLevelConcept string
+
+const (
+	TopLevelConceptData       TopLevelConcept = "data"
+	TopLevelConceptFacilities TopLevelConcept = "facilities"
+	TopLevelConceptSoftware   TopLevelConcept = "software"
+)
+
+func (e *TopLevelConcept) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TopLevelConcept(s)
+	case string:
+		*e = TopLevelConcept(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TopLevelConcept: %T", src)
+	}
+	return nil
+}
+
+type NullTopLevelConcept struct {
+	TopLevelConcept TopLevelConcept
+	Valid           bool // Valid is true if TopLevelConcept is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTopLevelConcept) Scan(value interface{}) error {
+	if value == nil {
+		ns.TopLevelConcept, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TopLevelConcept.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTopLevelConcept) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TopLevelConcept), nil
+}
+
 type UserStatus string
 
 const (
-	UserStatusACTIVE   UserStatus = "ACTIVE"
-	UserStatusINACTIVE UserStatus = "INACTIVE"
-	UserStatusBLOCKED  UserStatus = "BLOCKED"
+	UserStatusActive   UserStatus = "active"
+	UserStatusInactive UserStatus = "inactive"
+	UserStatusBlocked  UserStatus = "blocked"
 )
 
 func (e *UserStatus) Scan(src interface{}) error {
@@ -278,66 +321,73 @@ func (ns NullUserStatus) Value() (driver.Value, error) {
 }
 
 type Category struct {
-	Uid  string
-	Name string
+	ID       uuid.UUID
+	SchemeID uuid.UUID
+	Name     string
 }
 
 type CategoryChild struct {
-	ParentCategoryUid string
-	ChildCategoryUid  string
+	ParentCategoryID uuid.UUID
+	ChildCategoryID  uuid.UUID
+}
+
+type CategoryScheme struct {
+	ID      uuid.UUID
+	Name    string
+	Concept TopLevelConcept
 }
 
 type ContactPoint struct {
-	Uid   string
+	ID    uuid.UUID
 	Email string
 	Role  string
 }
 
 type Dataset struct {
-	Uid                string
-	Title              string
-	Description        string
-	SpatialPoint       interface{}
-	SpatialPolygon     interface{}
-	TemporalStart      sql.NullTime
-	TemporalEnd        sql.NullTime
-	Status             DatasetStatus
-	EditorUserID       uuid.NullUUID
-	GroupID            uuid.NullUUID
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	OriginalDatasetUid string
+	ID                uuid.UUID
+	Title             string
+	Description       string
+	SpatialPoint      interface{}
+	SpatialPolygon    interface{}
+	TemporalStart     sql.NullTime
+	TemporalEnd       sql.NullTime
+	Status            DatasetStatus
+	EditorUserID      uuid.NullUUID
+	GroupID           uuid.NullUUID
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	OriginalDatasetID uuid.UUID
 }
 
 type DatasetCategory struct {
-	DatasetUid  string
-	CategoryUid string
+	DatasetID  uuid.UUID
+	CategoryID uuid.UUID
 }
 
 type DatasetContactPoint struct {
-	DatasetUid      string
-	ContactPointUid string
+	DatasetID      uuid.UUID
+	ContactPointID uuid.UUID
 }
 
 type DatasetIdentifier struct {
-	DatasetUid    string
-	IdentifierUid string
+	DatasetID    uuid.UUID
+	IdentifierID uuid.UUID
 }
 
 type DatasetProvider struct {
-	DatasetUid      string
-	OrganizationUid string
+	DatasetID      uuid.UUID
+	OrganizationID uuid.UUID
 }
 
 type Distribution struct {
-	Uid                    string
-	DatasetUid             string
+	ID                     uuid.UUID
+	DatasetID              uuid.UUID
 	Title                  string
 	Description            string
 	License                sql.NullString
 	DownloadableFileUrl    sql.NullString
 	DownloadableFileFormat sql.NullString
-	WebServiceUid          sql.NullString
+	WebServiceID           uuid.NullUUID
 }
 
 type Friendship struct {
@@ -378,13 +428,13 @@ type GroupPermission struct {
 }
 
 type Identifier struct {
-	Uid   string
+	ID    uuid.UUID
 	Type  string
 	Value string
 }
 
 type Organization struct {
-	Uid        string
+	ID         uuid.UUID
 	Name       string
 	Street     sql.NullString
 	Locality   sql.NullString
@@ -396,13 +446,13 @@ type Organization struct {
 }
 
 type OrganizationIdentifier struct {
-	OrganizationUid string
-	IdentifierUid   string
+	OrganizationID uuid.UUID
+	IdentifierID   uuid.UUID
 }
 
 type OrganizationMembership struct {
-	ChildOrganizationUid  string
-	ParentOrganizationUid string
+	ChildOrganizationID  uuid.UUID
+	ParentOrganizationID uuid.UUID
 }
 
 type User struct {
@@ -418,7 +468,7 @@ type User struct {
 }
 
 type WebService struct {
-	Uid                      string
+	ID                       uuid.UUID
 	Name                     string
 	Description              string
 	TemplateUrl              string
@@ -433,13 +483,13 @@ type WebService struct {
 }
 
 type WebServiceContactPoint struct {
-	WebServiceUid   string
-	ContactPointUid string
+	WebServiceID   uuid.UUID
+	ContactPointID uuid.UUID
 }
 
 type WebServiceParameter struct {
-	Uid            string
-	WebServiceUid  string
+	ID             uuid.UUID
+	WebServiceID   uuid.UUID
 	Kind           ParameterKind
 	Variable       string
 	Property       string
@@ -451,6 +501,6 @@ type WebServiceParameter struct {
 }
 
 type WebServiceProvider struct {
-	WebServiceUid   string
-	OrganizationUid string
+	WebServiceID   uuid.UUID
+	OrganizationID uuid.UUID
 }
