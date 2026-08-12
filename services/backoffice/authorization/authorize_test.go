@@ -60,6 +60,15 @@ func (r fakeRepository) IsDatasetPublished(context.Context, uuid.UUID) (bool, er
 	return r.published, nil
 }
 
+func (r fakeRepository) GetDatasetVersionAuthorization(context.Context, sqlc.GetDatasetVersionAuthorizationParams) (sqlc.GetDatasetVersionAuthorizationRow, error) {
+	return sqlc.GetDatasetVersionAuthorizationRow{DatasetID: uuid.New(), GroupID: r.datasetGroup, Status: func() sqlc.ResourceStatus {
+		if r.published {
+			return sqlc.ResourceStatusPUBLISHED
+		}
+		return sqlc.ResourceStatusDRAFT
+	}()}, nil
+}
+
 func (r fakeRepository) IsSoftwareApplicationPublished(context.Context, uuid.UUID) (bool, error) {
 	return r.published, nil
 }

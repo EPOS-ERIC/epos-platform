@@ -480,8 +480,8 @@ type DatasetVersion struct {
 	AccessRight        *string
 	SourceCreatedAt    *time.Time
 	SourceUpdatedAt    *time.Time
-	SpatialPoint       interface{}
-	SpatialPolygon     interface{}
+	SpatialPoint       []byte
+	SpatialPolygon     []byte
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
 	CreatedBy          uuid.UUID

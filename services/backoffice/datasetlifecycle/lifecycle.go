@@ -1,0 +1,251 @@
+// Package datasetlifecycle manages dataset versions and their lifecycle.
+package datasetlifecycle
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authorization"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
+	"github.com/google/uuid"
+)
+
+var (
+	ErrDenied   = errors.New("permission denied")
+	ErrConflict = errors.New("lifecycle conflict")
+	ErrNotFound = errors.New("dataset not found")
+	ErrInvalid  = errors.New("invalid dataset request")
+	ErrInternal = errors.New("dataset operation failed")
+)
+
+const (
+	permissionCreate    = "resource.create"
+	permissionEdit      = "resource.edit"
+	permissionSubmit    = "resource.submit"
+	permissionWithdraw  = "resource.withdraw"
+	permissionReject    = "resource.reject"
+	permissionReopen    = "resource.reopen"
+	permissionPublish   = "resource.publish"
+	permissionDiscard   = "resource.discard"
+	permissionUnpublish = "resource.unpublish"
+)
+
+type Authorizer interface {
+	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authorization.Result, error)
+	AuthorizeResource(context.Context, uuid.UUID, authorization.ResourceType, uuid.UUID, string) (authorization.Result, error)
+	CanReadResource(context.Context, *uuid.UUID, authorization.ResourceType, uuid.UUID) (authorization.Result, error)
+	CanReadDatasetVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authorization.Result, error)
+	CanReadContactPoint(context.Context, uuid.UUID) (authorization.Result, error)
+}
+
+// Dataset is version metadata with lifecycle identity. Metadata.SourceIRI is
+// logical dataset source IRI and is immutable after creation.
+type Dataset struct {
+	DatasetID uuid.UUID              `json:"dataset_id"`
+	VersionID uuid.UUID              `json:"version_id"`
+	Revision  int32                  `json:"revision"`
+	Status    metadata.DatasetStatus `json:"status"`
+	Metadata  metadata.Dataset       `json:"metadata"`
+}
+
+type Repository interface {
+	Get(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
+	GetPublished(context.Context, uuid.UUID) (Dataset, error)
+	GetActive(context.Context, uuid.UUID) (Dataset, error)
+	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (Dataset, error)
+	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (Dataset, error)
+	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Dataset, error)
+	Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
+	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
+	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
+	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Dataset, error)
+}
+
+type Service struct {
+	authorizer Authorizer
+	repository Repository
+}
+
+func New(authorizer Authorizer, repository Repository) *Service {
+	return &Service{authorizer: authorizer, repository: repository}
+}
+
+func (s *Service) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.Dataset) (Dataset, error) {
+	if strings.TrimSpace(value.SourceIRI) == "" {
+		return Dataset{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
+	}
+	if err := s.authorizeGroup(ctx, actorID, groupID, permissionCreate); err != nil {
+		return Dataset{}, operationError("authorize draft creation", err)
+	}
+	value.SourceIRI = strings.TrimSpace(value.SourceIRI)
+	dataset, err := s.repository.CreateDraft(ctx, actorID, groupID, value)
+	if err != nil {
+		return Dataset{}, operationError("create draft", err)
+	}
+	return dataset, nil
+}
+
+func (s *Service) ReplaceDraft(ctx context.Context, actorID, datasetID, versionID uuid.UUID, revision int32, value metadata.Dataset) (Dataset, error) {
+	if revision < 1 {
+		return Dataset{}, fmt.Errorf("revision must be positive: %w", ErrInvalid)
+	}
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionEdit); err != nil {
+		return Dataset{}, operationError("authorize draft replacement", err)
+	}
+	dataset, err := s.repository.ReplaceDraft(ctx, actorID, datasetID, versionID, revision, value)
+	if err != nil {
+		return Dataset{}, operationError("replace draft", err)
+	}
+	return dataset, nil
+}
+
+func operationError(operation string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, ErrDenied) || errors.Is(err, ErrConflict) || errors.Is(err, ErrNotFound) || errors.Is(err, ErrInvalid) {
+		return fmt.Errorf("%s: %w", operation, err)
+	}
+	return fmt.Errorf("%s: %w: %w", operation, ErrInternal, err)
+}
+
+// Read selects the public version for anonymous requests and the active change
+// version for members when one exists.
+func (s *Service) Read(ctx context.Context, actorID *uuid.UUID, datasetID, versionID uuid.UUID) (Dataset, bool, error) {
+	result, err := s.authorizer.CanReadDatasetVersion(ctx, actorID, datasetID, versionID)
+	if err != nil {
+		return Dataset{}, false, operationError("authorize dataset read", err)
+	}
+	if !result.Allowed {
+		return Dataset{}, false, fmt.Errorf("%w: %s", ErrDenied, result.Reason)
+	}
+
+	includeContacts := false
+	if actorID != nil {
+		contactResult, err := s.authorizer.CanReadContactPoint(ctx, *actorID)
+		if err != nil {
+			return Dataset{}, false, operationError("authorize contact point read", err)
+		}
+		includeContacts = contactResult.Allowed
+	}
+
+	dataset, err := s.repository.Get(ctx, datasetID, versionID)
+	if err != nil {
+		return Dataset{}, false, operationError("get dataset version", err)
+	}
+	return dataset, includeContacts, nil
+}
+
+func (s *Service) Submit(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionSubmit); err != nil {
+		return Dataset{}, operationError("authorize submission", err)
+	}
+	dataset, err := s.repository.Submit(ctx, actorID, datasetID, versionID)
+	return dataset, operationError("submit draft", err)
+}
+
+func (s *Service) Withdraw(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionWithdraw); err != nil {
+		return Dataset{}, operationError("authorize withdrawal", err)
+	}
+	dataset, err := s.repository.Withdraw(ctx, actorID, datasetID, versionID)
+	return dataset, operationError("withdraw submission", err)
+}
+
+func (s *Service) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UUID, note string) (Dataset, error) {
+	if strings.TrimSpace(note) == "" {
+		return Dataset{}, fmt.Errorf("rejection note is required: %w", ErrInvalid)
+	}
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionReject); err != nil {
+		return Dataset{}, operationError("authorize rejection", err)
+	}
+	dataset, err := s.repository.Reject(ctx, actorID, datasetID, versionID, strings.TrimSpace(note))
+	return dataset, operationError("reject submission", err)
+}
+
+func (s *Service) Reopen(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionReopen); err != nil {
+		return Dataset{}, operationError("authorize reopening", err)
+	}
+	dataset, err := s.repository.Reopen(ctx, actorID, datasetID, versionID)
+	return dataset, operationError("reopen rejected version", err)
+}
+
+func (s *Service) Publish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionPublish); err != nil {
+		return Dataset{}, operationError("authorize publication", err)
+	}
+	dataset, err := s.repository.Publish(ctx, actorID, datasetID, versionID)
+	return dataset, operationError("publish version", err)
+}
+
+func (s *Service) Discard(ctx context.Context, actorID, datasetID, versionID uuid.UUID) error {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionDiscard); err != nil {
+		return operationError("authorize discard", err)
+	}
+	return operationError("discard version", s.repository.Discard(ctx, actorID, datasetID, versionID))
+}
+
+func (s *Service) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionUnpublish); err != nil {
+		return Dataset{}, operationError("authorize unpublication", err)
+	}
+	dataset, err := s.repository.Unpublish(ctx, actorID, datasetID, versionID)
+	return dataset, operationError("unpublish version", err)
+}
+
+func (s *Service) DraftFromPublication(ctx context.Context, actorID, datasetID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionCreate); err != nil {
+		return Dataset{}, operationError("authorize draft creation", err)
+	}
+	dataset, err := s.repository.DraftFromPublication(ctx, actorID, datasetID)
+	return dataset, operationError("create draft from publication", err)
+}
+
+func (s *Service) DraftFromLatestArchive(ctx context.Context, actorID, datasetID uuid.UUID) (Dataset, error) {
+	if err := s.authorizeResource(ctx, actorID, datasetID, permissionCreate); err != nil {
+		return Dataset{}, operationError("authorize draft creation", err)
+	}
+	dataset, err := s.repository.DraftFromLatestArchive(ctx, actorID, datasetID)
+	return dataset, operationError("create draft from archive", err)
+}
+
+func (s *Service) CopyPublished(ctx context.Context, actorID, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (Dataset, error) {
+	if strings.TrimSpace(sourceIRI) == "" {
+		return Dataset{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
+	}
+	if err := s.authorizeGroup(ctx, actorID, targetGroupID, permissionCreate); err != nil {
+		return Dataset{}, operationError("authorize dataset copy", err)
+	}
+	dataset, err := s.repository.CopyPublished(ctx, actorID, sourceDatasetID, targetGroupID, strings.TrimSpace(sourceIRI))
+	return dataset, operationError("copy published dataset", err)
+}
+
+func (s *Service) authorizeGroup(ctx context.Context, actorID, groupID uuid.UUID, permission string) error {
+	result, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, permission)
+	if err != nil {
+		return fmt.Errorf("authorize group: %w", err)
+	}
+	if !result.Allowed {
+		return fmt.Errorf("%w: %s", ErrDenied, result.Reason)
+	}
+	return nil
+}
+
+func (s *Service) authorizeResource(ctx context.Context, actorID, datasetID uuid.UUID, permission string) error {
+	result, err := s.authorizer.AuthorizeResource(ctx, actorID, authorization.ResourceTypeDataset, datasetID, permission)
+	if err != nil {
+		return fmt.Errorf("authorize dataset: %w", err)
+	}
+	if !result.Allowed {
+		return fmt.Errorf("%w: %s", ErrDenied, result.Reason)
+	}
+	return nil
+}

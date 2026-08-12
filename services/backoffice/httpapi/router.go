@@ -7,6 +7,8 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authorization"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers"
@@ -36,6 +38,22 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	})
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
+	r.Route("/api/v1", func(r chi.Router) {
+		datasets := handlers.NewDatasets(datasetlifecycle.New(authorization.New(database.Identity), database.Datasets))
+		r.Post("/groups/{group_id}/datasets", datasets.Create)
+		r.Get("/datasets/{id}/{version_id}", datasets.Get)
+		r.Put("/datasets/{id}/versions/{version_id}/draft", datasets.ReplaceDraft)
+		r.Post("/datasets/{id}/versions/{version_id}/submit", datasets.Submit)
+		r.Post("/datasets/{id}/versions/{version_id}/withdraw", datasets.Withdraw)
+		r.Post("/datasets/{id}/versions/{version_id}/reject", datasets.Reject)
+		r.Post("/datasets/{id}/versions/{version_id}/reopen", datasets.Reopen)
+		r.Post("/datasets/{id}/versions/{version_id}/publish", datasets.Publish)
+		r.Post("/datasets/{id}/versions/{version_id}/unpublish", datasets.Unpublish)
+		r.Post("/datasets/{id}/draft-from-publication", datasets.DraftFromPublication)
+		r.Post("/datasets/{id}/draft-from-archive", datasets.DraftFromArchive)
+		r.Delete("/datasets/{id}/versions/{version_id}/draft", datasets.Discard)
+		r.Post("/groups/{group_id}/datasets/{id}/copy", datasets.Copy)
+	})
 
 	return observability.NewHTTPHandler(r, "/")
 }

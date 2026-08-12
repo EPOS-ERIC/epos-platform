@@ -7,6 +7,8 @@
 -- Role and permission scopes are fixed by policy. Foreign keys confirm
 -- catalog entries exist, but cannot confirm an entry belongs in this table.
 CREATE FUNCTION enforce_fixed_authorization_scopes() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    row_data jsonb := to_jsonb(NEW);
 BEGIN
     IF TG_TABLE_NAME = 'user_global_roles' AND NEW.role_key <> 'ADMIN' THEN
         RAISE EXCEPTION 'global roles must be ADMIN';
@@ -18,12 +20,20 @@ BEGIN
     END IF;
 
     IF TG_TABLE_NAME = 'global_permission_grants'
-        AND NOT EXISTS (SELECT 1 FROM permissions WHERE key = NEW.permission_key AND scope = 'GLOBAL') THEN
+        AND NOT EXISTS (
+            SELECT 1
+            FROM permissions
+            WHERE key = row_data->>'permission_key' AND scope = 'GLOBAL'
+        ) THEN
         RAISE EXCEPTION 'permission must be global';
     END IF;
 
     IF TG_TABLE_NAME = 'group_permission_grants'
-        AND NOT EXISTS (SELECT 1 FROM permissions WHERE key = NEW.permission_key AND scope = 'GROUP') THEN
+        AND NOT EXISTS (
+            SELECT 1
+            FROM permissions
+            WHERE key = row_data->>'permission_key' AND scope = 'GROUP'
+        ) THEN
         RAISE EXCEPTION 'permission must be group scoped';
     END IF;
 

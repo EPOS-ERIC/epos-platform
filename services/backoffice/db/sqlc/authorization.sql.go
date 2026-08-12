@@ -12,7 +12,13 @@ import (
 )
 
 const getAuthorizationUser = `-- name: GetAuthorizationUser :one
-SELECT id, status FROM users WHERE id = $1
+SELECT
+    id,
+    STATUS
+FROM
+    users
+WHERE
+    id = $1
 `
 
 type GetAuthorizationUserRow struct {
@@ -28,7 +34,12 @@ func (q *Queries) GetAuthorizationUser(ctx context.Context, id uuid.UUID) (GetAu
 }
 
 const getDatasetGroup = `-- name: GetDatasetGroup :one
-SELECT group_id FROM datasets WHERE id = $1
+SELECT
+    group_id
+FROM
+    datasets
+WHERE
+    id = $1
 `
 
 func (q *Queries) GetDatasetGroup(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
@@ -38,8 +49,39 @@ func (q *Queries) GetDatasetGroup(ctx context.Context, id uuid.UUID) (uuid.UUID,
 	return group_id, err
 }
 
+const getDatasetVersionAuthorization = `-- name: GetDatasetVersionAuthorization :one
+SELECT version.dataset_id, dataset.group_id, version.status
+FROM dataset_versions AS version
+JOIN datasets AS dataset ON dataset.id = version.dataset_id
+WHERE version.id = $1
+  AND version.dataset_id = $2
+`
+
+type GetDatasetVersionAuthorizationParams struct {
+	VersionID uuid.UUID
+	DatasetID uuid.UUID
+}
+
+type GetDatasetVersionAuthorizationRow struct {
+	DatasetID uuid.UUID
+	GroupID   uuid.UUID
+	Status    ResourceStatus
+}
+
+func (q *Queries) GetDatasetVersionAuthorization(ctx context.Context, arg GetDatasetVersionAuthorizationParams) (GetDatasetVersionAuthorizationRow, error) {
+	row := q.db.QueryRow(ctx, getDatasetVersionAuthorization, arg.VersionID, arg.DatasetID)
+	var i GetDatasetVersionAuthorizationRow
+	err := row.Scan(&i.DatasetID, &i.GroupID, &i.Status)
+	return i, err
+}
+
 const getPermissionScope = `-- name: GetPermissionScope :one
-SELECT scope FROM permissions WHERE key = $1
+SELECT
+    scope
+FROM
+    permissions
+WHERE
+    KEY = $1
 `
 
 func (q *Queries) GetPermissionScope(ctx context.Context, key string) (PermissionScope, error) {
@@ -50,7 +92,12 @@ func (q *Queries) GetPermissionScope(ctx context.Context, key string) (Permissio
 }
 
 const getSoftwareApplicationGroup = `-- name: GetSoftwareApplicationGroup :one
-SELECT group_id FROM software_applications WHERE id = $1
+SELECT
+    group_id
+FROM
+    software_applications
+WHERE
+    id = $1
 `
 
 func (q *Queries) GetSoftwareApplicationGroup(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
@@ -61,7 +108,12 @@ func (q *Queries) GetSoftwareApplicationGroup(ctx context.Context, id uuid.UUID)
 }
 
 const getSoftwareSourceCodeGroup = `-- name: GetSoftwareSourceCodeGroup :one
-SELECT group_id FROM software_source_codes WHERE id = $1
+SELECT
+    group_id
+FROM
+    software_source_codes
+WHERE
+    id = $1
 `
 
 func (q *Queries) GetSoftwareSourceCodeGroup(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
@@ -72,9 +124,16 @@ func (q *Queries) GetSoftwareSourceCodeGroup(ctx context.Context, id uuid.UUID) 
 }
 
 const hasAnyActiveMembership = `-- name: HasAnyActiveMembership :one
-SELECT EXISTS (
-    SELECT 1 FROM group_memberships WHERE user_id = $1 AND status = 'ACTIVE'
-) AS active
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_memberships
+        WHERE
+            user_id = $1
+            AND STATUS = 'ACTIVE'
+    ) AS active
 `
 
 func (q *Queries) HasAnyActiveMembership(ctx context.Context, userID uuid.UUID) (bool, error) {
@@ -85,9 +144,16 @@ func (q *Queries) HasAnyActiveMembership(ctx context.Context, userID uuid.UUID) 
 }
 
 const hasGlobalPermission = `-- name: HasGlobalPermission :one
-SELECT EXISTS (
-    SELECT 1 FROM global_permission_grants WHERE user_id = $1 AND permission_key = $2
-) AS allowed
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            global_permission_grants
+        WHERE
+            user_id = $1
+            AND permission_key = $2
+    ) AS allowed
 `
 
 type HasGlobalPermissionParams struct {
@@ -103,20 +169,28 @@ func (q *Queries) HasGlobalPermission(ctx context.Context, arg HasGlobalPermissi
 }
 
 const hasGroupPermission = `-- name: HasGroupPermission :one
-SELECT EXISTS (
-    SELECT 1
-    FROM group_permission_grants
-    WHERE group_permission_grants.user_id = $1
-      AND group_permission_grants.group_id = $2
-      AND group_permission_grants.permission_key = $3
-    UNION ALL
-    SELECT 1
-    FROM group_membership_roles AS assignment
-    JOIN role_permissions ON role_permissions.role_key = assignment.role_key
-    WHERE assignment.user_id = $1
-      AND assignment.group_id = $2
-      AND role_permissions.permission_key = $3
-) AS allowed
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_permission_grants
+        WHERE
+            group_permission_grants.user_id = $1
+            AND group_permission_grants.group_id = $2
+            AND group_permission_grants.permission_key = $3
+        UNION
+        ALL
+        SELECT
+            1
+        FROM
+            group_membership_roles AS assignment
+            JOIN role_permissions ON role_permissions.role_key = assignment.role_key
+        WHERE
+            assignment.user_id = $1
+            AND assignment.group_id = $2
+            AND role_permissions.permission_key = $3
+    ) AS allowed
 `
 
 type HasGroupPermissionParams struct {
@@ -133,9 +207,17 @@ func (q *Queries) HasGroupPermission(ctx context.Context, arg HasGroupPermission
 }
 
 const isActiveMember = `-- name: IsActiveMember :one
-SELECT EXISTS (
-    SELECT 1 FROM group_memberships WHERE user_id = $1 AND group_id = $2 AND status = 'ACTIVE'
-) AS active
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_memberships
+        WHERE
+            user_id = $1
+            AND group_id = $2
+            AND STATUS = 'ACTIVE'
+    ) AS active
 `
 
 type IsActiveMemberParams struct {
@@ -151,9 +233,16 @@ func (q *Queries) IsActiveMember(ctx context.Context, arg IsActiveMemberParams) 
 }
 
 const isDatasetPublished = `-- name: IsDatasetPublished :one
-SELECT EXISTS (
-    SELECT 1 FROM dataset_versions WHERE dataset_id = $1 AND status = 'PUBLISHED'
-) AS published
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            dataset_versions
+        WHERE
+            dataset_id = $1
+            AND STATUS = 'PUBLISHED'
+    ) AS published
 `
 
 func (q *Queries) IsDatasetPublished(ctx context.Context, datasetID uuid.UUID) (bool, error) {
@@ -164,9 +253,16 @@ func (q *Queries) IsDatasetPublished(ctx context.Context, datasetID uuid.UUID) (
 }
 
 const isGlobalAdmin = `-- name: IsGlobalAdmin :one
-SELECT EXISTS (
-    SELECT 1 FROM user_global_roles WHERE user_id = $1 AND role_key = 'ADMIN'
-) AS allowed
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles
+        WHERE
+            user_id = $1
+            AND role_key = 'ADMIN'
+    ) AS allowed
 `
 
 func (q *Queries) IsGlobalAdmin(ctx context.Context, userID uuid.UUID) (bool, error) {
@@ -177,9 +273,16 @@ func (q *Queries) IsGlobalAdmin(ctx context.Context, userID uuid.UUID) (bool, er
 }
 
 const isSoftwareApplicationPublished = `-- name: IsSoftwareApplicationPublished :one
-SELECT EXISTS (
-    SELECT 1 FROM software_application_versions WHERE software_application_id = $1 AND status = 'PUBLISHED'
-) AS published
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            software_application_versions
+        WHERE
+            software_application_id = $1
+            AND STATUS = 'PUBLISHED'
+    ) AS published
 `
 
 func (q *Queries) IsSoftwareApplicationPublished(ctx context.Context, softwareApplicationID uuid.UUID) (bool, error) {
@@ -190,9 +293,16 @@ func (q *Queries) IsSoftwareApplicationPublished(ctx context.Context, softwareAp
 }
 
 const isSoftwareSourceCodePublished = `-- name: IsSoftwareSourceCodePublished :one
-SELECT EXISTS (
-    SELECT 1 FROM software_source_code_versions WHERE software_source_code_id = $1 AND status = 'PUBLISHED'
-) AS published
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            software_source_code_versions
+        WHERE
+            software_source_code_id = $1
+            AND STATUS = 'PUBLISHED'
+    ) AS published
 `
 
 func (q *Queries) IsSoftwareSourceCodePublished(ctx context.Context, softwareSourceCodeID uuid.UUID) (bool, error) {

@@ -76,6 +76,72 @@ type DateTimeParameter struct {
 func (p DateTimeParameter) GetMetadata() ParameterMetadata { return p.Metadata }
 func (p DateTimeParameter) Kind() ParameterKind            { return ParameterKindDateTime }
 
+// UnmarshalJSON restores concrete parameter types from their metadata kind.
+func (w *WebService) UnmarshalJSON(data []byte) error {
+	var input struct {
+		ID               uuid.UUID         `json:"id"`
+		SourceIRI        string            `json:"source_iri"`
+		Name             string            `json:"name"`
+		Description      string            `json:"description"`
+		TemplateURL      string            `json:"template_url"`
+		Parameters       []json.RawMessage `json:"parameters"`
+		Format           string            `json:"format"`
+		Provider         *Organization     `json:"provider"`
+		Documentation    *Documentation    `json:"documentation"`
+		SpatialCoverage  *Spatial          `json:"spatial_coverage"`
+		TemporalCoverage *Temporal         `json:"temporal_coverage"`
+		ContactPoints    []ContactPoint    `json:"contact_points"`
+	}
+	if err := json.Unmarshal(data, &input); err != nil {
+		return fmt.Errorf("decode web service: %w", err)
+	}
+	parameters := make([]Parameter, 0, len(input.Parameters))
+	for _, raw := range input.Parameters {
+		var header struct {
+			Metadata ParameterMetadata `json:"metadata"`
+		}
+		if err := json.Unmarshal(raw, &header); err != nil {
+			return fmt.Errorf("decode parameter metadata: %w", err)
+		}
+		switch header.Metadata.Kind {
+		case ParameterKindString:
+			var parameter StringParameter
+			if err := json.Unmarshal(raw, &parameter); err != nil {
+				return fmt.Errorf("decode %s parameter: %w", header.Metadata.Kind, err)
+			}
+			parameters = append(parameters, parameter)
+		case ParameterKindBoolean:
+			var parameter BooleanParameter
+			if err := json.Unmarshal(raw, &parameter); err != nil {
+				return fmt.Errorf("decode %s parameter: %w", header.Metadata.Kind, err)
+			}
+			parameters = append(parameters, parameter)
+		case ParameterKindInteger:
+			var parameter IntegerParameter
+			if err := json.Unmarshal(raw, &parameter); err != nil {
+				return fmt.Errorf("decode %s parameter: %w", header.Metadata.Kind, err)
+			}
+			parameters = append(parameters, parameter)
+		case ParameterKindFloat:
+			var parameter FloatParameter
+			if err := json.Unmarshal(raw, &parameter); err != nil {
+				return fmt.Errorf("decode %s parameter: %w", header.Metadata.Kind, err)
+			}
+			parameters = append(parameters, parameter)
+		case ParameterKindDateTime:
+			var parameter DateTimeParameter
+			if err := json.Unmarshal(raw, &parameter); err != nil {
+				return fmt.Errorf("decode %s parameter: %w", header.Metadata.Kind, err)
+			}
+			parameters = append(parameters, parameter)
+		default:
+			return fmt.Errorf("unsupported parameter kind %q", header.Metadata.Kind)
+		}
+	}
+	*w = WebService{ID: input.ID, SourceIRI: input.SourceIRI, Name: input.Name, Description: input.Description, TemplateURL: input.TemplateURL, Parameters: parameters, Format: input.Format, Provider: input.Provider, Documentation: input.Documentation, SpatialCoverage: input.SpatialCoverage, TemporalCoverage: input.TemporalCoverage, ContactPoints: input.ContactPoints}
+	return nil
+}
+
 // ParameterRecord maps a typed parameter to web_service_parameters kind and config columns.
 type ParameterRecord struct {
 	Kind     ParameterKind

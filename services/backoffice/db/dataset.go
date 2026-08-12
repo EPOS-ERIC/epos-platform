@@ -1,0 +1,947 @@
+package db
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// DatasetRepository persists each lifecycle operation in one database transaction.
+type DatasetRepository struct {
+	db *pgxpool.Pool
+}
+
+func NewDatasetRepository(pool *pgxpool.Pool) *DatasetRepository {
+	return &DatasetRepository{db: pool}
+}
+
+func (r *DatasetRepository) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+	var result datasetlifecycle.Dataset
+	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+		dataset, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
+			SourceIri: value.SourceIRI,
+			GroupID:   groupID,
+			CreatedBy: actorID,
+		})
+		if err != nil {
+			return fmt.Errorf("create dataset: %w", err)
+		}
+
+		params, err := versionParams(dataset.ID, actorID, value)
+		if err != nil {
+			return fmt.Errorf("build dataset version: %w", err)
+		}
+
+		version, err := q.CreateLifecycleDatasetVersion(ctx, params)
+		if err != nil {
+			return fmt.Errorf("create dataset version: %w", err)
+		}
+
+		if err := persistDatasetChildren(ctx, q, version.ID, value); err != nil {
+			return fmt.Errorf("persist dataset metadata: %w", err)
+		}
+		result = lifecycleDataset(dataset, version)
+		return nil
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return result, datasetlifecycle.ErrConflict
+	}
+	return result, err
+}
+
+func (r *DatasetRepository) ReplaceDraft(ctx context.Context, _, datasetID, versionID uuid.UUID, revision int32, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+	var result datasetlifecycle.Dataset
+	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+		params, err := replaceParams(datasetID, versionID, revision, value)
+		if err != nil {
+			return fmt.Errorf("build draft replacement: %w", err)
+		}
+
+		version, err := q.ReplaceLifecycleDatasetDraft(ctx, params)
+		if err != nil {
+			return fmt.Errorf("replace draft: %w", err)
+		}
+
+		if err := q.DeleteLifecycleDatasetVersionChildren(ctx, &version.ID); err != nil {
+			return fmt.Errorf("delete draft children: %w", err)
+		}
+		if err := persistDatasetChildren(ctx, q, version.ID, value); err != nil {
+			return fmt.Errorf("persist draft metadata: %w", err)
+		}
+		result = datasetFromVersion(version)
+		return nil
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return result, datasetlifecycle.ErrConflict
+	}
+	return result, err
+}
+
+// Get returns one selected version with all version-owned metadata and canonical references.
+func (r *DatasetRepository) Get(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	q := sqlc.New(r.db)
+	version, err := q.GetLifecycleDatasetVersion(ctx, sqlc.GetLifecycleDatasetVersionParams{
+		DatasetID: datasetID,
+		VersionID: versionID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrNotFound
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("get dataset version: %w", err)
+	}
+	metadataValue, err := readDatasetMetadata(ctx, q, version)
+	if err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("read dataset metadata: %w", err)
+	}
+	return datasetlifecycle.Dataset{
+		DatasetID: version.DatasetID,
+		VersionID: version.ID,
+		Revision:  version.Revision,
+		Status:    metadata.DatasetStatus(version.Status),
+		Metadata:  metadataValue,
+	}, nil
+}
+
+func (r *DatasetRepository) GetPublished(ctx context.Context, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	version, err := sqlc.New(r.db).GetPublishedLifecycleDatasetVersion(ctx, datasetID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrNotFound
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("get published dataset version: %w", err)
+	}
+	return r.Get(ctx, datasetID, version.ID)
+}
+
+func (r *DatasetRepository) GetActive(ctx context.Context, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	version, err := sqlc.New(r.db).GetActiveLifecycleDatasetVersion(ctx, datasetID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrNotFound
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("get active dataset version: %w", err)
+	}
+	return r.Get(ctx, datasetID, version.ID)
+}
+
+func (r *DatasetRepository) Submit(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("submit dataset version: %w", err)
+	}
+
+	v, err := sqlc.New(r.db).SubmitLifecycleDatasetVersion(ctx, sqlc.SubmitLifecycleDatasetVersionParams{
+		ActorID: &actorID,
+		ID:      versionID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrConflict
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("submit dataset version: %w", err)
+	}
+	return datasetFromVersion(v), nil
+}
+
+func (r *DatasetRepository) Withdraw(ctx context.Context, _, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("withdraw dataset version: %w", err)
+	}
+
+	v, err := sqlc.New(r.db).WithdrawLifecycleDatasetVersion(ctx, versionID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrConflict
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("withdraw dataset version: %w", err)
+	}
+	return datasetFromVersion(v), nil
+}
+
+func (r *DatasetRepository) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UUID, note string) (datasetlifecycle.Dataset, error) {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("reject dataset version: %w", err)
+	}
+
+	v, err := sqlc.New(r.db).RejectLifecycleDatasetVersion(ctx, sqlc.RejectLifecycleDatasetVersionParams{
+		ActorID:       &actorID,
+		RejectionNote: &note,
+		ID:            versionID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrConflict
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("reject dataset version: %w", err)
+	}
+	return datasetFromVersion(v), nil
+}
+
+func (r *DatasetRepository) Reopen(ctx context.Context, _, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("reopen dataset version: %w", err)
+	}
+
+	v, err := sqlc.New(r.db).ReopenLifecycleDatasetVersion(ctx, versionID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrConflict
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("reopen dataset version: %w", err)
+	}
+	return datasetFromVersion(v), nil
+}
+
+func (r *DatasetRepository) Publish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("publish dataset version: %w", err)
+	}
+
+	v, err := sqlc.New(r.db).PublishLifecycleDatasetVersion(ctx, sqlc.PublishLifecycleDatasetVersionParams{
+		ActorID:   &actorID,
+		VersionID: versionID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrConflict
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("publish dataset version: %w", err)
+	}
+	return datasetFromVersion(v), nil
+}
+
+func (r *DatasetRepository) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("unpublish dataset version: %w", err)
+	}
+
+	v, err := sqlc.New(r.db).UnpublishLifecycleDatasetVersion(ctx, sqlc.UnpublishLifecycleDatasetVersionParams{
+		ActorID: &actorID,
+		ID:      versionID,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return datasetlifecycle.Dataset{}, datasetlifecycle.ErrConflict
+		}
+		return datasetlifecycle.Dataset{}, fmt.Errorf("unpublish dataset version: %w", err)
+	}
+	return datasetFromVersion(v), nil
+}
+
+func (r *DatasetRepository) Discard(ctx context.Context, _, datasetID, versionID uuid.UUID) error {
+	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
+		return fmt.Errorf("discard dataset: %w", err)
+	}
+
+	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+		id, err := q.DiscardLifecycleDatasetVersion(ctx, versionID)
+		if err != nil {
+			return fmt.Errorf("discard dataset version: %w", err)
+		}
+		if err := q.DeleteEmptyLifecycleDataset(ctx, id); err != nil {
+			return fmt.Errorf("delete empty dataset: %w", err)
+		}
+		return nil
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return datasetlifecycle.ErrConflict
+	}
+	return err
+}
+
+func (r *DatasetRepository) DraftFromPublication(ctx context.Context, actorID, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
+}
+
+func (r *DatasetRepository) DraftFromLatestArchive(ctx context.Context, actorID, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
+}
+
+func (r *DatasetRepository) CopyPublished(ctx context.Context, actorID, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (datasetlifecycle.Dataset, error) {
+	var result datasetlifecycle.Dataset
+	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+		source, err := q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
+		if err != nil {
+			return fmt.Errorf("get published source version: %w", err)
+		}
+		logical, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
+			SourceIri: sourceIRI,
+			GroupID:   targetGroupID,
+			CreatedBy: actorID,
+		})
+		if err != nil {
+			return fmt.Errorf("create copied dataset: %w", err)
+		}
+		version, err := q.CloneLifecycleDatasetVersion(ctx, sqlc.CloneLifecycleDatasetVersionParams{
+			SourceVersionID: source.ID,
+			SourceStatus:    sqlc.ResourceStatusPUBLISHED,
+			TargetDatasetID: logical.ID,
+			ActorID:         actorID,
+			TargetGroupID:   logical.GroupID,
+			CopyCategories:  false,
+		})
+		if err != nil {
+			return fmt.Errorf("clone published dataset version: %w", err)
+		}
+		result = datasetFromVersion(version.DatasetVersion)
+		result.Metadata.SourceIRI = logical.SourceIri
+		return nil
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return result, datasetlifecycle.ErrConflict
+	}
+	return result, err
+}
+
+func (r *DatasetRepository) clone(
+	ctx context.Context,
+	actorID,
+	sourceDatasetID,
+	targetDatasetID uuid.UUID,
+	status sqlc.ResourceStatus,
+	targetGroupID uuid.UUID,
+	categories bool,
+) (datasetlifecycle.Dataset, error) {
+	var result datasetlifecycle.Dataset
+	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+		var source sqlc.DatasetVersion
+		var err error
+		if status == sqlc.ResourceStatusPUBLISHED {
+			source, err = q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
+		} else {
+			source, err = q.GetLatestArchivedLifecycleDatasetVersion(ctx, sourceDatasetID)
+		}
+		if err != nil {
+			return fmt.Errorf("get source dataset version: %w", err)
+		}
+		if targetGroupID == uuid.Nil {
+			logical, err := q.GetLifecycleDataset(ctx, targetDatasetID)
+			if err != nil {
+				return fmt.Errorf("get target dataset: %w", err)
+			}
+			targetGroupID = logical.GroupID
+		}
+		v, err := q.CloneLifecycleDatasetVersion(ctx, sqlc.CloneLifecycleDatasetVersionParams{
+			SourceVersionID: source.ID,
+			SourceStatus:    status,
+			TargetDatasetID: targetDatasetID,
+			ActorID:         actorID,
+			TargetGroupID:   targetGroupID,
+			CopyCategories:  categories,
+		})
+		if err != nil {
+			return fmt.Errorf("clone dataset version: %w", err)
+		}
+		result = datasetFromVersion(v.DatasetVersion)
+		return nil
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return result, datasetlifecycle.ErrConflict
+	}
+	return result, err
+}
+
+func (r *DatasetRepository) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+	if err := fn(sqlc.New(tx)); err != nil {
+		return fmt.Errorf("execute transaction: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+	return nil
+}
+
+func (r *DatasetRepository) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {
+	_, err := sqlc.New(r.db).EnsureLifecycleDatasetVersion(ctx, sqlc.EnsureLifecycleDatasetVersionParams{
+		DatasetID: datasetID,
+		VersionID: versionID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return datasetlifecycle.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("ensure dataset version: %w", err)
+	}
+	return nil
+}
+
+func versionParams(datasetID, actorID uuid.UUID, value metadata.Dataset) (sqlc.CreateLifecycleDatasetVersionParams, error) {
+	var start, end *time.Time
+	if value.TemporalCoverage != nil {
+		start, end = value.TemporalCoverage.Start, value.TemporalCoverage.End
+	}
+	point, polygon, err := spatialJSON(value.SpatialCoverage)
+	if err != nil {
+		return sqlc.CreateLifecycleDatasetVersionParams{}, fmt.Errorf("encode dataset geometry: %w", err)
+	}
+	return sqlc.CreateLifecycleDatasetVersionParams{
+		DatasetID:          datasetID,
+		Title:              value.Title,
+		Description:        value.Description,
+		Keywords:           value.Keywords,
+		AccrualPeriodicity: value.AccrualPeriodicity,
+		QualityAnnotation:  value.QualityAnnotation,
+		AccessRight:        value.AccessRight,
+		SourceCreatedAt:    value.SourceCreated,
+		SourceUpdatedAt:    value.SourceUpdated,
+		SpatialPoint:       point,
+		SpatialPolygon:     polygon,
+		TemporalStart:      start,
+		TemporalEnd:        end,
+		CreatedBy:          actorID,
+	}, nil
+}
+
+func replaceParams(datasetID, id uuid.UUID, revision int32, value metadata.Dataset) (sqlc.ReplaceLifecycleDatasetDraftParams, error) {
+	p, err := versionParams(uuid.Nil, uuid.Nil, value)
+	if err != nil {
+		return sqlc.ReplaceLifecycleDatasetDraftParams{}, err
+	}
+	return sqlc.ReplaceLifecycleDatasetDraftParams{
+		Title:              p.Title,
+		Description:        p.Description,
+		Keywords:           p.Keywords,
+		AccrualPeriodicity: p.AccrualPeriodicity,
+		QualityAnnotation:  p.QualityAnnotation,
+		AccessRight:        p.AccessRight,
+		SourceCreatedAt:    p.SourceCreatedAt,
+		SourceUpdatedAt:    p.SourceUpdatedAt,
+		SpatialPoint:       p.SpatialPoint,
+		SpatialPolygon:     p.SpatialPolygon,
+		TemporalStart:      p.TemporalStart,
+		TemporalEnd:        p.TemporalEnd,
+		DatasetID:          datasetID,
+		ID:                 id,
+		Revision:           revision,
+	}, nil
+}
+
+func lifecycleDataset(d sqlc.Dataset, v sqlc.DatasetVersion) datasetlifecycle.Dataset {
+	result := datasetFromVersion(v)
+	result.Metadata.SourceIRI = d.SourceIri
+	return result
+}
+
+func datasetFromVersion(v sqlc.DatasetVersion) datasetlifecycle.Dataset {
+	return datasetlifecycle.Dataset{
+		DatasetID: v.DatasetID,
+		VersionID: v.ID,
+		Revision:  v.Revision,
+		Status:    metadata.DatasetStatus(v.Status),
+		Metadata: metadata.Dataset{
+			ID:                    v.ID,
+			SourceIRI:             "",
+			Title:                 v.Title,
+			Description:           v.Description,
+			Keywords:              v.Keywords,
+			AccrualPeriodicity:    v.AccrualPeriodicity,
+			QualityAnnotation:     v.QualityAnnotation,
+			AccessRight:           v.AccessRight,
+			Distributions:         nil,
+			SpatialCoverage:       nil,
+			TemporalCoverage:      temporal(v.TemporalStart, v.TemporalEnd),
+			PersistentIdentifiers: nil,
+			ContactPoints:         nil,
+			Providers:             nil,
+			Categories:            nil,
+			SourceCreated:         v.SourceCreatedAt,
+			SourceUpdated:         v.SourceUpdatedAt,
+			Status:                metadata.DatasetStatus(v.Status),
+			Editor:                nil,
+			Group:                 nil,
+			Created:               v.CreatedAt,
+			Updated:               v.UpdatedAt,
+			OriginalDatasetID:     v.DatasetID,
+		},
+	}
+}
+
+func temporal(start, end *time.Time) *metadata.Temporal {
+	if start == nil && end == nil {
+		return nil
+	}
+	return &metadata.Temporal{Start: start, End: end}
+}
+
+func persistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value metadata.Dataset) error {
+	for _, identifier := range value.PersistentIdentifiers {
+		if err := q.AddLifecycleDatasetIdentifier(ctx, sqlc.AddLifecycleDatasetIdentifierParams{
+			SourceIri:        identifier.SourceIRI,
+			Type:             string(identifier.Type),
+			Value:            identifier.Value,
+			DatasetVersionID: &versionID,
+		}); err != nil {
+			return fmt.Errorf("add identifier: %w", err)
+		}
+	}
+	for _, provider := range value.Providers {
+		if err := q.AddLifecycleDatasetProvider(ctx, sqlc.AddLifecycleDatasetProviderParams{
+			DatasetVersionID: versionID,
+			OrganizationID:   provider.ID,
+		}); err != nil {
+			return fmt.Errorf("add provider: %w", err)
+		}
+	}
+	for _, contact := range value.ContactPoints {
+		if err := q.AddLifecycleDatasetContactPoint(ctx, sqlc.AddLifecycleDatasetContactPointParams{
+			DatasetVersionID: versionID,
+			ContactPointID:   contact.ID,
+		}); err != nil {
+			return fmt.Errorf("add contact point: %w", err)
+		}
+	}
+	for _, category := range value.Categories {
+		if err := q.AddLifecycleDatasetCategory(ctx, sqlc.AddLifecycleDatasetCategoryParams{
+			DatasetVersionID: versionID,
+			CategoryID:       category.ID,
+		}); err != nil {
+			return fmt.Errorf("add category: %w", err)
+		}
+	}
+
+	services := make(map[string]uuid.UUID, len(value.Distributions))
+	for _, distribution := range value.Distributions {
+		if distribution.WebService == nil {
+			continue
+		}
+		service := distribution.WebService
+		point, polygon, err := spatialJSON(service.SpatialCoverage)
+		if err != nil {
+			return fmt.Errorf("encode web service geometry: %w", err)
+		}
+		var start, end *time.Time
+		if service.TemporalCoverage != nil {
+			start, end = service.TemporalCoverage.Start, service.TemporalCoverage.End
+		}
+		var providerID *uuid.UUID
+		if service.Provider != nil {
+			providerID = &service.Provider.ID
+		}
+		var title, description, uri *string
+		if service.Documentation != nil {
+			title, description, uri = service.Documentation.Title, service.Documentation.Description, &service.Documentation.URI
+		}
+		created, err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
+			DatasetVersionID:         versionID,
+			SourceIri:                service.SourceIRI,
+			Name:                     service.Name,
+			Description:              service.Description,
+			TemplateUrl:              service.TemplateURL,
+			Format:                   service.Format,
+			ProviderOrganizationID:   providerID,
+			DocumentationTitle:       title,
+			DocumentationDescription: description,
+			DocumentationUri:         uri,
+			SpatialPoint:             point,
+			SpatialPolygon:           polygon,
+			TemporalStart:            start,
+			TemporalEnd:              end,
+		})
+		if err != nil {
+			return fmt.Errorf("add web service: %w", err)
+		}
+		services[service.SourceIRI] = created.ID
+		for _, contact := range service.ContactPoints {
+			if err := q.AddLifecycleWebServiceContactPoint(ctx, sqlc.AddLifecycleWebServiceContactPointParams{
+				WebServiceID:   created.ID,
+				ContactPointID: contact.ID,
+			}); err != nil {
+				return fmt.Errorf("add web service contact point: %w", err)
+			}
+		}
+		for _, parameter := range service.Parameters {
+			record, err := metadata.EncodeParameter(parameter)
+			if err != nil {
+				return fmt.Errorf("encode web service parameter: %w", err)
+			}
+			m := record.Metadata
+			if err := q.AddLifecycleWebServiceParameter(ctx, sqlc.AddLifecycleWebServiceParameterParams{
+				SourceIri:      m.SourceIRI,
+				WebServiceID:   created.ID,
+				Kind:           sqlc.ParameterKind(record.Kind),
+				Variable:       m.Variable,
+				Property:       m.Property,
+				Label:          m.Label,
+				Required:       m.Required,
+				MultipleValues: m.MultipleValues,
+				ReadOnly:       m.ReadOnly,
+				Config:         record.Config,
+			}); err != nil {
+				return fmt.Errorf("add web service parameter: %w", err)
+			}
+		}
+	}
+	for _, distribution := range value.Distributions {
+		params := sqlc.AddLifecycleDistributionParams{
+			DatasetVersionID:       versionID,
+			SourceIri:              distribution.SourceIRI,
+			Title:                  distribution.Title,
+			Description:            distribution.Description,
+			License:                distribution.License,
+			SourceIssuedAt:         distribution.Issued,
+			SourceModifiedAt:       distribution.Modified,
+			ByteSize:               nil,
+			Type:                   string(distribution.Type),
+			DownloadableFileUrl:    nil,
+			DownloadableFileFormat: nil,
+			WebServiceID:           nil,
+		}
+		if distribution.ByteSize != nil {
+			if *distribution.ByteSize > int64(^uint32(0)>>1) || *distribution.ByteSize < -int64(^uint32(0)>>1)-1 {
+				return fmt.Errorf("distribution byte size out of range")
+			}
+			byteSize := int32(*distribution.ByteSize)
+			params.ByteSize = &byteSize
+		}
+		if distribution.DownloadableFile != nil {
+			params.DownloadableFileUrl = &distribution.DownloadableFile.URL
+			params.DownloadableFileFormat = &distribution.DownloadableFile.Format
+		}
+		if distribution.WebService != nil {
+			id, ok := services[distribution.WebService.SourceIRI]
+			if !ok {
+				return fmt.Errorf("distribution web service is missing")
+			}
+			params.WebServiceID = &id
+		}
+		if err := q.AddLifecycleDistribution(ctx, params); err != nil {
+			return fmt.Errorf("add distribution: %w", err)
+		}
+	}
+	return nil
+}
+
+func spatialJSON(value *metadata.Spatial) (*string, *string, error) {
+	if value == nil {
+		return nil, nil, nil
+	}
+	if value.Point != nil && len(value.Polygon) != 0 {
+		return nil, nil, fmt.Errorf("spatial coverage cannot contain both point and polygon")
+	}
+	if value.Point != nil {
+		encoded, err := json.Marshal(struct {
+			Type        string    `json:"type"`
+			Coordinates []float64 `json:"coordinates"`
+		}{"Point", []float64{value.Point.Longitude, value.Point.Latitude}})
+		if err != nil {
+			return nil, nil, fmt.Errorf("marshal point GeoJSON: %w", err)
+		}
+		text := string(encoded)
+		return &text, nil, nil
+	}
+	if len(value.Polygon) == 0 {
+		return nil, nil, nil
+	}
+	coordinates := make([][]float64, len(value.Polygon))
+	for i, coordinate := range value.Polygon {
+		coordinates[i] = []float64{coordinate.Longitude, coordinate.Latitude}
+	}
+	encoded, err := json.Marshal(struct {
+		Type        string        `json:"type"`
+		Coordinates [][][]float64 `json:"coordinates"`
+	}{"Polygon", [][][]float64{coordinates}})
+	if err != nil {
+		return nil, nil, fmt.Errorf("marshal polygon GeoJSON: %w", err)
+	}
+	text := string(encoded)
+	return nil, &text, nil
+}
+
+func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetLifecycleDatasetVersionRow) (metadata.Dataset, error) {
+	spatial, err := spatialFromJSON(version.SpatialPointGeojson, version.SpatialPolygonGeojson)
+	if err != nil {
+		return metadata.Dataset{}, fmt.Errorf("decode dataset geometry: %w", err)
+	}
+	identifiers, err := q.ListLifecycleDatasetIdentifiers(ctx, &version.ID)
+	if err != nil {
+		return metadata.Dataset{}, fmt.Errorf("list identifiers: %w", err)
+	}
+	providers, err := q.ListLifecycleDatasetProviders(ctx, version.ID)
+	if err != nil {
+		return metadata.Dataset{}, fmt.Errorf("list providers: %w", err)
+	}
+	contacts, err := q.ListLifecycleDatasetContactPoints(ctx, version.ID)
+	if err != nil {
+		return metadata.Dataset{}, fmt.Errorf("list contact points: %w", err)
+	}
+	categories, err := q.ListLifecycleDatasetCategories(ctx, version.ID)
+	if err != nil {
+		return metadata.Dataset{}, fmt.Errorf("list categories: %w", err)
+	}
+	services, err := readWebServices(ctx, q, version.ID)
+	if err != nil {
+		return metadata.Dataset{}, err
+	}
+	distributions, err := q.ListLifecycleDistributions(ctx, version.ID)
+	if err != nil {
+		return metadata.Dataset{}, fmt.Errorf("list distributions: %w", err)
+	}
+	result := metadata.Dataset{
+		ID:                    version.ID,
+		SourceIRI:             version.SourceIri,
+		Title:                 version.Title,
+		Description:           version.Description,
+		Keywords:              version.Keywords,
+		AccrualPeriodicity:    version.AccrualPeriodicity,
+		QualityAnnotation:     version.QualityAnnotation,
+		AccessRight:           version.AccessRight,
+		Distributions:         nil,
+		SpatialCoverage:       spatial,
+		TemporalCoverage:      temporal(version.TemporalStart, version.TemporalEnd),
+		PersistentIdentifiers: nil,
+		ContactPoints:         nil,
+		Providers:             nil,
+		Categories:            nil,
+		SourceCreated:         version.SourceCreatedAt,
+		SourceUpdated:         version.SourceUpdatedAt,
+		Status:                metadata.DatasetStatus(version.Status),
+		Editor:                nil,
+		Group:                 nil,
+		Created:               version.CreatedAt,
+		Updated:               version.UpdatedAt,
+		OriginalDatasetID:     version.DatasetID,
+	}
+	for _, item := range identifiers {
+		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifier(item.Identifier))
+	}
+	for _, item := range providers {
+		result.Providers = append(result.Providers, organization(item))
+	}
+	for _, item := range contacts {
+		result.ContactPoints = append(result.ContactPoints, contactPoint(item))
+	}
+	for _, item := range categories {
+		result.Categories = append(result.Categories, metadata.Category{
+			ID:        item.ID,
+			SourceIRI: item.SourceIri,
+			Name:      item.Name,
+			Scheme: metadata.CategoryScheme{
+				ID:          uuid.Nil,
+				SourceIRI:   "",
+				Name:        "",
+				Label:       nil,
+				Logo:        nil,
+				Page:        nil,
+				Color:       nil,
+				Position:    0,
+				Concept:     "",
+				TopConcepts: nil,
+			},
+			Children: nil,
+		})
+	}
+	for _, item := range distributions {
+		distribution := metadata.Distribution{
+			ID:               item.ID,
+			SourceIRI:        item.SourceIri,
+			Title:            item.Title,
+			Description:      item.Description,
+			License:          item.License,
+			Type:             metadata.DistributionType(item.Type),
+			Issued:           item.SourceIssuedAt,
+			Modified:         item.SourceModifiedAt,
+			ByteSize:         nil,
+			WebService:       nil,
+			DownloadableFile: nil,
+		}
+		if item.ByteSize != nil {
+			byteSize := int64(*item.ByteSize)
+			distribution.ByteSize = &byteSize
+		}
+		if item.WebServiceID != nil {
+			service := services[*item.WebServiceID]
+			distribution.WebService = &service
+		} else {
+			distribution.DownloadableFile = &metadata.DownloadableFile{
+				URL:    *item.DownloadableFileUrl,
+				Format: *item.DownloadableFileFormat,
+			}
+		}
+		result.Distributions = append(result.Distributions, distribution)
+	}
+	return result, nil
+}
+
+func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) (map[uuid.UUID]metadata.WebService, error) {
+	rows, err := q.ListLifecycleWebServices(ctx, versionID)
+	if err != nil {
+		return nil, fmt.Errorf("list web services: %w", err)
+	}
+	ids := make([]uuid.UUID, len(rows))
+	result := make(map[uuid.UUID]metadata.WebService, len(rows))
+	providerIDs := make([]uuid.UUID, 0, len(rows))
+	for i, row := range rows {
+		spatial, err := spatialFromJSON(row.SpatialPointGeojson, row.SpatialPolygonGeojson)
+		if err != nil {
+			return nil, fmt.Errorf("decode web service geometry: %w", err)
+		}
+		var documentation *metadata.Documentation
+		if row.WebService.DocumentationUri != nil {
+			documentation = &metadata.Documentation{
+				SourceIRI:   "",
+				Title:       row.WebService.DocumentationTitle,
+				Description: row.WebService.DocumentationDescription,
+				URI:         *row.WebService.DocumentationUri,
+			}
+		}
+		result[row.WebService.ID] = metadata.WebService{
+			ID:               row.WebService.ID,
+			SourceIRI:        row.WebService.SourceIri,
+			Name:             row.WebService.Name,
+			Description:      row.WebService.Description,
+			TemplateURL:      row.WebService.TemplateUrl,
+			Parameters:       nil,
+			Format:           row.WebService.Format,
+			Provider:         nil,
+			Documentation:    documentation,
+			SpatialCoverage:  spatial,
+			TemporalCoverage: temporal(row.WebService.TemporalStart, row.WebService.TemporalEnd),
+			ContactPoints:    nil,
+		}
+		ids[i] = row.WebService.ID
+		if row.WebService.ProviderOrganizationID != nil {
+			providerIDs = append(providerIDs, *row.WebService.ProviderOrganizationID)
+		}
+	}
+	if len(rows) == 0 {
+		return result, nil
+	}
+	organizations, err := q.ListLifecycleOrganizations(ctx, providerIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list web service providers: %w", err)
+	}
+	providerByID := make(map[uuid.UUID]metadata.Organization, len(organizations))
+	for _, item := range organizations {
+		providerByID[item.ID] = organization(item)
+	}
+	for _, row := range rows {
+		if row.WebService.ProviderOrganizationID != nil {
+			service := result[row.WebService.ID]
+			provider := providerByID[*row.WebService.ProviderOrganizationID]
+			service.Provider = &provider
+			result[row.WebService.ID] = service
+		}
+	}
+	contacts, err := q.ListLifecycleWebServiceContactPoints(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list web service contact points: %w", err)
+	}
+	for _, item := range contacts {
+		service := result[item.WebServiceID]
+		service.ContactPoints = append(service.ContactPoints, contactPoint(item.ContactPoint))
+		result[item.WebServiceID] = service
+	}
+	parameters, err := q.ListLifecycleWebServiceParameters(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list web service parameters: %w", err)
+	}
+	for _, item := range parameters {
+		parameter, err := metadata.DecodeParameter(metadata.ParameterRecord{
+			Kind: metadata.ParameterKind(item.Kind),
+			Metadata: metadata.ParameterMetadata{
+				ID:             item.ID,
+				SourceIRI:      item.SourceIri,
+				Kind:           metadata.ParameterKind(item.Kind),
+				Variable:       item.Variable,
+				Property:       item.Property,
+				Label:          item.Label,
+				Required:       item.Required,
+				MultipleValues: item.MultipleValues,
+				ReadOnly:       item.ReadOnly,
+			},
+			Config: item.Config,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("decode web service parameter: %w", err)
+		}
+		service := result[item.WebServiceID]
+		service.Parameters = append(service.Parameters, parameter)
+		result[item.WebServiceID] = service
+	}
+	return result, nil
+}
+
+// spatialFromJSON maps GeoJSON produced by ST_AsGeoJSON from stored PostGIS geometries.
+func spatialFromJSON(point, polygon string) (*metadata.Spatial, error) {
+	if point == "" && polygon == "" {
+		return nil, nil
+	}
+	if point != "" {
+		var value struct {
+			Coordinates []float64 `json:"coordinates"`
+		}
+		if err := json.Unmarshal([]byte(point), &value); err != nil || len(value.Coordinates) != 2 {
+			return nil, fmt.Errorf("invalid point GeoJSON")
+		}
+		return &metadata.Spatial{
+			Point: &metadata.Coordinate{
+				Longitude: value.Coordinates[0],
+				Latitude:  value.Coordinates[1],
+			},
+			Polygon: nil,
+		}, nil
+	}
+	var value struct {
+		Coordinates [][][]float64 `json:"coordinates"`
+	}
+	if err := json.Unmarshal([]byte(polygon), &value); err != nil || len(value.Coordinates) != 1 {
+		return nil, fmt.Errorf("invalid polygon GeoJSON")
+	}
+	coordinates := make([]metadata.Coordinate, len(value.Coordinates[0]))
+	for i, coordinate := range value.Coordinates[0] {
+		if len(coordinate) != 2 {
+			return nil, fmt.Errorf("invalid polygon coordinate")
+		}
+		coordinates[i] = metadata.Coordinate{Longitude: coordinate[0], Latitude: coordinate[1]}
+	}
+	return &metadata.Spatial{Point: nil, Polygon: coordinates}, nil
+}
+
+func organization(value sqlc.Organization) metadata.Organization {
+	return metadata.Organization{
+		ID:          value.ID,
+		SourceIRI:   value.SourceIri,
+		Name:        value.Name,
+		Street:      value.Street,
+		Locality:    value.Locality,
+		PostalCode:  value.PostalCode,
+		Country:     value.Country,
+		LogoURL:     value.LogoUrl,
+		PageURL:     value.PageUrl,
+		Email:       value.Email,
+		LEICode:     value.LeiCode,
+		Identifiers: nil,
+	}
+}
+
+func contactPoint(value sqlc.ContactPoint) metadata.ContactPoint {
+	return metadata.ContactPoint{
+		ID:        value.ID,
+		SourceIRI: value.SourceIri,
+		Email:     value.Email,
+		Role:      metadata.ContactPointRole(value.Role),
+	}
+}
+
+func identifier(value sqlc.Identifier) metadata.Identifier {
+	return metadata.Identifier{
+		ID:        value.ID,
+		SourceIRI: value.SourceIri,
+		Type:      metadata.IdentifierType(value.Type),
+		Value:     value.Value,
+	}
+}

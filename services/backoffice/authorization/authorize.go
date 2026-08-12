@@ -38,6 +38,45 @@ type repository interface {
 	IsDatasetPublished(context.Context, uuid.UUID) (bool, error)
 	IsSoftwareApplicationPublished(context.Context, uuid.UUID) (bool, error)
 	IsSoftwareSourceCodePublished(context.Context, uuid.UUID) (bool, error)
+	GetDatasetVersionAuthorization(context.Context, sqlc.GetDatasetVersionAuthorizationParams) (sqlc.GetDatasetVersionAuthorizationRow, error)
+}
+
+// CanReadDatasetVersion applies publication and stored-group membership rules to one version.
+func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *uuid.UUID, datasetID, versionID uuid.UUID) (Result, error) {
+	version, err := a.repository.GetDatasetVersionAuthorization(ctx, sqlc.GetDatasetVersionAuthorizationParams{DatasetID: datasetID, VersionID: versionID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Result{Allowed: false, Reason: "resource not found"}, nil
+	}
+	if err != nil {
+		return Result{}, fmt.Errorf("load dataset version authorization: %w", err)
+	}
+	if version.Status == sqlc.ResourceStatusPUBLISHED {
+		return Result{Allowed: true, Reason: "public published resource"}, nil
+	}
+	if userID == nil {
+		return Result{Allowed: false, Reason: "authentication required"}, nil
+	}
+
+	_, result, err := a.activeUser(ctx, *userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if admin {
+		return Result{Allowed: true, Reason: "global admin"}, nil
+	}
+
+	member, err := a.repository.IsActiveMember(ctx, sqlc.IsActiveMemberParams{UserID: *userID, GroupID: version.GroupID})
+	if err != nil {
+		return Result{}, fmt.Errorf("check group membership: %w", err)
+	}
+	if !member {
+		return Result{Allowed: false, Reason: "user is not an active group member"}, nil
+	}
+	return Result{Allowed: true, Reason: "active group member"}, nil
 }
 
 type Authorizer struct {

@@ -1,938 +1,1144 @@
 openapi: 3.0.3
 info:
-  title: EPOS User Group API
+  title: EPOS Backoffice Dataset API
   version: 2.0.0
-  description: >-
-    User, group, membership, and authorization APIs for service access control.
-    The API exposes core identity records, group membership management, and the decision
-    endpoint used by downstream services to evaluate access.
+  description: Dataset lifecycle transport. Command endpoints require X-EPOS-User-ID.
 servers:
   - url: /
 tags:
   - name: Health
-    description: Service liveness and readiness checks.
-  - name: Authorization
-    description: Evaluate access decisions for downstream services.
-  - name: Users
-    description: Manage user identities.
-  - name: Groups
-    description: Manage groups and group metadata.
-  - name: Memberships
-    description: Manage group membership assignments.
-  - name: Metadata Import
-    description: Import dataset metadata from Turtle files.
-  - name: Metadata
-    description: Read materialized metadata resources.
+    description: Service availability.
+  - name: Datasets
+    description: Dataset draft metadata and lifecycle commands.
 paths:
   /health:
     get:
       tags: [Health]
+      operationId: healthCheck
       summary: Health check
-      description: Returns 200 when the service can respond.
+      security: []
       responses:
-        '200':
-          description: Service healthy
-  /api/v2/authorize:
+        "200": { description: Service healthy }
+        "503": { description: Database unreachable }
+  /api/v1/groups/{group_id}/datasets:
     post:
-      tags: [Authorization]
-      summary: Evaluate authorization decision
-      description: Evaluates whether requester can perform requested action.
+      tags: [Datasets]
+      operationId: createDatasetDraft
+      summary: Create draft dataset
+      description: Creates a logical dataset and its first editable DRAFT version in path group.
+      parameters: [{ $ref: "#/components/parameters/GroupID" }, { $ref: "#/components/parameters/Actor" }]
+      security: [{ ActorHeader: [] }]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthorizeRequest'
-      responses:
-        '200':
-          description: Decision computed
+        {
+          required: true,
           content:
-            application/json:
-               schema:
-                 $ref: '#/components/schemas/AuthorizeResponse'
-  /api/v2/import/metadata:
-    post:
-      tags: [Metadata Import]
-      summary: Import dataset metadata
-      description: >-
-        Imports a Turtle file into dataset-centric backoffice records. Organizations,
-        contact points, categories, and category schemes may be shared. Other nested
-        resources are materialized per dataset tree. The imported file or Turtle body is
-        provided as the request body; identifiers and status are query parameters.
-      parameters:
-        - name: editorId
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: User assigned as editor.
-        - name: groupId
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Group assigned to datasets.
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [DRAFT, PUBLISHED, SUBMITTED, ARCHIVED, REJECTED]
-            default: DRAFT
-          description: Imported dataset status. Non-draft statuses require a super admin editor.
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/MetadataImportRequest'
-          text/turtle:
-            schema:
-              type: string
-              format: binary
-              description: Turtle metadata body.
+            {
+              application/json:
+                {
+                   schema: { $ref: "#/components/schemas/DatasetDraftMetadata" },
+                },
+            },
+        }
       responses:
-        '201':
-          description: Metadata imported
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MetadataImportResponse'
-        '400':
-          description: Invalid request, identifiers, or status
-        '403':
-          description: Requested non-draft status requires a super admin editor
-        '404':
-          description: Editor or group not found
-        '422':
-          description: Turtle mapping or domain validation failed
-        '500':
-          description: Import persistence failed
-  /api/v2/resources/{resourceType}/{id}:
+        {
+          "201": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/{version_id}:
     get:
-      tags: [Metadata]
-      summary: Get materialized metadata resource
-      description: Returns canonical Backoffice metadata for a resource identified by its UUID.
+      tags: [Datasets]
+      operationId: getDataset
+      summary: Read current dataset version
+      description: Returns published version publicly. Active members receive active non-public version when present. Public responses omit dataset and web-service contact points.
       parameters:
-        - name: resourceType
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [dataset, distribution, webservice, organization, concept, conceptscheme, softwareapplication, softwaresourcecode]
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Resource UUID.
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/ActorOptional" },
+        ]
+      security: [{}, { ActorHeader: [] }]
       responses:
-        '200':
-          description: Canonical resource representation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MetadataResource'
-        '400':
-          description: Unsupported resource type or invalid UUID
-        '404':
-          description: Resource not found
-        '500':
-          description: Metadata read failed
-  /api/v2/groups/{groupId}/memberships:
-    get:
-      tags: [Memberships]
-      summary: List memberships by group
-      description: Returns memberships currently attached to the given group.
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Memberships listed
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Membership'
-  /api/v2/groups/{groupId}/memberships/{userId}:
+        {
+          "200": { $ref: "#/components/responses/DatasetRead" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/draft:
     put:
-      tags: [Memberships]
-      summary: Create or update membership
-      description: Upserts membership role and status for a user in a group.
+      tags: [Datasets]
+      operationId: replaceDatasetDraft
+      summary: Replace draft metadata
+      description: Atomically replaces all mutable draft metadata and nested version-owned content when revision matches. Returns 409 for a stale revision.
       parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpsertMembershipRequest'
-      responses:
-        '200':
-          description: Membership upserted
+        {
+          required: true,
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Membership'
+            {
+              application/json:
+                {
+                  schema: { $ref: "#/components/schemas/ReplaceDraftRequest" },
+                },
+            },
+        }
+      responses:
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
     delete:
-      tags: [Memberships]
-      summary: Delete membership
-      description: Removes a user from a group.
+      tags: [Datasets]
+      operationId: discardDatasetVersion
+      summary: Discard draft or rejected version
+      description: Permanently deletes selected DRAFT or REJECTED version. Deletes logical dataset when no versions remain.
       parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
       responses:
-        '204':
-          description: Membership deleted
-  /api/v2/groups:
-    get:
-      tags: [Groups]
-      summary: List groups
-      description: Returns groups newest first.
-      responses:
-        '200':
-          description: Groups listed
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Group'
+        {
+          "204": { description: Draft discarded },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/submit:
     post:
-      tags: [Groups]
-      summary: Create group
-      description: Creates a new group record.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateGroupRequest'
-      responses:
-        '201':
-          description: Group created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-  /api/v2/groups/{groupId}:
-    get:
-      tags: [Groups]
-      summary: Get group by id
-      description: Returns single group by UUID.
+      tags: [Datasets]
+      operationId: submitDatasetDraft
+      summary: Submit draft for review
+      description: Changes selected DRAFT version to SUBMITTED. Submitted metadata becomes immutable.
       parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
       responses:
-        '200':
-          description: Group found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-        '404':
-          description: Group not found
-    put:
-      tags: [Groups]
-      summary: Replace group
-      description: Replaces all mutable group fields.
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateGroupRequest'
-      responses:
-        '200':
-          description: Group replaced
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-    patch:
-      tags: [Groups]
-      summary: Patch group
-      description: Updates selected group fields.
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchGroupRequest'
-      responses:
-        '200':
-          description: Group updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Group'
-    delete:
-      tags: [Groups]
-      summary: Delete group
-      description: Deletes a group if it exists.
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Group deleted
-  /api/v2/users:
-    get:
-      tags: [Users]
-      summary: List users
-      description: Returns users newest first.
-      responses:
-        '200':
-          description: Users listed
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/withdraw:
     post:
-      tags: [Users]
-      summary: Create user
-      description: Creates a new user. First created user is promoted to super admin.
+      tags: [Datasets]
+      operationId: withdrawDatasetSubmission
+      summary: Withdraw submission
+      description: Returns selected SUBMITTED version to editable DRAFT status.
+      parameters:
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
+      responses:
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/reopen:
+    post:
+      tags: [Datasets]
+      operationId: reopenRejectedDataset
+      summary: Reopen rejected version
+      description: Returns selected REJECTED version to editable DRAFT status while retaining rejection feedback.
+      parameters:
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
+      responses:
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/publish:
+    post:
+      tags: [Datasets]
+      operationId: publishDatasetVersion
+      summary: Publish submitted version
+      description: Publishes selected SUBMITTED version and atomically archives any current publication.
+      parameters:
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
+      responses:
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/unpublish:
+    post:
+      tags: [Datasets]
+      operationId: unpublishDatasetVersion
+      summary: Unpublish current version
+      description: Archives selected PUBLISHED version without creating a replacement draft.
+      parameters:
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateUserRequest'
-      responses:
-        '201':
-          description: User created
+        {
+          required: true,
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-  /api/v2/users/by-auth/{authIdentifier}:
-    get:
-      tags: [Users]
-      summary: Get user by auth identifier
-      description: Returns user identified by external auth identifier.
-      parameters:
-        - name: authIdentifier
-          in: path
-          required: true
-          schema:
-            type: string
+            {
+              application/json:
+                { schema: { type: object } },
+            },
+        }
       responses:
-        '200':
-          description: User found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '404':
-          description: User not found
-  /api/v2/users/{userId}:
-    get:
-      tags: [Users]
-      summary: Get user by id
-      description: Returns single user by UUID.
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/versions/{version_id}/reject:
+    post:
+      tags: [Datasets]
+      operationId: rejectDatasetSubmission
+      summary: Reject submitted version
+      description: Changes selected SUBMITTED version to REJECTED. A non-empty rejection note is required.
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: User found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '404':
-          description: User not found
-    put:
-      tags: [Users]
-      summary: Replace user
-      description: Replaces all mutable user fields.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/VersionID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutUserRequest'
-      responses:
-        '200':
-          description: User replaced
+        {
+          required: true,
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-    patch:
-      tags: [Users]
-      summary: Patch user
-      description: Updates selected user fields.
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/RejectRequest" } },
+            },
+        }
+      responses:
+        {
+          "200": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/draft-from-publication:
+    post:
+      tags: [Datasets]
+      operationId: createDraftFromPublication
+      summary: Create draft from publication
+      description: Clones current PUBLISHED version and all version-owned metadata into a new DRAFT for this logical dataset.
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
+      responses:
+        {
+          "201": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/datasets/{id}/draft-from-archive:
+    post:
+      tags: [Datasets]
+      operationId: createDraftFromArchive
+      summary: Create draft from latest archive
+      description: Clones latest ARCHIVED version when this logical dataset has no active publication.
+      parameters:
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
+      responses:
+        {
+          "201": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
+  /api/v1/groups/{group_id}/datasets/{id}/copy:
+    post:
+      tags: [Datasets]
+      operationId: copyPublishedDataset
+      summary: Copy published dataset into group
+      description: Creates independent DRAFT dataset from source PUBLISHED version. New source IRI is required; categories are not copied.
+      parameters:
+        [
+          { $ref: "#/components/parameters/DatasetID" },
+          { $ref: "#/components/parameters/GroupID" },
+          { $ref: "#/components/parameters/Actor" },
+        ]
+      security: [{ ActorHeader: [] }]
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchUserRequest'
-      responses:
-        '200':
-          description: User updated
+        {
+          required: true,
           content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-    delete:
-      tags: [Users]
-      summary: Delete user
-      description: Deletes a user and related rows.
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/CopyRequest" } },
+            },
+        }
       responses:
-        '204':
-          description: User deleted
+        {
+          "201": { $ref: "#/components/responses/Dataset" },
+          "400": { $ref: "#/components/responses/Invalid" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        }
 components:
-  schemas:
-    MetadataImportRequest:
-      type: object
-      description: Multipart Turtle metadata import request.
-      required: [file]
-      properties:
-        file:
-          type: string
-          format: binary
-          description: Turtle file to import.
-    MetadataResource:
-      description: Response shape selected by `resourceType`.
-      oneOf:
-        - $ref: '#/components/schemas/Dataset'
-        - $ref: '#/components/schemas/Distribution'
-        - $ref: '#/components/schemas/WebService'
-        - $ref: '#/components/schemas/Organization'
-        - $ref: '#/components/schemas/Category'
-        - $ref: '#/components/schemas/CategoryScheme'
-        - $ref: '#/components/schemas/SoftwareApplication'
-        - $ref: '#/components/schemas/SoftwareSourceCode'
+  securitySchemes:
+    ActorHeader:
+      {
+        type: apiKey,
+        in: header,
+        name: X-EPOS-User-ID,
+        description: Trusted authenticated user ID.,
+      }
+  parameters:
+    Actor:
+      {
+        name: X-EPOS-User-ID,
+        in: header,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    ActorOptional:
+      {
+        name: X-EPOS-User-ID,
+        in: header,
+        required: false,
+        schema: { type: string, format: uuid },
+      }
+    DatasetID:
+      {
+        name: id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    VersionID:
+      {
+        name: version_id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    GroupID:
+      {
+        name: group_id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+  responses:
     Dataset:
+      {
+        description: Dataset lifecycle record,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/DatasetRecord" } },
+          },
+      }
+    DatasetRead:
+      {
+        description: Dataset lifecycle record. Public reads omit dataset and web-service contact_points.,
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  {
+                    oneOf:
+                      [
+                        { $ref: "#/components/schemas/DatasetRecord" },
+                        { $ref: "#/components/schemas/PublicDatasetRecord" },
+                      ],
+                  },
+              },
+          },
+      }
+    Invalid:
+      {
+        description: Invalid request,
+        content:
+          {
+            application/problem+json:
+              { schema: { $ref: "#/components/schemas/Problem" } },
+          },
+      }
+    Unauthorized:
+      {
+        description: Missing or invalid actor header,
+        content: { text/plain: { schema: { type: string } } },
+      }
+    Forbidden:
+      {
+        description: Access denied,
+        content:
+          {
+            application/problem+json:
+              { schema: { $ref: "#/components/schemas/Problem" } },
+          },
+      }
+    NotFound:
+      {
+        description: Dataset or selected version not found,
+        content:
+          {
+            application/problem+json:
+              { schema: { $ref: "#/components/schemas/Problem" } },
+          },
+      }
+    Conflict:
+      {
+        description: Lifecycle or revision conflict,
+        content:
+          {
+            application/problem+json:
+              { schema: { $ref: "#/components/schemas/Problem" } },
+          },
+      }
+  schemas:
+    ReplaceDraftRequest:
       type: object
-      required: [id, source_iri, title, description, keywords, status, created, updated, original_dataset_id]
+      required: [revision, metadata]
       properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        title: {type: string}
-        description: {type: string}
-        keywords: {type: string, description: Comma-separated keywords from imported metadata.}
-        accrual_periodicity: {type: string, nullable: true}
-        quality_annotation: {type: string, nullable: true}
-        access_right: {type: string, nullable: true}
-        distributions: {type: array, items: {$ref: '#/components/schemas/Distribution'}}
-        spatial_coverage: {$ref: '#/components/schemas/Spatial'}
-        temporal_coverage: {$ref: '#/components/schemas/Temporal'}
-        persistent_identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
-        contact_points: {type: array, items: {$ref: '#/components/schemas/ContactPoint'}}
-        providers: {type: array, items: {$ref: '#/components/schemas/Organization'}}
-        categories: {type: array, items: {$ref: '#/components/schemas/Category'}}
-        source_created: {type: string, format: date-time, nullable: true}
-        source_updated: {type: string, format: date-time, nullable: true}
-        status: {$ref: '#/components/schemas/DatasetStatus'}
-        editor: {$ref: '#/components/schemas/MetadataUser'}
-        group: {$ref: '#/components/schemas/MetadataGroup'}
-        created: {type: string, format: date-time}
-        updated: {type: string, format: date-time}
-        original_dataset_id: {type: string, format: uuid}
+        {
+          revision: { type: integer, format: int32 },
+          metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" },
+        }
+    RejectRequest:
+      {
+        type: object,
+        required: [note],
+        properties: { note: { type: string, minLength: 1 } },
+      }
+    CopyRequest:
+      {
+        type: object,
+        required: [source_iri],
+        properties: { source_iri: { type: string, format: uri } },
+      }
+    DatasetRecord:
+      type: object
+      required: [dataset_id, version_id, revision, status, metadata]
+      properties:
+        {
+          dataset_id: { type: string, format: uuid },
+          version_id: { type: string, format: uuid },
+          revision: { type: integer, format: int32 },
+          status: { $ref: "#/components/schemas/DatasetStatus" },
+          metadata: { $ref: "#/components/schemas/DatasetMetadata" },
+        }
+    Problem:
+      {
+        type: object,
+        required: [title, status, detail],
+        properties:
+          {
+            title:
+              {
+                type: string,
+                enum:
+                  [
+                    invalid_request,
+                    forbidden,
+                    dataset_not_found,
+                    conflict,
+                    internal_server_error,
+                  ],
+              },
+            status: { type: integer },
+            detail: { type: string },
+          },
+      }
+    DatasetDraftMetadata:
+      description: Mutable dataset version metadata. Contact points, providers, and categories must reference existing canonical records by ID. IDs on version-owned nested records are accepted but generated by storage.
+      type: object
+      required: [source_iri, title]
+      example:
+        source_iri: sourceiritest
+        title: my dataset
+        description: description
+        keywords: test
+      properties:
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string, default: "" }
+        keywords: { type: string, default: "" }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        id:
+          {
+            type: string,
+            format: uuid,
+            description: Accepted but generated by storage.,
+          }
+        distributions:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DistributionDraft" },
+          }
+        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
+        persistent_identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/IdentifierDraft" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        providers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        source_created: { type: string, format: date-time, nullable: true }
+        source_updated: { type: string, format: date-time, nullable: true }
+    DatasetMetadata:
+      type: object
+      required:
+        [
+          id,
+          source_iri,
+          title,
+          description,
+          keywords,
+          distributions,
+          persistent_identifiers,
+          contact_points,
+          providers,
+          categories,
+          status,
+          created,
+          updated,
+          original_dataset_id,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        distributions:
+          { type: array, items: { $ref: "#/components/schemas/Distribution" } }
+        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
+        persistent_identifiers:
+          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points:
+          { type: array, items: { $ref: "#/components/schemas/ContactPoint" } }
+        providers:
+          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        categories:
+          { type: array, items: { $ref: "#/components/schemas/Category" } }
+        source_created: { type: string, format: date-time, nullable: true }
+        source_updated: { type: string, format: date-time, nullable: true }
+        status: { $ref: "#/components/schemas/DatasetStatus" }
+        editor: { $ref: "#/components/schemas/User" }
+        group: { $ref: "#/components/schemas/Group" }
+        created: { type: string, format: date-time }
+        updated: { type: string, format: date-time }
+        original_dataset_id: { type: string, format: uuid }
     Distribution:
       type: object
       required: [id, source_iri, title, description, type]
       properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        title: {type: string}
-        description: {type: string}
-        license: {type: string, nullable: true}
-        type: {$ref: '#/components/schemas/DistributionType'}
-        issued: {type: string, format: date-time, nullable: true}
-        modified: {type: string, format: date-time, nullable: true}
-        byte_size: {type: integer, format: int64, nullable: true}
-        web_service: {$ref: '#/components/schemas/WebService'}
-        downloadable_file: {$ref: '#/components/schemas/DownloadableFile'}
-    DownloadableFile:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type: { $ref: "#/components/schemas/DistributionType" }
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        web_service: { $ref: "#/components/schemas/WebService" }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+    DistributionDraft:
       type: object
+      required: [source_iri, title, type]
       properties:
-        url: {type: string, format: uri}
-        format: {type: string}
+        id:
+          {
+            type: string,
+            format: uuid,
+            description: Accepted but generated by storage.,
+          }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string, default: "" }
+        license: { type: string, nullable: true }
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        type:
+          allOf: [{ $ref: "#/components/schemas/DistributionType" }]
+          description: Must match selected delivery method.
+        web_service: { $ref: "#/components/schemas/WebServiceDraft" }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+      oneOf:
+        - required: [web_service]
+        - required: [downloadable_file]
+    WebServiceDraft:
+      type: object
+      required: [source_iri, name, template_url, format]
+      properties:
+        id:
+          {
+            type: string,
+            format: uuid,
+            description: Accepted but generated by storage.,
+          }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string, default: "" }
+        template_url: { type: string }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/CanonicalReference" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        parameters:
+          { type: array, items: { $ref: "#/components/schemas/Parameter" } }
+    CanonicalReference:
+      {
+        type: object,
+        required: [id],
+        properties: { id: { type: string, format: uuid } },
+      }
+    Parameter:
+      oneOf:
+        - { $ref: "#/components/schemas/StringParameter" }
+        - { $ref: "#/components/schemas/BooleanParameter" }
+        - { $ref: "#/components/schemas/IntegerParameter" }
+        - { $ref: "#/components/schemas/FloatParameter" }
+        - { $ref: "#/components/schemas/DateTimeParameter" }
+      discriminator:
+        propertyName: metadata.kind
+        mapping:
+          {
+            STRING: "#/components/schemas/StringParameter",
+            BOOLEAN: "#/components/schemas/BooleanParameter",
+            INTEGER: "#/components/schemas/IntegerParameter",
+            FLOAT: "#/components/schemas/FloatParameter",
+            DATETIME: "#/components/schemas/DateTimeParameter",
+          }
+    ParameterMetadata:
+      {
+        type: object,
+        required:
+          [
+            id,
+            source_iri,
+            kind,
+            variable,
+            property,
+            label,
+            required,
+            multiple_values,
+            read_only,
+          ],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            source_iri: { type: string },
+            kind: { $ref: "#/components/schemas/ParameterKind" },
+            variable: { type: string },
+            property: { type: string },
+            label: { type: string },
+            required: { type: boolean },
+            multiple_values: { type: boolean },
+            read_only: { type: boolean },
+          },
+      }
+    StringParameter:
+      {
+        type: object,
+        required: [metadata, default, allowed_values, pattern],
+        properties:
+          {
+            metadata:
+              {
+                allOf:
+                  [
+                    { $ref: "#/components/schemas/ParameterMetadata" },
+                    {
+                      type: object,
+                      properties: { kind: { type: string, enum: [STRING] } },
+                    },
+                  ],
+              },
+            default: { type: string, nullable: true },
+            allowed_values: { type: array, items: { type: string } },
+            pattern: { type: string },
+          },
+      }
+    BooleanParameter:
+      {
+        type: object,
+        required: [metadata, default],
+        properties:
+          {
+            metadata:
+              {
+                allOf:
+                  [
+                    { $ref: "#/components/schemas/ParameterMetadata" },
+                    {
+                      type: object,
+                      properties: { kind: { type: string, enum: [BOOLEAN] } },
+                    },
+                  ],
+              },
+            default: { type: boolean, nullable: true },
+          },
+      }
+    IntegerParameter:
+      {
+        type: object,
+        required: [metadata, minimum, maximum, default, allowed_values],
+        properties:
+          {
+            metadata:
+              {
+                allOf:
+                  [
+                    { $ref: "#/components/schemas/ParameterMetadata" },
+                    {
+                      type: object,
+                      properties: { kind: { type: string, enum: [INTEGER] } },
+                    },
+                  ],
+              },
+            minimum: { type: integer, format: int64, nullable: true },
+            maximum: { type: integer, format: int64, nullable: true },
+            default: { type: integer, format: int64, nullable: true },
+            allowed_values:
+              { type: array, items: { type: integer, format: int64 } },
+          },
+      }
+    FloatParameter:
+      {
+        type: object,
+        required: [metadata, minimum, maximum, default, allowed_values],
+        properties:
+          {
+            metadata:
+              {
+                allOf:
+                  [
+                    { $ref: "#/components/schemas/ParameterMetadata" },
+                    {
+                      type: object,
+                      properties: { kind: { type: string, enum: [FLOAT] } },
+                    },
+                  ],
+              },
+            minimum: { type: number, format: double, nullable: true },
+            maximum: { type: number, format: double, nullable: true },
+            default: { type: number, format: double, nullable: true },
+            allowed_values:
+              { type: array, items: { type: number, format: double } },
+          },
+      }
+    DateTimeParameter:
+      {
+        type: object,
+        required: [metadata, minimum, maximum, default, pattern],
+        properties:
+          {
+            metadata:
+              {
+                allOf:
+                  [
+                    { $ref: "#/components/schemas/ParameterMetadata" },
+                    {
+                      type: object,
+                      properties: { kind: { type: string, enum: [DATETIME] } },
+                    },
+                  ],
+              },
+            minimum: { type: string, format: date-time, nullable: true },
+            maximum: { type: string, format: date-time, nullable: true },
+            default: { type: string, format: date-time, nullable: true },
+            pattern: { type: string },
+          },
+      }
     WebService:
       type: object
       required: [id, source_iri, name, description, template_url, format]
       properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        name: {type: string}
-        description: {type: string}
-        template_url: {type: string}
-        parameters: {type: array, items: {$ref: '#/components/schemas/Parameter'}}
-        format: {type: string}
-        provider: {$ref: '#/components/schemas/Organization', nullable: true}
-        documentation: {$ref: '#/components/schemas/Documentation'}
-        spatial_coverage: {$ref: '#/components/schemas/Spatial'}
-        temporal_coverage: {$ref: '#/components/schemas/Temporal'}
-        contact_points: {type: array, items: {$ref: '#/components/schemas/ContactPoint'}}
-    SoftwareApplication:
-      type: object
-      required: [id, source_iri, name, description, keywords]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        name: {type: string}
-        description: {type: string}
-        main_entity_of_page: {type: string, nullable: true}
-        license: {type: string, nullable: true}
-        version: {type: string, nullable: true}
-        keywords: {type: string}
-        download_url: {type: string, format: uri, nullable: true}
-        requirements: {type: string, nullable: true}
-        operating_system: {type: string, nullable: true}
-        creators: {type: array, items: {$ref: '#/components/schemas/Organization'}}
-        identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
-        categories: {type: array, items: {$ref: '#/components/schemas/Category'}}
-    SoftwareSourceCode:
-      type: object
-      required: [id, source_iri, name, description, keywords]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        name: {type: string}
-        description: {type: string}
-        programming_language: {type: string, nullable: true}
-        keywords: {type: string}
-        repository: {type: string, format: uri, nullable: true}
-        license: {type: string, nullable: true}
-        software_requirements: {type: string, nullable: true}
-        runtime_platform: {type: string, nullable: true}
-        main_entity_of_page: {type: string, nullable: true}
-        version: {type: string, nullable: true}
-        creators: {type: array, items: {$ref: '#/components/schemas/Organization'}}
-        identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
-        categories: {type: array, items: {$ref: '#/components/schemas/Category'}}
-    Organization:
-      type: object
-      required: [id, source_iri, name]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        name: {type: string}
-        street: {type: string, nullable: true}
-        locality: {type: string, nullable: true}
-        postal_code: {type: string, nullable: true}
-        country: {type: string, nullable: true}
-        logo_url: {type: string, format: uri, nullable: true}
-        page_url: {type: string, format: uri, nullable: true}
-        email: {type: string, format: email, nullable: true}
-        lei_code: {type: string, nullable: true}
-        identifiers: {type: array, items: {$ref: '#/components/schemas/Identifier'}}
-    Category:
-      type: object
-      required: [id, source_iri, name, scheme]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        name: {type: string}
-        scheme: {$ref: '#/components/schemas/CategoryScheme'}
-        children: {type: array, items: {$ref: '#/components/schemas/Category'}}
-    CategoryScheme:
-      type: object
-      required: [id, source_iri, name, position, concept]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        name: {type: string}
-        label: {type: string, nullable: true}
-        logo: {type: string, format: uri, nullable: true}
-        page: {type: string, format: uri, nullable: true}
-        color: {type: string, nullable: true}
-        position: {type: integer, format: int32}
-        concept: {type: string, enum: [DATA, FACILITIES, SOFTWARE]}
-        top_concepts: {type: array, items: {$ref: '#/components/schemas/Category'}}
-    Identifier:
-      type: object
-      required: [id, source_iri, type, value]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        type: {type: string}
-        value: {type: string}
-    ContactPoint:
-      type: object
-      required: [id, source_iri, email, role]
-      properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        email: {type: string, format: email}
-        role: {type: string}
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        template_url: { type: string }
+        parameters:
+          { type: array, items: { $ref: "#/components/schemas/Parameter" } }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/Organization" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
+        contact_points:
+          { type: array, items: { $ref: "#/components/schemas/ContactPoint" } }
+    DownloadableFile:
+      {
+        type: object,
+        required: [url, format],
+        properties: { url: { type: string }, format: { type: string } },
+      }
     Documentation:
+      {
+        type: object,
+        required: [source_iri, uri],
+        properties:
+          {
+            source_iri: { type: string },
+            title: { type: string, nullable: true },
+            description: { type: string, nullable: true },
+            uri: { type: string },
+          },
+      }
+    Identifier:
+      {
+        type: object,
+        required: [id, source_iri, type, value],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            source_iri: { type: string },
+            type: { type: string },
+            value: { type: string },
+          },
+      }
+    IdentifierDraft:
+      {
+        type: object,
+        required: [source_iri, type, value],
+        properties:
+          {
+            id:
+              {
+                type: string,
+                format: uuid,
+                description: Accepted but generated by storage.,
+              },
+            source_iri: { type: string },
+            type: { type: string },
+            value: { type: string },
+          },
+      }
+    ContactPoint:
+      {
+        type: object,
+        required: [id, source_iri, email, role],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            source_iri: { type: string },
+            email: { type: string },
+            role: { type: string },
+          },
+      }
+    Organization:
+      {
+        type: object,
+        required: [id, source_iri, name],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            source_iri: { type: string },
+            name: { type: string },
+            street: { type: string, nullable: true },
+            locality: { type: string, nullable: true },
+            postal_code: { type: string, nullable: true },
+            country: { type: string, nullable: true },
+            logo_url: { type: string, nullable: true },
+            page_url: { type: string, nullable: true },
+            email: { type: string, nullable: true },
+            lei_code: { type: string, nullable: true },
+            identifiers:
+              {
+                type: array,
+                items: { $ref: "#/components/schemas/Identifier" },
+              },
+          },
+      }
+    Category:
+      {
+        type: object,
+        required: [id, source_iri, name, scheme],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            source_iri: { type: string },
+            name: { type: string },
+            scheme: { $ref: "#/components/schemas/CategoryScheme" },
+            children:
+              { type: array, items: { $ref: "#/components/schemas/Category" } },
+          },
+      }
+    CategoryScheme:
+      {
+        type: object,
+        required: [id, source_iri, name, position, concept],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            source_iri: { type: string },
+            name: { type: string },
+            label: { type: string, nullable: true },
+            logo: { type: string, nullable: true },
+            page: { type: string, nullable: true },
+            color: { type: string, nullable: true },
+            position: { type: integer, format: int32 },
+            concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] },
+            top_concepts:
+              { type: array, items: { $ref: "#/components/schemas/Category" } },
+          },
+      }
+    User:
+      {
+        type: object,
+        required:
+          [id, auth_identifier, is_super_admin, status, created, updated],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            auth_identifier: { type: string },
+            family_name: { type: string, nullable: true },
+            given_name: { type: string, nullable: true },
+            email: { type: string, nullable: true },
+            is_super_admin: { type: boolean },
+            status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] },
+            created: { type: string, format: date-time },
+            updated: { type: string, format: date-time },
+          },
+      }
+    Group:
+      {
+        type: object,
+        required: [id, slug, name, is_system, created, updated],
+        properties:
+          {
+            id: { type: string, format: uuid },
+            slug: { type: string },
+            name: { type: string },
+            description: { type: string, nullable: true },
+            is_system: { type: boolean },
+            created: { type: string, format: date-time },
+            updated: { type: string, format: date-time },
+          },
+      }
+    PublicDatasetRecord:
       type: object
-      required: [source_iri, uri]
+      required: [dataset_id, version_id, revision, status, metadata]
       properties:
-        source_iri: {type: string, format: uri}
-        title: {type: string, nullable: true}
-        description: {type: string, nullable: true}
-        uri: {type: string, format: uri}
-    Parameter:
+        dataset_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision: { type: integer, format: int32 }
+        status: { $ref: "#/components/schemas/DatasetStatus" }
+        metadata: { $ref: "#/components/schemas/PublicDatasetMetadata" }
+    PublicDatasetMetadata:
       type: object
-      description: Typed web-service parameter. Fields outside metadata vary by parameter range.
-      required: [metadata]
+      required:
+        [
+          id,
+          source_iri,
+          title,
+          description,
+          keywords,
+          distributions,
+          persistent_identifiers,
+          providers,
+          categories,
+          status,
+          created,
+          updated,
+          original_dataset_id,
+        ]
       properties:
-        metadata: {$ref: '#/components/schemas/ParameterMetadata'}
-        default: {}
-        minimum: {}
-        maximum: {}
-        allowed_values: {type: array, items: {}}
-        pattern: {type: string}
-    ParameterMetadata:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        distributions:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/PublicDistribution" },
+          }
+        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
+        persistent_identifiers:
+          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        providers:
+          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        categories:
+          { type: array, items: { $ref: "#/components/schemas/Category" } }
+        source_created: { type: string, format: date-time, nullable: true }
+        source_updated: { type: string, format: date-time, nullable: true }
+        status: { $ref: "#/components/schemas/DatasetStatus" }
+        editor: { $ref: "#/components/schemas/User" }
+        group: { $ref: "#/components/schemas/Group" }
+        created: { type: string, format: date-time }
+        updated: { type: string, format: date-time }
+        original_dataset_id: { type: string, format: uuid }
+    PublicDistribution:
       type: object
-      required: [id, source_iri, kind, variable, property, label, required, multiple_values, read_only]
+      required: [id, source_iri, title, description, type]
       properties:
-        id: {type: string, format: uuid}
-        source_iri: {type: string, format: uri}
-        kind: {type: string, enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME]}
-        variable: {type: string}
-        property: {type: string}
-        label: {type: string}
-        required: {type: boolean}
-        multiple_values: {type: boolean}
-        read_only: {type: boolean}
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type: { $ref: "#/components/schemas/DistributionType" }
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        web_service: { $ref: "#/components/schemas/PublicWebService" }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+    PublicWebService:
+      type: object
+      required: [id, source_iri, name, description, template_url, format]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        template_url: { type: string }
+        parameters:
+          { type: array, items: { $ref: "#/components/schemas/Parameter" } }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/Organization" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
+    ParameterKind:
+      { type: string, enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME] }
+    DistributionType:
+      {
+        type: string,
+        enum:
+          [
+            "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE",
+            "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE",
+          ],
+      }
     Spatial:
       type: object
       properties:
-        point: {$ref: '#/components/schemas/Coordinate'}
-        polygon: {type: array, items: {$ref: '#/components/schemas/Coordinate'}}
+        point: { $ref: "#/components/schemas/Coordinate" }
+        polygon:
+          {
+            type: array,
+            minItems: 4,
+            items: { $ref: "#/components/schemas/Coordinate" },
+          }
+      oneOf:
+        - required: [point]
+        - required: [polygon]
     Coordinate:
-      type: object
-      required: [latitude, longitude]
-      properties:
-        latitude: {type: number, format: double}
-        longitude: {type: number, format: double}
+      {
+        type: object,
+        required: [latitude, longitude],
+        properties:
+          {
+            latitude: { type: number, minimum: -90, maximum: 90 },
+            longitude: { type: number, minimum: -180, maximum: 180 },
+          },
+      }
     Temporal:
-      type: object
-      properties:
-        start: {type: string, format: date-time, nullable: true}
-        end: {type: string, format: date-time, nullable: true}
-    MetadataUser:
-      type: object
-      properties:
-        id: {type: string, format: uuid}
-        auth_identifier: {type: string}
-        family_name: {type: string, nullable: true}
-        given_name: {type: string, nullable: true}
-        email: {type: string, format: email, nullable: true}
-        is_super_admin: {type: boolean}
-        status: {type: string}
-        created: {type: string, format: date-time}
-        updated: {type: string, format: date-time}
-    MetadataGroup:
-      type: object
-      properties:
-        id: {type: string, format: uuid}
-        slug: {type: string}
-        name: {type: string}
-        description: {type: string, nullable: true}
-        is_system: {type: boolean}
-        created: {type: string, format: date-time}
-        updated: {type: string, format: date-time}
+      {
+        type: object,
+        properties:
+          {
+            start: { type: string, format: date-time, nullable: true },
+            end: { type: string, format: date-time, nullable: true },
+          },
+      }
     DatasetStatus:
-      type: string
-      enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
-    DistributionType:
-      type: string
-      enum:
-        - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
-        - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
-    MetadataImportWarning:
-      type: object
-      required: [message]
-      properties:
-        subject:
-          type: string
-        message:
-          type: string
-    MetadataImportResponse:
-      type: object
-      required: [datasets, categorySchemes, categories, organizations, contactPoints]
-      properties:
-        datasets:
-          type: integer
-          minimum: 0
-        categorySchemes:
-          type: integer
-          minimum: 0
-        categories:
-          type: integer
-          minimum: 0
-        organizations:
-          type: integer
-          minimum: 0
-        contactPoints:
-          type: integer
-          minimum: 0
-        warnings:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetadataImportWarning'
-    Group:
-      type: object
-      description: Group record returned by group endpoints.
-      properties:
-        id:
-          type: string
-          format: uuid
-        slug:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        isSystem:
-          type: boolean
-    CreateGroupRequest:
-      type: object
-      description: Payload for creating a group.
-      required: [slug, name]
-      properties:
-        slug:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        isSystem:
-          type: boolean
-    PatchGroupRequest:
-      type: object
-      description: Partial payload for updating a group.
-      properties:
-        slug:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        isSystem:
-          type: boolean
-    AuthorizeRequest:
-      type: object
-      description: Access-check payload consumed by the authorization endpoint.
-      required: [authIdentifier, group, service, action]
-      properties:
-        authIdentifier:
-          type: string
-        group:
-          type: string
-        service:
-          type: string
-        action:
-          type: string
-        resourceOwnerIdentifier:
-          type: string
-    AuthorizeResponse:
-      type: object
-      description: Decision returned by authorization checks.
-      required: [allowed]
-      properties:
-        allowed:
-          type: boolean
-        reason:
-          type: string
-    UserStatus:
-      type: string
-      description: Lifecycle state for a user record.
-      enum: [ACTIVE, INACTIVE, BLOCKED]
-      x-enum-varnames:
-        - UserStatusActive
-        - UserStatusInactive
-        - UserStatusBlocked
-    MembershipRole:
-      type: string
-      description: Role assigned to a user inside a group.
-      enum: [VIEWER, EDITOR, REVIEWER, ADMIN]
-    MembershipStatus:
-      type: string
-      description: Lifecycle state for a group membership.
-      enum: [PENDING, ACTIVE, REVOKED, REJECTED]
-      x-enum-varnames:
-        - MembershipStatusPending
-        - MembershipStatusActive
-        - MembershipStatusRevoked
-        - MembershipStatusRejected
-    Membership:
-      type: object
-      description: Membership record linking user to group.
-      properties:
-        userId:
-          type: string
-          format: uuid
-        groupId:
-          type: string
-          format: uuid
-        role:
-          $ref: '#/components/schemas/MembershipRole'
-        status:
-          $ref: '#/components/schemas/MembershipStatus'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-    UpsertMembershipRequest:
-      type: object
-      description: Payload for creating or updating a membership.
-      required: [role, status]
-      properties:
-        role:
-          $ref: '#/components/schemas/MembershipRole'
-        status:
-          $ref: '#/components/schemas/MembershipStatus'
-    User:
-      type: object
-      description: User record returned by user endpoints.
-      properties:
-        id:
-          type: string
-          format: uuid
-        authIdentifier:
-          type: string
-        email:
-          type: string
-        givenName:
-          type: string
-        familyName:
-          type: string
-        isSuperAdmin:
-          type: boolean
-        status:
-          $ref: '#/components/schemas/UserStatus'
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-    CreateUserRequest:
-      type: object
-      description: Payload for creating a user.
-      required: [authIdentifier]
-      properties:
-        authIdentifier:
-          type: string
-        email:
-          type: string
-        givenName:
-          type: string
-        familyName:
-          type: string
-        isSuperAdmin:
-          type: boolean
-        status:
-          $ref: '#/components/schemas/UserStatus'
-          default: ACTIVE
-    PutUserRequest:
-      type: object
-      description: Payload for fully replacing a user.
-      required: [authIdentifier, status]
-      properties:
-        authIdentifier:
-          type: string
-        email:
-          type: string
-        givenName:
-          type: string
-        familyName:
-          type: string
-        isSuperAdmin:
-          type: boolean
-        status:
-          $ref: '#/components/schemas/UserStatus'
-    PatchUserRequest:
-      type: object
-      description: Partial payload for updating a user.
-      properties:
-        authIdentifier:
-          type: string
-        email:
-          type: string
-        givenName:
-          type: string
-        familyName:
-          type: string
-        isSuperAdmin:
-          type: boolean
-        status:
-          $ref: '#/components/schemas/UserStatus'
+      { type: string, enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED] }

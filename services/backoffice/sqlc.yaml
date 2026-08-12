@@ -35,10 +35,10 @@ sql:
               import: "time"
               type: "Time"
               pointer: true
-          - column: "datasets.spatial_point"
+          - column: "dataset_versions.spatial_point"
             go_type:
               type: "[]byte"
-          - column: "datasets.spatial_polygon"
+          - column: "dataset_versions.spatial_polygon"
             go_type:
               type: "[]byte"
           - column: "web_services.spatial_point"

@@ -49,38 +49,6 @@ CREATE TABLE dataset_version_contact_points (
     PRIMARY KEY (dataset_version_id, contact_point_id)
 );
 
-CREATE TABLE distributions (
-    -- Version-owned distribution identity
-    id                       uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    dataset_version_id       uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
-
-    -- Distribution metadata
-    source_iri               text NOT NULL,
-    title                    text NOT NULL,
-    description              text NOT NULL DEFAULT '',
-    license                  text,
-    source_issued_at         timestamptz,
-    source_modified_at       timestamptz,
-    byte_size                integer,
-
-    -- Delivery method. Constraint below requires one complete representation.
-    type                     text NOT NULL,
-    downloadable_file_url    text,
-    downloadable_file_format text,
-    web_service_id           uuid REFERENCES web_services(id) ON DELETE CASCADE,
-    UNIQUE (dataset_version_id, source_iri),
-    CHECK (
-        (type = 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
-            AND downloadable_file_url IS NULL
-            AND downloadable_file_format IS NULL
-            AND web_service_id IS NOT NULL)
-        OR
-        (type = 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE'
-            AND downloadable_file_url IS NOT NULL
-            AND downloadable_file_format IS NOT NULL
-            AND web_service_id IS NULL)
-    )
-);
 CREATE TABLE web_services (
     -- Version-owned web service identity
     id                        uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -128,6 +96,38 @@ CREATE TABLE web_service_parameters (
     CHECK (jsonb_typeof(config) = 'object'),
 
     UNIQUE (web_service_id, variable)
+);
+CREATE TABLE distributions (
+    -- Version-owned distribution identity
+    id                       uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    dataset_version_id       uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
+
+    -- Distribution metadata
+    source_iri               text NOT NULL,
+    title                    text NOT NULL,
+    description              text NOT NULL DEFAULT '',
+    license                  text,
+    source_issued_at         timestamptz,
+    source_modified_at       timestamptz,
+    byte_size                integer,
+
+    -- Delivery method. Constraint below requires one complete representation.
+    type                     text NOT NULL,
+    downloadable_file_url    text,
+    downloadable_file_format text,
+    web_service_id           uuid REFERENCES web_services(id) ON DELETE CASCADE,
+    UNIQUE (dataset_version_id, source_iri),
+    CHECK (
+        (type = 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
+            AND downloadable_file_url IS NULL
+            AND downloadable_file_format IS NULL
+            AND web_service_id IS NOT NULL)
+        OR
+        (type = 'http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE'
+            AND downloadable_file_url IS NOT NULL
+            AND downloadable_file_format IS NOT NULL
+            AND web_service_id IS NULL)
+    )
 );
 
 -- group_id forms a composite foreign key with category_id. Migration 0006 adds

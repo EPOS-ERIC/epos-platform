@@ -21,6 +21,7 @@ var embedMigrations embed.FS
 type PostgresDB struct {
 	db       *pgxpool.Pool
 	Identity *IdentityRepository
+	Datasets *DatasetRepository
 }
 
 // IdentityRepository provides identity persistence through generated queries.
@@ -63,7 +64,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		return nil, fmt.Errorf("ping postgres pool: %w", err)
 	}
 
-	return &PostgresDB{db: db, Identity: &IdentityRepository{Queries: sqlc.New(db)}}, nil
+	return &PostgresDB{db: db, Identity: &IdentityRepository{Queries: sqlc.New(db)}, Datasets: NewDatasetRepository(db)}, nil
 }
 
 func runMigrations(db *sql.DB) error {
