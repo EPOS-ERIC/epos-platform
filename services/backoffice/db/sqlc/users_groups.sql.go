@@ -13,23 +13,16 @@ import (
 )
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (slug, name, description, is_system)
-VALUES ($1, $2, $3, $4)
-RETURNING
-    id,
-    slug,
-    name,
-    COALESCE(description, '') AS description,
-    is_system,
-    created_at,
-    updated_at
+WITH ignored AS (SELECT $4::boolean)
+INSERT INTO groups (name, source_iri, concept, description) VALUES ($2, 'urn:epos:group:' || $1::text, 'DATA', $3)
+RETURNING id, name AS slug, name, COALESCE(description, '') AS description, false AS is_system, created_at, updated_at
 `
 
 type CreateGroupParams struct {
-	Slug        string
+	Column1     string
 	Name        string
 	Description *string
-	IsSystem    bool
+	Column4     bool
 }
 
 type CreateGroupRow struct {
@@ -44,10 +37,10 @@ type CreateGroupRow struct {
 
 func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (CreateGroupRow, error) {
 	row := q.db.QueryRow(ctx, createGroup,
-		arg.Slug,
+		arg.Column1,
 		arg.Name,
 		arg.Description,
-		arg.IsSystem,
+		arg.Column4,
 	)
 	var i CreateGroupRow
 	err := row.Scan(
@@ -63,18 +56,9 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Creat
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (auth_identifier, email, given_name, family_name, is_super_admin, status)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING
-    id,
-    auth_identifier,
-    COALESCE(email, '') AS email,
-    COALESCE(given_name, '') AS given_name,
-    COALESCE(family_name, '') AS family_name,
-    is_super_admin,
-    status,
-    created_at,
-    updated_at
+WITH ignored AS (SELECT $5::boolean)
+INSERT INTO users (auth_identifier, email, given_name, family_name, status) VALUES ($1, $2, $3, $4, $6)
+RETURNING id, auth_identifier, COALESCE(email, '') AS email, COALESCE(given_name, '') AS given_name, COALESCE(family_name, '') AS family_name, false AS is_super_admin, status, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -82,7 +66,7 @@ type CreateUserParams struct {
 	Email          *string
 	GivenName      *string
 	FamilyName     *string
-	IsSuperAdmin   bool
+	Column5        bool
 	Status         UserStatus
 }
 
@@ -104,7 +88,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.Email,
 		arg.GivenName,
 		arg.FamilyName,
-		arg.IsSuperAdmin,
+		arg.Column5,
 		arg.Status,
 	)
 	var i CreateUserRow
@@ -155,16 +139,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getGroupByID = `-- name: GetGroupByID :one
-SELECT
-    id,
-    slug,
-    name,
-    COALESCE(description, '') AS description,
-    is_system,
-    created_at,
-    updated_at
-FROM groups
-WHERE id = $1
+SELECT id, name AS slug, name, COALESCE(description, '') AS description, false AS is_system, created_at, updated_at FROM groups WHERE id = $1
 `
 
 type GetGroupByIDRow struct {
@@ -193,15 +168,7 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDR
 }
 
 const getMembershipByIDs = `-- name: GetMembershipByIDs :one
-SELECT
-    user_id,
-    group_id,
-    role,
-    status,
-    created_at,
-    updated_at
-FROM group_memberships
-WHERE user_id = $1 AND group_id = $2
+SELECT user_id, group_id, 'EDITOR'::membership_role AS role, status, created_at, updated_at FROM group_memberships WHERE user_id = $1 AND group_id = $2
 `
 
 type GetMembershipByIDsParams struct {
@@ -209,9 +176,18 @@ type GetMembershipByIDsParams struct {
 	GroupID uuid.UUID
 }
 
-func (q *Queries) GetMembershipByIDs(ctx context.Context, arg GetMembershipByIDsParams) (GroupMembership, error) {
+type GetMembershipByIDsRow struct {
+	UserID    uuid.UUID
+	GroupID   uuid.UUID
+	Role      MembershipRole
+	Status    MembershipStatus
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetMembershipByIDs(ctx context.Context, arg GetMembershipByIDsParams) (GetMembershipByIDsRow, error) {
 	row := q.db.QueryRow(ctx, getMembershipByIDs, arg.UserID, arg.GroupID)
-	var i GroupMembership
+	var i GetMembershipByIDsRow
 	err := row.Scan(
 		&i.UserID,
 		&i.GroupID,
@@ -224,18 +200,7 @@ func (q *Queries) GetMembershipByIDs(ctx context.Context, arg GetMembershipByIDs
 }
 
 const getUserByAuthIdentifier = `-- name: GetUserByAuthIdentifier :one
-SELECT
-    id,
-    auth_identifier,
-    COALESCE(email, '') AS email,
-    COALESCE(given_name, '') AS given_name,
-    COALESCE(family_name, '') AS family_name,
-    is_super_admin,
-    status,
-    created_at,
-    updated_at
-FROM users
-WHERE auth_identifier = $1
+SELECT id, auth_identifier, COALESCE(email, '') AS email, COALESCE(given_name, '') AS given_name, COALESCE(family_name, '') AS family_name, false AS is_super_admin, status, created_at, updated_at FROM users WHERE auth_identifier = $1
 `
 
 type GetUserByAuthIdentifierRow struct {
@@ -268,18 +233,7 @@ func (q *Queries) GetUserByAuthIdentifier(ctx context.Context, authIdentifier st
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT
-    id,
-    auth_identifier,
-    COALESCE(email, '') AS email,
-    COALESCE(given_name, '') AS given_name,
-    COALESCE(family_name, '') AS family_name,
-    is_super_admin,
-    status,
-    created_at,
-    updated_at
-FROM users
-WHERE id = $1
+SELECT id, auth_identifier, COALESCE(email, '') AS email, COALESCE(given_name, '') AS given_name, COALESCE(family_name, '') AS family_name, false AS is_super_admin, status, created_at, updated_at FROM users WHERE id = $1
 `
 
 type GetUserByIDRow struct {
@@ -312,10 +266,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 }
 
 const isActiveMember = `-- name: IsActiveMember :one
-SELECT
-    status = 'ACTIVE' AS active
-FROM group_memberships
-WHERE user_id = $1 AND group_id = $2
+SELECT status = 'ACTIVE' AS active FROM group_memberships WHERE user_id = $1 AND group_id = $2
 `
 
 type IsActiveMemberParams struct {
@@ -331,16 +282,7 @@ func (q *Queries) IsActiveMember(ctx context.Context, arg IsActiveMemberParams) 
 }
 
 const listGroups = `-- name: ListGroups :many
-SELECT
-    id,
-    slug,
-    name,
-    COALESCE(description, '') AS description,
-    is_system,
-    created_at,
-    updated_at
-FROM groups
-ORDER BY created_at DESC
+SELECT id, name AS slug, name, COALESCE(description, '') AS description, false AS is_system, created_at, updated_at FROM groups ORDER BY created_at DESC
 `
 
 type ListGroupsRow struct {
@@ -382,27 +324,27 @@ func (q *Queries) ListGroups(ctx context.Context) ([]ListGroupsRow, error) {
 }
 
 const listMembershipsByGroupID = `-- name: ListMembershipsByGroupID :many
-SELECT
-    user_id,
-    group_id,
-    role,
-    status,
-    created_at,
-    updated_at
-FROM group_memberships
-WHERE group_id = $1
-ORDER BY created_at DESC
+SELECT user_id, group_id, 'EDITOR'::membership_role AS role, status, created_at, updated_at FROM group_memberships WHERE group_id = $1 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListMembershipsByGroupID(ctx context.Context, groupID uuid.UUID) ([]GroupMembership, error) {
+type ListMembershipsByGroupIDRow struct {
+	UserID    uuid.UUID
+	GroupID   uuid.UUID
+	Role      MembershipRole
+	Status    MembershipStatus
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) ListMembershipsByGroupID(ctx context.Context, groupID uuid.UUID) ([]ListMembershipsByGroupIDRow, error) {
 	rows, err := q.db.Query(ctx, listMembershipsByGroupID, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GroupMembership
+	var items []ListMembershipsByGroupIDRow
 	for rows.Next() {
-		var i GroupMembership
+		var i ListMembershipsByGroupIDRow
 		if err := rows.Scan(
 			&i.UserID,
 			&i.GroupID,
@@ -422,18 +364,7 @@ func (q *Queries) ListMembershipsByGroupID(ctx context.Context, groupID uuid.UUI
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT
-    id,
-    auth_identifier,
-    COALESCE(email, '') AS email,
-    COALESCE(given_name, '') AS given_name,
-    COALESCE(family_name, '') AS family_name,
-    is_super_admin,
-    status,
-    created_at,
-    updated_at
-FROM users
-ORDER BY created_at DESC
+SELECT id, auth_identifier, COALESCE(email, '') AS email, COALESCE(given_name, '') AS given_name, COALESCE(family_name, '') AS family_name, false AS is_super_admin, status, created_at, updated_at FROM users ORDER BY created_at DESC
 `
 
 type ListUsersRow struct {
@@ -479,29 +410,16 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 }
 
 const updateGroup = `-- name: UpdateGroup :one
-UPDATE groups
-SET
-    slug = $1,
-    name = $2,
-    description = $3,
-    is_system = $4,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $5
-RETURNING
-    id,
-    slug,
-    name,
-    COALESCE(description, '') AS description,
-    is_system,
-    created_at,
-    updated_at
+WITH ignored AS (SELECT $1::text, $4::boolean)
+UPDATE groups SET name = $2, description = $3 WHERE id = $5
+RETURNING id, name AS slug, name, COALESCE(description, '') AS description, false AS is_system, created_at, updated_at
 `
 
 type UpdateGroupParams struct {
-	Slug        string
+	Column1     string
 	Name        string
 	Description *string
-	IsSystem    bool
+	Column4     bool
 	ID          uuid.UUID
 }
 
@@ -517,10 +435,10 @@ type UpdateGroupRow struct {
 
 func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (UpdateGroupRow, error) {
 	row := q.db.QueryRow(ctx, updateGroup,
-		arg.Slug,
+		arg.Column1,
 		arg.Name,
 		arg.Description,
-		arg.IsSystem,
+		arg.Column4,
 		arg.ID,
 	)
 	var i UpdateGroupRow
@@ -537,26 +455,9 @@ func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) (Updat
 }
 
 const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET
-    auth_identifier = $1,
-    email = $2,
-    given_name = $3,
-    family_name = $4,
-    is_super_admin = $5,
-    status = $6,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $7
-RETURNING
-    id,
-    auth_identifier,
-    COALESCE(email, '') AS email,
-    COALESCE(given_name, '') AS given_name,
-    COALESCE(family_name, '') AS family_name,
-    is_super_admin,
-    status,
-    created_at,
-    updated_at
+WITH ignored AS (SELECT $5::boolean)
+UPDATE users SET auth_identifier = $1, email = $2, given_name = $3, family_name = $4, status = $6 WHERE id = $7
+RETURNING id, auth_identifier, COALESCE(email, '') AS email, COALESCE(given_name, '') AS given_name, COALESCE(family_name, '') AS family_name, false AS is_super_admin, status, created_at, updated_at
 `
 
 type UpdateUserParams struct {
@@ -564,7 +465,7 @@ type UpdateUserParams struct {
 	Email          *string
 	GivenName      *string
 	FamilyName     *string
-	IsSuperAdmin   bool
+	Column5        bool
 	Status         UserStatus
 	ID             uuid.UUID
 }
@@ -587,7 +488,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		arg.Email,
 		arg.GivenName,
 		arg.FamilyName,
-		arg.IsSuperAdmin,
+		arg.Column5,
 		arg.Status,
 		arg.ID,
 	)
@@ -607,36 +508,36 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 }
 
 const upsertMembership = `-- name: UpsertMembership :one
-INSERT INTO group_memberships (user_id, group_id, role, status)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (user_id, group_id) DO UPDATE SET
-    role = excluded.role,
-    status = excluded.status,
-    updated_at = CURRENT_TIMESTAMP
-RETURNING
-    user_id,
-    group_id,
-    role,
-    status,
-    created_at,
-    updated_at
+WITH ignored AS (SELECT $3::membership_role)
+INSERT INTO group_memberships (user_id, group_id, status) VALUES ($1, $2, $4)
+ON CONFLICT (user_id, group_id) DO UPDATE SET status = excluded.status
+RETURNING user_id, group_id, 'EDITOR'::membership_role AS role, status, created_at, updated_at
 `
 
 type UpsertMembershipParams struct {
 	UserID  uuid.UUID
 	GroupID uuid.UUID
-	Role    MembershipRole
+	Column3 MembershipRole
 	Status  MembershipStatus
 }
 
-func (q *Queries) UpsertMembership(ctx context.Context, arg UpsertMembershipParams) (GroupMembership, error) {
+type UpsertMembershipRow struct {
+	UserID    uuid.UUID
+	GroupID   uuid.UUID
+	Role      MembershipRole
+	Status    MembershipStatus
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) UpsertMembership(ctx context.Context, arg UpsertMembershipParams) (UpsertMembershipRow, error) {
 	row := q.db.QueryRow(ctx, upsertMembership,
 		arg.UserID,
 		arg.GroupID,
-		arg.Role,
+		arg.Column3,
 		arg.Status,
 	)
-	var i GroupMembership
+	var i UpsertMembershipRow
 	err := row.Scan(
 		&i.UserID,
 		&i.GroupID,

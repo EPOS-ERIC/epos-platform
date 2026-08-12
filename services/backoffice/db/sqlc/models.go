@@ -12,58 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type DatasetStatus string
-
-const (
-	DatasetStatusPUBLISHED DatasetStatus = "PUBLISHED"
-	DatasetStatusDRAFT     DatasetStatus = "DRAFT"
-	DatasetStatusSUBMITTED DatasetStatus = "SUBMITTED"
-	DatasetStatusARCHIVED  DatasetStatus = "ARCHIVED"
-	DatasetStatusREJECTED  DatasetStatus = "REJECTED"
-)
-
-func (e *DatasetStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = DatasetStatus(s)
-	case string:
-		*e = DatasetStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for DatasetStatus: %T", src)
-	}
-	return nil
-}
-
-type NullDatasetStatus struct {
-	DatasetStatus DatasetStatus
-	Valid         bool // Valid is true if DatasetStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullDatasetStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.DatasetStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.DatasetStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullDatasetStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.DatasetStatus), nil
-}
-
 type MembershipRole string
 
 const (
-	MembershipRoleVIEWER   MembershipRole = "VIEWER"
-	MembershipRoleEDITOR   MembershipRole = "EDITOR"
-	MembershipRoleREVIEWER MembershipRole = "REVIEWER"
-	MembershipRoleADMIN    MembershipRole = "ADMIN"
+	MembershipRoleEDITOR     MembershipRole = "EDITOR"
+	MembershipRoleREVIEWER   MembershipRole = "REVIEWER"
+	MembershipRoleGROUPADMIN MembershipRole = "GROUP_ADMIN"
 )
 
 func (e *MembershipRole) Scan(src interface{}) error {
@@ -106,7 +60,6 @@ type MembershipStatus string
 const (
 	MembershipStatusPENDING  MembershipStatus = "PENDING"
 	MembershipStatusACTIVE   MembershipStatus = "ACTIVE"
-	MembershipStatusREVOKED  MembershipStatus = "REVOKED"
 	MembershipStatusREJECTED MembershipStatus = "REJECTED"
 )
 
@@ -143,6 +96,89 @@ func (ns NullMembershipStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.MembershipStatus), nil
+}
+
+type NotificationChannel string
+
+const (
+	NotificationChannelEMAIL NotificationChannel = "EMAIL"
+)
+
+func (e *NotificationChannel) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationChannel(s)
+	case string:
+		*e = NotificationChannel(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationChannel: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationChannel struct {
+	NotificationChannel NotificationChannel
+	Valid               bool // Valid is true if NotificationChannel is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationChannel) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationChannel, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationChannel.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationChannel) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationChannel), nil
+}
+
+type NotificationScope string
+
+const (
+	NotificationScopeGLOBAL NotificationScope = "GLOBAL"
+	NotificationScopeGROUP  NotificationScope = "GROUP"
+)
+
+func (e *NotificationScope) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = NotificationScope(s)
+	case string:
+		*e = NotificationScope(s)
+	default:
+		return fmt.Errorf("unsupported scan type for NotificationScope: %T", src)
+	}
+	return nil
+}
+
+type NullNotificationScope struct {
+	NotificationScope NotificationScope
+	Valid             bool // Valid is true if NotificationScope is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullNotificationScope) Scan(value interface{}) error {
+	if value == nil {
+		ns.NotificationScope, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.NotificationScope.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullNotificationScope) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.NotificationScope), nil
 }
 
 type ParameterKind string
@@ -190,46 +226,134 @@ func (ns NullParameterKind) Value() (driver.Value, error) {
 	return string(ns.ParameterKind), nil
 }
 
-type PermissionEffect string
+type PermissionScope string
 
 const (
-	PermissionEffectALLOW PermissionEffect = "ALLOW"
-	PermissionEffectDENY  PermissionEffect = "DENY"
+	PermissionScopeGLOBAL PermissionScope = "GLOBAL"
+	PermissionScopeGROUP  PermissionScope = "GROUP"
 )
 
-func (e *PermissionEffect) Scan(src interface{}) error {
+func (e *PermissionScope) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = PermissionEffect(s)
+		*e = PermissionScope(s)
 	case string:
-		*e = PermissionEffect(s)
+		*e = PermissionScope(s)
 	default:
-		return fmt.Errorf("unsupported scan type for PermissionEffect: %T", src)
+		return fmt.Errorf("unsupported scan type for PermissionScope: %T", src)
 	}
 	return nil
 }
 
-type NullPermissionEffect struct {
-	PermissionEffect PermissionEffect
-	Valid            bool // Valid is true if PermissionEffect is not NULL
+type NullPermissionScope struct {
+	PermissionScope PermissionScope
+	Valid           bool // Valid is true if PermissionScope is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullPermissionEffect) Scan(value interface{}) error {
+func (ns *NullPermissionScope) Scan(value interface{}) error {
 	if value == nil {
-		ns.PermissionEffect, ns.Valid = "", false
+		ns.PermissionScope, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.PermissionEffect.Scan(value)
+	return ns.PermissionScope.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullPermissionEffect) Value() (driver.Value, error) {
+func (ns NullPermissionScope) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.PermissionEffect), nil
+	return string(ns.PermissionScope), nil
+}
+
+type ResourceStatus string
+
+const (
+	ResourceStatusDRAFT     ResourceStatus = "DRAFT"
+	ResourceStatusSUBMITTED ResourceStatus = "SUBMITTED"
+	ResourceStatusREJECTED  ResourceStatus = "REJECTED"
+	ResourceStatusPUBLISHED ResourceStatus = "PUBLISHED"
+	ResourceStatusARCHIVED  ResourceStatus = "ARCHIVED"
+)
+
+func (e *ResourceStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ResourceStatus(s)
+	case string:
+		*e = ResourceStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ResourceStatus: %T", src)
+	}
+	return nil
+}
+
+type NullResourceStatus struct {
+	ResourceStatus ResourceStatus
+	Valid          bool // Valid is true if ResourceStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullResourceStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ResourceStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ResourceStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullResourceStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ResourceStatus), nil
+}
+
+type RoleRequestStatus string
+
+const (
+	RoleRequestStatusPENDING  RoleRequestStatus = "PENDING"
+	RoleRequestStatusACCEPTED RoleRequestStatus = "ACCEPTED"
+	RoleRequestStatusREJECTED RoleRequestStatus = "REJECTED"
+)
+
+func (e *RoleRequestStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoleRequestStatus(s)
+	case string:
+		*e = RoleRequestStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoleRequestStatus: %T", src)
+	}
+	return nil
+}
+
+type NullRoleRequestStatus struct {
+	RoleRequestStatus RoleRequestStatus
+	Valid             bool // Valid is true if RoleRequestStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoleRequestStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoleRequestStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoleRequestStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoleRequestStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoleRequestStatus), nil
 }
 
 type TopLevelConcept string
@@ -319,27 +443,13 @@ func (ns NullUserStatus) Value() (driver.Value, error) {
 }
 
 type Category struct {
-	ID        uuid.UUID
-	SourceIri string
-	SchemeID  uuid.UUID
-	Name      string
-}
-
-type CategoryChild struct {
-	ParentCategoryID uuid.UUID
-	ChildCategoryID  uuid.UUID
-}
-
-type CategoryScheme struct {
-	ID        uuid.UUID
-	SourceIri string
-	Name      string
-	Concept   TopLevelConcept
-	Label     *string
-	Logo      *string
-	Page      *string
-	Color     *string
-	Position  int32
+	ID               uuid.UUID
+	GroupID          uuid.UUID
+	ParentCategoryID *uuid.UUID
+	SourceIri        string
+	Name             string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type ContactPoint struct {
@@ -350,52 +460,64 @@ type ContactPoint struct {
 }
 
 type Dataset struct {
+	ID        uuid.UUID
+	SourceIri string
+	GroupID   uuid.UUID
+	CreatedBy uuid.UUID
+	CreatedAt time.Time
+}
+
+type DatasetVersion struct {
 	ID                 uuid.UUID
-	SourceIri          string
+	DatasetID          uuid.UUID
+	Status             ResourceStatus
+	Revision           int32
 	Title              string
 	Description        string
 	Keywords           string
 	AccrualPeriodicity *string
 	QualityAnnotation  *string
 	AccessRight        *string
-	SpatialPoint       []byte
-	SpatialPolygon     []byte
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	Status             DatasetStatus
-	EditorUserID       *uuid.UUID
-	GroupID            *uuid.UUID
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
 	SourceCreatedAt    *time.Time
 	SourceUpdatedAt    *time.Time
-	OriginalDatasetID  uuid.UUID
+	SpatialPoint       interface{}
+	SpatialPolygon     interface{}
+	TemporalStart      *time.Time
+	TemporalEnd        *time.Time
+	CreatedBy          uuid.UUID
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	SubmittedBy        *uuid.UUID
+	SubmittedAt        *time.Time
+	PublishedBy        *uuid.UUID
+	PublishedAt        *time.Time
+	ArchivedBy         *uuid.UUID
+	ArchivedAt         *time.Time
+	RejectedBy         *uuid.UUID
+	RejectedAt         *time.Time
+	RejectionNote      *string
 }
 
-type DatasetCategory struct {
-	DatasetID  uuid.UUID
-	CategoryID uuid.UUID
+type DatasetVersionCategory struct {
+	DatasetVersionID uuid.UUID
+	GroupID          uuid.UUID
+	CategoryID       uuid.UUID
 }
 
-type DatasetContactPoint struct {
-	DatasetID      uuid.UUID
-	ContactPointID uuid.UUID
+type DatasetVersionContactPoint struct {
+	DatasetVersionID uuid.UUID
+	ContactPointID   uuid.UUID
 }
 
-type DatasetIdentifier struct {
-	DatasetID    uuid.UUID
-	IdentifierID uuid.UUID
-}
-
-type DatasetProvider struct {
-	DatasetID      uuid.UUID
-	OrganizationID uuid.UUID
+type DatasetVersionProvider struct {
+	DatasetVersionID uuid.UUID
+	OrganizationID   uuid.UUID
 }
 
 type Distribution struct {
 	ID                     uuid.UUID
+	DatasetVersionID       uuid.UUID
 	SourceIri              string
-	DatasetID              uuid.UUID
 	Title                  string
 	Description            string
 	License                *string
@@ -408,12 +530,30 @@ type Distribution struct {
 	WebServiceID           *uuid.UUID
 }
 
+type GlobalNotificationSubscription struct {
+	UserID    uuid.UUID
+	EventType string
+	Channel   NotificationChannel
+}
+
+type GlobalPermissionGrant struct {
+	UserID        uuid.UUID
+	PermissionKey string
+	GrantedBy     uuid.UUID
+	GrantedAt     time.Time
+}
+
 type Group struct {
 	ID          uuid.UUID
-	Slug        string
 	Name        string
 	Description *string
-	IsSystem    bool
+	SourceIri   string
+	Concept     TopLevelConcept
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -421,29 +561,60 @@ type Group struct {
 type GroupMembership struct {
 	UserID    uuid.UUID
 	GroupID   uuid.UUID
-	Role      MembershipRole
 	Status    MembershipStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-type GroupPermission struct {
-	ID           uuid.UUID
-	GroupID      uuid.UUID
-	Service      string
-	Action       string
-	ResourceType *string
-	ResourceID   *string
-	Effect       PermissionEffect
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+type GroupMembershipRole struct {
+	UserID     uuid.UUID
+	GroupID    uuid.UUID
+	RoleKey    string
+	AssignedBy uuid.UUID
+	AssignedAt time.Time
+}
+
+type GroupNotificationSubscription struct {
+	UserID    uuid.UUID
+	GroupID   uuid.UUID
+	EventType string
+	Channel   NotificationChannel
+}
+
+type GroupPermissionGrant struct {
+	UserID        uuid.UUID
+	GroupID       uuid.UUID
+	PermissionKey string
+	GrantedBy     uuid.UUID
+	GrantedAt     time.Time
+}
+
+type GroupRoleRequest struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	GroupID     uuid.UUID
+	RoleKey     string
+	Status      RoleRequestStatus
+	RequestedAt time.Time
+	DecidedBy   *uuid.UUID
+	DecidedAt   *time.Time
 }
 
 type Identifier struct {
-	ID        uuid.UUID
-	SourceIri string
-	Type      string
-	Value     string
+	ID                           uuid.UUID
+	SourceIri                    string
+	Type                         string
+	Value                        string
+	DatasetVersionID             *uuid.UUID
+	OrganizationID               *uuid.UUID
+	SoftwareApplicationVersionID *uuid.UUID
+	SoftwareSourceCodeVersionID  *uuid.UUID
+}
+
+type NotificationEventType struct {
+	Key                   string
+	Scope                 NotificationScope
+	RequiredPermissionKey *string
 }
 
 type Organization struct {
@@ -460,48 +631,88 @@ type Organization struct {
 	LeiCode    *string
 }
 
-type OrganizationIdentifier struct {
-	OrganizationID uuid.UUID
-	IdentifierID   uuid.UUID
-}
-
 type OrganizationMembership struct {
 	ChildOrganizationID  uuid.UUID
 	ParentOrganizationID uuid.UUID
 }
 
+type Permission struct {
+	Key         string
+	Label       string
+	Description string
+	Scope       PermissionScope
+}
+
+type Role struct {
+	Key   string
+	Scope PermissionScope
+}
+
+type RolePermission struct {
+	RoleKey       string
+	PermissionKey string
+}
+
 type SoftwareApplication struct {
-	ID               uuid.UUID
-	SourceIri        string
-	Name             string
-	Description      string
-	MainEntityOfPage *string
-	License          *string
-	Version          *string
-	Keywords         string
-	DownloadUrl      *string
-	Requirements     *string
-	OperatingSystem  *string
+	ID        uuid.UUID
+	SourceIri string
+	GroupID   uuid.UUID
+	CreatedBy uuid.UUID
+	CreatedAt time.Time
 }
 
-type SoftwareApplicationCategory struct {
+type SoftwareApplicationVersion struct {
+	ID                    uuid.UUID
 	SoftwareApplicationID uuid.UUID
-	CategoryID            uuid.UUID
+	Status                ResourceStatus
+	Revision              int32
+	Name                  string
+	Description           string
+	MainEntityOfPage      *string
+	License               *string
+	Version               *string
+	Keywords              string
+	DownloadUrl           *string
+	Requirements          *string
+	OperatingSystem       *string
+	CreatedBy             uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	SubmittedBy           *uuid.UUID
+	SubmittedAt           *time.Time
+	PublishedBy           *uuid.UUID
+	PublishedAt           *time.Time
+	ArchivedBy            *uuid.UUID
+	ArchivedAt            *time.Time
+	RejectedBy            *uuid.UUID
+	RejectedAt            *time.Time
+	RejectionNote         *string
 }
 
-type SoftwareApplicationCreator struct {
-	SoftwareApplicationID uuid.UUID
-	OrganizationID        uuid.UUID
+type SoftwareApplicationVersionCategory struct {
+	SoftwareApplicationVersionID uuid.UUID
+	GroupID                      uuid.UUID
+	CategoryID                   uuid.UUID
 }
 
-type SoftwareApplicationIdentifier struct {
-	SoftwareApplicationID uuid.UUID
-	IdentifierID          uuid.UUID
+type SoftwareApplicationVersionCreator struct {
+	SoftwareApplicationVersionID uuid.UUID
+	OrganizationID               uuid.UUID
 }
 
 type SoftwareSourceCode struct {
+	ID        uuid.UUID
+	SourceIri string
+	GroupID   uuid.UUID
+	CreatedBy uuid.UUID
+	CreatedAt time.Time
+}
+
+type SoftwareSourceCodeVersion struct {
 	ID                   uuid.UUID
-	SourceIri            string
+	SoftwareSourceCodeID uuid.UUID
+	Status               ResourceStatus
+	Revision             int32
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
@@ -512,21 +723,29 @@ type SoftwareSourceCode struct {
 	RuntimePlatform      *string
 	MainEntityOfPage     *string
 	Version              *string
+	CreatedBy            uuid.UUID
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	SubmittedBy          *uuid.UUID
+	SubmittedAt          *time.Time
+	PublishedBy          *uuid.UUID
+	PublishedAt          *time.Time
+	ArchivedBy           *uuid.UUID
+	ArchivedAt           *time.Time
+	RejectedBy           *uuid.UUID
+	RejectedAt           *time.Time
+	RejectionNote        *string
 }
 
-type SoftwareSourceCodeCategory struct {
-	SoftwareSourceCodeID uuid.UUID
-	CategoryID           uuid.UUID
+type SoftwareSourceCodeVersionCategory struct {
+	SoftwareSourceCodeVersionID uuid.UUID
+	GroupID                     uuid.UUID
+	CategoryID                  uuid.UUID
 }
 
-type SoftwareSourceCodeCreator struct {
-	SoftwareSourceCodeID uuid.UUID
-	OrganizationID       uuid.UUID
-}
-
-type SoftwareSourceCodeIdentifier struct {
-	SoftwareSourceCodeID uuid.UUID
-	IdentifierID         uuid.UUID
+type SoftwareSourceCodeVersionCreator struct {
+	SoftwareSourceCodeVersionID uuid.UUID
+	OrganizationID              uuid.UUID
 }
 
 type User struct {
@@ -535,14 +754,24 @@ type User struct {
 	FamilyName     *string
 	GivenName      *string
 	Email          *string
-	IsSuperAdmin   bool
 	Status         UserStatus
+	BlockReason    *string
+	BlockedBy      *uuid.UUID
+	BlockedAt      *time.Time
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
 
+type UserGlobalRole struct {
+	UserID     uuid.UUID
+	RoleKey    string
+	AssignedBy *uuid.UUID
+	AssignedAt time.Time
+}
+
 type WebService struct {
 	ID                       uuid.UUID
+	DatasetVersionID         uuid.UUID
 	SourceIri                string
 	Name                     string
 	Description              string
