@@ -6,8 +6,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
 )
+
+var log = logging.Get("health-handler")
+
+type healthResponse struct {
+	Status string `json:"status"`
+	Reason string `json:"reason,omitempty"`
+}
 
 type Health struct {
 	db *db.PostgresDB
