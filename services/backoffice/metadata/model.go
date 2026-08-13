@@ -33,7 +33,6 @@ type Dataset struct {
 
 type Distribution struct {
 	ID          uuid.UUID
-	SourceIRI   string
 	Title       string
 	Description string
 	License     *string
@@ -65,7 +64,6 @@ type DownloadableFile struct {
 
 type WebService struct {
 	ID               uuid.UUID
-	SourceIRI        string
 	Name             string
 	Description      string
 	TemplateURL      string
@@ -113,7 +111,6 @@ type SoftwareSourceCode struct {
 	Categories           []Category
 }
 type Documentation struct {
-	SourceIRI   string
 	Title       *string
 	Description *string
 	URI         string

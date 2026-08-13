@@ -34,7 +34,6 @@ type datasetDraftRequest struct {
 
 type distributionRequest struct {
 	ID               uuid.UUID                 `json:"id"`
-	SourceIRI        string                    `json:"source_iri"`
 	Title            string                    `json:"title"`
 	Description      string                    `json:"description"`
 	License          *string                   `json:"license"`
@@ -48,7 +47,6 @@ type distributionRequest struct {
 
 type webServiceRequest struct {
 	ID               uuid.UUID            `json:"id"`
-	SourceIRI        string               `json:"source_iri"`
 	Name             string               `json:"name"`
 	Description      string               `json:"description"`
 	TemplateURL      string               `json:"template_url"`
@@ -159,7 +157,6 @@ func decodeStrictBytes(data []byte, target any) error {
 
 type parameterMetadata struct {
 	ID             uuid.UUID              `json:"id"`
-	SourceIRI      string                 `json:"source_iri"`
 	Kind           metadata.ParameterKind `json:"kind"`
 	Variable       string                 `json:"variable"`
 	Property       string                 `json:"property"`
@@ -172,7 +169,6 @@ type parameterMetadata struct {
 func (p parameterMetadata) domain() metadata.ParameterMetadata {
 	return metadata.ParameterMetadata{
 		ID:             p.ID,
-		SourceIRI:      p.SourceIRI,
 		Kind:           p.Kind,
 		Variable:       p.Variable,
 		Property:       p.Property,
@@ -239,7 +235,6 @@ type downloadableFile struct {
 }
 
 type documentation struct {
-	SourceIRI   string  `json:"source_iri"`
 	Title       *string `json:"title"`
 	Description *string `json:"description"`
 	URI         string  `json:"uri"`
@@ -345,7 +340,6 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 func (r distributionRequest) domain() metadata.Distribution {
 	result := metadata.Distribution{
 		ID:               r.ID,
-		SourceIRI:        r.SourceIRI,
 		Title:            r.Title,
 		Description:      r.Description,
 		License:          r.License,
@@ -372,7 +366,6 @@ func (r distributionRequest) domain() metadata.Distribution {
 func (r webServiceRequest) domain() metadata.WebService {
 	result := metadata.WebService{
 		ID:               r.ID,
-		SourceIRI:        r.SourceIRI,
 		Name:             r.Name,
 		Description:      r.Description,
 		TemplateURL:      r.TemplateURL,
@@ -405,7 +398,6 @@ func (r webServiceRequest) domain() metadata.WebService {
 	}
 	if r.Documentation != nil {
 		result.Documentation = &metadata.Documentation{
-			SourceIRI:   r.Documentation.SourceIRI,
 			Title:       r.Documentation.Title,
 			Description: r.Documentation.Description,
 			URI:         r.Documentation.URI,
@@ -499,7 +491,6 @@ type metadataResponse struct {
 
 type distribution struct {
 	ID               uuid.UUID                 `json:"id"`
-	SourceIRI        string                    `json:"source_iri"`
 	Title            string                    `json:"title"`
 	Description      string                    `json:"description"`
 	License          *string                   `json:"license"`
@@ -513,7 +504,6 @@ type distribution struct {
 
 type webService struct {
 	ID               uuid.UUID           `json:"id"`
-	SourceIRI        string              `json:"source_iri"`
 	Name             string              `json:"name"`
 	Description      string              `json:"description"`
 	TemplateURL      string              `json:"template_url"`
@@ -627,7 +617,6 @@ func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataRe
 func distributionDTO(value metadata.Distribution, includeContacts bool) distribution {
 	result := distribution{
 		ID:               value.ID,
-		SourceIRI:        value.SourceIRI,
 		Title:            value.Title,
 		Description:      value.Description,
 		License:          value.License,
@@ -654,7 +643,6 @@ func distributionDTO(value metadata.Distribution, includeContacts bool) distribu
 func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 	result := webService{
 		ID:               value.ID,
-		SourceIRI:        value.SourceIRI,
 		Name:             value.Name,
 		Description:      value.Description,
 		TemplateURL:      value.TemplateURL,
@@ -675,7 +663,6 @@ func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 	}
 	if value.Documentation != nil {
 		result.Documentation = &documentation{
-			SourceIRI:   value.Documentation.SourceIRI,
 			Title:       value.Documentation.Title,
 			Description: value.Documentation.Description,
 			URI:         value.Documentation.URI,
@@ -738,7 +725,6 @@ func parameterDTO(value metadata.Parameter) parameterResponse {
 func parameterMetadataResponse(value metadata.ParameterMetadata) parameterMetadata {
 	return parameterMetadata{
 		ID:             value.ID,
-		SourceIRI:      value.SourceIRI,
 		Kind:           value.Kind,
 		Variable:       value.Variable,
 		Property:       value.Property,

@@ -548,7 +548,7 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 		}
 	}
 
-	services := make(map[string]uuid.UUID, len(value.Distributions))
+	services := make(map[uuid.UUID]uuid.UUID, len(value.Distributions))
 	for _, distribution := range value.Distributions {
 		if distribution.WebService == nil {
 			continue
@@ -572,7 +572,6 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 		}
 		created, err := q.AddLifecycleWebService(ctx, sqlc.AddLifecycleWebServiceParams{
 			DatasetVersionID:         versionID,
-			SourceIri:                service.SourceIRI,
 			Name:                     service.Name,
 			Description:              service.Description,
 			TemplateUrl:              service.TemplateURL,
@@ -589,7 +588,7 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 		if err != nil {
 			return fmt.Errorf("add web service: %w", err)
 		}
-		services[service.SourceIRI] = created.ID
+		services[service.ID] = created.ID
 		for _, contact := range service.ContactPoints {
 			if err := q.AddLifecycleWebServiceContactPoint(ctx, sqlc.AddLifecycleWebServiceContactPointParams{
 				WebServiceID:   created.ID,
@@ -605,7 +604,6 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 			}
 			m := record.metadata
 			if err := q.AddLifecycleWebServiceParameter(ctx, sqlc.AddLifecycleWebServiceParameterParams{
-				SourceIri:      m.SourceIRI,
 				WebServiceID:   created.ID,
 				Kind:           sqlc.ParameterKind(record.kind),
 				Variable:       m.Variable,
@@ -623,7 +621,6 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 	for _, distribution := range value.Distributions {
 		params := sqlc.AddLifecycleDistributionParams{
 			DatasetVersionID:       versionID,
-			SourceIri:              distribution.SourceIRI,
 			Title:                  distribution.Title,
 			Description:            distribution.Description,
 			License:                distribution.License,
@@ -647,7 +644,7 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 			params.DownloadableFileFormat = &distribution.DownloadableFile.Format
 		}
 		if distribution.WebService != nil {
-			id, ok := services[distribution.WebService.SourceIRI]
+			id, ok := services[distribution.WebService.ID]
 			if !ok {
 				return fmt.Errorf("distribution web service is missing")
 			}
@@ -778,7 +775,6 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 	for _, item := range distributions {
 		distribution := metadata.Distribution{
 			ID:               item.ID,
-			SourceIRI:        item.SourceIri,
 			Title:            item.Title,
 			Description:      item.Description,
 			License:          item.License,
@@ -823,7 +819,6 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		var documentation *metadata.Documentation
 		if row.WebService.DocumentationUri != nil {
 			documentation = &metadata.Documentation{
-				SourceIRI:   "",
 				Title:       row.WebService.DocumentationTitle,
 				Description: row.WebService.DocumentationDescription,
 				URI:         *row.WebService.DocumentationUri,
@@ -831,7 +826,6 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		}
 		result[row.WebService.ID] = metadata.WebService{
 			ID:               row.WebService.ID,
-			SourceIRI:        row.WebService.SourceIri,
 			Name:             row.WebService.Name,
 			Description:      row.WebService.Description,
 			TemplateURL:      row.WebService.TemplateUrl,
@@ -885,7 +879,6 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 			kind: metadata.ParameterKind(item.Kind),
 			metadata: metadata.ParameterMetadata{
 				ID:             item.ID,
-				SourceIRI:      item.SourceIri,
 				Kind:           metadata.ParameterKind(item.Kind),
 				Variable:       item.Variable,
 				Property:       item.Property,

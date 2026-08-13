@@ -128,7 +128,7 @@ func TestCreateDatasetDecodesTypedParameter(t *testing.T) {
 		return datasetlifecycle.Dataset{}, nil
 	}})
 	router.Post("/groups/{group_id}/datasets", datasets.Create)
-	body := `{"source_iri":"dataset:test","distributions":[{"source_iri":"distribution:test","title":"Test","type":"http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE","web_service":{"source_iri":"service:test","name":"Test","template_url":"https://example.test/{value}","format":"application/json","parameters":[{"metadata":{"id":"` + parameterID.String() + `","source_iri":"parameter:test","kind":"STRING","variable":"value","property":"schema:value","label":"Value","required":true,"multiple_values":false,"read_only":false},"default":null,"allowed_values":[],"pattern":""}]}}]}`
+	body := `{"source_iri":"dataset:test","distributions":[{"title":"Test","type":"http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE","web_service":{"name":"Test","template_url":"https://example.test/{value}","format":"application/json","parameters":[{"metadata":{"id":"` + parameterID.String() + `","kind":"STRING","variable":"value","property":"schema:value","label":"Value","required":true,"multiple_values":false,"read_only":false},"default":null,"allowed_values":[],"pattern":""}]}}]}`
 	request := httptest.NewRequest(http.MethodPost, "/groups/"+group.String()+"/datasets", strings.NewReader(body))
 	request.Header.Set(transport.ActorHeader, actor.String())
 	response := httptest.NewRecorder()

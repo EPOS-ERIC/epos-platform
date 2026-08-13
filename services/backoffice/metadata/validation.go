@@ -160,7 +160,7 @@ func (w WebService) Validate() error {
 			if parameter == nil {
 				return fmt.Errorf("parameter: %w", err)
 			}
-			return fmt.Errorf("parameter %q: %w", parameter.GetMetadata().SourceIRI, err)
+			return fmt.Errorf("parameter %q: %w", parameter.GetMetadata().Variable, err)
 		}
 		if err := addUnique(variables, parameter.GetMetadata().Variable, "parameter variable"); err != nil {
 			return err

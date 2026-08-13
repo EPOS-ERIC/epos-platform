@@ -109,7 +109,6 @@ const addLifecycleDistribution = `-- name: AddLifecycleDistribution :exec
 INSERT INTO
     distributions (
         dataset_version_id,
-        source_iri,
         title,
         description,
         license,
@@ -133,14 +132,12 @@ VALUES
         $8,
         $9,
         $10,
-        $11,
-        $12
+        $11
     )
 `
 
 type AddLifecycleDistributionParams struct {
 	DatasetVersionID       uuid.UUID
-	SourceIri              string
 	Title                  string
 	Description            string
 	License                *string
@@ -156,7 +153,6 @@ type AddLifecycleDistributionParams struct {
 func (q *Queries) AddLifecycleDistribution(ctx context.Context, arg AddLifecycleDistributionParams) error {
 	_, err := q.db.Exec(ctx, addLifecycleDistribution,
 		arg.DatasetVersionID,
-		arg.SourceIri,
 		arg.Title,
 		arg.Description,
 		arg.License,
@@ -175,7 +171,6 @@ const addLifecycleWebService = `-- name: AddLifecycleWebService :one
 INSERT INTO
     web_services (
         dataset_version_id,
-        source_iri,
         name,
         description,
         template_url,
@@ -200,7 +195,13 @@ VALUES
         $7,
         $8,
         $9,
-        $10,
+        CASE
+            WHEN $10::text IS NULL THEN NULL
+            ELSE ST_SetSRID(
+                ST_GeomFromGeoJSON($10::text),
+                4326
+            )
+        END,
         CASE
             WHEN $11::text IS NULL THEN NULL
             ELSE ST_SetSRID(
@@ -208,23 +209,15 @@ VALUES
                 4326
             )
         END,
-        CASE
-            WHEN $12::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON($12::text),
-                4326
-            )
-        END,
-        $13,
-        $14
+        $12,
+        $13
     )
 RETURNING
-    id, dataset_version_id, source_iri, name, description, template_url, format, provider_organization_id, documentation_title, documentation_description, documentation_uri, spatial_point, spatial_polygon, temporal_start, temporal_end
+    id, dataset_version_id, name, description, template_url, format, provider_organization_id, documentation_title, documentation_description, documentation_uri, spatial_point, spatial_polygon, temporal_start, temporal_end
 `
 
 type AddLifecycleWebServiceParams struct {
 	DatasetVersionID         uuid.UUID
-	SourceIri                string
 	Name                     string
 	Description              string
 	TemplateUrl              string
@@ -242,7 +235,6 @@ type AddLifecycleWebServiceParams struct {
 func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWebServiceParams) (WebService, error) {
 	row := q.db.QueryRow(ctx, addLifecycleWebService,
 		arg.DatasetVersionID,
-		arg.SourceIri,
 		arg.Name,
 		arg.Description,
 		arg.TemplateUrl,
@@ -260,7 +252,6 @@ func (q *Queries) AddLifecycleWebService(ctx context.Context, arg AddLifecycleWe
 	err := row.Scan(
 		&i.ID,
 		&i.DatasetVersionID,
-		&i.SourceIri,
 		&i.Name,
 		&i.Description,
 		&i.TemplateUrl,
@@ -300,7 +291,6 @@ func (q *Queries) AddLifecycleWebServiceContactPoint(ctx context.Context, arg Ad
 const addLifecycleWebServiceParameter = `-- name: AddLifecycleWebServiceParameter :exec
 INSERT INTO
     web_service_parameters (
-        source_iri,
         web_service_id,
         kind,
         variable,
@@ -321,13 +311,11 @@ VALUES
         $6,
         $7,
         $8,
-        $9,
-        $10
+        $9
     )
 `
 
 type AddLifecycleWebServiceParameterParams struct {
-	SourceIri      string
 	WebServiceID   uuid.UUID
 	Kind           ParameterKind
 	Variable       string
@@ -341,7 +329,6 @@ type AddLifecycleWebServiceParameterParams struct {
 
 func (q *Queries) AddLifecycleWebServiceParameter(ctx context.Context, arg AddLifecycleWebServiceParameterParams) error {
 	_, err := q.db.Exec(ctx, addLifecycleWebServiceParameter,
-		arg.SourceIri,
 		arg.WebServiceID,
 		arg.Kind,
 		arg.Variable,
@@ -474,8 +461,8 @@ categories AS (
 web_services AS (
     INSERT INTO
         web_services (
+            id,
             dataset_version_id,
-            source_iri,
             name,
             description,
             template_url,
@@ -490,13 +477,13 @@ web_services AS (
             temporal_end
         )
     SELECT
+        uuid_generate_v5((SELECT id FROM inserted), source.id::text),
         (
             SELECT
                 id
             FROM
                 inserted
         ),
-        source_iri,
         name,
         description,
         template_url,
@@ -510,12 +497,12 @@ web_services AS (
         temporal_start,
         temporal_end
     FROM
-        web_services
+        web_services AS source
     WHERE
         dataset_version_id = $1
     RETURNING
         id,
-        source_iri
+        dataset_version_id
 ),
 web_service_contacts AS (
     INSERT INTO
@@ -526,7 +513,7 @@ web_service_contacts AS (
     FROM
         web_service_contact_points AS link
         JOIN web_services AS source ON source.id = link.web_service_id
-        JOIN web_services AS target ON target.source_iri = source.source_iri
+        JOIN web_services AS target ON target.id = uuid_generate_v5((SELECT id FROM inserted), source.id::text)
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -539,7 +526,6 @@ web_service_contacts AS (
 web_service_parameters AS (
     INSERT INTO
         web_service_parameters (
-            source_iri,
             web_service_id,
             kind,
             variable,
@@ -551,7 +537,6 @@ web_service_parameters AS (
             config
         )
     SELECT
-        parameter.source_iri,
         target.id,
         parameter.kind,
         parameter.variable,
@@ -564,7 +549,7 @@ web_service_parameters AS (
     FROM
         web_service_parameters AS parameter
         JOIN web_services AS source ON source.id = parameter.web_service_id
-        JOIN web_services AS target ON target.source_iri = source.source_iri
+        JOIN web_services AS target ON target.id = uuid_generate_v5((SELECT id FROM inserted), source.id::text)
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -578,7 +563,6 @@ distributions AS (
     INSERT INTO
         distributions (
             dataset_version_id,
-            source_iri,
             title,
             description,
             license,
@@ -597,7 +581,6 @@ distributions AS (
             FROM
                 inserted
         ),
-        distribution.source_iri,
         distribution.title,
         distribution.description,
         distribution.license,
@@ -611,7 +594,7 @@ distributions AS (
     FROM
         distributions AS distribution
         LEFT JOIN web_services AS source ON source.id = distribution.web_service_id
-        LEFT JOIN web_services AS target ON target.source_iri = source.source_iri
+        LEFT JOIN web_services AS target ON target.id = uuid_generate_v5((SELECT id FROM inserted), source.id::text)
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -1072,9 +1055,11 @@ func (q *Queries) GetLifecycleDataset(ctx context.Context, id uuid.UUID) (Datase
 const getLifecycleDatasetGroup = `-- name: GetLifecycleDatasetGroup :one
 SELECT
     owning_group.id, owning_group.name, owning_group.description, owning_group.source_iri, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
-FROM datasets AS dataset
-JOIN groups AS owning_group ON owning_group.id = dataset.group_id
-WHERE dataset.id = $1
+FROM
+    datasets AS dataset
+    JOIN groups AS owning_group ON owning_group.id = dataset.group_id
+WHERE
+    dataset.id = $1
 `
 
 type GetLifecycleDatasetGroupRow struct {
@@ -1462,7 +1447,7 @@ func (q *Queries) ListLifecycleDatasetProviders(ctx context.Context, datasetVers
 
 const listLifecycleDistributions = `-- name: ListLifecycleDistributions :many
 SELECT
-    id, dataset_version_id, source_iri, title, description, license, source_issued_at, source_modified_at, byte_size, type, downloadable_file_url, downloadable_file_format, web_service_id
+    id, dataset_version_id, title, description, license, source_issued_at, source_modified_at, byte_size, type, downloadable_file_url, downloadable_file_format, web_service_id
 FROM
     distributions
 WHERE
@@ -1483,7 +1468,6 @@ func (q *Queries) ListLifecycleDistributions(ctx context.Context, datasetVersion
 		if err := rows.Scan(
 			&i.ID,
 			&i.DatasetVersionID,
-			&i.SourceIri,
 			&i.Title,
 			&i.Description,
 			&i.License,
@@ -1606,7 +1590,6 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 const listLifecycleWebServiceParameters = `-- name: ListLifecycleWebServiceParameters :many
 SELECT
     id,
-    source_iri,
     web_service_id,
     kind,
     variable,
@@ -1636,7 +1619,6 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 		var i WebServiceParameter
 		if err := rows.Scan(
 			&i.ID,
-			&i.SourceIri,
 			&i.WebServiceID,
 			&i.Kind,
 			&i.Variable,
@@ -1659,7 +1641,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 
 const listLifecycleWebServices = `-- name: ListLifecycleWebServices :many
 SELECT
-    service.id, service.dataset_version_id, service.source_iri, service.name, service.description, service.template_url, service.format, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_point, service.spatial_polygon, service.temporal_start, service.temporal_end,
+    service.id, service.dataset_version_id, service.name, service.description, service.template_url, service.format, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_point, service.spatial_polygon, service.temporal_start, service.temporal_end,
     COALESCE(ST_AsGeoJSON(service.spatial_point), '')::text AS spatial_point_geojson,
     COALESCE(ST_AsGeoJSON(service.spatial_polygon), '')::text AS spatial_polygon_geojson
 FROM
@@ -1688,7 +1670,6 @@ func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID
 		if err := rows.Scan(
 			&i.WebService.ID,
 			&i.WebService.DatasetVersionID,
-			&i.WebService.SourceIri,
 			&i.WebService.Name,
 			&i.WebService.Description,
 			&i.WebService.TemplateUrl,

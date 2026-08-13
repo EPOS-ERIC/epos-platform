@@ -407,8 +407,8 @@ categories AS (
 web_services AS (
     INSERT INTO
         web_services (
+            id,
             dataset_version_id,
-            source_iri,
             name,
             description,
             template_url,
@@ -423,13 +423,21 @@ web_services AS (
             temporal_end
         )
     SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        ),
         (
             SELECT
                 id
             FROM
                 inserted
         ),
-        source_iri,
         name,
         description,
         template_url,
@@ -443,12 +451,12 @@ web_services AS (
         temporal_start,
         temporal_end
     FROM
-        web_services
+        web_services AS source
     WHERE
         dataset_version_id = sqlc.arg(source_version_id)
     RETURNING
         id,
-        source_iri
+        dataset_version_id
 ),
 web_service_contacts AS (
     INSERT INTO
@@ -459,7 +467,15 @@ web_service_contacts AS (
     FROM
         web_service_contact_points AS link
         JOIN web_services AS source ON source.id = link.web_service_id
-        JOIN web_services AS target ON target.source_iri = source.source_iri
+        JOIN web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        )
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -472,7 +488,6 @@ web_service_contacts AS (
 web_service_parameters AS (
     INSERT INTO
         web_service_parameters (
-            source_iri,
             web_service_id,
             kind,
             variable,
@@ -484,7 +499,6 @@ web_service_parameters AS (
             config
         )
     SELECT
-        parameter.source_iri,
         target.id,
         parameter.kind,
         parameter.variable,
@@ -497,7 +511,15 @@ web_service_parameters AS (
     FROM
         web_service_parameters AS parameter
         JOIN web_services AS source ON source.id = parameter.web_service_id
-        JOIN web_services AS target ON target.source_iri = source.source_iri
+        JOIN web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        )
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -511,7 +533,6 @@ distributions AS (
     INSERT INTO
         distributions (
             dataset_version_id,
-            source_iri,
             title,
             description,
             license,
@@ -530,7 +551,6 @@ distributions AS (
             FROM
                 inserted
         ),
-        distribution.source_iri,
         distribution.title,
         distribution.description,
         distribution.license,
@@ -544,7 +564,15 @@ distributions AS (
     FROM
         distributions AS distribution
         LEFT JOIN web_services AS source ON source.id = distribution.web_service_id
-        LEFT JOIN web_services AS target ON target.source_iri = source.source_iri
+        LEFT JOIN web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        )
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -606,7 +634,6 @@ WHERE
 INSERT INTO
     web_services (
         dataset_version_id,
-        source_iri,
         name,
         description,
         template_url,
@@ -623,7 +650,6 @@ INSERT INTO
 VALUES
     (
         sqlc.arg(dataset_version_id),
-        sqlc.arg(source_iri),
         sqlc.arg(name),
         sqlc.arg(description),
         sqlc.arg(template_url),
@@ -664,7 +690,6 @@ VALUES
 -- name: AddLifecycleWebServiceParameter :exec
 INSERT INTO
     web_service_parameters (
-        source_iri,
         web_service_id,
         kind,
         variable,
@@ -677,7 +702,6 @@ INSERT INTO
     )
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(web_service_id),
         sqlc.arg(kind),
         sqlc.arg(variable),
@@ -693,7 +717,6 @@ VALUES
 INSERT INTO
     distributions (
         dataset_version_id,
-        source_iri,
         title,
         description,
         license,
@@ -708,7 +731,6 @@ INSERT INTO
 VALUES
     (
         sqlc.arg(dataset_version_id),
-        sqlc.arg(source_iri),
         sqlc.arg(title),
         sqlc.arg(description),
         sqlc.narg(license),
@@ -913,7 +935,6 @@ ORDER BY
 -- name: ListLifecycleWebServiceParameters :many
 SELECT
     id,
-    source_iri,
     web_service_id,
     kind,
     variable,

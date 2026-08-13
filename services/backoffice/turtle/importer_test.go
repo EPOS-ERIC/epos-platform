@@ -130,10 +130,10 @@ func TestParseMetadataOne(t *testing.T) {
 			}
 			service := distribution.WebService
 			if service.Provider == nil || service.Provider.SourceIRI != "pic:999472675" {
-				t.Errorf("web service %q provider = %#v", service.SourceIRI, service.Provider)
+				t.Errorf("web service provider = %#v", service.Provider)
 			}
 			if len(service.ContactPoints) != 2 {
-				t.Errorf("web service %q contacts = %d, want 2", service.SourceIRI, len(service.ContactPoints))
+				t.Errorf("web service contacts = %d, want 2", len(service.ContactPoints))
 			}
 		}
 	}

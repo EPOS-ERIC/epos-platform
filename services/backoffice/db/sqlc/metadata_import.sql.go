@@ -13,8 +13,15 @@ import (
 )
 
 const addImportOrganizationIdentifier = `-- name: AddImportOrganizationIdentifier :exec
-INSERT INTO identifiers (source_iri, type, value, organization_id)
-VALUES ($1, $2, $3, $4)
+INSERT INTO
+    identifiers (source_iri, TYPE, value, organization_id)
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4
+    )
 `
 
 type AddImportOrganizationIdentifierParams struct {
@@ -35,7 +42,10 @@ func (q *Queries) AddImportOrganizationIdentifier(ctx context.Context, arg AddIm
 }
 
 const deleteImportOrganizationIdentifiers = `-- name: DeleteImportOrganizationIdentifiers :exec
-DELETE FROM identifiers WHERE organization_id = $1
+DELETE FROM
+    identifiers
+WHERE
+    organization_id = $1
 `
 
 func (q *Queries) DeleteImportOrganizationIdentifiers(ctx context.Context, organizationID *uuid.UUID) error {
@@ -44,11 +54,19 @@ func (q *Queries) DeleteImportOrganizationIdentifiers(ctx context.Context, organ
 }
 
 const getImportDataset = `-- name: GetImportDataset :one
-SELECT d.id, d.source_iri, d.group_id, d.created_by, d.created_at, v.id AS active_version_id, v.status AS active_status, v.revision AS active_revision
-FROM datasets d
-LEFT JOIN dataset_versions v ON v.dataset_id = d.id AND v.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
-WHERE d.source_iri = $1
-FOR UPDATE OF d
+SELECT
+    d.id, d.source_iri, d.group_id, d.created_by, d.created_at,
+    v.id AS active_version_id,
+    v.status AS active_status,
+    v.revision AS active_revision
+FROM
+    datasets d
+    LEFT JOIN dataset_versions v ON v.dataset_id = d.id
+    AND v.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
+WHERE
+    d.source_iri = $1 FOR
+UPDATE
+    OF d
 `
 
 type GetImportDatasetRow struct {
@@ -79,9 +97,14 @@ func (q *Queries) GetImportDataset(ctx context.Context, sourceIri string) (GetIm
 }
 
 const setImportCategoryParent = `-- name: SetImportCategoryParent :exec
-UPDATE categories
-SET parent_category_id = $1, updated_at = now()
-WHERE id = $2 AND group_id = $3
+UPDATE
+    categories
+SET
+    parent_category_id = $1,
+    updated_at = NOW()
+WHERE
+    id = $2
+    AND group_id = $3
 `
 
 type SetImportCategoryParentParams struct {
@@ -96,10 +119,30 @@ func (q *Queries) SetImportCategoryParent(ctx context.Context, arg SetImportCate
 }
 
 const upsertImportCategory = `-- name: UpsertImportCategory :one
-INSERT INTO categories (id, group_id, parent_category_id, source_iri, name)
-VALUES ($1, $2, NULL, $3, $4)
-ON CONFLICT (source_iri) DO UPDATE SET name = EXCLUDED.name, parent_category_id = NULL, updated_at = now()
-RETURNING id, group_id
+INSERT INTO
+    categories (
+        id,
+        group_id,
+        parent_category_id,
+        source_iri,
+        name
+    )
+VALUES
+    (
+        $1,
+        $2,
+        NULL,
+        $3,
+        $4
+    ) ON CONFLICT (source_iri) DO
+UPDATE
+SET
+    name = EXCLUDED.name,
+    parent_category_id = NULL,
+    updated_at = NOW()
+RETURNING
+    id,
+    group_id
 `
 
 type UpsertImportCategoryParams struct {
@@ -127,10 +170,21 @@ func (q *Queries) UpsertImportCategory(ctx context.Context, arg UpsertImportCate
 }
 
 const upsertImportContactPoint = `-- name: UpsertImportContactPoint :one
-INSERT INTO contact_points (id, source_iri, email, role)
-VALUES ($1, $2, $3, $4)
-ON CONFLICT (source_iri) DO UPDATE SET email = EXCLUDED.email, role = EXCLUDED.role
-RETURNING id
+INSERT INTO
+    contact_points (id, source_iri, email, role)
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4
+    ) ON CONFLICT (source_iri) DO
+UPDATE
+SET
+    email = EXCLUDED.email,
+    role = EXCLUDED.role
+RETURNING
+    id
 `
 
 type UpsertImportContactPointParams struct {
@@ -153,18 +207,44 @@ func (q *Queries) UpsertImportContactPoint(ctx context.Context, arg UpsertImport
 }
 
 const upsertImportGroup = `-- name: UpsertImportGroup :one
-INSERT INTO groups (id, name, description, source_iri, concept, label, logo, page, color, position)
-VALUES ($1, $2, NULL, $3, $4, $5, $6, $7, $8, $9)
-ON CONFLICT (source_iri) DO UPDATE SET
+INSERT INTO
+    groups (
+        id,
+        name,
+        description,
+        source_iri,
+        concept,
+        label,
+        logo,
+        PAGE,
+        color,
+        position
+    )
+VALUES
+    (
+        $1,
+        $2,
+        NULL,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9
+    ) ON CONFLICT (source_iri) DO
+UPDATE
+SET
     name = EXCLUDED.name,
     concept = EXCLUDED.concept,
     label = EXCLUDED.label,
     logo = EXCLUDED.logo,
-    page = EXCLUDED.page,
+    PAGE = EXCLUDED.page,
     color = EXCLUDED.color,
     position = EXCLUDED.position,
-    updated_at = now()
-RETURNING id
+    updated_at = NOW()
+RETURNING
+    id
 `
 
 type UpsertImportGroupParams struct {
@@ -197,9 +277,36 @@ func (q *Queries) UpsertImportGroup(ctx context.Context, arg UpsertImportGroupPa
 }
 
 const upsertImportOrganization = `-- name: UpsertImportOrganization :one
-INSERT INTO organizations (id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-ON CONFLICT (source_iri) DO UPDATE SET
+INSERT INTO
+    organizations (
+        id,
+        source_iri,
+        name,
+        street,
+        locality,
+        postal_code,
+        country,
+        logo_url,
+        page_url,
+        email,
+        lei_code
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11
+    ) ON CONFLICT (source_iri) DO
+UPDATE
+SET
     name = EXCLUDED.name,
     street = EXCLUDED.street,
     locality = EXCLUDED.locality,
@@ -209,7 +316,8 @@ ON CONFLICT (source_iri) DO UPDATE SET
     page_url = EXCLUDED.page_url,
     email = EXCLUDED.email,
     lei_code = EXCLUDED.lei_code
-RETURNING id
+RETURNING
+    id
 `
 
 type UpsertImportOrganizationParams struct {

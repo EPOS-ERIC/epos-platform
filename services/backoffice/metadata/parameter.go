@@ -13,7 +13,6 @@ type Parameter interface {
 
 type ParameterMetadata struct {
 	ID             uuid.UUID
-	SourceIRI      string
 	Kind           ParameterKind
 	Variable       string
 	Property       string

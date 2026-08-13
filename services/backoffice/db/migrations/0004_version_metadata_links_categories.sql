@@ -55,7 +55,6 @@ CREATE TABLE web_services (
     dataset_version_id        uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
 
     -- Web service metadata
-    source_iri                text NOT NULL,
     name                      text NOT NULL,
     description               text NOT NULL DEFAULT '',
     template_url              text NOT NULL,
@@ -81,7 +80,6 @@ CREATE TABLE web_service_contact_points (
 );
 CREATE TABLE web_service_parameters (
     id              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri      text NOT NULL,
     web_service_id  uuid NOT NULL REFERENCES web_services(id) ON DELETE CASCADE,
     kind            parameter_kind NOT NULL,
     variable        text NOT NULL,
@@ -103,7 +101,6 @@ CREATE TABLE distributions (
     dataset_version_id       uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
 
     -- Distribution metadata
-    source_iri               text NOT NULL,
     title                    text NOT NULL,
     description              text NOT NULL DEFAULT '',
     license                  text,
@@ -116,7 +113,6 @@ CREATE TABLE distributions (
     downloadable_file_url    text,
     downloadable_file_format text,
     web_service_id           uuid REFERENCES web_services(id) ON DELETE CASCADE,
-    UNIQUE (dataset_version_id, source_iri),
     CHECK (
         (type = 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
             AND downloadable_file_url IS NULL

@@ -301,7 +301,6 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distribution, error) {
 	distribution := domain.Distribution{
 		ID:               ownedID(owner.String(), "distribution", source),
-		SourceIRI:        source,
 		Title:            m.requiredString(source, dctTitle),
 		Description:      m.optionalString(source, dctDescription),
 		License:          nil,
@@ -352,7 +351,6 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 func (m *mapper) webService(source string, owner uuid.UUID, format string) (domain.WebService, error) {
 	service := domain.WebService{
 		ID:               ownedID(owner.String(), "web-service", source),
-		SourceIRI:        source,
 		Name:             m.optionalString(source, schemaName),
 		Description:      m.optionalString(source, schemaDescription),
 		TemplateURL:      "",
@@ -400,7 +398,6 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (doma
 	for _, documentation := range m.graph.refs(source, dctConformsTo) {
 		if m.graph.hasType(documentation, hydraAPIDocumentation) {
 			item := domain.Documentation{
-				SourceIRI:   documentation,
 				Title:       stringPtr(m.optionalString(documentation, hydraTitle)),
 				Description: stringPtr(m.optionalString(documentation, hydraDescription)),
 				URI:         m.optionalString(documentation, hydraEntrypoint),
@@ -436,7 +433,6 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (doma
 func (m *mapper) parameter(source string, owner uuid.UUID) (domain.Parameter, error) {
 	metadata := domain.ParameterMetadata{
 		ID:             ownedID(owner.String(), "parameter", source),
-		SourceIRI:      source,
 		Kind:           "",
 		Variable:       m.requiredString(source, hydraVariable),
 		Label:          m.optionalString(source, "http://www.w3.org/2000/01/rdf-schema#label"),

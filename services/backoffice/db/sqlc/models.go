@@ -517,7 +517,6 @@ type DatasetVersionProvider struct {
 type Distribution struct {
 	ID                     uuid.UUID
 	DatasetVersionID       uuid.UUID
-	SourceIri              string
 	Title                  string
 	Description            string
 	License                *string
@@ -772,7 +771,6 @@ type UserGlobalRole struct {
 type WebService struct {
 	ID                       uuid.UUID
 	DatasetVersionID         uuid.UUID
-	SourceIri                string
 	Name                     string
 	Description              string
 	TemplateUrl              string
@@ -794,7 +792,6 @@ type WebServiceContactPoint struct {
 
 type WebServiceParameter struct {
 	ID             uuid.UUID
-	SourceIri      string
 	WebServiceID   uuid.UUID
 	Kind           ParameterKind
 	Variable       string

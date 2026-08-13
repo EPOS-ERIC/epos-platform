@@ -27,7 +27,7 @@ func TestDatasetValidate(t *testing.T) {
 				Format:      "application/json",
 				Provider:    &Organization{ID: uuid.New(), Name: "Provider"},
 				Parameters: []Parameter{IntegerParameter{
-					Metadata: ParameterMetadata{ID: uuid.New(), SourceIRI: "", Kind: "", Variable: "value", Property: "schema:value", Label: "Value", Required: false, MultipleValues: false, ReadOnly: false},
+					Metadata: ParameterMetadata{ID: uuid.New(), Kind: "", Variable: "value", Property: "schema:value", Label: "Value", Required: false, MultipleValues: false, ReadOnly: false},
 					Minimum:  &minimum,
 					Maximum:  &maximum,
 					Default:  &defaultValue,
