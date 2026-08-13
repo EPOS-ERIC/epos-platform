@@ -156,10 +156,10 @@ func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID, sourceID, g
 			return fmt.Errorf("get published source code version: %w", err)
 		}
 		row, err := q.CloneLifecycleSoftwareSourceCodeVersion(ctx, sqlc.CloneLifecycleSoftwareSourceCodeVersionParams{SourceVersionID: source.ID, SourceStatus: sqlc.ResourceStatusPUBLISHED, TargetSoftwareSourceCodeID: targetID, ActorID: actorID, TargetGroupID: groupID, CopyCategories: false})
-		versionID = row.SoftwareSourceCodeVersion.ID
 		if err != nil {
 			return fmt.Errorf("clone published source code version: %w", err)
 		}
+		versionID = row.ID
 		return nil
 	})
 	if err != nil {
@@ -193,7 +193,7 @@ func (r *SourceCodeRepo) clone(ctx context.Context, actorID, sourceID, targetID 
 		if err != nil {
 			return fmt.Errorf("clone source code version: %w", err)
 		}
-		versionID = row.SoftwareSourceCodeVersion.ID
+		versionID = row.ID
 		return nil
 	})
 	if err != nil {

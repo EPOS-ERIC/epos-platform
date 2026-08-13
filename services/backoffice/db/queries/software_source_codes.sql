@@ -384,10 +384,34 @@ categories AS (
         AND sqlc.arg(copy_categories)::boolean
 )
 SELECT
-    sqlc.embed(software_source_code_versions)
+    id,
+    software_source_code_id,
+    STATUS,
+    revision,
+    name,
+    description,
+    programming_language,
+    keywords,
+    repository,
+    license,
+    software_requirements,
+    runtime_platform,
+    main_entity_of_page,
+    version,
+    created_by,
+    created_at,
+    updated_at,
+    submitted_by,
+    submitted_at,
+    published_by,
+    published_at,
+    archived_by,
+    archived_at,
+    rejected_by,
+    rejected_at,
+    rejection_note
 FROM
-    software_source_code_versions
-    JOIN inserted ON inserted.id = software_source_code_versions.id;
+    inserted;
 
 -- name: AddLifecycleSoftwareSourceCodeIdentifier :exec
 INSERT INTO

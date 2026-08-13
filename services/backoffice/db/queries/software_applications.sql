@@ -379,10 +379,33 @@ categories AS (
         AND sqlc.arg(copy_categories)::boolean
 )
 SELECT
-    sqlc.embed(software_application_versions)
+    id,
+    software_application_id,
+    STATUS,
+    revision,
+    name,
+    description,
+    main_entity_of_page,
+    license,
+    version,
+    keywords,
+    download_url,
+    requirements,
+    operating_system,
+    created_by,
+    created_at,
+    updated_at,
+    submitted_by,
+    submitted_at,
+    published_by,
+    published_at,
+    archived_by,
+    archived_at,
+    rejected_by,
+    rejected_at,
+    rejection_note
 FROM
-    software_application_versions
-    JOIN inserted ON inserted.id = software_application_versions.id;
+    inserted;
 
 -- name: AddLifecycleSoftwareApplicationIdentifier :exec
 INSERT INTO

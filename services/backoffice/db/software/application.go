@@ -289,7 +289,7 @@ func (r *ApplicationRepo) clone(
 		if err != nil {
 			return fmt.Errorf("clone application version: %w", err)
 		}
-		versionID = row.SoftwareApplicationVersion.ID
+		versionID = row.ID
 		return nil
 	})
 	if err != nil {

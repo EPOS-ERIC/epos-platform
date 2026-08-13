@@ -132,12 +132,12 @@ Deliver dataset lifecycle as first usable vertical slice using stored-resource a
 - Public dataset reads redact dataset and web-service contact points. Authenticated reads include them only after active-membership or global-admin eligibility passes.
 - Fixed draft-from-publication/archive routing, required absence of a current publication before cloning the latest archive, and made command responses reload complete persisted metadata.
 - Dataset persistence now binds generated web services to their owning distributions by position and translates PostgreSQL constraint/trigger failures into lifecycle conflicts.
-- `make generate`, `make test`, `make build`, and `make lint` pass. Fresh migration smoke remains pending until Tilt database is recreated for replaced baseline history; applying new baseline over current public schema correctly fails on existing types.
+- Fixed clone queries for datasets and software resources: PostgreSQL data-modifying CTE results must be returned from their `inserted` CTE, not re-read from base table in same statement.
+- Fresh Tilt PostgreSQL applied migrations `0001` through `0006`. HTTP smoke covered dataset, application, and source-code create, submit, publish, anonymous published read, draft-from-publication, and draft discard. `make generate`, `make test`, `make build`, and `make lint` pass.
 
 ### Remaining Verification
 
 - Focused database-backed lifecycle acceptance scenarios are deferred while the API and model remain fluid.
-- Fresh migration smoke remains required before marking this slice complete.
 
 ## Active Slice: Dataset Import
 
@@ -155,11 +155,11 @@ Allow global administrators to atomically import canonical metadata and dataset 
 - PostgreSQL constraint and invariant-trigger failures return import conflicts instead of internal failures.
 - Software application and source-code drafts are imported atomically with canonical references and version-owned contact-point links.
 - `make generate`, `make test`, `make build`, and `make lint` pass.
+- Fresh Tilt PostgreSQL Turtle smoke imported `packages/assets/metadatone.ttl`: 5 groups, 8 categories, 6 organizations, 6 contact points, 3 dataset drafts, 1 application draft, and 1 source-code draft.
 
 ### Remaining Verification
 
 - Focused database-backed import atomicity and lifecycle acceptance scenarios are deferred while the import model remains fluid.
-- Fresh migration and real PostgreSQL import smoke remain required before marking this slice complete.
 
 ## Active Slice: Software Lifecycle
 
@@ -175,12 +175,11 @@ Apply the resource lifecycle to software applications and software source code u
 - Same-resource drafts clone metadata, creators, identifiers, and categories. Copies create independent logical resources with new source IRIs and zero categories.
 - Added shared resource HTTP routes and OpenAPI schemas for applications and source code. Typed handlers remain separate behind the resource dispatcher.
 - Software Turtle import now persists application and source-code drafts atomically.
-- `make generate`, `make test`, `make build`, and `make lint` pass.
+- Fresh Tilt PostgreSQL lifecycle smoke covered application and source-code create, submit, publish, anonymous published read, draft-from-publication, and draft discard. `make generate`, `make test`, `make build`, and `make lint` pass.
 
 ### Remaining Verification
 
 - Focused database-backed software lifecycle acceptance scenarios are deferred while the API and model remain fluid.
-- Fresh migration and real PostgreSQL lifecycle smoke remain required before marking this slice complete.
 
 ## Future Slice Completion Criteria
 

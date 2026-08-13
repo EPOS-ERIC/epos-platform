@@ -637,10 +637,36 @@ distributions AS (
         distribution.dataset_version_id = $1
 )
 SELECT
-    dataset_versions.id, dataset_versions.dataset_id, dataset_versions.status, dataset_versions.revision, dataset_versions.title, dataset_versions.description, dataset_versions.keywords, dataset_versions.accrual_periodicity, dataset_versions.quality_annotation, dataset_versions.access_right, dataset_versions.source_created_at, dataset_versions.source_updated_at, dataset_versions.spatial_point, dataset_versions.spatial_polygon, dataset_versions.temporal_start, dataset_versions.temporal_end, dataset_versions.created_by, dataset_versions.created_at, dataset_versions.updated_at, dataset_versions.submitted_by, dataset_versions.submitted_at, dataset_versions.published_by, dataset_versions.published_at, dataset_versions.archived_by, dataset_versions.archived_at, dataset_versions.rejected_by, dataset_versions.rejected_at, dataset_versions.rejection_note
+    id,
+    dataset_id,
+    status,
+    revision,
+    title,
+    description,
+    keywords,
+    accrual_periodicity,
+    quality_annotation,
+    access_right,
+    source_created_at,
+    source_updated_at,
+    spatial_point,
+    spatial_polygon,
+    temporal_start,
+    temporal_end,
+    created_by,
+    created_at,
+    updated_at,
+    submitted_by,
+    submitted_at,
+    published_by,
+    published_at,
+    archived_by,
+    archived_at,
+    rejected_by,
+    rejected_at,
+    rejection_note
 FROM
-    dataset_versions
-    JOIN inserted ON inserted.id = dataset_versions.id
+    inserted
 `
 
 type CloneLifecycleDatasetVersionParams struct {
@@ -653,7 +679,34 @@ type CloneLifecycleDatasetVersionParams struct {
 }
 
 type CloneLifecycleDatasetVersionRow struct {
-	DatasetVersion DatasetVersion
+	ID                 uuid.UUID
+	DatasetID          uuid.UUID
+	Status             ResourceStatus
+	Revision           int32
+	Title              string
+	Description        string
+	Keywords           string
+	AccrualPeriodicity *string
+	QualityAnnotation  *string
+	AccessRight        *string
+	SourceCreatedAt    *time.Time
+	SourceUpdatedAt    *time.Time
+	SpatialPoint       interface{}
+	SpatialPolygon     interface{}
+	TemporalStart      *time.Time
+	TemporalEnd        *time.Time
+	CreatedBy          uuid.UUID
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	SubmittedBy        *uuid.UUID
+	SubmittedAt        *time.Time
+	PublishedBy        *uuid.UUID
+	PublishedAt        *time.Time
+	ArchivedBy         *uuid.UUID
+	ArchivedAt         *time.Time
+	RejectedBy         *uuid.UUID
+	RejectedAt         *time.Time
+	RejectionNote      *string
 }
 
 func (q *Queries) CloneLifecycleDatasetVersion(ctx context.Context, arg CloneLifecycleDatasetVersionParams) (CloneLifecycleDatasetVersionRow, error) {
@@ -667,34 +720,34 @@ func (q *Queries) CloneLifecycleDatasetVersion(ctx context.Context, arg CloneLif
 	)
 	var i CloneLifecycleDatasetVersionRow
 	err := row.Scan(
-		&i.DatasetVersion.ID,
-		&i.DatasetVersion.DatasetID,
-		&i.DatasetVersion.Status,
-		&i.DatasetVersion.Revision,
-		&i.DatasetVersion.Title,
-		&i.DatasetVersion.Description,
-		&i.DatasetVersion.Keywords,
-		&i.DatasetVersion.AccrualPeriodicity,
-		&i.DatasetVersion.QualityAnnotation,
-		&i.DatasetVersion.AccessRight,
-		&i.DatasetVersion.SourceCreatedAt,
-		&i.DatasetVersion.SourceUpdatedAt,
-		&i.DatasetVersion.SpatialPoint,
-		&i.DatasetVersion.SpatialPolygon,
-		&i.DatasetVersion.TemporalStart,
-		&i.DatasetVersion.TemporalEnd,
-		&i.DatasetVersion.CreatedBy,
-		&i.DatasetVersion.CreatedAt,
-		&i.DatasetVersion.UpdatedAt,
-		&i.DatasetVersion.SubmittedBy,
-		&i.DatasetVersion.SubmittedAt,
-		&i.DatasetVersion.PublishedBy,
-		&i.DatasetVersion.PublishedAt,
-		&i.DatasetVersion.ArchivedBy,
-		&i.DatasetVersion.ArchivedAt,
-		&i.DatasetVersion.RejectedBy,
-		&i.DatasetVersion.RejectedAt,
-		&i.DatasetVersion.RejectionNote,
+		&i.ID,
+		&i.DatasetID,
+		&i.Status,
+		&i.Revision,
+		&i.Title,
+		&i.Description,
+		&i.Keywords,
+		&i.AccrualPeriodicity,
+		&i.QualityAnnotation,
+		&i.AccessRight,
+		&i.SourceCreatedAt,
+		&i.SourceUpdatedAt,
+		&i.SpatialPoint,
+		&i.SpatialPolygon,
+		&i.TemporalStart,
+		&i.TemporalEnd,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SubmittedBy,
+		&i.SubmittedAt,
+		&i.PublishedBy,
+		&i.PublishedAt,
+		&i.ArchivedBy,
+		&i.ArchivedAt,
+		&i.RejectedBy,
+		&i.RejectedAt,
+		&i.RejectionNote,
 	)
 	return i, err
 }

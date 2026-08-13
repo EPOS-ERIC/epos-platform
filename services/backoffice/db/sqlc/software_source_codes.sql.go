@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -241,10 +242,34 @@ categories AS (
         AND $6::boolean
 )
 SELECT
-    software_source_code_versions.id, software_source_code_versions.software_source_code_id, software_source_code_versions.status, software_source_code_versions.revision, software_source_code_versions.name, software_source_code_versions.description, software_source_code_versions.programming_language, software_source_code_versions.keywords, software_source_code_versions.repository, software_source_code_versions.license, software_source_code_versions.software_requirements, software_source_code_versions.runtime_platform, software_source_code_versions.main_entity_of_page, software_source_code_versions.version, software_source_code_versions.created_by, software_source_code_versions.created_at, software_source_code_versions.updated_at, software_source_code_versions.submitted_by, software_source_code_versions.submitted_at, software_source_code_versions.published_by, software_source_code_versions.published_at, software_source_code_versions.archived_by, software_source_code_versions.archived_at, software_source_code_versions.rejected_by, software_source_code_versions.rejected_at, software_source_code_versions.rejection_note
+    id,
+    software_source_code_id,
+    status,
+    revision,
+    name,
+    description,
+    programming_language,
+    keywords,
+    repository,
+    license,
+    software_requirements,
+    runtime_platform,
+    main_entity_of_page,
+    version,
+    created_by,
+    created_at,
+    updated_at,
+    submitted_by,
+    submitted_at,
+    published_by,
+    published_at,
+    archived_by,
+    archived_at,
+    rejected_by,
+    rejected_at,
+    rejection_note
 FROM
-    software_source_code_versions
-    JOIN inserted ON inserted.id = software_source_code_versions.id
+    inserted
 `
 
 type CloneLifecycleSoftwareSourceCodeVersionParams struct {
@@ -257,7 +282,32 @@ type CloneLifecycleSoftwareSourceCodeVersionParams struct {
 }
 
 type CloneLifecycleSoftwareSourceCodeVersionRow struct {
-	SoftwareSourceCodeVersion SoftwareSourceCodeVersion
+	ID                   uuid.UUID
+	SoftwareSourceCodeID uuid.UUID
+	Status               ResourceStatus
+	Revision             int32
+	Name                 string
+	Description          string
+	ProgrammingLanguage  *string
+	Keywords             string
+	Repository           *string
+	License              *string
+	SoftwareRequirements *string
+	RuntimePlatform      *string
+	MainEntityOfPage     *string
+	Version              *string
+	CreatedBy            uuid.UUID
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	SubmittedBy          *uuid.UUID
+	SubmittedAt          *time.Time
+	PublishedBy          *uuid.UUID
+	PublishedAt          *time.Time
+	ArchivedBy           *uuid.UUID
+	ArchivedAt           *time.Time
+	RejectedBy           *uuid.UUID
+	RejectedAt           *time.Time
+	RejectionNote        *string
 }
 
 func (q *Queries) CloneLifecycleSoftwareSourceCodeVersion(ctx context.Context, arg CloneLifecycleSoftwareSourceCodeVersionParams) (CloneLifecycleSoftwareSourceCodeVersionRow, error) {
@@ -271,32 +321,32 @@ func (q *Queries) CloneLifecycleSoftwareSourceCodeVersion(ctx context.Context, a
 	)
 	var i CloneLifecycleSoftwareSourceCodeVersionRow
 	err := row.Scan(
-		&i.SoftwareSourceCodeVersion.ID,
-		&i.SoftwareSourceCodeVersion.SoftwareSourceCodeID,
-		&i.SoftwareSourceCodeVersion.Status,
-		&i.SoftwareSourceCodeVersion.Revision,
-		&i.SoftwareSourceCodeVersion.Name,
-		&i.SoftwareSourceCodeVersion.Description,
-		&i.SoftwareSourceCodeVersion.ProgrammingLanguage,
-		&i.SoftwareSourceCodeVersion.Keywords,
-		&i.SoftwareSourceCodeVersion.Repository,
-		&i.SoftwareSourceCodeVersion.License,
-		&i.SoftwareSourceCodeVersion.SoftwareRequirements,
-		&i.SoftwareSourceCodeVersion.RuntimePlatform,
-		&i.SoftwareSourceCodeVersion.MainEntityOfPage,
-		&i.SoftwareSourceCodeVersion.Version,
-		&i.SoftwareSourceCodeVersion.CreatedBy,
-		&i.SoftwareSourceCodeVersion.CreatedAt,
-		&i.SoftwareSourceCodeVersion.UpdatedAt,
-		&i.SoftwareSourceCodeVersion.SubmittedBy,
-		&i.SoftwareSourceCodeVersion.SubmittedAt,
-		&i.SoftwareSourceCodeVersion.PublishedBy,
-		&i.SoftwareSourceCodeVersion.PublishedAt,
-		&i.SoftwareSourceCodeVersion.ArchivedBy,
-		&i.SoftwareSourceCodeVersion.ArchivedAt,
-		&i.SoftwareSourceCodeVersion.RejectedBy,
-		&i.SoftwareSourceCodeVersion.RejectedAt,
-		&i.SoftwareSourceCodeVersion.RejectionNote,
+		&i.ID,
+		&i.SoftwareSourceCodeID,
+		&i.Status,
+		&i.Revision,
+		&i.Name,
+		&i.Description,
+		&i.ProgrammingLanguage,
+		&i.Keywords,
+		&i.Repository,
+		&i.License,
+		&i.SoftwareRequirements,
+		&i.RuntimePlatform,
+		&i.MainEntityOfPage,
+		&i.Version,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SubmittedBy,
+		&i.SubmittedAt,
+		&i.PublishedBy,
+		&i.PublishedAt,
+		&i.ArchivedBy,
+		&i.ArchivedAt,
+		&i.RejectedBy,
+		&i.RejectedAt,
+		&i.RejectionNote,
 	)
 	return i, err
 }

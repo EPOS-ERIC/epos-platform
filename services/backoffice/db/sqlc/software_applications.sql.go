@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -239,10 +240,33 @@ categories AS (
         AND $6::boolean
 )
 SELECT
-    software_application_versions.id, software_application_versions.software_application_id, software_application_versions.status, software_application_versions.revision, software_application_versions.name, software_application_versions.description, software_application_versions.main_entity_of_page, software_application_versions.license, software_application_versions.version, software_application_versions.keywords, software_application_versions.download_url, software_application_versions.requirements, software_application_versions.operating_system, software_application_versions.created_by, software_application_versions.created_at, software_application_versions.updated_at, software_application_versions.submitted_by, software_application_versions.submitted_at, software_application_versions.published_by, software_application_versions.published_at, software_application_versions.archived_by, software_application_versions.archived_at, software_application_versions.rejected_by, software_application_versions.rejected_at, software_application_versions.rejection_note
+    id,
+    software_application_id,
+    status,
+    revision,
+    name,
+    description,
+    main_entity_of_page,
+    license,
+    version,
+    keywords,
+    download_url,
+    requirements,
+    operating_system,
+    created_by,
+    created_at,
+    updated_at,
+    submitted_by,
+    submitted_at,
+    published_by,
+    published_at,
+    archived_by,
+    archived_at,
+    rejected_by,
+    rejected_at,
+    rejection_note
 FROM
-    software_application_versions
-    JOIN inserted ON inserted.id = software_application_versions.id
+    inserted
 `
 
 type CloneLifecycleSoftwareApplicationVersionParams struct {
@@ -255,7 +279,31 @@ type CloneLifecycleSoftwareApplicationVersionParams struct {
 }
 
 type CloneLifecycleSoftwareApplicationVersionRow struct {
-	SoftwareApplicationVersion SoftwareApplicationVersion
+	ID                    uuid.UUID
+	SoftwareApplicationID uuid.UUID
+	Status                ResourceStatus
+	Revision              int32
+	Name                  string
+	Description           string
+	MainEntityOfPage      *string
+	License               *string
+	Version               *string
+	Keywords              string
+	DownloadUrl           *string
+	Requirements          *string
+	OperatingSystem       *string
+	CreatedBy             uuid.UUID
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	SubmittedBy           *uuid.UUID
+	SubmittedAt           *time.Time
+	PublishedBy           *uuid.UUID
+	PublishedAt           *time.Time
+	ArchivedBy            *uuid.UUID
+	ArchivedAt            *time.Time
+	RejectedBy            *uuid.UUID
+	RejectedAt            *time.Time
+	RejectionNote         *string
 }
 
 func (q *Queries) CloneLifecycleSoftwareApplicationVersion(ctx context.Context, arg CloneLifecycleSoftwareApplicationVersionParams) (CloneLifecycleSoftwareApplicationVersionRow, error) {
@@ -269,31 +317,31 @@ func (q *Queries) CloneLifecycleSoftwareApplicationVersion(ctx context.Context, 
 	)
 	var i CloneLifecycleSoftwareApplicationVersionRow
 	err := row.Scan(
-		&i.SoftwareApplicationVersion.ID,
-		&i.SoftwareApplicationVersion.SoftwareApplicationID,
-		&i.SoftwareApplicationVersion.Status,
-		&i.SoftwareApplicationVersion.Revision,
-		&i.SoftwareApplicationVersion.Name,
-		&i.SoftwareApplicationVersion.Description,
-		&i.SoftwareApplicationVersion.MainEntityOfPage,
-		&i.SoftwareApplicationVersion.License,
-		&i.SoftwareApplicationVersion.Version,
-		&i.SoftwareApplicationVersion.Keywords,
-		&i.SoftwareApplicationVersion.DownloadUrl,
-		&i.SoftwareApplicationVersion.Requirements,
-		&i.SoftwareApplicationVersion.OperatingSystem,
-		&i.SoftwareApplicationVersion.CreatedBy,
-		&i.SoftwareApplicationVersion.CreatedAt,
-		&i.SoftwareApplicationVersion.UpdatedAt,
-		&i.SoftwareApplicationVersion.SubmittedBy,
-		&i.SoftwareApplicationVersion.SubmittedAt,
-		&i.SoftwareApplicationVersion.PublishedBy,
-		&i.SoftwareApplicationVersion.PublishedAt,
-		&i.SoftwareApplicationVersion.ArchivedBy,
-		&i.SoftwareApplicationVersion.ArchivedAt,
-		&i.SoftwareApplicationVersion.RejectedBy,
-		&i.SoftwareApplicationVersion.RejectedAt,
-		&i.SoftwareApplicationVersion.RejectionNote,
+		&i.ID,
+		&i.SoftwareApplicationID,
+		&i.Status,
+		&i.Revision,
+		&i.Name,
+		&i.Description,
+		&i.MainEntityOfPage,
+		&i.License,
+		&i.Version,
+		&i.Keywords,
+		&i.DownloadUrl,
+		&i.Requirements,
+		&i.OperatingSystem,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.SubmittedBy,
+		&i.SubmittedAt,
+		&i.PublishedBy,
+		&i.PublishedAt,
+		&i.ArchivedBy,
+		&i.ArchivedAt,
+		&i.RejectedBy,
+		&i.RejectedAt,
+		&i.RejectionNote,
 	)
 	return i, err
 }

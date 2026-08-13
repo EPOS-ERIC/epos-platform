@@ -592,10 +592,36 @@ distributions AS (
         distribution.dataset_version_id = sqlc.arg(source_version_id)
 )
 SELECT
-    sqlc.embed(dataset_versions)
+    id,
+    dataset_id,
+    STATUS,
+    revision,
+    title,
+    description,
+    keywords,
+    accrual_periodicity,
+    quality_annotation,
+    access_right,
+    source_created_at,
+    source_updated_at,
+    spatial_point,
+    spatial_polygon,
+    temporal_start,
+    temporal_end,
+    created_by,
+    created_at,
+    updated_at,
+    submitted_by,
+    submitted_at,
+    published_by,
+    published_at,
+    archived_by,
+    archived_at,
+    rejected_by,
+    rejected_at,
+    rejection_note
 FROM
-    dataset_versions
-    JOIN inserted ON inserted.id = dataset_versions.id;
+    inserted;
 
 -- name: AddLifecycleDatasetIdentifier :exec
 INSERT INTO

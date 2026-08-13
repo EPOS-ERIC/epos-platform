@@ -52,7 +52,7 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, valu
 		if err := PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
 			return fmt.Errorf("persist dataset metadata: %w", err)
 		}
-		result, err = datasetResult(ctx, q, version)
+		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
 		if err != nil {
 			return err
 		}
@@ -87,7 +87,7 @@ func (r *Repo) ReplaceDraft(
 		if err := PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
 			return fmt.Errorf("persist draft metadata: %w", err)
 		}
-		result, err = datasetResult(ctx, q, version)
+		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
 		if err != nil {
 			return err
 		}
@@ -149,7 +149,7 @@ func (r *Repo) Submit(ctx context.Context, actorID, datasetID, versionID uuid.UU
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("submit dataset version: %w", err)
 	}
-	return datasetResult(ctx, sqlc.New(r.db), v)
+	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
 }
 
 func (r *Repo) Withdraw(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
@@ -164,7 +164,7 @@ func (r *Repo) Withdraw(ctx context.Context, datasetID, versionID uuid.UUID) (da
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("withdraw dataset version: %w", err)
 	}
-	return datasetResult(ctx, sqlc.New(r.db), v)
+	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
 }
 
 func (r *Repo) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UUID, note string) (datasetlifecycle.Dataset, error) {
@@ -183,7 +183,7 @@ func (r *Repo) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UU
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("reject dataset version: %w", err)
 	}
-	return datasetResult(ctx, sqlc.New(r.db), v)
+	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
 }
 
 func (r *Repo) Reopen(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
@@ -198,7 +198,7 @@ func (r *Repo) Reopen(ctx context.Context, datasetID, versionID uuid.UUID) (data
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("reopen dataset version: %w", err)
 	}
-	return datasetResult(ctx, sqlc.New(r.db), v)
+	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
 }
 
 func (r *Repo) Publish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
@@ -216,7 +216,7 @@ func (r *Repo) Publish(ctx context.Context, actorID, datasetID, versionID uuid.U
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("publish dataset version: %w", err)
 	}
-	return datasetResult(ctx, sqlc.New(r.db), v)
+	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
 }
 
 func (r *Repo) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
@@ -234,7 +234,7 @@ func (r *Repo) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("unpublish dataset version: %w", err)
 	}
-	return datasetResult(ctx, sqlc.New(r.db), v)
+	return datasetResultByID(ctx, sqlc.New(r.db), v.DatasetID, v.ID)
 }
 
 func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) error {
@@ -292,7 +292,7 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID, sourceDatasetID, targ
 		if err != nil {
 			return fmt.Errorf("clone published dataset version: %w", err)
 		}
-		result, err = datasetResult(ctx, q, version.DatasetVersion)
+		result, err = datasetResultByID(ctx, q, version.DatasetID, version.ID)
 		if err != nil {
 			return err
 		}
@@ -341,7 +341,7 @@ func (r *Repo) clone(
 		if err != nil {
 			return fmt.Errorf("clone dataset version: %w", err)
 		}
-		result, err = datasetResult(ctx, q, v.DatasetVersion)
+		result, err = datasetResultByID(ctx, q, v.DatasetID, v.ID)
 		if err != nil {
 			return err
 		}
@@ -430,10 +430,10 @@ func ReplaceParams(datasetID, id uuid.UUID, revision int32, value metadata.Datas
 	}, nil
 }
 
-func datasetResult(ctx context.Context, q *sqlc.Queries, version sqlc.DatasetVersion) (datasetlifecycle.Dataset, error) {
+func datasetResultByID(ctx context.Context, q *sqlc.Queries, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	row, err := q.GetLifecycleDatasetVersion(ctx, sqlc.GetLifecycleDatasetVersionParams{
-		DatasetID: version.DatasetID,
-		VersionID: version.ID,
+		DatasetID: datasetID,
+		VersionID: versionID,
 	})
 	if err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("get dataset result: %w", err)
