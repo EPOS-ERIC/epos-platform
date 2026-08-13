@@ -12,6 +12,26 @@ import (
 	"github.com/google/uuid"
 )
 
+const addImportOrganizationContactPoint = `-- name: AddImportOrganizationContactPoint :exec
+INSERT INTO
+    organization_contact_points (organization_id, contact_point_id)
+VALUES
+    (
+        $1,
+        $2
+    )
+`
+
+type AddImportOrganizationContactPointParams struct {
+	OrganizationID uuid.UUID
+	ContactPointID uuid.UUID
+}
+
+func (q *Queries) AddImportOrganizationContactPoint(ctx context.Context, arg AddImportOrganizationContactPointParams) error {
+	_, err := q.db.Exec(ctx, addImportOrganizationContactPoint, arg.OrganizationID, arg.ContactPointID)
+	return err
+}
+
 const addImportOrganizationIdentifier = `-- name: AddImportOrganizationIdentifier :exec
 INSERT INTO
     identifiers (source_iri, TYPE, value, organization_id)
@@ -41,6 +61,38 @@ func (q *Queries) AddImportOrganizationIdentifier(ctx context.Context, arg AddIm
 	return err
 }
 
+const addImportOrganizationMembership = `-- name: AddImportOrganizationMembership :exec
+INSERT INTO
+    organization_memberships (child_organization_id, parent_organization_id)
+VALUES
+    (
+        $1,
+        $2
+    )
+`
+
+type AddImportOrganizationMembershipParams struct {
+	ChildOrganizationID  uuid.UUID
+	ParentOrganizationID uuid.UUID
+}
+
+func (q *Queries) AddImportOrganizationMembership(ctx context.Context, arg AddImportOrganizationMembershipParams) error {
+	_, err := q.db.Exec(ctx, addImportOrganizationMembership, arg.ChildOrganizationID, arg.ParentOrganizationID)
+	return err
+}
+
+const deleteImportOrganizationContactPoints = `-- name: DeleteImportOrganizationContactPoints :exec
+DELETE FROM
+    organization_contact_points
+WHERE
+    organization_id = $1
+`
+
+func (q *Queries) DeleteImportOrganizationContactPoints(ctx context.Context, organizationID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteImportOrganizationContactPoints, organizationID)
+	return err
+}
+
 const deleteImportOrganizationIdentifiers = `-- name: DeleteImportOrganizationIdentifiers :exec
 DELETE FROM
     identifiers
@@ -50,6 +102,18 @@ WHERE
 
 func (q *Queries) DeleteImportOrganizationIdentifiers(ctx context.Context, organizationID *uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteImportOrganizationIdentifiers, organizationID)
+	return err
+}
+
+const deleteImportOrganizationMemberships = `-- name: DeleteImportOrganizationMemberships :exec
+DELETE FROM
+    organization_memberships
+WHERE
+    child_organization_id = $1
+`
+
+func (q *Queries) DeleteImportOrganizationMemberships(ctx context.Context, childOrganizationID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteImportOrganizationMemberships, childOrganizationID)
 	return err
 }
 
@@ -83,6 +147,92 @@ type GetImportDatasetRow struct {
 func (q *Queries) GetImportDataset(ctx context.Context, sourceIri string) (GetImportDatasetRow, error) {
 	row := q.db.QueryRow(ctx, getImportDataset, sourceIri)
 	var i GetImportDatasetRow
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.GroupID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.ActiveVersionID,
+		&i.ActiveStatus,
+		&i.ActiveRevision,
+	)
+	return i, err
+}
+
+const getImportSoftwareApplication = `-- name: GetImportSoftwareApplication :one
+SELECT
+    resource.id, resource.source_iri, resource.group_id, resource.created_by, resource.created_at,
+    version.id AS active_version_id,
+    version.status AS active_status,
+    version.revision AS active_revision
+FROM
+    software_applications AS resource
+    LEFT JOIN software_application_versions AS version ON version.software_application_id = resource.id
+    AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
+WHERE
+    resource.source_iri = $1 FOR
+UPDATE
+    OF resource
+`
+
+type GetImportSoftwareApplicationRow struct {
+	ID              uuid.UUID
+	SourceIri       string
+	GroupID         uuid.UUID
+	CreatedBy       uuid.UUID
+	CreatedAt       time.Time
+	ActiveVersionID *uuid.UUID
+	ActiveStatus    *ResourceStatus
+	ActiveRevision  *int32
+}
+
+func (q *Queries) GetImportSoftwareApplication(ctx context.Context, sourceIri string) (GetImportSoftwareApplicationRow, error) {
+	row := q.db.QueryRow(ctx, getImportSoftwareApplication, sourceIri)
+	var i GetImportSoftwareApplicationRow
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.GroupID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.ActiveVersionID,
+		&i.ActiveStatus,
+		&i.ActiveRevision,
+	)
+	return i, err
+}
+
+const getImportSoftwareSourceCode = `-- name: GetImportSoftwareSourceCode :one
+SELECT
+    resource.id, resource.source_iri, resource.group_id, resource.created_by, resource.created_at,
+    version.id AS active_version_id,
+    version.status AS active_status,
+    version.revision AS active_revision
+FROM
+    software_source_codes AS resource
+    LEFT JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
+    AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
+WHERE
+    resource.source_iri = $1 FOR
+UPDATE
+    OF resource
+`
+
+type GetImportSoftwareSourceCodeRow struct {
+	ID              uuid.UUID
+	SourceIri       string
+	GroupID         uuid.UUID
+	CreatedBy       uuid.UUID
+	CreatedAt       time.Time
+	ActiveVersionID *uuid.UUID
+	ActiveStatus    *ResourceStatus
+	ActiveRevision  *int32
+}
+
+func (q *Queries) GetImportSoftwareSourceCode(ctx context.Context, sourceIri string) (GetImportSoftwareSourceCodeRow, error) {
+	row := q.db.QueryRow(ctx, getImportSoftwareSourceCode, sourceIri)
+	var i GetImportSoftwareSourceCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.SourceIri,

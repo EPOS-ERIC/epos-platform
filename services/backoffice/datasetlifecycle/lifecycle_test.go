@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authorization"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/google/uuid"
 )
@@ -15,26 +15,26 @@ type testAuthorizer struct {
 	permission string
 }
 
-func (a *testAuthorizer) AuthorizeGroup(_ context.Context, _, _ uuid.UUID, permission string) (authorization.Result, error) {
+func (a *testAuthorizer) AuthorizeGroup(_ context.Context, _, _ uuid.UUID, permission string) (authz.Result, error) {
 	a.permission = permission
-	return authorization.Result{Allowed: a.allowed, Reason: "denied"}, nil
+	return authz.Result{Allowed: a.allowed, Reason: "denied"}, nil
 }
 
-func (a *testAuthorizer) AuthorizeResource(_ context.Context, _ uuid.UUID, _ authorization.ResourceType, _ uuid.UUID, permission string) (authorization.Result, error) {
+func (a *testAuthorizer) AuthorizeResource(_ context.Context, _ uuid.UUID, _ authz.ResourceType, _ uuid.UUID, permission string) (authz.Result, error) {
 	a.permission = permission
-	return authorization.Result{Allowed: a.allowed, Reason: "denied"}, nil
+	return authz.Result{Allowed: a.allowed, Reason: "denied"}, nil
 }
 
-func (a *testAuthorizer) CanReadResource(_ context.Context, _ *uuid.UUID, _ authorization.ResourceType, _ uuid.UUID) (authorization.Result, error) {
-	return authorization.Result{Allowed: a.allowed, Reason: "denied"}, nil
+func (a *testAuthorizer) CanReadResource(_ context.Context, _ *uuid.UUID, _ authz.ResourceType, _ uuid.UUID) (authz.Result, error) {
+	return authz.Result{Allowed: a.allowed, Reason: "denied"}, nil
 }
 
-func (a *testAuthorizer) CanReadDatasetVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authorization.Result, error) {
-	return authorization.Result{Allowed: a.allowed, Reason: "denied"}, nil
+func (a *testAuthorizer) CanReadDatasetVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authz.Result, error) {
+	return authz.Result{Allowed: a.allowed, Reason: "denied"}, nil
 }
 
-func (a *testAuthorizer) CanReadContactPoint(context.Context, uuid.UUID) (authorization.Result, error) {
-	return authorization.Result{Allowed: a.allowed, Reason: "denied"}, nil
+func (a *testAuthorizer) CanReadContactPoint(context.Context, uuid.UUID) (authz.Result, error) {
+	return authz.Result{Allowed: a.allowed, Reason: "denied"}, nil
 }
 
 type testRepository struct {

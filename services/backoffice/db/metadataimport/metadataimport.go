@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
+	softwaredb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/software"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
@@ -16,15 +18,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Repository struct {
+type Repo struct {
 	db *pgxpool.Pool
 }
 
-func New(pool *pgxpool.Pool) *Repository {
-	return &Repository{db: pool}
+func New(pool *pgxpool.Pool) *Repo {
+	return &Repo{db: pool}
 }
 
-func (r *Repository) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
+func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin import transaction: %w", err)
@@ -39,14 +41,16 @@ func (r *Repository) withTx(ctx context.Context, fn func(*sqlc.Queries) error) e
 	return nil
 }
 
-func (r *Repository) Import(ctx context.Context, actorID uuid.UUID, batch metadataimport.Batch) (metadataimport.Result, error) {
+func (r *Repo) Import(ctx context.Context, actorID uuid.UUID, batch metadataimport.Batch) (metadataimport.Result, error) {
 	result := metadataimport.Result{
-		Groups:        len(batch.CategorySchemes),
-		Categories:    len(batch.Categories),
-		Organizations: len(batch.Organizations),
-		ContactPoints: len(batch.ContactPoints),
-		Datasets:      len(batch.Datasets),
-		Warnings:      batch.Warnings,
+		Groups:               len(batch.CategorySchemes),
+		Categories:           len(batch.Categories),
+		Organizations:        len(batch.Organizations),
+		ContactPoints:        len(batch.ContactPoints),
+		Datasets:             len(batch.Datasets),
+		SoftwareApplications: len(batch.SoftwareApplications),
+		SoftwareSourceCodes:  len(batch.SoftwareSourceCodes),
+		Warnings:             batch.Warnings,
 	}
 
 	err := r.withTx(ctx, func(q *sqlc.Queries) error {
@@ -54,12 +58,15 @@ func (r *Repository) Import(ctx context.Context, actorID uuid.UUID, batch metada
 		if err != nil {
 			return err
 		}
-		organizationIDs, err := importOrganizations(ctx, q, batch.Organizations)
+		organizationIDs, err := importOrganizations(ctx, q, batch)
 		if err != nil {
 			return err
 		}
 		contactIDs, err := importContactPoints(ctx, q, batch.ContactPoints)
 		if err != nil {
+			return err
+		}
+		if err := importOrganizationContactPoints(ctx, q, batch.Organizations, organizationIDs, contactIDs); err != nil {
 			return err
 		}
 		categoryIDs, err := importCategories(ctx, q, batch, groupIDs)
@@ -72,16 +79,169 @@ func (r *Repository) Import(ctx context.Context, actorID uuid.UUID, batch metada
 				return err
 			}
 		}
+		for _, application := range batch.SoftwareApplications {
+			if err := importSoftwareApplication(ctx, q, actorID, application, groupIDs, organizationIDs, contactIDs, categoryIDs); err != nil {
+				return err
+			}
+		}
+		for _, sourceCode := range batch.SoftwareSourceCodes {
+			if err := importSoftwareSourceCode(ctx, q, actorID, sourceCode, groupIDs, organizationIDs, contactIDs, categoryIDs); err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 	if err == nil {
 		return result, nil
 	}
 	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23503" || pgErr.Code == "23514") {
+	if errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001") {
 		return metadataimport.Result{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, metadataimport.ErrConflict)
 	}
 	return metadataimport.Result{}, err
+}
+
+//nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
+func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID uuid.UUID, value metadata.SoftwareApplication, groupIDs, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) error {
+	groupID, err := softwareGroupID(value.Categories, groupIDs)
+	if err != nil {
+		return fmt.Errorf("software application %q: %w", value.SourceIRI, err)
+	}
+	remapSoftwareApplicationReferences(&value, organizationIDs, contactIDs, categoryIDs)
+	existing, err := q.GetImportSoftwareApplication(ctx, value.SourceIRI)
+	if errors.Is(err, pgx.ErrNoRows) {
+		logical, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{SourceIri: value.SourceIRI, GroupID: groupID, CreatedBy: actorID})
+		if err != nil {
+			return fmt.Errorf("create imported application: %w", err)
+		}
+		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwaredb.ApplicationVersionParams(logical.ID, actorID, value))
+		if err != nil {
+			return fmt.Errorf("create imported application version: %w", err)
+		}
+		if err := softwaredb.PersistApplicationChildren(ctx, q, version.ID, value); err != nil {
+			return fmt.Errorf("persist imported application metadata: %w", err)
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("load imported application: %w", err)
+	}
+	if existing.GroupID != groupID {
+		return fmt.Errorf("application %q belongs to another group: %w", value.SourceIRI, metadataimport.ErrConflict)
+	}
+	if existing.ActiveVersionID == nil {
+		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwaredb.ApplicationVersionParams(existing.ID, actorID, value))
+		if err != nil {
+			return fmt.Errorf("create imported application draft: %w", err)
+		}
+		if err := softwaredb.PersistApplicationChildren(ctx, q, version.ID, value); err != nil {
+			return fmt.Errorf("persist imported application metadata: %w", err)
+		}
+		return nil
+	}
+	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
+		return fmt.Errorf("application %q has non-draft active change: %w", value.SourceIRI, metadataimport.ErrConflict)
+	}
+	version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, softwaredb.ReplaceApplicationVersionParams(*existing.ActiveVersionID, existing.ID, *existing.ActiveRevision, value))
+	if err != nil {
+		return fmt.Errorf("replace imported application draft: %w", err)
+	}
+	if err := q.DeleteLifecycleSoftwareApplicationVersionChildren(ctx, &version.ID); err != nil {
+		return fmt.Errorf("clear imported application draft: %w", err)
+	}
+	if err := softwaredb.PersistApplicationChildren(ctx, q, version.ID, value); err != nil {
+		return fmt.Errorf("persist imported application metadata: %w", err)
+	}
+	return nil
+}
+
+//nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
+func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID uuid.UUID, value metadata.SoftwareSourceCode, groupIDs, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) error {
+	groupID, err := softwareGroupID(value.Categories, groupIDs)
+	if err != nil {
+		return fmt.Errorf("software source code %q: %w", value.SourceIRI, err)
+	}
+	remapSoftwareSourceCodeReferences(&value, organizationIDs, contactIDs, categoryIDs)
+	existing, err := q.GetImportSoftwareSourceCode(ctx, value.SourceIRI)
+	if errors.Is(err, pgx.ErrNoRows) {
+		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{SourceIri: value.SourceIRI, GroupID: groupID, CreatedBy: actorID})
+		if err != nil {
+			return fmt.Errorf("create imported source code: %w", err)
+		}
+		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaredb.SourceCodeVersionParams(logical.ID, actorID, value))
+		if err != nil {
+			return fmt.Errorf("create imported source code version: %w", err)
+		}
+		if err := softwaredb.PersistSourceCodeChildren(ctx, q, version.ID, value); err != nil {
+			return fmt.Errorf("persist imported source code metadata: %w", err)
+		}
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("load imported source code: %w", err)
+	}
+	if existing.GroupID != groupID {
+		return fmt.Errorf("source code %q belongs to another group: %w", value.SourceIRI, metadataimport.ErrConflict)
+	}
+	if existing.ActiveVersionID == nil {
+		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaredb.SourceCodeVersionParams(existing.ID, actorID, value))
+		if err != nil {
+			return fmt.Errorf("create imported source code draft: %w", err)
+		}
+		if err := softwaredb.PersistSourceCodeChildren(ctx, q, version.ID, value); err != nil {
+			return fmt.Errorf("persist imported source code metadata: %w", err)
+		}
+		return nil
+	}
+	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
+		return fmt.Errorf("source code %q has non-draft active change: %w", value.SourceIRI, metadataimport.ErrConflict)
+	}
+	version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, softwaredb.ReplaceSourceCodeVersionParams(*existing.ActiveVersionID, existing.ID, *existing.ActiveRevision, value))
+	if err != nil {
+		return fmt.Errorf("replace imported source code draft: %w", err)
+	}
+	if err := q.DeleteLifecycleSoftwareSourceCodeVersionChildren(ctx, &version.ID); err != nil {
+		return fmt.Errorf("clear imported source code draft: %w", err)
+	}
+	if err := softwaredb.PersistSourceCodeChildren(ctx, q, version.ID, value); err != nil {
+		return fmt.Errorf("persist imported source code metadata: %w", err)
+	}
+	return nil
+}
+
+func softwareGroupID(categories []metadata.Category, groupIDs map[string]uuid.UUID) (uuid.UUID, error) {
+	if len(categories) == 0 {
+		return uuid.Nil, fmt.Errorf("no category group: %w", metadataimport.ErrInvalid)
+	}
+	groupID, ok := groupIDs[categories[0].Scheme.SourceIRI]
+	if !ok {
+		return uuid.Nil, fmt.Errorf("unknown category scheme: %w", metadataimport.ErrInvalid)
+	}
+	return groupID, nil
+}
+
+func remapSoftwareApplicationReferences(value *metadata.SoftwareApplication, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) {
+	for i := range value.Creators {
+		value.Creators[i].ID = organizationIDs[value.Creators[i].SourceIRI]
+	}
+	for i := range value.ContactPoints {
+		value.ContactPoints[i].ID = contactIDs[value.ContactPoints[i].SourceIRI]
+	}
+	for i := range value.Categories {
+		value.Categories[i].ID = categoryIDs[value.Categories[i].ID]
+	}
+}
+
+func remapSoftwareSourceCodeReferences(value *metadata.SoftwareSourceCode, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) {
+	for i := range value.Creators {
+		value.Creators[i].ID = organizationIDs[value.Creators[i].SourceIRI]
+	}
+	for i := range value.ContactPoints {
+		value.ContactPoints[i].ID = contactIDs[value.ContactPoints[i].SourceIRI]
+	}
+	for i := range value.Categories {
+		value.Categories[i].ID = categoryIDs[value.Categories[i].ID]
+	}
 }
 
 func importGroups(ctx context.Context, q *sqlc.Queries, schemes []metadata.CategoryScheme) (map[string]uuid.UUID, error) {
@@ -106,9 +266,10 @@ func importGroups(ctx context.Context, q *sqlc.Queries, schemes []metadata.Categ
 	return ids, nil
 }
 
-func importOrganizations(ctx context.Context, q *sqlc.Queries, organizations []metadata.Organization) (map[string]uuid.UUID, error) {
-	ids := make(map[string]uuid.UUID, len(organizations))
-	for _, organization := range organizations {
+func importOrganizations(ctx context.Context, q *sqlc.Queries, batch metadataimport.Batch) (map[string]uuid.UUID, error) {
+	ids := make(map[string]uuid.UUID, len(batch.Organizations))
+	stableIDs := make(map[uuid.UUID]uuid.UUID, len(batch.Organizations))
+	for _, organization := range batch.Organizations {
 		id, err := q.UpsertImportOrganization(ctx, sqlc.UpsertImportOrganizationParams{
 			ID:         organization.ID,
 			SourceIri:  organization.SourceIRI,
@@ -139,8 +300,50 @@ func importOrganizations(ctx context.Context, q *sqlc.Queries, organizations []m
 			}
 		}
 		ids[organization.SourceIRI] = id
+		stableIDs[organization.ID] = id
+	}
+	for _, organization := range batch.Organizations {
+		childID := stableIDs[organization.ID]
+		if err := q.DeleteImportOrganizationMemberships(ctx, childID); err != nil {
+			return nil, fmt.Errorf("replace organization hierarchy %q: %w", organization.SourceIRI, err)
+		}
+	}
+	for _, edge := range batch.OrganizationEdges {
+		parentID, parentOK := stableIDs[edge.ParentID]
+		childID, childOK := stableIDs[edge.ChildID]
+		if !parentOK || !childOK {
+			return nil, fmt.Errorf("invalid organization hierarchy: %w", metadataimport.ErrInvalid)
+		}
+		if err := q.AddImportOrganizationMembership(ctx, sqlc.AddImportOrganizationMembershipParams{
+			ChildOrganizationID:  childID,
+			ParentOrganizationID: parentID,
+		}); err != nil {
+			return nil, fmt.Errorf("add organization hierarchy: %w", err)
+		}
 	}
 	return ids, nil
+}
+
+func importOrganizationContactPoints(ctx context.Context, q *sqlc.Queries, organizations []metadata.Organization, organizationIDs, contactIDs map[string]uuid.UUID) error {
+	for _, organization := range organizations {
+		organizationID := organizationIDs[organization.SourceIRI]
+		if err := q.DeleteImportOrganizationContactPoints(ctx, organizationID); err != nil {
+			return fmt.Errorf("replace organization contact points %q: %w", organization.SourceIRI, err)
+		}
+		for _, contact := range organization.ContactPoints {
+			contactID, ok := contactIDs[contact.SourceIRI]
+			if !ok {
+				return fmt.Errorf("organization %q references unknown contact point %q: %w", organization.SourceIRI, contact.SourceIRI, metadataimport.ErrInvalid)
+			}
+			if err := q.AddImportOrganizationContactPoint(ctx, sqlc.AddImportOrganizationContactPointParams{
+				OrganizationID: organizationID,
+				ContactPointID: contactID,
+			}); err != nil {
+				return fmt.Errorf("add organization contact point %q: %w", organization.SourceIRI, err)
+			}
+		}
+	}
+	return nil
 }
 
 func importContactPoints(ctx context.Context, q *sqlc.Queries, contacts []metadata.ContactPoint) (map[string]uuid.UUID, error) {

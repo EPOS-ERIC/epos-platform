@@ -630,6 +630,11 @@ type Organization struct {
 	LeiCode    *string
 }
 
+type OrganizationContactPoint struct {
+	OrganizationID uuid.UUID
+	ContactPointID uuid.UUID
+}
+
 type OrganizationMembership struct {
 	ChildOrganizationID  uuid.UUID
 	ParentOrganizationID uuid.UUID
@@ -694,6 +699,11 @@ type SoftwareApplicationVersionCategory struct {
 	CategoryID                   uuid.UUID
 }
 
+type SoftwareApplicationVersionContactPoint struct {
+	SoftwareApplicationVersionID uuid.UUID
+	ContactPointID               uuid.UUID
+}
+
 type SoftwareApplicationVersionCreator struct {
 	SoftwareApplicationVersionID uuid.UUID
 	OrganizationID               uuid.UUID
@@ -740,6 +750,11 @@ type SoftwareSourceCodeVersionCategory struct {
 	SoftwareSourceCodeVersionID uuid.UUID
 	GroupID                     uuid.UUID
 	CategoryID                  uuid.UUID
+}
+
+type SoftwareSourceCodeVersionContactPoint struct {
+	SoftwareSourceCodeVersionID uuid.UUID
+	ContactPointID              uuid.UUID
 }
 
 type SoftwareSourceCodeVersionCreator struct {

@@ -9,9 +9,10 @@ import (
 	"io/fs"
 
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/config"
-	authdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/authorization"
+	authdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/authz"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
 	importdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/metadataimport"
+	softwaredb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/software"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -22,10 +23,12 @@ import (
 var embedMigrations embed.FS
 
 type PostgresDB struct {
-	db            *pgxpool.Pool
-	Authorization *authdb.Repository
-	Datasets      *datasetdb.Repository
-	Imports       *importdb.Repository
+	db                   *pgxpool.Pool
+	Authorization        *authdb.Repo
+	Datasets             *datasetdb.Repo
+	Imports              *importdb.Repo
+	SoftwareApplications *softwaredb.ApplicationRepo
+	SoftwareSourceCodes  *softwaredb.SourceCodeRepo
 }
 
 func Open(cfg config.Config) (*PostgresDB, error) {
@@ -64,10 +67,12 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 	}
 
 	return &PostgresDB{
-		db:            db,
-		Authorization: &authdb.Repository{Queries: sqlc.New(db)},
-		Datasets:      datasetdb.New(db),
-		Imports:       importdb.New(db),
+		db:                   db,
+		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
+		Datasets:             datasetdb.New(db),
+		Imports:              importdb.New(db),
+		SoftwareApplications: softwaredb.NewApplicationRepo(db),
+		SoftwareSourceCodes:  softwaredb.NewSourceCodeRepo(db),
 	}, nil
 }
 

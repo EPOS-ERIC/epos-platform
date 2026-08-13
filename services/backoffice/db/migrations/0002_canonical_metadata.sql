@@ -62,7 +62,12 @@ CREATE TABLE contact_points (
 
     UNIQUE (email, role)
 );
+CREATE TABLE organization_contact_points (
+    organization_id  uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    contact_point_id uuid NOT NULL REFERENCES contact_points(id) ON DELETE CASCADE,
+    PRIMARY KEY (organization_id, contact_point_id)
+);
 
 -- +goose Down
 
-DROP TABLE IF EXISTS contact_points, organization_memberships, organizations, categories;
+DROP TABLE IF EXISTS organization_contact_points, contact_points, organization_memberships, organizations, categories;

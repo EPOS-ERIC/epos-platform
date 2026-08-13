@@ -76,6 +76,30 @@ WHERE
     version.id = sqlc.arg(version_id)
     AND version.dataset_id = sqlc.arg(dataset_id);
 
+-- name: GetSoftwareApplicationVersionAuthorization :one
+SELECT
+    version.software_application_id,
+    application.group_id,
+    version.status
+FROM
+    software_application_versions AS version
+    JOIN software_applications AS application ON application.id = version.software_application_id
+WHERE
+    version.id = sqlc.arg(version_id)
+    AND version.software_application_id = sqlc.arg(software_application_id);
+
+-- name: GetSoftwareSourceCodeVersionAuthorization :one
+SELECT
+    version.software_source_code_id,
+    source_code.group_id,
+    version.status
+FROM
+    software_source_code_versions AS version
+    JOIN software_source_codes AS source_code ON source_code.id = version.software_source_code_id
+WHERE
+    version.id = sqlc.arg(version_id)
+    AND version.software_source_code_id = sqlc.arg(software_source_code_id);
+
 -- name: HasGroupPermission :one
 SELECT
     EXISTS (

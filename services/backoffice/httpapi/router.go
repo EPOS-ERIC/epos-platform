@@ -7,14 +7,18 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
-	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authorization"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/dataset"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/health"
 	imports "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/import"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/resource"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/softwareapplication"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/softwaresourcecode"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/softwarelifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/turtle"
 	"github.com/go-chi/chi/v5"
 )
@@ -43,24 +47,27 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 	r.Route("/api/v1", func(r chi.Router) {
-		authorizer := authorization.New(database.Authorization)
+		authorizer := authz.New(database.Authorization)
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
+		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))
+		sourceCodes := softwaresourcecode.New(softwarelifecycle.NewSourceCodeService(authorizer, database.SoftwareSourceCodes))
+		resources := resource.New(datasets, applications, sourceCodes)
 		importsHandler := imports.New(metadataimport.New(turtle.Parser{}, authorizer, database.Imports))
 
 		r.Post("/imports/turtle", importsHandler.Turtle)
-		r.Post("/groups/{group_id}/datasets", datasets.Create)
-		r.Get("/datasets/{id}/{version_id}", datasets.Get)
-		r.Put("/datasets/{id}/versions/{version_id}/draft", datasets.ReplaceDraft)
-		r.Post("/datasets/{id}/versions/{version_id}/submit", datasets.Submit)
-		r.Post("/datasets/{id}/versions/{version_id}/withdraw", datasets.Withdraw)
-		r.Post("/datasets/{id}/versions/{version_id}/reject", datasets.Reject)
-		r.Post("/datasets/{id}/versions/{version_id}/reopen", datasets.Reopen)
-		r.Post("/datasets/{id}/versions/{version_id}/publish", datasets.Publish)
-		r.Post("/datasets/{id}/versions/{version_id}/unpublish", datasets.Unpublish)
-		r.Post("/datasets/{id}/draft-from-publication", datasets.DraftFromPublication)
-		r.Post("/datasets/{id}/draft-from-archive", datasets.DraftFromArchive)
-		r.Delete("/datasets/{id}/versions/{version_id}/draft", datasets.Discard)
-		r.Post("/groups/{group_id}/datasets/{id}/copy", datasets.Copy)
+		r.Post("/groups/{group_id}/resources/{resource_type}", resources.Create)
+		r.Get("/resources/{resource_type}/{id}/versions/{version_id}", resources.Get)
+		r.Put("/resources/{resource_type}/{id}/versions/{version_id}/draft", resources.ReplaceDraft)
+		r.Delete("/resources/{resource_type}/{id}/versions/{version_id}/draft", resources.Discard)
+		r.Post("/resources/{resource_type}/{id}/versions/{version_id}/submit", resources.Submit)
+		r.Post("/resources/{resource_type}/{id}/versions/{version_id}/withdraw", resources.Withdraw)
+		r.Post("/resources/{resource_type}/{id}/versions/{version_id}/reject", resources.Reject)
+		r.Post("/resources/{resource_type}/{id}/versions/{version_id}/reopen", resources.Reopen)
+		r.Post("/resources/{resource_type}/{id}/versions/{version_id}/publish", resources.Publish)
+		r.Post("/resources/{resource_type}/{id}/versions/{version_id}/unpublish", resources.Unpublish)
+		r.Post("/resources/{resource_type}/{id}/draft-from-publication", resources.DraftFromPublication)
+		r.Post("/resources/{resource_type}/{id}/draft-from-archive", resources.DraftFromArchive)
+		r.Post("/groups/{group_id}/resources/{resource_type}/{id}/copy", resources.Copy)
 	})
 
 	return observability.NewHTTPHandler(r, "/")

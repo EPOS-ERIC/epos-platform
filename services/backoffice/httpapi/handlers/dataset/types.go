@@ -301,18 +301,19 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 	}
 	for _, value := range r.Providers {
 		result.Providers = append(result.Providers, metadata.Organization{
-			ID:          value.ID,
-			SourceIRI:   "",
-			Name:        "",
-			Street:      nil,
-			Locality:    nil,
-			PostalCode:  nil,
-			Country:     nil,
-			LogoURL:     nil,
-			PageURL:     nil,
-			Email:       nil,
-			LEICode:     nil,
-			Identifiers: nil,
+			ID:            value.ID,
+			SourceIRI:     "",
+			Name:          "",
+			Street:        nil,
+			Locality:      nil,
+			PostalCode:    nil,
+			Country:       nil,
+			LogoURL:       nil,
+			PageURL:       nil,
+			Email:         nil,
+			LEICode:       nil,
+			ContactPoints: nil,
+			Identifiers:   nil,
 		})
 	}
 	for _, value := range r.Categories {
@@ -382,18 +383,19 @@ func (r webServiceRequest) domain() metadata.WebService {
 	}
 	if r.Provider != nil {
 		result.Provider = &metadata.Organization{
-			ID:          r.Provider.ID,
-			SourceIRI:   "",
-			Name:        "",
-			Street:      nil,
-			Locality:    nil,
-			PostalCode:  nil,
-			Country:     nil,
-			LogoURL:     nil,
-			PageURL:     nil,
-			Email:       nil,
-			LEICode:     nil,
-			Identifiers: nil,
+			ID:            r.Provider.ID,
+			SourceIRI:     "",
+			Name:          "",
+			Street:        nil,
+			Locality:      nil,
+			PostalCode:    nil,
+			Country:       nil,
+			LogoURL:       nil,
+			PageURL:       nil,
+			Email:         nil,
+			LEICode:       nil,
+			ContactPoints: nil,
+			Identifiers:   nil,
 		}
 	}
 	if r.Documentation != nil {
@@ -457,13 +459,13 @@ func (i identifier) domain() metadata.Identifier {
 }
 
 type record struct {
-	DatasetID uuid.UUID              `json:"dataset_id"`
-	VersionID uuid.UUID              `json:"version_id"`
-	Revision  int32                  `json:"revision"`
-	Status    metadata.DatasetStatus `json:"status"`
-	CreatedBy uuid.UUID              `json:"created_by"`
-	Group     categoryScheme         `json:"group"`
-	Metadata  metadataResponse       `json:"metadata"`
+	ResourceID uuid.UUID              `json:"resource_id"`
+	VersionID  uuid.UUID              `json:"version_id"`
+	Revision   int32                  `json:"revision"`
+	Status     metadata.DatasetStatus `json:"status"`
+	CreatedBy  uuid.UUID              `json:"created_by"`
+	Group      categoryScheme         `json:"group"`
+	Metadata   metadataResponse       `json:"metadata"`
 }
 
 type metadataResponse struct {
@@ -517,18 +519,19 @@ type webService struct {
 }
 
 type organization struct {
-	ID          uuid.UUID    `json:"id"`
-	SourceIRI   string       `json:"source_iri"`
-	Name        string       `json:"name"`
-	Street      *string      `json:"street"`
-	Locality    *string      `json:"locality"`
-	PostalCode  *string      `json:"postal_code"`
-	Country     *string      `json:"country"`
-	LogoURL     *string      `json:"logo_url"`
-	PageURL     *string      `json:"page_url"`
-	Email       *string      `json:"email"`
-	LEICode     *string      `json:"lei_code"`
-	Identifiers []identifier `json:"identifiers"`
+	ID            uuid.UUID       `json:"id"`
+	SourceIRI     string          `json:"source_iri"`
+	Name          string          `json:"name"`
+	Street        *string         `json:"street"`
+	Locality      *string         `json:"locality"`
+	PostalCode    *string         `json:"postal_code"`
+	Country       *string         `json:"country"`
+	LogoURL       *string         `json:"logo_url"`
+	PageURL       *string         `json:"page_url"`
+	Email         *string         `json:"email"`
+	LEICode       *string         `json:"lei_code"`
+	ContactPoints *[]contactPoint `json:"contact_points,omitempty"`
+	Identifiers   []identifier    `json:"identifiers"`
 }
 
 type category struct {
@@ -559,13 +562,13 @@ type contactPoint struct {
 
 func datasetResponse(value datasetlifecycle.Dataset, includeContacts bool) record {
 	return record{
-		DatasetID: value.DatasetID,
-		VersionID: value.VersionID,
-		Revision:  value.Revision,
-		Status:    value.Status,
-		CreatedBy: value.CreatedBy,
-		Group:     categorySchemeDTO(value.Group),
-		Metadata:  datasetMetadataDTO(value.Metadata, includeContacts),
+		ResourceID: value.DatasetID,
+		VersionID:  value.VersionID,
+		Revision:   value.Revision,
+		Status:     value.Status,
+		CreatedBy:  value.CreatedBy,
+		Group:      categorySchemeDTO(value.Group),
+		Metadata:   datasetMetadataDTO(value.Metadata, includeContacts),
 	}
 }
 
@@ -606,7 +609,7 @@ func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataRe
 		result.ContactPoints = &contacts
 	}
 	for _, item := range value.Providers {
-		result.Providers = append(result.Providers, organizationDTO(item))
+		result.Providers = append(result.Providers, organizationDTO(item, includeContacts))
 	}
 	for _, item := range value.Categories {
 		result.Categories = append(result.Categories, categoryDTO(item))
@@ -658,7 +661,7 @@ func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 		result.Parameters = append(result.Parameters, parameterDTO(item))
 	}
 	if value.Provider != nil {
-		item := organizationDTO(*value.Provider)
+		item := organizationDTO(*value.Provider, includeContacts)
 		result.Provider = &item
 	}
 	if value.Documentation != nil {
@@ -735,23 +738,32 @@ func parameterMetadataResponse(value metadata.ParameterMetadata) parameterMetada
 	}
 }
 
-func organizationDTO(value metadata.Organization) organization {
+func organizationDTO(value metadata.Organization, includeContacts bool) organization {
 	result := organization{
-		ID:          value.ID,
-		SourceIRI:   value.SourceIRI,
-		Name:        value.Name,
-		Street:      value.Street,
-		Locality:    value.Locality,
-		PostalCode:  value.PostalCode,
-		Country:     value.Country,
-		LogoURL:     value.LogoURL,
-		PageURL:     value.PageURL,
-		Email:       value.Email,
-		LEICode:     value.LEICode,
-		Identifiers: make([]identifier, 0, len(value.Identifiers)),
+		ID:            value.ID,
+		SourceIRI:     value.SourceIRI,
+		Name:          value.Name,
+		Street:        value.Street,
+		Locality:      value.Locality,
+		PostalCode:    value.PostalCode,
+		Country:       value.Country,
+		LogoURL:       value.LogoURL,
+		PageURL:       value.PageURL,
+		Email:         value.Email,
+		LEICode:       value.LEICode,
+		ContactPoints: nil,
+		Identifiers:   make([]identifier, 0, len(value.Identifiers)),
 	}
 	for _, item := range value.Identifiers {
 		result.Identifiers = append(result.Identifiers, identifierResponse(item))
+	}
+	for _, item := range value.ContactPoints {
+		if includeContacts {
+			if result.ContactPoints == nil {
+				result.ContactPoints = new([]contactPoint)
+			}
+			*result.ContactPoints = append(*result.ContactPoints, contactPointDTO(item))
+		}
 	}
 	return result
 }

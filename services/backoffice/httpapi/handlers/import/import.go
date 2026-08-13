@@ -44,22 +44,26 @@ func (h *handler) Turtle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	transport.WriteJSON(w, http.StatusOK, resultResponse{
-		Groups:        result.Groups,
-		Categories:    result.Categories,
-		Organizations: result.Organizations,
-		ContactPoints: result.ContactPoints,
-		Datasets:      result.Datasets,
-		Warnings:      diagnostics(result.Warnings),
+		Groups:               result.Groups,
+		Categories:           result.Categories,
+		Organizations:        result.Organizations,
+		ContactPoints:        result.ContactPoints,
+		Datasets:             result.Datasets,
+		SoftwareApplications: result.SoftwareApplications,
+		SoftwareSourceCodes:  result.SoftwareSourceCodes,
+		Warnings:             diagnostics(result.Warnings),
 	})
 }
 
 type resultResponse struct {
-	Groups        int          `json:"groups"`
-	Categories    int          `json:"categories"`
-	Organizations int          `json:"organizations"`
-	ContactPoints int          `json:"contact_points"`
-	Datasets      int          `json:"datasets"`
-	Warnings      []diagnostic `json:"warnings"`
+	Groups               int          `json:"groups"`
+	Categories           int          `json:"categories"`
+	Organizations        int          `json:"organizations"`
+	ContactPoints        int          `json:"contact_points"`
+	Datasets             int          `json:"datasets"`
+	SoftwareApplications int          `json:"software_applications"`
+	SoftwareSourceCodes  int          `json:"software_source_codes"`
+	Warnings             []diagnostic `json:"warnings"`
 }
 
 type diagnostic struct {

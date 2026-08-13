@@ -23,7 +23,7 @@ For each slice:
 | Foundation              | Complete | Target baseline schema and generated persistence types.                       | None                                                      |
 | Authorization kernel    | Complete | Stored-resource authorization using fixed roles, grants, and user state.      | Foundation                                                |
 | Dataset lifecycle       | Active   | Complete dataset lifecycle as first usable vertical slice.                    | Authorization kernel                                      |
-| Software lifecycle      | Pending  | Same lifecycle for applications and source code.                              | Dataset lifecycle                                         |
+| Software lifecycle      | Active   | Same lifecycle for applications and source code.                              | Dataset lifecycle                                         |
 | Identity administration | Pending  | Membership/role requests, grants, blocking, admin safety.                     | Authorization kernel                                      |
 | Canonical metadata      | Pending  | Group/category, organization, and contact management with confirmed deletion. | Foundation, authorization kernel                          |
 | Dataset import          | Active   | Admin Turtle import into canonical metadata and dataset drafts.               | Dataset lifecycle                                         |
@@ -126,11 +126,61 @@ Deliver dataset lifecycle as first usable vertical slice using stored-resource a
 
 ### Implementation Record
 
-- Added `POST /api/v1/datasets`, `GET /api/v1/datasets/{id}`, draft replacement, lifecycle action, draft-from-publication/archive, and copy routes. OpenAPI now documents this API instead of prototype routes.
+- Added shared `/api/v1/resources/{resource_type}` routes for dataset lifecycle actions. Resource type selects the existing typed handler and accepts `dataset`, `software-application`, or `software-source-code`.
 - Commands require `X-EPOS-User-ID`. This header is trusted only because Backoffice is currently network-private; gateway-only transport protection is required before external exposure.
 - Draft create/replace persist scalar metadata, identifiers, providers, contact points, categories, distributions, web services, web-service contacts, and parameters atomically. Canonical entities remain ID references.
 - Public dataset reads redact dataset and web-service contact points. Authenticated reads include them only after active-membership or global-admin eligibility passes.
+- Fixed draft-from-publication/archive routing, required absence of a current publication before cloning the latest archive, and made command responses reload complete persisted metadata.
+- Dataset persistence now binds generated web services to their owning distributions by position and translates PostgreSQL constraint/trigger failures into lifecycle conflicts.
 - `make generate`, `make test`, `make build`, and `make lint` pass. Fresh migration smoke remains pending until Tilt database is recreated for replaced baseline history; applying new baseline over current public schema correctly fails on existing types.
+
+### Remaining Verification
+
+- Focused database-backed lifecycle acceptance scenarios are deferred while the API and model remain fluid.
+- Fresh migration smoke remains required before marking this slice complete.
+
+## Active Slice: Dataset Import
+
+### Goal
+
+Allow global administrators to atomically import canonical metadata and dataset drafts from Turtle.
+
+### Implementation Record
+
+- Added global-admin-only `POST /api/v1/imports/turtle` with atomic canonical metadata and dataset draft persistence.
+- Category schemes map to groups. Dataset categories must come from exactly one scheme, which determines immutable resource ownership.
+- Reimport replaces existing `DRAFT` content by source IRI, creates a draft beside a publication when no active change exists, and conflicts with submitted or rejected changes. Import never publishes.
+- Typed standalone category schemes, categories, organizations, and contact points are imported even when no resource references them.
+- Organization `schema:memberOf` hierarchy is replaced atomically. Category parsing rejects multiple parents and hierarchy cycles before persistence.
+- PostgreSQL constraint and invariant-trigger failures return import conflicts instead of internal failures.
+- Software application and source-code drafts are imported atomically with canonical references and version-owned contact-point links.
+- `make generate`, `make test`, `make build`, and `make lint` pass.
+
+### Remaining Verification
+
+- Focused database-backed import atomicity and lifecycle acceptance scenarios are deferred while the import model remains fluid.
+- Fresh migration and real PostgreSQL import smoke remain required before marking this slice complete.
+
+## Active Slice: Software Lifecycle
+
+### Goal
+
+Apply the resource lifecycle to software applications and software source code using stored-resource authorization.
+
+### Implementation Record
+
+- Added typed application and source-code lifecycle services with create, exact-version read, draft replacement, submit, withdraw, reject, reopen, publish, discard, unpublish, draft-from-publication/archive, and copy operations.
+- Existing-resource actions authorize against each logical software resource's stored group. Exact-version reads allow public `PUBLISHED` versions and restrict non-public versions to active group members or global administrators.
+- Added atomic PostgreSQL persistence for lifecycle transitions, optimistic revisions, publication/archive replacement, cloning, copying, creators, identifiers, and canonical category links.
+- Same-resource drafts clone metadata, creators, identifiers, and categories. Copies create independent logical resources with new source IRIs and zero categories.
+- Added shared resource HTTP routes and OpenAPI schemas for applications and source code. Typed handlers remain separate behind the resource dispatcher.
+- Software Turtle import now persists application and source-code drafts atomically.
+- `make generate`, `make test`, `make build`, and `make lint` pass.
+
+### Remaining Verification
+
+- Focused database-backed software lifecycle acceptance scenarios are deferred while the API and model remain fluid.
+- Fresh migration and real PostgreSQL lifecycle smoke remain required before marking this slice complete.
 
 ## Future Slice Completion Criteria
 
@@ -138,7 +188,7 @@ Deliver dataset lifecycle as first usable vertical slice using stored-resource a
 
 - Public, member, role, direct-grant, admin, inactive, and blocked decisions load ownership/group from stored resources.
 - Caller-supplied ownership or group does not affect decision.
-- Contact-point reads, including embedded resource contact points, require active membership in at least one group; public representations omit them.
+- Contact-point reads, including embedded organization and resource contact points, require active membership in at least one group; public representations return null contact-point fields.
 
 ### Dataset Lifecycle
 
@@ -150,7 +200,7 @@ Deliver dataset lifecycle as first usable vertical slice using stored-resource a
 - Global `ADMIN` may atomically import Turtle category schemes, categories, organizations, contact points, and dataset drafts.
 - Category schemes create or update groups. Each dataset must reference categories from exactly one imported scheme, which determines immutable ownership group.
 - Existing `DRAFT` content is replaced by source IRI; an existing submitted or rejected change conflicts. Import never publishes resources.
-- Software metadata is rejected until software lifecycle supports draft persistence.
+- Software metadata imports use same one-active-change and draft-only rules as datasets.
 
 ### Software Lifecycle
 

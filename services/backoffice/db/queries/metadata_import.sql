@@ -98,6 +98,36 @@ VALUES
         sqlc.arg(organization_id)
     );
 
+-- name: DeleteImportOrganizationMemberships :exec
+DELETE FROM
+    organization_memberships
+WHERE
+    child_organization_id = sqlc.arg(child_organization_id);
+
+-- name: DeleteImportOrganizationContactPoints :exec
+DELETE FROM
+    organization_contact_points
+WHERE
+    organization_id = sqlc.arg(organization_id);
+
+-- name: AddImportOrganizationContactPoint :exec
+INSERT INTO
+    organization_contact_points (organization_id, contact_point_id)
+VALUES
+    (
+        sqlc.arg(organization_id),
+        sqlc.arg(contact_point_id)
+    );
+
+-- name: AddImportOrganizationMembership :exec
+INSERT INTO
+    organization_memberships (child_organization_id, parent_organization_id)
+VALUES
+    (
+        sqlc.arg(child_organization_id),
+        sqlc.arg(parent_organization_id)
+    );
+
 -- name: UpsertImportContactPoint :one
 INSERT INTO
     contact_points (id, source_iri, email, role)
@@ -165,3 +195,33 @@ WHERE
     d.source_iri = sqlc.arg(source_iri) FOR
 UPDATE
     OF d;
+
+-- name: GetImportSoftwareApplication :one
+SELECT
+    resource.*,
+    version.id AS active_version_id,
+    version.status AS active_status,
+    version.revision AS active_revision
+FROM
+    software_applications AS resource
+    LEFT JOIN software_application_versions AS version ON version.software_application_id = resource.id
+    AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
+WHERE
+    resource.source_iri = sqlc.arg(source_iri) FOR
+UPDATE
+    OF resource;
+
+-- name: GetImportSoftwareSourceCode :one
+SELECT
+    resource.*,
+    version.id AS active_version_id,
+    version.status AS active_status,
+    version.revision AS active_revision
+FROM
+    software_source_codes AS resource
+    LEFT JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
+    AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
+WHERE
+    resource.source_iri = sqlc.arg(source_iri) FOR
+UPDATE
+    OF resource;

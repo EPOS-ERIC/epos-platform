@@ -477,7 +477,15 @@ web_services AS (
             temporal_end
         )
     SELECT
-        uuid_generate_v5((SELECT id FROM inserted), source.id::text),
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        ),
         (
             SELECT
                 id
@@ -513,7 +521,15 @@ web_service_contacts AS (
     FROM
         web_service_contact_points AS link
         JOIN web_services AS source ON source.id = link.web_service_id
-        JOIN web_services AS target ON target.id = uuid_generate_v5((SELECT id FROM inserted), source.id::text)
+        JOIN web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        )
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -549,7 +565,15 @@ web_service_parameters AS (
     FROM
         web_service_parameters AS parameter
         JOIN web_services AS source ON source.id = parameter.web_service_id
-        JOIN web_services AS target ON target.id = uuid_generate_v5((SELECT id FROM inserted), source.id::text)
+        JOIN web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        )
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -594,7 +618,15 @@ distributions AS (
     FROM
         distributions AS distribution
         LEFT JOIN web_services AS source ON source.id = distribution.web_service_id
-        LEFT JOIN web_services AS target ON target.id = uuid_generate_v5((SELECT id FROM inserted), source.id::text)
+        LEFT JOIN web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
+        )
         AND target.dataset_version_id = (
             SELECT
                 id
@@ -981,8 +1013,17 @@ SELECT
 FROM
     dataset_versions
 WHERE
-    dataset_id = $1
-    AND STATUS = 'ARCHIVED'
+    dataset_versions.dataset_id = $1
+    AND dataset_versions.STATUS = 'ARCHIVED'
+    AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            dataset_versions AS published
+        WHERE
+            published.dataset_id = $1
+            AND published.status = 'PUBLISHED'
+    )
 ORDER BY
     archived_at DESC NULLS LAST,
     id DESC
@@ -1478,6 +1519,51 @@ func (q *Queries) ListLifecycleDistributions(ctx context.Context, datasetVersion
 			&i.DownloadableFileUrl,
 			&i.DownloadableFileFormat,
 			&i.WebServiceID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleOrganizationContactPoints = `-- name: ListLifecycleOrganizationContactPoints :many
+SELECT
+    link.organization_id,
+    contact.id, contact.source_iri, contact.email, contact.role
+FROM
+    organization_contact_points AS link
+    JOIN contact_points AS contact ON contact.id = link.contact_point_id
+WHERE
+    link.organization_id = ANY($1::uuid [])
+ORDER BY
+    link.organization_id,
+    contact.id
+`
+
+type ListLifecycleOrganizationContactPointsRow struct {
+	OrganizationID uuid.UUID
+	ContactPoint   ContactPoint
+}
+
+func (q *Queries) ListLifecycleOrganizationContactPoints(ctx context.Context, organizationIds []uuid.UUID) ([]ListLifecycleOrganizationContactPointsRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleOrganizationContactPoints, organizationIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleOrganizationContactPointsRow
+	for rows.Next() {
+		var i ListLifecycleOrganizationContactPointsRow
+		if err := rows.Scan(
+			&i.OrganizationID,
+			&i.ContactPoint.ID,
+			&i.ContactPoint.SourceIri,
+			&i.ContactPoint.Email,
+			&i.ContactPoint.Role,
 		); err != nil {
 			return nil, err
 		}

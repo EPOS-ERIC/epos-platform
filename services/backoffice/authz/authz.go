@@ -1,14 +1,12 @@
-// Package authorization contains stored-resource access decisions.
-package authorization
+// Package authz contains stored-resource access decisions.
+package authz
 
 import (
 	"context"
 	"errors"
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 )
 
 type ResourceType string
@@ -24,33 +22,72 @@ type Result struct {
 	Reason  string
 }
 
+var ErrNotFound = errors.New("authorization resource not found")
+
+type UserStatus string
+
+const (
+	UserStatusActive  UserStatus = "ACTIVE"
+	UserStatusBlocked UserStatus = "BLOCKED"
+)
+
+type PermissionScope string
+
+const (
+	PermissionScopeGlobal PermissionScope = "GLOBAL"
+	PermissionScopeGroup  PermissionScope = "GROUP"
+)
+
+type ResourceStatus string
+
+const (
+	ResourceStatusDraft     ResourceStatus = "DRAFT"
+	ResourceStatusSubmitted ResourceStatus = "SUBMITTED"
+	ResourceStatusRejected  ResourceStatus = "REJECTED"
+	ResourceStatusPublished ResourceStatus = "PUBLISHED"
+	ResourceStatusArchived  ResourceStatus = "ARCHIVED"
+)
+
+type User struct {
+	ID     uuid.UUID
+	Status UserStatus
+}
+
+type VersionAuthz struct {
+	ResourceID uuid.UUID
+	GroupID    uuid.UUID
+	Status     ResourceStatus
+}
+
 type repository interface {
-	GetAuthorizationUser(context.Context, uuid.UUID) (sqlc.GetAuthorizationUserRow, error)
-	GetPermissionScope(context.Context, string) (sqlc.PermissionScope, error)
+	User(context.Context, uuid.UUID) (User, error)
+	PermissionScope(context.Context, string) (PermissionScope, error)
 	IsGlobalAdmin(context.Context, uuid.UUID) (bool, error)
-	HasGlobalPermission(context.Context, sqlc.HasGlobalPermissionParams) (bool, error)
-	IsActiveMember(context.Context, sqlc.IsActiveMemberParams) (bool, error)
+	HasGlobalPermission(context.Context, uuid.UUID, string) (bool, error)
+	IsActiveMember(context.Context, uuid.UUID, uuid.UUID) (bool, error)
 	HasAnyActiveMembership(context.Context, uuid.UUID) (bool, error)
-	HasGroupPermission(context.Context, sqlc.HasGroupPermissionParams) (bool, error)
-	GetDatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
-	GetSoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
-	GetSoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error)
+	HasGroupPermission(context.Context, uuid.UUID, uuid.UUID, string) (bool, error)
+	DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
+	SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
+	SoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	IsDatasetPublished(context.Context, uuid.UUID) (bool, error)
 	IsSoftwareApplicationPublished(context.Context, uuid.UUID) (bool, error)
 	IsSoftwareSourceCodePublished(context.Context, uuid.UUID) (bool, error)
-	GetDatasetVersionAuthorization(context.Context, sqlc.GetDatasetVersionAuthorizationParams) (sqlc.GetDatasetVersionAuthorizationRow, error)
+	DatasetVersionAuthz(context.Context, uuid.UUID, uuid.UUID) (VersionAuthz, error)
+	SoftwareApplicationVersionAuthz(context.Context, uuid.UUID, uuid.UUID) (VersionAuthz, error)
+	SoftwareSourceCodeVersionAuthz(context.Context, uuid.UUID, uuid.UUID) (VersionAuthz, error)
 }
 
 // CanReadDatasetVersion applies publication and stored-group membership rules to one version.
 func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *uuid.UUID, datasetID, versionID uuid.UUID) (Result, error) {
-	version, err := a.repository.GetDatasetVersionAuthorization(ctx, sqlc.GetDatasetVersionAuthorizationParams{DatasetID: datasetID, VersionID: versionID})
-	if errors.Is(err, pgx.ErrNoRows) {
+	version, err := a.repository.DatasetVersionAuthz(ctx, datasetID, versionID)
+	if errors.Is(err, ErrNotFound) {
 		return Result{Allowed: false, Reason: "resource not found"}, nil
 	}
 	if err != nil {
 		return Result{}, fmt.Errorf("load dataset version authorization: %w", err)
 	}
-	if version.Status == sqlc.ResourceStatusPUBLISHED {
+	if version.Status == ResourceStatusPublished {
 		return Result{Allowed: true, Reason: "public published resource"}, nil
 	}
 	if userID == nil {
@@ -69,7 +106,60 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *uuid.UUI
 		return Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	member, err := a.repository.IsActiveMember(ctx, sqlc.IsActiveMemberParams{UserID: *userID, GroupID: version.GroupID})
+	member, err := a.repository.IsActiveMember(ctx, *userID, version.GroupID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check group membership: %w", err)
+	}
+	if !member {
+		return Result{Allowed: false, Reason: "user is not an active group member"}, nil
+	}
+	return Result{Allowed: true, Reason: "active group member"}, nil
+}
+
+// CanReadSoftwareApplicationVersion applies publication and stored-group membership rules to one version.
+func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *uuid.UUID, applicationID, versionID uuid.UUID) (Result, error) {
+	version, err := a.repository.SoftwareApplicationVersionAuthz(ctx, applicationID, versionID)
+	if err != nil {
+		return versionReadError("software application", err)
+	}
+	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
+}
+
+// CanReadSoftwareSourceCodeVersion applies publication and stored-group membership rules to one version.
+func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *uuid.UUID, sourceCodeID, versionID uuid.UUID) (Result, error) {
+	version, err := a.repository.SoftwareSourceCodeVersionAuthz(ctx, sourceCodeID, versionID)
+	if err != nil {
+		return versionReadError("software source code", err)
+	}
+	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
+}
+
+func versionReadError(resource string, err error) (Result, error) {
+	if errors.Is(err, ErrNotFound) {
+		return Result{Allowed: false, Reason: "resource not found"}, nil
+	}
+	return Result{}, fmt.Errorf("load %s version authorization: %w", resource, err)
+}
+
+func (a *Authorizer) authorizeVersionRead(ctx context.Context, userID *uuid.UUID, groupID uuid.UUID, status ResourceStatus) (Result, error) {
+	if status == ResourceStatusPublished {
+		return Result{Allowed: true, Reason: "public published resource"}, nil
+	}
+	if userID == nil {
+		return Result{Allowed: false, Reason: "authentication required"}, nil
+	}
+	_, result, err := a.activeUser(ctx, *userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if admin {
+		return Result{Allowed: true, Reason: "global admin"}, nil
+	}
+	member, err := a.repository.IsActiveMember(ctx, *userID, groupID)
 	if err != nil {
 		return Result{}, fmt.Errorf("check group membership: %w", err)
 	}
@@ -105,7 +195,7 @@ func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID uuid.UUID) (Resu
 
 // AuthorizeGlobal evaluates a global permission without requiring membership.
 func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID uuid.UUID, permissionKey string) (Result, error) {
-	if err := a.requirePermissionScope(ctx, permissionKey, sqlc.PermissionScopeGLOBAL); err != nil {
+	if err := a.requirePermissionScope(ctx, permissionKey, PermissionScopeGlobal); err != nil {
 		return Result{}, err
 	}
 
@@ -122,7 +212,7 @@ func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID uuid.UUID, perm
 		return Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	allowed, err := a.repository.HasGlobalPermission(ctx, sqlc.HasGlobalPermissionParams{UserID: userID, PermissionKey: permissionKey})
+	allowed, err := a.repository.HasGlobalPermission(ctx, userID, permissionKey)
 	if err != nil {
 		return Result{}, fmt.Errorf("check global permission: %w", err)
 	}
@@ -134,9 +224,15 @@ func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID uuid.UUID, perm
 }
 
 // AuthorizeResource gets group from stored logical resource, never caller input.
-func (a *Authorizer) AuthorizeResource(ctx context.Context, userID uuid.UUID, resourceType ResourceType, resourceID uuid.UUID, permissionKey string) (Result, error) {
+func (a *Authorizer) AuthorizeResource(
+	ctx context.Context,
+	userID uuid.UUID,
+	resourceType ResourceType,
+	resourceID uuid.UUID,
+	permissionKey string,
+) (Result, error) {
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, ErrNotFound) {
 		return Result{Allowed: false, Reason: "resource not found"}, nil
 	}
 	if err != nil {
@@ -148,7 +244,7 @@ func (a *Authorizer) AuthorizeResource(ctx context.Context, userID uuid.UUID, re
 
 // AuthorizeGroup handles resource creation before a logical resource exists.
 func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID, groupID uuid.UUID, permissionKey string) (Result, error) {
-	if err := a.requirePermissionScope(ctx, permissionKey, sqlc.PermissionScopeGROUP); err != nil {
+	if err := a.requirePermissionScope(ctx, permissionKey, PermissionScopeGroup); err != nil {
 		return Result{}, err
 	}
 
@@ -165,7 +261,7 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID, groupID uuid.UU
 		return Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	member, err := a.repository.IsActiveMember(ctx, sqlc.IsActiveMemberParams{UserID: userID, GroupID: groupID})
+	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
 	if err != nil {
 		return Result{}, fmt.Errorf("check group membership: %w", err)
 	}
@@ -173,7 +269,7 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID, groupID uuid.UU
 		return Result{Allowed: false, Reason: "user is not an active group member"}, nil
 	}
 
-	allowed, err := a.repository.HasGroupPermission(ctx, sqlc.HasGroupPermissionParams{UserID: userID, GroupID: groupID, PermissionKey: permissionKey})
+	allowed, err := a.repository.HasGroupPermission(ctx, userID, groupID, permissionKey)
 	if err != nil {
 		return Result{}, fmt.Errorf("check group permission: %w", err)
 	}
@@ -188,7 +284,7 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID, groupID uuid.UU
 // resources require an active member in stored resource group or global admin.
 func (a *Authorizer) CanReadResource(ctx context.Context, userID *uuid.UUID, resourceType ResourceType, resourceID uuid.UUID) (Result, error) {
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
-	if errors.Is(err, pgx.ErrNoRows) {
+	if errors.Is(err, ErrNotFound) {
 		return Result{Allowed: false, Reason: "resource not found"}, nil
 	}
 	if err != nil {
@@ -219,7 +315,7 @@ func (a *Authorizer) CanReadResource(ctx context.Context, userID *uuid.UUID, res
 		return Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	member, err := a.repository.IsActiveMember(ctx, sqlc.IsActiveMemberParams{UserID: *userID, GroupID: groupID})
+	member, err := a.repository.IsActiveMember(ctx, *userID, groupID)
 	if err != nil {
 		return Result{}, fmt.Errorf("check group membership: %w", err)
 	}
@@ -280,23 +376,23 @@ func (a *Authorizer) resourcePublished(ctx context.Context, typ ResourceType, id
 	}
 }
 
-func (a *Authorizer) activeUser(ctx context.Context, userID uuid.UUID) (sqlc.GetAuthorizationUserRow, Result, error) {
-	user, err := a.repository.GetAuthorizationUser(ctx, userID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return sqlc.GetAuthorizationUserRow{ID: uuid.Nil, Status: ""}, Result{Allowed: false, Reason: "user not found"}, nil
+func (a *Authorizer) activeUser(ctx context.Context, userID uuid.UUID) (User, Result, error) {
+	user, err := a.repository.User(ctx, userID)
+	if errors.Is(err, ErrNotFound) {
+		return User{ID: uuid.Nil, Status: ""}, Result{Allowed: false, Reason: "user not found"}, nil
 	}
 	if err != nil {
-		return sqlc.GetAuthorizationUserRow{}, Result{}, fmt.Errorf("load user: %w", err)
+		return User{}, Result{}, fmt.Errorf("load user: %w", err)
 	}
-	if user.Status != sqlc.UserStatusACTIVE {
-		return sqlc.GetAuthorizationUserRow{ID: uuid.Nil, Status: ""}, Result{Allowed: false, Reason: "user is not active"}, nil
+	if user.Status != UserStatusActive {
+		return User{ID: uuid.Nil, Status: ""}, Result{Allowed: false, Reason: "user is not active"}, nil
 	}
 	return user, Result{Allowed: true, Reason: ""}, nil
 }
 
-func (a *Authorizer) requirePermissionScope(ctx context.Context, permissionKey string, scope sqlc.PermissionScope) error {
-	actual, err := a.repository.GetPermissionScope(ctx, permissionKey)
-	if errors.Is(err, pgx.ErrNoRows) {
+func (a *Authorizer) requirePermissionScope(ctx context.Context, permissionKey string, scope PermissionScope) error {
+	actual, err := a.repository.PermissionScope(ctx, permissionKey)
+	if errors.Is(err, ErrNotFound) {
 		return fmt.Errorf("unknown permission: %s", permissionKey)
 	}
 	if err != nil {
@@ -311,21 +407,21 @@ func (a *Authorizer) requirePermissionScope(ctx context.Context, permissionKey s
 func (a *Authorizer) resourceGroup(ctx context.Context, typ ResourceType, id uuid.UUID) (uuid.UUID, error) {
 	switch typ {
 	case ResourceTypeDataset:
-		groupID, err := a.repository.GetDatasetGroup(ctx, id)
+		groupID, err := a.repository.DatasetGroup(ctx, id)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("get dataset group: %w", err)
 		}
 
 		return groupID, nil
 	case ResourceTypeSoftwareApplication:
-		groupID, err := a.repository.GetSoftwareApplicationGroup(ctx, id)
+		groupID, err := a.repository.SoftwareApplicationGroup(ctx, id)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("get software application group: %w", err)
 		}
 
 		return groupID, nil
 	case ResourceTypeSoftwareSourceCode:
-		groupID, err := a.repository.GetSoftwareSourceCodeGroup(ctx, id)
+		groupID, err := a.repository.SoftwareSourceCodeGroup(ctx, id)
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("get software source code group: %w", err)
 		}

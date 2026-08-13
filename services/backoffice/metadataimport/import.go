@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authorization"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/google/uuid"
 )
@@ -32,10 +32,16 @@ type Batch struct {
 	SoftwareApplications []metadata.SoftwareApplication
 	SoftwareSourceCodes  []metadata.SoftwareSourceCode
 	CategoryEdges        []CategoryEdge
+	OrganizationEdges    []OrganizationEdge
 	Warnings             []Diagnostic
 }
 
 type CategoryEdge struct {
+	ParentID uuid.UUID
+	ChildID  uuid.UUID
+}
+
+type OrganizationEdge struct {
 	ParentID uuid.UUID
 	ChildID  uuid.UUID
 }
@@ -55,12 +61,14 @@ type Diagnostic struct {
 }
 
 type Result struct {
-	Groups        int
-	Categories    int
-	Organizations int
-	ContactPoints int
-	Datasets      int
-	Warnings      []Diagnostic
+	Groups               int
+	Categories           int
+	Organizations        int
+	ContactPoints        int
+	Datasets             int
+	SoftwareApplications int
+	SoftwareSourceCodes  int
+	Warnings             []Diagnostic
 }
 
 type Parser interface {
@@ -68,7 +76,7 @@ type Parser interface {
 }
 
 type Authorizer interface {
-	AuthorizeAdmin(context.Context, uuid.UUID) (authorization.Result, error)
+	AuthorizeAdmin(context.Context, uuid.UUID) (authz.Result, error)
 }
 
 type Repository interface {
@@ -98,10 +106,7 @@ func (s *Service) Import(ctx context.Context, actorID uuid.UUID, input io.Reader
 	if err != nil {
 		return Result{}, fmt.Errorf("parse Turtle: %w: %w", ErrInvalid, err)
 	}
-	if len(batch.SoftwareApplications) != 0 || len(batch.SoftwareSourceCodes) != 0 {
-		return Result{}, fmt.Errorf("software import is not available yet: %w", ErrInvalid)
-	}
-	if err := validateDatasetGroups(batch); err != nil {
+	if err := validateResourceGroups(batch); err != nil {
 		return Result{}, fmt.Errorf("validate ownership: %w: %w", ErrInvalid, err)
 	}
 
@@ -118,6 +123,37 @@ func validateDatasetGroups(batch Batch) error {
 		if len(schemes) != 1 {
 			return fmt.Errorf("dataset %q must reference categories from exactly one scheme", dataset.SourceIRI)
 		}
+	}
+	return nil
+}
+
+func validateResourceGroups(batch Batch) error {
+	if err := validateDatasetGroups(batch); err != nil {
+		return err
+	}
+	for _, software := range batch.SoftwareApplications {
+		if err := validateSoftwareGroups(software.SourceIRI, software.Categories); err != nil {
+			return err
+		}
+	}
+	for _, software := range batch.SoftwareSourceCodes {
+		if err := validateSoftwareGroups(software.SourceIRI, software.Categories); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateSoftwareGroups(sourceIRI string, categories []metadata.Category) error {
+	if len(categories) == 0 {
+		return fmt.Errorf("software %q must reference at least one category", sourceIRI)
+	}
+	schemes := make(map[string]struct{})
+	for _, category := range categories {
+		schemes[category.Scheme.SourceIRI] = struct{}{}
+	}
+	if len(schemes) != 1 {
+		return fmt.Errorf("software %q must reference categories from exactly one scheme", sourceIRI)
 	}
 	return nil
 }

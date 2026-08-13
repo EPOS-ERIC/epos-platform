@@ -43,6 +43,16 @@ CREATE TABLE software_source_code_version_creators (
     organization_id                 uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     PRIMARY KEY (software_source_code_version_id, organization_id)
 );
+CREATE TABLE software_application_version_contact_points (
+    software_application_version_id uuid NOT NULL REFERENCES software_application_versions(id) ON DELETE CASCADE,
+    contact_point_id               uuid NOT NULL REFERENCES contact_points(id) ON DELETE CASCADE,
+    PRIMARY KEY (software_application_version_id, contact_point_id)
+);
+CREATE TABLE software_source_code_version_contact_points (
+    software_source_code_version_id uuid NOT NULL REFERENCES software_source_code_versions(id) ON DELETE CASCADE,
+    contact_point_id                uuid NOT NULL REFERENCES contact_points(id) ON DELETE CASCADE,
+    PRIMARY KEY (software_source_code_version_id, contact_point_id)
+);
 CREATE TABLE dataset_version_contact_points (
     dataset_version_id uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,
     contact_point_id   uuid NOT NULL REFERENCES contact_points(id) ON DELETE CASCADE,
@@ -152,5 +162,5 @@ CREATE TABLE software_source_code_version_categories (
 
 -- +goose Down
 
-DROP TABLE IF EXISTS software_source_code_version_categories, software_application_version_categories, dataset_version_categories, web_service_parameters, web_service_contact_points, distributions, web_services, dataset_version_contact_points, software_source_code_version_creators, software_application_version_creators, dataset_version_providers, identifiers;
+DROP TABLE IF EXISTS software_source_code_version_categories, software_application_version_categories, software_source_code_version_contact_points, software_application_version_contact_points, dataset_version_categories, web_service_parameters, web_service_contact_points, distributions, web_services, dataset_version_contact_points, software_source_code_version_creators, software_application_version_creators, dataset_version_providers, identifiers;
 DROP TYPE IF EXISTS parameter_kind;

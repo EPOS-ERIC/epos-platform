@@ -280,8 +280,17 @@ SELECT
 FROM
     dataset_versions
 WHERE
-    dataset_id = sqlc.arg(dataset_id)
-    AND STATUS = 'ARCHIVED'
+    dataset_versions.dataset_id = sqlc.arg(dataset_id)
+    AND dataset_versions.STATUS = 'ARCHIVED'
+    AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            dataset_versions AS published
+        WHERE
+            published.dataset_id = sqlc.arg(dataset_id)
+            AND published.status = 'PUBLISHED'
+    )
 ORDER BY
     archived_at DESC NULLS LAST,
     id DESC
@@ -878,6 +887,19 @@ WHERE
     id = ANY(sqlc.arg(organization_ids)::uuid [])
 ORDER BY
     id;
+
+-- name: ListLifecycleOrganizationContactPoints :many
+SELECT
+    link.organization_id,
+    sqlc.embed(contact)
+FROM
+    organization_contact_points AS link
+    JOIN contact_points AS contact ON contact.id = link.contact_point_id
+WHERE
+    link.organization_id = ANY(sqlc.arg(organization_ids)::uuid [])
+ORDER BY
+    link.organization_id,
+    contact.id;
 
 -- name: ListLifecycleDatasetContactPoints :many
 SELECT

@@ -1,38 +1,37 @@
-package authorization
+package authz
 
 import (
 	"context"
 	"testing"
 
-	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/google/uuid"
 )
 
 type fakeRepository struct {
-	user         sqlc.GetAuthorizationUserRow
+	user         User
 	admin        bool
 	global       bool
 	member       bool
 	anyMember    bool
 	groupAllowed bool
 	datasetGroup uuid.UUID
-	scope        sqlc.PermissionScope
+	scope        PermissionScope
 	published    bool
 }
 
-func (r fakeRepository) GetAuthorizationUser(context.Context, uuid.UUID) (sqlc.GetAuthorizationUserRow, error) {
+func (r fakeRepository) User(context.Context, uuid.UUID) (User, error) {
 	return r.user, nil
 }
 
-func (r fakeRepository) GetPermissionScope(context.Context, string) (sqlc.PermissionScope, error) {
+func (r fakeRepository) PermissionScope(context.Context, string) (PermissionScope, error) {
 	return r.scope, nil
 }
 func (r fakeRepository) IsGlobalAdmin(context.Context, uuid.UUID) (bool, error) { return r.admin, nil }
-func (r fakeRepository) HasGlobalPermission(context.Context, sqlc.HasGlobalPermissionParams) (bool, error) {
+func (r fakeRepository) HasGlobalPermission(context.Context, uuid.UUID, string) (bool, error) {
 	return r.global, nil
 }
 
-func (r fakeRepository) IsActiveMember(context.Context, sqlc.IsActiveMemberParams) (bool, error) {
+func (r fakeRepository) IsActiveMember(context.Context, uuid.UUID, uuid.UUID) (bool, error) {
 	return r.member, nil
 }
 
@@ -40,19 +39,19 @@ func (r fakeRepository) HasAnyActiveMembership(context.Context, uuid.UUID) (bool
 	return r.anyMember, nil
 }
 
-func (r fakeRepository) HasGroupPermission(context.Context, sqlc.HasGroupPermissionParams) (bool, error) {
+func (r fakeRepository) HasGroupPermission(context.Context, uuid.UUID, uuid.UUID, string) (bool, error) {
 	return r.groupAllowed, nil
 }
 
-func (r fakeRepository) GetDatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
+func (r fakeRepository) DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
 	return r.datasetGroup, nil
 }
 
-func (r fakeRepository) GetSoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
+func (r fakeRepository) SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
 	return uuid.Nil, nil
 }
 
-func (r fakeRepository) GetSoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
+func (r fakeRepository) SoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
 	return uuid.Nil, nil
 }
 
@@ -60,12 +59,30 @@ func (r fakeRepository) IsDatasetPublished(context.Context, uuid.UUID) (bool, er
 	return r.published, nil
 }
 
-func (r fakeRepository) GetDatasetVersionAuthorization(context.Context, sqlc.GetDatasetVersionAuthorizationParams) (sqlc.GetDatasetVersionAuthorizationRow, error) {
-	return sqlc.GetDatasetVersionAuthorizationRow{DatasetID: uuid.New(), GroupID: r.datasetGroup, Status: func() sqlc.ResourceStatus {
+func (r fakeRepository) DatasetVersionAuthz(_ context.Context, datasetID, _ uuid.UUID) (VersionAuthz, error) {
+	return VersionAuthz{ResourceID: datasetID, GroupID: r.datasetGroup, Status: func() ResourceStatus {
 		if r.published {
-			return sqlc.ResourceStatusPUBLISHED
+			return ResourceStatusPublished
 		}
-		return sqlc.ResourceStatusDRAFT
+		return ResourceStatusDraft
+	}()}, nil
+}
+
+func (r fakeRepository) SoftwareApplicationVersionAuthz(_ context.Context, applicationID, _ uuid.UUID) (VersionAuthz, error) {
+	return VersionAuthz{ResourceID: applicationID, GroupID: r.datasetGroup, Status: func() ResourceStatus {
+		if r.published {
+			return ResourceStatusPublished
+		}
+		return ResourceStatusDraft
+	}()}, nil
+}
+
+func (r fakeRepository) SoftwareSourceCodeVersionAuthz(_ context.Context, sourceCodeID, _ uuid.UUID) (VersionAuthz, error) {
+	return VersionAuthz{ResourceID: sourceCodeID, GroupID: r.datasetGroup, Status: func() ResourceStatus {
+		if r.published {
+			return ResourceStatusPublished
+		}
+		return ResourceStatusDraft
 	}()}, nil
 }
 
@@ -81,11 +98,11 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 	t.Parallel()
 	groupID := uuid.New()
 	authorizer := New(fakeRepository{
-		user:         sqlc.GetAuthorizationUserRow{Status: sqlc.UserStatusACTIVE},
+		user:         User{Status: UserStatusActive},
 		member:       true,
 		groupAllowed: true,
 		datasetGroup: groupID,
-		scope:        sqlc.PermissionScopeGROUP,
+		scope:        PermissionScopeGroup,
 	})
 
 	result, err := authorizer.AuthorizeResource(context.Background(), uuid.New(), ResourceTypeDataset, uuid.New(), "resource.edit")
@@ -99,7 +116,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 
 func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 	t.Parallel()
-	authorizer := New(fakeRepository{user: sqlc.GetAuthorizationUserRow{Status: sqlc.UserStatusBLOCKED}, scope: sqlc.PermissionScopeGROUP})
+	authorizer := New(fakeRepository{user: User{Status: UserStatusBlocked}, scope: PermissionScopeGroup})
 
 	result, err := authorizer.AuthorizeGroup(context.Background(), uuid.New(), uuid.New(), "resource.edit")
 	if err != nil {
@@ -113,9 +130,9 @@ func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	t.Parallel()
 	authorizer := New(fakeRepository{
-		user:   sqlc.GetAuthorizationUserRow{Status: sqlc.UserStatusACTIVE},
+		user:   User{Status: UserStatusActive},
 		global: true,
-		scope:  sqlc.PermissionScopeGLOBAL,
+		scope:  PermissionScopeGlobal,
 	})
 
 	result, err := authorizer.AuthorizeGlobal(context.Background(), uuid.New(), "organization.manage")
@@ -157,7 +174,7 @@ func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := New(fakeRepository{
-				user:      sqlc.GetAuthorizationUserRow{Status: sqlc.UserStatusACTIVE},
+				user:      User{Status: UserStatusActive},
 				admin:     test.admin,
 				anyMember: test.member,
 			}).CanReadContactPoint(ctx, userID)

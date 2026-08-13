@@ -1,15 +1,15 @@
 openapi: 3.0.3
 info:
-  title: EPOS Backoffice Dataset API
+  title: EPOS Backoffice Lifecycle API
   version: 2.0.0
-  description: Dataset lifecycle transport. Command endpoints require X-EPOS-User-ID.
+  description: Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
 servers:
   - url: /
 tags:
   - name: Health
     description: Service availability.
-  - name: Datasets
-    description: Dataset draft metadata and lifecycle commands.
+  - name: Resources
+    description: Shared dataset and software resource lifecycle commands.
   - name: Imports
     description: Global administrator metadata import.
 paths:
@@ -27,7 +27,7 @@ paths:
       tags: [Imports]
       operationId: importTurtleMetadata
       summary: Import Turtle metadata
-      description: Atomically creates or updates groups, categories, organizations, contact points, and dataset DRAFT content. Category schemes become groups. Every dataset must reference categories from exactly one scheme. Global ADMIN only.
+      description: Atomically creates or updates groups, categories, organizations, contact points, and dataset or software DRAFT content. Category schemes become groups. Every resource must reference categories from exactly one scheme. Global ADMIN only.
       parameters: [{ $ref: "#/components/parameters/Actor" }]
       requestBody:
         required: true
@@ -44,308 +44,273 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
-  /api/v1/groups/{group_id}/datasets:
+        "415": { description: Content-Type must be text/turtle }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/groups/{group_id}/resources/{resource_type}:
+    parameters:
+      - { $ref: "#/components/parameters/GroupID" }
+      - { $ref: "#/components/parameters/ResourceType" }
     post:
-      tags: [Datasets]
-      operationId: createDatasetDraft
-      summary: Create draft dataset
-      description: Creates a logical dataset and its first editable DRAFT version in path group.
-      parameters: [{ $ref: "#/components/parameters/GroupID" }, { $ref: "#/components/parameters/Actor" }]
+      tags: [Resources]
+      operationId: createResource
+      summary: Create resource draft
+      description: Creates a logical resource and its first editable DRAFT version for the selected resource type.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       requestBody:
-        {
-          required: true,
-          content:
-            {
-              application/json:
-                {
-                   schema: { $ref: "#/components/schemas/DatasetDraftMetadata" },
-                },
-            },
-        }
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - { $ref: "#/components/schemas/DatasetDraftMetadata" }
+                - { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+                - { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
       responses:
-        {
-          "201": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/{version_id}:
+        "201": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     get:
-      tags: [Datasets]
-      operationId: getDataset
-      summary: Read current dataset version
-      description: Returns published version publicly. Active members receive active non-public version when present. Public responses omit dataset and web-service contact points.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/ActorOptional" },
-        ]
+      tags: [Resources]
+      operationId: getResourceVersion
+      summary: Read resource version
+      description: Returns the selected resource version. Published dataset responses may be full or public; software records are returned directly.
+      parameters: [{ $ref: "#/components/parameters/ActorOptional" }]
       responses:
-        {
-          "200": { $ref: "#/components/responses/DatasetRead" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/draft:
+        "200": { $ref: "#/components/responses/ResourceRead" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/draft:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     put:
-      tags: [Datasets]
-      operationId: replaceDatasetDraft
-      summary: Replace draft metadata
-      description: Atomically replaces all mutable draft metadata and nested version-owned content when revision matches. Returns 409 for a stale revision.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      tags: [Resources]
+      operationId: replaceResourceDraft
+      summary: Replace resource draft
+      description: Atomically replaces all mutable draft metadata when supplied revision matches selected version.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       requestBody:
-        {
-          required: true,
-          content:
-            {
-              application/json:
-                {
-                  schema: { $ref: "#/components/schemas/ReplaceDraftRequest" },
-                },
-            },
-        }
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - { $ref: "#/components/schemas/ReplaceDraftRequest" }
+                - { $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest" }
+                - { $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest" }
       responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     delete:
-      tags: [Datasets]
-      operationId: discardDatasetVersion
-      summary: Discard draft or rejected version
-      description: Permanently deletes selected DRAFT or REJECTED version. Deletes logical dataset when no versions remain.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      tags: [Resources]
+      operationId: discardResourceDraft
+      summary: Discard resource draft
+      description: Permanently deletes selected DRAFT or REJECTED version and removes its logical resource when no versions remain.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       responses:
-        {
-          "204": { description: Draft discarded },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/submit:
+        "204": { description: Resource draft discarded }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/submit:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     post:
-      tags: [Datasets]
-      operationId: submitDatasetDraft
-      summary: Submit draft for review
-      description: Changes selected DRAFT version to SUBMITTED. Submitted metadata becomes immutable.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      tags: [Resources]
+      operationId: submitResource
+      summary: Submit resource draft
+      description: Changes selected DRAFT version to SUBMITTED and makes its metadata immutable.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/withdraw:
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/withdraw:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     post:
-      tags: [Datasets]
-      operationId: withdrawDatasetSubmission
-      summary: Withdraw submission
+      tags: [Resources]
+      operationId: withdrawResource
+      summary: Withdraw resource submission
       description: Returns selected SUBMITTED version to editable DRAFT status.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/reopen:
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/reject:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     post:
-      tags: [Datasets]
-      operationId: reopenRejectedDataset
-      summary: Reopen rejected version
-      description: Returns selected REJECTED version to editable DRAFT status while retaining rejection feedback.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
-      responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/publish:
-    post:
-      tags: [Datasets]
-      operationId: publishDatasetVersion
-      summary: Publish submitted version
-      description: Publishes selected SUBMITTED version and atomically archives any current publication.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
-      responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/unpublish:
-    post:
-      tags: [Datasets]
-      operationId: unpublishDatasetVersion
-      summary: Unpublish current version
-      description: Archives selected PUBLISHED version without creating a replacement draft.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
-      responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/versions/{version_id}/reject:
-    post:
-      tags: [Datasets]
-      operationId: rejectDatasetSubmission
-      summary: Reject submitted version
+      tags: [Resources]
+      operationId: rejectResource
+      summary: Reject resource submission
       description: Changes selected SUBMITTED version to REJECTED. A non-empty rejection note is required.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/VersionID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       requestBody:
-        {
-          required: true,
-          content:
-            {
-              application/json:
-                { schema: { $ref: "#/components/schemas/RejectRequest" } },
-            },
-        }
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RejectRequest" }
       responses:
-        {
-          "200": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/draft-from-publication:
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/reopen:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     post:
-      tags: [Datasets]
-      operationId: createDraftFromPublication
-      summary: Create draft from publication
-      description: Clones current PUBLISHED version and all version-owned metadata into a new DRAFT for this logical dataset.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      tags: [Resources]
+      operationId: reopenResource
+      summary: Reopen rejected resource
+      description: Returns selected REJECTED version to editable DRAFT status while retaining rejection feedback.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       responses:
-        {
-          "201": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/datasets/{id}/draft-from-archive:
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/publish:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     post:
-      tags: [Datasets]
-      operationId: createDraftFromArchive
-      summary: Create draft from latest archive
-      description: Clones latest ARCHIVED version when this logical dataset has no active publication.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      tags: [Resources]
+      operationId: publishResource
+      summary: Publish resource submission
+      description: Publishes selected SUBMITTED version and atomically archives any current publication.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       responses:
-        {
-          "201": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
-  /api/v1/groups/{group_id}/datasets/{id}/copy:
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/unpublish:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     post:
-      tags: [Datasets]
-      operationId: copyPublishedDataset
-      summary: Copy published dataset into group
-      description: Creates independent DRAFT dataset from source PUBLISHED version. New source IRI is required; categories are not copied.
-      parameters:
-        [
-          { $ref: "#/components/parameters/DatasetID" },
-          { $ref: "#/components/parameters/GroupID" },
-          { $ref: "#/components/parameters/Actor" },
-        ]
+      tags: [Resources]
+      operationId: unpublishResource
+      summary: Unpublish resource version
+      description: Archives selected PUBLISHED version without creating a replacement draft.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "200": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/draft-from-publication:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+    post:
+      tags: [Resources]
+      operationId: createResourceDraftFromPublication
+      summary: Create resource draft from publication
+      description: Clones current PUBLISHED version and its version-owned metadata into a new DRAFT.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "201": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{id}/draft-from-archive:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+    post:
+      tags: [Resources]
+      operationId: createResourceDraftFromArchive
+      summary: Create resource draft from archive
+      description: Clones latest ARCHIVED version when selected logical resource has no active publication.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "201": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/groups/{group_id}/resources/{resource_type}/{id}/copy:
+    parameters:
+      - { $ref: "#/components/parameters/GroupID" }
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+    post:
+      tags: [Resources]
+      operationId: copyResource
+      summary: Copy published resource into group
+      description: Creates an independent DRAFT resource from the source PUBLISHED version. A new source IRI is required.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
       requestBody:
-        {
-          required: true,
-          content:
-            {
-              application/json:
-                { schema: { $ref: "#/components/schemas/CopyRequest" } },
-            },
-        }
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CopyRequest" }
       responses:
-        {
-          "201": { $ref: "#/components/responses/Dataset" },
-          "400": { $ref: "#/components/responses/Invalid" },
-          "401": { $ref: "#/components/responses/Unauthorized" },
-          "403": { $ref: "#/components/responses/Forbidden" },
-          "404": { $ref: "#/components/responses/NotFound" },
-          "409": { $ref: "#/components/responses/Conflict" },
-        }
+        "201": { $ref: "#/components/responses/Resource" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
 components:
   parameters:
     Actor:
@@ -362,7 +327,18 @@ components:
         required: false,
         schema: { type: string, format: uuid },
       }
-    DatasetID:
+    ResourceType:
+      {
+        name: resource_type,
+        in: path,
+        required: true,
+        schema:
+          {
+            type: string,
+            enum: [dataset, software-application, software-source-code],
+          },
+      }
+    ResourceID:
       {
         name: id,
         in: path,
@@ -384,30 +360,46 @@ components:
         schema: { type: string, format: uuid },
       }
   responses:
+    Resource:
+      {
+        description: Resource lifecycle record,
+        content:
+          {
+            application/json:
+              {
+                schema:
+                  { $ref: "#/components/schemas/ResourceRecord" },
+              },
+          },
+      }
+    ResourceRead:
+      description: Resource version record. Sensitive contact points are null unless caller is eligible to read them.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResourceRecord"
+    SoftwareApplication:
+      { description: Software application lifecycle record, content: { application/json: { schema: { $ref: "#/components/schemas/ResourceRecord" } } } }
+    SoftwareSourceCode:
+      { description: Software source code lifecycle record, content: { application/json: { schema: { $ref: "#/components/schemas/ResourceRecord" } } } }
     Dataset:
       {
         description: Dataset lifecycle record,
         content:
           {
             application/json:
-              { schema: { $ref: "#/components/schemas/DatasetRecord" } },
+              { schema: { $ref: "#/components/schemas/ResourceRecord" } },
           },
       }
     DatasetRead:
       {
-        description: Dataset lifecycle record. Public reads omit dataset and web-service contact_points.,
+        description: "Dataset lifecycle record. Public reads return null dataset and web-service contact_points.",
         content:
           {
             application/json:
               {
                 schema:
-                  {
-                    oneOf:
-                      [
-                        { $ref: "#/components/schemas/DatasetRecord" },
-                        { $ref: "#/components/schemas/PublicDatasetRecord" },
-                      ],
-                  },
+                  { $ref: "#/components/schemas/ResourceRecord" },
               },
           },
       }
@@ -436,7 +428,7 @@ components:
       }
     NotFound:
       {
-        description: Dataset or selected version not found,
+        description: Resource or selected version not found,
         content:
           {
             application/problem+json:
@@ -452,16 +444,146 @@ components:
               { schema: { $ref: "#/components/schemas/Problem" } },
           },
       }
+    InternalServerError:
+      {
+        description: Internal server error,
+        content:
+          {
+            application/problem+json:
+              { schema: { $ref: "#/components/schemas/Problem" } },
+          },
+      }
   schemas:
+    ReplaceSoftwareApplicationDraftRequest:
+      type: object
+      required: [revision, metadata]
+      properties:
+        revision: { type: integer, format: int32, minimum: 1 }
+        metadata: { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+    ReplaceSoftwareSourceCodeDraftRequest:
+      type: object
+      required: [revision, metadata]
+      properties:
+        revision: { type: integer, format: int32, minimum: 1 }
+        metadata: { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
+    ResourceRecord:
+      type: object
+      required: [resource_id, version_id, revision, status, created_by, group, metadata]
+      properties:
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision: { type: integer, format: int32 }
+        status: { $ref: "#/components/schemas/DatasetStatus" }
+        created_by: { type: string, format: uuid }
+        group: { $ref: "#/components/schemas/CategoryScheme" }
+        metadata:
+          anyOf:
+            - { $ref: "#/components/schemas/DatasetMetadata" }
+            - { $ref: "#/components/schemas/SoftwareApplicationMetadata" }
+            - { $ref: "#/components/schemas/SoftwareSourceCodeMetadata" }
+    SoftwareApplicationDraftMetadata:
+      type: object
+      required: [source_iri, name]
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        main_entity_of_page: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        keywords: { type: string }
+        download_url: { type: string, nullable: true }
+        requirements: { type: string, nullable: true }
+        operating_system: { type: string, nullable: true }
+        creators: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+        identifiers: { type: array, items: { $ref: "#/components/schemas/SoftwareIdentifierDraft" } }
+        categories: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+        contact_points: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+    SoftwareSourceCodeDraftMetadata:
+      type: object
+      required: [source_iri, name]
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        programming_language: { type: string, nullable: true }
+        keywords: { type: string }
+        repository: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        software_requirements: { type: string, nullable: true }
+        runtime_platform: { type: string, nullable: true }
+        main_entity_of_page: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        creators: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+        identifiers: { type: array, items: { $ref: "#/components/schemas/SoftwareIdentifierDraft" } }
+        categories: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+        contact_points: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+    SoftwareApplicationMetadata:
+      type: object
+      required: [id, source_iri, name, description, keywords, creators, identifiers, contact_points, categories]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        main_entity_of_page: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        keywords: { type: string }
+        download_url: { type: string, nullable: true }
+        requirements: { type: string, nullable: true }
+        operating_system: { type: string, nullable: true }
+        creators: { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        identifiers: { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } }
+        categories: { type: array, items: { $ref: "#/components/schemas/SoftwareCategory" } }
+    SoftwareSourceCodeMetadata:
+      type: object
+      required: [id, source_iri, name, description, keywords, creators, identifiers, contact_points, categories]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        programming_language: { type: string, nullable: true }
+        keywords: { type: string }
+        repository: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        software_requirements: { type: string, nullable: true }
+        runtime_platform: { type: string, nullable: true }
+        main_entity_of_page: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        creators: { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        identifiers: { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } }
+        categories: { type: array, items: { $ref: "#/components/schemas/SoftwareCategory" } }
+    SoftwareIdentifierDraft:
+      type: object
+      required: [source_iri, type, value]
+      properties:
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+    SoftwareCategory:
+      type: object
+      required: [id, source_iri, name, scheme, children]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        scheme: { $ref: "#/components/schemas/CategoryScheme" }
+        children: { type: array, items: { $ref: "#/components/schemas/SoftwareCategory" } }
     ImportResult:
       type: object
-      required: [groups, categories, organizations, contact_points, datasets, warnings]
+      required: [groups, categories, organizations, contact_points, datasets, software_applications, software_source_codes, warnings]
       properties:
         groups: { type: integer }
         categories: { type: integer }
         organizations: { type: integer }
         contact_points: { type: integer }
         datasets: { type: integer }
+        software_applications: { type: integer }
+        software_source_codes: { type: integer }
         warnings:
           type: array
           items: { $ref: "#/components/schemas/ImportDiagnostic" }
@@ -493,19 +615,6 @@ components:
         required: [source_iri],
         properties: { source_iri: { type: string, format: uri } },
       }
-    DatasetRecord:
-      type: object
-      required: [dataset_id, version_id, revision, status, created_by, group, metadata]
-      properties:
-        dataset_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
-        revision: { type: integer, format: int32 }
-        status: { $ref: "#/components/schemas/DatasetStatus" }
-        created_by: { type: string, format: uuid }
-        group:
-          allOf: [{ $ref: "#/components/schemas/CategoryScheme" }]
-          description: Owning group and its category-scheme metadata.
-        metadata: { $ref: "#/components/schemas/DatasetMetadata" }
     Problem:
       {
         type: object,
@@ -517,10 +626,12 @@ components:
                 type: string,
                 enum:
                   [
-                    invalid_request,
-                    forbidden,
-                    dataset_not_found,
-                    conflict,
+                     invalid_request,
+                     forbidden,
+                     dataset_not_found,
+                     software_application_not_found,
+                     software_source_code_not_found,
+                     conflict,
                     internal_server_error,
                   ],
               },
@@ -582,22 +693,7 @@ components:
         source_updated: { type: string, format: date-time, nullable: true }
     DatasetMetadata:
       type: object
-      required:
-        [
-          id,
-          source_iri,
-          title,
-          description,
-          keywords,
-          distributions,
-          persistent_identifiers,
-          contact_points,
-          providers,
-          categories,
-          status,
-          created,
-          updated,
-        ]
+      required: [id, source_iri, title, description, keywords, distributions, persistent_identifiers, contact_points, providers, categories, status, created, updated]
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -607,18 +703,13 @@ components:
         accrual_periodicity: { type: string, nullable: true }
         quality_annotation: { type: string, nullable: true }
         access_right: { type: string, nullable: true }
-        distributions:
-          { type: array, items: { $ref: "#/components/schemas/Distribution" } }
+        distributions: { type: array, items: { $ref: "#/components/schemas/Distribution" } }
         spatial_coverage: { $ref: "#/components/schemas/Spatial" }
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
-        persistent_identifiers:
-          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
-        contact_points:
-          { type: array, items: { $ref: "#/components/schemas/ContactPoint" } }
-        providers:
-          { type: array, items: { $ref: "#/components/schemas/Organization" } }
-        categories:
-          { type: array, items: { $ref: "#/components/schemas/Category" } }
+        persistent_identifiers: { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } }
+        providers: { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        categories: { type: array, items: { $ref: "#/components/schemas/Category" } }
         source_created: { type: string, format: date-time, nullable: true }
         source_updated: { type: string, format: date-time, nullable: true }
         status: { $ref: "#/components/schemas/DatasetStatus" }
@@ -939,8 +1030,9 @@ components:
             country: { type: string, nullable: true },
             logo_url: { type: string, nullable: true },
             page_url: { type: string, nullable: true },
-            email: { type: string, nullable: true },
-            lei_code: { type: string, nullable: true },
+             email: { type: string, nullable: true },
+             lei_code: { type: string, nullable: true },
+             contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } },
             identifiers:
               {
                 type: array,
@@ -978,90 +1070,6 @@ components:
             concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] },
           },
       }
-    PublicDatasetRecord:
-      type: object
-      required: [dataset_id, version_id, revision, status, created_by, group, metadata]
-      properties:
-        dataset_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
-        revision: { type: integer, format: int32 }
-        status: { $ref: "#/components/schemas/DatasetStatus" }
-        created_by: { type: string, format: uuid }
-        group: { $ref: "#/components/schemas/CategoryScheme" }
-        metadata: { $ref: "#/components/schemas/PublicDatasetMetadata" }
-    PublicDatasetMetadata:
-      type: object
-      required:
-        [
-          id,
-          source_iri,
-          title,
-          description,
-          keywords,
-          distributions,
-          persistent_identifiers,
-          providers,
-          categories,
-          status,
-          created,
-          updated,
-        ]
-      properties:
-        id: { type: string, format: uuid }
-        source_iri: { type: string }
-        title: { type: string }
-        description: { type: string }
-        keywords: { type: string }
-        accrual_periodicity: { type: string, nullable: true }
-        quality_annotation: { type: string, nullable: true }
-        access_right: { type: string, nullable: true }
-        distributions:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/PublicDistribution" },
-          }
-        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
-        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
-        persistent_identifiers:
-          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
-        providers:
-          { type: array, items: { $ref: "#/components/schemas/Organization" } }
-        categories:
-          { type: array, items: { $ref: "#/components/schemas/Category" } }
-        source_created: { type: string, format: date-time, nullable: true }
-        source_updated: { type: string, format: date-time, nullable: true }
-        status: { $ref: "#/components/schemas/DatasetStatus" }
-        created: { type: string, format: date-time }
-        updated: { type: string, format: date-time }
-    PublicDistribution:
-      type: object
-      required: [id, title, description, type]
-      properties:
-        id: { type: string, format: uuid }
-        title: { type: string }
-        description: { type: string }
-        license: { type: string, nullable: true }
-        type: { $ref: "#/components/schemas/DistributionType" }
-        issued: { type: string, format: date-time, nullable: true }
-        modified: { type: string, format: date-time, nullable: true }
-        byte_size: { type: integer, format: int64, nullable: true }
-        web_service: { $ref: "#/components/schemas/PublicWebService" }
-        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
-    PublicWebService:
-      type: object
-      required: [id, name, description, template_url, format]
-      properties:
-        id: { type: string, format: uuid }
-        name: { type: string }
-        description: { type: string }
-        template_url: { type: string }
-        parameters:
-          { type: array, items: { $ref: "#/components/schemas/Parameter" } }
-        format: { type: string }
-        provider: { $ref: "#/components/schemas/Organization" }
-        documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
-        temporal_coverage: { $ref: "#/components/schemas/Temporal" }
     ParameterKind:
       { type: string, enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME] }
     DistributionType:

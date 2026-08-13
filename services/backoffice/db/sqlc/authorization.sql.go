@@ -112,6 +112,37 @@ func (q *Queries) GetSoftwareApplicationGroup(ctx context.Context, id uuid.UUID)
 	return group_id, err
 }
 
+const getSoftwareApplicationVersionAuthorization = `-- name: GetSoftwareApplicationVersionAuthorization :one
+SELECT
+    version.software_application_id,
+    application.group_id,
+    version.status
+FROM
+    software_application_versions AS version
+    JOIN software_applications AS application ON application.id = version.software_application_id
+WHERE
+    version.id = $1
+    AND version.software_application_id = $2
+`
+
+type GetSoftwareApplicationVersionAuthorizationParams struct {
+	VersionID             uuid.UUID
+	SoftwareApplicationID uuid.UUID
+}
+
+type GetSoftwareApplicationVersionAuthorizationRow struct {
+	SoftwareApplicationID uuid.UUID
+	GroupID               uuid.UUID
+	Status                ResourceStatus
+}
+
+func (q *Queries) GetSoftwareApplicationVersionAuthorization(ctx context.Context, arg GetSoftwareApplicationVersionAuthorizationParams) (GetSoftwareApplicationVersionAuthorizationRow, error) {
+	row := q.db.QueryRow(ctx, getSoftwareApplicationVersionAuthorization, arg.VersionID, arg.SoftwareApplicationID)
+	var i GetSoftwareApplicationVersionAuthorizationRow
+	err := row.Scan(&i.SoftwareApplicationID, &i.GroupID, &i.Status)
+	return i, err
+}
+
 const getSoftwareSourceCodeGroup = `-- name: GetSoftwareSourceCodeGroup :one
 SELECT
     group_id
@@ -126,6 +157,37 @@ func (q *Queries) GetSoftwareSourceCodeGroup(ctx context.Context, id uuid.UUID) 
 	var group_id uuid.UUID
 	err := row.Scan(&group_id)
 	return group_id, err
+}
+
+const getSoftwareSourceCodeVersionAuthorization = `-- name: GetSoftwareSourceCodeVersionAuthorization :one
+SELECT
+    version.software_source_code_id,
+    source_code.group_id,
+    version.status
+FROM
+    software_source_code_versions AS version
+    JOIN software_source_codes AS source_code ON source_code.id = version.software_source_code_id
+WHERE
+    version.id = $1
+    AND version.software_source_code_id = $2
+`
+
+type GetSoftwareSourceCodeVersionAuthorizationParams struct {
+	VersionID            uuid.UUID
+	SoftwareSourceCodeID uuid.UUID
+}
+
+type GetSoftwareSourceCodeVersionAuthorizationRow struct {
+	SoftwareSourceCodeID uuid.UUID
+	GroupID              uuid.UUID
+	Status               ResourceStatus
+}
+
+func (q *Queries) GetSoftwareSourceCodeVersionAuthorization(ctx context.Context, arg GetSoftwareSourceCodeVersionAuthorizationParams) (GetSoftwareSourceCodeVersionAuthorizationRow, error) {
+	row := q.db.QueryRow(ctx, getSoftwareSourceCodeVersionAuthorization, arg.VersionID, arg.SoftwareSourceCodeID)
+	var i GetSoftwareSourceCodeVersionAuthorizationRow
+	err := row.Scan(&i.SoftwareSourceCodeID, &i.GroupID, &i.Status)
+	return i, err
 }
 
 const hasAnyActiveMembership = `-- name: HasAnyActiveMembership :one

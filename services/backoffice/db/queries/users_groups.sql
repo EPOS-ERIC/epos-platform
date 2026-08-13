@@ -1,1 +1,0 @@
--- Legacy identity CRUD queries removed. Authorization uses authorization.sql.

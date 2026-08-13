@@ -90,6 +90,7 @@ type SoftwareApplication struct {
 	OperatingSystem  *string
 	Creators         []Organization
 	Identifiers      []Identifier
+	ContactPoints    []ContactPoint
 	Categories       []Category
 }
 
@@ -108,6 +109,7 @@ type SoftwareSourceCode struct {
 	Version              *string
 	Creators             []Organization
 	Identifiers          []Identifier
+	ContactPoints        []ContactPoint
 	Categories           []Category
 }
 type Documentation struct {
@@ -117,18 +119,19 @@ type Documentation struct {
 }
 
 type Organization struct {
-	ID          uuid.UUID
-	SourceIRI   string
-	Name        string
-	Street      *string
-	Locality    *string
-	PostalCode  *string
-	Country     *string
-	LogoURL     *string
-	PageURL     *string
-	Email       *string
-	LEICode     *string
-	Identifiers []Identifier
+	ID            uuid.UUID
+	SourceIRI     string
+	Name          string
+	Street        *string
+	Locality      *string
+	PostalCode    *string
+	Country       *string
+	LogoURL       *string
+	PageURL       *string
+	Email         *string
+	LEICode       *string
+	ContactPoints []ContactPoint
+	Identifiers   []Identifier
 }
 
 type Category struct {

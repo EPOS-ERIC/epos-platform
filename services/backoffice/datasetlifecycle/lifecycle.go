@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authorization"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/google/uuid"
 )
@@ -33,11 +33,11 @@ const (
 )
 
 type Authorizer interface {
-	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authorization.Result, error)
-	AuthorizeResource(context.Context, uuid.UUID, authorization.ResourceType, uuid.UUID, string) (authorization.Result, error)
-	CanReadResource(context.Context, *uuid.UUID, authorization.ResourceType, uuid.UUID) (authorization.Result, error)
-	CanReadDatasetVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authorization.Result, error)
-	CanReadContactPoint(context.Context, uuid.UUID) (authorization.Result, error)
+	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authz.Result, error)
+	AuthorizeResource(context.Context, uuid.UUID, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
+	CanReadResource(context.Context, *uuid.UUID, authz.ResourceType, uuid.UUID) (authz.Result, error)
+	CanReadDatasetVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authz.Result, error)
+	CanReadContactPoint(context.Context, uuid.UUID) (authz.Result, error)
 }
 
 // Dataset is version metadata with lifecycle identity. Metadata.SourceIRI is
@@ -242,7 +242,7 @@ func (s *Service) authorizeGroup(ctx context.Context, actorID, groupID uuid.UUID
 }
 
 func (s *Service) authorizeResource(ctx context.Context, actorID, datasetID uuid.UUID, permission string) error {
-	result, err := s.authorizer.AuthorizeResource(ctx, actorID, authorization.ResourceTypeDataset, datasetID, permission)
+	result, err := s.authorizer.AuthorizeResource(ctx, actorID, authz.ResourceTypeDataset, datasetID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize dataset: %w", err)
 	}

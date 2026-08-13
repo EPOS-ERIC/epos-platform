@@ -122,10 +122,6 @@ func (h *handler) action(name string) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		versionID, ok := versionID(w, r)
-		if !ok {
-			return
-		}
 		if name == "draft-from-publication" || name == "draft-from-archive" {
 			var dataset datasetlifecycle.Dataset
 			var err error
@@ -135,6 +131,10 @@ func (h *handler) action(name string) http.HandlerFunc {
 				dataset, err = h.service.DraftFromLatestArchive(r.Context(), actor, datasetID)
 			}
 			h.writeDataset(r, w, dataset, err, http.StatusCreated)
+			return
+		}
+		versionID, ok := versionID(w, r)
+		if !ok {
 			return
 		}
 		if name == "discard" {

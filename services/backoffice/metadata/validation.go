@@ -78,12 +78,18 @@ func (s SoftwareApplication) Validate() error {
 	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
 		return fmt.Errorf("ID, source IRI, and name are required")
 	}
+	if err := validateContactPoints(s.ContactPoints, "software application contact point"); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s SoftwareSourceCode) Validate() error {
 	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
 		return fmt.Errorf("ID, source IRI, and name are required")
+	}
+	if err := validateContactPoints(s.ContactPoints, "software source code contact point"); err != nil {
+		return err
 	}
 	return nil
 }
@@ -179,6 +185,22 @@ func (o Organization) Validate() error {
 			return fmt.Errorf("identifier: %w", err)
 		}
 		if err := addUnique(identifiers, identifier.ID.String(), "organization identifier"); err != nil {
+			return err
+		}
+	}
+	if err := validateContactPoints(o.ContactPoints, "organization contact point"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateContactPoints(values []ContactPoint, label string) error {
+	contacts := make(map[string]struct{}, len(values))
+	for _, contact := range values {
+		if err := contact.Validate(); err != nil {
+			return fmt.Errorf("%s: %w", label, err)
+		}
+		if err := addUnique(contacts, contact.ID.String(), label); err != nil {
 			return err
 		}
 	}

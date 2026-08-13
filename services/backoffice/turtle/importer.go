@@ -15,11 +15,12 @@ import (
 )
 
 type (
-	Options      = metadataimport.Options
-	Batch        = metadataimport.Batch
-	CategoryEdge = metadataimport.CategoryEdge
-	Severity     = metadataimport.Severity
-	Diagnostic   = metadataimport.Diagnostic
+	Options          = metadataimport.Options
+	Batch            = metadataimport.Batch
+	CategoryEdge     = metadataimport.CategoryEdge
+	OrganizationEdge = metadataimport.OrganizationEdge
+	Severity         = metadataimport.Severity
+	Diagnostic       = metadataimport.Diagnostic
 )
 
 const (
@@ -47,26 +48,28 @@ func Parse(input io.Reader, options Options) (Batch, error) {
 }
 
 type mapper struct {
-	graph         *graph
-	options       Options
-	warnings      []Diagnostic
-	schemes       map[string]domain.CategoryScheme
-	categories    map[string]domain.Category
-	organizations map[string]domain.Organization
-	contacts      map[string]domain.ContactPoint
-	categoryEdges map[string]CategoryEdge
+	graph             *graph
+	options           Options
+	warnings          []Diagnostic
+	schemes           map[string]domain.CategoryScheme
+	categories        map[string]domain.Category
+	organizations     map[string]domain.Organization
+	contacts          map[string]domain.ContactPoint
+	categoryEdges     map[string]CategoryEdge
+	organizationEdges map[string]OrganizationEdge
 }
 
 func mapGraph(g *graph, options Options) (Batch, error) {
 	m := &mapper{
-		graph:         g,
-		options:       options,
-		warnings:      nil,
-		schemes:       make(map[string]domain.CategoryScheme),
-		categories:    make(map[string]domain.Category),
-		organizations: make(map[string]domain.Organization),
-		contacts:      make(map[string]domain.ContactPoint),
-		categoryEdges: make(map[string]CategoryEdge),
+		graph:             g,
+		options:           options,
+		warnings:          nil,
+		schemes:           make(map[string]domain.CategoryScheme),
+		categories:        make(map[string]domain.Category),
+		organizations:     make(map[string]domain.Organization),
+		contacts:          make(map[string]domain.ContactPoint),
+		categoryEdges:     make(map[string]CategoryEdge),
+		organizationEdges: make(map[string]OrganizationEdge),
 	}
 
 	var datasets []domain.Dataset
@@ -97,9 +100,46 @@ func mapGraph(g *graph, options Options) (Batch, error) {
 		softwareSourceCodes = append(softwareSourceCodes, software)
 	}
 
+	for _, source := range m.graph.subjects(rdfType, skosConceptScheme) {
+		if !m.supportedScheme(source) {
+			continue
+		}
+		if _, err := m.scheme(source); err != nil {
+			return Batch{}, err
+		}
+	}
+	for _, source := range m.graph.subjects(rdfType, skosConcept) {
+		if _, ok := m.firstString(source, skosInScheme); !ok {
+			continue
+		}
+		schemeIRI, _ := m.firstString(source, skosInScheme)
+		if !m.supportedScheme(schemeIRI) {
+			continue
+		}
+		if _, err := m.category(source, make(map[string]bool)); err != nil {
+			return Batch{}, err
+		}
+	}
+	for _, source := range m.graph.subjects(rdfType, schemaOrganization) {
+		if _, err := m.organization(source, make(map[string]bool)); err != nil {
+			return Batch{}, err
+		}
+	}
+	for _, source := range m.graph.subjects(rdfType, schemaContactPoint) {
+		if _, err := m.contact(source); err != nil {
+			return Batch{}, err
+		}
+	}
+
 	m.addUnsupportedWarnings()
 
-	if len(datasets) == 0 && len(softwareApplications) == 0 && len(softwareSourceCodes) == 0 {
+	if len(datasets) == 0 &&
+		len(softwareApplications) == 0 &&
+		len(softwareSourceCodes) == 0 &&
+		len(m.schemes) == 0 &&
+		len(m.categories) == 0 &&
+		len(m.organizations) == 0 &&
+		len(m.contacts) == 0 {
 		return Batch{}, fmt.Errorf("no supported metadata resources found")
 	}
 
@@ -130,22 +170,31 @@ func mapGraph(g *graph, options Options) (Batch, error) {
 		SoftwareApplications: softwareApplications,
 		SoftwareSourceCodes:  softwareSourceCodes,
 		CategoryEdges:        mapEdges(m.categoryEdges),
+		OrganizationEdges:    mapOrganizationEdges(m.organizationEdges),
 		Warnings:             m.warnings,
 	}, nil
 }
 
 func (m *mapper) softwareApplication(source string) (domain.SoftwareApplication, error) {
 	result := domain.SoftwareApplication{
-		ID: sharedID("software-application", source), SourceIRI: source,
-		Name: m.requiredString(source, schemaName), Description: m.optionalString(source, schemaDescription),
-		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)), License: stringPtr(m.optionalString(source, schemaLicense)),
-		Version: stringPtr(m.optionalStringOneOf(source, schemaSoftwareVersion, schemaVersion)), Keywords: strings.Join(m.strings(source, schemaKeywords), ","),
-		DownloadURL: stringPtr(m.optionalString(source, schemaDownloadURL)), Requirements: stringPtr(m.optionalString(source, schemaSoftwareRequirements)),
-		OperatingSystem: stringPtr(m.optionalString(source, schemaOperatingSystem)),
-		Creators:        nil, Identifiers: nil, Categories: nil,
+		ID:               sharedID("software-application", source),
+		SourceIRI:        source,
+		Name:             m.requiredString(source, schemaName),
+		Description:      m.optionalString(source, schemaDescription),
+		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)),
+		License:          stringPtr(m.optionalString(source, schemaLicense)),
+		Version:          stringPtr(m.optionalStringOneOf(source, schemaSoftwareVersion, schemaVersion)),
+		Keywords:         strings.Join(m.strings(source, schemaKeywords), ","),
+		DownloadURL:      stringPtr(m.optionalString(source, schemaDownloadURL)),
+		Requirements:     stringPtr(m.optionalString(source, schemaSoftwareRequirements)),
+		OperatingSystem:  stringPtr(m.optionalString(source, schemaOperatingSystem)),
+		Creators:         nil,
+		Identifiers:      nil,
+		ContactPoints:    nil,
+		Categories:       nil,
 	}
 
-	if err := m.addSoftwareRelations(source, result.ID, &result.Creators, &result.Identifiers, &result.Categories); err != nil {
+	if err := m.addSoftwareRelations(source, result.ID, &result.Creators, &result.Identifiers, &result.ContactPoints, &result.Categories); err != nil {
 		return domain.SoftwareApplication{}, err
 	}
 
@@ -154,23 +203,39 @@ func (m *mapper) softwareApplication(source string) (domain.SoftwareApplication,
 
 func (m *mapper) softwareSourceCode(source string) (domain.SoftwareSourceCode, error) {
 	result := domain.SoftwareSourceCode{
-		ID: sharedID("software-source-code", source), SourceIRI: source,
-		Name: m.requiredString(source, schemaName), Description: m.optionalString(source, schemaDescription),
-		ProgrammingLanguage: stringPtr(m.optionalString(source, schemaProgrammingLanguage)), Keywords: strings.Join(m.strings(source, schemaKeywords), ","),
-		Repository: stringPtr(m.optionalString(source, schemaCodeRepository)), License: stringPtr(m.optionalString(source, schemaLicense)),
-		SoftwareRequirements: stringPtr(m.optionalString(source, schemaSoftwareRequirements)), RuntimePlatform: stringPtr(m.optionalString(source, schemaRuntimePlatform)),
-		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)), Version: stringPtr(m.optionalString(source, schemaVersion)),
-		Creators: nil, Identifiers: nil, Categories: nil,
+		ID:                   sharedID("software-source-code", source),
+		SourceIRI:            source,
+		Name:                 m.requiredString(source, schemaName),
+		Description:          m.optionalString(source, schemaDescription),
+		ProgrammingLanguage:  stringPtr(m.optionalString(source, schemaProgrammingLanguage)),
+		Keywords:             strings.Join(m.strings(source, schemaKeywords), ","),
+		Repository:           stringPtr(m.optionalString(source, schemaCodeRepository)),
+		License:              stringPtr(m.optionalString(source, schemaLicense)),
+		SoftwareRequirements: stringPtr(m.optionalString(source, schemaSoftwareRequirements)),
+		RuntimePlatform:      stringPtr(m.optionalString(source, schemaRuntimePlatform)),
+		MainEntityOfPage:     stringPtr(m.optionalString(source, schemaMainEntityOfPage)),
+		Version:              stringPtr(m.optionalString(source, schemaVersion)),
+		Creators:             nil,
+		Identifiers:          nil,
+		ContactPoints:        nil,
+		Categories:           nil,
 	}
 
-	if err := m.addSoftwareRelations(source, result.ID, &result.Creators, &result.Identifiers, &result.Categories); err != nil {
+	if err := m.addSoftwareRelations(source, result.ID, &result.Creators, &result.Identifiers, &result.ContactPoints, &result.Categories); err != nil {
 		return domain.SoftwareSourceCode{}, err
 	}
 
 	return result, nil
 }
 
-func (m *mapper) addSoftwareRelations(source string, owner uuid.UUID, creators *[]domain.Organization, identifiers *[]domain.Identifier, categories *[]domain.Category) error {
+func (m *mapper) addSoftwareRelations(
+	source string,
+	owner uuid.UUID,
+	creators *[]domain.Organization,
+	identifiers *[]domain.Identifier,
+	contacts *[]domain.ContactPoint,
+	categories *[]domain.Category,
+) error {
 	for _, identifierSource := range m.graph.refs(source, schemaIdentifier) {
 		if identifier, ok := m.identifier(identifierSource, owner, source); ok {
 			*identifiers = append(*identifiers, identifier)
@@ -178,11 +243,19 @@ func (m *mapper) addSoftwareRelations(source string, owner uuid.UUID, creators *
 	}
 
 	for _, creatorSource := range m.graph.refs(source, schemaCreator) {
-		creator, err := m.organization(creatorSource)
+		creator, err := m.organization(creatorSource, make(map[string]bool))
 		if err != nil {
 			return err
 		}
 		*creators = append(*creators, creator)
+	}
+
+	for _, contactSource := range m.graph.refs(source, dcatContactPoint) {
+		contact, err := m.contact(contactSource)
+		if err != nil {
+			return err
+		}
+		*contacts = append(*contacts, contact)
 	}
 
 	for _, categorySource := range m.graph.refs(source, dcatTheme) {
@@ -280,7 +353,7 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 	}
 
 	for _, ref := range m.graph.refs(source, dctPublisher) {
-		organization, err := m.organization(ref)
+		organization, err := m.organization(ref, make(map[string]bool))
 		if err != nil {
 			return domain.Dataset{}, err
 		}
@@ -380,7 +453,7 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (doma
 		return domain.WebService{}, fmt.Errorf("web service must have at most one provider")
 	}
 	if len(providers) == 1 {
-		item, err := m.organization(providers[0])
+		item, err := m.organization(providers[0], make(map[string]bool))
 		if err != nil {
 			return domain.WebService{}, err
 		}
@@ -553,14 +626,24 @@ func (m *mapper) scheme(source string) (domain.CategoryScheme, error) {
 	return result, nil
 }
 
-func (m *mapper) category(source string, active map[string]bool) (domain.Category, error) {
-	if value, ok := m.categories[source]; ok {
-		return value, nil
+func (m *mapper) supportedScheme(source string) bool {
+	for _, top := range m.graph.refs(source, skosHasTopConcept) {
+		if top == "category:facets/dataset-theme" || top == "category:facets/facility-theme" || top == "category:facets/software-theme" {
+			return true
+		}
 	}
+	return false
+}
+
+func (m *mapper) category(source string, active map[string]bool) (domain.Category, error) {
 	if active[source] {
 		return domain.Category{}, fmt.Errorf("category hierarchy cycle at %q", source)
 	}
+	if value, ok := m.categories[source]; ok {
+		return value, nil
+	}
 	active[source] = true
+	defer delete(active, source)
 	schemeIRI, ok := m.firstString(source, skosInScheme)
 	if !ok {
 		return domain.Category{}, fmt.Errorf("category %q has no scheme", source)
@@ -576,39 +659,48 @@ func (m *mapper) category(source string, active map[string]bool) (domain.Categor
 		Scheme:    scheme,
 		Children:  nil,
 	}
-	m.categories[source] = result
-	for _, parentIRI := range m.graph.refs(source, skosBroader) {
+	parents := m.graph.refs(source, skosBroader)
+	if len(parents) > 1 {
+		return domain.Category{}, fmt.Errorf("category %q has multiple parents", source)
+	}
+	for _, parentIRI := range parents {
 		parent, err := m.category(parentIRI, active)
 		if err != nil {
 			return domain.Category{}, err
 		}
 		m.categoryEdges[parent.SourceIRI+"\x00"+result.SourceIRI] = CategoryEdge{ParentID: parent.ID, ChildID: result.ID}
 	}
-	delete(active, source)
+	m.categories[source] = result
 	return result, nil
 }
 
-func (m *mapper) organization(source string) (domain.Organization, error) {
+func (m *mapper) organization(source string, active map[string]bool) (domain.Organization, error) {
+	if active[source] {
+		return domain.Organization{}, fmt.Errorf("organization hierarchy cycle at %q", source)
+	}
 	if value, ok := m.organizations[source]; ok {
 		return value, nil
 	}
+	active[source] = true
+	defer delete(active, source)
 	address := source
 	if references := m.graph.refs(source, schemaAddress); len(references) > 0 {
 		address = references[0]
 	}
 	result := domain.Organization{
-		ID:          sharedID("organization", source),
-		SourceIRI:   source,
-		Name:        m.optionalString(source, schemaLegalName),
-		Street:      stringPtr(m.optionalString(address, schemaStreetAddress)),
-		Locality:    stringPtr(m.optionalString(address, schemaAddressLocality)),
-		PostalCode:  stringPtr(m.optionalString(address, schemaPostalCode)),
-		Country:     stringPtr(m.optionalString(address, schemaAddressCountry)),
-		LogoURL:     stringPtr(m.optionalString(source, schemaLogo)),
-		PageURL:     stringPtr(m.optionalString(source, schemaURL)),
-		Email:       stringPtr(m.optionalString(source, schemaEmail)),
-		LEICode:     stringPtr(m.optionalString(source, schemaLEICode)),
-		Identifiers: nil,
+		ID:            sharedID("organization", source),
+		SourceIRI:     source,
+		Name:          m.optionalString(source, schemaLegalName),
+		Street:        stringPtr(m.optionalString(address, schemaStreetAddress)),
+		Locality:      stringPtr(m.optionalString(address, schemaAddressLocality)),
+		PostalCode:    stringPtr(m.optionalString(address, schemaPostalCode)),
+		Country:       stringPtr(m.optionalString(address, schemaAddressCountry)),
+		LogoURL:       stringPtr(m.optionalString(source, schemaLogo)),
+		PageURL:       stringPtr(m.optionalString(source, schemaURL)),
+		Email:         stringPtr(m.optionalString(source, schemaEmail)),
+		LEICode:       stringPtr(m.optionalString(source, schemaLEICode)),
+		ContactPoints: nil,
+		Identifiers:   nil,
 	}
 	if result.Name == "" {
 		result.Name = m.optionalString(source, schemaName)
@@ -620,6 +712,20 @@ func (m *mapper) organization(source string) (domain.Organization, error) {
 		if identifier, ok := m.identifier(identifierSource, result.ID, source); ok {
 			result.Identifiers = append(result.Identifiers, identifier)
 		}
+	}
+	for _, contactSource := range m.graph.refs(source, dcatContactPoint) {
+		contact, err := m.contact(contactSource)
+		if err != nil {
+			return domain.Organization{}, err
+		}
+		result.ContactPoints = append(result.ContactPoints, contact)
+	}
+	for _, parentIRI := range m.graph.refs(source, schemaMemberOf) {
+		parent, err := m.organization(parentIRI, active)
+		if err != nil {
+			return domain.Organization{}, err
+		}
+		m.organizationEdges[parent.SourceIRI+"\x00"+result.SourceIRI] = OrganizationEdge{ParentID: parent.ID, ChildID: result.ID}
 	}
 	m.organizations[source] = result
 	return result, nil
@@ -940,6 +1046,14 @@ func mapValues[T any](values map[string]T) []T {
 
 func mapEdges(values map[string]CategoryEdge) []CategoryEdge {
 	result := make([]CategoryEdge, 0, len(values))
+	for _, value := range values {
+		result = append(result, value)
+	}
+	return result
+}
+
+func mapOrganizationEdges(values map[string]OrganizationEdge) []OrganizationEdge {
+	result := make([]OrganizationEdge, 0, len(values))
 	for _, value := range values {
 		result = append(result, value)
 	}
