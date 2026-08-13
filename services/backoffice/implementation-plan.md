@@ -26,7 +26,8 @@ For each slice:
 | Software lifecycle      | Pending  | Same lifecycle for applications and source code.                              | Dataset lifecycle                                         |
 | Identity administration | Pending  | Membership/role requests, grants, blocking, admin safety.                     | Authorization kernel                                      |
 | Canonical metadata      | Pending  | Group/category, organization, and contact management with confirmed deletion. | Foundation, authorization kernel                          |
-| Import alignment        | Pending  | Admin import through canonical and draft resource operations.                 | Dataset lifecycle, software lifecycle, canonical metadata |
+| Dataset import          | Active   | Admin Turtle import into canonical metadata and dataset drafts.               | Dataset lifecycle                                         |
+| Import alignment        | Pending  | Extend import through software drafts and canonical management operations.    | Dataset import, software lifecycle, canonical metadata    |
 | Notifications           | Pending  | Subscription storage, eligibility, defaults, and cleanup.                     | Authorization kernel, identity administration             |
 | Completion pass         | Pending  | Required scenarios, API cleanup, fresh-environment validation.                | All slices                                                |
 
@@ -143,6 +144,13 @@ Deliver dataset lifecycle as first usable vertical slice using stored-resource a
 
 - Create, edit, submit, withdraw, reject, reopen, publish, discard, unpublish, draft-from-publication, and copy satisfy lifecycle scenarios.
 - Revision conflicts and atomic publication are tested.
+
+### Dataset Import
+
+- Global `ADMIN` may atomically import Turtle category schemes, categories, organizations, contact points, and dataset drafts.
+- Category schemes create or update groups. Each dataset must reference categories from exactly one imported scheme, which determines immutable ownership group.
+- Existing `DRAFT` content is replaced by source IRI; an existing submitted or rejected change conflicts. Import never publishes resources.
+- Software metadata is rejected until software lifecycle supports draft persistence.
 
 ### Software Lifecycle
 

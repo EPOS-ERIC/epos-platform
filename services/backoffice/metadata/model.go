@@ -9,47 +9,42 @@ import (
 )
 
 type Dataset struct {
-	ID                    uuid.UUID      `json:"id"`
-	SourceIRI             string         `json:"source_iri"`
-	Title                 string         `json:"title"`
-	Description           string         `json:"description"`
-	Keywords              string         `json:"keywords"`
-	AccrualPeriodicity    *string        `json:"accrual_periodicity"`
-	QualityAnnotation     *string        `json:"quality_annotation"`
-	AccessRight           *string        `json:"access_right"`
-	Distributions         []Distribution `json:"distributions"`
-	SpatialCoverage       *Spatial       `json:"spatial_coverage"`
-	TemporalCoverage      *Temporal      `json:"temporal_coverage"`
-	PersistentIdentifiers []Identifier   `json:"persistent_identifiers"`
-	ContactPoints         []ContactPoint `json:"contact_points"`
-	Providers             []Organization `json:"providers"`
-	Categories            []Category     `json:"categories"`
-	SourceCreated         *time.Time     `json:"source_created"`
-	SourceUpdated         *time.Time     `json:"source_updated"`
-
-	// versioning stuff
-	Status            DatasetStatus `json:"status"`
-	Editor            *User         `json:"editor"`
-	Group             *Group        `json:"group"`
-	Created           time.Time     `json:"created"`
-	Updated           time.Time     `json:"updated"`
-	OriginalDatasetID uuid.UUID     `json:"original_dataset_id"`
+	ID                    uuid.UUID
+	SourceIRI             string
+	Title                 string
+	Description           string
+	Keywords              string
+	AccrualPeriodicity    *string
+	QualityAnnotation     *string
+	AccessRight           *string
+	Distributions         []Distribution
+	SpatialCoverage       *Spatial
+	TemporalCoverage      *Temporal
+	PersistentIdentifiers []Identifier
+	ContactPoints         []ContactPoint
+	Providers             []Organization
+	Categories            []Category
+	SourceCreated         *time.Time
+	SourceUpdated         *time.Time
+	Status                DatasetStatus
+	Created               time.Time
+	Updated               time.Time
 }
 
 type Distribution struct {
-	ID          uuid.UUID        `json:"id"`
-	SourceIRI   string           `json:"source_iri"`
-	Title       string           `json:"title"`
-	Description string           `json:"description"`
-	License     *string          `json:"license"`
-	Type        DistributionType `json:"type"`
-	Issued      *time.Time       `json:"issued"`
-	Modified    *time.Time       `json:"modified"`
-	ByteSize    *int64           `json:"byte_size"`
+	ID          uuid.UUID
+	SourceIRI   string
+	Title       string
+	Description string
+	License     *string
+	Type        DistributionType
+	Issued      *time.Time
+	Modified    *time.Time
+	ByteSize    *int64
 
 	// mutually exclusive
-	WebService       *WebService       `json:"web_service"`
-	DownloadableFile *DownloadableFile `json:"downloadable_file"`
+	WebService       *WebService
+	DownloadableFile *DownloadableFile
 }
 
 func (d Distribution) DeliveryType() (DistributionType, error) {
@@ -64,148 +59,125 @@ func (d Distribution) DeliveryType() (DistributionType, error) {
 }
 
 type DownloadableFile struct {
-	URL    string `json:"url"`
-	Format string `json:"format"`
+	URL    string
+	Format string
 }
 
 type WebService struct {
-	ID               uuid.UUID      `json:"id"`
-	SourceIRI        string         `json:"source_iri"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	TemplateURL      string         `json:"template_url"`
-	Parameters       []Parameter    `json:"parameters"`
-	Format           string         `json:"format"`
-	Provider         *Organization  `json:"provider"`
-	Documentation    *Documentation `json:"documentation"`
-	SpatialCoverage  *Spatial       `json:"spatial_coverage"`
-	TemporalCoverage *Temporal      `json:"temporal_coverage"`
-	ContactPoints    []ContactPoint `json:"contact_points"`
+	ID               uuid.UUID
+	SourceIRI        string
+	Name             string
+	Description      string
+	TemplateURL      string
+	Parameters       []Parameter
+	Format           string
+	Provider         *Organization
+	Documentation    *Documentation
+	SpatialCoverage  *Spatial
+	TemporalCoverage *Temporal
+	ContactPoints    []ContactPoint
 }
 
 type SoftwareApplication struct {
-	ID               uuid.UUID      `json:"id"`
-	SourceIRI        string         `json:"source_iri"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	MainEntityOfPage *string        `json:"main_entity_of_page"`
-	License          *string        `json:"license"`
-	Version          *string        `json:"version"`
-	Keywords         string         `json:"keywords"`
-	DownloadURL      *string        `json:"download_url"`
-	Requirements     *string        `json:"requirements"`
-	OperatingSystem  *string        `json:"operating_system"`
-	Creators         []Organization `json:"creators"`
-	Identifiers      []Identifier   `json:"identifiers"`
-	Categories       []Category     `json:"categories"`
+	ID               uuid.UUID
+	SourceIRI        string
+	Name             string
+	Description      string
+	MainEntityOfPage *string
+	License          *string
+	Version          *string
+	Keywords         string
+	DownloadURL      *string
+	Requirements     *string
+	OperatingSystem  *string
+	Creators         []Organization
+	Identifiers      []Identifier
+	Categories       []Category
 }
 
 type SoftwareSourceCode struct {
-	ID                   uuid.UUID      `json:"id"`
-	SourceIRI            string         `json:"source_iri"`
-	Name                 string         `json:"name"`
-	Description          string         `json:"description"`
-	ProgrammingLanguage  *string        `json:"programming_language"`
-	Keywords             string         `json:"keywords"`
-	Repository           *string        `json:"repository"`
-	License              *string        `json:"license"`
-	SoftwareRequirements *string        `json:"software_requirements"`
-	RuntimePlatform      *string        `json:"runtime_platform"`
-	MainEntityOfPage     *string        `json:"main_entity_of_page"`
-	Version              *string        `json:"version"`
-	Creators             []Organization `json:"creators"`
-	Identifiers          []Identifier   `json:"identifiers"`
-	Categories           []Category     `json:"categories"`
+	ID                   uuid.UUID
+	SourceIRI            string
+	Name                 string
+	Description          string
+	ProgrammingLanguage  *string
+	Keywords             string
+	Repository           *string
+	License              *string
+	SoftwareRequirements *string
+	RuntimePlatform      *string
+	MainEntityOfPage     *string
+	Version              *string
+	Creators             []Organization
+	Identifiers          []Identifier
+	Categories           []Category
 }
 type Documentation struct {
-	SourceIRI   string  `json:"source_iri"`
-	Title       *string `json:"title"`
-	Description *string `json:"description"`
-	URI         string  `json:"uri"`
+	SourceIRI   string
+	Title       *string
+	Description *string
+	URI         string
 }
 
 type Organization struct {
-	ID          uuid.UUID    `json:"id"`
-	SourceIRI   string       `json:"source_iri"`
-	Name        string       `json:"name"`
-	Street      *string      `json:"street"`
-	Locality    *string      `json:"locality"`
-	PostalCode  *string      `json:"postal_code"`
-	Country     *string      `json:"country"`
-	LogoURL     *string      `json:"logo_url"`
-	PageURL     *string      `json:"page_url"`
-	Email       *string      `json:"email"`
-	LEICode     *string      `json:"lei_code"`
-	Identifiers []Identifier `json:"identifiers"`
+	ID          uuid.UUID
+	SourceIRI   string
+	Name        string
+	Street      *string
+	Locality    *string
+	PostalCode  *string
+	Country     *string
+	LogoURL     *string
+	PageURL     *string
+	Email       *string
+	LEICode     *string
+	Identifiers []Identifier
 }
 
 type Category struct {
-	ID        uuid.UUID      `json:"id"`
-	SourceIRI string         `json:"source_iri"`
-	Name      string         `json:"name"`
-	Scheme    CategoryScheme `json:"scheme"`
-	Children  []Category     `json:"children"`
+	ID        uuid.UUID
+	SourceIRI string
+	Name      string
+	Scheme    CategoryScheme
+	Children  []Category
 }
 
 type CategoryScheme struct {
-	ID          uuid.UUID       `json:"id"`
-	SourceIRI   string          `json:"source_iri"`
-	Name        string          `json:"name"`
-	Label       *string         `json:"label"`
-	Logo        *string         `json:"logo"`
-	Page        *string         `json:"page"`
-	Color       *string         `json:"color"`
-	Position    int32           `json:"position"`
-	Concept     TopLevelConcept `json:"concept"`
-	TopConcepts []Category      `json:"top_concepts"`
-}
-
-type User struct {
-	ID             uuid.UUID  `json:"id"`
-	AuthIdentifier string     `json:"auth_identifier"`
-	FamilyName     *string    `json:"family_name"`
-	GivenName      *string    `json:"given_name"`
-	Email          *string    `json:"email"`
-	IsSuperAdmin   bool       `json:"is_super_admin"`
-	Status         UserStatus `json:"status"`
-	Created        time.Time  `json:"created"`
-	Updated        time.Time  `json:"updated"`
-}
-
-type Group struct {
-	ID          uuid.UUID `json:"id"`
-	Slug        string    `json:"slug"`
-	Name        string    `json:"name"`
-	Description *string   `json:"description"`
-	IsSystem    bool      `json:"is_system"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
+	ID        uuid.UUID
+	SourceIRI string
+	Name      string
+	Label     *string
+	Logo      *string
+	Page      *string
+	Color     *string
+	Position  int32
+	Concept   TopLevelConcept
 }
 
 type Coordinate struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	Latitude  float64
+	Longitude float64
 }
 
 type Spatial struct {
-	Point   *Coordinate  `json:"point"`
-	Polygon []Coordinate `json:"polygon"`
+	Point   *Coordinate
+	Polygon []Coordinate
 }
 type Temporal struct {
-	Start *time.Time `json:"start"`
-	End   *time.Time `json:"end"`
+	Start *time.Time
+	End   *time.Time
 }
 
 type Identifier struct {
-	ID        uuid.UUID      `json:"id"`
-	SourceIRI string         `json:"source_iri"`
-	Type      IdentifierType `json:"type"`
-	Value     string         `json:"value"`
+	ID        uuid.UUID
+	SourceIRI string
+	Type      IdentifierType
+	Value     string
 }
 
 type ContactPoint struct {
-	ID        uuid.UUID        `json:"id"`
-	SourceIRI string           `json:"source_iri"`
-	Email     string           `json:"email"`
-	Role      ContactPointRole `json:"role"`
+	ID        uuid.UUID
+	SourceIRI string
+	Email     string
+	Role      ContactPointRole
 }

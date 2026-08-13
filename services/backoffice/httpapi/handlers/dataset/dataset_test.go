@@ -1,4 +1,4 @@
-package handlers
+package dataset
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -70,7 +71,7 @@ func (fakeDatasetService) CopyPublished(context.Context, uuid.UUID, uuid.UUID, u
 
 func TestDatasetCommandsRequireActor(t *testing.T) {
 	router := chi.NewRouter()
-	router.Post("/groups/{group_id}/datasets", NewDatasets(fakeDatasetService{}).Create)
+	router.Post("/groups/{group_id}/datasets", New(fakeDatasetService{}).Create)
 	request := httptest.NewRequest(http.MethodPost, "/groups/"+uuid.NewString()+"/datasets", strings.NewReader(`{}`))
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
@@ -83,7 +84,7 @@ func TestCreateDatasetPassesActorAndMetadata(t *testing.T) {
 	actor := uuid.New()
 	group := uuid.New()
 	router := chi.NewRouter()
-	datasets := NewDatasets(fakeDatasetService{create: func(_ context.Context, actualActor, actualGroup uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+	datasets := New(fakeDatasetService{create: func(_ context.Context, actualActor, actualGroup uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
 		if actualActor != actor || actualGroup != group || value.SourceIRI != "https://example.test/dataset" {
 			t.Fatal("unexpected create request")
 		}
@@ -91,7 +92,7 @@ func TestCreateDatasetPassesActorAndMetadata(t *testing.T) {
 	}})
 	router.Post("/groups/{group_id}/datasets", datasets.Create)
 	request := httptest.NewRequest(http.MethodPost, "/groups/"+group.String()+"/datasets", strings.NewReader(`{"source_iri":"https://example.test/dataset"}`))
-	request.Header.Set(actorHeader, actor.String())
+	request.Header.Set(transport.ActorHeader, actor.String())
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
 	if response.Code != http.StatusCreated {
@@ -99,11 +100,50 @@ func TestCreateDatasetPassesActorAndMetadata(t *testing.T) {
 	}
 }
 
+func TestCreateDatasetRejectsResponseFields(t *testing.T) {
+	actor := uuid.New()
+	group := uuid.New()
+	router := chi.NewRouter()
+	router.Post("/groups/{group_id}/datasets", New(fakeDatasetService{}).Create)
+	request := httptest.NewRequest(http.MethodPost, "/groups/"+group.String()+"/datasets", strings.NewReader(`{"source_iri":"dataset:test","status":"DRAFT"}`))
+	request.Header.Set(transport.ActorHeader, actor.String())
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+}
+
+func TestCreateDatasetDecodesTypedParameter(t *testing.T) {
+	actor := uuid.New()
+	group := uuid.New()
+	parameterID := uuid.New()
+	router := chi.NewRouter()
+	datasets := New(fakeDatasetService{create: func(_ context.Context, _, _ uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+		parameter, ok := value.Distributions[0].WebService.Parameters[0].(metadata.StringParameter)
+		if !ok || parameter.Metadata.ID != parameterID || parameter.Kind() != metadata.ParameterKindString {
+			t.Fatalf("parameter = %#v", value.Distributions[0].WebService.Parameters[0])
+		}
+		return datasetlifecycle.Dataset{}, nil
+	}})
+	router.Post("/groups/{group_id}/datasets", datasets.Create)
+	body := `{"source_iri":"dataset:test","distributions":[{"source_iri":"distribution:test","title":"Test","type":"http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE","web_service":{"source_iri":"service:test","name":"Test","template_url":"https://example.test/{value}","format":"application/json","parameters":[{"metadata":{"id":"` + parameterID.String() + `","source_iri":"parameter:test","kind":"STRING","variable":"value","property":"schema:value","label":"Value","required":true,"multiple_values":false,"read_only":false},"default":null,"allowed_values":[],"pattern":""}]}}]}`
+	request := httptest.NewRequest(http.MethodPost, "/groups/"+group.String()+"/datasets", strings.NewReader(body))
+	request.Header.Set(transport.ActorHeader, actor.String())
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusCreated {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+}
+
 func TestPublicDatasetOmitsContactPoints(t *testing.T) {
 	id := uuid.New()
 	router := chi.NewRouter()
 	versionID := uuid.New()
-	datasets := NewDatasets(fakeDatasetService{read: func(_ context.Context, actor *uuid.UUID, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+	datasets := New(fakeDatasetService{read: func(_ context.Context, actor *uuid.UUID, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
 		if actor != nil || actualID != id || actualVersionID != versionID {
 			t.Fatal("unexpected read request")
 		}
@@ -123,7 +163,7 @@ func TestDatasetReadOmitsContactPointsWithoutEligibility(t *testing.T) {
 	actor := uuid.New()
 	router := chi.NewRouter()
 	versionID := uuid.New()
-	datasets := NewDatasets(fakeDatasetService{read: func(_ context.Context, actualActor *uuid.UUID, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+	datasets := New(fakeDatasetService{read: func(_ context.Context, actualActor *uuid.UUID, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
 		if actualActor == nil || *actualActor != actor || actualID != id || actualVersionID != versionID {
 			t.Fatal("unexpected read request")
 		}
@@ -131,7 +171,7 @@ func TestDatasetReadOmitsContactPointsWithoutEligibility(t *testing.T) {
 	}})
 	router.Get("/datasets/{id}/{version_id}", datasets.Get)
 	request := httptest.NewRequest(http.MethodGet, "/datasets/"+id.String()+"/"+versionID.String(), nil)
-	request.Header.Set(actorHeader, actor.String())
+	request.Header.Set(transport.ActorHeader, actor.String())
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
 	if response.Code != http.StatusOK || strings.Contains(response.Body.String(), "private@example.test") {
@@ -139,16 +179,41 @@ func TestDatasetReadOmitsContactPointsWithoutEligibility(t *testing.T) {
 	}
 }
 
+func TestDatasetReadExposesGroupOnce(t *testing.T) {
+	id := uuid.New()
+	versionID := uuid.New()
+	groupID := uuid.New()
+	router := chi.NewRouter()
+	datasets := New(fakeDatasetService{read: func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+		return datasetlifecycle.Dataset{
+			Group:    metadata.CategoryScheme{ID: groupID, SourceIRI: "scheme:test", Name: "Test", Concept: metadata.TopLevelConceptData},
+			Metadata: metadata.Dataset{Categories: []metadata.Category{{ID: uuid.New(), SourceIRI: "category:test", Name: "Category", Scheme: metadata.CategoryScheme{ID: groupID}}}},
+		}, true, nil
+	}})
+	router.Get("/datasets/{id}/{version_id}", datasets.Get)
+	request := httptest.NewRequest(http.MethodGet, "/datasets/"+id.String()+"/"+versionID.String(), nil)
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
+	}
+	body := response.Body.String()
+	if !strings.Contains(body, `"group":{"id":"`+groupID.String()) || strings.Contains(body, `"scheme"`) || strings.Contains(body, `"group":null`) {
+		t.Fatalf("response shape = %s", body)
+	}
+}
+
 func TestCreateDatasetDoesNotExposeInternalErrors(t *testing.T) {
 	actor := uuid.New()
 	group := uuid.New()
 	router := chi.NewRouter()
-	datasets := NewDatasets(fakeDatasetService{create: func(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error) {
+	datasets := New(fakeDatasetService{create: func(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error) {
 		return datasetlifecycle.Dataset{}, errors.New("postgres: password authentication failed")
 	}})
 	router.Post("/groups/{group_id}/datasets", datasets.Create)
 	request := httptest.NewRequest(http.MethodPost, "/groups/"+group.String()+"/datasets", strings.NewReader(`{"source_iri":"https://example.test/dataset"}`))
-	request.Header.Set(actorHeader, actor.String())
+	request.Header.Set(transport.ActorHeader, actor.String())
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
 	if response.Code != http.StatusInternalServerError {

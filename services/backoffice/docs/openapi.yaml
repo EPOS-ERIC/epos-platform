@@ -10,6 +10,8 @@ tags:
     description: Service availability.
   - name: Datasets
     description: Dataset draft metadata and lifecycle commands.
+  - name: Imports
+    description: Global administrator metadata import.
 paths:
   /health:
     get:
@@ -20,6 +22,28 @@ paths:
       responses:
         "200": { description: Service healthy }
         "503": { description: Database unreachable }
+  /api/v1/imports/turtle:
+    post:
+      tags: [Imports]
+      operationId: importTurtleMetadata
+      summary: Import Turtle metadata
+      description: Atomically creates or updates groups, categories, organizations, contact points, and dataset DRAFT content. Category schemes become groups. Every dataset must reference categories from exactly one scheme. Global ADMIN only.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          text/turtle:
+            schema: { type: string }
+      responses:
+        "200":
+          description: Import completed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ImportResult" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
   /api/v1/groups/{group_id}/datasets:
     post:
       tags: [Datasets]
@@ -27,7 +51,6 @@ paths:
       summary: Create draft dataset
       description: Creates a logical dataset and its first editable DRAFT version in path group.
       parameters: [{ $ref: "#/components/parameters/GroupID" }, { $ref: "#/components/parameters/Actor" }]
-      security: [{ ActorHeader: [] }]
       requestBody:
         {
           required: true,
@@ -59,7 +82,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/ActorOptional" },
         ]
-      security: [{}, { ActorHeader: [] }]
       responses:
         {
           "200": { $ref: "#/components/responses/DatasetRead" },
@@ -79,7 +101,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       requestBody:
         {
           required: true,
@@ -111,7 +132,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "204": { description: Draft discarded },
@@ -133,7 +153,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "200": { $ref: "#/components/responses/Dataset" },
@@ -155,7 +174,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "200": { $ref: "#/components/responses/Dataset" },
@@ -177,7 +195,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "200": { $ref: "#/components/responses/Dataset" },
@@ -199,7 +216,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "200": { $ref: "#/components/responses/Dataset" },
@@ -221,16 +237,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
-      requestBody:
-        {
-          required: true,
-          content:
-            {
-              application/json:
-                { schema: { type: object } },
-            },
-        }
       responses:
         {
           "200": { $ref: "#/components/responses/Dataset" },
@@ -252,7 +258,6 @@ paths:
           { $ref: "#/components/parameters/VersionID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       requestBody:
         {
           required: true,
@@ -282,7 +287,6 @@ paths:
           { $ref: "#/components/parameters/DatasetID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "201": { $ref: "#/components/responses/Dataset" },
@@ -303,7 +307,6 @@ paths:
           { $ref: "#/components/parameters/DatasetID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       responses:
         {
           "201": { $ref: "#/components/responses/Dataset" },
@@ -325,7 +328,6 @@ paths:
           { $ref: "#/components/parameters/GroupID" },
           { $ref: "#/components/parameters/Actor" },
         ]
-      security: [{ ActorHeader: [] }]
       requestBody:
         {
           required: true,
@@ -345,14 +347,6 @@ paths:
           "409": { $ref: "#/components/responses/Conflict" },
         }
 components:
-  securitySchemes:
-    ActorHeader:
-      {
-        type: apiKey,
-        in: header,
-        name: X-EPOS-User-ID,
-        description: Trusted authenticated user ID.,
-      }
   parameters:
     Actor:
       {
@@ -459,6 +453,26 @@ components:
           },
       }
   schemas:
+    ImportResult:
+      type: object
+      required: [groups, categories, organizations, contact_points, datasets, warnings]
+      properties:
+        groups: { type: integer }
+        categories: { type: integer }
+        organizations: { type: integer }
+        contact_points: { type: integer }
+        datasets: { type: integer }
+        warnings:
+          type: array
+          items: { $ref: "#/components/schemas/ImportDiagnostic" }
+    ImportDiagnostic:
+      type: object
+      required: [severity, subject, predicate, message]
+      properties:
+        severity: { type: string, enum: [warning, error] }
+        subject: { type: string }
+        predicate: { type: string }
+        message: { type: string }
     ReplaceDraftRequest:
       type: object
       required: [revision, metadata]
@@ -481,15 +495,17 @@ components:
       }
     DatasetRecord:
       type: object
-      required: [dataset_id, version_id, revision, status, metadata]
+      required: [dataset_id, version_id, revision, status, created_by, group, metadata]
       properties:
-        {
-          dataset_id: { type: string, format: uuid },
-          version_id: { type: string, format: uuid },
-          revision: { type: integer, format: int32 },
-          status: { $ref: "#/components/schemas/DatasetStatus" },
-          metadata: { $ref: "#/components/schemas/DatasetMetadata" },
-        }
+        dataset_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision: { type: integer, format: int32 }
+        status: { $ref: "#/components/schemas/DatasetStatus" }
+        created_by: { type: string, format: uuid }
+        group:
+          allOf: [{ $ref: "#/components/schemas/CategoryScheme" }]
+          description: Owning group and its category-scheme metadata.
+        metadata: { $ref: "#/components/schemas/DatasetMetadata" }
     Problem:
       {
         type: object,
@@ -581,7 +597,6 @@ components:
           status,
           created,
           updated,
-          original_dataset_id,
         ]
       properties:
         id: { type: string, format: uuid }
@@ -607,11 +622,8 @@ components:
         source_created: { type: string, format: date-time, nullable: true }
         source_updated: { type: string, format: date-time, nullable: true }
         status: { $ref: "#/components/schemas/DatasetStatus" }
-        editor: { $ref: "#/components/schemas/User" }
-        group: { $ref: "#/components/schemas/Group" }
         created: { type: string, format: date-time }
         updated: { type: string, format: date-time }
-        original_dataset_id: { type: string, format: uuid }
     Distribution:
       type: object
       required: [id, source_iri, title, description, type]
@@ -946,13 +958,12 @@ components:
     Category:
       {
         type: object,
-        required: [id, source_iri, name, scheme],
+        required: [id, source_iri, name],
         properties:
           {
             id: { type: string, format: uuid },
             source_iri: { type: string },
             name: { type: string },
-            scheme: { $ref: "#/components/schemas/CategoryScheme" },
             children:
               { type: array, items: { $ref: "#/components/schemas/Category" } },
           },
@@ -972,51 +983,18 @@ components:
             color: { type: string, nullable: true },
             position: { type: integer, format: int32 },
             concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] },
-            top_concepts:
-              { type: array, items: { $ref: "#/components/schemas/Category" } },
-          },
-      }
-    User:
-      {
-        type: object,
-        required:
-          [id, auth_identifier, is_super_admin, status, created, updated],
-        properties:
-          {
-            id: { type: string, format: uuid },
-            auth_identifier: { type: string },
-            family_name: { type: string, nullable: true },
-            given_name: { type: string, nullable: true },
-            email: { type: string, nullable: true },
-            is_super_admin: { type: boolean },
-            status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] },
-            created: { type: string, format: date-time },
-            updated: { type: string, format: date-time },
-          },
-      }
-    Group:
-      {
-        type: object,
-        required: [id, slug, name, is_system, created, updated],
-        properties:
-          {
-            id: { type: string, format: uuid },
-            slug: { type: string },
-            name: { type: string },
-            description: { type: string, nullable: true },
-            is_system: { type: boolean },
-            created: { type: string, format: date-time },
-            updated: { type: string, format: date-time },
           },
       }
     PublicDatasetRecord:
       type: object
-      required: [dataset_id, version_id, revision, status, metadata]
+      required: [dataset_id, version_id, revision, status, created_by, group, metadata]
       properties:
         dataset_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         revision: { type: integer, format: int32 }
         status: { $ref: "#/components/schemas/DatasetStatus" }
+        created_by: { type: string, format: uuid }
+        group: { $ref: "#/components/schemas/CategoryScheme" }
         metadata: { $ref: "#/components/schemas/PublicDatasetMetadata" }
     PublicDatasetMetadata:
       type: object
@@ -1034,7 +1012,6 @@ components:
           status,
           created,
           updated,
-          original_dataset_id,
         ]
       properties:
         id: { type: string, format: uuid }
@@ -1061,11 +1038,8 @@ components:
         source_created: { type: string, format: date-time, nullable: true }
         source_updated: { type: string, format: date-time, nullable: true }
         status: { $ref: "#/components/schemas/DatasetStatus" }
-        editor: { $ref: "#/components/schemas/User" }
-        group: { $ref: "#/components/schemas/Group" }
         created: { type: string, format: date-time }
         updated: { type: string, format: date-time }
-        original_dataset_id: { type: string, format: uuid }
     PublicDistribution:
       type: object
       required: [id, source_iri, title, description, type]

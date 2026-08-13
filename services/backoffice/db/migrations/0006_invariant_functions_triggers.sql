@@ -76,31 +76,37 @@ $$;
 -- the immutable group of the resource version being categorized.
 CREATE FUNCTION enforce_category_resource_group() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF TG_TABLE_NAME = 'dataset_version_categories' AND NOT EXISTS (
-        SELECT 1
-        FROM dataset_versions AS version
-        JOIN datasets AS dataset ON dataset.id = version.dataset_id
-        WHERE version.id = NEW.dataset_version_id AND dataset.group_id = NEW.group_id
-    ) THEN
-        RAISE EXCEPTION 'category group must match dataset group';
-    END IF;
-
-    IF TG_TABLE_NAME = 'software_application_version_categories' AND NOT EXISTS (
-        SELECT 1
-        FROM software_application_versions AS version
-        JOIN software_applications AS application ON application.id = version.software_application_id
-        WHERE version.id = NEW.software_application_version_id AND application.group_id = NEW.group_id
-    ) THEN
-        RAISE EXCEPTION 'category group must match software application group';
-    END IF;
-
-    IF TG_TABLE_NAME = 'software_source_code_version_categories' AND NOT EXISTS (
-        SELECT 1
-        FROM software_source_code_versions AS version
-        JOIN software_source_codes AS source_code ON source_code.id = version.software_source_code_id
-        WHERE version.id = NEW.software_source_code_version_id AND source_code.group_id = NEW.group_id
-    ) THEN
-        RAISE EXCEPTION 'category group must match source code group';
+    -- NEW has a different row type for each link table. Field access must stay
+    -- inside its branch so PL/pgSQL does not resolve absent columns.
+    IF TG_TABLE_NAME = 'dataset_version_categories' THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM dataset_versions AS version
+            JOIN datasets AS dataset ON dataset.id = version.dataset_id
+            WHERE version.id = NEW.dataset_version_id AND dataset.group_id = NEW.group_id
+        ) THEN
+            RAISE EXCEPTION 'category group must match dataset group';
+        END IF;
+    ELSIF TG_TABLE_NAME = 'software_application_version_categories' THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM software_application_versions AS version
+            JOIN software_applications AS application ON application.id = version.software_application_id
+            WHERE version.id = NEW.software_application_version_id AND application.group_id = NEW.group_id
+        ) THEN
+            RAISE EXCEPTION 'category group must match software application group';
+        END IF;
+    ELSIF TG_TABLE_NAME = 'software_source_code_version_categories' THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM software_source_code_versions AS version
+            JOIN software_source_codes AS source_code ON source_code.id = version.software_source_code_id
+            WHERE version.id = NEW.software_source_code_version_id AND source_code.group_id = NEW.group_id
+        ) THEN
+            RAISE EXCEPTION 'category group must match source code group';
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'unsupported category resource table: %', TG_TABLE_NAME;
     END IF;
 
     RETURN NEW;

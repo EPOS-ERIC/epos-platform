@@ -1,14 +1,12 @@
 package turtle
 
 import (
-	"encoding/json"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
 	domain "github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
-	"github.com/google/uuid"
 )
 
 func TestParseMetadataOne(t *testing.T) {
@@ -22,10 +20,7 @@ func TestParseMetadataOne(t *testing.T) {
 		}
 	}()
 
-	batch, err := Parse(file, Options{
-		Editor: domain.User{ID: uuid.New(), AuthIdentifier: "importer", Status: domain.UserStatusActive},
-		Group:  domain.Group{ID: uuid.New(), Slug: "all", Name: "ALL"},
-	})
+	batch, err := Parse(file, Options{})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -54,7 +49,7 @@ func TestParseMetadataOne(t *testing.T) {
 		}
 		if dataset.SourceIRI == "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events" {
 			keywords := make(map[string]bool)
-			for _, keyword := range strings.Split(dataset.Keywords, ",") {
+			for keyword := range strings.SplitSeq(dataset.Keywords, ",") {
 				keywords[keyword] = true
 			}
 			for _, keyword := range []string{"event", "earthquake", "seismicity", "catalogue", "magnitude"} {
@@ -180,18 +175,6 @@ func TestParseMetadataOne(t *testing.T) {
 	end := time.Date(1899, 12, 31, 23, 59, 59, 0, time.UTC)
 	if !ok || startTime.Minimum == nil || startTime.Maximum == nil || startTime.Default == nil || !startTime.Minimum.Equal(start) || !startTime.Maximum.Equal(end) || !startTime.Default.Equal(start) {
 		t.Errorf("starttime bounds = %#v", parameters["starttime"])
-	} else {
-		record, err := domain.EncodeParameter(startTime)
-		if err != nil {
-			t.Fatalf("encode starttime parameter: %v", err)
-		}
-		var config map[string]string
-		if err := json.Unmarshal(record.Config, &config); err != nil {
-			t.Fatalf("decode starttime config: %v", err)
-		}
-		if config["minimum"] != "1000-01-01T00:00:00Z" || config["maximum"] != "1899-12-31T23:59:59Z" || config["default"] != "1000-01-01T00:00:00Z" {
-			t.Errorf("starttime config = %s", record.Config)
-		}
 	}
 	bibliographyParameters := make(map[string]domain.Parameter, len(bibliographyService.Parameters))
 	for _, parameter := range bibliographyService.Parameters {
@@ -205,18 +188,6 @@ func TestParseMetadataOne(t *testing.T) {
 	minLatitude, ok := parameters["minlatitude"].(domain.FloatParameter)
 	if !ok || minLatitude.Minimum == nil || minLatitude.Maximum == nil || *minLatitude.Minimum != 33 || *minLatitude.Maximum != 74 {
 		t.Errorf("minlatitude bounds = %#v", parameters["minlatitude"])
-	} else {
-		record, err := domain.EncodeParameter(minLatitude)
-		if err != nil {
-			t.Fatalf("encode minlatitude parameter: %v", err)
-		}
-		var config map[string]float64
-		if err := json.Unmarshal(record.Config, &config); err != nil {
-			t.Fatalf("decode minlatitude config: %v", err)
-		}
-		if config["minimum"] != 33 || config["maximum"] != 74 || config["default"] != 33 {
-			t.Errorf("minlatitude config = %s", record.Config)
-		}
 	}
 }
 
@@ -278,10 +249,7 @@ func TestParseClonesOwnedWebServicesPerDataset(t *testing.T) {
 <template> hydra:template "https://example.test" .
 `
 
-	batch, err := Parse(strings.NewReader(ttl), Options{
-		Editor: domain.User{ID: uuid.New(), AuthIdentifier: "importer", Status: domain.UserStatusActive},
-		Group:  domain.Group{ID: uuid.New(), Slug: "all", Name: "ALL"},
-	})
+	batch, err := Parse(strings.NewReader(ttl), Options{})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -305,10 +273,7 @@ func TestParseDatasetSourceTimestamps(t *testing.T) {
 <dataset-without-dates> a dcat:Dataset; dct:title "Without dates" .
 `
 
-	batch, err := Parse(strings.NewReader(ttl), Options{
-		Editor: domain.User{ID: uuid.New(), AuthIdentifier: "importer", Status: domain.UserStatusActive},
-		Group:  domain.Group{ID: uuid.New(), Slug: "all", Name: "ALL"},
-	})
+	batch, err := Parse(strings.NewReader(ttl), Options{})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}

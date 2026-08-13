@@ -50,11 +50,16 @@ func (q *Queries) GetDatasetGroup(ctx context.Context, id uuid.UUID) (uuid.UUID,
 }
 
 const getDatasetVersionAuthorization = `-- name: GetDatasetVersionAuthorization :one
-SELECT version.dataset_id, dataset.group_id, version.status
-FROM dataset_versions AS version
-JOIN datasets AS dataset ON dataset.id = version.dataset_id
-WHERE version.id = $1
-  AND version.dataset_id = $2
+SELECT
+    version.dataset_id,
+    dataset.group_id,
+    version.status
+FROM
+    dataset_versions AS version
+    JOIN datasets AS dataset ON dataset.id = version.dataset_id
+WHERE
+    version.id = $1
+    AND version.dataset_id = $2
 `
 
 type GetDatasetVersionAuthorizationParams struct {

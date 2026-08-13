@@ -1,21 +1,21 @@
-// Package handlers exposes Backoffice HTTP handlers.
-package handlers
+// Package dataset exposes dataset HTTP handlers.
+package dataset
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-const actorHeader = "X-EPOS-User-ID"
+var log = logging.Get("dataset-handler")
 
 type datasetService interface {
 	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error)
@@ -33,15 +33,15 @@ type datasetService interface {
 	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error)
 }
 
-type Datasets struct {
+type handler struct {
 	service datasetService
 }
 
-func NewDatasets(service datasetService) *Datasets {
-	return &Datasets{service: service}
+func New(service datasetService) *handler {
+	return &handler{service: service}
 }
 
-func (h *Datasets) Create(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	actor, ok := actor(w, r)
 	if !ok {
 		return
@@ -51,15 +51,15 @@ func (h *Datasets) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request metadata.Dataset
-	if !decode(w, r, &request) {
+	var request datasetDraftRequest
+	if !transport.Decode(w, r, &request) {
 		return
 	}
-	dataset, err := h.service.CreateDraft(r.Context(), actor, groupID, request)
+	dataset, err := h.service.CreateDraft(r.Context(), actor, groupID, request.domain())
 	h.writeDataset(r, w, dataset, err, http.StatusCreated)
 }
 
-func (h *Datasets) Get(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	datasetID, ok := datasetID(w, r)
 	if !ok {
 		return
@@ -82,13 +82,13 @@ func (h *Datasets) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !includeContacts {
-		writePublicDataset(w, dataset)
+		transport.WriteJSON(w, http.StatusOK, datasetResponse(dataset, false))
 		return
 	}
-	writeJSON(w, http.StatusOK, dataset)
+	transport.WriteJSON(w, http.StatusOK, datasetResponse(dataset, true))
 }
 
-func (h *Datasets) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 	actor, ok := actor(w, r)
 	if !ok {
 		return
@@ -98,21 +98,21 @@ func (h *Datasets) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request struct {
-		Revision int32            `json:"revision"`
-		Metadata metadata.Dataset `json:"metadata"`
+		Revision int32               `json:"revision"`
+		Metadata datasetDraftRequest `json:"metadata"`
 	}
-	if !decode(w, r, &request) {
+	if !transport.Decode(w, r, &request) {
 		return
 	}
 	versionID, ok := versionID(w, r)
 	if !ok {
 		return
 	}
-	dataset, err := h.service.ReplaceDraft(r.Context(), actor, datasetID, versionID, request.Revision, request.Metadata)
+	dataset, err := h.service.ReplaceDraft(r.Context(), actor, datasetID, versionID, request.Revision, request.Metadata.domain())
 	h.writeDataset(r, w, dataset, err, http.StatusOK)
 }
 
-func (h *Datasets) action(name string) http.HandlerFunc {
+func (h *handler) action(name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		actor, ok := actor(w, r)
 		if !ok {
@@ -148,7 +148,7 @@ func (h *Datasets) action(name string) http.HandlerFunc {
 		var request struct {
 			Note string `json:"note"`
 		}
-		if name == "reject" && !decode(w, r, &request) {
+		if name == "reject" && !transport.Decode(w, r, &request) {
 			return
 		}
 		var dataset datasetlifecycle.Dataset
@@ -171,43 +171,43 @@ func (h *Datasets) action(name string) http.HandlerFunc {
 	}
 }
 
-func (h *Datasets) Submit(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Submit(w http.ResponseWriter, r *http.Request) {
 	h.action("submit")(w, r)
 }
 
-func (h *Datasets) Withdraw(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Withdraw(w http.ResponseWriter, r *http.Request) {
 	h.action("withdraw")(w, r)
 }
 
-func (h *Datasets) Reject(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Reject(w http.ResponseWriter, r *http.Request) {
 	h.action("reject")(w, r)
 }
 
-func (h *Datasets) Reopen(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Reopen(w http.ResponseWriter, r *http.Request) {
 	h.action("reopen")(w, r)
 }
 
-func (h *Datasets) Publish(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Publish(w http.ResponseWriter, r *http.Request) {
 	h.action("publish")(w, r)
 }
 
-func (h *Datasets) Unpublish(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Unpublish(w http.ResponseWriter, r *http.Request) {
 	h.action("unpublish")(w, r)
 }
 
-func (h *Datasets) DraftFromPublication(w http.ResponseWriter, r *http.Request) {
+func (h *handler) DraftFromPublication(w http.ResponseWriter, r *http.Request) {
 	h.action("draft-from-publication")(w, r)
 }
 
-func (h *Datasets) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
+func (h *handler) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
 	h.action("draft-from-archive")(w, r)
 }
 
-func (h *Datasets) Discard(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Discard(w http.ResponseWriter, r *http.Request) {
 	h.action("discard")(w, r)
 }
 
-func (h *Datasets) Copy(w http.ResponseWriter, r *http.Request) {
+func (h *handler) Copy(w http.ResponseWriter, r *http.Request) {
 	actor, ok := actor(w, r)
 	if !ok {
 		return
@@ -223,7 +223,7 @@ func (h *Datasets) Copy(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		SourceIRI string `json:"source_iri"`
 	}
-	if !decode(w, r, &request) {
+	if !transport.Decode(w, r, &request) {
 		return
 	}
 	if strings.TrimSpace(request.SourceIRI) == "" {
@@ -234,12 +234,12 @@ func (h *Datasets) Copy(w http.ResponseWriter, r *http.Request) {
 	h.writeDataset(r, w, dataset, err, http.StatusCreated)
 }
 
-func (h *Datasets) writeDataset(r *http.Request, w http.ResponseWriter, dataset datasetlifecycle.Dataset, err error, status int) {
+func (h *handler) writeDataset(r *http.Request, w http.ResponseWriter, dataset datasetlifecycle.Dataset, err error, status int) {
 	if err != nil {
 		writeLifecycleError(r, w, err)
 		return
 	}
-	writeJSON(w, status, dataset)
+	transport.WriteJSON(w, status, datasetResponse(dataset, true))
 }
 
 func actor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
@@ -248,23 +248,14 @@ func actor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 		return uuid.Nil, false
 	}
 	if !present {
-		http.Error(w, actorHeader+" is required", http.StatusUnauthorized)
+		http.Error(w, transport.ActorHeader+" is required", http.StatusUnauthorized)
 		return uuid.Nil, false
 	}
 	return id, true
 }
 
 func optionalActor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool, bool) {
-	value := strings.TrimSpace(r.Header.Get(actorHeader))
-	if value == "" {
-		return uuid.Nil, false, true
-	}
-	id, err := uuid.Parse(value)
-	if err != nil || id == uuid.Nil {
-		http.Error(w, "invalid "+actorHeader, http.StatusUnauthorized)
-		return uuid.Nil, true, false
-	}
-	return id, true, true
+	return transport.OptionalActor(w, r)
 }
 
 func datasetID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
@@ -288,73 +279,22 @@ func pathUUID(w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
 	return id, true
 }
 
-func decode(w http.ResponseWriter, r *http.Request, target any) bool {
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(target); err != nil {
-		http.Error(w, "invalid JSON request", http.StatusBadRequest)
-		return false
-	}
-	if decoder.Decode(&struct{}{}) != io.EOF {
-		http.Error(w, "invalid JSON request", http.StatusBadRequest)
-		return false
-	}
-	return true
-}
-
-func writePublicDataset(w http.ResponseWriter, dataset datasetlifecycle.Dataset) {
-	encoded, err := json.Marshal(dataset)
-	if err != nil {
-		http.Error(w, "encode response", http.StatusInternalServerError)
-		return
-	}
-	var response map[string]any
-	if err := json.Unmarshal(encoded, &response); err != nil {
-		http.Error(w, "encode response", http.StatusInternalServerError)
-		return
-	}
-	metadataValue, _ := response["metadata"].(map[string]any)
-	delete(metadataValue, "contact_points")
-	if distributions, ok := metadataValue["distributions"].([]any); ok {
-		for _, distribution := range distributions {
-			item, _ := distribution.(map[string]any)
-			service, _ := item["web_service"].(map[string]any)
-			delete(service, "contact_points")
-		}
-	}
-	writeJSON(w, http.StatusOK, response)
-}
-
 func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, datasetlifecycle.ErrDenied):
-		writeProblem(w, http.StatusForbidden, "forbidden", "access denied")
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "access denied")
 	case errors.Is(err, datasetlifecycle.ErrNotFound):
-		writeProblem(w, http.StatusNotFound, "dataset_not_found", "dataset or version not found")
+		transport.WriteProblem(w, http.StatusNotFound, "dataset_not_found", "dataset or version not found")
 	case errors.Is(err, datasetlifecycle.ErrConflict):
-		writeProblem(w, http.StatusConflict, "conflict", "dataset lifecycle conflict")
+		transport.WriteProblem(w, http.StatusConflict, "conflict", "dataset lifecycle conflict")
 	case errors.Is(err, datasetlifecycle.ErrInvalid):
 		detail := err.Error()
 		if index := strings.LastIndex(detail, ": "); index > 0 {
 			detail = detail[:index]
 		}
-		writeProblem(w, http.StatusBadRequest, "invalid_request", detail)
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", detail)
 	default:
 		log.ErrorContext(r.Context(), "dataset request failed", "method", r.Method, "path", r.URL.Path, "error", err)
-		writeProblem(w, http.StatusInternalServerError, "internal_server_error", "dataset request failed")
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "dataset request failed")
 	}
-}
-
-func writeProblem(w http.ResponseWriter, status int, code, detail string) {
-	writeJSON(w, status, struct {
-		Title  string `json:"title"`
-		Status int    `json:"status"`
-		Detail string `json:"detail"`
-	}{Title: code, Status: status, Detail: detail})
-}
-
-func writeJSON(w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
 }

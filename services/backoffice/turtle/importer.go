@@ -9,45 +9,28 @@ import (
 	"time"
 
 	domain "github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
 	rdf "github.com/deiu/rdf2go"
 	"github.com/google/uuid"
 )
 
-type Options struct {
-	Editor  domain.User
-	Group   domain.Group
-	BaseURI string
-}
-
-type Batch struct {
-	CategorySchemes      []domain.CategoryScheme
-	Categories           []domain.Category
-	Organizations        []domain.Organization
-	ContactPoints        []domain.ContactPoint
-	Datasets             []domain.Dataset
-	SoftwareApplications []domain.SoftwareApplication
-	SoftwareSourceCodes  []domain.SoftwareSourceCode
-	CategoryEdges        []CategoryEdge
-	Warnings             []Diagnostic
-}
-
-type CategoryEdge struct {
-	ParentID uuid.UUID
-	ChildID  uuid.UUID
-}
-
-type Severity string
-
-const (
-	SeverityWarning Severity = "warning"
-	SeverityError   Severity = "error"
+type (
+	Options      = metadataimport.Options
+	Batch        = metadataimport.Batch
+	CategoryEdge = metadataimport.CategoryEdge
+	Severity     = metadataimport.Severity
+	Diagnostic   = metadataimport.Diagnostic
 )
 
-type Diagnostic struct {
-	Severity  Severity
-	Subject   string
-	Predicate string
-	Message   string
+const (
+	SeverityWarning = metadataimport.SeverityWarning
+	SeverityError   = metadataimport.SeverityError
+)
+
+type Parser struct{}
+
+func (Parser) Parse(input io.Reader, options metadataimport.Options) (metadataimport.Batch, error) {
+	return Parse(input, options)
 }
 
 func Parse(input io.Reader, options Options) (Batch, error) {
@@ -232,15 +215,11 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 		Providers:             nil,
 		Categories:            nil,
 		Status:                domain.DatasetStatusDraft,
-		Editor:                &m.options.Editor,
-		Group:                 &m.options.Group,
 		Created:               time.Time{},
 		Updated:               time.Time{},
 		SourceCreated:         nil,
 		SourceUpdated:         nil,
-		OriginalDatasetID:     id,
 	}
-
 	dataset.Title = m.requiredString(source, dctTitle)
 	dataset.Description = m.optionalString(source, dctDescription)
 	dataset.Keywords = strings.Join(m.strings(source, dcatKeyword), ",")
@@ -557,16 +536,15 @@ func (m *mapper) scheme(source string) (domain.CategoryScheme, error) {
 		}
 	}
 	result := domain.CategoryScheme{
-		ID:          sharedID("category-scheme", source),
-		SourceIRI:   source,
-		Name:        m.optionalString(source, dctTitle),
-		Label:       stringPtr(m.optionalString(source, skosPrefLabel)),
-		Logo:        stringPtr(m.optionalString(source, foafLogo)),
-		Page:        stringPtr(m.optionalString(source, foafHomepage)),
-		Color:       stringPtr(m.optionalString(source, schemaColor)),
-		Position:    int32(m.int64(source, schemaOrderItemNumber)),
-		Concept:     domain.TopLevelConcept(""),
-		TopConcepts: nil,
+		ID:        sharedID("category-scheme", source),
+		SourceIRI: source,
+		Name:      m.optionalString(source, dctTitle),
+		Label:     stringPtr(m.optionalString(source, skosPrefLabel)),
+		Logo:      stringPtr(m.optionalString(source, foafLogo)),
+		Page:      stringPtr(m.optionalString(source, foafHomepage)),
+		Color:     stringPtr(m.optionalString(source, schemaColor)),
+		Position:  int32(m.int64(source, schemaOrderItemNumber)),
+		Concept:   domain.TopLevelConcept(""),
 	}
 	if result.Name == "" {
 		result.Name = m.optionalString(source, skosPrefLabel)

@@ -1,4 +1,5 @@
-package db
+// Package dataset provides PostgreSQL persistence for dataset lifecycle data.
+package dataset
 
 import (
 	"context"
@@ -15,16 +16,16 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// DatasetRepository persists each lifecycle operation in one database transaction.
-type DatasetRepository struct {
+// Repository persists each lifecycle operation in one database transaction.
+type Repository struct {
 	db *pgxpool.Pool
 }
 
-func NewDatasetRepository(pool *pgxpool.Pool) *DatasetRepository {
-	return &DatasetRepository{db: pool}
+func New(pool *pgxpool.Pool) *Repository {
+	return &Repository{db: pool}
 }
 
-func (r *DatasetRepository) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+func (r *Repository) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
 	err := r.withTx(ctx, func(q *sqlc.Queries) error {
 		dataset, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
@@ -36,7 +37,7 @@ func (r *DatasetRepository) CreateDraft(ctx context.Context, actorID, groupID uu
 			return fmt.Errorf("create dataset: %w", err)
 		}
 
-		params, err := versionParams(dataset.ID, actorID, value)
+		params, err := VersionParams(dataset.ID, actorID, value)
 		if err != nil {
 			return fmt.Errorf("build dataset version: %w", err)
 		}
@@ -46,10 +47,14 @@ func (r *DatasetRepository) CreateDraft(ctx context.Context, actorID, groupID uu
 			return fmt.Errorf("create dataset version: %w", err)
 		}
 
-		if err := persistDatasetChildren(ctx, q, version.ID, value); err != nil {
+		if err := PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
 			return fmt.Errorf("persist dataset metadata: %w", err)
 		}
-		result = lifecycleDataset(dataset, version)
+		result, err = datasetResult(ctx, q, version)
+		if err != nil {
+			return err
+		}
+		result.Metadata.SourceIRI = dataset.SourceIri
 		return nil
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -58,10 +63,16 @@ func (r *DatasetRepository) CreateDraft(ctx context.Context, actorID, groupID uu
 	return result, err
 }
 
-func (r *DatasetRepository) ReplaceDraft(ctx context.Context, _, datasetID, versionID uuid.UUID, revision int32, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+func (r *Repository) ReplaceDraft(
+	ctx context.Context,
+	datasetID,
+	versionID uuid.UUID,
+	revision int32,
+	value metadata.Dataset,
+) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
 	err := r.withTx(ctx, func(q *sqlc.Queries) error {
-		params, err := replaceParams(datasetID, versionID, revision, value)
+		params, err := ReplaceParams(datasetID, versionID, revision, value)
 		if err != nil {
 			return fmt.Errorf("build draft replacement: %w", err)
 		}
@@ -74,10 +85,13 @@ func (r *DatasetRepository) ReplaceDraft(ctx context.Context, _, datasetID, vers
 		if err := q.DeleteLifecycleDatasetVersionChildren(ctx, &version.ID); err != nil {
 			return fmt.Errorf("delete draft children: %w", err)
 		}
-		if err := persistDatasetChildren(ctx, q, version.ID, value); err != nil {
+		if err := PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
 			return fmt.Errorf("persist draft metadata: %w", err)
 		}
-		result = datasetFromVersion(version)
+		result, err = datasetResult(ctx, q, version)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -87,7 +101,7 @@ func (r *DatasetRepository) ReplaceDraft(ctx context.Context, _, datasetID, vers
 }
 
 // Get returns one selected version with all version-owned metadata and canonical references.
-func (r *DatasetRepository) Get(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Get(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	q := sqlc.New(r.db)
 	version, err := q.GetLifecycleDatasetVersion(ctx, sqlc.GetLifecycleDatasetVersionParams{
 		DatasetID: datasetID,
@@ -108,11 +122,13 @@ func (r *DatasetRepository) Get(ctx context.Context, datasetID, versionID uuid.U
 		VersionID: version.ID,
 		Revision:  version.Revision,
 		Status:    metadata.DatasetStatus(version.Status),
+		CreatedBy: version.CreatedBy,
+		Group:     categoryScheme(version.Group),
 		Metadata:  metadataValue,
 	}, nil
 }
 
-func (r *DatasetRepository) GetPublished(ctx context.Context, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) GetPublished(ctx context.Context, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleDatasetVersion(ctx, datasetID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -123,7 +139,7 @@ func (r *DatasetRepository) GetPublished(ctx context.Context, datasetID uuid.UUI
 	return r.Get(ctx, datasetID, version.ID)
 }
 
-func (r *DatasetRepository) GetActive(ctx context.Context, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) GetActive(ctx context.Context, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	version, err := sqlc.New(r.db).GetActiveLifecycleDatasetVersion(ctx, datasetID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -134,7 +150,7 @@ func (r *DatasetRepository) GetActive(ctx context.Context, datasetID uuid.UUID) 
 	return r.Get(ctx, datasetID, version.ID)
 }
 
-func (r *DatasetRepository) Submit(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Submit(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("submit dataset version: %w", err)
 	}
@@ -149,10 +165,10 @@ func (r *DatasetRepository) Submit(ctx context.Context, actorID, datasetID, vers
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("submit dataset version: %w", err)
 	}
-	return datasetFromVersion(v), nil
+	return datasetResult(ctx, sqlc.New(r.db), v)
 }
 
-func (r *DatasetRepository) Withdraw(ctx context.Context, _, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Withdraw(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("withdraw dataset version: %w", err)
 	}
@@ -164,10 +180,10 @@ func (r *DatasetRepository) Withdraw(ctx context.Context, _, datasetID, versionI
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("withdraw dataset version: %w", err)
 	}
-	return datasetFromVersion(v), nil
+	return datasetResult(ctx, sqlc.New(r.db), v)
 }
 
-func (r *DatasetRepository) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UUID, note string) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UUID, note string) (datasetlifecycle.Dataset, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("reject dataset version: %w", err)
 	}
@@ -183,10 +199,10 @@ func (r *DatasetRepository) Reject(ctx context.Context, actorID, datasetID, vers
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("reject dataset version: %w", err)
 	}
-	return datasetFromVersion(v), nil
+	return datasetResult(ctx, sqlc.New(r.db), v)
 }
 
-func (r *DatasetRepository) Reopen(ctx context.Context, _, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Reopen(ctx context.Context, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("reopen dataset version: %w", err)
 	}
@@ -198,10 +214,10 @@ func (r *DatasetRepository) Reopen(ctx context.Context, _, datasetID, versionID 
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("reopen dataset version: %w", err)
 	}
-	return datasetFromVersion(v), nil
+	return datasetResult(ctx, sqlc.New(r.db), v)
 }
 
-func (r *DatasetRepository) Publish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Publish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("publish dataset version: %w", err)
 	}
@@ -216,10 +232,10 @@ func (r *DatasetRepository) Publish(ctx context.Context, actorID, datasetID, ver
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("publish dataset version: %w", err)
 	}
-	return datasetFromVersion(v), nil
+	return datasetResult(ctx, sqlc.New(r.db), v)
 }
 
-func (r *DatasetRepository) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return datasetlifecycle.Dataset{}, fmt.Errorf("unpublish dataset version: %w", err)
 	}
@@ -234,10 +250,10 @@ func (r *DatasetRepository) Unpublish(ctx context.Context, actorID, datasetID, v
 		}
 		return datasetlifecycle.Dataset{}, fmt.Errorf("unpublish dataset version: %w", err)
 	}
-	return datasetFromVersion(v), nil
+	return datasetResult(ctx, sqlc.New(r.db), v)
 }
 
-func (r *DatasetRepository) Discard(ctx context.Context, _, datasetID, versionID uuid.UUID) error {
+func (r *Repository) Discard(ctx context.Context, datasetID, versionID uuid.UUID) error {
 	if err := r.ensureVersion(ctx, datasetID, versionID); err != nil {
 		return fmt.Errorf("discard dataset: %w", err)
 	}
@@ -258,15 +274,15 @@ func (r *DatasetRepository) Discard(ctx context.Context, _, datasetID, versionID
 	return err
 }
 
-func (r *DatasetRepository) DraftFromPublication(ctx context.Context, actorID, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) DraftFromPublication(ctx context.Context, actorID, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
 }
 
-func (r *DatasetRepository) DraftFromLatestArchive(ctx context.Context, actorID, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (r *Repository) DraftFromLatestArchive(ctx context.Context, actorID, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *DatasetRepository) CopyPublished(ctx context.Context, actorID, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (datasetlifecycle.Dataset, error) {
+func (r *Repository) CopyPublished(ctx context.Context, actorID, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
 	err := r.withTx(ctx, func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
@@ -292,7 +308,10 @@ func (r *DatasetRepository) CopyPublished(ctx context.Context, actorID, sourceDa
 		if err != nil {
 			return fmt.Errorf("clone published dataset version: %w", err)
 		}
-		result = datasetFromVersion(version.DatasetVersion)
+		result, err = datasetResult(ctx, q, version.DatasetVersion)
+		if err != nil {
+			return err
+		}
 		result.Metadata.SourceIRI = logical.SourceIri
 		return nil
 	})
@@ -302,7 +321,7 @@ func (r *DatasetRepository) CopyPublished(ctx context.Context, actorID, sourceDa
 	return result, err
 }
 
-func (r *DatasetRepository) clone(
+func (r *Repository) clone(
 	ctx context.Context,
 	actorID,
 	sourceDatasetID,
@@ -341,7 +360,10 @@ func (r *DatasetRepository) clone(
 		if err != nil {
 			return fmt.Errorf("clone dataset version: %w", err)
 		}
-		result = datasetFromVersion(v.DatasetVersion)
+		result, err = datasetResult(ctx, q, v.DatasetVersion)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -350,7 +372,7 @@ func (r *DatasetRepository) clone(
 	return result, err
 }
 
-func (r *DatasetRepository) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
+func (r *Repository) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
@@ -365,7 +387,7 @@ func (r *DatasetRepository) withTx(ctx context.Context, fn func(*sqlc.Queries) e
 	return nil
 }
 
-func (r *DatasetRepository) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {
+func (r *Repository) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {
 	_, err := sqlc.New(r.db).EnsureLifecycleDatasetVersion(ctx, sqlc.EnsureLifecycleDatasetVersionParams{
 		DatasetID: datasetID,
 		VersionID: versionID,
@@ -379,7 +401,7 @@ func (r *DatasetRepository) ensureVersion(ctx context.Context, datasetID, versio
 	return nil
 }
 
-func versionParams(datasetID, actorID uuid.UUID, value metadata.Dataset) (sqlc.CreateLifecycleDatasetVersionParams, error) {
+func VersionParams(datasetID, actorID uuid.UUID, value metadata.Dataset) (sqlc.CreateLifecycleDatasetVersionParams, error) {
 	var start, end *time.Time
 	if value.TemporalCoverage != nil {
 		start, end = value.TemporalCoverage.Start, value.TemporalCoverage.End
@@ -406,8 +428,8 @@ func versionParams(datasetID, actorID uuid.UUID, value metadata.Dataset) (sqlc.C
 	}, nil
 }
 
-func replaceParams(datasetID, id uuid.UUID, revision int32, value metadata.Dataset) (sqlc.ReplaceLifecycleDatasetDraftParams, error) {
-	p, err := versionParams(uuid.Nil, uuid.Nil, value)
+func ReplaceParams(datasetID, id uuid.UUID, revision int32, value metadata.Dataset) (sqlc.ReplaceLifecycleDatasetDraftParams, error) {
+	p, err := VersionParams(uuid.Nil, uuid.Nil, value)
 	if err != nil {
 		return sqlc.ReplaceLifecycleDatasetDraftParams{}, err
 	}
@@ -430,18 +452,24 @@ func replaceParams(datasetID, id uuid.UUID, revision int32, value metadata.Datas
 	}, nil
 }
 
-func lifecycleDataset(d sqlc.Dataset, v sqlc.DatasetVersion) datasetlifecycle.Dataset {
-	result := datasetFromVersion(v)
-	result.Metadata.SourceIRI = d.SourceIri
-	return result
-}
-
 func datasetFromVersion(v sqlc.DatasetVersion) datasetlifecycle.Dataset {
 	return datasetlifecycle.Dataset{
 		DatasetID: v.DatasetID,
 		VersionID: v.ID,
 		Revision:  v.Revision,
 		Status:    metadata.DatasetStatus(v.Status),
+		CreatedBy: v.CreatedBy,
+		Group: metadata.CategoryScheme{
+			ID:        uuid.Nil,
+			SourceIRI: "",
+			Name:      "",
+			Label:     nil,
+			Logo:      nil,
+			Page:      nil,
+			Color:     nil,
+			Position:  0,
+			Concept:   "",
+		},
 		Metadata: metadata.Dataset{
 			ID:                    v.ID,
 			SourceIRI:             "",
@@ -461,13 +489,20 @@ func datasetFromVersion(v sqlc.DatasetVersion) datasetlifecycle.Dataset {
 			SourceCreated:         v.SourceCreatedAt,
 			SourceUpdated:         v.SourceUpdatedAt,
 			Status:                metadata.DatasetStatus(v.Status),
-			Editor:                nil,
-			Group:                 nil,
 			Created:               v.CreatedAt,
 			Updated:               v.UpdatedAt,
-			OriginalDatasetID:     v.DatasetID,
 		},
 	}
+}
+
+func datasetResult(ctx context.Context, q *sqlc.Queries, version sqlc.DatasetVersion) (datasetlifecycle.Dataset, error) {
+	group, err := q.GetLifecycleDatasetGroup(ctx, version.DatasetID)
+	if err != nil {
+		return datasetlifecycle.Dataset{}, fmt.Errorf("get dataset group: %w", err)
+	}
+	result := datasetFromVersion(version)
+	result.Group = categoryScheme(group.Group)
+	return result, nil
 }
 
 func temporal(start, end *time.Time) *metadata.Temporal {
@@ -477,7 +512,7 @@ func temporal(start, end *time.Time) *metadata.Temporal {
 	return &metadata.Temporal{Start: start, End: end}
 }
 
-func persistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value metadata.Dataset) error {
+func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value metadata.Dataset) error {
 	for _, identifier := range value.PersistentIdentifiers {
 		if err := q.AddLifecycleDatasetIdentifier(ctx, sqlc.AddLifecycleDatasetIdentifierParams{
 			SourceIri:        identifier.SourceIRI,
@@ -564,22 +599,22 @@ func persistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 			}
 		}
 		for _, parameter := range service.Parameters {
-			record, err := metadata.EncodeParameter(parameter)
+			record, err := encodeParameter(parameter)
 			if err != nil {
 				return fmt.Errorf("encode web service parameter: %w", err)
 			}
-			m := record.Metadata
+			m := record.metadata
 			if err := q.AddLifecycleWebServiceParameter(ctx, sqlc.AddLifecycleWebServiceParameterParams{
 				SourceIri:      m.SourceIRI,
 				WebServiceID:   created.ID,
-				Kind:           sqlc.ParameterKind(record.Kind),
+				Kind:           sqlc.ParameterKind(record.kind),
 				Variable:       m.Variable,
 				Property:       m.Property,
 				Label:          m.Label,
 				Required:       m.Required,
 				MultipleValues: m.MultipleValues,
 				ReadOnly:       m.ReadOnly,
-				Config:         record.Config,
+				Config:         record.config,
 			}); err != nil {
 				return fmt.Errorf("add web service parameter: %w", err)
 			}
@@ -709,11 +744,8 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		SourceCreated:         version.SourceCreatedAt,
 		SourceUpdated:         version.SourceUpdatedAt,
 		Status:                metadata.DatasetStatus(version.Status),
-		Editor:                nil,
-		Group:                 nil,
 		Created:               version.CreatedAt,
 		Updated:               version.UpdatedAt,
-		OriginalDatasetID:     version.DatasetID,
 	}
 	for _, item := range identifiers {
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifier(item.Identifier))
@@ -730,16 +762,15 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 			SourceIRI: item.SourceIri,
 			Name:      item.Name,
 			Scheme: metadata.CategoryScheme{
-				ID:          uuid.Nil,
-				SourceIRI:   "",
-				Name:        "",
-				Label:       nil,
-				Logo:        nil,
-				Page:        nil,
-				Color:       nil,
-				Position:    0,
-				Concept:     "",
-				TopConcepts: nil,
+				ID:        uuid.Nil,
+				SourceIRI: "",
+				Name:      "",
+				Label:     nil,
+				Logo:      nil,
+				Page:      nil,
+				Color:     nil,
+				Position:  0,
+				Concept:   "",
 			},
 			Children: nil,
 		})
@@ -850,9 +881,9 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		return nil, fmt.Errorf("list web service parameters: %w", err)
 	}
 	for _, item := range parameters {
-		parameter, err := metadata.DecodeParameter(metadata.ParameterRecord{
-			Kind: metadata.ParameterKind(item.Kind),
-			Metadata: metadata.ParameterMetadata{
+		parameter, err := decodeParameter(parameterRecord{
+			kind: metadata.ParameterKind(item.Kind),
+			metadata: metadata.ParameterMetadata{
 				ID:             item.ID,
 				SourceIRI:      item.SourceIri,
 				Kind:           metadata.ParameterKind(item.Kind),
@@ -863,7 +894,7 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 				MultipleValues: item.MultipleValues,
 				ReadOnly:       item.ReadOnly,
 			},
-			Config: item.Config,
+			config: item.Config,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("decode web service parameter: %w", err)
@@ -943,5 +974,19 @@ func identifier(value sqlc.Identifier) metadata.Identifier {
 		SourceIRI: value.SourceIri,
 		Type:      metadata.IdentifierType(value.Type),
 		Value:     value.Value,
+	}
+}
+
+func categoryScheme(value sqlc.Group) metadata.CategoryScheme {
+	return metadata.CategoryScheme{
+		ID:        value.ID,
+		SourceIRI: value.SourceIri,
+		Name:      value.Name,
+		Label:     value.Label,
+		Logo:      value.Logo,
+		Page:      value.Page,
+		Color:     value.Color,
+		Position:  value.Position,
+		Concept:   metadata.TopLevelConcept(value.Concept),
 	}
 }

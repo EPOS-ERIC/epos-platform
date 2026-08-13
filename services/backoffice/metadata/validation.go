@@ -19,26 +19,12 @@ func (d Dataset) Validate() error {
 	if !d.Status.Valid() {
 		return fmt.Errorf("dataset status %q is invalid", d.Status)
 	}
-	if d.OriginalDatasetID == uuid.Nil {
-		return fmt.Errorf("original dataset ID is required")
-	}
 	if err := validateSpatial(d.SpatialCoverage); err != nil {
 		return fmt.Errorf("dataset spatial coverage: %w", err)
 	}
 	if err := validateTemporal(d.TemporalCoverage); err != nil {
 		return fmt.Errorf("dataset temporal coverage: %w", err)
 	}
-	if d.Editor != nil {
-		if err := d.Editor.Validate(); err != nil {
-			return fmt.Errorf("dataset editor: %w", err)
-		}
-	}
-	if d.Group != nil {
-		if err := d.Group.Validate(); err != nil {
-			return fmt.Errorf("dataset group: %w", err)
-		}
-	}
-
 	identifiers := make(map[string]struct{}, len(d.PersistentIdentifiers))
 	for _, identifier := range d.PersistentIdentifiers {
 		if err := identifier.Validate(); err != nil {
@@ -179,20 +165,6 @@ func (w WebService) Validate() error {
 		if err := addUnique(variables, parameter.GetMetadata().Variable, "parameter variable"); err != nil {
 			return err
 		}
-	}
-	return nil
-}
-
-func (u User) Validate() error {
-	if u.ID == uuid.Nil || u.AuthIdentifier == "" || !u.Status.Valid() {
-		return fmt.Errorf("ID, auth identifier, and valid status are required")
-	}
-	return nil
-}
-
-func (g Group) Validate() error {
-	if g.ID == uuid.Nil || g.Slug == "" || g.Name == "" {
-		return fmt.Errorf("ID, slug, and name are required")
 	}
 	return nil
 }

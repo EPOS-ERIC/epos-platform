@@ -9,6 +9,9 @@ import (
 	"io/fs"
 
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/config"
+	authdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/authorization"
+	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
+	importdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/metadataimport"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -19,14 +22,10 @@ import (
 var embedMigrations embed.FS
 
 type PostgresDB struct {
-	db       *pgxpool.Pool
-	Identity *IdentityRepository
-	Datasets *DatasetRepository
-}
-
-// IdentityRepository provides identity persistence through generated queries.
-type IdentityRepository struct {
-	*sqlc.Queries
+	db            *pgxpool.Pool
+	Authorization *authdb.Repository
+	Datasets      *datasetdb.Repository
+	Imports       *importdb.Repository
 }
 
 func Open(cfg config.Config) (*PostgresDB, error) {
@@ -64,7 +63,12 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		return nil, fmt.Errorf("ping postgres pool: %w", err)
 	}
 
-	return &PostgresDB{db: db, Identity: &IdentityRepository{Queries: sqlc.New(db)}, Datasets: NewDatasetRepository(db)}, nil
+	return &PostgresDB{
+		db:            db,
+		Authorization: &authdb.Repository{Queries: sqlc.New(db)},
+		Datasets:      datasetdb.New(db),
+		Imports:       importdb.New(db),
+	}, nil
 }
 
 func runMigrations(db *sql.DB) error {

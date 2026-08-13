@@ -40,21 +40,9 @@ func mapDataset(dataset clients.Dataset) (api.Dataset, error) {
 		QualityAnnotation:  stringValue(dataset.QualityAnnotation),
 		VersionInfo:        "",
 		Issued:             nil,
-		IsVersionOf:        datasetVersionRef(dataset),
+		IsVersionOf:        nil,
 		Version:            "",
 	}, nil
-}
-
-func datasetVersionRef(dataset clients.Dataset) *api.ResourceRef {
-	if dataset.OriginalDatasetID == uuid.Nil || dataset.OriginalDatasetID == dataset.ID {
-		return nil
-	}
-
-	return &api.ResourceRef{
-		ID:   dataset.OriginalDatasetID.String(),
-		Href: resourcehref.Build(api.DatasetType, dataset.OriginalDatasetID.String()),
-		Name: "",
-	}
 }
 
 func mapDistribution(distribution clients.Distribution) (api.Distribution, error) {

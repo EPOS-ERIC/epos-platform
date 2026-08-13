@@ -18,7 +18,7 @@ func TestMapDatasetFromResources(t *testing.T) {
 	updated := created.Add(time.Hour)
 	sourceUpdated := created.Add(2 * time.Hour)
 	dataset, err := mapDataset(clients.Dataset{
-		ID: testUUID("550e8400-e29b-41d4-a716-446655440000"), SourceIRI: "dataset-1", Title: "Dataset", Keywords: "one,two", Created: created, Updated: updated, SourceCreated: &created, SourceUpdated: &sourceUpdated, OriginalDatasetID: testUUID("550e8400-e29b-41d4-a716-446655440000"), Status: "PUBLISHED",
+		ID: testUUID("550e8400-e29b-41d4-a716-446655440000"), SourceIRI: "dataset-1", Title: "Dataset", Keywords: "one,two", Created: created, Updated: updated, SourceCreated: &created, SourceUpdated: &sourceUpdated, Status: "PUBLISHED",
 		Categories:      []clients.Category{{ID: testUUID("550e8400-e29b-41d4-a716-446655440001"), SourceIRI: "concept-1", Name: "Concept"}},
 		Providers:       []clients.Organization{{ID: testUUID("550e8400-e29b-41d4-a716-446655440002"), SourceIRI: "organization-1", Name: "Organization"}},
 		Distributions:   []clients.Distribution{{ID: testUUID("550e8400-e29b-41d4-a716-446655440003"), SourceIRI: "distribution-1", Title: "Distribution"}},
@@ -32,21 +32,6 @@ func TestMapDatasetFromResources(t *testing.T) {
 	}
 	if dataset.ID != "550e8400-e29b-41d4-a716-446655440000" || dataset.Concepts[0].ID != "550e8400-e29b-41d4-a716-446655440001" || dataset.Concepts[0].Href != "v1/resources/concept/550e8400-e29b-41d4-a716-446655440001" || len(dataset.Keywords) != 2 || len(dataset.Concepts) != 1 || len(dataset.Publisher) != 1 || len(dataset.Distributions) != 1 {
 		t.Fatalf("dataset refs = %#v", dataset)
-	}
-}
-
-func TestMapDatasetVersion(t *testing.T) {
-	originalID := testUUID("550e8400-e29b-41d4-a716-446655440001")
-	dataset, err := mapDataset(clients.Dataset{
-		ID:                testUUID("550e8400-e29b-41d4-a716-446655440002"),
-		OriginalDatasetID: originalID,
-		Status:            "PUBLISHED",
-	})
-	if err != nil {
-		t.Fatalf("mapDataset() error = %v", err)
-	}
-	if dataset.IsVersionOf == nil || dataset.IsVersionOf.ID != originalID.String() || dataset.IsVersionOf.Href != "v1/resources/dataset/550e8400-e29b-41d4-a716-446655440001" {
-		t.Fatalf("is_version_of = %#v", dataset.IsVersionOf)
 	}
 }
 

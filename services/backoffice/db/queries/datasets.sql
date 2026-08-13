@@ -788,13 +788,23 @@ SELECT
     version.rejected_at,
     version.rejection_note,
     dataset.source_iri,
-    dataset.group_id
+    sqlc.embed(owning_group)
 FROM
     dataset_versions AS version
     JOIN datasets AS dataset ON dataset.id = version.dataset_id
+    JOIN groups AS owning_group ON owning_group.id = dataset.group_id
 WHERE
     version.id = sqlc.arg(version_id)
     AND version.dataset_id = sqlc.arg(dataset_id);
+
+-- name: GetLifecycleDatasetGroup :one
+SELECT
+    sqlc.embed(owning_group)
+FROM
+    datasets AS dataset
+    JOIN groups AS owning_group ON owning_group.id = dataset.group_id
+WHERE
+    dataset.id = sqlc.arg(dataset_id);
 
 -- name: ListLifecycleDatasetIdentifiers :many
 SELECT

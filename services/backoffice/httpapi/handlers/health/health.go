@@ -1,4 +1,5 @@
-package handlers
+// Package health exposes service health HTTP handlers.
+package health
 
 import (
 	"context"
@@ -17,17 +18,17 @@ type healthResponse struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-type Health struct {
+type handler struct {
 	db *db.PostgresDB
 }
 
-func NewHealth(database *db.PostgresDB) *Health {
-	return &Health{
+func New(database *db.PostgresDB) *handler {
+	return &handler{
 		db: database,
 	}
 }
 
-func (h *Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 

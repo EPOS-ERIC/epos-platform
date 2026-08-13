@@ -43,11 +43,13 @@ type Authorizer interface {
 // Dataset is version metadata with lifecycle identity. Metadata.SourceIRI is
 // logical dataset source IRI and is immutable after creation.
 type Dataset struct {
-	DatasetID uuid.UUID              `json:"dataset_id"`
-	VersionID uuid.UUID              `json:"version_id"`
-	Revision  int32                  `json:"revision"`
-	Status    metadata.DatasetStatus `json:"status"`
-	Metadata  metadata.Dataset       `json:"metadata"`
+	DatasetID uuid.UUID
+	VersionID uuid.UUID
+	Revision  int32
+	Status    metadata.DatasetStatus
+	CreatedBy uuid.UUID
+	Group     metadata.CategoryScheme
+	Metadata  metadata.Dataset
 }
 
 type Repository interface {
@@ -55,13 +57,13 @@ type Repository interface {
 	GetPublished(context.Context, uuid.UUID) (Dataset, error)
 	GetActive(context.Context, uuid.UUID) (Dataset, error)
 	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (Dataset, error)
-	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (Dataset, error)
+	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (Dataset, error)
 	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
-	Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Withdraw(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
 	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Dataset, error)
-	Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Reopen(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
 	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
-	Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
+	Discard(context.Context, uuid.UUID, uuid.UUID) error
 	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
 	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
 	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
@@ -99,7 +101,7 @@ func (s *Service) ReplaceDraft(ctx context.Context, actorID, datasetID, versionI
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionEdit); err != nil {
 		return Dataset{}, operationError("authorize draft replacement", err)
 	}
-	dataset, err := s.repository.ReplaceDraft(ctx, actorID, datasetID, versionID, revision, value)
+	dataset, err := s.repository.ReplaceDraft(ctx, datasetID, versionID, revision, value)
 	if err != nil {
 		return Dataset{}, operationError("replace draft", err)
 	}
@@ -155,7 +157,7 @@ func (s *Service) Withdraw(ctx context.Context, actorID, datasetID, versionID uu
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionWithdraw); err != nil {
 		return Dataset{}, operationError("authorize withdrawal", err)
 	}
-	dataset, err := s.repository.Withdraw(ctx, actorID, datasetID, versionID)
+	dataset, err := s.repository.Withdraw(ctx, datasetID, versionID)
 	return dataset, operationError("withdraw submission", err)
 }
 
@@ -174,7 +176,7 @@ func (s *Service) Reopen(ctx context.Context, actorID, datasetID, versionID uuid
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionReopen); err != nil {
 		return Dataset{}, operationError("authorize reopening", err)
 	}
-	dataset, err := s.repository.Reopen(ctx, actorID, datasetID, versionID)
+	dataset, err := s.repository.Reopen(ctx, datasetID, versionID)
 	return dataset, operationError("reopen rejected version", err)
 }
 
@@ -190,7 +192,7 @@ func (s *Service) Discard(ctx context.Context, actorID, datasetID, versionID uui
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionDiscard); err != nil {
 		return operationError("authorize discard", err)
 	}
-	return operationError("discard version", s.repository.Discard(ctx, actorID, datasetID, versionID))
+	return operationError("discard version", s.repository.Discard(ctx, datasetID, versionID))
 }
 
 func (s *Service) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {

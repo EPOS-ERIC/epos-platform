@@ -87,6 +87,22 @@ func New(repository repository) *Authorizer {
 	return &Authorizer{repository: repository}
 }
 
+// AuthorizeAdmin permits active global administrators only.
+func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID uuid.UUID) (Result, error) {
+	_, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if !admin {
+		return Result{Allowed: false, Reason: "global admin required"}, nil
+	}
+	return Result{Allowed: true, Reason: "global admin"}, nil
+}
+
 // AuthorizeGlobal evaluates a global permission without requiring membership.
 func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID uuid.UUID, permissionKey string) (Result, error) {
 	if err := a.requirePermissionScope(ctx, permissionKey, sqlc.PermissionScopeGLOBAL); err != nil {

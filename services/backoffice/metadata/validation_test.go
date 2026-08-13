@@ -10,21 +10,12 @@ import (
 
 func TestDatasetValidate(t *testing.T) {
 	defaultValue := int64(10)
+	minimum := int64(0)
+	maximum := int64(100)
 	dataset := Dataset{
-		ID:                uuid.New(),
-		Title:             "Dataset",
-		Status:            DatasetStatusDraft,
-		OriginalDatasetID: uuid.New(),
-		Editor: new(User{
-			ID:             uuid.New(),
-			AuthIdentifier: "editor",
-			Status:         UserStatusActive,
-		}),
-		Group: new(Group{
-			ID:   uuid.New(),
-			Slug: "group",
-			Name: "Group",
-		}),
+		ID:         uuid.New(),
+		Title:      "Dataset",
+		Status:     DatasetStatusDraft,
 		Categories: []Category{{ID: uuid.New(), Name: "Category", Scheme: CategoryScheme{ID: uuid.New(), Name: "EPOS", Concept: TopLevelConceptData}}},
 		Distributions: []Distribution{{
 			ID:    uuid.New(),
@@ -37,8 +28,8 @@ func TestDatasetValidate(t *testing.T) {
 				Provider:    &Organization{ID: uuid.New(), Name: "Provider"},
 				Parameters: []Parameter{IntegerParameter{
 					Metadata: ParameterMetadata{ID: uuid.New(), SourceIRI: "", Kind: "", Variable: "value", Property: "schema:value", Label: "Value", Required: false, MultipleValues: false, ReadOnly: false},
-					Minimum:  new(int64(0)),
-					Maximum:  new(int64(100)),
+					Minimum:  &minimum,
+					Maximum:  &maximum,
 					Default:  &defaultValue,
 				}},
 			},
@@ -62,10 +53,9 @@ func TestDatasetValidateRejectsInvalidNestedValues(t *testing.T) {
 		{
 			name: "both delivery methods",
 			dataset: Dataset{
-				ID:                uuid.New(),
-				Title:             "Dataset",
-				Status:            DatasetStatusDraft,
-				OriginalDatasetID: uuid.New(),
+				ID:     uuid.New(),
+				Title:  "Dataset",
+				Status: DatasetStatusDraft,
 				Distributions: []Distribution{{
 					ID:               uuid.New(),
 					Title:            "Distribution",
@@ -78,22 +68,20 @@ func TestDatasetValidateRejectsInvalidNestedValues(t *testing.T) {
 		{
 			name: "reversed temporal range",
 			dataset: Dataset{
-				ID:                uuid.New(),
-				Title:             "Dataset",
-				Status:            DatasetStatusDraft,
-				OriginalDatasetID: uuid.New(),
-				TemporalCoverage:  &Temporal{Start: &start, End: &end},
+				ID:               uuid.New(),
+				Title:            "Dataset",
+				Status:           DatasetStatusDraft,
+				TemporalCoverage: &Temporal{Start: &start, End: &end},
 			},
 			want: "start must not be after end",
 		},
 		{
 			name: "missing category scheme",
 			dataset: Dataset{
-				ID:                uuid.New(),
-				Title:             "Dataset",
-				Status:            DatasetStatusDraft,
-				OriginalDatasetID: uuid.New(),
-				Categories:        []Category{{ID: uuid.New(), Name: "Category"}},
+				ID:         uuid.New(),
+				Title:      "Dataset",
+				Status:     DatasetStatusDraft,
+				Categories: []Category{{ID: uuid.New(), Name: "Category"}},
 			},
 			want: "scheme",
 		},
@@ -106,29 +94,5 @@ func TestDatasetValidateRejectsInvalidNestedValues(t *testing.T) {
 				t.Fatalf("Validate() error = %v, want %q", err, test.want)
 			}
 		})
-	}
-}
-
-func TestParameterRecordRoundTrip(t *testing.T) {
-	parameter := StringParameter{
-		Metadata:      ParameterMetadata{ID: uuid.New(), SourceIRI: "", Kind: "", Variable: "format", Property: "schema:format", Label: "Format", Required: false, MultipleValues: false, ReadOnly: false},
-		Default:       new("json"),
-		AllowedValues: []string{"json", "csv"},
-	}
-
-	record, err := EncodeParameter(parameter)
-	if err != nil {
-		t.Fatalf("EncodeParameter() error = %v", err)
-	}
-	decoded, err := DecodeParameter(record)
-	if err != nil {
-		t.Fatalf("DecodeParameter() error = %v", err)
-	}
-	stringParameter, ok := decoded.(StringParameter)
-	if !ok {
-		t.Fatalf("DecodeParameter() type = %T, want StringParameter", decoded)
-	}
-	if stringParameter.Kind() != ParameterKindString || *stringParameter.Default != "json" {
-		t.Fatalf("DecodeParameter() = %#v", stringParameter)
 	}
 }

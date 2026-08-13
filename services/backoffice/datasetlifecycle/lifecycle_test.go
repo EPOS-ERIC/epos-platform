@@ -58,7 +58,7 @@ func (r *testRepository) CreateDraft(_ context.Context, _, _ uuid.UUID, v metada
 	return r.create(v)
 }
 
-func (*testRepository) ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (Dataset, error) {
+func (*testRepository) ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (Dataset, error) {
 	return Dataset{}, nil
 }
 
@@ -66,7 +66,7 @@ func (*testRepository) Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) 
 	return Dataset{}, nil
 }
 
-func (*testRepository) Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error) {
+func (*testRepository) Withdraw(context.Context, uuid.UUID, uuid.UUID) (Dataset, error) {
 	return Dataset{}, nil
 }
 
@@ -75,14 +75,14 @@ func (r *testRepository) Reject(_ context.Context, _ uuid.UUID, _ uuid.UUID, _ u
 	return Dataset{}, nil
 }
 
-func (*testRepository) Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error) {
+func (*testRepository) Reopen(context.Context, uuid.UUID, uuid.UUID) (Dataset, error) {
 	return Dataset{}, nil
 }
 
 func (*testRepository) Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error) {
 	return Dataset{}, nil
 }
-func (*testRepository) Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error { return nil }
+func (*testRepository) Discard(context.Context, uuid.UUID, uuid.UUID) error { return nil }
 func (*testRepository) Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error) {
 	return Dataset{}, nil
 }

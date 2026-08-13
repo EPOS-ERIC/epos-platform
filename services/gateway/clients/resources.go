@@ -41,7 +41,6 @@ type Dataset struct {
 	Updated               time.Time      `json:"updated"`
 	SourceCreated         *time.Time     `json:"source_created"`
 	SourceUpdated         *time.Time     `json:"source_updated"`
-	OriginalDatasetID     uuid.UUID      `json:"original_dataset_id"`
 	Status                string         `json:"status"`
 }
 
