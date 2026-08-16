@@ -19,7 +19,7 @@ val neo4jDriverVersion = "5.28.5"
 val rdf4jVersion = "5.3.0"
 val ktorVersion = "3.0.3"
 val coroutinesVersion = "1.10.2"
-val jacksonVersion = "2.21.2"
+val jacksonVersion = "2.21.5"
 val slf4jVersion = "2.0.9"
 val ktorOpenApiToolsVersion = "5.4.0"
 val serializationVersion = "1.6.2"
@@ -114,12 +114,16 @@ dependencies {
         implementation("commons-beanutils:commons-beanutils:1.11.0")
         implementation("org.apache.commons:commons-lang3:3.18.0")
         implementation("org.apache.commons:commons-configuration2:2.10.1")
+        implementation("com.fasterxml.jackson.core:jackson-core:2.21.4")
         implementation("io.netty:netty-resolver-dns:4.1.135.Final")
         implementation("io.netty:netty-handler:4.1.135.Final")
         implementation("io.netty:netty-transport-sctp:4.1.135.Final")
         implementation("io.netty:netty-codec-redis:4.1.135.Final")
         implementation("io.netty:netty-codec-haproxy:4.1.135.Final")
-        implementation("io.netty:netty-codec-http2:4.1.135.Final")
+        implementation("io.netty:netty-codec-http2:4.1.136.Final")
+        implementation("io.netty:netty-codec-xml:4.1.136.Final")
+        implementation("io.netty:netty-handler-ssl-ocsp:4.1.136.Final")
+        implementation("io.netty:netty-handler-proxy:4.1.133.Final")
         implementation("io.netty:netty-codec-smtp:4.1.128.Final")
         implementation("io.netty:netty-transport-native-epoll:4.1.135.Final")
         implementation("io.netty:netty-transport-native-kqueue:4.1.135.Final")
