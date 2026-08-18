@@ -7,23 +7,19 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 	"github.com/go-chi/chi/v5"
 )
 
 var log = logging.Get("routes")
 
 func NewRouter(
-	discoveryService *discovery.Service,
-	resourcesService *resources.Service,
 	lifecycleService *lifecycle.Service,
+	backofficeClient *clients.Backoffice,
 	authService *auth.Service,
-	usergroupService *usergroup.Service,
 	corsAllowOrigin string,
 ) http.Handler {
 	log.Info("creating HTTP handler")
@@ -49,44 +45,39 @@ func NewRouter(
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
-	discoveryHandler := handlers.NewDiscovery(discoveryService)
-	resourcesHandler := handlers.NewResources(resourcesService)
 	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
-	usersHandler := handlers.NewUsers(usergroupService)
-	groupsHandler := handlers.NewGroups(usergroupService)
 
 	r.Route("/v1", func(r chi.Router) {
 		// discovery
-		r.With(authMiddlewareOptional(authService, usergroupService)).
-			Get("/search", discoveryHandler.SearchMetadata)
-		r.Get("/concept", discoveryHandler.GetConceptTree)
+		r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/search", handlers.NotImplemented)
+		r.Get("/concept", handlers.NotImplemented)
 
 		r.Route("/users", func(r chi.Router) {
-			r.Use(authMiddleware(authService, usergroupService))
-			r.Get("/", usersHandler.ListUsers)
-			r.Get("/{id}", usersHandler.GetUser)
-			r.Patch("/{id}", usersHandler.PatchUser)
+			r.Use(authMiddleware(authService, backofficeClient))
+			r.Get("/", handlers.NotImplemented)
+			r.Get("/{id}", handlers.NotImplemented)
 		})
 
 		r.Route("/groups", func(r chi.Router) {
-			r.Use(authMiddleware(authService, usergroupService))
-			r.Get("/", groupsHandler.ListGroups)
-			r.Get("/{groupId}", groupsHandler.GetGroup)
-			r.Get("/{groupId}/memberships", groupsHandler.ListMemberships)
-			r.Patch("/{groupId}", groupsHandler.PatchGroup)
-			r.Patch("/{groupId}/memberships/{userId}", groupsHandler.PatchMembership)
-			r.Delete("/{groupId}", groupsHandler.DeleteGroup)
-			r.Delete("/{groupId}/memberships/{userId}", groupsHandler.DeleteMembership)
-			r.Post("/{groupId}/memberships", groupsHandler.RequestMembership)
-			r.Post("/", groupsHandler.CreateGroup)
+			r.Use(authMiddleware(authService, backofficeClient))
+			r.Get("/", handlers.NotImplemented)
+			r.Get("/{groupId}", handlers.NotImplemented)
+			r.Get("/{groupId}/memberships", handlers.NotImplemented)
+			r.Delete("/{groupId}", handlers.NotImplemented)
+			r.Delete("/{groupId}/memberships/{userId}", handlers.NotImplemented)
+			r.Post("/{groupId}/memberships", handlers.NotImplemented)
+			r.Post("/", handlers.NotImplemented)
+			r.Post("/{groupId}/resources/{resourceType}", lifecycleHandler.Create)
+			r.Post("/{groupId}/resources/{resourceType}/{id}/copy", lifecycleHandler.Copy)
 		})
 
 		r.Route("/resources", func(r chi.Router) {
-			r.With(authMiddlewareOptional(authService, usergroupService)).
-				Get("/{resourceType}/{id}", resourcesHandler.GetResourceByID)
-			// lifecycle TODO
-			r.With(authMiddleware(authService, usergroupService)).
-				Post("/{resourceType}/{id}/draft", lifecycleHandler.DraftResource)
+			r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/{resourceType}/{id}/versions/{versionId}", lifecycleHandler.Get)
+			r.With(authMiddleware(authService, backofficeClient)).Put("/{resourceType}/{id}/versions/{versionId}/draft", lifecycleHandler.ReplaceDraft)
+			r.With(authMiddleware(authService, backofficeClient)).Delete("/{resourceType}/{id}/versions/{versionId}/draft", lifecycleHandler.Discard)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{resourceType}/{id}/versions/{versionId}/{action}", lifecycleHandler.Action)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{resourceType}/{id}/draft-from-publication", lifecycleHandler.DraftFromPublication)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{resourceType}/{id}/draft-from-archive", lifecycleHandler.DraftFromArchive)
 		})
 	})
 

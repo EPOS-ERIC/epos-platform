@@ -13,10 +13,12 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/dataset"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/health"
+	identityapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/identity"
 	imports "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/import"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/softwareapplication"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/softwaresourcecode"
+	identityservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/softwarelifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/turtle"
@@ -49,13 +51,21 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 	r.Route("/api/v1", func(r chi.Router) {
 		authorizer := authz.New(database.Authorization)
+		importsHandler := imports.New(metadataimport.New(turtle.Parser{}, authorizer, database.Imports))
+
+		r.Post("/imports/turtle", importsHandler.Turtle)
+
+		identity := identityapi.New(identityservice.New(database.Identity))
+
+		r.Get("/users/by-auth/{auth_identifier}", identity.GetByAuthIdentifier)
+		r.Post("/users", identity.Create)
+		r.Delete("/users/{id}", identity.Delete)
+
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))
 		sourceCodes := softwaresourcecode.New(softwarelifecycle.NewSourceCodeService(authorizer, database.SoftwareSourceCodes))
 		resources := resource.New(datasets, applications, sourceCodes)
-		importsHandler := imports.New(metadataimport.New(turtle.Parser{}, authorizer, database.Imports))
 
-		r.Post("/imports/turtle", importsHandler.Turtle)
 		r.Post("/groups/{group_id}/resources/{resource_type}", resources.Create)
 		r.Get("/resources/{resource_type}/{id}/versions/{version_id}", resources.Get)
 		r.Put("/resources/{resource_type}/{id}/versions/{version_id}/draft", resources.ReplaceDraft)

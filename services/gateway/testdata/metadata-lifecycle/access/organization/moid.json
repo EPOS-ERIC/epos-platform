@@ -1,8 +1,0 @@
-{
-  "href": "http://localhost:8080/api/v2/access/organization/MOID%3Ahttps%3A%2F%2Fgnss-metadata.eu%2FMOID%2Fdatasupplier.641dd8c7e06540da270881d8%2Fv1.0",
-  "id": "MOID:https://gnss-metadata.eu/MOID/datasupplier.641dd8c7e06540da270881d8/v1.0",
-  "properties": {
-    "schema:legalName": "EPOS-GNSS Data Suppliers"
-  },
-  "shape": "organization"
-}

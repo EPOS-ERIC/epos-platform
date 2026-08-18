@@ -12,12 +12,7 @@ upstream:
   cache_ttl: "5m"
   max_entries: 2048
 
-discovery:
-  fan_out_limit: 64
-
 services:
-  metadata-lifecycle:
-    url: "http://metadata-lifecycle-service:8080/"
   backoffice:
     url: "http://backoffice-service:5000/"
   auth:

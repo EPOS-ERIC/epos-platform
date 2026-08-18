@@ -7,9 +7,82 @@ package sqlc
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO
+    users (
+        auth_identifier,
+        email,
+        given_name,
+        family_name
+    )
+VALUES
+    ($1, $2, $3, $4)
+RETURNING
+    id,
+    auth_identifier,
+    email,
+    given_name,
+    family_name,
+    STATUS,
+    created_at,
+    updated_at
+`
+
+type CreateUserParams struct {
+	AuthIdentifier string
+	Email          string
+	GivenName      string
+	FamilyName     string
+}
+
+type CreateUserRow struct {
+	ID             uuid.UUID
+	AuthIdentifier string
+	Email          string
+	GivenName      string
+	FamilyName     string
+	Status         UserStatus
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.AuthIdentifier,
+		arg.Email,
+		arg.GivenName,
+		arg.FamilyName,
+	)
+	var i CreateUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.AuthIdentifier,
+		&i.Email,
+		&i.GivenName,
+		&i.FamilyName,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM
+    users
+WHERE
+    id = $1
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUser, id)
+	return err
+}
 
 const getAuthorizationUser = `-- name: GetAuthorizationUser :one
 SELECT
@@ -188,6 +261,234 @@ func (q *Queries) GetSoftwareSourceCodeVersionAuthorization(ctx context.Context,
 	var i GetSoftwareSourceCodeVersionAuthorizationRow
 	err := row.Scan(&i.SoftwareSourceCodeID, &i.GroupID, &i.Status)
 	return i, err
+}
+
+const getUserByAuthIdentifier = `-- name: GetUserByAuthIdentifier :one
+SELECT
+    id,
+    auth_identifier,
+    email,
+    given_name,
+    family_name,
+    STATUS,
+    created_at,
+    updated_at
+FROM
+    users
+WHERE
+    auth_identifier = $1
+`
+
+type GetUserByAuthIdentifierRow struct {
+	ID             uuid.UUID
+	AuthIdentifier string
+	Email          string
+	GivenName      string
+	FamilyName     string
+	Status         UserStatus
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (q *Queries) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (GetUserByAuthIdentifierRow, error) {
+	row := q.db.QueryRow(ctx, getUserByAuthIdentifier, authIdentifier)
+	var i GetUserByAuthIdentifierRow
+	err := row.Scan(
+		&i.ID,
+		&i.AuthIdentifier,
+		&i.Email,
+		&i.GivenName,
+		&i.FamilyName,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserGlobalPermissions = `-- name: GetUserGlobalPermissions :many
+SELECT role_permission.permission_key
+FROM user_global_roles AS global_role
+JOIN role_permissions AS role_permission
+    ON role_permission.role_key = global_role.role_key
+WHERE global_role.user_id = $1
+UNION
+SELECT global_grant.permission_key
+FROM global_permission_grants AS global_grant
+WHERE global_grant.user_id = $1
+ORDER BY permission_key
+`
+
+func (q *Queries) GetUserGlobalPermissions(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, getUserGlobalPermissions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var permission_key string
+		if err := rows.Scan(&permission_key); err != nil {
+			return nil, err
+		}
+		items = append(items, permission_key)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserGlobalRoles = `-- name: GetUserGlobalRoles :many
+SELECT role_key
+FROM user_global_roles
+WHERE user_id = $1
+ORDER BY role_key
+`
+
+func (q *Queries) GetUserGlobalRoles(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, getUserGlobalRoles, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var role_key string
+		if err := rows.Scan(&role_key); err != nil {
+			return nil, err
+		}
+		items = append(items, role_key)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserMembershipPermissions = `-- name: GetUserMembershipPermissions :many
+SELECT membership.group_id, role_permission.permission_key
+FROM group_memberships AS membership
+JOIN group_membership_roles AS role_assignment
+    ON role_assignment.user_id = membership.user_id
+    AND role_assignment.group_id = membership.group_id
+JOIN role_permissions AS role_permission
+    ON role_permission.role_key = role_assignment.role_key
+WHERE membership.user_id = $1
+    AND membership.status = 'ACTIVE'
+UNION
+SELECT direct_grant.group_id, direct_grant.permission_key
+FROM group_permission_grants AS direct_grant
+JOIN group_memberships AS membership
+    ON membership.user_id = direct_grant.user_id
+    AND membership.group_id = direct_grant.group_id
+WHERE direct_grant.user_id = $1
+    AND membership.status = 'ACTIVE'
+ORDER BY group_id, permission_key
+`
+
+type GetUserMembershipPermissionsRow struct {
+	GroupID       uuid.UUID
+	PermissionKey string
+}
+
+func (q *Queries) GetUserMembershipPermissions(ctx context.Context, userID uuid.UUID) ([]GetUserMembershipPermissionsRow, error) {
+	rows, err := q.db.Query(ctx, getUserMembershipPermissions, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserMembershipPermissionsRow
+	for rows.Next() {
+		var i GetUserMembershipPermissionsRow
+		if err := rows.Scan(&i.GroupID, &i.PermissionKey); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserMembershipRoles = `-- name: GetUserMembershipRoles :many
+SELECT group_id, role_key
+FROM group_membership_roles
+WHERE user_id = $1
+ORDER BY group_id, role_key
+`
+
+type GetUserMembershipRolesRow struct {
+	GroupID uuid.UUID
+	RoleKey string
+}
+
+func (q *Queries) GetUserMembershipRoles(ctx context.Context, userID uuid.UUID) ([]GetUserMembershipRolesRow, error) {
+	rows, err := q.db.Query(ctx, getUserMembershipRoles, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserMembershipRolesRow
+	for rows.Next() {
+		var i GetUserMembershipRolesRow
+		if err := rows.Scan(&i.GroupID, &i.RoleKey); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserMemberships = `-- name: GetUserMemberships :many
+SELECT
+    membership.group_id,
+    groups.name AS group_name,
+    membership.status,
+    membership.created_at,
+    membership.updated_at
+FROM group_memberships AS membership
+JOIN groups ON groups.id = membership.group_id
+WHERE membership.user_id = $1
+ORDER BY groups.name, membership.group_id
+`
+
+type GetUserMembershipsRow struct {
+	GroupID   uuid.UUID
+	GroupName string
+	Status    MembershipStatus
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetUserMemberships(ctx context.Context, userID uuid.UUID) ([]GetUserMembershipsRow, error) {
+	rows, err := q.db.Query(ctx, getUserMemberships, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserMembershipsRow
+	for rows.Next() {
+		var i GetUserMembershipsRow
+		if err := rows.Scan(
+			&i.GroupID,
+			&i.GroupName,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const hasAnyActiveMembership = `-- name: HasAnyActiveMembership :one

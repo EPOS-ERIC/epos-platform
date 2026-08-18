@@ -2,7 +2,7 @@
 
 ## Build and Test Workflow
 
-- `make generate` regenerates `gen/metadataclient` from metadata-lifecycle OpenAPI spec
+- `make generate` regenerates `gen/backoffice` from Backoffice OpenAPI spec
 - `make lint test` formats + checks if changes ok
 
 ## Service Conventions
@@ -57,12 +57,12 @@ log.Info(...)
 ### Gateway service structure
 
 - Keep package layout domain-first:
-  - `discovery/`, `resources/` = domain use-cases.
-  - `integrations/` = outbound adapters to external services (for example `integrations/metadatalifecycle`).
+  - `lifecycle/` = Backoffice lifecycle use-cases.
+  - `clients/` = outbound adapters to Backoffice and AAI.
   - `http/` = inbound transport adapter (router, handlers, middleware).
   - `main.go` = single binary entrypoint and dependency wiring.
   - `config/` = configuration load/validate.
-  - `gen/` = generated OpenAPI code (do not edit manually).
+  - `gen/backoffice/` = generated Backoffice OpenAPI code (do not edit manually).
 - Dependency direction is mandatory:
   - Domain packages must not import `http/` or `integrations/`.
   - Adapter packages (`http/`, `integrations/`) can import domain packages.

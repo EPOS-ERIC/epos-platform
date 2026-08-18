@@ -7,6 +7,130 @@ FROM
 WHERE
     id = $1;
 
+-- name: GetUserByAuthIdentifier :one
+SELECT
+    id,
+    auth_identifier,
+    email,
+    given_name,
+    family_name,
+    STATUS,
+    created_at,
+    updated_at
+FROM
+    users
+WHERE
+    auth_identifier = $1;
+
+-- name: GetUserGlobalRoles :many
+SELECT
+    role_key
+FROM
+    user_global_roles
+WHERE
+    user_id = $1
+ORDER BY
+    role_key;
+
+-- name: GetUserGlobalPermissions :many
+SELECT
+    role_permission.permission_key
+FROM
+    user_global_roles AS global_role
+    JOIN role_permissions AS role_permission ON role_permission.role_key = global_role.role_key
+WHERE
+    global_role.user_id = $1
+UNION
+SELECT
+    global_grant.permission_key
+FROM
+    global_permission_grants AS global_grant
+WHERE
+    global_grant.user_id = $1
+ORDER BY
+    permission_key;
+
+-- name: GetUserMemberships :many
+SELECT
+    membership.group_id,
+    groups.name AS group_name,
+    membership.status,
+    membership.created_at,
+    membership.updated_at
+FROM
+    group_memberships AS membership
+    JOIN groups ON groups.id = membership.group_id
+WHERE
+    membership.user_id = $1
+ORDER BY
+    groups.name,
+    membership.group_id;
+
+-- name: GetUserMembershipRoles :many
+SELECT
+    group_id,
+    role_key
+FROM
+    group_membership_roles
+WHERE
+    user_id = $1
+ORDER BY
+    group_id,
+    role_key;
+
+-- name: GetUserMembershipPermissions :many
+SELECT
+    membership.group_id,
+    role_permission.permission_key
+FROM
+    group_memberships AS membership
+    JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
+    AND role_assignment.group_id = membership.group_id
+    JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
+WHERE
+    membership.user_id = $1
+    AND membership.status = 'ACTIVE'
+UNION
+SELECT
+    direct_grant.group_id,
+    direct_grant.permission_key
+FROM
+    group_permission_grants AS direct_grant
+    JOIN group_memberships AS membership ON membership.user_id = direct_grant.user_id
+    AND membership.group_id = direct_grant.group_id
+WHERE
+    direct_grant.user_id = $1
+    AND membership.status = 'ACTIVE'
+ORDER BY
+    group_id,
+    permission_key;
+
+-- name: CreateUser :one
+INSERT INTO
+    users (
+        auth_identifier,
+        email,
+        given_name,
+        family_name
+    )
+VALUES
+    ($1, $2, $3, $4)
+RETURNING
+    id,
+    auth_identifier,
+    email,
+    given_name,
+    family_name,
+    STATUS,
+    created_at,
+    updated_at;
+
+-- name: DeleteUser :exec
+DELETE FROM
+    users
+WHERE
+    id = $1;
+
 -- name: GetPermissionScope :one
 SELECT
     scope

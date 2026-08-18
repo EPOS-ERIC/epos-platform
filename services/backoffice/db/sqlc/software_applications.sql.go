@@ -242,7 +242,7 @@ categories AS (
 SELECT
     id,
     software_application_id,
-    status,
+    STATUS,
     revision,
     name,
     description,

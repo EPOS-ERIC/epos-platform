@@ -16,38 +16,24 @@ build-docker: build
 test:
 	go test ./... -race -count=1
 
-test-fixtures-refresh:
-	go run ./scripts/refresh_test_fixtures.go
-
 fmt:
 	golangci-lint fmt
 
 lint: fmt
 	golangci-lint run ./...
 
-METADATA_SPEC := ../metadata-lifecycle/openapi.yaml
-METADATA_CLIENT_GEN_DIR := gen/metadataclient
-
 BACKOFFICE_SPEC := ../backoffice/docs/openapi.yaml
-USERGROUP_CLIENT_GEN_DIR := gen/usergroupclient
+BACKOFFICE_CLIENT_GEN_DIR := gen/backoffice
 generate: clean
 	openapi-generator generate -g go \
-		-i $(METADATA_SPEC) \
-		-o $(METADATA_CLIENT_GEN_DIR) \
-		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
-		-p packageName=metadataclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
-	# Format generated metadata client
-	(cd $(METADATA_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
-
-	openapi-generator generate -g go \
 		-i $(BACKOFFICE_SPEC) \
-		-o $(USERGROUP_CLIENT_GEN_DIR) \
+		-o $(BACKOFFICE_CLIENT_GEN_DIR) \
 		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
-		-p packageName=usergroupclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
-	(cd $(USERGROUP_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
+		-p packageName=backofficeclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
+	(cd $(BACKOFFICE_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
 clean:
-	rm -rf $(BIN) $(METADATA_CLIENT_GEN_DIR) $(USERGROUP_CLIENT_GEN_DIR)
+	rm -rf $(BIN) $(BACKOFFICE_CLIENT_GEN_DIR)
 
 get-token:
 	curl -s -X POST http://localhost:8110/oauth/token \
@@ -57,4 +43,4 @@ get-token:
 		-d password=adminadmin
 
 
-.PHONY: build build-docker generate test test-hurl test-fixtures-refresh fmt lint clean
+.PHONY: build build-docker generate test fmt lint clean

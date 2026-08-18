@@ -244,7 +244,7 @@ categories AS (
 SELECT
     id,
     software_source_code_id,
-    status,
+    STATUS,
     revision,
     name,
     description,

@@ -9,24 +9,25 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 )
 
-func authMiddleware(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+func authMiddleware(authenticator *auth.Service, provisioner *clients.Backoffice) func(http.Handler) http.Handler {
 	return authMiddlewareRequired(authenticator, provisioner)
 }
 
-func authMiddlewareRequired(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+func authMiddlewareRequired(authenticator *auth.Service, provisioner *clients.Backoffice) func(http.Handler) http.Handler {
 	return authMiddlewareWithMode(authenticator, provisioner, true)
 }
 
-func authMiddlewareOptional(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+func authMiddlewareOptional(authenticator *auth.Service, provisioner *clients.Backoffice) func(http.Handler) http.Handler {
 	return authMiddlewareWithMode(authenticator, provisioner, false)
 }
 
-func authMiddlewareWithMode(authenticator *auth.Service, provisioner *usergroup.Service, required bool) func(http.Handler) http.Handler {
+func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Backoffice, required bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			span := trace.SpanFromContext(r.Context())
@@ -59,7 +60,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *usergroup.
 				return
 			}
 
-			user, err := provisioner.EnsureUser(r.Context(), usergroup.Identity{
+			resolved, err := provisioner.EnsureUser(r.Context(), clients.ActorIdentity{
 				AuthIdentifier: identity.AuthIdentifier,
 				Email:          identity.Email,
 				GivenName:      identity.GivenName,
@@ -72,10 +73,42 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *usergroup.
 				return
 			}
 
+			user := api.User{
+				ID:                resolved.ID,
+				AuthIdentifier:    resolved.AuthIdentifier,
+				Email:             resolved.Email,
+				GivenName:         resolved.GivenName,
+				FamilyName:        resolved.FamilyName,
+				Status:            api.UserStatus(resolved.Status),
+				GlobalRoles:       append([]string{}, resolved.GlobalRoles...),
+				GlobalPermissions: append([]string{}, resolved.GlobalPermissions...),
+				CreatedAt:         resolved.CreatedAt,
+				UpdatedAt:         resolved.UpdatedAt,
+				Memberships:       []api.UserMembershipSummary{},
+			}
+			user.Memberships = make([]api.UserMembershipSummary, 0, len(resolved.Memberships))
+			for _, membership := range resolved.Memberships {
+				roles := make([]api.MembershipRole, 0, len(membership.Roles))
+				for _, role := range membership.Roles {
+					roles = append(roles, api.MembershipRole(role))
+				}
+				user.Memberships = append(user.Memberships, api.UserMembershipSummary{
+					Group: api.ResourceRef{
+						ID:   membership.Group.ID,
+						Name: membership.Group.Name,
+						Href: "/v1/groups/" + membership.Group.ID,
+					},
+					Roles:       roles,
+					Status:      api.MembershipStatus(membership.Status),
+					Permissions: append([]string{}, membership.Permissions...),
+					CreatedAt:   membership.CreatedAt,
+					UpdatedAt:   membership.UpdatedAt,
+				})
+			}
 			ctx := logging.WithActor(r.Context(), logging.Actor{
 				ID:             user.ID,
 				AuthIdentifier: user.AuthIdentifier,
-				IsSuperAdmin:   user.IsSuperAdmin,
+				IsSuperAdmin:   user.IsGlobalAdmin(),
 			})
 
 			span.SetAttributes(
@@ -83,7 +116,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *usergroup.
 				// "enduser" is an otel-specific naming
 				attribute.String("enduser.id", user.ID),
 				attribute.String("enduser.auth_identifier", user.AuthIdentifier),
-				attribute.Bool("enduser.is_super_admin", user.IsSuperAdmin),
+				attribute.Bool("enduser.is_global_admin", user.IsGlobalAdmin()),
 			)
 
 			ctx = handlers.WithAuthenticatedUser(ctx, user)

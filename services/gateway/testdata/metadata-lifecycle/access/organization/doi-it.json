@@ -1,8 +1,0 @@
-{
-  "href": "http://localhost:8080/api/v2/access/organization/https%3A%2F%2Fdoi.org%2F10.7914%2FSN%2FIT",
-  "id": "https://doi.org/10.7914/SN/IT",
-  "properties": {
-    "schema:legalName": "Italian Strong Motion Network, IT, https://doi.org/10.7914/SN/IT"
-  },
-  "shape": "organization"
-}

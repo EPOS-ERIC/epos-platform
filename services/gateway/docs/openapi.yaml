@@ -32,10 +32,6 @@ tags:
     description: Group management endpoints
   - name: Memberships
     description: Group membership endpoints
-  - name: Resources
-    description: Resource detail endpoints
-  - name: Draft Resource Operations
-    description: Create, replace, and delete draft aggregates
   - name: Resource Lifecycle
     description: Submit, publish, draft, and discard aggregates
 
@@ -199,7 +195,8 @@ paths:
                       email: "alice@example.org"
                       given_name: "Alice"
                       family_name: "Rossi"
-                      is_super_admin: true
+                      global_roles: [ADMIN]
+                      global_permissions: []
                       status: "ACTIVE"
                       created_at: "2026-06-17T12:48:45.574Z"
                       updated_at: "2026-06-17T12:48:45.574Z"
@@ -238,7 +235,7 @@ paths:
                       description: "Geospatial data obtained from Satellite measurements"
                       is_system: false
                       membership:
-                        role: "VIEWER"
+                        role: "EDITOR"
                         status: "ACTIVE"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -312,45 +309,8 @@ paths:
                     description: "Geospatial data obtained from Satellite measurements"
                     is_system: false
                     membership:
-                      role: "ADMIN"
+                      role: "GROUP_ADMIN"
                       status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-    patch:
-      tags:
-        - Groups
-      summary: Patch group
-      description: Update mutable group fields. Allowed to super admins and active group admins for this group.
-      operationId: patchGroup
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PatchGroupRequest"
-            examples:
-              update:
-                summary: Update group fields
-                value:
-                  name: "Research Core Team"
-                  description: "Updated research group"
-      responses:
-        "200":
-          description: Group updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Group"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -407,7 +367,7 @@ paths:
                         id: "550e8400-e29b-41d4-a716-446655440101"
                         name: "Alice Rossi"
                         href: "v1/users/550e8400-e29b-41d4-a716-446655440101"
-                      role: "ADMIN"
+                      role: "GROUP_ADMIN"
                       status: "ACTIVE"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -435,7 +395,7 @@ paths:
               create:
                 summary: Request participation
                 value:
-                  role: "VIEWER"
+                      role: "EDITOR"
       responses:
         "201":
           description: Membership request created successfully
@@ -449,7 +409,7 @@ paths:
                   value:
                     user_id: "550e8400-e29b-41d4-a716-446655440101"
                     group_id: "550e8400-e29b-41d4-a716-446655440001"
-                    role: "VIEWER"
+                    role: "EDITOR"
                     status: "PENDING"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -468,52 +428,6 @@ paths:
     parameters:
       - $ref: "#/components/parameters/GroupId"
       - $ref: "#/components/parameters/MembershipUserId"
-    patch:
-      tags:
-        - Memberships
-      summary: Update membership
-      description: Accept, reject, or adjust a user membership. Allowed to super admins and active group admins for the target group.
-      operationId: patchGroupMembership
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PatchMembershipRequest"
-            examples:
-              patch:
-                summary: Update membership status
-                value:
-                  status: "ACTIVE"
-      responses:
-        "200":
-          description: Membership patched successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Membership"
-              examples:
-                patched:
-                  summary: Patched membership
-                  value:
-                    user_id: "550e8400-e29b-41d4-a716-446655440101"
-                    group_id: "550e8400-e29b-41d4-a716-446655440001"
-                    role: "VIEWER"
-                    status: "ACTIVE"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T13:05:45.574Z"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
         - Memberships
@@ -561,7 +475,8 @@ paths:
                     email: "alice@example.org"
                     given_name: "Alice"
                     family_name: "Rossi"
-                    is_super_admin: true
+                    global_roles: [ADMIN]
+                    global_permissions: []
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -570,8 +485,11 @@ paths:
                           id: "550e8400-e29b-41d4-a716-446655440001"
                           name: "Group Cool Name"
                           href: "v1/groups/550e8400-e29b-41d4-a716-446655440001"
-                        role: "VIEWER"
+                        roles: [EDITOR]
                         status: "ACTIVE"
+                        permissions: [resource.create, resource.edit]
+                        created_at: "2026-06-17T12:48:45.574Z"
+                        updated_at: "2026-06-17T12:48:45.574Z"
                 self:
                   summary: Self profile
                   value:
@@ -580,7 +498,8 @@ paths:
                     email: "alice@example.org"
                     given_name: "Alice"
                     family_name: "Rossi"
-                    is_super_admin: true
+                    global_roles: [ADMIN]
+                    global_permissions: []
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -589,8 +508,11 @@ paths:
                           id: "550e8400-e29b-41d4-a716-446655440001"
                           name: "Group Cool Name"
                           href: "v1/groups/550e8400-e29b-41d4-a716-446655440001"
-                        role: "VIEWER"
+                        roles: [EDITOR]
                         status: "ACTIVE"
+                        permissions: [resource.create, resource.edit]
+                        created_at: "2026-06-17T12:48:45.574Z"
+                        updated_at: "2026-06-17T12:48:45.574Z"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -599,85 +521,17 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
-    patch:
-      tags:
-        - Users
-      summary: Patch user by id
-      description: Update mutable fields for a user profile. Use `self` to update authenticated user profile. Super admins may also update any user id.
-      operationId: patchUser
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PatchCurrentUserRequest"
-            examples:
-              update:
-                summary: Update fields
-                value:
-                  given_name: "John"
-                  family_name: "Doe"
-      responses:
-        "200":
-          description: User updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-              examples:
-                self:
-                  summary: Self profile update
-                  value:
-                    id: "550e8400-e29b-41d4-a716-446655440101"
-                    auth_identifier: "auth-1"
-                    email: "alice@example.org"
-                    given_name: "John"
-                    family_name: "Doe"
-                    is_super_admin: true
-                    status: "ACTIVE"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T13:05:45.574Z"
-                uuid:
-                  summary: User update by UUID
-                  value:
-                    id: "550e8400-e29b-41d4-a716-446655440102"
-                    auth_identifier: "auth-2"
-                    email: "bob@example.org"
-                    given_name: "Bob"
-                    family_name: "Meyer"
-                    is_super_admin: false
-                    status: "ACTIVE"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T13:05:45.574Z"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /resources/{resourceType}:
+  /groups/{groupId}/resources/{resourceType}:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/LifecycleResourceType"
     post:
       tags:
-        - Draft Resource Operations
+        - Resource Lifecycle
       summary: Create resource draft
-      description: Create a new `draft` resource for the selected type.
       operationId: createResource
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       requestBody:
         required: true
         content:
@@ -698,50 +552,73 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}:
+  /groups/{groupId}/resources/{resourceType}/{id}/copy:
     parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Copy resource
+      operationId: copyResource
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceWrite"
+      responses:
+        "201":
+          description: Resource copied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/versions/{versionId}:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     get:
       tags:
-        - Resources
-      summary: Get resource by id
-      description: |
-        Returns resource detail metadata for the selected resource type.
-      operationId: getResourceById
+        - Resource Lifecycle
+      summary: Get resource version
+      operationId: getResourceVersion
       security:
         - {}
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ReadResourceType"
       responses:
         "200":
-          description: Resource found
+          description: Resource version found
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
     put:
       tags:
-        - Draft Resource Operations
-      summary: Replace resource draft
-      description: Full replace semantics. Omitted writable fields are removed from the draft resource.
-      operationId: updateResource
+        - Resource Lifecycle
+      summary: Replace resource draft version
+      operationId: replaceResourceDraftVersion
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/WriteResourceType"
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       requestBody:
         required: true
         content:
@@ -750,7 +627,7 @@ paths:
               $ref: "#/components/schemas/ResourceWrite"
       responses:
         "200":
-          description: Draft replaced
+          description: Draft version replaced
           content:
             application/json:
               schema:
@@ -765,23 +642,21 @@ paths:
           $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
-        - Draft Resource Operations
-      summary: Delete resource draft
-      description: Delete a `draft` resource.
-      operationId: deleteResource
+        - Resource Lifecycle
+      summary: Discard resource draft version
+      description: Discard a `draft` version.
+      operationId: discardResourceDraftVersion
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/WriteResourceType"
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       responses:
         "200":
-          description: Draft deleted
+          description: Draft version discarded
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -789,29 +664,27 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  # RESOURCE LIFECYCLE ENDPOINTS
-  /resources/{resourceType}/{id}/submit:
+  /resources/{resourceType}/{id}/versions/{versionId}/submit:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     post:
       tags:
         - Resource Lifecycle
-      summary: Submit resource draft
-      description: Submit a `draft` resource for review.
-      operationId: submitResource
+      summary: Submit resource version
+      operationId: submitResourceVersion
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       responses:
         "200":
-          description: Draft submitted
+          description: Resource version submitted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -819,28 +692,27 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}/publish:
+  /resources/{resourceType}/{id}/versions/{versionId}/withdraw:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     post:
       tags:
         - Resource Lifecycle
-      summary: Publish resource draft
-      description: Publish a `submitted` resource.
-      operationId: publishResource
+      summary: Withdraw resource version
+      operationId: withdrawResourceVersion
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       responses:
         "200":
-          description: Draft published
+          description: Resource version withdrawn
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -848,21 +720,135 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}/draft:
+  /resources/{resourceType}/{id}/versions/{versionId}/reject:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Reject resource version
+      operationId: rejectResourceVersion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Resource version rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/versions/{versionId}/reopen:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Reopen resource version
+      operationId: reopenResourceVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version reopened
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/versions/{versionId}/publish:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Publish resource version
+      operationId: publishResourceVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/versions/{versionId}/unpublish:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resource Lifecycle
+      summary: Unpublish resource version
+      operationId: unpublishResourceVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version unpublished
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/draft-from-publication:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
     post:
       tags:
         - Resource Lifecycle
-      summary: Create draft from published resource
-      description: Create a new draft version from a published resource.
-      operationId: draftResource
+      summary: Create draft from publication
+      operationId: draftFromPublication
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       responses:
         "201":
           description: Draft created
@@ -870,6 +856,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -877,28 +865,26 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}/discard:
+  /resources/{resourceType}/{id}/draft-from-archive:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
     post:
       tags:
         - Resource Lifecycle
-      summary: Discard resource draft
-      description: Discard a `draft` or `submitted` resource.
-      operationId: discardResource
+      summary: Create draft from archive
+      operationId: draftFromArchive
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
       responses:
-        "200":
-          description: Draft discarded
+        "201":
+          description: Draft created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -957,6 +943,28 @@ components:
         type: string
         format: uuid
         example: "550e8400-e29b-41d4-a716-446655440001"
+
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      description: Resource version identifier.
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440002"
+
+    LifecycleResourceType:
+      name: resourceType
+      in: path
+      required: true
+      description: Resource type identifier accepted by lifecycle endpoints.
+      schema:
+        type: string
+        enum:
+          - dataset
+          - software-application
+          - software-source-code
 
     WriteResourceType:
       name: resourceType
@@ -2796,10 +2804,9 @@ components:
       type: string
       description: Role assigned to a user inside a group.
       enum:
-        - VIEWER
         - EDITOR
         - REVIEWER
-        - ADMIN
+        - GROUP_ADMIN
 
     MembershipStatus:
       type: string
@@ -2807,7 +2814,6 @@ components:
       enum:
         - PENDING
         - ACTIVE
-        - REVOKED
         - REJECTED
 
     User:
@@ -2825,8 +2831,12 @@ components:
         - email
         - given_name
         - family_name
-        - is_super_admin
         - status
+        - global_roles
+        - global_permissions
+        - created_at
+        - updated_at
+        - memberships
       properties:
         id:
           type: string
@@ -2838,10 +2848,16 @@ components:
           type: string
         family_name:
           type: string
-        is_super_admin:
-          type: boolean
         status:
           $ref: "#/components/schemas/UserStatus"
+        global_roles:
+          type: array
+          items:
+            type: string
+        global_permissions:
+          type: array
+          items:
+            type: string
         created_at:
           type: string
           format: date-time
@@ -2901,15 +2917,30 @@ components:
       description: Embedded membership preview for one user-group relation.
       required:
         - group
-        - role
+        - roles
         - status
+        - permissions
+        - created_at
+        - updated_at
       properties:
         group:
           $ref: "#/components/schemas/ResourceRef"
-        role:
-          $ref: "#/components/schemas/MembershipRole"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MembershipRole"
         status:
           $ref: "#/components/schemas/MembershipStatus"
+        permissions:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     GroupMembershipSummary:
       type: object
@@ -2959,16 +2990,6 @@ components:
         role:
           $ref: "#/components/schemas/MembershipRole"
 
-    PatchMembershipRequest:
-      type: object
-      description: Partial payload for updating membership role or status.
-      minProperties: 1
-      properties:
-        role:
-          $ref: "#/components/schemas/MembershipRole"
-        status:
-          $ref: "#/components/schemas/MembershipStatus"
-
     CreateGroupRequest:
       type: object
       description: Mutable group fields accepted by gateway create endpoint.
@@ -2984,37 +3005,6 @@ components:
           type: string
         is_system:
           type: boolean
-
-    PatchGroupRequest:
-      type: object
-      description: Mutable group fields accepted by gateway patch endpoint.
-      minProperties: 1
-      properties:
-        slug:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        is_system:
-          type: boolean
-
-    PatchCurrentUserRequest:
-      type: object
-      description: Mutable self-service user fields accepted by gateway patch endpoint.
-      minProperties: 1
-      properties:
-        email:
-          type: string
-        given_name:
-          type: string
-        family_name:
-          type: string
-        is_super_admin:
-          type: boolean
-          description: Super-admin only.
-        status:
-          $ref: "#/components/schemas/UserStatus"
 
     Problem:
       type: object

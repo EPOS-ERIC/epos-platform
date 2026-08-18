@@ -765,9 +765,9 @@ type SoftwareSourceCodeVersionCreator struct {
 type User struct {
 	ID             uuid.UUID
 	AuthIdentifier string
-	FamilyName     *string
-	GivenName      *string
-	Email          *string
+	FamilyName     string
+	GivenName      string
+	Email          string
 	Status         UserStatus
 	BlockReason    *string
 	BlockedBy      *uuid.UUID

@@ -639,7 +639,7 @@ distributions AS (
 SELECT
     id,
     dataset_id,
-    status,
+    STATUS,
     revision,
     title,
     description,

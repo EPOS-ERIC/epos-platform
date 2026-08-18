@@ -28,7 +28,7 @@ func TestClientReturnsValidCachedEntry(t *testing.T) {
 	})
 
 	client := newTestClient(t, transport, time.Second, time.Minute)
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v1/resources?q=b&a=1", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources?q=b&a=1", nil)
 
 	first, err := client.Do(request)
 	if err != nil {
@@ -74,7 +74,7 @@ func TestClientReturnsStaleOnTimeoutAndRefreshesCache(t *testing.T) {
 	now := time.Unix(100, 0)
 	client.now = func() time.Time { return now }
 
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v1/resources", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources", nil)
 	if _, err := client.Do(request); err != nil {
 		t.Fatalf("warm request failed: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestClientDeletesStaleEntryWhenRefreshFails(t *testing.T) {
 	now := time.Unix(100, 0)
 	client.now = func() time.Time { return now }
 
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v1/resources", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources", nil)
 	if _, err := client.Do(request); err != nil {
 		t.Fatalf("warm request failed: %v", err)
 	}
@@ -209,7 +209,7 @@ func TestClientDeduplicatesInflightRequests(t *testing.T) {
 	})
 
 	client := newTestClient(t, transport, time.Second, time.Minute)
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v1/resources", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources", nil)
 
 	var wg sync.WaitGroup
 	results := make(chan string, 2)
@@ -253,7 +253,7 @@ func TestClientReturnsStaleImmediatelyWhileRefreshContinues(t *testing.T) {
 	now := time.Unix(100, 0)
 	client.now = func() time.Time { return now }
 
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v1/resources", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources", nil)
 	if _, err := client.Do(request); err != nil {
 		t.Fatalf("warm request failed: %v", err)
 	}
@@ -303,7 +303,7 @@ func TestRoundTripReturnsResponseForNonSuccessStatus(t *testing.T) {
 	})
 
 	client := newTestClient(t, transport, time.Second, time.Minute)
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v2/access/concept/concept-seismology", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources/concept/concept-seismology", nil)
 
 	resp, err := client.RoundTrip(request)
 	if err != nil {
@@ -327,7 +327,7 @@ func TestClientColdMissIgnoresShortTimeout(t *testing.T) {
 	})
 
 	client := newTestClient(t, transport, time.Second, time.Minute)
-	request := mustNewRequest(t, "GET", "http://metadata-lifecycle:8080/api/v1/resources", nil)
+	request := mustNewRequest(t, "GET", "http://backoffice:5000/api/v1/resources", nil)
 
 	resultCh := make(chan *Response, 1)
 	errCh := make(chan error, 1)
@@ -376,7 +376,7 @@ func TestClientCancelsColdMissInflightAfterCallerContextCancellation(t *testing.
 	client.httpClient.Transport = transport
 
 	ctx, cancel := context.WithCancel(context.Background())
-	request, err := http.NewRequestWithContext(ctx, "GET", "http://metadata-lifecycle:8080/api/v1/resources", nil)
+	request, err := http.NewRequestWithContext(ctx, "GET", "http://backoffice:5000/api/v1/resources", nil)
 	if err != nil {
 		t.Fatalf("new request: %v", err)
 	}

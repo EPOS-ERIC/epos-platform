@@ -1,22 +1,13 @@
 // Package lifecycle contains resource detail domain use-cases.
 package lifecycle
 
-import (
-	"log/slog"
-
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
-)
+import "github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 
 type Service struct {
-	log            *slog.Logger
-	metadataClient *metadataclient.APIClient
+	backoffice *clients.Backoffice
 }
 
-// NewService builds lifecycle service for draft operations.
-func NewService(metadataClient *metadataclient.APIClient) *Service {
-	return &Service{
-		log:            logging.Get("lifecycle-service"),
-		metadataClient: metadataClient,
-	}
+// NewService builds lifecycle service for Backoffice lifecycle operations.
+func NewService(backoffice *clients.Backoffice) *Service {
+	return &Service{backoffice: backoffice}
 }

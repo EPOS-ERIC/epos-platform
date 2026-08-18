@@ -49,29 +49,9 @@ type CreateMembershipRequest struct {
 	Role MembershipRole `json:"role"`
 }
 
-type PatchMembershipRequest struct {
-	Role   *MembershipRole   `json:"role,omitempty"`
-	Status *MembershipStatus `json:"status,omitempty"`
-}
-
-func (r PatchMembershipRequest) IsEmpty() bool {
-	return r.Role == nil && r.Status == nil
-}
-
-type PatchGroupRequest struct {
-	Slug        *string `json:"slug,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	IsSystem    *bool   `json:"is_system,omitempty"`
-}
-
-func (r PatchGroupRequest) IsEmpty() bool {
-	return r.Slug == nil && r.Name == nil && r.Description == nil && r.IsSystem == nil
-}
-
 func (r MembershipRole) IsValid() bool {
 	switch r {
-	case MembershipViewerRole, MembershipEditorRole, MembershipReviewerRole, MembershipAdminRole:
+	case MembershipEditorRole, MembershipReviewerRole, MembershipGroupAdminRole:
 		return true
 	default:
 		return false
@@ -80,7 +60,7 @@ func (r MembershipRole) IsValid() bool {
 
 func (s MembershipStatus) IsValid() bool {
 	switch s {
-	case MembershipPendingStatus, MembershipActiveStatus, MembershipRevokedStatus, MembershipRejectedStatus:
+	case MembershipPendingStatus, MembershipActiveStatus, MembershipRejectedStatus:
 		return true
 	default:
 		return false
