@@ -22,6 +22,7 @@ type Config struct {
 	DBPassword string `envconfig:"DB_PASSWORD" default:"backoffice"`
 }
 
+// Load reads and validates configuration from environment variables.
 func Load() (Config, error) {
 	var cfg Config
 	if err := envconfig.Process("", &cfg); err != nil {
@@ -35,6 +36,7 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
+// Validate checks required values and timeout settings.
 func (c *Config) Validate() error {
 	if c.ServerPort == "" {
 		return fmt.Errorf("port is required")

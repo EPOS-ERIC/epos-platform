@@ -24,6 +24,7 @@ type handler struct {
 
 var log = logging.Get("import-handler")
 
+// New creates a Turtle import handler.
 func New(service importService) *handler {
 	return &handler{service: service}
 }

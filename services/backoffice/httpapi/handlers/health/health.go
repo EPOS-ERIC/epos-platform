@@ -22,6 +22,7 @@ type handler struct {
 	db *db.PostgresDB
 }
 
+// New creates a database health handler.
 func New(database *db.PostgresDB) *handler {
 	return &handler{
 		db: database,

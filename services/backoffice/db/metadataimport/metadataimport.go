@@ -22,6 +22,7 @@ type Repo struct {
 	db *pgxpool.Pool
 }
 
+// New creates a metadata import repository.
 func New(pool *pgxpool.Pool) *Repo {
 	return &Repo{db: pool}
 }
@@ -41,6 +42,7 @@ func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
 	return nil
 }
 
+// Import persists one metadata batch in a transaction.
 func (r *Repo) Import(ctx context.Context, actorID uuid.UUID, batch metadataimport.Batch) (metadataimport.Result, error) {
 	result := metadataimport.Result{
 		Groups:               len(batch.CategorySchemes),

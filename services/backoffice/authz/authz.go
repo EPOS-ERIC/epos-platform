@@ -173,6 +173,7 @@ type Authorizer struct {
 	repository repository
 }
 
+// New creates an authorizer backed by repository.
 func New(repository repository) *Authorizer {
 	return &Authorizer{repository: repository}
 }

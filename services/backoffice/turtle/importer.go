@@ -30,10 +30,12 @@ const (
 
 type Parser struct{}
 
+// Parse converts Turtle input into a metadata import batch.
 func (Parser) Parse(input io.Reader, options metadataimport.Options) (metadataimport.Batch, error) {
 	return Parse(input, options)
 }
 
+// Parse converts Turtle input into a metadata import batch.
 func Parse(input io.Reader, options Options) (Batch, error) {
 	if options.BaseURI == "" {
 		options.BaseURI = "https://epos-eu.org/backoffice/import"

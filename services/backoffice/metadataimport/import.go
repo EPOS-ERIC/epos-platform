@@ -89,10 +89,16 @@ type Service struct {
 	repository Repository
 }
 
+// New creates an authorized metadata import service.
 func New(parser Parser, authorizer Authorizer, repository Repository) *Service {
-	return &Service{parser: parser, authorizer: authorizer, repository: repository}
+	return &Service{
+		parser:     parser,
+		authorizer: authorizer,
+		repository: repository,
+	}
 }
 
+// Import authorizes, parses, validates, and persists metadata from input.
 func (s *Service) Import(ctx context.Context, actorID uuid.UUID, input io.Reader) (Result, error) {
 	decision, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {

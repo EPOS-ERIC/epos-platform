@@ -43,10 +43,12 @@ type ApplicationService struct {
 	repository ApplicationRepository
 }
 
+// NewApplicationService creates a software application lifecycle service.
 func NewApplicationService(authorizer ApplicationAuthorizer, repository ApplicationRepository) *ApplicationService {
 	return &ApplicationService{authorizer: authorizer, repository: repository}
 }
 
+// CreateDraft creates a software application draft in groupID.
 func (s *ApplicationService) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.SoftwareApplication) (Application, error) {
 	if err := normalizeApplication(&value); err != nil {
 		return Application{}, err
@@ -58,6 +60,7 @@ func (s *ApplicationService) CreateDraft(ctx context.Context, actorID, groupID u
 	return application, operationError("create application draft", err)
 }
 
+// Read returns an authorized software application version and contact visibility.
 func (s *ApplicationService) Read(ctx context.Context, actorID *uuid.UUID, applicationID, versionID uuid.UUID) (Application, bool, error) {
 	result, err := s.authorizer.CanReadSoftwareApplicationVersion(ctx, actorID, applicationID, versionID)
 	if err != nil {
@@ -78,6 +81,7 @@ func (s *ApplicationService) Read(ctx context.Context, actorID *uuid.UUID, appli
 	return application, includeContacts, operationError("get application version", err)
 }
 
+// ReplaceDraft replaces a software application draft at revision.
 func (s *ApplicationService) ReplaceDraft(ctx context.Context, actorID, applicationID, versionID uuid.UUID, revision int32, value metadata.SoftwareApplication) (Application, error) {
 	if revision < 1 {
 		return Application{}, fmt.Errorf("revision must be positive: %w", ErrInvalid)
@@ -92,6 +96,7 @@ func (s *ApplicationService) ReplaceDraft(ctx context.Context, actorID, applicat
 	return application, operationError("replace application draft", err)
 }
 
+// Submit submits a software application draft for review.
 func (s *ApplicationService) Submit(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionSubmit); err != nil {
 		return Application{}, operationError("authorize application submission", err)
@@ -100,6 +105,7 @@ func (s *ApplicationService) Submit(ctx context.Context, actorID, applicationID,
 	return application, operationError("submit application draft", err)
 }
 
+// Withdraw withdraws a submitted software application version.
 func (s *ApplicationService) Withdraw(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionWithdraw); err != nil {
 		return Application{}, operationError("authorize application withdrawal", err)
@@ -108,6 +114,7 @@ func (s *ApplicationService) Withdraw(ctx context.Context, actorID, applicationI
 	return application, operationError("withdraw application submission", err)
 }
 
+// Reject rejects a submitted software application version with note.
 func (s *ApplicationService) Reject(ctx context.Context, actorID, applicationID, versionID uuid.UUID, note string) (Application, error) {
 	note = strings.TrimSpace(note)
 	if note == "" {
@@ -120,6 +127,7 @@ func (s *ApplicationService) Reject(ctx context.Context, actorID, applicationID,
 	return application, operationError("reject application submission", err)
 }
 
+// Reopen reopens a rejected software application version.
 func (s *ApplicationService) Reopen(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionReopen); err != nil {
 		return Application{}, operationError("authorize application reopening", err)
@@ -128,6 +136,7 @@ func (s *ApplicationService) Reopen(ctx context.Context, actorID, applicationID,
 	return application, operationError("reopen rejected application version", err)
 }
 
+// Publish publishes a submitted software application version.
 func (s *ApplicationService) Publish(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionPublish); err != nil {
 		return Application{}, operationError("authorize application publication", err)
@@ -136,6 +145,7 @@ func (s *ApplicationService) Publish(ctx context.Context, actorID, applicationID
 	return application, operationError("publish application version", err)
 }
 
+// Discard removes a software application draft or rejected version.
 func (s *ApplicationService) Discard(ctx context.Context, actorID, applicationID, versionID uuid.UUID) error {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionDiscard); err != nil {
 		return operationError("authorize application discard", err)
@@ -143,6 +153,7 @@ func (s *ApplicationService) Discard(ctx context.Context, actorID, applicationID
 	return operationError("discard application version", s.repository.Discard(ctx, applicationID, versionID))
 }
 
+// Unpublish archives a published software application version.
 func (s *ApplicationService) Unpublish(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionUnpublish); err != nil {
 		return Application{}, operationError("authorize application unpublication", err)
@@ -151,6 +162,7 @@ func (s *ApplicationService) Unpublish(ctx context.Context, actorID, application
 	return application, operationError("unpublish application version", err)
 }
 
+// DraftFromPublication creates a draft from published application metadata.
 func (s *ApplicationService) DraftFromPublication(ctx context.Context, actorID, applicationID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionCreate); err != nil {
 		return Application{}, operationError("authorize application draft creation", err)
@@ -159,6 +171,7 @@ func (s *ApplicationService) DraftFromPublication(ctx context.Context, actorID, 
 	return application, operationError("create application draft from publication", err)
 }
 
+// DraftFromLatestArchive creates a draft from the latest archived version.
 func (s *ApplicationService) DraftFromLatestArchive(ctx context.Context, actorID, applicationID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionCreate); err != nil {
 		return Application{}, operationError("authorize application draft creation", err)
@@ -167,6 +180,7 @@ func (s *ApplicationService) DraftFromLatestArchive(ctx context.Context, actorID
 	return application, operationError("create application draft from archive", err)
 }
 
+// CopyPublished copies published application metadata into targetGroupID.
 func (s *ApplicationService) CopyPublished(ctx context.Context, actorID, sourceApplicationID, targetGroupID uuid.UUID, sourceIRI string) (Application, error) {
 	sourceIRI = strings.TrimSpace(sourceIRI)
 	if sourceIRI == "" {

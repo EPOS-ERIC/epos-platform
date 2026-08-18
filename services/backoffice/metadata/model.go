@@ -46,6 +46,7 @@ type Distribution struct {
 	DownloadableFile *DownloadableFile
 }
 
+// DeliveryType returns distribution delivery method when exactly one is set.
 func (d Distribution) DeliveryType() (DistributionType, error) {
 	switch {
 	case d.WebService != nil && d.DownloadableFile == nil:

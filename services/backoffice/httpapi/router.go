@@ -25,6 +25,7 @@ import (
 
 var log = logging.Get("routes")
 
+// NewRouter builds the backoffice HTTP handler and routes.
 func NewRouter(database *db.PostgresDB) http.Handler {
 	log.Info("creating HTTP handler")
 

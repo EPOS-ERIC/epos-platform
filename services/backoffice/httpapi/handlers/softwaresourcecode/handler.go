@@ -37,6 +37,7 @@ type Handler struct {
 	service sourceCodeService
 }
 
+// New creates a software source code HTTP handler.
 func New(service sourceCodeService) *Handler {
 	return &Handler{service: service}
 }

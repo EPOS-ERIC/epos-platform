@@ -7,6 +7,7 @@ const (
 	DistributionTypeDownloadableFile DistributionType = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
 )
 
+// Valid reports whether t is a supported distribution type.
 func (t DistributionType) Valid() bool {
 	switch t {
 	case DistributionTypeDownloadableFile, DistributionTypeWebService:
@@ -26,6 +27,7 @@ const (
 	DatasetStatusRejected  DatasetStatus = "REJECTED"
 )
 
+// Valid reports whether s is a supported dataset status.
 func (s DatasetStatus) Valid() bool {
 	switch s {
 	case DatasetStatusPublished, DatasetStatusDraft, DatasetStatusSubmitted, DatasetStatusArchived, DatasetStatusRejected:
@@ -45,6 +47,7 @@ const (
 	ParameterKindDateTime ParameterKind = "DATETIME"
 )
 
+// Valid reports whether k is a supported parameter kind.
 func (k ParameterKind) Valid() bool {
 	switch k {
 	case ParameterKindString, ParameterKindBoolean, ParameterKindInteger, ParameterKindFloat, ParameterKindDateTime:
@@ -66,6 +69,7 @@ const (
 	TopLevelConceptSoftware   TopLevelConcept = "SOFTWARE"
 )
 
+// Valid reports whether c is a supported top-level concept.
 func (c TopLevelConcept) Valid() bool {
 	switch c {
 	case TopLevelConceptData, TopLevelConceptFacilities, TopLevelConceptSoftware:

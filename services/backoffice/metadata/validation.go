@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Validate checks dataset identity, status, relationships, and distributions.
 func (d Dataset) Validate() error {
 	if d.ID == uuid.Nil {
 		return fmt.Errorf("dataset ID is required")
@@ -74,6 +75,7 @@ func (d Dataset) Validate() error {
 	return nil
 }
 
+// Validate checks software application identity and references.
 func (s SoftwareApplication) Validate() error {
 	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
 		return fmt.Errorf("ID, source IRI, and name are required")
@@ -84,6 +86,7 @@ func (s SoftwareApplication) Validate() error {
 	return nil
 }
 
+// Validate checks software source code identity and references.
 func (s SoftwareSourceCode) Validate() error {
 	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
 		return fmt.Errorf("ID, source IRI, and name are required")
@@ -94,6 +97,7 @@ func (s SoftwareSourceCode) Validate() error {
 	return nil
 }
 
+// Validate checks category identity and scheme.
 func (c Category) Validate() error {
 	if c.ID == uuid.Nil || c.Name == "" {
 		return fmt.Errorf("ID and name are required")
@@ -104,6 +108,7 @@ func (c Category) Validate() error {
 	return nil
 }
 
+// Validate checks category scheme identity and concept.
 func (s CategoryScheme) Validate() error {
 	if s.ID == uuid.Nil || s.Name == "" || !s.Concept.Valid() {
 		return fmt.Errorf("ID, name, and valid concept are required")
@@ -111,6 +116,7 @@ func (s CategoryScheme) Validate() error {
 	return nil
 }
 
+// Validate checks distribution identity and delivery method.
 func (d Distribution) Validate() error {
 	if d.ID == uuid.Nil || d.Title == "" {
 		return fmt.Errorf("ID and title are required")
@@ -133,6 +139,7 @@ func (d Distribution) Validate() error {
 	return nil
 }
 
+// Validate checks web service identity and nested metadata.
 func (w WebService) Validate() error {
 	if w.ID == uuid.Nil || w.Name == "" || w.TemplateURL == "" || w.Format == "" {
 		return fmt.Errorf("ID, name, template URL, and format are required")
@@ -175,6 +182,7 @@ func (w WebService) Validate() error {
 	return nil
 }
 
+// Validate checks organization identity and references.
 func (o Organization) Validate() error {
 	if o.ID == uuid.Nil || o.Name == "" {
 		return fmt.Errorf("ID and name are required")
@@ -207,6 +215,7 @@ func validateContactPoints(values []ContactPoint, label string) error {
 	return nil
 }
 
+// Validate checks identifier identity, type, and value.
 func (i Identifier) Validate() error {
 	if i.ID == uuid.Nil || i.Type == "" || i.Value == "" {
 		return fmt.Errorf("ID, type, and value are required")
@@ -214,6 +223,7 @@ func (i Identifier) Validate() error {
 	return nil
 }
 
+// Validate checks contact point identity, email, and role.
 func (c ContactPoint) Validate() error {
 	if c.ID == uuid.Nil || c.Email == "" || c.Role == "" {
 		return fmt.Errorf("ID, email, and role are required")

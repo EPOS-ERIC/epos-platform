@@ -10,7 +10,8 @@ import (
 
 const ActorHeader = "X-EPOS-User-ID"
 
-func Actor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+// Actor returns actor ID and whether request contains a valid actor header.
+func Actor(w http.ResponseWriter, r *http.Request) (actorID uuid.UUID, valid bool) {
 	id, present, ok := OptionalActor(w, r)
 	if !ok {
 		return uuid.Nil, false
@@ -22,7 +23,8 @@ func Actor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	return id, true
 }
 
-func OptionalActor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool, bool) {
+// OptionalActor returns actor ID, whether header is present, and whether value is valid.
+func OptionalActor(w http.ResponseWriter, r *http.Request) (actorID uuid.UUID, present bool, valid bool) {
 	value := strings.TrimSpace(r.Header.Get(ActorHeader))
 	if value == "" {
 		return uuid.Nil, false, true

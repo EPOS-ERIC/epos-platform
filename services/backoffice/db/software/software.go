@@ -21,10 +21,12 @@ type (
 	SourceCodeRepo  struct{ db *pgxpool.Pool }
 )
 
+// NewApplicationRepo creates a software application repository.
 func NewApplicationRepo(pool *pgxpool.Pool) *ApplicationRepo {
 	return &ApplicationRepo{db: pool}
 }
 
+// NewSourceCodeRepo creates a software source code repository.
 func NewSourceCodeRepo(pool *pgxpool.Pool) *SourceCodeRepo {
 	return &SourceCodeRepo{db: pool}
 }

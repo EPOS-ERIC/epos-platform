@@ -38,6 +38,7 @@ type Handler struct {
 	service Service
 }
 
+// New creates a software application HTTP handler.
 func New(service Service) *Handler {
 	return &Handler{service: service}
 }

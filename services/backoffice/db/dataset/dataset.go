@@ -23,6 +23,7 @@ type Repo struct {
 	db *pgxpool.Pool
 }
 
+// New creates a dataset repository.
 func New(pool *pgxpool.Pool) *Repo {
 	return &Repo{db: pool}
 }

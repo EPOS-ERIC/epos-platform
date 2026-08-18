@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Decode parses one JSON request body into target.
 func Decode(w http.ResponseWriter, r *http.Request, target any) bool {
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20))
 	decoder.DisallowUnknownFields()
@@ -20,12 +21,14 @@ func Decode(w http.ResponseWriter, r *http.Request, target any) bool {
 	return true
 }
 
+// WriteJSON writes value as a JSON response.
 func WriteJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(value)
 }
 
+// WriteProblem writes a problem details JSON response.
 func WriteProblem(w http.ResponseWriter, status int, code, detail string) {
 	WriteJSON(w, status, problem{Title: code, Status: status, Detail: detail})
 }

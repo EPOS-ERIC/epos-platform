@@ -36,6 +36,7 @@ type Handler struct {
 	softwareSourceCode  typedHandler
 }
 
+// New creates a resource-type dispatch handler.
 func New(dataset, softwareApplication, softwareSourceCode typedHandler) *Handler {
 	return &Handler{
 		dataset:             dataset,

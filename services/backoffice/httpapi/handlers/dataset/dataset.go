@@ -37,6 +37,7 @@ type handler struct {
 	service datasetService
 }
 
+// New creates a dataset HTTP handler.
 func New(service datasetService) *handler {
 	return &handler{service: service}
 }

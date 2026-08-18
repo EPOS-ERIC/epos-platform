@@ -31,6 +31,7 @@ type PostgresDB struct {
 	SoftwareSourceCodes  *softwaredb.SourceCodeRepo
 }
 
+// Open connects to PostgreSQL, applies migrations, and builds repositories.
 func Open(cfg config.Config) (*PostgresDB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
@@ -104,6 +105,7 @@ func runMigrations(db *sql.DB) error {
 	return nil
 }
 
+// Close closes the PostgreSQL connection pool.
 func (d *PostgresDB) Close() error {
 	if d.db == nil {
 		return nil
@@ -112,16 +114,7 @@ func (d *PostgresDB) Close() error {
 	return nil
 }
 
-func (d *PostgresDB) Health() error {
-	if d.db == nil {
-		return fmt.Errorf("database connection is nil")
-	}
-	if err := d.db.Ping(context.Background()); err != nil {
-		return fmt.Errorf("ping database: %w", err)
-	}
-	return nil
-}
-
+// PingContext checks PostgreSQL using ctx.
 func (d *PostgresDB) PingContext(ctx context.Context) error {
 	if d.db == nil {
 		return fmt.Errorf("database connection is nil")

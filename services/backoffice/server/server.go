@@ -18,6 +18,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi"
 )
 
+// Run starts the backoffice HTTP server until shutdown.
 func Run(cfg config.Config) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
