@@ -182,7 +182,7 @@ Permissions have one of these scopes:
 | `GROUP_ADMIN` | Group  | All `EDITOR` and `REVIEWER` permissions, `resource.unpublish`, `group.membership.manage`, `group.role.manage` |
 | `ADMIN`       | Global | Full authorization bypass                                                                                         |
 
-Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership itself grants read access, so no `VIEWER` role exists. Roles are fixed system definitions seeded by migrations and are not user-configurable. Only global `ADMIN` may assign/remove `GROUP_ADMIN`; users cannot request it and group role managers cannot grant it.
+Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership itself grants read access, so no `VIEWER` role exists. Roles are fixed system definitions seeded by migrations and are not user-configurable. Only global `ADMIN` or a user with `global.role.manage` may assign/remove `GROUP_ADMIN`; users cannot request it and group role managers cannot grant it.
 
 ### Permission Catalog
 
@@ -246,7 +246,7 @@ Users request group membership with zero or more requested roles. Membership and
 | Request another role          | Active group member       | Creates pending request for `EDITOR` or `REVIEWER`.                                                             |
 | Withdraw role request         | Requesting user           | Deletes pending role request.                                                                                   |
 | Accept/reject role            | `group.role.manage` or `global.role.manage` | Adds role assignment or rejects request.                                                      |
-| Assign/remove role directly   | `group.role.manage` or `global.role.manage` | Changes `EDITOR` or `REVIEWER`; global `ADMIN` required for `GROUP_ADMIN`.                    |
+| Assign/remove role directly   | `group.role.manage` or `global.role.manage` | Group role managers change `EDITOR` or `REVIEWER`; global role managers may also change `GROUP_ADMIN`. |
 | Grant/revoke group permission | `global.permission.manage` | Changes any additive group grant in every group. Global `ADMIN` may do this in every group. |
 | Revoke membership             | `group.membership.manage` or `global.membership.manage` | Permanently deletes membership, roles, grants, subscriptions, and all membership-related role requests. `GROUP_ADMIN` membership requires global `ADMIN`. |
 

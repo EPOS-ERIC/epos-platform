@@ -8,12 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
 	identitydomain "github.com/EPOS-ERIC/epos-platform/services/backoffice/identity"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
+
+var log = logging.Get("identity-handler")
 
 type service interface {
 	GetByAuthIdentifier(context.Context, string) (identitydomain.User, error)
@@ -46,6 +49,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 	allowed, err := h.authorizer.CanReadUser(r.Context(), actorID, targetID)
 	if err != nil {
+		log.ErrorContext(r.Context(), "authorize user read failed", "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "authorize user read failed")
 		return
 	}
@@ -59,6 +63,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 			transport.WriteProblem(w, http.StatusNotFound, "user_not_found", "user not found")
 			return
 		}
+		log.ErrorContext(r.Context(), "get user failed", "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get user failed")
 		return
 	}
@@ -79,6 +84,7 @@ func (h *Handler) GetByAuthIdentifier(w http.ResponseWriter, r *http.Request) {
 			transport.WriteProblem(w, http.StatusNotFound, "user_not_found", "user not found")
 			return
 		}
+		log.ErrorContext(r.Context(), "get user by auth identifier failed", "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get user failed")
 		return
 	}
@@ -111,6 +117,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			transport.WriteProblem(w, http.StatusConflict, "conflict", "user already exists")
 			return
 		}
+		log.ErrorContext(r.Context(), "create user failed", "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create user failed")
 		return
 	}

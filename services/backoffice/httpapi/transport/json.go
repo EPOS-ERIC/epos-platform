@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 )
+
+var log = logging.Get("transport")
 
 // Decode parses one JSON request body into target.
 func Decode(w http.ResponseWriter, r *http.Request, target any) bool {
@@ -25,7 +29,9 @@ func Decode(w http.ResponseWriter, r *http.Request, target any) bool {
 func WriteJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(value)
+	if err := json.NewEncoder(w).Encode(value); err != nil {
+		log.Error("encode JSON response failed", "status", status, "error", err)
+	}
 }
 
 // WriteProblem writes a problem details JSON response.

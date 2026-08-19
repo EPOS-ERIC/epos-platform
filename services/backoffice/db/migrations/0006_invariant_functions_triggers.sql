@@ -10,13 +10,43 @@ CREATE FUNCTION enforce_fixed_authorization_scopes() RETURNS trigger LANGUAGE pl
 DECLARE
     row_data jsonb := to_jsonb(NEW);
 BEGIN
-    IF TG_TABLE_NAME = 'user_global_roles' AND NEW.role_key <> 'ADMIN' THEN
+    IF TG_TABLE_NAME = 'user_global_roles' AND row_data->>'role_key' <> 'ADMIN' THEN
         RAISE EXCEPTION 'global roles must be ADMIN';
     END IF;
 
     IF TG_TABLE_NAME = 'group_membership_roles'
-        AND NEW.role_key NOT IN ('EDITOR', 'REVIEWER', 'GROUP_ADMIN') THEN
+        AND row_data->>'role_key' NOT IN ('EDITOR', 'REVIEWER', 'GROUP_ADMIN') THEN
         RAISE EXCEPTION 'invalid group role';
+    END IF;
+
+    IF TG_TABLE_NAME IN ('group_membership_roles', 'group_permission_grants')
+        AND NOT EXISTS (
+            SELECT 1
+            FROM group_memberships
+            WHERE user_id = (row_data->>'user_id')::uuid
+                AND group_id = (row_data->>'group_id')::uuid
+                AND status = 'ACTIVE'
+        ) THEN
+        RAISE EXCEPTION 'group roles and permissions require active membership';
+    END IF;
+
+    IF TG_TABLE_NAME = 'group_memberships'
+        AND row_data->>'status' <> 'ACTIVE'
+        AND (
+            EXISTS (
+                SELECT 1
+                FROM group_membership_roles
+                WHERE user_id = (row_data->>'user_id')::uuid
+                    AND group_id = (row_data->>'group_id')::uuid
+            )
+            OR EXISTS (
+                SELECT 1
+                FROM group_permission_grants
+                WHERE user_id = (row_data->>'user_id')::uuid
+                    AND group_id = (row_data->>'group_id')::uuid
+            )
+        ) THEN
+        RAISE EXCEPTION 'inactive memberships cannot retain group roles or permissions';
     END IF;
 
     IF TG_TABLE_NAME = 'global_permission_grants'
@@ -176,6 +206,9 @@ END;
 $$;
 CREATE FUNCTION enforce_resource_source_iri_global_unique() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
+    -- Serialize same-IRI writes across the three logical-resource tables.
+    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.source_iri, 0));
+
     -- PostgreSQL cannot express uniqueness across three tables with an index.
     IF TG_TABLE_NAME <> 'datasets'
         AND EXISTS (SELECT 1 FROM datasets WHERE source_iri = NEW.source_iri) THEN
@@ -190,6 +223,49 @@ BEGIN
     IF TG_TABLE_NAME <> 'software_source_codes'
         AND EXISTS (SELECT 1 FROM software_source_codes WHERE source_iri = NEW.source_iri) THEN
         RAISE EXCEPTION 'resource source IRI must be globally unique';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+-- Version rows are mutable only while DRAFT. Lifecycle transitions may update
+-- their own attribution fields but may not change version metadata.
+CREATE FUNCTION enforce_version_lifecycle_mutability() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    old_data jsonb := to_jsonb(OLD);
+    new_data jsonb := to_jsonb(NEW);
+    allowed_fields text[];
+BEGIN
+    IF OLD.status = NEW.status THEN
+        IF OLD.status = 'DRAFT' THEN
+            RETURN NEW;
+        END IF;
+
+        IF old_data - ARRAY['updated_at'] IS DISTINCT FROM new_data - ARRAY['updated_at'] THEN
+            RAISE EXCEPTION 'non-draft version is immutable';
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    IF OLD.status = 'DRAFT' AND NEW.status = 'SUBMITTED' THEN
+        allowed_fields := ARRAY['status', 'submitted_by', 'submitted_at', 'updated_at'];
+    ELSIF OLD.status = 'SUBMITTED' AND NEW.status = 'DRAFT' THEN
+        allowed_fields := ARRAY['status', 'updated_at'];
+    ELSIF OLD.status = 'SUBMITTED' AND NEW.status = 'REJECTED' THEN
+        allowed_fields := ARRAY['status', 'rejected_by', 'rejected_at', 'rejection_note', 'updated_at'];
+    ELSIF OLD.status = 'REJECTED' AND NEW.status = 'DRAFT' THEN
+        allowed_fields := ARRAY['status', 'updated_at'];
+    ELSIF OLD.status = 'SUBMITTED' AND NEW.status = 'PUBLISHED' THEN
+        allowed_fields := ARRAY['status', 'published_by', 'published_at', 'rejected_by', 'rejected_at', 'rejection_note', 'updated_at'];
+    ELSIF OLD.status = 'PUBLISHED' AND NEW.status = 'ARCHIVED' THEN
+        allowed_fields := ARRAY['status', 'archived_by', 'archived_at', 'updated_at'];
+    ELSE
+        RAISE EXCEPTION 'invalid version lifecycle transition from % to %', OLD.status, NEW.status;
+    END IF;
+
+    IF old_data - allowed_fields IS DISTINCT FROM new_data - allowed_fields THEN
+        RAISE EXCEPTION 'lifecycle transition cannot change version metadata';
     END IF;
 
     RETURN NEW;
@@ -226,6 +302,9 @@ FOR EACH ROW EXECUTE FUNCTION enforce_fixed_authorization_scopes();
 CREATE TRIGGER group_permission_grants_scope
 BEFORE INSERT OR UPDATE ON group_permission_grants
 FOR EACH ROW EXECUTE FUNCTION enforce_fixed_authorization_scopes();
+CREATE TRIGGER group_memberships_active_assignments
+BEFORE UPDATE OF status ON group_memberships
+FOR EACH ROW EXECUTE FUNCTION enforce_fixed_authorization_scopes();
 
 -- Record modification time even when change does not use a dedicated handler.
 CREATE TRIGGER users_set_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -235,6 +314,17 @@ CREATE TRIGGER group_memberships_set_updated_at BEFORE UPDATE ON group_membershi
 CREATE TRIGGER dataset_versions_set_updated_at BEFORE UPDATE ON dataset_versions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER software_application_versions_set_updated_at BEFORE UPDATE ON software_application_versions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER software_source_code_versions_set_updated_at BEFORE UPDATE ON software_source_code_versions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+-- Version-owned link mutation guards are deferred until confirmed canonical
+-- deletion can perform its documented cross-version unlink transaction.
+CREATE TRIGGER dataset_versions_lifecycle_mutability
+BEFORE UPDATE ON dataset_versions
+FOR EACH ROW EXECUTE FUNCTION enforce_version_lifecycle_mutability();
+CREATE TRIGGER software_application_versions_lifecycle_mutability
+BEFORE UPDATE ON software_application_versions
+FOR EACH ROW EXECUTE FUNCTION enforce_version_lifecycle_mutability();
+CREATE TRIGGER software_source_code_versions_lifecycle_mutability
+BEFORE UPDATE ON software_source_code_versions
+FOR EACH ROW EXECUTE FUNCTION enforce_version_lifecycle_mutability();
 
 -- Establish initial authority only after the user exists for its role foreign key.
 CREATE TRIGGER users_assign_first_admin AFTER INSERT ON users FOR EACH ROW EXECUTE FUNCTION assign_first_user_admin();
@@ -261,6 +351,9 @@ DROP TRIGGER IF EXISTS software_source_codes_immutable ON software_source_codes;
 DROP TRIGGER IF EXISTS software_applications_immutable ON software_applications;
 DROP TRIGGER IF EXISTS datasets_immutable ON datasets;
 DROP TRIGGER IF EXISTS users_assign_first_admin ON users;
+DROP TRIGGER IF EXISTS software_source_code_versions_lifecycle_mutability ON software_source_code_versions;
+DROP TRIGGER IF EXISTS software_application_versions_lifecycle_mutability ON software_application_versions;
+DROP TRIGGER IF EXISTS dataset_versions_lifecycle_mutability ON dataset_versions;
 DROP TRIGGER IF EXISTS software_source_code_versions_set_updated_at ON software_source_code_versions;
 DROP TRIGGER IF EXISTS software_application_versions_set_updated_at ON software_application_versions;
 DROP TRIGGER IF EXISTS dataset_versions_set_updated_at ON dataset_versions;
@@ -271,9 +364,10 @@ DROP TRIGGER IF EXISTS users_set_updated_at ON users;
 DROP TRIGGER IF EXISTS group_permission_grants_scope ON group_permission_grants;
 DROP TRIGGER IF EXISTS global_permission_grants_scope ON global_permission_grants;
 DROP TRIGGER IF EXISTS group_membership_roles_scope ON group_membership_roles;
+DROP TRIGGER IF EXISTS group_memberships_active_assignments ON group_memberships;
 DROP TRIGGER IF EXISTS user_global_roles_scope ON user_global_roles;
 DROP TRIGGER IF EXISTS software_source_code_version_categories_group ON software_source_code_version_categories;
 DROP TRIGGER IF EXISTS software_application_version_categories_group ON software_application_version_categories;
 DROP TRIGGER IF EXISTS dataset_version_categories_group ON dataset_version_categories;
 DROP TRIGGER IF EXISTS categories_acyclic ON categories;
-DROP FUNCTION IF EXISTS enforce_resource_source_iri_global_unique(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();
+DROP FUNCTION IF EXISTS enforce_version_lifecycle_mutability(), enforce_resource_source_iri_global_unique(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();

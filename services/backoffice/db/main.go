@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/config"
 	authdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/authz"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
@@ -19,6 +20,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 )
+
+var log = logging.Get("db")
 
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
@@ -98,12 +101,15 @@ func runMigrations(db *sql.DB) error {
 	}
 
 	if !hasPending {
+		log.Debug("database migrations are current")
 		return nil
 	}
 
+	log.Info("applying database migrations")
 	if _, err := provider.Up(ctx); err != nil {
 		return fmt.Errorf("run migrations: %w", err)
 	}
+	log.Info("database migrations applied")
 
 	return nil
 }

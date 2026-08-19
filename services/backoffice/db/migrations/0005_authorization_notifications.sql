@@ -104,21 +104,24 @@ CREATE TABLE group_notification_subscriptions (
 );
 
 INSERT INTO permissions (key, label, description, scope) VALUES
-    ('resource.create',         'Create resources',        'Create an empty draft, draft from an existing resource, or copy a published resource into this group.',     'GROUP'),
-    ('resource.edit',           'Edit drafts',             'Change metadata and links on draft resources owned by this group.',                                         'GROUP'),
-    ('resource.submit',         'Submit drafts',           'Submit this group''s draft resources for review. Submitted versions become immutable.',                     'GROUP'),
-    ('resource.withdraw',       'Withdraw submissions',    'Return this group''s submitted resource versions to editable draft status.',                                'GROUP'),
-    ('resource.reopen',         'Reopen rejections',       'Return this group''s rejected resource versions to editable draft status.',                                 'GROUP'),
-    ('resource.discard',        'Discard changes',         'Permanently delete this group''s draft or rejected resource versions.',                                     'GROUP'),
-    ('resource.reject',         'Reject submissions',      'Reject submitted resource versions in this group and provide a rejection note.',                            'GROUP'),
-    ('resource.publish',        'Publish resources',       'Publish submitted resource versions in this group. Existing publications are archived.',                    'GROUP'),
-    ('resource.unpublish',      'Unpublish resources',     'Archive this group''s currently published resource version without publishing a replacement.',              'GROUP'),
-    ('group.membership.review', 'Review memberships',      'Accept, reject, or revoke membership requests for this group.',                                             'GROUP'),
-    ('group.role.manage',       'Manage group roles',      'Assign or remove EDITOR and REVIEWER roles for active members of this group. Does not manage GROUP_ADMIN.', 'GROUP'),
-    ('organization.manage',     'Manage organizations',    'Create, edit, delete, and manage identifiers and hierarchy for canonical organizations across all groups.', 'GLOBAL'),
-    ('contact_point.manage',    'Manage contact points',   'Create, edit, and delete canonical contact points across all groups.',                                      'GLOBAL'),
-    ('category_scheme.manage',  'Manage category schemes', 'Edit category-scheme metadata stored on groups across the system. Does not manage categories.',             'GLOBAL'),
-    ('category.manage',         'Manage categories',       'Create, edit, reparent, and delete canonical categories in this group.',                                    'GROUP');
+    ('resource.create',          'Create resources',         'Create an empty draft, draft from an existing resource, or copy a published resource into this group.',     'GROUP'),
+    ('resource.edit',            'Edit drafts',              'Change metadata and links on draft resources owned by this group.',                                         'GROUP'),
+    ('resource.submit',          'Submit drafts',            'Submit this group''s draft resources for review. Submitted versions become immutable.',                     'GROUP'),
+    ('resource.withdraw',        'Withdraw submissions',     'Return this group''s submitted resource versions to editable draft status.',                                'GROUP'),
+    ('resource.reopen',          'Reopen rejections',        'Return this group''s rejected resource versions to editable draft status.',                                 'GROUP'),
+    ('resource.discard',         'Discard changes',          'Permanently delete this group''s draft or rejected resource versions.',                                     'GROUP'),
+    ('resource.reject',          'Reject submissions',       'Reject submitted resource versions in this group and provide a rejection note.',                            'GROUP'),
+    ('resource.publish',         'Publish resources',        'Publish submitted resource versions in this group. Existing publications are archived.',                    'GROUP'),
+    ('resource.unpublish',       'Unpublish resources',      'Archive this group''s currently published resource version without publishing a replacement.',              'GROUP'),
+    ('group.membership.manage',  'Manage memberships',       'Accept, reject, or revoke membership requests for this group.',                                             'GROUP'),
+    ('group.role.manage',        'Manage group roles',       'Assign or remove EDITOR and REVIEWER roles for active members of this group. Does not manage GROUP_ADMIN.', 'GROUP'),
+    ('global.membership.manage', 'Manage memberships',       'Accept, reject, or revoke memberships in every group.',                                                     'GLOBAL'),
+    ('global.role.manage',       'Manage group roles',       'Assign or remove group roles in every group, including GROUP_ADMIN.',                                       'GLOBAL'),
+    ('global.permission.manage', 'Manage group permissions', 'Grant or revoke group-scoped direct permissions in every group.',                                           'GLOBAL'),
+    ('organization.manage',      'Manage organizations',     'Create, edit, delete, and manage identifiers and hierarchy for canonical organizations across all groups.', 'GLOBAL'),
+    ('contact_point.manage',     'Manage contact points',    'Create, edit, and delete canonical contact points across all groups.',                                      'GLOBAL'),
+    ('category_scheme.manage',   'Manage category schemes',  'Edit category-scheme metadata stored on groups across the system. Does not manage categories.',             'GLOBAL'),
+    ('category.manage',          'Manage categories',        'Create, edit, reparent, and delete canonical categories in this group.',                                    'GROUP');
 INSERT INTO roles (key, scope) VALUES
     ('EDITOR',      'GROUP'),
     ('REVIEWER',    'GROUP'),
@@ -142,7 +145,7 @@ INSERT INTO role_permissions (role_key, permission_key) VALUES
     ('GROUP_ADMIN', 'resource.reject'),
     ('GROUP_ADMIN', 'resource.publish'),
     ('GROUP_ADMIN', 'resource.unpublish'),
-    ('GROUP_ADMIN', 'group.membership.review'),
+    ('GROUP_ADMIN', 'group.membership.manage'),
     ('GROUP_ADMIN', 'group.role.manage');
 
 -- +goose Down
