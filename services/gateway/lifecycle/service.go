@@ -38,8 +38,12 @@ func (s *Service) Create(ctx context.Context, actorID, groupID, resourceType str
 	return resourceResult(s.resources.CreateResource(ctx, resourceType).XEPOSUserID(actorID).CreateResourceRequest(request).Execute())
 }
 
-func (s *Service) Get(ctx context.Context, resourceType, id, versionID string) (*backofficeclient.ResourceRecord, error) {
-	return resourceResult(s.resources.GetResourceVersion(ctx, resourceType, id, versionID).Execute())
+func (s *Service) Get(ctx context.Context, actorID, resourceType, id, versionID string) (*backofficeclient.ResourceRecord, error) {
+	request := s.resources.GetResourceVersion(ctx, resourceType, id, versionID)
+	if actorID != "" {
+		request = request.XEPOSUserID(actorID)
+	}
+	return resourceResult(request.Execute())
 }
 
 func (s *Service) ReplaceDraft(ctx context.Context, actorID, resourceType, id, versionID string, request backofficeclient.ReplaceResourceDraftRequest) (*backofficeclient.ResourceRecord, error) {

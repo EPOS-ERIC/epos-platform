@@ -121,6 +121,11 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *Lifecycle) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	actorID := ""
+	if actor, ok := AuthenticatedUserFromContext(ctx); ok {
+		actorID = actor.ID
+	}
+
 	resourceType, ok := resourceTypeParam(ctx, w, r)
 	if !ok {
 		return
@@ -134,7 +139,7 @@ func (h *Lifecycle) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record, err := h.service.Get(ctx, resourceType, id, versionID)
+	record, err := h.service.Get(ctx, actorID, resourceType, id, versionID)
 	if err != nil {
 		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
 			if responseErr.ContentType != "" {
