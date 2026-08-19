@@ -19,6 +19,7 @@ type Backoffice struct {
 	identity  backofficeclient.InternalIdentityAPI
 	users     backofficeclient.UsersAPI
 	resources backofficeclient.ResourcesAPI
+	imports   backofficeclient.ImportsAPI
 }
 
 type ActorIdentity struct {
@@ -82,7 +83,16 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 		identity:  apiClient.InternalIdentityAPI,
 		users:     apiClient.UsersAPI,
 		resources: apiClient.ResourcesAPI,
+		imports:   apiClient.ImportsAPI,
 	}, nil
+}
+
+// Imports exposes typed Backoffice metadata import operations.
+func (c *Backoffice) Imports() backofficeclient.ImportsAPI {
+	if c == nil {
+		return nil
+	}
+	return c.imports
 }
 
 // Resources exposes typed Backoffice resource lifecycle operations.

@@ -36,6 +36,42 @@ tags:
     description: Submit, publish, draft, and discard aggregates
 
 paths:
+  /imports/turtle:
+    post:
+      tags:
+        - Imports
+      summary: Import Turtle metadata
+      description: Atomically imports metadata and creates or updates draft content. Global administrators only.
+      operationId: importTurtleMetadata
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          text/turtle:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Import conflicts with existing metadata
+        "415":
+          description: Content-Type must be text/turtle
+        "503":
+          description: Backoffice service unavailable
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /search:
     get:
       tags:
@@ -1313,6 +1349,29 @@ components:
     # -------------------------------------------------------------------------
     # Resource write schemas
     # -------------------------------------------------------------------------
+    ImportResult:
+      type: object
+      required: [groups, categories, organizations, contact_points, datasets, software_applications, software_source_codes, warnings]
+      properties:
+        groups: { type: integer }
+        categories: { type: integer }
+        organizations: { type: integer }
+        contact_points: { type: integer }
+        datasets: { type: integer }
+        software_applications: { type: integer }
+        software_source_codes: { type: integer }
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportDiagnostic"
+    ImportDiagnostic:
+      type: object
+      required: [severity, subject, predicate, message]
+      properties:
+        severity: { type: string }
+        subject: { type: string }
+        predicate: { type: string }
+        message: { type: string }
 
     WriteResourceType:
       type: string

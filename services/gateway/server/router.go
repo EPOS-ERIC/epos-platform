@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/go-chi/chi/v5"
@@ -49,8 +50,10 @@ func NewRouter(
 
 	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
 	usersHandler := handlers.NewUsers(identityService)
+	importsHandler := handlers.NewImports(imports.NewService(backofficeClient))
 
 	r.Route("/v1", func(r chi.Router) {
+		r.With(authMiddleware(authService, backofficeClient)).Post("/imports/turtle", importsHandler.Turtle)
 		// discovery
 		r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/search", handlers.NotImplemented)
 		r.Get("/concept", handlers.NotImplemented)
