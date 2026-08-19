@@ -607,15 +607,16 @@ func (m *mapper) scheme(source string) (domain.CategoryScheme, error) {
 		}
 	}
 	result := domain.CategoryScheme{
-		ID:        sharedID("category-scheme", source),
-		SourceIRI: source,
-		Name:      m.optionalString(source, dctTitle),
-		Label:     stringPtr(m.optionalString(source, skosPrefLabel)),
-		Logo:      stringPtr(m.optionalString(source, foafLogo)),
-		Page:      stringPtr(m.optionalString(source, foafHomepage)),
-		Color:     stringPtr(m.optionalString(source, schemaColor)),
-		Position:  int32(m.int64(source, schemaOrderItemNumber)),
-		Concept:   domain.TopLevelConcept(""),
+		ID:          sharedID("category-scheme", source),
+		SourceIRI:   source,
+		Name:        m.optionalString(source, dctTitle),
+		Description: stringPtr(m.optionalString(source, dctDescription)),
+		Label:       stringPtr(m.optionalString(source, skosPrefLabel)),
+		Logo:        stringPtr(m.optionalString(source, foafLogo)),
+		Page:        stringPtr(m.optionalString(source, foafHomepage)),
+		Color:       stringPtr(m.optionalString(source, schemaColor)),
+		Position:    int32(m.int64(source, schemaOrderItemNumber)),
+		Concept:     domain.TopLevelConcept(""),
 	}
 	if result.Name == "" {
 		result.Name = m.optionalString(source, skosPrefLabel)

@@ -79,7 +79,12 @@ func organization(value sqlc.Organization) metadata.Organization {
 }
 
 func contactPoint(value sqlc.ContactPoint) metadata.ContactPoint {
-	return metadata.ContactPoint{ID: value.ID, SourceIRI: value.SourceIri, Email: value.Email, Role: metadata.ContactPointRole(value.Role)}
+	return metadata.ContactPoint{
+		ID:        value.ID,
+		SourceIRI: value.SourceIri,
+		Email:     value.Email,
+		Role:      metadata.ContactPointRole(value.Role),
+	}
 }
 
 func organizationWithContactPoints(ctx context.Context, q *sqlc.Queries, value sqlc.Organization) (metadata.Organization, error) {
@@ -95,17 +100,35 @@ func organizationWithContactPoints(ctx context.Context, q *sqlc.Queries, value s
 }
 
 func identifier(value sqlc.Identifier) metadata.Identifier {
-	return metadata.Identifier{ID: value.ID, SourceIRI: value.SourceIri, Type: metadata.IdentifierType(value.Type), Value: value.Value}
+	return metadata.Identifier{
+		ID:        value.ID,
+		SourceIRI: value.SourceIri,
+		Type:      metadata.IdentifierType(value.Type),
+		Value:     value.Value,
+	}
 }
 
 func category(id uuid.UUID, sourceIRI, name string, group sqlc.Group) metadata.Category {
-	return metadata.Category{ID: id, SourceIRI: sourceIRI, Name: name, Scheme: categoryScheme(group), Children: nil}
+	return metadata.Category{
+		ID:        id,
+		SourceIRI: sourceIRI,
+		Name:      name,
+		Scheme:    categoryScheme(group),
+		Children:  nil,
+	}
 }
 
 func categoryScheme(value sqlc.Group) metadata.CategoryScheme {
 	return metadata.CategoryScheme{
-		ID: value.ID, SourceIRI: value.SourceIri, Name: value.Name, Label: value.Label,
-		Logo: value.Logo, Page: value.Page, Color: value.Color, Position: value.Position,
-		Concept: metadata.TopLevelConcept(value.Concept),
+		ID:          value.ID,
+		SourceIRI:   value.SourceIri,
+		Name:        value.Name,
+		Description: value.Description,
+		Label:       value.Label,
+		Logo:        value.Logo,
+		Page:        value.Page,
+		Color:       value.Color,
+		Position:    value.Position,
+		Concept:     metadata.TopLevelConcept(value.Concept),
 	}
 }

@@ -953,14 +953,15 @@ func identifier(value sqlc.Identifier) metadata.Identifier {
 
 func categoryScheme(value sqlc.Group) metadata.CategoryScheme {
 	return metadata.CategoryScheme{
-		ID:        value.ID,
-		SourceIRI: value.SourceIri,
-		Name:      value.Name,
-		Label:     value.Label,
-		Logo:      value.Logo,
-		Page:      value.Page,
-		Color:     value.Color,
-		Position:  value.Position,
-		Concept:   metadata.TopLevelConcept(value.Concept),
+		ID:          value.ID,
+		SourceIRI:   value.SourceIri,
+		Name:        value.Name,
+		Description: value.Description,
+		Label:       value.Label,
+		Logo:        value.Logo,
+		Page:        value.Page,
+		Color:       value.Color,
+		Position:    value.Position,
+		Concept:     metadata.TopLevelConcept(value.Concept),
 	}
 }

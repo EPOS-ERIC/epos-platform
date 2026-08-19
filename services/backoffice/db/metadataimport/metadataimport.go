@@ -250,15 +250,16 @@ func importGroups(ctx context.Context, q *sqlc.Queries, schemes []metadata.Categ
 	ids := make(map[string]uuid.UUID, len(schemes))
 	for _, scheme := range schemes {
 		id, err := q.UpsertImportGroup(ctx, sqlc.UpsertImportGroupParams{
-			ID:        scheme.ID,
-			Name:      scheme.Name,
-			SourceIri: scheme.SourceIRI,
-			Concept:   sqlc.TopLevelConcept(scheme.Concept),
-			Label:     scheme.Label,
-			Logo:      scheme.Logo,
-			Page:      scheme.Page,
-			Color:     scheme.Color,
-			Position:  scheme.Position,
+			ID:          scheme.ID,
+			Name:        scheme.Name,
+			Description: scheme.Description,
+			SourceIri:   scheme.SourceIRI,
+			Concept:     sqlc.TopLevelConcept(scheme.Concept),
+			Label:       scheme.Label,
+			Logo:        scheme.Logo,
+			Page:        scheme.Page,
+			Color:       scheme.Color,
+			Position:    scheme.Position,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("upsert group %q: %w", scheme.SourceIRI, err)

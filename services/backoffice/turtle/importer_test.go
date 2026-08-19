@@ -95,6 +95,9 @@ func TestParseMetadataOne(t *testing.T) {
 	if scheme := schemes["category:seismology"]; scheme.Label == nil || *scheme.Label != "SEI" || scheme.Logo == nil || scheme.Page == nil || scheme.Color == nil || scheme.Position != 1 {
 		t.Errorf("seismology scheme fields = %#v", scheme)
 	}
+	if scheme := schemes["category:Volcanology"]; scheme.Description == nil || *scheme.Description != "Facility Domain" {
+		t.Errorf("volcanology scheme description = %v", scheme.Description)
+	}
 
 	organizations := make(map[string]domain.Organization, len(batch.Organizations))
 	for _, organization := range batch.Organizations {

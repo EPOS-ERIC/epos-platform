@@ -144,15 +144,16 @@ type Category struct {
 }
 
 type CategoryScheme struct {
-	ID        uuid.UUID
-	SourceIRI string
-	Name      string
-	Label     *string
-	Logo      *string
-	Page      *string
-	Color     *string
-	Position  int32
-	Concept   TopLevelConcept
+	ID          uuid.UUID
+	SourceIRI   string
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     TopLevelConcept
 }
 
 type Coordinate struct {

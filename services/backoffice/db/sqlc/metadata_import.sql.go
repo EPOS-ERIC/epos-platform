@@ -374,18 +374,19 @@ VALUES
     (
         $1,
         $2,
-        NULL,
         $3,
         $4,
         $5,
         $6,
         $7,
         $8,
-        $9
+        $9,
+        $10
     ) ON CONFLICT (source_iri) DO
 UPDATE
 SET
     name = EXCLUDED.name,
+    description = EXCLUDED.description,
     concept = EXCLUDED.concept,
     label = EXCLUDED.label,
     logo = EXCLUDED.logo,
@@ -398,21 +399,23 @@ RETURNING
 `
 
 type UpsertImportGroupParams struct {
-	ID        uuid.UUID
-	Name      string
-	SourceIri string
-	Concept   TopLevelConcept
-	Label     *string
-	Logo      *string
-	Page      *string
-	Color     *string
-	Position  int32
+	ID          uuid.UUID
+	Name        string
+	Description *string
+	SourceIri   string
+	Concept     TopLevelConcept
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
 }
 
 func (q *Queries) UpsertImportGroup(ctx context.Context, arg UpsertImportGroupParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, upsertImportGroup,
 		arg.ID,
 		arg.Name,
+		arg.Description,
 		arg.SourceIri,
 		arg.Concept,
 		arg.Label,

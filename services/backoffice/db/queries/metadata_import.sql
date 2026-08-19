@@ -16,7 +16,7 @@ VALUES
     (
         sqlc.arg(id),
         sqlc.arg(name),
-        NULL,
+        sqlc.narg(description),
         sqlc.arg(source_iri),
         sqlc.arg(concept),
         sqlc.narg(label),
@@ -28,6 +28,7 @@ VALUES
 UPDATE
 SET
     name = EXCLUDED.name,
+    description = EXCLUDED.description,
     concept = EXCLUDED.concept,
     label = EXCLUDED.label,
     logo = EXCLUDED.logo,
