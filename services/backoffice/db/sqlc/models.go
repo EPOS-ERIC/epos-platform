@@ -463,7 +463,7 @@ type Dataset struct {
 	ID        uuid.UUID
 	SourceIri string
 	GroupID   uuid.UUID
-	CreatedBy uuid.UUID
+	CreatedBy string
 	CreatedAt time.Time
 }
 
@@ -484,16 +484,16 @@ type DatasetVersion struct {
 	SpatialPolygon     []byte
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
-	CreatedBy          uuid.UUID
+	CreatedBy          string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
-	SubmittedBy        *uuid.UUID
+	SubmittedBy        *string
 	SubmittedAt        *time.Time
-	PublishedBy        *uuid.UUID
+	PublishedBy        *string
 	PublishedAt        *time.Time
-	ArchivedBy         *uuid.UUID
+	ArchivedBy         *string
 	ArchivedAt         *time.Time
-	RejectedBy         *uuid.UUID
+	RejectedBy         *string
 	RejectedAt         *time.Time
 	RejectionNote      *string
 }
@@ -530,15 +530,15 @@ type Distribution struct {
 }
 
 type GlobalNotificationSubscription struct {
-	UserID    uuid.UUID
+	UserID    string
 	EventType string
 	Channel   NotificationChannel
 }
 
 type GlobalPermissionGrant struct {
-	UserID        uuid.UUID
+	UserID        string
 	PermissionKey string
-	GrantedBy     uuid.UUID
+	GrantedBy     string
 	GrantedAt     time.Time
 }
 
@@ -558,7 +558,7 @@ type Group struct {
 }
 
 type GroupMembership struct {
-	UserID    uuid.UUID
+	UserID    string
 	GroupID   uuid.UUID
 	Status    MembershipStatus
 	CreatedAt time.Time
@@ -566,36 +566,36 @@ type GroupMembership struct {
 }
 
 type GroupMembershipRole struct {
-	UserID     uuid.UUID
+	UserID     string
 	GroupID    uuid.UUID
 	RoleKey    string
-	AssignedBy uuid.UUID
+	AssignedBy string
 	AssignedAt time.Time
 }
 
 type GroupNotificationSubscription struct {
-	UserID    uuid.UUID
+	UserID    string
 	GroupID   uuid.UUID
 	EventType string
 	Channel   NotificationChannel
 }
 
 type GroupPermissionGrant struct {
-	UserID        uuid.UUID
+	UserID        string
 	GroupID       uuid.UUID
 	PermissionKey string
-	GrantedBy     uuid.UUID
+	GrantedBy     string
 	GrantedAt     time.Time
 }
 
 type GroupRoleRequest struct {
 	ID          uuid.UUID
-	UserID      uuid.UUID
+	UserID      string
 	GroupID     uuid.UUID
 	RoleKey     string
 	Status      RoleRequestStatus
 	RequestedAt time.Time
-	DecidedBy   *uuid.UUID
+	DecidedBy   *string
 	DecidedAt   *time.Time
 }
 
@@ -661,7 +661,7 @@ type SoftwareApplication struct {
 	ID        uuid.UUID
 	SourceIri string
 	GroupID   uuid.UUID
-	CreatedBy uuid.UUID
+	CreatedBy string
 	CreatedAt time.Time
 }
 
@@ -679,16 +679,16 @@ type SoftwareApplicationVersion struct {
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
-	CreatedBy             uuid.UUID
+	CreatedBy             string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
-	SubmittedBy           *uuid.UUID
+	SubmittedBy           *string
 	SubmittedAt           *time.Time
-	PublishedBy           *uuid.UUID
+	PublishedBy           *string
 	PublishedAt           *time.Time
-	ArchivedBy            *uuid.UUID
+	ArchivedBy            *string
 	ArchivedAt            *time.Time
-	RejectedBy            *uuid.UUID
+	RejectedBy            *string
 	RejectedAt            *time.Time
 	RejectionNote         *string
 }
@@ -713,7 +713,7 @@ type SoftwareSourceCode struct {
 	ID        uuid.UUID
 	SourceIri string
 	GroupID   uuid.UUID
-	CreatedBy uuid.UUID
+	CreatedBy string
 	CreatedAt time.Time
 }
 
@@ -732,16 +732,16 @@ type SoftwareSourceCodeVersion struct {
 	RuntimePlatform      *string
 	MainEntityOfPage     *string
 	Version              *string
-	CreatedBy            uuid.UUID
+	CreatedBy            string
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
-	SubmittedBy          *uuid.UUID
+	SubmittedBy          *string
 	SubmittedAt          *time.Time
-	PublishedBy          *uuid.UUID
+	PublishedBy          *string
 	PublishedAt          *time.Time
-	ArchivedBy           *uuid.UUID
+	ArchivedBy           *string
 	ArchivedAt           *time.Time
-	RejectedBy           *uuid.UUID
+	RejectedBy           *string
 	RejectedAt           *time.Time
 	RejectionNote        *string
 }
@@ -763,23 +763,22 @@ type SoftwareSourceCodeVersionCreator struct {
 }
 
 type User struct {
-	ID             uuid.UUID
-	AuthIdentifier string
-	FamilyName     string
-	GivenName      string
-	Email          string
-	Status         UserStatus
-	BlockReason    *string
-	BlockedBy      *uuid.UUID
-	BlockedAt      *time.Time
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID          string
+	FamilyName  string
+	GivenName   string
+	Email       string
+	Status      UserStatus
+	BlockReason *string
+	BlockedBy   *string
+	BlockedAt   *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type UserGlobalRole struct {
-	UserID     uuid.UUID
+	UserID     string
 	RoleKey    string
-	AssignedBy *uuid.UUID
+	AssignedBy *string
 	AssignedAt time.Time
 }
 

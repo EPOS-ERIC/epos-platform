@@ -64,9 +64,8 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		request = backofficeclient.CreateResourceRequest{
-			DatasetDraftMetadata:             &value,
-			SoftwareApplicationDraftMetadata: nil,
-			SoftwareSourceCodeDraftMetadata:  nil,
+			GroupId:  groupID,
+			Metadata: backofficeclient.DatasetDraftMetadataAsCreateResourceRequestMetadata(&value),
 		}
 	case softwareApplicationType:
 		var value backofficeclient.SoftwareApplicationDraftMetadata
@@ -75,9 +74,8 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		request = backofficeclient.CreateResourceRequest{
-			DatasetDraftMetadata:             nil,
-			SoftwareApplicationDraftMetadata: &value,
-			SoftwareSourceCodeDraftMetadata:  nil,
+			GroupId:  groupID,
+			Metadata: backofficeclient.SoftwareApplicationDraftMetadataAsCreateResourceRequestMetadata(&value),
 		}
 	case softwareSourceCodeType:
 		var value backofficeclient.SoftwareSourceCodeDraftMetadata
@@ -86,9 +84,8 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		request = backofficeclient.CreateResourceRequest{
-			DatasetDraftMetadata:             nil,
-			SoftwareApplicationDraftMetadata: nil,
-			SoftwareSourceCodeDraftMetadata:  &value,
+			GroupId:  groupID,
+			Metadata: backofficeclient.SoftwareSourceCodeDraftMetadataAsCreateResourceRequestMetadata(&value),
 		}
 	}
 
@@ -459,7 +456,7 @@ func (h *Lifecycle) Copy(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var request backofficeclient.CopyRequest
+	var request backofficeclient.CopyResourceRequest
 	if err := json.Unmarshal(body, &request); err != nil {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
 		return

@@ -1,7 +1,7 @@
 /*
-EPOS Backoffice Lifecycle API
+EPOS Backoffice API
 
-Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
+Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -22,10 +22,10 @@ var _ MappedNullable = &CreateUserRequest{}
 // CreateUserRequest struct for CreateUserRequest
 type CreateUserRequest struct {
 	// Stable external authentication identifier from AAI.
-	AuthIdentifier string `json:"auth_identifier"`
-	Email          string `json:"email"`
-	GivenName      string `json:"given_name"`
-	FamilyName     string `json:"family_name"`
+	Id         string `json:"id"`
+	Email      string `json:"email"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
 }
 
 type _CreateUserRequest CreateUserRequest
@@ -34,9 +34,9 @@ type _CreateUserRequest CreateUserRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateUserRequest(authIdentifier string, email string, givenName string, familyName string) *CreateUserRequest {
+func NewCreateUserRequest(id string, email string, givenName string, familyName string) *CreateUserRequest {
 	this := CreateUserRequest{}
-	this.AuthIdentifier = authIdentifier
+	this.Id = id
 	this.Email = email
 	this.GivenName = givenName
 	this.FamilyName = familyName
@@ -51,28 +51,28 @@ func NewCreateUserRequestWithDefaults() *CreateUserRequest {
 	return &this
 }
 
-// GetAuthIdentifier returns the AuthIdentifier field value
-func (o *CreateUserRequest) GetAuthIdentifier() string {
+// GetId returns the Id field value
+func (o *CreateUserRequest) GetId() string {
 	if o == nil {
 		var ret string
 		return ret
 	}
 
-	return o.AuthIdentifier
+	return o.Id
 }
 
-// GetAuthIdentifierOk returns a tuple with the AuthIdentifier field value
+// GetIdOk returns a tuple with the Id field value
 // and a boolean to check if the value has been set.
-func (o *CreateUserRequest) GetAuthIdentifierOk() (*string, bool) {
+func (o *CreateUserRequest) GetIdOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.AuthIdentifier, true
+	return &o.Id, true
 }
 
-// SetAuthIdentifier sets field value
-func (o *CreateUserRequest) SetAuthIdentifier(v string) {
-	o.AuthIdentifier = v
+// SetId sets field value
+func (o *CreateUserRequest) SetId(v string) {
+	o.Id = v
 }
 
 // GetEmail returns the Email field value
@@ -157,7 +157,7 @@ func (o CreateUserRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateUserRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["auth_identifier"] = o.AuthIdentifier
+	toSerialize["id"] = o.Id
 	toSerialize["email"] = o.Email
 	toSerialize["given_name"] = o.GivenName
 	toSerialize["family_name"] = o.FamilyName
@@ -169,7 +169,7 @@ func (o *CreateUserRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"auth_identifier",
+		"id",
 		"email",
 		"given_name",
 		"family_name",

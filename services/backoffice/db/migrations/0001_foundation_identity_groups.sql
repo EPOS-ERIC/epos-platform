@@ -9,14 +9,13 @@ CREATE TYPE membership_role AS ENUM ('EDITOR', 'REVIEWER', 'GROUP_ADMIN');
 CREATE TYPE top_level_concept AS ENUM ('DATA', 'FACILITIES', 'SOFTWARE');
 
 CREATE TABLE users (
-    id              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    auth_identifier text NOT NULL UNIQUE,
+    id              text PRIMARY KEY,
     family_name     text NOT NULL,
     given_name      text NOT NULL,
     email           text NOT NULL UNIQUE,
     status          user_status NOT NULL DEFAULT 'ACTIVE',
     block_reason    text,
-    blocked_by      uuid REFERENCES users(id) ON DELETE RESTRICT,
+    blocked_by      text REFERENCES users(id) ON DELETE RESTRICT,
     blocked_at      timestamptz,
     created_at      timestamptz NOT NULL DEFAULT now(),
     updated_at      timestamptz NOT NULL DEFAULT now(),

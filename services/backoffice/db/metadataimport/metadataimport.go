@@ -43,7 +43,7 @@ func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
 }
 
 // Import persists one metadata batch in a transaction.
-func (r *Repo) Import(ctx context.Context, actorID uuid.UUID, batch metadataimport.Batch) (metadataimport.Result, error) {
+func (r *Repo) Import(ctx context.Context, actorID string, batch metadataimport.Batch) (metadataimport.Result, error) {
 	result := metadataimport.Result{
 		Groups:               len(batch.CategorySchemes),
 		Categories:           len(batch.Categories),
@@ -104,7 +104,7 @@ func (r *Repo) Import(ctx context.Context, actorID uuid.UUID, batch metadataimpo
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
-func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID uuid.UUID, value metadata.SoftwareApplication, groupIDs, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) error {
+func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID string, value metadata.SoftwareApplication, groupIDs, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) error {
 	groupID, err := softwareGroupID(value.Categories, groupIDs)
 	if err != nil {
 		return fmt.Errorf("software application %q: %w", value.SourceIRI, err)
@@ -158,7 +158,7 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID uui
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
-func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID uuid.UUID, value metadata.SoftwareSourceCode, groupIDs, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) error {
+func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID string, value metadata.SoftwareSourceCode, groupIDs, organizationIDs, contactIDs map[string]uuid.UUID, categoryIDs map[uuid.UUID]uuid.UUID) error {
 	groupID, err := softwareGroupID(value.Categories, groupIDs)
 	if err != nil {
 		return fmt.Errorf("software source code %q: %w", value.SourceIRI, err)
@@ -407,7 +407,7 @@ func importCategories(ctx context.Context, q *sqlc.Queries, batch metadataimport
 func importDataset(
 	ctx context.Context,
 	q *sqlc.Queries,
-	actorID uuid.UUID,
+	actorID string,
 	value metadata.Dataset,
 	groupIDs map[string]uuid.UUID,
 	organizationIDs, contactIDs map[string]uuid.UUID,

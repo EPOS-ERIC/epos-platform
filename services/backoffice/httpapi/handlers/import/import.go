@@ -11,11 +11,10 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
-	"github.com/google/uuid"
 )
 
 type importService interface {
-	Import(context.Context, uuid.UUID, io.Reader) (metadataimport.Result, error)
+	Import(context.Context, string, io.Reader) (metadataimport.Result, error)
 }
 
 type handler struct {

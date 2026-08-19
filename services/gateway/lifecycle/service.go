@@ -34,7 +34,8 @@ func (e *ResponseError) Error() string {
 }
 
 func (s *Service) Create(ctx context.Context, actorID, groupID, resourceType string, request backofficeclient.CreateResourceRequest) (*backofficeclient.ResourceRecord, error) {
-	return resourceResult(s.resources.CreateResource(ctx, groupID, resourceType).XEPOSUserID(actorID).CreateResourceRequest(request).Execute())
+	request.GroupId = groupID
+	return resourceResult(s.resources.CreateResource(ctx, resourceType).XEPOSUserID(actorID).CreateResourceRequest(request).Execute())
 }
 
 func (s *Service) Get(ctx context.Context, resourceType, id, versionID string) (*backofficeclient.ResourceRecord, error) {
@@ -82,8 +83,9 @@ func (s *Service) DraftFromArchive(ctx context.Context, actorID, resourceType, i
 	return resourceResult(s.resources.CreateResourceDraftFromArchive(ctx, resourceType, id).XEPOSUserID(actorID).Execute())
 }
 
-func (s *Service) Copy(ctx context.Context, actorID, groupID, resourceType, id string, request backofficeclient.CopyRequest) (*backofficeclient.ResourceRecord, error) {
-	return resourceResult(s.resources.CopyResource(ctx, groupID, resourceType, id).XEPOSUserID(actorID).CopyRequest(request).Execute())
+func (s *Service) Copy(ctx context.Context, actorID, groupID, resourceType, id string, request backofficeclient.CopyResourceRequest) (*backofficeclient.ResourceRecord, error) {
+	request.TargetGroupId = groupID
+	return resourceResult(s.resources.CopyResource(ctx, resourceType, id).XEPOSUserID(actorID).CopyResourceRequest(request).Execute())
 }
 
 func resourceResult(record *backofficeclient.ResourceRecord, response *http.Response, err error) (*backofficeclient.ResourceRecord, error) {

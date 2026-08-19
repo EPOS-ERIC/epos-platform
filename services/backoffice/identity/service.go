@@ -17,21 +17,19 @@ var (
 )
 
 type Claims struct {
-	AuthIdentifier string
-	Email          string
-	GivenName      string
-	FamilyName     string
+	ID         string
+	Email      string
+	GivenName  string
+	FamilyName string
 }
 
 type Store interface {
-	GetUserByAuthIdentifier(context.Context, string) (User, error)
-	GetUserByID(context.Context, uuid.UUID) (User, error)
+	GetUserByID(context.Context, string) (User, error)
 	CreateUser(context.Context, Claims) (User, error)
 }
 
 type User struct {
-	ID                uuid.UUID
-	AuthIdentifier    string
+	ID                string
 	Email             string
 	GivenName         string
 	FamilyName        string
@@ -61,21 +59,9 @@ func New(store Store) *Service {
 	return &Service{store: store}
 }
 
-// GetByAuthIdentifier returns user associated with external identity.
-func (s *Service) GetByAuthIdentifier(ctx context.Context, authIdentifier string) (User, error) {
-	authIdentifier = strings.TrimSpace(authIdentifier)
-	if authIdentifier == "" {
-		return User{}, ErrInvalid
-	}
-	user, err := s.store.GetUserByAuthIdentifier(ctx, authIdentifier)
-	if err != nil {
-		return User{}, fmt.Errorf("get user by auth identifier: %w", err)
-	}
-	return user, nil
-}
-
-func (s *Service) GetByID(ctx context.Context, userID uuid.UUID) (User, error) {
-	if userID == uuid.Nil {
+func (s *Service) GetByID(ctx context.Context, userID string) (User, error) {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
 		return User{}, ErrInvalid
 	}
 	user, err := s.store.GetUserByID(ctx, userID)
@@ -86,11 +72,11 @@ func (s *Service) GetByID(ctx context.Context, userID uuid.UUID) (User, error) {
 }
 
 func (s *Service) Create(ctx context.Context, claims Claims) (User, error) {
-	claims.AuthIdentifier = strings.TrimSpace(claims.AuthIdentifier)
+	claims.ID = strings.TrimSpace(claims.ID)
 	claims.Email = strings.TrimSpace(claims.Email)
 	claims.GivenName = strings.TrimSpace(claims.GivenName)
 	claims.FamilyName = strings.TrimSpace(claims.FamilyName)
-	if claims.AuthIdentifier == "" || claims.Email == "" || claims.GivenName == "" || claims.FamilyName == "" {
+	if claims.ID == "" || claims.Email == "" || claims.GivenName == "" || claims.FamilyName == "" {
 		return User{}, ErrInvalid
 	}
 

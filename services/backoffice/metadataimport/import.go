@@ -76,11 +76,11 @@ type Parser interface {
 }
 
 type Authorizer interface {
-	AuthorizeAdmin(context.Context, uuid.UUID) (authz.Result, error)
+	AuthorizeAdmin(context.Context, string) (authz.Result, error)
 }
 
 type Repository interface {
-	Import(context.Context, uuid.UUID, Batch) (Result, error)
+	Import(context.Context, string, Batch) (Result, error)
 }
 
 type Service struct {
@@ -99,7 +99,7 @@ func New(parser Parser, authorizer Authorizer, repository Repository) *Service {
 }
 
 // Import authorizes, parses, validates, and persists metadata from input.
-func (s *Service) Import(ctx context.Context, actorID uuid.UUID, input io.Reader) (Result, error) {
+func (s *Service) Import(ctx context.Context, actorID string, input io.Reader) (Result, error) {
 	decision, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
 	if err != nil {
 		return Result{}, operationError("authorize import", err)

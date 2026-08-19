@@ -191,7 +191,6 @@ paths:
                   summary: User list
                   value:
                     - id: "550e8400-e29b-41d4-a716-446655440101"
-                      auth_identifier: "auth-1"
                       email: "alice@example.org"
                       given_name: "Alice"
                       family_name: "Rossi"
@@ -471,7 +470,6 @@ paths:
                   summary: User detail with memberships
                   value:
                     id: "550e8400-e29b-41d4-a716-446655440101"
-                    auth_identifier: "auth-1"
                     email: "alice@example.org"
                     given_name: "Alice"
                     family_name: "Rossi"
@@ -494,7 +492,6 @@ paths:
                   summary: Self profile
                   value:
                     id: "550e8400-e29b-41d4-a716-446655440101"
-                    auth_identifier: "auth-1"
                     email: "alice@example.org"
                     given_name: "Alice"
                     family_name: "Rossi"
@@ -2827,7 +2824,6 @@ components:
       description: User record returned by user endpoints.
       required:
         - id
-        - auth_identifier
         - email
         - given_name
         - family_name
@@ -2839,8 +2835,6 @@ components:
         - memberships
       properties:
         id:
-          type: string
-        auth_identifier:
           type: string
         email:
           type: string

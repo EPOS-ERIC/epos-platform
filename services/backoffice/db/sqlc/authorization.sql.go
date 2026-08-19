@@ -15,7 +15,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO
     users (
-        auth_identifier,
+        id,
         email,
         given_name,
         family_name
@@ -24,7 +24,6 @@ VALUES
     ($1, $2, $3, $4)
 RETURNING
     id,
-    auth_identifier,
     email,
     given_name,
     family_name,
@@ -34,26 +33,25 @@ RETURNING
 `
 
 type CreateUserParams struct {
-	AuthIdentifier string
-	Email          string
-	GivenName      string
-	FamilyName     string
+	ID         string
+	Email      string
+	GivenName  string
+	FamilyName string
 }
 
 type CreateUserRow struct {
-	ID             uuid.UUID
-	AuthIdentifier string
-	Email          string
-	GivenName      string
-	FamilyName     string
-	Status         UserStatus
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID         string
+	Email      string
+	GivenName  string
+	FamilyName string
+	Status     UserStatus
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRow(ctx, createUser,
-		arg.AuthIdentifier,
+		arg.ID,
 		arg.Email,
 		arg.GivenName,
 		arg.FamilyName,
@@ -61,7 +59,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.AuthIdentifier,
 		&i.Email,
 		&i.GivenName,
 		&i.FamilyName,
@@ -83,11 +80,11 @@ WHERE
 `
 
 type GetAuthorizationUserRow struct {
-	ID     uuid.UUID
+	ID     string
 	Status UserStatus
 }
 
-func (q *Queries) GetAuthorizationUser(ctx context.Context, id uuid.UUID) (GetAuthorizationUserRow, error) {
+func (q *Queries) GetAuthorizationUser(ctx context.Context, id string) (GetAuthorizationUserRow, error) {
 	row := q.db.QueryRow(ctx, getAuthorizationUser, id)
 	var i GetAuthorizationUserRow
 	err := row.Scan(&i.ID, &i.Status)
@@ -251,53 +248,9 @@ func (q *Queries) GetSoftwareSourceCodeVersionAuthorization(ctx context.Context,
 	return i, err
 }
 
-const getUserByAuthIdentifier = `-- name: GetUserByAuthIdentifier :one
-SELECT
-    id,
-    auth_identifier,
-    email,
-    given_name,
-    family_name,
-    STATUS,
-    created_at,
-    updated_at
-FROM
-    users
-WHERE
-    auth_identifier = $1
-`
-
-type GetUserByAuthIdentifierRow struct {
-	ID             uuid.UUID
-	AuthIdentifier string
-	Email          string
-	GivenName      string
-	FamilyName     string
-	Status         UserStatus
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-}
-
-func (q *Queries) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (GetUserByAuthIdentifierRow, error) {
-	row := q.db.QueryRow(ctx, getUserByAuthIdentifier, authIdentifier)
-	var i GetUserByAuthIdentifierRow
-	err := row.Scan(
-		&i.ID,
-		&i.AuthIdentifier,
-		&i.Email,
-		&i.GivenName,
-		&i.FamilyName,
-		&i.Status,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getUserByID = `-- name: GetUserByID :one
 SELECT
     id,
-    auth_identifier,
     email,
     given_name,
     family_name,
@@ -311,22 +264,20 @@ WHERE
 `
 
 type GetUserByIDRow struct {
-	ID             uuid.UUID
-	AuthIdentifier string
-	Email          string
-	GivenName      string
-	FamilyName     string
-	Status         UserStatus
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ID         string
+	Email      string
+	GivenName  string
+	FamilyName string
+	Status     UserStatus
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 
-func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
+func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error) {
 	row := q.db.QueryRow(ctx, getUserByID, id)
 	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
-		&i.AuthIdentifier,
 		&i.Email,
 		&i.GivenName,
 		&i.FamilyName,
@@ -372,7 +323,7 @@ ORDER BY
     permission_key
 `
 
-func (q *Queries) GetUserGlobalPermissions(ctx context.Context, userID uuid.UUID) ([]string, error) {
+func (q *Queries) GetUserGlobalPermissions(ctx context.Context, userID string) ([]string, error) {
 	rows, err := q.db.Query(ctx, getUserGlobalPermissions, userID)
 	if err != nil {
 		return nil, err
@@ -403,7 +354,7 @@ ORDER BY
     role_key
 `
 
-func (q *Queries) GetUserGlobalRoles(ctx context.Context, userID uuid.UUID) ([]string, error) {
+func (q *Queries) GetUserGlobalRoles(ctx context.Context, userID string) ([]string, error) {
 	rows, err := q.db.Query(ctx, getUserGlobalRoles, userID)
 	if err != nil {
 		return nil, err
@@ -456,7 +407,7 @@ type GetUserMembershipPermissionsRow struct {
 	PermissionKey string
 }
 
-func (q *Queries) GetUserMembershipPermissions(ctx context.Context, userID uuid.UUID) ([]GetUserMembershipPermissionsRow, error) {
+func (q *Queries) GetUserMembershipPermissions(ctx context.Context, userID string) ([]GetUserMembershipPermissionsRow, error) {
 	rows, err := q.db.Query(ctx, getUserMembershipPermissions, userID)
 	if err != nil {
 		return nil, err
@@ -494,7 +445,7 @@ type GetUserMembershipRolesRow struct {
 	RoleKey string
 }
 
-func (q *Queries) GetUserMembershipRoles(ctx context.Context, userID uuid.UUID) ([]GetUserMembershipRolesRow, error) {
+func (q *Queries) GetUserMembershipRoles(ctx context.Context, userID string) ([]GetUserMembershipRolesRow, error) {
 	rows, err := q.db.Query(ctx, getUserMembershipRoles, userID)
 	if err != nil {
 		return nil, err
@@ -539,7 +490,7 @@ type GetUserMembershipsRow struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) GetUserMemberships(ctx context.Context, userID uuid.UUID) ([]GetUserMembershipsRow, error) {
+func (q *Queries) GetUserMemberships(ctx context.Context, userID string) ([]GetUserMembershipsRow, error) {
 	rows, err := q.db.Query(ctx, getUserMemberships, userID)
 	if err != nil {
 		return nil, err
@@ -578,7 +529,7 @@ SELECT
     ) AS active
 `
 
-func (q *Queries) HasAnyActiveMembership(ctx context.Context, userID uuid.UUID) (bool, error) {
+func (q *Queries) HasAnyActiveMembership(ctx context.Context, userID string) (bool, error) {
 	row := q.db.QueryRow(ctx, hasAnyActiveMembership, userID)
 	var active bool
 	err := row.Scan(&active)
@@ -608,7 +559,7 @@ SELECT
 `
 
 type HasGlobalPermissionParams struct {
-	UserID        uuid.UUID
+	UserID        string
 	PermissionKey string
 }
 
@@ -645,7 +596,7 @@ SELECT
 `
 
 type HasGroupPermissionParams struct {
-	UserID        uuid.UUID
+	UserID        string
 	GroupID       uuid.UUID
 	PermissionKey string
 }
@@ -672,7 +623,7 @@ SELECT
 `
 
 type IsActiveMemberParams struct {
-	UserID  uuid.UUID
+	UserID  string
 	GroupID uuid.UUID
 }
 
@@ -716,7 +667,7 @@ SELECT
     ) AS allowed
 `
 
-func (q *Queries) IsGlobalAdmin(ctx context.Context, userID uuid.UUID) (bool, error) {
+func (q *Queries) IsGlobalAdmin(ctx context.Context, userID string) (bool, error) {
 	row := q.db.QueryRow(ctx, isGlobalAdmin, userID)
 	var allowed bool
 	err := row.Scan(&allowed)

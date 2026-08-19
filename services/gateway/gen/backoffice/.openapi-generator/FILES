@@ -3,10 +3,13 @@
 .travis.yml
 README.md
 api/openapi.yaml
+api_group_access.go
+api_groups.go
 api_health.go
 api_imports.go
 api_internal_identity.go
 api_resources.go
+api_users.go
 client.go
 configuration.go
 git_push.sh
@@ -17,8 +20,11 @@ model_category.go
 model_category_scheme.go
 model_contact_point.go
 model_coordinate.go
-model_copy_request.go
+model_copy_resource_request.go
+model_create_membership_request.go
 model_create_resource_request.go
+model_create_resource_request_metadata.go
+model_create_role_request.go
 model_create_user_request.go
 model_dataset_draft_metadata.go
 model_dataset_metadata.go
@@ -32,6 +38,8 @@ model_documentation.go
 model_downloadable_file.go
 model_float_parameter.go
 model_float_parameter_metadata.go
+model_group.go
+model_group_membership.go
 model_group_reference.go
 model_identifier.go
 model_identifier_draft.go
@@ -39,6 +47,8 @@ model_import_diagnostic.go
 model_import_result.go
 model_integer_parameter.go
 model_integer_parameter_metadata.go
+model_membership_decision_request.go
+model_membership_user.go
 model_organization.go
 model_parameter.go
 model_parameter_kind.go
@@ -51,6 +61,8 @@ model_replace_software_application_draft_request.go
 model_replace_software_source_code_draft_request.go
 model_resource_record.go
 model_resource_record_metadata.go
+model_role_request.go
+model_role_request_decision_request.go
 model_software_application_draft_metadata.go
 model_software_application_metadata.go
 model_software_category.go
@@ -63,6 +75,7 @@ model_string_parameter_metadata.go
 model_temporal.go
 model_user.go
 model_user_membership.go
+model_user_summary.go
 model_web_service.go
 model_web_service_draft.go
 response.go

@@ -33,22 +33,22 @@ const (
 )
 
 type ApplicationAuthorizer interface {
-	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authz.Result, error)
-	AuthorizeResource(context.Context, uuid.UUID, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-	CanReadSoftwareApplicationVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadContactPoint(context.Context, uuid.UUID) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
+	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
+	CanReadContactPoint(context.Context, string) (authz.Result, error)
 }
 
 type SourceCodeAuthorizer interface {
-	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authz.Result, error)
-	AuthorizeResource(context.Context, uuid.UUID, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-	CanReadSoftwareSourceCodeVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadContactPoint(context.Context, uuid.UUID) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
+	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
+	CanReadContactPoint(context.Context, string) (authz.Result, error)
 }
 
 func authorizeGroup(ctx context.Context, authorizer interface {
-	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authz.Result, error)
-}, actorID, groupID uuid.UUID, permission string,
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
+}, actorID string, groupID uuid.UUID, permission string,
 ) error {
 	result, err := authorizer.AuthorizeGroup(ctx, actorID, groupID, permission)
 	if err != nil {
@@ -61,8 +61,8 @@ func authorizeGroup(ctx context.Context, authorizer interface {
 }
 
 func authorizeResource(ctx context.Context, authorizer interface {
-	AuthorizeResource(context.Context, uuid.UUID, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-}, actorID uuid.UUID, resourceType authz.ResourceType, resourceID uuid.UUID, permission string,
+	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
+}, actorID string, resourceType authz.ResourceType, resourceID uuid.UUID, permission string,
 ) error {
 	result, err := authorizer.AuthorizeResource(ctx, actorID, resourceType, resourceID, permission)
 	if err != nil {

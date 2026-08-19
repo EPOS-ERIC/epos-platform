@@ -19,13 +19,12 @@ import (
 var log = logging.Get("identity-handler")
 
 type service interface {
-	GetByAuthIdentifier(context.Context, string) (identitydomain.User, error)
-	GetByID(context.Context, uuid.UUID) (identitydomain.User, error)
+	GetByID(context.Context, string) (identitydomain.User, error)
 	Create(context.Context, identitydomain.Claims) (identitydomain.User, error)
 }
 
 type authorizer interface {
-	CanReadUser(context.Context, uuid.UUID, uuid.UUID) (authz.Result, error)
+	CanReadUser(context.Context, string, string) (authz.Result, error)
 }
 
 type Handler struct {
@@ -42,8 +41,8 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	targetID, err := uuid.Parse(chi.URLParam(r, "user_id"))
-	if err != nil || targetID == uuid.Nil {
+	targetID := strings.TrimSpace(chi.URLParam(r, "user_id"))
+	if targetID == "" {
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
 		return
 	}
@@ -70,47 +69,26 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusOK, response(user))
 }
 
-// GetByAuthIdentifier intentionally has no actor authorization: Gateway calls it
-// while resolving an authenticated identity before a Backoffice actor exists.
-// This endpoint is internal-only and must not be exposed outside Gateway.
-func (h *Handler) GetByAuthIdentifier(w http.ResponseWriter, r *http.Request) {
-	user, err := h.service.GetByAuthIdentifier(r.Context(), chi.URLParam(r, "auth_identifier"))
-	if err != nil {
-		if errors.Is(err, identitydomain.ErrInvalid) {
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "auth identifier is required")
-			return
-		}
-		if errors.Is(err, identitydomain.ErrNotFound) {
-			transport.WriteProblem(w, http.StatusNotFound, "user_not_found", "user not found")
-			return
-		}
-		log.ErrorContext(r.Context(), "get user by auth identifier failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get user failed")
-		return
-	}
-	transport.WriteJSON(w, http.StatusOK, response(user))
-}
-
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	var request struct {
-		AuthIdentifier string `json:"auth_identifier"`
-		Email          string `json:"email"`
-		GivenName      string `json:"given_name"`
-		FamilyName     string `json:"family_name"`
+		ID         string `json:"id"`
+		Email      string `json:"email"`
+		GivenName  string `json:"given_name"`
+		FamilyName string `json:"family_name"`
 	}
 	if !transport.Decode(w, r, &request) {
 		return
 	}
 
 	user, err := h.service.Create(r.Context(), identitydomain.Claims{
-		AuthIdentifier: request.AuthIdentifier,
-		Email:          request.Email,
-		GivenName:      request.GivenName,
-		FamilyName:     request.FamilyName,
+		ID:         request.ID,
+		Email:      request.Email,
+		GivenName:  request.GivenName,
+		FamilyName: request.FamilyName,
 	})
 	if err != nil {
 		if errors.Is(err, identitydomain.ErrInvalid) {
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "auth_identifier, email, given_name, and family_name are required")
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "id, email, given_name, and family_name are required")
 			return
 		}
 		if strings.Contains(err.Error(), "duplicate") {
@@ -125,8 +103,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 type userResponse struct {
-	ID                uuid.UUID            `json:"id"`
-	AuthIdentifier    string               `json:"auth_identifier"`
+	ID                string               `json:"id"`
 	Email             string               `json:"email"`
 	GivenName         string               `json:"given_name"`
 	FamilyName        string               `json:"family_name"`
@@ -179,7 +156,6 @@ func response(user identitydomain.User) userResponse {
 
 	return userResponse{
 		ID:                user.ID,
-		AuthIdentifier:    user.AuthIdentifier,
 		Email:             user.Email,
 		GivenName:         user.GivenName,
 		FamilyName:        user.FamilyName,

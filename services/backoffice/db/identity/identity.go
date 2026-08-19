@@ -17,18 +17,7 @@ type Repo struct {
 	*sqlc.Queries
 }
 
-func (r *Repo) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (identitydomain.User, error) {
-	user, err := r.Queries.GetUserByAuthIdentifier(ctx, authIdentifier)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.User{}, identitydomain.ErrNotFound
-	}
-	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user by auth identifier: %w", err)
-	}
-	return r.mapUser(ctx, user.ID, user.AuthIdentifier, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
-}
-
-func (r *Repo) GetUserByID(ctx context.Context, userID uuid.UUID) (identitydomain.User, error) {
+func (r *Repo) GetUserByID(ctx context.Context, userID string) (identitydomain.User, error) {
 	user, err := r.Queries.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return identitydomain.User{}, identitydomain.ErrNotFound
@@ -36,13 +25,12 @@ func (r *Repo) GetUserByID(ctx context.Context, userID uuid.UUID) (identitydomai
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user by id: %w", err)
 	}
-	return r.mapUser(ctx, user.ID, user.AuthIdentifier, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
+	return r.mapUser(ctx, user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
 }
 
 func (r *Repo) mapUser(
 	ctx context.Context,
-	id uuid.UUID,
-	authIdentifier,
+	id,
 	email,
 	givenName,
 	familyName string,
@@ -94,7 +82,6 @@ func (r *Repo) mapUser(
 
 	return identitydomain.User{
 		ID:                id,
-		AuthIdentifier:    authIdentifier,
 		Email:             email,
 		GivenName:         givenName,
 		FamilyName:        familyName,
@@ -109,21 +96,20 @@ func (r *Repo) mapUser(
 
 func (r *Repo) CreateUser(ctx context.Context, claims identitydomain.Claims) (identitydomain.User, error) {
 	user, err := r.Queries.CreateUser(ctx, sqlc.CreateUserParams{
-		AuthIdentifier: claims.AuthIdentifier,
-		Email:          claims.Email,
-		GivenName:      claims.GivenName,
-		FamilyName:     claims.FamilyName,
+		ID:         claims.ID,
+		Email:      claims.Email,
+		GivenName:  claims.GivenName,
+		FamilyName: claims.FamilyName,
 	})
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("create user: %w", err)
 	}
-	return mapUser(user.ID, user.AuthIdentifier, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt), nil
+	return mapUser(user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt), nil
 }
 
-func mapUser(id uuid.UUID, authIdentifier, email, givenName, familyName string, status sqlc.UserStatus, createdAt, updatedAt time.Time) identitydomain.User {
+func mapUser(id, email, givenName, familyName string, status sqlc.UserStatus, createdAt, updatedAt time.Time) identitydomain.User {
 	return identitydomain.User{
 		ID:                id,
-		AuthIdentifier:    authIdentifier,
 		Email:             email,
 		GivenName:         givenName,
 		FamilyName:        familyName,

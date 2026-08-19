@@ -17,6 +17,7 @@ import (
 
 type Backoffice struct {
 	identity  backofficeclient.InternalIdentityAPI
+	users     backofficeclient.UsersAPI
 	resources backofficeclient.ResourcesAPI
 }
 
@@ -29,7 +30,6 @@ type ActorIdentity struct {
 
 type User struct {
 	ID                string       `json:"id"`
-	AuthIdentifier    string       `json:"auth_identifier"`
 	Email             string       `json:"email"`
 	GivenName         string       `json:"given_name"`
 	FamilyName        string       `json:"family_name"`
@@ -80,6 +80,7 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 	apiClient := backofficeclient.NewAPIClient(clientConfig)
 	return &Backoffice{
 		identity:  apiClient.InternalIdentityAPI,
+		users:     apiClient.UsersAPI,
 		resources: apiClient.ResourcesAPI,
 	}, nil
 }
@@ -92,22 +93,11 @@ func (c *Backoffice) Resources() backofficeclient.ResourcesAPI {
 	return c.resources
 }
 
-func (c *Backoffice) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (User, error) {
-	if c == nil || c.identity == nil {
-		return User{}, fmt.Errorf("backoffice identity client is not configured")
-	}
-	user, response, err := c.identity.GetUserByAuthIdentifier(ctx, authIdentifier).Execute()
-	if err != nil {
-		return User{}, getUserError("get backoffice user", response, err)
-	}
-	return userFromGenerated(user)
-}
-
 func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (User, error) {
-	if c == nil || c.identity == nil {
+	if c == nil || c.users == nil {
 		return User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
-	user, response, err := c.identity.GetUserByID(ctx, userID).XEPOSUserID(actorID).Execute()
+	user, response, err := c.users.GetUser(ctx, userID).XEPOSUserID(actorID).Execute()
 	if err != nil {
 		return User{}, getUserError("get backoffice user", response, err)
 	}
@@ -115,11 +105,11 @@ func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (U
 }
 
 func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (User, error) {
-	user, err := c.GetUserByAuthIdentifier(ctx, identity.AuthIdentifier)
+	user, err := c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {
 		user, err = c.CreateUser(ctx, identity)
 		if errors.Is(err, domain.ErrConflict) {
-			user, err = c.GetUserByAuthIdentifier(ctx, identity.AuthIdentifier)
+			user, err = c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 		}
 	}
 	if err != nil {
@@ -132,11 +122,11 @@ func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (Us
 	if c == nil || c.identity == nil {
 		return User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
-	user, response, err := c.identity.CreateUser(ctx).CreateUserRequest(backofficeclient.CreateUserRequest{
-		AuthIdentifier: identity.AuthIdentifier,
-		Email:          identity.Email,
-		GivenName:      identity.GivenName,
-		FamilyName:     identity.FamilyName,
+	user, response, err := c.identity.ProvisionUser(ctx).CreateUserRequest(backofficeclient.CreateUserRequest{
+		Id:         identity.AuthIdentifier,
+		Email:      identity.Email,
+		GivenName:  identity.GivenName,
+		FamilyName: identity.FamilyName,
 	}).Execute()
 	if err != nil {
 		if response != nil && response.StatusCode == http.StatusConflict {
@@ -193,7 +183,6 @@ func userFromGenerated(value *backofficeclient.User) (User, error) {
 	}
 	return User{
 		ID:                value.Id,
-		AuthIdentifier:    value.AuthIdentifier,
 		Email:             value.Email,
 		GivenName:         value.GivenName,
 		FamilyName:        value.FamilyName,

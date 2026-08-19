@@ -23,7 +23,7 @@ BEGIN
         AND NOT EXISTS (
             SELECT 1
             FROM group_memberships
-            WHERE user_id = (row_data->>'user_id')::uuid
+            WHERE user_id = row_data->>'user_id'
                 AND group_id = (row_data->>'group_id')::uuid
                 AND status = 'ACTIVE'
         ) THEN
@@ -36,13 +36,13 @@ BEGIN
             EXISTS (
                 SELECT 1
                 FROM group_membership_roles
-                WHERE user_id = (row_data->>'user_id')::uuid
+                WHERE user_id = row_data->>'user_id'
                     AND group_id = (row_data->>'group_id')::uuid
             )
             OR EXISTS (
                 SELECT 1
                 FROM group_permission_grants
-                WHERE user_id = (row_data->>'user_id')::uuid
+                WHERE user_id = row_data->>'user_id'
                     AND group_id = (row_data->>'group_id')::uuid
             )
         ) THEN

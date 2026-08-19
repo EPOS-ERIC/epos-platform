@@ -8,7 +8,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -23,8 +22,8 @@ func (s *Service) GetUser(ctx context.Context, actor api.User, id string) (api.U
 	if id == "self" {
 		id = actor.ID
 	}
-	if _, err := uuid.Parse(id); err != nil {
-		return api.User{}, fmt.Errorf("invalid user id: %w: %w", domain.ErrBadRequest, err)
+	if id == "" {
+		return api.User{}, fmt.Errorf("invalid user id: %w", domain.ErrBadRequest)
 	}
 	if s == nil || s.backoffice == nil {
 		return api.User{}, fmt.Errorf("backoffice identity client is not configured")
@@ -39,7 +38,6 @@ func (s *Service) GetUser(ctx context.Context, actor api.User, id string) (api.U
 func UserFromClient(resolved clients.User) api.User {
 	user := api.User{
 		ID:                resolved.ID,
-		AuthIdentifier:    resolved.AuthIdentifier,
 		Email:             resolved.Email,
 		GivenName:         resolved.GivenName,
 		FamilyName:        resolved.FamilyName,

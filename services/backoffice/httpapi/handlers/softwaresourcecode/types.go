@@ -58,7 +58,7 @@ type sourceCodeRecord struct {
 	VersionID  uuid.UUID                  `json:"version_id"`
 	Revision   int32                      `json:"revision"`
 	Status     metadata.DatasetStatus     `json:"status"`
-	CreatedBy  uuid.UUID                  `json:"created_by"`
+	CreatedBy  string                     `json:"created_by"`
 	Group      categoryScheme             `json:"group"`
 	Metadata   sourceCodeMetadataResponse `json:"metadata"`
 }

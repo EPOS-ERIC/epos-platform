@@ -1,7 +1,7 @@
 /*
-EPOS Backoffice Lifecycle API
+EPOS Backoffice API
 
-Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
+Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -16,83 +16,52 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 type InternalIdentityAPI interface {
 	/*
-		CreateUser Create user
+		ProvisionUser Provision user
 
 		Internal Gateway-to-Backoffice creation from verified authentication claims. Must not be publicly exposed.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApiCreateUserRequest
+		@return ApiProvisionUserRequest
 	*/
-	CreateUser(ctx context.Context) ApiCreateUserRequest
+	ProvisionUser(ctx context.Context) ApiProvisionUserRequest
 
-	// CreateUserExecute executes the request
+	// ProvisionUserExecute executes the request
 	//  @return User
-	CreateUserExecute(r ApiCreateUserRequest) (*User, *http.Response, error)
-
-	/*
-		GetUserByAuthIdentifier Get user by authentication identifier
-
-		Internal Gateway-to-Backoffice lookup. Must not be publicly exposed.
-
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param authIdentifier
-		@return ApiGetUserByAuthIdentifierRequest
-	*/
-	GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) ApiGetUserByAuthIdentifierRequest
-
-	// GetUserByAuthIdentifierExecute executes the request
-	//  @return User
-	GetUserByAuthIdentifierExecute(r ApiGetUserByAuthIdentifierRequest) (*User, *http.Response, error)
-
-	/*
-		GetUserByID Get user by id
-
-		Internal Gateway-to-Backoffice user lookup. Must not be publicly exposed.
-
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApiGetUserByIDRequest
-	*/
-	GetUserByID(ctx context.Context, id string) ApiGetUserByIDRequest
-
-	// GetUserByIDExecute executes the request
-	//  @return User
-	GetUserByIDExecute(r ApiGetUserByIDRequest) (*User, *http.Response, error)
+	ProvisionUserExecute(r ApiProvisionUserRequest) (*User, *http.Response, error)
 }
 
 // InternalIdentityAPIService InternalIdentityAPI service
 type InternalIdentityAPIService service
 
-type ApiCreateUserRequest struct {
+type ApiProvisionUserRequest struct {
 	ctx               context.Context
 	ApiService        InternalIdentityAPI
 	createUserRequest *CreateUserRequest
 }
 
-func (r ApiCreateUserRequest) CreateUserRequest(createUserRequest CreateUserRequest) ApiCreateUserRequest {
+func (r ApiProvisionUserRequest) CreateUserRequest(createUserRequest CreateUserRequest) ApiProvisionUserRequest {
 	r.createUserRequest = &createUserRequest
 	return r
 }
 
-func (r ApiCreateUserRequest) Execute() (*User, *http.Response, error) {
-	return r.ApiService.CreateUserExecute(r)
+func (r ApiProvisionUserRequest) Execute() (*User, *http.Response, error) {
+	return r.ApiService.ProvisionUserExecute(r)
 }
 
 /*
-CreateUser Create user
+ProvisionUser Provision user
 
 Internal Gateway-to-Backoffice creation from verified authentication claims. Must not be publicly exposed.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiCreateUserRequest
+	@return ApiProvisionUserRequest
 */
-func (a *InternalIdentityAPIService) CreateUser(ctx context.Context) ApiCreateUserRequest {
-	return ApiCreateUserRequest{
+func (a *InternalIdentityAPIService) ProvisionUser(ctx context.Context) ApiProvisionUserRequest {
+	return ApiProvisionUserRequest{
 		ApiService: a,
 		ctx:        ctx,
 	}
@@ -101,7 +70,7 @@ func (a *InternalIdentityAPIService) CreateUser(ctx context.Context) ApiCreateUs
 // Execute executes the request
 //
 //	@return User
-func (a *InternalIdentityAPIService) CreateUserExecute(r ApiCreateUserRequest) (*User, *http.Response, error) {
+func (a *InternalIdentityAPIService) ProvisionUserExecute(r ApiProvisionUserRequest) (*User, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
@@ -109,12 +78,12 @@ func (a *InternalIdentityAPIService) CreateUserExecute(r ApiCreateUserRequest) (
 		localVarReturnValue *User
 	)
 
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "InternalIdentityAPIService.CreateUser")
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "InternalIdentityAPIService.ProvisionUser")
 	if err != nil {
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/users"
+	localVarPath := localBasePath + "/api/v1/internal/users"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -176,310 +145,6 @@ func (a *InternalIdentityAPIService) CreateUserExecute(r ApiCreateUserRequest) (
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 409 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiGetUserByAuthIdentifierRequest struct {
-	ctx            context.Context
-	ApiService     InternalIdentityAPI
-	authIdentifier string
-}
-
-func (r ApiGetUserByAuthIdentifierRequest) Execute() (*User, *http.Response, error) {
-	return r.ApiService.GetUserByAuthIdentifierExecute(r)
-}
-
-/*
-GetUserByAuthIdentifier Get user by authentication identifier
-
-Internal Gateway-to-Backoffice lookup. Must not be publicly exposed.
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param authIdentifier
-	@return ApiGetUserByAuthIdentifierRequest
-*/
-func (a *InternalIdentityAPIService) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) ApiGetUserByAuthIdentifierRequest {
-	return ApiGetUserByAuthIdentifierRequest{
-		ApiService:     a,
-		ctx:            ctx,
-		authIdentifier: authIdentifier,
-	}
-}
-
-// Execute executes the request
-//
-//	@return User
-func (a *InternalIdentityAPIService) GetUserByAuthIdentifierExecute(r ApiGetUserByAuthIdentifierRequest) (*User, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *User
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "InternalIdentityAPIService.GetUserByAuthIdentifier")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/users/by-auth/{auth_identifier}"
-	localVarPath = strings.Replace(localVarPath, "{"+"auth_identifier"+"}", url.PathEscape(parameterValueToString(r.authIdentifier, "authIdentifier")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiGetUserByIDRequest struct {
-	ctx         context.Context
-	ApiService  InternalIdentityAPI
-	id          string
-	xEPOSUserID *string
-}
-
-func (r ApiGetUserByIDRequest) XEPOSUserID(xEPOSUserID string) ApiGetUserByIDRequest {
-	r.xEPOSUserID = &xEPOSUserID
-	return r
-}
-
-func (r ApiGetUserByIDRequest) Execute() (*User, *http.Response, error) {
-	return r.ApiService.GetUserByIDExecute(r)
-}
-
-/*
-GetUserByID Get user by id
-
-Internal Gateway-to-Backoffice user lookup. Must not be publicly exposed.
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApiGetUserByIDRequest
-*/
-func (a *InternalIdentityAPIService) GetUserByID(ctx context.Context, id string) ApiGetUserByIDRequest {
-	return ApiGetUserByIDRequest{
-		ApiService: a,
-		ctx:        ctx,
-		id:         id,
-	}
-}
-
-// Execute executes the request
-//
-//	@return User
-func (a *InternalIdentityAPIService) GetUserByIDExecute(r ApiGetUserByIDRequest) (*User, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *User
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "InternalIdentityAPIService.GetUserByID")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/users/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", url.PathEscape(parameterValueToString(r.id, "id")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.xEPOSUserID == nil {
-		return localVarReturnValue, nil, reportError("xEPOSUserID is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json", "text/plain"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-EPOS-User-ID", r.xEPOSUserID, "simple", "")
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
 			var v Problem
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {

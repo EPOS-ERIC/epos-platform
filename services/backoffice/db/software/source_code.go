@@ -13,7 +13,7 @@ import (
 )
 
 //nolint:dupl // Source code and application creation intentionally mirror typed SQLC operations.
-func (r *SourceCodeRepo) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error) {
 	var result softwarelifecycle.SourceCode
 	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
 		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{SourceIri: value.SourceIRI, GroupID: groupID, CreatedBy: actorID})
@@ -36,7 +36,7 @@ func (r *SourceCodeRepo) CreateDraft(ctx context.Context, actorID, groupID uuid.
 func (r *SourceCodeRepo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UUID, revision int32, value metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error) {
 	var result softwarelifecycle.SourceCode
 	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
-		p := SourceCodeVersionParams(sourceCodeID, uuid.Nil, value)
+		p := SourceCodeVersionParams(sourceCodeID, "", value)
 		version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, sqlc.ReplaceLifecycleSoftwareSourceCodeDraftParams{
 			Name: p.Name, Description: p.Description, ProgrammingLanguage: p.ProgrammingLanguage, Keywords: p.Keywords,
 			Repository: p.Repository, License: p.License, SoftwareRequirements: p.SoftwareRequirements,
@@ -81,7 +81,7 @@ func (r *SourceCodeRepo) transition(ctx context.Context, sourceCodeID, versionID
 	return sourceCodeResult(ctx, q, sourceCodeID, version.ID)
 }
 
-func (r *SourceCodeRepo) Submit(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) Submit(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (softwarelifecycle.SourceCode, error) {
 	return r.transition(ctx, sourceCodeID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareSourceCodeVersion, error) {
 		return q.SubmitLifecycleSoftwareSourceCodeVersion(ctx, sqlc.SubmitLifecycleSoftwareSourceCodeVersionParams{ActorID: &actorID, ID: versionID})
 	})
@@ -93,7 +93,7 @@ func (r *SourceCodeRepo) Withdraw(ctx context.Context, sourceCodeID, versionID u
 	})
 }
 
-func (r *SourceCodeRepo) Reject(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID, note string) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) Reject(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID, note string) (softwarelifecycle.SourceCode, error) {
 	return r.transition(ctx, sourceCodeID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareSourceCodeVersion, error) {
 		return q.RejectLifecycleSoftwareSourceCodeVersion(ctx, sqlc.RejectLifecycleSoftwareSourceCodeVersionParams{ActorID: &actorID, RejectionNote: &note, ID: versionID})
 	})
@@ -105,13 +105,13 @@ func (r *SourceCodeRepo) Reopen(ctx context.Context, sourceCodeID, versionID uui
 	})
 }
 
-func (r *SourceCodeRepo) Publish(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) Publish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (softwarelifecycle.SourceCode, error) {
 	return r.transition(ctx, sourceCodeID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareSourceCodeVersion, error) {
 		return q.PublishLifecycleSoftwareSourceCodeVersion(ctx, sqlc.PublishLifecycleSoftwareSourceCodeVersionParams{ActorID: &actorID, VersionID: versionID})
 	})
 }
 
-func (r *SourceCodeRepo) Unpublish(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) Unpublish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (softwarelifecycle.SourceCode, error) {
 	return r.transition(ctx, sourceCodeID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareSourceCodeVersion, error) {
 		return q.UnpublishLifecycleSoftwareSourceCodeVersion(ctx, sqlc.UnpublishLifecycleSoftwareSourceCodeVersionParams{ActorID: &actorID, ID: versionID})
 	})
@@ -135,15 +135,15 @@ func (r *SourceCodeRepo) Discard(ctx context.Context, sourceCodeID, versionID uu
 	return lifecycleError(err)
 }
 
-func (r *SourceCodeRepo) DraftFromPublication(ctx context.Context, actorID, sourceCodeID uuid.UUID) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) DraftFromPublication(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (softwarelifecycle.SourceCode, error) {
 	return r.clone(ctx, actorID, sourceCodeID, sourceCodeID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
 }
 
-func (r *SourceCodeRepo) DraftFromLatestArchive(ctx context.Context, actorID, sourceCodeID uuid.UUID) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) DraftFromLatestArchive(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (softwarelifecycle.SourceCode, error) {
 	return r.clone(ctx, actorID, sourceCodeID, sourceCodeID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.SourceCode, error) {
 	var targetID, versionID uuid.UUID
 	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
 		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{SourceIri: sourceIRI, GroupID: groupID, CreatedBy: actorID})
@@ -169,7 +169,7 @@ func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID, sourceID, g
 }
 
 //nolint:dupl // Source code and application cloning intentionally mirror typed SQLC operations.
-func (r *SourceCodeRepo) clone(ctx context.Context, actorID, sourceID, targetID uuid.UUID, status sqlc.ResourceStatus, groupID uuid.UUID, copyCategories bool) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) clone(ctx context.Context, actorID string, sourceID, targetID uuid.UUID, status sqlc.ResourceStatus, groupID uuid.UUID, copyCategories bool) (softwarelifecycle.SourceCode, error) {
 	var versionID uuid.UUID
 	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
 		var source sqlc.SoftwareSourceCodeVersion
@@ -202,7 +202,7 @@ func (r *SourceCodeRepo) clone(ctx context.Context, actorID, sourceID, targetID 
 	return r.Get(ctx, targetID, versionID)
 }
 
-func SourceCodeVersionParams(id, actorID uuid.UUID, value metadata.SoftwareSourceCode) sqlc.CreateLifecycleSoftwareSourceCodeVersionParams {
+func SourceCodeVersionParams(id uuid.UUID, actorID string, value metadata.SoftwareSourceCode) sqlc.CreateLifecycleSoftwareSourceCodeVersionParams {
 	return sqlc.CreateLifecycleSoftwareSourceCodeVersionParams{SoftwareSourceCodeID: id, Name: value.Name, Description: value.Description, ProgrammingLanguage: value.ProgrammingLanguage, Keywords: value.Keywords, Repository: value.Repository, License: value.License, SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform, MainEntityOfPage: value.MainEntityOfPage, Version: value.Version, CreatedBy: actorID}
 }
 

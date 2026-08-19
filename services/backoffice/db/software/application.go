@@ -15,7 +15,7 @@ import (
 //nolint:dupl // Application and source code creation intentionally mirror typed SQLC operations.
 func (r *ApplicationRepo) CreateDraft(
 	ctx context.Context,
-	actorID,
+	actorID string,
 	groupID uuid.UUID,
 	value metadata.SoftwareApplication,
 ) (softwarelifecycle.Application, error) {
@@ -54,7 +54,7 @@ func (r *ApplicationRepo) ReplaceDraft(
 ) (softwarelifecycle.Application, error) {
 	var result softwarelifecycle.Application
 	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
-		p := ApplicationVersionParams(appID, uuid.Nil, value)
+		p := ApplicationVersionParams(appID, "", value)
 		version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, sqlc.ReplaceLifecycleSoftwareApplicationDraftParams{
 			Name:                  p.Name,
 			Description:           p.Description,
@@ -93,10 +93,7 @@ func (r *ApplicationRepo) Get(ctx context.Context, appID, versionID uuid.UUID) (
 	return result, err
 }
 
-func (r *ApplicationRepo) Submit(
-	ctx context.Context,
-	actorID, appID, versionID uuid.UUID,
-) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) Submit(ctx context.Context, actorID string, appID, versionID uuid.UUID) (softwarelifecycle.Application, error) {
 	return r.transition(ctx, appID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareApplicationVersion, error) {
 		return q.SubmitLifecycleSoftwareApplicationVersion(ctx, sqlc.SubmitLifecycleSoftwareApplicationVersionParams{
 			ActorID: &actorID,
@@ -111,7 +108,7 @@ func (r *ApplicationRepo) Withdraw(ctx context.Context, appID, versionID uuid.UU
 	})
 }
 
-func (r *ApplicationRepo) Reject(ctx context.Context, actorID, appID, versionID uuid.UUID, note string) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) Reject(ctx context.Context, actorID string, appID, versionID uuid.UUID, note string) (softwarelifecycle.Application, error) {
 	return r.transition(ctx, appID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareApplicationVersion, error) {
 		return q.RejectLifecycleSoftwareApplicationVersion(ctx, sqlc.RejectLifecycleSoftwareApplicationVersionParams{
 			ActorID:       &actorID,
@@ -127,7 +124,7 @@ func (r *ApplicationRepo) Reopen(ctx context.Context, appID, versionID uuid.UUID
 	})
 }
 
-func (r *ApplicationRepo) Publish(ctx context.Context, actorID, appID, versionID uuid.UUID) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) Publish(ctx context.Context, actorID string, appID, versionID uuid.UUID) (softwarelifecycle.Application, error) {
 	return r.transition(ctx, appID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareApplicationVersion, error) {
 		return q.PublishLifecycleSoftwareApplicationVersion(ctx, sqlc.PublishLifecycleSoftwareApplicationVersionParams{
 			ActorID:   &actorID,
@@ -136,7 +133,7 @@ func (r *ApplicationRepo) Publish(ctx context.Context, actorID, appID, versionID
 	})
 }
 
-func (r *ApplicationRepo) Unpublish(ctx context.Context, actorID, appID, versionID uuid.UUID) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) Unpublish(ctx context.Context, actorID string, appID, versionID uuid.UUID) (softwarelifecycle.Application, error) {
 	return r.transition(ctx, appID, versionID, func(q *sqlc.Queries) (sqlc.SoftwareApplicationVersion, error) {
 		return q.UnpublishLifecycleSoftwareApplicationVersion(ctx, sqlc.UnpublishLifecycleSoftwareApplicationVersionParams{
 			ActorID: &actorID,
@@ -190,25 +187,15 @@ func (r *ApplicationRepo) Discard(ctx context.Context, appID, versionID uuid.UUI
 	return lifecycleError(err)
 }
 
-func (r *ApplicationRepo) DraftFromPublication(
-	ctx context.Context,
-	actorID, appID uuid.UUID,
-) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) DraftFromPublication(ctx context.Context, actorID string, appID uuid.UUID) (softwarelifecycle.Application, error) {
 	return r.clone(ctx, actorID, appID, appID, sqlc.ResourceStatusPUBLISHED, uuid.Nil, true)
 }
 
-func (r *ApplicationRepo) DraftFromLatestArchive(
-	ctx context.Context,
-	actorID, appID uuid.UUID,
-) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) DraftFromLatestArchive(ctx context.Context, actorID string, appID uuid.UUID) (softwarelifecycle.Application, error) {
 	return r.clone(ctx, actorID, appID, appID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *ApplicationRepo) CopyPublished(
-	ctx context.Context,
-	actorID, sourceID, groupID uuid.UUID,
-	sourceIRI string,
-) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.Application, error) {
 	var targetID uuid.UUID
 	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
 		app, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
@@ -253,7 +240,7 @@ func (r *ApplicationRepo) CopyPublished(
 //nolint:dupl // Application and source code cloning intentionally mirror typed SQLC operations.
 func (r *ApplicationRepo) clone(
 	ctx context.Context,
-	actorID, sourceID, targetID uuid.UUID,
+	actorID string, sourceID, targetID uuid.UUID,
 	status sqlc.ResourceStatus,
 	groupID uuid.UUID,
 	copyCategories bool,
@@ -298,10 +285,7 @@ func (r *ApplicationRepo) clone(
 	return r.Get(ctx, targetID, versionID)
 }
 
-func ApplicationVersionParams(
-	id, actorID uuid.UUID,
-	value metadata.SoftwareApplication,
-) sqlc.CreateLifecycleSoftwareApplicationVersionParams {
+func ApplicationVersionParams(id uuid.UUID, actorID string, value metadata.SoftwareApplication) sqlc.CreateLifecycleSoftwareApplicationVersionParams {
 	return sqlc.CreateLifecycleSoftwareApplicationVersionParams{
 		SoftwareApplicationID: id,
 		Name:                  value.Name,

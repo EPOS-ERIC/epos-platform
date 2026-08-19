@@ -17,25 +17,25 @@ type Application struct {
 	VersionID     uuid.UUID
 	Revision      int32
 	Status        metadata.DatasetStatus
-	CreatedBy     uuid.UUID
+	CreatedBy     string
 	Group         metadata.CategoryScheme
 	Metadata      metadata.SoftwareApplication
 }
 
 type ApplicationRepository interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (Application, error)
-	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.SoftwareApplication) (Application, error)
+	CreateDraft(context.Context, string, uuid.UUID, metadata.SoftwareApplication) (Application, error)
 	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, int32, metadata.SoftwareApplication) (Application, error)
-	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Application, error)
+	Submit(context.Context, string, uuid.UUID, uuid.UUID) (Application, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (Application, error)
-	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Application, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (Application, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (Application, error)
-	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Application, error)
+	Publish(context.Context, string, uuid.UUID, uuid.UUID) (Application, error)
 	Discard(context.Context, uuid.UUID, uuid.UUID) error
-	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Application, error)
-	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (Application, error)
-	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (Application, error)
-	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Application, error)
+	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (Application, error)
+	DraftFromPublication(context.Context, string, uuid.UUID) (Application, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (Application, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (Application, error)
 }
 
 type ApplicationService struct {
@@ -49,7 +49,7 @@ func NewApplicationService(authorizer ApplicationAuthorizer, repository Applicat
 }
 
 // CreateDraft creates a software application draft in groupID.
-func (s *ApplicationService) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.SoftwareApplication) (Application, error) {
+func (s *ApplicationService) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.SoftwareApplication) (Application, error) {
 	if err := normalizeApplication(&value); err != nil {
 		return Application{}, err
 	}
@@ -61,7 +61,7 @@ func (s *ApplicationService) CreateDraft(ctx context.Context, actorID, groupID u
 }
 
 // Read returns an authorized software application version and contact visibility.
-func (s *ApplicationService) Read(ctx context.Context, actorID *uuid.UUID, applicationID, versionID uuid.UUID) (Application, bool, error) {
+func (s *ApplicationService) Read(ctx context.Context, actorID *string, applicationID, versionID uuid.UUID) (Application, bool, error) {
 	result, err := s.authorizer.CanReadSoftwareApplicationVersion(ctx, actorID, applicationID, versionID)
 	if err != nil {
 		return Application{}, false, operationError("authorize application read", err)
@@ -82,7 +82,7 @@ func (s *ApplicationService) Read(ctx context.Context, actorID *uuid.UUID, appli
 }
 
 // ReplaceDraft replaces a software application draft at revision.
-func (s *ApplicationService) ReplaceDraft(ctx context.Context, actorID, applicationID, versionID uuid.UUID, revision int32, value metadata.SoftwareApplication) (Application, error) {
+func (s *ApplicationService) ReplaceDraft(ctx context.Context, actorID string, applicationID, versionID uuid.UUID, revision int32, value metadata.SoftwareApplication) (Application, error) {
 	if revision < 1 {
 		return Application{}, fmt.Errorf("revision must be positive: %w", ErrInvalid)
 	}
@@ -97,7 +97,7 @@ func (s *ApplicationService) ReplaceDraft(ctx context.Context, actorID, applicat
 }
 
 // Submit submits a software application draft for review.
-func (s *ApplicationService) Submit(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
+func (s *ApplicationService) Submit(ctx context.Context, actorID string, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionSubmit); err != nil {
 		return Application{}, operationError("authorize application submission", err)
 	}
@@ -106,7 +106,7 @@ func (s *ApplicationService) Submit(ctx context.Context, actorID, applicationID,
 }
 
 // Withdraw withdraws a submitted software application version.
-func (s *ApplicationService) Withdraw(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
+func (s *ApplicationService) Withdraw(ctx context.Context, actorID string, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionWithdraw); err != nil {
 		return Application{}, operationError("authorize application withdrawal", err)
 	}
@@ -115,7 +115,7 @@ func (s *ApplicationService) Withdraw(ctx context.Context, actorID, applicationI
 }
 
 // Reject rejects a submitted software application version with note.
-func (s *ApplicationService) Reject(ctx context.Context, actorID, applicationID, versionID uuid.UUID, note string) (Application, error) {
+func (s *ApplicationService) Reject(ctx context.Context, actorID string, applicationID, versionID uuid.UUID, note string) (Application, error) {
 	note = strings.TrimSpace(note)
 	if note == "" {
 		return Application{}, fmt.Errorf("rejection note is required: %w", ErrInvalid)
@@ -128,7 +128,7 @@ func (s *ApplicationService) Reject(ctx context.Context, actorID, applicationID,
 }
 
 // Reopen reopens a rejected software application version.
-func (s *ApplicationService) Reopen(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
+func (s *ApplicationService) Reopen(ctx context.Context, actorID string, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionReopen); err != nil {
 		return Application{}, operationError("authorize application reopening", err)
 	}
@@ -137,7 +137,7 @@ func (s *ApplicationService) Reopen(ctx context.Context, actorID, applicationID,
 }
 
 // Publish publishes a submitted software application version.
-func (s *ApplicationService) Publish(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
+func (s *ApplicationService) Publish(ctx context.Context, actorID string, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionPublish); err != nil {
 		return Application{}, operationError("authorize application publication", err)
 	}
@@ -146,7 +146,7 @@ func (s *ApplicationService) Publish(ctx context.Context, actorID, applicationID
 }
 
 // Discard removes a software application draft or rejected version.
-func (s *ApplicationService) Discard(ctx context.Context, actorID, applicationID, versionID uuid.UUID) error {
+func (s *ApplicationService) Discard(ctx context.Context, actorID string, applicationID, versionID uuid.UUID) error {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionDiscard); err != nil {
 		return operationError("authorize application discard", err)
 	}
@@ -154,7 +154,7 @@ func (s *ApplicationService) Discard(ctx context.Context, actorID, applicationID
 }
 
 // Unpublish archives a published software application version.
-func (s *ApplicationService) Unpublish(ctx context.Context, actorID, applicationID, versionID uuid.UUID) (Application, error) {
+func (s *ApplicationService) Unpublish(ctx context.Context, actorID string, applicationID, versionID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionUnpublish); err != nil {
 		return Application{}, operationError("authorize application unpublication", err)
 	}
@@ -163,7 +163,7 @@ func (s *ApplicationService) Unpublish(ctx context.Context, actorID, application
 }
 
 // DraftFromPublication creates a draft from published application metadata.
-func (s *ApplicationService) DraftFromPublication(ctx context.Context, actorID, applicationID uuid.UUID) (Application, error) {
+func (s *ApplicationService) DraftFromPublication(ctx context.Context, actorID string, applicationID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionCreate); err != nil {
 		return Application{}, operationError("authorize application draft creation", err)
 	}
@@ -172,7 +172,7 @@ func (s *ApplicationService) DraftFromPublication(ctx context.Context, actorID, 
 }
 
 // DraftFromLatestArchive creates a draft from the latest archived version.
-func (s *ApplicationService) DraftFromLatestArchive(ctx context.Context, actorID, applicationID uuid.UUID) (Application, error) {
+func (s *ApplicationService) DraftFromLatestArchive(ctx context.Context, actorID string, applicationID uuid.UUID) (Application, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareApplication, applicationID, permissionCreate); err != nil {
 		return Application{}, operationError("authorize application draft creation", err)
 	}
@@ -181,7 +181,7 @@ func (s *ApplicationService) DraftFromLatestArchive(ctx context.Context, actorID
 }
 
 // CopyPublished copies published application metadata into targetGroupID.
-func (s *ApplicationService) CopyPublished(ctx context.Context, actorID, sourceApplicationID, targetGroupID uuid.UUID, sourceIRI string) (Application, error) {
+func (s *ApplicationService) CopyPublished(ctx context.Context, actorID string, sourceApplicationID, targetGroupID uuid.UUID, sourceIRI string) (Application, error) {
 	sourceIRI = strings.TrimSpace(sourceIRI)
 	if sourceIRI == "" {
 		return Application{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)

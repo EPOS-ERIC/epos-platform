@@ -23,7 +23,7 @@ CREATE TABLE role_permissions (
 );
 
 CREATE TABLE group_memberships (
-    user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id    text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     status     membership_status NOT NULL DEFAULT 'PENDING',
     created_at timestamptz NOT NULL DEFAULT now(),
@@ -31,10 +31,10 @@ CREATE TABLE group_memberships (
     PRIMARY KEY (user_id, group_id)
 );
 CREATE TABLE group_membership_roles (
-    user_id     uuid NOT NULL,
+    user_id     text NOT NULL,
     group_id    uuid NOT NULL,
     role_key    text NOT NULL REFERENCES roles(key) ON DELETE RESTRICT,
-    assigned_by uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    assigned_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     assigned_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, group_id, role_key),
     FOREIGN KEY (user_id, group_id)
@@ -42,24 +42,24 @@ CREATE TABLE group_membership_roles (
         ON DELETE CASCADE
 );
 CREATE TABLE user_global_roles (
-    user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id     text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     role_key    text NOT NULL REFERENCES roles(key) ON DELETE RESTRICT,
-    assigned_by uuid REFERENCES users(id) ON DELETE RESTRICT,
+    assigned_by text REFERENCES users(id) ON DELETE RESTRICT,
     assigned_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, role_key)
 );
 CREATE TABLE global_permission_grants (
-    user_id        uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id        text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     permission_key text NOT NULL REFERENCES permissions(key) ON DELETE RESTRICT,
-    granted_by     uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    granted_by     text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     granted_at     timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, permission_key)
 );
 CREATE TABLE group_permission_grants (
-    user_id        uuid NOT NULL,
+    user_id        text NOT NULL,
     group_id       uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     permission_key text NOT NULL REFERENCES permissions(key) ON DELETE RESTRICT,
-    granted_by     uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    granted_by     text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     granted_at     timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (user_id, group_id, permission_key),
     FOREIGN KEY (user_id, group_id)
@@ -68,12 +68,12 @@ CREATE TABLE group_permission_grants (
 );
 CREATE TABLE group_role_requests (
     id           uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id      uuid NOT NULL,
+    user_id      text NOT NULL,
     group_id     uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     role_key     text NOT NULL REFERENCES roles(key) ON DELETE RESTRICT,
     status       role_request_status NOT NULL DEFAULT 'PENDING',
     requested_at timestamptz NOT NULL DEFAULT now(),
-    decided_by   uuid REFERENCES users(id) ON DELETE RESTRICT,
+    decided_by   text REFERENCES users(id) ON DELETE RESTRICT,
     decided_at   timestamptz,
     FOREIGN KEY (user_id, group_id)
         REFERENCES group_memberships(user_id, group_id)
@@ -87,13 +87,13 @@ CREATE TABLE notification_event_types (
     required_permission_key text REFERENCES permissions(key) ON DELETE RESTRICT
 );
 CREATE TABLE global_notification_subscriptions (
-    user_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id    text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     event_type text NOT NULL REFERENCES notification_event_types(key) ON DELETE CASCADE,
     channel    notification_channel NOT NULL DEFAULT 'EMAIL',
     PRIMARY KEY (user_id, event_type, channel)
 );
 CREATE TABLE group_notification_subscriptions (
-    user_id    uuid NOT NULL,
+    user_id    text NOT NULL,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     event_type text NOT NULL REFERENCES notification_event_types(key) ON DELETE CASCADE,
     channel    notification_channel NOT NULL DEFAULT 'EMAIL',

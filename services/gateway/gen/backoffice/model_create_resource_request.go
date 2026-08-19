@@ -1,7 +1,7 @@
 /*
-EPOS Backoffice Lifecycle API
+EPOS Backoffice API
 
-Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
+Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -11,77 +11,138 @@ API version: 2.0.0
 package backofficeclient
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 )
 
+// checks if the CreateResourceRequest type satisfies the MappedNullable interface at compile time
+var _ MappedNullable = &CreateResourceRequest{}
+
 // CreateResourceRequest struct for CreateResourceRequest
 type CreateResourceRequest struct {
-	DatasetDraftMetadata             *DatasetDraftMetadata
-	SoftwareApplicationDraftMetadata *SoftwareApplicationDraftMetadata
-	SoftwareSourceCodeDraftMetadata  *SoftwareSourceCodeDraftMetadata
+	GroupId  string                        `json:"group_id"`
+	Metadata CreateResourceRequestMetadata `json:"metadata"`
 }
 
-// Unmarshal JSON data into any of the pointers in the struct
-func (dst *CreateResourceRequest) UnmarshalJSON(data []byte) error {
-	var err error
-	// try to unmarshal JSON data into DatasetDraftMetadata
-	err = json.Unmarshal(data, &dst.DatasetDraftMetadata)
-	if err == nil {
-		jsonDatasetDraftMetadata, _ := json.Marshal(dst.DatasetDraftMetadata)
-		if string(jsonDatasetDraftMetadata) == "{}" { // empty struct
-			dst.DatasetDraftMetadata = nil
-		} else {
-			return nil // data stored in dst.DatasetDraftMetadata, return on the first match
-		}
-	} else {
-		dst.DatasetDraftMetadata = nil
-	}
+type _CreateResourceRequest CreateResourceRequest
 
-	// try to unmarshal JSON data into SoftwareApplicationDraftMetadata
-	err = json.Unmarshal(data, &dst.SoftwareApplicationDraftMetadata)
-	if err == nil {
-		jsonSoftwareApplicationDraftMetadata, _ := json.Marshal(dst.SoftwareApplicationDraftMetadata)
-		if string(jsonSoftwareApplicationDraftMetadata) == "{}" { // empty struct
-			dst.SoftwareApplicationDraftMetadata = nil
-		} else {
-			return nil // data stored in dst.SoftwareApplicationDraftMetadata, return on the first match
-		}
-	} else {
-		dst.SoftwareApplicationDraftMetadata = nil
-	}
-
-	// try to unmarshal JSON data into SoftwareSourceCodeDraftMetadata
-	err = json.Unmarshal(data, &dst.SoftwareSourceCodeDraftMetadata)
-	if err == nil {
-		jsonSoftwareSourceCodeDraftMetadata, _ := json.Marshal(dst.SoftwareSourceCodeDraftMetadata)
-		if string(jsonSoftwareSourceCodeDraftMetadata) == "{}" { // empty struct
-			dst.SoftwareSourceCodeDraftMetadata = nil
-		} else {
-			return nil // data stored in dst.SoftwareSourceCodeDraftMetadata, return on the first match
-		}
-	} else {
-		dst.SoftwareSourceCodeDraftMetadata = nil
-	}
-
-	return fmt.Errorf("data failed to match schemas in anyOf(CreateResourceRequest)")
+// NewCreateResourceRequest instantiates a new CreateResourceRequest object
+// This constructor will assign default values to properties that have it defined,
+// and makes sure properties required by API are set, but the set of arguments
+// will change when the set of required properties is changed
+func NewCreateResourceRequest(groupId string, metadata CreateResourceRequestMetadata) *CreateResourceRequest {
+	this := CreateResourceRequest{}
+	this.GroupId = groupId
+	this.Metadata = metadata
+	return &this
 }
 
-// Marshal data from the first non-nil pointers in the struct to JSON
-func (src CreateResourceRequest) MarshalJSON() ([]byte, error) {
-	if src.DatasetDraftMetadata != nil {
-		return json.Marshal(&src.DatasetDraftMetadata)
+// NewCreateResourceRequestWithDefaults instantiates a new CreateResourceRequest object
+// This constructor will only assign default values to properties that have it defined,
+// but it doesn't guarantee that properties required by API are set
+func NewCreateResourceRequestWithDefaults() *CreateResourceRequest {
+	this := CreateResourceRequest{}
+	return &this
+}
+
+// GetGroupId returns the GroupId field value
+func (o *CreateResourceRequest) GetGroupId() string {
+	if o == nil {
+		var ret string
+		return ret
 	}
 
-	if src.SoftwareApplicationDraftMetadata != nil {
-		return json.Marshal(&src.SoftwareApplicationDraftMetadata)
+	return o.GroupId
+}
+
+// GetGroupIdOk returns a tuple with the GroupId field value
+// and a boolean to check if the value has been set.
+func (o *CreateResourceRequest) GetGroupIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.GroupId, true
+}
+
+// SetGroupId sets field value
+func (o *CreateResourceRequest) SetGroupId(v string) {
+	o.GroupId = v
+}
+
+// GetMetadata returns the Metadata field value
+func (o *CreateResourceRequest) GetMetadata() CreateResourceRequestMetadata {
+	if o == nil {
+		var ret CreateResourceRequestMetadata
+		return ret
 	}
 
-	if src.SoftwareSourceCodeDraftMetadata != nil {
-		return json.Marshal(&src.SoftwareSourceCodeDraftMetadata)
+	return o.Metadata
+}
+
+// GetMetadataOk returns a tuple with the Metadata field value
+// and a boolean to check if the value has been set.
+func (o *CreateResourceRequest) GetMetadataOk() (*CreateResourceRequestMetadata, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Metadata, true
+}
+
+// SetMetadata sets field value
+func (o *CreateResourceRequest) SetMetadata(v CreateResourceRequestMetadata) {
+	o.Metadata = v
+}
+
+func (o CreateResourceRequest) MarshalJSON() ([]byte, error) {
+	toSerialize, err := o.ToMap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return json.Marshal(toSerialize)
+}
+
+func (o CreateResourceRequest) ToMap() (map[string]interface{}, error) {
+	toSerialize := map[string]interface{}{}
+	toSerialize["group_id"] = o.GroupId
+	toSerialize["metadata"] = o.Metadata
+	return toSerialize, nil
+}
+
+func (o *CreateResourceRequest) UnmarshalJSON(data []byte) (err error) {
+	// This validates that all required properties are included in the JSON object
+	// by unmarshalling the object into a generic map with string keys and checking
+	// that every required field exists as a key in the generic map.
+	requiredProperties := []string{
+		"group_id",
+		"metadata",
 	}
 
-	return nil, nil // no data in anyOf schemas
+	allProperties := make(map[string]interface{})
+
+	err = json.Unmarshal(data, &allProperties)
+	if err != nil {
+		return err
+	}
+
+	for _, requiredProperty := range requiredProperties {
+		if _, exists := allProperties[requiredProperty]; !exists {
+			return fmt.Errorf("no value given for required property %v", requiredProperty)
+		}
+	}
+
+	varCreateResourceRequest := _CreateResourceRequest{}
+
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(&varCreateResourceRequest)
+	if err != nil {
+		return err
+	}
+
+	*o = CreateResourceRequest(varCreateResourceRequest)
+
+	return err
 }
 
 type NullableCreateResourceRequest struct {

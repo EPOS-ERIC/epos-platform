@@ -76,7 +76,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Ba
 			user := identityservice.UserFromClient(resolved)
 			ctx := logging.WithActor(r.Context(), logging.Actor{
 				ID:             user.ID,
-				AuthIdentifier: user.AuthIdentifier,
+				AuthIdentifier: user.ID,
 				IsSuperAdmin:   user.IsGlobalAdmin(),
 			})
 
@@ -84,7 +84,6 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Ba
 				attribute.String("auth.result", "authenticated"),
 				// "enduser" is an otel-specific naming
 				attribute.String("enduser.id", user.ID),
-				attribute.String("enduser.auth_identifier", user.AuthIdentifier),
 				attribute.Bool("enduser.is_global_admin", user.IsGlobalAdmin()),
 			)
 

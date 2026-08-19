@@ -16,7 +16,7 @@ type Repo struct {
 	*sqlc.Queries
 }
 
-func (r *Repo) User(ctx context.Context, userID uuid.UUID) (authz.User, error) {
+func (r *Repo) User(ctx context.Context, userID string) (authz.User, error) {
 	user, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return authz.User{}, authz.ErrNotFound
@@ -38,7 +38,7 @@ func (r *Repo) PermissionScope(ctx context.Context, key string) (authz.Permissio
 	return authz.PermissionScope(scope), nil
 }
 
-func (r *Repo) HasGlobalPermission(ctx context.Context, userID uuid.UUID, permissionKey string) (bool, error) {
+func (r *Repo) HasGlobalPermission(ctx context.Context, userID string, permissionKey string) (bool, error) {
 	allowed, err := r.Queries.HasGlobalPermission(ctx, sqlc.HasGlobalPermissionParams{
 		UserID:        userID,
 		PermissionKey: permissionKey,
@@ -46,7 +46,7 @@ func (r *Repo) HasGlobalPermission(ctx context.Context, userID uuid.UUID, permis
 	return allowed, wrap("check global permission", err)
 }
 
-func (r *Repo) IsActiveMember(ctx context.Context, userID, groupID uuid.UUID) (bool, error) {
+func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.UUID) (bool, error) {
 	active, err := r.Queries.IsActiveMember(ctx, sqlc.IsActiveMemberParams{
 		UserID:  userID,
 		GroupID: groupID,
@@ -54,7 +54,7 @@ func (r *Repo) IsActiveMember(ctx context.Context, userID, groupID uuid.UUID) (b
 	return active, wrap("check active membership", err)
 }
 
-func (r *Repo) HasGroupPermission(ctx context.Context, userID, groupID uuid.UUID, permissionKey string) (bool, error) {
+func (r *Repo) HasGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, permissionKey string) (bool, error) {
 	allowed, err := r.Queries.HasGroupPermission(ctx, sqlc.HasGroupPermissionParams{
 		UserID:        userID,
 		GroupID:       groupID,

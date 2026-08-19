@@ -273,7 +273,7 @@ type CloneLifecycleSoftwareApplicationVersionParams struct {
 	SourceVersionID             uuid.UUID
 	SourceStatus                ResourceStatus
 	TargetSoftwareApplicationID uuid.UUID
-	ActorID                     uuid.UUID
+	ActorID                     string
 	TargetGroupID               uuid.UUID
 	CopyCategories              bool
 }
@@ -292,16 +292,16 @@ type CloneLifecycleSoftwareApplicationVersionRow struct {
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
-	CreatedBy             uuid.UUID
+	CreatedBy             string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
-	SubmittedBy           *uuid.UUID
+	SubmittedBy           *string
 	SubmittedAt           *time.Time
-	PublishedBy           *uuid.UUID
+	PublishedBy           *string
 	PublishedAt           *time.Time
-	ArchivedBy            *uuid.UUID
+	ArchivedBy            *string
 	ArchivedAt            *time.Time
-	RejectedBy            *uuid.UUID
+	RejectedBy            *string
 	RejectedAt            *time.Time
 	RejectionNote         *string
 }
@@ -362,7 +362,7 @@ RETURNING
 type CreateLifecycleSoftwareApplicationParams struct {
 	SourceIri string
 	GroupID   uuid.UUID
-	CreatedBy uuid.UUID
+	CreatedBy string
 }
 
 func (q *Queries) CreateLifecycleSoftwareApplication(ctx context.Context, arg CreateLifecycleSoftwareApplicationParams) (SoftwareApplication, error) {
@@ -422,7 +422,7 @@ type CreateLifecycleSoftwareApplicationVersionParams struct {
 	DownloadUrl           *string
 	Requirements          *string
 	OperatingSystem       *string
-	CreatedBy             uuid.UUID
+	CreatedBy             string
 }
 
 func (q *Queries) CreateLifecycleSoftwareApplicationVersion(ctx context.Context, arg CreateLifecycleSoftwareApplicationVersionParams) (SoftwareApplicationVersion, error) {
@@ -1037,7 +1037,7 @@ RETURNING
 `
 
 type PublishLifecycleSoftwareApplicationVersionParams struct {
-	ActorID   *uuid.UUID
+	ActorID   *string
 	VersionID uuid.UUID
 }
 
@@ -1090,7 +1090,7 @@ RETURNING
 `
 
 type RejectLifecycleSoftwareApplicationVersionParams struct {
-	ActorID       *uuid.UUID
+	ActorID       *string
 	RejectionNote *string
 	ID            uuid.UUID
 }
@@ -1272,7 +1272,7 @@ RETURNING
 `
 
 type SubmitLifecycleSoftwareApplicationVersionParams struct {
-	ActorID *uuid.UUID
+	ActorID *string
 	ID      uuid.UUID
 }
 
@@ -1324,7 +1324,7 @@ RETURNING
 `
 
 type UnpublishLifecycleSoftwareApplicationVersionParams struct {
-	ActorID *uuid.UUID
+	ActorID *string
 	ID      uuid.UUID
 }
 

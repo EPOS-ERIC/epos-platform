@@ -45,7 +45,6 @@ require (
 	go.opentelemetry.io/otel v1.44.0
 	go.opentelemetry.io/otel/trace v1.44.0
 	go.yaml.in/yaml/v3 v3.0.4
-	golang.org/x/sync v0.20.0
 )
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging

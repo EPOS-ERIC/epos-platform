@@ -57,7 +57,6 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 
 		identity := identityapi.New(identityservice.New(database.Identity), authorizer)
 
-		r.Get("/internal/users/by-auth/{auth_identifier}", identity.GetByAuthIdentifier)
 		r.Get("/users/{user_id}", identity.GetByID)
 		r.Post("/internal/users", identity.Create)
 

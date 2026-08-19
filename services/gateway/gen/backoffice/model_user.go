@@ -1,7 +1,7 @@
 /*
-EPOS Backoffice Lifecycle API
+EPOS Backoffice API
 
-Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
+Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -23,7 +23,6 @@ var _ MappedNullable = &User{}
 // User struct for User
 type User struct {
 	Id                string           `json:"id"`
-	AuthIdentifier    string           `json:"auth_identifier"`
 	Email             string           `json:"email"`
 	GivenName         string           `json:"given_name"`
 	FamilyName        string           `json:"family_name"`
@@ -41,10 +40,9 @@ type _User User
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUser(id string, authIdentifier string, email string, givenName string, familyName string, status string, globalRoles []string, globalPermissions []string, createdAt time.Time, updatedAt time.Time, memberships []UserMembership) *User {
+func NewUser(id string, email string, givenName string, familyName string, status string, globalRoles []string, globalPermissions []string, createdAt time.Time, updatedAt time.Time, memberships []UserMembership) *User {
 	this := User{}
 	this.Id = id
-	this.AuthIdentifier = authIdentifier
 	this.Email = email
 	this.GivenName = givenName
 	this.FamilyName = familyName
@@ -87,30 +85,6 @@ func (o *User) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *User) SetId(v string) {
 	o.Id = v
-}
-
-// GetAuthIdentifier returns the AuthIdentifier field value
-func (o *User) GetAuthIdentifier() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.AuthIdentifier
-}
-
-// GetAuthIdentifierOk returns a tuple with the AuthIdentifier field value
-// and a boolean to check if the value has been set.
-func (o *User) GetAuthIdentifierOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.AuthIdentifier, true
-}
-
-// SetAuthIdentifier sets field value
-func (o *User) SetAuthIdentifier(v string) {
-	o.AuthIdentifier = v
 }
 
 // GetEmail returns the Email field value
@@ -340,7 +314,6 @@ func (o User) MarshalJSON() ([]byte, error) {
 func (o User) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["auth_identifier"] = o.AuthIdentifier
 	toSerialize["email"] = o.Email
 	toSerialize["given_name"] = o.GivenName
 	toSerialize["family_name"] = o.FamilyName
@@ -359,7 +332,6 @@ func (o *User) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"auth_identifier",
 		"email",
 		"given_name",
 		"family_name",

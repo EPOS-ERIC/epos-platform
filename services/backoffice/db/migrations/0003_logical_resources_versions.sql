@@ -6,21 +6,21 @@ CREATE TABLE datasets (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_iri text NOT NULL UNIQUE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
-    created_by uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE software_applications (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_iri text NOT NULL UNIQUE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
-    created_by uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE software_source_codes (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     source_iri text NOT NULL UNIQUE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
-    created_by uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -48,18 +48,18 @@ CREATE TABLE dataset_versions (
     temporal_end        timestamptz,
 
     -- Backoffice record timestamps
-    created_by          uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_by          text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at          timestamptz NOT NULL DEFAULT now(),
     updated_at          timestamptz NOT NULL DEFAULT now(),
 
     -- Lifecycle transition attribution; rejection stores latest decision only
-    submitted_by        uuid REFERENCES users(id) ON DELETE RESTRICT,
+    submitted_by        text REFERENCES users(id) ON DELETE RESTRICT,
     submitted_at        timestamptz,
-    published_by        uuid REFERENCES users(id) ON DELETE RESTRICT,
+    published_by        text REFERENCES users(id) ON DELETE RESTRICT,
     published_at        timestamptz,
-    archived_by         uuid REFERENCES users(id) ON DELETE RESTRICT,
+    archived_by         text REFERENCES users(id) ON DELETE RESTRICT,
     archived_at         timestamptz,
-    rejected_by         uuid REFERENCES users(id) ON DELETE RESTRICT,
+    rejected_by         text REFERENCES users(id) ON DELETE RESTRICT,
     rejected_at         timestamptz,
     rejection_note      text,
 
@@ -87,18 +87,18 @@ CREATE TABLE software_application_versions (
     operating_system        text,
 
     -- Backoffice record timestamps
-    created_by              uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_by              text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at              timestamptz NOT NULL DEFAULT now(),
     updated_at              timestamptz NOT NULL DEFAULT now(),
 
     -- Lifecycle transition attribution; rejection stores latest decision only
-    submitted_by            uuid REFERENCES users(id) ON DELETE RESTRICT,
+    submitted_by            text REFERENCES users(id) ON DELETE RESTRICT,
     submitted_at            timestamptz,
-    published_by            uuid REFERENCES users(id) ON DELETE RESTRICT,
+    published_by            text REFERENCES users(id) ON DELETE RESTRICT,
     published_at            timestamptz,
-    archived_by             uuid REFERENCES users(id) ON DELETE RESTRICT,
+    archived_by             text REFERENCES users(id) ON DELETE RESTRICT,
     archived_at             timestamptz,
-    rejected_by             uuid REFERENCES users(id) ON DELETE RESTRICT,
+    rejected_by             text REFERENCES users(id) ON DELETE RESTRICT,
     rejected_at             timestamptz,
     rejection_note          text,
     CHECK (rejection_note IS NULL OR length(trim(rejection_note)) > 0)
@@ -123,18 +123,18 @@ CREATE TABLE software_source_code_versions (
     version                 text,
 
     -- Backoffice record timestamps
-    created_by              uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    created_by              text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at              timestamptz NOT NULL DEFAULT now(),
     updated_at              timestamptz NOT NULL DEFAULT now(),
 
     -- Lifecycle transition attribution; rejection stores latest decision only
-    submitted_by            uuid REFERENCES users(id) ON DELETE RESTRICT,
+    submitted_by            text REFERENCES users(id) ON DELETE RESTRICT,
     submitted_at            timestamptz,
-    published_by            uuid REFERENCES users(id) ON DELETE RESTRICT,
+    published_by            text REFERENCES users(id) ON DELETE RESTRICT,
     published_at            timestamptz,
-    archived_by             uuid REFERENCES users(id) ON DELETE RESTRICT,
+    archived_by             text REFERENCES users(id) ON DELETE RESTRICT,
     archived_at             timestamptz,
-    rejected_by             uuid REFERENCES users(id) ON DELETE RESTRICT,
+    rejected_by             text REFERENCES users(id) ON DELETE RESTRICT,
     rejected_at             timestamptz,
     rejection_note          text,
     CHECK (rejection_note IS NULL OR length(trim(rejection_note)) > 0)

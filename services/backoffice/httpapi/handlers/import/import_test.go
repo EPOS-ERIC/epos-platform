@@ -16,11 +16,11 @@ import (
 )
 
 type fakeImportService struct {
-	actor uuid.UUID
+	actor string
 	body  string
 }
 
-func (s *fakeImportService) Import(_ context.Context, actor uuid.UUID, input io.Reader) (metadataimport.Result, error) {
+func (s *fakeImportService) Import(_ context.Context, actor string, input io.Reader) (metadataimport.Result, error) {
 	s.actor = actor
 	content, err := io.ReadAll(input)
 	if err != nil {
@@ -53,9 +53,9 @@ func TestTurtleImportRequiresActorAndContentType(t *testing.T) {
 func TestTurtleImportPassesRawBody(t *testing.T) {
 	service := &fakeImportService{}
 	handler := New(service)
-	actorID := uuid.New()
+	actorID := "user-1"
 	request := httptest.NewRequest(http.MethodPost, "/api/v1/imports/turtle", strings.NewReader("@prefix dcat: <http://www.w3.org/ns/dcat#> ."))
-	request.Header.Set(transport.ActorHeader, actorID.String())
+	request.Header.Set(transport.ActorHeader, actorID)
 	request.Header.Set("Content-Type", "text/turtle; charset=utf-8")
 	response := httptest.NewRecorder()
 

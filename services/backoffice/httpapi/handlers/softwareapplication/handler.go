@@ -19,19 +19,19 @@ var log = logging.Get("software-application-handler")
 
 // Service is the software application lifecycle behavior used by Handler.
 type Service interface {
-	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.SoftwareApplication) (softwarelifecycle.Application, error)
-	Read(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, bool, error)
-	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.SoftwareApplication) (softwarelifecycle.Application, error)
-	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (softwarelifecycle.Application, error)
-	Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
-	Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
-	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (softwarelifecycle.Application, error)
+	CreateDraft(context.Context, string, uuid.UUID, metadata.SoftwareApplication) (softwarelifecycle.Application, error)
+	Read(context.Context, *string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, bool, error)
+	ReplaceDraft(context.Context, string, uuid.UUID, uuid.UUID, int32, metadata.SoftwareApplication) (softwarelifecycle.Application, error)
+	Submit(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
+	Withdraw(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.Application, error)
+	Reopen(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
+	Publish(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
+	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
+	DraftFromPublication(context.Context, string, uuid.UUID) (softwarelifecycle.Application, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (softwarelifecycle.Application, error)
+	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.Application, error)
 }
 
 type Handler struct {
@@ -73,7 +73,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var actor *uuid.UUID
+	var actor *string
 	if present {
 		actor = &actorID
 	}
@@ -222,18 +222,18 @@ func (h *Handler) writeApplication(r *http.Request, w http.ResponseWriter, appli
 	transport.WriteJSON(w, status, applicationResponse(application, includeContacts))
 }
 
-func commandIDs(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID, uuid.UUID, bool) {
+func commandIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, uuid.UUID, bool) {
 	actorID, ok := transport.Actor(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, uuid.Nil, false
 	}
 	applicationID, ok := applicationID(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, uuid.Nil, false
 	}
 	versionID, ok := versionID(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, uuid.Nil, false
 	}
 	return actorID, applicationID, versionID, true
 }

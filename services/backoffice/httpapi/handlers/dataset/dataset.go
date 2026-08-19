@@ -18,19 +18,19 @@ import (
 var log = logging.Get("dataset-handler")
 
 type datasetService interface {
-	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error)
-	Read(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error)
-	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (datasetlifecycle.Dataset, error)
-	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error)
-	Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
-	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
-	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error)
+	CreateDraft(context.Context, string, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error)
+	Read(context.Context, *string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error)
+	ReplaceDraft(context.Context, string, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (datasetlifecycle.Dataset, error)
+	Submit(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
+	Withdraw(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error)
+	Reopen(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
+	Publish(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
+	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
+	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
+	DraftFromPublication(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error)
 }
 
 type handler struct {
@@ -68,7 +68,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var actor *uuid.UUID
+	var actor *string
 	if present {
 		actor = &actorID
 	}
@@ -239,19 +239,19 @@ func (h *handler) writeDataset(r *http.Request, w http.ResponseWriter, dataset d
 	transport.WriteJSON(w, status, datasetResponse(dataset, true))
 }
 
-func actor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+func actor(w http.ResponseWriter, r *http.Request) (string, bool) {
 	id, present, ok := optionalActor(w, r)
 	if !ok {
-		return uuid.Nil, false
+		return "", false
 	}
 	if !present {
 		http.Error(w, transport.ActorHeader+" is required", http.StatusUnauthorized)
-		return uuid.Nil, false
+		return "", false
 	}
 	return id, true
 }
 
-func optionalActor(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool, bool) {
+func optionalActor(w http.ResponseWriter, r *http.Request) (string, bool, bool) {
 	return transport.OptionalActor(w, r)
 }
 

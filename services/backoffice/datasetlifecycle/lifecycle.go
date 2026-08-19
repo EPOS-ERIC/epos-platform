@@ -33,11 +33,11 @@ const (
 )
 
 type Authorizer interface {
-	AuthorizeGroup(context.Context, uuid.UUID, uuid.UUID, string) (authz.Result, error)
-	AuthorizeResource(context.Context, uuid.UUID, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-	CanReadResource(context.Context, *uuid.UUID, authz.ResourceType, uuid.UUID) (authz.Result, error)
-	CanReadDatasetVersion(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadContactPoint(context.Context, uuid.UUID) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
+	CanReadResource(context.Context, *string, authz.ResourceType, uuid.UUID) (authz.Result, error)
+	CanReadDatasetVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
+	CanReadContactPoint(context.Context, string) (authz.Result, error)
 }
 
 // Dataset is version metadata with lifecycle identity. Metadata.SourceIRI is
@@ -47,7 +47,7 @@ type Dataset struct {
 	VersionID uuid.UUID
 	Revision  int32
 	Status    metadata.DatasetStatus
-	CreatedBy uuid.UUID
+	CreatedBy string
 	Group     metadata.CategoryScheme
 	Metadata  metadata.Dataset
 }
@@ -56,18 +56,18 @@ type Repository interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
 	GetPublished(context.Context, uuid.UUID) (Dataset, error)
 	GetActive(context.Context, uuid.UUID) (Dataset, error)
-	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (Dataset, error)
+	CreateDraft(context.Context, string, uuid.UUID, metadata.Dataset) (Dataset, error)
 	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (Dataset, error)
-	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Submit(context.Context, string, uuid.UUID, uuid.UUID) (Dataset, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
-	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Dataset, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (Dataset, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
-	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
+	Publish(context.Context, string, uuid.UUID, uuid.UUID) (Dataset, error)
 	Discard(context.Context, uuid.UUID, uuid.UUID) error
-	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (Dataset, error)
-	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
-	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (Dataset, error)
-	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (Dataset, error)
+	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (Dataset, error)
+	DraftFromPublication(context.Context, string, uuid.UUID) (Dataset, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (Dataset, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (Dataset, error)
 }
 
 type Service struct {
@@ -81,7 +81,7 @@ func New(authorizer Authorizer, repository Repository) *Service {
 }
 
 // CreateDraft creates a dataset draft in groupID.
-func (s *Service) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.Dataset) (Dataset, error) {
+func (s *Service) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.Dataset) (Dataset, error) {
 	if strings.TrimSpace(value.SourceIRI) == "" {
 		return Dataset{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
 	}
@@ -97,7 +97,7 @@ func (s *Service) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, v
 }
 
 // ReplaceDraft replaces a dataset draft at revision.
-func (s *Service) ReplaceDraft(ctx context.Context, actorID, datasetID, versionID uuid.UUID, revision int32, value metadata.Dataset) (Dataset, error) {
+func (s *Service) ReplaceDraft(ctx context.Context, actorID string, datasetID, versionID uuid.UUID, revision int32, value metadata.Dataset) (Dataset, error) {
 	if revision < 1 {
 		return Dataset{}, fmt.Errorf("revision must be positive: %w", ErrInvalid)
 	}
@@ -122,7 +122,7 @@ func operationError(operation string, err error) error {
 }
 
 // Read returns an authorized dataset version and contact visibility.
-func (s *Service) Read(ctx context.Context, actorID *uuid.UUID, datasetID, versionID uuid.UUID) (Dataset, bool, error) {
+func (s *Service) Read(ctx context.Context, actorID *string, datasetID, versionID uuid.UUID) (Dataset, bool, error) {
 	result, err := s.authorizer.CanReadDatasetVersion(ctx, actorID, datasetID, versionID)
 	if err != nil {
 		return Dataset{}, false, operationError("authorize dataset read", err)
@@ -148,7 +148,7 @@ func (s *Service) Read(ctx context.Context, actorID *uuid.UUID, datasetID, versi
 }
 
 // Submit submits a dataset draft for review.
-func (s *Service) Submit(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+func (s *Service) Submit(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionSubmit); err != nil {
 		return Dataset{}, operationError("authorize submission", err)
 	}
@@ -157,7 +157,7 @@ func (s *Service) Submit(ctx context.Context, actorID, datasetID, versionID uuid
 }
 
 // Withdraw withdraws a submitted dataset version.
-func (s *Service) Withdraw(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+func (s *Service) Withdraw(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionWithdraw); err != nil {
 		return Dataset{}, operationError("authorize withdrawal", err)
 	}
@@ -166,7 +166,7 @@ func (s *Service) Withdraw(ctx context.Context, actorID, datasetID, versionID uu
 }
 
 // Reject rejects a submitted dataset version with note.
-func (s *Service) Reject(ctx context.Context, actorID, datasetID, versionID uuid.UUID, note string) (Dataset, error) {
+func (s *Service) Reject(ctx context.Context, actorID string, datasetID, versionID uuid.UUID, note string) (Dataset, error) {
 	if strings.TrimSpace(note) == "" {
 		return Dataset{}, fmt.Errorf("rejection note is required: %w", ErrInvalid)
 	}
@@ -178,7 +178,7 @@ func (s *Service) Reject(ctx context.Context, actorID, datasetID, versionID uuid
 }
 
 // Reopen reopens a rejected dataset version.
-func (s *Service) Reopen(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+func (s *Service) Reopen(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionReopen); err != nil {
 		return Dataset{}, operationError("authorize reopening", err)
 	}
@@ -187,7 +187,7 @@ func (s *Service) Reopen(ctx context.Context, actorID, datasetID, versionID uuid
 }
 
 // Publish publishes a submitted dataset version.
-func (s *Service) Publish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+func (s *Service) Publish(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionPublish); err != nil {
 		return Dataset{}, operationError("authorize publication", err)
 	}
@@ -196,7 +196,7 @@ func (s *Service) Publish(ctx context.Context, actorID, datasetID, versionID uui
 }
 
 // Discard removes a dataset draft or rejected version.
-func (s *Service) Discard(ctx context.Context, actorID, datasetID, versionID uuid.UUID) error {
+func (s *Service) Discard(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) error {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionDiscard); err != nil {
 		return operationError("authorize discard", err)
 	}
@@ -204,7 +204,7 @@ func (s *Service) Discard(ctx context.Context, actorID, datasetID, versionID uui
 }
 
 // Unpublish archives a published dataset version.
-func (s *Service) Unpublish(ctx context.Context, actorID, datasetID, versionID uuid.UUID) (Dataset, error) {
+func (s *Service) Unpublish(ctx context.Context, actorID string, datasetID, versionID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionUnpublish); err != nil {
 		return Dataset{}, operationError("authorize unpublication", err)
 	}
@@ -213,7 +213,7 @@ func (s *Service) Unpublish(ctx context.Context, actorID, datasetID, versionID u
 }
 
 // DraftFromPublication creates a draft from published dataset metadata.
-func (s *Service) DraftFromPublication(ctx context.Context, actorID, datasetID uuid.UUID) (Dataset, error) {
+func (s *Service) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionCreate); err != nil {
 		return Dataset{}, operationError("authorize draft creation", err)
 	}
@@ -222,7 +222,7 @@ func (s *Service) DraftFromPublication(ctx context.Context, actorID, datasetID u
 }
 
 // DraftFromLatestArchive creates a draft from the latest archived version.
-func (s *Service) DraftFromLatestArchive(ctx context.Context, actorID, datasetID uuid.UUID) (Dataset, error) {
+func (s *Service) DraftFromLatestArchive(ctx context.Context, actorID string, datasetID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeResource(ctx, actorID, datasetID, permissionCreate); err != nil {
 		return Dataset{}, operationError("authorize draft creation", err)
 	}
@@ -231,7 +231,7 @@ func (s *Service) DraftFromLatestArchive(ctx context.Context, actorID, datasetID
 }
 
 // CopyPublished copies published dataset metadata into targetGroupID.
-func (s *Service) CopyPublished(ctx context.Context, actorID, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (Dataset, error) {
+func (s *Service) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (Dataset, error) {
 	if strings.TrimSpace(sourceIRI) == "" {
 		return Dataset{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
 	}
@@ -242,7 +242,7 @@ func (s *Service) CopyPublished(ctx context.Context, actorID, sourceDatasetID, t
 	return dataset, operationError("copy published dataset", err)
 }
 
-func (s *Service) authorizeGroup(ctx context.Context, actorID, groupID uuid.UUID, permission string) error {
+func (s *Service) authorizeGroup(ctx context.Context, actorID string, groupID uuid.UUID, permission string) error {
 	result, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize group: %w", err)
@@ -253,7 +253,7 @@ func (s *Service) authorizeGroup(ctx context.Context, actorID, groupID uuid.UUID
 	return nil
 }
 
-func (s *Service) authorizeResource(ctx context.Context, actorID, datasetID uuid.UUID, permission string) error {
+func (s *Service) authorizeResource(ctx context.Context, actorID string, datasetID uuid.UUID, permission string) error {
 	result, err := s.authorizer.AuthorizeResource(ctx, actorID, authz.ResourceTypeDataset, datasetID, permission)
 	if err != nil {
 		return fmt.Errorf("authorize dataset: %w", err)

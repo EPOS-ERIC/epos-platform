@@ -17,55 +17,55 @@ import (
 )
 
 type fakeDatasetService struct {
-	create func(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error)
-	read   func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error)
+	create func(context.Context, string, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error)
+	read   func(context.Context, *string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error)
 }
 
-func (s fakeDatasetService) CreateDraft(ctx context.Context, actor, group uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+func (s fakeDatasetService) CreateDraft(ctx context.Context, actor string, group uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
 	return s.create(ctx, actor, group, value)
 }
 
-func (s fakeDatasetService) Read(ctx context.Context, actor *uuid.UUID, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+func (s fakeDatasetService) Read(ctx context.Context, actor *string, datasetID, versionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
 	return s.read(ctx, actor, datasetID, versionID)
 }
 
-func (fakeDatasetService) ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) ReplaceDraft(context.Context, string, uuid.UUID, uuid.UUID, int32, metadata.Dataset) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Submit(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Withdraw(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Reopen(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Publish(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
-func (fakeDatasetService) Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error { return nil }
-func (fakeDatasetService) DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
-	return datasetlifecycle.Dataset{}, nil
-}
-
-func (fakeDatasetService) DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) Discard(context.Context, string, uuid.UUID, uuid.UUID) error { return nil }
+func (fakeDatasetService) DraftFromPublication(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
-func (fakeDatasetService) CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error) {
+func (fakeDatasetService) DraftFromLatestArchive(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error) {
+	return datasetlifecycle.Dataset{}, nil
+}
+
+func (fakeDatasetService) CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
 
@@ -84,8 +84,8 @@ func TestCreateDatasetPassesActorAndMetadata(t *testing.T) {
 	actor := uuid.New()
 	group := uuid.New()
 	router := chi.NewRouter()
-	datasets := New(fakeDatasetService{create: func(_ context.Context, actualActor, actualGroup uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
-		if actualActor != actor || actualGroup != group || value.SourceIRI != "https://example.test/dataset" {
+	datasets := New(fakeDatasetService{create: func(_ context.Context, actualActor string, actualGroup uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+		if actualActor != actor.String() || actualGroup != group || value.SourceIRI != "https://example.test/dataset" {
 			t.Fatal("unexpected create request")
 		}
 		return datasetlifecycle.Dataset{}, nil
@@ -120,7 +120,7 @@ func TestCreateDatasetDecodesTypedParameter(t *testing.T) {
 	group := uuid.New()
 	parameterID := uuid.New()
 	router := chi.NewRouter()
-	datasets := New(fakeDatasetService{create: func(_ context.Context, _, _ uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
+	datasets := New(fakeDatasetService{create: func(_ context.Context, _ string, _ uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
 		parameter, ok := value.Distributions[0].WebService.Parameters[0].(metadata.StringParameter)
 		if !ok || parameter.Metadata.ID != parameterID || parameter.Kind() != metadata.ParameterKindString {
 			t.Fatalf("parameter = %#v", value.Distributions[0].WebService.Parameters[0])
@@ -143,7 +143,7 @@ func TestPublicDatasetOmitsContactPoints(t *testing.T) {
 	id := uuid.New()
 	router := chi.NewRouter()
 	versionID := uuid.New()
-	datasets := New(fakeDatasetService{read: func(_ context.Context, actor *uuid.UUID, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+	datasets := New(fakeDatasetService{read: func(_ context.Context, actor *string, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
 		if actor != nil || actualID != id || actualVersionID != versionID {
 			t.Fatal("unexpected read request")
 		}
@@ -163,8 +163,8 @@ func TestDatasetReadOmitsContactPointsWithoutEligibility(t *testing.T) {
 	actor := uuid.New()
 	router := chi.NewRouter()
 	versionID := uuid.New()
-	datasets := New(fakeDatasetService{read: func(_ context.Context, actualActor *uuid.UUID, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
-		if actualActor == nil || *actualActor != actor || actualID != id || actualVersionID != versionID {
+	datasets := New(fakeDatasetService{read: func(_ context.Context, actualActor *string, actualID, actualVersionID uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+		if actualActor == nil || *actualActor != actor.String() || actualID != id || actualVersionID != versionID {
 			t.Fatal("unexpected read request")
 		}
 		return datasetlifecycle.Dataset{Metadata: metadata.Dataset{ContactPoints: []metadata.ContactPoint{{Email: "private@example.test"}}}}, false, nil
@@ -184,7 +184,7 @@ func TestDatasetReadExposesGroupOnce(t *testing.T) {
 	versionID := uuid.New()
 	groupID := uuid.New()
 	router := chi.NewRouter()
-	datasets := New(fakeDatasetService{read: func(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
+	datasets := New(fakeDatasetService{read: func(context.Context, *string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error) {
 		return datasetlifecycle.Dataset{
 			Group:    metadata.CategoryScheme{ID: groupID, SourceIRI: "scheme:test", Name: "Test", Concept: metadata.TopLevelConceptData},
 			Metadata: metadata.Dataset{Categories: []metadata.Category{{ID: uuid.New(), SourceIRI: "category:test", Name: "Category", Scheme: metadata.CategoryScheme{ID: groupID}}}},
@@ -208,7 +208,7 @@ func TestCreateDatasetDoesNotExposeInternalErrors(t *testing.T) {
 	actor := uuid.New()
 	group := uuid.New()
 	router := chi.NewRouter()
-	datasets := New(fakeDatasetService{create: func(context.Context, uuid.UUID, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error) {
+	datasets := New(fakeDatasetService{create: func(context.Context, string, uuid.UUID, metadata.Dataset) (datasetlifecycle.Dataset, error) {
 		return datasetlifecycle.Dataset{}, errors.New("postgres: password authentication failed")
 	}})
 	router.Post("/resources/dataset", datasets.Create)

@@ -18,19 +18,19 @@ import (
 var log = logging.Get("software-source-code-handler")
 
 type sourceCodeService interface {
-	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error)
-	Read(context.Context, *uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, bool, error)
-	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, int32, metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error)
-	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Withdraw(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (softwarelifecycle.SourceCode, error)
-	Reopen(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Discard(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) error
-	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (softwarelifecycle.SourceCode, error)
+	CreateDraft(context.Context, string, uuid.UUID, metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error)
+	Read(context.Context, *string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, bool, error)
+	ReplaceDraft(context.Context, string, uuid.UUID, uuid.UUID, int32, metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error)
+	Submit(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	Withdraw(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.SourceCode, error)
+	Reopen(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	Publish(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	DraftFromPublication(context.Context, string, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.SourceCode, error)
 }
 
 type Handler struct {
@@ -74,7 +74,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var actor *uuid.UUID
+	var actor *string
 	if present {
 		actor = &actorID
 	}
@@ -226,26 +226,26 @@ func (h *Handler) writeSourceCode(r *http.Request, w http.ResponseWriter, value 
 	transport.WriteJSON(w, status, sourceCodeResponse(value, includeContacts))
 }
 
-func lifecycleIDs(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID, uuid.UUID, bool) {
+func lifecycleIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, uuid.UUID, bool) {
 	actorID, sourceCodeID, ok := resourceIDs(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, uuid.Nil, false
 	}
 	versionID, ok := versionID(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, uuid.Nil, false
 	}
 	return actorID, sourceCodeID, versionID, true
 }
 
-func resourceIDs(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID, bool) {
+func resourceIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {
 	actorID, ok := transport.Actor(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, false
 	}
 	sourceCodeID, ok := sourceCodeID(w, r)
 	if !ok {
-		return uuid.Nil, uuid.Nil, false
+		return "", uuid.Nil, false
 	}
 	return actorID, sourceCodeID, true
 }

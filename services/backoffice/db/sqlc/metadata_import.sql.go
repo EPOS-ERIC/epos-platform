@@ -137,7 +137,7 @@ type GetImportDatasetRow struct {
 	ID              uuid.UUID
 	SourceIri       string
 	GroupID         uuid.UUID
-	CreatedBy       uuid.UUID
+	CreatedBy       string
 	CreatedAt       time.Time
 	ActiveVersionID *uuid.UUID
 	ActiveStatus    *ResourceStatus
@@ -180,7 +180,7 @@ type GetImportSoftwareApplicationRow struct {
 	ID              uuid.UUID
 	SourceIri       string
 	GroupID         uuid.UUID
-	CreatedBy       uuid.UUID
+	CreatedBy       string
 	CreatedAt       time.Time
 	ActiveVersionID *uuid.UUID
 	ActiveStatus    *ResourceStatus
@@ -223,7 +223,7 @@ type GetImportSoftwareSourceCodeRow struct {
 	ID              uuid.UUID
 	SourceIri       string
 	GroupID         uuid.UUID
-	CreatedBy       uuid.UUID
+	CreatedBy       string
 	CreatedAt       time.Time
 	ActiveVersionID *uuid.UUID
 	ActiveStatus    *ResourceStatus

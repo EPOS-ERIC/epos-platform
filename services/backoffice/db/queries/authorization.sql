@@ -7,25 +7,9 @@ FROM
 WHERE
     id = $1;
 
--- name: GetUserByAuthIdentifier :one
-SELECT
-    id,
-    auth_identifier,
-    email,
-    given_name,
-    family_name,
-    STATUS,
-    created_at,
-    updated_at
-FROM
-    users
-WHERE
-    auth_identifier = $1;
-
 -- name: GetUserByID :one
 SELECT
     id,
-    auth_identifier,
     email,
     given_name,
     family_name,
@@ -139,7 +123,7 @@ ORDER BY
 -- name: CreateUser :one
 INSERT INTO
     users (
-        auth_identifier,
+        id,
         email,
         given_name,
         family_name
@@ -148,7 +132,6 @@ VALUES
     ($1, $2, $3, $4)
 RETURNING
     id,
-    auth_identifier,
     email,
     given_name,
     family_name,

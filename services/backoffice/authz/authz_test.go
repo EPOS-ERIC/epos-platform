@@ -19,27 +19,27 @@ type fakeRepository struct {
 	published    bool
 }
 
-func (r fakeRepository) User(context.Context, uuid.UUID) (User, error) {
+func (r fakeRepository) User(context.Context, string) (User, error) {
 	return r.user, nil
 }
 
 func (r fakeRepository) PermissionScope(context.Context, string) (PermissionScope, error) {
 	return r.scope, nil
 }
-func (r fakeRepository) IsGlobalAdmin(context.Context, uuid.UUID) (bool, error) { return r.admin, nil }
-func (r fakeRepository) HasGlobalPermission(context.Context, uuid.UUID, string) (bool, error) {
+func (r fakeRepository) IsGlobalAdmin(context.Context, string) (bool, error) { return r.admin, nil }
+func (r fakeRepository) HasGlobalPermission(context.Context, string, string) (bool, error) {
 	return r.global, nil
 }
 
-func (r fakeRepository) IsActiveMember(context.Context, uuid.UUID, uuid.UUID) (bool, error) {
+func (r fakeRepository) IsActiveMember(context.Context, string, uuid.UUID) (bool, error) {
 	return r.member, nil
 }
 
-func (r fakeRepository) HasAnyActiveMembership(context.Context, uuid.UUID) (bool, error) {
+func (r fakeRepository) HasAnyActiveMembership(context.Context, string) (bool, error) {
 	return r.anyMember, nil
 }
 
-func (r fakeRepository) HasGroupPermission(context.Context, uuid.UUID, uuid.UUID, string) (bool, error) {
+func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error) {
 	return r.groupAllowed, nil
 }
 
@@ -105,7 +105,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 		scope:        PermissionScopeGroup,
 	})
 
-	result, err := authorizer.AuthorizeResource(context.Background(), uuid.New(), ResourceTypeDataset, uuid.New(), "resource.edit")
+	result, err := authorizer.AuthorizeResource(context.Background(), "user-1", ResourceTypeDataset, uuid.New(), "resource.edit")
 	if err != nil {
 		t.Fatalf("authorize resource: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 	t.Parallel()
 	authorizer := New(fakeRepository{user: User{Status: UserStatusBlocked}, scope: PermissionScopeGroup})
 
-	result, err := authorizer.AuthorizeGroup(context.Background(), uuid.New(), uuid.New(), "resource.edit")
+	result, err := authorizer.AuthorizeGroup(context.Background(), "user-1", uuid.New(), "resource.edit")
 	if err != nil {
 		t.Fatalf("authorize group: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 		scope:  PermissionScopeGlobal,
 	})
 
-	result, err := authorizer.AuthorizeGlobal(context.Background(), uuid.New(), "organization.manage")
+	result, err := authorizer.AuthorizeGlobal(context.Background(), "user-1", "organization.manage")
 	if err != nil {
 		t.Fatalf("authorize global: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestCanReadPublishedResourceWithoutUser(t *testing.T) {
 func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
-	userID := uuid.New()
+	userID := "user-1"
 
 	for _, test := range []struct {
 		name    string

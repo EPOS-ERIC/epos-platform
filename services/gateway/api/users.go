@@ -8,7 +8,6 @@ import (
 
 type User struct {
 	ID                string                  `json:"id"`
-	AuthIdentifier    string                  `json:"auth_identifier"`
 	Email             string                  `json:"email"`
 	GivenName         string                  `json:"given_name"`
 	FamilyName        string                  `json:"family_name"`
@@ -23,7 +22,6 @@ type User struct {
 // UserSummary is gateway response for user list and profile fields.
 type UserSummary struct {
 	ID                string     `json:"id"`
-	AuthIdentifier    string     `json:"auth_identifier"`
 	Email             string     `json:"email"`
 	GivenName         string     `json:"given_name"`
 	FamilyName        string     `json:"family_name"`

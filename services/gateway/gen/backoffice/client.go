@@ -1,7 +1,7 @@
 /*
-EPOS Backoffice Lifecycle API
+EPOS Backoffice API
 
-Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
+Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -40,13 +40,17 @@ var (
 	queryDescape    = strings.NewReplacer("%5B", "[", "%5D", "]")
 )
 
-// APIClient manages communication with the EPOS Backoffice Lifecycle API API v2.0.0
+// APIClient manages communication with the EPOS Backoffice API API v2.0.0
 // In most cases there should be only one, shared, APIClient.
 type APIClient struct {
 	cfg    *Configuration
 	common service // Reuse a single struct instead of allocating one for each service on the heap.
 
 	// API Services
+
+	GroupAccessAPI GroupAccessAPI
+
+	GroupsAPI GroupsAPI
 
 	HealthAPI HealthAPI
 
@@ -55,6 +59,8 @@ type APIClient struct {
 	InternalIdentityAPI InternalIdentityAPI
 
 	ResourcesAPI ResourcesAPI
+
+	UsersAPI UsersAPI
 }
 
 type service struct {
@@ -73,10 +79,13 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
+	c.GroupAccessAPI = (*GroupAccessAPIService)(&c.common)
+	c.GroupsAPI = (*GroupsAPIService)(&c.common)
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.ImportsAPI = (*ImportsAPIService)(&c.common)
 	c.InternalIdentityAPI = (*InternalIdentityAPIService)(&c.common)
 	c.ResourcesAPI = (*ResourcesAPIService)(&c.common)
+	c.UsersAPI = (*UsersAPIService)(&c.common)
 
 	return c
 }

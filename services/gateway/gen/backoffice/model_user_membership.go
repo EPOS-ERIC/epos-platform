@@ -1,7 +1,7 @@
 /*
-EPOS Backoffice Lifecycle API
+EPOS Backoffice API
 
-Dataset and software lifecycle transport. Command endpoints require X-EPOS-User-ID.
+Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -22,12 +22,13 @@ var _ MappedNullable = &UserMembership{}
 
 // UserMembership struct for UserMembership
 type UserMembership struct {
-	Group       GroupReference `json:"group"`
-	Roles       []string       `json:"roles"`
-	Status      string         `json:"status"`
-	Permissions []string       `json:"permissions"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	Group        GroupReference `json:"group"`
+	Roles        []string       `json:"roles"`
+	Status       string         `json:"status"`
+	Permissions  []string       `json:"permissions"`
+	RoleRequests []RoleRequest  `json:"role_requests"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type _UserMembership UserMembership
@@ -36,12 +37,13 @@ type _UserMembership UserMembership
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUserMembership(group GroupReference, roles []string, status string, permissions []string, createdAt time.Time, updatedAt time.Time) *UserMembership {
+func NewUserMembership(group GroupReference, roles []string, status string, permissions []string, roleRequests []RoleRequest, createdAt time.Time, updatedAt time.Time) *UserMembership {
 	this := UserMembership{}
 	this.Group = group
 	this.Roles = roles
 	this.Status = status
 	this.Permissions = permissions
+	this.RoleRequests = roleRequests
 	this.CreatedAt = createdAt
 	this.UpdatedAt = updatedAt
 	return &this
@@ -151,6 +153,30 @@ func (o *UserMembership) SetPermissions(v []string) {
 	o.Permissions = v
 }
 
+// GetRoleRequests returns the RoleRequests field value
+func (o *UserMembership) GetRoleRequests() []RoleRequest {
+	if o == nil {
+		var ret []RoleRequest
+		return ret
+	}
+
+	return o.RoleRequests
+}
+
+// GetRoleRequestsOk returns a tuple with the RoleRequests field value
+// and a boolean to check if the value has been set.
+func (o *UserMembership) GetRoleRequestsOk() ([]RoleRequest, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.RoleRequests, true
+}
+
+// SetRoleRequests sets field value
+func (o *UserMembership) SetRoleRequests(v []RoleRequest) {
+	o.RoleRequests = v
+}
+
 // GetCreatedAt returns the CreatedAt field value
 func (o *UserMembership) GetCreatedAt() time.Time {
 	if o == nil {
@@ -213,6 +239,7 @@ func (o UserMembership) ToMap() (map[string]interface{}, error) {
 	toSerialize["roles"] = o.Roles
 	toSerialize["status"] = o.Status
 	toSerialize["permissions"] = o.Permissions
+	toSerialize["role_requests"] = o.RoleRequests
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["updated_at"] = o.UpdatedAt
 	return toSerialize, nil
@@ -227,6 +254,7 @@ func (o *UserMembership) UnmarshalJSON(data []byte) (err error) {
 		"roles",
 		"status",
 		"permissions",
+		"role_requests",
 		"created_at",
 		"updated_at",
 	}

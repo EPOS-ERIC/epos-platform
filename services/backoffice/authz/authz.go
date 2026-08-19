@@ -49,7 +49,7 @@ const (
 )
 
 type User struct {
-	ID     uuid.UUID
+	ID     string
 	Status UserStatus
 }
 
@@ -59,8 +59,8 @@ type VersionAuthz struct {
 	Status     ResourceStatus
 }
 
-func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID uuid.UUID) (Result, error) {
-	if actorID == uuid.Nil || targetID == uuid.Nil {
+func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) (Result, error) {
+	if actorID == "" || targetID == "" {
 		return Result{Allowed: false, Reason: "invalid user"}, nil
 	}
 	if actorID == targetID {
@@ -82,13 +82,13 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID uuid.UUI
 }
 
 type repository interface {
-	User(context.Context, uuid.UUID) (User, error)
+	User(context.Context, string) (User, error)
 	PermissionScope(context.Context, string) (PermissionScope, error)
-	IsGlobalAdmin(context.Context, uuid.UUID) (bool, error)
-	HasGlobalPermission(context.Context, uuid.UUID, string) (bool, error)
-	IsActiveMember(context.Context, uuid.UUID, uuid.UUID) (bool, error)
-	HasAnyActiveMembership(context.Context, uuid.UUID) (bool, error)
-	HasGroupPermission(context.Context, uuid.UUID, uuid.UUID, string) (bool, error)
+	IsGlobalAdmin(context.Context, string) (bool, error)
+	HasGlobalPermission(context.Context, string, string) (bool, error)
+	IsActiveMember(context.Context, string, uuid.UUID) (bool, error)
+	HasAnyActiveMembership(context.Context, string) (bool, error)
+	HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error)
 	DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error)
@@ -101,7 +101,7 @@ type repository interface {
 }
 
 // CanReadDatasetVersion applies publication and stored-group membership rules to one version.
-func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *uuid.UUID, datasetID, versionID uuid.UUID) (Result, error) {
+func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, datasetID, versionID uuid.UUID) (Result, error) {
 	version, err := a.repository.DatasetVersionAuthz(ctx, datasetID, versionID)
 	if errors.Is(err, ErrNotFound) {
 		return Result{Allowed: false, Reason: "resource not found"}, nil
@@ -139,7 +139,7 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *uuid.UUI
 }
 
 // CanReadSoftwareApplicationVersion applies publication and stored-group membership rules to one version.
-func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *uuid.UUID, applicationID, versionID uuid.UUID) (Result, error) {
+func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *string, applicationID, versionID uuid.UUID) (Result, error) {
 	version, err := a.repository.SoftwareApplicationVersionAuthz(ctx, applicationID, versionID)
 	if err != nil {
 		return versionReadError("software application", err)
@@ -148,7 +148,7 @@ func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, user
 }
 
 // CanReadSoftwareSourceCodeVersion applies publication and stored-group membership rules to one version.
-func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *uuid.UUID, sourceCodeID, versionID uuid.UUID) (Result, error) {
+func (a *Authorizer) CanReadSoftwareSourceCodeVersion(ctx context.Context, userID *string, sourceCodeID, versionID uuid.UUID) (Result, error) {
 	version, err := a.repository.SoftwareSourceCodeVersionAuthz(ctx, sourceCodeID, versionID)
 	if err != nil {
 		return versionReadError("software source code", err)
@@ -163,7 +163,7 @@ func versionReadError(resource string, err error) (Result, error) {
 	return Result{}, fmt.Errorf("load %s version authorization: %w", resource, err)
 }
 
-func (a *Authorizer) authorizeVersionRead(ctx context.Context, userID *uuid.UUID, groupID uuid.UUID, status ResourceStatus) (Result, error) {
+func (a *Authorizer) authorizeVersionRead(ctx context.Context, userID *string, groupID uuid.UUID, status ResourceStatus) (Result, error) {
 	if status == ResourceStatusPublished {
 		return Result{Allowed: true, Reason: "public published resource"}, nil
 	}
@@ -201,7 +201,7 @@ func New(repository repository) *Authorizer {
 }
 
 // AuthorizeAdmin permits active global administrators only.
-func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID uuid.UUID) (Result, error) {
+func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (Result, error) {
 	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
@@ -217,7 +217,7 @@ func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID uuid.UUID) (Resu
 }
 
 // AuthorizeGlobal evaluates a global permission without requiring membership.
-func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID uuid.UUID, permissionKey string) (Result, error) {
+func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID string, permissionKey string) (Result, error) {
 	if err := a.requirePermissionScope(ctx, permissionKey, PermissionScopeGlobal); err != nil {
 		return Result{}, err
 	}
@@ -249,7 +249,7 @@ func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID uuid.UUID, perm
 // AuthorizeResource gets group from stored logical resource, never caller input.
 func (a *Authorizer) AuthorizeResource(
 	ctx context.Context,
-	userID uuid.UUID,
+	userID string,
 	resourceType ResourceType,
 	resourceID uuid.UUID,
 	permissionKey string,
@@ -266,7 +266,7 @@ func (a *Authorizer) AuthorizeResource(
 }
 
 // AuthorizeGroup handles resource creation before a logical resource exists.
-func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID, groupID uuid.UUID, permissionKey string) (Result, error) {
+func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID string, groupID uuid.UUID, permissionKey string) (Result, error) {
 	if err := a.requirePermissionScope(ctx, permissionKey, PermissionScopeGroup); err != nil {
 		return Result{}, err
 	}
@@ -305,7 +305,7 @@ func (a *Authorizer) AuthorizeGroup(ctx context.Context, userID, groupID uuid.UU
 
 // CanReadResource permits public reads of published resources. Non-public
 // resources require an active member in stored resource group or global admin.
-func (a *Authorizer) CanReadResource(ctx context.Context, userID *uuid.UUID, resourceType ResourceType, resourceID uuid.UUID) (Result, error) {
+func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resourceType ResourceType, resourceID uuid.UUID) (Result, error) {
 	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
 	if errors.Is(err, ErrNotFound) {
 		return Result{Allowed: false, Reason: "resource not found"}, nil
@@ -349,7 +349,7 @@ func (a *Authorizer) CanReadResource(ctx context.Context, userID *uuid.UUID, res
 }
 
 // CanReadContactPoint protects email data while allowing active members in any group.
-func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID uuid.UUID) (Result, error) {
+func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (Result, error) {
 	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
@@ -399,16 +399,16 @@ func (a *Authorizer) resourcePublished(ctx context.Context, typ ResourceType, id
 	}
 }
 
-func (a *Authorizer) activeUser(ctx context.Context, userID uuid.UUID) (User, Result, error) {
+func (a *Authorizer) activeUser(ctx context.Context, userID string) (User, Result, error) {
 	user, err := a.repository.User(ctx, userID)
 	if errors.Is(err, ErrNotFound) {
-		return User{ID: uuid.Nil, Status: ""}, Result{Allowed: false, Reason: "user not found"}, nil
+		return User{ID: "", Status: ""}, Result{Allowed: false, Reason: "user not found"}, nil
 	}
 	if err != nil {
 		return User{}, Result{}, fmt.Errorf("load user: %w", err)
 	}
 	if user.Status != UserStatusActive {
-		return User{ID: uuid.Nil, Status: ""}, Result{Allowed: false, Reason: "user is not active"}, nil
+		return User{ID: "", Status: ""}, Result{Allowed: false, Reason: "user is not active"}, nil
 	}
 	return user, Result{Allowed: true, Reason: ""}, nil
 }

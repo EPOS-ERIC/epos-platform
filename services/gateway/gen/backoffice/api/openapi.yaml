@@ -1,15 +1,22 @@
 openapi: 3.0.3
 info:
-  description: Dataset and software lifecycle transport. Command endpoints require
-    X-EPOS-User-ID.
-  title: EPOS Backoffice Lifecycle API
+  description: "Public group metadata, group access management, resource lifecycle,\
+    \ user access management, and internal identity transport. Authenticated endpoints\
+    \ require X-EPOS-User-ID."
+  title: EPOS Backoffice API
   version: 2.0.0
 servers:
 - url: /
 tags:
 - description: Service availability.
   name: Health
-- description: Shared dataset and software resource lifecycle commands.
+- description: Public group metadata.
+  name: Groups
+- description: "Group memberships, roles, role requests, and direct permissions."
+  name: Group Access
+- description: "User directory, profiles, and global permissions."
+  name: Users
+- description: Shared dataset and software resource lifecycle.
   name: Resources
 - description: Global administrator metadata import.
   name: Imports
@@ -28,14 +35,15 @@ paths:
       summary: Health check
       tags:
       - Health
-  /api/v1/users/by-auth/{auth_identifier}:
+  /api/v1/users:
     get:
-      description: Internal Gateway-to-Backoffice lookup. Must not be publicly exposed.
-      operationId: getUserByAuthIdentifier
+      description: "Requires global ADMIN, global.membership.manage, global.role.manage,\
+        \ or global.permission.manage."
+      operationId: listUsers
       parameters:
       - explode: false
-        in: path
-        name: auth_identifier
+        in: header
+        name: X-EPOS-User-ID
         required: true
         schema:
           type: string
@@ -45,35 +53,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-          description: User found
-        "400":
+                items:
+                  $ref: "#/components/schemas/UserSummary"
+                type: array
+          description: Users returned
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
           content:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
-          description: Invalid request
-        "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-          description: Resource or selected version not found
+          description: Access denied
         "500":
           content:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
           description: Internal server error
-      security: []
-      summary: Get user by authentication identifier
+      summary: List users
       tags:
-      - Internal Identity
-  /api/v1/users:
+      - Users
+  /api/v1/internal/users:
     post:
       description: Internal Gateway-to-Backoffice creation from verified authentication
         claims. Must not be publicly exposed.
-      operationId: createUser
+      operationId: provisionUser
       requestBody:
         content:
           application/json:
@@ -106,21 +115,20 @@ paths:
                 $ref: "#/components/schemas/Problem"
           description: Internal server error
       security: []
-      summary: Create user
+      summary: Provision user
       tags:
       - Internal Identity
-  /api/v1/users/{id}:
+  /api/v1/users/{user_id}:
     get:
-      description: Internal Gateway-to-Backoffice user lookup. Must not be publicly
-        exposed.
-      operationId: getUserByID
+      description: "Users may read own detail. Global ADMIN, global.membership.manage,\
+        \ global.role.manage, and global.permission.manage may read any user detail."
+      operationId: getUser
       parameters:
       - explode: false
         in: path
-        name: id
+        name: user_id
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       - explode: false
@@ -128,7 +136,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -168,10 +175,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
           description: Internal server error
-      security: []
-      summary: Get user by id
+      summary: Get user
       tags:
-      - Internal Identity
+      - Users
   /api/v1/imports/turtle:
     post:
       description: "Atomically creates or updates groups, categories, organizations,\
@@ -185,7 +191,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       requestBody:
@@ -236,20 +241,12 @@ paths:
       summary: Import Turtle metadata
       tags:
       - Imports
-  /api/v1/groups/{group_id}/resources/{resource_type}:
+  /api/v1/resources/{resource_type}:
     post:
       description: Creates a logical resource and its first editable DRAFT version
-        for the selected resource type.
+        in request group_id.
       operationId: createResource
       parameters:
-      - explode: false
-        in: path
-        name: group_id
-        required: true
-        schema:
-          format: uuid
-          type: string
-        style: simple
       - explode: false
         in: path
         name: resource_type
@@ -266,14 +263,13 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/createResource_request"
+              $ref: "#/components/schemas/CreateResourceRequest"
         required: true
       responses:
         "201":
@@ -315,7 +311,7 @@ paths:
       summary: Create resource draft
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}:
     get:
       description: Returns the selected resource version. Published dataset responses
         may be full or public; software records are returned directly.
@@ -334,7 +330,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -397,7 +393,7 @@ paths:
       summary: Read resource version
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/draft:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft:
     delete:
       description: Permanently deletes selected DRAFT or REJECTED version and removes
         its logical resource when no versions remain.
@@ -416,7 +412,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -435,7 +431,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -498,7 +493,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -517,7 +512,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       requestBody:
@@ -572,7 +566,7 @@ paths:
       summary: Replace resource draft
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/submit:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit:
     post:
       description: Changes selected DRAFT version to SUBMITTED and makes its metadata
         immutable.
@@ -591,7 +585,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -610,7 +604,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -659,7 +652,7 @@ paths:
       summary: Submit resource draft
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/withdraw:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw:
     post:
       description: Returns selected SUBMITTED version to editable DRAFT status.
       operationId: withdrawResource
@@ -677,7 +670,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -696,7 +689,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -745,7 +737,7 @@ paths:
       summary: Withdraw resource submission
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/reject:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reject:
     post:
       description: Changes selected SUBMITTED version to REJECTED. A non-empty rejection
         note is required.
@@ -764,7 +756,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -783,7 +775,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       requestBody:
@@ -838,7 +829,7 @@ paths:
       summary: Reject resource submission
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/reopen:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen:
     post:
       description: Returns selected REJECTED version to editable DRAFT status while
         retaining rejection feedback.
@@ -857,7 +848,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -876,7 +867,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -925,7 +915,7 @@ paths:
       summary: Reopen rejected resource
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/publish:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/publish:
     post:
       description: Publishes selected SUBMITTED version and atomically archives any
         current publication.
@@ -944,7 +934,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -963,7 +953,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -1012,7 +1001,7 @@ paths:
       summary: Publish resource submission
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/versions/{version_id}/unpublish:
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish:
     post:
       description: Archives selected PUBLISHED version without creating a replacement
         draft.
@@ -1031,7 +1020,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -1050,7 +1039,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -1099,7 +1087,7 @@ paths:
       summary: Unpublish resource version
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/draft-from-publication:
+  /api/v1/resources/{resource_type}/{resource_id}/drafts/from-publication:
     post:
       description: Clones current PUBLISHED version and its version-owned metadata
         into a new DRAFT.
@@ -1118,7 +1106,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -1129,7 +1117,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -1178,7 +1165,7 @@ paths:
       summary: Create resource draft from publication
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{id}/draft-from-archive:
+  /api/v1/resources/{resource_type}/{resource_id}/drafts/from-archive:
     post:
       description: Clones latest ARCHIVED version when selected logical resource has
         no active publication.
@@ -1197,7 +1184,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -1208,7 +1195,6 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       responses:
@@ -1257,20 +1243,12 @@ paths:
       summary: Create resource draft from archive
       tags:
       - Resources
-  /api/v1/groups/{group_id}/resources/{resource_type}/{id}/copy:
+  /api/v1/resources/{resource_type}/{resource_id}/copies:
     post:
-      description: Creates an independent DRAFT resource from the source PUBLISHED
-        version. A new source IRI is required.
+      description: Creates an independent DRAFT resource in request target_group_id
+        from the source PUBLISHED version. A new source IRI is required.
       operationId: copyResource
       parameters:
-      - explode: false
-        in: path
-        name: group_id
-        required: true
-        schema:
-          format: uuid
-          type: string
-        style: simple
       - explode: false
         in: path
         name: resource_type
@@ -1284,7 +1262,7 @@ paths:
         style: simple
       - explode: false
         in: path
-        name: id
+        name: resource_id
         required: true
         schema:
           format: uuid
@@ -1295,14 +1273,13 @@ paths:
         name: X-EPOS-User-ID
         required: true
         schema:
-          format: uuid
           type: string
         style: simple
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CopyRequest"
+              $ref: "#/components/schemas/CopyResourceRequest"
         required: true
       responses:
         "201":
@@ -1347,9 +1324,1073 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
           description: Internal server error
-      summary: Copy published resource into group
+      summary: Copy published resource
       tags:
       - Resources
+  /api/v1/groups:
+    get:
+      description: Returns public group metadata. Does not include membership data.
+      operationId: listGroups
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/Group"
+                type: array
+          description: Groups returned
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: List groups
+      tags:
+      - Groups
+  /api/v1/groups/{group_id}:
+    get:
+      description: Returns public group metadata. Does not include membership data.
+      operationId: getGroup
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group returned
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Get group
+      tags:
+      - Groups
+  /api/v1/groups/{group_id}/memberships:
+    get:
+      description: "Requires global ADMIN, global.membership.manage, global.role.manage,\
+        \ or matching active group membership/role/permission management permission."
+      operationId: listGroupMemberships
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/GroupMembership"
+                type: array
+          description: Memberships returned
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: List group memberships
+      tags:
+      - Group Access
+  /api/v1/groups/{group_id}/membership-requests:
+    delete:
+      description: Deletes caller's own PENDING membership request and pending role
+        requests.
+      operationId: withdrawGroupMembershipRequest
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Membership request withdrawn
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Withdraw own membership request
+      tags:
+      - Group Access
+    post:
+      description: Active user creates own PENDING membership with an explicit possibly-empty
+        list of requested EDITOR and REVIEWER roles.
+      operationId: requestGroupMembership
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMembershipRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+          description: Membership requested
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Request group membership
+      tags:
+      - Group Access
+  /api/v1/groups/{group_id}/memberships/{user_id}:
+    delete:
+      description: "Requires group.membership.manage in this group, global.membership.manage,\
+        \ or global ADMIN. Membership holding GROUP_ADMIN requires global.membership.manage\
+        \ or global ADMIN."
+      operationId: revokeGroupMembership
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Membership revoked
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Revoke membership
+      tags:
+      - Group Access
+    patch:
+      description: "Requires group.membership.manage in this group, global.membership.manage,\
+        \ or global ADMIN."
+      operationId: decideGroupMembership
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembershipDecisionRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+          description: Membership decision applied
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Accept or reject membership request
+      tags:
+      - Group Access
+  /api/v1/groups/{group_id}/role-requests:
+    post:
+      description: Active group member requests EDITOR or REVIEWER for self.
+      operationId: requestGroupRole
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleRequest"
+          description: Role requested
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Request group role
+      tags:
+      - Group Access
+  /api/v1/groups/{group_id}/role-requests/{request_id}:
+    delete:
+      description: Deletes caller's own pending role request.
+      operationId: withdrawGroupRoleRequest
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: request_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Role request withdrawn
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Withdraw own role request
+      tags:
+      - Group Access
+    patch:
+      description: "Requires group.role.manage in this group, global.role.manage,\
+        \ or global ADMIN."
+      operationId: decideGroupRoleRequest
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: request_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleRequestDecisionRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+          description: Role request decision applied
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Accept or reject role request
+      tags:
+      - Group Access
+  /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role}:
+    delete:
+      description: Idempotent. Group role managers remove EDITOR or REVIEWER in their
+        group; global role managers and global ADMIN may also remove GROUP_ADMIN.
+      operationId: removeGroupRole
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: role
+        required: true
+        schema:
+          enum:
+          - EDITOR
+          - REVIEWER
+          - GROUP_ADMIN
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Role removed
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Remove group role
+      tags:
+      - Group Access
+    put:
+      description: Idempotent. Group role managers assign EDITOR or REVIEWER in their
+        group; global role managers and global ADMIN may also assign GROUP_ADMIN.
+      operationId: assignGroupRole
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: role
+        required: true
+        schema:
+          enum:
+          - EDITOR
+          - REVIEWER
+          - GROUP_ADMIN
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Role assigned
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Assign group role
+      tags:
+      - Group Access
+  /api/v1/groups/{group_id}/memberships/{user_id}/permissions/{permission}:
+    delete:
+      description: Idempotent. Requires group.permission.manage in this group or global
+        ADMIN.
+      operationId: revokeGroupPermission
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: permission
+        required: true
+        schema:
+          enum:
+          - resource.create
+          - resource.edit
+          - resource.submit
+          - resource.withdraw
+          - resource.reopen
+          - resource.discard
+          - resource.reject
+          - resource.publish
+          - resource.unpublish
+          - group.membership.manage
+          - group.role.manage
+          - group.permission.manage
+          - category.manage
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Permission revoked
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Revoke direct group permission
+      tags:
+      - Group Access
+    put:
+      description: Idempotent. Requires group.permission.manage in this group or global
+        ADMIN.
+      operationId: grantGroupPermission
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: permission
+        required: true
+        schema:
+          enum:
+          - resource.create
+          - resource.edit
+          - resource.submit
+          - resource.withdraw
+          - resource.reopen
+          - resource.discard
+          - resource.reject
+          - resource.publish
+          - resource.unpublish
+          - group.membership.manage
+          - group.role.manage
+          - group.permission.manage
+          - category.manage
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Permission granted
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Grant direct group permission
+      tags:
+      - Group Access
+  /api/v1/users/{user_id}/global-permissions/{permission}:
+    delete:
+      description: Idempotent. Requires global.permission.manage or global ADMIN.
+      operationId: revokeGlobalPermission
+      parameters:
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: permission
+        required: true
+        schema:
+          enum:
+          - global.membership.manage
+          - global.role.manage
+          - global.permission.manage
+          - organization.manage
+          - contact_point.manage
+          - category_scheme.manage
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Global permission revoked
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Revoke global permission
+      tags:
+      - Users
+    put:
+      description: Idempotent. Requires global.permission.manage or global ADMIN.
+      operationId: grantGlobalPermission
+      parameters:
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: permission
+        required: true
+        schema:
+          enum:
+          - global.membership.manage
+          - global.role.manage
+          - global.permission.manage
+          - organization.manage
+          - contact_point.manage
+          - category_scheme.manage
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Global permission granted
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Grant global permission
+      tags:
+      - Users
 components:
   parameters:
     Actor:
@@ -1358,7 +2399,6 @@ components:
       name: X-EPOS-User-ID
       required: true
       schema:
-        format: uuid
         type: string
       style: simple
     ActorOptional:
@@ -1385,7 +2425,7 @@ components:
     ResourceID:
       explode: false
       in: path
-      name: id
+      name: resource_id
       required: true
       schema:
         format: uuid
@@ -1407,6 +2447,72 @@ components:
       required: true
       schema:
         format: uuid
+        type: string
+      style: simple
+    UserID:
+      explode: false
+      in: path
+      name: user_id
+      required: true
+      schema:
+        type: string
+      style: simple
+    RoleRequestID:
+      explode: false
+      in: path
+      name: request_id
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
+    GroupRole:
+      explode: false
+      in: path
+      name: role
+      required: true
+      schema:
+        enum:
+        - EDITOR
+        - REVIEWER
+        - GROUP_ADMIN
+        type: string
+      style: simple
+    GroupPermission:
+      explode: false
+      in: path
+      name: permission
+      required: true
+      schema:
+        enum:
+        - resource.create
+        - resource.edit
+        - resource.submit
+        - resource.withdraw
+        - resource.reopen
+        - resource.discard
+        - resource.reject
+        - resource.publish
+        - resource.unpublish
+        - group.membership.manage
+        - group.role.manage
+        - group.permission.manage
+        - category.manage
+        type: string
+      style: simple
+    GlobalPermission:
+      explode: false
+      in: path
+      name: permission
+      required: true
+      schema:
+        enum:
+        - global.membership.manage
+        - global.role.manage
+        - global.permission.manage
+        - organization.manage
+        - contact_point.manage
+        - category_scheme.manage
         type: string
       style: simple
   responses:
@@ -1488,12 +2594,12 @@ components:
     CreateUserRequest:
       additionalProperties: false
       example:
-        auth_identifier: auth_identifier
+        id: id
         email: email
         given_name: given_name
         family_name: family_name
       properties:
-        auth_identifier:
+        id:
           description: Stable external authentication identifier from AAI.
           minLength: 1
           type: string
@@ -1505,16 +2611,15 @@ components:
         family_name:
           type: string
       required:
-      - auth_identifier
       - email
       - family_name
       - given_name
+      - id
       type: object
     User:
       additionalProperties: false
       example:
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        auth_identifier: auth_identifier
+        id: id
         email: email
         given_name: given_name
         family_name: family_name
@@ -1538,6 +2643,15 @@ components:
           permissions:
           - permissions
           - permissions
+          role_requests:
+          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            role: EDITOR
+            status: PENDING
+            requested_at: 2000-01-23T04:56:07.000+00:00
+          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            role: EDITOR
+            status: PENDING
+            requested_at: 2000-01-23T04:56:07.000+00:00
           created_at: 2000-01-23T04:56:07.000+00:00
           updated_at: 2000-01-23T04:56:07.000+00:00
         - group:
@@ -1550,13 +2664,19 @@ components:
           permissions:
           - permissions
           - permissions
+          role_requests:
+          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            role: EDITOR
+            status: PENDING
+            requested_at: 2000-01-23T04:56:07.000+00:00
+          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+            role: EDITOR
+            status: PENDING
+            requested_at: 2000-01-23T04:56:07.000+00:00
           created_at: 2000-01-23T04:56:07.000+00:00
           updated_at: 2000-01-23T04:56:07.000+00:00
       properties:
         id:
-          format: uuid
-          type: string
-        auth_identifier:
           type: string
         email:
           format: email
@@ -1590,7 +2710,6 @@ components:
             $ref: "#/components/schemas/UserMembership"
           type: array
       required:
-      - auth_identifier
       - created_at
       - email
       - family_name
@@ -1601,6 +2720,53 @@ components:
       - memberships
       - status
       - updated_at
+      type: object
+    UserSummary:
+      additionalProperties: false
+      example:
+        id: id
+        email: email
+        given_name: given_name
+        family_name: family_name
+        status: ACTIVE
+        global_roles:
+        - global_roles
+        - global_roles
+        global_permissions:
+        - global_permissions
+        - global_permissions
+      properties:
+        id:
+          type: string
+        email:
+          format: email
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        status:
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - BLOCKED
+          type: string
+        global_roles:
+          items:
+            type: string
+          type: array
+        global_permissions:
+          items:
+            type: string
+          type: array
+      required:
+      - email
+      - family_name
+      - given_name
+      - global_permissions
+      - global_roles
+      - id
+      - status
       type: object
     UserMembership:
       additionalProperties: false
@@ -1615,6 +2781,15 @@ components:
         permissions:
         - permissions
         - permissions
+        role_requests:
+        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          role: EDITOR
+          status: PENDING
+          requested_at: 2000-01-23T04:56:07.000+00:00
+        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          role: EDITOR
+          status: PENDING
+          requested_at: 2000-01-23T04:56:07.000+00:00
         created_at: 2000-01-23T04:56:07.000+00:00
         updated_at: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -1634,6 +2809,10 @@ components:
           items:
             type: string
           type: array
+        role_requests:
+          items:
+            $ref: "#/components/schemas/RoleRequest"
+          type: array
         created_at:
           format: date-time
           type: string
@@ -1644,6 +2823,7 @@ components:
       - created_at
       - group
       - permissions
+      - role_requests
       - roles
       - status
       - updated_at
@@ -1662,6 +2842,237 @@ components:
       required:
       - id
       - name
+      type: object
+    Group:
+      additionalProperties: false
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        source_iri: source_iri
+        name: name
+        description: description
+        label: label
+        logo: logo
+        page: page
+        color: color
+        position: 0
+        concept: DATA
+      properties:
+        id:
+          format: uuid
+          type: string
+        source_iri:
+          type: string
+        name:
+          type: string
+        description:
+          nullable: true
+          type: string
+        label:
+          nullable: true
+          type: string
+        logo:
+          nullable: true
+          type: string
+        page:
+          nullable: true
+          type: string
+        color:
+          nullable: true
+          type: string
+        position:
+          format: int32
+          type: integer
+        concept:
+          enum:
+          - DATA
+          - FACILITIES
+          - SOFTWARE
+          type: string
+      required:
+      - concept
+      - id
+      - name
+      - position
+      - source_iri
+      type: object
+    MembershipUser:
+      additionalProperties: false
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        given_name: given_name
+        family_name: family_name
+        email: email
+      properties:
+        id:
+          format: uuid
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        email:
+          format: email
+          type: string
+      required:
+      - email
+      - family_name
+      - given_name
+      - id
+      type: object
+    GroupMembership:
+      additionalProperties: false
+      example:
+        user:
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          given_name: given_name
+          family_name: family_name
+          email: email
+        status: PENDING
+        roles:
+        - EDITOR
+        - EDITOR
+        permissions:
+        - permissions
+        - permissions
+        role_requests:
+        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          role: EDITOR
+          status: PENDING
+          requested_at: 2000-01-23T04:56:07.000+00:00
+        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          role: EDITOR
+          status: PENDING
+          requested_at: 2000-01-23T04:56:07.000+00:00
+        created_at: 2000-01-23T04:56:07.000+00:00
+        updated_at: 2000-01-23T04:56:07.000+00:00
+      properties:
+        user:
+          $ref: "#/components/schemas/MembershipUser"
+        status:
+          enum:
+          - PENDING
+          - ACTIVE
+          - REJECTED
+          type: string
+        roles:
+          items:
+            enum:
+            - EDITOR
+            - REVIEWER
+            - GROUP_ADMIN
+            type: string
+          type: array
+        permissions:
+          items:
+            type: string
+          type: array
+        role_requests:
+          description: Pending role requests only.
+          items:
+            $ref: "#/components/schemas/RoleRequest"
+          type: array
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+      required:
+      - created_at
+      - permissions
+      - role_requests
+      - roles
+      - status
+      - updated_at
+      - user
+      type: object
+    RoleRequest:
+      additionalProperties: false
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        role: EDITOR
+        status: PENDING
+        requested_at: 2000-01-23T04:56:07.000+00:00
+      properties:
+        id:
+          format: uuid
+          type: string
+        role:
+          enum:
+          - EDITOR
+          - REVIEWER
+          type: string
+        status:
+          enum:
+          - PENDING
+          - ACCEPTED
+          - REJECTED
+          type: string
+        requested_at:
+          format: date-time
+          type: string
+      required:
+      - id
+      - requested_at
+      - role
+      - status
+      type: object
+    CreateMembershipRequest:
+      additionalProperties: false
+      example:
+        roles:
+        - EDITOR
+        - EDITOR
+      properties:
+        roles:
+          items:
+            enum:
+            - EDITOR
+            - REVIEWER
+            type: string
+          type: array
+          uniqueItems: true
+      required:
+      - roles
+      type: object
+    MembershipDecisionRequest:
+      additionalProperties: false
+      example:
+        status: ACTIVE
+      properties:
+        status:
+          enum:
+          - ACTIVE
+          - REJECTED
+          type: string
+      required:
+      - status
+      type: object
+    CreateRoleRequest:
+      additionalProperties: false
+      example:
+        role: EDITOR
+      properties:
+        role:
+          enum:
+          - EDITOR
+          - REVIEWER
+          type: string
+      required:
+      - role
+      type: object
+    RoleRequestDecisionRequest:
+      additionalProperties: false
+      example:
+        status: ACCEPTED
+      properties:
+        status:
+          enum:
+          - ACCEPTED
+          - REJECTED
+          type: string
+      required:
+      - status
       type: object
     ReplaceSoftwareApplicationDraftRequest:
       properties:
@@ -2398,15 +3809,39 @@ components:
       required:
       - note
       type: object
-    CopyRequest:
+    CreateResourceRequest:
+      additionalProperties: false
       example:
+        group_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        metadata:
+          source_iri: sourceiritest
+          title: my dataset
+          description: description
+          keywords: test
+      properties:
+        group_id:
+          format: uuid
+          type: string
+        metadata:
+          $ref: "#/components/schemas/CreateResourceRequest_metadata"
+      required:
+      - group_id
+      - metadata
+      type: object
+    CopyResourceRequest:
+      example:
+        target_group_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
         source_iri: https://openapi-generator.tech
       properties:
+        target_group_id:
+          format: uuid
+          type: string
         source_iri:
           format: uri
           type: string
       required:
       - source_iri
+      - target_group_id
       type: object
     Problem:
       properties:
@@ -3726,11 +5161,6 @@ components:
       - ARCHIVED
       - REJECTED
       type: string
-    createResource_request:
-      anyOf:
-      - $ref: "#/components/schemas/DatasetDraftMetadata"
-      - $ref: "#/components/schemas/SoftwareApplicationDraftMetadata"
-      - $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata"
     replaceResourceDraft_request:
       anyOf:
       - $ref: "#/components/schemas/ReplaceDraftRequest"
@@ -3741,6 +5171,11 @@ components:
       - $ref: "#/components/schemas/DatasetMetadata"
       - $ref: "#/components/schemas/SoftwareApplicationMetadata"
       - $ref: "#/components/schemas/SoftwareSourceCodeMetadata"
+    CreateResourceRequest_metadata:
+      oneOf:
+      - $ref: "#/components/schemas/DatasetDraftMetadata"
+      - $ref: "#/components/schemas/SoftwareApplicationDraftMetadata"
+      - $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata"
     StringParameter_metadata:
       allOf:
       - $ref: "#/components/schemas/ParameterMetadata"

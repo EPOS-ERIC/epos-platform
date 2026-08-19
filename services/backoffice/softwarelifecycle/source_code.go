@@ -17,25 +17,25 @@ type SourceCode struct {
 	VersionID    uuid.UUID
 	Revision     int32
 	Status       metadata.DatasetStatus
-	CreatedBy    uuid.UUID
+	CreatedBy    string
 	Group        metadata.CategoryScheme
 	Metadata     metadata.SoftwareSourceCode
 }
 
 type SourceCodeRepository interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (SourceCode, error)
-	CreateDraft(context.Context, uuid.UUID, uuid.UUID, metadata.SoftwareSourceCode) (SourceCode, error)
+	CreateDraft(context.Context, string, uuid.UUID, metadata.SoftwareSourceCode) (SourceCode, error)
 	ReplaceDraft(context.Context, uuid.UUID, uuid.UUID, int32, metadata.SoftwareSourceCode) (SourceCode, error)
-	Submit(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (SourceCode, error)
+	Submit(context.Context, string, uuid.UUID, uuid.UUID) (SourceCode, error)
 	Withdraw(context.Context, uuid.UUID, uuid.UUID) (SourceCode, error)
-	Reject(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (SourceCode, error)
+	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (SourceCode, error)
 	Reopen(context.Context, uuid.UUID, uuid.UUID) (SourceCode, error)
-	Publish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (SourceCode, error)
+	Publish(context.Context, string, uuid.UUID, uuid.UUID) (SourceCode, error)
 	Discard(context.Context, uuid.UUID, uuid.UUID) error
-	Unpublish(context.Context, uuid.UUID, uuid.UUID, uuid.UUID) (SourceCode, error)
-	DraftFromPublication(context.Context, uuid.UUID, uuid.UUID) (SourceCode, error)
-	DraftFromLatestArchive(context.Context, uuid.UUID, uuid.UUID) (SourceCode, error)
-	CopyPublished(context.Context, uuid.UUID, uuid.UUID, uuid.UUID, string) (SourceCode, error)
+	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (SourceCode, error)
+	DraftFromPublication(context.Context, string, uuid.UUID) (SourceCode, error)
+	DraftFromLatestArchive(context.Context, string, uuid.UUID) (SourceCode, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (SourceCode, error)
 }
 
 type SourceCodeService struct {
@@ -49,7 +49,7 @@ func NewSourceCodeService(authorizer SourceCodeAuthorizer, repository SourceCode
 }
 
 // CreateDraft creates a software source code draft in groupID.
-func (s *SourceCodeService) CreateDraft(ctx context.Context, actorID, groupID uuid.UUID, value metadata.SoftwareSourceCode) (SourceCode, error) {
+func (s *SourceCodeService) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.SoftwareSourceCode) (SourceCode, error) {
 	if err := normalizeSourceCode(&value); err != nil {
 		return SourceCode{}, err
 	}
@@ -61,7 +61,7 @@ func (s *SourceCodeService) CreateDraft(ctx context.Context, actorID, groupID uu
 }
 
 // Read returns an authorized source code version and contact visibility.
-func (s *SourceCodeService) Read(ctx context.Context, actorID *uuid.UUID, sourceCodeID, versionID uuid.UUID) (SourceCode, bool, error) {
+func (s *SourceCodeService) Read(ctx context.Context, actorID *string, sourceCodeID, versionID uuid.UUID) (SourceCode, bool, error) {
 	result, err := s.authorizer.CanReadSoftwareSourceCodeVersion(ctx, actorID, sourceCodeID, versionID)
 	if err != nil {
 		return SourceCode{}, false, operationError("authorize source code read", err)
@@ -82,7 +82,7 @@ func (s *SourceCodeService) Read(ctx context.Context, actorID *uuid.UUID, source
 }
 
 // ReplaceDraft replaces a source code draft at revision.
-func (s *SourceCodeService) ReplaceDraft(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID, revision int32, value metadata.SoftwareSourceCode) (SourceCode, error) {
+func (s *SourceCodeService) ReplaceDraft(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID, revision int32, value metadata.SoftwareSourceCode) (SourceCode, error) {
 	if revision < 1 {
 		return SourceCode{}, fmt.Errorf("revision must be positive: %w", ErrInvalid)
 	}
@@ -97,7 +97,7 @@ func (s *SourceCodeService) ReplaceDraft(ctx context.Context, actorID, sourceCod
 }
 
 // Submit submits a source code draft for review.
-func (s *SourceCodeService) Submit(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) Submit(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionSubmit); err != nil {
 		return SourceCode{}, operationError("authorize source code submission", err)
 	}
@@ -106,7 +106,7 @@ func (s *SourceCodeService) Submit(ctx context.Context, actorID, sourceCodeID, v
 }
 
 // Withdraw withdraws a submitted source code version.
-func (s *SourceCodeService) Withdraw(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) Withdraw(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionWithdraw); err != nil {
 		return SourceCode{}, operationError("authorize source code withdrawal", err)
 	}
@@ -115,7 +115,7 @@ func (s *SourceCodeService) Withdraw(ctx context.Context, actorID, sourceCodeID,
 }
 
 // Reject rejects a submitted source code version with note.
-func (s *SourceCodeService) Reject(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID, note string) (SourceCode, error) {
+func (s *SourceCodeService) Reject(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID, note string) (SourceCode, error) {
 	note = strings.TrimSpace(note)
 	if note == "" {
 		return SourceCode{}, fmt.Errorf("rejection note is required: %w", ErrInvalid)
@@ -128,7 +128,7 @@ func (s *SourceCodeService) Reject(ctx context.Context, actorID, sourceCodeID, v
 }
 
 // Reopen reopens a rejected source code version.
-func (s *SourceCodeService) Reopen(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) Reopen(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionReopen); err != nil {
 		return SourceCode{}, operationError("authorize source code reopening", err)
 	}
@@ -137,7 +137,7 @@ func (s *SourceCodeService) Reopen(ctx context.Context, actorID, sourceCodeID, v
 }
 
 // Publish publishes a submitted source code version.
-func (s *SourceCodeService) Publish(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) Publish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionPublish); err != nil {
 		return SourceCode{}, operationError("authorize source code publication", err)
 	}
@@ -146,7 +146,7 @@ func (s *SourceCodeService) Publish(ctx context.Context, actorID, sourceCodeID, 
 }
 
 // Discard removes a source code draft or rejected version.
-func (s *SourceCodeService) Discard(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) error {
+func (s *SourceCodeService) Discard(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) error {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionDiscard); err != nil {
 		return operationError("authorize source code discard", err)
 	}
@@ -154,7 +154,7 @@ func (s *SourceCodeService) Discard(ctx context.Context, actorID, sourceCodeID, 
 }
 
 // Unpublish archives a published source code version.
-func (s *SourceCodeService) Unpublish(ctx context.Context, actorID, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) Unpublish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionUnpublish); err != nil {
 		return SourceCode{}, operationError("authorize source code unpublication", err)
 	}
@@ -163,7 +163,7 @@ func (s *SourceCodeService) Unpublish(ctx context.Context, actorID, sourceCodeID
 }
 
 // DraftFromPublication creates a draft from published source code metadata.
-func (s *SourceCodeService) DraftFromPublication(ctx context.Context, actorID, sourceCodeID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) DraftFromPublication(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionCreate); err != nil {
 		return SourceCode{}, operationError("authorize source code draft creation", err)
 	}
@@ -172,7 +172,7 @@ func (s *SourceCodeService) DraftFromPublication(ctx context.Context, actorID, s
 }
 
 // DraftFromLatestArchive creates a draft from the latest archived version.
-func (s *SourceCodeService) DraftFromLatestArchive(ctx context.Context, actorID, sourceCodeID uuid.UUID) (SourceCode, error) {
+func (s *SourceCodeService) DraftFromLatestArchive(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (SourceCode, error) {
 	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionCreate); err != nil {
 		return SourceCode{}, operationError("authorize source code draft creation", err)
 	}
@@ -181,7 +181,7 @@ func (s *SourceCodeService) DraftFromLatestArchive(ctx context.Context, actorID,
 }
 
 // CopyPublished copies published source code metadata into targetGroupID.
-func (s *SourceCodeService) CopyPublished(ctx context.Context, actorID, sourceSourceCodeID, targetGroupID uuid.UUID, sourceIRI string) (SourceCode, error) {
+func (s *SourceCodeService) CopyPublished(ctx context.Context, actorID string, sourceSourceCodeID, targetGroupID uuid.UUID, sourceIRI string) (SourceCode, error) {
 	sourceIRI = strings.TrimSpace(sourceIRI)
 	if sourceIRI == "" {
 		return SourceCode{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)

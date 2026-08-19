@@ -276,7 +276,7 @@ type CloneLifecycleSoftwareSourceCodeVersionParams struct {
 	SourceVersionID            uuid.UUID
 	SourceStatus               ResourceStatus
 	TargetSoftwareSourceCodeID uuid.UUID
-	ActorID                    uuid.UUID
+	ActorID                    string
 	TargetGroupID              uuid.UUID
 	CopyCategories             bool
 }
@@ -296,16 +296,16 @@ type CloneLifecycleSoftwareSourceCodeVersionRow struct {
 	RuntimePlatform      *string
 	MainEntityOfPage     *string
 	Version              *string
-	CreatedBy            uuid.UUID
+	CreatedBy            string
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
-	SubmittedBy          *uuid.UUID
+	SubmittedBy          *string
 	SubmittedAt          *time.Time
-	PublishedBy          *uuid.UUID
+	PublishedBy          *string
 	PublishedAt          *time.Time
-	ArchivedBy           *uuid.UUID
+	ArchivedBy           *string
 	ArchivedAt           *time.Time
-	RejectedBy           *uuid.UUID
+	RejectedBy           *string
 	RejectedAt           *time.Time
 	RejectionNote        *string
 }
@@ -367,7 +367,7 @@ RETURNING
 type CreateLifecycleSoftwareSourceCodeParams struct {
 	SourceIri string
 	GroupID   uuid.UUID
-	CreatedBy uuid.UUID
+	CreatedBy string
 }
 
 func (q *Queries) CreateLifecycleSoftwareSourceCode(ctx context.Context, arg CreateLifecycleSoftwareSourceCodeParams) (SoftwareSourceCode, error) {
@@ -430,7 +430,7 @@ type CreateLifecycleSoftwareSourceCodeVersionParams struct {
 	RuntimePlatform      *string
 	MainEntityOfPage     *string
 	Version              *string
-	CreatedBy            uuid.UUID
+	CreatedBy            string
 }
 
 func (q *Queries) CreateLifecycleSoftwareSourceCodeVersion(ctx context.Context, arg CreateLifecycleSoftwareSourceCodeVersionParams) (SoftwareSourceCodeVersion, error) {
@@ -1051,7 +1051,7 @@ RETURNING
 `
 
 type PublishLifecycleSoftwareSourceCodeVersionParams struct {
-	ActorID   *uuid.UUID
+	ActorID   *string
 	VersionID uuid.UUID
 }
 
@@ -1105,7 +1105,7 @@ RETURNING
 `
 
 type RejectLifecycleSoftwareSourceCodeVersionParams struct {
-	ActorID       *uuid.UUID
+	ActorID       *string
 	RejectionNote *string
 	ID            uuid.UUID
 }
@@ -1293,7 +1293,7 @@ RETURNING
 `
 
 type SubmitLifecycleSoftwareSourceCodeVersionParams struct {
-	ActorID *uuid.UUID
+	ActorID *string
 	ID      uuid.UUID
 }
 
@@ -1346,7 +1346,7 @@ RETURNING
 `
 
 type UnpublishLifecycleSoftwareSourceCodeVersionParams struct {
-	ActorID *uuid.UUID
+	ActorID *string
 	ID      uuid.UUID
 }
 

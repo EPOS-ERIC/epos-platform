@@ -673,7 +673,7 @@ type CloneLifecycleDatasetVersionParams struct {
 	SourceVersionID uuid.UUID
 	SourceStatus    ResourceStatus
 	TargetDatasetID uuid.UUID
-	ActorID         uuid.UUID
+	ActorID         string
 	TargetGroupID   uuid.UUID
 	CopyCategories  bool
 }
@@ -695,16 +695,16 @@ type CloneLifecycleDatasetVersionRow struct {
 	SpatialPolygon     interface{}
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
-	CreatedBy          uuid.UUID
+	CreatedBy          string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
-	SubmittedBy        *uuid.UUID
+	SubmittedBy        *string
 	SubmittedAt        *time.Time
-	PublishedBy        *uuid.UUID
+	PublishedBy        *string
 	PublishedAt        *time.Time
-	ArchivedBy         *uuid.UUID
+	ArchivedBy         *string
 	ArchivedAt         *time.Time
-	RejectedBy         *uuid.UUID
+	RejectedBy         *string
 	RejectedAt         *time.Time
 	RejectionNote      *string
 }
@@ -772,7 +772,7 @@ RETURNING
 type CreateLifecycleDatasetParams struct {
 	SourceIri string
 	GroupID   uuid.UUID
-	CreatedBy uuid.UUID
+	CreatedBy string
 }
 
 func (q *Queries) CreateLifecycleDataset(ctx context.Context, arg CreateLifecycleDatasetParams) (Dataset, error) {
@@ -853,7 +853,7 @@ type CreateLifecycleDatasetVersionParams struct {
 	SpatialPolygon     *string
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
-	CreatedBy          uuid.UUID
+	CreatedBy          string
 }
 
 func (q *Queries) CreateLifecycleDatasetVersion(ctx context.Context, arg CreateLifecycleDatasetVersionParams) (DatasetVersion, error) {
@@ -1243,16 +1243,16 @@ type GetLifecycleDatasetVersionRow struct {
 	SpatialPolygonGeojson string
 	TemporalStart         *time.Time
 	TemporalEnd           *time.Time
-	CreatedBy             uuid.UUID
+	CreatedBy             string
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
-	SubmittedBy           *uuid.UUID
+	SubmittedBy           *string
 	SubmittedAt           *time.Time
-	PublishedBy           *uuid.UUID
+	PublishedBy           *string
 	PublishedAt           *time.Time
-	ArchivedBy            *uuid.UUID
+	ArchivedBy            *string
 	ArchivedAt            *time.Time
-	RejectedBy            *uuid.UUID
+	RejectedBy            *string
 	RejectedAt            *time.Time
 	RejectionNote         *string
 	SourceIri             string
@@ -1878,7 +1878,7 @@ RETURNING
 `
 
 type PublishLifecycleDatasetVersionParams struct {
-	ActorID   *uuid.UUID
+	ActorID   *string
 	VersionID uuid.UUID
 }
 
@@ -1934,7 +1934,7 @@ RETURNING
 `
 
 type RejectLifecycleDatasetVersionParams struct {
-	ActorID       *uuid.UUID
+	ActorID       *string
 	RejectionNote *string
 	ID            uuid.UUID
 }
@@ -2146,7 +2146,7 @@ RETURNING
 `
 
 type SubmitLifecycleDatasetVersionParams struct {
-	ActorID *uuid.UUID
+	ActorID *string
 	ID      uuid.UUID
 }
 
@@ -2201,7 +2201,7 @@ RETURNING
 `
 
 type UnpublishLifecycleDatasetVersionParams struct {
-	ActorID *uuid.UUID
+	ActorID *string
 	ID      uuid.UUID
 }
 
