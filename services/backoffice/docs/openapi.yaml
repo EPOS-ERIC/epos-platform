@@ -91,16 +91,6 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: [Internal Identity]
-      operationId: deleteUser
-      summary: Delete user
-      description: Internal user deletion. Must not be publicly exposed.
-      security: []
-      responses:
-        "204": { description: User deleted }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/imports/turtle:
     post:
       tags: [Imports]

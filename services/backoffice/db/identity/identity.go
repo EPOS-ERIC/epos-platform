@@ -120,13 +120,6 @@ func (r *Repo) CreateUser(ctx context.Context, claims identitydomain.Claims) (id
 	return mapUser(user.ID, user.AuthIdentifier, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt), nil
 }
 
-func (r *Repo) DeleteUser(ctx context.Context, userID uuid.UUID) error {
-	if err := r.Queries.DeleteUser(ctx, userID); err != nil {
-		return fmt.Errorf("delete user: %w", err)
-	}
-	return nil
-}
-
 func mapUser(id uuid.UUID, authIdentifier, email, givenName, familyName string, status sqlc.UserStatus, createdAt, updatedAt time.Time) identitydomain.User {
 	return identitydomain.User{
 		ID:                id,

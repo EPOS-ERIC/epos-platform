@@ -19,7 +19,6 @@ type service interface {
 	GetByAuthIdentifier(context.Context, string) (identitydomain.User, error)
 	GetByID(context.Context, uuid.UUID) (identitydomain.User, error)
 	Create(context.Context, identitydomain.Claims) (identitydomain.User, error)
-	Delete(context.Context, uuid.UUID) error
 }
 
 type authorizer interface {
@@ -116,19 +115,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	transport.WriteJSON(w, http.StatusCreated, response(user))
-}
-
-func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil || userID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
-		return
-	}
-	if err := h.service.Delete(r.Context(), userID); err != nil {
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete user failed")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
 }
 
 type userResponse struct {

@@ -154,20 +154,6 @@ func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (Us
 	return resolved, nil
 }
 
-func (c *Backoffice) DeleteUser(ctx context.Context, userID string) error {
-	if c == nil || c.identity == nil {
-		return fmt.Errorf("backoffice identity client is not configured")
-	}
-	response, err := c.identity.DeleteUser(ctx, userID).Execute()
-	if err != nil {
-		if response != nil && response.StatusCode == http.StatusNotFound {
-			return domain.ErrNotFound
-		}
-		return generatedError("delete backoffice user", err)
-	}
-	return nil
-}
-
 func getUserError(operation string, response *http.Response, err error) error {
 	if response != nil {
 		switch response.StatusCode {

@@ -27,7 +27,6 @@ type Store interface {
 	GetUserByAuthIdentifier(context.Context, string) (User, error)
 	GetUserByID(context.Context, uuid.UUID) (User, error)
 	CreateUser(context.Context, Claims) (User, error)
-	DeleteUser(context.Context, uuid.UUID) error
 }
 
 type User struct {
@@ -100,14 +99,4 @@ func (s *Service) Create(ctx context.Context, claims Claims) (User, error) {
 		return User{}, fmt.Errorf("create user: %w", err)
 	}
 	return user, nil
-}
-
-func (s *Service) Delete(ctx context.Context, userID uuid.UUID) error {
-	if userID == uuid.Nil {
-		return ErrInvalid
-	}
-	if err := s.store.DeleteUser(ctx, userID); err != nil {
-		return fmt.Errorf("delete user: %w", err)
-	}
-	return nil
 }

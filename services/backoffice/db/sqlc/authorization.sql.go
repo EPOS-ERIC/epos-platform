@@ -72,18 +72,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
-const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM
-    users
-WHERE
-    id = $1
-`
-
-func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
-	return err
-}
-
 const getAuthorizationUser = `-- name: GetAuthorizationUser :one
 SELECT
     id,
@@ -607,7 +595,8 @@ SELECT
         WHERE
             global_grant.user_id = $1
             AND global_grant.permission_key = $2
-        UNION ALL
+        UNION
+        ALL
         SELECT
             1
         FROM
