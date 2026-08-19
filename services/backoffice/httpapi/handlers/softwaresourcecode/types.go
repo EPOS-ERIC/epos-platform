@@ -24,6 +24,11 @@ type sourceCodeRequest struct {
 	ContactPoints        []canonicalReference `json:"contact_points"`
 }
 
+type createRequest struct {
+	GroupID  uuid.UUID         `json:"group_id"`
+	Metadata sourceCodeRequest `json:"metadata"`
+}
+
 type replaceDraftRequest struct {
 	Revision int32             `json:"revision"`
 	Metadata sourceCodeRequest `json:"metadata"`
@@ -34,7 +39,8 @@ type rejectionRequest struct {
 }
 
 type copyRequest struct {
-	SourceIRI string `json:"source_iri"`
+	TargetGroupID uuid.UUID `json:"target_group_id"`
+	SourceIRI     string    `json:"source_iri"`
 }
 
 type canonicalReference struct {

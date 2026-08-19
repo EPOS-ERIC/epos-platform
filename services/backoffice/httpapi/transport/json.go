@@ -15,11 +15,11 @@ func Decode(w http.ResponseWriter, r *http.Request, target any) bool {
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
-		http.Error(w, "invalid JSON request", http.StatusBadRequest)
+		WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
 		return false
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		http.Error(w, "invalid JSON request", http.StatusBadRequest)
+		WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
 		return false
 	}
 	return true

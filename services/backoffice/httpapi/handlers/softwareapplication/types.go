@@ -23,6 +23,11 @@ type applicationRequest struct {
 	ContactPoints    []canonicalReference `json:"contact_points"`
 }
 
+type createRequest struct {
+	GroupID  uuid.UUID          `json:"group_id"`
+	Metadata applicationRequest `json:"metadata"`
+}
+
 type canonicalReference struct {
 	ID uuid.UUID `json:"id"`
 }
@@ -43,7 +48,8 @@ type rejectRequest struct {
 }
 
 type copyRequest struct {
-	SourceIRI string `json:"source_iri"`
+	TargetGroupID uuid.UUID `json:"target_group_id"`
+	SourceIRI     string    `json:"source_iri"`
 }
 
 func (r applicationRequest) domain() metadata.SoftwareApplication {

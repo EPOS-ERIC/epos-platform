@@ -115,9 +115,10 @@ INSERT INTO permissions (key, label, description, scope) VALUES
     ('resource.unpublish',       'Unpublish resources',      'Archive this group''s currently published resource version without publishing a replacement.',              'GROUP'),
     ('group.membership.manage',  'Manage memberships',       'Accept, reject, or revoke membership requests for this group.',                                             'GROUP'),
     ('group.role.manage',        'Manage group roles',       'Assign or remove EDITOR and REVIEWER roles for active members of this group. Does not manage GROUP_ADMIN.', 'GROUP'),
-    ('global.membership.manage', 'Manage memberships',       'Accept, reject, or revoke memberships in every group.',                                                     'GLOBAL'),
-    ('global.role.manage',       'Manage group roles',       'Assign or remove group roles in every group, including GROUP_ADMIN.',                                       'GLOBAL'),
-    ('global.permission.manage', 'Manage group permissions', 'Grant or revoke group-scoped direct permissions in every group.',                                           'GLOBAL'),
+    ('group.permission.manage',  'Manage group permissions', 'Grant or revoke group-scoped direct permissions for active members of this group.',                         'GROUP'),
+    ('global.membership.manage', 'Manage memberships',       'List users and accept, reject, or revoke memberships in every group.',                                      'GLOBAL'),
+    ('global.role.manage',       'Manage group roles',       'List users and assign or remove group roles in every group, including GROUP_ADMIN.',                        'GLOBAL'),
+    ('global.permission.manage', 'Manage permissions',       'List users and grant or revoke global permissions.',                                                        'GLOBAL'),
     ('organization.manage',      'Manage organizations',     'Create, edit, delete, and manage identifiers and hierarchy for canonical organizations across all groups.', 'GLOBAL'),
     ('contact_point.manage',     'Manage contact points',    'Create, edit, and delete canonical contact points across all groups.',                                      'GLOBAL'),
     ('category_scheme.manage',   'Manage category schemes',  'Edit category-scheme metadata stored on groups across the system. Does not manage categories.',             'GLOBAL'),
@@ -146,7 +147,8 @@ INSERT INTO role_permissions (role_key, permission_key) VALUES
     ('GROUP_ADMIN', 'resource.publish'),
     ('GROUP_ADMIN', 'resource.unpublish'),
     ('GROUP_ADMIN', 'group.membership.manage'),
-    ('GROUP_ADMIN', 'group.role.manage');
+    ('GROUP_ADMIN', 'group.role.manage'),
+    ('GROUP_ADMIN', 'group.permission.manage');
 
 -- +goose Down
 

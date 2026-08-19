@@ -15,8 +15,8 @@ It does not define HTTP endpoints, UI layouts, migration order, or notification 
 | Logical software        | Stable identity shared by all versions of one software application or source code. Owns source IRI and belongs to one group. |
 | Software version        | Editable or historical metadata for one logical software resource.                                                           |
 | Active change version   | Single `DRAFT`, `SUBMITTED`, or `REJECTED` version for one logical resource.                                                 |
-| Group                   | Resource ownership and authorization boundary. Each group defines exactly one category scheme.                               |
-| Category scheme         | Container for categories and their hierarchy, associated 1:1 with a group and stored in same `groups` row.                   |
+| Group                   | Canonical category scheme, resource ownership, and authorization boundary stored in one `groups` row.                        |
+| Category scheme         | Category-hierarchy aspect of a group; not a separate authorization resource.                                                 |
 | Category                | Node inside category scheme. A subcategory is category with parent category, not separate type.                              |
 | Canonical category      | Shared live category persisted in its owning group's category scheme.                                                        |
 | Canonical organization  | Shared live organization managed directly in backoffice without lifecycle states.                                            |
@@ -72,7 +72,7 @@ Draft creation for an existing logical resource fails with conflict when an acti
 
 Published resource may be copied into same or different group. Source is public, so source-group membership is not required; caller needs `resource.create` in target group. Copy creates new logical resource and first `DRAFT`; caller supplies new globally unique source IRI. Original remains unchanged. Copy clones descriptive metadata, identifiers, and organization links. Dataset copies also clone distributions, web services, and contact-point links. Identifier rows receive new internal IDs but preserve source IRI, type, and value. Target draft has zero categories.
 
-Published resource lists return current `PUBLISHED` versions grouped by logical resource group. Published versions, canonical organizations, canonical category schemes, and canonical categories are publicly readable without authentication. Public category-scheme and category representations expose canonical metadata but never group-management state, memberships, roles, or grants. Group data is readable only by authenticated active users. Contact points are excluded from public resource representations because they contain email addresses. Any active group member may read every non-public version in that group. Global `ADMIN` may read everything.
+Published resource lists return current `PUBLISHED` versions grouped by logical resource group. Published versions, canonical organizations, groups, and canonical categories are publicly readable without authentication. Public group and category representations expose canonical metadata but never memberships, roles, grants, or role requests. Contact points are excluded from public resource representations because they contain email addresses. Any active group member may read every non-public version in that group. Global `ADMIN` may read everything.
 
 Software application and software source code are independent resource types. Their versions contain type-specific metadata plus creator, identifier, contact-point, and category links; they do not reference each other, distributions, or web services.
 
@@ -175,41 +175,42 @@ Permissions have one of these scopes:
 
 ### Fixed Roles
 
-| Role          | Scope  | Included permissions                                                                                              |
-| ------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
-| `EDITOR`      | Group  | `resource.create`, `resource.edit`, `resource.submit`, `resource.withdraw`, `resource.reopen`, `resource.discard` |
-| `REVIEWER`    | Group  | `resource.reject`, `resource.publish`                                                                             |
-| `GROUP_ADMIN` | Group  | All `EDITOR` and `REVIEWER` permissions, `resource.unpublish`, `group.membership.manage`, `group.role.manage` |
-| `ADMIN`       | Global | Full authorization bypass                                                                                         |
+| Role          | Scope  | Included permissions                                                                                                                     |
+| ------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `EDITOR`      | Group  | `resource.create`, `resource.edit`, `resource.submit`, `resource.withdraw`, `resource.reopen`, `resource.discard`                        |
+| `REVIEWER`    | Group  | `resource.reject`, `resource.publish`                                                                                                    |
+| `GROUP_ADMIN` | Group  | All `EDITOR` and `REVIEWER` permissions, `resource.unpublish`, `group.membership.manage`, `group.role.manage`, `group.permission.manage` |
+| `ADMIN`       | Global | Full authorization bypass                                                                                                                |
 
 Users may hold both `EDITOR` and `REVIEWER` in same group. Active membership itself grants read access, so no `VIEWER` role exists. Roles are fixed system definitions seeded by migrations and are not user-configurable. Only global `ADMIN` or a user with `global.role.manage` may assign/remove `GROUP_ADMIN`; users cannot request it and group role managers cannot grant it.
 
 ### Permission Catalog
 
-| Permission                | Scope  | Meaning                                                                |
-| ------------------------- | ------ | ---------------------------------------------------------------------- |
-| `resource.create`         | Group  | Create logical dataset or software resource, draft, or copy.           |
-| `resource.edit`           | Group  | Modify group resource draft.                                           |
-| `resource.submit`         | Group  | Submit group resource draft.                                           |
-| `resource.withdraw`       | Group  | Return submitted resource version to draft.                            |
-| `resource.reopen`         | Group  | Return rejected resource version to draft.                             |
-| `resource.discard`        | Group  | Delete resource draft or rejected version.                             |
-| `resource.reject`         | Group  | Reject submitted resource version.                                     |
-| `resource.publish`        | Group  | Publish submitted resource version.                                    |
-| `resource.unpublish`      | Group  | Archive current published resource version without replacement.        |
-| `group.membership.manage` | Group  | View group membership roster and accept, reject, or revoke memberships. |
-| `group.role.manage`       | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles. |
-| `global.membership.manage` | Global | View every group membership roster and accept, reject, or revoke memberships in every group. |
-| `global.role.manage`       | Global | View every group membership roster; accept or reject role requests and assign or remove `EDITOR` and `REVIEWER` roles in every group. |
-| `global.permission.manage` | Global | View every group membership roster and grant or revoke any group-scoped direct permission in every group. |
-| `organization.manage`     | Global | Manage canonical organizations, identifiers, and hierarchy.            |
-| `contact_point.manage`    | Global | Manage canonical contact points.                                       |
-| `category_scheme.manage`  | Global | Manage groups' category-scheme metadata.                               |
-| `category.manage`         | Group  | Manage canonical categories in owning group.                           |
+| Permission                 | Scope  | Meaning                                                                                                                                                    |
+| -------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resource.create`          | Group  | Create logical dataset or software resource, draft, or copy.                                                                                               |
+| `resource.edit`            | Group  | Modify group resource draft.                                                                                                                               |
+| `resource.submit`          | Group  | Submit group resource draft.                                                                                                                               |
+| `resource.withdraw`        | Group  | Return submitted resource version to draft.                                                                                                                |
+| `resource.reopen`          | Group  | Return rejected resource version to draft.                                                                                                                 |
+| `resource.discard`         | Group  | Delete resource draft or rejected version.                                                                                                                 |
+| `resource.reject`          | Group  | Reject submitted resource version.                                                                                                                         |
+| `resource.publish`         | Group  | Publish submitted resource version.                                                                                                                        |
+| `resource.unpublish`       | Group  | Archive current published resource version without replacement.                                                                                            |
+| `group.membership.manage`  | Group  | View group membership roster and accept, reject, or revoke memberships.                                                                                    |
+| `group.role.manage`        | Group  | View group membership roster; accept or reject role requests and assign or remove fixed group roles.                                                       |
+| `group.permission.manage`  | Group  | View group membership roster and grant or revoke group-scoped direct permissions.                                                                          |
+| `global.membership.manage` | Global | List and read users; view every group membership roster and accept, reject, or revoke memberships in every group.                                          |
+| `global.role.manage`       | Global | List and read users; view every group membership roster; accept or reject role requests and assign or remove `EDITOR` and `REVIEWER` roles in every group. |
+| `global.permission.manage` | Global | List and read users; grant or revoke globally scoped permissions.                                                                                          |
+| `organization.manage`      | Global | Manage canonical organizations, identifiers, and hierarchy.                                                                                                |
+| `contact_point.manage`     | Global | Manage canonical contact points.                                                                                                                           |
+| `category_scheme.manage`   | Global | Manage groups' category-scheme metadata.                                                                                                                   |
+| `category.manage`          | Group  | Manage canonical categories in owning group.                                                                                                               |
 
-Global `ADMIN` grants and revokes globally scoped permissions, global roles, and `GROUP_ADMIN`. An active member with `group.membership.manage` or `group.role.manage` performs that action only in their group. An active user with the corresponding `global.membership.manage` or `global.role.manage` permission performs that action in every group without membership. Role managers may assign only `EDITOR` and `REVIEWER`; only global `ADMIN` or an active user with `global.role.manage` may assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires global `ADMIN` or `global.membership.manage`. Only global `ADMIN` or an active user with `global.permission.manage` may grant or revoke group-scoped direct permissions, in every group. `GROUP_ADMIN` includes both group management permissions. Users with `organization.manage`, `contact_point.manage`, or `category_scheme.manage` manage corresponding canonical entities or category-scheme metadata globally. User with `category.manage` manages canonical categories only in group where permission is granted. Group creation and deletion require global `ADMIN`. Global `ADMIN` may perform all operations.
+Global `ADMIN` grants and revokes global roles and `GROUP_ADMIN`. An active user with `global.permission.manage` or global `ADMIN` grants and revokes globally scoped permissions. An active member with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` performs that action only in their group. An active user with the corresponding `global.membership.manage` or `global.role.manage` permission performs that action in every group without membership. Role managers may assign only `EDITOR` and `REVIEWER`; only global `ADMIN` or an active user with `global.role.manage` may assign or remove `GROUP_ADMIN`. Removing a role does not revoke membership; `GROUP_ADMIN` membership revocation requires global `ADMIN` or `global.membership.manage`. Group permission managers grant and revoke group-scoped direct permissions in their group. `GROUP_ADMIN` includes all three group management permissions. Users with `organization.manage`, `contact_point.manage`, or `category_scheme.manage` manage corresponding canonical entities or category-scheme metadata globally. User with `category.manage` manages canonical categories only in group where permission is granted. Group creation and deletion require global `ADMIN`. Global `ADMIN` may perform all operations.
 
-Canonical category schemes and categories are publicly readable without authentication. Group list and group detail are available only to authenticated active users, even without group membership, role, or global permission. They return group metadata only and never include other users' memberships, roles, direct permissions, or role requests. Group membership roster access requires global `ADMIN`, a global group-management permission, or an active membership with `group.membership.manage` or `group.role.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, assigned direct group permissions, and pending role requests. A user may read the same assigned roles and direct group permissions for their own memberships.
+Groups and categories are publicly readable without authentication. A group is also its canonical category scheme for authorization and API purposes. Public group metadata never includes memberships, roles, direct permissions, or role requests. Global `ADMIN` and every global management permission holder may list users and read any user detail; users may also read their own detail. Group membership roster access requires global `ADMIN`, global membership/role management permission, or an active membership with `group.membership.manage`, `group.role.manage`, or `group.permission.manage` in that group. Roster entries expose member ID, given name, family name, email, membership status, assigned roles, assigned direct group permissions, and pending role requests. A user may read the same assigned roles and direct group permissions for their own memberships.
 
 Group roles and additive group permissions may be assigned only to active members of target group. Pending, rejected, and revoked memberships cannot hold dormant assignments.
 
@@ -218,14 +219,13 @@ Group roles and additive group permissions may be assigned only to active member
 1. Allow public read without requiring user identity; blocked user has public-read access only.
 2. Reject authenticated action for missing, inactive, or blocked user.
 3. Allow global `ADMIN` without membership or resource grants.
-4. Evaluate additive global permission for global action or cross-group membership, role, and permission management.
-5. Allow public reads of canonical category schemes and categories without user identity.
-6. Allow an active user to read group data without group membership.
-7. For group action, require active membership in resource's stored group unless a matching global group-management permission grants cross-group access.
-8. Allow baseline group reads for active member.
-9. Combine permissions from all assigned group roles and additive group grants.
-10. For resource category selection, require category `group_id` to equal resource `group_id`.
-11. Otherwise deny.
+4. Evaluate additive global permission for global action or cross-group membership and role management.
+5. Allow public reads of groups and categories without user identity.
+6. For group action, require active membership in resource's stored group unless a matching global group-management permission grants cross-group access.
+7. Allow baseline group reads for active member.
+8. Combine permissions from all assigned group roles and additive group grants.
+9. For resource category selection, require category `group_id` to equal resource `group_id`.
+10. Otherwise deny.
 
 Group, ownership, status, and category scheme association must be loaded from stored resource. Caller-provided ownership or group claims are not authorization inputs.
 
@@ -233,22 +233,23 @@ Group, ownership, status, and category scheme association must be loaded from st
 
 Users request group membership with zero or more requested roles. Membership and role decisions are separate.
 
-| Action                        | Required access           | Result                                                                                                          |
-| ----------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Read category scheme or category | Public                  | Returns canonical category-scheme or category metadata without authentication; excludes group-management state. |
-| Read group list or detail     | Active user               | Returns group metadata only. Does not reveal other users' memberships, roles, direct permissions, or role requests. No group membership, role, or global permission required. |
-| Read group membership roster  | Group membership/role management permission, or global membership/role/permission management permission | Returns all membership states, member identity including email, assigned roles and direct permissions, and pending role requests. Global `ADMIN` may read any roster. |
-| Read own membership access    | Requesting user           | Returns own membership status, assigned roles, direct permissions, and pending role requests.                  |
-| Request membership            | Active user               | Creates pending membership and optional role requests.                                                          |
-| Withdraw membership request   | Requesting user           | Deletes pending membership and its pending role requests.                                                       |
-| Accept membership             | `group.membership.manage` or `global.membership.manage` | Membership becomes active with read-only access. Role requests remain pending.                    |
-| Reject membership             | `group.membership.manage` or `global.membership.manage` | Membership becomes rejected; system rejects pending role requests as cascade, without separate role permission. |
-| Request another role          | Active group member       | Creates pending request for `EDITOR` or `REVIEWER`.                                                             |
-| Withdraw role request         | Requesting user           | Deletes pending role request.                                                                                   |
-| Accept/reject role            | `group.role.manage` or `global.role.manage` | Adds role assignment or rejects request.                                                      |
-| Assign/remove role directly   | `group.role.manage` or `global.role.manage` | Group role managers change `EDITOR` or `REVIEWER`; global role managers may also change `GROUP_ADMIN`. |
-| Grant/revoke group permission | `global.permission.manage` | Changes any additive group grant in every group. Global `ADMIN` may do this in every group. |
-| Revoke membership             | `group.membership.manage` or `global.membership.manage` | Permanently deletes membership, roles, grants, subscriptions, and all membership-related role requests. `GROUP_ADMIN` membership requires global `ADMIN` or `global.membership.manage`. |
+| Action                         | Required access                                                                                         | Result                                                                                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Read group or category         | Public                                                                                                  | Returns canonical metadata without authentication; excludes memberships, roles, direct permissions, and role requests.                                                                  |
+| List users or read user detail | Global management permission                                                                            | Returns user identity, status, global access, and memberships. Users may read own detail. Global `ADMIN` may read all users.                                                            |
+| Read group membership roster   | Group membership/role/permission management permission, or global membership/role management permission | Returns all membership states, member identity including email, assigned roles and direct permissions, and pending role requests. Global `ADMIN` may read any roster.                   |
+| Read own membership access     | Requesting user                                                                                         | Returns own membership status, assigned roles, direct permissions, and pending role requests.                                                                                           |
+| Request membership             | Active user                                                                                             | Creates pending membership and optional role requests.                                                                                                                                  |
+| Withdraw membership request    | Requesting user                                                                                         | Deletes pending membership and its pending role requests.                                                                                                                               |
+| Accept membership              | `group.membership.manage` or `global.membership.manage`                                                 | Membership becomes active with read-only access. Role requests remain pending.                                                                                                          |
+| Reject membership              | `group.membership.manage` or `global.membership.manage`                                                 | Membership becomes rejected; system rejects pending role requests as cascade, without separate role permission.                                                                         |
+| Request another role           | Active group member                                                                                     | Creates pending request for `EDITOR` or `REVIEWER`.                                                                                                                                     |
+| Withdraw role request          | Requesting user                                                                                         | Deletes pending role request.                                                                                                                                                           |
+| Accept/reject role             | `group.role.manage` or `global.role.manage`                                                             | Adds role assignment or rejects request.                                                                                                                                                |
+| Assign/remove role directly    | `group.role.manage` or `global.role.manage`                                                             | Group role managers change `EDITOR` or `REVIEWER`; global role managers may also change `GROUP_ADMIN`.                                                                                  |
+| Grant/revoke global permission | `global.permission.manage`                                                                              | Changes any global permission grant. Global `ADMIN` may do this.                                                                                                                        |
+| Grant/revoke group permission  | `group.permission.manage`                                                                               | Changes any additive group grant in the group. Global `ADMIN` may do this in every group.                                                                                               |
+| Revoke membership              | `group.membership.manage` or `global.membership.manage`                                                 | Permanently deletes membership, roles, grants, subscriptions, and all membership-related role requests. `GROUP_ADMIN` membership requires global `ADMIN` or `global.membership.manage`. |
 
 Membership states are `PENDING`, `ACTIVE`, and `REJECTED`. Pending or active member cannot request duplicate membership. Rejected user may submit new request, resetting membership to `PENDING`. Revocation retains no record and has no restoration action; user may submit new membership request immediately.
 
@@ -318,7 +319,7 @@ Global events are administrator-only. Only explicitly configured security events
 
 All resource-version tables store latest `rejection_note`, `rejected_by`, and `rejected_at`; repeated rejection replaces these fields and successful publication clears them. Lifecycle actor and timestamp fields record submission, publication, archival, and latest rejection without a generic event-history table. Dataset versions also retain nullable `source_created_at` and `source_updated_at` from upstream metadata; these do not represent backoffice record creation or editing.
 
-`groups` row represents two explicit domain concepts: group is authorization boundary; category scheme contains categories and hierarchy. Category scheme fields move into `groups`; separate `category_schemes` table is removed; `categories.scheme_id` becomes `categories.group_id`. Categories have stable UUIDs, immutable source IRIs, and one nullable parent instead of many-to-many child table. Partial unique constraints enforce normalized sibling and top-level names. Resource versions link only canonical category IDs from own group and do not snapshot category fields.
+`groups` row is one canonical group/category-scheme object: it owns categories, defines resource ownership, and is the authorization boundary. Separate `category_schemes` table is removed; `categories.scheme_id` becomes `categories.group_id`. Categories have stable UUIDs, immutable source IRIs, and one nullable parent instead of many-to-many child table. Partial unique constraints enforce normalized sibling and top-level names. Resource versions link only canonical category IDs from own group and do not snapshot category fields.
 
 Logical resource tables hold stable identity, immutable source IRI, and group. Source IRI is globally unique across all logical resource types. Their version tables hold mutable metadata and lifecycle state. A new version references same logical row; a copy creates new logical row with new source IRI. `based_on_version_id` is not stored.
 
@@ -347,7 +348,7 @@ Grant tables record `granted_by` and `granted_at`. Role-request decisions record
 
 Database constraints must enforce scopes: only `ADMIN` may appear in `user_global_roles`; only `EDITOR`, `REVIEWER`, and `GROUP_ADMIN` may appear in `group_membership_roles`; global grant table accepts only global permissions; group grant table accepts only group permissions. Application policy permits only global `ADMIN` to change `GROUP_ADMIN` assignments.
 
-Per-user category scheme access grants and `user_category_scheme_grants` are removed without replacement. Active membership provides access to group's category scheme. Global `category_scheme.manage` manages category-scheme metadata; group-scoped `category.manage` is sole non-admin permission for managing canonical categories in that group.
+Per-user category scheme access grants and `user_category_scheme_grants` are removed without replacement. Group metadata is public; active membership controls non-public resource access and group-scoped actions. Global `category_scheme.manage` manages group/category-scheme metadata; group-scoped `category.manage` is sole non-admin permission for managing canonical categories in that group.
 
 ### Notifications
 

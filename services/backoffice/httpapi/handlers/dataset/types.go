@@ -32,6 +32,11 @@ type datasetDraftRequest struct {
 	SourceUpdated         *time.Time            `json:"source_updated"`
 }
 
+type createRequest struct {
+	GroupID  uuid.UUID           `json:"group_id"`
+	Metadata datasetDraftRequest `json:"metadata"`
+}
+
 type distributionRequest struct {
 	ID               uuid.UUID                 `json:"id"`
 	Title            string                    `json:"title"`

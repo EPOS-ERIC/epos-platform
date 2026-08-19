@@ -47,17 +47,16 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	groupID, ok := groupID(w, r)
-	if !ok {
-		return
-	}
-
-	var request sourceCodeRequest
+	var request createRequest
 	if !transport.Decode(w, r, &request) {
 		return
 	}
+	if request.GroupID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "group_id is required")
+		return
+	}
 
-	value, err := h.service.CreateDraft(r.Context(), actorID, groupID, request.domain())
+	value, err := h.service.CreateDraft(r.Context(), actorID, request.GroupID, request.Metadata.domain())
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 
@@ -206,21 +205,16 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	groupID, ok := groupID(w, r)
-	if !ok {
-		return
-	}
-
 	var request copyRequest
 	if !transport.Decode(w, r, &request) {
 		return
 	}
-	if strings.TrimSpace(request.SourceIRI) == "" {
-		http.Error(w, "source_iri is required", http.StatusBadRequest)
+	if request.TargetGroupID == uuid.Nil || strings.TrimSpace(request.SourceIRI) == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id and source_iri are required")
 		return
 	}
 
-	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, groupID, request.SourceIRI)
+	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, request.TargetGroupID, request.SourceIRI)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 
@@ -257,21 +251,17 @@ func resourceIDs(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID, 
 }
 
 func sourceCodeID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	return pathUUID(w, chi.URLParam(r, "id"), "software source code")
+	return pathUUID(w, chi.URLParam(r, "resource_id"), "software source code")
 }
 
 func versionID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	return pathUUID(w, chi.URLParam(r, "version_id"), "version")
 }
 
-func groupID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	return pathUUID(w, chi.URLParam(r, "group_id"), "group")
-}
-
 func pathUUID(w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		http.Error(w, "invalid "+resource+" id", http.StatusBadRequest)
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid "+resource+" id")
 		return uuid.Nil, false
 	}
 	return id, true

@@ -42,7 +42,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	targetID, err := uuid.Parse(chi.URLParam(r, "id"))
+	targetID, err := uuid.Parse(chi.URLParam(r, "user_id"))
 	if err != nil || targetID == uuid.Nil {
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
 		return
@@ -139,12 +139,20 @@ type userResponse struct {
 }
 
 type membershipResponse struct {
-	Group       groupResponse `json:"group"`
-	Roles       []string      `json:"roles"`
-	Status      string        `json:"status"`
-	Permissions []string      `json:"permissions"`
-	CreatedAt   string        `json:"created_at"`
-	UpdatedAt   string        `json:"updated_at"`
+	Group        groupResponse `json:"group"`
+	Roles        []string      `json:"roles"`
+	Status       string        `json:"status"`
+	Permissions  []string      `json:"permissions"`
+	RoleRequests []roleRequest `json:"role_requests"`
+	CreatedAt    string        `json:"created_at"`
+	UpdatedAt    string        `json:"updated_at"`
+}
+
+type roleRequest struct {
+	ID          uuid.UUID `json:"id"`
+	Role        string    `json:"role"`
+	Status      string    `json:"status"`
+	RequestedAt string    `json:"requested_at"`
 }
 
 type groupResponse struct {
@@ -160,11 +168,12 @@ func response(user identitydomain.User) userResponse {
 				ID:   membership.GroupID,
 				Name: membership.GroupName,
 			},
-			Roles:       append([]string{}, membership.Roles...),
-			Status:      membership.Status,
-			Permissions: append([]string{}, membership.Permissions...),
-			CreatedAt:   membership.CreatedAt.Format(time.RFC3339Nano),
-			UpdatedAt:   membership.UpdatedAt.Format(time.RFC3339Nano),
+			Roles:        append([]string{}, membership.Roles...),
+			Status:       membership.Status,
+			Permissions:  append([]string{}, membership.Permissions...),
+			RoleRequests: []roleRequest{},
+			CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
+			UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
 		})
 	}
 
