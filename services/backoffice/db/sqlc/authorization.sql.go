@@ -516,6 +516,23 @@ func (q *Queries) GetUserMemberships(ctx context.Context, userID string) ([]GetU
 	return items, nil
 }
 
+const grantGlobalPermission = `-- name: GrantGlobalPermission :exec
+INSERT INTO global_permission_grants (user_id, permission_key, granted_by)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id, permission_key) DO NOTHING
+`
+
+type GrantGlobalPermissionParams struct {
+	UserID        string
+	PermissionKey string
+	GrantedBy     string
+}
+
+func (q *Queries) GrantGlobalPermission(ctx context.Context, arg GrantGlobalPermissionParams) error {
+	_, err := q.db.Exec(ctx, grantGlobalPermission, arg.UserID, arg.PermissionKey, arg.GrantedBy)
+	return err
+}
+
 const hasAnyActiveMembership = `-- name: HasAnyActiveMembership :one
 SELECT
     EXISTS (
@@ -712,4 +729,64 @@ func (q *Queries) IsSoftwareSourceCodePublished(ctx context.Context, softwareSou
 	var published bool
 	err := row.Scan(&published)
 	return published, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT
+    users.id,
+    users.email,
+    users.given_name,
+    users.family_name,
+    users.status
+FROM users
+ORDER BY users.family_name, users.given_name, users.id
+`
+
+type ListUsersRow struct {
+	ID         string
+	Email      string
+	GivenName  string
+	FamilyName string
+	Status     UserStatus
+}
+
+func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
+	rows, err := q.db.Query(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUsersRow
+	for rows.Next() {
+		var i ListUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.GivenName,
+			&i.FamilyName,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const revokeGlobalPermission = `-- name: RevokeGlobalPermission :exec
+DELETE FROM global_permission_grants
+WHERE user_id = $1 AND permission_key = $2
+`
+
+type RevokeGlobalPermissionParams struct {
+	UserID        string
+	PermissionKey string
+}
+
+func (q *Queries) RevokeGlobalPermission(ctx context.Context, arg RevokeGlobalPermissionParams) error {
+	_, err := q.db.Exec(ctx, revokeGlobalPermission, arg.UserID, arg.PermissionKey)
+	return err
 }

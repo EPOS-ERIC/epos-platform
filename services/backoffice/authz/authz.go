@@ -81,6 +81,44 @@ func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) 
 	return Result{Allowed: true, Reason: "global admin"}, nil
 }
 
+// CanListUsers checks permissions required to manage the user directory.
+func (a *Authorizer) CanListUsers(ctx context.Context, userID string) (Result, error) {
+	if userID == "" {
+		return Result{Allowed: false, Reason: "invalid user"}, nil
+	}
+
+	actor, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+
+	admin, err := a.repository.IsGlobalAdmin(ctx, actor.ID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+
+	if admin {
+		return Result{Allowed: true, Reason: "global admin"}, nil
+	}
+
+	for _, permission := range []string{
+		"global.membership.manage",
+		"global.role.manage",
+		"global.permission.manage",
+	} {
+		allowed, err := a.repository.HasGlobalPermission(ctx, actor.ID, permission)
+		if err != nil {
+			return Result{}, fmt.Errorf("check global permission: %w", err)
+		}
+
+		if allowed {
+			return Result{Allowed: true, Reason: permission}, nil
+		}
+	}
+
+	return Result{Allowed: false, Reason: "user directory permission required"}, nil
+}
+
 type repository interface {
 	User(context.Context, string) (User, error)
 	PermissionScope(context.Context, string) (PermissionScope, error)
@@ -217,7 +255,7 @@ func (a *Authorizer) AuthorizeAdmin(ctx context.Context, userID string) (Result,
 }
 
 // AuthorizeGlobal evaluates a global permission without requiring membership.
-func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID string, permissionKey string) (Result, error) {
+func (a *Authorizer) AuthorizeGlobal(ctx context.Context, userID, permissionKey string) (Result, error) {
 	if err := a.requirePermissionScope(ctx, permissionKey, PermissionScopeGlobal); err != nil {
 		return Result{}, err
 	}

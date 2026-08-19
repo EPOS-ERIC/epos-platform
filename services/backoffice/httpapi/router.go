@@ -51,13 +51,17 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 	r.Route("/api/v1", func(r chi.Router) {
 		authorizer := authz.New(database.Authorization)
+
 		importsHandler := imports.New(metadataimport.New(turtle.Parser{}, authorizer, database.Imports))
 
 		r.Post("/imports/turtle", importsHandler.Turtle)
 
-		identity := identityapi.New(identityservice.New(database.Identity), authorizer)
+		identity := identityapi.New(identityservice.New(database.Identity, authorizer))
 
 		r.Get("/users/{user_id}", identity.GetByID)
+		r.Get("/users", identity.List)
+		r.Put("/users/{user_id}/global-permissions/{permission}", identity.GrantGlobalPermission)
+		r.Delete("/users/{user_id}/global-permissions/{permission}", identity.RevokeGlobalPermission)
 		r.Post("/internal/users", identity.Create)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))

@@ -21,6 +21,20 @@ FROM
 WHERE
     id = $1;
 
+-- name: ListUsers :many
+SELECT
+    users.id,
+    users.email,
+    users.given_name,
+    users.family_name,
+    users.status
+FROM
+    users
+ORDER BY
+    users.family_name,
+    users.given_name,
+    users.id;
+
 -- name: GetUserGlobalRoles :many
 SELECT
     role_key
@@ -138,6 +152,19 @@ RETURNING
     STATUS,
     created_at,
     updated_at;
+
+-- name: GrantGlobalPermission :exec
+INSERT INTO
+    global_permission_grants (user_id, permission_key, granted_by)
+VALUES
+    ($1, $2, $3) ON CONFLICT (user_id, permission_key) DO NOTHING;
+
+-- name: RevokeGlobalPermission :exec
+DELETE FROM
+    global_permission_grants
+WHERE
+    user_id = $1
+    AND permission_key = $2;
 
 -- name: GetPermissionScope :one
 SELECT
