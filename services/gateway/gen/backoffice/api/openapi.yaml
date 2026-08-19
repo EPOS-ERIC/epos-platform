@@ -141,6 +141,68 @@ paths:
       summary: Delete user
       tags:
       - Internal Identity
+    get:
+      description: Internal Gateway-to-Backoffice user lookup. Must not be publicly
+        exposed.
+      operationId: getUserByID
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+          description: User found
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      security: []
+      summary: Get user by id
+      tags:
+      - Internal Identity
   /api/v1/imports/turtle:
     post:
       description: "Atomically creates or updates groups, categories, organizations,\

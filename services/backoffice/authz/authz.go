@@ -59,6 +59,28 @@ type VersionAuthz struct {
 	Status     ResourceStatus
 }
 
+func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID uuid.UUID) (Result, error) {
+	if actorID == uuid.Nil || targetID == uuid.Nil {
+		return Result{Allowed: false, Reason: "invalid user"}, nil
+	}
+	if actorID == targetID {
+		return Result{Allowed: true, Reason: "self"}, nil
+	}
+
+	actor, result, err := a.activeUser(ctx, actorID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+	admin, err := a.repository.IsGlobalAdmin(ctx, actor.ID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if !admin {
+		return Result{Allowed: false, Reason: "global admin required"}, nil
+	}
+	return Result{Allowed: true, Reason: "global admin"}, nil
+}
+
 type repository interface {
 	User(context.Context, uuid.UUID) (User, error)
 	PermissionScope(context.Context, string) (PermissionScope, error)

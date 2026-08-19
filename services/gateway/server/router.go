@@ -9,6 +9,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/go-chi/chi/v5"
@@ -18,6 +19,7 @@ var log = logging.Get("routes")
 
 func NewRouter(
 	lifecycleService *lifecycle.Service,
+	identityService *identity.Service,
 	backofficeClient *clients.Backoffice,
 	authService *auth.Service,
 	corsAllowOrigin string,
@@ -46,6 +48,7 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
+	usersHandler := handlers.NewUsers(identityService)
 
 	r.Route("/v1", func(r chi.Router) {
 		// discovery
@@ -55,7 +58,7 @@ func NewRouter(
 		r.Route("/users", func(r chi.Router) {
 			r.Use(authMiddleware(authService, backofficeClient))
 			r.Get("/", handlers.NotImplemented)
-			r.Get("/{id}", handlers.NotImplemented)
+			r.Get("/{id}", usersHandler.Get)
 		})
 
 		r.Route("/groups", func(r chi.Router) {

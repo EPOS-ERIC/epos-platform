@@ -72,6 +72,25 @@ paths:
         in: path
         required: true
         schema: { type: string, format: uuid }
+    get:
+      tags: [Internal Identity]
+      operationId: getUserByID
+      summary: Get user by id
+      description: Internal Gateway-to-Backoffice user lookup. Must not be publicly exposed.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     delete:
       tags: [Internal Identity]
       operationId: deleteUser

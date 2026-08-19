@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
 	identitydomain "github.com/EPOS-ERIC/epos-platform/services/backoffice/identity"
 	"github.com/go-chi/chi/v5"
@@ -16,18 +17,58 @@ import (
 
 type service interface {
 	GetByAuthIdentifier(context.Context, string) (identitydomain.User, error)
+	GetByID(context.Context, uuid.UUID) (identitydomain.User, error)
 	Create(context.Context, identitydomain.Claims) (identitydomain.User, error)
 	Delete(context.Context, uuid.UUID) error
 }
 
+type authorizer interface {
+	CanReadUser(context.Context, uuid.UUID, uuid.UUID) (authz.Result, error)
+}
+
 type Handler struct {
-	service service
+	service    service
+	authorizer authorizer
 }
 
-func New(service service) *Handler {
-	return &Handler{service: service}
+func New(service service, authorizer authorizer) *Handler {
+	return &Handler{service: service, authorizer: authorizer}
 }
 
+func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+	targetID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil || targetID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
+		return
+	}
+	allowed, err := h.authorizer.CanReadUser(r.Context(), actorID, targetID)
+	if err != nil {
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "authorize user read failed")
+		return
+	}
+	if !allowed.Allowed {
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "user read is not permitted")
+		return
+	}
+	user, err := h.service.GetByID(r.Context(), targetID)
+	if err != nil {
+		if errors.Is(err, identitydomain.ErrNotFound) {
+			transport.WriteProblem(w, http.StatusNotFound, "user_not_found", "user not found")
+			return
+		}
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get user failed")
+		return
+	}
+	transport.WriteJSON(w, http.StatusOK, response(user))
+}
+
+// GetByAuthIdentifier intentionally has no actor authorization: Gateway calls it
+// while resolving an authenticated identity before a Backoffice actor exists.
+// This endpoint is internal-only and must not be exposed outside Gateway.
 func (h *Handler) GetByAuthIdentifier(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.GetByAuthIdentifier(r.Context(), chi.URLParam(r, "auth_identifier"))
 	if err != nil {

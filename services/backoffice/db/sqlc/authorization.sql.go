@@ -306,17 +306,82 @@ func (q *Queries) GetUserByAuthIdentifier(ctx context.Context, authIdentifier st
 	return i, err
 }
 
+const getUserByID = `-- name: GetUserByID :one
+SELECT
+    id,
+    auth_identifier,
+    email,
+    given_name,
+    family_name,
+    STATUS,
+    created_at,
+    updated_at
+FROM
+    users
+WHERE
+    id = $1
+`
+
+type GetUserByIDRow struct {
+	ID             uuid.UUID
+	AuthIdentifier string
+	Email          string
+	GivenName      string
+	FamilyName     string
+	Status         UserStatus
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i GetUserByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.AuthIdentifier,
+		&i.Email,
+		&i.GivenName,
+		&i.FamilyName,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserGlobalPermissions = `-- name: GetUserGlobalPermissions :many
-SELECT role_permission.permission_key
-FROM user_global_roles AS global_role
-JOIN role_permissions AS role_permission
-    ON role_permission.role_key = global_role.role_key
-WHERE global_role.user_id = $1
+SELECT
+    role_permission.permission_key
+FROM
+    user_global_roles AS global_role
+    JOIN role_permissions AS role_permission ON role_permission.role_key = global_role.role_key
+WHERE
+    global_role.user_id = $1
 UNION
-SELECT global_grant.permission_key
-FROM global_permission_grants AS global_grant
-WHERE global_grant.user_id = $1
-ORDER BY permission_key
+SELECT
+    global_grant.permission_key
+FROM
+    global_permission_grants AS global_grant
+WHERE
+    global_grant.user_id = $1
+UNION
+SELECT
+    permission.key
+FROM
+    permissions AS permission
+WHERE
+    permission.scope = 'GLOBAL'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles AS global_role
+        WHERE
+            global_role.user_id = $1
+            AND global_role.role_key = 'ADMIN'
+    )
+ORDER BY
+    permission_key
 `
 
 func (q *Queries) GetUserGlobalPermissions(ctx context.Context, userID uuid.UUID) ([]string, error) {
@@ -340,10 +405,14 @@ func (q *Queries) GetUserGlobalPermissions(ctx context.Context, userID uuid.UUID
 }
 
 const getUserGlobalRoles = `-- name: GetUserGlobalRoles :many
-SELECT role_key
-FROM user_global_roles
-WHERE user_id = $1
-ORDER BY role_key
+SELECT
+    role_key
+FROM
+    user_global_roles
+WHERE
+    user_id = $1
+ORDER BY
+    role_key
 `
 
 func (q *Queries) GetUserGlobalRoles(ctx context.Context, userID uuid.UUID) ([]string, error) {
@@ -367,24 +436,31 @@ func (q *Queries) GetUserGlobalRoles(ctx context.Context, userID uuid.UUID) ([]s
 }
 
 const getUserMembershipPermissions = `-- name: GetUserMembershipPermissions :many
-SELECT membership.group_id, role_permission.permission_key
-FROM group_memberships AS membership
-JOIN group_membership_roles AS role_assignment
-    ON role_assignment.user_id = membership.user_id
+SELECT
+    membership.group_id,
+    role_permission.permission_key
+FROM
+    group_memberships AS membership
+    JOIN group_membership_roles AS role_assignment ON role_assignment.user_id = membership.user_id
     AND role_assignment.group_id = membership.group_id
-JOIN role_permissions AS role_permission
-    ON role_permission.role_key = role_assignment.role_key
-WHERE membership.user_id = $1
+    JOIN role_permissions AS role_permission ON role_permission.role_key = role_assignment.role_key
+WHERE
+    membership.user_id = $1
     AND membership.status = 'ACTIVE'
 UNION
-SELECT direct_grant.group_id, direct_grant.permission_key
-FROM group_permission_grants AS direct_grant
-JOIN group_memberships AS membership
-    ON membership.user_id = direct_grant.user_id
+SELECT
+    direct_grant.group_id,
+    direct_grant.permission_key
+FROM
+    group_permission_grants AS direct_grant
+    JOIN group_memberships AS membership ON membership.user_id = direct_grant.user_id
     AND membership.group_id = direct_grant.group_id
-WHERE direct_grant.user_id = $1
+WHERE
+    direct_grant.user_id = $1
     AND membership.status = 'ACTIVE'
-ORDER BY group_id, permission_key
+ORDER BY
+    group_id,
+    permission_key
 `
 
 type GetUserMembershipPermissionsRow struct {
@@ -413,10 +489,16 @@ func (q *Queries) GetUserMembershipPermissions(ctx context.Context, userID uuid.
 }
 
 const getUserMembershipRoles = `-- name: GetUserMembershipRoles :many
-SELECT group_id, role_key
-FROM group_membership_roles
-WHERE user_id = $1
-ORDER BY group_id, role_key
+SELECT
+    group_id,
+    role_key
+FROM
+    group_membership_roles
+WHERE
+    user_id = $1
+ORDER BY
+    group_id,
+    role_key
 `
 
 type GetUserMembershipRolesRow struct {
@@ -451,10 +533,14 @@ SELECT
     membership.status,
     membership.created_at,
     membership.updated_at
-FROM group_memberships AS membership
-JOIN groups ON groups.id = membership.group_id
-WHERE membership.user_id = $1
-ORDER BY groups.name, membership.group_id
+FROM
+    group_memberships AS membership
+    JOIN groups ON groups.id = membership.group_id
+WHERE
+    membership.user_id = $1
+ORDER BY
+    groups.name,
+    membership.group_id
 `
 
 type GetUserMembershipsRow struct {
@@ -517,10 +603,18 @@ SELECT
         SELECT
             1
         FROM
-            global_permission_grants
+            global_permission_grants AS global_grant
         WHERE
-            user_id = $1
-            AND permission_key = $2
+            global_grant.user_id = $1
+            AND global_grant.permission_key = $2
+        UNION ALL
+        SELECT
+            1
+        FROM
+            user_global_roles AS global_role
+        WHERE
+            global_role.user_id = $1
+            AND global_role.role_key = 'ADMIN'
     ) AS allowed
 `
 

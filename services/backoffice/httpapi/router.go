@@ -55,9 +55,10 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 
 		r.Post("/imports/turtle", importsHandler.Turtle)
 
-		identity := identityapi.New(identityservice.New(database.Identity))
+		identity := identityapi.New(identityservice.New(database.Identity), authorizer)
 
 		r.Get("/users/by-auth/{auth_identifier}", identity.GetByAuthIdentifier)
+		r.Get("/users/{id}", identity.GetByID)
 		r.Post("/users", identity.Create)
 		r.Delete("/users/{id}", identity.Delete)
 

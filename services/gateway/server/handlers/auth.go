@@ -16,11 +16,3 @@ func AuthenticatedUserFromContext(ctx context.Context) (api.User, bool) {
 	user, ok := ctx.Value(authenticatedUserKey{}).(api.User)
 	return user, ok
 }
-
-func OptionalAuthenticatedUserFromContext(ctx context.Context) *api.User {
-	user, ok := ctx.Value(authenticatedUserKey{}).(api.User)
-	if ok {
-		return &user
-	}
-	return nil
-}

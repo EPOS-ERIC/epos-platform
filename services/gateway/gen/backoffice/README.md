@@ -76,6 +76,7 @@ Class | Method | HTTP request | Description
 *InternalIdentityAPI* | [**CreateUser**](docs/InternalIdentityAPI.md#createuser) | **Post** /api/v1/users | Create user
 *InternalIdentityAPI* | [**DeleteUser**](docs/InternalIdentityAPI.md#deleteuser) | **Delete** /api/v1/users/{id} | Delete user
 *InternalIdentityAPI* | [**GetUserByAuthIdentifier**](docs/InternalIdentityAPI.md#getuserbyauthidentifier) | **Get** /api/v1/users/by-auth/{auth_identifier} | Get user by authentication identifier
+*InternalIdentityAPI* | [**GetUserByID**](docs/InternalIdentityAPI.md#getuserbyid) | **Get** /api/v1/users/{id} | Get user by id
 *ResourcesAPI* | [**CopyResource**](docs/ResourcesAPI.md#copyresource) | **Post** /api/v1/groups/{group_id}/resources/{resource_type}/{id}/copy | Copy published resource into group
 *ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/groups/{group_id}/resources/{resource_type} | Create resource draft
 *ResourcesAPI* | [**CreateResourceDraftFromArchive**](docs/ResourcesAPI.md#createresourcedraftfromarchive) | **Post** /api/v1/resources/{resource_type}/{id}/draft-from-archive | Create resource draft from archive

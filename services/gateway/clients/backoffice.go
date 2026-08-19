@@ -2,24 +2,22 @@
 package clients
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	backofficeclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/upstream"
 )
 
 type Backoffice struct {
-	baseURL string
-	http    *http.Client
+	identity  backofficeclient.InternalIdentityAPI
+	resources backofficeclient.ResourcesAPI
 }
 
 type ActorIdentity struct {
@@ -57,12 +55,6 @@ type Group struct {
 	Name string `json:"name"`
 }
 
-type BackofficeResponse struct {
-	StatusCode  int
-	ContentType string
-	Body        []byte
-}
-
 func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, error) {
 	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
 	if err != nil {
@@ -81,32 +73,45 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 		return nil, fmt.Errorf("create backoffice client: %w", err)
 	}
 
+	clientConfig := backofficeclient.NewConfiguration()
+	clientConfig.Servers[0].URL = normalizedBaseURL
+	clientConfig.HTTPClient = upstreamClient.StandardClient()
+
+	apiClient := backofficeclient.NewAPIClient(clientConfig)
 	return &Backoffice{
-		baseURL: normalizedBaseURL,
-		http:    upstreamClient.StandardClient(),
+		identity:  apiClient.InternalIdentityAPI,
+		resources: apiClient.ResourcesAPI,
 	}, nil
 }
 
+// Resources exposes typed Backoffice resource lifecycle operations.
+func (c *Backoffice) Resources() backofficeclient.ResourcesAPI {
+	if c == nil {
+		return nil
+	}
+	return c.resources
+}
+
 func (c *Backoffice) GetUserByAuthIdentifier(ctx context.Context, authIdentifier string) (User, error) {
-	path, err := url.JoinPath("/api/v1/users/by-auth", url.PathEscape(authIdentifier))
+	if c == nil || c.identity == nil {
+		return User{}, fmt.Errorf("backoffice identity client is not configured")
+	}
+	user, response, err := c.identity.GetUserByAuthIdentifier(ctx, authIdentifier).Execute()
 	if err != nil {
-		return User{}, fmt.Errorf("build backoffice user path: %w", err)
+		return User{}, getUserError("get backoffice user", response, err)
 	}
-	response, err := c.Request(ctx, http.MethodGet, path, nil, "")
+	return userFromGenerated(user)
+}
+
+func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (User, error) {
+	if c == nil || c.identity == nil {
+		return User{}, fmt.Errorf("backoffice identity client is not configured")
+	}
+	user, response, err := c.identity.GetUserByID(ctx, userID).XEPOSUserID(actorID).Execute()
 	if err != nil {
-		return User{}, fmt.Errorf("get backoffice user: %w", err)
+		return User{}, getUserError("get backoffice user", response, err)
 	}
-	if response.StatusCode == http.StatusNotFound {
-		return User{}, domain.ErrNotFound
-	}
-	if response.StatusCode != http.StatusOK {
-		return User{}, fmt.Errorf("get backoffice user: unexpected status %d", response.StatusCode)
-	}
-	var user User
-	if err := json.Unmarshal(response.Body, &user); err != nil {
-		return User{}, fmt.Errorf("decode backoffice user: %w", err)
-	}
-	return user, nil
+	return userFromGenerated(user)
 }
 
 func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (User, error) {
@@ -124,92 +129,93 @@ func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (Us
 }
 
 func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (User, error) {
-	body, err := json.Marshal(identity)
+	if c == nil || c.identity == nil {
+		return User{}, fmt.Errorf("backoffice identity client is not configured")
+	}
+	user, response, err := c.identity.CreateUser(ctx).CreateUserRequest(backofficeclient.CreateUserRequest{
+		AuthIdentifier: identity.AuthIdentifier,
+		Email:          identity.Email,
+		GivenName:      identity.GivenName,
+		FamilyName:     identity.FamilyName,
+	}).Execute()
 	if err != nil {
-		return User{}, fmt.Errorf("encode actor identity: %w", err)
+		if response != nil && response.StatusCode == http.StatusConflict {
+			return User{}, domain.ErrConflict
+		}
+		return User{}, generatedError("create backoffice user", err)
 	}
-
-	response, err := c.Request(ctx, http.MethodPost, "/api/v1/users", body, "")
+	resolved, err := userFromGenerated(user)
 	if err != nil {
-		return User{}, fmt.Errorf("create backoffice user: %w", err)
+		return User{}, err
 	}
-	if response.StatusCode == http.StatusConflict {
-		return User{}, domain.ErrConflict
-	}
-	if response.StatusCode != http.StatusCreated {
-		return User{}, fmt.Errorf("create backoffice user: unexpected status %d", response.StatusCode)
-	}
-
-	var user User
-	if err := json.Unmarshal(response.Body, &user); err != nil {
-		return User{}, fmt.Errorf("decode backoffice user: %w", err)
-	}
-	if user.ID == "" {
+	if resolved.ID == "" {
 		return User{}, fmt.Errorf("decode backoffice user: missing id")
 	}
-	return user, nil
+	return resolved, nil
 }
 
 func (c *Backoffice) DeleteUser(ctx context.Context, userID string) error {
-	path, err := url.JoinPath("/api/v1/users", url.PathEscape(userID))
+	if c == nil || c.identity == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+	response, err := c.identity.DeleteUser(ctx, userID).Execute()
 	if err != nil {
-		return fmt.Errorf("build backoffice delete path: %w", err)
-	}
-	response, err := c.Request(ctx, http.MethodDelete, path, nil, "")
-	if err != nil {
-		return fmt.Errorf("delete backoffice user: %w", err)
-	}
-	if response.StatusCode == http.StatusNotFound {
-		return domain.ErrNotFound
-	}
-	if response.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("delete backoffice user: unexpected status %d", response.StatusCode)
+		if response != nil && response.StatusCode == http.StatusNotFound {
+			return domain.ErrNotFound
+		}
+		return generatedError("delete backoffice user", err)
 	}
 	return nil
 }
 
-func (c *Backoffice) Request(ctx context.Context, method, path string, body []byte, actorID string) (BackofficeResponse, error) {
-	if c == nil || c.http == nil {
-		return BackofficeResponse{}, fmt.Errorf("backoffice client is not configured")
-	}
-
-	endpoint, err := url.Parse(c.baseURL)
-	if err != nil {
-		return BackofficeResponse{}, fmt.Errorf("parse backoffice base URL: %w", err)
-	}
-	endpoint.Path, err = url.JoinPath(endpoint.Path, path)
-	if err != nil {
-		return BackofficeResponse{}, fmt.Errorf("join backoffice request path: %w", err)
-	}
-	endpoint.RawPath = ""
-
-	req, err := http.NewRequestWithContext(ctx, method, endpoint.String(), bytes.NewReader(body))
-	if err != nil {
-		return BackofficeResponse{}, fmt.Errorf("create backoffice request: %w", err)
-	}
-	if len(body) > 0 {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if actorID != "" {
-		req.Header.Set("X-EPOS-User-ID", actorID)
-	}
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-			return BackofficeResponse{}, fmt.Errorf("backoffice request: %w: %w", domain.ErrUpstreamTimeout, err)
+func getUserError(operation string, response *http.Response, err error) error {
+	if response != nil {
+		switch response.StatusCode {
+		case http.StatusNotFound:
+			return domain.ErrNotFound
+		case http.StatusForbidden:
+			return domain.ErrForbidden
 		}
-		return BackofficeResponse{}, fmt.Errorf("backoffice request: %w", err)
 	}
-	defer resp.Body.Close()
+	return generatedError(operation, err)
+}
 
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return BackofficeResponse{}, fmt.Errorf("read backoffice response: %w", err)
+func generatedError(operation string, err error) error {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
 	}
-	return BackofficeResponse{
-		StatusCode:  resp.StatusCode,
-		ContentType: resp.Header.Get("Content-Type"),
-		Body:        responseBody,
+	return fmt.Errorf("%s: %w", operation, err)
+}
+
+func userFromGenerated(value *backofficeclient.User) (User, error) {
+	if value == nil {
+		return User{}, fmt.Errorf("decode backoffice user: response is empty")
+	}
+	memberships := make([]Membership, 0, len(value.Memberships))
+	for _, membership := range value.Memberships {
+		memberships = append(memberships, Membership{
+			Group: Group{
+				ID:   membership.Group.Id,
+				Name: membership.Group.Name,
+			},
+			Roles:       append([]string{}, membership.Roles...),
+			Status:      membership.Status,
+			Permissions: append([]string{}, membership.Permissions...),
+			CreatedAt:   membership.CreatedAt.Format(time.RFC3339Nano),
+			UpdatedAt:   membership.UpdatedAt.Format(time.RFC3339Nano),
+		})
+	}
+	return User{
+		ID:                value.Id,
+		AuthIdentifier:    value.AuthIdentifier,
+		Email:             value.Email,
+		GivenName:         value.GivenName,
+		FamilyName:        value.FamilyName,
+		Status:            value.Status,
+		GlobalRoles:       append([]string{}, value.GlobalRoles...),
+		GlobalPermissions: append([]string{}, value.GlobalPermissions...),
+		CreatedAt:         value.CreatedAt.Format(time.RFC3339Nano),
+		UpdatedAt:         value.UpdatedAt.Format(time.RFC3339Nano),
+		Memberships:       memberships,
 	}, nil
 }

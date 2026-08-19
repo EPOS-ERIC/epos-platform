@@ -25,23 +25,48 @@ func (r *Repo) GetUserByAuthIdentifier(ctx context.Context, authIdentifier strin
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user by auth identifier: %w", err)
 	}
-	globalRoles, err := r.GetUserGlobalRoles(ctx, user.ID)
+	return r.mapUser(ctx, user.ID, user.AuthIdentifier, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
+}
+
+func (r *Repo) GetUserByID(ctx context.Context, userID uuid.UUID) (identitydomain.User, error) {
+	user, err := r.Queries.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return identitydomain.User{}, identitydomain.ErrNotFound
+	}
+	if err != nil {
+		return identitydomain.User{}, fmt.Errorf("get user by id: %w", err)
+	}
+	return r.mapUser(ctx, user.ID, user.AuthIdentifier, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
+}
+
+func (r *Repo) mapUser(
+	ctx context.Context,
+	id uuid.UUID,
+	authIdentifier,
+	email,
+	givenName,
+	familyName string,
+	status sqlc.UserStatus,
+	createdAt,
+	updatedAt time.Time,
+) (identitydomain.User, error) {
+	globalRoles, err := r.GetUserGlobalRoles(ctx, id)
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user global roles: %w", err)
 	}
-	globalPermissions, err := r.GetUserGlobalPermissions(ctx, user.ID)
+	globalPermissions, err := r.GetUserGlobalPermissions(ctx, id)
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user global permissions: %w", err)
 	}
-	memberships, err := r.GetUserMemberships(ctx, user.ID)
+	memberships, err := r.GetUserMemberships(ctx, id)
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user memberships: %w", err)
 	}
-	roles, err := r.GetUserMembershipRoles(ctx, user.ID)
+	roles, err := r.GetUserMembershipRoles(ctx, id)
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user membership roles: %w", err)
 	}
-	permissions, err := r.GetUserMembershipPermissions(ctx, user.ID)
+	permissions, err := r.GetUserMembershipPermissions(ctx, id)
 	if err != nil {
 		return identitydomain.User{}, fmt.Errorf("get user membership permissions: %w", err)
 	}
@@ -68,14 +93,14 @@ func (r *Repo) GetUserByAuthIdentifier(ctx context.Context, authIdentifier strin
 	}
 
 	return identitydomain.User{
-		ID:                user.ID,
-		AuthIdentifier:    user.AuthIdentifier,
-		Email:             user.Email,
-		GivenName:         user.GivenName,
-		FamilyName:        user.FamilyName,
-		Status:            string(user.Status),
-		CreatedAt:         user.CreatedAt,
-		UpdatedAt:         user.UpdatedAt,
+		ID:                id,
+		AuthIdentifier:    authIdentifier,
+		Email:             email,
+		GivenName:         givenName,
+		FamilyName:        familyName,
+		Status:            string(status),
+		CreatedAt:         createdAt,
+		UpdatedAt:         updatedAt,
 		GlobalRoles:       append([]string{}, globalRoles...),
 		GlobalPermissions: append([]string{}, globalPermissions...),
 		Memberships:       userMemberships,

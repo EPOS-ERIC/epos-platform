@@ -22,6 +22,21 @@ FROM
 WHERE
     auth_identifier = $1;
 
+-- name: GetUserByID :one
+SELECT
+    id,
+    auth_identifier,
+    email,
+    given_name,
+    family_name,
+    STATUS,
+    created_at,
+    updated_at
+FROM
+    users
+WHERE
+    id = $1;
+
 -- name: GetUserGlobalRoles :many
 SELECT
     role_key
@@ -47,6 +62,22 @@ FROM
     global_permission_grants AS global_grant
 WHERE
     global_grant.user_id = $1
+UNION
+SELECT
+    permission.key
+FROM
+    permissions AS permission
+WHERE
+    permission.scope = 'GLOBAL'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            user_global_roles AS global_role
+        WHERE
+            global_role.user_id = $1
+            AND global_role.role_key = 'ADMIN'
+    )
 ORDER BY
     permission_key;
 
@@ -157,10 +188,19 @@ SELECT
         SELECT
             1
         FROM
-            global_permission_grants
+            global_permission_grants AS global_grant
         WHERE
-            user_id = $1
-            AND permission_key = $2
+            global_grant.user_id = $1
+            AND global_grant.permission_key = $2
+        UNION
+        ALL
+        SELECT
+            1
+        FROM
+            user_global_roles AS global_role
+        WHERE
+            global_role.user_id = $1
+            AND global_role.role_key = 'ADMIN'
     ) AS allowed;
 
 -- name: IsActiveMember :one

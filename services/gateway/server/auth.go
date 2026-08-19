@@ -9,9 +9,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	identityservice "github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
@@ -73,38 +73,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Ba
 				return
 			}
 
-			user := api.User{
-				ID:                resolved.ID,
-				AuthIdentifier:    resolved.AuthIdentifier,
-				Email:             resolved.Email,
-				GivenName:         resolved.GivenName,
-				FamilyName:        resolved.FamilyName,
-				Status:            api.UserStatus(resolved.Status),
-				GlobalRoles:       append([]string{}, resolved.GlobalRoles...),
-				GlobalPermissions: append([]string{}, resolved.GlobalPermissions...),
-				CreatedAt:         resolved.CreatedAt,
-				UpdatedAt:         resolved.UpdatedAt,
-				Memberships:       []api.UserMembershipSummary{},
-			}
-			user.Memberships = make([]api.UserMembershipSummary, 0, len(resolved.Memberships))
-			for _, membership := range resolved.Memberships {
-				roles := make([]api.MembershipRole, 0, len(membership.Roles))
-				for _, role := range membership.Roles {
-					roles = append(roles, api.MembershipRole(role))
-				}
-				user.Memberships = append(user.Memberships, api.UserMembershipSummary{
-					Group: api.ResourceRef{
-						ID:   membership.Group.ID,
-						Name: membership.Group.Name,
-						Href: "/v1/groups/" + membership.Group.ID,
-					},
-					Roles:       roles,
-					Status:      api.MembershipStatus(membership.Status),
-					Permissions: append([]string{}, membership.Permissions...),
-					CreatedAt:   membership.CreatedAt,
-					UpdatedAt:   membership.UpdatedAt,
-				})
-			}
+			user := identityservice.UserFromClient(resolved)
 			ctx := logging.WithActor(r.Context(), logging.Actor{
 				ID:             user.ID,
 				AuthIdentifier: user.AuthIdentifier,

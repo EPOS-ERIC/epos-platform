@@ -25,6 +25,7 @@ type Claims struct {
 
 type Store interface {
 	GetUserByAuthIdentifier(context.Context, string) (User, error)
+	GetUserByID(context.Context, uuid.UUID) (User, error)
 	CreateUser(context.Context, Claims) (User, error)
 	DeleteUser(context.Context, uuid.UUID) error
 }
@@ -70,6 +71,17 @@ func (s *Service) GetByAuthIdentifier(ctx context.Context, authIdentifier string
 	user, err := s.store.GetUserByAuthIdentifier(ctx, authIdentifier)
 	if err != nil {
 		return User{}, fmt.Errorf("get user by auth identifier: %w", err)
+	}
+	return user, nil
+}
+
+func (s *Service) GetByID(ctx context.Context, userID uuid.UUID) (User, error) {
+	if userID == uuid.Nil {
+		return User{}, ErrInvalid
+	}
+	user, err := s.store.GetUserByID(ctx, userID)
+	if err != nil {
+		return User{}, fmt.Errorf("get user by id: %w", err)
 	}
 	return user, nil
 }

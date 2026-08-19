@@ -15,6 +15,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 )
 
@@ -38,7 +39,8 @@ func Run(cfg config.Config, backofficeClient *clients.Backoffice, authService *a
 	}()
 
 	lifecycleSvc := lifecycle.NewService(backofficeClient)
-	router := NewRouter(lifecycleSvc, backofficeClient, authService, cfg.Server.CORSAllowOrigin)
+	identitySvc := identity.NewService(backofficeClient)
+	router := NewRouter(lifecycleSvc, identitySvc, backofficeClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct
