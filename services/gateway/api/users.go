@@ -28,8 +28,8 @@ type UserSummary struct {
 	Status            UserStatus `json:"status"`
 	GlobalRoles       []string   `json:"global_roles"`
 	GlobalPermissions []string   `json:"global_permissions"`
-	CreatedAt         string     `json:"created_at"`
-	UpdatedAt         string     `json:"updated_at"`
+	CreatedAt         string     `json:"created_at,omitempty"`
+	UpdatedAt         string     `json:"updated_at,omitempty"`
 }
 
 type MembershipRole string

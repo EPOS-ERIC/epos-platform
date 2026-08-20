@@ -35,6 +35,34 @@ func (s *Service) GetUser(ctx context.Context, actor api.User, id string) (api.U
 	return UserFromClient(user), nil
 }
 
+func (s *Service) ListUsers(ctx context.Context, actor api.User) ([]api.UserSummary, error) {
+	if s == nil || s.backoffice == nil {
+		return nil, fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	users, err := s.backoffice.ListUsers(ctx, actor.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list users from backoffice: %w", err)
+	}
+
+	result := make([]api.UserSummary, 0, len(users))
+	for _, user := range users {
+		result = append(result, api.UserSummary{
+			ID:                user.ID,
+			Email:             user.Email,
+			GivenName:         user.GivenName,
+			FamilyName:        user.FamilyName,
+			Status:            api.UserStatus(user.Status),
+			GlobalRoles:       append([]string{}, user.GlobalRoles...),
+			GlobalPermissions: append([]string{}, user.GlobalPermissions...),
+			CreatedAt:         user.CreatedAt,
+			UpdatedAt:         user.UpdatedAt,
+		})
+	}
+
+	return result, nil
+}
+
 func UserFromClient(resolved clients.User) api.User {
 	user := api.User{
 		ID:                resolved.ID,

@@ -52,10 +52,44 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 	writeUserJSON(w, http.StatusOK, resolved)
 }
 
+func (h *Users) List(w http.ResponseWriter, r *http.Request) {
+	user, ok := AuthenticatedUserFromContext(r.Context())
+	if !ok {
+		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	resolved, err := h.service.ListUsers(r.Context(), user)
+	if err != nil {
+		if errors.Is(err, domain.ErrForbidden) {
+			WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "user list is not permitted", nil)
+			return
+		}
+		if errors.Is(err, domain.ErrUpstreamTimeout) {
+			WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
+			return
+		}
+
+		log.ErrorContext(r.Context(), "list users failed", "error", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		return
+	}
+
+	writeUserSummariesJSON(w, http.StatusOK, resolved)
+}
+
 func writeUserJSON(w http.ResponseWriter, status int, value api.User) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(value); err != nil {
 		log.Error("failed to encode user response", "error", err)
+	}
+}
+
+func writeUserSummariesJSON(w http.ResponseWriter, status int, value []api.UserSummary) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(value); err != nil {
+		log.Error("failed to encode user summaries response", "error", err)
 	}
 }

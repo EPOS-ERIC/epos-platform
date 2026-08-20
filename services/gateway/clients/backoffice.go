@@ -10,50 +10,50 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	backofficeclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
+	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/upstream"
 )
 
 type Backoffice struct {
-	identity  backofficeclient.InternalIdentityAPI
-	users     backofficeclient.UsersAPI
-	resources backofficeclient.ResourcesAPI
-	imports   backofficeclient.ImportsAPI
+	identity  client.InternalIdentityAPI
+	users     client.UsersAPI
+	resources client.ResourcesAPI
+	imports   client.ImportsAPI
 }
 
 type ActorIdentity struct {
-	AuthIdentifier string `json:"auth_identifier"`
-	Email          string `json:"email"`
-	GivenName      string `json:"given_name"`
-	FamilyName     string `json:"family_name"`
+	AuthIdentifier string
+	Email          string
+	GivenName      string
+	FamilyName     string
 }
 
 type User struct {
-	ID                string       `json:"id"`
-	Email             string       `json:"email"`
-	GivenName         string       `json:"given_name"`
-	FamilyName        string       `json:"family_name"`
-	Status            string       `json:"status"`
-	GlobalRoles       []string     `json:"global_roles"`
-	GlobalPermissions []string     `json:"global_permissions"`
-	CreatedAt         string       `json:"created_at"`
-	UpdatedAt         string       `json:"updated_at"`
-	Memberships       []Membership `json:"memberships"`
+	ID                string
+	Email             string
+	GivenName         string
+	FamilyName        string
+	Status            string
+	GlobalRoles       []string
+	GlobalPermissions []string
+	CreatedAt         string
+	UpdatedAt         string
+	Memberships       []Membership
 }
 
 type Membership struct {
-	Group       Group    `json:"group"`
-	Roles       []string `json:"roles"`
-	Status      string   `json:"status"`
-	Permissions []string `json:"permissions"`
-	CreatedAt   string   `json:"created_at"`
-	UpdatedAt   string   `json:"updated_at"`
+	Group       Group
+	Roles       []string
+	Status      string
+	Permissions []string
+	CreatedAt   string
+	UpdatedAt   string
 }
 
 type Group struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID   string
+	Name string
 }
 
 func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, error) {
@@ -74,11 +74,11 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 		return nil, fmt.Errorf("create backoffice client: %w", err)
 	}
 
-	clientConfig := backofficeclient.NewConfiguration()
+	clientConfig := client.NewConfiguration()
 	clientConfig.Servers[0].URL = normalizedBaseURL
 	clientConfig.HTTPClient = upstreamClient.StandardClient()
 
-	apiClient := backofficeclient.NewAPIClient(clientConfig)
+	apiClient := client.NewAPIClient(clientConfig)
 	return &Backoffice{
 		identity:  apiClient.InternalIdentityAPI,
 		users:     apiClient.UsersAPI,
@@ -88,7 +88,7 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 }
 
 // Imports exposes typed Backoffice metadata import operations.
-func (c *Backoffice) Imports() backofficeclient.ImportsAPI {
+func (c *Backoffice) Imports() client.ImportsAPI {
 	if c == nil {
 		return nil
 	}
@@ -96,7 +96,7 @@ func (c *Backoffice) Imports() backofficeclient.ImportsAPI {
 }
 
 // Resources exposes typed Backoffice resource lifecycle operations.
-func (c *Backoffice) Resources() backofficeclient.ResourcesAPI {
+func (c *Backoffice) Resources() client.ResourcesAPI {
 	if c == nil {
 		return nil
 	}
@@ -107,11 +107,42 @@ func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (U
 	if c == nil || c.users == nil {
 		return User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
+
 	user, response, err := c.users.GetUser(ctx, userID).XEPOSUserID(actorID).Execute()
 	if err != nil {
 		return User{}, getUserError("get backoffice user", response, err)
 	}
+
 	return userFromGenerated(user)
+}
+
+func (c *Backoffice) ListUsers(ctx context.Context, actorID string) ([]User, error) {
+	if c == nil || c.users == nil {
+		return nil, fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	users, response, err := c.users.ListUsers(ctx).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return nil, getUserError("list backoffice users", response, err)
+	}
+
+	result := make([]User, 0, len(users))
+	for _, user := range users {
+		result = append(result, User{
+			ID:                user.Id,
+			Email:             user.Email,
+			GivenName:         user.GivenName,
+			FamilyName:        user.FamilyName,
+			Status:            user.Status,
+			GlobalRoles:       append([]string{}, user.GlobalRoles...),
+			GlobalPermissions: append([]string{}, user.GlobalPermissions...),
+			CreatedAt:         "",
+			UpdatedAt:         "",
+			Memberships:       []Membership{},
+		})
+	}
+
+	return result, nil
 }
 
 func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (User, error) {
@@ -132,7 +163,7 @@ func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (Us
 	if c == nil || c.identity == nil {
 		return User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
-	user, response, err := c.identity.ProvisionUser(ctx).CreateUserRequest(backofficeclient.CreateUserRequest{
+	user, response, err := c.identity.ProvisionUser(ctx).CreateUserRequest(client.CreateUserRequest{
 		Id:         identity.AuthIdentifier,
 		Email:      identity.Email,
 		GivenName:  identity.GivenName,
@@ -173,7 +204,7 @@ func generatedError(operation string, err error) error {
 	return fmt.Errorf("%s: %w", operation, err)
 }
 
-func userFromGenerated(value *backofficeclient.User) (User, error) {
+func userFromGenerated(value *client.User) (User, error) {
 	if value == nil {
 		return User{}, fmt.Errorf("decode backoffice user: response is empty")
 	}

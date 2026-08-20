@@ -60,7 +60,7 @@ func NewRouter(
 
 		r.Route("/users", func(r chi.Router) {
 			r.Use(authMiddleware(authService, backofficeClient))
-			r.Get("/", handlers.NotImplemented)
+			r.Get("/", usersHandler.List)
 			r.Get("/{id}", usersHandler.Get)
 		})
 
