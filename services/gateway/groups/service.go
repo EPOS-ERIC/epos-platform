@@ -47,3 +47,40 @@ func (s *Service) Get(ctx context.Context, id string) (domain.Group, error) {
 
 	return group, nil
 }
+
+func (s *Service) WithdrawMembershipRequest(ctx context.Context, groupID, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || actorID == "" {
+		return fmt.Errorf("invalid membership request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.WithdrawMembershipRequest(ctx, groupID, actorID); err != nil {
+		return fmt.Errorf("withdraw membership request from backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) DecideMembership(ctx context.Context, groupID, userID, actorID, status string) (domain.GroupMembership, error) {
+	groupID = strings.TrimSpace(groupID)
+	userID = strings.TrimSpace(userID)
+	actorID = strings.TrimSpace(actorID)
+	status = strings.TrimSpace(status)
+	if groupID == "" || userID == "" || actorID == "" || (status != "ACTIVE" && status != "REJECTED") {
+		return domain.GroupMembership{}, fmt.Errorf("invalid membership decision: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.GroupMembership{}, fmt.Errorf("backoffice group client is not configured")
+	}
+
+	membership, err := s.backoffice.DecideMembership(ctx, groupID, userID, status, actorID)
+	if err != nil {
+		return domain.GroupMembership{}, fmt.Errorf("decide membership in backoffice: %w", err)
+	}
+
+	return membership, nil
+}

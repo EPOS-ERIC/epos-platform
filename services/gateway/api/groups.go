@@ -28,6 +28,34 @@ type GroupMembershipSummary struct {
 	Status MembershipStatus `json:"status"`
 }
 
+type GroupMembership struct {
+	User         MembershipUser   `json:"user"`
+	Status       MembershipStatus `json:"status"`
+	Roles        []MembershipRole `json:"roles"`
+	Permissions  []string         `json:"permissions"`
+	RoleRequests []RoleRequest    `json:"role_requests"`
+	CreatedAt    string           `json:"created_at"`
+	UpdatedAt    string           `json:"updated_at"`
+}
+
+type MembershipUser struct {
+	ID         string `json:"id"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
+	Email      string `json:"email"`
+}
+
+type RoleRequest struct {
+	ID          string `json:"id"`
+	Role        string `json:"role"`
+	Status      string `json:"status"`
+	RequestedAt string `json:"requested_at"`
+}
+
+type MembershipDecisionRequest struct {
+	Status MembershipStatus `json:"status"`
+}
+
 type CreateGroupRequest struct {
 	Slug        string  `json:"slug"`
 	Name        string  `json:"name"`

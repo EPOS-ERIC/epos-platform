@@ -440,6 +440,33 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /groups/{groupId}/membership-requests:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    delete:
+      tags:
+        - Memberships
+      summary: Withdraw own membership request
+      description: Delete the authenticated user's pending membership request and pending role requests.
+      operationId: withdrawGroupMembershipRequest
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Membership request withdrawn
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
   /groups/{groupId}/memberships/{userId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -463,6 +490,41 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalServerError"
+    patch:
+      tags:
+        - Memberships
+      summary: Accept or reject membership request
+      description: Accept or reject a pending membership request. Requires group membership management permission or global membership management permission.
+      operationId: decideGroupMembership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembershipDecisionRequest"
+      responses:
+        "200":
+          description: Membership decision applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 
   /users/{id}:
     parameters:
@@ -1354,6 +1416,20 @@ components:
                 title: "upstream_timeout"
                 status: 504
                 detail: "metadata search timed out"
+
+    ServiceUnavailable:
+      description: Backoffice service unavailable
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            backofficeUnavailable:
+              summary: Backoffice unavailable
+              value:
+                title: "backoffice_unavailable"
+                status: 503
+                detail: "backoffice service unavailable"
 
   schemas:
     # -------------------------------------------------------------------------
@@ -3054,6 +3130,91 @@ components:
           $ref: "#/components/schemas/MembershipRole"
         status:
           $ref: "#/components/schemas/MembershipStatus"
+
+    GroupMembership:
+      type: object
+      description: Complete membership record returned after a membership decision.
+      required:
+        - user
+        - status
+        - roles
+        - permissions
+        - role_requests
+        - created_at
+        - updated_at
+      properties:
+        user:
+          $ref: "#/components/schemas/MembershipUser"
+        status:
+          $ref: "#/components/schemas/MembershipStatus"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MembershipRole"
+        permissions:
+          type: array
+          items:
+            type: string
+        role_requests:
+          type: array
+          description: Pending role requests only.
+          items:
+            $ref: "#/components/schemas/RoleRequest"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MembershipUser:
+      type: object
+      required:
+        - id
+        - given_name
+        - family_name
+        - email
+      properties:
+        id:
+          type: string
+        given_name:
+          type: string
+        family_name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    RoleRequest:
+      type: object
+      required:
+        - id
+        - role
+        - status
+        - requested_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [EDITOR, REVIEWER]
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED]
+        requested_at:
+          type: string
+          format: date-time
+
+    MembershipDecisionRequest:
+      type: object
+      required:
+        - status
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, REJECTED]
 
     Membership:
       type: object

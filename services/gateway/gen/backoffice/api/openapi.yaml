@@ -2898,13 +2898,12 @@ components:
     MembershipUser:
       additionalProperties: false
       example:
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        id: id
         given_name: given_name
         family_name: family_name
         email: email
       properties:
         id:
-          format: uuid
           type: string
         given_name:
           type: string
@@ -2923,7 +2922,7 @@ components:
       additionalProperties: false
       example:
         user:
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          id: id
           given_name: given_name
           family_name: family_name
           email: email

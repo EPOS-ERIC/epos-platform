@@ -15,6 +15,8 @@ import (
 type accessService interface {
 	ListMemberships(context.Context, string, uuid.UUID) ([]groups.Membership, error)
 	RequestMembership(context.Context, string, uuid.UUID, groups.MembershipRequest) (groups.Membership, error)
+	WithdrawMembershipRequest(context.Context, string, uuid.UUID) error
+	DecideMembership(context.Context, string, uuid.UUID, string, string) (groups.Membership, error)
 }
 
 type AccessHandler struct {
@@ -70,6 +72,52 @@ func (h *AccessHandler) RequestMembership(w http.ResponseWriter, r *http.Request
 	}
 
 	transport.WriteJSON(w, http.StatusCreated, toMembershipResponse(membership))
+}
+
+func (h *AccessHandler) WithdrawMembershipRequest(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.WithdrawMembershipRequest(r.Context(), actorID, groupID); err != nil {
+		writeAccessError(w, r, err, "withdraw group membership request")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AccessHandler) DecideMembership(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	userID := chi.URLParam(r, "user_id")
+	if userID == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
+		return
+	}
+
+	var body struct {
+		Status *string `json:"status"`
+	}
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+	if body.Status == nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "status is required")
+		return
+	}
+
+	membership, err := h.service.DecideMembership(r.Context(), actorID, groupID, userID, *body.Status)
+	if err != nil {
+		writeAccessError(w, r, err, "decide group membership")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusOK, toMembershipResponse(membership))
 }
 
 func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {

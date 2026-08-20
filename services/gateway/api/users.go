@@ -48,6 +48,10 @@ const (
 	MembershipRejectedStatus MembershipStatus = "REJECTED"
 )
 
+func (s MembershipStatus) IsDecision() bool {
+	return s == MembershipActiveStatus || s == MembershipRejectedStatus
+}
+
 type UserMembershipSummary struct {
 	Group       ResourceRef      `json:"group"`
 	Roles       []MembershipRole `json:"roles"`

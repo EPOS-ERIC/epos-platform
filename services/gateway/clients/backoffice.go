@@ -19,6 +19,7 @@ type Backoffice struct {
 	identity  client.InternalIdentityAPI
 	users     client.UsersAPI
 	groups    client.GroupsAPI
+	access    client.GroupAccessAPI
 	resources client.ResourcesAPI
 	imports   client.ImportsAPI
 }
@@ -57,6 +58,7 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 		identity:  apiClient.InternalIdentityAPI,
 		users:     apiClient.UsersAPI,
 		groups:    apiClient.GroupsAPI,
+		access:    apiClient.GroupAccessAPI,
 		resources: apiClient.ResourcesAPI,
 		imports:   apiClient.ImportsAPI,
 	}, nil
@@ -96,6 +98,35 @@ func (c *Backoffice) GetGroup(ctx context.Context, id string) (domain.Group, err
 	}
 
 	return toDomainGroup(group)
+}
+
+func (c *Backoffice) WithdrawMembershipRequest(ctx context.Context, groupID, actorID string) error {
+	if c == nil || c.access == nil {
+		return fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	response, err := c.access.WithdrawGroupMembershipRequest(ctx, groupID).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapGroupAccessError("withdraw backoffice membership request", response, err)
+	}
+
+	return nil
+}
+
+func (c *Backoffice) DecideMembership(ctx context.Context, groupID, userID, status, actorID string) (domain.GroupMembership, error) {
+	if c == nil || c.access == nil {
+		return domain.GroupMembership{}, fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	membership, response, err := c.access.DecideGroupMembership(ctx, groupID, userID).
+		XEPOSUserID(actorID).
+		MembershipDecisionRequest(client.MembershipDecisionRequest{Status: status}).
+		Execute()
+	if err != nil {
+		return domain.GroupMembership{}, wrapGroupAccessError("decide backoffice membership", response, err)
+	}
+
+	return toDomainGroupMembership(membership)
 }
 
 // Imports exposes typed Backoffice metadata import operations.
@@ -296,6 +327,22 @@ func wrapGroupError(operation string, response *http.Response, err error) error 
 	return wrapConnectionError(operation, err)
 }
 
+func wrapGroupAccessError(operation string, response *http.Response, err error) error {
+	if response != nil {
+		switch response.StatusCode {
+		case http.StatusBadRequest:
+			return fmt.Errorf("%s: %w", operation, domain.ErrBadRequest)
+		case http.StatusForbidden:
+			return fmt.Errorf("%s: %w", operation, domain.ErrForbidden)
+		case http.StatusNotFound:
+			return fmt.Errorf("%s: %w", operation, domain.ErrNotFound)
+		case http.StatusConflict:
+			return fmt.Errorf("%s: %w", operation, domain.ErrConflict)
+		}
+	}
+	return wrapConnectionError(operation, err)
+}
+
 func wrapConnectionError(operation string, err error) error {
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
@@ -361,5 +408,36 @@ func toDomainGroup(value *client.Group) (domain.Group, error) {
 		Color:       value.Color.Get(),
 		Position:    value.Position,
 		Concept:     value.Concept,
+	}, nil
+}
+
+func toDomainGroupMembership(value *client.GroupMembership) (domain.GroupMembership, error) {
+	if value == nil {
+		return domain.GroupMembership{}, fmt.Errorf("decode backoffice membership: response is empty")
+	}
+
+	roleRequests := make([]domain.RoleRequest, 0, len(value.RoleRequests))
+	for _, request := range value.RoleRequests {
+		roleRequests = append(roleRequests, domain.RoleRequest{
+			ID:          request.Id,
+			Role:        request.Role,
+			Status:      request.Status,
+			RequestedAt: request.RequestedAt,
+		})
+	}
+
+	return domain.GroupMembership{
+		User: domain.MembershipUser{
+			ID:         value.User.Id,
+			GivenName:  value.User.GivenName,
+			FamilyName: value.User.FamilyName,
+			Email:      value.User.Email,
+		},
+		Status:       value.Status,
+		Roles:        append([]string{}, value.Roles...),
+		Permissions:  append([]string{}, value.Permissions...),
+		RoleRequests: roleRequests,
+		CreatedAt:    value.CreatedAt,
+		UpdatedAt:    value.UpdatedAt,
 	}, nil
 }

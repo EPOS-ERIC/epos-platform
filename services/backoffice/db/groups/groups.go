@@ -196,6 +196,151 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 	return membership, nil
 }
 
+func (r *Repo) WithdrawMembershipRequest(ctx context.Context, groupID uuid.UUID, userID string) error {
+	rows, err := r.WithdrawGroupMembershipRequest(ctx, sqlc.WithdrawGroupMembershipRequestParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return fmt.Errorf("withdraw membership request: %w", err)
+	}
+
+	if rows == 0 {
+		return groups.ErrNotFound
+	}
+
+	return nil
+}
+
+// DecideMembership changes a pending membership to ACTIVE or REJECTED.
+// Rejection also marks its pending role requests as rejected in the same transaction.
+func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID, status, actorID string) (groups.Membership, error) {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Membership{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("check group: %w", err)
+	}
+
+	_, err = r.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Membership{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("check user: %w", err)
+	}
+
+	var membership sqlc.GroupMembership
+	err = r.withTx(ctx, func(q *sqlc.Queries) error {
+		row, err := q.DecideGroupMembership(ctx, sqlc.DecideGroupMembershipParams{
+			// TODO: maybe we should see if we can use a custom type for enums? global domain package that converts or something
+			Status:  sqlc.MembershipStatus(status),
+			GroupID: groupID,
+			UserID:  userID,
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return groups.ErrConflict
+		}
+		if err != nil {
+			return fmt.Errorf("update membership: %w", err)
+		}
+
+		membership = row
+
+		if status == "REJECTED" {
+			err = q.RejectPendingGroupRoleRequests(ctx, sqlc.RejectPendingGroupRoleRequestsParams{
+				DecidedBy: new(actorID),
+				GroupID:   groupID,
+				UserID:    userID,
+			})
+			if err != nil {
+				return fmt.Errorf("reject pending role requests: %w", err)
+			}
+		}
+
+		return nil
+	})
+	if errors.Is(err, groups.ErrConflict) {
+		return groups.Membership{}, err
+	}
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("decide membership transaction: %w", err)
+	}
+
+	result, err := r.loadMembership(ctx, membership.GroupID, membership.UserID)
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("load decided membership: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID string) (groups.Membership, error) {
+	row, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("get membership: %w", err)
+	}
+
+	roles, err := r.ListGroupMembershipRoles(ctx, groupID)
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("list membership roles: %w", err)
+	}
+
+	permissions, err := r.ListGroupMembershipPermissions(ctx, groupID)
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("list membership permissions: %w", err)
+	}
+
+	requests, err := r.ListPendingGroupRoleRequests(ctx, groupID)
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("list pending role requests: %w", err)
+	}
+
+	result := groups.Membership{
+		User: groups.MembershipUser{
+			ID:         row.User.ID,
+			GivenName:  row.User.GivenName,
+			FamilyName: row.User.FamilyName,
+			Email:      row.User.Email,
+		},
+		Status:       string(row.GroupMembership.Status),
+		Roles:        []string{},
+		Permissions:  []string{},
+		RoleRequests: []groups.RoleRequest{},
+		CreatedAt:    row.GroupMembership.CreatedAt,
+		UpdatedAt:    row.GroupMembership.UpdatedAt,
+	}
+
+	for _, role := range roles {
+		if role.GroupMembershipRole.UserID == userID {
+			result.Roles = append(result.Roles, role.GroupMembershipRole.RoleKey)
+		}
+	}
+
+	for _, permission := range permissions {
+		if permission.GroupPermissionGrant.UserID == userID {
+			result.Permissions = append(result.Permissions, permission.GroupPermissionGrant.PermissionKey)
+		}
+	}
+
+	for _, request := range requests {
+		if request.GroupRoleRequest.UserID == userID {
+			result.RoleRequests = append(result.RoleRequests, groups.RoleRequest{
+				ID:          request.GroupRoleRequest.ID,
+				Role:        request.GroupRoleRequest.RoleKey,
+				Status:      string(request.GroupRoleRequest.Status),
+				RequestedAt: request.GroupRoleRequest.RequestedAt,
+			})
+		}
+	}
+
+	return result, nil
+}
+
 func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {

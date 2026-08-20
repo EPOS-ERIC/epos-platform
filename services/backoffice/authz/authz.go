@@ -192,6 +192,56 @@ func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string,
 	return Result{Allowed: false, Reason: "group roster permission required"}, nil
 }
 
+// CanManageGroupMemberships permits membership acceptance, rejection, and revocation.
+func (a *Authorizer) CanManageGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (Result, error) {
+	if userID == "" || groupID == uuid.Nil {
+		return Result{Allowed: false, Reason: "invalid group access request"}, nil
+	}
+
+	_, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+
+	if admin {
+		return Result{Allowed: true, Reason: "global admin"}, nil
+	}
+
+	allowed, err := a.repository.HasGlobalPermission(ctx, userID, "global.membership.manage")
+	if err != nil {
+		return Result{}, fmt.Errorf("check global membership permission: %w", err)
+	}
+
+	if allowed {
+		return Result{Allowed: true, Reason: "global.membership.manage"}, nil
+	}
+
+	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check group membership: %w", err)
+	}
+
+	if !member {
+		return Result{Allowed: false, Reason: "user is not an active group member"}, nil
+	}
+
+	allowed, err = a.repository.HasGroupPermission(ctx, userID, groupID, "group.membership.manage")
+	if err != nil {
+		return Result{}, fmt.Errorf("check group membership permission: %w", err)
+	}
+
+	if !allowed {
+		return Result{Allowed: false, Reason: "group membership permission required"}, nil
+	}
+
+	return Result{Allowed: true, Reason: "group.membership.manage"}, nil
+}
+
 type repository interface {
 	User(context.Context, string) (User, error)
 	PermissionScope(context.Context, string) (PermissionScope, error)

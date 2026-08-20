@@ -73,6 +73,8 @@ func NewRouter(
 			r.Get("/{groupId}", groupsHandler.Get)
 
 			r.With(authMiddleware(authService, backofficeClient)).Get("/{groupId}/memberships", handlers.NotImplemented)
+			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}/membership-requests", groupsHandler.WithdrawMembershipRequest)
+			r.With(authMiddleware(authService, backofficeClient)).Patch("/{groupId}/memberships/{userId}", groupsHandler.DecideMembership)
 			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}", handlers.NotImplemented)
 			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}/memberships/{userId}", handlers.NotImplemented)
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/memberships", handlers.NotImplemented)

@@ -55,6 +55,39 @@ func (q *Queries) CreateGroupRoleRequest(ctx context.Context, arg CreateGroupRol
 	return i, err
 }
 
+const decideGroupMembership = `-- name: DecideGroupMembership :one
+UPDATE group_memberships
+SET status = $1::membership_status
+WHERE group_id = $2
+  AND user_id = $3
+  AND status = 'PENDING'
+RETURNING
+    user_id,
+    group_id,
+    status,
+    created_at,
+    updated_at
+`
+
+type DecideGroupMembershipParams struct {
+	Status  MembershipStatus
+	GroupID uuid.UUID
+	UserID  string
+}
+
+func (q *Queries) DecideGroupMembership(ctx context.Context, arg DecideGroupMembershipParams) (GroupMembership, error) {
+	row := q.db.QueryRow(ctx, decideGroupMembership, arg.Status, arg.GroupID, arg.UserID)
+	var i GroupMembership
+	err := row.Scan(
+		&i.UserID,
+		&i.GroupID,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getGroupByID = `-- name: GetGroupByID :one
 SELECT
     groups.id, groups.name, groups.description, groups.source_iri, groups.concept, groups.label, groups.logo, groups.page, groups.color, groups.position, groups.created_at, groups.updated_at
@@ -84,6 +117,51 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDR
 		&i.Group.Position,
 		&i.Group.CreatedAt,
 		&i.Group.UpdatedAt,
+	)
+	return i, err
+}
+
+const getGroupMembership = `-- name: GetGroupMembership :one
+SELECT
+    membership.user_id, membership.group_id, membership.status, membership.created_at, membership.updated_at,
+    users.id, users.family_name, users.given_name, users.email, users.status, users.block_reason, users.blocked_by, users.blocked_at, users.created_at, users.updated_at
+FROM
+    group_memberships AS membership
+    JOIN users ON users.id = membership.user_id
+WHERE
+    membership.group_id = $1
+    AND membership.user_id = $2
+`
+
+type GetGroupMembershipParams struct {
+	GroupID uuid.UUID
+	UserID  string
+}
+
+type GetGroupMembershipRow struct {
+	GroupMembership GroupMembership
+	User            User
+}
+
+func (q *Queries) GetGroupMembership(ctx context.Context, arg GetGroupMembershipParams) (GetGroupMembershipRow, error) {
+	row := q.db.QueryRow(ctx, getGroupMembership, arg.GroupID, arg.UserID)
+	var i GetGroupMembershipRow
+	err := row.Scan(
+		&i.GroupMembership.UserID,
+		&i.GroupMembership.GroupID,
+		&i.GroupMembership.Status,
+		&i.GroupMembership.CreatedAt,
+		&i.GroupMembership.UpdatedAt,
+		&i.User.ID,
+		&i.User.FamilyName,
+		&i.User.GivenName,
+		&i.User.Email,
+		&i.User.Status,
+		&i.User.BlockReason,
+		&i.User.BlockedBy,
+		&i.User.BlockedAt,
+		&i.User.CreatedAt,
+		&i.User.UpdatedAt,
 	)
 	return i, err
 }
@@ -323,14 +401,37 @@ func (q *Queries) ListPendingGroupRoleRequests(ctx context.Context, groupID uuid
 	return items, nil
 }
 
+const rejectPendingGroupRoleRequests = `-- name: RejectPendingGroupRoleRequests :exec
+UPDATE group_role_requests
+SET status = 'REJECTED',
+    decided_by = $1,
+    decided_at = now()
+WHERE group_id = $2
+  AND user_id = $3
+  AND status = 'PENDING'
+`
+
+type RejectPendingGroupRoleRequestsParams struct {
+	DecidedBy *string
+	GroupID   uuid.UUID
+	UserID    string
+}
+
+func (q *Queries) RejectPendingGroupRoleRequests(ctx context.Context, arg RejectPendingGroupRoleRequestsParams) error {
+	_, err := q.db.Exec(ctx, rejectPendingGroupRoleRequests, arg.DecidedBy, arg.GroupID, arg.UserID)
+	return err
+}
+
 const requestGroupMembership = `-- name: RequestGroupMembership :one
 INSERT INTO
     group_memberships (user_id, group_id, STATUS)
 VALUES
-    ($1, $2, 'PENDING')
-ON CONFLICT (user_id, group_id) DO UPDATE
-SET STATUS = 'PENDING'
-WHERE group_memberships.STATUS = 'REJECTED'
+    ($1, $2, 'PENDING') ON CONFLICT (user_id, group_id) DO
+UPDATE
+SET
+    STATUS = 'PENDING'
+WHERE
+    group_memberships.STATUS = 'REJECTED'
 RETURNING
     user_id,
     group_id,
@@ -355,4 +456,24 @@ func (q *Queries) RequestGroupMembership(ctx context.Context, arg RequestGroupMe
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const withdrawGroupMembershipRequest = `-- name: WithdrawGroupMembershipRequest :execrows
+DELETE FROM group_memberships
+WHERE group_id = $1
+  AND user_id = $2
+  AND status = 'PENDING'
+`
+
+type WithdrawGroupMembershipRequestParams struct {
+	GroupID uuid.UUID
+	UserID  string
+}
+
+func (q *Queries) WithdrawGroupMembershipRequest(ctx context.Context, arg WithdrawGroupMembershipRequestParams) (int64, error) {
+	result, err := q.db.Exec(ctx, withdrawGroupMembershipRequest, arg.GroupID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

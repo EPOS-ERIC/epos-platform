@@ -47,11 +47,14 @@ type MembershipRequest struct {
 type AccessStore interface {
 	ListMemberships(context.Context, uuid.UUID) ([]Membership, error)
 	RequestMembership(context.Context, uuid.UUID, string, []string) (Membership, error)
+	WithdrawMembershipRequest(context.Context, uuid.UUID, string) error
+	DecideMembership(context.Context, uuid.UUID, string, string, string) (Membership, error)
 }
 
 type AccessAuthorizer interface {
 	AuthorizeActiveUser(context.Context, string) (authz.Result, error)
 	CanListGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
+	CanManageGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
 }
 
 type AccessService struct {
@@ -109,6 +112,56 @@ func (s *AccessService) RequestMembership(ctx context.Context, actorID string, g
 	membership, err := s.store.RequestMembership(ctx, groupID, actorID, request.Roles)
 	if err != nil {
 		return Membership{}, fmt.Errorf("request group membership: %w", err)
+	}
+
+	return membership, nil
+}
+
+func (s *AccessService) WithdrawMembershipRequest(ctx context.Context, actorID string, groupID uuid.UUID) error {
+	actorID = strings.TrimSpace(actorID)
+	if actorID == "" || groupID == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize membership withdrawal: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.WithdrawMembershipRequest(ctx, groupID, actorID); err != nil {
+		return fmt.Errorf("withdraw group membership request: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AccessService) DecideMembership(ctx context.Context, actorID string, groupID uuid.UUID, userID, status string) (Membership, error) {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	status = strings.TrimSpace(status)
+	if actorID == "" || userID == "" || groupID == uuid.Nil {
+		return Membership{}, ErrInvalid
+	}
+
+	// TODO: use an enum
+	if status != "ACTIVE" && status != "REJECTED" {
+		return Membership{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.CanManageGroupMemberships(ctx, actorID, groupID)
+	if err != nil {
+		return Membership{}, fmt.Errorf("authorize membership decision: %w", err)
+	}
+	if !allowed.Allowed {
+		return Membership{}, ErrForbidden
+	}
+
+	membership, err := s.store.DecideMembership(ctx, groupID, userID, status, actorID)
+	if err != nil {
+		return Membership{}, fmt.Errorf("decide group membership: %w", err)
 	}
 
 	return membership, nil
