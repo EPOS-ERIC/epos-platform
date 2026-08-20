@@ -18,6 +18,7 @@ import (
 type Backoffice struct {
 	identity  client.InternalIdentityAPI
 	users     client.UsersAPI
+	groups    client.GroupsAPI
 	resources client.ResourcesAPI
 	imports   client.ImportsAPI
 }
@@ -55,9 +56,46 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 	return &Backoffice{
 		identity:  apiClient.InternalIdentityAPI,
 		users:     apiClient.UsersAPI,
+		groups:    apiClient.GroupsAPI,
 		resources: apiClient.ResourcesAPI,
 		imports:   apiClient.ImportsAPI,
 	}, nil
+}
+
+func (c *Backoffice) ListGroups(ctx context.Context) ([]domain.Group, error) {
+	if c == nil || c.groups == nil {
+		return nil, fmt.Errorf("backoffice group client is not configured")
+	}
+
+	groups, response, err := c.groups.ListGroups(ctx).Execute()
+	if err != nil {
+		return nil, wrapGroupError("list backoffice groups", response, err)
+	}
+
+	result := make([]domain.Group, 0, len(groups))
+	for _, group := range groups {
+		mapped, err := toDomainGroup(&group)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, mapped)
+	}
+
+	return result, nil
+}
+
+func (c *Backoffice) GetGroup(ctx context.Context, id string) (domain.Group, error) {
+	if c == nil || c.groups == nil {
+		return domain.Group{}, fmt.Errorf("backoffice group client is not configured")
+	}
+
+	group, response, err := c.groups.GetGroup(ctx, id).Execute()
+	if err != nil {
+		return domain.Group{}, wrapGroupError("get backoffice group", response, err)
+	}
+
+	return toDomainGroup(group)
 }
 
 // Imports exposes typed Backoffice metadata import operations.
@@ -246,6 +284,18 @@ func wrapUserError(operation string, response *http.Response, err error) error {
 	return wrapConnectionError(operation, err)
 }
 
+func wrapGroupError(operation string, response *http.Response, err error) error {
+	if response != nil {
+		switch response.StatusCode {
+		case http.StatusBadRequest:
+			return fmt.Errorf("%s: %w", operation, domain.ErrBadRequest)
+		case http.StatusNotFound:
+			return fmt.Errorf("%s: %w", operation, domain.ErrNotFound)
+		}
+	}
+	return wrapConnectionError(operation, err)
+}
+
 func wrapConnectionError(operation string, err error) error {
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
@@ -262,8 +312,16 @@ func toDomainUser(value *client.User) (domain.User, error) {
 	for _, membership := range value.Memberships {
 		memberships = append(memberships, domain.Membership{
 			Group: domain.Group{
-				ID:   membership.Group.Id,
-				Name: membership.Group.Name,
+				ID:          membership.Group.Id,
+				Name:        membership.Group.Name,
+				SourceIRI:   "",
+				Description: nil,
+				Label:       nil,
+				Logo:        nil,
+				Page:        nil,
+				Color:       nil,
+				Position:    0,
+				Concept:     "",
 			},
 			Roles:       append([]string{}, membership.Roles...),
 			Status:      membership.Status,
@@ -284,5 +342,24 @@ func toDomainUser(value *client.User) (domain.User, error) {
 		CreatedAt:         value.CreatedAt.Format(time.RFC3339Nano),
 		UpdatedAt:         value.UpdatedAt.Format(time.RFC3339Nano),
 		Memberships:       memberships,
+	}, nil
+}
+
+func toDomainGroup(value *client.Group) (domain.Group, error) {
+	if value == nil {
+		return domain.Group{}, fmt.Errorf("decode backoffice group: response is empty")
+	}
+
+	return domain.Group{
+		ID:          value.Id,
+		SourceIRI:   value.SourceIri,
+		Name:        value.Name,
+		Description: value.Description.Get(),
+		Label:       value.Label.Get(),
+		Logo:        value.Logo.Get(),
+		Page:        value.Page.Get(),
+		Color:       value.Color.Get(),
+		Position:    value.Position,
+		Concept:     value.Concept,
 	}, nil
 }

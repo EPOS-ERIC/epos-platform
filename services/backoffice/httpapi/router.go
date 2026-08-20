@@ -11,7 +11,9 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/docs"
+	groupservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/dataset"
+	groupsapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/health"
 	identityapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/identity"
 	imports "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/import"
@@ -63,6 +65,11 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Put("/users/{user_id}/global-permissions/{permission}", identity.GrantGlobalPermission)
 		r.Delete("/users/{user_id}/global-permissions/{permission}", identity.RevokeGlobalPermission)
 		r.Post("/internal/users", identity.Create)
+
+		groups := groupsapi.New(groupservice.New(database.Groups))
+
+		r.Get("/groups", groups.List)
+		r.Get("/groups/{group_id}", groups.Get)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))

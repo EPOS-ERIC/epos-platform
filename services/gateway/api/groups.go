@@ -1,26 +1,16 @@
 package api
 
 type Group struct {
-	ID          string                   `json:"id"`
-	Slug        string                   `json:"slug"`
-	Name        string                   `json:"name"`
-	Description string                   `json:"description,omitempty"`
-	IsSystem    bool                     `json:"is_system"`
-	Membership  *ViewerMembershipSummary `json:"membership,omitempty"`
-}
-
-type GroupSummary struct {
-	ID          string                   `json:"id"`
-	Slug        string                   `json:"slug"`
-	Name        string                   `json:"name"`
-	Description string                   `json:"description,omitempty"`
-	IsSystem    bool                     `json:"is_system"`
-	Membership  *ViewerMembershipSummary `json:"membership,omitempty"`
-}
-
-type ViewerMembershipSummary struct {
-	Role   MembershipRole   `json:"role"`
-	Status MembershipStatus `json:"status"`
+	ID          string  `json:"id"`
+	SourceIRI   string  `json:"source_iri"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	Label       *string `json:"label"`
+	Logo        *string `json:"logo"`
+	Page        *string `json:"page"`
+	Color       *string `json:"color"`
+	Position    int32   `json:"position"`
+	Concept     string  `json:"concept"`
 }
 
 type Membership struct {

@@ -247,10 +247,8 @@ paths:
       tags:
         - Groups
       summary: List groups
-      description: Retrieve all group records from usergroup service, including caller membership when present.
+      description: Retrieve public group metadata from Backoffice. Membership data is not included.
       operationId: listGroups
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: Groups returned successfully
@@ -259,25 +257,22 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GroupSummary"
+                  $ref: "#/components/schemas/Group"
               examples:
                 list:
-                  summary: Groups with caller membership
+                  summary: Public group metadata
                   value:
                     - id: "550e8400-e29b-41d4-a716-446655440001"
-                      slug: "satd"
+                      source_iri: "https://example.org/groups/satd"
                       name: "Satellite Data"
                       description: "Geospatial data obtained from Satellite measurements"
-                      is_system: false
-                      membership:
-                        role: "EDITOR"
-                        status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                      label: "Satellite Data"
+                      position: 0
+                      concept: "DATA"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
     post:
       tags:
         - Groups
@@ -323,10 +318,8 @@ paths:
       tags:
         - Groups
       summary: Get group by id
-      description: Retrieve group details from usergroup service, including caller membership when present.
+      description: Retrieve public group metadata from Backoffice. Membership data is not included.
       operationId: getGroup
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: Group found
@@ -334,26 +327,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Group"
-              examples:
-                detail:
-                  summary: Group detail with caller membership
-                  value:
-                    id: "550e8400-e29b-41d4-a716-446655440001"
-                    slug: "satd"
-                    name: "Satellite Data"
-                    description: "Geospatial data obtained from Satellite measurements"
-                    is_system: false
-                    membership:
-                      role: "GROUP_ADMIN"
-                      status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
     delete:
       tags:
         - Groups
@@ -2991,46 +2972,43 @@ components:
           type: string
           format: date-time
     Group:
-      allOf:
-        - $ref: "#/components/schemas/GroupSummary"
-        - type: object
-          description: Group record returned by gateway group endpoints.
-
-    GroupSummary:
       type: object
-      description: Group record returned by group endpoints.
+      description: Public group metadata returned by Backoffice.
       required:
         - id
-        - slug
+        - source_iri
         - name
-        - is_system
+        - position
+        - concept
       properties:
         id:
           type: string
-        slug:
+          format: uuid
+        source_iri:
           type: string
         name:
           type: string
         description:
           type: string
-        is_system:
-          type: boolean
-        membership:
-          description: Current caller membership in this group, when present.
-          $ref: "#/components/schemas/ViewerMembershipSummary"
-
-    ViewerMembershipSummary:
-      type: object
-      description: Caller-scoped membership preview for one group.
-      required:
-        - role
-        - status
-      properties:
-        role:
-          $ref: "#/components/schemas/MembershipRole"
-        status:
-          description: Optional at request time. Self-service callers omit it and server creates `PENDING`. Privileged callers may set it to `ACTIVE` for direct membership creation.
-          $ref: "#/components/schemas/MembershipStatus"
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        page:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        position:
+          type: integer
+          format: int32
+        concept:
+          type: string
+          enum: [DATA, FACILITIES, SOFTWARE]
 
     UserMembershipSummary:
       type: object

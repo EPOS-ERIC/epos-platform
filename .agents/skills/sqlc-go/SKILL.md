@@ -50,7 +50,7 @@ Type table, `sqlc.arg`/`sqlc.narg`, `overrides:`: `references/types-and-nullabil
 
 ## Advanced features
 
-- **`sqlc.embed(table)`** — nest joined table struct, not flat columns (`Post.Author.Name` vs `Post.AuthorName`). Prefer over manual listing/aliasing.
+- **`sqlc.embed(table)`** — return a table as a nested generated struct (`row.Post`, `row.User`). Use it for joins and for single-table queries that return the whole table; it simplifies adapter mapping and avoids repeated column lists. Prefer over manual listing/aliasing when selecting the full table. Use explicit columns when the query intentionally projects a narrower contract or should avoid coupling to future table columns.
 - **`sqlc.arg(name)` / `sqlc.narg(name)`** — named params; `narg` makes Go param nullable for optional filters.
 - **`sqlc.slice(name)`** — Go slice param for `IN (...)` queries (pgx/v5 only), replacing manual `= ANY($1::type[])`.
 

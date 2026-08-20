@@ -2,12 +2,21 @@
 
 ## sqlc.embed(table)
 
-Nest full joined-table struct, not flat columns:
+ Nest full table structs, not flat columns. This works for both joins and single-table queries:
 
 ```sql
 -- name: GetPostWithAuthor :one
 SELECT sqlc.embed(posts), sqlc.embed(users)
 FROM posts JOIN users ON users.id = posts.author_id
+WHERE posts.id = $1;
+```
+
+For a single-table read, use the same pattern:
+
+```sql
+-- name: GetPost :one
+SELECT sqlc.embed(posts)
+FROM posts
 WHERE posts.id = $1;
 ```
 
@@ -18,7 +27,7 @@ type GetPostWithAuthorRow struct {
 }
 ```
 
-Prefer over manual listing/aliasing: avoids name collisions, reads better. Table or alias must appear in `FROM`/`JOIN`, not arbitrary subquery.
+Prefer over manual listing/aliasing when returning the full table: avoids name collisions, simplifies adapter mapping, and keeps column lists in generated SQL. Use explicit columns when intentionally projecting a narrower result or avoiding coupling to future table columns. Table or alias must appear in `FROM`/`JOIN`, not arbitrary subquery.
 
 ## sqlc.slice(name)
 

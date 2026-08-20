@@ -9,6 +9,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
+	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
@@ -50,6 +51,7 @@ func NewRouter(
 
 	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
 	usersHandler := handlers.NewUsers(identityService)
+	groupsHandler := handlers.NewGroups(groupservice.NewService(backofficeClient))
 	importsHandler := handlers.NewImports(imports.NewService(backofficeClient))
 
 	r.Route("/v1", func(r chi.Router) {
@@ -67,16 +69,16 @@ func NewRouter(
 		})
 
 		r.Route("/groups", func(r chi.Router) {
-			r.Use(authMiddleware(authService, backofficeClient))
-			r.Get("/", handlers.NotImplemented)
-			r.Get("/{groupId}", handlers.NotImplemented)
-			r.Get("/{groupId}/memberships", handlers.NotImplemented)
-			r.Delete("/{groupId}", handlers.NotImplemented)
-			r.Delete("/{groupId}/memberships/{userId}", handlers.NotImplemented)
-			r.Post("/{groupId}/memberships", handlers.NotImplemented)
-			r.Post("/", handlers.NotImplemented)
-			r.Post("/{groupId}/resources/{resourceType}", lifecycleHandler.Create)
-			r.Post("/{groupId}/resources/{resourceType}/{id}/copy", lifecycleHandler.Copy)
+			r.Get("/", groupsHandler.List)
+			r.Get("/{groupId}", groupsHandler.Get)
+
+			r.With(authMiddleware(authService, backofficeClient)).Get("/{groupId}/memberships", handlers.NotImplemented)
+			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}", handlers.NotImplemented)
+			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}/memberships/{userId}", handlers.NotImplemented)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/memberships", handlers.NotImplemented)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/", handlers.NotImplemented)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources/{resourceType}", lifecycleHandler.Create)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources/{resourceType}/{id}/copy", lifecycleHandler.Copy)
 		})
 
 		r.Route("/resources", func(r chi.Router) {

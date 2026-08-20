@@ -48,6 +48,7 @@ func Run(cfg config.Config) error {
 		}
 	}()
 
+	// TODO: create services here and inject into router
 	router := httpapi.NewRouter(database)
 	handler := requestTimeoutHandler(router, cfg.RequestTimeout)
 

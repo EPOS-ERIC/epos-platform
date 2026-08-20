@@ -517,9 +517,10 @@ func (q *Queries) GetUserMemberships(ctx context.Context, userID string) ([]GetU
 }
 
 const grantGlobalPermission = `-- name: GrantGlobalPermission :exec
-INSERT INTO global_permission_grants (user_id, permission_key, granted_by)
-VALUES ($1, $2, $3)
-ON CONFLICT (user_id, permission_key) DO NOTHING
+INSERT INTO
+    global_permission_grants (user_id, permission_key, granted_by)
+VALUES
+    ($1, $2, $3) ON CONFLICT (user_id, permission_key) DO NOTHING
 `
 
 type GrantGlobalPermissionParams struct {
@@ -738,8 +739,12 @@ SELECT
     users.given_name,
     users.family_name,
     users.status
-FROM users
-ORDER BY users.family_name, users.given_name, users.id
+FROM
+    users
+ORDER BY
+    users.family_name,
+    users.given_name,
+    users.id
 `
 
 type ListUsersRow struct {
@@ -777,8 +782,11 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 }
 
 const revokeGlobalPermission = `-- name: RevokeGlobalPermission :exec
-DELETE FROM global_permission_grants
-WHERE user_id = $1 AND permission_key = $2
+DELETE FROM
+    global_permission_grants
+WHERE
+    user_id = $1
+    AND permission_key = $2
 `
 
 type RevokeGlobalPermissionParams struct {
