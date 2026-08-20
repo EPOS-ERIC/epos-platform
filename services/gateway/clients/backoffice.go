@@ -117,6 +117,32 @@ func (c *Backoffice) ListUsers(ctx context.Context, actorID string) ([]domain.Us
 	return result, nil
 }
 
+func (c *Backoffice) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
+	if c == nil || c.users == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	response, err := c.users.GrantGlobalPermission(ctx, userID, permission).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapUserError("grant backoffice global permission", response, err)
+	}
+
+	return nil
+}
+
+func (c *Backoffice) RevokeGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
+	if c == nil || c.users == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	response, err := c.users.RevokeGlobalPermission(ctx, userID, permission).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapUserError("revoke backoffice global permission", response, err)
+	}
+
+	return nil
+}
+
 func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	user, err := c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {
@@ -209,6 +235,8 @@ func (c *Backoffice) ImportTurtle(ctx context.Context, actorID string, body []by
 func wrapUserError(operation string, response *http.Response, err error) error {
 	if response != nil {
 		switch response.StatusCode {
+		case http.StatusBadRequest:
+			return domain.ErrBadRequest
 		case http.StatusNotFound:
 			return domain.ErrNotFound
 		case http.StatusForbidden:

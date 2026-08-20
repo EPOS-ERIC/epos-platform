@@ -4,6 +4,7 @@ package identity
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -49,4 +50,40 @@ func (s *Service) ListUsers(ctx context.Context, actorID string) ([]domain.UserS
 	}
 
 	return users, nil
+}
+
+func (s *Service) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
+	userID = strings.TrimSpace(userID)
+	permission = strings.TrimSpace(permission)
+	if userID == "" || permission == "" {
+		return fmt.Errorf("invalid user id or permission: %w", domain.ErrBadRequest)
+	}
+
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	if err := s.backoffice.GrantGlobalPermission(ctx, actorID, userID, permission); err != nil {
+		return fmt.Errorf("grant global permission through backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
+	userID = strings.TrimSpace(userID)
+	permission = strings.TrimSpace(permission)
+	if userID == "" || permission == "" {
+		return fmt.Errorf("invalid user id or permission: %w", domain.ErrBadRequest)
+	}
+
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	if err := s.backoffice.RevokeGlobalPermission(ctx, actorID, userID, permission); err != nil {
+		return fmt.Errorf("revoke global permission through backoffice: %w", err)
+	}
+
+	return nil
 }

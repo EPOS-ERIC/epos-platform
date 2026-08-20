@@ -103,6 +103,8 @@ CREATE TABLE group_notification_subscriptions (
         ON DELETE CASCADE
 );
 
+-- Keep this list synchronized with permission enums in docs/openapi.yaml for
+-- Backoffice and Gateway, then regenerate the Gateway Backoffice client.
 INSERT INTO permissions (key, label, description, scope) VALUES
     ('resource.create',          'Create resources',         'Create an empty draft, draft from an existing resource, or copy a published resource into this group.',     'GROUP'),
     ('resource.edit',            'Edit drafts',              'Change metadata and links on draft resources owned by this group.',                                         'GROUP'),

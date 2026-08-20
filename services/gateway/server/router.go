@@ -62,6 +62,8 @@ func NewRouter(
 			r.Use(authMiddleware(authService, backofficeClient))
 			r.Get("/", usersHandler.List)
 			r.Get("/{id}", usersHandler.Get)
+			r.Put("/{id}/global-permissions/{permission}", usersHandler.GrantGlobalPermission)
+			r.Delete("/{id}/global-permissions/{permission}", usersHandler.RevokeGlobalPermission)
 		})
 
 		r.Route("/groups", func(r chi.Router) {

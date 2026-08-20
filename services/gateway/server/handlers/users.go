@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -78,6 +79,60 @@ func (h *Users) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeUserSummariesJSON(w, http.StatusOK, UserSummariesFromDomain(resolved))
+}
+
+func (h *Users) GrantGlobalPermission(w http.ResponseWriter, r *http.Request) {
+	h.changeGlobalPermission(w, r, true)
+}
+
+func (h *Users) RevokeGlobalPermission(w http.ResponseWriter, r *http.Request) {
+	h.changeGlobalPermission(w, r, false)
+}
+
+func (h *Users) changeGlobalPermission(w http.ResponseWriter, r *http.Request, grant bool) {
+	user, ok := AuthenticatedUserFromContext(r.Context())
+	if !ok {
+		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	id := strings.TrimSpace(chi.URLParam(r, "id"))
+	permission := strings.TrimSpace(chi.URLParam(r, "permission"))
+	if id == "" || permission == "" {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id or permission", nil)
+		return
+	}
+
+	var err error
+	if grant {
+		err = h.service.GrantGlobalPermission(r.Context(), user.ID, id, permission)
+	} else {
+		err = h.service.RevokeGlobalPermission(r.Context(), user.ID, id, permission)
+	}
+	if err != nil {
+		if errors.Is(err, domain.ErrBadRequest) {
+			WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id or permission", err)
+			return
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "global permission management is not permitted", nil)
+			return
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			WriteError(r.Context(), w, http.StatusNotFound, "not_found", "user not found", nil)
+			return
+		}
+		if errors.Is(err, domain.ErrUpstreamTimeout) {
+			WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
+			return
+		}
+
+		log.ErrorContext(r.Context(), "change global permission failed", "error", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func UserFromDomain(resolved domain.User) api.User {
