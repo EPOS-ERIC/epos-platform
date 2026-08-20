@@ -2877,6 +2877,14 @@ components:
         - $ref: "#/components/schemas/UserSummary"
         - type: object
           description: User record returned by gateway user endpoints.
+          required:
+            - memberships
+          properties:
+            memberships:
+              type: array
+              description: Membership previews for this user.
+              items:
+                $ref: "#/components/schemas/UserMembershipSummary"
 
     UserSummary:
       type: object
@@ -2891,7 +2899,6 @@ components:
         - global_permissions
         - created_at
         - updated_at
-        - memberships
       properties:
         id:
           type: string
@@ -2917,12 +2924,6 @@ components:
         updated_at:
           type: string
           format: date-time
-        memberships:
-          type: array
-          description: Membership previews for this user.
-          items:
-            $ref: "#/components/schemas/UserMembershipSummary"
-
     Group:
       allOf:
         - $ref: "#/components/schemas/GroupSummary"

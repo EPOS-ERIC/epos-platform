@@ -11,7 +11,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
-	identityservice "github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
@@ -73,7 +72,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Ba
 				return
 			}
 
-			user := identityservice.UserFromClient(resolved)
+			user := handlers.UserFromDomain(resolved)
 			ctx := logging.WithActor(r.Context(), logging.Actor{
 				ID:             user.ID,
 				AuthIdentifier: user.ID,

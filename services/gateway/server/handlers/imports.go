@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
 )
@@ -37,12 +38,12 @@ func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid Turtle request body", err)
 			return
 		}
-		if responseErr, ok := errors.AsType[*metadataimports.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
+		if errors.Is(err, domain.ErrForbidden) {
+			WriteError(ctx, w, http.StatusForbidden, "forbidden", "user access denied", err)
+			return
+		}
+		if errors.Is(err, domain.ErrConflict) {
+			WriteError(ctx, w, http.StatusConflict, "resource_conflict", "import conflicts with existing metadata", err)
 			return
 		}
 		if errors.Is(err, domain.ErrUpstreamTimeout) {
@@ -56,7 +57,7 @@ func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	response := importResultResponse{
+	response := api.ImportResult{
 		Groups:               result.Groups,
 		Categories:           result.Categories,
 		Organizations:        result.Organizations,
@@ -64,10 +65,10 @@ func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
 		Datasets:             result.Datasets,
 		SoftwareApplications: result.SoftwareApplications,
 		SoftwareSourceCodes:  result.SoftwareSourceCodes,
-		Warnings:             make([]importDiagnosticResponse, 0, len(result.Warnings)),
+		Warnings:             make([]api.ImportDiagnostic, 0, len(result.Warnings)),
 	}
 	for _, warning := range result.Warnings {
-		response.Warnings = append(response.Warnings, importDiagnosticResponse{
+		response.Warnings = append(response.Warnings, api.ImportDiagnostic{
 			Severity:  warning.Severity,
 			Subject:   warning.Subject,
 			Predicate: warning.Predicate,
@@ -77,22 +78,4 @@ func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.ErrorContext(ctx, "encode metadata import response failed", "error", err)
 	}
-}
-
-type importResultResponse struct {
-	Groups               int32                      `json:"groups"`
-	Categories           int32                      `json:"categories"`
-	Organizations        int32                      `json:"organizations"`
-	ContactPoints        int32                      `json:"contact_points"`
-	Datasets             int32                      `json:"datasets"`
-	SoftwareApplications int32                      `json:"software_applications"`
-	SoftwareSourceCodes  int32                      `json:"software_source_codes"`
-	Warnings             []importDiagnosticResponse `json:"warnings"`
-}
-
-type importDiagnosticResponse struct {
-	Severity  string `json:"severity"`
-	Subject   string `json:"subject"`
-	Predicate string `json:"predicate"`
-	Message   string `json:"message"`
 }

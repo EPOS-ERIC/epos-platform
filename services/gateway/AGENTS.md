@@ -24,6 +24,18 @@
 - Do not edit `gen/` manually. Regenerate it.
 - Treat `docs/openapi.yaml` and embedded docs assets as source for served API docs. Keep route changes aligned with docs updates.
 
+## Endpoint Boundaries
+
+- Treat `docs/openapi.yaml` as the public gateway contract. Keep `api/` structs, handlers, status codes, and response bodies aligned with it.
+- Use generated Backoffice clients only inside `clients/`. Never inject generated APIs into services or handlers, and never expose generated models outside `clients/`.
+- Map generated request and response models to gateway domain contracts in `clients/`. Convert upstream HTTP failures into domain errors; never pass upstream status, headers, or bodies to gateway callers.
+- Keep use-case contracts and errors in `domain/`. Domain types must not contain JSON tags, HTTP URLs, generated models, or transport dependencies.
+- Services accept and return domain contracts. Services own use-case validation, rules, orchestration, and calls to custom clients. Thin proxy services may forward domain contracts unchanged.
+- Keep HTTP parsing, `api/` request and response mapping, URL construction such as `href`, domain-error-to-HTTP mapping, and gateway `api.Problem` encoding in `server/handlers/`.
+- Do not alias `domain/` and `api/` types. Use explicit mappings so public API changes remain independent from service logic changes.
+- Return only documented gateway error responses, normally `application/problem+json`. Keep upstream diagnostics for logs and internal errors only.
+- Avoid abstractions before repeated behavior proves their value. Prefer explicit client operation methods and mappings.
+
 ## Testing
 
 - Prefer **table-driven tests** where practical. Follow existing patterns in repository.

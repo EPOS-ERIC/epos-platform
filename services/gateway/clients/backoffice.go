@@ -29,33 +29,6 @@ type ActorIdentity struct {
 	FamilyName     string
 }
 
-type User struct {
-	ID                string
-	Email             string
-	GivenName         string
-	FamilyName        string
-	Status            string
-	GlobalRoles       []string
-	GlobalPermissions []string
-	CreatedAt         string
-	UpdatedAt         string
-	Memberships       []Membership
-}
-
-type Membership struct {
-	Group       Group
-	Roles       []string
-	Status      string
-	Permissions []string
-	CreatedAt   string
-	UpdatedAt   string
-}
-
-type Group struct {
-	ID   string
-	Name string
-}
-
 func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, error) {
 	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
 	if err != nil {
@@ -103,32 +76,32 @@ func (c *Backoffice) Resources() client.ResourcesAPI {
 	return c.resources
 }
 
-func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (User, error) {
+func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (domain.User, error) {
 	if c == nil || c.users == nil {
-		return User{}, fmt.Errorf("backoffice identity client is not configured")
+		return domain.User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
 
 	user, response, err := c.users.GetUser(ctx, userID).XEPOSUserID(actorID).Execute()
 	if err != nil {
-		return User{}, getUserError("get backoffice user", response, err)
+		return domain.User{}, wrapUserError("get backoffice user", response, err)
 	}
 
-	return userFromGenerated(user)
+	return toDomainUser(user)
 }
 
-func (c *Backoffice) ListUsers(ctx context.Context, actorID string) ([]User, error) {
+func (c *Backoffice) ListUsers(ctx context.Context, actorID string) ([]domain.UserSummary, error) {
 	if c == nil || c.users == nil {
 		return nil, fmt.Errorf("backoffice identity client is not configured")
 	}
 
 	users, response, err := c.users.ListUsers(ctx).XEPOSUserID(actorID).Execute()
 	if err != nil {
-		return nil, getUserError("list backoffice users", response, err)
+		return nil, wrapUserError("list backoffice users", response, err)
 	}
 
-	result := make([]User, 0, len(users))
+	result := make([]domain.UserSummary, 0, len(users))
 	for _, user := range users {
-		result = append(result, User{
+		result = append(result, domain.UserSummary{
 			ID:                user.Id,
 			Email:             user.Email,
 			GivenName:         user.GivenName,
@@ -138,14 +111,13 @@ func (c *Backoffice) ListUsers(ctx context.Context, actorID string) ([]User, err
 			GlobalPermissions: append([]string{}, user.GlobalPermissions...),
 			CreatedAt:         "",
 			UpdatedAt:         "",
-			Memberships:       []Membership{},
 		})
 	}
 
 	return result, nil
 }
 
-func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (User, error) {
+func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	user, err := c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {
 		user, err = c.CreateUser(ctx, identity)
@@ -154,15 +126,17 @@ func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (Us
 		}
 	}
 	if err != nil {
-		return User{}, fmt.Errorf("ensure backoffice user: %w", err)
+		return domain.User{}, fmt.Errorf("ensure backoffice user: %w", err)
 	}
+
 	return user, nil
 }
 
-func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (User, error) {
+func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	if c == nil || c.identity == nil {
-		return User{}, fmt.Errorf("backoffice identity client is not configured")
+		return domain.User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
+
 	user, response, err := c.identity.ProvisionUser(ctx).CreateUserRequest(client.CreateUserRequest{
 		Id:         identity.AuthIdentifier,
 		Email:      identity.Email,
@@ -171,21 +145,68 @@ func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (Us
 	}).Execute()
 	if err != nil {
 		if response != nil && response.StatusCode == http.StatusConflict {
-			return User{}, domain.ErrConflict
+			return domain.User{}, domain.ErrConflict
 		}
-		return User{}, generatedError("create backoffice user", err)
+
+		return domain.User{}, wrapConnectionError("create backoffice user", err)
 	}
-	resolved, err := userFromGenerated(user)
+
+	resolved, err := toDomainUser(user)
 	if err != nil {
-		return User{}, err
+		return domain.User{}, err
 	}
-	if resolved.ID == "" {
-		return User{}, fmt.Errorf("decode backoffice user: missing id")
-	}
+
 	return resolved, nil
 }
 
-func getUserError(operation string, response *http.Response, err error) error {
+func (c *Backoffice) ImportTurtle(ctx context.Context, actorID string, body []byte) (*domain.ImportResult, error) {
+	if c == nil || c.imports == nil {
+		return nil, fmt.Errorf("backoffice import client is not configured")
+	}
+
+	result, response, err := c.imports.ImportTurtleMetadata(ctx).XEPOSUserID(actorID).Body(string(body)).Execute()
+	if err != nil {
+		if response != nil {
+			switch response.StatusCode {
+			case http.StatusBadRequest:
+				return nil, fmt.Errorf("backoffice import rejected request: %w", domain.ErrBadRequest)
+			case http.StatusForbidden:
+				return nil, fmt.Errorf("backoffice import forbidden: %w", domain.ErrForbidden)
+			case http.StatusConflict:
+				return nil, fmt.Errorf("backoffice import conflict: %w", domain.ErrConflict)
+			}
+			return nil, fmt.Errorf("backoffice import failed with status %d: %w", response.StatusCode, err)
+		}
+		return nil, wrapConnectionError("backoffice import request", err)
+	}
+
+	if result == nil {
+		return nil, fmt.Errorf("decode backoffice import result: response is empty")
+	}
+
+	responseResult := &domain.ImportResult{
+		Groups:               result.Groups,
+		Categories:           result.Categories,
+		Organizations:        result.Organizations,
+		ContactPoints:        result.ContactPoints,
+		Datasets:             result.Datasets,
+		SoftwareApplications: result.SoftwareApplications,
+		SoftwareSourceCodes:  result.SoftwareSourceCodes,
+		Warnings:             make([]domain.ImportDiagnostic, 0, len(result.Warnings)),
+	}
+	for _, warning := range result.Warnings {
+		responseResult.Warnings = append(responseResult.Warnings, domain.ImportDiagnostic{
+			Severity:  warning.Severity,
+			Subject:   warning.Subject,
+			Predicate: warning.Predicate,
+			Message:   warning.Message,
+		})
+	}
+
+	return responseResult, nil
+}
+
+func wrapUserError(operation string, response *http.Response, err error) error {
 	if response != nil {
 		switch response.StatusCode {
 		case http.StatusNotFound:
@@ -194,24 +215,25 @@ func getUserError(operation string, response *http.Response, err error) error {
 			return domain.ErrForbidden
 		}
 	}
-	return generatedError(operation, err)
+	return wrapConnectionError(operation, err)
 }
 
-func generatedError(operation string, err error) error {
+func wrapConnectionError(operation string, err error) error {
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
 	}
 	return fmt.Errorf("%s: %w", operation, err)
 }
 
-func userFromGenerated(value *client.User) (User, error) {
+func toDomainUser(value *client.User) (domain.User, error) {
 	if value == nil {
-		return User{}, fmt.Errorf("decode backoffice user: response is empty")
+		return domain.User{}, fmt.Errorf("decode backoffice user: response is empty")
 	}
-	memberships := make([]Membership, 0, len(value.Memberships))
+
+	memberships := make([]domain.Membership, 0, len(value.Memberships))
 	for _, membership := range value.Memberships {
-		memberships = append(memberships, Membership{
-			Group: Group{
+		memberships = append(memberships, domain.Membership{
+			Group: domain.Group{
 				ID:   membership.Group.Id,
 				Name: membership.Group.Name,
 			},
@@ -222,7 +244,8 @@ func userFromGenerated(value *client.User) (User, error) {
 			UpdatedAt:   membership.UpdatedAt.Format(time.RFC3339Nano),
 		})
 	}
-	return User{
+
+	return domain.User{
 		ID:                value.Id,
 		Email:             value.Email,
 		GivenName:         value.GivenName,

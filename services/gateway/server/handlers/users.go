@@ -27,7 +27,8 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-	resolved, err := h.service.GetUser(r.Context(), user, id)
+
+	resolved, err := h.service.GetUser(r.Context(), user.ID, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrBadRequest) {
 			WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id", err)
@@ -49,7 +50,8 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
 		return
 	}
-	writeUserJSON(w, http.StatusOK, resolved)
+
+	writeUserJSON(w, http.StatusOK, UserFromDomain(resolved))
 }
 
 func (h *Users) List(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +61,7 @@ func (h *Users) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resolved, err := h.service.ListUsers(r.Context(), user)
+	resolved, err := h.service.ListUsers(r.Context(), user.ID)
 	if err != nil {
 		if errors.Is(err, domain.ErrForbidden) {
 			WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "user list is not permitted", nil)
@@ -75,7 +77,63 @@ func (h *Users) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeUserSummariesJSON(w, http.StatusOK, resolved)
+	writeUserSummariesJSON(w, http.StatusOK, UserSummariesFromDomain(resolved))
+}
+
+func UserFromDomain(resolved domain.User) api.User {
+	user := api.User{
+		ID:                resolved.ID,
+		Email:             resolved.Email,
+		GivenName:         resolved.GivenName,
+		FamilyName:        resolved.FamilyName,
+		Status:            api.UserStatus(resolved.Status),
+		GlobalRoles:       append([]string{}, resolved.GlobalRoles...),
+		GlobalPermissions: append([]string{}, resolved.GlobalPermissions...),
+		CreatedAt:         resolved.CreatedAt,
+		UpdatedAt:         resolved.UpdatedAt,
+		Memberships:       make([]api.UserMembershipSummary, 0, len(resolved.Memberships)),
+	}
+
+	for _, membership := range resolved.Memberships {
+		roles := make([]api.MembershipRole, 0, len(membership.Roles))
+		for _, role := range membership.Roles {
+			roles = append(roles, api.MembershipRole(role))
+		}
+
+		user.Memberships = append(user.Memberships, api.UserMembershipSummary{
+			Group: api.ResourceRef{
+				ID:   membership.Group.ID,
+				Name: membership.Group.Name,
+				Href: "/v1/groups/" + membership.Group.ID,
+			},
+			Roles:       roles,
+			Status:      api.MembershipStatus(membership.Status),
+			Permissions: append([]string{}, membership.Permissions...),
+			CreatedAt:   membership.CreatedAt,
+			UpdatedAt:   membership.UpdatedAt,
+		})
+	}
+
+	return user
+}
+
+func UserSummariesFromDomain(resolved []domain.UserSummary) []api.UserSummary {
+	result := make([]api.UserSummary, 0, len(resolved))
+	for _, user := range resolved {
+		result = append(result, api.UserSummary{
+			ID:                user.ID,
+			Email:             user.Email,
+			GivenName:         user.GivenName,
+			FamilyName:        user.FamilyName,
+			Status:            api.UserStatus(user.Status),
+			GlobalRoles:       append([]string{}, user.GlobalRoles...),
+			GlobalPermissions: append([]string{}, user.GlobalPermissions...),
+			CreatedAt:         user.CreatedAt,
+			UpdatedAt:         user.UpdatedAt,
+		})
+	}
+
+	return result
 }
 
 func writeUserJSON(w http.ResponseWriter, status int, value api.User) {
