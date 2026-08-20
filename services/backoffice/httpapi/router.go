@@ -67,9 +67,12 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/internal/users", identity.Create)
 
 		groups := groupsapi.New(groupservice.New(database.Groups))
+		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
 
 		r.Get("/groups", groups.List)
 		r.Get("/groups/{group_id}", groups.Get)
+		r.Get("/groups/{group_id}/memberships", groupAccess.ListMemberships)
+		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))

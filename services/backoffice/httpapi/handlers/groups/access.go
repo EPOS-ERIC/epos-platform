@@ -1,0 +1,156 @@
+package groups
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"time"
+
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/groups"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+)
+
+type accessService interface {
+	ListMemberships(context.Context, string, uuid.UUID) ([]groups.Membership, error)
+	RequestMembership(context.Context, string, uuid.UUID, groups.MembershipRequest) (groups.Membership, error)
+}
+
+type AccessHandler struct {
+	service accessService
+}
+
+func NewAccess(service accessService) *AccessHandler {
+	return &AccessHandler{service: service}
+}
+
+func (h *AccessHandler) ListMemberships(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	memberships, err := h.service.ListMemberships(r.Context(), actorID, groupID)
+	if err != nil {
+		writeAccessError(w, r, err, "list group memberships")
+		return
+	}
+
+	// TODO: see if maybe we can create a package with utils functions like Map or something
+	result := make([]membershipResponse, 0, len(memberships))
+	for _, membership := range memberships {
+		result = append(result, toMembershipResponse(membership))
+	}
+
+	transport.WriteJSON(w, http.StatusOK, result)
+}
+
+func (h *AccessHandler) RequestMembership(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	var body struct {
+		Roles *[]string `json:"roles"`
+	}
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+	if body.Roles == nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "roles is required")
+		return
+	}
+
+	membership, err := h.service.RequestMembership(r.Context(), actorID, groupID, groups.MembershipRequest{Roles: *body.Roles})
+	if err != nil {
+		writeAccessError(w, r, err, "request group membership")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, toMembershipResponse(membership))
+}
+
+func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return "", uuid.Nil, false
+	}
+
+	groupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil || groupID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+		return "", uuid.Nil, false
+	}
+
+	return actorID, groupID, true
+}
+
+func writeAccessError(w http.ResponseWriter, r *http.Request, err error, operation string) {
+	switch {
+	case errors.Is(err, groups.ErrInvalid):
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group access request")
+	case errors.Is(err, groups.ErrForbidden):
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "group access operation is not permitted")
+	case errors.Is(err, groups.ErrNotFound):
+		transport.WriteProblem(w, http.StatusNotFound, "not_found", "group or user not found")
+	case errors.Is(err, groups.ErrConflict):
+		transport.WriteProblem(w, http.StatusConflict, "conflict", "group membership request conflicts with existing membership")
+	default:
+		log.ErrorContext(r.Context(), operation+" failed", "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
+	}
+}
+
+type membershipResponse struct {
+	User         membershipUserResponse `json:"user"`
+	Status       string                 `json:"status"`
+	Roles        []string               `json:"roles"`
+	Permissions  []string               `json:"permissions"`
+	RoleRequests []roleRequestResponse  `json:"role_requests"`
+	CreatedAt    time.Time              `json:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at"`
+}
+
+type membershipUserResponse struct {
+	ID         string `json:"id"`
+	GivenName  string `json:"given_name"`
+	FamilyName string `json:"family_name"`
+	Email      string `json:"email"`
+}
+
+type roleRequestResponse struct {
+	ID          uuid.UUID `json:"id"`
+	Role        string    `json:"role"`
+	Status      string    `json:"status"`
+	RequestedAt time.Time `json:"requested_at"`
+}
+
+func toMembershipResponse(membership groups.Membership) membershipResponse {
+	roles := append([]string{}, membership.Roles...)
+	permissions := append([]string{}, membership.Permissions...)
+	requests := make([]roleRequestResponse, 0, len(membership.RoleRequests))
+	for _, request := range membership.RoleRequests {
+		requests = append(requests, roleRequestResponse{
+			ID:          request.ID,
+			Role:        request.Role,
+			Status:      request.Status,
+			RequestedAt: request.RequestedAt,
+		})
+	}
+	return membershipResponse{
+		User: membershipUserResponse{
+			ID:         membership.User.ID,
+			GivenName:  membership.User.GivenName,
+			FamilyName: membership.User.FamilyName,
+			Email:      membership.User.Email,
+		},
+		Status:       membership.Status,
+		Roles:        roles,
+		Permissions:  permissions,
+		RoleRequests: requests,
+		CreatedAt:    membership.CreatedAt,
+		UpdatedAt:    membership.UpdatedAt,
+	}
+}

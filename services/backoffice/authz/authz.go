@@ -119,6 +119,79 @@ func (a *Authorizer) CanListUsers(ctx context.Context, userID string) (Result, e
 	return Result{Allowed: false, Reason: "user directory permission required"}, nil
 }
 
+// AuthorizeActiveUser permits authenticated operations for active users.
+func (a *Authorizer) AuthorizeActiveUser(ctx context.Context, userID string) (Result, error) {
+	if userID == "" {
+		return Result{Allowed: false, Reason: "invalid user"}, nil
+	}
+
+	_, result, err := a.activeUser(ctx, userID)
+
+	return result, err
+}
+
+// CanListGroupMemberships permits group membership roster access.
+func (a *Authorizer) CanListGroupMemberships(ctx context.Context, userID string, groupID uuid.UUID) (Result, error) {
+	if userID == "" || groupID == uuid.Nil {
+		return Result{Allowed: false, Reason: "invalid group access request"}, nil
+	}
+
+	_, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+
+	if admin {
+		return Result{Allowed: true, Reason: "global admin"}, nil
+	}
+
+	// TODO: see if these kind of permission checks could use an helper or an ad hoc query to check for more than one permission
+	for _, permission := range []string{
+		"global.membership.manage",
+		"global.role.manage",
+	} {
+		allowed, err := a.repository.HasGlobalPermission(ctx, userID, permission)
+		if err != nil {
+			return Result{}, fmt.Errorf("check global permission: %w", err)
+		}
+
+		if allowed {
+			return Result{Allowed: true, Reason: permission}, nil
+		}
+	}
+
+	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check group membership: %w", err)
+	}
+
+	if !member {
+		return Result{Allowed: false, Reason: "user is not an active group member"}, nil
+	}
+
+	for _, permission := range []string{
+		"group.membership.manage",
+		"group.role.manage",
+		"group.permission.manage",
+	} {
+		allowed, err := a.repository.HasGroupPermission(ctx, userID, groupID, permission)
+		if err != nil {
+			return Result{}, fmt.Errorf("check group permission: %w", err)
+		}
+
+		if allowed {
+			return Result{Allowed: true, Reason: permission}, nil
+		}
+	}
+
+	return Result{Allowed: false, Reason: "group roster permission required"}, nil
+}
+
 type repository interface {
 	User(context.Context, string) (User, error)
 	PermissionScope(context.Context, string) (PermissionScope, error)

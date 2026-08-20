@@ -52,7 +52,7 @@ func Run(cfg config.Config) error {
 	router := httpapi.NewRouter(database)
 	handler := requestTimeoutHandler(router, cfg.RequestTimeout)
 
-	srv := &http.Server{ //nolint:exhaustruct
+	srv := &http.Server{ //nolint:exhaustruct_v5
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         ":" + cfg.ServerPort,
 		Handler:      handler,

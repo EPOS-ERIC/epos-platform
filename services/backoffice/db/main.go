@@ -78,7 +78,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		db:                   db,
 		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
 		Identity:             &identitydb.Repo{Queries: sqlc.New(db)},
-		Groups:               &groupdb.Repo{Queries: sqlc.New(db)},
+		Groups:               groupdb.New(db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwaredb.NewApplicationRepo(db),

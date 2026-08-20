@@ -43,7 +43,7 @@ func Run(cfg config.Config, backofficeClient *clients.Backoffice, authService *a
 	router := NewRouter(lifecycleSvc, identitySvc, backofficeClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
-	srv := &http.Server{ //nolint:exhaustruct
+	srv := &http.Server{ //nolint:exhaustruct_v5
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         cfg.Server.Listen,
 		Handler:      handler,

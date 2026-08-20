@@ -70,7 +70,7 @@ CREATE TABLE group_role_requests (
     id           uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id      text NOT NULL,
     group_id     uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    role_key     text NOT NULL REFERENCES roles(key) ON DELETE RESTRICT,
+    role_key     text NOT NULL REFERENCES roles(key) ON DELETE RESTRICT CHECK (role_key IN ('EDITOR', 'REVIEWER')),
     status       role_request_status NOT NULL DEFAULT 'PENDING',
     requested_at timestamptz NOT NULL DEFAULT now(),
     decided_by   text REFERENCES users(id) ON DELETE RESTRICT,

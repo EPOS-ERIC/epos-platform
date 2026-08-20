@@ -967,7 +967,7 @@ components:
       required: [id, given_name, family_name, email]
       additionalProperties: false
       properties:
-        id: { type: string, format: uuid }
+        id: { type: string }
         given_name: { type: string }
         family_name: { type: string }
         email: { type: string, format: email }

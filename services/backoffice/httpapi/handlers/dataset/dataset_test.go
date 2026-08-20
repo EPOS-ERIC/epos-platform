@@ -56,7 +56,9 @@ func (fakeDatasetService) Publish(context.Context, string, uuid.UUID, uuid.UUID)
 func (fakeDatasetService) Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
+
 func (fakeDatasetService) Discard(context.Context, string, uuid.UUID, uuid.UUID) error { return nil }
+
 func (fakeDatasetService) DraftFromPublication(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error) {
 	return datasetlifecycle.Dataset{}, nil
 }
