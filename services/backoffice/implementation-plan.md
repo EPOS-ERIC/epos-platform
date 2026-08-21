@@ -124,11 +124,10 @@ These mismatches must be fixed during identity administration or the completion 
 
 - Membership requests currently require existing active membership. Lifecycle allows any active user to request membership in a group.
 - Own user detail omits pending role requests. It must expose pending role requests for the user's memberships.
-- User block/unblock is missing. Blocking requires a non-empty reason, records actor/time, and cannot remove the last active `ADMIN`.
 - Published-resource listing is missing. Public listings must return current published versions grouped by logical resource group.
 - Notification subscription endpoints are missing. Users must manage eligible own subscriptions; `ADMIN` may manage all subscriptions.
 - Canonical organization, contact-point, category, category-scheme, and group management routes are missing and must follow the API shape above.
-- OpenAPI has no canonical-management, published-listing, blocking, global-role, or notification-subscription operations.
+- OpenAPI has no canonical-management, published-listing, global-role, or notification-subscription operations.
 
 ## Identity Administration: Membership Request Step
 
@@ -140,6 +139,7 @@ These mismatches must be fixed during identity administration or the completion 
 - User-directory reads now check actor state before self-read and allow active global membership, role, or permission managers to read other users.
 - Global `ADMIN` assignment and removal now use serialized transactions and reject removal of the last active administrator.
 - Gateway now exposes the documented authenticated `POST /groups/{groupId}/membership-requests` route and forwards role lists to Backoffice.
+- User block/unblock now persists block reason, actor, and time, serializes active-admin safety with global role changes, and leaves dormant memberships, roles, grants, and subscriptions stored.
 - Backoffice and Gateway builds pass. Gateway lint passes. Backoffice lint remains blocked by the pre-existing `identity.Store` godoclint error in `identity/service.go:28`; no tests were added or run per request.
 
 ## Completed Slice: Foundation

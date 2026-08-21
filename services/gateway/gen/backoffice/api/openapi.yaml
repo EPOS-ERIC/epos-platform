@@ -178,6 +178,129 @@ paths:
       summary: Get user
       tags:
       - Users
+  /api/v1/users/{user_id}/block:
+    post:
+      description: "Block a user with a required reason. Requires active global ADMIN.\
+        \ Existing memberships, roles, grants, and subscriptions remain stored."
+      operationId: blockUser
+      parameters:
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockUserRequest"
+        required: true
+      responses:
+        "204":
+          description: User blocked
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Block user
+      tags:
+      - Users
+  /api/v1/users/{user_id}/unblock:
+    post:
+      description: Restore a blocked user to ACTIVE. Requires active global ADMIN.
+      operationId: unblockUser
+      parameters:
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: User unblocked
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Unblock user
+      tags:
+      - Users
   /api/v1/imports/turtle:
     post:
       description: "Atomically creates or updates groups, categories, organizations,\
@@ -2766,6 +2889,17 @@ components:
       - family_name
       - given_name
       - id
+      type: object
+    BlockUserRequest:
+      additionalProperties: false
+      example:
+        reason: reason
+      properties:
+        reason:
+          minLength: 1
+          type: string
+      required:
+      - reason
       type: object
     User:
       additionalProperties: false

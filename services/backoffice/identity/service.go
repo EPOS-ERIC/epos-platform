@@ -35,6 +35,8 @@ type Store interface {
 	RevokeGlobalPermission(context.Context, string, string) error
 	AssignGlobalRole(context.Context, string, string, string) error
 	RemoveGlobalRole(context.Context, string, string) error
+	BlockUser(context.Context, string, string, string) error
+	UnblockUser(context.Context, string) error
 }
 
 type Authorizer interface {
@@ -233,6 +235,53 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role st
 	if err := s.store.RemoveGlobalRole(ctx, userID, role); err != nil {
 		return fmt.Errorf("remove global role: %w", err)
 	}
+	return nil
+}
+
+func (s *Service) BlockUser(ctx context.Context, actorID, userID, reason string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	reason = strings.TrimSpace(reason)
+	if actorID == "" || userID == "" || reason == "" {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize user blocking: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	err = s.store.BlockUser(ctx, actorID, userID, reason)
+	if err != nil {
+		return fmt.Errorf("block user: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) UnblockUser(ctx context.Context, actorID, userID string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	if actorID == "" || userID == "" {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize user unblocking: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	err = s.store.UnblockUser(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("unblock user: %w", err)
+	}
+
 	return nil
 }
 

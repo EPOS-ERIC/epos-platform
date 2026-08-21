@@ -98,6 +98,67 @@ func (h *Users) RemoveGlobalRole(w http.ResponseWriter, r *http.Request) {
 	h.changeGlobalRole(w, r, false)
 }
 
+func (h *Users) BlockUser(w http.ResponseWriter, r *http.Request) {
+	user, ok := AuthenticatedUserFromContext(r.Context())
+	if !ok {
+		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	var request struct {
+		Reason string `json:"reason"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid block request", err)
+		return
+	}
+
+	err := h.service.BlockUser(r.Context(), user.ID, chi.URLParam(r, "id"), request.Reason)
+	if h.writeUserStateError(w, r, err, "block user", "cannot block the last active global administrator") {
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Users) UnblockUser(w http.ResponseWriter, r *http.Request) {
+	user, ok := AuthenticatedUserFromContext(r.Context())
+	if !ok {
+		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	err := h.service.UnblockUser(r.Context(), user.ID, chi.URLParam(r, "id"))
+	if h.writeUserStateError(w, r, err, "unblock user", "cannot unblock user") {
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// TODO: see if we should make a more generic error wrapper for the user handlers
+func (h *Users) writeUserStateError(w http.ResponseWriter, r *http.Request, err error, operation, conflictMessage string) bool {
+	if err == nil {
+		return false
+	}
+	switch {
+	case errors.Is(err, domain.ErrBadRequest):
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user state request", err)
+	case errors.Is(err, domain.ErrForbidden):
+		WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "user state management is not permitted", nil)
+	case errors.Is(err, domain.ErrNotFound):
+		WriteError(r.Context(), w, http.StatusNotFound, "not_found", "user not found", nil)
+	case errors.Is(err, domain.ErrConflict):
+		WriteError(r.Context(), w, http.StatusConflict, "conflict", conflictMessage, nil)
+	case errors.Is(err, domain.ErrUpstreamTimeout):
+		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
+	default:
+		log.ErrorContext(r.Context(), operation+" failed", "error", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+	}
+	return true
+}
+
 func (h *Users) changeGlobalPermission(w http.ResponseWriter, r *http.Request, grant bool) {
 	user, ok := AuthenticatedUserFromContext(r.Context())
 	if !ok {

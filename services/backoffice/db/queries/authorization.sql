@@ -212,6 +212,30 @@ WHERE
     global_role.role_key = 'ADMIN'
     AND users.status = 'ACTIVE';
 
+-- name: BlockUser :execrows
+UPDATE
+    users
+SET
+    STATUS = 'BLOCKED',
+    block_reason = sqlc.arg(reason),
+    blocked_by = sqlc.arg(blocked_by),
+    blocked_at = NOW()
+WHERE
+    id = sqlc.arg(user_id)
+    AND STATUS <> 'BLOCKED';
+
+-- name: UnblockUser :execrows
+UPDATE
+    users
+SET
+    STATUS = 'ACTIVE',
+    block_reason = NULL,
+    blocked_by = NULL,
+    blocked_at = NULL
+WHERE
+    id = sqlc.arg(user_id)
+    AND STATUS = 'BLOCKED';
+
 -- name: LockGlobalAdminChanges :exec
 SELECT
     pg_advisory_xact_lock(hashtextextended('global-admin-role', 0));

@@ -364,6 +364,35 @@ func (c *Backoffice) RemoveGlobalRole(ctx context.Context, actorID, userID, role
 	return nil
 }
 
+func (c *Backoffice) BlockUser(ctx context.Context, actorID, userID, reason string) error {
+	if c == nil || c.users == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	response, err := c.users.BlockUser(ctx, userID).
+		XEPOSUserID(actorID).
+		BlockUserRequest(client.BlockUserRequest{Reason: reason}).
+		Execute()
+	if err != nil {
+		return wrapUserError("block backoffice user", response, err)
+	}
+
+	return nil
+}
+
+func (c *Backoffice) UnblockUser(ctx context.Context, actorID, userID string) error {
+	if c == nil || c.users == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	response, err := c.users.UnblockUser(ctx, userID).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapUserError("unblock backoffice user", response, err)
+	}
+
+	return nil
+}
+
 func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	user, err := c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {
@@ -462,6 +491,8 @@ func wrapUserError(operation string, response *http.Response, err error) error {
 			return domain.ErrNotFound
 		case http.StatusForbidden:
 			return domain.ErrForbidden
+		case http.StatusConflict:
+			return domain.ErrConflict
 		}
 	}
 	return wrapConnectionError(operation, err)

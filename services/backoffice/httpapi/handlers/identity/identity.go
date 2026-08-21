@@ -25,6 +25,8 @@ type service interface {
 	RevokeGlobalPermission(context.Context, string, string, string) error
 	AssignGlobalRole(context.Context, string, string, string) error
 	RemoveGlobalRole(context.Context, string, string, string) error
+	BlockUser(context.Context, string, string, string) error
+	UnblockUser(context.Context, string, string) error
 }
 
 type Handler struct {
@@ -117,6 +119,76 @@ func (h *Handler) AssignGlobalRole(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) RemoveGlobalRole(w http.ResponseWriter, r *http.Request) {
 	h.changeGlobalRole(w, r, false)
+}
+
+func (h *Handler) BlockUser(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	userID := strings.TrimSpace(chi.URLParam(r, "user_id"))
+	var request struct {
+		Reason string `json:"reason"`
+	}
+	if !transport.Decode(w, r, &request) {
+		return
+	}
+	if userID == "" || strings.TrimSpace(request.Reason) == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "user id and non-empty reason are required")
+		return
+	}
+
+	err := h.service.BlockUser(r.Context(), actorID, userID, request.Reason)
+	if err != nil {
+		h.writeUserStateError(w, r, err, "block user", "cannot block the last active global administrator")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) UnblockUser(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	userID := strings.TrimSpace(chi.URLParam(r, "user_id"))
+	if userID == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
+		return
+	}
+
+	err := h.service.UnblockUser(r.Context(), actorID, userID)
+	if err != nil {
+		h.writeUserStateError(w, r, err, "unblock user", "cannot unblock user")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// TODO: see if we should make a more generic user error wrapper to reuse in this handler
+func (h *Handler) writeUserStateError(w http.ResponseWriter, r *http.Request, err error, operation, conflictMessage string) {
+	if errors.Is(err, identity.ErrInvalid) {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user state request")
+		return
+	}
+	if errors.Is(err, identity.ErrForbidden) {
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "user state management is not permitted")
+		return
+	}
+	if errors.Is(err, identity.ErrNotFound) {
+		transport.WriteProblem(w, http.StatusNotFound, "user_not_found", "user not found")
+		return
+	}
+	if errors.Is(err, identity.ErrConflict) {
+		transport.WriteProblem(w, http.StatusConflict, "conflict", conflictMessage)
+		return
+	}
+	log.ErrorContext(r.Context(), operation+" failed", "error", err)
+	transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
 }
 
 func (h *Handler) changeGlobalPermission(w http.ResponseWriter, r *http.Request, grant bool) {

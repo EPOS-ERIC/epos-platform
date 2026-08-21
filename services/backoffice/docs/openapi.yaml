@@ -90,6 +90,44 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/users/{user_id}/block:
+    parameters:
+      - { $ref: "#/components/parameters/UserID" }
+    post:
+      tags: [Users]
+      operationId: blockUser
+      summary: Block user
+      description: Block a user with a required reason. Requires active global ADMIN. Existing memberships, roles, grants, and subscriptions remain stored.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/BlockUserRequest" }
+      responses:
+        "204": { description: User blocked }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/users/{user_id}/unblock:
+    parameters:
+      - { $ref: "#/components/parameters/UserID" }
+    post:
+      tags: [Users]
+      operationId: unblockUser
+      summary: Unblock user
+      description: Restore a blocked user to ACTIVE. Requires active global ADMIN.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "204": { description: User unblocked }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/imports/turtle:
     post:
       tags: [Imports]
@@ -923,6 +961,14 @@ components:
           type: string
         family_name:
           type: string
+    BlockUserRequest:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 1
     User:
       type: object
       required: [id, email, given_name, family_name, status, global_roles, global_permissions, created_at, updated_at, memberships]

@@ -33,6 +33,32 @@ func (q *Queries) AssignGlobalAdmin(ctx context.Context, arg AssignGlobalAdminPa
 	return err
 }
 
+const blockUser = `-- name: BlockUser :execrows
+UPDATE users
+SET
+    status = 'BLOCKED',
+    block_reason = $1,
+    blocked_by = $2,
+    blocked_at = now()
+WHERE
+    id = $3
+    AND status <> 'BLOCKED'
+`
+
+type BlockUserParams struct {
+	Reason    *string
+	BlockedBy *string
+	UserID    string
+}
+
+func (q *Queries) BlockUser(ctx context.Context, arg BlockUserParams) (int64, error) {
+	result, err := q.db.Exec(ctx, blockUser, arg.Reason, arg.BlockedBy, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const countActiveGlobalAdmins = `-- name: CountActiveGlobalAdmins :one
 SELECT
     COUNT(*)::int
@@ -950,4 +976,24 @@ type RevokeGlobalPermissionParams struct {
 func (q *Queries) RevokeGlobalPermission(ctx context.Context, arg RevokeGlobalPermissionParams) error {
 	_, err := q.db.Exec(ctx, revokeGlobalPermission, arg.UserID, arg.PermissionKey)
 	return err
+}
+
+const unblockUser = `-- name: UnblockUser :execrows
+UPDATE users
+SET
+    status = 'ACTIVE',
+    block_reason = NULL,
+    blocked_by = NULL,
+    blocked_at = NULL
+WHERE
+    id = $1
+    AND status = 'BLOCKED'
+`
+
+func (q *Queries) UnblockUser(ctx context.Context, userID string) (int64, error) {
+	result, err := q.db.Exec(ctx, unblockUser, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

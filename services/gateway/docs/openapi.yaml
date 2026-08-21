@@ -760,6 +760,66 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /users/{id}/block:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    post:
+      tags:
+        - Users
+      summary: Block user
+      description: Block a user with a required reason. Requires active global ADMIN. Existing memberships, roles, grants, and subscriptions remain stored.
+      operationId: blockUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockUserRequest"
+      responses:
+        "204":
+          description: User blocked
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /users/{id}/unblock:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    post:
+      tags:
+        - Users
+      summary: Unblock user
+      description: Restore a blocked user to ACTIVE. Requires active global ADMIN.
+      operationId: unblockUser
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: User unblocked
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /users/{id}/global-roles/{role}:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -3186,6 +3246,16 @@ components:
         - ACTIVE
         - INACTIVE
         - BLOCKED
+
+    BlockUserRequest:
+      type: object
+      required:
+        - reason
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 1
 
     MembershipRole:
       type: string

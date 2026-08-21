@@ -305,6 +305,84 @@ func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error 
 	return nil
 }
 
+func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) error {
+	if r.DB == nil {
+		return fmt.Errorf("identity database pool is not configured")
+	}
+
+	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
+			return fmt.Errorf("lock global admin changes: %w", err)
+		}
+
+		_, err := queries.GetAuthorizationUser(ctx, userID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return identitydomain.ErrNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("check target user: %w", err)
+		}
+
+		changed, err := queries.BlockUser(ctx, sqlc.BlockUserParams{
+			Reason:    &reason,
+			BlockedBy: &actorID,
+			UserID:    userID,
+		})
+		if err != nil {
+			return fmt.Errorf("block user: %w", err)
+		}
+		if changed == 0 {
+			return nil
+		}
+
+		admins, err := queries.CountActiveGlobalAdmins(ctx)
+		if err != nil {
+			return fmt.Errorf("count active global admins: %w", err)
+		}
+		if admins == 0 {
+			return identitydomain.ErrConflict
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("block user transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) UnblockUser(ctx context.Context, userID string) error {
+	if r.DB == nil {
+		return fmt.Errorf("identity database pool is not configured")
+	}
+
+	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
+			return fmt.Errorf("lock global admin changes: %w", err)
+		}
+
+		_, err := queries.GetAuthorizationUser(ctx, userID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return identitydomain.ErrNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("check target user: %w", err)
+		}
+
+		if _, err := queries.UnblockUser(ctx, userID); err != nil {
+			return fmt.Errorf("unblock user: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("unblock user transaction: %w", err)
+	}
+
+	return nil
+}
+
 func mapUser(id, email, givenName, familyName string, status sqlc.UserStatus, createdAt, updatedAt time.Time) identitydomain.User {
 	return identitydomain.User{
 		ID:                id,

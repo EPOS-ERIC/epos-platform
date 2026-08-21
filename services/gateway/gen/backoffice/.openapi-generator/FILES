@@ -13,6 +13,7 @@ api_users.go
 client.go
 configuration.go
 git_push.sh
+model_block_user_request.go
 model_boolean_parameter.go
 model_boolean_parameter_metadata.go
 model_canonical_reference.go

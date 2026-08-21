@@ -68,6 +68,8 @@ func NewRouter(
 			r.Delete("/{id}/global-permissions/{permission}", usersHandler.RevokeGlobalPermission)
 			r.Put("/{id}/global-roles/{role}", usersHandler.AssignGlobalRole)
 			r.Delete("/{id}/global-roles/{role}", usersHandler.RemoveGlobalRole)
+			r.Post("/{id}/block", usersHandler.BlockUser)
+			r.Post("/{id}/unblock", usersHandler.UnblockUser)
 		})
 
 		r.Route("/groups", func(r chi.Router) {

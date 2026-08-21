@@ -123,3 +123,36 @@ func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role st
 
 	return nil
 }
+
+func (s *Service) BlockUser(ctx context.Context, actorID, userID, reason string) error {
+	userID = strings.TrimSpace(userID)
+	reason = strings.TrimSpace(reason)
+	if userID == "" || reason == "" {
+		return fmt.Errorf("invalid user id or reason: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	if err := s.backoffice.BlockUser(ctx, actorID, userID, reason); err != nil {
+		return fmt.Errorf("block user through backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) UnblockUser(ctx context.Context, actorID, userID string) error {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
+		return fmt.Errorf("invalid user id: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	if err := s.backoffice.UnblockUser(ctx, actorID, userID); err != nil {
+		return fmt.Errorf("unblock user through backoffice: %w", err)
+	}
+
+	return nil
+}
