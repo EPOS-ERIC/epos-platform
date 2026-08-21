@@ -204,6 +204,32 @@ WHERE
     group_id = sqlc.arg(group_id)
     AND id = sqlc.arg(id);
 
+-- name: CreateGroupCategory :one
+INSERT INTO
+    categories (
+        id,
+        group_id,
+        parent_category_id,
+        source_iri,
+        name
+    )
+VALUES
+    (
+        sqlc.arg(id),
+        sqlc.arg(group_id),
+        sqlc.narg(parent_category_id),
+        sqlc.arg(source_iri),
+        sqlc.arg(name)
+    )
+RETURNING
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at;
+
 -- name: ListGroupMemberships :many
 SELECT
     sqlc.embed(membership),

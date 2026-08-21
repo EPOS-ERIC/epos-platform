@@ -224,6 +224,62 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 	return i, err
 }
 
+const createGroupCategory = `-- name: CreateGroupCategory :one
+INSERT INTO
+    categories (
+        id,
+        group_id,
+        parent_category_id,
+        source_iri,
+        name
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+    )
+RETURNING
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at
+`
+
+type CreateGroupCategoryParams struct {
+	ID               uuid.UUID
+	GroupID          uuid.UUID
+	ParentCategoryID *uuid.UUID
+	SourceIri        string
+	Name             string
+}
+
+func (q *Queries) CreateGroupCategory(ctx context.Context, arg CreateGroupCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, createGroupCategory,
+		arg.ID,
+		arg.GroupID,
+		arg.ParentCategoryID,
+		arg.SourceIri,
+		arg.Name,
+	)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.ParentCategoryID,
+		&i.SourceIri,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createGroupRoleRequest = `-- name: CreateGroupRoleRequest :one
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
@@ -433,7 +489,7 @@ SELECT
                 target
         ) THEN 'NOT_FOUND'
         ELSE 'CONFLICT'
-END AS outcome
+    END AS outcome
 `
 
 func (q *Queries) DeleteGroup(ctx context.Context, id uuid.UUID) (string, error) {
@@ -492,9 +548,11 @@ SELECT
     name,
     created_at,
     updated_at
-FROM categories
-WHERE group_id = $1
-  AND id = $2
+FROM
+    categories
+WHERE
+    group_id = $1
+    AND id = $2
 `
 
 type GetGroupCategoryParams struct {
@@ -672,8 +730,10 @@ SELECT
     name,
     created_at,
     updated_at
-FROM categories
-WHERE group_id = $1
+FROM
+    categories
+WHERE
+    group_id = $1
 ORDER BY
     parent_category_id NULLS FIRST,
     lower(trim(name)),
@@ -870,6 +930,7 @@ ORDER BY
     id
 `
 
+// TODO: we sholud probably split this huge file in separate files
 func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 	rows, err := q.db.Query(ctx, listGroups)
 	if err != nil {

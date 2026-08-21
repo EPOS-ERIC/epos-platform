@@ -38,6 +38,12 @@ type Category struct {
 	Name             string
 }
 
+type CreateCategoryRequest struct {
+	SourceIRI        string
+	Name             string
+	ParentCategoryID *uuid.UUID
+}
+
 type CreateRequest struct {
 	SourceIRI   string
 	Name        string
@@ -69,11 +75,13 @@ type Store interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	ListCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error)
 	GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error)
+	CreateCategory(ctx context.Context, category Category) (Category, error)
 }
 
 type Authorizer interface {
 	AuthorizeAdmin(context.Context, string) (authz.Result, error)
 	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
 }
 
 type Service struct {
@@ -200,6 +208,42 @@ func (s *Service) GetCategory(ctx context.Context, groupID, categoryID uuid.UUID
 	category, err := s.store.GetCategory(ctx, groupID, categoryID)
 	if err != nil {
 		return Category{}, fmt.Errorf("get category: %w", err)
+	}
+
+	return category, nil
+}
+
+func (s *Service) CreateCategory(ctx context.Context, actorID string, groupID uuid.UUID, request CreateCategoryRequest) (Category, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
+	request.Name = strings.TrimSpace(request.Name)
+	if actorID == "" || groupID == uuid.Nil || request.Name == "" {
+		return Category{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "category.manage")
+	if err != nil {
+		return Category{}, fmt.Errorf("authorize category creation: %w", err)
+	}
+	if !allowed.Allowed {
+		return Category{}, ErrForbidden
+	}
+
+	id := uuid.New()
+	sourceIRI := request.SourceIRI
+	if sourceIRI == "" {
+		sourceIRI = "urn:epos:category:" + id.String()
+	}
+
+	category, err := s.store.CreateCategory(ctx, Category{
+		ID:               id,
+		GroupID:          groupID,
+		ParentCategoryID: request.ParentCategoryID,
+		SourceIRI:        sourceIRI,
+		Name:             request.Name,
+	})
+	if err != nil {
+		return Category{}, fmt.Errorf("create category: %w", err)
 	}
 
 	return category, nil

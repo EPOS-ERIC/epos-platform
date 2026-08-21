@@ -23,6 +23,7 @@ type service interface {
 	Delete(context.Context, string, uuid.UUID) error
 	ListCategories(context.Context, uuid.UUID) ([]groupdomain.Category, error)
 	GetCategory(context.Context, uuid.UUID, uuid.UUID) (groupdomain.Category, error)
+	CreateCategory(context.Context, string, uuid.UUID, groupdomain.CreateCategoryRequest) (groupdomain.Category, error)
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -179,6 +180,51 @@ func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusOK, result)
 }
 
+func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := groupIDPath(w, r)
+	if !ok {
+		return
+	}
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	var body createCategoryRequest
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+
+	request := groupdomain.CreateCategoryRequest{
+		SourceIRI:        "",
+		Name:             body.Name,
+		ParentCategoryID: body.ParentCategoryID,
+	}
+	if body.SourceIRI != nil {
+		request.SourceIRI = *body.SourceIRI
+	}
+
+	category, err := h.service.CreateCategory(r.Context(), actorID, groupID, request)
+	if err != nil {
+		switch {
+		case errors.Is(err, groupdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category")
+		case errors.Is(err, groupdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
+		case errors.Is(err, groupdomain.ErrNotFound):
+			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
+		case errors.Is(err, groupdomain.ErrConflict):
+			transport.WriteProblem(w, http.StatusConflict, "conflict", "category conflicts with existing category")
+		default:
+			log.ErrorContext(r.Context(), "create group category failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create group category failed")
+		}
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, categoryResponseFromDomain(category))
+}
+
 func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	groupID, ok := groupIDPath(w, r)
 	if !ok {
@@ -272,6 +318,12 @@ type categoryResponse struct {
 	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
 	SourceIRI        string     `json:"source_iri"`
 	Name             string     `json:"name"`
+}
+
+type createCategoryRequest struct {
+	SourceIRI        *string    `json:"source_iri"`
+	Name             string     `json:"name"`
+	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
 }
 
 type createGroupRequest struct {

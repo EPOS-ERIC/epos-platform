@@ -502,6 +502,29 @@ paths:
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/groups/{group_id}/categories:
     parameters: [{ $ref: "#/components/parameters/GroupID" }]
+    post:
+      tags: [Categories]
+      operationId: createGroupCategory
+      summary: Create group category
+      description: Creates a category in the group category scheme. Requires category.manage in the group. Source IRI is generated when omitted.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCategoryRequest" }
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalCategory" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     get:
       tags: [Categories]
       operationId: listGroupCategories
@@ -1152,6 +1175,14 @@ components:
         parent_category_id: { type: string, format: uuid, nullable: true }
         source_iri: { type: string }
         name: { type: string }
+    CreateCategoryRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        parent_category_id: { type: string, format: uuid }
     CreateGroupRequest:
       type: object
       required: [name, concept]

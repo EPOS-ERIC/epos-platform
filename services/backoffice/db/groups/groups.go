@@ -157,6 +157,38 @@ func (r *Repo) GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (
 	return mapCategory(row), nil
 }
 
+func (r *Repo) CreateCategory(ctx context.Context, category groups.Category) (groups.Category, error) {
+	_, err := r.GetGroupByID(ctx, category.GroupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Category{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.Category{}, fmt.Errorf("check group: %w", err)
+	}
+
+	row, err := r.CreateGroupCategory(ctx, sqlc.CreateGroupCategoryParams{
+		ID:               category.ID,
+		GroupID:          category.GroupID,
+		ParentCategoryID: category.ParentCategoryID,
+		SourceIri:        category.SourceIRI,
+		Name:             category.Name,
+	})
+	if err != nil {
+		// TODO: see if we can find a better (more general) way to handle errors in the db package
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			switch pgErr.Code {
+			case "23505":
+				return groups.Category{}, groups.ErrConflict
+			case "23503", "P0001":
+				return groups.Category{}, groups.ErrInvalid
+			}
+		}
+		return groups.Category{}, fmt.Errorf("insert category: %w", err)
+	}
+
+	return mapCategory(row), nil
+}
+
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
