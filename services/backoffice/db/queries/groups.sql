@@ -1,3 +1,4 @@
+-- TODO: we sholud probably split this huge file in separate files
 -- name: ListGroups :many
 SELECT
     id,
@@ -169,6 +170,39 @@ SELECT
         ) THEN 'NOT_FOUND'
         ELSE 'CONFLICT'
     END AS outcome;
+
+-- name: ListGroupCategories :many
+SELECT
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at
+FROM
+    categories
+WHERE
+    group_id = sqlc.arg(group_id)
+ORDER BY
+    parent_category_id NULLS FIRST,
+    lower(trim(name)),
+    id;
+
+-- name: GetGroupCategory :one
+SELECT
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at
+FROM
+    categories
+WHERE
+    group_id = sqlc.arg(group_id)
+    AND id = sqlc.arg(id);
 
 -- name: ListGroupMemberships :many
 SELECT

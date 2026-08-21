@@ -500,6 +500,42 @@ paths:
               schema: { $ref: "#/components/schemas/Group" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/groups/{group_id}/categories:
+    parameters: [{ $ref: "#/components/parameters/GroupID" }]
+    get:
+      tags: [Categories]
+      operationId: listGroupCategories
+      summary: List group categories
+      description: Returns the group category forest as a flat public list.
+      responses:
+        "200":
+          description: Categories returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CanonicalCategory" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/groups/{group_id}/categories/{category_id}:
+    parameters:
+      - { $ref: "#/components/parameters/GroupID" }
+      - { $ref: "#/components/parameters/CategoryID" }
+    get:
+      tags: [Categories]
+      operationId: getGroupCategory
+      summary: Get group category
+      description: Returns a public category owned by the path group.
+      responses:
+        "200":
+          description: Category returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalCategory" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/groups/{group_id}/memberships:
     parameters: [{ $ref: "#/components/parameters/GroupID" }]
     get:
@@ -1106,6 +1142,16 @@ components:
         color: { type: string, nullable: true }
         position: { type: integer, format: int32 }
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+    CanonicalCategory:
+      type: object
+      required: [id, group_id, parent_category_id, source_iri, name]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        group_id: { type: string, format: uuid }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+        source_iri: { type: string }
+        name: { type: string }
     CreateGroupRequest:
       type: object
       required: [name, concept]

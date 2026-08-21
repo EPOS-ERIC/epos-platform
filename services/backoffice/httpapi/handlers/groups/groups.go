@@ -21,6 +21,8 @@ type service interface {
 	Create(context.Context, string, groupdomain.CreateRequest) (groupdomain.Group, error)
 	Replace(context.Context, string, uuid.UUID, groupdomain.ReplaceRequest) (groupdomain.Group, error)
 	Delete(context.Context, string, uuid.UUID) error
+	ListCategories(context.Context, uuid.UUID) ([]groupdomain.Category, error)
+	GetCategory(context.Context, uuid.UUID, uuid.UUID) (groupdomain.Category, error)
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -150,6 +152,60 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := groupIDPath(w, r)
+	if !ok {
+		return
+	}
+
+	categories, err := h.service.ListCategories(r.Context(), groupID)
+	if err != nil {
+		if errors.Is(err, groupdomain.ErrNotFound) {
+			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
+			return
+		}
+
+		log.ErrorContext(r.Context(), "list group categories failed", "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "list group categories failed")
+
+		return
+	}
+
+	result := make([]categoryResponse, 0, len(categories))
+	for _, category := range categories {
+		result = append(result, categoryResponseFromDomain(category))
+	}
+
+	transport.WriteJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := groupIDPath(w, r)
+	if !ok {
+		return
+	}
+	categoryID, err := uuid.Parse(chi.URLParam(r, "category_id"))
+	if err != nil || categoryID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category id")
+		return
+	}
+
+	category, err := h.service.GetCategory(r.Context(), groupID, categoryID)
+	if err != nil {
+		if errors.Is(err, groupdomain.ErrNotFound) {
+			transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
+			return
+		}
+
+		log.ErrorContext(r.Context(), "get group category failed", "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get group category failed")
+
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusOK, categoryResponseFromDomain(category))
+}
+
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	groups, err := h.service.List(r.Context())
 	if err != nil {
@@ -188,6 +244,15 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusOK, response(group))
 }
 
+func groupIDPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil || id == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
 type groupResponse struct {
 	ID          uuid.UUID `json:"id"`
 	SourceIRI   string    `json:"source_iri"`
@@ -199,6 +264,14 @@ type groupResponse struct {
 	Color       *string   `json:"color"`
 	Position    int32     `json:"position"`
 	Concept     string    `json:"concept"`
+}
+
+type categoryResponse struct {
+	ID               uuid.UUID  `json:"id"`
+	GroupID          uuid.UUID  `json:"group_id"`
+	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
+	SourceIRI        string     `json:"source_iri"`
+	Name             string     `json:"name"`
 }
 
 type createGroupRequest struct {
@@ -309,5 +382,15 @@ func response(group groupdomain.Group) groupResponse {
 		Color:       group.Color,
 		Position:    group.Position,
 		Concept:     group.Concept,
+	}
+}
+
+func categoryResponseFromDomain(category groupdomain.Category) categoryResponse {
+	return categoryResponse{
+		ID:               category.ID,
+		GroupID:          category.GroupID,
+		ParentCategoryID: category.ParentCategoryID,
+		SourceIRI:        category.SourceIRI,
+		Name:             category.Name,
 	}
 }

@@ -120,6 +120,43 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 }
 
+func (r *Repo) ListCategories(ctx context.Context, groupID uuid.UUID) ([]groups.Category, error) {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, groups.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("check group: %w", err)
+	}
+
+	rows, err := r.ListGroupCategories(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list group categories: %w", err)
+	}
+
+	result := make([]groups.Category, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, mapCategory(row))
+	}
+
+	return result, nil
+}
+
+func (r *Repo) GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (groups.Category, error) {
+	row, err := r.GetGroupCategory(ctx, sqlc.GetGroupCategoryParams{
+		GroupID: groupID,
+		ID:      categoryID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Category{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.Category{}, fmt.Errorf("get group category: %w", err)
+	}
+
+	return mapCategory(row), nil
+}
+
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -757,5 +794,15 @@ func mapGroup(row sqlc.Group) groups.Group {
 		Color:       row.Color,
 		Position:    row.Position,
 		Concept:     string(row.Concept),
+	}
+}
+
+func mapCategory(row sqlc.Category) groups.Category {
+	return groups.Category{
+		ID:               row.ID,
+		GroupID:          row.GroupID,
+		ParentCategoryID: row.ParentCategoryID,
+		SourceIRI:        row.SourceIri,
+		Name:             row.Name,
 	}
 }

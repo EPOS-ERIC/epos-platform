@@ -30,6 +30,14 @@ type Group struct {
 	Concept     string
 }
 
+type Category struct {
+	ID               uuid.UUID
+	GroupID          uuid.UUID
+	ParentCategoryID *uuid.UUID
+	SourceIRI        string
+	Name             string
+}
+
 type CreateRequest struct {
 	SourceIRI   string
 	Name        string
@@ -59,6 +67,8 @@ type Store interface {
 	Create(ctx context.Context, group Group) (Group, error)
 	Replace(ctx context.Context, id uuid.UUID, request ReplaceRequest) (Group, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	ListCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error)
+	GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error)
 }
 
 type Authorizer interface {
@@ -167,6 +177,32 @@ func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) erro
 	}
 
 	return nil
+}
+
+func (s *Service) ListCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error) {
+	if groupID == uuid.Nil {
+		return nil, ErrInvalid
+	}
+
+	categories, err := s.store.ListCategories(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list categories: %w", err)
+	}
+
+	return categories, nil
+}
+
+func (s *Service) GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error) {
+	if groupID == uuid.Nil || categoryID == uuid.Nil {
+		return Category{}, ErrInvalid
+	}
+
+	category, err := s.store.GetCategory(ctx, groupID, categoryID)
+	if err != nil {
+		return Category{}, fmt.Errorf("get category: %w", err)
+	}
+
+	return category, nil
 }
 
 func (s *Service) List(ctx context.Context) ([]Group, error) {

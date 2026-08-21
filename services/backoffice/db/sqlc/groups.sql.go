@@ -374,25 +374,65 @@ func (q *Queries) DecideGroupMembership(ctx context.Context, arg DecideGroupMemb
 
 const deleteGroup = `-- name: DeleteGroup :one
 WITH target AS (
-    SELECT group_row.id
-    FROM groups AS group_row
-    WHERE group_row.id = $1
-), deleted AS (
-    DELETE FROM groups AS group_row
-    WHERE group_row.id = (SELECT target.id FROM target)
-      AND NOT EXISTS (
-          SELECT 1 FROM datasets WHERE group_id = $1
-          UNION ALL
-          SELECT 1 FROM software_applications WHERE group_id = $1
-          UNION ALL
-          SELECT 1 FROM software_source_codes WHERE group_id = $1
-      )
-    RETURNING id
+    SELECT
+        group_row.id
+    FROM
+        groups AS group_row
+    WHERE
+        group_row.id = $1
+),
+deleted AS (
+    DELETE FROM
+        groups AS group_row
+    WHERE
+        group_row.id = (
+            SELECT
+                target.id
+            FROM
+                target
+        )
+        AND NOT EXISTS (
+            SELECT
+                1
+            FROM
+                datasets
+            WHERE
+                group_id = $1
+            UNION
+            ALL
+            SELECT
+                1
+            FROM
+                software_applications
+            WHERE
+                group_id = $1
+            UNION
+            ALL
+            SELECT
+                1
+            FROM
+                software_source_codes
+            WHERE
+                group_id = $1
+        )
+    RETURNING
+        id
 )
-SELECT CASE
-    WHEN EXISTS (SELECT 1 FROM deleted) THEN 'DELETED'
-    WHEN NOT EXISTS (SELECT 1 FROM target) THEN 'NOT_FOUND'
-    ELSE 'CONFLICT'
+SELECT
+    CASE
+        WHEN EXISTS (
+            SELECT
+                1
+            FROM
+                deleted
+        ) THEN 'DELETED'
+        WHEN NOT EXISTS (
+            SELECT
+                1
+            FROM
+                target
+        ) THEN 'NOT_FOUND'
+        ELSE 'CONFLICT'
 END AS outcome
 `
 
@@ -437,6 +477,40 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error)
 		&i.Page,
 		&i.Color,
 		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getGroupCategory = `-- name: GetGroupCategory :one
+SELECT
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at
+FROM categories
+WHERE group_id = $1
+  AND id = $2
+`
+
+type GetGroupCategoryParams struct {
+	GroupID uuid.UUID
+	ID      uuid.UUID
+}
+
+func (q *Queries) GetGroupCategory(ctx context.Context, arg GetGroupCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, getGroupCategory, arg.GroupID, arg.ID)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.ParentCategoryID,
+		&i.SourceIri,
+		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -587,6 +661,51 @@ func (q *Queries) GroupMembershipRoleExists(ctx context.Context, arg GroupMember
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const listGroupCategories = `-- name: ListGroupCategories :many
+SELECT
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at
+FROM categories
+WHERE group_id = $1
+ORDER BY
+    parent_category_id NULLS FIRST,
+    lower(trim(name)),
+    id
+`
+
+func (q *Queries) ListGroupCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error) {
+	rows, err := q.db.Query(ctx, listGroupCategories, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Category
+	for rows.Next() {
+		var i Category
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.ParentCategoryID,
+			&i.SourceIri,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listGroupMembershipPermissions = `-- name: ListGroupMembershipPermissions :many
