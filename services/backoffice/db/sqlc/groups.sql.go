@@ -139,30 +139,32 @@ func (q *Queries) AssignGroupRoleFromRequest(ctx context.Context, arg AssignGrou
 }
 
 const createGroup = `-- name: CreateGroup :one
-INSERT INTO groups (
-    id,
-    name,
-    description,
-    source_iri,
-    concept,
-    label,
-    logo,
-    page,
-    color,
-    position
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10
-)
+INSERT INTO
+    groups (
+        id,
+        name,
+        description,
+        source_iri,
+        concept,
+        label,
+        logo,
+        PAGE,
+        color,
+        position
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10
+    )
 RETURNING
     id,
     name,
@@ -171,7 +173,7 @@ RETURNING
     concept,
     label,
     logo,
-    page,
+    PAGE,
     color,
     position,
     created_at,
@@ -846,6 +848,77 @@ func (q *Queries) RemoveGroupRole(ctx context.Context, arg RemoveGroupRoleParams
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const replaceGroup = `-- name: ReplaceGroup :one
+UPDATE
+    groups
+SET
+    name = $1,
+    description = $2,
+    label = $3,
+    logo = $4,
+    PAGE = $5,
+    color = $6,
+    position = $7,
+    concept = $8
+WHERE
+    id = $9
+RETURNING
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at
+`
+
+type ReplaceGroupParams struct {
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     TopLevelConcept
+	ID          uuid.UUID
+}
+
+func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Group, error) {
+	row := q.db.QueryRow(ctx, replaceGroup,
+		arg.Name,
+		arg.Description,
+		arg.Label,
+		arg.Logo,
+		arg.Page,
+		arg.Color,
+		arg.Position,
+		arg.Concept,
+		arg.ID,
+	)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.SourceIri,
+		&i.Concept,
+		&i.Label,
+		&i.Logo,
+		&i.Page,
+		&i.Color,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const requestGroupMembership = `-- name: RequestGroupMembership :one

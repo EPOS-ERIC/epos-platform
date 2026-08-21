@@ -450,6 +450,29 @@ paths:
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/groups/{group_id}:
     parameters: [{ $ref: "#/components/parameters/GroupID" }]
+    put:
+      tags: [Groups]
+      operationId: replaceGroup
+      summary: Replace group
+      description: Replaces group and category-scheme metadata. Requires category_scheme.manage or global ADMIN.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceGroupRequest" }
+      responses:
+        "200":
+          description: Group replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     get:
       tags: [Groups]
       operationId: getGroup
@@ -1075,6 +1098,19 @@ components:
       additionalProperties: false
       properties:
         source_iri: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        label: { type: string, nullable: true }
+        logo: { type: string, nullable: true }
+        page: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        position: { type: integer, format: int32 }
+        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+    ReplaceGroupRequest:
+      type: object
+      required: [name, description, label, logo, page, color, position, concept]
+      additionalProperties: false
+      properties:
         name: { type: string }
         description: { type: string, nullable: true }
         label: { type: string, nullable: true }

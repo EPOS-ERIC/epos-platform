@@ -64,11 +64,39 @@ func (r *Repo) Create(ctx context.Context, group groups.Group) (groups.Group, er
 		Position:    group.Position,
 	})
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		pgErr, ok := errors.AsType[*pgconn.PgError](err)
+		if ok && pgErr.Code == "23505" {
 			return groups.Group{}, groups.ErrConflict
 		}
+
 		return groups.Group{}, fmt.Errorf("insert group: %w", err)
+	}
+
+	return mapGroup(row), nil
+}
+
+func (r *Repo) Replace(ctx context.Context, id uuid.UUID, request groups.ReplaceRequest) (groups.Group, error) {
+	row, err := r.ReplaceGroup(ctx, sqlc.ReplaceGroupParams{
+		ID:          id,
+		Name:        request.Name,
+		Description: request.Description,
+		Label:       request.Label,
+		Logo:        request.Logo,
+		Page:        request.Page,
+		Color:       request.Color,
+		Position:    request.Position,
+		Concept:     sqlc.TopLevelConcept(request.Concept),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Group{}, groups.ErrNotFound
+	}
+	if err != nil {
+		pgErr, ok := errors.AsType[*pgconn.PgError](err)
+		if ok && pgErr.Code == "23505" {
+			return groups.Group{}, groups.ErrConflict
+		}
+
+		return groups.Group{}, fmt.Errorf("update group: %w", err)
 	}
 
 	return mapGroup(row), nil

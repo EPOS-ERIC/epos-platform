@@ -42,14 +42,27 @@ type CreateRequest struct {
 	Concept     string
 }
 
+type ReplaceRequest struct {
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     string
+}
+
 type Store interface {
 	List(ctx context.Context) ([]Group, error)
 	Get(ctx context.Context, id uuid.UUID) (Group, error)
 	Create(ctx context.Context, group Group) (Group, error)
+	Replace(ctx context.Context, id uuid.UUID, request ReplaceRequest) (Group, error)
 }
 
 type Authorizer interface {
 	AuthorizeAdmin(context.Context, string) (authz.Result, error)
+	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
 }
 
 type Service struct {
@@ -102,6 +115,33 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 	})
 	if err != nil {
 		return Group{}, fmt.Errorf("create group: %w", err)
+	}
+
+	return group, nil
+}
+
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, request ReplaceRequest) (Group, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.Name = strings.TrimSpace(request.Name)
+	request.Concept = strings.TrimSpace(request.Concept)
+	if actorID == "" || id == uuid.Nil || request.Name == "" || request.Concept == "" {
+		return Group{}, ErrInvalid
+	}
+	if request.Concept != "DATA" && request.Concept != "FACILITIES" && request.Concept != "SOFTWARE" {
+		return Group{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "category_scheme.manage")
+	if err != nil {
+		return Group{}, fmt.Errorf("authorize group replacement: %w", err)
+	}
+	if !allowed.Allowed {
+		return Group{}, ErrForbidden
+	}
+
+	group, err := s.store.Replace(ctx, id, request)
+	if err != nil {
+		return Group{}, fmt.Errorf("replace group: %w", err)
 	}
 
 	return group, nil

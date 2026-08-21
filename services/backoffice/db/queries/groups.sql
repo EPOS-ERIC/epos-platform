@@ -79,6 +79,34 @@ RETURNING
     created_at,
     updated_at;
 
+-- name: ReplaceGroup :one
+UPDATE
+    groups
+SET
+    name = sqlc.arg(name),
+    description = sqlc.arg(description),
+    label = sqlc.arg(label),
+    logo = sqlc.arg(logo),
+    PAGE = sqlc.arg(PAGE),
+    color = sqlc.arg(color),
+    position = sqlc.arg(position),
+    concept = sqlc.arg(concept)
+WHERE
+    id = sqlc.arg(id)
+RETURNING
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at;
+
 -- name: ListGroupMemberships :many
 SELECT
     sqlc.embed(membership),
