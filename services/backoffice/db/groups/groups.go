@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/groups"
 	"github.com/google/uuid"
@@ -14,8 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-var log = logging.Get("groups-db")
 
 type Repo struct {
 	*sqlc.Queries
@@ -140,7 +138,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 	}
 
 	var membership groups.Membership
-	err = r.withTx(ctx, func(q *sqlc.Queries) error {
+	err = dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
 		row, err := q.RequestGroupMembership(ctx, sqlc.RequestGroupMembershipParams{
 			UserID:  userID,
 			GroupID: groupID,
@@ -188,7 +186,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 		return nil
 	})
 	if errors.Is(err, groups.ErrConflict) {
-		return groups.Membership{}, err
+		return groups.Membership{}, fmt.Errorf("request membership transaction: %w", err)
 	}
 	if err != nil {
 		return groups.Membership{}, fmt.Errorf("request membership transaction: %w", err)
@@ -301,7 +299,7 @@ func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID 
 
 	var request sqlc.GroupRoleRequest
 	decidedBy := actorID
-	err = r.withTx(ctx, func(q *sqlc.Queries) error {
+	err = dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
 		request, err = q.ApplyRoleRequestDecision(ctx, sqlc.ApplyRoleRequestDecisionParams{
 			Status:    sqlc.RoleRequestStatus(status),
 			DecidedBy: &decidedBy,
@@ -567,7 +565,7 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID, 
 	}
 
 	var membership sqlc.GroupMembership
-	err = r.withTx(ctx, func(q *sqlc.Queries) error {
+	err = dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
 		row, err := q.DecideGroupMembership(ctx, sqlc.DecideGroupMembershipParams{
 			// TODO: maybe we should see if we can use a custom type for enums? global domain package that converts or something
 			Status:  sqlc.MembershipStatus(status),
@@ -598,7 +596,7 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID, 
 		return nil
 	})
 	if errors.Is(err, groups.ErrConflict) {
-		return groups.Membership{}, err
+		return groups.Membership{}, fmt.Errorf("decide membership transaction: %w", err)
 	}
 	if err != nil {
 		return groups.Membership{}, fmt.Errorf("decide membership transaction: %w", err)
@@ -675,29 +673,6 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 	}
 
 	return result, nil
-}
-
-func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
-	defer func() {
-		err := tx.Rollback(ctx)
-		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
-			log.ErrorContext(ctx, "rollback transaction failed", "error", err)
-		}
-	}()
-
-	if err := fn(sqlc.New(tx)); err != nil {
-		return fmt.Errorf("execute transaction: %w", err)
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit transaction: %w", err)
-	}
-
-	return nil
 }
 
 func mapGroup(row sqlc.Group) groups.Group {

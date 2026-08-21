@@ -338,6 +338,32 @@ func (c *Backoffice) RevokeGlobalPermission(ctx context.Context, actorID, userID
 	return nil
 }
 
+func (c *Backoffice) AssignGlobalRole(ctx context.Context, actorID, userID, role string) error {
+	if c == nil || c.users == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	response, err := c.users.AssignGlobalRole(ctx, userID, role).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapUserError("assign backoffice global role", response, err)
+	}
+
+	return nil
+}
+
+func (c *Backoffice) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
+	if c == nil || c.users == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	response, err := c.users.RemoveGlobalRole(ctx, userID, role).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapUserError("remove backoffice global role", response, err)
+	}
+
+	return nil
+}
+
 func (c *Backoffice) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	user, err := c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {

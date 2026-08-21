@@ -101,9 +101,11 @@ Class | Method | HTTP request | Description
 *ResourcesAPI* | [**SubmitResource**](docs/ResourcesAPI.md#submitresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit | Submit resource draft
 *ResourcesAPI* | [**UnpublishResource**](docs/ResourcesAPI.md#unpublishresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish | Unpublish resource version
 *ResourcesAPI* | [**WithdrawResource**](docs/ResourcesAPI.md#withdrawresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw | Withdraw resource submission
+*UsersAPI* | [**AssignGlobalRole**](docs/UsersAPI.md#assignglobalrole) | **Put** /api/v1/users/{user_id}/global-roles/{role} | Assign global role
 *UsersAPI* | [**GetUser**](docs/UsersAPI.md#getuser) | **Get** /api/v1/users/{user_id} | Get user
 *UsersAPI* | [**GrantGlobalPermission**](docs/UsersAPI.md#grantglobalpermission) | **Put** /api/v1/users/{user_id}/global-permissions/{permission} | Grant global permission
 *UsersAPI* | [**ListUsers**](docs/UsersAPI.md#listusers) | **Get** /api/v1/users | List users
+*UsersAPI* | [**RemoveGlobalRole**](docs/UsersAPI.md#removeglobalrole) | **Delete** /api/v1/users/{user_id}/global-roles/{role} | Remove global role
 *UsersAPI* | [**RevokeGlobalPermission**](docs/UsersAPI.md#revokeglobalpermission) | **Delete** /api/v1/users/{user_id}/global-permissions/{permission} | Revoke global permission
 
 

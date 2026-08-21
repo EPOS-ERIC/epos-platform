@@ -65,6 +65,8 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Get("/users", identity.List)
 		r.Put("/users/{user_id}/global-permissions/{permission}", identity.GrantGlobalPermission)
 		r.Delete("/users/{user_id}/global-permissions/{permission}", identity.RevokeGlobalPermission)
+		r.Put("/users/{user_id}/global-roles/{role}", identity.AssignGlobalRole)
+		r.Delete("/users/{user_id}/global-roles/{role}", identity.RemoveGlobalRole)
 		r.Post("/internal/users", identity.Create)
 
 		groups := groupsapi.New(groupservice.New(database.Groups))

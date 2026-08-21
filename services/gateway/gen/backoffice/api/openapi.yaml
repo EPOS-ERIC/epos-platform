@@ -2391,6 +2391,147 @@ paths:
       summary: Grant global permission
       tags:
       - Users
+  /api/v1/users/{user_id}/global-roles/{role}:
+    delete:
+      description: Idempotent. Requires active global ADMIN. Removing the last active
+        ADMIN is rejected.
+      operationId: removeGlobalRole
+      parameters:
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: role
+        required: true
+        schema:
+          enum:
+          - ADMIN
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Global role removed
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Remove global role
+      tags:
+      - Users
+    put:
+      description: Idempotent. Requires active global ADMIN. Only ADMIN is a valid
+        global role.
+      operationId: assignGlobalRole
+      parameters:
+      - explode: false
+        in: path
+        name: user_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: role
+        required: true
+        schema:
+          enum:
+          - ADMIN
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Global role assigned
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Assign global role
+      tags:
+      - Users
 components:
   parameters:
     Actor:
@@ -2513,6 +2654,16 @@ components:
         - organization.manage
         - contact_point.manage
         - category_scheme.manage
+        type: string
+      style: simple
+    GlobalRole:
+      explode: false
+      in: path
+      name: role
+      required: true
+      schema:
+        enum:
+        - ADMIN
         type: string
       style: simple
   responses:

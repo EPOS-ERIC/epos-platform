@@ -66,6 +66,8 @@ func NewRouter(
 			r.Get("/{id}", usersHandler.Get)
 			r.Put("/{id}/global-permissions/{permission}", usersHandler.GrantGlobalPermission)
 			r.Delete("/{id}/global-permissions/{permission}", usersHandler.RevokeGlobalPermission)
+			r.Put("/{id}/global-roles/{role}", usersHandler.AssignGlobalRole)
+			r.Delete("/{id}/global-roles/{role}", usersHandler.RemoveGlobalRole)
 		})
 
 		r.Route("/groups", func(r chi.Router) {

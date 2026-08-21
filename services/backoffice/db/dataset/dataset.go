@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/google/uuid"
@@ -30,7 +31,7 @@ func New(pool *pgxpool.Pool) *Repo {
 
 func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.Dataset) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
-	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		dataset, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
 			SourceIri: value.SourceIRI,
 			GroupID:   groupID,
@@ -71,7 +72,7 @@ func (r *Repo) ReplaceDraft(
 	value metadata.Dataset,
 ) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
-	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		params, err := ReplaceParams(datasetID, versionID, revision, value)
 		if err != nil {
 			return fmt.Errorf("build draft replacement: %w", err)
@@ -243,7 +244,7 @@ func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) erro
 		return fmt.Errorf("discard dataset: %w", err)
 	}
 
-	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		id, err := q.DiscardLifecycleDatasetVersion(ctx, versionID)
 		if err != nil {
 			return fmt.Errorf("discard dataset version: %w", err)
@@ -256,7 +257,7 @@ func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) erro
 	if errors.Is(err, pgx.ErrNoRows) {
 		return datasetlifecycle.ErrConflict
 	}
-	return err
+	return fmt.Errorf("discard dataset transaction: %w", err)
 }
 
 func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
@@ -269,7 +270,7 @@ func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datas
 
 func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
-	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
 		if err != nil {
 			return fmt.Errorf("get published source version: %w", err)
@@ -313,7 +314,7 @@ func (r *Repo) clone(
 	categories bool,
 ) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
-	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		var source sqlc.DatasetVersion
 		var err error
 		if status == sqlc.ResourceStatusPUBLISHED {
@@ -349,21 +350,6 @@ func (r *Repo) clone(
 		return nil
 	})
 	return result, lifecycleError(err)
-}
-
-func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	if err := fn(sqlc.New(tx)); err != nil {
-		return fmt.Errorf("execute transaction: %w", err)
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit transaction: %w", err)
-	}
-	return nil
 }
 
 func (r *Repo) ensureVersion(ctx context.Context, datasetID, versionID uuid.UUID) error {

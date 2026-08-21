@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	softwaredb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/software"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
@@ -27,21 +28,6 @@ func New(pool *pgxpool.Pool) *Repo {
 	return &Repo{db: pool}
 }
 
-func (r *Repo) withTx(ctx context.Context, fn func(*sqlc.Queries) error) error {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin import transaction: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	if err := fn(sqlc.New(tx)); err != nil {
-		return err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit import transaction: %w", err)
-	}
-	return nil
-}
-
 // Import persists one metadata batch in a transaction.
 func (r *Repo) Import(ctx context.Context, actorID string, batch metadataimport.Batch) (metadataimport.Result, error) {
 	result := metadataimport.Result{
@@ -55,7 +41,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch metadataimport.
 		Warnings:             batch.Warnings,
 	}
 
-	err := r.withTx(ctx, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		groupIDs, err := importGroups(ctx, q, batch.CategorySchemes)
 		if err != nil {
 			return err
@@ -100,7 +86,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch metadataimport.
 	if errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001") {
 		return metadataimport.Result{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, metadataimport.ErrConflict)
 	}
-	return metadataimport.Result{}, err
+	return metadataimport.Result{}, fmt.Errorf("metadata import transaction: %w", err)
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.

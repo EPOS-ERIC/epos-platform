@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/softwarelifecycle"
@@ -20,7 +21,7 @@ func (r *ApplicationRepo) CreateDraft(
 	value metadata.SoftwareApplication,
 ) (softwarelifecycle.Application, error) {
 	var result softwarelifecycle.Application
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		app, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
 			SourceIri: value.SourceIRI,
 			GroupID:   groupID,
@@ -53,7 +54,7 @@ func (r *ApplicationRepo) ReplaceDraft(
 	value metadata.SoftwareApplication,
 ) (softwarelifecycle.Application, error) {
 	var result softwarelifecycle.Application
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		p := ApplicationVersionParams(appID, "", value)
 		version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, sqlc.ReplaceLifecycleSoftwareApplicationDraftParams{
 			Name:                  p.Name,
@@ -177,7 +178,7 @@ func (r *ApplicationRepo) Discard(ctx context.Context, appID, versionID uuid.UUI
 		}
 		return fmt.Errorf("ensure application version: %w", err)
 	}
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		id, err := q.DiscardLifecycleSoftwareApplicationVersion(ctx, versionID)
 		if err != nil {
 			return fmt.Errorf("discard application version: %w", err)
@@ -197,7 +198,7 @@ func (r *ApplicationRepo) DraftFromLatestArchive(ctx context.Context, actorID st
 
 func (r *ApplicationRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.Application, error) {
 	var targetID uuid.UUID
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		app, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
 			SourceIri: sourceIRI,
 			GroupID:   groupID,
@@ -246,7 +247,7 @@ func (r *ApplicationRepo) clone(
 	copyCategories bool,
 ) (softwarelifecycle.Application, error) {
 	var versionID uuid.UUID
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		var source sqlc.SoftwareApplicationVersion
 		var err error
 		if status == sqlc.ResourceStatusPUBLISHED {

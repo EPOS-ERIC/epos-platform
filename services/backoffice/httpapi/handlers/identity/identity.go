@@ -23,6 +23,8 @@ type service interface {
 	Create(context.Context, identity.Claims) (identity.User, error)
 	GrantGlobalPermission(context.Context, string, string, string) error
 	RevokeGlobalPermission(context.Context, string, string, string) error
+	AssignGlobalRole(context.Context, string, string, string) error
+	RemoveGlobalRole(context.Context, string, string, string) error
 }
 
 type Handler struct {
@@ -109,6 +111,14 @@ func (h *Handler) RevokeGlobalPermission(w http.ResponseWriter, r *http.Request)
 	h.changeGlobalPermission(w, r, false)
 }
 
+func (h *Handler) AssignGlobalRole(w http.ResponseWriter, r *http.Request) {
+	h.changeGlobalRole(w, r, true)
+}
+
+func (h *Handler) RemoveGlobalRole(w http.ResponseWriter, r *http.Request) {
+	h.changeGlobalRole(w, r, false)
+}
+
 func (h *Handler) changeGlobalPermission(w http.ResponseWriter, r *http.Request, grant bool) {
 	actorID, ok := transport.Actor(w, r)
 	if !ok {
@@ -147,6 +157,50 @@ func (h *Handler) changeGlobalPermission(w http.ResponseWriter, r *http.Request,
 		log.ErrorContext(r.Context(), "change global permission failed", "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "change global permission failed")
 
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) changeGlobalRole(w http.ResponseWriter, r *http.Request, assign bool) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+	targetID := strings.TrimSpace(chi.URLParam(r, "user_id"))
+	role := strings.TrimSpace(chi.URLParam(r, "role"))
+	if targetID == "" || role == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id or role")
+		return
+	}
+
+	var err error
+	if assign {
+		err = h.service.AssignGlobalRole(r.Context(), actorID, targetID, role)
+	} else {
+		err = h.service.RemoveGlobalRole(r.Context(), actorID, targetID, role)
+	}
+	if err != nil {
+		if errors.Is(err, identity.ErrForbidden) {
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global role management is not permitted")
+			return
+		}
+		if errors.Is(err, identity.ErrInvalid) {
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid global role")
+			return
+		}
+		if errors.Is(err, identity.ErrNotFound) {
+			transport.WriteProblem(w, http.StatusNotFound, "user_not_found", "user not found")
+			return
+		}
+		if errors.Is(err, identity.ErrConflict) {
+			transport.WriteProblem(w, http.StatusConflict, "conflict", "cannot remove the last active global administrator")
+			return
+		}
+
+		log.ErrorContext(r.Context(), "change global role failed", "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "change global role failed")
 		return
 	}
 

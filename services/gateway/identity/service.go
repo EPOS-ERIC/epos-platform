@@ -87,3 +87,39 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID, userID, p
 
 	return nil
 }
+
+func (s *Service) AssignGlobalRole(ctx context.Context, actorID, userID, role string) error {
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	if userID == "" || role == "" {
+		return fmt.Errorf("invalid user id or role: %w", domain.ErrBadRequest)
+	}
+
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	if err := s.backoffice.AssignGlobalRole(ctx, actorID, userID, role); err != nil {
+		return fmt.Errorf("assign global role through backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	if userID == "" || role == "" {
+		return fmt.Errorf("invalid user id or role: %w", domain.ErrBadRequest)
+	}
+
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice identity client is not configured")
+	}
+
+	if err := s.backoffice.RemoveGlobalRole(ctx, actorID, userID, role); err != nil {
+		return fmt.Errorf("remove global role through backoffice: %w", err)
+	}
+
+	return nil
+}

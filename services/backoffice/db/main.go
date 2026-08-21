@@ -74,10 +74,11 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		return nil, fmt.Errorf("ping postgres pool: %w", err)
 	}
 
+	// TODO: align the initialization of the db packages
 	return &PostgresDB{
 		db:                   db,
 		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
-		Identity:             &identitydb.Repo{Queries: sqlc.New(db)},
+		Identity:             &identitydb.Repo{Queries: sqlc.New(db), DB: db},
 		Groups:               groupdb.New(db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),

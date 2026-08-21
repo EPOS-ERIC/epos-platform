@@ -124,7 +124,6 @@ These mismatches must be fixed during identity administration or the completion 
 
 - Membership requests currently require existing active membership. Lifecycle allows any active user to request membership in a group.
 - Own user detail omits pending role requests. It must expose pending role requests for the user's memberships.
-- Global role assignment/removal is missing, including `ADMIN` assignment/removal and active-admin safety.
 - User block/unblock is missing. Blocking requires a non-empty reason, records actor/time, and cannot remove the last active `ADMIN`.
 - Published-resource listing is missing. Public listings must return current published versions grouped by logical resource group.
 - Notification subscription endpoints are missing. Users must manage eligible own subscriptions; `ADMIN` may manage all subscriptions.
@@ -139,6 +138,7 @@ These mismatches must be fixed during identity administration or the completion 
 - Requested `EDITOR` and `REVIEWER` roles are inserted against the new pending membership atomically. Subsequent role requests remain restricted to active members.
 - User detail responses now include pending role requests grouped under their memberships.
 - User-directory reads now check actor state before self-read and allow active global membership, role, or permission managers to read other users.
+- Global `ADMIN` assignment and removal now use serialized transactions and reject removal of the last active administrator.
 - Gateway now exposes the documented authenticated `POST /groups/{groupId}/membership-requests` route and forwards role lists to Backoffice.
 - Backoffice and Gateway builds pass. Gateway lint passes. Backoffice lint remains blocked by the pre-existing `identity.Store` godoclint error in `identity/service.go:28`; no tests were added or run per request.
 

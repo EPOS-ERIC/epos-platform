@@ -760,6 +760,60 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
         "500":
           $ref: "#/components/responses/InternalServerError"
+  /users/{id}/global-roles/{role}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/GlobalRole"
+    put:
+      tags:
+        - Users
+      summary: Assign global role
+      description: Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
+      operationId: assignGlobalRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Global role assigned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    delete:
+      tags:
+        - Users
+      summary: Remove global role
+      description: Remove a global role from a user. Removing the last active ADMIN is rejected.
+      operationId: removeGlobalRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Global role removed
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /groups/{groupId}/resources/{resourceType}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -1178,6 +1232,16 @@ components:
           - contact_point.manage
           - category_scheme.manage
         example: global.permission.manage
+
+    GlobalRole:
+      name: role
+      in: path
+      required: true
+      description: Global role key.
+      schema:
+        type: string
+        enum: [ADMIN]
+        example: ADMIN
 
     MembershipUserId:
       name: userId

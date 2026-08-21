@@ -16,6 +16,7 @@ var (
 	ErrInvalid   = errors.New("invalid identity")
 	ErrNotFound  = errors.New("user not found")
 	ErrForbidden = errors.New("identity operation forbidden")
+	ErrConflict  = errors.New("identity operation conflict")
 )
 
 type Claims struct {
@@ -32,11 +33,14 @@ type Store interface {
 	CreateUser(context.Context, Claims) (User, error)
 	GrantGlobalPermission(context.Context, string, string, string) error
 	RevokeGlobalPermission(context.Context, string, string) error
+	AssignGlobalRole(context.Context, string, string, string) error
+	RemoveGlobalRole(context.Context, string, string) error
 }
 
 type Authorizer interface {
 	CanReadUser(context.Context, string, string) (authz.Result, error)
 	CanListUsers(context.Context, string) (authz.Result, error)
+	AuthorizeAdmin(context.Context, string) (authz.Result, error)
 	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
 }
 
@@ -185,6 +189,50 @@ func (s *Service) RevokeGlobalPermission(ctx context.Context, actorID, userID, p
 		return fmt.Errorf("revoke global permission: %w", err)
 	}
 
+	return nil
+}
+
+func (s *Service) AssignGlobalRole(ctx context.Context, actorID, userID, role string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	if actorID == "" || userID == "" || role != "ADMIN" {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize global role assignment: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.AssignGlobalRole(ctx, userID, actorID, role); err != nil {
+		return fmt.Errorf("assign global role: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	if actorID == "" || userID == "" || role != "ADMIN" {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize global role removal: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.RemoveGlobalRole(ctx, userID, role); err != nil {
+		return fmt.Errorf("remove global role: %w", err)
+	}
 	return nil
 }
 

@@ -659,6 +659,38 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/users/{user_id}/global-roles/{role}:
+    parameters:
+      - { $ref: "#/components/parameters/UserID" }
+      - { $ref: "#/components/parameters/GlobalRole" }
+    put:
+      tags: [Users]
+      operationId: assignGlobalRole
+      summary: Assign global role
+      description: Idempotent. Requires active global ADMIN. Only ADMIN is a valid global role.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "204": { description: Global role assigned }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+    delete:
+      tags: [Users]
+      operationId: removeGlobalRole
+      summary: Remove global role
+      description: Idempotent. Requires active global ADMIN. Removing the last active ADMIN is rejected.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "204": { description: Global role removed }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
 components:
   parameters:
     Actor:
@@ -772,6 +804,13 @@ components:
                 category_scheme.manage,
               ],
           },
+      }
+    GlobalRole:
+      {
+        name: role,
+        in: path,
+        required: true,
+        schema: { type: string, enum: [ADMIN] },
       }
   responses:
     Resource:

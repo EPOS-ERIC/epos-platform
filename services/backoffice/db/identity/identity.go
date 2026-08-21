@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	identitydomain "github.com/EPOS-ERIC/epos-platform/services/backoffice/identity"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repo struct {
 	*sqlc.Queries
+	DB *pgxpool.Pool
 }
 
 func (r *Repo) ListUsers(ctx context.Context) ([]identitydomain.UserSummary, error) {
@@ -226,6 +229,79 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission st
 		return fmt.Errorf("revoke global permission: %w", err)
 	}
 
+	return nil
+}
+
+func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role string) error {
+	if role != "ADMIN" {
+		return identitydomain.ErrInvalid
+	}
+
+	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		return identitydomain.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check target user: %w", err)
+	}
+
+	if r.DB == nil {
+		return fmt.Errorf("identity database pool is not configured")
+	}
+
+	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
+			return fmt.Errorf("lock global role changes: %w", err)
+		}
+		if err := queries.AssignGlobalAdmin(ctx, sqlc.AssignGlobalAdminParams{
+			UserID:     userID,
+			AssignedBy: &assignedBy,
+		}); err != nil {
+			return fmt.Errorf("assign global admin role: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("assign global role transaction: %w", err)
+	}
+	return nil
+}
+
+func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error {
+	if role != "ADMIN" {
+		return identitydomain.ErrInvalid
+	}
+
+	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		return identitydomain.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check target user: %w", err)
+	}
+
+	if r.DB == nil {
+		return fmt.Errorf("identity database pool is not configured")
+	}
+
+	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
+			return fmt.Errorf("lock global role changes: %w", err)
+		}
+		rows, err := queries.RemoveGlobalAdmin(ctx, userID)
+		if err != nil {
+			return fmt.Errorf("remove global admin role: %w", err)
+		}
+		if rows > 0 {
+			admins, err := queries.CountActiveGlobalAdmins(ctx)
+			if err != nil {
+				return fmt.Errorf("count active global admins: %w", err)
+			}
+			if admins == 0 {
+				return identitydomain.ErrConflict
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("remove global role transaction: %w", err)
+	}
 	return nil
 }
 

@@ -185,6 +185,37 @@ VALUES
         sqlc.arg(granted_by)
     ) ON CONFLICT (user_id, permission_key) DO NOTHING;
 
+-- name: AssignGlobalAdmin :exec
+INSERT INTO
+    user_global_roles (user_id, role_key, assigned_by)
+VALUES
+    (
+        sqlc.arg(user_id),
+        'ADMIN',
+        sqlc.arg(assigned_by)
+    ) ON CONFLICT (user_id, role_key) DO NOTHING;
+
+-- name: RemoveGlobalAdmin :execrows
+DELETE FROM
+    user_global_roles
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND role_key = 'ADMIN';
+
+-- name: CountActiveGlobalAdmins :one
+SELECT
+    COUNT(*)::int
+FROM
+    user_global_roles AS global_role
+    JOIN users ON users.id = global_role.user_id
+WHERE
+    global_role.role_key = 'ADMIN'
+    AND users.status = 'ACTIVE';
+
+-- name: LockGlobalAdminChanges :exec
+SELECT
+    pg_advisory_xact_lock(hashtextextended('global-admin-role', 0));
+
 -- name: RevokeGlobalPermission :exec
 DELETE FROM
     global_permission_grants

@@ -1,3 +1,4 @@
+// TODO: align this package to the groups one
 package software
 
 import (
@@ -5,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/softwarelifecycle"
@@ -15,7 +17,7 @@ import (
 //nolint:dupl // Source code and application creation intentionally mirror typed SQLC operations.
 func (r *SourceCodeRepo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error) {
 	var result softwarelifecycle.SourceCode
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{SourceIri: value.SourceIRI, GroupID: groupID, CreatedBy: actorID})
 		if err != nil {
 			return fmt.Errorf("create source code: %w", err)
@@ -35,13 +37,22 @@ func (r *SourceCodeRepo) CreateDraft(ctx context.Context, actorID string, groupI
 
 func (r *SourceCodeRepo) ReplaceDraft(ctx context.Context, sourceCodeID, versionID uuid.UUID, revision int32, value metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error) {
 	var result softwarelifecycle.SourceCode
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		p := SourceCodeVersionParams(sourceCodeID, "", value)
 		version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, sqlc.ReplaceLifecycleSoftwareSourceCodeDraftParams{
-			Name: p.Name, Description: p.Description, ProgrammingLanguage: p.ProgrammingLanguage, Keywords: p.Keywords,
-			Repository: p.Repository, License: p.License, SoftwareRequirements: p.SoftwareRequirements,
-			RuntimePlatform: p.RuntimePlatform, MainEntityOfPage: p.MainEntityOfPage, Version: p.Version,
-			ID: versionID, SoftwareSourceCodeID: sourceCodeID, Revision: revision,
+			Name:                 p.Name,
+			Description:          p.Description,
+			ProgrammingLanguage:  p.ProgrammingLanguage,
+			Keywords:             p.Keywords,
+			Repository:           p.Repository,
+			License:              p.License,
+			SoftwareRequirements: p.SoftwareRequirements,
+			RuntimePlatform:      p.RuntimePlatform,
+			MainEntityOfPage:     p.MainEntityOfPage,
+			Version:              p.Version,
+			ID:                   versionID,
+			SoftwareSourceCodeID: sourceCodeID,
+			Revision:             revision,
 		})
 		if err != nil {
 			return fmt.Errorf("replace source code draft: %w", err)
@@ -125,7 +136,7 @@ func (r *SourceCodeRepo) Discard(ctx context.Context, sourceCodeID, versionID uu
 		}
 		return fmt.Errorf("ensure source code version: %w", err)
 	}
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		id, err := q.DiscardLifecycleSoftwareSourceCodeVersion(ctx, versionID)
 		if err != nil {
 			return fmt.Errorf("discard source code version: %w", err)
@@ -145,8 +156,12 @@ func (r *SourceCodeRepo) DraftFromLatestArchive(ctx context.Context, actorID str
 
 func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.SourceCode, error) {
 	var targetID, versionID uuid.UUID
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
-		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{SourceIri: sourceIRI, GroupID: groupID, CreatedBy: actorID})
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
+		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{
+			SourceIri: sourceIRI,
+			GroupID:   groupID,
+			CreatedBy: actorID,
+		})
 		if err != nil {
 			return fmt.Errorf("create source code copy: %w", err)
 		}
@@ -155,7 +170,14 @@ func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID string, sour
 		if err != nil {
 			return fmt.Errorf("get published source code version: %w", err)
 		}
-		row, err := q.CloneLifecycleSoftwareSourceCodeVersion(ctx, sqlc.CloneLifecycleSoftwareSourceCodeVersionParams{SourceVersionID: source.ID, SourceStatus: sqlc.ResourceStatusPUBLISHED, TargetSoftwareSourceCodeID: targetID, ActorID: actorID, TargetGroupID: groupID, CopyCategories: false})
+		row, err := q.CloneLifecycleSoftwareSourceCodeVersion(ctx, sqlc.CloneLifecycleSoftwareSourceCodeVersionParams{
+			SourceVersionID:            source.ID,
+			SourceStatus:               sqlc.ResourceStatusPUBLISHED,
+			TargetSoftwareSourceCodeID: targetID,
+			ActorID:                    actorID,
+			TargetGroupID:              groupID,
+			CopyCategories:             false,
+		})
 		if err != nil {
 			return fmt.Errorf("clone published source code version: %w", err)
 		}
@@ -171,7 +193,7 @@ func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID string, sour
 //nolint:dupl // Source code and application cloning intentionally mirror typed SQLC operations.
 func (r *SourceCodeRepo) clone(ctx context.Context, actorID string, sourceID, targetID uuid.UUID, status sqlc.ResourceStatus, groupID uuid.UUID, copyCategories bool) (softwarelifecycle.SourceCode, error) {
 	var versionID uuid.UUID
-	err := withTx(ctx, r.db, func(q *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		var source sqlc.SoftwareSourceCodeVersion
 		var err error
 		if status == sqlc.ResourceStatusPUBLISHED {
@@ -203,16 +225,37 @@ func (r *SourceCodeRepo) clone(ctx context.Context, actorID string, sourceID, ta
 }
 
 func SourceCodeVersionParams(id uuid.UUID, actorID string, value metadata.SoftwareSourceCode) sqlc.CreateLifecycleSoftwareSourceCodeVersionParams {
-	return sqlc.CreateLifecycleSoftwareSourceCodeVersionParams{SoftwareSourceCodeID: id, Name: value.Name, Description: value.Description, ProgrammingLanguage: value.ProgrammingLanguage, Keywords: value.Keywords, Repository: value.Repository, License: value.License, SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform, MainEntityOfPage: value.MainEntityOfPage, Version: value.Version, CreatedBy: actorID}
+	return sqlc.CreateLifecycleSoftwareSourceCodeVersionParams{
+		SoftwareSourceCodeID: id,
+		Name:                 value.Name,
+		Description:          value.Description,
+		ProgrammingLanguage:  value.ProgrammingLanguage,
+		Keywords:             value.Keywords,
+		Repository:           value.Repository,
+		License:              value.License,
+		SoftwareRequirements: value.SoftwareRequirements,
+		RuntimePlatform:      value.RuntimePlatform,
+		MainEntityOfPage:     value.MainEntityOfPage,
+		Version:              value.Version,
+		CreatedBy:            actorID,
+	}
 }
 
 func ReplaceSourceCodeVersionParams(id, sourceCodeID uuid.UUID, revision int32, value metadata.SoftwareSourceCode) sqlc.ReplaceLifecycleSoftwareSourceCodeDraftParams {
 	return sqlc.ReplaceLifecycleSoftwareSourceCodeDraftParams{
-		Name: value.Name, Description: value.Description, ProgrammingLanguage: value.ProgrammingLanguage,
-		Keywords: value.Keywords, Repository: value.Repository, License: value.License,
-		SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform,
-		MainEntityOfPage: value.MainEntityOfPage, Version: value.Version, ID: id,
-		SoftwareSourceCodeID: sourceCodeID, Revision: revision,
+		Name:                 value.Name,
+		Description:          value.Description,
+		ProgrammingLanguage:  value.ProgrammingLanguage,
+		Keywords:             value.Keywords,
+		Repository:           value.Repository,
+		License:              value.License,
+		SoftwareRequirements: value.SoftwareRequirements,
+		RuntimePlatform:      value.RuntimePlatform,
+		MainEntityOfPage:     value.MainEntityOfPage,
+		Version:              value.Version,
+		ID:                   id,
+		SoftwareSourceCodeID: sourceCodeID,
+		Revision:             revision,
 	}
 }
 

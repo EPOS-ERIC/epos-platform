@@ -90,6 +90,14 @@ func (h *Users) RevokeGlobalPermission(w http.ResponseWriter, r *http.Request) {
 	h.changeGlobalPermission(w, r, false)
 }
 
+func (h *Users) AssignGlobalRole(w http.ResponseWriter, r *http.Request) {
+	h.changeGlobalRole(w, r, true)
+}
+
+func (h *Users) RemoveGlobalRole(w http.ResponseWriter, r *http.Request) {
+	h.changeGlobalRole(w, r, false)
+}
+
 func (h *Users) changeGlobalPermission(w http.ResponseWriter, r *http.Request, grant bool) {
 	user, ok := AuthenticatedUserFromContext(r.Context())
 	if !ok {
@@ -129,6 +137,56 @@ func (h *Users) changeGlobalPermission(w http.ResponseWriter, r *http.Request, g
 		}
 
 		log.ErrorContext(r.Context(), "change global permission failed", "error", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Users) changeGlobalRole(w http.ResponseWriter, r *http.Request, assign bool) {
+	user, ok := AuthenticatedUserFromContext(r.Context())
+	if !ok {
+		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	id := strings.TrimSpace(chi.URLParam(r, "id"))
+	role := strings.TrimSpace(chi.URLParam(r, "role"))
+	if id == "" || role == "" {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id or role", nil)
+		return
+	}
+
+	var err error
+	if assign {
+		err = h.service.AssignGlobalRole(r.Context(), user.ID, id, role)
+	} else {
+		err = h.service.RemoveGlobalRole(r.Context(), user.ID, id, role)
+	}
+	if err != nil {
+		if errors.Is(err, domain.ErrBadRequest) {
+			WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id or role", err)
+			return
+		}
+		if errors.Is(err, domain.ErrForbidden) {
+			WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "global role management is not permitted", nil)
+			return
+		}
+		if errors.Is(err, domain.ErrNotFound) {
+			WriteError(r.Context(), w, http.StatusNotFound, "not_found", "user not found", nil)
+			return
+		}
+		if errors.Is(err, domain.ErrConflict) {
+			WriteError(r.Context(), w, http.StatusConflict, "conflict", "cannot remove the last active global administrator", nil)
+			return
+		}
+		if errors.Is(err, domain.ErrUpstreamTimeout) {
+			WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
+			return
+		}
+
+		log.ErrorContext(r.Context(), "change global role failed", "error", err)
 		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
 		return
 	}

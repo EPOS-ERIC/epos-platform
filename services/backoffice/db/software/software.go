@@ -31,21 +31,6 @@ func NewSourceCodeRepo(pool *pgxpool.Pool) *SourceCodeRepo {
 	return &SourceCodeRepo{db: pool}
 }
 
-func withTx(ctx context.Context, db *pgxpool.Pool, fn func(*sqlc.Queries) error) error {
-	tx, err := db.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
-	defer func() { _ = tx.Rollback(ctx) }()
-	if err := fn(sqlc.New(tx)); err != nil {
-		return fmt.Errorf("execute transaction: %w", err)
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit transaction: %w", err)
-	}
-	return nil
-}
-
 func lifecycleError(err error) error {
 	if err == nil {
 		return nil

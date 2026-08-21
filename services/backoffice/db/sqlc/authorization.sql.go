@@ -12,6 +12,45 @@ import (
 	"github.com/google/uuid"
 )
 
+const assignGlobalAdmin = `-- name: AssignGlobalAdmin :exec
+INSERT INTO
+    user_global_roles (user_id, role_key, assigned_by)
+VALUES
+    (
+        $1,
+        'ADMIN',
+        $2
+    ) ON CONFLICT (user_id, role_key) DO NOTHING
+`
+
+type AssignGlobalAdminParams struct {
+	UserID     string
+	AssignedBy *string
+}
+
+func (q *Queries) AssignGlobalAdmin(ctx context.Context, arg AssignGlobalAdminParams) error {
+	_, err := q.db.Exec(ctx, assignGlobalAdmin, arg.UserID, arg.AssignedBy)
+	return err
+}
+
+const countActiveGlobalAdmins = `-- name: CountActiveGlobalAdmins :one
+SELECT
+    COUNT(*)::int
+FROM
+    user_global_roles AS global_role
+    JOIN users ON users.id = global_role.user_id
+WHERE
+    global_role.role_key = 'ADMIN'
+    AND users.status = 'ACTIVE'
+`
+
+func (q *Queries) CountActiveGlobalAdmins(ctx context.Context) (int32, error) {
+	row := q.db.QueryRow(ctx, countActiveGlobalAdmins)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO
     users (
@@ -867,6 +906,32 @@ func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockGlobalAdminChanges = `-- name: LockGlobalAdminChanges :exec
+SELECT
+    pg_advisory_xact_lock(hashtextextended('global-admin-role', 0))
+`
+
+func (q *Queries) LockGlobalAdminChanges(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, lockGlobalAdminChanges)
+	return err
+}
+
+const removeGlobalAdmin = `-- name: RemoveGlobalAdmin :execrows
+DELETE FROM
+    user_global_roles
+WHERE
+    user_id = $1
+    AND role_key = 'ADMIN'
+`
+
+func (q *Queries) RemoveGlobalAdmin(ctx context.Context, userID string) (int64, error) {
+	result, err := q.db.Exec(ctx, removeGlobalAdmin, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const revokeGlobalPermission = `-- name: RevokeGlobalPermission :exec
