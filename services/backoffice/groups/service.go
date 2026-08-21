@@ -5,7 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
 	"github.com/google/uuid"
 )
 
@@ -28,17 +30,81 @@ type Group struct {
 	Concept     string
 }
 
+type CreateRequest struct {
+	SourceIRI   string
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     string
+}
+
 type Store interface {
 	List(ctx context.Context) ([]Group, error)
 	Get(ctx context.Context, id uuid.UUID) (Group, error)
+	Create(ctx context.Context, group Group) (Group, error)
+}
+
+type Authorizer interface {
+	AuthorizeAdmin(context.Context, string) (authz.Result, error)
 }
 
 type Service struct {
-	store Store
+	store      Store
+	authorizer Authorizer
 }
 
-func New(store Store) *Service {
-	return &Service{store: store}
+func New(store Store, authorizer Authorizer) *Service {
+	return &Service{store: store, authorizer: authorizer}
+}
+
+func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (Group, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.Name = strings.TrimSpace(request.Name)
+	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
+	request.Concept = strings.TrimSpace(request.Concept)
+	if actorID == "" || request.Name == "" || request.Concept == "" {
+		return Group{}, ErrInvalid
+	}
+	if request.Concept != "DATA" && request.Concept != "FACILITIES" && request.Concept != "SOFTWARE" {
+		return Group{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	if err != nil {
+		return Group{}, fmt.Errorf("authorize group creation: %w", err)
+	}
+	if !allowed.Allowed {
+		return Group{}, ErrForbidden
+	}
+
+	id := uuid.New()
+	sourceIRI := request.SourceIRI
+	if sourceIRI == "" {
+		// TODO: define once and for all how to handle source iri for new resources
+		sourceIRI = "urn:epos:group:" + id.String()
+	}
+
+	group, err := s.store.Create(ctx, Group{
+		ID:          id,
+		SourceIRI:   sourceIRI,
+		Name:        request.Name,
+		Description: request.Description,
+		Label:       request.Label,
+		Logo:        request.Logo,
+		Page:        request.Page,
+		Color:       request.Color,
+		Position:    request.Position,
+		Concept:     request.Concept,
+	})
+	if err != nil {
+		return Group{}, fmt.Errorf("create group: %w", err)
+	}
+
+	return group, nil
 }
 
 func (s *Service) List(ctx context.Context) ([]Group, error) {

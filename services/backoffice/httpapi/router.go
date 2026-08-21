@@ -71,10 +71,11 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/users/{user_id}/unblock", identity.UnblockUser)
 		r.Post("/internal/users", identity.Create)
 
-		groups := groupsapi.New(groupservice.New(database.Groups))
+		groups := groupsapi.New(groupservice.New(database.Groups, authorizer))
 		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
 
 		r.Get("/groups", groups.List)
+		r.Post("/groups", groups.Create)
 		r.Get("/groups/{group_id}", groups.Get)
 		r.Get("/groups/{group_id}/memberships", groupAccess.ListMemberships)
 		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)

@@ -18,18 +18,18 @@ For each slice:
 
 ## Roadmap
 
-| Slice                   | Status   | Outcome                                                                       | Depends on                                                |
-| ----------------------- | -------- | ----------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Foundation              | Complete | Target baseline schema and generated persistence types.                       | None                                                      |
-| Authorization kernel    | Complete | Stored-resource authorization using fixed roles, grants, and user state.      | Foundation                                                |
-| Dataset lifecycle       | Active   | Complete dataset lifecycle as first usable vertical slice.                    | Authorization kernel                                      |
-| Software lifecycle      | Active   | Same lifecycle for applications and source code.                              | Dataset lifecycle                                         |
-| Identity administration | Active   | Membership/role requests, grants, blocking, admin safety.                     | Authorization kernel                                      |
-| Canonical metadata      | Pending  | Group/category, organization, and contact management with atomic deletion.    | Foundation, authorization kernel                          |
-| Dataset import          | Active   | Admin Turtle import into canonical metadata and dataset drafts.               | Dataset lifecycle                                         |
-| Import alignment        | Pending  | Extend import through software drafts and canonical management operations.    | Dataset import, software lifecycle, canonical metadata    |
-| Notifications           | Pending  | Subscription storage, eligibility, defaults, and cleanup.                     | Authorization kernel, identity administration             |
-| Completion pass         | Pending  | Required scenarios, API cleanup, fresh-environment validation.                | All slices                                                |
+| Slice                   | Status   | Outcome                                                                    | Depends on                                             |
+| ----------------------- | -------- | -------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Foundation              | Complete | Target baseline schema and generated persistence types.                    | None                                                   |
+| Authorization kernel    | Complete | Stored-resource authorization using fixed roles, grants, and user state.   | Foundation                                             |
+| Dataset lifecycle       | Active   | Complete dataset lifecycle as first usable vertical slice.                 | Authorization kernel                                   |
+| Software lifecycle      | Active   | Same lifecycle for applications and source code.                           | Dataset lifecycle                                      |
+| Identity administration | Active   | Membership/role requests, grants, blocking, admin safety.                  | Authorization kernel                                   |
+| Canonical metadata      | Active   | Group/category, organization, and contact management with atomic deletion. | Foundation, authorization kernel                       |
+| Dataset import          | Active   | Admin Turtle import into canonical metadata and dataset drafts.            | Dataset lifecycle                                      |
+| Import alignment        | Pending  | Extend import through software drafts and canonical management operations. | Dataset import, software lifecycle, canonical metadata |
+| Notifications           | Pending  | Subscription storage, eligibility, defaults, and cleanup.                  | Authorization kernel, identity administration          |
+| Completion pass         | Pending  | Required scenarios, API cleanup, fresh-environment validation.             | All slices                                             |
 
 ## Agreed API Shape: Canonical Metadata
 
@@ -50,13 +50,13 @@ requirements remain authoritative unless an explicit deviation is recorded here.
 
 ### Organizations
 
-| Method | Path | Behavior | Required access |
-| ------ | ---- | -------- | --------------- |
-| `GET` | `/api/v1/organizations` | List complete organization documents. | Public |
-| `POST` | `/api/v1/organizations` | Create canonical organization. | `organization.manage` |
-| `GET` | `/api/v1/organizations/{organization_id}` | Read complete organization document. | Public |
-| `PUT` | `/api/v1/organizations/{organization_id}` | Replace organization fields, identifiers, parent organization IDs, and contact-point IDs atomically. | `organization.manage` |
-| `DELETE` | `/api/v1/organizations/{organization_id}` | Delete organization, owned identifiers, hierarchy links, and organization links atomically. | `organization.manage` |
+| Method   | Path                                      | Behavior                                                                                             | Required access       |
+| -------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------- |
+| `GET`    | `/api/v1/organizations`                   | List complete organization documents.                                                                | Public                |
+| `POST`   | `/api/v1/organizations`                   | Create canonical organization.                                                                       | `organization.manage` |
+| `GET`    | `/api/v1/organizations/{organization_id}` | Read complete organization document.                                                                 | Public                |
+| `PUT`    | `/api/v1/organizations/{organization_id}` | Replace organization fields, identifiers, parent organization IDs, and contact-point IDs atomically. | `organization.manage` |
+| `DELETE` | `/api/v1/organizations/{organization_id}` | Delete organization, owned identifiers, hierarchy links, and organization links atomically.          | `organization.manage` |
 
 Organization documents use `address: {street, locality, postal_code, country}` and
 include `logo_url`, `page_url`, `email`, `lei_code`, `parent_organization_ids`,
@@ -65,24 +65,24 @@ identifier and relation list. Organization hierarchy cycles are rejected.
 
 ### Contact Points
 
-| Method | Path | Behavior | Required access |
-| ------ | ---- | -------- | --------------- |
-| `GET` | `/api/v1/contact-points` | List complete contact-point documents, unpaginated. | Active member of any group or `ADMIN` |
-| `POST` | `/api/v1/contact-points` | Create canonical contact point. | `contact_point.manage` |
-| `GET` | `/api/v1/contact-points/{contact_point_id}` | Read contact point. | Active member of any group or `ADMIN` |
-| `PUT` | `/api/v1/contact-points/{contact_point_id}` | Replace email and role fields; source IRI remains immutable. | `contact_point.manage` |
-| `DELETE` | `/api/v1/contact-points/{contact_point_id}` | Delete contact point and all organization, resource-version, and web-service links atomically. | `contact_point.manage` |
+| Method   | Path                                        | Behavior                                                                                       | Required access                       |
+| -------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `GET`    | `/api/v1/contact-points`                    | List complete contact-point documents, unpaginated.                                            | Active member of any group or `ADMIN` |
+| `POST`   | `/api/v1/contact-points`                    | Create canonical contact point.                                                                | `contact_point.manage`                |
+| `GET`    | `/api/v1/contact-points/{contact_point_id}` | Read contact point.                                                                            | Active member of any group or `ADMIN` |
+| `PUT`    | `/api/v1/contact-points/{contact_point_id}` | Replace email and role fields; source IRI remains immutable.                                   | `contact_point.manage`                |
+| `DELETE` | `/api/v1/contact-points/{contact_point_id}` | Delete contact point and all organization, resource-version, and web-service links atomically. | `contact_point.manage`                |
 
 ### Categories
 
 Groups are category schemes. There is no separate category-scheme resource.
 
-| Method | Path | Behavior | Required access |
-| ------ | ---- | -------- | --------------- |
-| `GET` | `/api/v1/groups/{group_id}/categories` | List the group category forest as a flat list. | Public |
-| `POST` | `/api/v1/groups/{group_id}/categories` | Create category with optional `parent_category_id`. | `category.manage` in group |
-| `GET` | `/api/v1/groups/{group_id}/categories/{category_id}` | Read category. | Public |
-| `PUT` | `/api/v1/groups/{group_id}/categories/{category_id}` | Replace category name and optional parent. | `category.manage` in group |
+| Method   | Path                                                 | Behavior                                                                                                   | Required access            |
+| -------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `GET`    | `/api/v1/groups/{group_id}/categories`               | List the group category forest as a flat list.                                                             | Public                     |
+| `POST`   | `/api/v1/groups/{group_id}/categories`               | Create category with optional `parent_category_id`.                                                        | `category.manage` in group |
+| `GET`    | `/api/v1/groups/{group_id}/categories/{category_id}` | Read category.                                                                                             | Public                     |
+| `PUT`    | `/api/v1/groups/{group_id}/categories/{category_id}` | Replace category name and optional parent.                                                                 | `category.manage` in group |
 | `DELETE` | `/api/v1/groups/{group_id}/categories/{category_id}` | Delete category and complete descendant subtree, then unlink every affected resource reference atomically. | `category.manage` in group |
 
 Category records contain `id`, `group_id`, `parent_category_id`, `source_iri`, and
@@ -91,11 +91,11 @@ parents, acyclic hierarchy, and normalized sibling-name uniqueness.
 
 ### Groups And Category-Scheme Metadata
 
-| Method | Path | Behavior | Required access |
-| ------ | ---- | -------- | --------------- |
-| `POST` | `/api/v1/groups` | Create group and category scheme. | Global `ADMIN` |
-| `PUT` | `/api/v1/groups/{group_id}` | Replace group name, description, and all category-scheme metadata. | `category_scheme.manage` |
-| `DELETE` | `/api/v1/groups/{group_id}` | Delete group, category scheme, categories, memberships, assignments, grants, requests, and subscriptions when no logical resource belongs to it. | Global `ADMIN` |
+| Method   | Path                        | Behavior                                                                                                                                         | Required access          |
+| -------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| `POST`   | `/api/v1/groups`            | Create group and category scheme.                                                                                                                | Global `ADMIN`           |
+| `PUT`    | `/api/v1/groups/{group_id}` | Replace group name, description, and all category-scheme metadata.                                                                               | `category_scheme.manage` |
+| `DELETE` | `/api/v1/groups/{group_id}` | Delete group, category scheme, categories, memberships, assignments, grants, requests, and subscriptions when no logical resource belongs to it. | Global `ADMIN`           |
 
 Existing `GET /api/v1/groups` and `GET /api/v1/groups/{group_id}` responses remain
 complete public group/category-scheme representations. Group deletion is blocked
@@ -108,6 +108,79 @@ Canonical delete requests are direct client-requested deletes. The client obtain
 any warning data from list/detail and resource-reference endpoints. The backoffice
 returns `204 No Content` after atomically unlinking references and deleting the
 canonical entity.
+
+## Active Slice: Canonical Metadata
+
+### Execution Plan
+
+Implement and verify one endpoint operation at a time. Each substep includes its
+route, OpenAPI contract, domain service, persistence transaction, authorization,
+and focused tests.
+
+2. Group creation: `POST /api/v1/groups`
+   - Require global `ADMIN`.
+   - Create the group and complete category-scheme metadata.
+
+3. Group replacement: `PUT /api/v1/groups/{group_id}`
+   - Require global `category_scheme.manage`.
+   - Replace mutable group and category-scheme fields while preserving ID and source IRI.
+
+4. Group deletion: `DELETE /api/v1/groups/{group_id}`
+   - Require global `ADMIN`.
+   - Reject deletion while any logical dataset, application, or source code belongs to the group.
+   - Otherwise remove group-owned canonical and authorization data atomically.
+
+5. Category reads: `GET /api/v1/groups/{group_id}/categories` and detail
+   - Add public flat-list and detail representations.
+   - Validate category ownership against the path group.
+
+6. Category creation: `POST /api/v1/groups/{group_id}/categories`
+   - Require `category.manage` in the target group.
+   - Enforce immutable generated or supplied source IRI, same-group optional parent, and sibling-name uniqueness.
+
+7. Category replacement: `PUT /api/v1/groups/{group_id}/categories/{category_id}`
+   - Require `category.manage` in the target group.
+   - Replace name and parent only; preserve group and source IRI; reject cycles.
+
+8. Category deletion: `DELETE /api/v1/groups/{group_id}/categories/{category_id}`
+   - Require `category.manage` in the target group.
+   - Delete the complete subtree and unlink every dataset/software category reference atomically.
+
+9. Contact-point reads: `GET /api/v1/contact-points` and detail
+   - Require active membership in any group or global `ADMIN`.
+
+10. Contact-point creation: `POST /api/v1/contact-points`
+    - Require global `contact_point.manage`.
+    - Persist immutable generated or supplied source IRI, email, and role.
+
+11. Contact-point replacement: `PUT /api/v1/contact-points/{contact_point_id}`
+    - Require global `contact_point.manage`.
+    - Replace email and role only; preserve source IRI.
+
+12. Contact-point deletion: `DELETE /api/v1/contact-points/{contact_point_id}`
+    - Require global `contact_point.manage`.
+    - Unlink organization, resource-version, and web-service references before deletion in one transaction.
+
+13. Organization reads: `GET /api/v1/organizations` and detail
+    - Add public complete documents with owned identifiers, parent IDs, and contact-point IDs.
+
+14. Organization creation: `POST /api/v1/organizations`
+    - Require global `organization.manage`.
+    - Create scalar fields, owned identifiers, parent links, and contact-point links atomically.
+    - Reject missing related IDs and hierarchy cycles.
+
+15. Organization replacement: `PUT /api/v1/organizations/{organization_id}`
+    - Require global `organization.manage`.
+    - Fully replace scalar fields, identifiers, parent IDs, and contact-point IDs atomically.
+    - Preserve ID and source IRI; reject hierarchy cycles.
+
+16. Organization deletion: `DELETE /api/v1/organizations/{organization_id}`
+    - Require global `organization.manage`.
+    - Remove resource/hierarchy links and owned identifiers before deleting the organization atomically.
+
+17. Canonical acceptance pass
+    - Add database-backed tests for authorization, full replacement, immutable fields, hierarchy constraints, and atomic unlinking.
+    - Run `make generate`, `make test`, `make build`, and `make lint`.
 
 ## Known Gaps In Existing Endpoints
 
@@ -211,7 +284,7 @@ Use fresh disposable database for schema smoke. Do not remove existing local dat
 - Existing-resource decisions load ownership group from stored logical resource rows. `resource.create` alone authorizes caller-supplied target group before resource exists.
 - Internal decisions distinguish global and group permission scopes, apply global `ADMIN` and direct global grants, combine fixed roles with direct group grants, and deny inactive or blocked users.
 - Public reads allow published resources without identity; non-public reads require global `ADMIN` or active membership in stored resource group. Contact-point reads require global `ADMIN` or active membership in any group.
--  `make test`, `make build`, and `make lint` pass.
+- `make test`, `make build`, and `make lint` pass.
 
 ## Active Slice: Dataset Lifecycle
 
@@ -314,7 +387,7 @@ Apply the resource lifecycle to software applications and software source code u
 ### Canonical Metadata
 
 - Category management enforces group tree and same-group references.
-- Organization/contact/category deletion uses preview, exact confirmation, transaction-time recomputation, and atomic unlinking.
+- Organization/contact/category deletion directly returns `204 No Content` after transaction-time recomputation and atomic unlinking.
 
 ### Import Alignment
 

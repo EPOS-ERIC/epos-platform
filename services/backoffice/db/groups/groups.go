@@ -50,6 +50,30 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (groups.Group, error) {
 	return mapGroup(group), nil
 }
 
+func (r *Repo) Create(ctx context.Context, group groups.Group) (groups.Group, error) {
+	row, err := r.CreateGroup(ctx, sqlc.CreateGroupParams{
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		SourceIri:   group.SourceIRI,
+		Concept:     sqlc.TopLevelConcept(group.Concept),
+		Label:       group.Label,
+		Logo:        group.Logo,
+		Page:        group.Page,
+		Color:       group.Color,
+		Position:    group.Position,
+	})
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return groups.Group{}, groups.ErrConflict
+		}
+		return groups.Group{}, fmt.Errorf("insert group: %w", err)
+	}
+
+	return mapGroup(row), nil
+}
+
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {

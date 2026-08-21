@@ -34,15 +34,16 @@ func (q *Queries) AssignGlobalAdmin(ctx context.Context, arg AssignGlobalAdminPa
 }
 
 const blockUser = `-- name: BlockUser :execrows
-UPDATE users
+UPDATE
+    users
 SET
-    status = 'BLOCKED',
+    STATUS = 'BLOCKED',
     block_reason = $1,
     blocked_by = $2,
-    blocked_at = now()
+    blocked_at = NOW()
 WHERE
     id = $3
-    AND status <> 'BLOCKED'
+    AND STATUS <> 'BLOCKED'
 `
 
 type BlockUserParams struct {
@@ -979,15 +980,16 @@ func (q *Queries) RevokeGlobalPermission(ctx context.Context, arg RevokeGlobalPe
 }
 
 const unblockUser = `-- name: UnblockUser :execrows
-UPDATE users
+UPDATE
+    users
 SET
-    status = 'ACTIVE',
+    STATUS = 'ACTIVE',
     block_reason = NULL,
     blocked_by = NULL,
     blocked_at = NULL
 WHERE
     id = $1
-    AND status = 'BLOCKED'
+    AND STATUS = 'BLOCKED'
 `
 
 func (q *Queries) UnblockUser(ctx context.Context, userID string) (int64, error) {

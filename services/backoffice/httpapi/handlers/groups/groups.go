@@ -16,6 +16,7 @@ import (
 var log = logging.Get("groups-handler")
 
 type service interface {
+	Create(context.Context, string, groupdomain.CreateRequest) (groupdomain.Group, error)
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -26,6 +27,46 @@ type Handler struct {
 
 func New(service service) *Handler {
 	return &Handler{service: service}
+}
+
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	var body createGroupRequest
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+
+	group, err := h.service.Create(r.Context(), actorID, groupdomain.CreateRequest{
+		SourceIRI:   body.SourceIRI,
+		Name:        body.Name,
+		Description: body.Description,
+		Label:       body.Label,
+		Logo:        body.Logo,
+		Page:        body.Page,
+		Color:       body.Color,
+		Position:    body.Position,
+		Concept:     body.Concept,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, groupdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
+		case errors.Is(err, groupdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global admin required")
+		case errors.Is(err, groupdomain.ErrConflict):
+			transport.WriteProblem(w, http.StatusConflict, "conflict", "group already exists")
+		default:
+			log.ErrorContext(r.Context(), "create group failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create group failed")
+		}
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, response(group))
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +118,18 @@ type groupResponse struct {
 	Color       *string   `json:"color"`
 	Position    int32     `json:"position"`
 	Concept     string    `json:"concept"`
+}
+
+type createGroupRequest struct {
+	SourceIRI   string  `json:"source_iri"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	Label       *string `json:"label"`
+	Logo        *string `json:"logo"`
+	Page        *string `json:"page"`
+	Color       *string `json:"color"`
+	Position    int32   `json:"position"`
+	Concept     string  `json:"concept"`
 }
 
 func response(group groupdomain.Group) groupResponse {

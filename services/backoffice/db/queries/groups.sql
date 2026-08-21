@@ -38,6 +38,47 @@ FROM
 WHERE
     id = sqlc.arg(id);
 
+-- name: CreateGroup :one
+INSERT INTO
+    groups (
+        id,
+        name,
+        description,
+        source_iri,
+        concept,
+        label,
+        logo,
+        PAGE,
+        color,
+        position
+    )
+VALUES
+    (
+        sqlc.arg(id),
+        sqlc.arg(name),
+        sqlc.arg(description),
+        sqlc.arg(source_iri),
+        sqlc.arg(concept),
+        sqlc.arg(label),
+        sqlc.arg(logo),
+        sqlc.arg(PAGE),
+        sqlc.arg(color),
+        sqlc.arg(position)
+    )
+RETURNING
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at;
+
 -- name: ListGroupMemberships :many
 SELECT
     sqlc.embed(membership),

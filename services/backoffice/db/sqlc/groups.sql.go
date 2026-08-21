@@ -138,6 +138,90 @@ func (q *Queries) AssignGroupRoleFromRequest(ctx context.Context, arg AssignGrou
 	return err
 }
 
+const createGroup = `-- name: CreateGroup :one
+INSERT INTO groups (
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    page,
+    color,
+    position
+)
+VALUES (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10
+)
+RETURNING
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    page,
+    color,
+    position,
+    created_at,
+    updated_at
+`
+
+type CreateGroupParams struct {
+	ID          uuid.UUID
+	Name        string
+	Description *string
+	SourceIri   string
+	Concept     TopLevelConcept
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+}
+
+func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group, error) {
+	row := q.db.QueryRow(ctx, createGroup,
+		arg.ID,
+		arg.Name,
+		arg.Description,
+		arg.SourceIri,
+		arg.Concept,
+		arg.Label,
+		arg.Logo,
+		arg.Page,
+		arg.Color,
+		arg.Position,
+	)
+	var i Group
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.SourceIri,
+		&i.Concept,
+		&i.Label,
+		&i.Logo,
+		&i.Page,
+		&i.Color,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createGroupRoleRequest = `-- name: CreateGroupRoleRequest :one
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
