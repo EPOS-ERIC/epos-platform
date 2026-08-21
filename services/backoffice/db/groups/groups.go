@@ -189,6 +189,31 @@ func (r *Repo) CreateCategory(ctx context.Context, category groups.Category) (gr
 	return mapCategory(row), nil
 }
 
+func (r *Repo) ReplaceCategory(ctx context.Context, groupID, categoryID uuid.UUID, request groups.ReplaceCategoryRequest) (groups.Category, error) {
+	row, err := r.ReplaceGroupCategory(ctx, sqlc.ReplaceGroupCategoryParams{
+		GroupID:          groupID,
+		ID:               categoryID,
+		Name:             request.Name,
+		ParentCategoryID: request.ParentCategoryID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Category{}, groups.ErrNotFound
+	}
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
+			switch pgErr.Code {
+			case "23505":
+				return groups.Category{}, groups.ErrConflict
+			case "23503", "23514", "P0001":
+				return groups.Category{}, groups.ErrInvalid
+			}
+		}
+		return groups.Category{}, fmt.Errorf("update category: %w", err)
+	}
+
+	return mapCategory(row), nil
+}
+
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {

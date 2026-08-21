@@ -1132,6 +1132,51 @@ func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Gro
 	return i, err
 }
 
+const replaceGroupCategory = `-- name: ReplaceGroupCategory :one
+UPDATE categories
+SET
+    name = $1,
+    parent_category_id = $2,
+    updated_at = NOW()
+WHERE group_id = $3
+  AND id = $4
+RETURNING
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at
+`
+
+type ReplaceGroupCategoryParams struct {
+	Name             string
+	ParentCategoryID *uuid.UUID
+	GroupID          uuid.UUID
+	ID               uuid.UUID
+}
+
+func (q *Queries) ReplaceGroupCategory(ctx context.Context, arg ReplaceGroupCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, replaceGroupCategory,
+		arg.Name,
+		arg.ParentCategoryID,
+		arg.GroupID,
+		arg.ID,
+	)
+	var i Category
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.ParentCategoryID,
+		&i.SourceIri,
+		&i.Name,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const requestGroupMembership = `-- name: RequestGroupMembership :one
 INSERT INTO
     group_memberships (user_id, group_id, STATUS)

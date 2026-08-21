@@ -230,6 +230,25 @@ RETURNING
     created_at,
     updated_at;
 
+-- name: ReplaceGroupCategory :one
+UPDATE
+    categories
+SET
+    name = sqlc.arg(name),
+    parent_category_id = sqlc.arg(parent_category_id),
+    updated_at = NOW()
+WHERE
+    group_id = sqlc.arg(group_id)
+    AND id = sqlc.arg(id)
+RETURNING
+    id,
+    group_id,
+    parent_category_id,
+    source_iri,
+    name,
+    created_at,
+    updated_at;
+
 -- name: ListGroupMemberships :many
 SELECT
     sqlc.embed(membership),

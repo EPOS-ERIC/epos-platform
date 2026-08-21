@@ -44,6 +44,11 @@ type CreateCategoryRequest struct {
 	ParentCategoryID *uuid.UUID
 }
 
+type ReplaceCategoryRequest struct {
+	Name             string
+	ParentCategoryID *uuid.UUID
+}
+
 type CreateRequest struct {
 	SourceIRI   string
 	Name        string
@@ -76,6 +81,7 @@ type Store interface {
 	ListCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error)
 	GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error)
 	CreateCategory(ctx context.Context, category Category) (Category, error)
+	ReplaceCategory(ctx context.Context, groupID, categoryID uuid.UUID, request ReplaceCategoryRequest) (Category, error)
 }
 
 type Authorizer interface {
@@ -244,6 +250,29 @@ func (s *Service) CreateCategory(ctx context.Context, actorID string, groupID uu
 	})
 	if err != nil {
 		return Category{}, fmt.Errorf("create category: %w", err)
+	}
+
+	return category, nil
+}
+
+func (s *Service) ReplaceCategory(ctx context.Context, actorID string, groupID, categoryID uuid.UUID, request ReplaceCategoryRequest) (Category, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.Name = strings.TrimSpace(request.Name)
+	if actorID == "" || groupID == uuid.Nil || categoryID == uuid.Nil || request.Name == "" {
+		return Category{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "category.manage")
+	if err != nil {
+		return Category{}, fmt.Errorf("authorize category replacement: %w", err)
+	}
+	if !allowed.Allowed {
+		return Category{}, ErrForbidden
+	}
+
+	category, err := s.store.ReplaceCategory(ctx, groupID, categoryID, request)
+	if err != nil {
+		return Category{}, fmt.Errorf("replace category: %w", err)
 	}
 
 	return category, nil

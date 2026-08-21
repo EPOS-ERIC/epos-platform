@@ -24,6 +24,7 @@ type service interface {
 	ListCategories(context.Context, uuid.UUID) ([]groupdomain.Category, error)
 	GetCategory(context.Context, uuid.UUID, uuid.UUID) (groupdomain.Category, error)
 	CreateCategory(context.Context, string, uuid.UUID, groupdomain.CreateCategoryRequest) (groupdomain.Category, error)
+	ReplaceCategory(context.Context, string, uuid.UUID, uuid.UUID, groupdomain.ReplaceCategoryRequest) (groupdomain.Category, error)
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -252,6 +253,53 @@ func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusOK, categoryResponseFromDomain(category))
 }
 
+func (h *Handler) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := groupIDPath(w, r)
+	if !ok {
+		return
+	}
+	categoryID, err := uuid.Parse(chi.URLParam(r, "category_id"))
+	if err != nil || categoryID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category id")
+		return
+	}
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	var body replaceCategoryRequest
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+
+	request, err := body.domain()
+	if err != nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "name and parent_category_id are required")
+		return
+	}
+
+	category, err := h.service.ReplaceCategory(r.Context(), actorID, groupID, categoryID, request)
+	if err != nil {
+		switch {
+		case errors.Is(err, groupdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category")
+		case errors.Is(err, groupdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
+		case errors.Is(err, groupdomain.ErrNotFound):
+			transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
+		case errors.Is(err, groupdomain.ErrConflict):
+			transport.WriteProblem(w, http.StatusConflict, "conflict", "category conflicts with existing category")
+		default:
+			log.ErrorContext(r.Context(), "replace group category failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "replace group category failed")
+		}
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusOK, categoryResponseFromDomain(category))
+}
+
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	groups, err := h.service.List(r.Context())
 	if err != nil {
@@ -324,6 +372,35 @@ type createCategoryRequest struct {
 	SourceIRI        *string    `json:"source_iri"`
 	Name             string     `json:"name"`
 	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
+}
+
+type replaceCategoryRequest struct {
+	Name             json.RawMessage `json:"name"`
+	ParentCategoryID json.RawMessage `json:"parent_category_id"`
+}
+
+func (r replaceCategoryRequest) domain() (groupdomain.ReplaceCategoryRequest, error) {
+	name, err := requiredString(r.Name)
+	if err != nil {
+		return groupdomain.ReplaceCategoryRequest{}, err
+	}
+	if len(r.ParentCategoryID) == 0 {
+		return groupdomain.ReplaceCategoryRequest{}, errors.New("parent category is missing")
+	}
+
+	var parent *uuid.UUID
+	if string(r.ParentCategoryID) != "null" {
+		var value uuid.UUID
+		if err := json.Unmarshal(r.ParentCategoryID, &value); err != nil || value == uuid.Nil {
+			return groupdomain.ReplaceCategoryRequest{}, errors.New("invalid parent category")
+		}
+		parent = &value
+	}
+
+	return groupdomain.ReplaceCategoryRequest{
+		Name:             name,
+		ParentCategoryID: parent,
+	}, nil
 }
 
 type createGroupRequest struct {
