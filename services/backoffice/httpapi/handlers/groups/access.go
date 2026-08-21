@@ -21,6 +21,8 @@ type accessService interface {
 	RequestRole(context.Context, string, uuid.UUID, string) (groups.RoleRequest, error)
 	ApplyRoleRequestDecision(context.Context, string, uuid.UUID, uuid.UUID, string) (groups.Membership, error)
 	WithdrawRoleRequest(context.Context, string, uuid.UUID, uuid.UUID) error
+	AssignRole(context.Context, string, uuid.UUID, string, string) error
+	RemoveRole(context.Context, string, uuid.UUID, string, string) error
 }
 
 type AccessHandler struct {
@@ -227,6 +229,34 @@ func (h *AccessHandler) WithdrawRoleRequest(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *AccessHandler) AssignRole(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, userID, role, ok := rolePath(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.AssignRole(r.Context(), actorID, groupID, userID, role); err != nil {
+		writeAccessError(w, r, err, "assign group role")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AccessHandler) RemoveRole(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, userID, role, ok := rolePath(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.RemoveRole(r.Context(), actorID, groupID, userID, role); err != nil {
+		writeAccessError(w, r, err, "remove group role")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {
 	actorID, ok := transport.Actor(w, r)
 	if !ok {
@@ -240,6 +270,22 @@ func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool
 	}
 
 	return actorID, groupID, true
+}
+
+func rolePath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, string, string, bool) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return "", uuid.Nil, "", "", false
+	}
+
+	userID := chi.URLParam(r, "user_id")
+	role := chi.URLParam(r, "role")
+	if userID == "" || role == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id or role")
+		return "", uuid.Nil, "", "", false
+	}
+
+	return actorID, groupID, userID, role, true
 }
 
 func writeAccessError(w http.ResponseWriter, r *http.Request, err error, operation string) {

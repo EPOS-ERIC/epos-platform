@@ -34,14 +34,14 @@ func (r *Repo) List(ctx context.Context) ([]groups.Group, error) {
 
 	result := make([]groups.Group, 0, len(rows))
 	for _, row := range rows {
-		result = append(result, mapGroup(row.Group))
+		result = append(result, mapGroup(row))
 	}
 
 	return result, nil
 }
 
 func (r *Repo) Get(ctx context.Context, id uuid.UUID) (groups.Group, error) {
-	row, err := r.GetGroupByID(ctx, id)
+	group, err := r.GetGroupByID(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return groups.Group{}, groups.ErrNotFound
 	}
@@ -49,7 +49,7 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (groups.Group, error) {
 		return groups.Group{}, fmt.Errorf("get group by id: %w", err)
 	}
 
-	return mapGroup(row.Group), nil
+	return mapGroup(group), nil
 }
 
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
@@ -83,21 +83,21 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups
 
 	rolesByUser := make(map[string][]string)
 	for _, role := range roles {
-		rolesByUser[role.GroupMembershipRole.UserID] = append(rolesByUser[role.GroupMembershipRole.UserID], role.GroupMembershipRole.RoleKey)
+		rolesByUser[role.UserID] = append(rolesByUser[role.UserID], role.RoleKey)
 	}
 
 	permissionsByUser := make(map[string][]string)
 	for _, permission := range permissions {
-		permissionsByUser[permission.GroupPermissionGrant.UserID] = append(permissionsByUser[permission.GroupPermissionGrant.UserID], permission.GroupPermissionGrant.PermissionKey)
+		permissionsByUser[permission.UserID] = append(permissionsByUser[permission.UserID], permission.PermissionKey)
 	}
 
 	requestsByUser := make(map[string][]groups.RoleRequest)
 	for _, request := range requests {
-		requestsByUser[request.GroupRoleRequest.UserID] = append(requestsByUser[request.GroupRoleRequest.UserID], groups.RoleRequest{
-			ID:          request.GroupRoleRequest.ID,
-			Role:        request.GroupRoleRequest.RoleKey,
-			Status:      string(request.GroupRoleRequest.Status),
-			RequestedAt: request.GroupRoleRequest.RequestedAt,
+		requestsByUser[request.UserID] = append(requestsByUser[request.UserID], groups.RoleRequest{
+			ID:          request.ID,
+			Role:        request.RoleKey,
+			Status:      string(request.Status),
+			RequestedAt: request.RequestedAt,
 		})
 	}
 
@@ -366,6 +366,108 @@ func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.
 	return nil
 }
 
+func (r *Repo) AssignRole(ctx context.Context, groupID uuid.UUID, userID, role, actorID string) error {
+	exists, err := r.checkRoleTarget(ctx, groupID, userID, role)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	rows, err := r.AssignGroupRole(ctx, sqlc.AssignGroupRoleParams{
+		UserID:     userID,
+		GroupID:    groupID,
+		RoleKey:    role,
+		AssignedBy: actorID,
+	})
+	if err != nil {
+		return fmt.Errorf("assign role: %w", err)
+	}
+	if rows == 0 {
+		return groups.ErrConflict
+	}
+
+	return nil
+}
+
+func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID, role string) error {
+	_, err := r.checkRoleTarget(ctx, groupID, userID, role)
+	if err != nil {
+		return err
+	}
+
+	if _, err := r.RemoveGroupRole(ctx, sqlc.RemoveGroupRoleParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: role,
+	}); err != nil {
+		return fmt.Errorf("remove role: %w", err)
+	}
+
+	return nil
+}
+
+// checkRoleTarget validates the target membership and pending-request state.
+// It reports whether the requested role is already assigned.
+func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID, role string) (bool, error) {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, groups.ErrNotFound
+	}
+	if err != nil {
+		return false, fmt.Errorf("check group: %w", err)
+	}
+
+	_, err = r.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, groups.ErrNotFound
+	}
+	if err != nil {
+		return false, fmt.Errorf("check user: %w", err)
+	}
+
+	membership, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, groups.ErrNotFound
+	}
+	if err != nil {
+		return false, fmt.Errorf("check membership: %w", err)
+	}
+	if membership.GroupMembership.Status != sqlc.MembershipStatusACTIVE {
+		return false, groups.ErrConflict
+	}
+
+	_, err = r.GetPendingGroupRoleRequest(ctx, sqlc.GetPendingGroupRoleRequestParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: role,
+	})
+	if err == nil {
+		return false, groups.ErrConflict
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return false, fmt.Errorf("check pending role request: %w", err)
+	}
+
+	exists, err := r.GroupMembershipRoleExists(ctx, sqlc.GroupMembershipRoleExistsParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: role,
+	})
+	if err != nil {
+		return false, fmt.Errorf("check group role: %w", err)
+	}
+	if exists {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // DecideMembership changes a pending membership to ACTIVE or REJECTED.
 // Rejection also marks its pending role requests as rejected in the same transaction.
 // TODO: use a better name like ApplyMembershipDecision
@@ -472,24 +574,24 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 	}
 
 	for _, role := range roles {
-		if role.GroupMembershipRole.UserID == userID {
-			result.Roles = append(result.Roles, role.GroupMembershipRole.RoleKey)
+		if role.UserID == userID {
+			result.Roles = append(result.Roles, role.RoleKey)
 		}
 	}
 
 	for _, permission := range permissions {
-		if permission.GroupPermissionGrant.UserID == userID {
-			result.Permissions = append(result.Permissions, permission.GroupPermissionGrant.PermissionKey)
+		if permission.UserID == userID {
+			result.Permissions = append(result.Permissions, permission.PermissionKey)
 		}
 	}
 
 	for _, request := range requests {
-		if request.GroupRoleRequest.UserID == userID {
+		if request.UserID == userID {
 			result.RoleRequests = append(result.RoleRequests, groups.RoleRequest{
-				ID:          request.GroupRoleRequest.ID,
-				Role:        request.GroupRoleRequest.RoleKey,
-				Status:      string(request.GroupRoleRequest.Status),
-				RequestedAt: request.GroupRoleRequest.RequestedAt,
+				ID:          request.ID,
+				Role:        request.RoleKey,
+				Status:      string(request.Status),
+				RequestedAt: request.RequestedAt,
 			})
 		}
 	}

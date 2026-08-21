@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -128,6 +129,48 @@ func (h *Groups) DeleteMembership(w http.ResponseWriter, r *http.Request) {
 
 	if err := h.service.RevokeMembership(ctx, groupID, userID, actor.ID); err != nil {
 		writeMembershipError(r, w, err, "revoke membership")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Groups) AssignGroupRole(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, userID, role, ok := groupRoleParams(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.AssignGroupRole(ctx, groupID, userID, role, actor.ID); err != nil {
+		writeMembershipError(r, w, err, "assign group role")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Groups) RemoveGroupRole(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, userID, role, ok := groupRoleParams(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.RemoveGroupRole(ctx, groupID, userID, role, actor.ID); err != nil {
+		writeMembershipError(r, w, err, "remove group role")
 		return
 	}
 
@@ -280,6 +323,22 @@ func GroupMembershipFromDomain(membership domain.GroupMembership) api.GroupMembe
 		CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
 		UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
 	}
+}
+
+func groupRoleParams(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return "", "", "", false
+	}
+
+	userID := chi.URLParam(r, "userId")
+	role := api.MembershipRole(chi.URLParam(r, "role"))
+	if userID == "" || !role.IsValid() {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or role", nil)
+		return "", "", "", false
+	}
+
+	return groupID, userID, string(role), true
 }
 
 func writeGroupError(r *http.Request, w http.ResponseWriter, err error, operation string) {

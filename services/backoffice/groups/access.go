@@ -53,6 +53,8 @@ type AccessStore interface {
 	RequestRole(context.Context, uuid.UUID, string, string) (RoleRequest, error)
 	ApplyRoleRequestDecision(context.Context, uuid.UUID, uuid.UUID, string, string) (Membership, error)
 	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
+	AssignRole(context.Context, uuid.UUID, string, string, string) error
+	RemoveRole(context.Context, uuid.UUID, string, string) error
 }
 
 type AccessAuthorizer interface {
@@ -62,6 +64,7 @@ type AccessAuthorizer interface {
 	CanRevokeGroupMembership(context.Context, string, uuid.UUID, string) (authz.Result, error)
 	CanRequestGroupRole(context.Context, string, uuid.UUID) (authz.Result, error)
 	CanManageGroupRoles(context.Context, string, uuid.UUID) (authz.Result, error)
+	CanManageSpecificGroupRole(context.Context, string, uuid.UUID, string) (authz.Result, error)
 }
 
 type AccessService struct {
@@ -267,6 +270,53 @@ func (s *AccessService) WithdrawRoleRequest(ctx context.Context, actorID string,
 	return nil
 }
 
+func (s *AccessService) AssignRole(ctx context.Context, actorID string, groupID uuid.UUID, userID, role string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	if actorID == "" || userID == "" || groupID == uuid.Nil || !validGroupRole(role) {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.CanManageSpecificGroupRole(ctx, actorID, groupID, role)
+	if err != nil {
+		return fmt.Errorf("authorize group role assignment: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.AssignRole(ctx, groupID, userID, role, actorID); err != nil {
+		return fmt.Errorf("assign group role: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AccessService) RemoveRole(ctx context.Context, actorID string, groupID uuid.UUID, userID, role string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	if actorID == "" || userID == "" || groupID == uuid.Nil || !validGroupRole(role) {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.CanManageSpecificGroupRole(ctx, actorID, groupID, role)
+	if err != nil {
+		return fmt.Errorf("authorize group role removal: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.RemoveRole(ctx, groupID, userID, role); err != nil {
+		return fmt.Errorf("remove group role: %w", err)
+	}
+
+	return nil
+}
+
+// TODO: use an enum instead of this
 func validateRequestedRoles(roles []string) error {
 	seen := make(map[string]struct{}, len(roles))
 	for _, role := range roles {
@@ -279,4 +329,9 @@ func validateRequestedRoles(roles []string) error {
 		seen[role] = struct{}{}
 	}
 	return nil
+}
+
+// TODO: use an enum instead of this
+func validGroupRole(role string) bool {
+	return role == "EDITOR" || role == "REVIEWER" || role == "GROUP_ADMIN"
 }

@@ -161,3 +161,46 @@ func (s *Service) WithdrawRoleRequest(ctx context.Context, groupID, requestID, a
 
 	return nil
 }
+
+func (s *Service) AssignGroupRole(ctx context.Context, groupID, userID, role, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || userID == "" || actorID == "" || !validGroupRole(role) {
+		return fmt.Errorf("invalid group role assignment: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.AssignGroupRole(ctx, groupID, userID, role, actorID); err != nil {
+		return fmt.Errorf("assign group role in backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) RemoveGroupRole(ctx context.Context, groupID, userID, role, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	userID = strings.TrimSpace(userID)
+	role = strings.TrimSpace(role)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || userID == "" || actorID == "" || !validGroupRole(role) {
+		return fmt.Errorf("invalid group role removal: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.RemoveGroupRole(ctx, groupID, userID, role, actorID); err != nil {
+		return fmt.Errorf("remove group role in backoffice: %w", err)
+	}
+
+	return nil
+}
+
+// TODO: use an enum instead of this
+func validGroupRole(role string) bool {
+	return role == "EDITOR" || role == "REVIEWER" || role == "GROUP_ADMIN"
+}

@@ -253,9 +253,35 @@ func (a *Authorizer) CanRequestGroupRole(ctx context.Context, userID string, gro
 	return Result{Allowed: true, Reason: "active group member"}, nil
 }
 
-// CanManageGroupRoles permits role-request decisions and direct group role changes.
+// CanManageGroupRoles permits role-request decisions and standard direct group role changes.
 func (a *Authorizer) CanManageGroupRoles(ctx context.Context, userID string, groupID uuid.UUID) (Result, error) {
 	return a.canManageGroupPermission(ctx, userID, groupID, "global.role.manage", "group.role.manage")
+}
+
+// CanManageSpecificGroupRole applies role-specific restrictions for direct assignment and removal.
+func (a *Authorizer) CanManageSpecificGroupRole(ctx context.Context, userID string, groupID uuid.UUID, role string) (Result, error) {
+	allowed, err := a.CanManageGroupRoles(ctx, userID, groupID)
+	if err != nil || !allowed.Allowed || role != "GROUP_ADMIN" {
+		return allowed, err
+	}
+
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+	if admin {
+		return allowed, nil
+	}
+
+	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, "global.role.manage")
+	if err != nil {
+		return Result{}, fmt.Errorf("check global role permission: %w", err)
+	}
+	if !globalPermission {
+		return Result{Allowed: false, Reason: "GROUP_ADMIN requires global role management"}, nil
+	}
+
+	return allowed, nil
 }
 
 func (a *Authorizer) canManageGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, globalPermission, groupPermission string) (Result, error) {

@@ -528,6 +528,62 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 
+  /groups/{groupId}/memberships/{userId}/roles/{role}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/MembershipUserId"
+      - $ref: "#/components/parameters/GroupRole"
+    put:
+      tags:
+        - Memberships
+      summary: Assign group role
+      description: Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      operationId: assignGroupRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Role assigned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Memberships
+      summary: Remove group role
+      description: Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      operationId: removeGroupRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Role removed
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
   /groups/{groupId}/role-requests:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -1184,6 +1240,15 @@ components:
         type: string
         format: uuid
         example: "550e8400-e29b-41d4-a716-446655440101"
+
+    GroupRole:
+      name: role
+      in: path
+      required: true
+      description: Group role to assign or remove.
+      schema:
+        type: string
+        enum: [EDITOR, REVIEWER, GROUP_ADMIN]
 
     GroupId:
       name: groupId

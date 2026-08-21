@@ -72,6 +72,42 @@ func (q *Queries) ApplyRoleRequestDecision(ctx context.Context, arg ApplyRoleReq
 	return i, err
 }
 
+const assignGroupRole = `-- name: AssignGroupRole :execrows
+INSERT INTO
+    group_membership_roles (user_id, group_id, role_key, assigned_by)
+SELECT
+    $1,
+    $2,
+    $3,
+    $4
+FROM
+    group_memberships
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, role_key) DO NOTHING
+`
+
+type AssignGroupRoleParams struct {
+	UserID     string
+	GroupID    uuid.UUID
+	RoleKey    string
+	AssignedBy string
+}
+
+func (q *Queries) AssignGroupRole(ctx context.Context, arg AssignGroupRoleParams) (int64, error) {
+	result, err := q.db.Exec(ctx, assignGroupRole,
+		arg.UserID,
+		arg.GroupID,
+		arg.RoleKey,
+		arg.AssignedBy,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const assignGroupRoleFromRequest = `-- name: AssignGroupRoleFromRequest :exec
 INSERT INTO
     group_membership_roles (user_id, group_id, role_key, assigned_by)
@@ -201,33 +237,40 @@ func (q *Queries) DecideGroupMembership(ctx context.Context, arg DecideGroupMemb
 
 const getGroupByID = `-- name: GetGroupByID :one
 SELECT
-    groups.id, groups.name, groups.description, groups.source_iri, groups.concept, groups.label, groups.logo, groups.page, groups.color, groups.position, groups.created_at, groups.updated_at
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at
 FROM
     groups
 WHERE
     id = $1
 `
 
-type GetGroupByIDRow struct {
-	Group Group
-}
-
-func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (GetGroupByIDRow, error) {
+func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error) {
 	row := q.db.QueryRow(ctx, getGroupByID, id)
-	var i GetGroupByIDRow
+	var i Group
 	err := row.Scan(
-		&i.Group.ID,
-		&i.Group.Name,
-		&i.Group.Description,
-		&i.Group.SourceIri,
-		&i.Group.Concept,
-		&i.Group.Label,
-		&i.Group.Logo,
-		&i.Group.Page,
-		&i.Group.Color,
-		&i.Group.Position,
-		&i.Group.CreatedAt,
-		&i.Group.UpdatedAt,
+		&i.ID,
+		&i.Name,
+		&i.Description,
+		&i.SourceIri,
+		&i.Concept,
+		&i.Label,
+		&i.Logo,
+		&i.Page,
+		&i.Color,
+		&i.Position,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -277,9 +320,81 @@ func (q *Queries) GetGroupMembership(ctx context.Context, arg GetGroupMembership
 	return i, err
 }
 
+const getPendingGroupRoleRequest = `-- name: GetPendingGroupRoleRequest :one
+SELECT
+    id,
+    user_id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at,
+    decided_by,
+    decided_at
+FROM
+    group_role_requests
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND role_key = $3
+    AND STATUS = 'PENDING'
+`
+
+type GetPendingGroupRoleRequestParams struct {
+	UserID  string
+	GroupID uuid.UUID
+	RoleKey string
+}
+
+func (q *Queries) GetPendingGroupRoleRequest(ctx context.Context, arg GetPendingGroupRoleRequestParams) (GroupRoleRequest, error) {
+	row := q.db.QueryRow(ctx, getPendingGroupRoleRequest, arg.UserID, arg.GroupID, arg.RoleKey)
+	var i GroupRoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GroupID,
+		&i.RoleKey,
+		&i.Status,
+		&i.RequestedAt,
+		&i.DecidedBy,
+		&i.DecidedAt,
+	)
+	return i, err
+}
+
+const groupMembershipRoleExists = `-- name: GroupMembershipRoleExists :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_membership_roles
+        WHERE
+            user_id = $1
+            AND group_id = $2
+            AND role_key = $3
+    )
+`
+
+type GroupMembershipRoleExistsParams struct {
+	UserID  string
+	GroupID uuid.UUID
+	RoleKey string
+}
+
+func (q *Queries) GroupMembershipRoleExists(ctx context.Context, arg GroupMembershipRoleExistsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, groupMembershipRoleExists, arg.UserID, arg.GroupID, arg.RoleKey)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const listGroupMembershipPermissions = `-- name: ListGroupMembershipPermissions :many
 SELECT
-    group_permission_grants.user_id, group_permission_grants.group_id, group_permission_grants.permission_key, group_permission_grants.granted_by, group_permission_grants.granted_at
+    user_id,
+    group_id,
+    permission_key,
+    granted_by,
+    granted_at
 FROM
     group_permission_grants
 WHERE
@@ -289,25 +404,21 @@ ORDER BY
     permission_key
 `
 
-type ListGroupMembershipPermissionsRow struct {
-	GroupPermissionGrant GroupPermissionGrant
-}
-
-func (q *Queries) ListGroupMembershipPermissions(ctx context.Context, groupID uuid.UUID) ([]ListGroupMembershipPermissionsRow, error) {
+func (q *Queries) ListGroupMembershipPermissions(ctx context.Context, groupID uuid.UUID) ([]GroupPermissionGrant, error) {
 	rows, err := q.db.Query(ctx, listGroupMembershipPermissions, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListGroupMembershipPermissionsRow
+	var items []GroupPermissionGrant
 	for rows.Next() {
-		var i ListGroupMembershipPermissionsRow
+		var i GroupPermissionGrant
 		if err := rows.Scan(
-			&i.GroupPermissionGrant.UserID,
-			&i.GroupPermissionGrant.GroupID,
-			&i.GroupPermissionGrant.PermissionKey,
-			&i.GroupPermissionGrant.GrantedBy,
-			&i.GroupPermissionGrant.GrantedAt,
+			&i.UserID,
+			&i.GroupID,
+			&i.PermissionKey,
+			&i.GrantedBy,
+			&i.GrantedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -321,7 +432,11 @@ func (q *Queries) ListGroupMembershipPermissions(ctx context.Context, groupID uu
 
 const listGroupMembershipRoles = `-- name: ListGroupMembershipRoles :many
 SELECT
-    group_membership_roles.user_id, group_membership_roles.group_id, group_membership_roles.role_key, group_membership_roles.assigned_by, group_membership_roles.assigned_at
+    user_id,
+    group_id,
+    role_key,
+    assigned_by,
+    assigned_at
 FROM
     group_membership_roles
 WHERE
@@ -331,25 +446,21 @@ ORDER BY
     role_key
 `
 
-type ListGroupMembershipRolesRow struct {
-	GroupMembershipRole GroupMembershipRole
-}
-
-func (q *Queries) ListGroupMembershipRoles(ctx context.Context, groupID uuid.UUID) ([]ListGroupMembershipRolesRow, error) {
+func (q *Queries) ListGroupMembershipRoles(ctx context.Context, groupID uuid.UUID) ([]GroupMembershipRole, error) {
 	rows, err := q.db.Query(ctx, listGroupMembershipRoles, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListGroupMembershipRolesRow
+	var items []GroupMembershipRole
 	for rows.Next() {
-		var i ListGroupMembershipRolesRow
+		var i GroupMembershipRole
 		if err := rows.Scan(
-			&i.GroupMembershipRole.UserID,
-			&i.GroupMembershipRole.GroupID,
-			&i.GroupMembershipRole.RoleKey,
-			&i.GroupMembershipRole.AssignedBy,
-			&i.GroupMembershipRole.AssignedAt,
+			&i.UserID,
+			&i.GroupID,
+			&i.RoleKey,
+			&i.AssignedBy,
+			&i.AssignedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -419,7 +530,18 @@ func (q *Queries) ListGroupMemberships(ctx context.Context, groupID uuid.UUID) (
 
 const listGroups = `-- name: ListGroups :many
 SELECT
-    groups.id, groups.name, groups.description, groups.source_iri, groups.concept, groups.label, groups.logo, groups.page, groups.color, groups.position, groups.created_at, groups.updated_at
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at
 FROM
     groups
 ORDER BY
@@ -428,32 +550,28 @@ ORDER BY
     id
 `
 
-type ListGroupsRow struct {
-	Group Group
-}
-
-func (q *Queries) ListGroups(ctx context.Context) ([]ListGroupsRow, error) {
+func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 	rows, err := q.db.Query(ctx, listGroups)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListGroupsRow
+	var items []Group
 	for rows.Next() {
-		var i ListGroupsRow
+		var i Group
 		if err := rows.Scan(
-			&i.Group.ID,
-			&i.Group.Name,
-			&i.Group.Description,
-			&i.Group.SourceIri,
-			&i.Group.Concept,
-			&i.Group.Label,
-			&i.Group.Logo,
-			&i.Group.Page,
-			&i.Group.Color,
-			&i.Group.Position,
-			&i.Group.CreatedAt,
-			&i.Group.UpdatedAt,
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.SourceIri,
+			&i.Concept,
+			&i.Label,
+			&i.Logo,
+			&i.Page,
+			&i.Color,
+			&i.Position,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -467,7 +585,14 @@ func (q *Queries) ListGroups(ctx context.Context) ([]ListGroupsRow, error) {
 
 const listPendingGroupRoleRequests = `-- name: ListPendingGroupRoleRequests :many
 SELECT
-    group_role_requests.id, group_role_requests.user_id, group_role_requests.group_id, group_role_requests.role_key, group_role_requests.status, group_role_requests.requested_at, group_role_requests.decided_by, group_role_requests.decided_at
+    id,
+    user_id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at,
+    decided_by,
+    decided_at
 FROM
     group_role_requests
 WHERE
@@ -479,28 +604,24 @@ ORDER BY
     id
 `
 
-type ListPendingGroupRoleRequestsRow struct {
-	GroupRoleRequest GroupRoleRequest
-}
-
-func (q *Queries) ListPendingGroupRoleRequests(ctx context.Context, groupID uuid.UUID) ([]ListPendingGroupRoleRequestsRow, error) {
+func (q *Queries) ListPendingGroupRoleRequests(ctx context.Context, groupID uuid.UUID) ([]GroupRoleRequest, error) {
 	rows, err := q.db.Query(ctx, listPendingGroupRoleRequests, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListPendingGroupRoleRequestsRow
+	var items []GroupRoleRequest
 	for rows.Next() {
-		var i ListPendingGroupRoleRequestsRow
+		var i GroupRoleRequest
 		if err := rows.Scan(
-			&i.GroupRoleRequest.ID,
-			&i.GroupRoleRequest.UserID,
-			&i.GroupRoleRequest.GroupID,
-			&i.GroupRoleRequest.RoleKey,
-			&i.GroupRoleRequest.Status,
-			&i.GroupRoleRequest.RequestedAt,
-			&i.GroupRoleRequest.DecidedBy,
-			&i.GroupRoleRequest.DecidedAt,
+			&i.ID,
+			&i.UserID,
+			&i.GroupID,
+			&i.RoleKey,
+			&i.Status,
+			&i.RequestedAt,
+			&i.DecidedBy,
+			&i.DecidedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -534,6 +655,29 @@ type RejectPendingGroupRoleRequestsParams struct {
 func (q *Queries) RejectPendingGroupRoleRequests(ctx context.Context, arg RejectPendingGroupRoleRequestsParams) error {
 	_, err := q.db.Exec(ctx, rejectPendingGroupRoleRequests, arg.DecidedBy, arg.GroupID, arg.UserID)
 	return err
+}
+
+const removeGroupRole = `-- name: RemoveGroupRole :execrows
+DELETE FROM
+    group_membership_roles
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND role_key = $3
+`
+
+type RemoveGroupRoleParams struct {
+	UserID  string
+	GroupID uuid.UUID
+	RoleKey string
+}
+
+func (q *Queries) RemoveGroupRole(ctx context.Context, arg RemoveGroupRoleParams) (int64, error) {
+	result, err := q.db.Exec(ctx, removeGroupRole, arg.UserID, arg.GroupID, arg.RoleKey)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const requestGroupMembership = `-- name: RequestGroupMembership :one

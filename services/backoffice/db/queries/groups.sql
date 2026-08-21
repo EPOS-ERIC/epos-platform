@@ -1,6 +1,17 @@
 -- name: ListGroups :many
 SELECT
-    sqlc.embed(groups)
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at
 FROM
     groups
 ORDER BY
@@ -10,7 +21,18 @@ ORDER BY
 
 -- name: GetGroupByID :one
 SELECT
-    sqlc.embed(groups)
+    id,
+    name,
+    description,
+    source_iri,
+    concept,
+    label,
+    logo,
+    PAGE,
+    color,
+    position,
+    created_at,
+    updated_at
 FROM
     groups
 WHERE
@@ -43,7 +65,11 @@ WHERE
 
 -- name: ListGroupMembershipRoles :many
 SELECT
-    sqlc.embed(group_membership_roles)
+    user_id,
+    group_id,
+    role_key,
+    assigned_by,
+    assigned_at
 FROM
     group_membership_roles
 WHERE
@@ -54,7 +80,11 @@ ORDER BY
 
 -- name: ListGroupMembershipPermissions :many
 SELECT
-    sqlc.embed(group_permission_grants)
+    user_id,
+    group_id,
+    permission_key,
+    granted_by,
+    granted_at
 FROM
     group_permission_grants
 WHERE
@@ -65,7 +95,14 @@ ORDER BY
 
 -- name: ListPendingGroupRoleRequests :many
 SELECT
-    sqlc.embed(group_role_requests)
+    id,
+    user_id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at,
+    decided_by,
+    decided_at
 FROM
     group_role_requests
 WHERE
@@ -224,3 +261,57 @@ WHERE
     AND group_id = sqlc.arg(group_id)
     AND user_id = sqlc.arg(user_id)
     AND STATUS = 'PENDING';
+
+-- name: GroupMembershipRoleExists :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_membership_roles
+        WHERE
+            user_id = sqlc.arg(user_id)
+            AND group_id = sqlc.arg(group_id)
+            AND role_key = sqlc.arg(role_key)
+    );
+
+-- name: GetPendingGroupRoleRequest :one
+SELECT
+    id,
+    user_id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at,
+    decided_by,
+    decided_at
+FROM
+    group_role_requests
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
+    AND role_key = sqlc.arg(role_key)
+    AND STATUS = 'PENDING';
+
+-- name: AssignGroupRole :execrows
+INSERT INTO
+    group_membership_roles (user_id, group_id, role_key, assigned_by)
+SELECT
+    sqlc.arg(user_id),
+    sqlc.arg(group_id),
+    sqlc.arg(role_key),
+    sqlc.arg(assigned_by)
+FROM
+    group_memberships
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
+    AND STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, role_key) DO NOTHING;
+
+-- name: RemoveGroupRole :execrows
+DELETE FROM
+    group_membership_roles
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
+    AND role_key = sqlc.arg(role_key);
