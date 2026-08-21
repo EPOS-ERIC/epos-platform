@@ -65,6 +65,24 @@ func (s *Service) WithdrawMembershipRequest(ctx context.Context, groupID, actorI
 	return nil
 }
 
+func (s *Service) RequestMembership(ctx context.Context, groupID, actorID string, roles []string) (domain.GroupMembership, error) {
+	groupID = strings.TrimSpace(groupID)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || actorID == "" {
+		return domain.GroupMembership{}, fmt.Errorf("invalid membership request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.GroupMembership{}, fmt.Errorf("backoffice group client is not configured")
+	}
+
+	membership, err := s.backoffice.RequestMembership(ctx, groupID, actorID, roles)
+	if err != nil {
+		return domain.GroupMembership{}, fmt.Errorf("request membership from backoffice: %w", err)
+	}
+
+	return membership, nil
+}
+
 func (s *Service) DecideMembership(ctx context.Context, groupID, userID, actorID, status string) (domain.GroupMembership, error) {
 	groupID = strings.TrimSpace(groupID)
 	userID = strings.TrimSpace(userID)

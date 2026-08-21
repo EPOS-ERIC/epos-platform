@@ -300,6 +300,41 @@ paths:
   /groups/{groupId}/membership-requests:
     parameters:
       - $ref: "#/components/parameters/GroupId"
+    post:
+      tags:
+        - Memberships
+      summary: Request group membership
+      description: Create the authenticated user's pending membership request with zero or more requested group roles.
+      operationId: requestGroupMembership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMembershipRequest"
+      responses:
+        "201":
+          description: Membership request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
     delete:
       tags:
         - Memberships
@@ -3309,6 +3344,19 @@ components:
         role:
           type: string
           enum: [EDITOR, REVIEWER]
+
+    CreateMembershipRequest:
+      type: object
+      required:
+        - roles
+      additionalProperties: false
+      properties:
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [EDITOR, REVIEWER]
 
     MembershipDecisionRequest:
       type: object

@@ -69,6 +69,39 @@ func (h *Groups) WithdrawMembershipRequest(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Groups) RequestMembership(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+
+	body, ok := decodeJSONBody(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	var request api.CreateMembershipRequest
+	if err := json.Unmarshal(body, &request); err != nil || request.Roles == nil {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "roles is required", nil)
+		return
+	}
+
+	membership, err := h.service.RequestMembership(ctx, groupID, actor.ID, request.Roles)
+	if err != nil {
+		writeMembershipError(r, w, err, "request membership")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, GroupMembershipFromDomain(membership))
+}
+
 func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	actor, ok := AuthenticatedUserFromContext(ctx)

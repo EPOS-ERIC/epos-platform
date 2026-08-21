@@ -72,7 +72,7 @@ type CreateGroupRequest struct {
 }
 
 type CreateMembershipRequest struct {
-	Role MembershipRole `json:"role"`
+	Roles []string `json:"roles"`
 }
 
 func (r MembershipRole) IsValid() bool {

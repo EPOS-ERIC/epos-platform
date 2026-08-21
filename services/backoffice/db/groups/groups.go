@@ -154,7 +154,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 
 		requests := make([]groups.RoleRequest, 0, len(roles))
 		for _, role := range roles {
-			request, err := q.CreateGroupRoleRequest(ctx, sqlc.CreateGroupRoleRequestParams{
+			request, err := q.CreatePendingGroupRoleRequest(ctx, sqlc.CreatePendingGroupRoleRequestParams{
 				UserID:  userID,
 				GroupID: groupID,
 				RoleKey: role,

@@ -113,7 +113,7 @@ func (s *AccessService) RequestMembership(ctx context.Context, actorID string, g
 		return Membership{}, err
 	}
 
-	allowed, err := s.authorizer.CanRequestGroupRole(ctx, actorID, groupID)
+	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actorID)
 	if err != nil {
 		return Membership{}, fmt.Errorf("authorize membership request: %w", err)
 	}

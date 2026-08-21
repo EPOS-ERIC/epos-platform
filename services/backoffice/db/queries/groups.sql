@@ -36,7 +36,7 @@ SELECT
 FROM
     groups
 WHERE
-    id = $1;
+    id = sqlc.arg(id);
 
 -- name: ListGroupMemberships :many
 SELECT
@@ -46,7 +46,7 @@ FROM
     group_memberships AS membership
     JOIN users ON users.id = membership.user_id
 WHERE
-    membership.group_id = $1
+    membership.group_id = sqlc.arg(group_id)
 ORDER BY
     users.family_name,
     users.given_name,
@@ -60,8 +60,8 @@ FROM
     group_memberships AS membership
     JOIN users ON users.id = membership.user_id
 WHERE
-    membership.group_id = $1
-    AND membership.user_id = $2;
+    membership.group_id = sqlc.arg(group_id)
+    AND membership.user_id = sqlc.arg(user_id);
 
 -- name: ListGroupMembershipRoles :many
 SELECT
@@ -73,7 +73,7 @@ SELECT
 FROM
     group_membership_roles
 WHERE
-    group_id = $1
+    group_id = sqlc.arg(group_id)
 ORDER BY
     user_id,
     role_key;
@@ -88,7 +88,7 @@ SELECT
 FROM
     group_permission_grants
 WHERE
-    group_id = $1
+    group_id = sqlc.arg(group_id)
 ORDER BY
     user_id,
     permission_key;
@@ -106,7 +106,7 @@ SELECT
 FROM
     group_role_requests
 WHERE
-    group_id = $1
+    group_id = sqlc.arg(group_id)
     AND STATUS = 'PENDING'
 ORDER BY
     user_id,
@@ -117,7 +117,7 @@ ORDER BY
 INSERT INTO
     group_memberships (user_id, group_id, STATUS)
 VALUES
-    ($1, $2, 'PENDING') ON CONFLICT (user_id, group_id) DO
+    (sqlc.arg(user_id), sqlc.arg(group_id), 'PENDING') ON CONFLICT (user_id, group_id) DO
 UPDATE
 SET
     STATUS = 'PENDING'
@@ -134,14 +134,14 @@ RETURNING
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
 SELECT
-    $1,
-    $2,
-    $3
+    sqlc.arg(user_id),
+    sqlc.arg(group_id),
+    sqlc.arg(role_key)
 FROM
     group_memberships
 WHERE
-    user_id = $1
-    AND group_id = $2
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
     AND STATUS = 'ACTIVE'
     AND NOT EXISTS (
         SELECT
@@ -149,10 +149,31 @@ WHERE
         FROM
             group_membership_roles
         WHERE
-            user_id = $1
-            AND group_id = $2
-            AND role_key = $3
+            user_id = sqlc.arg(user_id)
+            AND group_id = sqlc.arg(group_id)
+            AND role_key = sqlc.arg(role_key)
     )
+RETURNING
+    id,
+    user_id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at;
+
+-- name: CreatePendingGroupRoleRequest :one
+INSERT INTO
+    group_role_requests (user_id, group_id, role_key)
+SELECT
+    sqlc.arg(user_id),
+    sqlc.arg(group_id),
+    sqlc.arg(role_key)
+FROM
+    group_memberships
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
+    AND STATUS = 'PENDING'
 RETURNING
     id,
     user_id,
@@ -165,16 +186,16 @@ RETURNING
 DELETE FROM
     group_memberships
 WHERE
-    group_id = $1
-    AND user_id = $2
+    group_id = sqlc.arg(group_id)
+    AND user_id = sqlc.arg(user_id)
     AND STATUS = 'PENDING';
 
 -- name: RevokeGroupMembership :execrows
 DELETE FROM
     group_memberships
 WHERE
-    group_id = $1
-    AND user_id = $2;
+    group_id = sqlc.arg(group_id)
+    AND user_id = sqlc.arg(user_id);
 
 -- name: DecideGroupMembership :one
 UPDATE

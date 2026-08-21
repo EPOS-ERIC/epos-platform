@@ -113,6 +113,22 @@ func (c *Backoffice) WithdrawMembershipRequest(ctx context.Context, groupID, act
 	return nil
 }
 
+func (c *Backoffice) RequestMembership(ctx context.Context, groupID, actorID string, roles []string) (domain.GroupMembership, error) {
+	if c == nil || c.access == nil {
+		return domain.GroupMembership{}, fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	membership, response, err := c.access.RequestGroupMembership(ctx, groupID).
+		XEPOSUserID(actorID).
+		CreateMembershipRequest(client.CreateMembershipRequest{Roles: roles}).
+		Execute()
+	if err != nil {
+		return domain.GroupMembership{}, wrapGroupAccessError("request backoffice membership", response, err)
+	}
+
+	return toDomainGroupMembership(membership)
+}
+
 func (c *Backoffice) DecideMembership(ctx context.Context, groupID, userID, status, actorID string) (domain.GroupMembership, error) {
 	if c == nil || c.access == nil {
 		return domain.GroupMembership{}, fmt.Errorf("backoffice group access client is not configured")
@@ -245,14 +261,6 @@ func (c *Backoffice) RevokeGroupPermission(ctx context.Context, groupID, userID,
 	}
 
 	return nil
-}
-
-// Imports exposes typed Backoffice metadata import operations.
-func (c *Backoffice) Imports() client.ImportsAPI {
-	if c == nil {
-		return nil
-	}
-	return c.imports
 }
 
 // Resources exposes typed Backoffice resource lifecycle operations.

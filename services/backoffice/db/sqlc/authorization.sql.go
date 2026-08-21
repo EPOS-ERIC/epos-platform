@@ -100,8 +100,8 @@ WHERE
     id = $1
 `
 
-func (q *Queries) GetDatasetGroup(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, getDatasetGroup, id)
+func (q *Queries) GetDatasetGroup(ctx context.Context, datasetID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getDatasetGroup, datasetID)
 	var group_id uuid.UUID
 	err := row.Scan(&group_id)
 	return group_id, err
@@ -147,8 +147,8 @@ WHERE
     KEY = $1
 `
 
-func (q *Queries) GetPermissionScope(ctx context.Context, key string) (PermissionScope, error) {
-	row := q.db.QueryRow(ctx, getPermissionScope, key)
+func (q *Queries) GetPermissionScope(ctx context.Context, permissionKey string) (PermissionScope, error) {
+	row := q.db.QueryRow(ctx, getPermissionScope, permissionKey)
 	var scope PermissionScope
 	err := row.Scan(&scope)
 	return scope, err
@@ -163,8 +163,8 @@ WHERE
     id = $1
 `
 
-func (q *Queries) GetSoftwareApplicationGroup(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, getSoftwareApplicationGroup, id)
+func (q *Queries) GetSoftwareApplicationGroup(ctx context.Context, softwareApplicationID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getSoftwareApplicationGroup, softwareApplicationID)
 	var group_id uuid.UUID
 	err := row.Scan(&group_id)
 	return group_id, err
@@ -210,8 +210,8 @@ WHERE
     id = $1
 `
 
-func (q *Queries) GetSoftwareSourceCodeGroup(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, getSoftwareSourceCodeGroup, id)
+func (q *Queries) GetSoftwareSourceCodeGroup(ctx context.Context, softwareSourceCodeID uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getSoftwareSourceCodeGroup, softwareSourceCodeID)
 	var group_id uuid.UUID
 	err := row.Scan(&group_id)
 	return group_id, err

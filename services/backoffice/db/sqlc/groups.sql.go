@@ -199,6 +199,57 @@ func (q *Queries) CreateGroupRoleRequest(ctx context.Context, arg CreateGroupRol
 	return i, err
 }
 
+const createPendingGroupRoleRequest = `-- name: CreatePendingGroupRoleRequest :one
+INSERT INTO
+    group_role_requests (user_id, group_id, role_key)
+SELECT
+    $1,
+    $2,
+    $3
+FROM
+    group_memberships
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND STATUS = 'PENDING'
+RETURNING
+    id,
+    user_id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at
+`
+
+type CreatePendingGroupRoleRequestParams struct {
+	UserID  string
+	GroupID uuid.UUID
+	RoleKey string
+}
+
+type CreatePendingGroupRoleRequestRow struct {
+	ID          uuid.UUID
+	UserID      string
+	GroupID     uuid.UUID
+	RoleKey     string
+	Status      RoleRequestStatus
+	RequestedAt time.Time
+}
+
+func (q *Queries) CreatePendingGroupRoleRequest(ctx context.Context, arg CreatePendingGroupRoleRequestParams) (CreatePendingGroupRoleRequestRow, error) {
+	row := q.db.QueryRow(ctx, createPendingGroupRoleRequest, arg.UserID, arg.GroupID, arg.RoleKey)
+	var i CreatePendingGroupRoleRequestRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GroupID,
+		&i.RoleKey,
+		&i.Status,
+		&i.RequestedAt,
+	)
+	return i, err
+}
+
 const decideGroupMembership = `-- name: DecideGroupMembership :one
 UPDATE
     group_memberships

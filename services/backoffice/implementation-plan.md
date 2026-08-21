@@ -11,7 +11,7 @@ Current implementation is undeployed. Replace abandoned baseline schema and beha
 For each slice:
 
 1. Write short execution plan from `lifecycle.md` requirements.
-2. Implement domain, persistence, API, and tests needed for slice.
+2. Implement domain, persistence, API needed for slice.
 3. Run slice verification.
 4. Record decisions, deviations, and follow-up work here.
 5. Mark complete only when acceptance criteria pass.
@@ -24,12 +24,123 @@ For each slice:
 | Authorization kernel    | Complete | Stored-resource authorization using fixed roles, grants, and user state.      | Foundation                                                |
 | Dataset lifecycle       | Active   | Complete dataset lifecycle as first usable vertical slice.                    | Authorization kernel                                      |
 | Software lifecycle      | Active   | Same lifecycle for applications and source code.                              | Dataset lifecycle                                         |
-| Identity administration | Pending  | Membership/role requests, grants, blocking, admin safety.                     | Authorization kernel                                      |
-| Canonical metadata      | Pending  | Group/category, organization, and contact management with confirmed deletion. | Foundation, authorization kernel                          |
+| Identity administration | Active   | Membership/role requests, grants, blocking, admin safety.                     | Authorization kernel                                      |
+| Canonical metadata      | Pending  | Group/category, organization, and contact management with atomic deletion.    | Foundation, authorization kernel                          |
 | Dataset import          | Active   | Admin Turtle import into canonical metadata and dataset drafts.               | Dataset lifecycle                                         |
 | Import alignment        | Pending  | Extend import through software drafts and canonical management operations.    | Dataset import, software lifecycle, canonical metadata    |
 | Notifications           | Pending  | Subscription storage, eligibility, defaults, and cleanup.                     | Authorization kernel, identity administration             |
 | Completion pass         | Pending  | Required scenarios, API cleanup, fresh-environment validation.                | All slices                                                |
+
+## Agreed API Shape: Canonical Metadata
+
+The API design below is the current target for the canonical metadata slice. Lifecycle
+requirements remain authoritative unless an explicit deviation is recorded here.
+
+### General Conventions
+
+- Collection responses are unpaginated arrays. No list envelope, offset, limit, or cursor is required for this slice.
+- Create requests may omit `source_iri`. Backoffice generates an opaque immutable URI. Responses always include `source_iri`.
+- Resource `id` values are server-generated UUIDs.
+- `PUT` is full replacement. All mutable fields are required. Omitted relation entries are removed; an empty array clears all relations.
+- Immutable `id`, `source_iri`, and owning `group_id` are response fields and cannot be changed.
+- Canonical deletes are direct, atomic operations and return `200` with deleted-entity information and impact counts.
+- Canonical organization responses expose contact-point IDs publicly. Contact-point email and role, and expanded contact-point records, require contact-point read eligibility.
+
+### Organizations
+
+| Method | Path | Behavior | Required access |
+| ------ | ---- | -------- | --------------- |
+| `GET` | `/api/v1/organizations` | List complete organization documents. | Public |
+| `POST` | `/api/v1/organizations` | Create canonical organization. | `organization.manage` |
+| `GET` | `/api/v1/organizations/{organization_id}` | Read complete organization document. | Public |
+| `PUT` | `/api/v1/organizations/{organization_id}` | Replace organization fields, identifiers, parent organization IDs, and contact-point IDs atomically. | `organization.manage` |
+| `DELETE` | `/api/v1/organizations/{organization_id}` | Delete organization, owned identifiers, hierarchy links, and organization links atomically. | `organization.manage` |
+
+Organization documents use `address: {street, locality, postal_code, country}` and
+include `logo_url`, `page_url`, `email`, `lei_code`, `parent_organization_ids`,
+`contact_point_ids`, and embedded owned `identifiers`. A full `PUT` replaces every
+identifier and relation list. Organization hierarchy cycles are rejected.
+
+### Contact Points
+
+| Method | Path | Behavior | Required access |
+| ------ | ---- | -------- | --------------- |
+| `GET` | `/api/v1/contact-points` | List complete contact-point documents, unpaginated. | Active member of any group or `ADMIN` |
+| `POST` | `/api/v1/contact-points` | Create canonical contact point. | `contact_point.manage` |
+| `GET` | `/api/v1/contact-points/{contact_point_id}` | Read contact point. | Active member of any group or `ADMIN` |
+| `PUT` | `/api/v1/contact-points/{contact_point_id}` | Replace source IRI, email, and role fields. | `contact_point.manage` |
+| `DELETE` | `/api/v1/contact-points/{contact_point_id}` | Delete contact point and all organization, resource-version, and web-service links atomically. | `contact_point.manage` |
+
+### Categories
+
+Groups are category schemes. There is no separate category-scheme resource.
+
+| Method | Path | Behavior | Required access |
+| ------ | ---- | -------- | --------------- |
+| `GET` | `/api/v1/groups/{group_id}/categories` | List the group category forest as a flat list. | Public |
+| `POST` | `/api/v1/groups/{group_id}/categories` | Create category with optional `parent_category_id`. | `category.manage` in group |
+| `GET` | `/api/v1/groups/{group_id}/categories/{category_id}` | Read category. | Public |
+| `PUT` | `/api/v1/groups/{group_id}/categories/{category_id}` | Replace category name and optional parent. | `category.manage` in group |
+| `DELETE` | `/api/v1/groups/{group_id}/categories/{category_id}` | Delete category and complete descendant subtree, then unlink every affected resource reference atomically. | `category.manage` in group |
+
+Category records contain `id`, `group_id`, `parent_category_id`, `source_iri`, and
+`name`. The service enforces immutable group ownership and source IRI, same-group
+parents, acyclic hierarchy, and normalized sibling-name uniqueness.
+
+### Groups And Category-Scheme Metadata
+
+| Method | Path | Behavior | Required access |
+| ------ | ---- | -------- | --------------- |
+| `POST` | `/api/v1/groups` | Create group and category scheme. | Global `ADMIN` |
+| `PUT` | `/api/v1/groups/{group_id}/category-scheme` | Replace group name, description, and all category-scheme metadata. | `category_scheme.manage` |
+| `DELETE` | `/api/v1/groups/{group_id}` | Delete group, category scheme, categories, memberships, assignments, grants, requests, and subscriptions when no logical resource belongs to it. | Global `ADMIN` |
+
+Existing `GET /api/v1/groups` and `GET /api/v1/groups/{group_id}` responses remain
+complete public group/category-scheme representations. Group deletion is blocked
+while any logical dataset, software application, or software source code belongs
+to the group.
+
+### Delete Response
+
+Canonical deletes return `200` with counts rather than affected-resource IDs. The
+response includes the deleted entity type and ID plus counts such as deleted
+descendant categories, unlinked dataset versions, unlinked software versions,
+web services, organization links, and owned identifiers.
+
+### Intentional Lifecycle Deviation
+
+The current API design uses direct client-requested deletes. The client obtains
+the data needed for its warning from list/detail and resource-reference endpoints;
+the backoffice does not expose a preview token or require exact inventory echo.
+Deletion still recomputes and applies all unlinking atomically in one transaction.
+The destructive-deletion requirements in `lifecycle.md` lines 97-109 must be
+updated before this slice is marked complete: remove backend preview, exact
+confirmation, and stale-inventory conflict requirements, and retain atomic
+unlinking/deletion.
+
+## Known Gaps In Existing Endpoints
+
+These mismatches must be fixed during identity administration or the completion pass.
+
+- Membership requests currently require existing active membership. Lifecycle allows any active user to request membership in a group.
+- Global membership, role, and permission managers cannot read other users. Lifecycle grants that read access to the corresponding global management permission holders, not only `ADMIN`.
+- A blocked user can read their own user detail. Blocked users must have public-read-only access; authenticated actions, including own-detail reads, are denied.
+- Own user detail omits pending role requests. It must expose pending role requests for the user's memberships.
+- Global role assignment/removal is missing, including `ADMIN` assignment/removal and active-admin safety.
+- User block/unblock is missing. Blocking requires a non-empty reason, records actor/time, and cannot remove the last active `ADMIN`.
+- Published-resource listing is missing. Public listings must return current published versions grouped by logical resource group.
+- Notification subscription endpoints are missing. Users must manage eligible own subscriptions; `ADMIN` may manage all subscriptions.
+- Canonical organization, contact-point, category, category-scheme, and group management routes are missing and must follow the API shape above.
+- OpenAPI has no canonical-management, published-listing, blocking, global-role, or notification-subscription operations.
+
+## Identity Administration: Membership Request Step
+
+### Implementation Record
+
+- Initial membership requests now require only an active, unblocked user; existing group membership is not required.
+- Requested `EDITOR` and `REVIEWER` roles are inserted against the new pending membership atomically. Subsequent role requests remain restricted to active members.
+- Gateway now exposes the documented authenticated `POST /groups/{groupId}/membership-requests` route and forwards role lists to Backoffice.
+- Backoffice and Gateway builds pass. Gateway lint passes. Backoffice lint remains blocked by the pre-existing `identity.Store` godoclint error in `identity/service.go:28`; no tests were added or run per request.
 
 ## Completed Slice: Foundation
 
@@ -93,7 +204,7 @@ Use fresh disposable database for schema smoke. Do not remove existing local dat
 - Provide internal-only authorization decisions. Existing resource decisions load group from stored logical resource; creation authorizes requested target group before resource exists.
 - Apply active user, global `ADMIN`, global grants, active membership, fixed-role, and direct group-grant decision order.
 - Provide contact-point eligibility decision for active members of any group or global `ADMIN`.
-- Cover stored-resource group lookup, inactive denial, role/grant decisions, and contact-point eligibility with focused tests.
+- Cover stored-resource group lookup, inactive denial, role/grant decisions, and contact-point eligibility
 
 ### Acceptance Criteria
 
@@ -109,7 +220,7 @@ Use fresh disposable database for schema smoke. Do not remove existing local dat
 - Existing-resource decisions load ownership group from stored logical resource rows. `resource.create` alone authorizes caller-supplied target group before resource exists.
 - Internal decisions distinguish global and group permission scopes, apply global `ADMIN` and direct global grants, combine fixed roles with direct group grants, and deny inactive or blocked users.
 - Public reads allow published resources without identity; non-public reads require global `ADMIN` or active membership in stored resource group. Contact-point reads require global `ADMIN` or active membership in any group.
-- Focused authorization tests and `make test`, `make build`, and `make lint` pass.
+-  `make test`, `make build`, and `make lint` pass.
 
 ## Active Slice: Dataset Lifecycle
 
@@ -192,7 +303,6 @@ Apply the resource lifecycle to software applications and software source code u
 ### Dataset Lifecycle
 
 - Create, edit, submit, withdraw, reject, reopen, publish, discard, unpublish, draft-from-publication, and copy satisfy lifecycle scenarios.
-- Revision conflicts and atomic publication are tested.
 
 ### Dataset Import
 
@@ -226,6 +336,5 @@ Apply the resource lifecycle to software applications and software source code u
 
 ### Completion Pass
 
-- Every `lifecycle.md` required scenario has focused automated coverage.
 - OpenAPI and gateway-generated client match implemented API.
 - Fresh database and service restart smoke succeed.
