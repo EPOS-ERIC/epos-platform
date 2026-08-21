@@ -90,21 +90,13 @@ Software application and software source code are independent resource types. Th
 | Category scheme                  | Use through group membership                   | No                    | `category_scheme.manage`   | Shared live metadata stored with group.                                                                                                                   |
 | Canonical category               | Select from owning group's category scheme     | No                    | `category.manage` in group | Shared live reference; category cannot move to another group.                                                                                             |
 
-Canonical organization, contact-point, category-scheme, and canonical-category changes appear immediately in every referencing version. No snapshots or history are required. Resource version category links retain only canonical category IDs; they never copy category fields.
+Canonical organization, contact-point, group, and canonical-category changes appear immediately in every referencing version. No snapshots or history are required. Resource version category links retain only canonical category IDs; they never copy category fields.
 
-Canonical organizations, contact points, and categories may be deleted while referenced through confirmed destructive deletion defined below. Group deletion is blocked only while group owns logical dataset or software resource.
+Canonical organizations, contact points, categories, and groups may be deleted directly. The client manages any impact preview. Group deletion is blocked only while group owns logical dataset or software resource.
 
-### Destructive Canonical Deletion
+### Canonical Deletion
 
-Deletion of referenced canonical organization, contact point, or category is two-step operation:
-
-1. Compute and return complete impact inventory.
-2. Require explicit confirmation of that exact inventory.
-3. Recompute inventory inside deletion transaction.
-4. Fail with conflict when inventory changed after confirmation.
-5. Delete canonical entity and unlink every reference atomically.
-
-Impact inventory includes draft, submitted, rejected, published, and archived resource versions; web services; hierarchy links; and owned identifiers where applicable. Category inventory also includes every descendant in deleted subtree. Confirmed deletion is explicit exception to version immutability and may change public and historical representations.
+Canonical deletion is a direct atomic operation returning `204 No Content`. Clients manage any impact preview before requesting deletion. The backoffice unlinks every reference and deletes the canonical entity in one transaction. Deletion remains an explicit exception to version immutability and may change public and historical representations.
 
 Category deletion removes selected category, complete descendant subtree, all hierarchy links, and all dataset/software links to any category in subtree. Organization deletion removes its resource and hierarchy links, deletes its owned identifiers, then deletes organization; related organizations remain. Contact-point deletion removes all organization, dataset-version, software-version, and web-service links, then deletes contact point.
 

@@ -43,7 +43,9 @@ requirements remain authoritative unless an explicit deviation is recorded here.
 - Resource `id` values are server-generated UUIDs.
 - `PUT` is full replacement. All mutable fields are required. Omitted relation entries are removed; an empty array clears all relations.
 - Immutable `id`, `source_iri`, and owning `group_id` are response fields and cannot be changed.
-- Canonical deletes are direct, atomic operations and return `200` with deleted-entity information and impact counts.
+- Canonical deletes are direct atomic operations returning `204 No Content`; clients manage impact previews.
+- When omitted on create, `source_iri` is generated as `urn:epos:<entity>:<uuid>`.
+- Current migrations may be edited in place because no database has been deployed.
 - Canonical organization responses expose contact-point IDs publicly. Contact-point email and role, and expanded contact-point records, require contact-point read eligibility.
 
 ### Organizations
@@ -68,7 +70,7 @@ identifier and relation list. Organization hierarchy cycles are rejected.
 | `GET` | `/api/v1/contact-points` | List complete contact-point documents, unpaginated. | Active member of any group or `ADMIN` |
 | `POST` | `/api/v1/contact-points` | Create canonical contact point. | `contact_point.manage` |
 | `GET` | `/api/v1/contact-points/{contact_point_id}` | Read contact point. | Active member of any group or `ADMIN` |
-| `PUT` | `/api/v1/contact-points/{contact_point_id}` | Replace source IRI, email, and role fields. | `contact_point.manage` |
+| `PUT` | `/api/v1/contact-points/{contact_point_id}` | Replace email and role fields; source IRI remains immutable. | `contact_point.manage` |
 | `DELETE` | `/api/v1/contact-points/{contact_point_id}` | Delete contact point and all organization, resource-version, and web-service links atomically. | `contact_point.manage` |
 
 ### Categories
@@ -92,7 +94,7 @@ parents, acyclic hierarchy, and normalized sibling-name uniqueness.
 | Method | Path | Behavior | Required access |
 | ------ | ---- | -------- | --------------- |
 | `POST` | `/api/v1/groups` | Create group and category scheme. | Global `ADMIN` |
-| `PUT` | `/api/v1/groups/{group_id}/category-scheme` | Replace group name, description, and all category-scheme metadata. | `category_scheme.manage` |
+| `PUT` | `/api/v1/groups/{group_id}` | Replace group name, description, and all category-scheme metadata. | `category_scheme.manage` |
 | `DELETE` | `/api/v1/groups/{group_id}` | Delete group, category scheme, categories, memberships, assignments, grants, requests, and subscriptions when no logical resource belongs to it. | Global `ADMIN` |
 
 Existing `GET /api/v1/groups` and `GET /api/v1/groups/{group_id}` responses remain
@@ -100,23 +102,12 @@ complete public group/category-scheme representations. Group deletion is blocked
 while any logical dataset, software application, or software source code belongs
 to the group.
 
-### Delete Response
-
-Canonical deletes return `200` with counts rather than affected-resource IDs. The
-response includes the deleted entity type and ID plus counts such as deleted
-descendant categories, unlinked dataset versions, unlinked software versions,
-web services, organization links, and owned identifiers.
-
 ### Intentional Lifecycle Deviation
 
-The current API design uses direct client-requested deletes. The client obtains
-the data needed for its warning from list/detail and resource-reference endpoints;
-the backoffice does not expose a preview token or require exact inventory echo.
-Deletion still recomputes and applies all unlinking atomically in one transaction.
-The destructive-deletion requirements in `lifecycle.md` lines 97-109 must be
-updated before this slice is marked complete: remove backend preview, exact
-confirmation, and stale-inventory conflict requirements, and retain atomic
-unlinking/deletion.
+Canonical delete requests are direct client-requested deletes. The client obtains
+any warning data from list/detail and resource-reference endpoints. The backoffice
+returns `204 No Content` after atomically unlinking references and deleting the
+canonical entity.
 
 ## Known Gaps In Existing Endpoints
 
