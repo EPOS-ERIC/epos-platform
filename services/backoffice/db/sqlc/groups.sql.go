@@ -15,8 +15,26 @@ import (
 const createGroupRoleRequest = `-- name: CreateGroupRoleRequest :one
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
-VALUES
-    ($1, $2, $3)
+SELECT
+    $1,
+    $2,
+    $3
+FROM
+    group_memberships
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND STATUS = 'ACTIVE'
+    AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            group_membership_roles
+        WHERE
+            user_id = $1
+            AND group_id = $2
+            AND role_key = $3
+    )
 RETURNING
     id,
     user_id,
@@ -56,15 +74,18 @@ func (q *Queries) CreateGroupRoleRequest(ctx context.Context, arg CreateGroupRol
 }
 
 const decideGroupMembership = `-- name: DecideGroupMembership :one
-UPDATE group_memberships
-SET status = $1::membership_status
-WHERE group_id = $2
-  AND user_id = $3
-  AND status = 'PENDING'
+UPDATE
+    group_memberships
+SET
+    STATUS = $1::membership_status
+WHERE
+    group_id = $2
+    AND user_id = $3
+    AND STATUS = 'PENDING'
 RETURNING
     user_id,
     group_id,
-    status,
+    STATUS,
     created_at,
     updated_at
 `
@@ -402,13 +423,16 @@ func (q *Queries) ListPendingGroupRoleRequests(ctx context.Context, groupID uuid
 }
 
 const rejectPendingGroupRoleRequests = `-- name: RejectPendingGroupRoleRequests :exec
-UPDATE group_role_requests
-SET status = 'REJECTED',
+UPDATE
+    group_role_requests
+SET
+    STATUS = 'REJECTED',
     decided_by = $1,
-    decided_at = now()
-WHERE group_id = $2
-  AND user_id = $3
-  AND status = 'PENDING'
+    decided_at = NOW()
+WHERE
+    group_id = $2
+    AND user_id = $3
+    AND STATUS = 'PENDING'
 `
 
 type RejectPendingGroupRoleRequestsParams struct {
@@ -458,11 +482,34 @@ func (q *Queries) RequestGroupMembership(ctx context.Context, arg RequestGroupMe
 	return i, err
 }
 
+const revokeGroupMembership = `-- name: RevokeGroupMembership :execrows
+DELETE FROM
+    group_memberships
+WHERE
+    group_id = $1
+    AND user_id = $2
+`
+
+type RevokeGroupMembershipParams struct {
+	GroupID uuid.UUID
+	UserID  string
+}
+
+func (q *Queries) RevokeGroupMembership(ctx context.Context, arg RevokeGroupMembershipParams) (int64, error) {
+	result, err := q.db.Exec(ctx, revokeGroupMembership, arg.GroupID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const withdrawGroupMembershipRequest = `-- name: WithdrawGroupMembershipRequest :execrows
-DELETE FROM group_memberships
-WHERE group_id = $1
-  AND user_id = $2
-  AND status = 'PENDING'
+DELETE FROM
+    group_memberships
+WHERE
+    group_id = $1
+    AND user_id = $2
+    AND STATUS = 'PENDING'
 `
 
 type WithdrawGroupMembershipRequestParams struct {

@@ -106,6 +106,72 @@ func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, GroupMembershipFromDomain(membership))
 }
 
+func (h *Groups) DeleteMembership(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+
+	userID := chi.URLParam(r, "userId")
+	if userID == "" {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId", nil)
+		return
+	}
+
+	if err := h.service.RevokeMembership(ctx, groupID, userID, actor.ID); err != nil {
+		writeMembershipError(r, w, err, "revoke membership")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+
+	body, ok := decodeJSONBody(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	var request api.CreateRoleRequest
+	// TODO: use an enum
+	if err := json.Unmarshal(body, &request); err != nil || (request.Role != "EDITOR" && request.Role != "REVIEWER") {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "role must be EDITOR or REVIEWER", nil)
+		return
+	}
+
+	roleRequest, err := h.service.RequestRole(ctx, groupID, request.Role, actor.ID)
+	if err != nil {
+		writeMembershipError(r, w, err, "request role")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, api.RoleRequest{
+		ID:          roleRequest.ID,
+		Role:        roleRequest.Role,
+		Status:      roleRequest.Status,
+		RequestedAt: roleRequest.RequestedAt.Format(time.RFC3339Nano),
+	})
+}
+
 func GroupFromDomain(group domain.Group) api.Group {
 	return api.Group{
 		ID:          group.ID,

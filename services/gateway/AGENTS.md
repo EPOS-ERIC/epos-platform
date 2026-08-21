@@ -3,7 +3,8 @@
 ## Workflow
 
 - Run the relevant generation target after changing an upstream API specification. Currently, `make generate` reads `../backoffice/docs/openapi.yaml` and regenerates `gen/backoffice`.
-- Run `make test` for tests and `make lint` for formatting and static checks.
+- Run `make test` for tests.
+- `make lint` formats before linting. Do not use gofmt on files individually, run make lint.
 
 ## Package Boundaries
 

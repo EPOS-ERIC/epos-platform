@@ -242,6 +242,62 @@ func (a *Authorizer) CanManageGroupMemberships(ctx context.Context, userID strin
 	return Result{Allowed: true, Reason: "group.membership.manage"}, nil
 }
 
+// CanRevokeGroupMembership applies the extra protection for GROUP_ADMIN memberships.
+func (a *Authorizer) CanRevokeGroupMembership(ctx context.Context, userID string, groupID uuid.UUID, targetUserID string) (Result, error) {
+	allowed, err := a.CanManageGroupMemberships(ctx, userID, groupID)
+	if err != nil || !allowed.Allowed {
+		return allowed, err
+	}
+
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+
+	globalPermission, err := a.repository.HasGlobalPermission(ctx, userID, "global.membership.manage")
+	if err != nil {
+		return Result{}, fmt.Errorf("check global membership permission: %w", err)
+	}
+
+	if admin || globalPermission {
+		return allowed, nil
+	}
+
+	// TODO: use an enum for GROUP_ADMIN
+	targetIsAdmin, err := a.repository.HasGroupRole(ctx, targetUserID, groupID, "GROUP_ADMIN")
+	if err != nil {
+		return Result{}, fmt.Errorf("check target group role: %w", err)
+	}
+
+	if targetIsAdmin {
+		return Result{Allowed: false, Reason: "GROUP_ADMIN membership requires global management"}, nil
+	}
+
+	return allowed, nil
+}
+
+// CanRequestGroupRole permits active members to request a group role.
+func (a *Authorizer) CanRequestGroupRole(ctx context.Context, userID string, groupID uuid.UUID) (Result, error) {
+	if userID == "" || groupID == uuid.Nil {
+		return Result{Allowed: false, Reason: "invalid group access request"}, nil
+	}
+
+	_, result, err := a.activeUser(ctx, userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+
+	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
+	if err != nil {
+		return Result{}, fmt.Errorf("check group membership: %w", err)
+	}
+	if !member {
+		return Result{Allowed: false, Reason: "user is not an active group member"}, nil
+	}
+
+	return Result{Allowed: true, Reason: "active group member"}, nil
+}
+
 type repository interface {
 	User(context.Context, string) (User, error)
 	PermissionScope(context.Context, string) (PermissionScope, error)
@@ -250,6 +306,7 @@ type repository interface {
 	IsActiveMember(context.Context, string, uuid.UUID) (bool, error)
 	HasAnyActiveMembership(context.Context, string) (bool, error)
 	HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error)
+	HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error)
 	DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareApplicationGroup(context.Context, uuid.UUID) (uuid.UUID, error)
 	SoftwareSourceCodeGroup(context.Context, uuid.UUID) (uuid.UUID, error)

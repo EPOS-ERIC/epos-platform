@@ -232,6 +232,19 @@ SELECT
             AND STATUS = 'ACTIVE'
     ) AS active;
 
+-- name: HasGroupRole :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_membership_roles
+        WHERE
+            user_id = $1
+            AND group_id = $2
+            AND role_key = $3
+    ) AS has_role;
+
 -- name: GetDatasetVersionAuthorization :one
 SELECT
     version.dataset_id,

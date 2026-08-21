@@ -17,6 +17,8 @@ type accessService interface {
 	RequestMembership(context.Context, string, uuid.UUID, groups.MembershipRequest) (groups.Membership, error)
 	WithdrawMembershipRequest(context.Context, string, uuid.UUID) error
 	DecideMembership(context.Context, string, uuid.UUID, string, string) (groups.Membership, error)
+	RevokeMembership(context.Context, string, uuid.UUID, string) error
+	RequestRole(context.Context, string, uuid.UUID, string) (groups.RoleRequest, error)
 }
 
 type AccessHandler struct {
@@ -118,6 +120,57 @@ func (h *AccessHandler) DecideMembership(w http.ResponseWriter, r *http.Request)
 	}
 
 	transport.WriteJSON(w, http.StatusOK, toMembershipResponse(membership))
+}
+
+func (h *AccessHandler) RevokeMembership(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	userID := chi.URLParam(r, "user_id")
+	if userID == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id")
+		return
+	}
+
+	if err := h.service.RevokeMembership(r.Context(), actorID, groupID, userID); err != nil {
+		writeAccessError(w, r, err, "revoke group membership")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AccessHandler) RequestRole(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	var body struct {
+		Role *string `json:"role"`
+	}
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+	if body.Role == nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "role is required")
+		return
+	}
+
+	request, err := h.service.RequestRole(r.Context(), actorID, groupID, *body.Role)
+	if err != nil {
+		writeAccessError(w, r, err, "request group role")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, roleRequestResponse{
+		ID:          request.ID,
+		Role:        request.Role,
+		Status:      request.Status,
+		RequestedAt: request.RequestedAt,
+	})
 }
 
 func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {

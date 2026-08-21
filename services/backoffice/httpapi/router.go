@@ -30,6 +30,7 @@ import (
 var log = logging.Get("routes")
 
 // NewRouter builds the backoffice HTTP handler and routes.
+// TODO: inject services inside of here, don't create them in the function
 func NewRouter(database *db.PostgresDB) http.Handler {
 	log.Info("creating HTTP handler")
 
@@ -75,6 +76,8 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)
 		r.Delete("/groups/{group_id}/membership-requests", groupAccess.WithdrawMembershipRequest)
 		r.Patch("/groups/{group_id}/memberships/{user_id}", groupAccess.DecideMembership)
+		r.Delete("/groups/{group_id}/memberships/{user_id}", groupAccess.RevokeMembership)
+		r.Post("/groups/{group_id}/role-requests", groupAccess.RequestRole)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))

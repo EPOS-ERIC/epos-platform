@@ -626,6 +626,33 @@ func (q *Queries) HasGroupPermission(ctx context.Context, arg HasGroupPermission
 	return allowed, err
 }
 
+const hasGroupRole = `-- name: HasGroupRole :one
+SELECT
+    EXISTS (
+        SELECT
+            1
+        FROM
+            group_membership_roles
+        WHERE
+            user_id = $1
+            AND group_id = $2
+            AND role_key = $3
+    ) AS has_role
+`
+
+type HasGroupRoleParams struct {
+	UserID  string
+	GroupID uuid.UUID
+	RoleKey string
+}
+
+func (q *Queries) HasGroupRole(ctx context.Context, arg HasGroupRoleParams) (bool, error) {
+	row := q.db.QueryRow(ctx, hasGroupRole, arg.UserID, arg.GroupID, arg.RoleKey)
+	var has_role bool
+	err := row.Scan(&has_role)
+	return has_role, err
+}
+
 const isActiveMember = `-- name: IsActiveMember :one
 SELECT
     EXISTS (

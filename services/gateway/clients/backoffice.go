@@ -129,6 +129,43 @@ func (c *Backoffice) DecideMembership(ctx context.Context, groupID, userID, stat
 	return toDomainGroupMembership(membership)
 }
 
+func (c *Backoffice) RevokeMembership(ctx context.Context, groupID, userID, actorID string) error {
+	if c == nil || c.access == nil {
+		return fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	response, err := c.access.RevokeGroupMembership(ctx, groupID, userID).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapGroupAccessError("revoke backoffice membership", response, err)
+	}
+
+	return nil
+}
+
+func (c *Backoffice) RequestRole(ctx context.Context, groupID, role, actorID string) (domain.RoleRequest, error) {
+	if c == nil || c.access == nil {
+		return domain.RoleRequest{}, fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	request, response, err := c.access.RequestGroupRole(ctx, groupID).
+		XEPOSUserID(actorID).
+		CreateRoleRequest(client.CreateRoleRequest{Role: role}).
+		Execute()
+	if err != nil {
+		return domain.RoleRequest{}, wrapGroupAccessError("request backoffice role", response, err)
+	}
+	if request == nil {
+		return domain.RoleRequest{}, fmt.Errorf("decode backoffice role request: response is empty")
+	}
+
+	return domain.RoleRequest{
+		ID:          request.Id,
+		Role:        request.Role,
+		Status:      request.Status,
+		RequestedAt: request.RequestedAt,
+	}, nil
+}
+
 // Imports exposes typed Backoffice metadata import operations.
 func (c *Backoffice) Imports() client.ImportsAPI {
 	if c == nil {

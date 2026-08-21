@@ -49,12 +49,16 @@ type AccessStore interface {
 	RequestMembership(context.Context, uuid.UUID, string, []string) (Membership, error)
 	WithdrawMembershipRequest(context.Context, uuid.UUID, string) error
 	DecideMembership(context.Context, uuid.UUID, string, string, string) (Membership, error)
+	RevokeMembership(context.Context, uuid.UUID, string) error
+	RequestRole(context.Context, uuid.UUID, string, string) (RoleRequest, error)
 }
 
 type AccessAuthorizer interface {
 	AuthorizeActiveUser(context.Context, string) (authz.Result, error)
 	CanListGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
 	CanManageGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
+	CanRevokeGroupMembership(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	CanRequestGroupRole(context.Context, string, uuid.UUID) (authz.Result, error)
 }
 
 type AccessService struct {
@@ -100,7 +104,7 @@ func (s *AccessService) RequestMembership(ctx context.Context, actorID string, g
 		return Membership{}, err
 	}
 
-	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actorID)
+	allowed, err := s.authorizer.CanRequestGroupRole(ctx, actorID, groupID)
 	if err != nil {
 		return Membership{}, fmt.Errorf("authorize membership request: %w", err)
 	}
@@ -165,6 +169,55 @@ func (s *AccessService) DecideMembership(ctx context.Context, actorID string, gr
 	}
 
 	return membership, nil
+}
+
+func (s *AccessService) RevokeMembership(ctx context.Context, actorID string, groupID uuid.UUID, userID string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	if actorID == "" || userID == "" || groupID == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.CanRevokeGroupMembership(ctx, actorID, groupID, userID)
+	if err != nil {
+		return fmt.Errorf("authorize membership revocation: %w", err)
+	}
+
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	err = s.store.RevokeMembership(ctx, groupID, userID)
+	if err != nil {
+		return fmt.Errorf("revoke group membership: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AccessService) RequestRole(ctx context.Context, actorID string, groupID uuid.UUID, role string) (RoleRequest, error) {
+	actorID = strings.TrimSpace(actorID)
+	role = strings.TrimSpace(role)
+	// TODO: use an enum with validation functions
+	if actorID == "" || groupID == uuid.Nil || (role != "EDITOR" && role != "REVIEWER") {
+		return RoleRequest{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actorID)
+	if err != nil {
+		return RoleRequest{}, fmt.Errorf("authorize role request: %w", err)
+	}
+
+	if !allowed.Allowed {
+		return RoleRequest{}, ErrForbidden
+	}
+
+	request, err := s.store.RequestRole(ctx, groupID, actorID, role)
+	if err != nil {
+		return RoleRequest{}, fmt.Errorf("request group role: %w", err)
+	}
+
+	return request, nil
 }
 
 func validateRequestedRoles(roles []string) error {

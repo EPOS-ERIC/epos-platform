@@ -475,7 +475,7 @@ paths:
       tags:
         - Memberships
       summary: Delete membership
-      description: Remove a user membership from a group. Self-service callers may leave a group or cancel a pending request for themselves. Super admins and active group admins for the target group may remove any membership in that group.
+      description: Remove a user membership from a group. Requires group membership management permission or global membership management permission. Memberships holding GROUP_ADMIN require global membership management permission.
       operationId: deleteGroupMembership
       security:
         - bearerAuth: []
@@ -488,8 +488,10 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
     patch:
       tags:
         - Memberships
@@ -511,6 +513,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GroupMembership"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /groups/{groupId}/role-requests:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    post:
+      tags:
+        - Memberships
+      summary: Request group role
+      description: Request EDITOR or REVIEWER role for the authenticated user. The user must be an active group member.
+      operationId: requestGroupRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+      responses:
+        "201":
+          description: Role requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleRequest"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -3205,6 +3246,16 @@ components:
         requested_at:
           type: string
           format: date-time
+
+    CreateRoleRequest:
+      type: object
+      required:
+        - role
+      additionalProperties: false
+      properties:
+        role:
+          type: string
+          enum: [EDITOR, REVIEWER]
 
     MembershipDecisionRequest:
       type: object

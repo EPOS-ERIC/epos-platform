@@ -43,6 +43,10 @@ func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, s
 	return r.groupAllowed, nil
 }
 
+func (fakeRepository) HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error) {
+	return false, nil
+}
+
 func (r fakeRepository) DatasetGroup(context.Context, uuid.UUID) (uuid.UUID, error) {
 	return r.datasetGroup, nil
 }

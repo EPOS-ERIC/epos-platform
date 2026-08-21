@@ -54,6 +54,15 @@ func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.U
 	return active, wrap("check active membership", err)
 }
 
+func (r *Repo) HasGroupRole(ctx context.Context, userID string, groupID uuid.UUID, roleKey string) (bool, error) {
+	hasRole, err := r.Queries.HasGroupRole(ctx, sqlc.HasGroupRoleParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: roleKey,
+	})
+	return hasRole, wrap("check group role", err)
+}
+
 func (r *Repo) HasGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, permissionKey string) (bool, error) {
 	allowed, err := r.Queries.HasGroupPermission(ctx, sqlc.HasGroupPermissionParams{
 		UserID:        userID,

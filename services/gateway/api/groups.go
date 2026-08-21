@@ -52,6 +52,10 @@ type RoleRequest struct {
 	RequestedAt string `json:"requested_at"`
 }
 
+type CreateRoleRequest struct {
+	Role string `json:"role"`
+}
+
 type MembershipDecisionRequest struct {
 	Status MembershipStatus `json:"status"`
 }

@@ -84,3 +84,42 @@ func (s *Service) DecideMembership(ctx context.Context, groupID, userID, actorID
 
 	return membership, nil
 }
+
+func (s *Service) RevokeMembership(ctx context.Context, groupID, userID, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	userID = strings.TrimSpace(userID)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || userID == "" || actorID == "" {
+		return fmt.Errorf("invalid membership revocation: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.RevokeMembership(ctx, groupID, userID, actorID); err != nil {
+		return fmt.Errorf("revoke membership in backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) RequestRole(ctx context.Context, groupID, role, actorID string) (domain.RoleRequest, error) {
+	// TODO: create a helper for these kind of checks
+	groupID = strings.TrimSpace(groupID)
+	role = strings.TrimSpace(role)
+	actorID = strings.TrimSpace(actorID)
+	// TODO: use an enum
+	if groupID == "" || actorID == "" || (role != "EDITOR" && role != "REVIEWER") {
+		return domain.RoleRequest{}, fmt.Errorf("invalid role request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.RoleRequest{}, fmt.Errorf("backoffice group client is not configured")
+	}
+
+	request, err := s.backoffice.RequestRole(ctx, groupID, role, actorID)
+	if err != nil {
+		return domain.RoleRequest{}, fmt.Errorf("request role in backoffice: %w", err)
+	}
+
+	return request, nil
+}

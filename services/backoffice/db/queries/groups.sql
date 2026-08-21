@@ -96,8 +96,26 @@ RETURNING
 -- name: CreateGroupRoleRequest :one
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
-VALUES
-    ($1, $2, $3)
+SELECT
+    $1,
+    $2,
+    $3
+FROM
+    group_memberships
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND STATUS = 'ACTIVE'
+    AND NOT EXISTS (
+        SELECT
+            1
+        FROM
+            group_membership_roles
+        WHERE
+            user_id = $1
+            AND group_id = $2
+            AND role_key = $3
+    )
 RETURNING
     id,
     user_id,
@@ -113,6 +131,13 @@ WHERE
     group_id = $1
     AND user_id = $2
     AND STATUS = 'PENDING';
+
+-- name: RevokeGroupMembership :execrows
+DELETE FROM
+    group_memberships
+WHERE
+    group_id = $1
+    AND user_id = $2;
 
 -- name: DecideGroupMembership :one
 UPDATE

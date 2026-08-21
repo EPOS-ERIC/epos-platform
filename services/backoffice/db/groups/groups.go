@@ -11,6 +11,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/groups"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -210,6 +211,80 @@ func (r *Repo) WithdrawMembershipRequest(ctx context.Context, groupID uuid.UUID,
 	}
 
 	return nil
+}
+
+func (r *Repo) RevokeMembership(ctx context.Context, groupID uuid.UUID, userID string) error {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check group: %w", err)
+	}
+
+	_, err = r.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check user: %w", err)
+	}
+
+	rows, err := r.RevokeGroupMembership(ctx, sqlc.RevokeGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return fmt.Errorf("revoke membership: %w", err)
+	}
+	if rows == 0 {
+		return groups.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID, role string) (groups.RoleRequest, error) {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.RoleRequest{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.RoleRequest{}, fmt.Errorf("check group: %w", err)
+	}
+
+	_, err = r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.RoleRequest{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.RoleRequest{}, fmt.Errorf("check membership: %w", err)
+	}
+
+	request, err := r.CreateGroupRoleRequest(ctx, sqlc.CreateGroupRoleRequestParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: role,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.RoleRequest{}, groups.ErrConflict
+	}
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		return groups.RoleRequest{}, groups.ErrConflict
+	}
+	if err != nil {
+		return groups.RoleRequest{}, fmt.Errorf("create role request: %w", err)
+	}
+
+	return groups.RoleRequest{
+		ID:          request.ID,
+		Role:        request.RoleKey,
+		Status:      string(request.Status),
+		RequestedAt: request.RequestedAt,
+	}, nil
 }
 
 // DecideMembership changes a pending membership to ACTIVE or REJECTED.
