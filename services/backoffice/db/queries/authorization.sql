@@ -134,6 +134,23 @@ ORDER BY
     group_id,
     permission_key;
 
+-- name: ListPendingUserGroupRoleRequests :many
+SELECT
+    id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at
+FROM
+    group_role_requests
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND STATUS = 'PENDING'
+ORDER BY
+    group_id,
+    role_key,
+    id;
+
 -- name: CreateUser :one
 INSERT INTO
     users (

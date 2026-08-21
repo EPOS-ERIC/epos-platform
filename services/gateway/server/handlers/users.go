@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -161,15 +162,29 @@ func UserFromDomain(resolved domain.User) api.User {
 				Name: membership.Group.Name,
 				Href: "/v1/groups/" + membership.Group.ID,
 			},
-			Roles:       roles,
-			Status:      api.MembershipStatus(membership.Status),
-			Permissions: append([]string{}, membership.Permissions...),
-			CreatedAt:   membership.CreatedAt,
-			UpdatedAt:   membership.UpdatedAt,
+			Roles:        roles,
+			Status:       api.MembershipStatus(membership.Status),
+			Permissions:  append([]string{}, membership.Permissions...),
+			RoleRequests: roleRequestsFromDomain(membership.RoleRequests),
+			CreatedAt:    membership.CreatedAt,
+			UpdatedAt:    membership.UpdatedAt,
 		})
 	}
 
 	return user
+}
+
+func roleRequestsFromDomain(requests []domain.RoleRequest) []api.RoleRequest {
+	result := make([]api.RoleRequest, 0, len(requests))
+	for _, request := range requests {
+		result = append(result, api.RoleRequest{
+			ID:          request.ID,
+			Role:        request.Role,
+			Status:      request.Status,
+			RequestedAt: request.RequestedAt.Format(time.RFC3339Nano),
+		})
+	}
+	return result
 }
 
 func UserSummariesFromDomain(resolved []domain.UserSummary) []api.UserSummary {

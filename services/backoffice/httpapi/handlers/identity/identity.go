@@ -246,7 +246,7 @@ func response(user identity.User) userResponse {
 			Roles:        append([]string{}, membership.Roles...),
 			Status:       membership.Status,
 			Permissions:  append([]string{}, membership.Permissions...),
-			RoleRequests: []roleRequest{},
+			RoleRequests: roleRequests(membership.RoleRequests),
 			CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
 			UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
 		})
@@ -264,4 +264,17 @@ func response(user identity.User) userResponse {
 		UpdatedAt:         user.UpdatedAt.Format(time.RFC3339Nano),
 		Memberships:       memberships,
 	}
+}
+
+func roleRequests(requests []identity.RoleRequest) []roleRequest {
+	result := make([]roleRequest, 0, len(requests))
+	for _, request := range requests {
+		result = append(result, roleRequest{
+			ID:          request.ID,
+			Role:        request.Role,
+			Status:      request.Status,
+			RequestedAt: request.RequestedAt.Format(time.RFC3339Nano),
+		})
+	}
+	return result
 }

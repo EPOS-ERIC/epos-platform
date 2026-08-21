@@ -139,6 +139,7 @@ These mismatches must be fixed during identity administration or the completion 
 
 - Initial membership requests now require only an active, unblocked user; existing group membership is not required.
 - Requested `EDITOR` and `REVIEWER` roles are inserted against the new pending membership atomically. Subsequent role requests remain restricted to active members.
+- User detail responses now include pending role requests grouped under their memberships.
 - Gateway now exposes the documented authenticated `POST /groups/{groupId}/membership-requests` route and forwards role lists to Backoffice.
 - Backoffice and Gateway builds pass. Gateway lint passes. Backoffice lint remains blocked by the pre-existing `identity.Store` godoclint error in `identity/service.go:28`; no tests were added or run per request.
 

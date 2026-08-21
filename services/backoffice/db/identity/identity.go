@@ -96,6 +96,11 @@ func (r *Repo) mapUser(
 		return identitydomain.User{}, fmt.Errorf("get user membership permissions: %w", err)
 	}
 
+	roleRequests, err := r.ListPendingUserGroupRoleRequests(ctx, id)
+	if err != nil {
+		return identitydomain.User{}, fmt.Errorf("get user pending role requests: %w", err)
+	}
+
 	rolesByGroup := make(map[uuid.UUID][]string)
 	for _, role := range roles {
 		rolesByGroup[role.GroupID] = append(rolesByGroup[role.GroupID], role.RoleKey)
@@ -106,16 +111,28 @@ func (r *Repo) mapUser(
 		permissionsByGroup[permission.GroupID] = append(permissionsByGroup[permission.GroupID], permission.PermissionKey)
 	}
 
+	roleRequestsByGroup := make(map[uuid.UUID][]identitydomain.RoleRequest)
+	for _, request := range roleRequests {
+		roleRequestsByGroup[request.GroupID] = append(roleRequestsByGroup[request.GroupID], identitydomain.RoleRequest{
+			ID:          request.ID,
+			GroupID:     request.GroupID,
+			Role:        request.RoleKey,
+			Status:      string(request.Status),
+			RequestedAt: request.RequestedAt,
+		})
+	}
+
 	userMemberships := make([]identitydomain.Membership, 0, len(memberships))
 	for _, membership := range memberships {
 		userMemberships = append(userMemberships, identitydomain.Membership{
-			GroupID:     membership.GroupID,
-			GroupName:   membership.GroupName,
-			Roles:       rolesByGroup[membership.GroupID],
-			Status:      string(membership.Status),
-			Permissions: permissionsByGroup[membership.GroupID],
-			CreatedAt:   membership.CreatedAt,
-			UpdatedAt:   membership.UpdatedAt,
+			GroupID:      membership.GroupID,
+			GroupName:    membership.GroupName,
+			Roles:        rolesByGroup[membership.GroupID],
+			Status:       string(membership.Status),
+			Permissions:  permissionsByGroup[membership.GroupID],
+			RoleRequests: append([]identitydomain.RoleRequest{}, roleRequestsByGroup[membership.GroupID]...),
+			CreatedAt:    membership.CreatedAt,
+			UpdatedAt:    membership.UpdatedAt,
 		})
 	}
 

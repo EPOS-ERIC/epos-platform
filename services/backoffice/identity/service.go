@@ -64,13 +64,22 @@ type User struct {
 }
 
 type Membership struct {
+	GroupID      uuid.UUID
+	GroupName    string
+	Roles        []string
+	Status       string
+	Permissions  []string
+	RoleRequests []RoleRequest
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type RoleRequest struct {
+	ID          uuid.UUID
 	GroupID     uuid.UUID
-	GroupName   string
-	Roles       []string
+	Role        string
 	Status      string
-	Permissions []string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	RequestedAt time.Time
 }
 
 type Service struct {

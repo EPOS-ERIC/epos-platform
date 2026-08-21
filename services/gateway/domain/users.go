@@ -26,12 +26,13 @@ type UserSummary struct {
 }
 
 type Membership struct {
-	Group       Group
-	Roles       []string
-	Status      string
-	Permissions []string
-	CreatedAt   string
-	UpdatedAt   string
+	Group        Group
+	Roles        []string
+	Status       string
+	Permissions  []string
+	RoleRequests []RoleRequest
+	CreatedAt    string
+	UpdatedAt    string
 }
 
 type Group struct {

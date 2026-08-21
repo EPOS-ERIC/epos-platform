@@ -21,7 +21,12 @@ INSERT INTO
         family_name
     )
 VALUES
-    ($1, $2, $3, $4)
+    (
+        $1,
+        $2,
+        $3,
+        $4
+    )
 RETURNING
     id,
     email,
@@ -520,7 +525,11 @@ const grantGlobalPermission = `-- name: GrantGlobalPermission :exec
 INSERT INTO
     global_permission_grants (user_id, permission_key, granted_by)
 VALUES
-    ($1, $2, $3) ON CONFLICT (user_id, permission_key) DO NOTHING
+    (
+        $1,
+        $2,
+        $3
+    ) ON CONFLICT (user_id, permission_key) DO NOTHING
 `
 
 type GrantGlobalPermissionParams struct {
@@ -757,6 +766,58 @@ func (q *Queries) IsSoftwareSourceCodePublished(ctx context.Context, softwareSou
 	var published bool
 	err := row.Scan(&published)
 	return published, err
+}
+
+const listPendingUserGroupRoleRequests = `-- name: ListPendingUserGroupRoleRequests :many
+SELECT
+    id,
+    group_id,
+    role_key,
+    STATUS,
+    requested_at
+FROM
+    group_role_requests
+WHERE
+    user_id = $1
+    AND STATUS = 'PENDING'
+ORDER BY
+    group_id,
+    role_key,
+    id
+`
+
+type ListPendingUserGroupRoleRequestsRow struct {
+	ID          uuid.UUID
+	GroupID     uuid.UUID
+	RoleKey     string
+	Status      RoleRequestStatus
+	RequestedAt time.Time
+}
+
+func (q *Queries) ListPendingUserGroupRoleRequests(ctx context.Context, userID string) ([]ListPendingUserGroupRoleRequestsRow, error) {
+	rows, err := q.db.Query(ctx, listPendingUserGroupRoleRequests, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPendingUserGroupRoleRequestsRow
+	for rows.Next() {
+		var i ListPendingUserGroupRoleRequestsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.GroupID,
+			&i.RoleKey,
+			&i.Status,
+			&i.RequestedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUsers = `-- name: ListUsers :many

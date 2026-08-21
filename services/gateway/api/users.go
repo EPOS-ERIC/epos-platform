@@ -53,12 +53,13 @@ func (s MembershipStatus) IsDecision() bool {
 }
 
 type UserMembershipSummary struct {
-	Group       ResourceRef      `json:"group"`
-	Roles       []MembershipRole `json:"roles"`
-	Status      MembershipStatus `json:"status"`
-	Permissions []string         `json:"permissions"`
-	CreatedAt   string           `json:"created_at"`
-	UpdatedAt   string           `json:"updated_at"`
+	Group        ResourceRef      `json:"group"`
+	Roles        []MembershipRole `json:"roles"`
+	Status       MembershipStatus `json:"status"`
+	Permissions  []string         `json:"permissions"`
+	RoleRequests []RoleRequest    `json:"role_requests"`
+	CreatedAt    string           `json:"created_at"`
+	UpdatedAt    string           `json:"updated_at"`
 }
 
 type UserStatus string

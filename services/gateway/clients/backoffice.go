@@ -496,11 +496,12 @@ func toDomainUser(value *client.User) (domain.User, error) {
 				Position:    0,
 				Concept:     "",
 			},
-			Roles:       append([]string{}, membership.Roles...),
-			Status:      membership.Status,
-			Permissions: append([]string{}, membership.Permissions...),
-			CreatedAt:   membership.CreatedAt.Format(time.RFC3339Nano),
-			UpdatedAt:   membership.UpdatedAt.Format(time.RFC3339Nano),
+			Roles:        append([]string{}, membership.Roles...),
+			Status:       membership.Status,
+			Permissions:  append([]string{}, membership.Permissions...),
+			RoleRequests: toDomainRoleRequests(membership.RoleRequests),
+			CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
+			UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
 		})
 	}
 
@@ -516,6 +517,19 @@ func toDomainUser(value *client.User) (domain.User, error) {
 		UpdatedAt:         value.UpdatedAt.Format(time.RFC3339Nano),
 		Memberships:       memberships,
 	}, nil
+}
+
+func toDomainRoleRequests(requests []client.RoleRequest) []domain.RoleRequest {
+	result := make([]domain.RoleRequest, 0, len(requests))
+	for _, request := range requests {
+		result = append(result, domain.RoleRequest{
+			ID:          request.Id,
+			Role:        request.Role,
+			Status:      request.Status,
+			RequestedAt: request.RequestedAt,
+		})
+	}
+	return result
 }
 
 func toDomainGroup(value *client.Group) (domain.Group, error) {
