@@ -123,8 +123,6 @@ unlinking/deletion.
 These mismatches must be fixed during identity administration or the completion pass.
 
 - Membership requests currently require existing active membership. Lifecycle allows any active user to request membership in a group.
-- Global membership, role, and permission managers cannot read other users. Lifecycle grants that read access to the corresponding global management permission holders, not only `ADMIN`.
-- A blocked user can read their own user detail. Blocked users must have public-read-only access; authenticated actions, including own-detail reads, are denied.
 - Own user detail omits pending role requests. It must expose pending role requests for the user's memberships.
 - Global role assignment/removal is missing, including `ADMIN` assignment/removal and active-admin safety.
 - User block/unblock is missing. Blocking requires a non-empty reason, records actor/time, and cannot remove the last active `ADMIN`.
@@ -140,6 +138,7 @@ These mismatches must be fixed during identity administration or the completion 
 - Initial membership requests now require only an active, unblocked user; existing group membership is not required.
 - Requested `EDITOR` and `REVIEWER` roles are inserted against the new pending membership atomically. Subsequent role requests remain restricted to active members.
 - User detail responses now include pending role requests grouped under their memberships.
+- User-directory reads now check actor state before self-read and allow active global membership, role, or permission managers to read other users.
 - Gateway now exposes the documented authenticated `POST /groups/{groupId}/membership-requests` route and forwards role lists to Backoffice.
 - Backoffice and Gateway builds pass. Gateway lint passes. Backoffice lint remains blocked by the pre-existing `identity.Store` godoclint error in `identity/service.go:28`; no tests were added or run per request.
 
