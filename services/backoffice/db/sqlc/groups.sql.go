@@ -361,6 +361,39 @@ func (q *Queries) GetPendingGroupRoleRequest(ctx context.Context, arg GetPending
 	return i, err
 }
 
+const grantGroupPermission = `-- name: GrantGroupPermission :exec
+INSERT INTO
+    group_permission_grants (user_id, group_id, permission_key, granted_by)
+SELECT
+    $1,
+    $2,
+    $3,
+    $4
+FROM
+    group_memberships
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, permission_key) DO NOTHING
+`
+
+type GrantGroupPermissionParams struct {
+	UserID        string
+	GroupID       uuid.UUID
+	PermissionKey string
+	GrantedBy     string
+}
+
+func (q *Queries) GrantGroupPermission(ctx context.Context, arg GrantGroupPermissionParams) error {
+	_, err := q.db.Exec(ctx, grantGroupPermission,
+		arg.UserID,
+		arg.GroupID,
+		arg.PermissionKey,
+		arg.GrantedBy,
+	)
+	return err
+}
+
 const groupMembershipRoleExists = `-- name: GroupMembershipRoleExists :one
 SELECT
     EXISTS (
@@ -735,6 +768,26 @@ func (q *Queries) RevokeGroupMembership(ctx context.Context, arg RevokeGroupMemb
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const revokeGroupPermission = `-- name: RevokeGroupPermission :exec
+DELETE FROM
+    group_permission_grants
+WHERE
+    user_id = $1
+    AND group_id = $2
+    AND permission_key = $3
+`
+
+type RevokeGroupPermissionParams struct {
+	UserID        string
+	GroupID       uuid.UUID
+	PermissionKey string
+}
+
+func (q *Queries) RevokeGroupPermission(ctx context.Context, arg RevokeGroupPermissionParams) error {
+	_, err := q.db.Exec(ctx, revokeGroupPermission, arg.UserID, arg.GroupID, arg.PermissionKey)
+	return err
 }
 
 const withdrawGroupMembershipRequest = `-- name: WithdrawGroupMembershipRequest :execrows

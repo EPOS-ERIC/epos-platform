@@ -221,6 +221,32 @@ func (c *Backoffice) RemoveGroupRole(ctx context.Context, groupID, userID, role,
 	return nil
 }
 
+func (c *Backoffice) GrantGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
+	if c == nil || c.access == nil {
+		return fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	response, err := c.access.GrantGroupPermission(ctx, groupID, userID, permission).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapGroupAccessError("grant backoffice group permission", response, err)
+	}
+
+	return nil
+}
+
+func (c *Backoffice) RevokeGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
+	if c == nil || c.access == nil {
+		return fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	response, err := c.access.RevokeGroupPermission(ctx, groupID, userID, permission).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapGroupAccessError("revoke backoffice group permission", response, err)
+	}
+
+	return nil
+}
+
 // Imports exposes typed Backoffice metadata import operations.
 func (c *Backoffice) Imports() client.ImportsAPI {
 	if c == nil {

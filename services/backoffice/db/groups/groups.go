@@ -408,6 +408,84 @@ func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID, role s
 	return nil
 }
 
+func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID, permission, actorID string) error {
+	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
+		return err
+	}
+
+	if err := r.GrantGroupPermission(ctx, sqlc.GrantGroupPermissionParams{
+		UserID:        userID,
+		GroupID:       groupID,
+		PermissionKey: permission,
+		GrantedBy:     actorID,
+	}); err != nil {
+		return fmt.Errorf("grant permission: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID, permission string) error {
+	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
+		return err
+	}
+
+	if err := r.RevokeGroupPermission(ctx, sqlc.RevokeGroupPermissionParams{
+		UserID:        userID,
+		GroupID:       groupID,
+		PermissionKey: permission,
+	}); err != nil {
+		return fmt.Errorf("revoke permission: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, userID, permission string) error {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check group: %w", err)
+	}
+
+	_, err = r.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check user: %w", err)
+	}
+
+	membership, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check membership: %w", err)
+	}
+	if membership.GroupMembership.Status != sqlc.MembershipStatusACTIVE {
+		return groups.ErrConflict
+	}
+
+	scope, err := r.GetPermissionScope(ctx, permission)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return groups.ErrInvalid
+		}
+		return fmt.Errorf("check permission: %w", err)
+	}
+	if scope != sqlc.PermissionScopeGROUP {
+		return groups.ErrInvalid
+	}
+
+	return nil
+}
+
 // checkRoleTarget validates the target membership and pending-request state.
 // It reports whether the requested role is already assigned.
 func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID, role string) (bool, error) {

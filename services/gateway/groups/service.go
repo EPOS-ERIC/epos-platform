@@ -200,7 +200,54 @@ func (s *Service) RemoveGroupRole(ctx context.Context, groupID, userID, role, ac
 	return nil
 }
 
+func (s *Service) GrantGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	userID = strings.TrimSpace(userID)
+	permission = strings.TrimSpace(permission)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || userID == "" || actorID == "" || !validGroupPermission(permission) {
+		return fmt.Errorf("invalid group permission grant: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.GrantGroupPermission(ctx, groupID, userID, permission, actorID); err != nil {
+		return fmt.Errorf("grant group permission in backoffice: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) RevokeGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	userID = strings.TrimSpace(userID)
+	permission = strings.TrimSpace(permission)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || userID == "" || actorID == "" || !validGroupPermission(permission) {
+		return fmt.Errorf("invalid group permission revocation: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.RevokeGroupPermission(ctx, groupID, userID, permission, actorID); err != nil {
+		return fmt.Errorf("revoke group permission in backoffice: %w", err)
+	}
+
+	return nil
+}
+
 // TODO: use an enum instead of this
 func validGroupRole(role string) bool {
 	return role == "EDITOR" || role == "REVIEWER" || role == "GROUP_ADMIN"
+}
+
+func validGroupPermission(permission string) bool {
+	switch permission {
+	case "resource.create", "resource.edit", "resource.submit", "resource.withdraw", "resource.reopen", "resource.discard", "resource.reject", "resource.publish", "resource.unpublish", "group.membership.manage", "group.role.manage", "group.permission.manage", "category.manage":
+		return true
+	default:
+		return false
+	}
 }

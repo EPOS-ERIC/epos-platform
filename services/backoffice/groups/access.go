@@ -55,6 +55,8 @@ type AccessStore interface {
 	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
 	AssignRole(context.Context, uuid.UUID, string, string, string) error
 	RemoveRole(context.Context, uuid.UUID, string, string) error
+	GrantPermission(context.Context, uuid.UUID, string, string, string) error
+	RevokePermission(context.Context, uuid.UUID, string, string) error
 }
 
 type AccessAuthorizer interface {
@@ -65,6 +67,7 @@ type AccessAuthorizer interface {
 	CanRequestGroupRole(context.Context, string, uuid.UUID) (authz.Result, error)
 	CanManageGroupRoles(context.Context, string, uuid.UUID) (authz.Result, error)
 	CanManageSpecificGroupRole(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
 }
 
 type AccessService struct {
@@ -311,6 +314,52 @@ func (s *AccessService) RemoveRole(ctx context.Context, actorID string, groupID 
 
 	if err := s.store.RemoveRole(ctx, groupID, userID, role); err != nil {
 		return fmt.Errorf("remove group role: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AccessService) GrantPermission(ctx context.Context, actorID string, groupID uuid.UUID, userID, permission string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	permission = strings.TrimSpace(permission)
+	if actorID == "" || userID == "" || permission == "" || groupID == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "group.permission.manage")
+	if err != nil {
+		return fmt.Errorf("authorize group permission grant: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.GrantPermission(ctx, groupID, userID, permission, actorID); err != nil {
+		return fmt.Errorf("grant group permission: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AccessService) RevokePermission(ctx context.Context, actorID string, groupID uuid.UUID, userID, permission string) error {
+	actorID = strings.TrimSpace(actorID)
+	userID = strings.TrimSpace(userID)
+	permission = strings.TrimSpace(permission)
+	if actorID == "" || userID == "" || permission == "" || groupID == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "group.permission.manage")
+	if err != nil {
+		return fmt.Errorf("authorize group permission revoke: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.RevokePermission(ctx, groupID, userID, permission); err != nil {
+		return fmt.Errorf("revoke group permission: %w", err)
 	}
 
 	return nil

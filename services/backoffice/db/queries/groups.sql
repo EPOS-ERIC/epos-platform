@@ -315,3 +315,26 @@ WHERE
     user_id = sqlc.arg(user_id)
     AND group_id = sqlc.arg(group_id)
     AND role_key = sqlc.arg(role_key);
+
+-- name: GrantGroupPermission :exec
+INSERT INTO
+    group_permission_grants (user_id, group_id, permission_key, granted_by)
+SELECT
+    sqlc.arg(user_id),
+    sqlc.arg(group_id),
+    sqlc.arg(permission_key),
+    sqlc.arg(granted_by)
+FROM
+    group_memberships
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
+    AND STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, permission_key) DO NOTHING;
+
+-- name: RevokeGroupPermission :exec
+DELETE FROM
+    group_permission_grants
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND group_id = sqlc.arg(group_id)
+    AND permission_key = sqlc.arg(permission_key);

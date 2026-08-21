@@ -177,6 +177,48 @@ func (h *Groups) RemoveGroupRole(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *Groups) GrantGroupPermission(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, userID, permission, ok := groupPermissionParams(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.GrantGroupPermission(ctx, groupID, userID, permission, actor.ID); err != nil {
+		writeMembershipError(r, w, err, "grant group permission")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Groups) RevokeGroupPermission(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, userID, permission, ok := groupPermissionParams(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.RevokeGroupPermission(ctx, groupID, userID, permission, actor.ID); err != nil {
+		writeMembershipError(r, w, err, "revoke group permission")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	actor, ok := AuthenticatedUserFromContext(ctx)
@@ -339,6 +381,22 @@ func groupRoleParams(ctx context.Context, w http.ResponseWriter, r *http.Request
 	}
 
 	return groupID, userID, string(role), true
+}
+
+func groupPermissionParams(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return "", "", "", false
+	}
+
+	userID := chi.URLParam(r, "userId")
+	permission := chi.URLParam(r, "permission")
+	if userID == "" || permission == "" {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or permission", nil)
+		return "", "", "", false
+	}
+
+	return groupID, userID, permission, true
 }
 
 func writeGroupError(r *http.Request, w http.ResponseWriter, err error, operation string) {

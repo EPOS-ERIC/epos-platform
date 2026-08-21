@@ -23,6 +23,8 @@ type accessService interface {
 	WithdrawRoleRequest(context.Context, string, uuid.UUID, uuid.UUID) error
 	AssignRole(context.Context, string, uuid.UUID, string, string) error
 	RemoveRole(context.Context, string, uuid.UUID, string, string) error
+	GrantPermission(context.Context, string, uuid.UUID, string, string) error
+	RevokePermission(context.Context, string, uuid.UUID, string, string) error
 }
 
 type AccessHandler struct {
@@ -257,6 +259,34 @@ func (h *AccessHandler) RemoveRole(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *AccessHandler) GrantPermission(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, userID, permission, ok := permissionPath(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.GrantPermission(r.Context(), actorID, groupID, userID, permission); err != nil {
+		writeAccessError(w, r, err, "grant group permission")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *AccessHandler) RevokePermission(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, userID, permission, ok := permissionPath(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.RevokePermission(r.Context(), actorID, groupID, userID, permission); err != nil {
+		writeAccessError(w, r, err, "revoke group permission")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {
 	actorID, ok := transport.Actor(w, r)
 	if !ok {
@@ -286,6 +316,22 @@ func rolePath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, string
 	}
 
 	return actorID, groupID, userID, role, true
+}
+
+func permissionPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, string, string, bool) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return "", uuid.Nil, "", "", false
+	}
+
+	userID := chi.URLParam(r, "user_id")
+	permission := chi.URLParam(r, "permission")
+	if userID == "" || permission == "" {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid user id or permission")
+		return "", uuid.Nil, "", "", false
+	}
+
+	return actorID, groupID, userID, permission, true
 }
 
 func writeAccessError(w http.ResponseWriter, r *http.Request, err error, operation string) {
