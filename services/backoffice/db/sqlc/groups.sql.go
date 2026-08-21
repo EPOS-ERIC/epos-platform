@@ -372,6 +372,37 @@ func (q *Queries) DecideGroupMembership(ctx context.Context, arg DecideGroupMemb
 	return i, err
 }
 
+const deleteGroup = `-- name: DeleteGroup :one
+WITH target AS (
+    SELECT group_row.id
+    FROM groups AS group_row
+    WHERE group_row.id = $1
+), deleted AS (
+    DELETE FROM groups AS group_row
+    WHERE group_row.id = (SELECT target.id FROM target)
+      AND NOT EXISTS (
+          SELECT 1 FROM datasets WHERE group_id = $1
+          UNION ALL
+          SELECT 1 FROM software_applications WHERE group_id = $1
+          UNION ALL
+          SELECT 1 FROM software_source_codes WHERE group_id = $1
+      )
+    RETURNING id
+)
+SELECT CASE
+    WHEN EXISTS (SELECT 1 FROM deleted) THEN 'DELETED'
+    WHEN NOT EXISTS (SELECT 1 FROM target) THEN 'NOT_FOUND'
+    ELSE 'CONFLICT'
+END AS outcome
+`
+
+func (q *Queries) DeleteGroup(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRow(ctx, deleteGroup, id)
+	var outcome string
+	err := row.Scan(&outcome)
+	return outcome, err
+}
+
 const getGroupByID = `-- name: GetGroupByID :one
 SELECT
     id,

@@ -78,6 +78,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/groups", groups.Create)
 		r.Get("/groups/{group_id}", groups.Get)
 		r.Put("/groups/{group_id}", groups.Replace)
+		r.Delete("/groups/{group_id}", groups.Delete)
 		r.Get("/groups/{group_id}/memberships", groupAccess.ListMemberships)
 		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)
 		r.Delete("/groups/{group_id}/membership-requests", groupAccess.WithdrawMembershipRequest)

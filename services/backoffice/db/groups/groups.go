@@ -102,6 +102,24 @@ func (r *Repo) Replace(ctx context.Context, id uuid.UUID, request groups.Replace
 	return mapGroup(row), nil
 }
 
+func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
+	outcome, err := r.DeleteGroup(ctx, id)
+	if err != nil {
+		return fmt.Errorf("delete group: %w", err)
+	}
+
+	switch outcome {
+	case "DELETED":
+		return nil
+	case "NOT_FOUND":
+		return groups.ErrNotFound
+	case "CONFLICT":
+		return groups.ErrConflict
+	default:
+		return fmt.Errorf("unexpected group deletion outcome %q", outcome)
+	}
+}
+
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {

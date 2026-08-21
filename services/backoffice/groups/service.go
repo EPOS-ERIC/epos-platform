@@ -58,6 +58,7 @@ type Store interface {
 	Get(ctx context.Context, id uuid.UUID) (Group, error)
 	Create(ctx context.Context, group Group) (Group, error)
 	Replace(ctx context.Context, id uuid.UUID, request ReplaceRequest) (Group, error)
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type Authorizer interface {
@@ -145,6 +146,27 @@ func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, req
 	}
 
 	return group, nil
+}
+
+func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
+	actorID = strings.TrimSpace(actorID)
+	if actorID == "" || id == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize group deletion: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.Delete(ctx, id); err != nil {
+		return fmt.Errorf("delete group: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) List(ctx context.Context) ([]Group, error) {

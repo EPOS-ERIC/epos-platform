@@ -450,6 +450,20 @@ paths:
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/groups/{group_id}:
     parameters: [{ $ref: "#/components/parameters/GroupID" }]
+    delete:
+      tags: [Groups]
+      operationId: deleteGroup
+      summary: Delete group
+      description: Deletes a group and its group-owned metadata. Requires global ADMIN. Deletion is blocked while logical resources belong to the group.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "204": { description: Group deleted }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     put:
       tags: [Groups]
       operationId: replaceGroup

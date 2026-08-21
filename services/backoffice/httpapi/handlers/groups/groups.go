@@ -20,6 +20,7 @@ var log = logging.Get("groups-handler")
 type service interface {
 	Create(context.Context, string, groupdomain.CreateRequest) (groupdomain.Group, error)
 	Replace(context.Context, string, uuid.UUID, groupdomain.ReplaceRequest) (groupdomain.Group, error)
+	Delete(context.Context, string, uuid.UUID) error
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -115,6 +116,38 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	transport.WriteJSON(w, http.StatusOK, response(group))
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil || id == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), actorID, id); err != nil {
+		switch {
+		case errors.Is(err, groupdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
+		case errors.Is(err, groupdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global admin required")
+		case errors.Is(err, groupdomain.ErrNotFound):
+			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
+		case errors.Is(err, groupdomain.ErrConflict):
+			transport.WriteProblem(w, http.StatusConflict, "conflict", "group owns logical resources")
+		default:
+			log.ErrorContext(r.Context(), "delete group failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete group failed")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
