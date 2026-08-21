@@ -12,6 +12,96 @@ import (
 	"github.com/google/uuid"
 )
 
+const applyRoleRequestDecision = `-- name: ApplyRoleRequestDecision :one
+UPDATE
+    group_role_requests
+SET
+    STATUS = $1::role_request_status,
+    decided_by = $2,
+    decided_at = NOW()
+WHERE
+    group_role_requests.id = $3
+    AND group_role_requests.group_id = $4
+    AND group_role_requests.STATUS = 'PENDING'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            group_memberships
+        WHERE
+            user_id = group_role_requests.user_id
+            AND group_id = group_role_requests.group_id
+            AND STATUS = 'ACTIVE'
+    )
+RETURNING
+    group_role_requests.id,
+    group_role_requests.user_id,
+    group_role_requests.group_id,
+    group_role_requests.role_key,
+    group_role_requests.STATUS,
+    group_role_requests.requested_at,
+    group_role_requests.decided_by,
+    group_role_requests.decided_at
+`
+
+type ApplyRoleRequestDecisionParams struct {
+	Status    RoleRequestStatus
+	DecidedBy *string
+	RequestID uuid.UUID
+	GroupID   uuid.UUID
+}
+
+func (q *Queries) ApplyRoleRequestDecision(ctx context.Context, arg ApplyRoleRequestDecisionParams) (GroupRoleRequest, error) {
+	row := q.db.QueryRow(ctx, applyRoleRequestDecision,
+		arg.Status,
+		arg.DecidedBy,
+		arg.RequestID,
+		arg.GroupID,
+	)
+	var i GroupRoleRequest
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.GroupID,
+		&i.RoleKey,
+		&i.Status,
+		&i.RequestedAt,
+		&i.DecidedBy,
+		&i.DecidedAt,
+	)
+	return i, err
+}
+
+const assignGroupRoleFromRequest = `-- name: AssignGroupRoleFromRequest :exec
+INSERT INTO
+    group_membership_roles (user_id, group_id, role_key, assigned_by)
+SELECT
+    group_role_requests.user_id,
+    group_role_requests.group_id,
+    group_role_requests.role_key,
+    $1
+FROM
+    group_role_requests
+    JOIN group_memberships ON group_memberships.user_id = group_role_requests.user_id
+    AND group_memberships.group_id = group_role_requests.group_id
+WHERE
+    group_role_requests.id = $2
+    AND group_role_requests.group_id = $3
+    AND group_role_requests.STATUS = 'ACCEPTED'
+    AND group_memberships.STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, role_key) DO NOTHING
+`
+
+type AssignGroupRoleFromRequestParams struct {
+	AssignedBy string
+	RequestID  uuid.UUID
+	GroupID    uuid.UUID
+}
+
+func (q *Queries) AssignGroupRoleFromRequest(ctx context.Context, arg AssignGroupRoleFromRequestParams) error {
+	_, err := q.db.Exec(ctx, assignGroupRoleFromRequest, arg.AssignedBy, arg.RequestID, arg.GroupID)
+	return err
+}
+
 const createGroupRoleRequest = `-- name: CreateGroupRoleRequest :one
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
@@ -519,6 +609,30 @@ type WithdrawGroupMembershipRequestParams struct {
 
 func (q *Queries) WithdrawGroupMembershipRequest(ctx context.Context, arg WithdrawGroupMembershipRequestParams) (int64, error) {
 	result, err := q.db.Exec(ctx, withdrawGroupMembershipRequest, arg.GroupID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const withdrawGroupRoleRequest = `-- name: WithdrawGroupRoleRequest :execrows
+DELETE FROM
+    group_role_requests
+WHERE
+    id = $1
+    AND group_id = $2
+    AND user_id = $3
+    AND STATUS = 'PENDING'
+`
+
+type WithdrawGroupRoleRequestParams struct {
+	RequestID uuid.UUID
+	GroupID   uuid.UUID
+	UserID    string
+}
+
+func (q *Queries) WithdrawGroupRoleRequest(ctx context.Context, arg WithdrawGroupRoleRequestParams) (int64, error) {
+	result, err := q.db.Exec(ctx, withdrawGroupRoleRequest, arg.RequestID, arg.GroupID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}

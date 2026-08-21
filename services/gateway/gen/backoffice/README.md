@@ -71,9 +71,9 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*GroupAccessAPI* | [**ApplyRoleRequestDecision**](docs/GroupAccessAPI.md#applyrolerequestdecision) | **Patch** /api/v1/groups/{group_id}/role-requests/{request_id} | Accept or reject role request
 *GroupAccessAPI* | [**AssignGroupRole**](docs/GroupAccessAPI.md#assigngrouprole) | **Put** /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role} | Assign group role
 *GroupAccessAPI* | [**DecideGroupMembership**](docs/GroupAccessAPI.md#decidegroupmembership) | **Patch** /api/v1/groups/{group_id}/memberships/{user_id} | Accept or reject membership request
-*GroupAccessAPI* | [**DecideGroupRoleRequest**](docs/GroupAccessAPI.md#decidegrouprolerequest) | **Patch** /api/v1/groups/{group_id}/role-requests/{request_id} | Accept or reject role request
 *GroupAccessAPI* | [**GrantGroupPermission**](docs/GroupAccessAPI.md#grantgrouppermission) | **Put** /api/v1/groups/{group_id}/memberships/{user_id}/permissions/{permission} | Grant direct group permission
 *GroupAccessAPI* | [**ListGroupMemberships**](docs/GroupAccessAPI.md#listgroupmemberships) | **Get** /api/v1/groups/{group_id}/memberships | List group memberships
 *GroupAccessAPI* | [**RemoveGroupRole**](docs/GroupAccessAPI.md#removegrouprole) | **Delete** /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role} | Remove group role

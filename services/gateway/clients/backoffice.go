@@ -166,6 +166,35 @@ func (c *Backoffice) RequestRole(ctx context.Context, groupID, role, actorID str
 	}, nil
 }
 
+func (c *Backoffice) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID, status, actorID string) (domain.GroupMembership, error) {
+	if c == nil || c.access == nil {
+		return domain.GroupMembership{}, fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	membership, response, err := c.access.ApplyRoleRequestDecision(ctx, groupID, requestID).
+		XEPOSUserID(actorID).
+		RoleRequestDecisionRequest(client.RoleRequestDecisionRequest{Status: status}).
+		Execute()
+	if err != nil {
+		return domain.GroupMembership{}, wrapGroupAccessError("decide backoffice role request", response, err)
+	}
+
+	return toDomainGroupMembership(membership)
+}
+
+func (c *Backoffice) WithdrawRoleRequest(ctx context.Context, groupID, requestID, actorID string) error {
+	if c == nil || c.access == nil {
+		return fmt.Errorf("backoffice group access client is not configured")
+	}
+
+	response, err := c.access.WithdrawGroupRoleRequest(ctx, groupID, requestID).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return wrapGroupAccessError("withdraw backoffice role request", response, err)
+	}
+
+	return nil
+}
+
 // Imports exposes typed Backoffice metadata import operations.
 func (c *Backoffice) Imports() client.ImportsAPI {
 	if c == nil {

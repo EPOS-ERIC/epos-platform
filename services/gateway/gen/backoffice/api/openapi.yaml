@@ -1835,7 +1835,7 @@ paths:
     patch:
       description: "Requires group.role.manage in this group, global.role.manage,\
         \ or global ADMIN."
-      operationId: decideGroupRoleRequest
+      operationId: applyRoleRequestDecision
       parameters:
       - explode: false
         in: path

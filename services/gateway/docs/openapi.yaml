@@ -567,6 +567,74 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 
+  /groups/{groupId}/role-requests/{requestId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - name: requestId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - Memberships
+      summary: Accept or reject role request
+      description: Accept or reject a pending role request. Requires group role management permission or global role management permission.
+      operationId: applyRoleRequestDecision
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleRequestDecisionRequest"
+      responses:
+        "200":
+          description: Role request decision applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Memberships
+      summary: Withdraw own role request
+      description: Delete the authenticated user's pending role request.
+      operationId: withdrawGroupRoleRequest
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Role request withdrawn
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
   /users/{id}:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -3266,6 +3334,16 @@ components:
         status:
           type: string
           enum: [ACTIVE, REJECTED]
+
+    RoleRequestDecisionRequest:
+      type: object
+      required:
+        - status
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [ACCEPTED, REJECTED]
 
     Membership:
       type: object

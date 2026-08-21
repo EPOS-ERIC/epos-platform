@@ -51,6 +51,8 @@ type AccessStore interface {
 	DecideMembership(context.Context, uuid.UUID, string, string, string) (Membership, error)
 	RevokeMembership(context.Context, uuid.UUID, string) error
 	RequestRole(context.Context, uuid.UUID, string, string) (RoleRequest, error)
+	ApplyRoleRequestDecision(context.Context, uuid.UUID, uuid.UUID, string, string) (Membership, error)
+	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
 }
 
 type AccessAuthorizer interface {
@@ -59,6 +61,7 @@ type AccessAuthorizer interface {
 	CanManageGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
 	CanRevokeGroupMembership(context.Context, string, uuid.UUID, string) (authz.Result, error)
 	CanRequestGroupRole(context.Context, string, uuid.UUID) (authz.Result, error)
+	CanManageGroupRoles(context.Context, string, uuid.UUID) (authz.Result, error)
 }
 
 type AccessService struct {
@@ -218,6 +221,50 @@ func (s *AccessService) RequestRole(ctx context.Context, actorID string, groupID
 	}
 
 	return request, nil
+}
+
+func (s *AccessService) ApplyRoleRequestDecision(ctx context.Context, actorID string, groupID, requestID uuid.UUID, status string) (Membership, error) {
+	actorID = strings.TrimSpace(actorID)
+	status = strings.TrimSpace(status)
+	if actorID == "" || groupID == uuid.Nil || requestID == uuid.Nil || (status != "ACCEPTED" && status != "REJECTED") {
+		return Membership{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.CanManageGroupRoles(ctx, actorID, groupID)
+	if err != nil {
+		return Membership{}, fmt.Errorf("authorize role request decision: %w", err)
+	}
+	if !allowed.Allowed {
+		return Membership{}, ErrForbidden
+	}
+
+	membership, err := s.store.ApplyRoleRequestDecision(ctx, groupID, requestID, status, actorID)
+	if err != nil {
+		return Membership{}, fmt.Errorf("decide group role request: %w", err)
+	}
+
+	return membership, nil
+}
+
+func (s *AccessService) WithdrawRoleRequest(ctx context.Context, actorID string, groupID, requestID uuid.UUID) error {
+	actorID = strings.TrimSpace(actorID)
+	if actorID == "" || groupID == uuid.Nil || requestID == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actorID)
+	if err != nil {
+		return fmt.Errorf("authorize role request withdrawal: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.WithdrawRoleRequest(ctx, groupID, requestID, actorID); err != nil {
+		return fmt.Errorf("withdraw group role request: %w", err)
+	}
+
+	return nil
 }
 
 func validateRequestedRoles(roles []string) error {

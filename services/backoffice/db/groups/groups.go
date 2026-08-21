@@ -287,8 +287,88 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID, role 
 	}, nil
 }
 
+// ApplyRoleRequestDecision accepts or rejects a pending role request and records the
+// decision actor and time. Acceptance assigns the requested role atomically,
+// then returns the target user's updated membership.
+func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID uuid.UUID, status, actorID string) (groups.Membership, error) {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.Membership{}, groups.ErrNotFound
+	}
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("check group: %w", err)
+	}
+
+	var request sqlc.GroupRoleRequest
+	decidedBy := actorID
+	err = r.withTx(ctx, func(q *sqlc.Queries) error {
+		request, err = q.ApplyRoleRequestDecision(ctx, sqlc.ApplyRoleRequestDecisionParams{
+			Status:    sqlc.RoleRequestStatus(status),
+			DecidedBy: &decidedBy,
+			RequestID: requestID,
+			GroupID:   groupID,
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return groups.ErrConflict
+		}
+		if err != nil {
+			return fmt.Errorf("update role request: %w", err)
+		}
+
+		if status == "ACCEPTED" {
+			if err := q.AssignGroupRoleFromRequest(ctx, sqlc.AssignGroupRoleFromRequestParams{
+				AssignedBy: actorID,
+				RequestID:  requestID,
+				GroupID:    groupID,
+			}); err != nil {
+				return fmt.Errorf("assign requested role: %w", err)
+			}
+		}
+
+		return nil
+	})
+	if errors.Is(err, groups.ErrConflict) {
+		return groups.Membership{}, fmt.Errorf("role request conflict: %w", groups.ErrConflict)
+	}
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("decide role request transaction: %w", err)
+	}
+
+	membership, err := r.loadMembership(ctx, request.GroupID, request.UserID)
+	if err != nil {
+		return groups.Membership{}, fmt.Errorf("load decided role membership: %w", err)
+	}
+
+	return membership, nil
+}
+
+func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, userID string) error {
+	_, err := r.GetGroupByID(ctx, groupID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return groups.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check group: %w", err)
+	}
+
+	rows, err := r.WithdrawGroupRoleRequest(ctx, sqlc.WithdrawGroupRoleRequestParams{
+		RequestID: requestID,
+		GroupID:   groupID,
+		UserID:    userID,
+	})
+	if err != nil {
+		return fmt.Errorf("withdraw role request: %w", err)
+	}
+	if rows == 0 {
+		return groups.ErrNotFound
+	}
+
+	return nil
+}
+
 // DecideMembership changes a pending membership to ACTIVE or REJECTED.
 // Rejection also marks its pending role requests as rejected in the same transaction.
+// TODO: use a better name like ApplyMembershipDecision
 func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID, status, actorID string) (groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -324,8 +404,9 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID, 
 		membership = row
 
 		if status == "REJECTED" {
+			decidedBy := actorID
 			err = q.RejectPendingGroupRoleRequests(ctx, sqlc.RejectPendingGroupRoleRequestsParams{
-				DecidedBy: new(actorID),
+				DecidedBy: &decidedBy,
 				GroupID:   groupID,
 				UserID:    userID,
 			})

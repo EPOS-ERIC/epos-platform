@@ -123,3 +123,41 @@ func (s *Service) RequestRole(ctx context.Context, groupID, role, actorID string
 
 	return request, nil
 }
+
+func (s *Service) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID, status, actorID string) (domain.GroupMembership, error) {
+	groupID = strings.TrimSpace(groupID)
+	requestID = strings.TrimSpace(requestID)
+	status = strings.TrimSpace(status)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || requestID == "" || actorID == "" || (status != "ACCEPTED" && status != "REJECTED") {
+		return domain.GroupMembership{}, fmt.Errorf("invalid role request decision: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.GroupMembership{}, fmt.Errorf("backoffice group client is not configured")
+	}
+
+	membership, err := s.backoffice.ApplyRoleRequestDecision(ctx, groupID, requestID, status, actorID)
+	if err != nil {
+		return domain.GroupMembership{}, fmt.Errorf("decide role request in backoffice: %w", err)
+	}
+
+	return membership, nil
+}
+
+func (s *Service) WithdrawRoleRequest(ctx context.Context, groupID, requestID, actorID string) error {
+	groupID = strings.TrimSpace(groupID)
+	requestID = strings.TrimSpace(requestID)
+	actorID = strings.TrimSpace(actorID)
+	if groupID == "" || requestID == "" || actorID == "" {
+		return fmt.Errorf("invalid role request withdrawal: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+
+	if err := s.backoffice.WithdrawRoleRequest(ctx, groupID, requestID, actorID); err != nil {
+		return fmt.Errorf("withdraw role request in backoffice: %w", err)
+	}
+
+	return nil
+}

@@ -166,3 +166,61 @@ WHERE
     group_id = sqlc.arg(group_id)
     AND user_id = sqlc.arg(user_id)
     AND STATUS = 'PENDING';
+
+-- name: ApplyRoleRequestDecision :one
+UPDATE
+    group_role_requests
+SET
+    STATUS = sqlc.arg(STATUS)::role_request_status,
+    decided_by = sqlc.arg(decided_by),
+    decided_at = NOW()
+WHERE
+    group_role_requests.id = sqlc.arg(request_id)
+    AND group_role_requests.group_id = sqlc.arg(group_id)
+    AND group_role_requests.STATUS = 'PENDING'
+    AND EXISTS (
+        SELECT
+            1
+        FROM
+            group_memberships
+        WHERE
+            user_id = group_role_requests.user_id
+            AND group_id = group_role_requests.group_id
+            AND STATUS = 'ACTIVE'
+    )
+RETURNING
+    group_role_requests.id,
+    group_role_requests.user_id,
+    group_role_requests.group_id,
+    group_role_requests.role_key,
+    group_role_requests.STATUS,
+    group_role_requests.requested_at,
+    group_role_requests.decided_by,
+    group_role_requests.decided_at;
+
+-- name: AssignGroupRoleFromRequest :exec
+INSERT INTO
+    group_membership_roles (user_id, group_id, role_key, assigned_by)
+SELECT
+    group_role_requests.user_id,
+    group_role_requests.group_id,
+    group_role_requests.role_key,
+    sqlc.arg(assigned_by)
+FROM
+    group_role_requests
+    JOIN group_memberships ON group_memberships.user_id = group_role_requests.user_id
+    AND group_memberships.group_id = group_role_requests.group_id
+WHERE
+    group_role_requests.id = sqlc.arg(request_id)
+    AND group_role_requests.group_id = sqlc.arg(group_id)
+    AND group_role_requests.STATUS = 'ACCEPTED'
+    AND group_memberships.STATUS = 'ACTIVE' ON CONFLICT (user_id, group_id, role_key) DO NOTHING;
+
+-- name: WithdrawGroupRoleRequest :execrows
+DELETE FROM
+    group_role_requests
+WHERE
+    id = sqlc.arg(request_id)
+    AND group_id = sqlc.arg(group_id)
+    AND user_id = sqlc.arg(user_id)
+    AND STATUS = 'PENDING';

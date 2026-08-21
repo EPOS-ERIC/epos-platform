@@ -60,6 +60,10 @@ type MembershipDecisionRequest struct {
 	Status MembershipStatus `json:"status"`
 }
 
+type RoleRequestDecisionRequest struct {
+	Status string `json:"status"`
+}
+
 type CreateGroupRequest struct {
 	Slug        string  `json:"slug"`
 	Name        string  `json:"name"`

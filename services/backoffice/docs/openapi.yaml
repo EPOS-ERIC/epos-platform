@@ -530,7 +530,7 @@ paths:
       - { $ref: "#/components/parameters/RoleRequestID" }
     patch:
       tags: [Group Access]
-      operationId: decideGroupRoleRequest
+      operationId: applyRoleRequestDecision
       summary: Accept or reject role request
       description: Requires group.role.manage in this group, global.role.manage, or global ADMIN.
       parameters: [{ $ref: "#/components/parameters/Actor" }]

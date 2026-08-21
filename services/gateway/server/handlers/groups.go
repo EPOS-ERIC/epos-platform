@@ -45,6 +45,7 @@ func (h *Groups) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, GroupFromDomain(group))
 }
 
+// WithdrawMembershipRequest deletes the authenticated user's pending membership request.
 // TODO: since the handlers here and the ones in the backoffice currently are doing basically the same thing, maybe we should make them behave in a similar way for consistency
 func (h *Groups) WithdrawMembershipRequest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -170,6 +171,68 @@ func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
 		Status:      roleRequest.Status,
 		RequestedAt: roleRequest.RequestedAt.Format(time.RFC3339Nano),
 	})
+}
+
+func (h *Groups) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	requestID, ok := uuidParam(ctx, w, r, "requestId")
+	if !ok {
+		return
+	}
+
+	body, ok := decodeJSONBody(ctx, w, r)
+	if !ok {
+		return
+	}
+
+	var request api.RoleRequestDecisionRequest
+	if err := json.Unmarshal(body, &request); err != nil || (request.Status != "ACCEPTED" && request.Status != "REJECTED") {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACCEPTED or REJECTED", nil)
+		return
+	}
+
+	membership, err := h.service.ApplyRoleRequestDecision(ctx, groupID, requestID, request.Status, actor.ID)
+	if err != nil {
+		writeMembershipError(r, w, err, "decide role request")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, GroupMembershipFromDomain(membership))
+}
+
+func (h *Groups) WithdrawRoleRequest(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	requestID, ok := uuidParam(ctx, w, r, "requestId")
+	if !ok {
+		return
+	}
+
+	if err := h.service.WithdrawRoleRequest(ctx, groupID, requestID, actor.ID); err != nil {
+		writeMembershipError(r, w, err, "withdraw role request")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func GroupFromDomain(group domain.Group) api.Group {

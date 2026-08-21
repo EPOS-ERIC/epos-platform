@@ -19,6 +19,8 @@ type accessService interface {
 	DecideMembership(context.Context, string, uuid.UUID, string, string) (groups.Membership, error)
 	RevokeMembership(context.Context, string, uuid.UUID, string) error
 	RequestRole(context.Context, string, uuid.UUID, string) (groups.RoleRequest, error)
+	ApplyRoleRequestDecision(context.Context, string, uuid.UUID, uuid.UUID, string) (groups.Membership, error)
+	WithdrawRoleRequest(context.Context, string, uuid.UUID, uuid.UUID) error
 }
 
 type AccessHandler struct {
@@ -171,6 +173,58 @@ func (h *AccessHandler) RequestRole(w http.ResponseWriter, r *http.Request) {
 		Status:      request.Status,
 		RequestedAt: request.RequestedAt,
 	})
+}
+
+func (h *AccessHandler) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	requestID, err := uuid.Parse(chi.URLParam(r, "request_id"))
+	if err != nil || requestID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid role request id")
+		return
+	}
+
+	var body struct {
+		Status *string `json:"status"`
+	}
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+	if body.Status == nil || (*body.Status != "ACCEPTED" && *body.Status != "REJECTED") {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "status must be ACCEPTED or REJECTED")
+		return
+	}
+
+	membership, err := h.service.ApplyRoleRequestDecision(r.Context(), actorID, groupID, requestID, *body.Status)
+	if err != nil {
+		writeAccessError(w, r, err, "decide group role request")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusOK, toMembershipResponse(membership))
+}
+
+func (h *AccessHandler) WithdrawRoleRequest(w http.ResponseWriter, r *http.Request) {
+	actorID, groupID, ok := accessPath(w, r)
+	if !ok {
+		return
+	}
+
+	requestID, err := uuid.Parse(chi.URLParam(r, "request_id"))
+	if err != nil || requestID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid role request id")
+		return
+	}
+
+	if err := h.service.WithdrawRoleRequest(r.Context(), actorID, groupID, requestID); err != nil {
+		writeAccessError(w, r, err, "withdraw group role request")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func accessPath(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {

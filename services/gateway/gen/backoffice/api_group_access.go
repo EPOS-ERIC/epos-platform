@@ -21,6 +21,22 @@ import (
 
 type GroupAccessAPI interface {
 	/*
+		ApplyRoleRequestDecision Accept or reject role request
+
+		Requires group.role.manage in this group, global.role.manage, or global ADMIN.
+
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@param groupId
+		@param requestId
+		@return ApiApplyRoleRequestDecisionRequest
+	*/
+	ApplyRoleRequestDecision(ctx context.Context, groupId string, requestId string) ApiApplyRoleRequestDecisionRequest
+
+	// ApplyRoleRequestDecisionExecute executes the request
+	//  @return GroupMembership
+	ApplyRoleRequestDecisionExecute(r ApiApplyRoleRequestDecisionRequest) (*GroupMembership, *http.Response, error)
+
+	/*
 		AssignGroupRole Assign group role
 
 		Idempotent. Group role managers assign EDITOR or REVIEWER in their group; global role managers and global ADMIN may also assign GROUP_ADMIN.
@@ -51,22 +67,6 @@ type GroupAccessAPI interface {
 	// DecideGroupMembershipExecute executes the request
 	//  @return GroupMembership
 	DecideGroupMembershipExecute(r ApiDecideGroupMembershipRequest) (*GroupMembership, *http.Response, error)
-
-	/*
-		DecideGroupRoleRequest Accept or reject role request
-
-		Requires group.role.manage in this group, global.role.manage, or global ADMIN.
-
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param groupId
-		@param requestId
-		@return ApiDecideGroupRoleRequestRequest
-	*/
-	DecideGroupRoleRequest(ctx context.Context, groupId string, requestId string) ApiDecideGroupRoleRequestRequest
-
-	// DecideGroupRoleRequestExecute executes the request
-	//  @return GroupMembership
-	DecideGroupRoleRequestExecute(r ApiDecideGroupRoleRequestRequest) (*GroupMembership, *http.Response, error)
 
 	/*
 		GrantGroupPermission Grant direct group permission
@@ -208,6 +208,200 @@ type GroupAccessAPI interface {
 
 // GroupAccessAPIService GroupAccessAPI service
 type GroupAccessAPIService service
+
+type ApiApplyRoleRequestDecisionRequest struct {
+	ctx                        context.Context
+	ApiService                 GroupAccessAPI
+	groupId                    string
+	requestId                  string
+	xEPOSUserID                *string
+	roleRequestDecisionRequest *RoleRequestDecisionRequest
+}
+
+func (r ApiApplyRoleRequestDecisionRequest) XEPOSUserID(xEPOSUserID string) ApiApplyRoleRequestDecisionRequest {
+	r.xEPOSUserID = &xEPOSUserID
+	return r
+}
+
+func (r ApiApplyRoleRequestDecisionRequest) RoleRequestDecisionRequest(roleRequestDecisionRequest RoleRequestDecisionRequest) ApiApplyRoleRequestDecisionRequest {
+	r.roleRequestDecisionRequest = &roleRequestDecisionRequest
+	return r
+}
+
+func (r ApiApplyRoleRequestDecisionRequest) Execute() (*GroupMembership, *http.Response, error) {
+	return r.ApiService.ApplyRoleRequestDecisionExecute(r)
+}
+
+/*
+ApplyRoleRequestDecision Accept or reject role request
+
+Requires group.role.manage in this group, global.role.manage, or global ADMIN.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param groupId
+	@param requestId
+	@return ApiApplyRoleRequestDecisionRequest
+*/
+func (a *GroupAccessAPIService) ApplyRoleRequestDecision(ctx context.Context, groupId string, requestId string) ApiApplyRoleRequestDecisionRequest {
+	return ApiApplyRoleRequestDecisionRequest{
+		ApiService: a,
+		ctx:        ctx,
+		groupId:    groupId,
+		requestId:  requestId,
+	}
+}
+
+// Execute executes the request
+//
+//	@return GroupMembership
+func (a *GroupAccessAPIService) ApplyRoleRequestDecisionExecute(r ApiApplyRoleRequestDecisionRequest) (*GroupMembership, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GroupMembership
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GroupAccessAPIService.ApplyRoleRequestDecision")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/groups/{group_id}/role-requests/{request_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"group_id"+"}", url.PathEscape(parameterValueToString(r.groupId, "groupId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"request_id"+"}", url.PathEscape(parameterValueToString(r.requestId, "requestId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.xEPOSUserID == nil {
+		return localVarReturnValue, nil, reportError("xEPOSUserID is required and must be specified")
+	}
+	if r.roleRequestDecisionRequest == nil {
+		return localVarReturnValue, nil, reportError("roleRequestDecisionRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json", "text/plain"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-EPOS-User-ID", r.xEPOSUserID, "simple", "")
+	// body params
+	localVarPostBody = r.roleRequestDecisionRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 409 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
 
 type ApiAssignGroupRoleRequest struct {
 	ctx         context.Context
@@ -476,200 +670,6 @@ func (a *GroupAccessAPIService) DecideGroupMembershipExecute(r ApiDecideGroupMem
 	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-EPOS-User-ID", r.xEPOSUserID, "simple", "")
 	// body params
 	localVarPostBody = r.membershipDecisionRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v string
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 409 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Problem
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiDecideGroupRoleRequestRequest struct {
-	ctx                        context.Context
-	ApiService                 GroupAccessAPI
-	groupId                    string
-	requestId                  string
-	xEPOSUserID                *string
-	roleRequestDecisionRequest *RoleRequestDecisionRequest
-}
-
-func (r ApiDecideGroupRoleRequestRequest) XEPOSUserID(xEPOSUserID string) ApiDecideGroupRoleRequestRequest {
-	r.xEPOSUserID = &xEPOSUserID
-	return r
-}
-
-func (r ApiDecideGroupRoleRequestRequest) RoleRequestDecisionRequest(roleRequestDecisionRequest RoleRequestDecisionRequest) ApiDecideGroupRoleRequestRequest {
-	r.roleRequestDecisionRequest = &roleRequestDecisionRequest
-	return r
-}
-
-func (r ApiDecideGroupRoleRequestRequest) Execute() (*GroupMembership, *http.Response, error) {
-	return r.ApiService.DecideGroupRoleRequestExecute(r)
-}
-
-/*
-DecideGroupRoleRequest Accept or reject role request
-
-Requires group.role.manage in this group, global.role.manage, or global ADMIN.
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param groupId
-	@param requestId
-	@return ApiDecideGroupRoleRequestRequest
-*/
-func (a *GroupAccessAPIService) DecideGroupRoleRequest(ctx context.Context, groupId string, requestId string) ApiDecideGroupRoleRequestRequest {
-	return ApiDecideGroupRoleRequestRequest{
-		ApiService: a,
-		ctx:        ctx,
-		groupId:    groupId,
-		requestId:  requestId,
-	}
-}
-
-// Execute executes the request
-//
-//	@return GroupMembership
-func (a *GroupAccessAPIService) DecideGroupRoleRequestExecute(r ApiDecideGroupRoleRequestRequest) (*GroupMembership, *http.Response, error) {
-	var (
-		localVarHTTPMethod  = http.MethodPatch
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *GroupMembership
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GroupAccessAPIService.DecideGroupRoleRequest")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/groups/{group_id}/role-requests/{request_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"group_id"+"}", url.PathEscape(parameterValueToString(r.groupId, "groupId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"request_id"+"}", url.PathEscape(parameterValueToString(r.requestId, "requestId")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.xEPOSUserID == nil {
-		return localVarReturnValue, nil, reportError("xEPOSUserID is required and must be specified")
-	}
-	if r.roleRequestDecisionRequest == nil {
-		return localVarReturnValue, nil, reportError("roleRequestDecisionRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json", "text/plain"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	parameterAddToHeaderOrQuery(localVarHeaderParams, "X-EPOS-User-ID", r.xEPOSUserID, "simple", "")
-	// body params
-	localVarPostBody = r.roleRequestDecisionRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
