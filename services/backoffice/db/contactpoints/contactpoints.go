@@ -10,6 +10,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -42,6 +43,24 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (contactpoints.ContactPoin
 	}
 	if err != nil {
 		return contactpoints.ContactPoint{}, fmt.Errorf("get contact point: %w", err)
+	}
+
+	return mapContactPoint(row), nil
+}
+
+func (r *Repo) Create(ctx context.Context, contactPoint contactpoints.ContactPoint) (contactpoints.ContactPoint, error) {
+	row, err := r.CreateContactPoint(ctx, sqlc.CreateContactPointParams{
+		ID:        contactPoint.ID,
+		SourceIri: contactPoint.SourceIRI,
+		Email:     contactPoint.Email,
+		Role:      contactPoint.Role,
+	})
+	if err != nil {
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			return contactpoints.ContactPoint{}, contactpoints.ErrConflict
+		}
+
+		return contactpoints.ContactPoint{}, fmt.Errorf("insert contact point: %w", err)
 	}
 
 	return mapContactPoint(row), nil

@@ -11,14 +11,60 @@ import (
 	"github.com/google/uuid"
 )
 
+const createContactPoint = `-- name: CreateContactPoint :one
+INSERT INTO contact_points (
+    id,
+    source_iri,
+    email,
+    role
+)
+VALUES (
+    $1,
+    $2,
+    $3,
+    $4
+)
+RETURNING
+    id,
+    source_iri,
+    email,
+    role
+`
+
+type CreateContactPointParams struct {
+	ID        uuid.UUID
+	SourceIri string
+	Email     string
+	Role      string
+}
+
+func (q *Queries) CreateContactPoint(ctx context.Context, arg CreateContactPointParams) (ContactPoint, error) {
+	row := q.db.QueryRow(ctx, createContactPoint,
+		arg.ID,
+		arg.SourceIri,
+		arg.Email,
+		arg.Role,
+	)
+	var i ContactPoint
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.Email,
+		&i.Role,
+	)
+	return i, err
+}
+
 const getContactPoint = `-- name: GetContactPoint :one
 SELECT
     id,
     source_iri,
     email,
     role
-FROM contact_points
-WHERE id = $1
+FROM
+    contact_points
+WHERE
+    id = $1
 `
 
 func (q *Queries) GetContactPoint(ctx context.Context, id uuid.UUID) (ContactPoint, error) {
@@ -39,7 +85,8 @@ SELECT
     source_iri,
     email,
     role
-FROM contact_points
+FROM
+    contact_points
 ORDER BY
     email,
     role,

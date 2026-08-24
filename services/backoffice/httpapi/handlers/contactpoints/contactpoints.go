@@ -18,6 +18,7 @@ var log = logging.Get("contact-points-handler")
 type service interface {
 	List(context.Context, string) ([]contactpointdomain.ContactPoint, error)
 	Get(context.Context, string, uuid.UUID) (contactpointdomain.ContactPoint, error)
+	Create(context.Context, string, contactpointdomain.CreateRequest) (contactpointdomain.ContactPoint, error)
 }
 
 type Handler struct {
@@ -69,12 +70,38 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusOK, response(contactPoint))
 }
 
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	var body createContactPointRequest
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+
+	contactPoint, err := h.service.Create(r.Context(), actorID, contactpointdomain.CreateRequest{
+		SourceIRI: body.SourceIRI,
+		Email:     body.Email,
+		Role:      body.Role,
+	})
+	if err != nil {
+		writeError(w, r, err, "create contact point")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, response(contactPoint))
+}
+
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
 	case errors.Is(err, contactpointdomain.ErrInvalid):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point request")
 	case errors.Is(err, contactpointdomain.ErrForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "contact point read is not permitted")
+	case errors.Is(err, contactpointdomain.ErrConflict):
+		transport.WriteProblem(w, http.StatusConflict, "conflict", "contact point already exists")
 	case errors.Is(err, contactpointdomain.ErrNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "contact_point_not_found", "contact point not found")
 	default:
@@ -88,6 +115,12 @@ type contactPointResponse struct {
 	SourceIRI string    `json:"source_iri"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
+}
+
+type createContactPointRequest struct {
+	SourceIRI string `json:"source_iri"`
+	Email     string `json:"email"`
+	Role      string `json:"role"`
 }
 
 func response(contactPoint contactpointdomain.ContactPoint) contactPointResponse {

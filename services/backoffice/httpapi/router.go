@@ -102,6 +102,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.RevokePermission)
 
 		r.Get("/contact-points", contactPoints.List)
+		r.Post("/contact-points", contactPoints.Create)
 		r.Get("/contact-points/{contact_point_id}", contactPoints.Get)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))

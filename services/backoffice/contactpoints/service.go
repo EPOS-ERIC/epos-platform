@@ -15,6 +15,7 @@ var (
 	ErrInvalid   = errors.New("invalid contact point")
 	ErrNotFound  = errors.New("contact point not found")
 	ErrForbidden = errors.New("contact point read forbidden")
+	ErrConflict  = errors.New("contact point conflict")
 )
 
 type ContactPoint struct {
@@ -24,13 +25,21 @@ type ContactPoint struct {
 	Role      string
 }
 
+type CreateRequest struct {
+	SourceIRI string
+	Email     string
+	Role      string
+}
+
 type Store interface {
 	List(context.Context) ([]ContactPoint, error)
 	Get(context.Context, uuid.UUID) (ContactPoint, error)
+	Create(context.Context, ContactPoint) (ContactPoint, error)
 }
 
 type Authorizer interface {
 	CanReadContactPoint(context.Context, string) (authz.Result, error)
+	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
 }
 
 type Service struct {
@@ -66,6 +75,43 @@ func (s *Service) Get(ctx context.Context, actorID string, id uuid.UUID) (Contac
 	contactPoint, err := s.store.Get(ctx, id)
 	if err != nil {
 		return ContactPoint{}, fmt.Errorf("get contact point: %w", err)
+	}
+
+	return contactPoint, nil
+}
+
+func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (ContactPoint, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
+	request.Email = strings.TrimSpace(request.Email)
+	request.Role = strings.TrimSpace(request.Role)
+	if actorID == "" || request.Email == "" || request.Role == "" {
+		return ContactPoint{}, ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "contact_point.manage")
+	if err != nil {
+		return ContactPoint{}, fmt.Errorf("authorize contact point creation: %w", err)
+	}
+	if !allowed.Allowed {
+		return ContactPoint{}, ErrForbidden
+	}
+
+	id := uuid.New()
+	sourceIRI := request.SourceIRI
+	if sourceIRI == "" {
+		// TODO: define the "urn:epos" as a app level constant instead of hard coding it in different places
+		sourceIRI = "urn:epos:contact-point:" + id.String()
+	}
+
+	contactPoint, err := s.store.Create(ctx, ContactPoint{
+		ID:        id,
+		SourceIRI: sourceIRI,
+		Email:     request.Email,
+		Role:      request.Role,
+	})
+	if err != nil {
+		return ContactPoint{}, fmt.Errorf("create contact point: %w", err)
 	}
 
 	return contactPoint, nil
