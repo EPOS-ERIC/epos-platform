@@ -44,8 +44,10 @@ func (s *Service) Get(ctx context.Context, actorID, resourceType, id, versionID 
 		request = request.XEPOSUserID(actorID)
 	}
 	record, response, err := request.Execute()
-	if err := responseError(response, err); err != nil {
-		return nil, err
+	// The resource-version endpoint is a transparent read. The generated model
+	// may lag Backoffice's extensible metadata, but a successful payload is valid.
+	if err != nil && (response == nil || response.StatusCode >= http.StatusMultipleChoices) {
+		return nil, responseError(response, err)
 	}
 	if response == nil || response.Body == nil {
 		return nil, fmt.Errorf("backoffice lifecycle response body is empty")

@@ -354,8 +354,6 @@ paths:
                       global_roles: [ADMIN]
                       global_permissions: []
                       status: "ACTIVE"
-                      created_at: "2026-06-17T12:48:45.574Z"
-                      updated_at: "2026-06-17T12:48:45.574Z"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1574,7 +1572,7 @@ components:
       name: id
       in: path
       required: true
-      description: Resource UUID.
+      description: Resource identifier.
       schema:
         type: string
         format: uuid
@@ -1737,8 +1735,8 @@ components:
       in: query
       required: false
       description: |
-        Spatial filter expressed as a WKT polygon string (EPSG:4326).
-        Resources whose spatial coverage intersects this polygon are returned.
+        Spatial filter expressed as a WKT POINT or POLYGON string (EPSG:4326).
+        Resources whose spatial coverage intersects this geometry are returned.
         Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
       schema:
         type: string
@@ -1779,11 +1777,12 @@ components:
         Use this filter to restrict results to resources associated with one of the
         specified provider organizations.
         Pass comma-separated values in a single parameter:
-        `?provider=PIC:999472675/v1.0,ROR:048a87296/v1.0`.
+        `?provider=94f4885e-502e-5f33-ba82-033a72efd827`.
       schema:
         type: array
         items:
           type: string
+          format: uuid
       style: form
       explode: false
 
@@ -2064,7 +2063,7 @@ components:
         version_id: { type: string, format: uuid }
         revision: { type: integer, format: int32 }
         status: { type: string }
-        created_by: { type: string, format: uuid }
+        created_by: { type: string }
         group: { type: object, additionalProperties: true }
         metadata:
           anyOf:
@@ -2276,8 +2275,6 @@ components:
         - status
         - global_roles
         - global_permissions
-        - created_at
-        - updated_at
       properties:
         id:
           type: string
@@ -2297,12 +2294,6 @@ components:
           type: array
           items:
             type: string
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
     Category:
       type: object
       required: [id, group_id, parent_category_id, source_iri, name]

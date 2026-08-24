@@ -45,14 +45,18 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	}
 	items, err := h.service.Search(r.Context(), actor, filter)
 	if err != nil {
-		log.ErrorContext(r.Context(), "discovery search failed", "error", err)
 		status := http.StatusInternalServerError
 		title := "internal_server_error"
 		detail := "discovery search failed"
-		if errors.Is(err, discovery.ErrInvalid) {
+		switch {
+		case errors.Is(err, discovery.ErrInvalid):
+			log.DebugContext(r.Context(), "discovery search invalid", "error", err)
 			status, title, detail = http.StatusBadRequest, "invalid_request", err.Error()
-		} else if errors.Is(err, discovery.ErrDenied) {
+		case errors.Is(err, discovery.ErrDenied):
+			log.DebugContext(r.Context(), "discovery search denied", "error", err)
 			status, title, detail = http.StatusUnauthorized, "unauthorized", "authentication is required for non-published discovery results"
+		default:
+			log.ErrorContext(r.Context(), "discovery search failed", "error", err)
 		}
 		transport.WriteProblem(w, status, title, detail)
 

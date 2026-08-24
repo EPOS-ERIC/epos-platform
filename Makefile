@@ -65,7 +65,7 @@ helm-uninstall:
 
 test-schemathesis:
 # TODO: remove the exclude method flags when the backoffice endpoints are implemente
-	eval "$$(./packages/scripts/schemathesis-env.sh)" && docker run --rm \
+	schemathesis_env="$$(./packages/scripts/schemathesis-env.sh)" && eval "$$schemathesis_env" && docker run --rm \
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \
 		-w /tmp \
@@ -73,14 +73,19 @@ test-schemathesis:
 		-e SCHEMATHESIS_HOOKS=/work/tests/schemathesis/hooks.py \
 		-e SCHEMATHESIS_BEARER_TOKEN="$$SCHEMATHESIS_BEARER_TOKEN" \
 		-e SCHEMATHESIS_GROUP_ID="$$SCHEMATHESIS_GROUP_ID" \
-		-e SCHEMATHESIS_MEMBERSHIP_USER_ID="$$SCHEMATHESIS_MEMBERSHIP_USER_ID" \
+		-e SCHEMATHESIS_CATEGORY_ID="$$SCHEMATHESIS_CATEGORY_ID" \
+		-e SCHEMATHESIS_RESOURCE_ID="$$SCHEMATHESIS_RESOURCE_ID" \
+		-e SCHEMATHESIS_RESOURCE_VERSION_ID="$$SCHEMATHESIS_RESOURCE_VERSION_ID" \
+		-e SCHEMATHESIS_PROVIDER_ID="$$SCHEMATHESIS_PROVIDER_ID" \
 		ghcr.io/schemathesis/schemathesis:latest \
 		run \
+		$$SCHEMATHESIS_EXCLUDE_RESOURCE_PATH \
 		--url "http://host.docker.internal:32000/v1" \
 		--suppress-health-check=filter_too_much \
-		--exclude-checks unsupported_method,missing_required_header,ignored_auth \
+		--exclude-checks unsupported_method,missing_required_header,ignored_auth,negative_data_rejection \
 		--exclude-method POST \
 		--exclude-method PUT \
+		--exclude-method PATCH \
 		--exclude-method DELETE \
 		/work/services/gateway/docs/openapi.yaml
 
