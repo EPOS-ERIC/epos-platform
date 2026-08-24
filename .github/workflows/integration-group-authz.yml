@@ -1,46 +1,7 @@
 name: Integration Group Authz Pipeline
 
 on:
-  pull_request:
-    paths:
-      - "tests/hurl-groups-authz/**"
-      - "services/gateway/**"
-      - "services/metadata-lifecycle/**"
-      - "services/user-group/**"
-      - "services/oss-aai-service/**"
-      - "packages/go/logging/**"
-      - "packages/go/observability/**"
-      - "packages/go/middleware/**"
-      - "packages/go/apidocs/**"
-      - "packages/scripts/epos-banner.sh"
-      - "packages/scripts/hurl-groups-authz-env.sh"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
-      - "Makefile"
-      - ".github/workflows/integration-group-authz.yml"
-      - ".github/workflows/_integration-suite.yml"
-  push:
-    branches:
-      - "main"
-    tags:
-      - "v*"
-    paths:
-      - "tests/hurl-groups-authz/**"
-      - "services/gateway/**"
-      - "services/metadata-lifecycle/**"
-      - "services/user-group/**"
-      - "services/oss-aai-service/**"
-      - "packages/go/logging/**"
-      - "packages/go/observability/**"
-      - "packages/go/middleware/**"
-      - "packages/go/apidocs/**"
-      - "packages/scripts/epos-banner.sh"
-      - "packages/scripts/hurl-groups-authz-env.sh"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
-      - "Makefile"
-      - ".github/workflows/integration-group-authz.yml"
-      - ".github/workflows/_integration-suite.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read

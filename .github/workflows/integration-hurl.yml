@@ -1,44 +1,7 @@
 name: Integration Hurl Pipeline
 
 on:
-  pull_request:
-    paths:
-      - "tests/hurl/**"
-      - "services/gateway/**"
-      - "services/metadata-lifecycle/**"
-      - "packages/go/logging/**"
-      - "packages/go/observability/**"
-      - "packages/go/middleware/**"
-      - "packages/go/apidocs/**"
-      - "packages/scripts/epos-banner.sh"
-      - "packages/scripts/metadatone.sh"
-      - "packages/assets/otel/opentelemetry-javaagent.jar"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
-      - "Makefile"
-      - ".github/workflows/integration-hurl.yml"
-      - ".github/workflows/_integration-suite.yml"
-  push:
-    branches:
-      - "main"
-    tags:
-      - "v*"
-    paths:
-      - "tests/hurl/**"
-      - "services/gateway/**"
-      - "services/metadata-lifecycle/**"
-      - "packages/go/logging/**"
-      - "packages/go/observability/**"
-      - "packages/go/middleware/**"
-      - "packages/go/apidocs/**"
-      - "packages/scripts/epos-banner.sh"
-      - "packages/scripts/metadatone.sh"
-      - "packages/assets/otel/opentelemetry-javaagent.jar"
-      - "docker/compose.dev.yaml"
-      - "docker/gateway-config.dev.yaml"
-      - "Makefile"
-      - ".github/workflows/integration-hurl.yml"
-      - ".github/workflows/_integration-suite.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read

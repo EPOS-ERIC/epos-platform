@@ -238,6 +238,7 @@ GitHub Actions workflows live under `.github/workflows/`:
 
 - `services-ci.yml`: runs Go/Gradle tests, lint, service builds, Docker image builds, Docker image publishing, and integration tests.
 - `helm-ci.yml`: runs Helm lint/render validation, packages the chart, uploads chart artifacts, and attaches release chart packages to GitHub Releases.
+- Hurl workflows are currently manual-only because their tests are not correctly implemented.
 
 Pipeline behavior:
 
@@ -254,7 +255,9 @@ Published Docker image names:
 - `ghcr.io/epos-eric/epos-platform/user-group`
 - `ghcr.io/epos-eric/epos-platform/data-retriever`
 
-Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Hurl tests under `tests/hurl/` and Schemathesis tests against the gateway OpenAPI contract.
+Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Schemathesis tests against the gateway OpenAPI contract.
+
+TODO: Correctly implement Hurl tests under `tests/hurl/` and `tests/hurl-groups-authz/`, then restore automatic CI triggers in their workflows.
 
 ## Service documentation
 
