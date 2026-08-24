@@ -11,6 +11,120 @@ import (
 	"github.com/google/uuid"
 )
 
+const createOrganization = `-- name: CreateOrganization :one
+INSERT INTO organizations (
+    id, source_iri, name, street, locality, postal_code, country,
+    logo_url, page_url, email, lei_code
+)
+VALUES (
+    $1, $2, $3, $4,
+    $5, $6, $7,
+    $8, $9, $10, $11
+)
+RETURNING id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+`
+
+type CreateOrganizationParams struct {
+	ID         uuid.UUID
+	SourceIri  string
+	Name       string
+	Street     *string
+	Locality   *string
+	PostalCode *string
+	Country    *string
+	LogoUrl    *string
+	PageUrl    *string
+	Email      *string
+	LeiCode    *string
+}
+
+func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error) {
+	row := q.db.QueryRow(ctx, createOrganization,
+		arg.ID,
+		arg.SourceIri,
+		arg.Name,
+		arg.Street,
+		arg.Locality,
+		arg.PostalCode,
+		arg.Country,
+		arg.LogoUrl,
+		arg.PageUrl,
+		arg.Email,
+		arg.LeiCode,
+	)
+	var i Organization
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.Name,
+		&i.Street,
+		&i.Locality,
+		&i.PostalCode,
+		&i.Country,
+		&i.LogoUrl,
+		&i.PageUrl,
+		&i.Email,
+		&i.LeiCode,
+	)
+	return i, err
+}
+
+const createOrganizationContactPoint = `-- name: CreateOrganizationContactPoint :exec
+INSERT INTO organization_contact_points (organization_id, contact_point_id)
+VALUES ($1, $2)
+`
+
+type CreateOrganizationContactPointParams struct {
+	OrganizationID uuid.UUID
+	ContactPointID uuid.UUID
+}
+
+func (q *Queries) CreateOrganizationContactPoint(ctx context.Context, arg CreateOrganizationContactPointParams) error {
+	_, err := q.db.Exec(ctx, createOrganizationContactPoint, arg.OrganizationID, arg.ContactPointID)
+	return err
+}
+
+const createOrganizationIdentifier = `-- name: CreateOrganizationIdentifier :exec
+INSERT INTO identifiers (id, source_iri, type, value, organization_id)
+VALUES (
+    $1, $2, $3, $4, $5
+)
+`
+
+type CreateOrganizationIdentifierParams struct {
+	ID             uuid.UUID
+	SourceIri      string
+	Type           string
+	Value          string
+	OrganizationID *uuid.UUID
+}
+
+func (q *Queries) CreateOrganizationIdentifier(ctx context.Context, arg CreateOrganizationIdentifierParams) error {
+	_, err := q.db.Exec(ctx, createOrganizationIdentifier,
+		arg.ID,
+		arg.SourceIri,
+		arg.Type,
+		arg.Value,
+		arg.OrganizationID,
+	)
+	return err
+}
+
+const createOrganizationParent = `-- name: CreateOrganizationParent :exec
+INSERT INTO organization_memberships (child_organization_id, parent_organization_id)
+VALUES ($1, $2)
+`
+
+type CreateOrganizationParentParams struct {
+	ChildOrganizationID  uuid.UUID
+	ParentOrganizationID uuid.UUID
+}
+
+func (q *Queries) CreateOrganizationParent(ctx context.Context, arg CreateOrganizationParentParams) error {
+	_, err := q.db.Exec(ctx, createOrganizationParent, arg.ChildOrganizationID, arg.ParentOrganizationID)
+	return err
+}
+
 const getOrganization = `-- name: GetOrganization :one
 SELECT
     id,
@@ -24,8 +138,10 @@ SELECT
     page_url,
     email,
     lei_code
-FROM organizations
-WHERE id = $1
+FROM
+    organizations
+WHERE
+    id = $1
 `
 
 func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organization, error) {
@@ -47,13 +163,43 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 	return i, err
 }
 
+const listContactPointIDs = `-- name: ListContactPointIDs :many
+SELECT id
+FROM contact_points
+WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) ListContactPointIDs(ctx context.Context, contactPointIds []uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listContactPointIDs, contactPointIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOrganizationContactPointIDs = `-- name: ListOrganizationContactPointIDs :many
 SELECT
     organization_id,
     contact_point_id
-FROM organization_contact_points
-WHERE organization_id = ANY($1::uuid[])
-ORDER BY organization_id, contact_point_id
+FROM
+    organization_contact_points
+WHERE
+    organization_id = ANY($1::uuid [])
+ORDER BY
+    organization_id,
+    contact_point_id
 `
 
 func (q *Queries) ListOrganizationContactPointIDs(ctx context.Context, organizationIds []uuid.UUID) ([]OrganizationContactPoint, error) {
@@ -80,9 +226,13 @@ const listOrganizationIdentifiers = `-- name: ListOrganizationIdentifiers :many
 SELECT
     organization_id,
     identifier.id, identifier.source_iri, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
-FROM identifiers AS identifier
-WHERE organization_id = ANY($1::uuid[])
-ORDER BY organization_id, identifier.id
+FROM
+    identifiers AS identifier
+WHERE
+    organization_id = ANY($1::uuid [])
+ORDER BY
+    organization_id,
+    identifier.id
 `
 
 type ListOrganizationIdentifiersRow struct {
@@ -124,9 +274,13 @@ const listOrganizationParents = `-- name: ListOrganizationParents :many
 SELECT
     child_organization_id,
     parent_organization_id
-FROM organization_memberships
-WHERE child_organization_id = ANY($1::uuid[])
-ORDER BY child_organization_id, parent_organization_id
+FROM
+    organization_memberships
+WHERE
+    child_organization_id = ANY($1::uuid [])
+ORDER BY
+    child_organization_id,
+    parent_organization_id
 `
 
 func (q *Queries) ListOrganizationParents(ctx context.Context, organizationIds []uuid.UUID) ([]OrganizationMembership, error) {
@@ -162,12 +316,63 @@ SELECT
     page_url,
     email,
     lei_code
-FROM organizations
-ORDER BY id
+FROM
+    organizations
+ORDER BY
+    id
 `
 
 func (q *Queries) ListOrganizations(ctx context.Context) ([]Organization, error) {
 	rows, err := q.db.Query(ctx, listOrganizations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Organization
+	for rows.Next() {
+		var i Organization
+		if err := rows.Scan(
+			&i.ID,
+			&i.SourceIri,
+			&i.Name,
+			&i.Street,
+			&i.Locality,
+			&i.PostalCode,
+			&i.Country,
+			&i.LogoUrl,
+			&i.PageUrl,
+			&i.Email,
+			&i.LeiCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrganizationsByIDs = `-- name: ListOrganizationsByIDs :many
+SELECT
+    id,
+    source_iri,
+    name,
+    street,
+    locality,
+    postal_code,
+    country,
+    logo_url,
+    page_url,
+    email,
+    lei_code
+FROM organizations
+WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []uuid.UUID) ([]Organization, error) {
+	rows, err := q.db.Query(ctx, listOrganizationsByIDs, organizationIds)
 	if err != nil {
 		return nil, err
 	}

@@ -6,19 +6,123 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/organizations"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repo struct {
 	*sqlc.Queries
+	db *pgxpool.Pool
 }
 
 func New(db *pgxpool.Pool) *Repo {
-	return &Repo{Queries: sqlc.New(db)}
+	return &Repo{Queries: sqlc.New(db), db: db}
+}
+
+func (r *Repo) Create(
+	ctx context.Context,
+	organization organizations.Organization,
+	identifiers []organizations.Identifier,
+	parents,
+	contactPointIDs []uuid.UUID,
+) (organizations.Organization, error) {
+	var result organizations.Organization
+	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
+		parentRows, err := q.ListOrganizationsByIDs(ctx, parents)
+		if err != nil {
+			return fmt.Errorf("check organization parents: %w", err)
+		}
+		if len(parentRows) != len(parents) {
+			return organizations.ErrInvalid
+		}
+
+		contactRows, err := q.ListContactPointIDs(ctx, contactPointIDs)
+		if err != nil {
+			return fmt.Errorf("check contact points: %w", err)
+		}
+		if len(contactRows) != len(contactPointIDs) {
+			return organizations.ErrInvalid
+		}
+
+		_, err = q.CreateOrganization(ctx, sqlc.CreateOrganizationParams{
+			ID:         organization.ID,
+			SourceIri:  organization.SourceIRI,
+			Name:       organization.Name,
+			Street:     organization.Street,
+			Locality:   organization.Locality,
+			PostalCode: organization.PostalCode,
+			Country:    organization.Country,
+			LogoUrl:    organization.LogoURL,
+			PageUrl:    organization.PageURL,
+			Email:      organization.Email,
+			LeiCode:    organization.LEICode,
+		})
+		if err != nil {
+			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+				return organizations.ErrConflict
+			}
+			return fmt.Errorf("insert organization: %w", err)
+		}
+
+		for _, identifier := range identifiers {
+			err := q.CreateOrganizationIdentifier(ctx, sqlc.CreateOrganizationIdentifierParams{
+				ID:             identifier.ID,
+				SourceIri:      identifier.SourceIRI,
+				Type:           identifier.Type,
+				Value:          identifier.Value,
+				OrganizationID: &organization.ID,
+			})
+			if err != nil {
+				if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+					return organizations.ErrConflict
+				}
+
+				return fmt.Errorf("insert organization identifier: %w", err)
+			}
+		}
+
+		for _, parentID := range parents {
+			if err := q.CreateOrganizationParent(ctx, sqlc.CreateOrganizationParentParams{
+				ChildOrganizationID:  organization.ID,
+				ParentOrganizationID: parentID,
+			}); err != nil {
+				return fmt.Errorf("link organization parent: %w", err)
+			}
+		}
+
+		for _, contactPointID := range contactPointIDs {
+			if err := q.CreateOrganizationContactPoint(ctx, sqlc.CreateOrganizationContactPointParams{
+				OrganizationID: organization.ID,
+				ContactPointID: contactPointID,
+			}); err != nil {
+				return fmt.Errorf("link organization contact point: %w", err)
+			}
+		}
+
+		row, err := q.GetOrganization(ctx, organization.ID)
+		if err != nil {
+			return fmt.Errorf("reload organization: %w", err)
+		}
+
+		loaded, err := r.loadWithQueries(ctx, q, []sqlc.Organization{row})
+		if err != nil {
+			return err
+		}
+
+		result = loaded[0]
+
+		return nil
+	})
+	if err != nil {
+		return organizations.Organization{}, fmt.Errorf("create organization transaction: %w", err)
+	}
+
+	return result, nil
 }
 
 func (r *Repo) List(ctx context.Context) ([]organizations.Organization, error) {
@@ -27,7 +131,7 @@ func (r *Repo) List(ctx context.Context) ([]organizations.Organization, error) {
 		return nil, fmt.Errorf("list organizations: %w", err)
 	}
 
-	return r.load(ctx, rows)
+	return r.loadWithQueries(ctx, r.Queries, rows)
 }
 
 func (r *Repo) Get(ctx context.Context, id uuid.UUID) (organizations.Organization, error) {
@@ -39,7 +143,7 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (organizations.Organizatio
 		return organizations.Organization{}, fmt.Errorf("get organization: %w", err)
 	}
 
-	result, err := r.load(ctx, []sqlc.Organization{row})
+	result, err := r.loadWithQueries(ctx, r.Queries, []sqlc.Organization{row})
 	if err != nil {
 		return organizations.Organization{}, err
 	}
@@ -48,7 +152,7 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (organizations.Organizatio
 }
 
 // doing this to avoid too many queries (ogranization*identifiers*contactpoints)
-func (r *Repo) load(ctx context.Context, rows []sqlc.Organization) ([]organizations.Organization, error) {
+func (r *Repo) loadWithQueries(ctx context.Context, q *sqlc.Queries, rows []sqlc.Organization) ([]organizations.Organization, error) {
 	result := make([]organizations.Organization, 0, len(rows))
 	if len(rows) == 0 {
 		return result, nil
@@ -60,15 +164,15 @@ func (r *Repo) load(ctx context.Context, rows []sqlc.Organization) ([]organizati
 		result = append(result, mapOrganization(row))
 	}
 
-	identifiers, err := r.ListOrganizationIdentifiers(ctx, ids)
+	identifiers, err := q.ListOrganizationIdentifiers(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("list organization identifiers: %w", err)
 	}
-	parents, err := r.ListOrganizationParents(ctx, ids)
+	parents, err := q.ListOrganizationParents(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("list organization parents: %w", err)
 	}
-	contactPoints, err := r.ListOrganizationContactPointIDs(ctx, ids)
+	contactPoints, err := q.ListOrganizationContactPointIDs(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("list organization contact points: %w", err)
 	}

@@ -157,6 +157,28 @@ paths:
         "415": { description: Content-Type must be text/turtle }
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/organizations:
+    post:
+      tags: [Organizations]
+      operationId: createOrganization
+      summary: Create organization
+      description: Creates a canonical organization. Requires global organization.manage or global ADMIN. Organization and identifier source IRIs are generated when omitted.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCanonicalOrganizationRequest" }
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     get:
       tags: [Organizations]
       operationId: listOrganizations
@@ -2082,6 +2104,42 @@ components:
         contact_point_ids:
           type: array
           items: { type: string, format: uuid }
+    CreateCanonicalOrganizationRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        address:
+          type: object
+          additionalProperties: false
+          properties:
+            street: { type: string, nullable: true }
+            locality: { type: string, nullable: true }
+            postal_code: { type: string, nullable: true }
+            country: { type: string, nullable: true }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/CreateOrganizationIdentifierRequest" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
+    CreateOrganizationIdentifierRequest:
+      type: object
+      required: [type, value]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
     Organization:
       {
         type: object,

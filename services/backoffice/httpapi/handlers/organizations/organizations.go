@@ -18,6 +18,7 @@ var log = logging.Get("organizations-handler")
 type service interface {
 	List(context.Context) ([]organizationdomain.Organization, error)
 	Get(context.Context, uuid.UUID) (organizationdomain.Organization, error)
+	Create(context.Context, string, organizationdomain.CreateRequest) (organizationdomain.Organization, error)
 }
 
 type Handler struct {
@@ -26,6 +27,58 @@ type Handler struct {
 
 func New(service service) *Handler {
 	return &Handler{service: service}
+}
+
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	var body createOrganizationRequest
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+
+	identifiers := make([]organizationdomain.IdentifierRequest, 0, len(body.Identifiers))
+	for _, item := range body.Identifiers {
+		identifiers = append(identifiers, organizationdomain.IdentifierRequest{
+			SourceIRI: item.SourceIRI,
+			Type:      item.Type,
+			Value:     item.Value,
+		})
+	}
+	item, err := h.service.Create(r.Context(), actorID, organizationdomain.CreateRequest{
+		SourceIRI:       body.SourceIRI,
+		Name:            body.Name,
+		Street:          body.Address.Street,
+		Locality:        body.Address.Locality,
+		PostalCode:      body.Address.PostalCode,
+		Country:         body.Address.Country,
+		LogoURL:         body.LogoURL,
+		PageURL:         body.PageURL,
+		Email:           body.Email,
+		LEICode:         body.LEICode,
+		Identifiers:     identifiers,
+		Parents:         body.Parents,
+		ContactPointIDs: body.ContactPointIDs,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, organizationdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization")
+		case errors.Is(err, organizationdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization management permission required")
+		case errors.Is(err, organizationdomain.ErrConflict):
+			transport.WriteProblem(w, http.StatusConflict, "conflict", "organization already exists")
+		default:
+			log.ErrorContext(r.Context(), "create organization failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create organization failed")
+		}
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, response(item))
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +147,32 @@ type identifier struct {
 	SourceIRI string    `json:"source_iri"`
 	Type      string    `json:"type"`
 	Value     string    `json:"value"`
+}
+
+type createOrganizationRequest struct {
+	SourceIRI       string                    `json:"source_iri"`
+	Name            string                    `json:"name"`
+	Address         organizationAddress       `json:"address"`
+	LogoURL         *string                   `json:"logo_url"`
+	PageURL         *string                   `json:"page_url"`
+	Email           *string                   `json:"email"`
+	LEICode         *string                   `json:"lei_code"`
+	Identifiers     []createIdentifierRequest `json:"identifiers"`
+	Parents         []uuid.UUID               `json:"parents"`
+	ContactPointIDs []uuid.UUID               `json:"contact_point_ids"`
+}
+
+type organizationAddress struct {
+	Street     *string `json:"street"`
+	Locality   *string `json:"locality"`
+	PostalCode *string `json:"postal_code"`
+	Country    *string `json:"country"`
+}
+
+type createIdentifierRequest struct {
+	SourceIRI string `json:"source_iri"`
+	Type      string `json:"type"`
+	Value     string `json:"value"`
 }
 
 func response(value organizationdomain.Organization) organizationResponse {

@@ -189,6 +189,13 @@ and focused tests.
 - Added SQLC-backed organization repository and separate canonical OpenAPI schema with nested address fields.
 - `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
 
+### Organization Creation Implementation Record
+
+- Added `POST /api/v1/organizations` with global `organization.manage` authorization.
+- Organization and identifier source IRIs are generated when omitted; public response returns the complete created document.
+- Parent and contact-point references are existence-checked, then organization, owned identifiers, hierarchy links, and contact-point links persist in one transaction.
+- `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
+
 ## Known Gaps In Existing Endpoints
 
 These mismatches must be fixed during identity administration or the completion pass.
