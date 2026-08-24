@@ -13,15 +13,18 @@ import (
 	authdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/authz"
 	contactpointdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/contactpoints"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
+	discoverydb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/discovery"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/groups"
 	identitydb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/identity"
 	importdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/metadataimport"
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/organizations"
 	softwaredb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/software"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+	pgxgeom "github.com/twpayne/pgx-geom"
 )
 
 var log = logging.Get("db")
@@ -36,6 +39,7 @@ type PostgresDB struct {
 	Groups               *groupdb.Repo
 	Organizations        *organizationdb.Repo
 	ContactPoints        *contactpointdb.Repo
+	Discovery            *discoverydb.Repo
 	Datasets             *datasetdb.Repo
 	Imports              *importdb.Repo
 	SoftwareApplications *softwaredb.ApplicationRepo
@@ -69,7 +73,18 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		return nil, fmt.Errorf("close migration db: %w", err)
 	}
 
-	db, err := pgxpool.New(context.Background(), dsn)
+	poolConfig, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("parse postgres pool config: %w", err)
+	}
+	poolConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+		// initialize the pgxgeom library for using wkt in go
+		if err := pgxgeom.Register(ctx, conn); err != nil {
+			return fmt.Errorf("register PostGIS codec: %w", err)
+		}
+		return nil
+	}
+	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("open postgres pool: %w", err)
 	}
@@ -86,6 +101,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		Groups:               groupdb.New(db),
 		Organizations:        organizationdb.New(db),
 		ContactPoints:        contactpointdb.New(db),
+		Discovery:            discoverydb.New(db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwaredb.NewApplicationRepo(db),

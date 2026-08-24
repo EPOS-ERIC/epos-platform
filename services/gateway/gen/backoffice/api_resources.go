@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type ResourcesAPI interface {
@@ -183,6 +184,23 @@ type ResourcesAPI interface {
 	// ReplaceResourceDraftExecute executes the request
 	//  @return ResourceRecord
 	ReplaceResourceDraftExecute(r ApiReplaceResourceDraftRequest) (*ResourceRecord, *http.Response, error)
+
+	/*
+			SearchResources Discover resources
+
+			Returns summary records for discovered resources. Published records are public.
+		Other statuses require X-EPOS-User-ID and active access to the resource group
+		or global ADMIN. Results are returned as one mixed array without pagination.
+
+
+			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+			@return ApiSearchResourcesRequest
+	*/
+	SearchResources(ctx context.Context) ApiSearchResourcesRequest
+
+	// SearchResourcesExecute executes the request
+	//  @return []DiscoveryItem
+	SearchResourcesExecute(r ApiSearchResourcesRequest) ([]DiscoveryItem, *http.Response, error)
 
 	/*
 		SubmitResource Submit resource draft
@@ -2064,6 +2082,230 @@ func (a *ResourcesAPIService) ReplaceResourceDraftExecute(r ApiReplaceResourceDr
 		}
 		if localVarHTTPResponse.StatusCode == 409 {
 			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiSearchResourcesRequest struct {
+	ctx              context.Context
+	ApiService       ResourcesAPI
+	xEPOSUserID      *string
+	q                *string
+	type_            *[]ResourceType
+	spatialFilter    *string
+	dateFrom         *time.Time
+	dateTo           *time.Time
+	provider         *string
+	keywords         *string
+	versioningStatus *[]string
+}
+
+func (r ApiSearchResourcesRequest) XEPOSUserID(xEPOSUserID string) ApiSearchResourcesRequest {
+	r.xEPOSUserID = &xEPOSUserID
+	return r
+}
+
+func (r ApiSearchResourcesRequest) Q(q string) ApiSearchResourcesRequest {
+	r.q = &q
+	return r
+}
+
+// Comma-separated resource types.
+func (r ApiSearchResourcesRequest) Type_(type_ []ResourceType) ApiSearchResourcesRequest {
+	r.type_ = &type_
+	return r
+}
+
+// WKT geometry intersecting dataset coverage.
+func (r ApiSearchResourcesRequest) SpatialFilter(spatialFilter string) ApiSearchResourcesRequest {
+	r.spatialFilter = &spatialFilter
+	return r
+}
+
+func (r ApiSearchResourcesRequest) DateFrom(dateFrom time.Time) ApiSearchResourcesRequest {
+	r.dateFrom = &dateFrom
+	return r
+}
+
+func (r ApiSearchResourcesRequest) DateTo(dateTo time.Time) ApiSearchResourcesRequest {
+	r.dateTo = &dateTo
+	return r
+}
+
+// Comma-separated provider or creator organization UUIDs.
+func (r ApiSearchResourcesRequest) Provider(provider string) ApiSearchResourcesRequest {
+	r.provider = &provider
+	return r
+}
+
+// Comma-separated keywords. All values must match.
+func (r ApiSearchResourcesRequest) Keywords(keywords string) ApiSearchResourcesRequest {
+	r.keywords = &keywords
+	return r
+}
+
+// Comma-separated lifecycle statuses. Defaults to PUBLISHED; other statuses require authentication.
+func (r ApiSearchResourcesRequest) VersioningStatus(versioningStatus []string) ApiSearchResourcesRequest {
+	r.versioningStatus = &versioningStatus
+	return r
+}
+
+func (r ApiSearchResourcesRequest) Execute() ([]DiscoveryItem, *http.Response, error) {
+	return r.ApiService.SearchResourcesExecute(r)
+}
+
+/*
+SearchResources Discover resources
+
+Returns summary records for discovered resources. Published records are public.
+Other statuses require X-EPOS-User-ID and active access to the resource group
+or global ADMIN. Results are returned as one mixed array without pagination.
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiSearchResourcesRequest
+*/
+func (a *ResourcesAPIService) SearchResources(ctx context.Context) ApiSearchResourcesRequest {
+	return ApiSearchResourcesRequest{
+		ApiService: a,
+		ctx:        ctx,
+	}
+}
+
+// Execute executes the request
+//
+//	@return []DiscoveryItem
+func (a *ResourcesAPIService) SearchResourcesExecute(r ApiSearchResourcesRequest) ([]DiscoveryItem, *http.Response, error) {
+	var (
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue []DiscoveryItem
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ResourcesAPIService.SearchResources")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/resources"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.q != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
+	}
+	if r.type_ != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "csv")
+	}
+	if r.spatialFilter != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "spatialFilter", r.spatialFilter, "form", "")
+	}
+	if r.dateFrom != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "dateFrom", r.dateFrom, "form", "")
+	}
+	if r.dateTo != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "dateTo", r.dateTo, "form", "")
+	}
+	if r.provider != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "provider", r.provider, "form", "")
+	}
+	if r.keywords != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "keywords", r.keywords, "form", "")
+	}
+	if r.versioningStatus != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "versioningStatus", r.versioningStatus, "form", "csv")
+	} else {
+		var defaultValue []string = []string{"PUBLISHED"}
+		parameterAddToHeaderOrQuery(localVarQueryParams, "versioningStatus", defaultValue, "form", "csv")
+		r.versioningStatus = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json", "application/problem+json", "text/plain"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.xEPOSUserID != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "X-EPOS-User-ID", r.xEPOSUserID, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Problem
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v string
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()

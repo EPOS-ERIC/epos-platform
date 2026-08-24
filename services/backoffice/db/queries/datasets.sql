@@ -43,20 +43,8 @@ VALUES
         sqlc.narg(access_right),
         sqlc.narg(source_created_at),
         sqlc.narg(source_updated_at),
-        CASE
-            WHEN sqlc.narg(spatial_point)::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON(sqlc.narg(spatial_point)::text),
-                4326
-            )
-        END,
-        CASE
-            WHEN sqlc.narg(spatial_polygon)::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON(sqlc.narg(spatial_polygon)::text),
-                4326
-            )
-        END,
+        sqlc.narg(spatial_point),
+        sqlc.narg(spatial_polygon),
         sqlc.narg(temporal_start),
         sqlc.narg(temporal_end),
         sqlc.arg(created_by)
@@ -76,20 +64,8 @@ SET
     access_right = sqlc.narg(access_right),
     source_created_at = sqlc.narg(source_created_at),
     source_updated_at = sqlc.narg(source_updated_at),
-    spatial_point = CASE
-        WHEN sqlc.narg(spatial_point)::text IS NULL THEN NULL
-        ELSE ST_SetSRID(
-            ST_GeomFromGeoJSON(sqlc.narg(spatial_point)::text),
-            4326
-        )
-    END,
-    spatial_polygon = CASE
-        WHEN sqlc.narg(spatial_polygon)::text IS NULL THEN NULL
-        ELSE ST_SetSRID(
-            ST_GeomFromGeoJSON(sqlc.narg(spatial_polygon)::text),
-            4326
-        )
-    END,
+    spatial_point = sqlc.narg(spatial_point),
+    spatial_polygon = sqlc.narg(spatial_polygon),
     temporal_start = sqlc.narg(temporal_start),
     temporal_end = sqlc.narg(temporal_end),
     revision = revision + 1
@@ -593,33 +569,7 @@ distributions AS (
 )
 SELECT
     id,
-    dataset_id,
-    STATUS,
-    revision,
-    title,
-    description,
-    keywords,
-    accrual_periodicity,
-    quality_annotation,
-    access_right,
-    source_created_at,
-    source_updated_at,
-    spatial_point,
-    spatial_polygon,
-    temporal_start,
-    temporal_end,
-    created_by,
-    created_at,
-    updated_at,
-    submitted_by,
-    submitted_at,
-    published_by,
-    published_at,
-    archived_by,
-    archived_at,
-    rejected_by,
-    rejected_at,
-    rejection_note
+    dataset_id
 FROM
     inserted;
 
@@ -693,20 +643,8 @@ VALUES
         sqlc.narg(documentation_title),
         sqlc.narg(documentation_description),
         sqlc.narg(documentation_uri),
-        CASE
-            WHEN sqlc.narg(spatial_point)::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON(sqlc.narg(spatial_point)::text),
-                4326
-            )
-        END,
-        CASE
-            WHEN sqlc.narg(spatial_polygon)::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON(sqlc.narg(spatial_polygon)::text),
-                4326
-            )
-        END,
+        sqlc.narg(spatial_point),
+        sqlc.narg(spatial_polygon),
         sqlc.narg(temporal_start),
         sqlc.narg(temporal_end)
     )
@@ -828,8 +766,8 @@ SELECT
     version.access_right,
     version.source_created_at,
     version.source_updated_at,
-    COALESCE(ST_AsGeoJSON(version.spatial_point), '')::text AS spatial_point_geojson,
-    COALESCE(ST_AsGeoJSON(version.spatial_polygon), '')::text AS spatial_polygon_geojson,
+    version.spatial_point,
+    version.spatial_polygon,
     version.temporal_start,
     version.temporal_end,
     version.created_by,
@@ -957,9 +895,7 @@ ORDER BY
 
 -- name: ListLifecycleWebServices :many
 SELECT
-    sqlc.embed(service),
-    COALESCE(ST_AsGeoJSON(service.spatial_point), '')::text AS spatial_point_geojson,
-    COALESCE(ST_AsGeoJSON(service.spatial_polygon), '')::text AS spatial_polygon_geojson
+    sqlc.embed(service)
 FROM
     web_services AS service
 WHERE

@@ -386,6 +386,7 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, 
 }
 
 // CanReadSoftwareApplicationVersion applies publication and stored-group membership rules to one version.
+// TODO: see if we can generalize this function to a general "can read resource version"?
 func (a *Authorizer) CanReadSoftwareApplicationVersion(ctx context.Context, userID *string, applicationID, versionID uuid.UUID) (Result, error) {
 	version, err := a.repository.SoftwareApplicationVersionAuthz(ctx, applicationID, versionID)
 	if err != nil {

@@ -11,10 +11,12 @@ import (
 	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
+	"github.com/EPOS-ERIC/epos-platform/services/backoffice/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/docs"
 	groupservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/groups"
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/dataset"
+	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/discovery"
 	groupsapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/health"
 	identityapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/identity"
@@ -76,7 +78,8 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/users/{user_id}/unblock", identity.UnblockUser)
 		r.Post("/internal/users", identity.Create)
 
-		groups := groupsapi.New(groupservice.New(database.Groups, authorizer))
+		groupService := groupservice.New(database.Groups, authorizer)
+		groups := groupsapi.New(groupService)
 		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
 
 		r.Get("/groups", groups.List)
@@ -116,11 +119,16 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Put("/organizations/{organization_id}", organizations.Replace)
 		r.Delete("/organizations/{organization_id}", organizations.Delete)
 
-		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
-		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))
-		sourceCodes := softwaresourcecode.New(softwarelifecycle.NewSourceCodeService(authorizer, database.SoftwareSourceCodes))
+		datasetService := datasetlifecycle.New(authorizer, database.Datasets)
+		applicationService := softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications)
+		sourceCodeService := softwarelifecycle.NewSourceCodeService(authorizer, database.SoftwareSourceCodes)
+		datasets := dataset.New(datasetService)
+		applications := softwareapplication.New(applicationService)
+		sourceCodes := softwaresourcecode.New(sourceCodeService)
 		resources := resource.New(datasets, applications, sourceCodes)
+		discoveryHandler := discoveryapi.New(discovery.New(database.Discovery, authorizer, datasetService, applicationService, sourceCodeService, groupService))
 
+		r.Get("/resources", discoveryHandler.Search)
 		r.Post("/resources/{resource_type}", resources.Create)
 		r.Get("/resources/{resource_type}/{resource_id}/versions/{version_id}", resources.Get)
 		r.Put("/resources/{resource_type}/{resource_id}/versions/{version_id}/draft", resources.ReplaceDraft)

@@ -3,7 +3,6 @@ package dataset
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/twpayne/go-geom"
 )
 
 // Repo persists each lifecycle operation in one database transaction.
@@ -371,7 +371,7 @@ func VersionParams(datasetID uuid.UUID, actorID string, value metadata.Dataset) 
 	if value.TemporalCoverage != nil {
 		start, end = value.TemporalCoverage.Start, value.TemporalCoverage.End
 	}
-	point, polygon, err := spatialJSON(value.SpatialCoverage)
+	point, polygon, err := spatialGeometry(value.SpatialCoverage)
 	if err != nil {
 		return sqlc.CreateLifecycleDatasetVersionParams{}, fmt.Errorf("encode dataset geometry: %w", err)
 	}
@@ -493,7 +493,7 @@ func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid
 			continue
 		}
 		service := distribution.WebService
-		point, polygon, err := spatialJSON(service.SpatialCoverage)
+		point, polygon, err := spatialGeometry(service.SpatialCoverage)
 		if err != nil {
 			return fmt.Errorf("encode web service geometry: %w", err)
 		}
@@ -609,7 +609,7 @@ func lifecycleError(err error) error {
 	return err
 }
 
-func spatialJSON(value *metadata.Spatial) (*string, *string, error) {
+func spatialGeometry(value *metadata.Spatial) (*geom.Point, *geom.Polygon, error) {
 	if value == nil {
 		return nil, nil, nil
 	}
@@ -617,71 +617,70 @@ func spatialJSON(value *metadata.Spatial) (*string, *string, error) {
 		return nil, nil, fmt.Errorf("spatial coverage cannot contain both point and polygon")
 	}
 	if value.Point != nil {
-		encoded, err := json.Marshal(struct {
-			Type        string    `json:"type"`
-			Coordinates []float64 `json:"coordinates"`
-		}{"Point", []float64{value.Point.Longitude, value.Point.Latitude}})
-		if err != nil {
-			return nil, nil, fmt.Errorf("marshal point GeoJSON: %w", err)
-		}
-		text := string(encoded)
-		return &text, nil, nil
+		point := geom.NewPointFlat(geom.XY, []float64{value.Point.Longitude, value.Point.Latitude})
+		point.SetSRID(4326)
+		return point, nil, nil
 	}
 	if len(value.Polygon) == 0 {
 		return nil, nil, nil
 	}
-	coordinates := make([][]float64, len(value.Polygon))
+	coordinates := make([]geom.Coord, len(value.Polygon))
 	for i, coordinate := range value.Polygon {
-		coordinates[i] = []float64{coordinate.Longitude, coordinate.Latitude}
+		coordinates[i] = geom.Coord{coordinate.Longitude, coordinate.Latitude}
 	}
-	encoded, err := json.Marshal(struct {
-		Type        string        `json:"type"`
-		Coordinates [][][]float64 `json:"coordinates"`
-	}{"Polygon", [][][]float64{coordinates}})
-	if err != nil {
-		return nil, nil, fmt.Errorf("marshal polygon GeoJSON: %w", err)
-	}
-	text := string(encoded)
-	return nil, &text, nil
+
+	polygon := geom.NewPolygon(geom.XY).MustSetCoords([][]geom.Coord{coordinates})
+	polygon.SetSRID(4326)
+
+	return nil, polygon, nil
 }
 
 func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetLifecycleDatasetVersionRow) (metadata.Dataset, error) {
-	spatial, err := spatialFromJSON(version.SpatialPointGeojson, version.SpatialPolygonGeojson)
+	spatial, err := spatialFromGeometry(version.SpatialPoint, version.SpatialPolygon)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("decode dataset geometry: %w", err)
 	}
+
 	identifiers, err := q.ListLifecycleDatasetIdentifiers(ctx, &version.ID)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("list identifiers: %w", err)
 	}
+
 	providers, err := q.ListLifecycleDatasetProviders(ctx, version.ID)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("list providers: %w", err)
 	}
+
 	providerIDs := make([]uuid.UUID, len(providers))
 	for i, provider := range providers {
 		providerIDs[i] = provider.ID
 	}
+
 	providerContacts, err := q.ListLifecycleOrganizationContactPoints(ctx, providerIDs)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("list provider contact points: %w", err)
 	}
+
 	contacts, err := q.ListLifecycleDatasetContactPoints(ctx, version.ID)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("list contact points: %w", err)
 	}
+
 	categories, err := q.ListLifecycleDatasetCategories(ctx, version.ID)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("list categories: %w", err)
 	}
+
 	services, err := readWebServices(ctx, q, version.ID)
 	if err != nil {
 		return metadata.Dataset{}, err
 	}
+
 	distributions, err := q.ListLifecycleDistributions(ctx, version.ID)
 	if err != nil {
 		return metadata.Dataset{}, fmt.Errorf("list distributions: %w", err)
 	}
+
 	result := metadata.Dataset{
 		ID:                    version.ID,
 		SourceIRI:             version.SourceIri,
@@ -704,21 +703,26 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		Created:               version.CreatedAt,
 		Updated:               version.UpdatedAt,
 	}
+
 	for _, item := range identifiers {
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifier(item.Identifier))
 	}
+
 	contactsByProviderID := make(map[uuid.UUID][]metadata.ContactPoint, len(providers))
 	for _, item := range providerContacts {
 		contactsByProviderID[item.OrganizationID] = append(contactsByProviderID[item.OrganizationID], contactPoint(item.ContactPoint))
 	}
+
 	for _, item := range providers {
 		provider := organization(item)
 		provider.ContactPoints = contactsByProviderID[item.ID]
 		result.Providers = append(result.Providers, provider)
 	}
+
 	for _, item := range contacts {
 		result.ContactPoints = append(result.ContactPoints, contactPoint(item))
 	}
+
 	for _, item := range categories {
 		result.Categories = append(result.Categories, metadata.Category{
 			ID:        item.ID,
@@ -739,6 +743,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 			Children: nil,
 		})
 	}
+
 	for _, item := range distributions {
 		distribution := metadata.Distribution{
 			ID:               item.ID,
@@ -767,6 +772,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		}
 		result.Distributions = append(result.Distributions, distribution)
 	}
+
 	return result, nil
 }
 
@@ -779,7 +785,7 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	result := make(map[uuid.UUID]metadata.WebService, len(rows))
 	providerIDs := make([]uuid.UUID, 0, len(rows))
 	for i, row := range rows {
-		spatial, err := spatialFromJSON(row.SpatialPointGeojson, row.SpatialPolygonGeojson)
+		spatial, err := spatialFromGeometry(row.WebService.SpatialPoint, row.WebService.SpatialPolygon)
 		if err != nil {
 			return nil, fmt.Errorf("decode web service geometry: %w", err)
 		}
@@ -866,38 +872,26 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 	return result, nil
 }
 
-// spatialFromJSON maps GeoJSON produced by ST_AsGeoJSON from stored PostGIS geometries.
-func spatialFromJSON(point, polygon string) (*metadata.Spatial, error) {
-	if point == "" && polygon == "" {
+func spatialFromGeometry(point *geom.Point, polygon *geom.Polygon) (*metadata.Spatial, error) {
+	if point == nil && polygon == nil {
 		return nil, nil
 	}
-	if point != "" {
-		var value struct {
-			Coordinates []float64 `json:"coordinates"`
-		}
-		if err := json.Unmarshal([]byte(point), &value); err != nil || len(value.Coordinates) != 2 {
-			return nil, fmt.Errorf("invalid point GeoJSON")
-		}
+	if point != nil {
 		return &metadata.Spatial{
 			Point: &metadata.Coordinate{
-				Longitude: value.Coordinates[0],
-				Latitude:  value.Coordinates[1],
+				Longitude: point.X(),
+				Latitude:  point.Y(),
 			},
 			Polygon: nil,
 		}, nil
 	}
-	var value struct {
-		Coordinates [][][]float64 `json:"coordinates"`
+	rings := polygon.Coords()
+	if len(rings) == 0 {
+		return nil, fmt.Errorf("invalid polygon geometry")
 	}
-	if err := json.Unmarshal([]byte(polygon), &value); err != nil || len(value.Coordinates) != 1 {
-		return nil, fmt.Errorf("invalid polygon GeoJSON")
-	}
-	coordinates := make([]metadata.Coordinate, len(value.Coordinates[0]))
-	for i, coordinate := range value.Coordinates[0] {
-		if len(coordinate) != 2 {
-			return nil, fmt.Errorf("invalid polygon coordinate")
-		}
-		coordinates[i] = metadata.Coordinate{Longitude: coordinate[0], Latitude: coordinate[1]}
+	coordinates := make([]metadata.Coordinate, len(rings[0]))
+	for i, coordinate := range rings[0] {
+		coordinates[i] = metadata.Coordinate{Longitude: coordinate.X(), Latitude: coordinate.Y()}
 	}
 	return &metadata.Spatial{Point: nil, Polygon: coordinates}, nil
 }

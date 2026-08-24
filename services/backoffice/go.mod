@@ -17,6 +17,8 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pressly/goose/v3 v3.27.3
+	github.com/twpayne/go-geom v1.6.1
+	github.com/twpayne/pgx-geom v1.0.0
 )
 
 require (

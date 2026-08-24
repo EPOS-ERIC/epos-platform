@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	geom "github.com/twpayne/go-geom"
 )
 
 const addLifecycleDatasetCategory = `-- name: AddLifecycleDatasetCategory :exec
@@ -195,20 +196,8 @@ VALUES
         $7,
         $8,
         $9,
-        CASE
-            WHEN $10::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON($10::text),
-                4326
-            )
-        END,
-        CASE
-            WHEN $11::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON($11::text),
-                4326
-            )
-        END,
+        $10,
+        $11,
         $12,
         $13
     )
@@ -226,8 +215,8 @@ type AddLifecycleWebServiceParams struct {
 	DocumentationTitle       *string
 	DocumentationDescription *string
 	DocumentationUri         *string
-	SpatialPoint             *string
-	SpatialPolygon           *string
+	SpatialPoint             *geom.Point
+	SpatialPolygon           *geom.Polygon
 	TemporalStart            *time.Time
 	TemporalEnd              *time.Time
 }
@@ -638,33 +627,7 @@ distributions AS (
 )
 SELECT
     id,
-    dataset_id,
-    STATUS,
-    revision,
-    title,
-    description,
-    keywords,
-    accrual_periodicity,
-    quality_annotation,
-    access_right,
-    source_created_at,
-    source_updated_at,
-    spatial_point,
-    spatial_polygon,
-    temporal_start,
-    temporal_end,
-    created_by,
-    created_at,
-    updated_at,
-    submitted_by,
-    submitted_at,
-    published_by,
-    published_at,
-    archived_by,
-    archived_at,
-    rejected_by,
-    rejected_at,
-    rejection_note
+    dataset_id
 FROM
     inserted
 `
@@ -679,34 +642,8 @@ type CloneLifecycleDatasetVersionParams struct {
 }
 
 type CloneLifecycleDatasetVersionRow struct {
-	ID                 uuid.UUID
-	DatasetID          uuid.UUID
-	Status             ResourceStatus
-	Revision           int32
-	Title              string
-	Description        string
-	Keywords           string
-	AccrualPeriodicity *string
-	QualityAnnotation  *string
-	AccessRight        *string
-	SourceCreatedAt    *time.Time
-	SourceUpdatedAt    *time.Time
-	SpatialPoint       interface{}
-	SpatialPolygon     interface{}
-	TemporalStart      *time.Time
-	TemporalEnd        *time.Time
-	CreatedBy          string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
-	SubmittedBy        *string
-	SubmittedAt        *time.Time
-	PublishedBy        *string
-	PublishedAt        *time.Time
-	ArchivedBy         *string
-	ArchivedAt         *time.Time
-	RejectedBy         *string
-	RejectedAt         *time.Time
-	RejectionNote      *string
+	ID        uuid.UUID
+	DatasetID uuid.UUID
 }
 
 func (q *Queries) CloneLifecycleDatasetVersion(ctx context.Context, arg CloneLifecycleDatasetVersionParams) (CloneLifecycleDatasetVersionRow, error) {
@@ -719,36 +656,7 @@ func (q *Queries) CloneLifecycleDatasetVersion(ctx context.Context, arg CloneLif
 		arg.CopyCategories,
 	)
 	var i CloneLifecycleDatasetVersionRow
-	err := row.Scan(
-		&i.ID,
-		&i.DatasetID,
-		&i.Status,
-		&i.Revision,
-		&i.Title,
-		&i.Description,
-		&i.Keywords,
-		&i.AccrualPeriodicity,
-		&i.QualityAnnotation,
-		&i.AccessRight,
-		&i.SourceCreatedAt,
-		&i.SourceUpdatedAt,
-		&i.SpatialPoint,
-		&i.SpatialPolygon,
-		&i.TemporalStart,
-		&i.TemporalEnd,
-		&i.CreatedBy,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.SubmittedBy,
-		&i.SubmittedAt,
-		&i.PublishedBy,
-		&i.PublishedAt,
-		&i.ArchivedBy,
-		&i.ArchivedAt,
-		&i.RejectedBy,
-		&i.RejectedAt,
-		&i.RejectionNote,
-	)
+	err := row.Scan(&i.ID, &i.DatasetID)
 	return i, err
 }
 
@@ -817,20 +725,8 @@ VALUES
         $7,
         $8,
         $9,
-        CASE
-            WHEN $10::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON($10::text),
-                4326
-            )
-        END,
-        CASE
-            WHEN $11::text IS NULL THEN NULL
-            ELSE ST_SetSRID(
-                ST_GeomFromGeoJSON($11::text),
-                4326
-            )
-        END,
+        $10,
+        $11,
         $12,
         $13,
         $14
@@ -849,8 +745,8 @@ type CreateLifecycleDatasetVersionParams struct {
 	AccessRight        *string
 	SourceCreatedAt    *time.Time
 	SourceUpdatedAt    *time.Time
-	SpatialPoint       *string
-	SpatialPolygon     *string
+	SpatialPoint       *geom.Point
+	SpatialPolygon     *geom.Polygon
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
 	CreatedBy          string
@@ -1194,8 +1090,8 @@ SELECT
     version.access_right,
     version.source_created_at,
     version.source_updated_at,
-    COALESCE(ST_AsGeoJSON(version.spatial_point), '')::text AS spatial_point_geojson,
-    COALESCE(ST_AsGeoJSON(version.spatial_polygon), '')::text AS spatial_polygon_geojson,
+    version.spatial_point,
+    version.spatial_polygon,
     version.temporal_start,
     version.temporal_end,
     version.created_by,
@@ -1227,36 +1123,36 @@ type GetLifecycleDatasetVersionParams struct {
 }
 
 type GetLifecycleDatasetVersionRow struct {
-	ID                    uuid.UUID
-	DatasetID             uuid.UUID
-	Status                ResourceStatus
-	Revision              int32
-	Title                 string
-	Description           string
-	Keywords              string
-	AccrualPeriodicity    *string
-	QualityAnnotation     *string
-	AccessRight           *string
-	SourceCreatedAt       *time.Time
-	SourceUpdatedAt       *time.Time
-	SpatialPointGeojson   string
-	SpatialPolygonGeojson string
-	TemporalStart         *time.Time
-	TemporalEnd           *time.Time
-	CreatedBy             string
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
-	SubmittedBy           *string
-	SubmittedAt           *time.Time
-	PublishedBy           *string
-	PublishedAt           *time.Time
-	ArchivedBy            *string
-	ArchivedAt            *time.Time
-	RejectedBy            *string
-	RejectedAt            *time.Time
-	RejectionNote         *string
-	SourceIri             string
-	Group                 Group
+	ID                 uuid.UUID
+	DatasetID          uuid.UUID
+	Status             ResourceStatus
+	Revision           int32
+	Title              string
+	Description        string
+	Keywords           string
+	AccrualPeriodicity *string
+	QualityAnnotation  *string
+	AccessRight        *string
+	SourceCreatedAt    *time.Time
+	SourceUpdatedAt    *time.Time
+	SpatialPoint       *geom.Point
+	SpatialPolygon     *geom.Polygon
+	TemporalStart      *time.Time
+	TemporalEnd        *time.Time
+	CreatedBy          string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	SubmittedBy        *string
+	SubmittedAt        *time.Time
+	PublishedBy        *string
+	PublishedAt        *time.Time
+	ArchivedBy         *string
+	ArchivedAt         *time.Time
+	RejectedBy         *string
+	RejectedAt         *time.Time
+	RejectionNote      *string
+	SourceIri          string
+	Group              Group
 }
 
 func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecycleDatasetVersionParams) (GetLifecycleDatasetVersionRow, error) {
@@ -1275,8 +1171,8 @@ func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecyc
 		&i.AccessRight,
 		&i.SourceCreatedAt,
 		&i.SourceUpdatedAt,
-		&i.SpatialPointGeojson,
-		&i.SpatialPolygonGeojson,
+		&i.SpatialPoint,
+		&i.SpatialPolygon,
 		&i.TemporalStart,
 		&i.TemporalEnd,
 		&i.CreatedBy,
@@ -1780,9 +1676,7 @@ func (q *Queries) ListLifecycleWebServiceParameters(ctx context.Context, webServ
 
 const listLifecycleWebServices = `-- name: ListLifecycleWebServices :many
 SELECT
-    service.id, service.dataset_version_id, service.name, service.description, service.template_url, service.format, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_point, service.spatial_polygon, service.temporal_start, service.temporal_end,
-    COALESCE(ST_AsGeoJSON(service.spatial_point), '')::text AS spatial_point_geojson,
-    COALESCE(ST_AsGeoJSON(service.spatial_polygon), '')::text AS spatial_polygon_geojson
+    service.id, service.dataset_version_id, service.name, service.description, service.template_url, service.format, service.provider_organization_id, service.documentation_title, service.documentation_description, service.documentation_uri, service.spatial_point, service.spatial_polygon, service.temporal_start, service.temporal_end
 FROM
     web_services AS service
 WHERE
@@ -1792,9 +1686,7 @@ ORDER BY
 `
 
 type ListLifecycleWebServicesRow struct {
-	WebService            WebService
-	SpatialPointGeojson   string
-	SpatialPolygonGeojson string
+	WebService WebService
 }
 
 func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID uuid.UUID) ([]ListLifecycleWebServicesRow, error) {
@@ -1821,8 +1713,6 @@ func (q *Queries) ListLifecycleWebServices(ctx context.Context, datasetVersionID
 			&i.WebService.SpatialPolygon,
 			&i.WebService.TemporalStart,
 			&i.WebService.TemporalEnd,
-			&i.SpatialPointGeojson,
-			&i.SpatialPolygonGeojson,
 		); err != nil {
 			return nil, err
 		}
@@ -2035,20 +1925,8 @@ SET
     access_right = $6,
     source_created_at = $7,
     source_updated_at = $8,
-    spatial_point = CASE
-        WHEN $9::text IS NULL THEN NULL
-        ELSE ST_SetSRID(
-            ST_GeomFromGeoJSON($9::text),
-            4326
-        )
-    END,
-    spatial_polygon = CASE
-        WHEN $10::text IS NULL THEN NULL
-        ELSE ST_SetSRID(
-            ST_GeomFromGeoJSON($10::text),
-            4326
-        )
-    END,
+    spatial_point = $9,
+    spatial_polygon = $10,
     temporal_start = $11,
     temporal_end = $12,
     revision = revision + 1
@@ -2070,8 +1948,8 @@ type ReplaceLifecycleDatasetDraftParams struct {
 	AccessRight        *string
 	SourceCreatedAt    *time.Time
 	SourceUpdatedAt    *time.Time
-	SpatialPoint       *string
-	SpatialPolygon     *string
+	SpatialPoint       *geom.Point
+	SpatialPolygon     *geom.Polygon
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
 	ID                 uuid.UUID
