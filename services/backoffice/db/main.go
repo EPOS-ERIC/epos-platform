@@ -11,6 +11,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/config"
 	authdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/authz"
+	contactpointdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/contactpoints"
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/dataset"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/groups"
 	identitydb "github.com/EPOS-ERIC/epos-platform/services/backoffice/db/identity"
@@ -32,6 +33,7 @@ type PostgresDB struct {
 	Authorization        *authdb.Repo
 	Identity             *identitydb.Repo
 	Groups               *groupdb.Repo
+	ContactPoints        *contactpointdb.Repo
 	Datasets             *datasetdb.Repo
 	Imports              *importdb.Repo
 	SoftwareApplications *softwaredb.ApplicationRepo
@@ -80,6 +82,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
 		Identity:             &identitydb.Repo{Queries: sqlc.New(db), DB: db},
 		Groups:               groupdb.New(db),
+		ContactPoints:        contactpointdb.New(db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwaredb.NewApplicationRepo(db),

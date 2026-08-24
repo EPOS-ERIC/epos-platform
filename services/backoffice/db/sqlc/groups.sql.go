@@ -500,9 +500,11 @@ func (q *Queries) DeleteGroup(ctx context.Context, id uuid.UUID) (string, error)
 }
 
 const deleteGroupCategory = `-- name: DeleteGroupCategory :execrows
-DELETE FROM categories
-WHERE group_id = $1
-  AND id = $2
+DELETE FROM
+    categories
+WHERE
+    group_id = $1
+    AND id = $2
 `
 
 type DeleteGroupCategoryParams struct {

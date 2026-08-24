@@ -18,6 +18,8 @@ tags:
     description: Shared dataset and software resource lifecycle.
   - name: Imports
     description: Global administrator metadata import.
+  - name: Contact Points
+    description: Protected canonical contact-point reads.
   - name: Internal Identity
     description: Internal gateway-to-Backoffice identity resolution.
 paths:
@@ -151,6 +153,43 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
         "415": { description: Content-Type must be text/turtle }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/contact-points:
+    get:
+      tags: [Contact Points]
+      operationId: listContactPoints
+      summary: List contact points
+      description: Returns complete contact-point documents. Requires an active user who is a member of any group or global ADMIN.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "200":
+          description: Contact points returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ContactPoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/contact-points/{contact_point_id}:
+    parameters: [{ $ref: "#/components/parameters/ContactPointID" }]
+    get:
+      tags: [Contact Points]
+      operationId: getContactPoint
+      summary: Get contact point
+      description: Returns a complete contact-point document. Requires an active user who is a member of any group or global ADMIN.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "200":
+          description: Contact point returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/resources/{resource_type}:
     parameters:
@@ -927,6 +966,13 @@ components:
     GroupID:
       {
         name: group_id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    ContactPointID:
+      {
+        name: contact_point_id,
         in: path,
         required: true,
         schema: { type: string, format: uuid },

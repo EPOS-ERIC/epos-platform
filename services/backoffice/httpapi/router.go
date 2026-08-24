@@ -8,10 +8,12 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/authz"
+	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/db"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/docs"
 	groupservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/groups"
+	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/dataset"
 	groupsapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/health"
@@ -53,6 +55,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 	r.Route("/api/v1", func(r chi.Router) {
+		// TODO: group the endpoints better with r.Route
 		authorizer := authz.New(database.Authorization)
 
 		importsHandler := imports.New(metadataimport.New(turtle.Parser{}, authorizer, database.Imports))
@@ -72,6 +75,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/internal/users", identity.Create)
 
 		groups := groupsapi.New(groupservice.New(database.Groups, authorizer))
+		contactPoints := contactpointsapi.New(contactpointservice.New(database.ContactPoints, authorizer))
 		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
 
 		r.Get("/groups", groups.List)
@@ -96,6 +100,9 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", groupAccess.RemoveRole)
 		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.GrantPermission)
 		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.RevokePermission)
+
+		r.Get("/contact-points", contactPoints.List)
+		r.Get("/contact-points/{contact_point_id}", contactPoints.Get)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))
