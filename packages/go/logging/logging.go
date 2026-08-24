@@ -39,13 +39,6 @@ type Request struct {
 	Query  string
 }
 
-// Actor carries request-scoped identity data for audit logs.
-type Actor struct {
-	ID             string
-	AuthIdentifier string
-	IsSuperAdmin   bool
-}
-
 func parseLevel(value string) (slog.Level, bool) {
 	switch strings.ToUpper(value) {
 	case "DEBUG":
@@ -189,9 +182,9 @@ func WithRequest(ctx context.Context, request Request) context.Context {
 	return context.WithValue(ctx, requestContextKey{}, request)
 }
 
-// WithActor returns a context enriched with authenticated actor metadata.
-func WithActor(ctx context.Context, actor Actor) context.Context {
-	return context.WithValue(ctx, actorContextKey{}, actor)
+// WithActor returns a context enriched with authenticated actor ID.
+func WithActor(ctx context.Context, actorID string) context.Context {
+	return context.WithValue(ctx, actorContextKey{}, actorID)
 }
 
 // RequestFromContext returns request-scoped logging metadata stored in ctx, if present.
@@ -200,10 +193,10 @@ func RequestFromContext(ctx context.Context) (Request, bool) {
 	return request, ok
 }
 
-// ActorFromContext returns authenticated actor metadata stored in ctx, if present.
-func ActorFromContext(ctx context.Context) (Actor, bool) {
-	actor, ok := ctx.Value(actorContextKey{}).(Actor)
-	return actor, ok
+// ActorFromContext returns authenticated actor ID stored in ctx, if present.
+func ActorFromContext(ctx context.Context) (string, bool) {
+	actorID, ok := ctx.Value(actorContextKey{}).(string)
+	return actorID, ok
 }
 
 type contextHandler struct {
@@ -216,7 +209,7 @@ func (h *contextHandler) Enabled(ctx context.Context, level slog.Level) bool {
 
 func (h *contextHandler) Handle(ctx context.Context, record slog.Record) error {
 	request, hasRequest := RequestFromContext(ctx)
-	actor, hasActor := ActorFromContext(ctx)
+	actorID, hasActor := ActorFromContext(ctx)
 	if !hasRequest && !hasActor {
 		return h.next.Handle(ctx, record)
 	}
@@ -237,14 +230,10 @@ func (h *contextHandler) Handle(ctx context.Context, record slog.Record) error {
 		attrs = append(attrs, slog.Group("request", requestAttrs...))
 	}
 	if hasActor {
-		actorAttrs := make([]any, 0, 3)
-		if actor.ID != "" {
-			actorAttrs = append(actorAttrs, slog.String("id", actor.ID))
+		actorAttrs := make([]any, 0, 1)
+		if actorID != "" {
+			actorAttrs = append(actorAttrs, slog.String("id", actorID))
 		}
-		if actor.AuthIdentifier != "" {
-			actorAttrs = append(actorAttrs, slog.String("auth_identifier", actor.AuthIdentifier))
-		}
-		actorAttrs = append(actorAttrs, slog.Bool("is_super_admin", actor.IsSuperAdmin))
 		attrs = append(attrs, slog.Group("actor", actorAttrs...))
 	}
 	if len(attrs) > 0 {

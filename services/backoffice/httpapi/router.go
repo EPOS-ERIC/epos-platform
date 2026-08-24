@@ -41,6 +41,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
+	r.Use(auditMiddleware(log))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Get("/health", health.New(database).ServeHTTP)

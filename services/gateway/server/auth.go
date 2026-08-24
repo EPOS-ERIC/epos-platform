@@ -73,11 +73,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Ba
 			}
 
 			user := handlers.UserFromDomain(resolved)
-			ctx := logging.WithActor(r.Context(), logging.Actor{
-				ID:             user.ID,
-				AuthIdentifier: user.ID,
-				IsSuperAdmin:   user.IsGlobalAdmin(),
-			})
+			ctx := logging.WithActor(r.Context(), user.ID)
 
 			span.SetAttributes(
 				attribute.String("auth.result", "authenticated"),

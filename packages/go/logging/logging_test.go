@@ -112,11 +112,7 @@ func TestContextHandlerAddsActor(t *testing.T) {
 	var output bytes.Buffer
 	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
 
-	ctx := WithActor(context.Background(), Actor{
-		ID:             "local-1",
-		AuthIdentifier: "user-123",
-		IsSuperAdmin:   true,
-	})
+	ctx := WithActor(context.Background(), "local-1")
 
 	logger.WarnContext(ctx, "access denied")
 
@@ -132,12 +128,6 @@ func TestContextHandlerAddsActor(t *testing.T) {
 	if actor["id"] != "local-1" {
 		t.Fatalf("actor.id = %#v", actor["id"])
 	}
-	if actor["auth_identifier"] != "user-123" {
-		t.Fatalf("actor.auth_identifier = %#v", actor["auth_identifier"])
-	}
-	if actor["is_super_admin"] != true {
-		t.Fatalf("actor.is_super_admin = %#v", actor["is_super_admin"])
-	}
 }
 
 func TestContextHandlerAddsRequestAndActor(t *testing.T) {
@@ -148,7 +138,7 @@ func TestContextHandlerAddsRequestAndActor(t *testing.T) {
 		Method: "GET",
 		Path:   "/v1/users",
 	})
-	ctx = WithActor(ctx, Actor{ID: "local-1"})
+	ctx = WithActor(ctx, "local-1")
 
 	logger.InfoContext(ctx, "request log")
 
