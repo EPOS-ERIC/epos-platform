@@ -19,11 +19,13 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/health"
 	identityapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/identity"
 	imports "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/import"
+	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/softwareapplication"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/handlers/softwaresourcecode"
 	identityservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/metadataimport"
+	organizationservice "github.com/EPOS-ERIC/epos-platform/services/backoffice/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/softwarelifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/turtle"
 	"github.com/go-chi/chi/v5"
@@ -75,7 +77,6 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/internal/users", identity.Create)
 
 		groups := groupsapi.New(groupservice.New(database.Groups, authorizer))
-		contactPoints := contactpointsapi.New(contactpointservice.New(database.ContactPoints, authorizer))
 		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
 
 		r.Get("/groups", groups.List)
@@ -101,11 +102,16 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.GrantPermission)
 		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.RevokePermission)
 
+		contactPoints := contactpointsapi.New(contactpointservice.New(database.ContactPoints, authorizer))
 		r.Get("/contact-points", contactPoints.List)
 		r.Post("/contact-points", contactPoints.Create)
 		r.Get("/contact-points/{contact_point_id}", contactPoints.Get)
 		r.Put("/contact-points/{contact_point_id}", contactPoints.Replace)
 		r.Delete("/contact-points/{contact_point_id}", contactPoints.Delete)
+
+		organizations := organizationsapi.New(organizationservice.New(database.Organizations))
+		r.Get("/organizations", organizations.List)
+		r.Get("/organizations/{organization_id}", organizations.Get)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))

@@ -20,6 +20,8 @@ tags:
     description: Global administrator metadata import.
   - name: Contact Points
     description: Protected canonical contact-point reads.
+  - name: Organizations
+    description: Public canonical organization reads.
   - name: Internal Identity
     description: Internal gateway-to-Backoffice identity resolution.
 paths:
@@ -153,6 +155,37 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
         "415": { description: Content-Type must be text/turtle }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/organizations:
+    get:
+      tags: [Organizations]
+      operationId: listOrganizations
+      summary: List organizations
+      description: Returns complete public organization documents. Contact-point IDs are public; contact-point details require contact-point read eligibility.
+      responses:
+        "200":
+          description: Organizations returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/organizations/{organization_id}:
+    parameters: [{ $ref: "#/components/parameters/OrganizationID" }]
+    get:
+      tags: [Organizations]
+      operationId: getOrganization
+      summary: Get organization
+      description: Returns one complete public organization document. Contact-point IDs are public; contact-point details require contact-point read eligibility.
+      responses:
+        "200":
+          description: Organization returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/contact-points:
     post:
@@ -1031,6 +1064,13 @@ components:
     ContactPointID:
       {
         name: contact_point_id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
+    OrganizationID:
+      {
+        name: organization_id,
         in: path,
         required: true,
         schema: { type: string, format: uuid },
@@ -2012,6 +2052,36 @@ components:
       properties:
         email: { type: string }
         role: { type: string }
+    CanonicalOrganization:
+      type: object
+      required: [id, source_iri, name, address, identifiers, parents, contact_point_ids]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        address:
+          type: object
+          required: [street, locality, postal_code, country]
+          additionalProperties: false
+          properties:
+            street: { type: string, nullable: true }
+            locality: { type: string, nullable: true }
+            postal_code: { type: string, nullable: true }
+            country: { type: string, nullable: true }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/Identifier" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
     Organization:
       {
         type: object,

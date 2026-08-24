@@ -59,7 +59,7 @@ requirements remain authoritative unless an explicit deviation is recorded here.
 | `DELETE` | `/api/v1/organizations/{organization_id}` | Delete organization, owned identifiers, hierarchy links, and organization links atomically.          | `organization.manage` |
 
 Organization documents use `address: {street, locality, postal_code, country}` and
-include `logo_url`, `page_url`, `email`, `lei_code`, `parent_organization_ids`,
+include `logo_url`, `page_url`, `email`, `lei_code`, `parents`,
 `contact_point_ids`, and embedded owned `identifiers`. A full `PUT` replaces every
 identifier and relation list. Organization hierarchy cycles are rejected.
 
@@ -162,7 +162,7 @@ and focused tests.
     - Unlink organization, resource-version, and web-service references before deletion in one transaction.
 
 13. Organization reads: `GET /api/v1/organizations` and detail
-    - Add public complete documents with owned identifiers, parent IDs, and contact-point IDs.
+     - Add public complete documents with owned identifiers, parent IDs, and contact-point IDs.
 
 14. Organization creation: `POST /api/v1/organizations`
     - Require global `organization.manage`.
@@ -180,7 +180,14 @@ and focused tests.
 
 17. Canonical acceptance pass
     - Add database-backed tests for authorization, full replacement, immutable fields, hierarchy constraints, and atomic unlinking.
-    - Run `make generate`, `make test`, `make build`, and `make lint`.
+     - Run `make generate`, `make test`, `make build`, and `make lint`.
+
+### Organization Reads Implementation Record
+
+- Added public organization list and detail routes with complete canonical documents.
+- Organization reads batch-load owned identifiers, parent organization IDs, and contact-point IDs without exposing contact-point details.
+- Added SQLC-backed organization repository and separate canonical OpenAPI schema with nested address fields.
+- `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
 
 ## Known Gaps In Existing Endpoints
 
