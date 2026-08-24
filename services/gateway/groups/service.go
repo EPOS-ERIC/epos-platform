@@ -48,6 +48,130 @@ func (s *Service) Get(ctx context.Context, id string) (domain.Group, error) {
 	return group, nil
 }
 
+func (s *Service) Create(ctx context.Context, actorID string, input domain.CreateGroupInput) (domain.Group, error) {
+	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(input.Name) == "" || strings.TrimSpace(input.Concept) == "" {
+		return domain.Group{}, fmt.Errorf("invalid group request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.Group{}, fmt.Errorf("backoffice group client is not configured")
+	}
+	group, err := s.backoffice.CreateGroup(ctx, actorID, input)
+	if err != nil {
+		return domain.Group{}, fmt.Errorf("create group in backoffice: %w", err)
+	}
+	return group, nil
+}
+
+func (s *Service) Replace(ctx context.Context, actorID, id string, input domain.ReplaceGroupInput) (domain.Group, error) {
+	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" || strings.TrimSpace(input.Name) == "" || strings.TrimSpace(input.Concept) == "" {
+		return domain.Group{}, fmt.Errorf("invalid group request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.Group{}, fmt.Errorf("backoffice group client is not configured")
+	}
+	group, err := s.backoffice.ReplaceGroup(ctx, actorID, id, input)
+	if err != nil {
+		return domain.Group{}, fmt.Errorf("replace group in backoffice: %w", err)
+	}
+	return group, nil
+}
+
+func (s *Service) Delete(ctx context.Context, actorID, id string) error {
+	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" {
+		return fmt.Errorf("invalid group request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice group client is not configured")
+	}
+	if err := s.backoffice.DeleteGroup(ctx, actorID, id); err != nil {
+		return fmt.Errorf("delete group in backoffice: %w", err)
+	}
+	return nil
+}
+
+func (s *Service) ListMemberships(ctx context.Context, groupID, actorID string) ([]domain.GroupMembership, error) {
+	if strings.TrimSpace(groupID) == "" || strings.TrimSpace(actorID) == "" {
+		return nil, fmt.Errorf("invalid membership request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return nil, fmt.Errorf("backoffice group client is not configured")
+	}
+	memberships, err := s.backoffice.ListGroupMemberships(ctx, groupID, actorID)
+	if err != nil {
+		return nil, fmt.Errorf("list group memberships in backoffice: %w", err)
+	}
+	return memberships, nil
+}
+
+func (s *Service) ListCategories(ctx context.Context, groupID string) ([]domain.Category, error) {
+	if strings.TrimSpace(groupID) == "" {
+		return nil, fmt.Errorf("invalid group id: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return nil, fmt.Errorf("backoffice category client is not configured")
+	}
+	categories, err := s.backoffice.ListCategories(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list categories in backoffice: %w", err)
+	}
+	return categories, nil
+}
+
+func (s *Service) GetCategory(ctx context.Context, groupID, categoryID string) (domain.Category, error) {
+	if strings.TrimSpace(groupID) == "" || strings.TrimSpace(categoryID) == "" {
+		return domain.Category{}, fmt.Errorf("invalid category request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.Category{}, fmt.Errorf("backoffice category client is not configured")
+	}
+	category, err := s.backoffice.GetCategory(ctx, groupID, categoryID)
+	if err != nil {
+		return domain.Category{}, fmt.Errorf("get category in backoffice: %w", err)
+	}
+	return category, nil
+}
+
+func (s *Service) CreateCategory(ctx context.Context, actorID, groupID string, input domain.CreateCategoryInput) (domain.Category, error) {
+	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(groupID) == "" || strings.TrimSpace(input.Name) == "" {
+		return domain.Category{}, fmt.Errorf("invalid category request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.Category{}, fmt.Errorf("backoffice category client is not configured")
+	}
+	category, err := s.backoffice.CreateCategory(ctx, actorID, groupID, input)
+	if err != nil {
+		return domain.Category{}, fmt.Errorf("create category in backoffice: %w", err)
+	}
+	return category, nil
+}
+
+func (s *Service) ReplaceCategory(ctx context.Context, actorID, groupID, categoryID string, input domain.ReplaceCategoryInput) (domain.Category, error) {
+	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(groupID) == "" || strings.TrimSpace(categoryID) == "" || strings.TrimSpace(input.Name) == "" {
+		return domain.Category{}, fmt.Errorf("invalid category request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return domain.Category{}, fmt.Errorf("backoffice category client is not configured")
+	}
+	category, err := s.backoffice.ReplaceCategory(ctx, actorID, groupID, categoryID, input)
+	if err != nil {
+		return domain.Category{}, fmt.Errorf("replace category in backoffice: %w", err)
+	}
+	return category, nil
+}
+
+func (s *Service) DeleteCategory(ctx context.Context, actorID, groupID, categoryID string) error {
+	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(groupID) == "" || strings.TrimSpace(categoryID) == "" {
+		return fmt.Errorf("invalid category request: %w", domain.ErrBadRequest)
+	}
+	if s == nil || s.backoffice == nil {
+		return fmt.Errorf("backoffice category client is not configured")
+	}
+	if err := s.backoffice.DeleteCategory(ctx, actorID, groupID, categoryID); err != nil {
+		return fmt.Errorf("delete category in backoffice: %w", err)
+	}
+	return nil
+}
+
 func (s *Service) WithdrawMembershipRequest(ctx context.Context, groupID, actorID string) error {
 	groupID = strings.TrimSpace(groupID)
 	actorID = strings.TrimSpace(actorID)

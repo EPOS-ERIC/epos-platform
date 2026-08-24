@@ -1,0 +1,56 @@
+package domain
+
+type Group struct {
+	ID          string
+	SourceIRI   string
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     string
+}
+
+type Category struct {
+	ID               string
+	GroupID          string
+	ParentCategoryID *string
+	SourceIRI        string
+	Name             string
+}
+
+type CreateGroupInput struct {
+	SourceIRI   *string
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    *int32
+	Concept     string
+}
+
+type ReplaceGroupInput struct {
+	Name        string
+	Description *string
+	Label       *string
+	Logo        *string
+	Page        *string
+	Color       *string
+	Position    int32
+	Concept     string
+}
+
+type CreateCategoryInput struct {
+	SourceIRI        *string
+	Name             string
+	ParentCategoryID *string
+}
+
+type ReplaceCategoryInput struct {
+	Name             string
+	ParentCategoryID *string
+}

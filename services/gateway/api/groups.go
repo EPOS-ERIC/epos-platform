@@ -65,10 +65,45 @@ type RoleRequestDecisionRequest struct {
 }
 
 type CreateGroupRequest struct {
-	Slug        string  `json:"slug"`
+	SourceIRI   *string `json:"source_iri,omitempty"`
 	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	IsSystem    *bool   `json:"is_system,omitempty"`
+	Description *string `json:"description"`
+	Label       *string `json:"label"`
+	Logo        *string `json:"logo"`
+	Page        *string `json:"page"`
+	Color       *string `json:"color"`
+	Position    *int32  `json:"position,omitempty"`
+	Concept     string  `json:"concept"`
+}
+
+type ReplaceGroupRequest struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	Label       *string `json:"label"`
+	Logo        *string `json:"logo"`
+	Page        *string `json:"page"`
+	Color       *string `json:"color"`
+	Position    int32   `json:"position"`
+	Concept     string  `json:"concept"`
+}
+
+type Category struct {
+	ID               string  `json:"id"`
+	GroupID          string  `json:"group_id"`
+	ParentCategoryID *string `json:"parent_category_id"`
+	SourceIRI        string  `json:"source_iri"`
+	Name             string  `json:"name"`
+}
+
+type CreateCategoryRequest struct {
+	SourceIRI        *string `json:"source_iri,omitempty"`
+	Name             string  `json:"name"`
+	ParentCategoryID *string `json:"parent_category_id,omitempty"`
+}
+
+type ReplaceCategoryRequest struct {
+	Name             string  `json:"name"`
+	ParentCategoryID *string `json:"parent_category_id"`
 }
 
 type CreateMembershipRequest struct {

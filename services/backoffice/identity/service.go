@@ -104,6 +104,21 @@ func (s *Service) GetByID(ctx context.Context, actorID, userID string) (User, er
 		return User{}, ErrInvalid
 	}
 
+	// Resolve self before authorization so callers can distinguish a missing
+	// authenticated user and provision it. Keep this limited to self-reads to
+	// avoid exposing whether other user IDs exist to unauthorized callers.
+	var self User
+	var err error
+	if actorID == userID {
+		self, err = s.store.GetUserByID(ctx, userID)
+		if errors.Is(err, ErrNotFound) {
+			return User{}, ErrNotFound
+		}
+		if err != nil {
+			return User{}, fmt.Errorf("get user by id: %w", err)
+		}
+	}
+
 	allowed, err := s.authorizer.CanReadUser(ctx, actorID, userID)
 	if err != nil {
 		return User{}, fmt.Errorf("authorize user read: %w", err)
@@ -111,6 +126,10 @@ func (s *Service) GetByID(ctx context.Context, actorID, userID string) (User, er
 
 	if !allowed.Allowed {
 		return User{}, ErrForbidden
+	}
+
+	if actorID == userID {
+		return self, nil
 	}
 
 	user, err := s.store.GetUserByID(ctx, userID)

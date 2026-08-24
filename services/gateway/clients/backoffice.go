@@ -16,12 +16,15 @@ import (
 )
 
 type Backoffice struct {
-	identity  client.InternalIdentityAPI
-	users     client.UsersAPI
-	groups    client.GroupsAPI
-	access    client.GroupAccessAPI
-	resources client.ResourcesAPI
-	imports   client.ImportsAPI
+	identity      client.InternalIdentityAPI
+	users         client.UsersAPI
+	groups        client.GroupsAPI
+	access        client.GroupAccessAPI
+	resources     client.ResourcesAPI
+	imports       client.ImportsAPI
+	contactPoints client.ContactPointsAPI
+	organizations client.OrganizationsAPI
+	categories    client.CategoriesAPI
 }
 
 type ActorIdentity struct {
@@ -55,12 +58,15 @@ func NewBackoffice(baseURL string, upstreamCfg config.Upstream) (*Backoffice, er
 
 	apiClient := client.NewAPIClient(clientConfig)
 	return &Backoffice{
-		identity:  apiClient.InternalIdentityAPI,
-		users:     apiClient.UsersAPI,
-		groups:    apiClient.GroupsAPI,
-		access:    apiClient.GroupAccessAPI,
-		resources: apiClient.ResourcesAPI,
-		imports:   apiClient.ImportsAPI,
+		identity:      apiClient.InternalIdentityAPI,
+		users:         apiClient.UsersAPI,
+		groups:        apiClient.GroupsAPI,
+		access:        apiClient.GroupAccessAPI,
+		resources:     apiClient.ResourcesAPI,
+		imports:       apiClient.ImportsAPI,
+		contactPoints: apiClient.ContactPointsAPI,
+		organizations: apiClient.OrganizationsAPI,
+		categories:    apiClient.CategoriesAPI,
 	}, nil
 }
 

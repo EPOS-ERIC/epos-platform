@@ -38,12 +38,27 @@ func (s *Service) Create(ctx context.Context, actorID, groupID, resourceType str
 	return resourceResult(s.resources.CreateResource(ctx, resourceType).XEPOSUserID(actorID).CreateResourceRequest(request).Execute())
 }
 
-func (s *Service) Get(ctx context.Context, actorID, resourceType, id, versionID string) (*backofficeclient.ResourceRecord, error) {
+func (s *Service) Get(ctx context.Context, actorID, resourceType, id, versionID string) ([]byte, error) {
 	request := s.resources.GetResourceVersion(ctx, resourceType, id, versionID)
 	if actorID != "" {
 		request = request.XEPOSUserID(actorID)
 	}
-	return resourceResult(request.Execute())
+	record, response, err := request.Execute()
+	if err := responseError(response, err); err != nil {
+		return nil, err
+	}
+	if response == nil || response.Body == nil {
+		return nil, fmt.Errorf("backoffice lifecycle response body is empty")
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read backoffice lifecycle response: %w", err)
+	}
+	if len(body) == 0 && record == nil {
+		return nil, fmt.Errorf("backoffice lifecycle response is empty")
+	}
+	return body, nil
 }
 
 func (s *Service) ReplaceDraft(ctx context.Context, actorID, resourceType, id, versionID string, request backofficeclient.ReplaceResourceDraftRequest) (*backofficeclient.ResourceRecord, error) {

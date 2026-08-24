@@ -30,6 +30,10 @@ tags:
     description: User profile endpoints
   - name: Groups
     description: Group management endpoints
+  - name: Contact Points
+    description: Canonical contact-point management endpoints
+  - name: Organizations
+    description: Canonical organization management endpoints
   - name: Memberships
     description: Group membership endpoints
   - name: Resource Lifecycle
@@ -204,6 +208,193 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /contact-points:
+    get:
+      tags: [Contact Points]
+      summary: List contact points
+      operationId: listContactPoints
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Contact points returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ContactPoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    post:
+      tags: [Contact Points]
+      summary: Create contact point
+      operationId: createContactPoint
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateContactPointRequest" }
+      responses:
+        "201":
+          description: Contact point created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /contact-points/{contactPointId}:
+    parameters:
+      - { name: contactPointId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Contact Points]
+      summary: Get contact point
+      operationId: getContactPoint
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Contact point returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    put:
+      tags: [Contact Points]
+      summary: Replace contact point
+      operationId: replaceContactPoint
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceContactPointRequest" }
+      responses:
+        "200":
+          description: Contact point replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Contact Points]
+      summary: Delete contact point
+      operationId: deleteContactPoint
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Contact point deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /organizations:
+    get:
+      tags: [Organizations]
+      summary: List organizations
+      operationId: listOrganizations
+      responses:
+        "200":
+          description: Organizations returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      operationId: createOrganization
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateOrganizationRequest" }
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /organizations/{organizationId}:
+    parameters:
+      - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Organizations]
+      summary: Get organization
+      operationId: getOrganization
+      responses:
+        "200":
+          description: Organization returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    put:
+      tags: [Organizations]
+      summary: Replace organization
+      operationId: replaceOrganization
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceOrganizationRequest" }
+      responses:
+        "200":
+          description: Organization replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      operationId: deleteOrganization
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Organization deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+
   /users:
     get:
       tags:
@@ -243,6 +434,28 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   /groups:
+    post:
+      tags: [Groups]
+      summary: Create group
+      operationId: createGroup
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateGroupRequest" }
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
     get:
       tags:
         - Groups
@@ -297,6 +510,160 @@ paths:
           $ref: "#/components/responses/ServiceUnavailable"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
+    put:
+      tags: [Groups]
+      summary: Replace group
+      operationId: replaceGroup
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceGroupRequest" }
+      responses:
+        "200":
+          description: Group replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Groups]
+      summary: Delete group
+      operationId: deleteGroup
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Group deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/categories:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags: [Groups]
+      summary: List group categories
+      operationId: listGroupCategories
+      responses:
+        "200":
+          description: Categories returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    post:
+      tags: [Groups]
+      summary: Create group category
+      operationId: createGroupCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCategoryRequest" }
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/categories/{categoryId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/CategoryId"
+    get:
+      tags: [Groups]
+      summary: Get group category
+      operationId: getGroupCategory
+      responses:
+        "200":
+          description: Category returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    put:
+      tags: [Groups]
+      summary: Replace group category
+      operationId: replaceGroupCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceCategoryRequest" }
+      responses:
+        "200":
+          description: Category replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Groups]
+      summary: Delete group category
+      operationId: deleteGroupCategory
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Category deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/memberships:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags: [Memberships]
+      summary: List group memberships
+      operationId: listGroupMemberships
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Memberships returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GroupMembership" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
   /groups/{groupId}/membership-requests:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -1353,6 +1720,15 @@ components:
         type: string
         format: uuid
         example: "550e8400-e29b-41d4-a716-446655440001"
+
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      description: Category identifier.
+      schema:
+        type: string
+        format: uuid
 
     VersionId:
       name: versionId
@@ -3325,6 +3701,166 @@ components:
         updated_at:
           type: string
           format: date-time
+    Category:
+      type: object
+      required: [id, group_id, parent_category_id, source_iri, name]
+      properties:
+        id: { type: string, format: uuid }
+        group_id: { type: string, format: uuid }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+        source_iri: { type: string }
+        name: { type: string }
+    CreateCategoryRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+    ReplaceCategoryRequest:
+      type: object
+      required: [name, parent_category_id]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+    CreateGroupRequest:
+      type: object
+      required: [name, concept]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        label: { type: string, nullable: true }
+        logo: { type: string, nullable: true }
+        page: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        position: { type: integer, format: int32 }
+        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+    ReplaceGroupRequest:
+      type: object
+      required: [name, description, label, logo, page, color, position, concept]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+        label: { type: string, nullable: true }
+        logo: { type: string, nullable: true }
+        page: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        position: { type: integer, format: int32 }
+        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+    ContactPoint:
+      type: object
+      required: [id, source_iri, email, role]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        email: { type: string }
+        role: { type: string }
+    CreateContactPointRequest:
+      type: object
+      required: [email, role]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        email: { type: string }
+        role: { type: string }
+    ReplaceContactPointRequest:
+      type: object
+      required: [email, role]
+      additionalProperties: false
+      properties:
+        email: { type: string }
+        role: { type: string }
+    OrganizationAddress:
+      type: object
+      required: [street, locality, postal_code, country]
+      properties:
+        street: { type: string, nullable: true }
+        locality: { type: string, nullable: true }
+        postal_code: { type: string, nullable: true }
+        country: { type: string, nullable: true }
+    OrganizationIdentifier:
+      type: object
+      required: [id, source_iri, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+    OrganizationIdentifierRequest:
+      type: object
+      required: [type, value]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+    CanonicalOrganization:
+      type: object
+      required: [id, source_iri, name, address, identifiers, parents, contact_point_ids]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        address: { $ref: "#/components/schemas/OrganizationAddress" }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizationIdentifier" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
+    CreateOrganizationRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        address: { $ref: "#/components/schemas/OrganizationAddress" }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizationIdentifierRequest" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
+    ReplaceOrganizationRequest:
+      type: object
+      required: [name, address, logo_url, page_url, email, lei_code, identifiers, parents, contact_point_ids]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        address: { $ref: "#/components/schemas/OrganizationAddress" }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizationIdentifierRequest" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
     Group:
       type: object
       description: Public group metadata returned by Backoffice.

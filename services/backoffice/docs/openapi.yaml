@@ -1119,6 +1119,13 @@ components:
         required: true,
         schema: { type: string, format: uuid },
       }
+    CategoryID:
+      {
+        name: category_id,
+        in: path,
+        required: true,
+        schema: { type: string, format: uuid },
+      }
     ContactPointID:
       {
         name: contact_point_id,

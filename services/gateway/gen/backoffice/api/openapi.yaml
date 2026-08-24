@@ -20,6 +20,10 @@ tags:
   name: Resources
 - description: Global administrator metadata import.
   name: Imports
+- description: Protected canonical contact-point reads.
+  name: Contact Points
+- description: Public canonical organization reads.
+  name: Organizations
 - description: Internal gateway-to-Backoffice identity resolution.
   name: Internal Identity
 paths:
@@ -364,6 +368,553 @@ paths:
       summary: Import Turtle metadata
       tags:
       - Imports
+  /api/v1/organizations:
+    get:
+      description: Returns complete public organization documents. Contact-point IDs
+        are public; contact-point details require contact-point read eligibility.
+      operationId: listOrganizations
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/CanonicalOrganization"
+                type: array
+          description: Organizations returned
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: List organizations
+      tags:
+      - Organizations
+    post:
+      description: Creates a canonical organization. Requires global organization.manage
+        or global ADMIN. Organization and identifier source IRIs are generated when
+        omitted.
+      operationId: createOrganization
+      parameters:
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCanonicalOrganizationRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanonicalOrganization"
+          description: Organization created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Create organization
+      tags:
+      - Organizations
+  /api/v1/organizations/{organization_id}:
+    delete:
+      description: "Atomically deletes the organization. Foreign keys remove owned\
+        \ identifiers, hierarchy links, organization links, and resource creator/provider\
+        \ links; web-service provider links are cleared. Requires global organization.manage\
+        \ or global ADMIN."
+      operationId: deleteOrganization
+      parameters:
+      - explode: false
+        in: path
+        name: organization_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Organization deleted
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Delete organization
+      tags:
+      - Organizations
+    get:
+      description: Returns one complete public organization document. Contact-point
+        IDs are public; contact-point details require contact-point read eligibility.
+      operationId: getOrganization
+      parameters:
+      - explode: false
+        in: path
+        name: organization_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanonicalOrganization"
+          description: Organization returned
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Get organization
+      tags:
+      - Organizations
+    put:
+      description: "Fully replaces organization fields, identifiers, parent links,\
+        \ and contact-point links. Requires global organization.manage or global ADMIN.\
+        \ Organization and identifier IDs/source IRIs remain immutable except replacement\
+        \ identifiers receive new IDs."
+      operationId: replaceOrganization
+      parameters:
+      - explode: false
+        in: path
+        name: organization_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceCanonicalOrganizationRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanonicalOrganization"
+          description: Organization replaced
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Replace organization
+      tags:
+      - Organizations
+  /api/v1/contact-points:
+    get:
+      description: Returns complete contact-point documents. Requires an active user
+        who is a member of any group or global ADMIN.
+      operationId: listContactPoints
+      parameters:
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/ContactPoint"
+                type: array
+          description: Contact points returned
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: List contact points
+      tags:
+      - Contact Points
+    post:
+      description: Creates a canonical contact point. Requires global contact_point.manage
+        or global ADMIN. Source IRI is generated when omitted.
+      operationId: createContactPoint
+      parameters:
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactPointRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactPoint"
+          description: Contact point created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Create contact point
+      tags:
+      - Contact Points
+  /api/v1/contact-points/{contact_point_id}:
+    delete:
+      description: "Atomically unlinks organization, resource-version, and web-service\
+        \ references before deleting the contact point. Requires global contact_point.manage\
+        \ or global ADMIN."
+      operationId: deleteContactPoint
+      parameters:
+      - explode: false
+        in: path
+        name: contact_point_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Contact point deleted
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Delete contact point
+      tags:
+      - Contact Points
+    get:
+      description: Returns a complete contact-point document. Requires an active user
+        who is a member of any group or global ADMIN.
+      operationId: getContactPoint
+      parameters:
+      - explode: false
+        in: path
+        name: contact_point_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactPoint"
+          description: Contact point returned
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Get contact point
+      tags:
+      - Contact Points
+    put:
+      description: Replaces email and role while preserving source IRI. Requires global
+        contact_point.manage or global ADMIN.
+      operationId: replaceContactPoint
+      parameters:
+      - explode: false
+        in: path
+        name: contact_point_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceContactPointRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactPoint"
+          description: Contact point replaced
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Replace contact point
+      tags:
+      - Contact Points
   /api/v1/resources/{resource_type}:
     post:
       description: Creates a logical resource and its first editable DRAFT version
@@ -1472,7 +2023,127 @@ paths:
       summary: List groups
       tags:
       - Groups
+    post:
+      description: Creates a group and its category-scheme metadata. Requires global
+        ADMIN.
+      operationId: createGroup
+      parameters:
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGroupRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Create group
+      tags:
+      - Groups
   /api/v1/groups/{group_id}:
+    delete:
+      description: Deletes a group and its group-owned metadata. Requires global ADMIN.
+        Deletion is blocked while logical resources belong to the group.
+      operationId: deleteGroup
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Group deleted
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Delete group
+      tags:
+      - Groups
     get:
       description: Returns public group metadata. Does not include membership data.
       operationId: getGroup
@@ -1507,6 +2178,387 @@ paths:
       summary: Get group
       tags:
       - Groups
+    put:
+      description: Replaces group and category-scheme metadata. Requires category_scheme.manage
+        or global ADMIN.
+      operationId: replaceGroup
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceGroupRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Group"
+          description: Group replaced
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Replace group
+      tags:
+      - Groups
+  /api/v1/groups/{group_id}/categories:
+    get:
+      description: Returns the group category forest as a flat public list.
+      operationId: listGroupCategories
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/CanonicalCategory"
+                type: array
+          description: Categories returned
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: List group categories
+      tags:
+      - Categories
+    post:
+      description: Creates a category in the group category scheme. Requires category.manage
+        in the group. Source IRI is generated when omitted.
+      operationId: createGroupCategory
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanonicalCategory"
+          description: Category created
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Create group category
+      tags:
+      - Categories
+  /api/v1/groups/{group_id}/categories/{category_id}:
+    delete:
+      description: "Deletes the category and complete descendant subtree, atomically\
+        \ unlinking affected resource references. Requires category.manage in the\
+        \ group."
+      operationId: deleteGroupCategory
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: category_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Category deleted
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Delete group category
+      tags:
+      - Categories
+    get:
+      description: Returns a public category owned by the path group.
+      operationId: getGroupCategory
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: category_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanonicalCategory"
+          description: Category returned
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Get group category
+      tags:
+      - Categories
+    put:
+      description: Replaces category name and parent. Requires category.manage in
+        the group. Parent may be null for a top-level category.
+      operationId: replaceGroupCategory
+      parameters:
+      - explode: false
+        in: path
+        name: group_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: category_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceCategoryRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CanonicalCategory"
+          description: Category replaced
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Replace group category
+      tags:
+      - Categories
   /api/v1/groups/{group_id}/memberships:
     get:
       description: "Requires global ADMIN, global.membership.manage, global.role.manage,\
@@ -2713,6 +3765,33 @@ components:
         format: uuid
         type: string
       style: simple
+    CategoryID:
+      explode: false
+      in: path
+      name: category_id
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
+    ContactPointID:
+      explode: false
+      in: path
+      name: contact_point_id
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
+    OrganizationID:
+      explode: false
+      in: path
+      name: organization_id
+      required: true
+      schema:
+        format: uuid
+        type: string
+      style: simple
     UserID:
       explode: false
       in: path
@@ -3179,6 +4258,162 @@ components:
       - name
       - position
       - source_iri
+      type: object
+    CanonicalCategory:
+      additionalProperties: false
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        group_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        parent_category_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        source_iri: source_iri
+        name: name
+      properties:
+        id:
+          format: uuid
+          type: string
+        group_id:
+          format: uuid
+          type: string
+        parent_category_id:
+          format: uuid
+          nullable: true
+          type: string
+        source_iri:
+          type: string
+        name:
+          type: string
+      required:
+      - group_id
+      - id
+      - name
+      - parent_category_id
+      - source_iri
+      type: object
+    CreateCategoryRequest:
+      additionalProperties: false
+      example:
+        source_iri: source_iri
+        name: name
+        parent_category_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        source_iri:
+          type: string
+        name:
+          type: string
+        parent_category_id:
+          format: uuid
+          type: string
+      required:
+      - name
+      type: object
+    ReplaceCategoryRequest:
+      additionalProperties: false
+      example:
+        name: name
+        parent_category_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        name:
+          type: string
+        parent_category_id:
+          format: uuid
+          nullable: true
+          type: string
+      required:
+      - name
+      - parent_category_id
+      type: object
+    CreateGroupRequest:
+      additionalProperties: false
+      example:
+        source_iri: source_iri
+        name: name
+        description: description
+        label: label
+        logo: logo
+        page: page
+        color: color
+        position: 0
+        concept: DATA
+      properties:
+        source_iri:
+          type: string
+        name:
+          type: string
+        description:
+          nullable: true
+          type: string
+        label:
+          nullable: true
+          type: string
+        logo:
+          nullable: true
+          type: string
+        page:
+          nullable: true
+          type: string
+        color:
+          nullable: true
+          type: string
+        position:
+          format: int32
+          type: integer
+        concept:
+          enum:
+          - DATA
+          - FACILITIES
+          - SOFTWARE
+          type: string
+      required:
+      - concept
+      - name
+      type: object
+    ReplaceGroupRequest:
+      additionalProperties: false
+      example:
+        name: name
+        description: description
+        label: label
+        logo: logo
+        page: page
+        color: color
+        position: 0
+        concept: DATA
+      properties:
+        name:
+          type: string
+        description:
+          nullable: true
+          type: string
+        label:
+          nullable: true
+          type: string
+        logo:
+          nullable: true
+          type: string
+        page:
+          nullable: true
+          type: string
+        color:
+          nullable: true
+          type: string
+        position:
+          format: int32
+          type: integer
+        concept:
+          enum:
+          - DATA
+          - FACILITIES
+          - SOFTWARE
+          type: string
+      required:
+      - color
+      - concept
+      - description
+      - label
+      - logo
+      - name
+      - page
+      - position
       type: object
     MembershipUser:
       additionalProperties: false
@@ -5223,6 +6458,260 @@ components:
       - role
       - source_iri
       type: object
+    CreateContactPointRequest:
+      additionalProperties: false
+      example:
+        source_iri: source_iri
+        email: email
+        role: role
+      properties:
+        source_iri:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+      required:
+      - email
+      - role
+      type: object
+    ReplaceContactPointRequest:
+      additionalProperties: false
+      example:
+        email: email
+        role: role
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+      required:
+      - email
+      - role
+      type: object
+    CanonicalOrganization:
+      additionalProperties: false
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        source_iri: source_iri
+        name: name
+        address:
+          street: street
+          locality: locality
+          postal_code: postal_code
+          country: country
+        logo_url: logo_url
+        page_url: page_url
+        email: email
+        lei_code: lei_code
+        identifiers:
+        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          source_iri: source_iri
+          type: type
+          value: value
+        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          source_iri: source_iri
+          type: type
+          value: value
+        parents:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        contact_point_ids:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        id:
+          format: uuid
+          type: string
+        source_iri:
+          type: string
+        name:
+          type: string
+        address:
+          $ref: "#/components/schemas/CanonicalOrganization_address"
+        logo_url:
+          nullable: true
+          type: string
+        page_url:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        lei_code:
+          nullable: true
+          type: string
+        identifiers:
+          items:
+            $ref: "#/components/schemas/Identifier"
+          type: array
+        parents:
+          items:
+            format: uuid
+            type: string
+          type: array
+        contact_point_ids:
+          items:
+            format: uuid
+            type: string
+          type: array
+      required:
+      - address
+      - contact_point_ids
+      - id
+      - identifiers
+      - name
+      - parents
+      - source_iri
+      type: object
+    CreateCanonicalOrganizationRequest:
+      additionalProperties: false
+      example:
+        source_iri: source_iri
+        name: name
+        address:
+          street: street
+          locality: locality
+          postal_code: postal_code
+          country: country
+        logo_url: logo_url
+        page_url: page_url
+        email: email
+        lei_code: lei_code
+        identifiers:
+        - source_iri: source_iri
+          type: type
+          value: value
+        - source_iri: source_iri
+          type: type
+          value: value
+        parents:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        contact_point_ids:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        source_iri:
+          type: string
+        name:
+          type: string
+        address:
+          $ref: "#/components/schemas/CreateCanonicalOrganizationRequest_address"
+        logo_url:
+          nullable: true
+          type: string
+        page_url:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        lei_code:
+          nullable: true
+          type: string
+        identifiers:
+          items:
+            $ref: "#/components/schemas/CreateOrganizationIdentifierRequest"
+          type: array
+        parents:
+          items:
+            format: uuid
+            type: string
+          type: array
+        contact_point_ids:
+          items:
+            format: uuid
+            type: string
+          type: array
+      required:
+      - name
+      type: object
+    CreateOrganizationIdentifierRequest:
+      additionalProperties: false
+      example:
+        source_iri: source_iri
+        type: type
+        value: value
+      properties:
+        source_iri:
+          type: string
+        type:
+          type: string
+        value:
+          type: string
+      required:
+      - type
+      - value
+      type: object
+    ReplaceCanonicalOrganizationRequest:
+      additionalProperties: false
+      example:
+        name: name
+        address:
+          street: street
+          locality: locality
+          postal_code: postal_code
+          country: country
+        logo_url: logo_url
+        page_url: page_url
+        email: email
+        lei_code: lei_code
+        identifiers:
+        - source_iri: source_iri
+          type: type
+          value: value
+        - source_iri: source_iri
+          type: type
+          value: value
+        parents:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        contact_point_ids:
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+      properties:
+        name:
+          type: string
+        address:
+          $ref: "#/components/schemas/CanonicalOrganization_address"
+        logo_url:
+          nullable: true
+          type: string
+        page_url:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        lei_code:
+          nullable: true
+          type: string
+        identifiers:
+          items:
+            $ref: "#/components/schemas/CreateOrganizationIdentifierRequest"
+          type: array
+        parents:
+          items:
+            format: uuid
+            type: string
+          type: array
+        contact_point_ids:
+          items:
+            format: uuid
+            type: string
+          type: array
+      required:
+      - address
+      - contact_point_ids
+      - email
+      - identifiers
+      - lei_code
+      - logo_url
+      - name
+      - page_url
+      - parents
+      type: object
     Organization:
       example:
         id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
@@ -5514,3 +7003,50 @@ components:
             - DATETIME
             type: string
         type: object
+    CanonicalOrganization_address:
+      additionalProperties: false
+      example:
+        street: street
+        locality: locality
+        postal_code: postal_code
+        country: country
+      properties:
+        street:
+          nullable: true
+          type: string
+        locality:
+          nullable: true
+          type: string
+        postal_code:
+          nullable: true
+          type: string
+        country:
+          nullable: true
+          type: string
+      required:
+      - country
+      - locality
+      - postal_code
+      - street
+      type: object
+    CreateCanonicalOrganizationRequest_address:
+      additionalProperties: false
+      example:
+        street: street
+        locality: locality
+        postal_code: postal_code
+        country: country
+      properties:
+        street:
+          nullable: true
+          type: string
+        locality:
+          nullable: true
+          type: string
+        postal_code:
+          nullable: true
+          type: string
+        country:
+          nullable: true
+          type: string
+      type: object

@@ -139,7 +139,7 @@ func (h *Lifecycle) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record, err := h.service.Get(ctx, actorID, resourceType, id, versionID)
+	body, err := h.service.Get(ctx, actorID, resourceType, id, versionID)
 	if err != nil {
 		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
 			if responseErr.ContentType != "" {
@@ -159,7 +159,7 @@ func (h *Lifecycle) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(record); err != nil {
+	if _, err := w.Write(body); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }

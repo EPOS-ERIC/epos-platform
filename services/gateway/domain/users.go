@@ -34,16 +34,3 @@ type Membership struct {
 	CreatedAt    string
 	UpdatedAt    string
 }
-
-type Group struct {
-	ID          string
-	SourceIRI   string
-	Name        string
-	Description *string
-	Label       *string
-	Logo        *string
-	Page        *string
-	Color       *string
-	Position    int32
-	Concept     string
-}

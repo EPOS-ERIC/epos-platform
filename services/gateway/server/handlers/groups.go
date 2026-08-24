@@ -46,6 +46,209 @@ func (h *Groups) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, GroupFromDomain(group))
 }
 
+func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	var request api.CreateGroupRequest
+	if !decodeCanonicalJSON(r, w, &request) {
+		return
+	}
+	group, err := h.service.Create(ctx, actor.ID, domain.CreateGroupInput{
+		SourceIRI: request.SourceIRI, Name: request.Name, Description: request.Description,
+		Label: request.Label, Logo: request.Logo, Page: request.Page, Color: request.Color,
+		Position: request.Position, Concept: request.Concept,
+	})
+	if err != nil {
+		writeGroupError(r, w, err, "create group")
+		return
+	}
+	writeJSON(w, http.StatusCreated, GroupFromDomain(group))
+}
+
+func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	var request api.ReplaceGroupRequest
+	if !decodeCanonicalJSON(r, w, &request) {
+		return
+	}
+	group, err := h.service.Replace(ctx, actor.ID, groupID, domain.ReplaceGroupInput{
+		Name: request.Name, Description: request.Description, Label: request.Label,
+		Logo: request.Logo, Page: request.Page, Color: request.Color,
+		Position: request.Position, Concept: request.Concept,
+	})
+	if err != nil {
+		writeGroupError(r, w, err, "replace group")
+		return
+	}
+	writeJSON(w, http.StatusOK, GroupFromDomain(group))
+}
+
+func (h *Groups) Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	if err := h.service.Delete(ctx, actor.ID, groupID); err != nil {
+		writeGroupError(r, w, err, "delete group")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Groups) ListMemberships(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	memberships, err := h.service.ListMemberships(ctx, groupID, actor.ID)
+	if err != nil {
+		writeMembershipError(r, w, err, "list group memberships")
+		return
+	}
+	result := make([]api.GroupMembership, 0, len(memberships))
+	for _, membership := range memberships {
+		result = append(result, GroupMembershipFromDomain(membership))
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Groups) ListCategories(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	categories, err := h.service.ListCategories(ctx, groupID)
+	if err != nil {
+		writeGroupError(r, w, err, "list categories")
+		return
+	}
+	result := make([]api.Category, 0, len(categories))
+	for _, category := range categories {
+		result = append(result, CategoryFromDomain(category))
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Groups) GetCategory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	categoryID, ok := uuidParam(ctx, w, r, "categoryId")
+	if !ok {
+		return
+	}
+	category, err := h.service.GetCategory(ctx, groupID, categoryID)
+	if err != nil {
+		writeGroupError(r, w, err, "get category")
+		return
+	}
+	writeJSON(w, http.StatusOK, CategoryFromDomain(category))
+}
+
+func (h *Groups) CreateCategory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	var request api.CreateCategoryRequest
+	if !decodeCanonicalJSON(r, w, &request) {
+		return
+	}
+	category, err := h.service.CreateCategory(ctx, actor.ID, groupID, domain.CreateCategoryInput{
+		SourceIRI: request.SourceIRI, Name: request.Name, ParentCategoryID: request.ParentCategoryID,
+	})
+	if err != nil {
+		writeGroupError(r, w, err, "create category")
+		return
+	}
+	writeJSON(w, http.StatusCreated, CategoryFromDomain(category))
+}
+
+func (h *Groups) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	categoryID, ok := uuidParam(ctx, w, r, "categoryId")
+	if !ok {
+		return
+	}
+	var request api.ReplaceCategoryRequest
+	if !decodeCanonicalJSON(r, w, &request) {
+		return
+	}
+	category, err := h.service.ReplaceCategory(ctx, actor.ID, groupID, categoryID, domain.ReplaceCategoryInput{
+		Name: request.Name, ParentCategoryID: request.ParentCategoryID,
+	})
+	if err != nil {
+		writeGroupError(r, w, err, "replace category")
+		return
+	}
+	writeJSON(w, http.StatusOK, CategoryFromDomain(category))
+}
+
+func (h *Groups) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	actor, ok := AuthenticatedUserFromContext(ctx)
+	if !ok {
+		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		return
+	}
+	groupID, ok := uuidParam(ctx, w, r, "groupId")
+	if !ok {
+		return
+	}
+	categoryID, ok := uuidParam(ctx, w, r, "categoryId")
+	if !ok {
+		return
+	}
+	if err := h.service.DeleteCategory(ctx, actor.ID, groupID, categoryID); err != nil {
+		writeGroupError(r, w, err, "delete category")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // WithdrawMembershipRequest deletes the authenticated user's pending membership request.
 // TODO: since the handlers here and the ones in the backoffice currently are doing basically the same thing, maybe we should make them behave in a similar way for consistency
 func (h *Groups) WithdrawMembershipRequest(w http.ResponseWriter, r *http.Request) {
@@ -400,6 +603,10 @@ func GroupMembershipFromDomain(membership domain.GroupMembership) api.GroupMembe
 	}
 }
 
+func CategoryFromDomain(category domain.Category) api.Category {
+	return api.Category{ID: category.ID, GroupID: category.GroupID, ParentCategoryID: category.ParentCategoryID, SourceIRI: category.SourceIRI, Name: category.Name}
+}
+
 func groupRoleParams(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
 	groupID, ok := uuidParam(ctx, w, r, "groupId")
 	if !ok {
@@ -432,12 +639,17 @@ func groupPermissionParams(ctx context.Context, w http.ResponseWriter, r *http.R
 	return groupID, userID, permission, true
 }
 
+//nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.
 func writeGroupError(r *http.Request, w http.ResponseWriter, err error, operation string) {
 	switch {
 	case errors.Is(err, domain.ErrBadRequest):
 		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid group id", err)
 	case errors.Is(err, domain.ErrNotFound):
 		WriteError(r.Context(), w, http.StatusNotFound, "not_found", "group not found", nil)
+	case errors.Is(err, domain.ErrForbidden):
+		WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "group operation is not permitted", nil)
+	case errors.Is(err, domain.ErrConflict):
+		WriteError(r.Context(), w, http.StatusConflict, "conflict", "group operation conflicts with existing data", nil)
 	case errors.Is(err, domain.ErrUpstreamTimeout):
 		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "group request timed out", err)
 	default:
@@ -446,6 +658,7 @@ func writeGroupError(r *http.Request, w http.ResponseWriter, err error, operatio
 	}
 }
 
+//nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.
 func writeMembershipError(r *http.Request, w http.ResponseWriter, err error, operation string) {
 	switch {
 	case errors.Is(err, domain.ErrBadRequest):

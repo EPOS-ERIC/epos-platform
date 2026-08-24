@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
@@ -53,9 +54,28 @@ func NewRouter(
 	usersHandler := handlers.NewUsers(identityService)
 	groupsHandler := handlers.NewGroups(groupservice.NewService(backofficeClient))
 	importsHandler := handlers.NewImports(imports.NewService(backofficeClient))
+	canonicalHandler := handlers.NewCanonical(canonical.NewService(backofficeClient))
 
 	r.Route("/v1", func(r chi.Router) {
 		r.With(authMiddleware(authService, backofficeClient)).Post("/imports/turtle", importsHandler.Turtle)
+
+		r.Route("/contact-points", func(r chi.Router) {
+			r.Use(authMiddleware(authService, backofficeClient))
+			r.Get("/", canonicalHandler.ListContactPoints)
+			r.Post("/", canonicalHandler.CreateContactPoint)
+			r.Get("/{contactPointId}", canonicalHandler.GetContactPoint)
+			r.Put("/{contactPointId}", canonicalHandler.ReplaceContactPoint)
+			r.Delete("/{contactPointId}", canonicalHandler.DeleteContactPoint)
+		})
+
+		r.Route("/organizations", func(r chi.Router) {
+			r.Get("/", canonicalHandler.ListOrganizations)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/", canonicalHandler.CreateOrganization)
+			r.Get("/{organizationId}", canonicalHandler.GetOrganization)
+			r.With(authMiddleware(authService, backofficeClient)).Put("/{organizationId}", canonicalHandler.ReplaceOrganization)
+			r.With(authMiddleware(authService, backofficeClient)).Delete("/{organizationId}", canonicalHandler.DeleteOrganization)
+		})
+
 		// discovery
 		r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/search", handlers.NotImplemented)
 		r.Get("/concept", handlers.NotImplemented)
@@ -74,7 +94,11 @@ func NewRouter(
 
 		r.Route("/groups", func(r chi.Router) {
 			r.Get("/", groupsHandler.List)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/", groupsHandler.Create)
 			r.Get("/{groupId}", groupsHandler.Get)
+			r.With(authMiddleware(authService, backofficeClient)).Put("/{groupId}", groupsHandler.Replace)
+			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}", groupsHandler.Delete)
+			r.With(authMiddleware(authService, backofficeClient)).Get("/{groupId}/memberships", groupsHandler.ListMemberships)
 
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/membership-requests", groupsHandler.RequestMembership)
 			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}/membership-requests", groupsHandler.WithdrawMembershipRequest)
@@ -89,6 +113,14 @@ func NewRouter(
 			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}/role-requests/{requestId}", groupsHandler.WithdrawRoleRequest)
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources/{resourceType}", lifecycleHandler.Create)
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources/{resourceType}/{id}/copy", lifecycleHandler.Copy)
+
+			r.Route("/{groupId}/categories", func(r chi.Router) {
+				r.Get("/", groupsHandler.ListCategories)
+				r.With(authMiddleware(authService, backofficeClient)).Post("/", groupsHandler.CreateCategory)
+				r.Get("/{categoryId}", groupsHandler.GetCategory)
+				r.With(authMiddleware(authService, backofficeClient)).Put("/{categoryId}", groupsHandler.ReplaceCategory)
+				r.With(authMiddleware(authService, backofficeClient)).Delete("/{categoryId}", groupsHandler.DeleteCategory)
+			})
 		})
 
 		r.Route("/resources", func(r chi.Router) {
