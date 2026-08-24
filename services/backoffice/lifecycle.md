@@ -92,7 +92,7 @@ Software application and software source code are independent resource types. Th
 
 Canonical organization, contact-point, group, and canonical-category changes appear immediately in every referencing version. No snapshots or history are required. Resource version category links retain only canonical category IDs; they never copy category fields.
 
-Canonical organizations, contact points, categories, and groups may be deleted directly. The client manages any impact preview. Group deletion is blocked only while group owns logical dataset or software resource.
+Canonical organizations, contact points, categories, and groups may be deleted directly. The client is responsible for obtaining impact data, presenting any warning or preview to the user, and requesting deletion after confirmation. Backoffice does not expose a separate preview or confirmation operation. Group deletion is blocked only while group owns logical dataset or software resource.
 
 ### Canonical Deletion
 
@@ -317,7 +317,7 @@ Logical resource tables hold stable identity, immutable source IRI, and group. S
 
 `identifiers` owner columns are `dataset_version_id`, `organization_id`, `software_application_version_id`, and `software_source_code_version_id`; exactly-one check prevents sharing and orphan rows. Content may repeat across owners. Resource-version cloning creates new identifier IDs. UUID conflict with different owner fails rather than transferring ownership.
 
-Canonical deletion uses cascading/nullable link behavior only through confirmed domain operation. Direct repository/database deletion that bypasses impact preview and confirmation is forbidden.
+Canonical deletion uses cascading/nullable link behavior through the normal client-requested delete operation. The client owns impact preview and user confirmation; Backoffice atomically unlinks references, deletes the canonical entity, and returns `204 No Content`. Direct repository/database deletion remains an implementation detail of that operation and must not be exposed as a separate bypass.
 
 Group references from logical datasets, software applications, and software source codes restrict deletion. Group-owned categories, memberships, role assignments, grants, requests, and subscriptions cascade through group deletion operation.
 
@@ -364,10 +364,10 @@ Notification preferences do not add columns to `users`.
 | Editor links category from another group's category scheme        | Denied even when editor belongs to both groups.                                                                     |
 | Editor attempts to create category through dataset draft          | Denied; category management is outside dataset lifecycle.                                                           |
 | Category manager creates category with duplicate sibling name     | Denied after normalized-name comparison.                                                                            |
-| Category manager confirms deletion of referenced category         | Full subtree and every dataset/software link are deleted atomically, including published/archived links.            |
-| Organization manager confirms deletion of referenced organization | Resource/hierarchy links and owned identifiers are removed, then organization is deleted.                           |
+| Client previews referenced category impact, then requests delete | Full subtree and every dataset/software link are deleted atomically, including published/archived links.            |
+| Client previews referenced organization impact, then requests delete | Resource/hierarchy links and owned identifiers are removed, then organization is deleted.                           |
 | Contact-point manager edits canonical contact                     | Change is visible through every dataset-version/web-service reference.                                              |
-| Contact-point manager confirms referenced deletion                | All contact links are removed, then contact point is deleted.                                                       |
+| Client previews referenced contact-point impact, then requests delete | All contact links are removed, then contact point is deleted.                                                       |
 | Group owns no resource                                            | Category scheme, categories, memberships, access assignments, requests, and subscriptions are deleted with group.   |
 | Group Admin unpublishes resource                                  | Public version becomes archived; later draft may publish normally.                                                  |
 | Role manager tries to assign `GROUP_ADMIN`                        | Denied; only global `ADMIN` may assign it.                                                                          |

@@ -162,8 +162,10 @@ func (q *Queries) CreateOrganizationParent(ctx context.Context, arg CreateOrgani
 }
 
 const deleteOrganization = `-- name: DeleteOrganization :execrows
-DELETE FROM organizations
-WHERE id = $1
+DELETE FROM
+    organizations
+WHERE
+    id = $1
 `
 
 func (q *Queries) DeleteOrganization(ctx context.Context, id uuid.UUID) (int64, error) {

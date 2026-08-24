@@ -212,7 +212,7 @@ func (s *AccessService) RequestRole(ctx context.Context, actorID string, groupID
 		return RoleRequest{}, ErrInvalid
 	}
 
-	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, actorID)
+	allowed, err := s.authorizer.CanRequestGroupRole(ctx, actorID, groupID)
 	if err != nil {
 		return RoleRequest{}, fmt.Errorf("authorize role request: %w", err)
 	}
