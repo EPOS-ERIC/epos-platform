@@ -15,6 +15,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// TODO: optimize this package and the sql queries, both for performance and for consistency in implementation
+
 type Repo struct {
 	*sqlc.Queries
 	db *pgxpool.Pool
@@ -123,6 +125,138 @@ func (r *Repo) Create(
 	}
 
 	return result, nil
+}
+
+func (r *Repo) Replace(
+	ctx context.Context,
+	id uuid.UUID,
+	request organizations.ReplaceRequest,
+	identifiers []organizations.Identifier,
+	parents,
+	contactPointIDs []uuid.UUID,
+) (organizations.Organization, error) {
+	var result organizations.Organization
+	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
+		_, err := q.GetOrganizationForUpdate(ctx, id)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return organizations.ErrNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("lock organization: %w", err)
+		}
+
+		parentRows, err := q.ListOrganizationsByIDs(ctx, parents)
+		if err != nil {
+			return fmt.Errorf("check organization parents: %w", err)
+		}
+		if len(parentRows) != len(parents) {
+			return organizations.ErrInvalid
+		}
+
+		contactRows, err := q.ListContactPointIDs(ctx, contactPointIDs)
+		if err != nil {
+			return fmt.Errorf("check contact points: %w", err)
+		}
+		if len(contactRows) != len(contactPointIDs) {
+			return organizations.ErrInvalid
+		}
+
+		_, err = q.ReplaceOrganization(ctx, sqlc.ReplaceOrganizationParams{
+			ID:         id,
+			Name:       request.Name,
+			Street:     request.Street,
+			Locality:   request.Locality,
+			PostalCode: request.PostalCode,
+			Country:    request.Country,
+			LogoUrl:    request.LogoURL,
+			PageUrl:    request.PageURL,
+			Email:      request.Email,
+			LeiCode:    request.LEICode,
+		})
+		if err != nil {
+			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+				return organizations.ErrConflict
+			}
+
+			return fmt.Errorf("update organization: %w", err)
+		}
+
+		if err := q.DeleteOrganizationIdentifiers(ctx, &id); err != nil {
+			return fmt.Errorf("replace organization identifiers: %w", err)
+		}
+
+		if err := q.DeleteOrganizationParents(ctx, id); err != nil {
+			return fmt.Errorf("replace organization parents: %w", err)
+		}
+
+		if err := q.DeleteOrganizationContactPoints(ctx, id); err != nil {
+			return fmt.Errorf("replace organization contact points: %w", err)
+		}
+
+		if err := insertOrganizationChildren(ctx, q, id, identifiers, parents, contactPointIDs); err != nil {
+			return err
+		}
+
+		row, err := q.GetOrganization(ctx, id)
+		if err != nil {
+			return fmt.Errorf("reload organization: %w", err)
+		}
+
+		loaded, err := r.loadWithQueries(ctx, q, []sqlc.Organization{row})
+		if err != nil {
+			return err
+		}
+
+		result = loaded[0]
+
+		return nil
+	})
+	if err != nil {
+		return organizations.Organization{}, fmt.Errorf("replace organization transaction: %w", err)
+	}
+
+	return result, nil
+}
+
+func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UUID, identifiers []organizations.Identifier, parents, contactPointIDs []uuid.UUID) error {
+	for _, identifier := range identifiers {
+		err := q.CreateOrganizationIdentifier(ctx, sqlc.CreateOrganizationIdentifierParams{
+			ID:             identifier.ID,
+			SourceIri:      identifier.SourceIRI,
+			Type:           identifier.Type,
+			Value:          identifier.Value,
+			OrganizationID: &id,
+		})
+		if err != nil {
+			if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+				return organizations.ErrConflict
+			}
+
+			return fmt.Errorf("insert organization identifier: %w", err)
+		}
+	}
+
+	for _, parentID := range parents {
+		err := q.CreateOrganizationParent(ctx, sqlc.CreateOrganizationParentParams{
+			ChildOrganizationID:  id,
+			ParentOrganizationID: parentID,
+		})
+		if err != nil {
+			return fmt.Errorf("link organization parent: %w", err)
+		}
+	}
+
+	for _, contactPointID := range contactPointIDs {
+		err := q.CreateOrganizationContactPoint(ctx, sqlc.CreateOrganizationContactPointParams{
+			OrganizationID: id,
+			ContactPointID: contactPointID,
+		})
+		if err != nil {
+			return fmt.Errorf("link organization contact point: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (r *Repo) List(ctx context.Context) ([]organizations.Organization, error) {

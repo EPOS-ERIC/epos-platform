@@ -12,16 +12,36 @@ import (
 )
 
 const createOrganization = `-- name: CreateOrganization :one
-INSERT INTO organizations (
-    id, source_iri, name, street, locality, postal_code, country,
-    logo_url, page_url, email, lei_code
-)
-VALUES (
-    $1, $2, $3, $4,
-    $5, $6, $7,
-    $8, $9, $10, $11
-)
-RETURNING id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+INSERT INTO
+    organizations (
+        id,
+        source_iri,
+        name,
+        street,
+        locality,
+        postal_code,
+        country,
+        logo_url,
+        page_url,
+        email,
+        lei_code
+    )
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11
+    )
+RETURNING
+    id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
 `
 
 type CreateOrganizationParams struct {
@@ -70,8 +90,13 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 }
 
 const createOrganizationContactPoint = `-- name: CreateOrganizationContactPoint :exec
-INSERT INTO organization_contact_points (organization_id, contact_point_id)
-VALUES ($1, $2)
+INSERT INTO
+    organization_contact_points (organization_id, contact_point_id)
+VALUES
+    (
+        $1,
+        $2
+    )
 `
 
 type CreateOrganizationContactPointParams struct {
@@ -85,10 +110,16 @@ func (q *Queries) CreateOrganizationContactPoint(ctx context.Context, arg Create
 }
 
 const createOrganizationIdentifier = `-- name: CreateOrganizationIdentifier :exec
-INSERT INTO identifiers (id, source_iri, type, value, organization_id)
-VALUES (
-    $1, $2, $3, $4, $5
-)
+INSERT INTO
+    identifiers (id, source_iri, TYPE, value, organization_id)
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5
+    )
 `
 
 type CreateOrganizationIdentifierParams struct {
@@ -111,8 +142,13 @@ func (q *Queries) CreateOrganizationIdentifier(ctx context.Context, arg CreateOr
 }
 
 const createOrganizationParent = `-- name: CreateOrganizationParent :exec
-INSERT INTO organization_memberships (child_organization_id, parent_organization_id)
-VALUES ($1, $2)
+INSERT INTO
+    organization_memberships (child_organization_id, parent_organization_id)
+VALUES
+    (
+        $1,
+        $2
+    )
 `
 
 type CreateOrganizationParentParams struct {
@@ -122,6 +158,36 @@ type CreateOrganizationParentParams struct {
 
 func (q *Queries) CreateOrganizationParent(ctx context.Context, arg CreateOrganizationParentParams) error {
 	_, err := q.db.Exec(ctx, createOrganizationParent, arg.ChildOrganizationID, arg.ParentOrganizationID)
+	return err
+}
+
+const deleteOrganizationContactPoints = `-- name: DeleteOrganizationContactPoints :exec
+DELETE FROM organization_contact_points
+WHERE organization_id = $1
+`
+
+func (q *Queries) DeleteOrganizationContactPoints(ctx context.Context, organizationID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrganizationContactPoints, organizationID)
+	return err
+}
+
+const deleteOrganizationIdentifiers = `-- name: DeleteOrganizationIdentifiers :exec
+DELETE FROM identifiers
+WHERE organization_id = $1
+`
+
+func (q *Queries) DeleteOrganizationIdentifiers(ctx context.Context, organizationID *uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrganizationIdentifiers, organizationID)
+	return err
+}
+
+const deleteOrganizationParents = `-- name: DeleteOrganizationParents :exec
+DELETE FROM organization_memberships
+WHERE child_organization_id = $1
+`
+
+func (q *Queries) DeleteOrganizationParents(ctx context.Context, organizationID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteOrganizationParents, organizationID)
 	return err
 }
 
@@ -163,10 +229,50 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 	return i, err
 }
 
+const getOrganizationForUpdate = `-- name: GetOrganizationForUpdate :one
+SELECT
+    id,
+    source_iri,
+    name,
+    street,
+    locality,
+    postal_code,
+    country,
+    logo_url,
+    page_url,
+    email,
+    lei_code
+FROM organizations
+WHERE id = $1
+FOR UPDATE
+`
+
+func (q *Queries) GetOrganizationForUpdate(ctx context.Context, id uuid.UUID) (Organization, error) {
+	row := q.db.QueryRow(ctx, getOrganizationForUpdate, id)
+	var i Organization
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.Name,
+		&i.Street,
+		&i.Locality,
+		&i.PostalCode,
+		&i.Country,
+		&i.LogoUrl,
+		&i.PageUrl,
+		&i.Email,
+		&i.LeiCode,
+	)
+	return i, err
+}
+
 const listContactPointIDs = `-- name: ListContactPointIDs :many
-SELECT id
-FROM contact_points
-WHERE id = ANY($1::uuid[])
+SELECT
+    id
+FROM
+    contact_points
+WHERE
+    id = ANY($1::uuid [])
 `
 
 func (q *Queries) ListContactPointIDs(ctx context.Context, contactPointIds []uuid.UUID) ([]uuid.UUID, error) {
@@ -367,8 +473,10 @@ SELECT
     page_url,
     email,
     lei_code
-FROM organizations
-WHERE id = ANY($1::uuid[])
+FROM
+    organizations
+WHERE
+    id = ANY($1::uuid [])
 `
 
 func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []uuid.UUID) ([]Organization, error) {
@@ -401,4 +509,63 @@ func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []
 		return nil, err
 	}
 	return items, nil
+}
+
+const replaceOrganization = `-- name: ReplaceOrganization :one
+UPDATE organizations
+SET
+    name = $1,
+    street = $2,
+    locality = $3,
+    postal_code = $4,
+    country = $5,
+    logo_url = $6,
+    page_url = $7,
+    email = $8,
+    lei_code = $9
+WHERE id = $10
+RETURNING id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+`
+
+type ReplaceOrganizationParams struct {
+	Name       string
+	Street     *string
+	Locality   *string
+	PostalCode *string
+	Country    *string
+	LogoUrl    *string
+	PageUrl    *string
+	Email      *string
+	LeiCode    *string
+	ID         uuid.UUID
+}
+
+func (q *Queries) ReplaceOrganization(ctx context.Context, arg ReplaceOrganizationParams) (Organization, error) {
+	row := q.db.QueryRow(ctx, replaceOrganization,
+		arg.Name,
+		arg.Street,
+		arg.Locality,
+		arg.PostalCode,
+		arg.Country,
+		arg.LogoUrl,
+		arg.PageUrl,
+		arg.Email,
+		arg.LeiCode,
+		arg.ID,
+	)
+	var i Organization
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.Name,
+		&i.Street,
+		&i.Locality,
+		&i.PostalCode,
+		&i.Country,
+		&i.LogoUrl,
+		&i.PageUrl,
+		&i.Email,
+		&i.LeiCode,
+	)
+	return i, err
 }

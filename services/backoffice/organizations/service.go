@@ -64,10 +64,26 @@ type CreateRequest struct {
 	ContactPointIDs []uuid.UUID
 }
 
+type ReplaceRequest struct {
+	Name            string
+	Street          *string
+	Locality        *string
+	PostalCode      *string
+	Country         *string
+	LogoURL         *string
+	PageURL         *string
+	Email           *string
+	LEICode         *string
+	Identifiers     []IdentifierRequest
+	Parents         []uuid.UUID
+	ContactPointIDs []uuid.UUID
+}
+
 type Store interface {
 	List(context.Context) ([]Organization, error)
 	Get(context.Context, uuid.UUID) (Organization, error)
 	Create(context.Context, Organization, []Identifier, []uuid.UUID, []uuid.UUID) (Organization, error)
+	Replace(context.Context, uuid.UUID, ReplaceRequest, []Identifier, []uuid.UUID, []uuid.UUID) (Organization, error)
 }
 
 type Authorizer interface {
@@ -152,6 +168,56 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 	}
 
 	return organization, nil
+}
+
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, request ReplaceRequest) (Organization, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.Name = strings.TrimSpace(request.Name)
+	if actorID == "" || id == uuid.Nil || request.Name == "" {
+		return Organization{}, ErrInvalid
+	}
+	if err := validateUUIDs(request.Parents); err != nil {
+		return Organization{}, err
+	}
+	if err := validateUUIDs(request.ContactPointIDs); err != nil {
+		return Organization{}, err
+	}
+
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
+	if err != nil {
+		return Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
+	}
+	if !allowed.Allowed {
+		return Organization{}, ErrForbidden
+	}
+
+	identifiers, err := buildIdentifiers(request.Identifiers)
+	if err != nil {
+		return Organization{}, err
+	}
+	organization, err := s.store.Replace(ctx, id, request, identifiers, request.Parents, request.ContactPointIDs)
+	if err != nil {
+		return Organization{}, fmt.Errorf("replace organization: %w", err)
+	}
+	return organization, nil
+}
+
+func buildIdentifiers(requests []IdentifierRequest) ([]Identifier, error) {
+	identifiers := make([]Identifier, 0, len(requests))
+	for _, item := range requests {
+		item.SourceIRI = strings.TrimSpace(item.SourceIRI)
+		item.Type = strings.TrimSpace(item.Type)
+		item.Value = strings.TrimSpace(item.Value)
+		if item.Type == "" || item.Value == "" {
+			return nil, ErrInvalid
+		}
+		id := uuid.New()
+		if item.SourceIRI == "" {
+			item.SourceIRI = "urn:epos:identifier:" + id.String()
+		}
+		identifiers = append(identifiers, Identifier{ID: id, SourceIRI: item.SourceIRI, Type: item.Type, Value: item.Value})
+	}
+	return identifiers, nil
 }
 
 func validateUUIDs(values []uuid.UUID) error {

@@ -101,6 +101,32 @@ BEGIN
 END;
 $$;
 
+-- A parent link must not make an organization its own ancestor.
+CREATE FUNCTION enforce_organization_acyclic() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF NEW.child_organization_id = NEW.parent_organization_id THEN
+        RAISE EXCEPTION 'organization hierarchy cycle';
+    END IF;
+
+    IF EXISTS (
+        WITH RECURSIVE ancestors(id) AS (
+            SELECT NEW.parent_organization_id
+
+            UNION ALL
+
+            SELECT membership.parent_organization_id
+            FROM organization_memberships AS membership
+            JOIN ancestors ON membership.child_organization_id = ancestors.id
+        )
+        SELECT 1 FROM ancestors WHERE id = NEW.child_organization_id
+    ) THEN
+        RAISE EXCEPTION 'organization hierarchy cycle';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
 -- The composite category foreign key proves a category belongs to supplied
 -- group. This additionally prevents callers from supplying a group other than
 -- the immutable group of the resource version being categorized.
@@ -333,6 +359,9 @@ CREATE TRIGGER datasets_immutable BEFORE UPDATE ON datasets FOR EACH ROW EXECUTE
 CREATE TRIGGER software_applications_immutable BEFORE UPDATE ON software_applications FOR EACH ROW EXECUTE FUNCTION enforce_immutable_logical_resource();
 CREATE TRIGGER software_source_codes_immutable BEFORE UPDATE ON software_source_codes FOR EACH ROW EXECUTE FUNCTION enforce_immutable_logical_resource();
 CREATE TRIGGER categories_immutable BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION enforce_immutable_category();
+CREATE TRIGGER organization_memberships_acyclic
+BEFORE INSERT OR UPDATE ON organization_memberships
+FOR EACH ROW EXECUTE FUNCTION enforce_organization_acyclic();
 CREATE TRIGGER identifiers_immutable_owner BEFORE UPDATE ON identifiers FOR EACH ROW EXECUTE FUNCTION enforce_immutable_identifier_owner();
 -- Enforce source IRI uniqueness across logical resource tables, which a normal
 -- per-table unique constraint cannot express.
@@ -347,6 +376,7 @@ DROP TRIGGER IF EXISTS software_applications_source_iri_global_unique ON softwar
 DROP TRIGGER IF EXISTS datasets_source_iri_global_unique ON datasets;
 DROP TRIGGER IF EXISTS identifiers_immutable_owner ON identifiers;
 DROP TRIGGER IF EXISTS categories_immutable ON categories;
+DROP TRIGGER IF EXISTS organization_memberships_acyclic ON organization_memberships;
 DROP TRIGGER IF EXISTS software_source_codes_immutable ON software_source_codes;
 DROP TRIGGER IF EXISTS software_applications_immutable ON software_applications;
 DROP TRIGGER IF EXISTS datasets_immutable ON datasets;
@@ -370,4 +400,4 @@ DROP TRIGGER IF EXISTS software_source_code_version_categories_group ON software
 DROP TRIGGER IF EXISTS software_application_version_categories_group ON software_application_version_categories;
 DROP TRIGGER IF EXISTS dataset_version_categories_group ON dataset_version_categories;
 DROP TRIGGER IF EXISTS categories_acyclic ON categories;
-DROP FUNCTION IF EXISTS enforce_version_lifecycle_mutability(), enforce_resource_source_iri_global_unique(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();
+DROP FUNCTION IF EXISTS enforce_organization_acyclic(), enforce_version_lifecycle_mutability(), enforce_resource_source_iri_global_unique(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();

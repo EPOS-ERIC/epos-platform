@@ -196,6 +196,13 @@ and focused tests.
 - Parent and contact-point references are existence-checked, then organization, owned identifiers, hierarchy links, and contact-point links persist in one transaction.
 - `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
 
+### Organization Replacement Implementation Record
+
+- Added `PUT /api/v1/organizations/{organization_id}` with global `organization.manage` authorization and full replacement semantics.
+- Replacement requires explicit mutable fields, replaces identifiers with fresh IDs, preserves organization identity/source IRI, and atomically replaces hierarchy and contact-point links.
+- Added PostgreSQL organization hierarchy cycle protection for inserts and updates, covering API and import writers.
+- `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
+
 ## Known Gaps In Existing Endpoints
 
 These mismatches must be fixed during identity administration or the completion pass.

@@ -195,6 +195,29 @@ paths:
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/organizations/{organization_id}:
     parameters: [{ $ref: "#/components/parameters/OrganizationID" }]
+    put:
+      tags: [Organizations]
+      operationId: replaceOrganization
+      summary: Replace organization
+      description: Fully replaces organization fields, identifiers, parent links, and contact-point links. Requires global organization.manage or global ADMIN. Organization and identifier IDs/source IRIs remain immutable except replacement identifiers receive new IDs.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceCanonicalOrganizationRequest" }
+      responses:
+        "200":
+          description: Organization replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     get:
       tags: [Organizations]
       operationId: getOrganization
@@ -2140,6 +2163,34 @@ components:
         source_iri: { type: string }
         type: { type: string }
         value: { type: string }
+    ReplaceCanonicalOrganizationRequest:
+      type: object
+      required: [name, address, logo_url, page_url, email, lei_code, identifiers, parents, contact_point_ids]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        address:
+          type: object
+          required: [street, locality, postal_code, country]
+          additionalProperties: false
+          properties:
+            street: { type: string, nullable: true }
+            locality: { type: string, nullable: true }
+            postal_code: { type: string, nullable: true }
+            country: { type: string, nullable: true }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/CreateOrganizationIdentifierRequest" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
     Organization:
       {
         type: object,

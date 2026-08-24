@@ -34,6 +34,26 @@ FROM
 WHERE
     id = sqlc.arg(id);
 
+-- name: GetOrganizationForUpdate :one
+SELECT
+    id,
+    source_iri,
+    name,
+    street,
+    locality,
+    postal_code,
+    country,
+    logo_url,
+    page_url,
+    email,
+    lei_code
+FROM
+    organizations
+WHERE
+    id = sqlc.arg(id) FOR
+UPDATE
+;
+
 -- name: ListOrganizationsByIDs :many
 SELECT
     id,
@@ -157,3 +177,39 @@ WHERE
 ORDER BY
     organization_id,
     contact_point_id;
+
+-- name: ReplaceOrganization :one
+UPDATE
+    organizations
+SET
+    name = sqlc.arg(name),
+    street = sqlc.narg(street),
+    locality = sqlc.narg(locality),
+    postal_code = sqlc.narg(postal_code),
+    country = sqlc.narg(country),
+    logo_url = sqlc.narg(logo_url),
+    page_url = sqlc.narg(page_url),
+    email = sqlc.narg(email),
+    lei_code = sqlc.narg(lei_code)
+WHERE
+    id = sqlc.arg(id)
+RETURNING
+    *;
+
+-- name: DeleteOrganizationIdentifiers :exec
+DELETE FROM
+    identifiers
+WHERE
+    organization_id = sqlc.arg(organization_id);
+
+-- name: DeleteOrganizationParents :exec
+DELETE FROM
+    organization_memberships
+WHERE
+    child_organization_id = sqlc.arg(organization_id);
+
+-- name: DeleteOrganizationContactPoints :exec
+DELETE FROM
+    organization_contact_points
+WHERE
+    organization_id = sqlc.arg(organization_id);

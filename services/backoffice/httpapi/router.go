@@ -113,6 +113,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Get("/organizations", organizations.List)
 		r.Post("/organizations", organizations.Create)
 		r.Get("/organizations/{organization_id}", organizations.Get)
+		r.Put("/organizations/{organization_id}", organizations.Replace)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))
