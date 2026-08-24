@@ -9,6 +9,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
@@ -55,6 +56,7 @@ func NewRouter(
 	groupsHandler := handlers.NewGroups(groupservice.NewService(backofficeClient))
 	importsHandler := handlers.NewImports(imports.NewService(backofficeClient))
 	canonicalHandler := handlers.NewCanonical(canonical.NewService(backofficeClient))
+	discoveryHandler := handlers.NewDiscovery(discovery.NewService(backofficeClient))
 
 	r.Route("/v1", func(r chi.Router) {
 		r.With(authMiddleware(authService, backofficeClient)).Post("/imports/turtle", importsHandler.Turtle)
@@ -77,8 +79,7 @@ func NewRouter(
 		})
 
 		// discovery
-		r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/search", handlers.NotImplemented)
-		r.Get("/concept", handlers.NotImplemented)
+		r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/search", discoveryHandler.Search)
 
 		r.Route("/users", func(r chi.Router) {
 			r.Use(authMiddleware(authService, backofficeClient))

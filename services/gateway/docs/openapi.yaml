@@ -6,14 +6,12 @@ info:
     Public API for searching and retrieving EPOS catalogue resources.
 
     API structure:
-    - Use discovery endpoints to search catalogue content and browse the concept tree.
-    - Use resource endpoints to retrieve full details for a specific dataset, distribution, webservice, organization, concept, or concept scheme.
-    - Search responses may include different resource types in the same result page.
+    - Use the discovery endpoint to search catalogue content.
+    - Use resource endpoints to retrieve full details for a specific resource.
 
     How to use this API:
     - Start with `/search` when you want to find resources by text, type, provider, time range, spatial area, or keywords.
-    - Start with `/concept` when you want to build browse or filtering interfaces based on the concept tree.
-    - Follow returned `href` values to retrieve related resources. Or use the IDs in the relative endpoints.
+    - Use returned resource and version IDs with the resource endpoints when details are needed.
   termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
   license:
     name: AGPL
@@ -25,7 +23,7 @@ servers:
 
 tags:
   - name: Discovery
-    description: Search and taxonomy bootstrap endpoints
+    description: Resource discovery endpoints
   - name: Users
     description: User profile endpoints
   - name: Groups
@@ -80,20 +78,19 @@ paths:
     get:
       tags:
         - Discovery
-      summary: Search metadata resources
+      summary: Discover resources
       description: |
-        Returns a flat, typed list of catalogue resources matching the supplied criteria.
-        Results may include datasets, webservices, organizations, software applications,
-        and software source codes. Each item includes an `href` that can be followed
-        to retrieve the corresponding resource detail.
-      operationId: searchMetadata
+        Returns summary records for discovered resources. Published records are public.
+        Other statuses require an authenticated user with access to the resource group
+        or global administrator permissions. Results are returned as one mixed array.
+        Supported resource types are `dataset`, `software-application`, and
+        `software-source-code`.
+      operationId: discoverResources
       security:
         - {}
         - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/Q"
-        - $ref: "#/components/parameters/PageSize"
-        - $ref: "#/components/parameters/PageNumber"
         - $ref: "#/components/parameters/TypeFilter"
         - $ref: "#/components/parameters/SpatialFilter"
         - $ref: "#/components/parameters/DateFrom"
@@ -103,106 +100,30 @@ paths:
         - $ref: "#/components/parameters/Keywords"
       responses:
         "200":
-          description: Search results returned successfully
+          description: Discovery results returned successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SearchResponse"
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscoveryItem"
               examples:
                 mixedResults:
-                  summary: Mixed resource search results
+                  summary: Mixed discovery results
                   value:
-                    page_number: 1
-                    page_size: 10
-                    total: 42
-                    total_pages: 5
-                    items:
-                      - type: dataset
-                        id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
-                        name: "TEST1 - Historical earthquakes 1000-1899"
-                        href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
-                        providers:
-                          - id: "PIC:999472675/v1.0"
-                            name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                            href: "v1/resources/organization/PIC:999472675/v1.0"
-                        concepts:
-                          - id: "category:earthquakeparameters/v1.0"
-                            name: "Earthquake parameters"
-                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-                        distributions:
-                          - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                            href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                      - type: organization
-                        id: "PIC:999472675/v1.0"
-                        name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                        href: "v1/resources/organization/PIC:999472675/v1.0"
-                      - type: webservice
-                        id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                        name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                        href: "v1/resources/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                        provider:
-                          id: "PIC:999472675/v1.0"
-                          name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                          href: "v1/resources/organization/PIC:999472675/v1.0"
-                        concepts:
-                          - id: "category:earthquakeparameters/v1.0"
-                            name: "Earthquake parameters"
-                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-                      - type: softwaresourcecode
-                        id: "https://doi.org/10.5281/zenodo.17598403"
-                        name: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
-                        href: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
-                        provider:
-                          - id: "ROR:048a87296/v1.0"
-                            name: "Uppsala University"
-                            href: "v1/resources/organization/ROR:048a87296/v1.0"
+                    - type: dataset
+                      resource_id: "550e8400-e29b-41d4-a716-446655440000"
+                      version_id: "550e8400-e29b-41d4-a716-446655440002"
+                      source_iri: "https://www.epos-eu.org/dataset/example"
+                      name: "Example dataset"
+                      status: PUBLISHED
+                      group:
+                        id: "550e8400-e29b-41d4-a716-446655440001"
+                        name: "Example group"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /concept:
-    get:
-      tags:
-        - Discovery
-      summary: Get full concept tree
-      description: |
-        Returns the complete concept tree as an ordered list of concept schemes.
-        Each scheme carries its full subtree of nested concepts.
-        Use this endpoint to populate browse or filtering interfaces.
-      operationId: getConceptTree
-      responses:
-        "200":
-          description: Concept tree returned successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ConceptTreeResponse"
-              examples:
-                tree:
-                  summary: Concept tree with one scheme
-                  value:
-                    schemes:
-                      - id: "category:software_jup/v1.0"
-                        label: "Jupyter Notebooks"
-                        name: "Jupyter Notebooks"
-                        description: "Jupyter Notebook Domain"
-                        logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
-                        homepage: ""
-                        color: "#F37726"
-                        order_number: 1
-                        top_concepts:
-                          - id: "category:facets/software-theme/v1.0"
-                            href: "v1/resources/concept/category:facets/software-theme/v1.0"
-                        children:
-                          - id: "category:facets/software-theme/v1.0"
-                            name: "Software"
-                            description: "Software"
-                            children: []
         "504":
           $ref: "#/components/responses/GatewayTimeout"
         "500":
@@ -1827,45 +1748,19 @@ components:
         type: string
         example: "historical earthquakes"
 
-    PageSize:
-      name: pageSize
-      in: query
-      required: false
-      description: Maximum number of search items requested per page.
-      schema:
-        type: integer
-        format: int32
-        minimum: 1
-        maximum: 100
-        default: 10
-        example: 10
-
-    PageNumber:
-      name: pageNumber
-      in: query
-      required: false
-      description: 1-based result page index to return.
-      schema:
-        type: integer
-        format: int32
-        minimum: 1
-        maximum: 2147483647
-        default: 1
-        example: 1
-
     TypeFilter:
       name: type
       in: query
       required: false
       description: |
-        Filter results to one or more resource types. When omitted, all supported search
+        Filter results to one or more resource types. When omitted, all supported
         resource types are returned.
         Pass comma-separated values in a single parameter:
-        `?type=dataset,webservice`.
+        `?type=dataset,software-application`.
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/SearchResourceType"
+          $ref: "#/components/schemas/DiscoveryResourceType"
       style: form
       explode: false
 
@@ -1930,15 +1825,15 @@ components:
       required: false
       description: |
         Filter by one or more versioning states.
-        When omitted, defaults to `published`.
+        When omitted, defaults to `PUBLISHED`.
         Pass comma-separated values in a single parameter:
-        `?versioningStatus=published,draft`.
+        `?versioningStatus=PUBLISHED,DRAFT`.
       schema:
         type: array
         items:
           $ref: "#/components/schemas/VersioningStatus"
         default:
-          - published
+          - PUBLISHED
       style: form
       explode: false
 
@@ -2080,15 +1975,13 @@ components:
     # Shared enums
     # -------------------------------------------------------------------------
 
-    SearchResourceType:
+    DiscoveryResourceType:
       type: string
-      description: Resource type identifier used in search results.
+      description: Resource type identifier used in discovery results.
       enum:
         - dataset
-        - webservice
-        - organization
-        - softwareapplication
-        - softwaresourcecode
+        - software-application
+        - software-source-code
 
     ReadResourceType:
       type: string
@@ -2637,225 +2530,64 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
 
     # -------------------------------------------------------------------------
-    # Search
+    # Discovery
     # -------------------------------------------------------------------------
 
-    SearchResponse:
+    DiscoveryReference:
       type: object
       required:
-        - page_number
-        - page_size
-        - total
-        - total_pages
-        - items
+        - id
+        - name
       properties:
-        page_number:
-          type: integer
-          minimum: 1
-          description: 1-based page index returned in this response
-          example: 1
-        page_size:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Number of items returned in this response page
-          example: 10
-        total:
-          type: integer
-          minimum: 0
-          description: Total number of matching resources across all pages
-          example: 123
-        total_pages:
-          type: integer
-          minimum: 0
-          description: Total number of available result pages for the supplied page size
-          example: 13
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/SearchItem"
+        id:
+          type: string
+        name:
+          type: string
 
-    SearchItem:
-      oneOf:
-        - $ref: "#/components/schemas/DatasetSearchItem"
-        - $ref: "#/components/schemas/WebserviceSearchItem"
-        - $ref: "#/components/schemas/OrganizationSearchItem"
-        - $ref: "#/components/schemas/SoftwareApplicationSearchItem"
-        - $ref: "#/components/schemas/SoftwareSourceCodeSearchItem"
-      discriminator:
-        propertyName: type
-        mapping:
-          dataset: "#/components/schemas/DatasetSearchItem"
-          webservice: "#/components/schemas/WebserviceSearchItem"
-          organization: "#/components/schemas/OrganizationSearchItem"
-          softwareapplication: "#/components/schemas/SoftwareApplicationSearchItem"
-          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeSearchItem"
-
-    BaseSearchItem:
+    DiscoveryItem:
       type: object
       required:
         - type
-        - id
+        - resource_id
+        - version_id
+        - source_iri
         - name
-        - href
+        - status
+        - group
       properties:
         type:
-          $ref: "#/components/schemas/SearchResourceType"
-        id:
+          $ref: "#/components/schemas/DiscoveryResourceType"
+        resource_id:
           type: string
-          description: Identifier of resource within this API.
-          example: "https://doi.org/10.5281/zenodo.17598403"
-        name:
-          description: Human-readable display name used in search results.
+          format: uuid
+        version_id:
           type: string
-          example: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
-        href:
+          format: uuid
+        source_iri:
           type: string
-          format: uri-reference
-          description: Relative URI reference to resource detail endpoint.
-          example: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
-
-    DatasetSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - dataset
-            providers:
-              type: array
-              description: Organization references associated with this dataset
-              items:
-                $ref: "#/components/schemas/DatasetProviderRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-            concepts:
-              type: array
-              description: Concept references assigned to this dataset
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:software_jup_conc_multi/v1.0"
-                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
-            distributions:
-              type: array
-              description: Distribution references for this dataset
-              items:
-                $ref: "#/components/schemas/DatasetDistributionSearchItem"
-              example:
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-
-    OrganizationSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - organization
-
-    SoftwareApplicationSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - softwareapplication
-            provider:
-              type: array
-              description: Organization references for providers of this software application
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-
-    SoftwareSourceCodeSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - softwaresourcecode
-            provider:
-              type: array
-              description: Organization references for providers of this software source code
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-
-    WebserviceSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - webservice
-            provider:
-              description: Organization reference for provider of this webservice
-              allOf:
-                - $ref: "#/components/schemas/ResourceRef"
-              example:
-                id: "PIC:999472675/v1.0"
-                name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/resources/organization/PIC:999472675/v1.0"
-            concepts:
-              type: array
-              description: Concept references assigned to this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:seismologicalproductsservices/v1.0"
-                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
-                - id: "category:earthquakeparameters/v1.0"
-                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-
-    DatasetDistributionSearchItem:
-      type: object
-      required:
-        - id
-        - href
-      properties:
-        id:
-          type: string
-          example: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
         name:
           type: string
-          description: Optional human-readable distribution title.
-          example: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-        href:
+        status:
           type: string
-          format: uri-reference
-          description: API-base-relative URI reference to distribution detail endpoint
-          example: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
+          enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+        group:
+          $ref: "#/components/schemas/DiscoveryReference"
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryReference"
+        creators:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryReference"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryReference"
+        distributions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoveryReference"
 
     # -------------------------------------------------------------------------
     # Resource references
@@ -3569,17 +3301,6 @@ components:
           description: Top concepts directly contained in this concept scheme
           items:
             $ref: "#/components/schemas/ResourceRef"
-
-    ConceptTreeResponse:
-      type: object
-      required:
-        - schemes
-      properties:
-        schemes:
-          type: array
-          description: Ordered list of concept schemes, each carrying its full concept subtree
-          items:
-            $ref: "#/components/schemas/ConceptScheme"
 
     # -------------------------------------------------------------------------
     # Shared helpers
