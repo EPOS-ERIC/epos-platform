@@ -12,7 +12,7 @@ jobs:
     secrets: inherit
     with:
       job-name: Hurl tests
-      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-backoffice-dev:local -f services/backoffice/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
       compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service
       populate-command: make populate-metadatone
       wait-url: http://localhost:32000/v1/search?type=softwareapplication

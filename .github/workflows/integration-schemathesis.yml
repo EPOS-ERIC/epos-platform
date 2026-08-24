@@ -6,7 +6,7 @@ on:
       - "tests/schemathesis/**"
       - "services/gateway/**"
       - "services/metadata-lifecycle/**"
-      - "services/user-group/**"
+      - "services/backoffice/**"
       - "services/oss-aai-service/**"
       - "packages/go/logging/**"
       - "packages/go/observability/**"
@@ -30,7 +30,7 @@ on:
       - "tests/schemathesis/**"
       - "services/gateway/**"
       - "services/metadata-lifecycle/**"
-      - "services/user-group/**"
+      - "services/backoffice/**"
       - "services/oss-aai-service/**"
       - "packages/go/logging/**"
       - "packages/go/observability/**"
@@ -55,8 +55,8 @@ jobs:
     secrets: inherit
     with:
       job-name: Schemathesis tests
-      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-user-group-dev:local -f services/user-group/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
-      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service user-group-service oss-aai-service
+      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-backoffice-dev:local -f services/backoffice/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+      compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service backoffice-service oss-aai-service
       populate-command: make populate-metadatone
       wait-url: http://localhost:32000/v1/search?type=softwareapplication
       test-command: make test-schemathesis
