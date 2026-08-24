@@ -202,6 +202,12 @@ DELETE FROM
 WHERE
     organization_id = sqlc.arg(organization_id);
 
+-- name: DeleteOrganization :execrows
+DELETE FROM
+    organizations
+WHERE
+    id = sqlc.arg(id);
+
 -- name: DeleteOrganizationParents :exec
 DELETE FROM
     organization_memberships

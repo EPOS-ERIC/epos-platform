@@ -161,9 +161,24 @@ func (q *Queries) CreateOrganizationParent(ctx context.Context, arg CreateOrgani
 	return err
 }
 
+const deleteOrganization = `-- name: DeleteOrganization :execrows
+DELETE FROM organizations
+WHERE id = $1
+`
+
+func (q *Queries) DeleteOrganization(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOrganization, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteOrganizationContactPoints = `-- name: DeleteOrganizationContactPoints :exec
-DELETE FROM organization_contact_points
-WHERE organization_id = $1
+DELETE FROM
+    organization_contact_points
+WHERE
+    organization_id = $1
 `
 
 func (q *Queries) DeleteOrganizationContactPoints(ctx context.Context, organizationID uuid.UUID) error {
@@ -172,8 +187,10 @@ func (q *Queries) DeleteOrganizationContactPoints(ctx context.Context, organizat
 }
 
 const deleteOrganizationIdentifiers = `-- name: DeleteOrganizationIdentifiers :exec
-DELETE FROM identifiers
-WHERE organization_id = $1
+DELETE FROM
+    identifiers
+WHERE
+    organization_id = $1
 `
 
 func (q *Queries) DeleteOrganizationIdentifiers(ctx context.Context, organizationID *uuid.UUID) error {
@@ -182,8 +199,10 @@ func (q *Queries) DeleteOrganizationIdentifiers(ctx context.Context, organizatio
 }
 
 const deleteOrganizationParents = `-- name: DeleteOrganizationParents :exec
-DELETE FROM organization_memberships
-WHERE child_organization_id = $1
+DELETE FROM
+    organization_memberships
+WHERE
+    child_organization_id = $1
 `
 
 func (q *Queries) DeleteOrganizationParents(ctx context.Context, organizationID uuid.UUID) error {
@@ -242,9 +261,11 @@ SELECT
     page_url,
     email,
     lei_code
-FROM organizations
-WHERE id = $1
-FOR UPDATE
+FROM
+    organizations
+WHERE
+    id = $1 FOR
+UPDATE
 `
 
 func (q *Queries) GetOrganizationForUpdate(ctx context.Context, id uuid.UUID) (Organization, error) {
@@ -512,7 +533,8 @@ func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []
 }
 
 const replaceOrganization = `-- name: ReplaceOrganization :one
-UPDATE organizations
+UPDATE
+    organizations
 SET
     name = $1,
     street = $2,
@@ -523,8 +545,10 @@ SET
     page_url = $7,
     email = $8,
     lei_code = $9
-WHERE id = $10
-RETURNING id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+WHERE
+    id = $10
+RETURNING
+    id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
 `
 
 type ReplaceOrganizationParams struct {

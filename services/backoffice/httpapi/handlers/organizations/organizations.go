@@ -22,6 +22,7 @@ type service interface {
 	Get(context.Context, uuid.UUID) (organizationdomain.Organization, error)
 	Create(context.Context, string, organizationdomain.CreateRequest) (organizationdomain.Organization, error)
 	Replace(context.Context, string, uuid.UUID, organizationdomain.ReplaceRequest) (organizationdomain.Organization, error)
+	Delete(context.Context, string, uuid.UUID) error
 }
 
 type Handler struct {
@@ -184,6 +185,35 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	transport.WriteJSON(w, http.StatusOK, response(item))
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+	id, err := uuid.Parse(chi.URLParam(r, "organization_id"))
+	if err != nil || id == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization id")
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), actorID, id); err != nil {
+		switch {
+		case errors.Is(err, organizationdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization")
+		case errors.Is(err, organizationdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization management permission required")
+		case errors.Is(err, organizationdomain.ErrNotFound):
+			transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "organization not found")
+		default:
+			log.ErrorContext(r.Context(), "delete organization failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete organization failed")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type organizationResponse struct {

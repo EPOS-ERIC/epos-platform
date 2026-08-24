@@ -84,6 +84,7 @@ type Store interface {
 	Get(context.Context, uuid.UUID) (Organization, error)
 	Create(context.Context, Organization, []Identifier, []uuid.UUID, []uuid.UUID) (Organization, error)
 	Replace(context.Context, uuid.UUID, ReplaceRequest, []Identifier, []uuid.UUID, []uuid.UUID) (Organization, error)
+	Delete(context.Context, uuid.UUID) error
 }
 
 type Authorizer interface {
@@ -200,6 +201,27 @@ func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, req
 		return Organization{}, fmt.Errorf("replace organization: %w", err)
 	}
 	return organization, nil
+}
+
+func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
+	actorID = strings.TrimSpace(actorID)
+	if actorID == "" || id == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
+	if err != nil {
+		return fmt.Errorf("authorize organization deletion: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.Delete(ctx, id); err != nil {
+		return fmt.Errorf("delete organization: %w", err)
+	}
+
+	return nil
 }
 
 func buildIdentifiers(requests []IdentifierRequest) ([]Identifier, error) {

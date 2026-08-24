@@ -195,6 +195,19 @@ paths:
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/organizations/{organization_id}:
     parameters: [{ $ref: "#/components/parameters/OrganizationID" }]
+    delete:
+      tags: [Organizations]
+      operationId: deleteOrganization
+      summary: Delete organization
+      description: Atomically deletes the organization. Foreign keys remove owned identifiers, hierarchy links, organization links, and resource creator/provider links; web-service provider links are cleared. Requires global organization.manage or global ADMIN.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "204": { description: Organization deleted }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     put:
       tags: [Organizations]
       operationId: replaceOrganization

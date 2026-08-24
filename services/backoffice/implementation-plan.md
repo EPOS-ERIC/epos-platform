@@ -203,6 +203,12 @@ and focused tests.
 - Added PostgreSQL organization hierarchy cycle protection for inserts and updates, covering API and import writers.
 - `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
 
+### Organization Deletion Implementation Record
+
+- Added `DELETE /api/v1/organizations/{organization_id}` with global `organization.manage` authorization and `204 No Content` response.
+- Deletion uses one SQL `DELETE`; existing foreign keys atomically remove owned identifiers, hierarchy links, organization/resource links, and clear nullable web-service providers.
+- `make generate`, `make build`, OpenAPI YAML validation, and `git diff --check` pass. Backoffice lint remains blocked by the three pre-existing `godoclint` errors.
+
 ## Known Gaps In Existing Endpoints
 
 These mismatches must be fixed during identity administration or the completion pass.

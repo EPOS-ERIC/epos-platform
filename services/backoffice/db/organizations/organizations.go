@@ -218,6 +218,18 @@ func (r *Repo) Replace(
 	return result, nil
 }
 
+func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
+	deleted, err := r.DeleteOrganization(ctx, id)
+	if err != nil {
+		return fmt.Errorf("delete organization: %w", err)
+	}
+	if deleted == 0 {
+		return organizations.ErrNotFound
+	}
+
+	return nil
+}
+
 func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UUID, identifiers []organizations.Identifier, parents, contactPointIDs []uuid.UUID) error {
 	for _, identifier := range identifiers {
 		err := q.CreateOrganizationIdentifier(ctx, sqlc.CreateOrganizationIdentifierParams{
