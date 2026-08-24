@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 
@@ -15,7 +14,6 @@ import (
 	backofficeclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
 
 const (
@@ -50,17 +48,15 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, ok := decodeJSONBody(ctx, w, r)
-	if !ok {
-		return
-	}
-
 	var request backofficeclient.CreateResourceRequest
 	switch resourceType {
 	case datasetType:
 		var value backofficeclient.DatasetDraftMetadata
-		if err := json.Unmarshal(body, &value); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if !decodeJSON(r, w, &value) {
+			return
+		}
+		if value.SourceIri == "" || value.Title == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and title are required", nil)
 			return
 		}
 		request = backofficeclient.CreateResourceRequest{
@@ -69,8 +65,11 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	case softwareApplicationType:
 		var value backofficeclient.SoftwareApplicationDraftMetadata
-		if err := json.Unmarshal(body, &value); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if !decodeJSON(r, w, &value) {
+			return
+		}
+		if value.SourceIri == "" || value.Name == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and name are required", nil)
 			return
 		}
 		request = backofficeclient.CreateResourceRequest{
@@ -79,8 +78,11 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	case softwareSourceCodeType:
 		var value backofficeclient.SoftwareSourceCodeDraftMetadata
-		if err := json.Unmarshal(body, &value); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if !decodeJSON(r, w, &value) {
+			return
+		}
+		if value.SourceIri == "" || value.Name == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and name are required", nil)
 			return
 		}
 		request = backofficeclient.CreateResourceRequest{
@@ -91,20 +93,7 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 
 	record, err := h.service.Create(ctx, actor.ID, groupID, resourceType, request)
 	if err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -141,20 +130,7 @@ func (h *Lifecycle) Get(w http.ResponseWriter, r *http.Request) {
 
 	body, err := h.service.Get(ctx, actorID, resourceType, id, versionID)
 	if err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -185,17 +161,11 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, ok := decodeJSONBody(ctx, w, r)
-	if !ok {
-		return
-	}
-
 	var request backofficeclient.ReplaceResourceDraftRequest
 	switch resourceType {
 	case datasetType:
 		var value backofficeclient.ReplaceDraftRequest
-		if err := json.Unmarshal(body, &value); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if !decodeJSON(r, w, &value) {
 			return
 		}
 		request = backofficeclient.ReplaceResourceDraftRequest{
@@ -205,8 +175,7 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		}
 	case softwareApplicationType:
 		var value backofficeclient.ReplaceSoftwareApplicationDraftRequest
-		if err := json.Unmarshal(body, &value); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if !decodeJSON(r, w, &value) {
 			return
 		}
 		request = backofficeclient.ReplaceResourceDraftRequest{
@@ -216,8 +185,7 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		}
 	case softwareSourceCodeType:
 		var value backofficeclient.ReplaceSoftwareSourceCodeDraftRequest
-		if err := json.Unmarshal(body, &value); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if !decodeJSON(r, w, &value) {
 			return
 		}
 		request = backofficeclient.ReplaceResourceDraftRequest{
@@ -229,20 +197,7 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 
 	record, err := h.service.ReplaceDraft(ctx, actor.ID, resourceType, id, versionID, request)
 	if err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -277,20 +232,7 @@ func (h *Lifecycle) Discard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Discard(ctx, actor.ID, resourceType, id, versionID); err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -328,14 +270,12 @@ func (h *Lifecycle) Action(w http.ResponseWriter, r *http.Request) {
 	var err error
 	switch action {
 	case "reject":
-		body, ok := decodeJSONBody(ctx, w, r)
-		if !ok {
+		var request backofficeclient.RejectRequest
+		if !decodeJSON(r, w, &request) {
 			return
 		}
-
-		var request backofficeclient.RejectRequest
-		if err := json.Unmarshal(body, &request); err != nil {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+		if strings.TrimSpace(request.Note) == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "note is required", nil)
 			return
 		}
 		record, err = h.service.Reject(ctx, actor.ID, resourceType, id, versionID, request)
@@ -354,20 +294,7 @@ func (h *Lifecycle) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -410,20 +337,7 @@ func (h *Lifecycle) createDraft(w http.ResponseWriter, r *http.Request, create f
 
 	record, err := create(ctx, actor.ID, resourceType, id)
 	if err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -457,32 +371,22 @@ func (h *Lifecycle) Copy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, ok := decodeJSONBody(ctx, w, r)
-	if !ok {
-		return
-	}
 	var request backofficeclient.CopyResourceRequest
-	if err := json.Unmarshal(body, &request); err != nil {
-		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
+	var body struct {
+		SourceIRI string `json:"source_iri"`
+	}
+	if !decodeJSON(r, w, &body) {
 		return
 	}
+	if strings.TrimSpace(body.SourceIRI) == "" {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri is required", nil)
+		return
+	}
+	request.SourceIri = body.SourceIRI
 
 	record, err := h.service.Copy(ctx, actor.ID, groupID, resourceType, id, request)
 	if err != nil {
-		if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
-			if responseErr.ContentType != "" {
-				w.Header().Set("Content-Type", responseErr.ContentType)
-			}
-			w.WriteHeader(responseErr.StatusCode)
-			_, _ = w.Write(responseErr.Body)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
-			return
-		}
-		log.ErrorContext(ctx, "lifecycle request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -507,18 +411,35 @@ func resourceTypeParam(ctx context.Context, w http.ResponseWriter, r *http.Reque
 
 func uuidParam(ctx context.Context, w http.ResponseWriter, r *http.Request, name string) (string, bool) {
 	value := chi.URLParam(r, name)
-	if _, err := uuid.Parse(value); err != nil {
+	if !validUUID(value) {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid "+name, nil)
 		return "", false
 	}
 	return value, true
 }
 
-func decodeJSONBody(ctx context.Context, w http.ResponseWriter, r *http.Request) ([]byte, bool) {
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20))
-	if err != nil || !json.Valid(body) {
-		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid JSON request", err)
-		return nil, false
+func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {
+	if errors.Is(err, domain.ErrUpstreamTimeout) {
+		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "lifecycle request timed out", err)
+		return
 	}
-	return body, true
+
+	if responseErr, ok := errors.AsType[*lifecycle.ResponseError](err); ok {
+		switch responseErr.StatusCode {
+		case http.StatusBadRequest:
+			WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid lifecycle request", err)
+		case http.StatusForbidden:
+			WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "lifecycle operation is not permitted", nil)
+		case http.StatusNotFound:
+			WriteError(r.Context(), w, http.StatusNotFound, "not_found", "resource version not found", nil)
+		case http.StatusConflict:
+			WriteError(r.Context(), w, http.StatusConflict, "conflict", "lifecycle operation conflicts with resource state", nil)
+		default:
+			WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		}
+		return
+	}
+
+	log.ErrorContext(r.Context(), "lifecycle request failed", "error", err)
+	WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
 }

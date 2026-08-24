@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -59,7 +58,7 @@ func (h *Canonical) CreateContactPoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request api.CreateContactPointRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 
@@ -85,7 +84,7 @@ func (h *Canonical) ReplaceContactPoint(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var request api.ReplaceContactPointRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 
@@ -149,7 +148,7 @@ func (h *Canonical) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request api.CreateOrganizationRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 	organization, err := h.service.CreateOrganization(r.Context(), actor.ID, createOrganizationInput(request))
@@ -170,7 +169,7 @@ func (h *Canonical) ReplaceOrganization(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var request api.ReplaceOrganizationRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 	organization, err := h.service.ReplaceOrganization(r.Context(), actor.ID, id, replaceOrganizationInput(request))
@@ -203,14 +202,6 @@ func authenticatedActor(r *http.Request, w http.ResponseWriter) (api.User, bool)
 		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 	}
 	return actor, ok
-}
-
-func decodeCanonicalJSON(r *http.Request, w http.ResponseWriter, value any) bool {
-	if err := json.NewDecoder(r.Body).Decode(value); err != nil {
-		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid JSON request body", err)
-		return false
-	}
-	return true
 }
 
 func contactPointFromDomain(point domain.ContactPoint) api.ContactPoint {

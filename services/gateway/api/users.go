@@ -1,9 +1,7 @@
 package api
 
 import (
-	"fmt"
 	"slices"
-	"strings"
 )
 
 type User struct {
@@ -53,7 +51,7 @@ func (s MembershipStatus) IsDecision() bool {
 }
 
 type UserMembershipSummary struct {
-	Group        ResourceRef      `json:"group"`
+	Group        Reference        `json:"group"`
 	Roles        []MembershipRole `json:"roles"`
 	Status       MembershipStatus `json:"status"`
 	Permissions  []string         `json:"permissions"`
@@ -69,24 +67,6 @@ const (
 	InactiveStatus UserStatus = "INACTIVE"
 	BlockedStatus  UserStatus = "BLOCKED"
 )
-
-func (s UserStatus) IsValid() bool {
-	switch s {
-	case ActiveStatus, InactiveStatus, BlockedStatus:
-		return true
-	default:
-		return false
-	}
-}
-
-func NewUserStatusFromValue(value string) (UserStatus, error) {
-	status := UserStatus(strings.ToUpper(strings.TrimSpace(value)))
-	if status.IsValid() {
-		return status, nil
-	}
-
-	return "", fmt.Errorf("invalid value '%s' for UserStatus", value)
-}
 
 func (u User) HasGlobalRole(role string) bool {
 	return slices.Contains(u.GlobalRoles, role)

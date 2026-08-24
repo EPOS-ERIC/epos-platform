@@ -37,7 +37,12 @@ func (h *Groups) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Groups) Get(w http.ResponseWriter, r *http.Request) {
-	group, err := h.service.Get(r.Context(), chi.URLParam(r, "groupId"))
+	groupID, ok := uuidParam(r.Context(), w, r, "groupId")
+	if !ok {
+		return
+	}
+
+	group, err := h.service.Get(r.Context(), groupID)
 	if err != nil {
 		writeGroupError(r, w, err, "get group")
 		return
@@ -54,7 +59,7 @@ func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request api.CreateGroupRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 	group, err := h.service.Create(ctx, actor.ID, domain.CreateGroupInput{
@@ -81,7 +86,7 @@ func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request api.ReplaceGroupRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 	group, err := h.service.Replace(ctx, actor.ID, groupID, domain.ReplaceGroupInput{
@@ -185,7 +190,7 @@ func (h *Groups) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request api.CreateCategoryRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 	category, err := h.service.CreateCategory(ctx, actor.ID, groupID, domain.CreateCategoryInput{
@@ -214,7 +219,7 @@ func (h *Groups) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request api.ReplaceCategoryRequest
-	if !decodeCanonicalJSON(r, w, &request) {
+	if !decodeJSON(r, w, &request) {
 		return
 	}
 	category, err := h.service.ReplaceCategory(ctx, actor.ID, groupID, categoryID, domain.ReplaceCategoryInput{
@@ -285,13 +290,8 @@ func (h *Groups) RequestMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, ok := decodeJSONBody(ctx, w, r)
-	if !ok {
-		return
-	}
-
 	var request api.CreateMembershipRequest
-	if err := json.Unmarshal(body, &request); err != nil || request.Roles == nil {
+	if !decodeJSON(r, w, &request) || request.Roles == nil {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "roles is required", nil)
 		return
 	}
@@ -317,21 +317,14 @@ func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	userID := chi.URLParam(r, "userId")
-	if userID == "" {
-		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId", nil)
-		return
-	}
-
-	body, ok := decodeJSONBody(ctx, w, r)
+	userID, ok := uuidParam(ctx, w, r, "userId")
 	if !ok {
 		return
 	}
 
 	var request api.MembershipDecisionRequest
-	err := json.Unmarshal(body, &request)
-	if err != nil || !request.Status.IsDecision() {
-		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACTIVE or REJECTED", err)
+	if !decodeJSON(r, w, &request) || !request.Status.IsDecision() {
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACTIVE or REJECTED", nil)
 		return
 	}
 
@@ -357,9 +350,8 @@ func (h *Groups) DeleteMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := chi.URLParam(r, "userId")
-	if userID == "" {
-		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId", nil)
+	userID, ok := uuidParam(ctx, w, r, "userId")
+	if !ok {
 		return
 	}
 
@@ -468,14 +460,9 @@ func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, ok := decodeJSONBody(ctx, w, r)
-	if !ok {
-		return
-	}
-
 	var request api.CreateRoleRequest
 	// TODO: use an enum
-	if err := json.Unmarshal(body, &request); err != nil || (request.Role != "EDITOR" && request.Role != "REVIEWER") {
+	if !decodeJSON(r, w, &request) || (request.Role != "EDITOR" && request.Role != "REVIEWER") {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "role must be EDITOR or REVIEWER", nil)
 		return
 	}
@@ -511,13 +498,8 @@ func (h *Groups) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	body, ok := decodeJSONBody(ctx, w, r)
-	if !ok {
-		return
-	}
-
 	var request api.RoleRequestDecisionRequest
-	if err := json.Unmarshal(body, &request); err != nil || (request.Status != "ACCEPTED" && request.Status != "REJECTED") {
+	if !decodeJSON(r, w, &request) || (request.Status != "ACCEPTED" && request.Status != "REJECTED") {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACCEPTED or REJECTED", nil)
 		return
 	}
@@ -615,7 +597,7 @@ func groupRoleParams(ctx context.Context, w http.ResponseWriter, r *http.Request
 
 	userID := chi.URLParam(r, "userId")
 	role := api.MembershipRole(chi.URLParam(r, "role"))
-	if userID == "" || !role.IsValid() {
+	if !validUUID(userID) || !role.IsValid() {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or role", nil)
 		return "", "", "", false
 	}
@@ -631,12 +613,21 @@ func groupPermissionParams(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	userID := chi.URLParam(r, "userId")
 	permission := chi.URLParam(r, "permission")
-	if userID == "" || permission == "" {
+	if !validUUID(userID) || !validGroupPermission(permission) {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or permission", nil)
 		return "", "", "", false
 	}
 
 	return groupID, userID, permission, true
+}
+
+func validGroupPermission(permission string) bool {
+	switch permission {
+	case "resource.create", "resource.edit", "resource.submit", "resource.withdraw", "resource.reopen", "resource.discard", "resource.reject", "resource.publish", "resource.unpublish", "group.membership.manage", "group.role.manage", "group.permission.manage", "category.manage":
+		return true
+	default:
+		return false
+	}
 }
 
 //nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.

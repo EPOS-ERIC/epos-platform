@@ -23,7 +23,7 @@ type Membership struct {
 }
 
 type GroupMembershipSummary struct {
-	User   ResourceRef      `json:"user"`
+	User   Reference        `json:"user"`
 	Role   MembershipRole   `json:"role"`
 	Status MembershipStatus `json:"status"`
 }

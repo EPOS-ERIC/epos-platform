@@ -54,6 +54,9 @@ func discoveryFilterFromRequest(values url.Values) (domain.DiscoveryFilter, erro
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
+	if dateFrom != nil && dateTo != nil && dateFrom.After(*dateTo) {
+		return domain.DiscoveryFilter{}, fmt.Errorf("dateFrom must be less than or equal to dateTo")
+	}
 
 	types, err := discoveryCSV(values["type"], discoveryTypeNames, "type")
 	if err != nil {
@@ -115,6 +118,10 @@ func discoveryCSV(values []string, allowed map[string]struct{}, name string) ([]
 
 func discoveryStatuses(values []string) ([]string, error) {
 	rawStatuses := splitDiscoveryCSV(values)
+	if len(rawStatuses) == 0 {
+		// TODO: use an enum
+		return []string{"PUBLISHED"}, nil
+	}
 	statuses := make([]string, 0, len(rawStatuses))
 	for _, rawStatus := range rawStatuses {
 		status := strings.ToUpper(rawStatus)
@@ -155,19 +162,19 @@ func discoveryItemFromDomain(item domain.DiscoveryItem) api.DiscoveryItem {
 	}
 }
 
-func discoveryReferencesFromDomain(values []domain.DiscoveryReference) []api.DiscoveryReference {
+func discoveryReferencesFromDomain(values []domain.DiscoveryReference) []api.Reference {
 	if values == nil {
 		return nil
 	}
-	result := make([]api.DiscoveryReference, 0, len(values))
+	result := make([]api.Reference, 0, len(values))
 	for _, value := range values {
 		result = append(result, discoveryReferenceFromDomain(value))
 	}
 	return result
 }
 
-func discoveryReferenceFromDomain(value domain.DiscoveryReference) api.DiscoveryReference {
-	return api.DiscoveryReference{ID: value.ID, Name: value.Name}
+func discoveryReferenceFromDomain(value domain.DiscoveryReference) api.Reference {
+	return api.Reference{ID: value.ID, Name: value.Name}
 }
 
 func writeDiscoveryError(r *http.Request, w http.ResponseWriter, err error) {

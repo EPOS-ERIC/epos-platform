@@ -29,6 +29,10 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
+	if id != "self" && !validUUID(id) {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id", nil)
+		return
+	}
 
 	resolved, err := h.service.GetUser(r.Context(), user.ID, id)
 	if err != nil {
@@ -105,11 +109,19 @@ func (h *Users) BlockUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !validUUID(chi.URLParam(r, "id")) {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id", nil)
+		return
+	}
+
 	var request struct {
 		Reason string `json:"reason"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid block request", err)
+	if !decodeJSON(r, w, &request) {
+		return
+	}
+	if strings.TrimSpace(request.Reason) == "" {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "reason is required", nil)
 		return
 	}
 
@@ -128,7 +140,13 @@ func (h *Users) UnblockUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.UnblockUser(r.Context(), user.ID, chi.URLParam(r, "id"))
+	id := chi.URLParam(r, "id")
+	if !validUUID(id) {
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id", nil)
+		return
+	}
+
+	err := h.service.UnblockUser(r.Context(), user.ID, id)
 	if h.writeUserStateError(w, r, err, "unblock user", "cannot unblock user") {
 		return
 	}
@@ -168,7 +186,7 @@ func (h *Users) changeGlobalPermission(w http.ResponseWriter, r *http.Request, g
 
 	id := strings.TrimSpace(chi.URLParam(r, "id"))
 	permission := strings.TrimSpace(chi.URLParam(r, "permission"))
-	if id == "" || permission == "" {
+	if !validUUID(id) || !validGlobalPermission(permission) {
 		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id or permission", nil)
 		return
 	}
@@ -214,7 +232,7 @@ func (h *Users) changeGlobalRole(w http.ResponseWriter, r *http.Request, assign 
 
 	id := strings.TrimSpace(chi.URLParam(r, "id"))
 	role := strings.TrimSpace(chi.URLParam(r, "role"))
-	if id == "" || role == "" {
+	if !validUUID(id) || role != "ADMIN" {
 		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id or role", nil)
 		return
 	}
@@ -255,6 +273,16 @@ func (h *Users) changeGlobalRole(w http.ResponseWriter, r *http.Request, assign 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// TODO: use an enum
+func validGlobalPermission(permission string) bool {
+	switch permission {
+	case "global.membership.manage", "global.role.manage", "global.permission.manage", "organization.manage", "contact_point.manage", "category_scheme.manage":
+		return true
+	default:
+		return false
+	}
+}
+
 func UserFromDomain(resolved domain.User) api.User {
 	user := api.User{
 		ID:                resolved.ID,
@@ -276,10 +304,9 @@ func UserFromDomain(resolved domain.User) api.User {
 		}
 
 		user.Memberships = append(user.Memberships, api.UserMembershipSummary{
-			Group: api.ResourceRef{
+			Group: api.Reference{
 				ID:   membership.Group.ID,
 				Name: membership.Group.Name,
-				Href: "/v1/groups/" + membership.Group.ID,
 			},
 			Roles:        roles,
 			Status:       api.MembershipStatus(membership.Status),
