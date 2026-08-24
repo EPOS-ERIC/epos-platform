@@ -117,3 +117,34 @@ func (q *Queries) ListContactPoints(ctx context.Context) ([]ContactPoint, error)
 	}
 	return items, nil
 }
+
+const replaceContactPoint = `-- name: ReplaceContactPoint :one
+UPDATE contact_points
+SET
+    email = $1,
+    role = $2
+WHERE id = $3
+RETURNING
+    id,
+    source_iri,
+    email,
+    role
+`
+
+type ReplaceContactPointParams struct {
+	Email string
+	Role  string
+	ID    uuid.UUID
+}
+
+func (q *Queries) ReplaceContactPoint(ctx context.Context, arg ReplaceContactPointParams) (ContactPoint, error) {
+	row := q.db.QueryRow(ctx, replaceContactPoint, arg.Email, arg.Role, arg.ID)
+	var i ContactPoint
+	err := row.Scan(
+		&i.ID,
+		&i.SourceIri,
+		&i.Email,
+		&i.Role,
+	)
+	return i, err
+}

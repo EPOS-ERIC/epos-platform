@@ -66,6 +66,27 @@ func (r *Repo) Create(ctx context.Context, contactPoint contactpoints.ContactPoi
 	return mapContactPoint(row), nil
 }
 
+func (r *Repo) Replace(ctx context.Context, id uuid.UUID, request contactpoints.ReplaceRequest) (contactpoints.ContactPoint, error) {
+	row, err := r.ReplaceContactPoint(ctx, sqlc.ReplaceContactPointParams{
+		ID:    id,
+		Email: request.Email,
+		Role:  request.Role,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return contactpoints.ContactPoint{}, contactpoints.ErrNotFound
+	}
+	if err != nil {
+		// TODO: maybe we can create an helper to do this check and reuse in the various db packages?
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			return contactpoints.ContactPoint{}, contactpoints.ErrConflict
+		}
+
+		return contactpoints.ContactPoint{}, fmt.Errorf("update contact point: %w", err)
+	}
+
+	return mapContactPoint(row), nil
+}
+
 func mapContactPoint(row sqlc.ContactPoint) contactpoints.ContactPoint {
 	return contactpoints.ContactPoint{
 		ID:        row.ID,

@@ -14,7 +14,7 @@ import (
 var (
 	ErrInvalid   = errors.New("invalid contact point")
 	ErrNotFound  = errors.New("contact point not found")
-	ErrForbidden = errors.New("contact point read forbidden")
+	ErrForbidden = errors.New("contact point operation forbidden")
 	ErrConflict  = errors.New("contact point conflict")
 )
 
@@ -31,10 +31,16 @@ type CreateRequest struct {
 	Role      string
 }
 
+type ReplaceRequest struct {
+	Email string
+	Role  string
+}
+
 type Store interface {
 	List(context.Context) ([]ContactPoint, error)
 	Get(context.Context, uuid.UUID) (ContactPoint, error)
 	Create(context.Context, ContactPoint) (ContactPoint, error)
+	Replace(context.Context, uuid.UUID, ReplaceRequest) (ContactPoint, error)
 }
 
 type Authorizer interface {
@@ -89,12 +95,8 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 		return ContactPoint{}, ErrInvalid
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "contact_point.manage")
-	if err != nil {
-		return ContactPoint{}, fmt.Errorf("authorize contact point creation: %w", err)
-	}
-	if !allowed.Allowed {
-		return ContactPoint{}, ErrForbidden
+	if err := s.authorizeManage(ctx, actorID); err != nil {
+		return ContactPoint{}, err
 	}
 
 	id := uuid.New()
@@ -115,6 +117,37 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 	}
 
 	return contactPoint, nil
+}
+
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, request ReplaceRequest) (ContactPoint, error) {
+	actorID = strings.TrimSpace(actorID)
+	request.Email = strings.TrimSpace(request.Email)
+	request.Role = strings.TrimSpace(request.Role)
+	if actorID == "" || id == uuid.Nil || request.Email == "" || request.Role == "" {
+		return ContactPoint{}, ErrInvalid
+	}
+
+	if err := s.authorizeManage(ctx, actorID); err != nil {
+		return ContactPoint{}, err
+	}
+
+	contactPoint, err := s.store.Replace(ctx, id, request)
+	if err != nil {
+		return ContactPoint{}, fmt.Errorf("replace contact point: %w", err)
+	}
+
+	return contactPoint, nil
+}
+
+func (s *Service) authorizeManage(ctx context.Context, actorID string) error {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "contact_point.manage")
+	if err != nil {
+		return fmt.Errorf("authorize contact point management: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+	return nil
 }
 
 func (s *Service) authorize(ctx context.Context, actorID string) error {

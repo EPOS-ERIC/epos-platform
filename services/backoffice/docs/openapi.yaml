@@ -196,6 +196,29 @@ paths:
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/contact-points/{contact_point_id}:
     parameters: [{ $ref: "#/components/parameters/ContactPointID" }]
+    put:
+      tags: [Contact Points]
+      operationId: replaceContactPoint
+      summary: Replace contact point
+      description: Replaces email and role while preserving source IRI. Requires global contact_point.manage or global ADMIN.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceContactPointRequest" }
+      responses:
+        "200":
+          description: Contact point replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     get:
       tags: [Contact Points]
       operationId: getContactPoint
@@ -1967,6 +1990,13 @@ components:
       additionalProperties: false
       properties:
         source_iri: { type: string }
+        email: { type: string }
+        role: { type: string }
+    ReplaceContactPointRequest:
+      type: object
+      required: [email, role]
+      additionalProperties: false
+      properties:
         email: { type: string }
         role: { type: string }
     Organization:

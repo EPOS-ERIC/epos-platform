@@ -19,6 +19,7 @@ type service interface {
 	List(context.Context, string) ([]contactpointdomain.ContactPoint, error)
 	Get(context.Context, string, uuid.UUID) (contactpointdomain.ContactPoint, error)
 	Create(context.Context, string, contactpointdomain.CreateRequest) (contactpointdomain.ContactPoint, error)
+	Replace(context.Context, string, uuid.UUID, contactpointdomain.ReplaceRequest) (contactpointdomain.ContactPoint, error)
 }
 
 type Handler struct {
@@ -94,12 +95,41 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusCreated, response(contactPoint))
 }
 
+func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	id, err := uuid.Parse(chi.URLParam(r, "contact_point_id"))
+	if err != nil || id == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point id")
+		return
+	}
+
+	var body replaceContactPointRequest
+	if !transport.Decode(w, r, &body) {
+		return
+	}
+
+	contactPoint, err := h.service.Replace(r.Context(), actorID, id, contactpointdomain.ReplaceRequest{
+		Email: body.Email,
+		Role:  body.Role,
+	})
+	if err != nil {
+		writeError(w, r, err, "replace contact point")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusOK, response(contactPoint))
+}
+
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
 	case errors.Is(err, contactpointdomain.ErrInvalid):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point request")
 	case errors.Is(err, contactpointdomain.ErrForbidden):
-		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "contact point read is not permitted")
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "contact point operation is not permitted")
 	case errors.Is(err, contactpointdomain.ErrConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "contact point already exists")
 	case errors.Is(err, contactpointdomain.ErrNotFound):
@@ -121,6 +151,11 @@ type createContactPointRequest struct {
 	SourceIRI string `json:"source_iri"`
 	Email     string `json:"email"`
 	Role      string `json:"role"`
+}
+
+type replaceContactPointRequest struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 func response(contactPoint contactpointdomain.ContactPoint) contactPointResponse {

@@ -104,6 +104,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Get("/contact-points", contactPoints.List)
 		r.Post("/contact-points", contactPoints.Create)
 		r.Get("/contact-points/{contact_point_id}", contactPoints.Get)
+		r.Put("/contact-points/{contact_point_id}", contactPoints.Replace)
 
 		datasets := dataset.New(datasetlifecycle.New(authorizer, database.Datasets))
 		applications := softwareapplication.New(softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications))
