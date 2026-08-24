@@ -87,6 +87,18 @@ func (r *Repo) Replace(ctx context.Context, id uuid.UUID, request contactpoints.
 	return mapContactPoint(row), nil
 }
 
+func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
+	deleted, err := r.DeleteContactPoint(ctx, id)
+	if err != nil {
+		return fmt.Errorf("delete contact point: %w", err)
+	}
+	if deleted == 0 {
+		return contactpoints.ErrNotFound
+	}
+
+	return nil
+}
+
 func mapContactPoint(row sqlc.ContactPoint) contactpoints.ContactPoint {
 	return contactpoints.ContactPoint{
 		ID:        row.ID,

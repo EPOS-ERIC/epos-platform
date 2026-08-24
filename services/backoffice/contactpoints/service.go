@@ -41,6 +41,7 @@ type Store interface {
 	Get(context.Context, uuid.UUID) (ContactPoint, error)
 	Create(context.Context, ContactPoint) (ContactPoint, error)
 	Replace(context.Context, uuid.UUID, ReplaceRequest) (ContactPoint, error)
+	Delete(context.Context, uuid.UUID) error
 }
 
 type Authorizer interface {
@@ -137,6 +138,23 @@ func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, req
 	}
 
 	return contactPoint, nil
+}
+
+func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
+	actorID = strings.TrimSpace(actorID)
+	if actorID == "" || id == uuid.Nil {
+		return ErrInvalid
+	}
+
+	if err := s.authorizeManage(ctx, actorID); err != nil {
+		return err
+	}
+
+	if err := s.store.Delete(ctx, id); err != nil {
+		return fmt.Errorf("delete contact point: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) authorizeManage(ctx context.Context, actorID string) error {

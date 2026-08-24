@@ -38,6 +38,12 @@ RETURNING
     email,
     role;
 
+-- name: DeleteContactPoint :execrows
+DELETE FROM
+    contact_points
+WHERE
+    id = sqlc.arg(id);
+
 -- name: ReplaceContactPoint :one
 UPDATE
     contact_points

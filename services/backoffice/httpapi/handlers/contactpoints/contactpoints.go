@@ -20,6 +20,7 @@ type service interface {
 	Get(context.Context, string, uuid.UUID) (contactpointdomain.ContactPoint, error)
 	Create(context.Context, string, contactpointdomain.CreateRequest) (contactpointdomain.ContactPoint, error)
 	Replace(context.Context, string, uuid.UUID, contactpointdomain.ReplaceRequest) (contactpointdomain.ContactPoint, error)
+	Delete(context.Context, string, uuid.UUID) error
 }
 
 type Handler struct {
@@ -122,6 +123,26 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	transport.WriteJSON(w, http.StatusOK, response(contactPoint))
+}
+
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	id, err := uuid.Parse(chi.URLParam(r, "contact_point_id"))
+	if err != nil || id == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point id")
+		return
+	}
+
+	if err := h.service.Delete(r.Context(), actorID, id); err != nil {
+		writeError(w, r, err, "delete contact point")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {

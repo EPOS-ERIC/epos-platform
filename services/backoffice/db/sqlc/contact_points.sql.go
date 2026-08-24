@@ -12,18 +12,15 @@ import (
 )
 
 const createContactPoint = `-- name: CreateContactPoint :one
-INSERT INTO contact_points (
-    id,
-    source_iri,
-    email,
-    role
-)
-VALUES (
-    $1,
-    $2,
-    $3,
-    $4
-)
+INSERT INTO
+    contact_points (id, source_iri, email, role)
+VALUES
+    (
+        $1,
+        $2,
+        $3,
+        $4
+    )
 RETURNING
     id,
     source_iri,
@@ -53,6 +50,21 @@ func (q *Queries) CreateContactPoint(ctx context.Context, arg CreateContactPoint
 		&i.Role,
 	)
 	return i, err
+}
+
+const deleteContactPoint = `-- name: DeleteContactPoint :execrows
+DELETE FROM
+    contact_points
+WHERE
+    id = $1
+`
+
+func (q *Queries) DeleteContactPoint(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteContactPoint, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const getContactPoint = `-- name: GetContactPoint :one
@@ -119,11 +131,13 @@ func (q *Queries) ListContactPoints(ctx context.Context) ([]ContactPoint, error)
 }
 
 const replaceContactPoint = `-- name: ReplaceContactPoint :one
-UPDATE contact_points
+UPDATE
+    contact_points
 SET
     email = $1,
     role = $2
-WHERE id = $3
+WHERE
+    id = $3
 RETURNING
     id,
     source_iri,
