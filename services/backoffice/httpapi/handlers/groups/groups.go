@@ -25,6 +25,7 @@ type service interface {
 	GetCategory(context.Context, uuid.UUID, uuid.UUID) (groupdomain.Category, error)
 	CreateCategory(context.Context, string, uuid.UUID, groupdomain.CreateCategoryRequest) (groupdomain.Category, error)
 	ReplaceCategory(context.Context, string, uuid.UUID, uuid.UUID, groupdomain.ReplaceCategoryRequest) (groupdomain.Category, error)
+	DeleteCategory(context.Context, string, uuid.UUID, uuid.UUID) error
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -298,6 +299,39 @@ func (h *Handler) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	transport.WriteJSON(w, http.StatusOK, categoryResponseFromDomain(category))
+}
+
+func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
+	groupID, ok := groupIDPath(w, r)
+	if !ok {
+		return
+	}
+	categoryID, err := uuid.Parse(chi.URLParam(r, "category_id"))
+	if err != nil || categoryID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category id")
+		return
+	}
+	actorID, ok := transport.Actor(w, r)
+	if !ok {
+		return
+	}
+
+	if err := h.service.DeleteCategory(r.Context(), actorID, groupID, categoryID); err != nil {
+		switch {
+		case errors.Is(err, groupdomain.ErrInvalid):
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category")
+		case errors.Is(err, groupdomain.ErrForbidden):
+			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
+		case errors.Is(err, groupdomain.ErrNotFound):
+			transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
+		default:
+			log.ErrorContext(r.Context(), "delete group category failed", "error", err)
+			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete group category failed")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {

@@ -499,6 +499,25 @@ func (q *Queries) DeleteGroup(ctx context.Context, id uuid.UUID) (string, error)
 	return outcome, err
 }
 
+const deleteGroupCategory = `-- name: DeleteGroupCategory :execrows
+DELETE FROM categories
+WHERE group_id = $1
+  AND id = $2
+`
+
+type DeleteGroupCategoryParams struct {
+	GroupID uuid.UUID
+	ID      uuid.UUID
+}
+
+func (q *Queries) DeleteGroupCategory(ctx context.Context, arg DeleteGroupCategoryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteGroupCategory, arg.GroupID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const getGroupByID = `-- name: GetGroupByID :one
 SELECT
     id,
@@ -1133,13 +1152,15 @@ func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Gro
 }
 
 const replaceGroupCategory = `-- name: ReplaceGroupCategory :one
-UPDATE categories
+UPDATE
+    categories
 SET
     name = $1,
     parent_category_id = $2,
     updated_at = NOW()
-WHERE group_id = $3
-  AND id = $4
+WHERE
+    group_id = $3
+    AND id = $4
 RETURNING
     id,
     group_id,

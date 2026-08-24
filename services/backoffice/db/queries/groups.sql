@@ -249,6 +249,13 @@ RETURNING
     created_at,
     updated_at;
 
+-- name: DeleteGroupCategory :execrows
+DELETE FROM
+    categories
+WHERE
+    group_id = sqlc.arg(group_id)
+    AND id = sqlc.arg(id);
+
 -- name: ListGroupMemberships :many
 SELECT
     sqlc.embed(membership),

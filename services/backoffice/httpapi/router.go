@@ -83,6 +83,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Get("/groups/{group_id}/categories", groups.ListCategories)
 		r.Get("/groups/{group_id}/categories/{category_id}", groups.GetCategory)
 		r.Put("/groups/{group_id}/categories/{category_id}", groups.ReplaceCategory)
+		r.Delete("/groups/{group_id}/categories/{category_id}", groups.DeleteCategory)
 		r.Get("/groups/{group_id}/memberships", groupAccess.ListMemberships)
 		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)
 		r.Delete("/groups/{group_id}/membership-requests", groupAccess.WithdrawMembershipRequest)

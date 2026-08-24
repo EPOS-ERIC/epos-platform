@@ -545,6 +545,19 @@ paths:
     parameters:
       - { $ref: "#/components/parameters/GroupID" }
       - { $ref: "#/components/parameters/CategoryID" }
+    delete:
+      tags: [Categories]
+      operationId: deleteGroupCategory
+      summary: Delete group category
+      description: Deletes the category and complete descendant subtree, atomically unlinking affected resource references. Requires category.manage in the group.
+      parameters: [{ $ref: "#/components/parameters/Actor" }]
+      responses:
+        "204": { description: Category deleted }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalServerError" }
     put:
       tags: [Categories]
       operationId: replaceGroupCategory

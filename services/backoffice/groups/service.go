@@ -82,6 +82,7 @@ type Store interface {
 	GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error)
 	CreateCategory(ctx context.Context, category Category) (Category, error)
 	ReplaceCategory(ctx context.Context, groupID, categoryID uuid.UUID, request ReplaceCategoryRequest) (Category, error)
+	DeleteCategory(ctx context.Context, groupID, categoryID uuid.UUID) error
 }
 
 type Authorizer interface {
@@ -276,6 +277,27 @@ func (s *Service) ReplaceCategory(ctx context.Context, actorID string, groupID, 
 	}
 
 	return category, nil
+}
+
+func (s *Service) DeleteCategory(ctx context.Context, actorID string, groupID, categoryID uuid.UUID) error {
+	actorID = strings.TrimSpace(actorID)
+	if actorID == "" || groupID == uuid.Nil || categoryID == uuid.Nil {
+		return ErrInvalid
+	}
+
+	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "category.manage")
+	if err != nil {
+		return fmt.Errorf("authorize category deletion: %w", err)
+	}
+	if !allowed.Allowed {
+		return ErrForbidden
+	}
+
+	if err := s.store.DeleteCategory(ctx, groupID, categoryID); err != nil {
+		return fmt.Errorf("delete category: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) List(ctx context.Context) ([]Group, error) {

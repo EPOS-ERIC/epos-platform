@@ -214,6 +214,21 @@ func (r *Repo) ReplaceCategory(ctx context.Context, groupID, categoryID uuid.UUI
 	return mapCategory(row), nil
 }
 
+func (r *Repo) DeleteCategory(ctx context.Context, groupID, categoryID uuid.UUID) error {
+	rows, err := r.DeleteGroupCategory(ctx, sqlc.DeleteGroupCategoryParams{
+		GroupID: groupID,
+		ID:      categoryID,
+	})
+	if err != nil {
+		return fmt.Errorf("delete category row: %w", err)
+	}
+	if rows == 0 {
+		return groups.ErrNotFound
+	}
+
+	return nil
+}
+
 func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]groups.Membership, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
