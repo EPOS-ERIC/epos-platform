@@ -1,16 +1,12 @@
 module github.com/EPOS-ERIC/epos-platform/services/backoffice
 
-go 1.26.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
+go 1.27
 
 require (
+	github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/google/uuid v1.6.0

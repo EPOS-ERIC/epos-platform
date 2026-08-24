@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/packages/go/middleware
 
-go 1.26
+go 1.27
 
 require github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
 

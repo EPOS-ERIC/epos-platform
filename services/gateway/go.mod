@@ -1,14 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/gateway
 
-go 1.26
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
-
-require github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
+go 1.27
 
 require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -39,6 +31,10 @@ require (
 )
 
 require (
+	github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
+	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/uuid v1.6.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0

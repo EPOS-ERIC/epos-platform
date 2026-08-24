@@ -1,12 +1,10 @@
-FROM golang:1.26.2
+FROM golang:1.27-alpine
 
 WORKDIR /workspace/services/data-retriever
 
 ENV CGO_ENABLED=0
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add curl
 
 COPY services/data-retriever/go.mod services/data-retriever/go.sum ./
 COPY packages/go/logging /workspace/packages/go/logging
