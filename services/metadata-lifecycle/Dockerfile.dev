@@ -1,6 +1,6 @@
 FROM amazoncorretto:21
 
-RUN yum install -y tar curl && yum clean all
+RUN yum install -y findutils tar && yum clean all
 
 COPY packages/assets/otel/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
