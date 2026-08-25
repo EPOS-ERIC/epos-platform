@@ -370,6 +370,8 @@ paths:
         "400": { $ref: "#/components/responses/Invalid" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
+  # TODO: Move resource_type into the create request body and use it as the
+  # discriminator. The path parameter is not the correct request discriminator.
   /api/v1/resources/{resource_type}:
     parameters:
       - { $ref: "#/components/parameters/ResourceType" }
@@ -409,6 +411,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
+  # TODO: Move resource_type into the replace-draft request body and use it as
+  # the discriminator. The path parameter is not the correct request discriminator.
   /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft:
     parameters:
       - { $ref: "#/components/parameters/ResourceType" }

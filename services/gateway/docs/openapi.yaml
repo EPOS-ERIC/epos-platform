@@ -1966,47 +1966,39 @@ components:
       description: Uppercase versioning state accepted by the discovery filter.
       enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
 
-    DraftMetadata:
-      type: object
-      description: Common draft metadata fields. Additional type-specific fields are accepted by Backoffice.
-      additionalProperties: true
-
     DatasetDraftMetadata:
-      allOf:
-        - $ref: "#/components/schemas/DraftMetadata"
-        - type: object
-          required: [source_iri, title]
-          properties:
-            source_iri: { type: string }
-            title: { type: string }
-            description: { type: string }
-            keywords: { type: string }
+      type: object
+      additionalProperties: false
+      required: [source_iri, title]
+      properties:
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        keywords: { type: string }
 
     SoftwareApplicationDraftMetadata:
-      allOf:
-        - $ref: "#/components/schemas/DraftMetadata"
-        - type: object
-          required: [source_iri, name]
-          properties:
-            source_iri: { type: string }
-            name: { type: string }
-            description: { type: string }
-            keywords: { type: string }
-            download_url: { type: string, format: uri }
-            main_entity_of_page: { type: string, format: uri }
+      type: object
+      additionalProperties: false
+      required: [source_iri, name]
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        download_url: { type: string, format: uri }
+        main_entity_of_page: { type: string, format: uri }
 
     SoftwareSourceCodeDraftMetadata:
-      allOf:
-        - $ref: "#/components/schemas/DraftMetadata"
-        - type: object
-          required: [source_iri, name]
-          properties:
-            source_iri: { type: string }
-            name: { type: string }
-            description: { type: string }
-            keywords: { type: string }
-            repository: { type: string, format: uri }
-            programming_language: { type: string }
+      type: object
+      additionalProperties: false
+      required: [source_iri, name]
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        repository: { type: string, format: uri }
+        programming_language: { type: string }
 
     CreateResourceDraftRequest:
       anyOf:
@@ -2016,6 +2008,7 @@ components:
 
     ReplaceDatasetDraftRequest:
       type: object
+      additionalProperties: false
       required: [revision, metadata]
       properties:
         revision: { type: integer, format: int32 }
@@ -2023,6 +2016,7 @@ components:
 
     ReplaceSoftwareApplicationDraftRequest:
       type: object
+      additionalProperties: false
       required: [revision, metadata]
       properties:
         revision: { type: integer, format: int32, minimum: 1 }
@@ -2030,6 +2024,7 @@ components:
 
     ReplaceSoftwareSourceCodeDraftRequest:
       type: object
+      additionalProperties: false
       required: [revision, metadata]
       properties:
         revision: { type: integer, format: int32, minimum: 1 }
@@ -2057,6 +2052,7 @@ components:
 
     ResourceVersion:
       type: object
+      additionalProperties: false
       required: [resource_id, version_id, revision, status, created_by, group, metadata]
       properties:
         resource_id: { type: string, format: uuid }
@@ -2064,7 +2060,7 @@ components:
         revision: { type: integer, format: int32 }
         status: { type: string }
         created_by: { type: string }
-        group: { type: object, additionalProperties: true }
+        group: { $ref: "#/components/schemas/ResourceGroupReference" }
         metadata:
           anyOf:
             - $ref: "#/components/schemas/DatasetResourceMetadata"
@@ -2074,7 +2070,7 @@ components:
     DatasetResourceMetadata:
       type: object
       required: [id, source_iri, title, description, keywords, status, created, updated]
-      additionalProperties: true
+      additionalProperties: false
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -2088,7 +2084,7 @@ components:
     SoftwareApplicationResourceMetadata:
       type: object
       required: [id, source_iri, name, description, keywords]
-      additionalProperties: true
+      additionalProperties: false
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -2099,13 +2095,21 @@ components:
     SoftwareSourceCodeResourceMetadata:
       type: object
       required: [id, source_iri, name, description, keywords]
-      additionalProperties: true
+      additionalProperties: false
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
         name: { type: string }
         description: { type: string }
         keywords: { type: string }
+
+    ResourceGroupReference:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
 
     # -------------------------------------------------------------------------
     # Resource write schemas

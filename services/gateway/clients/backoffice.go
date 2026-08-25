@@ -269,14 +269,6 @@ func (c *Backoffice) RevokeGroupPermission(ctx context.Context, groupID, userID,
 	return nil
 }
 
-// Resources exposes typed Backoffice resource lifecycle operations.
-func (c *Backoffice) Resources() client.ResourcesAPI {
-	if c == nil {
-		return nil
-	}
-	return c.resources
-}
-
 func (c *Backoffice) GetUserByID(ctx context.Context, userID, actorID string) (domain.User, error) {
 	if c == nil || c.users == nil {
 		return domain.User{}, fmt.Errorf("backoffice identity client is not configured")
