@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
 )
 
 func (c *Backoffice) CreateGroup(ctx context.Context, actorID string, input domain.CreateGroupInput) (domain.Group, error) {
@@ -14,22 +13,7 @@ func (c *Backoffice) CreateGroup(ctx context.Context, actorID string, input doma
 		return domain.Group{}, fmt.Errorf("backoffice group client is not configured")
 	}
 
-	request := client.CreateGroupRequest{
-		SourceIri:   input.SourceIRI,
-		Name:        input.Name,
-		Description: client.NullableString{},
-		Label:       client.NullableString{},
-		Logo:        client.NullableString{},
-		Page:        client.NullableString{},
-		Color:       client.NullableString{},
-		Position:    input.Position,
-		Concept:     input.Concept,
-	}
-	setNullable(&request.Description, input.Description)
-	setNullable(&request.Label, input.Label)
-	setNullable(&request.Logo, input.Logo)
-	setNullable(&request.Page, input.Page)
-	setNullable(&request.Color, input.Color)
+	request := toClientCreateGroupRequest(input)
 
 	group, response, err := c.groups.CreateGroup(ctx).XEPOSUserID(actorID).CreateGroupRequest(request).Execute()
 	if err != nil {
@@ -43,21 +27,7 @@ func (c *Backoffice) ReplaceGroup(ctx context.Context, actorID, id string, input
 		return domain.Group{}, fmt.Errorf("backoffice group client is not configured")
 	}
 
-	request := client.ReplaceGroupRequest{
-		Name:        input.Name,
-		Description: client.NullableString{},
-		Label:       client.NullableString{},
-		Logo:        client.NullableString{},
-		Page:        client.NullableString{},
-		Color:       client.NullableString{},
-		Position:    input.Position,
-		Concept:     input.Concept,
-	}
-	setNullable(&request.Description, input.Description)
-	setNullable(&request.Label, input.Label)
-	setNullable(&request.Logo, input.Logo)
-	setNullable(&request.Page, input.Page)
-	setNullable(&request.Color, input.Color)
+	request := toClientReplaceGroupRequest(input)
 
 	group, response, err := c.groups.ReplaceGroup(ctx, id).XEPOSUserID(actorID).ReplaceGroupRequest(request).Execute()
 	if err != nil {
@@ -85,15 +55,7 @@ func (c *Backoffice) ListGroupMemberships(ctx context.Context, groupID, actorID 
 	if err != nil {
 		return nil, wrapGroupAccessError("list backoffice group memberships", response, err)
 	}
-	result := make([]domain.GroupMembership, 0, len(memberships))
-	for _, membership := range memberships {
-		mapped, err := toDomainGroupMembership(&membership)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, mapped)
-	}
-	return result, nil
+	return mapSliceErr(memberships, toDomainGroupMembershipValue)
 }
 
 func (c *Backoffice) ListCategories(ctx context.Context, groupID string) ([]domain.Category, error) {
@@ -104,11 +66,7 @@ func (c *Backoffice) ListCategories(ctx context.Context, groupID string) ([]doma
 	if err != nil {
 		return nil, wrapCategoryError("list backoffice categories", response, err)
 	}
-	result := make([]domain.Category, 0, len(categories))
-	for _, category := range categories {
-		result = append(result, toDomainCategory(category))
-	}
-	return result, nil
+	return mapSlice(categories, toDomainCategory), nil
 }
 
 func (c *Backoffice) GetCategory(ctx context.Context, groupID, categoryID string) (domain.Category, error) {
@@ -131,7 +89,7 @@ func (c *Backoffice) CreateCategory(ctx context.Context, actorID, groupID string
 	}
 	category, response, err := c.categories.CreateGroupCategory(ctx, groupID).
 		XEPOSUserID(actorID).
-		CreateCategoryRequest(client.CreateCategoryRequest{SourceIri: input.SourceIRI, Name: input.Name, ParentCategoryId: input.ParentCategoryID}).
+		CreateCategoryRequest(toClientCreateCategoryRequest(input)).
 		Execute()
 	if err != nil {
 		return domain.Category{}, wrapCategoryError("create backoffice category", response, err)
@@ -146,8 +104,7 @@ func (c *Backoffice) ReplaceCategory(ctx context.Context, actorID, groupID, cate
 	if c == nil || c.categories == nil {
 		return domain.Category{}, fmt.Errorf("backoffice category client is not configured")
 	}
-	request := client.ReplaceCategoryRequest{Name: input.Name, ParentCategoryId: client.NullableString{}}
-	setNullable(&request.ParentCategoryId, input.ParentCategoryID)
+	request := toClientReplaceCategoryRequest(input)
 	category, response, err := c.categories.ReplaceGroupCategory(ctx, groupID, categoryID).
 		XEPOSUserID(actorID).
 		ReplaceCategoryRequest(request).
@@ -170,10 +127,6 @@ func (c *Backoffice) DeleteCategory(ctx context.Context, actorID, groupID, categ
 		return wrapCategoryError("delete backoffice category", response, err)
 	}
 	return nil
-}
-
-func toDomainCategory(category client.CanonicalCategory) domain.Category {
-	return domain.Category{ID: category.Id, GroupID: category.GroupId, ParentCategoryID: category.ParentCategoryId.Get(), SourceIRI: category.SourceIri, Name: category.Name}
 }
 
 func wrapGroupManagementError(operation string, response *http.Response, err error) error {

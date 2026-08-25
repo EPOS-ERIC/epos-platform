@@ -21,8 +21,9 @@ var _ MappedNullable = &ReplaceSoftwareApplicationDraftRequest{}
 
 // ReplaceSoftwareApplicationDraftRequest struct for ReplaceSoftwareApplicationDraftRequest
 type ReplaceSoftwareApplicationDraftRequest struct {
-	Revision int32                            `json:"revision"`
-	Metadata SoftwareApplicationDraftMetadata `json:"metadata"`
+	ResourceType string                           `json:"resource_type"`
+	Revision     int32                            `json:"revision"`
+	Metadata     SoftwareApplicationDraftMetadata `json:"metadata"`
 }
 
 type _ReplaceSoftwareApplicationDraftRequest ReplaceSoftwareApplicationDraftRequest
@@ -31,8 +32,9 @@ type _ReplaceSoftwareApplicationDraftRequest ReplaceSoftwareApplicationDraftRequ
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceSoftwareApplicationDraftRequest(revision int32, metadata SoftwareApplicationDraftMetadata) *ReplaceSoftwareApplicationDraftRequest {
+func NewReplaceSoftwareApplicationDraftRequest(resourceType string, revision int32, metadata SoftwareApplicationDraftMetadata) *ReplaceSoftwareApplicationDraftRequest {
 	this := ReplaceSoftwareApplicationDraftRequest{}
+	this.ResourceType = resourceType
 	this.Revision = revision
 	this.Metadata = metadata
 	return &this
@@ -44,6 +46,30 @@ func NewReplaceSoftwareApplicationDraftRequest(revision int32, metadata Software
 func NewReplaceSoftwareApplicationDraftRequestWithDefaults() *ReplaceSoftwareApplicationDraftRequest {
 	this := ReplaceSoftwareApplicationDraftRequest{}
 	return &this
+}
+
+// GetResourceType returns the ResourceType field value
+func (o *ReplaceSoftwareApplicationDraftRequest) GetResourceType() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.ResourceType
+}
+
+// GetResourceTypeOk returns a tuple with the ResourceType field value
+// and a boolean to check if the value has been set.
+func (o *ReplaceSoftwareApplicationDraftRequest) GetResourceTypeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.ResourceType, true
+}
+
+// SetResourceType sets field value
+func (o *ReplaceSoftwareApplicationDraftRequest) SetResourceType(v string) {
+	o.ResourceType = v
 }
 
 // GetRevision returns the Revision field value
@@ -104,6 +130,7 @@ func (o ReplaceSoftwareApplicationDraftRequest) MarshalJSON() ([]byte, error) {
 
 func (o ReplaceSoftwareApplicationDraftRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["resource_type"] = o.ResourceType
 	toSerialize["revision"] = o.Revision
 	toSerialize["metadata"] = o.Metadata
 	return toSerialize, nil
@@ -114,6 +141,7 @@ func (o *ReplaceSoftwareApplicationDraftRequest) UnmarshalJSON(data []byte) (err
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"resource_type",
 		"revision",
 		"metadata",
 	}

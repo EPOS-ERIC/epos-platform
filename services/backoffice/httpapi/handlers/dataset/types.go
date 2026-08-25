@@ -33,8 +33,9 @@ type datasetDraftRequest struct {
 }
 
 type createRequest struct {
-	GroupID  uuid.UUID           `json:"group_id"`
-	Metadata datasetDraftRequest `json:"metadata"`
+	GroupID      uuid.UUID           `json:"group_id,omitempty"`
+	ResourceType string              `json:"resource_type"`
+	Metadata     datasetDraftRequest `json:"metadata"`
 }
 
 type distributionRequest struct {

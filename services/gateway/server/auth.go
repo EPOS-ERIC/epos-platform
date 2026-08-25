@@ -72,7 +72,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Ba
 				return
 			}
 
-			user := handlers.UserFromDomain(resolved)
+			user := handlers.ToAPIUser(resolved)
 			ctx := logging.WithActor(r.Context(), user.ID)
 
 			span.SetAttributes(

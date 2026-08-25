@@ -6,7 +6,6 @@ import (
 	"mime"
 	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
 )
@@ -57,24 +56,7 @@ func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	response := api.ImportResult{
-		Groups:               result.Groups,
-		Categories:           result.Categories,
-		Organizations:        result.Organizations,
-		ContactPoints:        result.ContactPoints,
-		Datasets:             result.Datasets,
-		SoftwareApplications: result.SoftwareApplications,
-		SoftwareSourceCodes:  result.SoftwareSourceCodes,
-		Warnings:             make([]api.ImportDiagnostic, 0, len(result.Warnings)),
-	}
-	for _, warning := range result.Warnings {
-		response.Warnings = append(response.Warnings, api.ImportDiagnostic{
-			Severity:  warning.Severity,
-			Subject:   warning.Subject,
-			Predicate: warning.Predicate,
-			Message:   warning.Message,
-		})
-	}
+	response := toAPIImportResult(*result)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.ErrorContext(ctx, "encode metadata import response failed", "error", err)
 	}

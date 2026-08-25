@@ -2,6 +2,9 @@
 package resource
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/backoffice/httpapi/transport"
@@ -98,8 +101,27 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) dispatch(w http.ResponseWriter, r *http.Request, call func(typedHandler)) {
+	resourceType := chi.URLParam(r, "resource_type")
+	if resourceType == "" {
+		// TODO: use a helper for stuff like this
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20))
+		if err != nil {
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
+			return
+		}
+		r.Body = io.NopCloser(bytes.NewReader(body))
+		var envelope struct {
+			ResourceType string `json:"resource_type"`
+		}
+		if err := json.Unmarshal(body, &envelope); err != nil {
+			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
+			return
+		}
+		resourceType = envelope.ResourceType
+	}
+
 	var handler typedHandler
-	switch chi.URLParam(r, "resource_type") {
+	switch resourceType {
 	case Dataset:
 		handler = h.dataset
 	case SoftwareApplication:

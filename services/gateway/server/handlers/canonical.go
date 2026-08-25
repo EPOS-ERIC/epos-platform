@@ -28,10 +28,7 @@ func (h *Canonical) ListContactPoints(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := make([]api.ContactPoint, 0, len(points))
-	for _, point := range points {
-		result = append(result, contactPointFromDomain(point))
-	}
+	result := mapSlice(points, toAPIContactPoint)
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -49,7 +46,7 @@ func (h *Canonical) GetContactPoint(w http.ResponseWriter, r *http.Request) {
 		writeCanonicalError(r, w, err, "get contact point")
 		return
 	}
-	writeJSON(w, http.StatusOK, contactPointFromDomain(point))
+	writeJSON(w, http.StatusOK, toAPIContactPoint(point))
 }
 
 func (h *Canonical) CreateContactPoint(w http.ResponseWriter, r *http.Request) {
@@ -62,16 +59,12 @@ func (h *Canonical) CreateContactPoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	point, err := h.service.CreateContactPoint(r.Context(), actor.ID, domain.CreateContactPointInput{
-		SourceIRI: request.SourceIRI,
-		Email:     request.Email,
-		Role:      request.Role,
-	})
+	point, err := h.service.CreateContactPoint(r.Context(), actor.ID, toDomainCreateContactPointInput(request))
 	if err != nil {
 		writeCanonicalError(r, w, err, "create contact point")
 		return
 	}
-	writeJSON(w, http.StatusCreated, contactPointFromDomain(point))
+	writeJSON(w, http.StatusCreated, toAPIContactPoint(point))
 }
 
 func (h *Canonical) ReplaceContactPoint(w http.ResponseWriter, r *http.Request) {
@@ -88,15 +81,12 @@ func (h *Canonical) ReplaceContactPoint(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	point, err := h.service.ReplaceContactPoint(r.Context(), actor.ID, id, domain.ReplaceContactPointInput{
-		Email: request.Email,
-		Role:  request.Role,
-	})
+	point, err := h.service.ReplaceContactPoint(r.Context(), actor.ID, id, toDomainReplaceContactPointInput(request))
 	if err != nil {
 		writeCanonicalError(r, w, err, "replace contact point")
 		return
 	}
-	writeJSON(w, http.StatusOK, contactPointFromDomain(point))
+	writeJSON(w, http.StatusOK, toAPIContactPoint(point))
 }
 
 func (h *Canonical) DeleteContactPoint(w http.ResponseWriter, r *http.Request) {
@@ -122,10 +112,7 @@ func (h *Canonical) ListOrganizations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := make([]api.CanonicalOrganization, 0, len(organizations))
-	for _, organization := range organizations {
-		result = append(result, organizationFromDomain(organization))
-	}
+	result := mapSlice(organizations, toAPICanonicalOrganization)
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -139,7 +126,7 @@ func (h *Canonical) GetOrganization(w http.ResponseWriter, r *http.Request) {
 		writeCanonicalError(r, w, err, "get organization")
 		return
 	}
-	writeJSON(w, http.StatusOK, organizationFromDomain(organization))
+	writeJSON(w, http.StatusOK, toAPICanonicalOrganization(organization))
 }
 
 func (h *Canonical) CreateOrganization(w http.ResponseWriter, r *http.Request) {
@@ -151,12 +138,12 @@ func (h *Canonical) CreateOrganization(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(r, w, &request) {
 		return
 	}
-	organization, err := h.service.CreateOrganization(r.Context(), actor.ID, createOrganizationInput(request))
+	organization, err := h.service.CreateOrganization(r.Context(), actor.ID, toDomainCreateOrganizationInput(request))
 	if err != nil {
 		writeCanonicalError(r, w, err, "create organization")
 		return
 	}
-	writeJSON(w, http.StatusCreated, organizationFromDomain(organization))
+	writeJSON(w, http.StatusCreated, toAPICanonicalOrganization(organization))
 }
 
 func (h *Canonical) ReplaceOrganization(w http.ResponseWriter, r *http.Request) {
@@ -172,12 +159,12 @@ func (h *Canonical) ReplaceOrganization(w http.ResponseWriter, r *http.Request) 
 	if !decodeJSON(r, w, &request) {
 		return
 	}
-	organization, err := h.service.ReplaceOrganization(r.Context(), actor.ID, id, replaceOrganizationInput(request))
+	organization, err := h.service.ReplaceOrganization(r.Context(), actor.ID, id, toDomainReplaceOrganizationInput(request))
 	if err != nil {
 		writeCanonicalError(r, w, err, "replace organization")
 		return
 	}
-	writeJSON(w, http.StatusOK, organizationFromDomain(organization))
+	writeJSON(w, http.StatusOK, toAPICanonicalOrganization(organization))
 }
 
 func (h *Canonical) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
@@ -202,59 +189,6 @@ func authenticatedActor(r *http.Request, w http.ResponseWriter) (api.User, bool)
 		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 	}
 	return actor, ok
-}
-
-func contactPointFromDomain(point domain.ContactPoint) api.ContactPoint {
-	return api.ContactPoint{ID: point.ID, SourceIRI: point.SourceIRI, Email: point.Email, Role: point.Role}
-}
-
-func organizationFromDomain(organization domain.CanonicalOrganization) api.CanonicalOrganization {
-	identifiers := make([]api.OrganizationIdentifier, 0, len(organization.Identifiers))
-	for _, identifier := range organization.Identifiers {
-		identifiers = append(identifiers, api.OrganizationIdentifier{ID: identifier.ID, SourceIRI: identifier.SourceIRI, Type: identifier.Type, Value: identifier.Value})
-	}
-	return api.CanonicalOrganization{
-		ID: organization.ID, SourceIRI: organization.SourceIRI, Name: organization.Name,
-		Address: api.OrganizationAddress{Street: organization.Address.Street, Locality: organization.Address.Locality, PostalCode: organization.Address.PostalCode, Country: organization.Address.Country},
-		LogoURL: organization.LogoURL, PageURL: organization.PageURL, Email: organization.Email, LEICode: organization.LEICode,
-		Identifiers: identifiers, Parents: organization.Parents, ContactPointIDs: organization.ContactPointIDs,
-	}
-}
-
-func createOrganizationInput(request api.CreateOrganizationRequest) domain.CreateOrganizationInput {
-	identifiers := make([]domain.OrganizationIdentifierInput, 0, len(request.Identifiers))
-	for _, identifier := range request.Identifiers {
-		identifiers = append(identifiers, domain.OrganizationIdentifierInput{SourceIRI: identifier.SourceIRI, Type: identifier.Type, Value: identifier.Value})
-	}
-	return domain.CreateOrganizationInput{
-		SourceIRI: request.SourceIRI, Name: request.Name, Address: organizationAddressToDomain(request.Address),
-		LogoURL: request.LogoURL, PageURL: request.PageURL, Email: request.Email, LEICode: request.LEICode,
-		Identifiers: identifiers, Parents: request.Parents, ContactPointIDs: request.ContactPointIDs,
-	}
-}
-
-func replaceOrganizationInput(request api.ReplaceOrganizationRequest) domain.ReplaceOrganizationInput {
-	identifiers := make([]domain.OrganizationIdentifierInput, 0, len(request.Identifiers))
-	for _, identifier := range request.Identifiers {
-		identifiers = append(identifiers, domain.OrganizationIdentifierInput{SourceIRI: identifier.SourceIRI, Type: identifier.Type, Value: identifier.Value})
-	}
-	return domain.ReplaceOrganizationInput{
-		Name: request.Name, Address: organizationAddressToDomainValue(request.Address), LogoURL: request.LogoURL, PageURL: request.PageURL,
-		Email: request.Email, LEICode: request.LEICode, Identifiers: identifiers,
-		Parents: request.Parents, ContactPointIDs: request.ContactPointIDs,
-	}
-}
-
-func organizationAddressToDomain(address *api.OrganizationAddress) *domain.OrganizationAddress {
-	if address == nil {
-		return nil
-	}
-	value := organizationAddressToDomainValue(*address)
-	return &value
-}
-
-func organizationAddressToDomainValue(address api.OrganizationAddress) domain.OrganizationAddress {
-	return domain.OrganizationAddress{Street: address.Street, Locality: address.Locality, PostalCode: address.PostalCode, Country: address.Country}
 }
 
 //nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.

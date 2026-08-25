@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -28,10 +27,7 @@ func (h *Groups) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := make([]api.Group, 0, len(groups))
-	for _, group := range groups {
-		result = append(result, GroupFromDomain(group))
-	}
+	result := mapSlice(groups, toAPIGroup)
 
 	writeJSON(w, http.StatusOK, result)
 }
@@ -48,7 +44,7 @@ func (h *Groups) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, GroupFromDomain(group))
+	writeJSON(w, http.StatusOK, toAPIGroup(group))
 }
 
 func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
@@ -62,16 +58,12 @@ func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(r, w, &request) {
 		return
 	}
-	group, err := h.service.Create(ctx, actor.ID, domain.CreateGroupInput{
-		SourceIRI: request.SourceIRI, Name: request.Name, Description: request.Description,
-		Label: request.Label, Logo: request.Logo, Page: request.Page, Color: request.Color,
-		Position: request.Position, Concept: request.Concept,
-	})
+	group, err := h.service.Create(ctx, actor.ID, toDomainCreateGroupInput(request))
 	if err != nil {
 		writeGroupError(r, w, err, "create group")
 		return
 	}
-	writeJSON(w, http.StatusCreated, GroupFromDomain(group))
+	writeJSON(w, http.StatusCreated, toAPIGroup(group))
 }
 
 func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
@@ -89,16 +81,12 @@ func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(r, w, &request) {
 		return
 	}
-	group, err := h.service.Replace(ctx, actor.ID, groupID, domain.ReplaceGroupInput{
-		Name: request.Name, Description: request.Description, Label: request.Label,
-		Logo: request.Logo, Page: request.Page, Color: request.Color,
-		Position: request.Position, Concept: request.Concept,
-	})
+	group, err := h.service.Replace(ctx, actor.ID, groupID, toDomainReplaceGroupInput(request))
 	if err != nil {
 		writeGroupError(r, w, err, "replace group")
 		return
 	}
-	writeJSON(w, http.StatusOK, GroupFromDomain(group))
+	writeJSON(w, http.StatusOK, toAPIGroup(group))
 }
 
 func (h *Groups) Delete(w http.ResponseWriter, r *http.Request) {
@@ -135,10 +123,7 @@ func (h *Groups) ListMemberships(w http.ResponseWriter, r *http.Request) {
 		writeMembershipError(r, w, err, "list group memberships")
 		return
 	}
-	result := make([]api.GroupMembership, 0, len(memberships))
-	for _, membership := range memberships {
-		result = append(result, GroupMembershipFromDomain(membership))
-	}
+	result := mapSlice(memberships, toAPIGroupMembership)
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -153,10 +138,7 @@ func (h *Groups) ListCategories(w http.ResponseWriter, r *http.Request) {
 		writeGroupError(r, w, err, "list categories")
 		return
 	}
-	result := make([]api.Category, 0, len(categories))
-	for _, category := range categories {
-		result = append(result, CategoryFromDomain(category))
-	}
+	result := mapSlice(categories, toAPICategory)
 	writeJSON(w, http.StatusOK, result)
 }
 
@@ -175,7 +157,7 @@ func (h *Groups) GetCategory(w http.ResponseWriter, r *http.Request) {
 		writeGroupError(r, w, err, "get category")
 		return
 	}
-	writeJSON(w, http.StatusOK, CategoryFromDomain(category))
+	writeJSON(w, http.StatusOK, toAPICategory(category))
 }
 
 func (h *Groups) CreateCategory(w http.ResponseWriter, r *http.Request) {
@@ -193,14 +175,12 @@ func (h *Groups) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(r, w, &request) {
 		return
 	}
-	category, err := h.service.CreateCategory(ctx, actor.ID, groupID, domain.CreateCategoryInput{
-		SourceIRI: request.SourceIRI, Name: request.Name, ParentCategoryID: request.ParentCategoryID,
-	})
+	category, err := h.service.CreateCategory(ctx, actor.ID, groupID, toDomainCreateCategoryInput(request))
 	if err != nil {
 		writeGroupError(r, w, err, "create category")
 		return
 	}
-	writeJSON(w, http.StatusCreated, CategoryFromDomain(category))
+	writeJSON(w, http.StatusCreated, toAPICategory(category))
 }
 
 func (h *Groups) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
@@ -222,14 +202,12 @@ func (h *Groups) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(r, w, &request) {
 		return
 	}
-	category, err := h.service.ReplaceCategory(ctx, actor.ID, groupID, categoryID, domain.ReplaceCategoryInput{
-		Name: request.Name, ParentCategoryID: request.ParentCategoryID,
-	})
+	category, err := h.service.ReplaceCategory(ctx, actor.ID, groupID, categoryID, toDomainReplaceCategoryInput(request))
 	if err != nil {
 		writeGroupError(r, w, err, "replace category")
 		return
 	}
-	writeJSON(w, http.StatusOK, CategoryFromDomain(category))
+	writeJSON(w, http.StatusOK, toAPICategory(category))
 }
 
 func (h *Groups) DeleteCategory(w http.ResponseWriter, r *http.Request) {
@@ -302,7 +280,7 @@ func (h *Groups) RequestMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, GroupMembershipFromDomain(membership))
+	writeJSON(w, http.StatusCreated, toAPIGroupMembership(membership))
 }
 
 func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
@@ -334,7 +312,7 @@ func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, GroupMembershipFromDomain(membership))
+	writeJSON(w, http.StatusOK, toAPIGroupMembership(membership))
 }
 
 func (h *Groups) DeleteMembership(w http.ResponseWriter, r *http.Request) {
@@ -473,12 +451,7 @@ func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, api.RoleRequest{
-		ID:          roleRequest.ID,
-		Role:        roleRequest.Role,
-		Status:      roleRequest.Status,
-		RequestedAt: roleRequest.RequestedAt.Format(time.RFC3339Nano),
-	})
+	writeJSON(w, http.StatusCreated, toAPIRoleRequest(roleRequest))
 }
 
 func (h *Groups) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request) {
@@ -510,7 +483,7 @@ func (h *Groups) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJSON(w, http.StatusOK, GroupMembershipFromDomain(membership))
+	writeJSON(w, http.StatusOK, toAPIGroupMembership(membership))
 }
 
 func (h *Groups) WithdrawRoleRequest(w http.ResponseWriter, r *http.Request) {
@@ -538,57 +511,6 @@ func (h *Groups) WithdrawRoleRequest(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func GroupFromDomain(group domain.Group) api.Group {
-	return api.Group{
-		ID:          group.ID,
-		SourceIRI:   group.SourceIRI,
-		Name:        group.Name,
-		Description: group.Description,
-		Label:       group.Label,
-		Logo:        group.Logo,
-		Page:        group.Page,
-		Color:       group.Color,
-		Position:    group.Position,
-		Concept:     group.Concept,
-	}
-}
-
-func GroupMembershipFromDomain(membership domain.GroupMembership) api.GroupMembership {
-	roles := make([]api.MembershipRole, 0, len(membership.Roles))
-	for _, role := range membership.Roles {
-		roles = append(roles, api.MembershipRole(role))
-	}
-
-	requests := make([]api.RoleRequest, 0, len(membership.RoleRequests))
-	for _, request := range membership.RoleRequests {
-		requests = append(requests, api.RoleRequest{
-			ID:          request.ID,
-			Role:        request.Role,
-			Status:      request.Status,
-			RequestedAt: request.RequestedAt.Format(time.RFC3339Nano),
-		})
-	}
-
-	return api.GroupMembership{
-		User: api.MembershipUser{
-			ID:         membership.User.ID,
-			GivenName:  membership.User.GivenName,
-			FamilyName: membership.User.FamilyName,
-			Email:      membership.User.Email,
-		},
-		Status:       api.MembershipStatus(membership.Status),
-		Roles:        roles,
-		Permissions:  append([]string{}, membership.Permissions...),
-		RoleRequests: requests,
-		CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
-		UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
-	}
-}
-
-func CategoryFromDomain(category domain.Category) api.Category {
-	return api.Category{ID: category.ID, GroupID: category.GroupID, ParentCategoryID: category.ParentCategoryID, SourceIRI: category.SourceIRI, Name: category.Name}
-}
-
 func groupRoleParams(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
 	groupID, ok := uuidParam(ctx, w, r, "groupId")
 	if !ok {
@@ -596,7 +518,7 @@ func groupRoleParams(ctx context.Context, w http.ResponseWriter, r *http.Request
 	}
 
 	userID := chi.URLParam(r, "userId")
-	role := api.MembershipRole(chi.URLParam(r, "role"))
+	role := toAPIMembershipRole(chi.URLParam(r, "role"))
 	if !validUUID(userID) || !role.IsValid() {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or role", nil)
 		return "", "", "", false

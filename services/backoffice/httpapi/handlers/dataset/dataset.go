@@ -51,11 +51,20 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 	if !transport.Decode(w, r, &request) {
 		return
 	}
-	if request.GroupID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "group_id is required")
+	groupID := request.GroupID
+	if groupIDPath := chi.URLParam(r, "group_id"); groupIDPath != "" {
+		parsed, parseErr := uuid.Parse(groupIDPath)
+		if parseErr != nil {
+			groupID = uuid.Nil
+		} else {
+			groupID = parsed
+		}
+	}
+	if groupID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
-	dataset, err := h.service.CreateDraft(r.Context(), actor, request.GroupID, request.Metadata.domain())
+	dataset, err := h.service.CreateDraft(r.Context(), actor, groupID, request.Metadata.domain())
 	h.writeDataset(r, w, dataset, err, http.StatusCreated)
 }
 
@@ -98,8 +107,9 @@ func (h *handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request struct {
-		Revision int32               `json:"revision"`
-		Metadata datasetDraftRequest `json:"metadata"`
+		ResourceType string              `json:"resource_type"`
+		Revision     int32               `json:"revision"`
+		Metadata     datasetDraftRequest `json:"metadata"`
 	}
 	if !transport.Decode(w, r, &request) {
 		return

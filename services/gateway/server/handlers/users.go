@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -57,7 +56,7 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeUserJSON(w, http.StatusOK, UserFromDomain(resolved))
+	writeUserJSON(w, http.StatusOK, ToAPIUser(resolved))
 }
 
 func (h *Users) List(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +82,7 @@ func (h *Users) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeUserSummariesJSON(w, http.StatusOK, UserSummariesFromDomain(resolved))
+	writeUserSummariesJSON(w, http.StatusOK, toAPIUserSummaries(resolved))
 }
 
 func (h *Users) GrantGlobalPermission(w http.ResponseWriter, r *http.Request) {
@@ -281,75 +280,6 @@ func validGlobalPermission(permission string) bool {
 	default:
 		return false
 	}
-}
-
-func UserFromDomain(resolved domain.User) api.User {
-	user := api.User{
-		ID:                resolved.ID,
-		Email:             resolved.Email,
-		GivenName:         resolved.GivenName,
-		FamilyName:        resolved.FamilyName,
-		Status:            api.UserStatus(resolved.Status),
-		GlobalRoles:       append([]string{}, resolved.GlobalRoles...),
-		GlobalPermissions: append([]string{}, resolved.GlobalPermissions...),
-		CreatedAt:         resolved.CreatedAt,
-		UpdatedAt:         resolved.UpdatedAt,
-		Memberships:       make([]api.UserMembershipSummary, 0, len(resolved.Memberships)),
-	}
-
-	for _, membership := range resolved.Memberships {
-		roles := make([]api.MembershipRole, 0, len(membership.Roles))
-		for _, role := range membership.Roles {
-			roles = append(roles, api.MembershipRole(role))
-		}
-
-		user.Memberships = append(user.Memberships, api.UserMembershipSummary{
-			Group: api.Reference{
-				ID:   membership.Group.ID,
-				Name: membership.Group.Name,
-			},
-			Roles:        roles,
-			Status:       api.MembershipStatus(membership.Status),
-			Permissions:  append([]string{}, membership.Permissions...),
-			RoleRequests: roleRequestsFromDomain(membership.RoleRequests),
-			CreatedAt:    membership.CreatedAt,
-			UpdatedAt:    membership.UpdatedAt,
-		})
-	}
-
-	return user
-}
-
-func roleRequestsFromDomain(requests []domain.RoleRequest) []api.RoleRequest {
-	result := make([]api.RoleRequest, 0, len(requests))
-	for _, request := range requests {
-		result = append(result, api.RoleRequest{
-			ID:          request.ID,
-			Role:        request.Role,
-			Status:      request.Status,
-			RequestedAt: request.RequestedAt.Format(time.RFC3339Nano),
-		})
-	}
-	return result
-}
-
-func UserSummariesFromDomain(resolved []domain.UserSummary) []api.UserSummary {
-	result := make([]api.UserSummary, 0, len(resolved))
-	for _, user := range resolved {
-		result = append(result, api.UserSummary{
-			ID:                user.ID,
-			Email:             user.Email,
-			GivenName:         user.GivenName,
-			FamilyName:        user.FamilyName,
-			Status:            api.UserStatus(user.Status),
-			GlobalRoles:       append([]string{}, user.GlobalRoles...),
-			GlobalPermissions: append([]string{}, user.GlobalPermissions...),
-			CreatedAt:         user.CreatedAt,
-			UpdatedAt:         user.UpdatedAt,
-		})
-	}
-
-	return result
 }
 
 func writeUserJSON(w http.ResponseWriter, status int, value api.User) {

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -80,17 +79,7 @@ func (c *Backoffice) ListGroups(ctx context.Context) ([]domain.Group, error) {
 		return nil, wrapGroupError("list backoffice groups", response, err)
 	}
 
-	result := make([]domain.Group, 0, len(groups))
-	for _, group := range groups {
-		mapped, err := toDomainGroup(&group)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, mapped)
-	}
-
-	return result, nil
+	return toDomainGroups(groups)
 }
 
 func (c *Backoffice) GetGroup(ctx context.Context, id string) (domain.Group, error) {
@@ -126,7 +115,7 @@ func (c *Backoffice) RequestMembership(ctx context.Context, groupID, actorID str
 
 	membership, response, err := c.access.RequestGroupMembership(ctx, groupID).
 		XEPOSUserID(actorID).
-		CreateMembershipRequest(client.CreateMembershipRequest{Roles: roles}).
+		CreateMembershipRequest(toClientCreateMembershipRequest(roles)).
 		Execute()
 	if err != nil {
 		return domain.GroupMembership{}, wrapGroupAccessError("request backoffice membership", response, err)
@@ -142,7 +131,7 @@ func (c *Backoffice) DecideMembership(ctx context.Context, groupID, userID, stat
 
 	membership, response, err := c.access.DecideGroupMembership(ctx, groupID, userID).
 		XEPOSUserID(actorID).
-		MembershipDecisionRequest(client.MembershipDecisionRequest{Status: status}).
+		MembershipDecisionRequest(toClientMembershipDecisionRequest(status)).
 		Execute()
 	if err != nil {
 		return domain.GroupMembership{}, wrapGroupAccessError("decide backoffice membership", response, err)
@@ -171,7 +160,7 @@ func (c *Backoffice) RequestRole(ctx context.Context, groupID, role, actorID str
 
 	request, response, err := c.access.RequestGroupRole(ctx, groupID).
 		XEPOSUserID(actorID).
-		CreateRoleRequest(client.CreateRoleRequest{Role: role}).
+		CreateRoleRequest(toClientCreateRoleRequest(role)).
 		Execute()
 	if err != nil {
 		return domain.RoleRequest{}, wrapGroupAccessError("request backoffice role", response, err)
@@ -180,12 +169,7 @@ func (c *Backoffice) RequestRole(ctx context.Context, groupID, role, actorID str
 		return domain.RoleRequest{}, fmt.Errorf("decode backoffice role request: response is empty")
 	}
 
-	return domain.RoleRequest{
-		ID:          request.Id,
-		Role:        request.Role,
-		Status:      request.Status,
-		RequestedAt: request.RequestedAt,
-	}, nil
+	return toDomainRoleRequest(*request), nil
 }
 
 func (c *Backoffice) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID, status, actorID string) (domain.GroupMembership, error) {
@@ -195,7 +179,7 @@ func (c *Backoffice) ApplyRoleRequestDecision(ctx context.Context, groupID, requ
 
 	membership, response, err := c.access.ApplyRoleRequestDecision(ctx, groupID, requestID).
 		XEPOSUserID(actorID).
-		RoleRequestDecisionRequest(client.RoleRequestDecisionRequest{Status: status}).
+		RoleRequestDecisionRequest(toClientRoleRequestDecisionRequest(status)).
 		Execute()
 	if err != nil {
 		return domain.GroupMembership{}, wrapGroupAccessError("decide backoffice role request", response, err)
@@ -292,22 +276,7 @@ func (c *Backoffice) ListUsers(ctx context.Context, actorID string) ([]domain.Us
 		return nil, wrapUserError("list backoffice users", response, err)
 	}
 
-	result := make([]domain.UserSummary, 0, len(users))
-	for _, user := range users {
-		result = append(result, domain.UserSummary{
-			ID:                user.Id,
-			Email:             user.Email,
-			GivenName:         user.GivenName,
-			FamilyName:        user.FamilyName,
-			Status:            user.Status,
-			GlobalRoles:       append([]string{}, user.GlobalRoles...),
-			GlobalPermissions: append([]string{}, user.GlobalPermissions...),
-			CreatedAt:         "",
-			UpdatedAt:         "",
-		})
-	}
-
-	return result, nil
+	return toDomainUserSummaries(users), nil
 }
 
 func (c *Backoffice) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
@@ -369,7 +338,7 @@ func (c *Backoffice) BlockUser(ctx context.Context, actorID, userID, reason stri
 
 	response, err := c.users.BlockUser(ctx, userID).
 		XEPOSUserID(actorID).
-		BlockUserRequest(client.BlockUserRequest{Reason: reason}).
+		BlockUserRequest(toClientBlockUserRequest(reason)).
 		Execute()
 	if err != nil {
 		return wrapUserError("block backoffice user", response, err)
@@ -411,12 +380,7 @@ func (c *Backoffice) CreateUser(ctx context.Context, identity ActorIdentity) (do
 		return domain.User{}, fmt.Errorf("backoffice identity client is not configured")
 	}
 
-	user, response, err := c.identity.ProvisionUser(ctx).CreateUserRequest(client.CreateUserRequest{
-		Id:         identity.AuthIdentifier,
-		Email:      identity.Email,
-		GivenName:  identity.GivenName,
-		FamilyName: identity.FamilyName,
-	}).Execute()
+	user, response, err := c.identity.ProvisionUser(ctx).CreateUserRequest(toClientCreateUserRequest(identity)).Execute()
 	if err != nil {
 		if response != nil && response.StatusCode == http.StatusConflict {
 			return domain.User{}, domain.ErrConflict
@@ -458,26 +422,8 @@ func (c *Backoffice) ImportTurtle(ctx context.Context, actorID string, body []by
 		return nil, fmt.Errorf("decode backoffice import result: response is empty")
 	}
 
-	responseResult := &domain.ImportResult{
-		Groups:               result.Groups,
-		Categories:           result.Categories,
-		Organizations:        result.Organizations,
-		ContactPoints:        result.ContactPoints,
-		Datasets:             result.Datasets,
-		SoftwareApplications: result.SoftwareApplications,
-		SoftwareSourceCodes:  result.SoftwareSourceCodes,
-		Warnings:             make([]domain.ImportDiagnostic, 0, len(result.Warnings)),
-	}
-	for _, warning := range result.Warnings {
-		responseResult.Warnings = append(responseResult.Warnings, domain.ImportDiagnostic{
-			Severity:  warning.Severity,
-			Subject:   warning.Subject,
-			Predicate: warning.Predicate,
-			Message:   warning.Message,
-		})
-	}
-
-	return responseResult, nil
+	responseResult := toDomainImportResult(*result)
+	return &responseResult, nil
 }
 
 func wrapUserError(operation string, response *http.Response, err error) error {
@@ -529,110 +475,4 @@ func wrapConnectionError(operation string, err error) error {
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
 	}
 	return fmt.Errorf("%s: %w", operation, err)
-}
-
-func toDomainUser(value *client.User) (domain.User, error) {
-	if value == nil {
-		return domain.User{}, fmt.Errorf("decode backoffice user: response is empty")
-	}
-
-	memberships := make([]domain.Membership, 0, len(value.Memberships))
-	for _, membership := range value.Memberships {
-		memberships = append(memberships, domain.Membership{
-			Group: domain.Group{
-				ID:          membership.Group.Id,
-				Name:        membership.Group.Name,
-				SourceIRI:   "",
-				Description: nil,
-				Label:       nil,
-				Logo:        nil,
-				Page:        nil,
-				Color:       nil,
-				Position:    0,
-				Concept:     "",
-			},
-			Roles:        append([]string{}, membership.Roles...),
-			Status:       membership.Status,
-			Permissions:  append([]string{}, membership.Permissions...),
-			RoleRequests: toDomainRoleRequests(membership.RoleRequests),
-			CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
-			UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
-		})
-	}
-
-	return domain.User{
-		ID:                value.Id,
-		Email:             value.Email,
-		GivenName:         value.GivenName,
-		FamilyName:        value.FamilyName,
-		Status:            value.Status,
-		GlobalRoles:       append([]string{}, value.GlobalRoles...),
-		GlobalPermissions: append([]string{}, value.GlobalPermissions...),
-		CreatedAt:         value.CreatedAt.Format(time.RFC3339Nano),
-		UpdatedAt:         value.UpdatedAt.Format(time.RFC3339Nano),
-		Memberships:       memberships,
-	}, nil
-}
-
-func toDomainRoleRequests(requests []client.RoleRequest) []domain.RoleRequest {
-	result := make([]domain.RoleRequest, 0, len(requests))
-	for _, request := range requests {
-		result = append(result, domain.RoleRequest{
-			ID:          request.Id,
-			Role:        request.Role,
-			Status:      request.Status,
-			RequestedAt: request.RequestedAt,
-		})
-	}
-	return result
-}
-
-func toDomainGroup(value *client.Group) (domain.Group, error) {
-	if value == nil {
-		return domain.Group{}, fmt.Errorf("decode backoffice group: response is empty")
-	}
-
-	return domain.Group{
-		ID:          value.Id,
-		SourceIRI:   value.SourceIri,
-		Name:        value.Name,
-		Description: value.Description.Get(),
-		Label:       value.Label.Get(),
-		Logo:        value.Logo.Get(),
-		Page:        value.Page.Get(),
-		Color:       value.Color.Get(),
-		Position:    value.Position,
-		Concept:     value.Concept,
-	}, nil
-}
-
-func toDomainGroupMembership(value *client.GroupMembership) (domain.GroupMembership, error) {
-	if value == nil {
-		return domain.GroupMembership{}, fmt.Errorf("decode backoffice membership: response is empty")
-	}
-
-	roleRequests := make([]domain.RoleRequest, 0, len(value.RoleRequests))
-	for _, request := range value.RoleRequests {
-		roleRequests = append(roleRequests, domain.RoleRequest{
-			ID:          request.Id,
-			Role:        request.Role,
-			Status:      request.Status,
-			RequestedAt: request.RequestedAt,
-		})
-	}
-
-	return domain.GroupMembership{
-		User: domain.MembershipUser{
-			ID:         value.User.Id,
-			GivenName:  value.User.GivenName,
-			FamilyName: value.User.FamilyName,
-			Email:      value.User.Email,
-		},
-		Status:       value.Status,
-		Roles:        append([]string{}, value.Roles...),
-		Permissions:  append([]string{}, value.Permissions...),
-		RoleRequests: roleRequests,
-		CreatedAt:    value.CreatedAt,
-		UpdatedAt:    value.UpdatedAt,
-	}, nil
 }

@@ -167,7 +167,10 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/CreateCanonicalOrganizationRequest" }
+            schema:
+              {
+                $ref: "#/components/schemas/CreateCanonicalOrganizationRequest",
+              }
       responses:
         "201":
           description: Organization created
@@ -218,7 +221,10 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ReplaceCanonicalOrganizationRequest" }
+            schema:
+              {
+                $ref: "#/components/schemas/ReplaceCanonicalOrganizationRequest",
+              }
       responses:
         "200":
           description: Organization replaced
@@ -370,16 +376,13 @@ paths:
         "400": { $ref: "#/components/responses/Invalid" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "500": { $ref: "#/components/responses/InternalServerError" }
-  # TODO: Move resource_type into the create request body and use it as the
-  # discriminator. The path parameter is not the correct request discriminator.
-  /api/v1/resources/{resource_type}:
-    parameters:
-      - { $ref: "#/components/parameters/ResourceType" }
+  /api/v1/groups/{group_id}/resources:
+    parameters: [{ $ref: "#/components/parameters/GroupID" }]
     post:
       tags: [Resources]
       operationId: createResource
       summary: Create resource draft
-      description: Creates a logical resource and its first editable DRAFT version in request group_id.
+      description: Creates a logical resource and its first editable DRAFT version in the selected group.
       parameters: [{ $ref: "#/components/parameters/Actor" }]
       requestBody:
         required: true
@@ -411,11 +414,8 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "500": { $ref: "#/components/responses/InternalServerError" }
-  # TODO: Move resource_type into the replace-draft request body and use it as
-  # the discriminator. The path parameter is not the correct request discriminator.
-  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft:
+  /api/v1/resources/{resource_id}/versions/{version_id}/draft:
     parameters:
-      - { $ref: "#/components/parameters/ResourceType" }
       - { $ref: "#/components/parameters/ResourceID" }
       - { $ref: "#/components/parameters/VersionID" }
     put:
@@ -429,10 +429,7 @@ paths:
         content:
           application/json:
             schema:
-              anyOf:
-                - { $ref: "#/components/schemas/ReplaceDraftRequest" }
-                - { $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest" }
-                - { $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest" }
+              $ref: "#/components/schemas/ReplaceResourceDraftRequest"
       responses:
         "200": { $ref: "#/components/responses/Resource" }
         "400": { $ref: "#/components/responses/Invalid" }
@@ -1172,7 +1169,10 @@ components:
       schema:
         type: array
         items:
-          { type: string, enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED] }
+          {
+            type: string,
+            enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED],
+          }
         default: [PUBLISHED]
       style: form
       explode: false
@@ -1230,12 +1230,7 @@ components:
         schema: { type: string, format: uuid },
       }
     UserID:
-      {
-        name: user_id,
-        in: path,
-        required: true,
-        schema: { type: string },
-      }
+      { name: user_id, in: path, required: true, schema: { type: string } }
     RoleRequestID:
       {
         name: request_id,
@@ -1274,7 +1269,7 @@ components:
                 group.permission.manage,
                 category.manage,
               ],
-          }
+          },
       }
     GlobalPermission:
       {
@@ -1309,10 +1304,7 @@ components:
         content:
           {
             application/json:
-              {
-                schema:
-                  { $ref: "#/components/schemas/ResourceRecord" },
-              },
+              { schema: { $ref: "#/components/schemas/ResourceRecord" } },
           },
       }
     ResourceRead:
@@ -1322,9 +1314,23 @@ components:
           schema:
             $ref: "#/components/schemas/ResourceRecord"
     SoftwareApplication:
-      { description: Software application lifecycle record, content: { application/json: { schema: { $ref: "#/components/schemas/ResourceRecord" } } } }
+      {
+        description: Software application lifecycle record,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ResourceRecord" } },
+          },
+      }
     SoftwareSourceCode:
-      { description: Software source code lifecycle record, content: { application/json: { schema: { $ref: "#/components/schemas/ResourceRecord" } } } }
+      {
+        description: Software source code lifecycle record,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ResourceRecord" } },
+          },
+      }
     Dataset:
       {
         description: Dataset lifecycle record,
@@ -1340,10 +1346,7 @@ components:
         content:
           {
             application/json:
-              {
-                schema:
-                  { $ref: "#/components/schemas/ResourceRecord" },
-              },
+              { schema: { $ref: "#/components/schemas/ResourceRecord" } },
           },
       }
     Invalid:
@@ -1426,7 +1429,19 @@ components:
           minLength: 1
     User:
       type: object
-      required: [id, email, given_name, family_name, status, global_roles, global_permissions, created_at, updated_at, memberships]
+      required:
+        [
+          id,
+          email,
+          given_name,
+          family_name,
+          status,
+          global_roles,
+          global_permissions,
+          created_at,
+          updated_at,
+          memberships,
+        ]
       additionalProperties: false
       properties:
         id:
@@ -1448,7 +1463,16 @@ components:
           items: { $ref: "#/components/schemas/UserMembership" }
     UserSummary:
       type: object
-      required: [id, email, given_name, family_name, status, global_roles, global_permissions]
+      required:
+        [
+          id,
+          email,
+          given_name,
+          family_name,
+          status,
+          global_roles,
+          global_permissions,
+        ]
       additionalProperties: false
       properties:
         id: { type: string }
@@ -1464,7 +1488,16 @@ components:
           items: { type: string }
     UserMembership:
       type: object
-      required: [group, roles, status, permissions, role_requests, created_at, updated_at]
+      required:
+        [
+          group,
+          roles,
+          status,
+          permissions,
+          role_requests,
+          created_at,
+          updated_at,
+        ]
       additionalProperties: false
       properties:
         group: { $ref: "#/components/schemas/GroupReference" }
@@ -1565,7 +1598,16 @@ components:
         email: { type: string, format: email }
     GroupMembership:
       type: object
-      required: [user, status, roles, permissions, role_requests, created_at, updated_at]
+      required:
+        [
+          user,
+          status,
+          roles,
+          permissions,
+          role_requests,
+          created_at,
+          updated_at,
+        ]
       additionalProperties: false
       properties:
         user: { $ref: "#/components/schemas/MembershipUser" }
@@ -1620,31 +1662,55 @@ components:
         status: { type: string, enum: [ACCEPTED, REJECTED] }
     ReplaceSoftwareApplicationDraftRequest:
       type: object
-      required: [revision, metadata]
+      required: [resource_type, revision, metadata]
       properties:
+        resource_type: { type: string, enum: [software-application] }
         revision: { type: integer, format: int32, minimum: 1 }
-        metadata: { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
     ReplaceSoftwareSourceCodeDraftRequest:
       type: object
-      required: [revision, metadata]
+      required: [resource_type, revision, metadata]
       properties:
+        resource_type: { type: string, enum: [software-source-code] }
         revision: { type: integer, format: int32, minimum: 1 }
-        metadata: { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
     DiscoveryItem:
       type: object
       required: [type, resource_id, version_id, source_iri, name, status, group]
       properties:
-        type: { type: string, enum: [dataset, software-application, software-source-code] }
+        type:
+          {
+            type: string,
+            enum: [dataset, software-application, software-source-code],
+          }
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         source_iri: { type: string }
         name: { type: string }
         status: { $ref: "#/components/schemas/DatasetStatus" }
         group: { $ref: "#/components/schemas/DiscoveryReference" }
-        providers: { type: array, items: { $ref: "#/components/schemas/DiscoveryReference" } }
-        creators: { type: array, items: { $ref: "#/components/schemas/DiscoveryReference" } }
-        categories: { type: array, items: { $ref: "#/components/schemas/DiscoveryReference" } }
-        distributions: { type: array, items: { $ref: "#/components/schemas/DiscoveryReference" } }
+        providers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DiscoveryReference" },
+          }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DiscoveryReference" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DiscoveryReference" },
+          }
+        distributions:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DiscoveryReference" },
+          }
     DiscoveryReference:
       type: object
       required: [id, name]
@@ -1653,7 +1719,8 @@ components:
         name: { type: string }
     ResourceRecord:
       type: object
-      required: [resource_id, version_id, revision, status, created_by, group, metadata]
+      required:
+        [resource_id, version_id, revision, status, created_by, group, metadata]
       properties:
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
@@ -1680,10 +1747,26 @@ components:
         download_url: { type: string, nullable: true }
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
-        creators: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
-        identifiers: { type: array, items: { $ref: "#/components/schemas/SoftwareIdentifierDraft" } }
-        categories: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
-        contact_points: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/IdentifierDraft" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
     SoftwareSourceCodeDraftMetadata:
       type: object
       required: [source_iri, name]
@@ -1699,13 +1782,40 @@ components:
         runtime_platform: { type: string, nullable: true }
         main_entity_of_page: { type: string, nullable: true }
         version: { type: string, nullable: true }
-        creators: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
-        identifiers: { type: array, items: { $ref: "#/components/schemas/SoftwareIdentifierDraft" } }
-        categories: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
-        contact_points: { type: array, items: { $ref: "#/components/schemas/CanonicalReference" } }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/IdentifierDraft" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/CanonicalReference" },
+          }
     SoftwareApplicationMetadata:
       type: object
-      required: [id, source_iri, name, description, keywords, creators, identifiers, contact_points, categories]
+      required:
+        [
+          id,
+          source_iri,
+          name,
+          description,
+          keywords,
+          creators,
+          identifiers,
+          contact_points,
+          categories,
+        ]
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -1718,13 +1828,35 @@ components:
         download_url: { type: string, nullable: true }
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
-        creators: { type: array, items: { $ref: "#/components/schemas/Organization" } }
-        identifiers: { type: array, items: { $ref: "#/components/schemas/Identifier" } }
-        contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } }
-        categories: { type: array, items: { $ref: "#/components/schemas/SoftwareCategory" } }
+        creators:
+          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        identifiers:
+          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points:
+          {
+            type: array,
+            nullable: true,
+            items: { $ref: "#/components/schemas/ContactPoint" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareCategory" },
+          }
     SoftwareSourceCodeMetadata:
       type: object
-      required: [id, source_iri, name, description, keywords, creators, identifiers, contact_points, categories]
+      required:
+        [
+          id,
+          source_iri,
+          name,
+          description,
+          keywords,
+          creators,
+          identifiers,
+          contact_points,
+          categories,
+        ]
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -1738,17 +1870,21 @@ components:
         runtime_platform: { type: string, nullable: true }
         main_entity_of_page: { type: string, nullable: true }
         version: { type: string, nullable: true }
-        creators: { type: array, items: { $ref: "#/components/schemas/Organization" } }
-        identifiers: { type: array, items: { $ref: "#/components/schemas/Identifier" } }
-        contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } }
-        categories: { type: array, items: { $ref: "#/components/schemas/SoftwareCategory" } }
-    SoftwareIdentifierDraft:
-      type: object
-      required: [source_iri, type, value]
-      properties:
-        source_iri: { type: string }
-        type: { type: string }
-        value: { type: string }
+        creators:
+          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        identifiers:
+          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points:
+          {
+            type: array,
+            nullable: true,
+            items: { $ref: "#/components/schemas/ContactPoint" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareCategory" },
+          }
     SoftwareCategory:
       type: object
       required: [id, source_iri, name, scheme, children]
@@ -1757,10 +1893,24 @@ components:
         source_iri: { type: string }
         name: { type: string }
         scheme: { $ref: "#/components/schemas/CategoryScheme" }
-        children: { type: array, items: { $ref: "#/components/schemas/SoftwareCategory" } }
+        children:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareCategory" },
+          }
     ImportResult:
       type: object
-      required: [groups, categories, organizations, contact_points, datasets, software_applications, software_source_codes, warnings]
+      required:
+        [
+          groups,
+          categories,
+          organizations,
+          contact_points,
+          datasets,
+          software_applications,
+          software_source_codes,
+          warnings,
+        ]
       properties:
         groups: { type: integer }
         categories: { type: integer }
@@ -1782,12 +1932,26 @@ components:
         message: { type: string }
     ReplaceDraftRequest:
       type: object
-      required: [revision, metadata]
+      required: [resource_type, revision, metadata]
       properties:
         {
+          resource_type: { type: string, enum: [dataset] },
           revision: { type: integer, format: int32 },
           metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" },
         }
+    ReplaceResourceDraftRequest:
+      oneOf:
+        - { $ref: "#/components/schemas/ReplaceDraftRequest" }
+        - {
+            $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest",
+          }
+        - { $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest" }
+      discriminator:
+        propertyName: resource_type
+        mapping:
+          dataset: "#/components/schemas/ReplaceDraftRequest"
+          software-application: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
+          software-source-code: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
     RejectRequest:
       {
         type: object,
@@ -1795,16 +1959,40 @@ components:
         properties: { note: { type: string, minLength: 1 } },
       }
     CreateResourceRequest:
+      oneOf:
+        - { $ref: "#/components/schemas/CreateDatasetResourceRequest" }
+        - {
+            $ref: "#/components/schemas/CreateSoftwareApplicationResourceRequest",
+          }
+        - {
+            $ref: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest",
+          }
+      discriminator:
+        propertyName: resource_type
+        mapping:
+          dataset: "#/components/schemas/CreateDatasetResourceRequest"
+          software-application: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+          software-source-code: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+    CreateDatasetResourceRequest:
       type: object
-      required: [group_id, metadata]
-      additionalProperties: false
+      required: [resource_type, metadata]
       properties:
-        group_id: { type: string, format: uuid }
+        resource_type: { type: string, enum: [dataset] }
+        metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" }
+    CreateSoftwareApplicationResourceRequest:
+      type: object
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-application] }
         metadata:
-          oneOf:
-            - { $ref: "#/components/schemas/DatasetDraftMetadata" }
-            - { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
-            - { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
+          { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+    CreateSoftwareSourceCodeResourceRequest:
+      type: object
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-source-code] }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
     CopyResourceRequest:
       {
         type: object,
@@ -1826,12 +2014,12 @@ components:
                 type: string,
                 enum:
                   [
-                     invalid_request,
-                     forbidden,
-                     dataset_not_found,
-                     software_application_not_found,
-                     software_source_code_not_found,
-                     conflict,
+                    invalid_request,
+                    forbidden,
+                    dataset_not_found,
+                    software_application_not_found,
+                    software_source_code_not_found,
+                    conflict,
                     internal_server_error,
                   ],
               },
@@ -1893,7 +2081,22 @@ components:
         source_updated: { type: string, format: date-time, nullable: true }
     DatasetMetadata:
       type: object
-      required: [id, source_iri, title, description, keywords, distributions, persistent_identifiers, contact_points, providers, categories, status, created, updated]
+      required:
+        [
+          id,
+          source_iri,
+          title,
+          description,
+          keywords,
+          distributions,
+          persistent_identifiers,
+          contact_points,
+          providers,
+          categories,
+          status,
+          created,
+          updated,
+        ]
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -1903,13 +2106,22 @@ components:
         accrual_periodicity: { type: string, nullable: true }
         quality_annotation: { type: string, nullable: true }
         access_right: { type: string, nullable: true }
-        distributions: { type: array, items: { $ref: "#/components/schemas/Distribution" } }
+        distributions:
+          { type: array, items: { $ref: "#/components/schemas/Distribution" } }
         spatial_coverage: { $ref: "#/components/schemas/Spatial" }
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
-        persistent_identifiers: { type: array, items: { $ref: "#/components/schemas/Identifier" } }
-        contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } }
-        providers: { type: array, items: { $ref: "#/components/schemas/Organization" } }
-        categories: { type: array, items: { $ref: "#/components/schemas/Category" } }
+        persistent_identifiers:
+          { type: array, items: { $ref: "#/components/schemas/Identifier" } }
+        contact_points:
+          {
+            type: array,
+            nullable: true,
+            items: { $ref: "#/components/schemas/ContactPoint" },
+          }
+        providers:
+          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+        categories:
+          { type: array, items: { $ref: "#/components/schemas/Category" } }
         source_created: { type: string, format: date-time, nullable: true }
         source_updated: { type: string, format: date-time, nullable: true }
         status: { $ref: "#/components/schemas/DatasetStatus" }
@@ -2232,7 +2444,8 @@ components:
         role: { type: string }
     CanonicalOrganization:
       type: object
-      required: [id, source_iri, name, address, identifiers, parents, contact_point_ids]
+      required:
+        [id, source_iri, name, address, identifiers, parents, contact_point_ids]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -2281,7 +2494,8 @@ components:
         lei_code: { type: string, nullable: true }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/CreateOrganizationIdentifierRequest" }
+          items:
+            { $ref: "#/components/schemas/CreateOrganizationIdentifierRequest" }
         parents:
           type: array
           items: { type: string, format: uuid }
@@ -2298,7 +2512,18 @@ components:
         value: { type: string }
     ReplaceCanonicalOrganizationRequest:
       type: object
-      required: [name, address, logo_url, page_url, email, lei_code, identifiers, parents, contact_point_ids]
+      required:
+        [
+          name,
+          address,
+          logo_url,
+          page_url,
+          email,
+          lei_code,
+          identifiers,
+          parents,
+          contact_point_ids,
+        ]
       additionalProperties: false
       properties:
         name: { type: string }
@@ -2317,7 +2542,8 @@ components:
         lei_code: { type: string, nullable: true }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/CreateOrganizationIdentifierRequest" }
+          items:
+            { $ref: "#/components/schemas/CreateOrganizationIdentifierRequest" }
         parents:
           type: array
           items: { type: string, format: uuid }
@@ -2339,9 +2565,14 @@ components:
             country: { type: string, nullable: true },
             logo_url: { type: string, nullable: true },
             page_url: { type: string, nullable: true },
-             email: { type: string, nullable: true },
-             lei_code: { type: string, nullable: true },
-             contact_points: { type: array, nullable: true, items: { $ref: "#/components/schemas/ContactPoint" } },
+            email: { type: string, nullable: true },
+            lei_code: { type: string, nullable: true },
+            contact_points:
+              {
+                type: array,
+                nullable: true,
+                items: { $ref: "#/components/schemas/ContactPoint" },
+              },
             identifiers:
               {
                 type: array,

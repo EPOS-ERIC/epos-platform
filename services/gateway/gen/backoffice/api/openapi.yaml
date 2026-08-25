@@ -1037,21 +1037,18 @@ paths:
       summary: Discover resources
       tags:
       - Resources
-  /api/v1/resources/{resource_type}:
+  /api/v1/groups/{group_id}/resources:
     post:
       description: Creates a logical resource and its first editable DRAFT version
-        in request group_id.
+        in the selected group.
       operationId: createResource
       parameters:
       - explode: false
         in: path
-        name: resource_type
+        name: group_id
         required: true
         schema:
-          enum:
-          - dataset
-          - software-application
-          - software-source-code
+          format: uuid
           type: string
         style: simple
       - explode: false
@@ -1189,23 +1186,12 @@ paths:
       summary: Read resource version
       tags:
       - Resources
-  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft:
+  /api/v1/resources/{resource_id}/versions/{version_id}/draft:
     delete:
       description: Permanently deletes selected DRAFT or REJECTED version and removes
         its logical resource when no versions remain.
       operationId: discardResourceDraft
       parameters:
-      - explode: false
-        in: path
-        name: resource_type
-        required: true
-        schema:
-          enum:
-          - dataset
-          - software-application
-          - software-source-code
-          type: string
-        style: simple
       - explode: false
         in: path
         name: resource_id
@@ -1278,17 +1264,6 @@ paths:
       parameters:
       - explode: false
         in: path
-        name: resource_type
-        required: true
-        schema:
-          enum:
-          - dataset
-          - software-application
-          - software-source-code
-          type: string
-        style: simple
-      - explode: false
-        in: path
         name: resource_id
         required: true
         schema:
@@ -1314,7 +1289,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/replaceResourceDraft_request"
+              $ref: "#/components/schemas/ReplaceResourceDraftRequest"
         required: true
       responses:
         "200":
@@ -4807,6 +4782,10 @@ components:
       type: object
     ReplaceSoftwareApplicationDraftRequest:
       properties:
+        resource_type:
+          enum:
+          - software-application
+          type: string
         revision:
           format: int32
           minimum: 1
@@ -4815,10 +4794,15 @@ components:
           $ref: "#/components/schemas/SoftwareApplicationDraftMetadata"
       required:
       - metadata
+      - resource_type
       - revision
       type: object
     ReplaceSoftwareSourceCodeDraftRequest:
       properties:
+        resource_type:
+          enum:
+          - software-source-code
+          type: string
         revision:
           format: int32
           minimum: 1
@@ -4827,6 +4811,7 @@ components:
           $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata"
       required:
       - metadata
+      - resource_type
       - revision
       type: object
     DiscoveryItem:
@@ -5318,7 +5303,7 @@ components:
           type: array
         identifiers:
           items:
-            $ref: "#/components/schemas/SoftwareIdentifierDraft"
+            $ref: "#/components/schemas/IdentifierDraft"
           type: array
         categories:
           items:
@@ -5369,7 +5354,7 @@ components:
           type: array
         identifiers:
           items:
-            $ref: "#/components/schemas/SoftwareIdentifierDraft"
+            $ref: "#/components/schemas/IdentifierDraft"
           type: array
         categories:
           items:
@@ -5504,19 +5489,6 @@ components:
       - name
       - source_iri
       type: object
-    SoftwareIdentifierDraft:
-      properties:
-        source_iri:
-          type: string
-        type:
-          type: string
-        value:
-          type: string
-      required:
-      - source_iri
-      - type
-      - value
-      type: object
     SoftwareCategory:
       properties:
         id:
@@ -5611,7 +5583,19 @@ components:
       - subject
       type: object
     ReplaceDraftRequest:
+      example:
+        resource_type: dataset
+        revision: 0
+        metadata:
+          source_iri: sourceiritest
+          title: my dataset
+          description: description
+          keywords: test
       properties:
+        resource_type:
+          enum:
+          - dataset
+          type: string
         revision:
           format: int32
           type: integer
@@ -5619,8 +5603,20 @@ components:
           $ref: "#/components/schemas/DatasetDraftMetadata"
       required:
       - metadata
+      - resource_type
       - revision
       type: object
+    ReplaceResourceDraftRequest:
+      discriminator:
+        mapping:
+          dataset: "#/components/schemas/ReplaceDraftRequest"
+          software-application: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
+          software-source-code: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
+        propertyName: resource_type
+      oneOf:
+      - $ref: "#/components/schemas/ReplaceDraftRequest"
+      - $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
+      - $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
     RejectRequest:
       example:
         note: note
@@ -5632,23 +5628,58 @@ components:
       - note
       type: object
     CreateResourceRequest:
-      additionalProperties: false
+      discriminator:
+        mapping:
+          dataset: "#/components/schemas/CreateDatasetResourceRequest"
+          software-application: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+          software-source-code: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+        propertyName: resource_type
+      oneOf:
+      - $ref: "#/components/schemas/CreateDatasetResourceRequest"
+      - $ref: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+      - $ref: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+    CreateDatasetResourceRequest:
       example:
-        group_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        resource_type: dataset
         metadata:
           source_iri: sourceiritest
           title: my dataset
           description: description
           keywords: test
       properties:
-        group_id:
-          format: uuid
+        resource_type:
+          enum:
+          - dataset
           type: string
         metadata:
-          $ref: "#/components/schemas/CreateResourceRequest_metadata"
+          $ref: "#/components/schemas/DatasetDraftMetadata"
       required:
-      - group_id
       - metadata
+      - resource_type
+      type: object
+    CreateSoftwareApplicationResourceRequest:
+      properties:
+        resource_type:
+          enum:
+          - software-application
+          type: string
+        metadata:
+          $ref: "#/components/schemas/SoftwareApplicationDraftMetadata"
+      required:
+      - metadata
+      - resource_type
+      type: object
+    CreateSoftwareSourceCodeResourceRequest:
+      properties:
+        resource_type:
+          enum:
+          - software-source-code
+          type: string
+        metadata:
+          $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata"
+      required:
+      - metadata
+      - resource_type
       type: object
     CopyResourceRequest:
       example:
@@ -7237,21 +7268,11 @@ components:
       - ARCHIVED
       - REJECTED
       type: string
-    replaceResourceDraft_request:
-      anyOf:
-      - $ref: "#/components/schemas/ReplaceDraftRequest"
-      - $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
-      - $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
     ResourceRecord_metadata:
       anyOf:
       - $ref: "#/components/schemas/DatasetMetadata"
       - $ref: "#/components/schemas/SoftwareApplicationMetadata"
       - $ref: "#/components/schemas/SoftwareSourceCodeMetadata"
-    CreateResourceRequest_metadata:
-      oneOf:
-      - $ref: "#/components/schemas/DatasetDraftMetadata"
-      - $ref: "#/components/schemas/SoftwareApplicationDraftMetadata"
-      - $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata"
     StringParameter_metadata:
       allOf:
       - $ref: "#/components/schemas/ParameterMetadata"

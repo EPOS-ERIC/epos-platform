@@ -180,7 +180,12 @@ paths:
         "504": { $ref: "#/components/responses/GatewayTimeout" }
   /contact-points/{contactPointId}:
     parameters:
-      - { name: contactPointId, in: path, required: true, schema: { type: string, format: uuid } }
+      - {
+          name: contactPointId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
     get:
       tags: [Contact Points]
       summary: Get contact point
@@ -273,7 +278,12 @@ paths:
         "504": { $ref: "#/components/responses/GatewayTimeout" }
   /organizations/{organizationId}:
     parameters:
-      - { name: organizationId, in: path, required: true, schema: { type: string, format: uuid } }
+      - {
+          name: organizationId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
     get:
       tags: [Organizations]
       summary: Get organization
@@ -968,14 +978,14 @@ paths:
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
                     memberships:
-                        - group:
-                            id: "550e8400-e29b-41d4-a716-446655440001"
-                            name: "Group Cool Name"
-                          roles: [EDITOR]
-                          status: "ACTIVE"
-                          permissions: [resource.create, resource.edit]
-                          created_at: "2026-06-17T12:48:45.574Z"
-                          updated_at: "2026-06-17T12:48:45.574Z"
+                      - group:
+                          id: "550e8400-e29b-41d4-a716-446655440001"
+                          name: "Group Cool Name"
+                        roles: [EDITOR]
+                        status: "ACTIVE"
+                        permissions: [resource.create, resource.edit]
+                        created_at: "2026-06-17T12:48:45.574Z"
+                        updated_at: "2026-06-17T12:48:45.574Z"
                 self:
                   summary: Self profile
                   value:
@@ -989,14 +999,14 @@ paths:
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
                     memberships:
-                        - group:
-                            id: "550e8400-e29b-41d4-a716-446655440001"
-                            name: "Group Cool Name"
-                          roles: [EDITOR]
-                          status: "ACTIVE"
-                          permissions: [resource.create, resource.edit]
-                          created_at: "2026-06-17T12:48:45.574Z"
-                          updated_at: "2026-06-17T12:48:45.574Z"
+                      - group:
+                          id: "550e8400-e29b-41d4-a716-446655440001"
+                          name: "Group Cool Name"
+                        roles: [EDITOR]
+                        status: "ACTIVE"
+                        permissions: [resource.create, resource.edit]
+                        created_at: "2026-06-17T12:48:45.574Z"
+                        updated_at: "2026-06-17T12:48:45.574Z"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1171,15 +1181,14 @@ paths:
           $ref: "#/components/responses/GatewayTimeout"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-  /groups/{groupId}/resources/{resourceType}:
+  /groups/{groupId}/resources:
     parameters:
       - $ref: "#/components/parameters/GroupId"
-      - $ref: "#/components/parameters/LifecycleResourceType"
     post:
       tags:
         - Resources
       summary: Create resource draft
-      description: Creates an editable draft in the group. Request body shape is selected by `resourceType`.
+      description: Creates an editable draft in the group. Request body shape is selected by `resource_type`.
       operationId: createResource
       security:
         - bearerAuth: []
@@ -1269,16 +1278,15 @@ paths:
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
         "504": { $ref: "#/components/responses/GatewayTimeout" }
 
-  /resources/{resourceType}/{id}/versions/{versionId}/draft:
+  /resources/{id}/versions/{versionId}/draft:
     parameters:
-      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
       - $ref: "#/components/parameters/VersionId"
     put:
       tags:
         - Resources
       summary: Replace resource draft version
-      description: Replaces an editable draft only. Request body shape is selected by `resourceType` and includes the current revision.
+      description: Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the current revision.
       operationId: replaceResourceDraftVersion
       security:
         - bearerAuth: []
@@ -1971,10 +1979,43 @@ components:
       additionalProperties: false
       required: [source_iri, title]
       properties:
+        id: { type: string, format: uuid }
         source_iri: { type: string }
         title: { type: string }
         description: { type: string }
         keywords: { type: string }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        distributions:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DistributionDraft" },
+          }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        persistent_identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/IdentifierDraft" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        providers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        source_created: { type: string, format: date-time, nullable: true }
+        source_updated: { type: string, format: date-time, nullable: true }
 
     SoftwareApplicationDraftMetadata:
       type: object
@@ -1985,8 +2026,32 @@ components:
         name: { type: string }
         description: { type: string }
         keywords: { type: string }
+        license: { type: string, nullable: true }
+        version: { type: string, nullable: true }
         download_url: { type: string, format: uri }
+        requirements: { type: string, nullable: true }
+        operating_system: { type: string, nullable: true }
         main_entity_of_page: { type: string, format: uri }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareIdentifier" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
 
     SoftwareSourceCodeDraftMetadata:
       type: object
@@ -1999,42 +2064,208 @@ components:
         keywords: { type: string }
         repository: { type: string, format: uri }
         programming_language: { type: string }
+        license: { type: string, nullable: true }
+        software_requirements: { type: string, nullable: true }
+        runtime_platform: { type: string, nullable: true }
+        main_entity_of_page: { type: string, format: uri }
+        version: { type: string, nullable: true }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareIdentifier" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+
+    ResourceReference:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+
+    SoftwareIdentifier:
+      type: object
+      required: [source_iri, type, value]
+      properties:
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+
+    IdentifierDraft:
+      type: object
+      required: [source_iri, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+
+    # TODO: add discriminator on the type field for either downloadable_file or web_service. define what const should the type be and reuse it in both the gateway & backoffice
+    DistributionDraft:
+      type: object
+      required: [title, type]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type: { type: string }
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        web_service: { $ref: "#/components/schemas/WebServiceDraft" }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+
+    WebServiceDraft:
+      type: object
+      required: [name, template_url, format]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        template_url: { type: string }
+        parameters: { type: array, items: { type: object } }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/ResourceReference" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+
+    DownloadableFile:
+      type: object
+      required: [url, format]
+      properties:
+        url: { type: string }
+        format: { type: string }
+
+    Documentation:
+      type: object
+      required: [uri]
+      properties:
+        title: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        uri: { type: string }
+
+    SpatialCoverage:
+      type: object
+      properties:
+        point: { $ref: "#/components/schemas/Coordinate" }
+        polygon:
+          {
+            type: array,
+            minItems: 4,
+            items: { $ref: "#/components/schemas/Coordinate" },
+          }
+
+    Coordinate:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+
+    TemporalCoverage:
+      type: object
+      properties:
+        start: { type: string, format: date-time, nullable: true }
+        end: { type: string, format: date-time, nullable: true }
 
     CreateResourceDraftRequest:
-      anyOf:
-        - $ref: "#/components/schemas/DatasetDraftMetadata"
-        - $ref: "#/components/schemas/SoftwareApplicationDraftMetadata"
-        - $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata"
+      oneOf:
+        - $ref: "#/components/schemas/CreateDatasetResourceRequest"
+        - $ref: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+        - $ref: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+      discriminator:
+        propertyName: resource_type
+        mapping:
+          dataset: "#/components/schemas/CreateDatasetResourceRequest"
+          software-application: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+          software-source-code: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+
+    CreateDatasetResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [dataset] }
+        metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" }
+
+    CreateSoftwareApplicationResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-application] }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+
+    CreateSoftwareSourceCodeResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-source-code] }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
 
     ReplaceDatasetDraftRequest:
       type: object
       additionalProperties: false
-      required: [revision, metadata]
+      required: [resource_type, revision, metadata]
       properties:
+        resource_type: { type: string, enum: [dataset] }
         revision: { type: integer, format: int32 }
         metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" }
 
     ReplaceSoftwareApplicationDraftRequest:
       type: object
       additionalProperties: false
-      required: [revision, metadata]
+      required: [resource_type, revision, metadata]
       properties:
+        resource_type: { type: string, enum: [software-application] }
         revision: { type: integer, format: int32, minimum: 1 }
-        metadata: { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
 
     ReplaceSoftwareSourceCodeDraftRequest:
       type: object
       additionalProperties: false
-      required: [revision, metadata]
+      required: [resource_type, revision, metadata]
       properties:
+        resource_type: { type: string, enum: [software-source-code] }
         revision: { type: integer, format: int32, minimum: 1 }
-        metadata: { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
 
     ReplaceResourceDraftRequest:
-      anyOf:
+      oneOf:
         - $ref: "#/components/schemas/ReplaceDatasetDraftRequest"
         - $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
         - $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
+      discriminator:
+        propertyName: resource_type
+        mapping:
+          dataset: "#/components/schemas/ReplaceDatasetDraftRequest"
+          software-application: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
+          software-source-code: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
 
     CopyResourceRequest:
       type: object
@@ -2053,7 +2284,8 @@ components:
     ResourceVersion:
       type: object
       additionalProperties: false
-      required: [resource_id, version_id, revision, status, created_by, group, metadata]
+      required:
+        [resource_id, version_id, revision, status, created_by, group, metadata]
       properties:
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
@@ -2069,7 +2301,8 @@ components:
 
     DatasetResourceMetadata:
       type: object
-      required: [id, source_iri, title, description, keywords, status, created, updated]
+      required:
+        [id, source_iri, title, description, keywords, status, created, updated]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -2116,7 +2349,17 @@ components:
     # -------------------------------------------------------------------------
     ImportResult:
       type: object
-      required: [groups, categories, organizations, contact_points, datasets, software_applications, software_source_codes, warnings]
+      required:
+        [
+          groups,
+          categories,
+          organizations,
+          contact_points,
+          datasets,
+          software_applications,
+          software_source_codes,
+          warnings,
+        ]
       properties:
         groups: { type: integer }
         categories: { type: integer }
@@ -2398,7 +2641,8 @@ components:
         value: { type: string }
     CanonicalOrganization:
       type: object
-      required: [id, source_iri, name, address, identifiers, parents, contact_point_ids]
+      required:
+        [id, source_iri, name, address, identifiers, parents, contact_point_ids]
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
@@ -2440,7 +2684,18 @@ components:
           items: { type: string, format: uuid }
     ReplaceOrganizationRequest:
       type: object
-      required: [name, address, logo_url, page_url, email, lei_code, identifiers, parents, contact_point_ids]
+      required:
+        [
+          name,
+          address,
+          logo_url,
+          page_url,
+          email,
+          lei_code,
+          identifiers,
+          parents,
+          contact_point_ids,
+        ]
       additionalProperties: false
       properties:
         name: { type: string }

@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	backofficeclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
 )
 
 func (c *Backoffice) SearchResources(ctx context.Context, actorID string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
@@ -23,11 +22,7 @@ func (c *Backoffice) SearchResources(ctx context.Context, actorID string, filter
 		request = request.Q(filter.Query)
 	}
 	if len(filter.Types) != 0 {
-		types := make([]backofficeclient.ResourceType, 0, len(filter.Types))
-		for _, resourceType := range filter.Types {
-			types = append(types, backofficeclient.ResourceType(resourceType))
-		}
-		request = request.Type_(types)
+		request = request.Type_(toClientResourceTypes(filter.Types))
 	}
 	if filter.SpatialFilter != "" {
 		request = request.SpatialFilter(filter.SpatialFilter)
@@ -53,43 +48,7 @@ func (c *Backoffice) SearchResources(ctx context.Context, actorID string, filter
 		return nil, wrapDiscoveryError("search backoffice resources", response, err)
 	}
 
-	result := make([]domain.DiscoveryItem, 0, len(items))
-	for _, item := range items {
-		result = append(result, discoveryItemFromClient(item))
-	}
-	return result, nil
-}
-
-func discoveryItemFromClient(item backofficeclient.DiscoveryItem) domain.DiscoveryItem {
-	return domain.DiscoveryItem{
-		Type:          item.Type,
-		ResourceID:    item.ResourceId,
-		VersionID:     item.VersionId,
-		SourceIRI:     item.SourceIri,
-		Name:          item.Name,
-		Status:        string(item.Status),
-		Group:         discoveryReferenceFromClient(item.Group),
-		Providers:     discoveryReferencesFromClient(item.Providers),
-		Creators:      discoveryReferencesFromClient(item.Creators),
-		Categories:    discoveryReferencesFromClient(item.Categories),
-		Distributions: discoveryReferencesFromClient(item.Distributions),
-	}
-}
-
-func discoveryReferencesFromClient(values []backofficeclient.DiscoveryReference) []domain.DiscoveryReference {
-	if values == nil {
-		return nil
-	}
-
-	result := make([]domain.DiscoveryReference, 0, len(values))
-	for _, value := range values {
-		result = append(result, discoveryReferenceFromClient(value))
-	}
-	return result
-}
-
-func discoveryReferenceFromClient(value backofficeclient.DiscoveryReference) domain.DiscoveryReference {
-	return domain.DiscoveryReference{ID: value.Id, Name: value.Name}
+	return mapSlice(items, toDomainDiscoveryItem), nil
 }
 
 func wrapDiscoveryError(operation string, response *http.Response, err error) error {

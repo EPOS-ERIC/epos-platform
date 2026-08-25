@@ -42,43 +42,52 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	resourceType, ok := resourceTypeParam(ctx, w, r)
-	if !ok {
+	var envelope struct {
+		ResourceType string          `json:"resource_type"`
+		Metadata     json.RawMessage `json:"metadata"`
+	}
+	if !decodeJSON(r, w, &envelope) {
 		return
 	}
-
+	resourceType := envelope.ResourceType
 	var input domain.CreateResourceInput
 	switch resourceType {
 	case datasetType:
 		var value api.DatasetDraftMetadata
-		if !decodeJSON(r, w, &value) {
+		if err := json.Unmarshal(envelope.Metadata, &value); err != nil {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid dataset metadata", err)
 			return
 		}
 		if value.SourceIRI == "" || value.Title == "" {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and title are required", nil)
 			return
 		}
-		input.Metadata = domain.DatasetDraftMetadata(value)
+		input.Metadata = toDomainDatasetDraftMetadata(value)
 	case softwareApplicationType:
 		var value api.SoftwareApplicationDraftMetadata
-		if !decodeJSON(r, w, &value) {
+		if err := json.Unmarshal(envelope.Metadata, &value); err != nil {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software application metadata", err)
 			return
 		}
 		if value.SourceIRI == "" || value.Name == "" {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and name are required", nil)
 			return
 		}
-		input.Metadata = domain.SoftwareApplicationDraftMetadata(value)
+		input.Metadata = toDomainSoftwareApplicationDraftMetadata(value)
 	case softwareSourceCodeType:
 		var value api.SoftwareSourceCodeDraftMetadata
-		if !decodeJSON(r, w, &value) {
+		if err := json.Unmarshal(envelope.Metadata, &value); err != nil {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software source code metadata", err)
 			return
 		}
 		if value.SourceIRI == "" || value.Name == "" {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and name are required", nil)
 			return
 		}
-		input.Metadata = domain.SoftwareSourceCodeDraftMetadata(value)
+		input.Metadata = toDomainSoftwareSourceCodeDraftMetadata(value)
+	default:
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid resource_type", nil)
+		return
 	}
 
 	record, err := h.service.Create(ctx, actor.ID, groupID, resourceType, input)
@@ -88,11 +97,7 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	err = json.NewEncoder(w).Encode(api.WriteResult{
-		ResourceType: api.ResourceType(resourceType),
-		ID:           record.ResourceID,
-		Status:       api.VersioningStatus(strings.ToLower(record.Status)),
-	})
+	err = json.NewEncoder(w).Encode(toAPIWriteResult(resourceType, record))
 	if err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
@@ -125,7 +130,7 @@ func (h *Lifecycle) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(resourceVersionFromDomain(record)); err != nil {
+	if err := json.NewEncoder(w).Encode(toAPIResourceVersion(record)); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }
@@ -138,10 +143,6 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		WriteError(ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 		return
 	}
-	resourceType, ok := resourceTypeParam(ctx, w, r)
-	if !ok {
-		return
-	}
 	id, ok := uuidParam(ctx, w, r, "id")
 	if !ok {
 		return
@@ -151,26 +152,41 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var envelope struct {
+		ResourceType string          `json:"resource_type"`
+		Revision     int32           `json:"revision"`
+		Metadata     json.RawMessage `json:"metadata"`
+	}
+	if !decodeJSON(r, w, &envelope) {
+		return
+	}
+	resourceType := envelope.ResourceType
 	var input domain.ReplaceResourceDraftInput
 	switch resourceType {
 	case datasetType:
-		var value api.ReplaceDatasetDraftRequest
-		if !decodeJSON(r, w, &value) {
+		var metadata api.DatasetDraftMetadata
+		if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid dataset metadata", err)
 			return
 		}
-		input = domain.ReplaceResourceDraftInput{Revision: value.Revision, Metadata: domain.DatasetDraftMetadata(value.Metadata)}
+		input = toDomainReplaceResourceDraftInput(envelope.Revision, toDomainDatasetDraftMetadata(metadata))
 	case softwareApplicationType:
-		var value api.ReplaceSoftwareApplicationDraftRequest
-		if !decodeJSON(r, w, &value) {
+		var metadata api.SoftwareApplicationDraftMetadata
+		if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software application metadata", err)
 			return
 		}
-		input = domain.ReplaceResourceDraftInput{Revision: value.Revision, Metadata: domain.SoftwareApplicationDraftMetadata(value.Metadata)}
+		input = toDomainReplaceResourceDraftInput(envelope.Revision, toDomainSoftwareApplicationDraftMetadata(metadata))
 	case softwareSourceCodeType:
-		var value api.ReplaceSoftwareSourceCodeDraftRequest
-		if !decodeJSON(r, w, &value) {
+		var metadata api.SoftwareSourceCodeDraftMetadata
+		if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software source code metadata", err)
 			return
 		}
-		input = domain.ReplaceResourceDraftInput{Revision: value.Revision, Metadata: domain.SoftwareSourceCodeDraftMetadata(value.Metadata)}
+		input = toDomainReplaceResourceDraftInput(envelope.Revision, toDomainSoftwareSourceCodeDraftMetadata(metadata))
+	default:
+		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid resource_type", nil)
+		return
 	}
 
 	record, err := h.service.ReplaceDraft(ctx, actor.ID, resourceType, id, versionID, input)
@@ -180,11 +196,7 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(api.WriteResult{
-		ResourceType: api.ResourceType(resourceType),
-		ID:           record.ResourceID,
-		Status:       api.VersioningStatus(strings.ToLower(record.Status)),
-	}); err != nil {
+	if err := json.NewEncoder(w).Encode(toAPIWriteResult(resourceType, record)); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }
@@ -215,11 +227,7 @@ func (h *Lifecycle) Discard(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(api.WriteResult{
-		ResourceType: api.ResourceType(resourceType),
-		ID:           id,
-		Status:       api.DiscardedStatus,
-	}); err != nil {
+	if err := json.NewEncoder(w).Encode(toAPIDiscardedWriteResult(resourceType, id)); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }
@@ -256,7 +264,7 @@ func (h *Lifecycle) Action(w http.ResponseWriter, r *http.Request) {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "note is required", nil)
 			return
 		}
-		record, err = h.service.Reject(ctx, actor.ID, resourceType, id, versionID, domain.RejectResourceInput{Note: request.Note})
+		record, err = h.service.Reject(ctx, actor.ID, resourceType, id, versionID, toDomainRejectResourceInput(request))
 	case "submit":
 		record, err = h.service.Submit(ctx, actor.ID, resourceType, id, versionID)
 	case "withdraw":
@@ -277,11 +285,7 @@ func (h *Lifecycle) Action(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(api.WriteResult{
-		ResourceType: api.ResourceType(resourceType),
-		ID:           record.ResourceID,
-		Status:       api.VersioningStatus(strings.ToLower(record.Status)),
-	}); err != nil {
+	if err := json.NewEncoder(w).Encode(toAPIWriteResult(resourceType, record)); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }
@@ -320,11 +324,7 @@ func (h *Lifecycle) createDraft(w http.ResponseWriter, r *http.Request, create f
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(api.WriteResult{
-		ResourceType: api.ResourceType(resourceType),
-		ID:           record.ResourceID,
-		Status:       api.VersioningStatus(strings.ToLower(record.Status)),
-	}); err != nil {
+	if err := json.NewEncoder(w).Encode(toAPIWriteResult(resourceType, record)); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }
@@ -357,18 +357,14 @@ func (h *Lifecycle) Copy(w http.ResponseWriter, r *http.Request) {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri is required", nil)
 		return
 	}
-	record, err := h.service.Copy(ctx, actor.ID, groupID, resourceType, id, domain.CopyResourceInput{SourceIRI: request.SourceIRI})
+	record, err := h.service.Copy(ctx, actor.ID, groupID, resourceType, id, toDomainCopyResourceInput(request))
 	if err != nil {
 		writeLifecycleError(r, w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(api.WriteResult{
-		ResourceType: api.ResourceType(resourceType),
-		ID:           record.ResourceID,
-		Status:       api.VersioningStatus(strings.ToLower(record.Status)),
-	}); err != nil {
+	if err := json.NewEncoder(w).Encode(toAPIWriteResult(resourceType, record)); err != nil {
 		log.ErrorContext(ctx, "encode lifecycle response failed", "error", err)
 	}
 }
@@ -389,31 +385,6 @@ func uuidParam(ctx context.Context, w http.ResponseWriter, r *http.Request, name
 		return "", false
 	}
 	return value, true
-}
-
-func resourceVersionFromDomain(value domain.ResourceVersion) api.ResourceVersion {
-	result := api.ResourceVersion{
-		ResourceID: value.ResourceID,
-		VersionID:  value.VersionID,
-		Revision:   value.Revision,
-		Status:     value.Status,
-		CreatedBy:  value.CreatedBy,
-		Group: api.ResourceGroupReference{
-			ID:   value.Group.ID,
-			Name: value.Group.Name,
-		},
-	}
-
-	switch metadata := value.Metadata.(type) {
-	case domain.DatasetResourceMetadata:
-		result.Metadata = api.DatasetResourceMetadata(metadata)
-	case domain.SoftwareApplicationResourceMetadata:
-		result.Metadata = api.SoftwareApplicationResourceMetadata(metadata)
-	case domain.SoftwareSourceCodeResourceMetadata:
-		result.Metadata = api.SoftwareSourceCodeResourceMetadata(metadata)
-	}
-
-	return result
 }
 
 func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {

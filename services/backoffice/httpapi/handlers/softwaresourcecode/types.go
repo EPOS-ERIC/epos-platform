@@ -25,13 +25,15 @@ type sourceCodeRequest struct {
 }
 
 type createRequest struct {
-	GroupID  uuid.UUID         `json:"group_id"`
-	Metadata sourceCodeRequest `json:"metadata"`
+	GroupID      uuid.UUID         `json:"group_id,omitempty"`
+	ResourceType string            `json:"resource_type"`
+	Metadata     sourceCodeRequest `json:"metadata"`
 }
 
 type replaceDraftRequest struct {
-	Revision int32             `json:"revision"`
-	Metadata sourceCodeRequest `json:"metadata"`
+	ResourceType string            `json:"resource_type"`
+	Revision     int32             `json:"revision"`
+	Metadata     sourceCodeRequest `json:"metadata"`
 }
 
 type rejectionRequest struct {

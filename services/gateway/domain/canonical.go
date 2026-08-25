@@ -14,13 +14,6 @@ type OrganizationAddress struct {
 	Country    *string
 }
 
-type OrganizationIdentifier struct {
-	ID        string
-	SourceIRI string
-	Type      string
-	Value     string
-}
-
 type CanonicalOrganization struct {
 	ID              string
 	SourceIRI       string
@@ -30,7 +23,7 @@ type CanonicalOrganization struct {
 	PageURL         *string
 	Email           *string
 	LEICode         *string
-	Identifiers     []OrganizationIdentifier
+	Identifiers     []Identifier
 	Parents         []string
 	ContactPointIDs []string
 }

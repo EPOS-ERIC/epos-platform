@@ -130,9 +130,9 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		discoveryHandler := discoveryapi.New(discovery.New(database.Discovery, authorizer, datasetService, applicationService, sourceCodeService, groupService))
 
 		r.Get("/resources", discoveryHandler.Search)
-		r.Post("/resources/{resource_type}", resources.Create)
+		r.Post("/groups/{group_id}/resources", resources.Create)
 		r.Get("/resources/{resource_type}/{resource_id}/versions/{version_id}", resources.Get)
-		r.Put("/resources/{resource_type}/{resource_id}/versions/{version_id}/draft", resources.ReplaceDraft)
+		r.Put("/resources/{resource_id}/versions/{version_id}/draft", resources.ReplaceDraft)
 		r.Delete("/resources/{resource_type}/{resource_id}/versions/{version_id}/draft", resources.Discard)
 		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/submit", resources.Submit)
 		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw", resources.Withdraw)

@@ -40,13 +40,13 @@ type ResourcesAPI interface {
 	/*
 		CreateResource Create resource draft
 
-		Creates a logical resource and its first editable DRAFT version in request group_id.
+		Creates a logical resource and its first editable DRAFT version in the selected group.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param resourceType
+		@param groupId
 		@return ApiCreateResourceRequest
 	*/
-	CreateResource(ctx context.Context, resourceType string) ApiCreateResourceRequest
+	CreateResource(ctx context.Context, groupId string) ApiCreateResourceRequest
 
 	// CreateResourceExecute executes the request
 	//  @return ResourceRecord
@@ -90,12 +90,11 @@ type ResourcesAPI interface {
 		Permanently deletes selected DRAFT or REJECTED version and removes its logical resource when no versions remain.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param resourceType
 		@param resourceId
 		@param versionId
 		@return ApiDiscardResourceDraftRequest
 	*/
-	DiscardResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiDiscardResourceDraftRequest
+	DiscardResourceDraft(ctx context.Context, resourceId string, versionId string) ApiDiscardResourceDraftRequest
 
 	// DiscardResourceDraftExecute executes the request
 	DiscardResourceDraftExecute(r ApiDiscardResourceDraftRequest) (*http.Response, error)
@@ -174,12 +173,11 @@ type ResourcesAPI interface {
 		Atomically replaces all mutable draft metadata when supplied revision matches selected version.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param resourceType
 		@param resourceId
 		@param versionId
 		@return ApiReplaceResourceDraftRequest
 	*/
-	ReplaceResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiReplaceResourceDraftRequest
+	ReplaceResourceDraft(ctx context.Context, resourceId string, versionId string) ApiReplaceResourceDraftRequest
 
 	// ReplaceResourceDraftExecute executes the request
 	//  @return ResourceRecord
@@ -454,7 +452,7 @@ func (a *ResourcesAPIService) CopyResourceExecute(r ApiCopyResourceRequest) (*Re
 type ApiCreateResourceRequest struct {
 	ctx                   context.Context
 	ApiService            ResourcesAPI
-	resourceType          string
+	groupId               string
 	xEPOSUserID           *string
 	createResourceRequest *CreateResourceRequest
 }
@@ -476,17 +474,17 @@ func (r ApiCreateResourceRequest) Execute() (*ResourceRecord, *http.Response, er
 /*
 CreateResource Create resource draft
 
-Creates a logical resource and its first editable DRAFT version in request group_id.
+Creates a logical resource and its first editable DRAFT version in the selected group.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param resourceType
+	@param groupId
 	@return ApiCreateResourceRequest
 */
-func (a *ResourcesAPIService) CreateResource(ctx context.Context, resourceType string) ApiCreateResourceRequest {
+func (a *ResourcesAPIService) CreateResource(ctx context.Context, groupId string) ApiCreateResourceRequest {
 	return ApiCreateResourceRequest{
-		ApiService:   a,
-		ctx:          ctx,
-		resourceType: resourceType,
+		ApiService: a,
+		ctx:        ctx,
+		groupId:    groupId,
 	}
 }
 
@@ -506,8 +504,8 @@ func (a *ResourcesAPIService) CreateResourceExecute(r ApiCreateResourceRequest) 
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/resources/{resource_type}"
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", url.PathEscape(parameterValueToString(r.resourceType, "resourceType")), -1)
+	localVarPath := localBasePath + "/api/v1/groups/{group_id}/resources"
+	localVarPath = strings.Replace(localVarPath, "{"+"group_id"+"}", url.PathEscape(parameterValueToString(r.groupId, "groupId")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -997,12 +995,11 @@ func (a *ResourcesAPIService) CreateResourceDraftFromPublicationExecute(r ApiCre
 }
 
 type ApiDiscardResourceDraftRequest struct {
-	ctx          context.Context
-	ApiService   ResourcesAPI
-	resourceType string
-	resourceId   string
-	versionId    string
-	xEPOSUserID  *string
+	ctx         context.Context
+	ApiService  ResourcesAPI
+	resourceId  string
+	versionId   string
+	xEPOSUserID *string
 }
 
 func (r ApiDiscardResourceDraftRequest) XEPOSUserID(xEPOSUserID string) ApiDiscardResourceDraftRequest {
@@ -1020,18 +1017,16 @@ DiscardResourceDraft Discard resource draft
 Permanently deletes selected DRAFT or REJECTED version and removes its logical resource when no versions remain.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param resourceType
 	@param resourceId
 	@param versionId
 	@return ApiDiscardResourceDraftRequest
 */
-func (a *ResourcesAPIService) DiscardResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiDiscardResourceDraftRequest {
+func (a *ResourcesAPIService) DiscardResourceDraft(ctx context.Context, resourceId string, versionId string) ApiDiscardResourceDraftRequest {
 	return ApiDiscardResourceDraftRequest{
-		ApiService:   a,
-		ctx:          ctx,
-		resourceType: resourceType,
-		resourceId:   resourceId,
-		versionId:    versionId,
+		ApiService: a,
+		ctx:        ctx,
+		resourceId: resourceId,
+		versionId:  versionId,
 	}
 }
 
@@ -1048,8 +1043,7 @@ func (a *ResourcesAPIService) DiscardResourceDraftExecute(r ApiDiscardResourceDr
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft"
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", url.PathEscape(parameterValueToString(r.resourceType, "resourceType")), -1)
+	localVarPath := localBasePath + "/api/v1/resources/{resource_id}/versions/{version_id}/draft"
 	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", url.PathEscape(parameterValueToString(r.resourceId, "resourceId")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"version_id"+"}", url.PathEscape(parameterValueToString(r.versionId, "versionId")), -1)
 
@@ -1921,7 +1915,6 @@ func (a *ResourcesAPIService) ReopenResourceExecute(r ApiReopenResourceRequest) 
 type ApiReplaceResourceDraftRequest struct {
 	ctx                         context.Context
 	ApiService                  ResourcesAPI
-	resourceType                string
 	resourceId                  string
 	versionId                   string
 	xEPOSUserID                 *string
@@ -1948,18 +1941,16 @@ ReplaceResourceDraft Replace resource draft
 Atomically replaces all mutable draft metadata when supplied revision matches selected version.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param resourceType
 	@param resourceId
 	@param versionId
 	@return ApiReplaceResourceDraftRequest
 */
-func (a *ResourcesAPIService) ReplaceResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiReplaceResourceDraftRequest {
+func (a *ResourcesAPIService) ReplaceResourceDraft(ctx context.Context, resourceId string, versionId string) ApiReplaceResourceDraftRequest {
 	return ApiReplaceResourceDraftRequest{
-		ApiService:   a,
-		ctx:          ctx,
-		resourceType: resourceType,
-		resourceId:   resourceId,
-		versionId:    versionId,
+		ApiService: a,
+		ctx:        ctx,
+		resourceId: resourceId,
+		versionId:  versionId,
 	}
 }
 
@@ -1979,8 +1970,7 @@ func (a *ResourcesAPIService) ReplaceResourceDraftExecute(r ApiReplaceResourceDr
 		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft"
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", url.PathEscape(parameterValueToString(r.resourceType, "resourceType")), -1)
+	localVarPath := localBasePath + "/api/v1/resources/{resource_id}/versions/{version_id}/draft"
 	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", url.PathEscape(parameterValueToString(r.resourceId, "resourceId")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"version_id"+"}", url.PathEscape(parameterValueToString(r.versionId, "versionId")), -1)
 

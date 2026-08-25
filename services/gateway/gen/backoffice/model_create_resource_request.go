@@ -11,138 +11,141 @@ API version: 2.0.0
 package backofficeclient
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 )
 
-// checks if the CreateResourceRequest type satisfies the MappedNullable interface at compile time
-var _ MappedNullable = &CreateResourceRequest{}
-
-// CreateResourceRequest struct for CreateResourceRequest
+// CreateResourceRequest - struct for CreateResourceRequest
 type CreateResourceRequest struct {
-	GroupId  string                        `json:"group_id"`
-	Metadata CreateResourceRequestMetadata `json:"metadata"`
+	CreateDatasetResourceRequest             *CreateDatasetResourceRequest
+	CreateSoftwareApplicationResourceRequest *CreateSoftwareApplicationResourceRequest
+	CreateSoftwareSourceCodeResourceRequest  *CreateSoftwareSourceCodeResourceRequest
 }
 
-type _CreateResourceRequest CreateResourceRequest
-
-// NewCreateResourceRequest instantiates a new CreateResourceRequest object
-// This constructor will assign default values to properties that have it defined,
-// and makes sure properties required by API are set, but the set of arguments
-// will change when the set of required properties is changed
-func NewCreateResourceRequest(groupId string, metadata CreateResourceRequestMetadata) *CreateResourceRequest {
-	this := CreateResourceRequest{}
-	this.GroupId = groupId
-	this.Metadata = metadata
-	return &this
-}
-
-// NewCreateResourceRequestWithDefaults instantiates a new CreateResourceRequest object
-// This constructor will only assign default values to properties that have it defined,
-// but it doesn't guarantee that properties required by API are set
-func NewCreateResourceRequestWithDefaults() *CreateResourceRequest {
-	this := CreateResourceRequest{}
-	return &this
-}
-
-// GetGroupId returns the GroupId field value
-func (o *CreateResourceRequest) GetGroupId() string {
-	if o == nil {
-		var ret string
-		return ret
+// CreateDatasetResourceRequestAsCreateResourceRequest is a convenience function that returns CreateDatasetResourceRequest wrapped in CreateResourceRequest
+func CreateDatasetResourceRequestAsCreateResourceRequest(v *CreateDatasetResourceRequest) CreateResourceRequest {
+	return CreateResourceRequest{
+		CreateDatasetResourceRequest: v,
 	}
-
-	return o.GroupId
 }
 
-// GetGroupIdOk returns a tuple with the GroupId field value
-// and a boolean to check if the value has been set.
-func (o *CreateResourceRequest) GetGroupIdOk() (*string, bool) {
-	if o == nil {
-		return nil, false
+// CreateSoftwareApplicationResourceRequestAsCreateResourceRequest is a convenience function that returns CreateSoftwareApplicationResourceRequest wrapped in CreateResourceRequest
+func CreateSoftwareApplicationResourceRequestAsCreateResourceRequest(v *CreateSoftwareApplicationResourceRequest) CreateResourceRequest {
+	return CreateResourceRequest{
+		CreateSoftwareApplicationResourceRequest: v,
 	}
-	return &o.GroupId, true
 }
 
-// SetGroupId sets field value
-func (o *CreateResourceRequest) SetGroupId(v string) {
-	o.GroupId = v
-}
-
-// GetMetadata returns the Metadata field value
-func (o *CreateResourceRequest) GetMetadata() CreateResourceRequestMetadata {
-	if o == nil {
-		var ret CreateResourceRequestMetadata
-		return ret
+// CreateSoftwareSourceCodeResourceRequestAsCreateResourceRequest is a convenience function that returns CreateSoftwareSourceCodeResourceRequest wrapped in CreateResourceRequest
+func CreateSoftwareSourceCodeResourceRequestAsCreateResourceRequest(v *CreateSoftwareSourceCodeResourceRequest) CreateResourceRequest {
+	return CreateResourceRequest{
+		CreateSoftwareSourceCodeResourceRequest: v,
 	}
-
-	return o.Metadata
 }
 
-// GetMetadataOk returns a tuple with the Metadata field value
-// and a boolean to check if the value has been set.
-func (o *CreateResourceRequest) GetMetadataOk() (*CreateResourceRequestMetadata, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Metadata, true
-}
-
-// SetMetadata sets field value
-func (o *CreateResourceRequest) SetMetadata(v CreateResourceRequestMetadata) {
-	o.Metadata = v
-}
-
-func (o CreateResourceRequest) MarshalJSON() ([]byte, error) {
-	toSerialize, err := o.ToMap()
+// Unmarshal JSON data into one of the pointers in the struct
+func (dst *CreateResourceRequest) UnmarshalJSON(data []byte) error {
+	var err error
+	// use discriminator value to speed up the lookup
+	var jsonDict map[string]interface{}
+	err = newStrictDecoder(data).Decode(&jsonDict)
 	if err != nil {
-		return []byte{}, err
-	}
-	return json.Marshal(toSerialize)
-}
-
-func (o CreateResourceRequest) ToMap() (map[string]interface{}, error) {
-	toSerialize := map[string]interface{}{}
-	toSerialize["group_id"] = o.GroupId
-	toSerialize["metadata"] = o.Metadata
-	return toSerialize, nil
-}
-
-func (o *CreateResourceRequest) UnmarshalJSON(data []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"group_id",
-		"metadata",
+		return fmt.Errorf("failed to unmarshal JSON into map for the discriminator lookup")
 	}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(data, &allProperties)
-	if err != nil {
-		return err
-	}
-
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
+	// check if the discriminator value is 'dataset'
+	if jsonDict["resource_type"] == "dataset" {
+		// try to unmarshal JSON data into CreateDatasetResourceRequest
+		err = json.Unmarshal(data, &dst.CreateDatasetResourceRequest)
+		if err == nil {
+			return nil // data stored in dst.CreateDatasetResourceRequest, return on the first match
+		} else {
+			dst.CreateDatasetResourceRequest = nil
+			return fmt.Errorf("failed to unmarshal CreateResourceRequest as CreateDatasetResourceRequest: %s", err.Error())
 		}
 	}
 
-	varCreateResourceRequest := _CreateResourceRequest{}
-
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varCreateResourceRequest)
-	if err != nil {
-		return err
+	// check if the discriminator value is 'software-application'
+	if jsonDict["resource_type"] == "software-application" {
+		// try to unmarshal JSON data into CreateSoftwareApplicationResourceRequest
+		err = json.Unmarshal(data, &dst.CreateSoftwareApplicationResourceRequest)
+		if err == nil {
+			return nil // data stored in dst.CreateSoftwareApplicationResourceRequest, return on the first match
+		} else {
+			dst.CreateSoftwareApplicationResourceRequest = nil
+			return fmt.Errorf("failed to unmarshal CreateResourceRequest as CreateSoftwareApplicationResourceRequest: %s", err.Error())
+		}
 	}
 
-	*o = CreateResourceRequest(varCreateResourceRequest)
+	// check if the discriminator value is 'software-source-code'
+	if jsonDict["resource_type"] == "software-source-code" {
+		// try to unmarshal JSON data into CreateSoftwareSourceCodeResourceRequest
+		err = json.Unmarshal(data, &dst.CreateSoftwareSourceCodeResourceRequest)
+		if err == nil {
+			return nil // data stored in dst.CreateSoftwareSourceCodeResourceRequest, return on the first match
+		} else {
+			dst.CreateSoftwareSourceCodeResourceRequest = nil
+			return fmt.Errorf("failed to unmarshal CreateResourceRequest as CreateSoftwareSourceCodeResourceRequest: %s", err.Error())
+		}
+	}
 
-	return err
+	return nil
+}
+
+// Marshal data from the first non-nil pointers in the struct to JSON
+func (src CreateResourceRequest) MarshalJSON() ([]byte, error) {
+	if src.CreateDatasetResourceRequest != nil {
+		return json.Marshal(&src.CreateDatasetResourceRequest)
+	}
+
+	if src.CreateSoftwareApplicationResourceRequest != nil {
+		return json.Marshal(&src.CreateSoftwareApplicationResourceRequest)
+	}
+
+	if src.CreateSoftwareSourceCodeResourceRequest != nil {
+		return json.Marshal(&src.CreateSoftwareSourceCodeResourceRequest)
+	}
+
+	return nil, nil // no data in oneOf schemas
+}
+
+// Get the actual instance
+func (obj *CreateResourceRequest) GetActualInstance() interface{} {
+	if obj == nil {
+		return nil
+	}
+	if obj.CreateDatasetResourceRequest != nil {
+		return obj.CreateDatasetResourceRequest
+	}
+
+	if obj.CreateSoftwareApplicationResourceRequest != nil {
+		return obj.CreateSoftwareApplicationResourceRequest
+	}
+
+	if obj.CreateSoftwareSourceCodeResourceRequest != nil {
+		return obj.CreateSoftwareSourceCodeResourceRequest
+	}
+
+	// all schemas are nil
+	return nil
+}
+
+// Get the actual instance value
+func (obj CreateResourceRequest) GetActualInstanceValue() interface{} {
+	if obj.CreateDatasetResourceRequest != nil {
+		return *obj.CreateDatasetResourceRequest
+	}
+
+	if obj.CreateSoftwareApplicationResourceRequest != nil {
+		return *obj.CreateSoftwareApplicationResourceRequest
+	}
+
+	if obj.CreateSoftwareSourceCodeResourceRequest != nil {
+		return *obj.CreateSoftwareSourceCodeResourceRequest
+	}
+
+	// all schemas are nil
+	return nil
 }
 
 type NullableCreateResourceRequest struct {

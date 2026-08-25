@@ -21,21 +21,21 @@ var _ MappedNullable = &SoftwareSourceCodeDraftMetadata{}
 
 // SoftwareSourceCodeDraftMetadata struct for SoftwareSourceCodeDraftMetadata
 type SoftwareSourceCodeDraftMetadata struct {
-	SourceIri            string                    `json:"source_iri"`
-	Name                 string                    `json:"name"`
-	Description          *string                   `json:"description,omitempty"`
-	ProgrammingLanguage  NullableString            `json:"programming_language,omitempty"`
-	Keywords             *string                   `json:"keywords,omitempty"`
-	Repository           NullableString            `json:"repository,omitempty"`
-	License              NullableString            `json:"license,omitempty"`
-	SoftwareRequirements NullableString            `json:"software_requirements,omitempty"`
-	RuntimePlatform      NullableString            `json:"runtime_platform,omitempty"`
-	MainEntityOfPage     NullableString            `json:"main_entity_of_page,omitempty"`
-	Version              NullableString            `json:"version,omitempty"`
-	Creators             []CanonicalReference      `json:"creators,omitempty"`
-	Identifiers          []SoftwareIdentifierDraft `json:"identifiers,omitempty"`
-	Categories           []CanonicalReference      `json:"categories,omitempty"`
-	ContactPoints        []CanonicalReference      `json:"contact_points,omitempty"`
+	SourceIri            string               `json:"source_iri"`
+	Name                 string               `json:"name"`
+	Description          *string              `json:"description,omitempty"`
+	ProgrammingLanguage  NullableString       `json:"programming_language,omitempty"`
+	Keywords             *string              `json:"keywords,omitempty"`
+	Repository           NullableString       `json:"repository,omitempty"`
+	License              NullableString       `json:"license,omitempty"`
+	SoftwareRequirements NullableString       `json:"software_requirements,omitempty"`
+	RuntimePlatform      NullableString       `json:"runtime_platform,omitempty"`
+	MainEntityOfPage     NullableString       `json:"main_entity_of_page,omitempty"`
+	Version              NullableString       `json:"version,omitempty"`
+	Creators             []CanonicalReference `json:"creators,omitempty"`
+	Identifiers          []IdentifierDraft    `json:"identifiers,omitempty"`
+	Categories           []CanonicalReference `json:"categories,omitempty"`
+	ContactPoints        []CanonicalReference `json:"contact_points,omitempty"`
 }
 
 type _SoftwareSourceCodeDraftMetadata SoftwareSourceCodeDraftMetadata
@@ -505,9 +505,9 @@ func (o *SoftwareSourceCodeDraftMetadata) SetCreators(v []CanonicalReference) {
 }
 
 // GetIdentifiers returns the Identifiers field value if set, zero value otherwise.
-func (o *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []SoftwareIdentifierDraft {
+func (o *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []IdentifierDraft {
 	if o == nil || IsNil(o.Identifiers) {
-		var ret []SoftwareIdentifierDraft
+		var ret []IdentifierDraft
 		return ret
 	}
 	return o.Identifiers
@@ -515,7 +515,7 @@ func (o *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []SoftwareIdentifierD
 
 // GetIdentifiersOk returns a tuple with the Identifiers field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SoftwareSourceCodeDraftMetadata) GetIdentifiersOk() ([]SoftwareIdentifierDraft, bool) {
+func (o *SoftwareSourceCodeDraftMetadata) GetIdentifiersOk() ([]IdentifierDraft, bool) {
 	if o == nil || IsNil(o.Identifiers) {
 		return nil, false
 	}
@@ -531,8 +531,8 @@ func (o *SoftwareSourceCodeDraftMetadata) HasIdentifiers() bool {
 	return false
 }
 
-// SetIdentifiers gets a reference to the given []SoftwareIdentifierDraft and assigns it to the Identifiers field.
-func (o *SoftwareSourceCodeDraftMetadata) SetIdentifiers(v []SoftwareIdentifierDraft) {
+// SetIdentifiers gets a reference to the given []IdentifierDraft and assigns it to the Identifiers field.
+func (o *SoftwareSourceCodeDraftMetadata) SetIdentifiers(v []IdentifierDraft) {
 	o.Identifiers = v
 }
 

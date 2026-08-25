@@ -21,8 +21,9 @@ var _ MappedNullable = &ReplaceDraftRequest{}
 
 // ReplaceDraftRequest struct for ReplaceDraftRequest
 type ReplaceDraftRequest struct {
-	Revision int32                `json:"revision"`
-	Metadata DatasetDraftMetadata `json:"metadata"`
+	ResourceType string               `json:"resource_type"`
+	Revision     int32                `json:"revision"`
+	Metadata     DatasetDraftMetadata `json:"metadata"`
 }
 
 type _ReplaceDraftRequest ReplaceDraftRequest
@@ -31,8 +32,9 @@ type _ReplaceDraftRequest ReplaceDraftRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceDraftRequest(revision int32, metadata DatasetDraftMetadata) *ReplaceDraftRequest {
+func NewReplaceDraftRequest(resourceType string, revision int32, metadata DatasetDraftMetadata) *ReplaceDraftRequest {
 	this := ReplaceDraftRequest{}
+	this.ResourceType = resourceType
 	this.Revision = revision
 	this.Metadata = metadata
 	return &this
@@ -44,6 +46,30 @@ func NewReplaceDraftRequest(revision int32, metadata DatasetDraftMetadata) *Repl
 func NewReplaceDraftRequestWithDefaults() *ReplaceDraftRequest {
 	this := ReplaceDraftRequest{}
 	return &this
+}
+
+// GetResourceType returns the ResourceType field value
+func (o *ReplaceDraftRequest) GetResourceType() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.ResourceType
+}
+
+// GetResourceTypeOk returns a tuple with the ResourceType field value
+// and a boolean to check if the value has been set.
+func (o *ReplaceDraftRequest) GetResourceTypeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.ResourceType, true
+}
+
+// SetResourceType sets field value
+func (o *ReplaceDraftRequest) SetResourceType(v string) {
+	o.ResourceType = v
 }
 
 // GetRevision returns the Revision field value
@@ -104,6 +130,7 @@ func (o ReplaceDraftRequest) MarshalJSON() ([]byte, error) {
 
 func (o ReplaceDraftRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["resource_type"] = o.ResourceType
 	toSerialize["revision"] = o.Revision
 	toSerialize["metadata"] = o.Metadata
 	return toSerialize, nil
@@ -114,6 +141,7 @@ func (o *ReplaceDraftRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"resource_type",
 		"revision",
 		"metadata",
 	}

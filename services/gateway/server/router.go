@@ -112,7 +112,7 @@ func NewRouter(
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/role-requests", groupsHandler.RequestRole)
 			r.With(authMiddleware(authService, backofficeClient)).Patch("/{groupId}/role-requests/{requestId}", groupsHandler.ApplyRoleRequestDecision)
 			r.With(authMiddleware(authService, backofficeClient)).Delete("/{groupId}/role-requests/{requestId}", groupsHandler.WithdrawRoleRequest)
-			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources/{resourceType}", lifecycleHandler.Create)
+			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources", lifecycleHandler.Create)
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{groupId}/resources/{resourceType}/{id}/copy", lifecycleHandler.Copy)
 
 			r.Route("/{groupId}/categories", func(r chi.Router) {
@@ -126,7 +126,7 @@ func NewRouter(
 
 		r.Route("/resources", func(r chi.Router) {
 			r.With(authMiddlewareOptional(authService, backofficeClient)).Get("/{resourceType}/{id}/versions/{versionId}", lifecycleHandler.Get)
-			r.With(authMiddleware(authService, backofficeClient)).Put("/{resourceType}/{id}/versions/{versionId}/draft", lifecycleHandler.ReplaceDraft)
+			r.With(authMiddleware(authService, backofficeClient)).Put("/{id}/versions/{versionId}/draft", lifecycleHandler.ReplaceDraft)
 			r.With(authMiddleware(authService, backofficeClient)).Delete("/{resourceType}/{id}/versions/{versionId}/draft", lifecycleHandler.Discard)
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{resourceType}/{id}/versions/{versionId}/{action}", lifecycleHandler.Action)
 			r.With(authMiddleware(authService, backofficeClient)).Post("/{resourceType}/{id}/draft-from-publication", lifecycleHandler.DraftFromPublication)

@@ -107,15 +107,15 @@ Class | Method | HTTP request | Description
 *OrganizationsAPI* | [**ListOrganizations**](docs/OrganizationsAPI.md#listorganizations) | **Get** /api/v1/organizations | List organizations
 *OrganizationsAPI* | [**ReplaceOrganization**](docs/OrganizationsAPI.md#replaceorganization) | **Put** /api/v1/organizations/{organization_id} | Replace organization
 *ResourcesAPI* | [**CopyResource**](docs/ResourcesAPI.md#copyresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/copies | Copy published resource
-*ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/resources/{resource_type} | Create resource draft
+*ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/groups/{group_id}/resources | Create resource draft
 *ResourcesAPI* | [**CreateResourceDraftFromArchive**](docs/ResourcesAPI.md#createresourcedraftfromarchive) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-archive | Create resource draft from archive
 *ResourcesAPI* | [**CreateResourceDraftFromPublication**](docs/ResourcesAPI.md#createresourcedraftfrompublication) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-publication | Create resource draft from publication
-*ResourcesAPI* | [**DiscardResourceDraft**](docs/ResourcesAPI.md#discardresourcedraft) | **Delete** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft | Discard resource draft
+*ResourcesAPI* | [**DiscardResourceDraft**](docs/ResourcesAPI.md#discardresourcedraft) | **Delete** /api/v1/resources/{resource_id}/versions/{version_id}/draft | Discard resource draft
 *ResourcesAPI* | [**GetResourceVersion**](docs/ResourcesAPI.md#getresourceversion) | **Get** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id} | Read resource version
 *ResourcesAPI* | [**PublishResource**](docs/ResourcesAPI.md#publishresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/publish | Publish resource submission
 *ResourcesAPI* | [**RejectResource**](docs/ResourcesAPI.md#rejectresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reject | Reject resource submission
 *ResourcesAPI* | [**ReopenResource**](docs/ResourcesAPI.md#reopenresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen | Reopen rejected resource
-*ResourcesAPI* | [**ReplaceResourceDraft**](docs/ResourcesAPI.md#replaceresourcedraft) | **Put** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft | Replace resource draft
+*ResourcesAPI* | [**ReplaceResourceDraft**](docs/ResourcesAPI.md#replaceresourcedraft) | **Put** /api/v1/resources/{resource_id}/versions/{version_id}/draft | Replace resource draft
 *ResourcesAPI* | [**SearchResources**](docs/ResourcesAPI.md#searchresources) | **Get** /api/v1/resources | Discover resources
 *ResourcesAPI* | [**SubmitResource**](docs/ResourcesAPI.md#submitresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit | Submit resource draft
 *ResourcesAPI* | [**UnpublishResource**](docs/ResourcesAPI.md#unpublishresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish | Unpublish resource version
@@ -148,12 +148,14 @@ Class | Method | HTTP request | Description
  - [CreateCanonicalOrganizationRequestAddress](docs/CreateCanonicalOrganizationRequestAddress.md)
  - [CreateCategoryRequest](docs/CreateCategoryRequest.md)
  - [CreateContactPointRequest](docs/CreateContactPointRequest.md)
+ - [CreateDatasetResourceRequest](docs/CreateDatasetResourceRequest.md)
  - [CreateGroupRequest](docs/CreateGroupRequest.md)
  - [CreateMembershipRequest](docs/CreateMembershipRequest.md)
  - [CreateOrganizationIdentifierRequest](docs/CreateOrganizationIdentifierRequest.md)
  - [CreateResourceRequest](docs/CreateResourceRequest.md)
- - [CreateResourceRequestMetadata](docs/CreateResourceRequestMetadata.md)
  - [CreateRoleRequest](docs/CreateRoleRequest.md)
+ - [CreateSoftwareApplicationResourceRequest](docs/CreateSoftwareApplicationResourceRequest.md)
+ - [CreateSoftwareSourceCodeResourceRequest](docs/CreateSoftwareSourceCodeResourceRequest.md)
  - [CreateUserRequest](docs/CreateUserRequest.md)
  - [DatasetDraftMetadata](docs/DatasetDraftMetadata.md)
  - [DatasetMetadata](docs/DatasetMetadata.md)
@@ -202,7 +204,6 @@ Class | Method | HTTP request | Description
  - [SoftwareApplicationDraftMetadata](docs/SoftwareApplicationDraftMetadata.md)
  - [SoftwareApplicationMetadata](docs/SoftwareApplicationMetadata.md)
  - [SoftwareCategory](docs/SoftwareCategory.md)
- - [SoftwareIdentifierDraft](docs/SoftwareIdentifierDraft.md)
  - [SoftwareSourceCodeDraftMetadata](docs/SoftwareSourceCodeDraftMetadata.md)
  - [SoftwareSourceCodeMetadata](docs/SoftwareSourceCodeMetadata.md)
  - [Spatial](docs/Spatial.md)

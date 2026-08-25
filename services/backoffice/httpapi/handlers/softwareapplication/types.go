@@ -24,8 +24,9 @@ type applicationRequest struct {
 }
 
 type createRequest struct {
-	GroupID  uuid.UUID          `json:"group_id"`
-	Metadata applicationRequest `json:"metadata"`
+	GroupID      uuid.UUID          `json:"group_id,omitempty"`
+	ResourceType string             `json:"resource_type"`
+	Metadata     applicationRequest `json:"metadata"`
 }
 
 type canonicalReference struct {
@@ -39,8 +40,9 @@ type identifierRequest struct {
 }
 
 type replaceDraftRequest struct {
-	Revision int32              `json:"revision"`
-	Metadata applicationRequest `json:"metadata"`
+	ResourceType string             `json:"resource_type"`
+	Revision     int32              `json:"revision"`
+	Metadata     applicationRequest `json:"metadata"`
 }
 
 type rejectRequest struct {

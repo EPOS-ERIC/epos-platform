@@ -21,20 +21,20 @@ var _ MappedNullable = &SoftwareApplicationDraftMetadata{}
 
 // SoftwareApplicationDraftMetadata struct for SoftwareApplicationDraftMetadata
 type SoftwareApplicationDraftMetadata struct {
-	SourceIri        string                    `json:"source_iri"`
-	Name             string                    `json:"name"`
-	Description      *string                   `json:"description,omitempty"`
-	MainEntityOfPage NullableString            `json:"main_entity_of_page,omitempty"`
-	License          NullableString            `json:"license,omitempty"`
-	Version          NullableString            `json:"version,omitempty"`
-	Keywords         *string                   `json:"keywords,omitempty"`
-	DownloadUrl      NullableString            `json:"download_url,omitempty"`
-	Requirements     NullableString            `json:"requirements,omitempty"`
-	OperatingSystem  NullableString            `json:"operating_system,omitempty"`
-	Creators         []CanonicalReference      `json:"creators,omitempty"`
-	Identifiers      []SoftwareIdentifierDraft `json:"identifiers,omitempty"`
-	Categories       []CanonicalReference      `json:"categories,omitempty"`
-	ContactPoints    []CanonicalReference      `json:"contact_points,omitempty"`
+	SourceIri        string               `json:"source_iri"`
+	Name             string               `json:"name"`
+	Description      *string              `json:"description,omitempty"`
+	MainEntityOfPage NullableString       `json:"main_entity_of_page,omitempty"`
+	License          NullableString       `json:"license,omitempty"`
+	Version          NullableString       `json:"version,omitempty"`
+	Keywords         *string              `json:"keywords,omitempty"`
+	DownloadUrl      NullableString       `json:"download_url,omitempty"`
+	Requirements     NullableString       `json:"requirements,omitempty"`
+	OperatingSystem  NullableString       `json:"operating_system,omitempty"`
+	Creators         []CanonicalReference `json:"creators,omitempty"`
+	Identifiers      []IdentifierDraft    `json:"identifiers,omitempty"`
+	Categories       []CanonicalReference `json:"categories,omitempty"`
+	ContactPoints    []CanonicalReference `json:"contact_points,omitempty"`
 }
 
 type _SoftwareApplicationDraftMetadata SoftwareApplicationDraftMetadata
@@ -461,9 +461,9 @@ func (o *SoftwareApplicationDraftMetadata) SetCreators(v []CanonicalReference) {
 }
 
 // GetIdentifiers returns the Identifiers field value if set, zero value otherwise.
-func (o *SoftwareApplicationDraftMetadata) GetIdentifiers() []SoftwareIdentifierDraft {
+func (o *SoftwareApplicationDraftMetadata) GetIdentifiers() []IdentifierDraft {
 	if o == nil || IsNil(o.Identifiers) {
-		var ret []SoftwareIdentifierDraft
+		var ret []IdentifierDraft
 		return ret
 	}
 	return o.Identifiers
@@ -471,7 +471,7 @@ func (o *SoftwareApplicationDraftMetadata) GetIdentifiers() []SoftwareIdentifier
 
 // GetIdentifiersOk returns a tuple with the Identifiers field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SoftwareApplicationDraftMetadata) GetIdentifiersOk() ([]SoftwareIdentifierDraft, bool) {
+func (o *SoftwareApplicationDraftMetadata) GetIdentifiersOk() ([]IdentifierDraft, bool) {
 	if o == nil || IsNil(o.Identifiers) {
 		return nil, false
 	}
@@ -487,8 +487,8 @@ func (o *SoftwareApplicationDraftMetadata) HasIdentifiers() bool {
 	return false
 }
 
-// SetIdentifiers gets a reference to the given []SoftwareIdentifierDraft and assigns it to the Identifiers field.
-func (o *SoftwareApplicationDraftMetadata) SetIdentifiers(v []SoftwareIdentifierDraft) {
+// SetIdentifiers gets a reference to the given []IdentifierDraft and assigns it to the Identifiers field.
+func (o *SoftwareApplicationDraftMetadata) SetIdentifiers(v []IdentifierDraft) {
 	o.Identifiers = v
 }
 
