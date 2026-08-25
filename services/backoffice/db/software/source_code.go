@@ -1,5 +1,6 @@
-// TODO: align this package to the groups one
 package software
+
+// TODO: align this package to the groups one
 
 import (
 	"context"

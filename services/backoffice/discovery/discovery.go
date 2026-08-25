@@ -52,6 +52,7 @@ type Filter struct {
 }
 
 // TODO: use a domain enum!
+
 func (f Filter) Validate(actorID *string) error {
 	for _, status := range f.VersioningStatuses {
 		if status != Published && actorID == nil {

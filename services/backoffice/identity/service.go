@@ -27,6 +27,7 @@ type Claims struct {
 }
 
 // TODO: see if we should move this interface to the consuming package instead of the implementing one (also for the other services)
+
 type Store interface {
 	GetUserByID(context.Context, string) (User, error)
 	ListUsers(context.Context) ([]UserSummary, error)
@@ -45,6 +46,8 @@ type Authorizer interface {
 	AuthorizeAdmin(context.Context, string) (authz.Result, error)
 	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
 }
+
+// TODO: should we move these domain definitions to a separate package? (and the same for all other service structs)
 
 type UserSummary struct {
 	ID                string
