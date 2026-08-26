@@ -4,12 +4,12 @@ Monorepo for EPOS platform services, shared packages, and local development tool
 
 ## Current status
 
-The repository currently contains four active backend services used in local development:
+The repository currently contains five active backend services used in local development:
 
-- `services/metadata-lifecycle` (Kotlin): metadata lifecycle and versioning APIs backed by Neo4j.
 - `services/gateway` (Go): API gateway/aggregation layer.
-- `services/user-group` (Go): users, groups, memberships, and authorization-oriented data.
+- `services/metadata-lifecycle` (Go): users, groups, memberships, authorization, and metadata-lifecycle APIs.
 - `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
+- `services/oss-aai-service` (Go): local authentication and authorization identity provider.
 
 Local infrastructure and service wiring for development are defined in `docker/compose.dev.yaml` and orchestrated by Tilt.
 
@@ -23,22 +23,20 @@ flowchart TB
 
     subgraph EDGE[Published host ports]
         GWE[gateway-service :32000]
-        MLE[metadata-lifecycle-service :8080]
-        UGE[user-group-service :8090]
+        BOE[metadata-lifecycle-service :33000]
         DRE[data-retriever-service :8100]
         N4J[neo4j :7474/7687]
-        PUG[user-group-db :5432]
+        PBO[metadata-lifecycle-db :5434]
         PDR[data-retriever-db :5433]
     end
 
     subgraph NET["epos-network - docker compose"]
         GW[gateway-service]
-        ML[metadata-lifecycle-service]
-        UG[user-group-service]
+        BO[metadata-lifecycle-service]
         DR[data-retriever-service]
 
         NEO[(neo4j)]
-        UGDB[(user-group-db)]
+        BODB[(metadata-lifecycle-db)]
         DRDB[(data-retriever-db)]
     end
 
@@ -50,29 +48,27 @@ flowchart TB
 
     DEV --> GWE
     DEV --> MLE
-    DEV --> UGE
+    DEV --> BOE
     DEV --> DRE
     DEV --> N4J
 
     GWE --- GW
     MLE --- ML
-    UGE --- UG
+    BOE --- BO
     DRE --- DR
     N4J --- NEO
-    PUG --- UGDB
+    PBO --- BODB
     PDR --- DRDB
 
     GW -->|depends_on started| ML
-    UG -->|depends_on healthy| UGDB
+    BO -->|depends_on healthy| BODB
     DR -->|depends_on healthy| DRDB
     ML -->|depends_on healthy| NEO
 
     GW -. uses .-> LOG
-    UG -. uses .-> LOG
+    BO -. uses .-> LOG
     DR -. uses .-> LOG
-    UG -. uses .-> PG
     DR -. uses .-> PG
-    UG -. uses .-> MIG
     DR -. uses .-> MIG
 
     classDef svc fill:#0b5d8b,stroke:#083b59,color:#ffffff,stroke-width:1px;
@@ -81,11 +77,11 @@ flowchart TB
     classDef shared fill:#6f4b1f,stroke:#4f3516,color:#ffffff,stroke-width:1px;
     classDef edge fill:#39424e,stroke:#1f252d,color:#ffffff,stroke-width:1px;
 
-    class GW,ML,UG,DR svc;
+    class GW,ML,BO,DR svc;
     class NEO infra;
-    class UGDB,DRDB db;
+    class BODB,DRDB db;
     class LOG,PG,MIG shared;
-    class GWE,MLE,UGE,DRE,N4J,PUG,PDR edge;
+    class GWE,MLE,BOE,DRE,N4J,PBO,PDR edge;
 ```
 
 ## Shared Go packages
@@ -103,9 +99,8 @@ Shared Go modules live in `packages/go/` and are reused across services.
 |- apps/
 |- services/
 |  |- gateway/
-|  |- user-group/
+|  |- metadata-lifecycle/
 |  |- data-retriever/
-|  `- metadata-lifecycle/
 |- packages/
 |  |- go/
 |  |- shacl/
@@ -133,11 +128,10 @@ make up KUBE_CONTEXT=kind-epos
 
 Common local endpoints:
 
-- Metadata Lifecycle API: `http://localhost:8080`
-- Metadata Lifecycle Swagger: `http://localhost:8080/swagger`
 - Gateway API: `http://localhost:32000`
-- User Group API: `http://localhost:8090`
+- metadata-lifecycle API: `http://localhost:33000`
 - Data Retriever API: `http://localhost:8100`
+- OSS AAI API: `http://localhost:8110`
 - Neo4j Browser: `http://localhost:7474`
 
 Stop local development stack:
@@ -176,14 +170,12 @@ make helm-uninstall
 
 ## Helm Chart
 
-The platform Helm chart lives under `helm/epos-platform` and deploys the four backend services plus optional development datastores:
+The platform Helm chart lives under `helm/epos-platform` and deploys the backend services plus optional development datastores:
 
 - `gateway`
-- `metadata-lifecycle`
-- `user-group`
 - `data-retriever`
-- optional PostgreSQL instances for `user-group` and `data-retriever`
-- optional Neo4j instance for `metadata-lifecycle`
+- `oss-aai`
+- optional PostgreSQL instance for `data-retriever`
 
 Validate the chart locally:
 
@@ -229,7 +221,7 @@ helm package helm/epos-platform --destination dist
 For deployments using external datastores, disable the bundled datastore resources and provide connection settings through values:
 
 ```bash
-make helm-template HELM_SET_ARGS='--set postgresql.userGroup.enabled=false --set postgresql.userGroup.host=user-group-db.example --set postgresql.dataRetriever.enabled=false --set postgresql.dataRetriever.host=data-retriever-db.example --set neo4j.enabled=false --set neo4j.uri=bolt://neo4j.example:7687'
+make helm-template HELM_SET_ARGS='--set postgresql.dataRetriever.enabled=false --set postgresql.dataRetriever.host=data-retriever-db.example --set neo4j.enabled=false --set neo4j.uri=bolt://neo4j.example:7687'
 ```
 
 ## CI/CD Pipelines
@@ -238,6 +230,7 @@ GitHub Actions workflows live under `.github/workflows/`:
 
 - `services-ci.yml`: runs Go/Gradle tests, lint, service builds, Docker image builds, Docker image publishing, and integration tests.
 - `helm-ci.yml`: runs Helm lint/render validation, packages the chart, uploads chart artifacts, and attaches release chart packages to GitHub Releases.
+- Hurl workflows are currently manual-only because their tests are not correctly implemented.
 
 Pipeline behavior:
 
@@ -250,15 +243,15 @@ Pipeline behavior:
 Published Docker image names:
 
 - `ghcr.io/epos-eric/epos-platform/gateway`
-- `ghcr.io/epos-eric/epos-platform/metadata-lifecycle`
-- `ghcr.io/epos-eric/epos-platform/user-group`
 - `ghcr.io/epos-eric/epos-platform/data-retriever`
 
-Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Hurl tests under `tests/hurl/` and Schemathesis tests against the gateway OpenAPI contract.
+Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Schemathesis tests against the gateway OpenAPI contract.
+
+TODO: Correctly implement Hurl tests under `tests/hurl/`, then restore automatic CI triggers in `integration-hurl.yml`.
 
 ## Service documentation
 
-- Metadata Lifecycle: `services/metadata-lifecycle/README.md`
 - Gateway: `services/gateway/README.md`
-- User Group: `services/user-group/README.md`
+- metadata-lifecycle: `services/metadata-lifecycle/README.md`
 - Data Retriever: `services/data-retriever/README.md`
+- OSS AAI: `services/oss-aai-service/README.md`

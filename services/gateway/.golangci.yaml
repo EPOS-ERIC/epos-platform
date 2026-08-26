@@ -19,7 +19,7 @@ linters:
     - containedctx
     - copyloopvar
     - wrapcheck
-    - exhaustruct
+    - exhaustruct_v5
   exclusions:
     paths:
       - ".*gen/.*"
@@ -29,7 +29,7 @@ linters:
         source: "^\\s*defer\\s+"
       - linters:
           - errcheck
-          - exhaustruct
+          - exhaustruct_v5
         path: ".*_test\\.go"
   settings:
     goconst:

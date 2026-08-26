@@ -32,16 +32,10 @@ func main() {
 
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
-	metadataClient, err := clients.NewMetadatalifecycle(cfg.Services.MetadataLifecycle.URL, cfg.Upstream)
+	metadataLifecycleClient, err := clients.NewMetadataLifecycle(cfg.Services.MetadataLifecycle.URL, cfg.Upstream)
 	if err != nil {
-		log.Error("invalid metadata service configuration", "error", err)
-		panic("invalid metadata service configuration")
-	}
-
-	usergroupClient, err := clients.NewUsergroup(cfg.Services.Usergroup.URL, cfg.Upstream)
-	if err != nil {
-		log.Error("invalid usergroup service configuration", "error", err)
-		panic("invalid usergroup service configuration")
+		log.Error("invalid metadata-lifecycle service configuration", "error", err)
+		panic("invalid metadata-lifecycle service configuration")
 	}
 
 	authService, err := auth.NewService(cfg.Services.Auth.URL, cfg.Upstream)
@@ -50,7 +44,7 @@ func main() {
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, metadataClient, usergroupClient, authService); err != nil {
+	if err := server.Run(*cfg, metadataLifecycleClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

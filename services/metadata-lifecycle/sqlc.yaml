@@ -1,0 +1,58 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "./db/queries/*.sql"
+    schema: "./db/migrations/*.sql"
+    gen:
+      go:
+        package: "sqlc"
+        out: "db/sqlc"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: true
+        overrides:
+          - db_type: "uuid"
+            nullable: false
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "uuid"
+            nullable: true
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+              pointer: true
+          - db_type: "timestamptz"
+            nullable: false
+            go_type:
+              import: "time"
+              type: "Time"
+          - db_type: "timestamptz"
+            nullable: true
+            go_type:
+              import: "time"
+              type: "Time"
+              pointer: true
+          - column: "dataset_versions.spatial_point"
+            go_type:
+              import: "github.com/twpayne/go-geom"
+              package: "geom"
+              type: "Point"
+              pointer: true
+          - column: "dataset_versions.spatial_polygon"
+            go_type:
+              import: "github.com/twpayne/go-geom"
+              package: "geom"
+              type: "Polygon"
+              pointer: true
+          - column: "web_services.spatial_point"
+            go_type:
+              import: "github.com/twpayne/go-geom"
+              package: "geom"
+              type: "Point"
+              pointer: true
+          - column: "web_services.spatial_polygon"
+            go_type:
+              import: "github.com/twpayne/go-geom"
+              package: "geom"
+              type: "Polygon"
+              pointer: true

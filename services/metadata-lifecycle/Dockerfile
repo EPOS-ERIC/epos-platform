@@ -1,16 +1,15 @@
-FROM amazoncorretto:21
+FROM alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
+
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
-# Copy the fat jar built on host via `make build`
-COPY services/metadata-lifecycle/build/libs/metadata-service-*.jar /app/app.jar
+COPY services/metadata-lifecycle/metadata-lifecycle /usr/local/bin/metadata-lifecycle
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
 ENV EPOS_SERVICE_NAME="Metadata Lifecycle" \
-    EPOS_PORT="8080"
+    EPOS_PORT="5000"
 
-# Expose API port
-EXPOSE 8080
+EXPOSE 5000
 
-# Default: run the API server (or pass args like "populate")
-ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh", "java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh", "/usr/local/bin/metadata-lifecycle"]

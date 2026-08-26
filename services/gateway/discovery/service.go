@@ -1,24 +1,30 @@
-// Package discovery contains discovery domain use-cases.
+// Package discovery contains resource discovery use-cases.
 package discovery
 
 import (
-	"log/slog"
+	"context"
+	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
-type Service struct {
-	metadataClient *metadataclient.APIClient
-	fanOutLimit    int
-	log            *slog.Logger
+type ResourceSearcher interface {
+	SearchResources(context.Context, string, domain.DiscoveryFilter) ([]domain.DiscoveryItem, error)
 }
 
-// NewService builds discovery service for metadata search and concept tree.
-func NewService(metadataClient *metadataclient.APIClient, fanOutLimit int) *Service {
-	return &Service{
-		metadataClient: metadataClient,
-		fanOutLimit:    fanOutLimit,
-		log:            logging.Get("discovery-service"),
+type Service struct {
+	searcher ResourceSearcher
+}
+
+func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
+	return &Service{searcher: metadataLifecycle}
+}
+
+func (s *Service) Search(ctx context.Context, actorID string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
+	items, err := s.searcher.SearchResources(ctx, actorID, filter)
+	if err != nil {
+		return nil, fmt.Errorf("search discovery resources: %w", err)
 	}
+	return items, nil
 }

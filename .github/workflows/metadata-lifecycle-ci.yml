@@ -3,34 +3,30 @@ name: Metadata Lifecycle Pipeline
 on:
   pull_request:
     paths:
-      - "services/metadata-lifecycle/src/**"
-      - "services/metadata-lifecycle/gradle/**"
-      - "services/metadata-lifecycle/gradlew"
-      - "services/metadata-lifecycle/build.gradle.kts"
-      - "services/metadata-lifecycle/settings.gradle.kts"
-      - "services/metadata-lifecycle/Dockerfile"
-      - "packages/scripts/epos-banner.sh"
-      - "packages/assets/otel/opentelemetry-javaagent.jar"
-      - "Makefile"
-      - ".github/workflows/metadata-lifecycle-ci.yml"
-      - ".github/workflows/_gradle-service.yml"
+      - services/metadata-lifecycle/**
+      - packages/go/logging**
+      - packages/go/observability/**
+      - packages/go/middleware/**
+      - packages/go/apidocs/**
+      - packages/scripts/epos-banner.sh
+      - Makefile
+      - .github/workflows/metadata-lifecycle-ci.yml
+      - .github/workflows/_go-service.yml
   push:
     branches:
       - "main"
     tags:
       - "v*"
     paths:
-      - "services/metadata-lifecycle/src/**"
-      - "services/metadata-lifecycle/gradle/**"
-      - "services/metadata-lifecycle/gradlew"
-      - "services/metadata-lifecycle/build.gradle.kts"
-      - "services/metadata-lifecycle/settings.gradle.kts"
-      - "services/metadata-lifecycle/Dockerfile"
-      - "packages/scripts/epos-banner.sh"
-      - "packages/assets/otel/opentelemetry-javaagent.jar"
-      - "Makefile"
-      - ".github/workflows/metadata-lifecycle-ci.yml"
-      - ".github/workflows/_gradle-service.yml"
+      - services/metadata-lifecycle/**
+      - packages/go/logging**
+      - packages/go/observability/**
+      - packages/go/middleware/**
+      - packages/go/apidocs/**
+      - packages/scripts/epos-banner.sh
+      - Makefile
+      - .github/workflows/metadata-lifecycle-ci.yml
+      - .github/workflows/_go-service.yml
 
 permissions:
   contents: read
@@ -38,10 +34,11 @@ permissions:
 
 jobs:
   ci:
-    uses: ./.github/workflows/_gradle-service.yml
+    uses: ./.github/workflows/_go-service.yml
     secrets: inherit
     with:
       service: services/metadata-lifecycle
       image: metadata-lifecycle
       dockerfile: services/metadata-lifecycle/Dockerfile
       context: .
+      go-version-file: services/metadata-lifecycle/go.mod

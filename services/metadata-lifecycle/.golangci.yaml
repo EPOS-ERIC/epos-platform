@@ -1,0 +1,37 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: disable
+linters:
+  default: standard
+  enable:
+    - staticcheck
+    - errcheck
+    - misspell
+    - dupl
+    - gocritic
+    - godoclint
+    - contextcheck
+    - containedctx
+    - copyloopvar
+    - wrapcheck
+    - exhaustruct_v5
+  exclusions:
+    paths:
+      - ".*gen/.*"
+    rules:
+      - linters:
+          - errcheck
+        source: "^\\s*defer\\s+"
+      - linters:
+          - errcheck
+          - exhaustruct_v5
+        path: ".*_test\\.go"
+  settings:
+    goconst:
+      ignore-string-values:
+        - "true"

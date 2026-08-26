@@ -7,8 +7,8 @@ type Problem struct {
 	DebugDetail string `json:"debug_detail,omitempty"`
 }
 
-type BaseDetailResource struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+// Reference identifies another API resource by ID and display name.
+type Reference struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }

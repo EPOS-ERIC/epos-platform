@@ -7,23 +7,25 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
+	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 	"github.com/go-chi/chi/v5"
 )
 
 var log = logging.Get("routes")
 
 func NewRouter(
-	discoveryService *discovery.Service,
-	resourcesService *resources.Service,
 	lifecycleService *lifecycle.Service,
+	identityService *identity.Service,
+	metadataLifecycleClient *clients.MetadataLifecycle,
 	authService *auth.Service,
-	usergroupService *usergroup.Service,
 	corsAllowOrigin string,
 ) http.Handler {
 	log.Info("creating HTTP handler")
@@ -36,6 +38,7 @@ func NewRouter(
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude helath logs
 	r.Get("/health", health)
 	r.Get("/openapi.yaml", serveOpenAPISpec)
 	r.Get("/scalar", func(w http.ResponseWriter, r *http.Request) {
@@ -48,41 +51,88 @@ func NewRouter(
 	r.Handle("/scalar/*", http.StripPrefix("/scalar", http.FileServer(http.FS(docs.GetScalarUI()))))
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
-	discoveryHandler := handlers.NewDiscovery(discoveryService)
-	resourcesHandler := handlers.NewResources(resourcesService)
 	lifecycleHandler := handlers.NewLifecycle(lifecycleService)
-	usersHandler := handlers.NewUsers(usergroupService)
-	groupsHandler := handlers.NewGroups(usergroupService)
+	usersHandler := handlers.NewUsers(identityService)
+	groupsHandler := handlers.NewGroups(groupservice.NewService(metadataLifecycleClient))
+	importsHandler := handlers.NewImports(imports.NewService(metadataLifecycleClient))
+	canonicalHandler := handlers.NewCanonical(canonical.NewService(metadataLifecycleClient))
+	discoveryHandler := handlers.NewDiscovery(discovery.NewService(metadataLifecycleClient))
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Use(validateParams())
+
+		r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/imports/turtle", importsHandler.Turtle)
+
+		r.Route("/contact-points", func(r chi.Router) {
+			r.Use(authMiddleware(authService, metadataLifecycleClient))
+			r.Get("/", canonicalHandler.ListContactPoints)
+			r.Post("/", canonicalHandler.CreateContactPoint)
+			r.Get("/{contactPointId}", canonicalHandler.GetContactPoint)
+			r.Put("/{contactPointId}", canonicalHandler.ReplaceContactPoint)
+			r.Delete("/{contactPointId}", canonicalHandler.DeleteContactPoint)
+		})
+
+		r.Route("/organizations", func(r chi.Router) {
+			r.Get("/", canonicalHandler.ListOrganizations)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/", canonicalHandler.CreateOrganization)
+			r.Get("/{organizationId}", canonicalHandler.GetOrganization)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{organizationId}", canonicalHandler.ReplaceOrganization)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{organizationId}", canonicalHandler.DeleteOrganization)
+		})
+
 		// discovery
-		r.Get("/search", discoveryHandler.SearchMetadata)
-		r.Get("/concept", discoveryHandler.GetConceptTree)
+		r.With(authMiddlewareOptional(authService, metadataLifecycleClient)).Get("/search", discoveryHandler.Search)
 
 		r.Route("/users", func(r chi.Router) {
-			r.Use(authMiddleware(authService, usergroupService))
-			r.Get("/", usersHandler.ListUsers)
-			r.Get("/{id}", usersHandler.GetUser)
-			r.Patch("/{id}", usersHandler.PatchUser)
+			r.Use(authMiddleware(authService, metadataLifecycleClient))
+			r.Get("/", usersHandler.List)
+			r.Get("/{id}", usersHandler.Get)
+			r.Put("/{id}/global-permissions/{permission}", usersHandler.GrantGlobalPermission)
+			r.Delete("/{id}/global-permissions/{permission}", usersHandler.RevokeGlobalPermission)
+			r.Put("/{id}/global-roles/{role}", usersHandler.AssignGlobalRole)
+			r.Delete("/{id}/global-roles/{role}", usersHandler.RemoveGlobalRole)
+			r.Post("/{id}/block", usersHandler.BlockUser)
+			r.Post("/{id}/unblock", usersHandler.UnblockUser)
 		})
 
 		r.Route("/groups", func(r chi.Router) {
-			r.Use(authMiddleware(authService, usergroupService))
-			r.Get("/", groupsHandler.ListGroups)
-			r.Get("/{groupId}", groupsHandler.GetGroup)
-			r.Get("/{groupId}/memberships", groupsHandler.ListMemberships)
-			r.Patch("/{groupId}", groupsHandler.PatchGroup)
-			r.Patch("/{groupId}/memberships/{userId}", groupsHandler.PatchMembership)
-			r.Delete("/{groupId}", groupsHandler.DeleteGroup)
-			r.Delete("/{groupId}/memberships/{userId}", groupsHandler.DeleteMembership)
-			r.Post("/{groupId}/memberships", groupsHandler.RequestMembership)
-			r.Post("/", groupsHandler.CreateGroup)
+			r.Get("/", groupsHandler.List)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/", groupsHandler.Create)
+			r.Get("/{groupId}", groupsHandler.Get)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{groupId}", groupsHandler.Replace)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{groupId}", groupsHandler.Delete)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Get("/{groupId}/memberships", groupsHandler.ListMemberships)
+
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{groupId}/membership-requests", groupsHandler.RequestMembership)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{groupId}/membership-requests", groupsHandler.WithdrawMembershipRequest)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Patch("/{groupId}/memberships/{userId}", groupsHandler.DecideMembership)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{groupId}/memberships/{userId}", groupsHandler.DeleteMembership)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{groupId}/memberships/{userId}/roles/{role}", groupsHandler.AssignGroupRole)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{groupId}/memberships/{userId}/roles/{role}", groupsHandler.RemoveGroupRole)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{groupId}/memberships/{userId}/permissions/{permission}", groupsHandler.GrantGroupPermission)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{groupId}/memberships/{userId}/permissions/{permission}", groupsHandler.RevokeGroupPermission)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{groupId}/role-requests", groupsHandler.RequestRole)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Patch("/{groupId}/role-requests/{requestId}", groupsHandler.ApplyRoleRequestDecision)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{groupId}/role-requests/{requestId}", groupsHandler.WithdrawRoleRequest)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{groupId}/resources", lifecycleHandler.Create)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{groupId}/resources/{resourceType}/{id}/copy", lifecycleHandler.Copy)
+
+			r.Route("/{groupId}/categories", func(r chi.Router) {
+				r.Get("/", groupsHandler.ListCategories)
+				r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/", groupsHandler.CreateCategory)
+				r.Get("/{categoryId}", groupsHandler.GetCategory)
+				r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{categoryId}", groupsHandler.ReplaceCategory)
+				r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{categoryId}", groupsHandler.DeleteCategory)
+			})
 		})
 
 		r.Route("/resources", func(r chi.Router) {
-			r.Get("/{resourceType}/{id}", resourcesHandler.GetResourceByID)
-			// lifecycle TODO
-			r.Post("/{resourceType}/{id}/draft", lifecycleHandler.DraftResource)
+			r.With(authMiddlewareOptional(authService, metadataLifecycleClient)).Get("/{resourceType}/{id}/versions/{versionId}", lifecycleHandler.Get)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{id}/versions/{versionId}/draft", lifecycleHandler.ReplaceDraft)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{resourceType}/{id}/versions/{versionId}/draft", lifecycleHandler.Discard)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/versions/{versionId}/{action}", lifecycleHandler.Action)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/draft-from-publication", lifecycleHandler.DraftFromPublication)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/draft-from-archive", lifecycleHandler.DraftFromArchive)
 		})
 	})
 

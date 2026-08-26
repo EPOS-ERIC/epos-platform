@@ -42,7 +42,7 @@ func Logger(next http.Handler) http.Handler {
 			return
 		}
 
-		log.InfoContext(r.Context(), "http request", "status", rw.status, "duration", duration.String())
+		log.InfoContext(r.Context(), "http request", "method", r.Method, "path", r.URL.Path, "status", rw.status, "duration", duration.String())
 	})
 }
 

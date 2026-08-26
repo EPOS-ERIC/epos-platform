@@ -3,17 +3,22 @@ info:
   title: EPOS API
   version: 1.0.0
   description: |
-    Public API for searching and retrieving EPOS catalogue resources.
+    Public API for discovering EPOS catalogue resources and managing metadata.
 
     API structure:
-    - Use discovery endpoints to search catalogue content and browse the concept tree.
-    - Use resource endpoints to retrieve full details for a specific dataset, distribution, webservice, organization, concept, or concept scheme.
-    - Search responses may include different resource types in the same result page.
+    - Use the discovery endpoint to search catalogue content.
+    - Use resource-version endpoints to retrieve full details for a specific resource version.
+
+    Authentication:
+    - Public catalogue reads do not require credentials.
+    - Supply an OAuth2 bearer token for authenticated reads and all write operations.
+    - JSON request bodies must use `Content-Type: application/json`; other media types receive `415`.
+    - Error responses use `application/problem+json` unless noted otherwise.
+    - Operations backed by Metadata Lifecycle can return `503` when it is unavailable or `504` when a request times out.
 
     How to use this API:
     - Start with `/search` when you want to find resources by text, type, provider, time range, spatial area, or keywords.
-    - Start with `/concept` when you want to build browse or filtering interfaces based on the concept tree.
-    - Follow returned `href` values to retrieve related resources. Or use the IDs in the relative endpoints.
+    - Use returned resource and version IDs with the resource endpoints when details are needed.
   termsOfService: https://www.epos-eu.org/sites/default/files/2026-02/Terms_and_ConditionsJan26_1.pdf
   license:
     name: AGPL
@@ -25,36 +30,76 @@ servers:
 
 tags:
   - name: Discovery
-    description: Search and taxonomy bootstrap endpoints
-  - name: Users
-    description: User profile endpoints
-  - name: Groups
-    description: Group management endpoints
-  - name: Memberships
-    description: Group membership endpoints
+    description: Search public catalogue records and authenticated records you may access.
   - name: Resources
-    description: Resource detail endpoints
-  - name: Draft Resource Operations
-    description: Create, replace, and delete draft aggregates
-  - name: Resource Lifecycle
-    description: Submit, publish, draft, and discard aggregates
+    description: Read resource versions and manage their draft-to-publication lifecycle.
+  - name: Users
+    description: Read user profiles and administer global access.
+  - name: Groups
+    description: Read and manage groups and their categories.
+  - name: Contact Points
+    description: Manage reusable metadata contact points.
+  - name: Organizations
+    description: Read and manage reusable metadata organizations.
+  - name: Memberships
+    description: Request, review, and administer group membership and access.
+  - name: Imports
+    description: Import RDF Turtle metadata into draft resources.
 
 paths:
+  /imports/turtle:
+    post:
+      tags:
+        - Imports
+      summary: Import Turtle metadata
+      description: Atomically imports RDF Turtle metadata and creates or updates draft content. Requires global administrator access.
+      operationId: importTurtleMetadata
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          text/turtle:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Import conflicts with existing metadata
+        "415":
+          description: Content-Type must be text/turtle
+        "503":
+          description: Metadata Lifecycle service unavailable
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /search:
     get:
       tags:
         - Discovery
-      summary: Search metadata resources
+      summary: Search catalogue resources
       description: |
-        Returns a flat, typed list of catalogue resources matching the supplied criteria.
-        Results may include datasets, webservices, organizations, software applications,
-        and software source codes. Each item includes an `href` that can be followed
-        to retrieve the corresponding resource detail.
-      operationId: searchMetadata
+        Returns summary records for discovered resources. Published records are public.
+        Other statuses require an authenticated user with access to the resource group
+        or global administrator permissions. Results are returned as one mixed array.
+        Supported resource types are `dataset`, `software-application`, and
+        `software-source-code`.
+      operationId: discoverResources
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - $ref: "#/components/parameters/Q"
-        - $ref: "#/components/parameters/PageSize"
-        - $ref: "#/components/parameters/PageNumber"
         - $ref: "#/components/parameters/TypeFilter"
         - $ref: "#/components/parameters/SpatialFilter"
         - $ref: "#/components/parameters/DateFrom"
@@ -64,108 +109,231 @@ paths:
         - $ref: "#/components/parameters/Keywords"
       responses:
         "200":
-          description: Search results returned successfully
+          description: Discovery results returned successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SearchResponse"
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscoveryItem"
               examples:
                 mixedResults:
-                  summary: Mixed resource search results
+                  summary: Mixed discovery results
                   value:
-                    page_number: 1
-                    page_size: 10
-                    total: 42
-                    total_pages: 5
-                    items:
-                      - type: dataset
-                        id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
-                        name: "TEST1 - Historical earthquakes 1000-1899"
-                        href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/v1.0"
-                        providers:
-                          - id: "PIC:999472675/v1.0"
-                            name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                            href: "v1/resources/organization/PIC:999472675/v1.0"
-                        concepts:
-                          - id: "category:earthquakeparameters/v1.0"
-                            name: "Earthquake parameters"
-                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-                        distributions:
-                          - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                            href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                      - type: organization
-                        id: "PIC:999472675/v1.0"
-                        name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                        href: "v1/resources/organization/PIC:999472675/v1.0"
-                      - type: webservice
-                        id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                        name: "TEST1- Historical earthquakes 1000-1899 (FDSN-event)"
-                        href: "v1/resources/webservice/https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/v1.0"
-                        provider:
-                          id: "PIC:999472675/v1.0"
-                          name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                          href: "v1/resources/organization/PIC:999472675/v1.0"
-                        concepts:
-                          - id: "category:earthquakeparameters/v1.0"
-                            name: "Earthquake parameters"
-                            href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-                      - type: softwaresourcecode
-                        id: "https://doi.org/10.5281/zenodo.17598403"
-                        name: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
-                        href: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
-                        provider:
-                          - id: "ROR:048a87296/v1.0"
-                            name: "Uppsala University"
-                            href: "v1/resources/organization/ROR:048a87296/v1.0"
+                    - type: dataset
+                      resource_id: "550e8400-e29b-41d4-a716-446655440000"
+                      version_id: "550e8400-e29b-41d4-a716-446655440002"
+                      source_iri: "https://www.epos-eu.org/dataset/example"
+                      name: "Example dataset"
+                      status: PUBLISHED
+                      group:
+                        id: "550e8400-e29b-41d4-a716-446655440001"
+                        name: "Example group"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "400":
           $ref: "#/components/responses/BadRequest"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 
-  /concept:
+  /contact-points:
     get:
-      tags:
-        - Discovery
-      summary: Get full concept tree
-      description: |
-        Returns the complete concept tree as an ordered list of concept schemes.
-        Each scheme carries its full subtree of nested concepts.
-        Use this endpoint to populate browse or filtering interfaces.
-      operationId: getConceptTree
+      tags: [Contact Points]
+      summary: List reusable contact points
+      operationId: listContactPoints
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
-          description: Concept tree returned successfully
+          description: Contact points returned
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConceptTreeResponse"
-              examples:
-                tree:
-                  summary: Concept tree with one scheme
-                  value:
-                    schemes:
-                      - id: "category:software_jup/v1.0"
-                        label: "Jupyter Notebooks"
-                        name: "Jupyter Notebooks"
-                        description: "Jupyter Notebook Domain"
-                        logo: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
-                        homepage: ""
-                        color: "#F37726"
-                        order_number: 1
-                        top_concepts:
-                          - id: "category:facets/software-theme/v1.0"
-                            href: "v1/resources/concept/category:facets/software-theme/v1.0"
-                        children:
-                          - id: "category:facets/software-theme/v1.0"
-                            name: "Software"
-                            description: "Software"
-                            children: []
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                type: array
+                items: { $ref: "#/components/schemas/ContactPoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    post:
+      tags: [Contact Points]
+      summary: Create reusable contact point
+      operationId: createContactPoint
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateContactPointRequest" }
+      responses:
+        "201":
+          description: Contact point created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /contact-points/{contactPointId}:
+    parameters:
+      - {
+          name: contactPointId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    get:
+      tags: [Contact Points]
+      summary: Get contact point
+      operationId: getContactPoint
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Contact point returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    put:
+      tags: [Contact Points]
+      summary: Replace contact point
+      operationId: replaceContactPoint
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceContactPointRequest" }
+      responses:
+        "200":
+          description: Contact point replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactPoint" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Contact Points]
+      summary: Delete contact point
+      operationId: deleteContactPoint
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Contact point deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /organizations:
+    get:
+      tags: [Organizations]
+      summary: List reusable organizations
+      operationId: listOrganizations
+      responses:
+        "200":
+          description: Organizations returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    post:
+      tags: [Organizations]
+      summary: Create reusable organization
+      operationId: createOrganization
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateOrganizationRequest" }
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /organizations/{organizationId}:
+    parameters:
+      - {
+          name: organizationId,
+          in: path,
+          required: true,
+          schema: { type: string, format: uuid },
+        }
+    get:
+      tags: [Organizations]
+      summary: Get organization
+      operationId: getOrganization
+      responses:
+        "200":
+          description: Organization returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    put:
+      tags: [Organizations]
+      summary: Replace organization
+      operationId: replaceOrganization
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceOrganizationRequest" }
+      responses:
+        "200":
+          description: Organization replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CanonicalOrganization" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      operationId: deleteOrganization
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Organization deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /users:
     get:
@@ -190,30 +358,50 @@ paths:
                   summary: User list
                   value:
                     - id: "550e8400-e29b-41d4-a716-446655440101"
-                      auth_identifier: "auth-1"
                       email: "alice@example.org"
                       given_name: "Alice"
                       family_name: "Rossi"
-                      is_super_admin: true
+                      global_roles: [ADMIN]
+                      global_permissions: []
                       status: "ACTIVE"
-                      created_at: "2026-06-17T12:48:45.574Z"
-                      updated_at: "2026-06-17T12:48:45.574Z"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
 
   /groups:
+    post:
+      tags: [Groups]
+      summary: Create group
+      operationId: createGroup
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateGroupRequest" }
+      responses:
+        "201":
+          description: Group created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
     get:
       tags:
         - Groups
       summary: List groups
-      description: Retrieve all group records from usergroup service, including caller membership when present.
+      description: Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
       operationId: listGroups
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: Groups returned successfully
@@ -222,63 +410,22 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/GroupSummary"
+                  $ref: "#/components/schemas/Group"
               examples:
                 list:
-                  summary: Groups with caller membership
+                  summary: Public group metadata
                   value:
                     - id: "550e8400-e29b-41d4-a716-446655440001"
-                      slug: "satd"
+                      source_iri: "https://example.org/groups/satd"
                       name: "Satellite Data"
                       description: "Geospatial data obtained from Satellite measurements"
-                      is_system: false
-                      membership:
-                        role: "VIEWER"
-                        status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-    post:
-      tags:
-        - Groups
-      summary: Create group
-      description: Create a new group record in usergroup service. Allowed to super admins only.
-      operationId: createGroup
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateGroupRequest"
-            examples:
-              create:
-                summary: Create group
-                value:
-                  slug: "satd"
-                  name: "Satellite Data"
-                  description: "Geospatial data obtained from Satellite measurements"
-                  is_system: false
-      responses:
-        "201":
-          description: Group created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Group"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+                      label: "Satellite Data"
+                      position: 0
+                      concept: "DATA"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
   /groups/{groupId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -286,10 +433,8 @@ paths:
       tags:
         - Groups
       summary: Get group by id
-      description: Retrieve group details from usergroup service, including caller membership when present.
+      description: Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
       operationId: getGroup
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: Group found
@@ -297,126 +442,176 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Group"
-              examples:
-                detail:
-                  summary: Group detail with caller membership
-                  value:
-                    id: "550e8400-e29b-41d4-a716-446655440001"
-                    slug: "satd"
-                    name: "Satellite Data"
-                    description: "Geospatial data obtained from Satellite measurements"
-                    is_system: false
-                    membership:
-                      role: "ADMIN"
-                      status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-    patch:
-      tags:
-        - Groups
-      summary: Patch group
-      description: Update mutable group fields. Allowed to super admins and active group admins for this group.
-      operationId: patchGroup
-      security:
-        - bearerAuth: []
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+    put:
+      tags: [Groups]
+      summary: Replace group
+      operationId: replaceGroup
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/PatchGroupRequest"
-            examples:
-              update:
-                summary: Update group fields
-                value:
-                  name: "Research Core Team"
-                  description: "Updated research group"
+            schema: { $ref: "#/components/schemas/ReplaceGroupRequest" }
       responses:
         "200":
-          description: Group updated successfully
+          description: Group replaced
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Group"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+              schema: { $ref: "#/components/schemas/Group" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
     delete:
-      tags:
-        - Groups
+      tags: [Groups]
       summary: Delete group
-      description: Delete a group and clean up its memberships in usergroup service. Allowed to super admins only.
       operationId: deleteGroup
-      security:
-        - bearerAuth: []
+      security: [{ bearerAuth: [] }]
       responses:
-        "204":
-          description: Group deleted
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /groups/{groupId}/memberships:
+        "204": { description: Group deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/categories:
     parameters:
       - $ref: "#/components/parameters/GroupId"
     get:
-      tags:
-        - Memberships
-      summary: List group memberships
-      description: Retrieve all memberships for a group. Allowed to super admins and active group admins for this group; group admin scope includes membership management for that group.
-      operationId: listGroupMemberships
-      security:
-        - bearerAuth: []
+      tags: [Groups]
+      summary: List group categories
+      operationId: listGroupCategories
       responses:
         "200":
-          description: Memberships returned successfully
+          description: Categories returned
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/GroupMembershipSummary"
-              examples:
-                list:
-                  summary: Group memberships
-                  value:
-                    - user:
-                        id: "550e8400-e29b-41d4-a716-446655440101"
-                        name: "Alice Rossi"
-                        href: "v1/users/550e8400-e29b-41d4-a716-446655440101"
-                      role: "ADMIN"
-                      status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                items: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    post:
+      tags: [Groups]
+      summary: Create group category
+      operationId: createGroupCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCategoryRequest" }
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/categories/{categoryId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/CategoryId"
+    get:
+      tags: [Groups]
+      summary: Get group category
+      operationId: getGroupCategory
+      responses:
+        "200":
+          description: Category returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    put:
+      tags: [Groups]
+      summary: Replace group category
+      operationId: replaceGroupCategory
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ReplaceCategoryRequest" }
+      responses:
+        "200":
+          description: Category replaced
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Category" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags: [Groups]
+      summary: Delete group category
+      operationId: deleteGroupCategory
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Category deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/memberships:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    get:
+      tags: [Memberships]
+      summary: List group memberships
+      operationId: listGroupMemberships
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Memberships returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GroupMembership" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+  /groups/{groupId}/membership-requests:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
     post:
       tags:
         - Memberships
-      summary: Request group access
-      description: Request access to a group for the authenticated user.
+      summary: Request group membership
+      description: Create the authenticated user's pending membership request with zero or more requested group roles.
       operationId: requestGroupMembership
       security:
         - bearerAuth: []
@@ -426,28 +621,13 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateMembershipRequest"
-            examples:
-              create:
-                summary: Request participation
-                value:
-                  role: "VIEWER"
       responses:
         "201":
-          description: Membership request created successfully
+          description: Membership request created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Membership"
-              examples:
-                created:
-                  summary: Created membership request
-                  value:
-                    user_id: "550e8400-e29b-41d4-a716-446655440101"
-                    group_id: "550e8400-e29b-41d4-a716-446655440001"
-                    role: "VIEWER"
-                    status: "PENDING"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T12:48:45.574Z"
+                $ref: "#/components/schemas/GroupMembership"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -456,64 +636,45 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+    delete:
+      tags:
+        - Memberships
+      summary: Withdraw own membership request
+      description: Delete the authenticated user's pending membership request and pending role requests.
+      operationId: withdrawGroupMembershipRequest
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Membership request withdrawn
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 
   /groups/{groupId}/memberships/{userId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
       - $ref: "#/components/parameters/MembershipUserId"
-    patch:
-      tags:
-        - Memberships
-      summary: Update membership
-      description: Accept, reject, or adjust a user membership. Allowed to super admins and active group admins for the target group.
-      operationId: patchGroupMembership
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PatchMembershipRequest"
-            examples:
-              patch:
-                summary: Update membership status
-                value:
-                  status: "ACTIVE"
-      responses:
-        "200":
-          description: Membership patched successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Membership"
-              examples:
-                patched:
-                  summary: Patched membership
-                  value:
-                    user_id: "550e8400-e29b-41d4-a716-446655440101"
-                    group_id: "550e8400-e29b-41d4-a716-446655440001"
-                    role: "VIEWER"
-                    status: "ACTIVE"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T13:05:45.574Z"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
     delete:
       tags:
         - Memberships
       summary: Delete membership
-      description: Remove a user membership from a group. Self-service callers may leave a group or cancel a pending request for themselves. Super admins and active group admins for the target group may remove any membership in that group.
+      description: Remove a user membership from a group. Requires group membership management permission or global membership management permission. Memberships holding GROUP_ADMIN require global membership management permission.
       operationId: deleteGroupMembership
       security:
         - bearerAuth: []
@@ -526,8 +687,264 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+    patch:
+      tags:
+        - Memberships
+      summary: Accept or reject membership request
+      description: Accept or reject a pending membership request. Requires group membership management permission or global membership management permission.
+      operationId: decideGroupMembership
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MembershipDecisionRequest"
+      responses:
+        "200":
+          description: Membership decision applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /groups/{groupId}/memberships/{userId}/roles/{role}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/MembershipUserId"
+      - $ref: "#/components/parameters/GroupRole"
+    put:
+      tags:
+        - Memberships
+      summary: Assign group role
+      description: Assign EDITOR or REVIEWER in the group; assigning GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      operationId: assignGroupRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Role assigned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Memberships
+      summary: Remove group role
+      description: Remove EDITOR or REVIEWER in the group; removing GROUP_ADMIN requires global role management permission or global ADMIN. Operation is idempotent.
+      operationId: removeGroupRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Role removed
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /groups/{groupId}/role-requests:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    post:
+      tags:
+        - Memberships
+      summary: Request group role
+      description: Request EDITOR or REVIEWER role for the authenticated user. The user must be an active group member.
+      operationId: requestGroupRole
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+      responses:
+        "201":
+          description: Role requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleRequest"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /groups/{groupId}/memberships/{userId}/permissions/{permission}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/MembershipUserId"
+      - $ref: "#/components/parameters/GroupPermission"
+    put:
+      tags:
+        - Memberships
+      summary: Grant direct group permission
+      description: Grant a group-scoped direct permission to an active group member. Requires group.permission.manage in the group or global ADMIN. Operation is idempotent.
+      operationId: grantGroupPermission
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Permission granted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Memberships
+      summary: Revoke direct group permission
+      description: Revoke a group-scoped direct permission from an active group member. Requires group.permission.manage in the group or global ADMIN. Operation is idempotent.
+      operationId: revokeGroupPermission
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Permission revoked
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /groups/{groupId}/role-requests/{requestId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - name: requestId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags:
+        - Memberships
+      summary: Accept or reject role request
+      description: Accept or reject a pending role request. Requires group role management permission or global role management permission.
+      operationId: applyRoleRequestDecision
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleRequestDecisionRequest"
+      responses:
+        "200":
+          description: Role request decision applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupMembership"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Memberships
+      summary: Withdraw own role request
+      description: Delete the authenticated user's pending role request.
+      operationId: withdrawGroupRoleRequest
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Role request withdrawn
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
 
   /users/{id}:
     parameters:
@@ -552,11 +969,11 @@ paths:
                   summary: User detail with memberships
                   value:
                     id: "550e8400-e29b-41d4-a716-446655440101"
-                    auth_identifier: "auth-1"
                     email: "alice@example.org"
                     given_name: "Alice"
                     family_name: "Rossi"
-                    is_super_admin: true
+                    global_roles: [ADMIN]
+                    global_permissions: []
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -564,18 +981,20 @@ paths:
                       - group:
                           id: "550e8400-e29b-41d4-a716-446655440001"
                           name: "Group Cool Name"
-                          href: "v1/groups/550e8400-e29b-41d4-a716-446655440001"
-                        role: "VIEWER"
+                        roles: [EDITOR]
                         status: "ACTIVE"
+                        permissions: [resource.create, resource.edit]
+                        created_at: "2026-06-17T12:48:45.574Z"
+                        updated_at: "2026-06-17T12:48:45.574Z"
                 self:
                   summary: Self profile
                   value:
                     id: "550e8400-e29b-41d4-a716-446655440101"
-                    auth_identifier: "auth-1"
                     email: "alice@example.org"
                     given_name: "Alice"
                     family_name: "Rossi"
-                    is_super_admin: true
+                    global_roles: [ADMIN]
+                    global_permissions: []
                     status: "ACTIVE"
                     created_at: "2026-06-17T12:48:45.574Z"
                     updated_at: "2026-06-17T12:48:45.574Z"
@@ -583,23 +1002,80 @@ paths:
                       - group:
                           id: "550e8400-e29b-41d4-a716-446655440001"
                           name: "Group Cool Name"
-                          href: "v1/groups/550e8400-e29b-41d4-a716-446655440001"
-                        role: "VIEWER"
+                        roles: [EDITOR]
                         status: "ACTIVE"
+                        permissions: [resource.create, resource.edit]
+                        created_at: "2026-06-17T12:48:45.574Z"
+                        updated_at: "2026-06-17T12:48:45.574Z"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-    patch:
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+  /users/{id}/global-permissions/{permission}:
+    parameters:
+      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/Permission"
+    put:
       tags:
         - Users
-      summary: Patch user by id
-      description: Update mutable fields for a user profile. Use `self` to update authenticated user profile. Super admins may also update any user id.
-      operationId: patchUser
+      summary: Grant global permission
+      description: Grant a global permission to a user. Requires global.permission.manage or global ADMIN.
+      operationId: grantGlobalPermission
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Global permission granted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Users
+      summary: Revoke global permission
+      description: Revoke a global permission from a user. Requires global.permission.manage or global ADMIN.
+      operationId: revokeGlobalPermission
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Global permission revoked
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /users/{id}/block:
+    parameters:
+      - $ref: "#/components/parameters/UserUUID"
+    post:
+      tags:
+        - Users
+      summary: Block user
+      description: Block a user with a required reason. Requires active global ADMIN. Existing memberships, roles, grants, and subscriptions remain stored.
+      operationId: blockUser
       security:
         - bearerAuth: []
       requestBody:
@@ -607,45 +1083,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PatchCurrentUserRequest"
-            examples:
-              update:
-                summary: Update fields
-                value:
-                  given_name: "John"
-                  family_name: "Doe"
+              $ref: "#/components/schemas/BlockUserRequest"
       responses:
-        "200":
-          description: User updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-              examples:
-                self:
-                  summary: Self profile update
-                  value:
-                    id: "550e8400-e29b-41d4-a716-446655440101"
-                    auth_identifier: "auth-1"
-                    email: "alice@example.org"
-                    given_name: "John"
-                    family_name: "Doe"
-                    is_super_admin: true
-                    status: "ACTIVE"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T13:05:45.574Z"
-                uuid:
-                  summary: User update by UUID
-                  value:
-                    id: "550e8400-e29b-41d4-a716-446655440102"
-                    auth_identifier: "auth-2"
-                    email: "bob@example.org"
-                    given_name: "Bob"
-                    family_name: "Meyer"
-                    is_super_admin: false
-                    status: "ACTIVE"
-                    created_at: "2026-06-17T12:48:45.574Z"
-                    updated_at: "2026-06-17T13:05:45.574Z"
+        "204":
+          description: User blocked
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /users/{id}/unblock:
+    parameters:
+      - $ref: "#/components/parameters/UserUUID"
+    post:
+      tags:
+        - Users
+      summary: Unblock user
+      description: Restore a blocked user to ACTIVE. Requires active global ADMIN.
+      operationId: unblockUser
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: User unblocked
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -656,27 +1125,79 @@ paths:
           $ref: "#/components/responses/NotFound"
         "504":
           $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /resources/{resourceType}:
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /users/{id}/global-roles/{role}:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/GlobalRole"
+    put:
+      tags:
+        - Users
+      summary: Assign global role
+      description: Assign a global role to a user. Requires active global ADMIN. Only ADMIN is valid.
+      operationId: assignGlobalRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Global role assigned
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      tags:
+        - Users
+      summary: Remove global role
+      description: Remove a global role from a user. Removing the last active ADMIN is rejected.
+      operationId: removeGlobalRole
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Global role removed
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "504":
+          $ref: "#/components/responses/GatewayTimeout"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /groups/{groupId}/resources:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
     post:
       tags:
-        - Draft Resource Operations
+        - Resources
       summary: Create resource draft
-      description: Create a new `draft` resource for the selected type.
+      description: Creates an editable draft in the group. Request body shape is selected by `resource_type`.
       operationId: createResource
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ResourceWrite"
+              $ref: "#/components/schemas/CreateResourceDraftRequest"
       responses:
         "201":
           description: Draft created
@@ -686,57 +1207,153 @@ paths:
                 $ref: "#/components/schemas/WriteResult"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+
+  /groups/{groupId}/resources/{resourceType}/{id}/copy:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags:
+        - Resources
+      summary: Copy resource
+      description: Creates a draft copy in the group identified by `groupId`. The target group is taken from the URL, not the request body.
+      operationId: copyResource
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CopyResourceRequest"
+      responses:
+        "201":
+          description: Resource copied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
-  /resources/{resourceType}/{id}:
+  /resources/{resourceType}/{id}/versions/{versionId}:
     parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     get:
       tags:
         - Resources
-      summary: Get resource by id
-      description: |
-        Returns resource detail metadata for the selected resource type.
-      operationId: getResourceById
-      parameters:
-        - $ref: "#/components/parameters/ReadResourceType"
+      summary: Get resource version
+      description: Returns a published version publicly, or a non-public version when caller has access to its group.
+      operationId: getResourceVersion
+      security:
+        - {}
+        - bearerAuth: []
       responses:
         "200":
-          description: Resource found
+          description: Resource version found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResourceDetail"
-        "404":
-          $ref: "#/components/responses/NotFound"
+                $ref: "#/components/schemas/ResourceVersion"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+
+  /resources/{id}/versions/{versionId}/draft:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     put:
       tags:
-        - Draft Resource Operations
-      summary: Replace resource draft
-      description: Full replace semantics. Omitted writable fields are removed from the draft resource.
-      operationId: updateResource
-      parameters:
-        - $ref: "#/components/parameters/WriteResourceType"
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+        - Resources
+      summary: Replace resource draft version
+      description: Replaces an editable draft only. Request body shape is selected by `resource_type` and includes the current revision.
+      operationId: replaceResourceDraftVersion
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ResourceWrite"
+              $ref: "#/components/schemas/ReplaceResourceDraftRequest"
       responses:
         "200":
-          description: Draft replaced
+          description: Draft version replaced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+    delete:
+      tags:
+        - Resources
+      summary: Discard resource draft version
+      description: Permanently discards an editable draft version.
+      operationId: discardResourceDraftVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Draft version discarded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
+
+  /resources/{resourceType}/{id}/versions/{versionId}/submit:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resources
+      summary: Submit resource version
+      operationId: submitResourceVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version submitted
           content:
             application/json:
               schema:
@@ -749,23 +1366,28 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
-    delete:
+
+  /resources/{resourceType}/{id}/versions/{versionId}/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
       tags:
-        - Draft Resource Operations
-      summary: Delete resource draft
-      description: Delete a `draft` resource.
-      operationId: deleteResource
-      parameters:
-        - $ref: "#/components/parameters/WriteResourceType"
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+        - Resources
+      summary: Withdraw resource version
+      operationId: withdrawResourceVersion
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: Draft deleted
+          description: Resource version withdrawn
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -773,27 +1395,34 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  # RESOURCE LIFECYCLE ENDPOINTS
-  /resources/{resourceType}/{id}/submit:
+  /resources/{resourceType}/{id}/versions/{versionId}/reject:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     post:
       tags:
-        - Resource Lifecycle
-      summary: Submit resource draft
-      description: Submit a `draft` resource for review.
-      operationId: submitResource
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+        - Resources
+      summary: Reject resource version
+      description: Rejects a submitted resource version and records the required reviewer note.
+      operationId: rejectResourceVersion
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectResourceRequest"
       responses:
         "200":
-          description: Draft submitted
+          description: Resource version rejected
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -801,26 +1430,27 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}/publish:
+  /resources/{resourceType}/{id}/versions/{versionId}/reopen:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     post:
       tags:
-        - Resource Lifecycle
-      summary: Publish resource draft
-      description: Publish a `submitted` resource.
-      operationId: publishResource
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+        - Resources
+      summary: Reopen resource version
+      operationId: reopenResourceVersion
+      security:
+        - bearerAuth: []
       responses:
         "200":
-          description: Draft published
+          description: Resource version reopened
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -828,19 +1458,73 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}/draft:
+  /resources/{resourceType}/{id}/versions/{versionId}/publish:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resources
+      summary: Publish resource version
+      operationId: publishResourceVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/versions/{versionId}/unpublish:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    post:
+      tags:
+        - Resources
+      summary: Unpublish resource version
+      operationId: unpublishResourceVersion
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version unpublished
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /resources/{resourceType}/{id}/draft-from-publication:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
     post:
       tags:
-        - Resource Lifecycle
-      summary: Create draft from published resource
-      description: Create a new draft version from a published resource.
-      operationId: draftResource
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+        - Resources
+      summary: Create draft from publication
+      operationId: draftFromPublication
+      security:
+        - bearerAuth: []
       responses:
         "201":
           description: Draft created
@@ -848,6 +1532,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -855,26 +1541,26 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /resources/{resourceType}/{id}/discard:
+  /resources/{resourceType}/{id}/draft-from-archive:
     parameters:
-      - $ref: "#/components/parameters/WriteResourceType"
+      - $ref: "#/components/parameters/LifecycleResourceType"
       - $ref: "#/components/parameters/ResourceId"
     post:
       tags:
-        - Resource Lifecycle
-      summary: Discard resource draft
-      description: Discard a `draft` or `submitted` resource.
-      operationId: discardResource
-      parameters:
-        - $ref: "#/components/parameters/XAgent"
-        - $ref: "#/components/parameters/XGroup"
+        - Resources
+      summary: Create draft from archive
+      operationId: draftFromArchive
+      security:
+        - bearerAuth: []
       responses:
-        "200":
-          description: Draft discarded
+        "201":
+          description: Draft created
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
@@ -890,22 +1576,6 @@ components:
       bearerFormat: JWT
 
   parameters:
-    XAgent:
-      name: X-Agent
-      in: header
-      required: true
-      description: Absolute URI identifying acting agent.
-      schema:
-        type: string
-
-    XGroup:
-      name: X-Group
-      in: header
-      required: true
-      description: Absolute URI identifying acting group.
-      schema:
-        type: string
-
     ResourceId:
       name: id
       in: path
@@ -913,8 +1583,7 @@ components:
       description: Resource identifier.
       schema:
         type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FDataset%2FAHEAD%2Fevents%2Fv1.0"
+        format: uuid
 
     UserId:
       name: id
@@ -930,6 +1599,41 @@ components:
             format: uuid
         example: self
 
+    UserUUID:
+      name: id
+      in: path
+      required: true
+      description: User identifier.
+      schema:
+        type: string
+        format: uuid
+
+    Permission:
+      name: permission
+      in: path
+      required: true
+      description: Global permission key.
+      schema:
+        type: string
+        enum:
+          - global.membership.manage
+          - global.role.manage
+          - global.permission.manage
+          - organization.manage
+          - contact_point.manage
+          - category_scheme.manage
+        example: global.permission.manage
+
+    GlobalRole:
+      name: role
+      in: path
+      required: true
+      description: Global role key.
+      schema:
+        type: string
+        enum: [ADMIN]
+        example: ADMIN
+
     MembershipUserId:
       name: userId
       in: path
@@ -938,7 +1642,37 @@ components:
       schema:
         type: string
         format: uuid
-        example: "550e8400-e29b-41d4-a716-446655440101"
+
+    GroupRole:
+      name: role
+      in: path
+      required: true
+      description: Group role to assign or remove.
+      schema:
+        type: string
+        enum: [EDITOR, REVIEWER, GROUP_ADMIN]
+
+    GroupPermission:
+      name: permission
+      in: path
+      required: true
+      description: Group-scoped permission to grant or revoke.
+      schema:
+        type: string
+        enum:
+          - resource.create
+          - resource.edit
+          - resource.submit
+          - resource.withdraw
+          - resource.reopen
+          - resource.discard
+          - resource.reject
+          - resource.publish
+          - resource.unpublish
+          - group.membership.manage
+          - group.role.manage
+          - group.permission.manage
+          - category.manage
 
     GroupId:
       name: groupId
@@ -948,73 +1682,36 @@ components:
       schema:
         type: string
         format: uuid
-        example: "550e8400-e29b-41d4-a716-446655440001"
 
-    WriteResourceType:
+    CategoryId:
+      name: categoryId
+      in: path
+      required: true
+      description: Category identifier.
+      schema:
+        type: string
+        format: uuid
+
+    VersionId:
+      name: versionId
+      in: path
+      required: true
+      description: Resource version identifier.
+      schema:
+        type: string
+        format: uuid
+
+    LifecycleResourceType:
       name: resourceType
       in: path
       required: true
-      description: Resource type identifier accepted by write endpoints.
-      schema:
-        $ref: "#/components/schemas/WriteResourceType"
-
-    ReadResourceType:
-      name: resourceType
-      in: path
-      required: true
-      description: Resource type identifier accepted by read endpoints.
-      schema:
-        $ref: "#/components/schemas/ReadResourceType"
-
-    SoftwareSourceCodeId:
-      name: id
-      in: path
-      required: true
-      description: Software source code identifier.
+      description: Resource type identifier accepted by lifecycle endpoints.
       schema:
         type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fdoi.org%2F10.5281%2Fzenodo.17598403"
-
-    WebserviceId:
-      name: id
-      in: path
-      required: true
-      description: Webservice identifier.
-      schema:
-        type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FWebService%2FAHEAD%2Frestful%2Ffdsnws-event%2Fv1.0"
-
-    OrganizationId:
-      name: id
-      in: path
-      required: true
-      description: Organization identifier.
-      schema:
-        type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "ROR%3A048a87296%2Fv1.0"
-
-    ConceptId:
-      name: id
-      in: path
-      required: true
-      description: Concept identifier.
-      schema:
-        type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "category%3Asoftware_jup_conc_multi%2Fv1.0"
-
-    ConceptSchemeId:
-      name: id
-      in: path
-      required: true
-      description: Concept scheme identifier.
-      schema:
-        type: string
-        pattern: '^[^\x00-\x20\x7F]+$'
-        example: "category%3Asoftware_jup%2Fv1.0"
+        enum:
+          - dataset
+          - software-application
+          - software-source-code
 
     Q:
       name: q
@@ -1025,45 +1722,19 @@ components:
         type: string
         example: "historical earthquakes"
 
-    PageSize:
-      name: pageSize
-      in: query
-      required: false
-      description: Maximum number of search items requested per page.
-      schema:
-        type: integer
-        format: int32
-        minimum: 1
-        maximum: 100
-        default: 10
-        example: 10
-
-    PageNumber:
-      name: pageNumber
-      in: query
-      required: false
-      description: 1-based result page index to return.
-      schema:
-        type: integer
-        format: int32
-        minimum: 1
-        maximum: 2147483647
-        default: 1
-        example: 1
-
     TypeFilter:
       name: type
       in: query
       required: false
       description: |
-        Filter results to one or more resource types. When omitted, all supported search
+        Filter results to one or more resource types. When omitted, all supported
         resource types are returned.
         Pass comma-separated values in a single parameter:
-        `?type=dataset,webservice`.
+        `?type=dataset,software-application`.
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/SearchResourceType"
+          $ref: "#/components/schemas/DiscoveryResourceType"
       style: form
       explode: false
 
@@ -1072,8 +1743,8 @@ components:
       in: query
       required: false
       description: |
-        Spatial filter expressed as a WKT polygon string (EPSG:4326).
-        Resources whose spatial coverage intersects this polygon are returned.
+        Spatial filter expressed as a WKT POINT or POLYGON string (EPSG:4326).
+        Resources whose spatial coverage intersects this geometry are returned.
         Example: `POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))`
       schema:
         type: string
@@ -1114,11 +1785,12 @@ components:
         Use this filter to restrict results to resources associated with one of the
         specified provider organizations.
         Pass comma-separated values in a single parameter:
-        `?provider=PIC:999472675/v1.0,ROR:048a87296/v1.0`.
+        `?provider=94f4885e-502e-5f33-ba82-033a72efd827`.
       schema:
         type: array
         items:
           type: string
+          format: uuid
       style: form
       explode: false
 
@@ -1128,15 +1800,15 @@ components:
       required: false
       description: |
         Filter by one or more versioning states.
-        When omitted, defaults to `published`.
+        When omitted, defaults to `PUBLISHED`.
         Pass comma-separated values in a single parameter:
-        `?versioningStatus=published,draft`.
+        `?versioningStatus=PUBLISHED,DRAFT`.
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/VersioningStatus"
+          $ref: "#/components/schemas/DiscoveryVersioningStatus"
         default:
-          - published
+          - PUBLISHED
       style: form
       explode: false
 
@@ -1259,529 +1931,772 @@ components:
                 status: 504
                 detail: "metadata search timed out"
 
+    ServiceUnavailable:
+      description: Metadata Lifecycle service unavailable
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          examples:
+            metadataLifecycleUnavailable:
+              summary: Metadata Lifecycle unavailable
+              value:
+                title: "metadata_lifecycle_unavailable"
+                status: 503
+                detail: "metadata-lifecycle service unavailable"
+
   schemas:
     # -------------------------------------------------------------------------
     # Shared enums
     # -------------------------------------------------------------------------
 
-    SearchResourceType:
+    DiscoveryResourceType:
       type: string
-      description: Resource type identifier used in search results.
+      description: Resource type identifier used in discovery results.
       enum:
         - dataset
-        - webservice
-        - organization
-        - softwareapplication
-        - softwaresourcecode
-
-    ReadResourceType:
-      type: string
-      description: Resource type identifier used in detail read endpoints.
-      enum:
-        - dataset
-        - distribution
-        - organization
-        - softwareapplication
-        - softwaresourcecode
-        - webservice
-        - concept
-        - conceptscheme
+        - software-application
+        - software-source-code
 
     VersioningStatus:
       type: string
-      description: Versioning state used by search, read, and write endpoints.
+      description: Lowercase lifecycle state returned by write operations.
       enum:
         - published
         - draft
         - submitted
         - archived
         - discarded
+        - rejected
+
+    DiscoveryVersioningStatus:
+      type: string
+      description: Uppercase versioning state accepted by the discovery filter.
+      enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+
+    DatasetDraftMetadata:
+      type: object
+      additionalProperties: false
+      required: [source_iri, title]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        distributions:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/DistributionDraft" },
+          }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        persistent_identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/IdentifierDraft" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        providers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        created: { type: string, format: date-time, nullable: true }
+        updated: { type: string, format: date-time, nullable: true }
+
+    SoftwareApplicationDraftMetadata:
+      type: object
+      additionalProperties: false
+      required: [source_iri, name]
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        license: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        download_url: { type: string, format: uri }
+        requirements: { type: string, nullable: true }
+        operating_system: { type: string, nullable: true }
+        main_entity_of_page: { type: string, format: uri }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareIdentifier" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+
+    SoftwareSourceCodeDraftMetadata:
+      type: object
+      additionalProperties: false
+      required: [source_iri, name]
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        repository: { type: string, format: uri }
+        programming_language: { type: string }
+        license: { type: string, nullable: true }
+        software_requirements: { type: string, nullable: true }
+        runtime_platform: { type: string, nullable: true }
+        main_entity_of_page: { type: string, format: uri }
+        version: { type: string, nullable: true }
+        creators:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        identifiers:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/SoftwareIdentifier" },
+          }
+        categories:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+
+    ResourceReference:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+
+    SoftwareIdentifier:
+      type: object
+      required: [source_iri, type, value]
+      properties:
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+
+    IdentifierDraft:
+      type: object
+      required: [source_iri, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+
+    DistributionDraft:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistributionDraft"
+        - $ref: "#/components/schemas/DownloadableFileDistributionDraft"
+      discriminator:
+        propertyName: type
+        mapping:
+          # TODO: instead of having these weird constants, change them everywhere to just be WEB_SERVICE or DOWNLOADABLE_FILE (also in the db, ...)
+          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
+          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
+
+    WebServiceDistributionDraft:
+      type: object
+      additionalProperties: false
+      required: [title, type, web_service]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        web_service: { $ref: "#/components/schemas/WebServiceDraft" }
+
+    DownloadableFileDistributionDraft:
+      type: object
+      additionalProperties: false
+      required: [title, type, downloadable_file]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+
+    WebServiceDraft:
+      type: object
+      required: [name, template_url, format]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        template_url: { type: string }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/ResourceReference" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        contact_points:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+
+    Parameter:
+      oneOf:
+        - $ref: "#/components/schemas/StringParameter"
+        - $ref: "#/components/schemas/BooleanParameter"
+        - $ref: "#/components/schemas/IntegerParameter"
+        - $ref: "#/components/schemas/FloatParameter"
+        - $ref: "#/components/schemas/DateTimeParameter"
+      discriminator:
+        propertyName: kind
+        mapping:
+          STRING: "#/components/schemas/StringParameter"
+          BOOLEAN: "#/components/schemas/BooleanParameter"
+          INTEGER: "#/components/schemas/IntegerParameter"
+          FLOAT: "#/components/schemas/FloatParameter"
+          DATETIME: "#/components/schemas/DateTimeParameter"
+
+    ParameterMetadata:
+      type: object
+      required:
+        [id, variable, property, label, required, multiple_values, read_only]
+      properties:
+        id: { type: string, format: uuid }
+        variable: { type: string }
+        property: { type: string }
+        label: { type: string }
+        required: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
+
+    StringParameter:
+      type: object
+      required: [kind, metadata, default, allowed_values, pattern]
+      properties:
+        kind: { type: string, enum: [STRING] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        default: { type: string, nullable: true }
+        allowed_values: { type: array, items: { type: string } }
+        pattern: { type: string }
+
+    BooleanParameter:
+      type: object
+      required: [kind, metadata, default]
+      properties:
+        kind: { type: string, enum: [BOOLEAN] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        default: { type: boolean, nullable: true }
+
+    IntegerParameter:
+      type: object
+      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      properties:
+        kind: { type: string, enum: [INTEGER] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        minimum: { type: integer, format: int64, nullable: true }
+        maximum: { type: integer, format: int64, nullable: true }
+        default: { type: integer, format: int64, nullable: true }
+        allowed_values: { type: array, items: { type: integer, format: int64 } }
+
+    FloatParameter:
+      type: object
+      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      properties:
+        kind: { type: string, enum: [FLOAT] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        minimum: { type: number, format: double, nullable: true }
+        maximum: { type: number, format: double, nullable: true }
+        default: { type: number, format: double, nullable: true }
+        allowed_values: { type: array, items: { type: number, format: double } }
+
+    DateTimeParameter:
+      type: object
+      required: [kind, metadata, minimum, maximum, default, pattern]
+      properties:
+        kind: { type: string, enum: [DATETIME] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        minimum: { type: string, format: date-time, nullable: true }
+        maximum: { type: string, format: date-time, nullable: true }
+        default: { type: string, format: date-time, nullable: true }
+        pattern: { type: string }
+
+    ParameterKind:
+      type: string
+      enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME]
+
+    DownloadableFile:
+      type: object
+      required: [url, format]
+      properties:
+        url: { type: string }
+        format: { type: string }
+
+    Documentation:
+      type: object
+      required: [uri]
+      properties:
+        title: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        uri: { type: string }
+
+    SpatialCoverage:
+      type: object
+      properties:
+        point: { $ref: "#/components/schemas/Coordinate" }
+        polygon:
+          {
+            type: array,
+            minItems: 4,
+            items: { $ref: "#/components/schemas/Coordinate" },
+          }
+      oneOf:
+        - required: [point]
+        - required: [polygon]
+
+    Coordinate:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+
+    TemporalCoverage:
+      type: object
+      properties:
+        start: { type: string, format: date-time, nullable: true }
+        end: { type: string, format: date-time, nullable: true }
+
+    CreateResourceDraftRequest:
+      oneOf:
+        - $ref: "#/components/schemas/CreateDatasetResourceRequest"
+        - $ref: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+        - $ref: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+      discriminator:
+        propertyName: resource_type
+        mapping:
+          dataset: "#/components/schemas/CreateDatasetResourceRequest"
+          software-application: "#/components/schemas/CreateSoftwareApplicationResourceRequest"
+          software-source-code: "#/components/schemas/CreateSoftwareSourceCodeResourceRequest"
+
+    CreateDatasetResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [dataset] }
+        metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" }
+
+    CreateSoftwareApplicationResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-application] }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+
+    CreateSoftwareSourceCodeResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-source-code] }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
+
+    ReplaceDatasetDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, revision, metadata]
+      properties:
+        resource_type: { type: string, enum: [dataset] }
+        revision: { type: integer, format: int32 }
+        metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" }
+
+    ReplaceSoftwareApplicationDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, revision, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-application] }
+        revision: { type: integer, format: int32, minimum: 1 }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareApplicationDraftMetadata" }
+
+    ReplaceSoftwareSourceCodeDraftRequest:
+      type: object
+      additionalProperties: false
+      required: [resource_type, revision, metadata]
+      properties:
+        resource_type: { type: string, enum: [software-source-code] }
+        revision: { type: integer, format: int32, minimum: 1 }
+        metadata:
+          { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
+
+    ReplaceResourceDraftRequest:
+      oneOf:
+        - $ref: "#/components/schemas/ReplaceDatasetDraftRequest"
+        - $ref: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
+        - $ref: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
+      discriminator:
+        propertyName: resource_type
+        mapping:
+          dataset: "#/components/schemas/ReplaceDatasetDraftRequest"
+          software-application: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
+          software-source-code: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
+
+    CopyResourceRequest:
+      type: object
+      required: [source_iri]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string, format: uri }
+
+    RejectResourceRequest:
+      type: object
+      required: [note]
+      additionalProperties: false
+      properties:
+        note: { type: string, minLength: 1 }
+
+    ResourceVersion:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          resource_id,
+          version_id,
+          revision,
+          status,
+          created_by,
+          group_id,
+          group_name,
+          created_at,
+          updated_at,
+          metadata,
+        ]
+      properties:
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision: { type: integer, format: int32 }
+        status: { type: string }
+        # TODO: make this not required, only have the creator if the user is authenticated and a member of a group, otherwise omit this field complitely, we don't want to leak other user's ids
+        created_by: { type: string }
+        group_id: { type: string, format: uuid }
+        group_name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        metadata:
+          anyOf:
+            - $ref: "#/components/schemas/DatasetResourceMetadata"
+            - $ref: "#/components/schemas/SoftwareApplicationResourceMetadata"
+            - $ref: "#/components/schemas/SoftwareSourceCodeResourceMetadata"
+
+    DatasetResourceMetadata:
+      type: object
+      required:
+        [
+          id,
+          source_iri,
+          title,
+          description,
+          keywords,
+          distributions,
+          persistent_identifiers,
+          contact_points,
+          providers,
+          categories,
+        ]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        title: { type: string }
+        description: { type: string }
+        keywords: { type: string }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        distributions:
+          type: array
+          items: { $ref: "#/components/schemas/Distribution" }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        persistent_identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+        contact_points:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+        providers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        created: { type: string, format: date-time, nullable: true }
+        updated: { type: string, format: date-time, nullable: true }
+
+    SoftwareApplicationResourceMetadata:
+      type: object
+      required:
+        [
+          id,
+          source_iri,
+          name,
+          description,
+          keywords,
+          creators,
+          identifiers,
+          contact_points,
+          categories,
+        ]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        main_entity_of_page: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        keywords: { type: string }
+        download_url: { type: string, nullable: true }
+        requirements: { type: string, nullable: true }
+        operating_system: { type: string, nullable: true }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+        contact_points:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+
+    SoftwareSourceCodeResourceMetadata:
+      type: object
+      required:
+        [
+          id,
+          source_iri,
+          name,
+          description,
+          keywords,
+          creators,
+          identifiers,
+          contact_points,
+          categories,
+        ]
+      additionalProperties: false
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string }
+        programming_language: { type: string, nullable: true }
+        keywords: { type: string }
+        repository: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        software_requirements: { type: string, nullable: true }
+        runtime_platform: { type: string, nullable: true }
+        main_entity_of_page: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+        contact_points:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+
+    Distribution:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistribution"
+        - $ref: "#/components/schemas/DownloadableFileDistribution"
+      discriminator:
+        propertyName: type
+        mapping:
+          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
+          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
+
+    WebServiceDistribution:
+      type: object
+      additionalProperties: false
+      required: [id, title, description, type, web_service]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        web_service: { $ref: "#/components/schemas/WebService" }
+
+    DownloadableFileDistribution:
+      type: object
+      additionalProperties: false
+      required: [id, title, description, type, downloadable_file]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+
+    WebService:
+      type: object
+      required: [id, name, description, template_url, format]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        template_url: { type: string }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/ResourceVersionReference" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        contact_points:
+          type: array
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+
+    ResourceIdentifier:
+      type: object
+      required: [id, source_iri, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+
+    ResourceVersionReference:
+      type: object
+      required: [id, source_iri, name]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+
+    ContactPointReference:
+      type: object
+      required: [id, source_iri]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
 
     # -------------------------------------------------------------------------
     # Resource write schemas
     # -------------------------------------------------------------------------
+    ImportResult:
+      type: object
+      required:
+        [
+          groups,
+          categories,
+          organizations,
+          contact_points,
+          datasets,
+          software_applications,
+          software_source_codes,
+          warnings,
+        ]
+      properties:
+        groups: { type: integer }
+        categories: { type: integer }
+        organizations: { type: integer }
+        contact_points: { type: integer }
+        datasets: { type: integer }
+        software_applications: { type: integer }
+        software_source_codes: { type: integer }
+        warnings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportDiagnostic"
+    ImportDiagnostic:
+      type: object
+      required: [severity, subject, predicate, message]
+      properties:
+        severity: { type: string }
+        subject: { type: string }
+        predicate: { type: string }
+        message: { type: string }
 
     WriteResourceType:
       type: string
-      description: Resource type identifier accepted by write endpoints.
+      description: Resource type identifier returned by lifecycle write endpoints.
       enum:
         - dataset
-        - distribution
-        - organization
-        - softwareapplication
-        - softwaresourcecode
-        - webservice
-        - concept
-        - conceptscheme
-        - contactpoint
-
-    ResourceDetail:
-      anyOf:
-        - $ref: "#/components/schemas/Dataset"
-        - $ref: "#/components/schemas/Distribution"
-        - $ref: "#/components/schemas/Organization"
-        - $ref: "#/components/schemas/SoftwareApplication"
-        - $ref: "#/components/schemas/SoftwareSourceCode"
-        - $ref: "#/components/schemas/Webservice"
-        - $ref: "#/components/schemas/Concept"
-        - $ref: "#/components/schemas/ConceptScheme"
-
-    ResourceLink:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: string
-          description: Identifier of referenced resource.
-        name:
-          type: string
-          description: Optional human-readable label for referenced resource.
-        href:
-          type: string
-          format: uri-reference
-          description: Optional relative URI reference to referenced resource detail endpoint.
-
-    ResourceWriteBase:
-      type: object
-      required:
-        - resourceType
-        - id
-      properties:
-        resourceType:
-          $ref: "#/components/schemas/WriteResourceType"
-        id:
-          type: string
-          description: Client-provided conceptual or version identifier.
-
-    ConceptWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - concept
-            name:
-              type: string
-            description:
-              type: string
-            in_scheme:
-              $ref: "#/components/schemas/ResourceLink"
-            children:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-
-    ConceptSchemeWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - label
-            - name
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - conceptscheme
-            label:
-              type: string
-            name:
-              type: string
-            description:
-              type: string
-            logo:
-              type: string
-              format: uri
-            homepage:
-              type: string
-              format: uri
-            color:
-              type: string
-            order_number:
-              type: integer
-              format: int32
-            children:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            top_concepts:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-
-    ContactPointWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - contact_type
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - contactpoint
-            available_language:
-              type: array
-              items:
-                type: string
-            contact_type:
-              type: string
-            email:
-              type: array
-              items:
-                type: string
-            telephone:
-              type: array
-              items:
-                type: string
-
-    OrganizationWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - organization
-            identifiers:
-              type: array
-              items:
-                $ref: "#/components/schemas/Identifier"
-            name:
-              type: string
-            lei_code:
-              type: string
-            address:
-              type: string
-            logo:
-              type: string
-              format: uri
-            url:
-              type: string
-              format: uri
-            email:
-              type: array
-              items:
-                type: string
-            telephone:
-              type: array
-              items:
-                type: string
-            contact_points:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            member_of:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-
-    WebserviceWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-            - provider
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - webservice
-            identifiers:
-              type: array
-              items:
-                $ref: "#/components/schemas/Identifier"
-            name:
-              type: string
-            description:
-              type: string
-            entrypoint:
-              type: string
-              format: uri
-            provider:
-              $ref: "#/components/schemas/ResourceLink"
-            issued:
-              type: string
-              format: date-time
-            modified:
-              type: string
-              format: date-time
-            spatial:
-              type: string
-            temporal:
-              $ref: "#/components/schemas/TemporalExtent"
-            keywords:
-              type: array
-              items:
-                type: string
-            concepts:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            license:
-              type: string
-            operations:
-              type: array
-              items:
-                $ref: "#/components/schemas/Operation"
-            api_documentation:
-              $ref: "#/components/schemas/ApiDocumentation"
-
-    SoftwareApplicationWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - softwareapplication
-            name:
-              type: string
-            description:
-              type: string
-            keywords:
-              type: array
-              items:
-                type: string
-            concepts:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            download_url:
-              type: string
-              format: uri
-            install_url:
-              type: string
-              format: uri
-            license:
-              type: string
-              format: uri
-            software_version:
-              type: string
-            software_requirements:
-              type: string
-            main_entity_of_page:
-              type: string
-              format: uri
-            provider:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            operations:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-
-    SoftwareSourceCodeWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - softwaresourcecode
-            name:
-              type: string
-            description:
-              type: string
-            programming_language:
-              type: string
-            keywords:
-              type: array
-              items:
-                type: string
-            concepts:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            repository:
-              type: string
-              format: uri
-            license:
-              type: string
-              format: uri
-            software_version:
-              type: string
-            runtime_platform:
-              type: string
-            target_products:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            provider:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            main_entity_of_page:
-              type: string
-              format: uri
-
-    DistributionWriteBase:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - distribution
-            name:
-              type: string
-            description:
-              type: string
-            format:
-              type: string
-            issued:
-              type: string
-              format: date-time
-            modified:
-              type: string
-              format: date-time
-            license:
-              type: string
-
-    WebServiceDistributionWrite:
-      allOf:
-        - $ref: "#/components/schemas/DistributionWriteBase"
-        - type: object
-          required:
-            - type
-            - webservice
-            - operation
-          properties:
-            type:
-              type: string
-              enum:
-                - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
-            webservice:
-              $ref: "#/components/schemas/ResourceLink"
-            operation:
-              $ref: "#/components/schemas/Operation"
-
-    DownloadableFileDistributionWrite:
-      allOf:
-        - $ref: "#/components/schemas/DistributionWriteBase"
-        - type: object
-          required:
-            - type
-            - download_url
-          properties:
-            type:
-              type: string
-              enum:
-                - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
-            download_url:
-              type: string
-              format: uri
-
-    DistributionWrite:
-      allOf:
-        - $ref: "#/components/schemas/DistributionWriteBase"
-        - oneOf:
-            - $ref: "#/components/schemas/WebServiceDistributionWrite"
-            - $ref: "#/components/schemas/DownloadableFileDistributionWrite"
-      discriminator:
-        propertyName: type
-        mapping:
-          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistributionWrite"
-          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistributionWrite"
-
-    DatasetWrite:
-      allOf:
-        - $ref: "#/components/schemas/ResourceWriteBase"
-        - type: object
-          required:
-            - name
-            - description
-          properties:
-            resourceType:
-              type: string
-              enum:
-                - dataset
-            name:
-              type: string
-            description:
-              type: string
-            version_info:
-              type: string
-            keywords:
-              type: array
-              items:
-                type: string
-            concepts:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            publisher:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            issued:
-              type: string
-              format: date-time
-            spatial:
-              type: string
-            identifiers:
-              type: array
-              items:
-                $ref: "#/components/schemas/Identifier"
-            temporal:
-              $ref: "#/components/schemas/TemporalExtent"
-            distributions:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceLink"
-            access_rights:
-              type: string
-            accrual_periodicity:
-              type: string
-            is_version_of:
-              $ref: "#/components/schemas/ResourceLink"
-            quality_annotation:
-              type: string
-            version:
-              type: string
-
-    ResourceWrite:
-      oneOf:
-        - $ref: "#/components/schemas/DatasetWrite"
-        - $ref: "#/components/schemas/DistributionWrite"
-        - $ref: "#/components/schemas/OrganizationWrite"
-        - $ref: "#/components/schemas/WebserviceWrite"
-        - $ref: "#/components/schemas/SoftwareApplicationWrite"
-        - $ref: "#/components/schemas/SoftwareSourceCodeWrite"
-        - $ref: "#/components/schemas/ConceptWrite"
-        - $ref: "#/components/schemas/ConceptSchemeWrite"
-        - $ref: "#/components/schemas/ContactPointWrite"
-      discriminator:
-        propertyName: resourceType
-        mapping:
-          dataset: "#/components/schemas/DatasetWrite"
-          distribution: "#/components/schemas/DistributionWrite"
-          organization: "#/components/schemas/OrganizationWrite"
-          webservice: "#/components/schemas/WebserviceWrite"
-          softwareapplication: "#/components/schemas/SoftwareApplicationWrite"
-          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeWrite"
-          concept: "#/components/schemas/ConceptWrite"
-          conceptscheme: "#/components/schemas/ConceptSchemeWrite"
-          contactpoint: "#/components/schemas/ContactPointWrite"
+        - software-application
+        - software-source-code
 
     WriteResult:
       type: object
@@ -1798,976 +2713,65 @@ components:
           $ref: "#/components/schemas/VersioningStatus"
 
     # -------------------------------------------------------------------------
-    # Search
+    # Discovery
     # -------------------------------------------------------------------------
 
-    SearchResponse:
+    Reference:
       type: object
+      description: Reference to another API resource.
       required:
-        - page_number
-        - page_size
-        - total
-        - total_pages
-        - items
+        - id
+        - name
       properties:
-        page_number:
-          type: integer
-          minimum: 1
-          description: 1-based page index returned in this response
-          example: 1
-        page_size:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Number of items returned in this response page
-          example: 10
-        total:
-          type: integer
-          minimum: 0
-          description: Total number of matching resources across all pages
-          example: 123
-        total_pages:
-          type: integer
-          minimum: 0
-          description: Total number of available result pages for the supplied page size
-          example: 13
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/SearchItem"
+        id:
+          type: string
+        name:
+          type: string
 
-    SearchItem:
-      oneOf:
-        - $ref: "#/components/schemas/DatasetSearchItem"
-        - $ref: "#/components/schemas/WebserviceSearchItem"
-        - $ref: "#/components/schemas/OrganizationSearchItem"
-        - $ref: "#/components/schemas/SoftwareApplicationSearchItem"
-        - $ref: "#/components/schemas/SoftwareSourceCodeSearchItem"
-      discriminator:
-        propertyName: type
-        mapping:
-          dataset: "#/components/schemas/DatasetSearchItem"
-          webservice: "#/components/schemas/WebserviceSearchItem"
-          organization: "#/components/schemas/OrganizationSearchItem"
-          softwareapplication: "#/components/schemas/SoftwareApplicationSearchItem"
-          softwaresourcecode: "#/components/schemas/SoftwareSourceCodeSearchItem"
-
-    BaseSearchItem:
+    DiscoveryItem:
       type: object
       required:
         - type
-        - id
+        - resource_id
+        - version_id
+        - source_iri
         - name
-        - href
+        - status
+        - group
       properties:
         type:
-          $ref: "#/components/schemas/SearchResourceType"
-        id:
+          $ref: "#/components/schemas/DiscoveryResourceType"
+        resource_id:
           type: string
-          description: Identifier of resource within this API.
-          example: "https://doi.org/10.5281/zenodo.17598403"
-        name:
-          description: Human-readable display name used in search results.
+          format: uuid
+        version_id:
           type: string
-          example: "Discovery, automation/scripting and integration of EPOS data and services. Basic workflows in JupyterLab."
-        href:
+          format: uuid
+        source_iri:
           type: string
-          format: uri-reference
-          description: Relative URI reference to resource detail endpoint.
-          example: "v1/resources/softwaresourcecode/https://doi.org/10.5281/zenodo.17598403"
-
-    DatasetSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - dataset
-            providers:
-              type: array
-              description: Organization references associated with this dataset
-              items:
-                $ref: "#/components/schemas/DatasetProviderRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-            concepts:
-              type: array
-              description: Concept references assigned to this dataset
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:software_jup_conc_multi/v1.0"
-                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
-            distributions:
-              type: array
-              description: Distribution references for this dataset
-              items:
-                $ref: "#/components/schemas/DatasetDistributionSearchItem"
-              example:
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-
-    OrganizationSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - organization
-
-    SoftwareApplicationSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - softwareapplication
-            provider:
-              type: array
-              description: Organization references for providers of this software application
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-
-    SoftwareSourceCodeSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - softwaresourcecode
-            provider:
-              type: array
-              description: Organization references for providers of this software source code
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-
-    WebserviceSearchItem:
-      allOf:
-        - $ref: "#/components/schemas/BaseSearchItem"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum:
-                - webservice
-            provider:
-              description: Organization reference for provider of this webservice
-              allOf:
-                - $ref: "#/components/schemas/ResourceRef"
-              example:
-                id: "PIC:999472675/v1.0"
-                name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/resources/organization/PIC:999472675/v1.0"
-            concepts:
-              type: array
-              description: Concept references assigned to this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:seismologicalproductsservices/v1.0"
-                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
-                - id: "category:earthquakeparameters/v1.0"
-                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-
-    DatasetDistributionSearchItem:
-      type: object
-      required:
-        - id
-        - href
-      properties:
-        id:
-          type: string
-          example: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
         name:
           type: string
-          description: Optional human-readable distribution title.
-          example: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-        href:
+        status:
           type: string
-          format: uri-reference
-          description: API-base-relative URI reference to distribution detail endpoint
-          example: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-
-    # -------------------------------------------------------------------------
-    # Resource references
-    # -------------------------------------------------------------------------
-
-    ResourceRef:
-      type: object
-      required:
-        - id
-        - href
-      properties:
-        id:
-          type: string
-          example: "ROR:048a87296/v1.0"
-        name:
-          type: string
-          description: Optional human-readable label for referenced resource.
-          example: "Uppsala University"
-        href:
-          type: string
-          format: uri-reference
-          description: Relative URI reference to referenced resource detail endpoint
-          example: "v1/resources/organization/ROR:048a87296/v1.0"
-
-    DatasetProviderRef:
-      allOf:
-        - $ref: "#/components/schemas/ResourceRef"
-        - type: object
-          required:
-            - name
-
-    # -------------------------------------------------------------------------
-    # Detail schemas
-    # -------------------------------------------------------------------------
-
-    BaseDetailResource:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: string
-          description: Identifier of resource within this API.
-        name:
-          description: Human-readable display name of the resource
-          type: string
-        description:
-          description: Optional human-readable summary of resource.
-          type: string
-
-    Dataset:
-      allOf:
-        - $ref: "#/components/schemas/BaseDetailResource"
-        - type: object
-          required:
-            - description
-          properties:
-            created:
-              type: string
-              format: date-time
-              description: Resource creation timestamp in ISO 8601 UTC
-              example: "2024-01-15T10:30:00Z"
-            modified:
-              type: string
-              format: date-time
-              description: Resource last modification timestamp in ISO 8601 UTC
-              example: "2024-03-01T08:45:00Z"
-            version_info:
-              type: string
-              description: Human-readable version information for this dataset
-              example: "Revision 3 reviewed by EPOS"
-            keywords:
-              type: array
-              items:
-                type: string
-              example:
-                - "event"
-                - "earthquake"
-                - "magnitude"
-            concepts:
-              type: array
-              description: Concept references assigned to this dataset
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:seismologicalproductsservices/v1.0"
-                  name: "Seismological products services"
-                  href: "v1/resources/concept/category:seismologicalproductsservices/v1.0"
-                - id: "category:earthquakeparameters/v1.0"
-                  name: "Earthquake parameters"
-                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-            publisher:
-              type: array
-              description: Organizations publishing this dataset; exposed as `providers` in search results
-              items:
-                allOf:
-                  - $ref: "#/components/schemas/ResourceRef"
-                  - type: object
-                    required:
-                      - name
-              example:
-                - id: "PIC:999472675/v1.0"
-                  name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                  href: "v1/resources/organization/PIC:999472675/v1.0"
-            issued:
-              type: string
-              format: date-time
-              description: Dataset publication or issuance timestamp in ISO 8601 UTC
-              example: "2024-02-01T00:00:00Z"
-            spatial:
-              type: string
-              description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
-              example: "POLYGON((-25 34, 45 34, 45 72, -25 72, -25 34))"
-            identifiers:
-              type: array
-              description: External or domain-specific identifiers for this dataset
-              items:
-                $ref: "#/components/schemas/Identifier"
-            temporal:
-              $ref: "#/components/schemas/TemporalExtent"
-            status:
-              $ref: "#/components/schemas/VersioningStatus"
-            distributions:
-              type: array
-              description: Distributions that provide access to this dataset
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                  name: "TEST1 - Parameters of historical earthquakes (1000-1899) - FDSN event"
-                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/events/distribution/restful/v1.0"
-                - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-                  name: "TEST2 - Bibliography for historical earthquakes"
-                  href: "v1/resources/distribution/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/distribution/restful/v1.0"
-            access_rights:
-              type: string
-              description: Access rights statement for this dataset
-              example: "open"
-            accrual_periodicity:
-              type: string
-              description: Frequency with which this dataset is updated
-              example: "monthly"
-            is_version_of:
-              description: Reference to parent dataset resource this dataset version derives from
-              allOf:
-                - $ref: "#/components/schemas/ResourceRef"
-              example:
-                id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
-                name: "TEST2 - Bibliography metadata for historical earthquakes"
-                href: "v1/resources/dataset/https://www.epos-eu.org/epos-dcat-ap/Seismology/Dataset/AHEAD/bibliography/v1.0"
-            quality_annotation:
-              type: string
-              description: Aggregated quality annotation summary associated with this dataset
-              example: "Validated by EPOS thematic core service; station metadata completeness >95%."
-            version:
-              type: string
-              description: Machine-readable version string for this dataset
-              example: "3.1.0"
-
-    Distribution:
-      oneOf:
-        - $ref: "#/components/schemas/WebServiceDistribution"
-        - $ref: "#/components/schemas/DownloadableFileDistribution"
-      discriminator:
-        propertyName: type
-        mapping:
-          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistribution"
-          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistribution"
-
-    DistributionBase:
-      allOf:
-        - $ref: "#/components/schemas/BaseDetailResource"
-        - type: object
-          properties:
-            format:
-              type: string
-              description: File format of the distribution
-              example: "application/xml"
-            issued:
-              type: string
-              format: date-time
-              description: Distribution publication timestamp in ISO 8601 UTC
-              example: "2024-02-01T00:00:00Z"
-            modified:
-              type: string
-              format: date-time
-              description: Distribution last modification timestamp in ISO 8601 UTC
-              example: "2024-03-01T08:45:00Z"
-            license:
-              type: string
-              format: uri
-              description: License under which the distribution can be used or reused
-              example: "https://creativecommons.org/licenses/by-nc/4.0/"
-
-    WebServiceDistribution:
-      allOf:
-        - $ref: "#/components/schemas/DistributionBase"
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              description: Distribution delivery kind
-              enum:
-                - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-              example: "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
-            webservice:
-              $ref: "#/components/schemas/ResourceRef"
-            operation:
-              $ref: "#/components/schemas/Operation"
-
-    DownloadableFileDistribution:
-      allOf:
-        - $ref: "#/components/schemas/DistributionBase"
-        - type: object
-          required:
-            - type
-            - download_url
-          properties:
-            type:
-              type: string
-              description: Distribution delivery kind
-              enum:
-                - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
-              example: "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
-            download_url:
-              type: string
-              format: uri
-              description: Direct download URL for downloadable-file distributions.
-              example: "https://data.ingv.it/downloads/irpinia-stations.xml"
-
-    SoftwareApplication:
-      allOf:
-        - $ref: "#/components/schemas/BaseDetailResource"
-        - type: object
-          properties:
-            keywords:
-              type: array
-              items:
-                type: string
-              example:
-                - "portal"
-                - "seismology"
-                - "data access"
-            concepts:
-              type: array
-              description: Concept references assigned to this application
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:software_appl_conc_multi/v1.0"
-                  name: "Multidisciplinary software"
-                  href: "v1/resources/concept/category:software_appl_conc_multi/v1.0"
-            download_url:
-              type: string
-              format: uri
-              description: URL to download or install the application
-              example: "https://example.org/application/download"
-            install_url:
-              type: string
-              format: uri
-              description: URL at which the application may be installed
-              example: "https://example.org/application/install"
-            license:
-              type: string
-              format: uri
-              description: URL of the license document for the software application
-              example: "https://example.org/licenses/epos-app-license"
-            software_version:
-              type: string
-              description: Version of the software application instance
-              example: "2.4.1"
-            software_requirements:
-              type: string
-              description: Runtime dependencies required by the application
-              example: "Java 21"
-            main_entity_of_page:
-              type: string
-              format: uri
-              description: Web page describing the software application
-              example: "https://example.org/app"
-            provider:
-              type: array
-              description: Organizations providing this software application
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-            operations:
-              type: array
-              description: Web service operations linked to this software application
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-
-    SoftwareSourceCode:
-      allOf:
-        - $ref: "#/components/schemas/BaseDetailResource"
-        - type: object
-          properties:
-            programming_language:
-              type: string
-              description: Primary programming language of the source code
-              example: "Java"
-            keywords:
-              type: array
-              items:
-                type: string
-              example:
-                - "portal"
-                - "seismology"
-                - "open source"
-            concepts:
-              type: array
-              description: Concept references assigned to this source code
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:software_jup_conc_multi/v1.0"
-                  name: "Multidisciplinary software"
-                  href: "v1/resources/concept/category:software_jup_conc_multi/v1.0"
-            repository:
-              type: string
-              format: uri
-              description: URL of the source code repository
-              example: "https://github.com/example/epos-portal"
-            license:
-              type: string
-              format: uri
-              description: URL of the license document for the software source code
-              example: "https://example.org/licenses/epos-source-license"
-            software_version:
-              type: string
-              description: Version of the software source code instance
-              example: "2.4.1"
-            runtime_platform:
-              type: string
-              description: Runtime platform or interpreter dependencies
-              example: "Java 21"
-            target_products:
-              type: array
-              description: Software applications targeted by this source code
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-            provider:
-              type: array
-              description: Organizations providing this software source code
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "ROR:048a87296/v1.0"
-                  name: "Uppsala University"
-                  href: "v1/resources/organization/ROR:048a87296/v1.0"
-            main_entity_of_page:
-              type: string
-              format: uri
-              description: Web page describing the software source code
-              example: "https://example.org/source"
-
-    Organization:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: string
-          example: "PIC:999472675/v1.0"
-        identifiers:
+          enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+        group:
+          $ref: "#/components/schemas/Reference"
+        providers:
           type: array
-          description: External or domain-specific identifiers for this organization
           items:
-            $ref: "#/components/schemas/Identifier"
-        name:
-          type: string
-          description: Human-readable display name of the organization
-          example: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-        lei_code:
-          type: string
-          description: Legal Entity Identifier code
-          example: "5493001KJTIIGC8Y1R12"
-        address:
-          type: string
-          description: Physical address of the organization
-          example: "Via di Vigna Murata 605, Rome, 00143, IT"
-        logo:
-          type: string
-          format: uri
-          description: URL of the organization logo
-          example: "https://www.ingv.it/images/logo-ingv.png"
-        url:
-          type: string
-          format: uri
-          description: URL of the organization website
-          example: "http://www.ingv.it"
-        email:
+            $ref: "#/components/schemas/Reference"
+        creators:
           type: array
-          description: Email addresses of the organization
           items:
-            type: string
-          example:
-            - "ufficiostampa@ingv.it"
-        telephone:
+            $ref: "#/components/schemas/Reference"
+        categories:
           type: array
-          description: Telephone numbers of the organization
           items:
-            type: string
-        contact_points:
+            $ref: "#/components/schemas/Reference"
+        distributions:
           type: array
-          description: Contact point references associated with this organization
           items:
-            $ref: "#/components/schemas/ResourceRef"
-          example:
-            - id: "https://www.epos-eu.org/epos-dcat-ap/Seismology/Facility/AHEAD/contactPoint/v1.0"
-              name: "Manager"
-              href: "http://metadata-lifecycle-service:8080/api/v2/access/contactpoint/https%3A%2F%2Fwww.epos-eu.org%2Fepos-dcat-ap%2FSeismology%2FFacility%2FAHEAD%2FcontactPoint%2Fv1.0"
-        member_of:
-          type: array
-          description: Parent organizations to which this organization belongs
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-
-    Webservice:
-      allOf:
-        - $ref: "#/components/schemas/BaseDetailResource"
-        - type: object
-          properties:
-            identifiers:
-              type: array
-              description: External or domain-specific identifiers for this webservice
-              items:
-                $ref: "#/components/schemas/Identifier"
-            entrypoint:
-              type: string
-              format: uri
-              description: API entrypoint of the webservice
-              example: "https://webservices.ingv.it/fdsnws/station/1"
-            provider:
-              description: Organization providing this webservice
-              allOf:
-                - $ref: "#/components/schemas/ResourceRef"
-              example:
-                id: "PIC:999472675/v1.0"
-                name: "INGV - Istituto Nazionale di Geofisica e Vulcanologia"
-                href: "v1/resources/organization/PIC:999472675/v1.0"
-            issued:
-              type: string
-              format: date-time
-              description: Webservice publication timestamp in ISO 8601 UTC
-              example: "2024-02-01T00:00:00Z"
-            modified:
-              type: string
-              format: date-time
-              description: Webservice last modification timestamp in ISO 8601 UTC
-              example: "2024-03-01T08:45:00Z"
-            spatial:
-              type: string
-              description: Spatial coverage expressed as a WKT polygon (EPSG:4326)
-              example: "POLYGON((12.3 41.8, 14.5 41.8, 14.5 43.2, 12.3 43.2, 12.3 41.8))"
-            temporal:
-              $ref: "#/components/schemas/TemporalExtent"
-            keywords:
-              type: array
-              items:
-                type: string
-              example:
-                - "fdsn"
-                - "station"
-            concepts:
-              type: array
-              description: Concept references assigned to this webservice
-              items:
-                $ref: "#/components/schemas/ResourceRef"
-              example:
-                - id: "category:earthquakeparameters/v1.0"
-                  name: "Earthquake parameters"
-                  href: "v1/resources/concept/category:earthquakeparameters/v1.0"
-            license:
-              type: string
-              description: License under which the webservice can be used or reused
-              example: "open"
-            operations:
-              type: array
-              description: Operations supported by this webservice
-              items:
-                $ref: "#/components/schemas/Operation"
-            api_documentation:
-              $ref: "#/components/schemas/ApiDocumentation"
-
-    Operation:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: string
-          example: "https://www.epos-eu.org/epos-dcat-ap/Seismology/WebService/AHEAD/restful/fdsnws-event/Operation/v1.0"
-        method:
-          type: string
-          description: HTTP method used by the operation
-          example: "GET"
-        returns:
-          type: array
-          description: Output media types returned by the operation
-          items:
-            type: string
-          example:
-            - "application/xml"
-            - "application/json"
-        iri_template:
-          $ref: "#/components/schemas/IriTemplate"
-        api_documentation:
-          $ref: "#/components/schemas/ApiDocumentation"
-
-    IriTemplate:
-      type: object
-      required:
-        - template
-      properties:
-        template:
-          type: string
-          description: URI template describing the operation endpoint
-          example: "https://www.emidius.eu/fdsnws/event/1/query{?starttime, endtime, eventid, minlatitude, maxlatitude, minlongitude, maxlongitude, latitude, longitude, maxradiuskm, minmagnitude, maxmagnitude, orderby, includeallorigins, includeallmagnitudes, limit, nodata}"
-        mappings:
-          type: array
-          description: Parameter mappings supported by the URI template
-          items:
-            $ref: "#/components/schemas/IriTemplateMapping"
-
-    IriTemplateMapping:
-      type: object
-      required:
-        - variable
-        - label
-        - required
-        - range
-      properties:
-        variable:
-          type: string
-          description: Template variable name
-          example: "network"
-        label:
-          type: string
-          description: Short string describing the meaning of the parameter
-          example: "Network code"
-        range:
-          type: string
-          description: Parameter type such as `xsd:string`, `xsd:boolean`, `xsd:date`, or `xsd:dateTime`
-          example: "xsd:string"
-        property:
-          type: string
-          description: Property mapped to the variable
-          example: "http://schema.org/name"
-        required:
-          type: boolean
-          description: Whether the variable is required
-          example: false
-        default_value:
-          type: string
-          description: Default value of the parameter
-          example: "IV"
-        min_value:
-          type: string
-          description: Minimum value of the parameter
-          example: "0"
-        max_value:
-          type: string
-          description: Maximum value of the parameter
-          example: "9999"
-        param_value:
-          type: array
-          description: Allowed values that can be used for the parameter
-          items:
-            type: string
-          example:
-            - "BHZ"
-            - "HHZ"
-        multiple_values:
-          type: boolean
-          description: Whether multiple values are allowed for the parameter
-          example: true
-        readonly_value:
-          type: boolean
-          description: Whether the parameter is mutable
-          example: false
-        value_pattern:
-          type: string
-          description: Regular expression used to validate parameter values
-          example: "^[A-Z0-9]+$"
-
-    ApiDocumentation:
-      type: object
-      required:
-        - title
-        - description
-        - entrypoint
-      properties:
-        title:
-          type: string
-          description: Title of the API documentation
-          example: "ahead-fdsnws-event documentation"
-        description:
-          type: string
-          description: Description of the API documentation
-          example: "Documentation for the fdsnws-event webservice"
-        entrypoint:
-          type: string
-          format: uri
-          description: API documentation entry point
-          example: "https://www.emidius.eu/AHEAD/services/epos_events.php"
-
-    Concept:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: string
-          example: "category:seismologicalproductsservices/v1.0"
-        name:
-          type: string
-          example: "Seismological products services"
-        description:
-          type: string
-          example: "TCS Subdomain"
-        in_scheme:
-          description: Concept scheme containing this concept
-          allOf:
-            - $ref: "#/components/schemas/ResourceRef"
-        children:
-          type: array
-          description: Child concepts directly below this concept
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-
-    ConceptTreeNode:
-      type: object
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: string
-          example: "category:software_jup_conc_multi/v1.0"
-        name:
-          type: string
-          example: "Multidisciplinary software"
-        description:
-          type: string
-          example: "Multidisciplinary software"
-        children:
-          type: array
-          description: Nested child concepts directly below this concept
-          items:
-            $ref: "#/components/schemas/ConceptTreeNode"
-
-    ConceptScheme:
-      type: object
-      required:
-        - id
-        - label
-        - name
-      properties:
-        id:
-          type: string
-          example: "category:software_jup/v1.0"
-        label:
-          type: string
-          example: "Jupyter Notebooks"
-        name:
-          type: string
-          example: "Jupyter Notebooks"
-        description:
-          type: string
-          example: "Jupyter Notebook Domain"
-        logo:
-          type: string
-          format: uri
-          example: "https://raw.githubusercontent.com/epos-eu/platform-gui-icons/3c13924d1f3483a9e1f1941ba094f0937602d0a9/jupyter-svgrepo-com.svg"
-        homepage:
-          type: string
-          format: uri
-          example: ""
-        color:
-          type: string
-          description: Hex colour code used for UI rendering
-          example: "#F37726"
-        order_number:
-          type: integer
-          description: Display order among sibling concept schemes
-          example: 1
-        children:
-          type: array
-          description: Nested child concepts used by concept tree responses
-          items:
-            $ref: "#/components/schemas/ConceptTreeNode"
-        top_concepts:
-          type: array
-          description: Top concepts directly contained in this concept scheme
-          items:
-            $ref: "#/components/schemas/ResourceRef"
-
-    ConceptTreeResponse:
-      type: object
-      required:
-        - schemes
-      properties:
-        schemes:
-          type: array
-          description: Ordered list of concept schemes, each carrying its full concept subtree
-          items:
-            $ref: "#/components/schemas/ConceptScheme"
-
-    # -------------------------------------------------------------------------
-    # Shared helpers
-    # -------------------------------------------------------------------------
-
-    TemporalExtent:
-      type: object
-      description: Temporal coverage of a resource
-      properties:
-        start:
-          type: string
-          format: date-time
-          description: Start of the temporal coverage (inclusive), ISO 8601 UTC
-          example: "2010-01-01T00:00:00Z"
-        end:
-          type: string
-          format: date-time
-          description: End of the temporal coverage (inclusive), ISO 8601 UTC. Omitted for open-ended coverage.
-          example: "2023-12-31T23:59:59Z"
-
-    Identifier:
-      type: object
-      description: Typed identifier attached to a resource
-      required:
-        - type
-        - value
-      properties:
-        type:
-          type: string
-          description: Identifier scheme or type
-          example: "doi"
-        value:
-          type: string
-          description: Identifier value
-          example: "10.13127/tsunami/neamthm18"
+            $ref: "#/components/schemas/Reference"
 
     UserStatus:
       type: string
@@ -2776,14 +2780,23 @@ components:
         - INACTIVE
         - BLOCKED
 
+    BlockUserRequest:
+      type: object
+      required:
+        - reason
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 1
+
     MembershipRole:
       type: string
       description: Role assigned to a user inside a group.
       enum:
-        - VIEWER
         - EDITOR
         - REVIEWER
-        - ADMIN
+        - GROUP_ADMIN
 
     MembershipStatus:
       type: string
@@ -2791,7 +2804,6 @@ components:
       enum:
         - PENDING
         - ACTIVE
-        - REVOKED
         - REJECTED
 
     User:
@@ -2799,22 +2811,28 @@ components:
         - $ref: "#/components/schemas/UserSummary"
         - type: object
           description: User record returned by gateway user endpoints.
+          required:
+            - memberships
+          properties:
+            memberships:
+              type: array
+              description: Membership previews for this user.
+              items:
+                $ref: "#/components/schemas/UserMembershipSummary"
 
     UserSummary:
       type: object
       description: User record returned by user endpoints.
       required:
         - id
-        - auth_identifier
         - email
         - given_name
         - family_name
-        - is_super_admin
         - status
+        - global_roles
+        - global_permissions
       properties:
         id:
-          type: string
-        auth_identifier:
           type: string
         email:
           type: string
@@ -2822,111 +2840,256 @@ components:
           type: string
         family_name:
           type: string
-        is_super_admin:
-          type: boolean
         status:
           $ref: "#/components/schemas/UserStatus"
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        memberships:
+        global_roles:
           type: array
-          description: Membership previews for this user.
           items:
-            $ref: "#/components/schemas/UserMembershipSummary"
-
-    Group:
-      allOf:
-        - $ref: "#/components/schemas/GroupSummary"
-        - type: object
-          description: Group record returned by gateway group endpoints.
-
-    GroupSummary:
+            type: string
+        global_permissions:
+          type: array
+          items:
+            type: string
+    Category:
       type: object
-      description: Group record returned by group endpoints.
+      required: [id, group_id, parent_category_id, source_iri, name]
+      properties:
+        id: { type: string, format: uuid }
+        group_id: { type: string, format: uuid }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+        source_iri: { type: string }
+        name: { type: string }
+    CreateCategoryRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+    ReplaceCategoryRequest:
+      type: object
+      required: [name, parent_category_id]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        parent_category_id: { type: string, format: uuid, nullable: true }
+    CreateGroupRequest:
+      type: object
+      required: [name, concept]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        label: { type: string, nullable: true }
+        logo: { type: string, nullable: true }
+        page: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        position: { type: integer, format: int32 }
+        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+    ReplaceGroupRequest:
+      type: object
+      required: [name, description, label, logo, page, color, position, concept]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+        label: { type: string, nullable: true }
+        logo: { type: string, nullable: true }
+        page: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        position: { type: integer, format: int32 }
+        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+    ContactPoint:
+      type: object
+      required: [id, source_iri, email, role]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        email: { type: string }
+        role: { type: string }
+    CreateContactPointRequest:
+      type: object
+      required: [email, role]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        email: { type: string }
+        role: { type: string }
+    ReplaceContactPointRequest:
+      type: object
+      required: [email, role]
+      additionalProperties: false
+      properties:
+        email: { type: string }
+        role: { type: string }
+    OrganizationAddress:
+      type: object
+      required: [street, locality, postal_code, country]
+      properties:
+        street: { type: string, nullable: true }
+        locality: { type: string, nullable: true }
+        postal_code: { type: string, nullable: true }
+        country: { type: string, nullable: true }
+    OrganizationIdentifier:
+      type: object
+      required: [id, source_iri, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+    OrganizationIdentifierRequest:
+      type: object
+      required: [type, value]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+    CanonicalOrganization:
+      type: object
+      required:
+        [id, source_iri, name, address, identifiers, parents, contact_point_ids]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+        address: { $ref: "#/components/schemas/OrganizationAddress" }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizationIdentifier" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
+    CreateOrganizationRequest:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        source_iri: { type: string }
+        name: { type: string }
+        address: { $ref: "#/components/schemas/OrganizationAddress" }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizationIdentifierRequest" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
+    ReplaceOrganizationRequest:
+      type: object
+      required:
+        [
+          name,
+          address,
+          logo_url,
+          page_url,
+          email,
+          lei_code,
+          identifiers,
+          parents,
+          contact_point_ids,
+        ]
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        address: { $ref: "#/components/schemas/OrganizationAddress" }
+        logo_url: { type: string, nullable: true }
+        page_url: { type: string, nullable: true }
+        email: { type: string, nullable: true }
+        lei_code: { type: string, nullable: true }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/OrganizationIdentifierRequest" }
+        parents:
+          type: array
+          items: { type: string, format: uuid }
+        contact_point_ids:
+          type: array
+          items: { type: string, format: uuid }
+    Group:
+      type: object
+      description: Public group metadata returned by Metadata Lifecycle.
       required:
         - id
-        - slug
+        - source_iri
         - name
-        - is_system
+        - position
+        - concept
       properties:
         id:
           type: string
-        slug:
+          format: uuid
+        source_iri:
           type: string
         name:
           type: string
         description:
           type: string
-        is_system:
-          type: boolean
-        membership:
-          description: Current caller membership in this group, when present.
-          $ref: "#/components/schemas/ViewerMembershipSummary"
-
-    ViewerMembershipSummary:
-      type: object
-      description: Caller-scoped membership preview for one group.
-      required:
-        - role
-        - status
-      properties:
-        role:
-          $ref: "#/components/schemas/MembershipRole"
-        status:
-          description: Optional at request time. Self-service callers omit it and server creates `PENDING`. Privileged callers may set it to `ACTIVE` for direct membership creation.
-          $ref: "#/components/schemas/MembershipStatus"
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        page:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        position:
+          type: integer
+          format: int32
+        concept:
+          type: string
+          enum: [DATA, FACILITIES, SOFTWARE]
 
     UserMembershipSummary:
       type: object
       description: Embedded membership preview for one user-group relation.
       required:
         - group
-        - role
+        - roles
         - status
+        - permissions
+        - role_requests
+        - created_at
+        - updated_at
       properties:
         group:
-          $ref: "#/components/schemas/ResourceRef"
-        role:
-          $ref: "#/components/schemas/MembershipRole"
+          $ref: "#/components/schemas/Reference"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MembershipRole"
         status:
           $ref: "#/components/schemas/MembershipStatus"
-
-    GroupMembershipSummary:
-      type: object
-      description: Embedded membership summary for one group-user relation.
-      required:
-        - user
-        - role
-        - status
-      properties:
-        user:
-          $ref: "#/components/schemas/ResourceRef"
-        role:
-          $ref: "#/components/schemas/MembershipRole"
-        status:
-          $ref: "#/components/schemas/MembershipStatus"
-
-    Membership:
-      type: object
-      description: Membership record linking user to group.
-      required:
-        - user_id
-        - group_id
-        - role
-        - status
-      properties:
-        user_id:
-          type: string
-        group_id:
-          type: string
-        role:
-          $ref: "#/components/schemas/MembershipRole"
-        status:
-          $ref: "#/components/schemas/MembershipStatus"
+        permissions:
+          type: array
+          items:
+            type: string
+        role_requests:
+          type: array
+          description: Pending role requests for this membership.
+          items:
+            $ref: "#/components/schemas/RoleRequest"
         created_at:
           type: string
           format: date-time
@@ -2934,71 +3097,123 @@ components:
           type: string
           format: date-time
 
-    CreateMembershipRequest:
+    GroupMembership:
       type: object
-      description: Payload for requesting access to a group.
+      description: Complete membership record returned after a membership decision.
       required:
-        - role
+        - user
+        - status
+        - roles
+        - permissions
+        - role_requests
+        - created_at
+        - updated_at
       properties:
-        role:
-          $ref: "#/components/schemas/MembershipRole"
-
-    PatchMembershipRequest:
-      type: object
-      description: Partial payload for updating membership role or status.
-      minProperties: 1
-      properties:
-        role:
-          $ref: "#/components/schemas/MembershipRole"
+        user:
+          $ref: "#/components/schemas/MembershipUser"
         status:
           $ref: "#/components/schemas/MembershipStatus"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MembershipRole"
+        permissions:
+          type: array
+          items:
+            type: string
+        role_requests:
+          type: array
+          description: Pending role requests only.
+          items:
+            $ref: "#/components/schemas/RoleRequest"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
-    CreateGroupRequest:
+    MembershipUser:
       type: object
-      description: Mutable group fields accepted by gateway create endpoint.
       required:
-        - slug
-        - name
+        - id
+        - given_name
+        - family_name
+        - email
       properties:
-        slug:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        is_system:
-          type: boolean
-
-    PatchGroupRequest:
-      type: object
-      description: Mutable group fields accepted by gateway patch endpoint.
-      minProperties: 1
-      properties:
-        slug:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        is_system:
-          type: boolean
-
-    PatchCurrentUserRequest:
-      type: object
-      description: Mutable self-service user fields accepted by gateway patch endpoint.
-      minProperties: 1
-      properties:
-        email:
+        id:
           type: string
         given_name:
           type: string
         family_name:
           type: string
-        is_super_admin:
-          type: boolean
-          description: Super-admin only.
+        email:
+          type: string
+          format: email
+
+    RoleRequest:
+      type: object
+      required:
+        - id
+        - role
+        - status
+        - requested_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [EDITOR, REVIEWER]
         status:
-          $ref: "#/components/schemas/UserStatus"
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED]
+        requested_at:
+          type: string
+          format: date-time
+
+    CreateRoleRequest:
+      type: object
+      required:
+        - role
+      additionalProperties: false
+      properties:
+        role:
+          type: string
+          enum: [EDITOR, REVIEWER]
+
+    CreateMembershipRequest:
+      type: object
+      required:
+        - roles
+      additionalProperties: false
+      properties:
+        roles:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [EDITOR, REVIEWER]
+
+    MembershipDecisionRequest:
+      type: object
+      required:
+        - status
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, REJECTED]
+
+    RoleRequestDecisionRequest:
+      type: object
+      required:
+        - status
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [ACCEPTED, REJECTED]
 
     Problem:
       type: object

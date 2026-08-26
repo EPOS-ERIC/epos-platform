@@ -451,8 +451,6 @@
 				rdfs:range "xsd:float";
 				rdfs:label "Maximum longitude" ;
 				schema:minValue "-34.0000";
-                http:paramValue "1.0000";
-				http:paramValue "2.0000";
 				schema:maxValue "34.0000";
 				schema:defaultValue "34.0000";
 				hydra:required "false"^^xsd:boolean;

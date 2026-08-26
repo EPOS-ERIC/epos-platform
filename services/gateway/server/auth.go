@@ -4,23 +4,60 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 )
 
-func authMiddleware(authenticator *auth.Service, provisioner *usergroup.Service) func(http.Handler) http.Handler {
+func authMiddleware(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
+	return authMiddlewareRequired(authenticator, provisioner)
+}
+
+func authMiddlewareRequired(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
+	return authMiddlewareWithMode(authenticator, provisioner, true)
+}
+
+func authMiddlewareOptional(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
+	return authMiddlewareWithMode(authenticator, provisioner, false)
+}
+
+func validateParams() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			query := r.URL.Query()
+
+			for key, values := range query {
+				for _, value := range values {
+					if !utf8.ValidString(value) {
+						http.Error(w, "invalid query parameter '"+key+"': "+value, http.StatusBadRequest)
+						return
+					}
+				}
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.MetadataLifecycle, required bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			span := trace.SpanFromContext(r.Context())
 
 			token, ok := bearerTokenFromRequest(r)
 			if !ok {
+				if !required {
+					next.ServeHTTP(w, r)
+					return
+				}
+
 				span.SetAttributes(attribute.String("auth.result", "missing_token"))
 				log.WarnContext(r.Context(), "missing bearer token")
 				handlers.WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
@@ -42,7 +79,7 @@ func authMiddleware(authenticator *auth.Service, provisioner *usergroup.Service)
 				return
 			}
 
-			user, err := provisioner.EnsureUser(r.Context(), usergroup.Identity{
+			resolved, err := provisioner.EnsureUser(r.Context(), clients.ActorIdentity{
 				AuthIdentifier: identity.AuthIdentifier,
 				Email:          identity.Email,
 				GivenName:      identity.GivenName,
@@ -55,18 +92,14 @@ func authMiddleware(authenticator *auth.Service, provisioner *usergroup.Service)
 				return
 			}
 
-			ctx := logging.WithActor(r.Context(), logging.Actor{
-				ID:             user.ID,
-				AuthIdentifier: user.AuthIdentifier,
-				IsSuperAdmin:   user.IsSuperAdmin,
-			})
+			user := handlers.ToAPIUser(resolved)
+			ctx := logging.WithActor(r.Context(), user.ID)
 
 			span.SetAttributes(
 				attribute.String("auth.result", "authenticated"),
 				// "enduser" is an otel-specific naming
 				attribute.String("enduser.id", user.ID),
-				attribute.String("enduser.auth_identifier", user.AuthIdentifier),
-				attribute.Bool("enduser.is_super_admin", user.IsSuperAdmin),
+				attribute.Bool("enduser.is_global_admin", user.IsGlobalAdmin()),
 			)
 
 			ctx = handlers.WithAuthenticatedUser(ctx, user)

@@ -14,3 +14,5 @@ var ErrConflict = errors.New("conflict")
 var ErrUpstreamTimeout = errors.New("upstream timeout")
 
 var ErrForbidden = errors.New("forbidden")
+
+var ErrUnauthorized = errors.New("unauthorized")

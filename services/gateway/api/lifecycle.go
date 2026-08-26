@@ -1,5 +1,371 @@
 package api
 
+import "time"
+
+// TODO: check the whole apis for inconsistencies and try to clean it up. we don't need a difference between ResourceReference and ResourceVersionReference for example
+
+type DatasetDraftMetadata struct {
+	ID                    string              `json:"id,omitempty"`
+	SourceIRI             string              `json:"source_iri"`
+	Title                 string              `json:"title"`
+	Description           *string             `json:"description,omitempty"`
+	Keywords              *string             `json:"keywords,omitempty"`
+	AccrualPeriodicity    *string             `json:"accrual_periodicity,omitempty"`
+	QualityAnnotation     *string             `json:"quality_annotation,omitempty"`
+	AccessRight           *string             `json:"access_right,omitempty"`
+	Distributions         []DistributionDraft `json:"distributions,omitempty"`
+	SpatialCoverage       *SpatialCoverage    `json:"spatial_coverage,omitempty"`
+	TemporalCoverage      *TemporalCoverage   `json:"temporal_coverage,omitempty"`
+	PersistentIdentifiers []IdentifierDraft   `json:"persistent_identifiers,omitempty"`
+	ContactPoints         []ResourceReference `json:"contact_points,omitempty"`
+	Providers             []ResourceReference `json:"providers,omitempty"`
+	Categories            []ResourceReference `json:"categories,omitempty"`
+	Created               *time.Time          `json:"created,omitempty"`
+	Updated               *time.Time          `json:"updated,omitempty"`
+}
+
+type SoftwareApplicationDraftMetadata struct {
+	SourceIRI        string              `json:"source_iri"`
+	Name             string              `json:"name"`
+	Description      *string             `json:"description,omitempty"`
+	Keywords         *string             `json:"keywords,omitempty"`
+	License          *string             `json:"license,omitempty"`
+	Version          *string             `json:"version,omitempty"`
+	DownloadURL      *string             `json:"download_url,omitempty"`
+	Requirements     *string             `json:"requirements,omitempty"`
+	OperatingSystem  *string             `json:"operating_system,omitempty"`
+	MainEntityOfPage *string             `json:"main_entity_of_page,omitempty"`
+	Creators         []ResourceReference `json:"creators,omitempty"`
+	Identifiers      []IdentifierDraft   `json:"identifiers,omitempty"`
+	Categories       []ResourceReference `json:"categories,omitempty"`
+	ContactPoints    []ResourceReference `json:"contact_points,omitempty"`
+}
+
+type SoftwareSourceCodeDraftMetadata struct {
+	SourceIRI            string              `json:"source_iri"`
+	Name                 string              `json:"name"`
+	Description          *string             `json:"description,omitempty"`
+	Keywords             *string             `json:"keywords,omitempty"`
+	Repository           *string             `json:"repository,omitempty"`
+	ProgrammingLanguage  *string             `json:"programming_language,omitempty"`
+	License              *string             `json:"license,omitempty"`
+	SoftwareRequirements *string             `json:"software_requirements,omitempty"`
+	RuntimePlatform      *string             `json:"runtime_platform,omitempty"`
+	MainEntityOfPage     *string             `json:"main_entity_of_page,omitempty"`
+	Version              *string             `json:"version,omitempty"`
+	Creators             []ResourceReference `json:"creators,omitempty"`
+	Identifiers          []IdentifierDraft   `json:"identifiers,omitempty"`
+	Categories           []ResourceReference `json:"categories,omitempty"`
+	ContactPoints        []ResourceReference `json:"contact_points,omitempty"`
+}
+
+type ResourceReference struct {
+	ID string `json:"id"`
+}
+
+type IdentifierDraft struct {
+	ID        string `json:"id,omitempty"`
+	SourceIRI string `json:"source_iri"`
+	Type      string `json:"type"`
+	Value     string `json:"value"`
+}
+
+type DistributionDraft struct {
+	ID               string            `json:"id,omitempty"`
+	Title            string            `json:"title"`
+	Description      string            `json:"description"`
+	License          *string           `json:"license,omitempty"`
+	Type             string            `json:"type"`
+	Issued           *time.Time        `json:"issued,omitempty"`
+	Modified         *time.Time        `json:"modified,omitempty"`
+	ByteSize         *int64            `json:"byte_size,omitempty"`
+	WebService       *WebServiceDraft  `json:"web_service,omitempty"`
+	DownloadableFile *DownloadableFile `json:"downloadable_file,omitempty"`
+}
+
+type WebServiceDraft struct {
+	ID               string              `json:"id,omitempty"`
+	Name             string              `json:"name"`
+	Description      string              `json:"description"`
+	TemplateURL      string              `json:"template_url"`
+	Parameters       []any               `json:"parameters,omitempty"`
+	Format           string              `json:"format"`
+	Provider         *ResourceReference  `json:"provider,omitempty"`
+	Documentation    *Documentation      `json:"documentation,omitempty"`
+	SpatialCoverage  *SpatialCoverage    `json:"spatial_coverage,omitempty"`
+	TemporalCoverage *TemporalCoverage   `json:"temporal_coverage,omitempty"`
+	ContactPoints    []ResourceReference `json:"contact_points,omitempty"`
+}
+
+type DownloadableFile struct {
+	URL    string `json:"url"`
+	Format string `json:"format"`
+}
+
+type Documentation struct {
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	URI         string  `json:"uri"`
+}
+
+type SpatialCoverage struct {
+	Point   *Coordinate  `json:"point,omitempty"`
+	Polygon []Coordinate `json:"polygon,omitempty"`
+}
+
+type Coordinate struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type TemporalCoverage struct {
+	Start *time.Time `json:"start,omitempty"`
+	End   *time.Time `json:"end,omitempty"`
+}
+
+type CreateDatasetResourceRequest struct {
+	ResourceType string               `json:"resource_type"`
+	Metadata     DatasetDraftMetadata `json:"metadata"`
+}
+
+type CreateSoftwareApplicationResourceRequest struct {
+	ResourceType string                           `json:"resource_type"`
+	Metadata     SoftwareApplicationDraftMetadata `json:"metadata"`
+}
+
+type CreateSoftwareSourceCodeResourceRequest struct {
+	ResourceType string                          `json:"resource_type"`
+	Metadata     SoftwareSourceCodeDraftMetadata `json:"metadata"`
+}
+
+type ReplaceDatasetDraftRequest struct {
+	ResourceType string               `json:"resource_type"`
+	Revision     int32                `json:"revision"`
+	Metadata     DatasetDraftMetadata `json:"metadata"`
+}
+
+type ReplaceSoftwareApplicationDraftRequest struct {
+	ResourceType string                           `json:"resource_type"`
+	Revision     int32                            `json:"revision"`
+	Metadata     SoftwareApplicationDraftMetadata `json:"metadata"`
+}
+
+type ReplaceSoftwareSourceCodeDraftRequest struct {
+	ResourceType string                          `json:"resource_type"`
+	Revision     int32                           `json:"revision"`
+	Metadata     SoftwareSourceCodeDraftMetadata `json:"metadata"`
+}
+
+type CopyResourceRequest struct {
+	SourceIRI string `json:"source_iri"`
+}
+
+type RejectResourceRequest struct {
+	Note string `json:"note"`
+}
+
+type ResourceVersion struct {
+	ResourceID string                  `json:"resource_id"`
+	VersionID  string                  `json:"version_id"`
+	Revision   int32                   `json:"revision"`
+	Status     string                  `json:"status"`
+	CreatedBy  string                  `json:"created_by"`
+	GroupID    string                  `json:"group_id"`
+	GroupName  string                  `json:"group_name"`
+	CreatedAt  time.Time               `json:"created_at"`
+	UpdatedAt  time.Time               `json:"updated_at"`
+	Metadata   ResourceVersionMetadata `json:"metadata"`
+}
+
+type ResourceVersionMetadata interface {
+	resourceVersionMetadata()
+}
+
+type DatasetResourceMetadata struct {
+	ID                    string                     `json:"id"`
+	SourceIRI             string                     `json:"source_iri"`
+	Title                 string                     `json:"title"`
+	Description           string                     `json:"description"`
+	Keywords              string                     `json:"keywords"`
+	AccrualPeriodicity    *string                    `json:"accrual_periodicity"`
+	QualityAnnotation     *string                    `json:"quality_annotation"`
+	AccessRight           *string                    `json:"access_right"`
+	Distributions         []Distribution             `json:"distributions"`
+	SpatialCoverage       *SpatialCoverage           `json:"spatial_coverage,omitempty"`
+	TemporalCoverage      *TemporalCoverage          `json:"temporal_coverage,omitempty"`
+	PersistentIdentifiers []IdentifierDraft          `json:"persistent_identifiers"`
+	ContactPoints         []ContactPointReference    `json:"contact_points"`
+	Providers             []ResourceVersionReference `json:"providers"`
+	Categories            []ResourceVersionReference `json:"categories"`
+	Created               *time.Time                 `json:"created"`
+	Updated               *time.Time                 `json:"updated"`
+}
+
+func (DatasetResourceMetadata) resourceVersionMetadata() {}
+
+type SoftwareApplicationResourceMetadata struct {
+	ID               string                     `json:"id"`
+	SourceIRI        string                     `json:"source_iri"`
+	Name             string                     `json:"name"`
+	Description      string                     `json:"description"`
+	MainEntityOfPage *string                    `json:"main_entity_of_page"`
+	License          *string                    `json:"license"`
+	Version          *string                    `json:"version"`
+	Keywords         string                     `json:"keywords"`
+	DownloadURL      *string                    `json:"download_url"`
+	Requirements     *string                    `json:"requirements"`
+	OperatingSystem  *string                    `json:"operating_system"`
+	Creators         []ResourceVersionReference `json:"creators"`
+	Identifiers      []IdentifierDraft          `json:"identifiers"`
+	ContactPoints    []ContactPointReference    `json:"contact_points"`
+	Categories       []ResourceVersionReference `json:"categories"`
+}
+
+func (SoftwareApplicationResourceMetadata) resourceVersionMetadata() {}
+
+type SoftwareSourceCodeResourceMetadata struct {
+	ID                   string                     `json:"id"`
+	SourceIRI            string                     `json:"source_iri"`
+	Name                 string                     `json:"name"`
+	Description          string                     `json:"description"`
+	ProgrammingLanguage  *string                    `json:"programming_language"`
+	Keywords             string                     `json:"keywords"`
+	Repository           *string                    `json:"repository"`
+	License              *string                    `json:"license"`
+	SoftwareRequirements *string                    `json:"software_requirements"`
+	RuntimePlatform      *string                    `json:"runtime_platform"`
+	MainEntityOfPage     *string                    `json:"main_entity_of_page"`
+	Version              *string                    `json:"version"`
+	Creators             []ResourceVersionReference `json:"creators"`
+	Identifiers          []IdentifierDraft          `json:"identifiers"`
+	ContactPoints        []ContactPointReference    `json:"contact_points"`
+	Categories           []ResourceVersionReference `json:"categories"`
+}
+
+func (SoftwareSourceCodeResourceMetadata) resourceVersionMetadata() {}
+
+type ResourceVersionReference struct {
+	ID        string `json:"id"`
+	SourceIRI string `json:"source_iri"`
+	Name      string `json:"name"`
+}
+
+type ContactPointReference struct {
+	ID        string `json:"id"`
+	SourceIRI string `json:"source_iri"`
+}
+
+type Distribution interface {
+	distribution()
+}
+
+type WebServiceDistribution struct {
+	ID          string     `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	License     *string    `json:"license"`
+	Type        string     `json:"type"`
+	Issued      *time.Time `json:"issued"`
+	Modified    *time.Time `json:"modified"`
+	ByteSize    *int64     `json:"byte_size"`
+	WebService  WebService `json:"web_service"`
+}
+
+func (WebServiceDistribution) distribution() {}
+
+type DownloadableFileDistribution struct {
+	ID               string           `json:"id"`
+	Title            string           `json:"title"`
+	Description      string           `json:"description"`
+	License          *string          `json:"license"`
+	Type             string           `json:"type"`
+	Issued           *time.Time       `json:"issued"`
+	Modified         *time.Time       `json:"modified"`
+	ByteSize         *int64           `json:"byte_size"`
+	DownloadableFile DownloadableFile `json:"downloadable_file"`
+}
+
+func (DownloadableFileDistribution) distribution() {}
+
+type WebService struct {
+	ID               string                    `json:"id"`
+	Name             string                    `json:"name"`
+	Description      string                    `json:"description"`
+	TemplateURL      string                    `json:"template_url"`
+	Parameters       []Parameter               `json:"parameters,omitempty"`
+	Format           string                    `json:"format"`
+	Provider         *ResourceVersionReference `json:"provider,omitempty"`
+	Documentation    *Documentation            `json:"documentation,omitempty"`
+	SpatialCoverage  *SpatialCoverage          `json:"spatial_coverage,omitempty"`
+	TemporalCoverage *TemporalCoverage         `json:"temporal_coverage,omitempty"`
+	ContactPoints    []ContactPointReference   `json:"contact_points,omitempty"`
+}
+
+type Parameter interface {
+	parameter()
+}
+
+type ParameterMetadata struct {
+	ID             string `json:"id"`
+	Variable       string `json:"variable"`
+	Property       string `json:"property"`
+	Label          string `json:"label"`
+	Required       bool   `json:"required"`
+	MultipleValues bool   `json:"multiple_values"`
+	ReadOnly       bool   `json:"read_only"`
+}
+
+type StringParameter struct {
+	Kind          string            `json:"kind"`
+	Metadata      ParameterMetadata `json:"metadata"`
+	Default       *string           `json:"default"`
+	AllowedValues []string          `json:"allowed_values"`
+	Pattern       string            `json:"pattern"`
+}
+
+func (StringParameter) parameter() {}
+
+type BooleanParameter struct {
+	Kind     string            `json:"kind"`
+	Metadata ParameterMetadata `json:"metadata"`
+	Default  *bool             `json:"default"`
+}
+
+func (BooleanParameter) parameter() {}
+
+type IntegerParameter struct {
+	Kind          string            `json:"kind"`
+	Metadata      ParameterMetadata `json:"metadata"`
+	Minimum       *int64            `json:"minimum"`
+	Maximum       *int64            `json:"maximum"`
+	Default       *int64            `json:"default"`
+	AllowedValues []int64           `json:"allowed_values"`
+}
+
+func (IntegerParameter) parameter() {}
+
+type FloatParameter struct {
+	Kind          string            `json:"kind"`
+	Metadata      ParameterMetadata `json:"metadata"`
+	Minimum       *float64          `json:"minimum"`
+	Maximum       *float64          `json:"maximum"`
+	Default       *float64          `json:"default"`
+	AllowedValues []float64         `json:"allowed_values"`
+}
+
+func (FloatParameter) parameter() {}
+
+type DateTimeParameter struct {
+	Kind     string            `json:"kind"`
+	Metadata ParameterMetadata `json:"metadata"`
+	Minimum  *time.Time        `json:"minimum"`
+	Maximum  *time.Time        `json:"maximum"`
+	Default  *time.Time        `json:"default"`
+	Pattern  string            `json:"pattern"`
+}
+
+func (DateTimeParameter) parameter() {}
+
 type WriteResult struct {
 	ResourceType ResourceType     `json:"resourceType"`
 	ID           string           `json:"id"`

@@ -12,13 +12,8 @@ upstream:
   cache_ttl: "0s"
   max_entries: 128
 
-discovery:
-  fan_out_limit: 64
-
 services:
   metadata-lifecycle:
-    url: "http://metadata-lifecycle:8080/"
-  usergroup:
-    url: "http://usergroup:8080/"
+    url: "http://metadata-lifecycle:5000/"
   auth:
     url: "http://oss-aai-service:8080/"

@@ -1,6 +1,6 @@
 module github.com/EPOS-ERIC/epos-platform/services/oss-aai-service
 
-go 1.26
+go 1.27
 
 require (
 	golang.org/x/crypto v0.52.0

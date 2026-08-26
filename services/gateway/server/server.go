@@ -13,16 +13,13 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadataclient"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/gen/usergroupclient"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/resources"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/usergroup"
 )
 
-func Run(cfg config.Config, metadataClient *metadataclient.APIClient, usergroupClient *usergroupclient.APIClient, authService *auth.Service) error {
+func Run(cfg config.Config, metadataLifecycleClient *clients.MetadataLifecycle, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -41,14 +38,12 @@ func Run(cfg config.Config, metadataClient *metadataclient.APIClient, usergroupC
 		}
 	}()
 
-	discoverySvc := discovery.NewService(metadataClient, cfg.Discovery.FanOutLimit)
-	resourcesSvc := resources.NewService(metadataClient)
-	lifecycleSvc := lifecycle.NewService(metadataClient)
-	usergroupSvc := usergroup.NewService(usergroupClient)
-	router := NewRouter(discoverySvc, resourcesSvc, lifecycleSvc, authService, usergroupSvc, cfg.Server.CORSAllowOrigin)
+	lifecycleSvc := lifecycle.NewService(metadataLifecycleClient)
+	identitySvc := identity.NewService(metadataLifecycleClient)
+	router := NewRouter(lifecycleSvc, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
-	srv := &http.Server{ //nolint:exhaustruct
+	srv := &http.Server{ //nolint:exhaustruct_v5
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         cfg.Server.Listen,
 		Handler:      handler,

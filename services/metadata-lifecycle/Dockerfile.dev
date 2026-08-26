@@ -1,25 +1,27 @@
-FROM amazoncorretto:21
+FROM golang:1.27-alpine
 
-RUN yum install -y tar curl && yum clean all
-
-COPY packages/assets/otel/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
-COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
+RUN apk add --no-cache git curl make
 
 WORKDIR /workspace/services/metadata-lifecycle
 
-COPY services/metadata-lifecycle/gradlew ./gradlew
-COPY services/metadata-lifecycle/gradle ./gradle
-COPY services/metadata-lifecycle/settings.gradle.kts ./settings.gradle.kts
-COPY services/metadata-lifecycle/build.gradle.kts ./build.gradle.kts
+COPY services/metadata-lifecycle/go.mod services/metadata-lifecycle/go.sum ./
+COPY packages/go/logging /workspace/packages/go/logging
+COPY packages/go/observability /workspace/packages/go/observability
+COPY packages/go/middleware /workspace/packages/go/middleware
+COPY packages/go/apidocs /workspace/packages/go/apidocs
+COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
-RUN chmod +x ./gradlew && ./gradlew --version
+RUN go mod download
 
-COPY services/metadata-lifecycle/src ./src
+COPY services/metadata-lifecycle /workspace/services/metadata-lifecycle
 
-EXPOSE 8080
+EXPOSE 5000
 
 ENV EPOS_SERVICE_NAME="Metadata Lifecycle" \
-    EPOS_PORT="8080"
+    EPOS_PORT="5000"
+
+RUN adduser -D -u 1000 appuser && chown -R 1000:1000 /workspace
+USER 1000
 
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/epos-banner.sh"]
-CMD ["./gradlew", "run", "--args=server"]
+CMD ["make", "dev"]

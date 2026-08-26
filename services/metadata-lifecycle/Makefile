@@ -1,21 +1,31 @@
-IMAGE ?= epos-metadata-lifecycle:latest
+IMAGE ?= metadata-lifecycle:latest
 
-build:
-	./gradlew --no-daemon clean shadowJar
+BIN = metadata-lifecycle
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+BUILDFLAGS=-trimpath
+
+# TODO
+# LDFLAGS=-s -w -X github.com/EPOS-ERIC//common.Version=$(VERSION)
+
+build: generate
+	CGO_ENABLED=0 go build $(BUILDFLAGS) -ldflags "$(LDFLAGS)" -o $(BIN) .
 
 build-docker: build
 	docker build -t $(IMAGE) -f Dockerfile ../..
 
 test:
-	./gradlew --no-daemon test
+	go test ./...
 
-test-integration:
-	./gradlew --no-daemon test --tests "*IntegrationTest"
+dev: generate
+	go run .
+
+generate:
+	go generate ./...
 
 fmt:
-	./gradlew --no-daemon spotlessApply
+	golangci-lint fmt
 
 lint: fmt
-	./gradlew --no-daemon spotlessCheck
+	golangci-lint run ./...
 
-.PHONY: build build-docker test test-integration fmt lint
+.PHONY: build build-docker generate test fmt lint

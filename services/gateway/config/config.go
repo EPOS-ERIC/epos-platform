@@ -10,10 +10,9 @@ import (
 )
 
 type Config struct {
-	Server    Server    `yaml:"server"`
-	Upstream  Upstream  `yaml:"upstream"`
-	Discovery Discovery `yaml:"discovery"`
-	Services  Services  `yaml:"services"`
+	Server   Server   `yaml:"server"`
+	Upstream Upstream `yaml:"upstream"`
+	Services Services `yaml:"services"`
 }
 
 type Server struct {
@@ -36,13 +35,8 @@ type Upstream struct {
 	MaxEntries  int           `yaml:"max_entries"`
 }
 
-type Discovery struct {
-	FanOutLimit int `yaml:"fan_out_limit"`
-}
-
 type Services struct {
 	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
-	Usergroup         Service `yaml:"usergroup"`
 	Auth              Service `yaml:"auth"`
 }
 
@@ -62,10 +56,8 @@ func Default() Config {
 			CacheTTL:    0 * time.Second,
 			MaxEntries:  128,
 		},
-		Discovery: Discovery{FanOutLimit: 64},
 		Services: Services{
 			MetadataLifecycle: Service{URL: ""},
-			Usergroup:         Service{URL: ""},
 			Auth:              Service{URL: ""},
 		},
 	}
@@ -121,10 +113,6 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
 	}
 
-	if c.Services.Usergroup.URL == "" {
-		return fmt.Errorf("services.usergroup.url is required")
-	}
-
 	if c.Services.Auth.URL == "" {
 		return fmt.Errorf("services.auth.url is required")
 	}
@@ -143,10 +131,6 @@ func (c *Config) Validate() error {
 
 	if c.Upstream.MaxEntries <= 0 {
 		return fmt.Errorf("upstream.max_entries must be greater than zero")
-	}
-
-	if c.Discovery.FanOutLimit <= 0 {
-		return fmt.Errorf("discovery.fan_out_limit must be greater than zero")
 	}
 
 	return nil
