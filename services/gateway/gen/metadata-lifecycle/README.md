@@ -142,6 +142,7 @@ Class | Method | HTTP request | Description
  - [Category](docs/Category.md)
  - [CategoryScheme](docs/CategoryScheme.md)
  - [ContactPoint](docs/ContactPoint.md)
+ - [ContactPointReference](docs/ContactPointReference.md)
  - [Coordinate](docs/Coordinate.md)
  - [CopyResourceRequest](docs/CopyResourceRequest.md)
  - [CreateCanonicalOrganizationRequest](docs/CreateCanonicalOrganizationRequest.md)
@@ -169,6 +170,8 @@ Class | Method | HTTP request | Description
  - [DistributionType](docs/DistributionType.md)
  - [Documentation](docs/Documentation.md)
  - [DownloadableFile](docs/DownloadableFile.md)
+ - [DownloadableFileDistribution](docs/DownloadableFileDistribution.md)
+ - [DownloadableFileDistributionDraft](docs/DownloadableFileDistributionDraft.md)
  - [FloatParameter](docs/FloatParameter.md)
  - [FloatParameterMetadata](docs/FloatParameterMetadata.md)
  - [Group](docs/Group.md)
@@ -198,6 +201,7 @@ Class | Method | HTTP request | Description
  - [ReplaceSoftwareSourceCodeDraftRequest](docs/ReplaceSoftwareSourceCodeDraftRequest.md)
  - [ResourceRecord](docs/ResourceRecord.md)
  - [ResourceRecordMetadata](docs/ResourceRecordMetadata.md)
+ - [ResourceReference](docs/ResourceReference.md)
  - [ResourceType](docs/ResourceType.md)
  - [RoleRequest](docs/RoleRequest.md)
  - [RoleRequestDecisionRequest](docs/RoleRequestDecisionRequest.md)
@@ -214,6 +218,8 @@ Class | Method | HTTP request | Description
  - [UserMembership](docs/UserMembership.md)
  - [UserSummary](docs/UserSummary.md)
  - [WebService](docs/WebService.md)
+ - [WebServiceDistribution](docs/WebServiceDistribution.md)
+ - [WebServiceDistributionDraft](docs/WebServiceDistributionDraft.md)
  - [WebServiceDraft](docs/WebServiceDraft.md)
 
 

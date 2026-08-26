@@ -4,18 +4,25 @@ package lifecycle
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
 type Service struct {
 	metadataLifecycle *clients.MetadataLifecycle
+
+	log *slog.Logger
 }
 
 // NewService builds lifecycle service for Metadata Lifecycle lifecycle operations.
 func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
-	return &Service{metadataLifecycle: metadataLifecycle}
+	return &Service{
+		metadataLifecycle: metadataLifecycle,
+		log:               logging.Get("lifecycle-service"),
+	}
 }
 
 func (s *Service) Create(ctx context.Context, actorID, groupID, resourceType string, input domain.CreateResourceInput) (domain.ResourceVersion, error) {
@@ -27,10 +34,16 @@ func (s *Service) Create(ctx context.Context, actorID, groupID, resourceType str
 }
 
 func (s *Service) Get(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+	s.log.Debug("get resource version", "resourceType", resourceType, "resourceID", resourceID, "versionID", versionID)
+
 	result, err := s.metadataLifecycle.GetResourceVersion(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
+		s.log.Debug("get resource version", "error", err)
 		return domain.ResourceVersion{}, fmt.Errorf("get resource version: %w", err)
 	}
+
+	s.log.Debug("get resource version", "response", result)
+
 	return result, nil
 }
 

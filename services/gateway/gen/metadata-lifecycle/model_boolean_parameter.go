@@ -21,6 +21,7 @@ var _ MappedNullable = &BooleanParameter{}
 
 // BooleanParameter struct for BooleanParameter
 type BooleanParameter struct {
+	Kind     string                   `json:"kind"`
 	Metadata BooleanParameterMetadata `json:"metadata"`
 	Default  NullableBool             `json:"default"`
 }
@@ -31,8 +32,9 @@ type _BooleanParameter BooleanParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewBooleanParameter(metadata BooleanParameterMetadata, default_ NullableBool) *BooleanParameter {
+func NewBooleanParameter(kind string, metadata BooleanParameterMetadata, default_ NullableBool) *BooleanParameter {
 	this := BooleanParameter{}
+	this.Kind = kind
 	this.Metadata = metadata
 	this.Default = default_
 	return &this
@@ -44,6 +46,30 @@ func NewBooleanParameter(metadata BooleanParameterMetadata, default_ NullableBoo
 func NewBooleanParameterWithDefaults() *BooleanParameter {
 	this := BooleanParameter{}
 	return &this
+}
+
+// GetKind returns the Kind field value
+func (o *BooleanParameter) GetKind() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Kind
+}
+
+// GetKindOk returns a tuple with the Kind field value
+// and a boolean to check if the value has been set.
+func (o *BooleanParameter) GetKindOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Kind, true
+}
+
+// SetKind sets field value
+func (o *BooleanParameter) SetKind(v string) {
+	o.Kind = v
 }
 
 // GetMetadata returns the Metadata field value
@@ -106,6 +132,7 @@ func (o BooleanParameter) MarshalJSON() ([]byte, error) {
 
 func (o BooleanParameter) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["kind"] = o.Kind
 	toSerialize["metadata"] = o.Metadata
 	toSerialize["default"] = o.Default.Get()
 	return toSerialize, nil
@@ -116,6 +143,7 @@ func (o *BooleanParameter) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"kind",
 		"metadata",
 		"default",
 	}

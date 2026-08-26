@@ -22,6 +22,7 @@ var _ MappedNullable = &DateTimeParameter{}
 
 // DateTimeParameter struct for DateTimeParameter
 type DateTimeParameter struct {
+	Kind     string                    `json:"kind"`
 	Metadata DateTimeParameterMetadata `json:"metadata"`
 	Minimum  NullableTime              `json:"minimum"`
 	Maximum  NullableTime              `json:"maximum"`
@@ -35,8 +36,9 @@ type _DateTimeParameter DateTimeParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDateTimeParameter(metadata DateTimeParameterMetadata, minimum NullableTime, maximum NullableTime, default_ NullableTime, pattern string) *DateTimeParameter {
+func NewDateTimeParameter(kind string, metadata DateTimeParameterMetadata, minimum NullableTime, maximum NullableTime, default_ NullableTime, pattern string) *DateTimeParameter {
 	this := DateTimeParameter{}
+	this.Kind = kind
 	this.Metadata = metadata
 	this.Minimum = minimum
 	this.Maximum = maximum
@@ -51,6 +53,30 @@ func NewDateTimeParameter(metadata DateTimeParameterMetadata, minimum NullableTi
 func NewDateTimeParameterWithDefaults() *DateTimeParameter {
 	this := DateTimeParameter{}
 	return &this
+}
+
+// GetKind returns the Kind field value
+func (o *DateTimeParameter) GetKind() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Kind
+}
+
+// GetKindOk returns a tuple with the Kind field value
+// and a boolean to check if the value has been set.
+func (o *DateTimeParameter) GetKindOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Kind, true
+}
+
+// SetKind sets field value
+func (o *DateTimeParameter) SetKind(v string) {
+	o.Kind = v
 }
 
 // GetMetadata returns the Metadata field value
@@ -189,6 +215,7 @@ func (o DateTimeParameter) MarshalJSON() ([]byte, error) {
 
 func (o DateTimeParameter) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["kind"] = o.Kind
 	toSerialize["metadata"] = o.Metadata
 	toSerialize["minimum"] = o.Minimum.Get()
 	toSerialize["maximum"] = o.Maximum.Get()
@@ -202,6 +229,7 @@ func (o *DateTimeParameter) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"kind",
 		"metadata",
 		"minimum",
 		"maximum",

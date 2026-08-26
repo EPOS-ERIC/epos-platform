@@ -2014,8 +2014,8 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/ResourceReference" },
           }
-        source_created: { type: string, format: date-time, nullable: true }
-        source_updated: { type: string, format: date-time, nullable: true }
+        created: { type: string, format: date-time, nullable: true }
+        updated: { type: string, format: date-time, nullable: true }
 
     SoftwareApplicationDraftMetadata:
       type: object
@@ -2113,20 +2113,51 @@ components:
         type: { type: string }
         value: { type: string }
 
-    # TODO: add discriminator on the type field for either downloadable_file or web_service. define what const should the type be and reuse it in both the gateway & metadata-lifecycle
     DistributionDraft:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistributionDraft"
+        - $ref: "#/components/schemas/DownloadableFileDistributionDraft"
+      discriminator:
+        propertyName: type
+        mapping:
+          # TODO: instead of having these weird constants, change them everywhere to just be WEB_SERVICE or DOWNLOADABLE_FILE (also in the db, ...)
+          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
+          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
+
+    WebServiceDistributionDraft:
       type: object
-      required: [title, type]
+      additionalProperties: false
+      required: [title, type, web_service]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
-        type: { type: string }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true }
         web_service: { $ref: "#/components/schemas/WebServiceDraft" }
+
+    DownloadableFileDistributionDraft:
+      type: object
+      additionalProperties: false
+      required: [title, type, downloadable_file]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebServiceDraft:
@@ -2137,7 +2168,9 @@ components:
         name: { type: string }
         description: { type: string }
         template_url: { type: string }
-        parameters: { type: array, items: { type: object } }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
         format: { type: string }
         provider: { $ref: "#/components/schemas/ResourceReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
@@ -2148,6 +2181,90 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/ResourceReference" },
           }
+
+    Parameter:
+      oneOf:
+        - $ref: "#/components/schemas/StringParameter"
+        - $ref: "#/components/schemas/BooleanParameter"
+        - $ref: "#/components/schemas/IntegerParameter"
+        - $ref: "#/components/schemas/FloatParameter"
+        - $ref: "#/components/schemas/DateTimeParameter"
+      discriminator:
+        propertyName: kind
+        mapping:
+          STRING: "#/components/schemas/StringParameter"
+          BOOLEAN: "#/components/schemas/BooleanParameter"
+          INTEGER: "#/components/schemas/IntegerParameter"
+          FLOAT: "#/components/schemas/FloatParameter"
+          DATETIME: "#/components/schemas/DateTimeParameter"
+
+    ParameterMetadata:
+      type: object
+      required:
+        [id, variable, property, label, required, multiple_values, read_only]
+      properties:
+        id: { type: string, format: uuid }
+        variable: { type: string }
+        property: { type: string }
+        label: { type: string }
+        required: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
+
+    StringParameter:
+      type: object
+      required: [kind, metadata, default, allowed_values, pattern]
+      properties:
+        kind: { type: string, enum: [STRING] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        default: { type: string, nullable: true }
+        allowed_values: { type: array, items: { type: string } }
+        pattern: { type: string }
+
+    BooleanParameter:
+      type: object
+      required: [kind, metadata, default]
+      properties:
+        kind: { type: string, enum: [BOOLEAN] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        default: { type: boolean, nullable: true }
+
+    IntegerParameter:
+      type: object
+      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      properties:
+        kind: { type: string, enum: [INTEGER] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        minimum: { type: integer, format: int64, nullable: true }
+        maximum: { type: integer, format: int64, nullable: true }
+        default: { type: integer, format: int64, nullable: true }
+        allowed_values: { type: array, items: { type: integer, format: int64 } }
+
+    FloatParameter:
+      type: object
+      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      properties:
+        kind: { type: string, enum: [FLOAT] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        minimum: { type: number, format: double, nullable: true }
+        maximum: { type: number, format: double, nullable: true }
+        default: { type: number, format: double, nullable: true }
+        allowed_values: { type: array, items: { type: number, format: double } }
+
+    DateTimeParameter:
+      type: object
+      required: [kind, metadata, minimum, maximum, default, pattern]
+      properties:
+        kind: { type: string, enum: [DATETIME] }
+        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        minimum: { type: string, format: date-time, nullable: true }
+        maximum: { type: string, format: date-time, nullable: true }
+        default: { type: string, format: date-time, nullable: true }
+        pattern: { type: string }
+
+    ParameterKind:
+      type: string
+      enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME]
 
     DownloadableFile:
       type: object
@@ -2174,6 +2291,9 @@ components:
             minItems: 4,
             items: { $ref: "#/components/schemas/Coordinate" },
           }
+      oneOf:
+        - required: [point]
+        - required: [polygon]
 
     Coordinate:
       type: object
@@ -2285,14 +2405,29 @@ components:
       type: object
       additionalProperties: false
       required:
-        [resource_id, version_id, revision, status, created_by, group, metadata]
+        [
+          resource_id,
+          version_id,
+          revision,
+          status,
+          created_by,
+          group_id,
+          group_name,
+          created_at,
+          updated_at,
+          metadata,
+        ]
       properties:
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         revision: { type: integer, format: int32 }
         status: { type: string }
+        # TODO: make this not required, only have the creator if the user is authenticated and a member of a group, otherwise omit this field complitely, we don't want to leak other user's ids
         created_by: { type: string }
-        group: { $ref: "#/components/schemas/ResourceGroupReference" }
+        group_id: { type: string, format: uuid }
+        group_name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
         metadata:
           anyOf:
             - $ref: "#/components/schemas/DatasetResourceMetadata"
@@ -2302,7 +2437,18 @@ components:
     DatasetResourceMetadata:
       type: object
       required:
-        [id, source_iri, title, description, keywords, status, created, updated]
+        [
+          id,
+          source_iri,
+          title,
+          description,
+          keywords,
+          distributions,
+          persistent_identifiers,
+          contact_points,
+          providers,
+          categories,
+        ]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
@@ -2310,39 +2456,202 @@ components:
         title: { type: string }
         description: { type: string }
         keywords: { type: string }
-        status: { type: string }
-        created: { type: string, format: date-time }
-        updated: { type: string, format: date-time }
+        accrual_periodicity: { type: string, nullable: true }
+        quality_annotation: { type: string, nullable: true }
+        access_right: { type: string, nullable: true }
+        distributions:
+          type: array
+          items: { $ref: "#/components/schemas/Distribution" }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        persistent_identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+        contact_points:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+        providers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        created: { type: string, format: date-time, nullable: true }
+        updated: { type: string, format: date-time, nullable: true }
 
     SoftwareApplicationResourceMetadata:
       type: object
-      required: [id, source_iri, name, description, keywords]
+      required:
+        [
+          id,
+          source_iri,
+          name,
+          description,
+          keywords,
+          creators,
+          identifiers,
+          contact_points,
+          categories,
+        ]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
         name: { type: string }
         description: { type: string }
+        main_entity_of_page: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        version: { type: string, nullable: true }
         keywords: { type: string }
+        download_url: { type: string, nullable: true }
+        requirements: { type: string, nullable: true }
+        operating_system: { type: string, nullable: true }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+        contact_points:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
 
     SoftwareSourceCodeResourceMetadata:
       type: object
-      required: [id, source_iri, name, description, keywords]
+      required:
+        [
+          id,
+          source_iri,
+          name,
+          description,
+          keywords,
+          creators,
+          identifiers,
+          contact_points,
+          categories,
+        ]
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
         source_iri: { type: string }
         name: { type: string }
         description: { type: string }
+        programming_language: { type: string, nullable: true }
         keywords: { type: string }
+        repository: { type: string, nullable: true }
+        license: { type: string, nullable: true }
+        software_requirements: { type: string, nullable: true }
+        runtime_platform: { type: string, nullable: true }
+        main_entity_of_page: { type: string, nullable: true }
+        version: { type: string, nullable: true }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
+        identifiers:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+        contact_points:
+          type: array
+          nullable: true
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceVersionReference" }
 
-    ResourceGroupReference:
+    Distribution:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistribution"
+        - $ref: "#/components/schemas/DownloadableFileDistribution"
+      discriminator:
+        propertyName: type
+        mapping:
+          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
+          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
+
+    WebServiceDistribution:
       type: object
       additionalProperties: false
-      required: [id, name]
+      required: [id, title, description, type, web_service]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        web_service: { $ref: "#/components/schemas/WebService" }
+
+    DownloadableFileDistribution:
+      type: object
+      additionalProperties: false
+      required: [id, title, description, type, downloadable_file]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+
+    WebService:
+      type: object
+      required: [id, name, description, template_url, format]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
+        description: { type: string }
+        template_url: { type: string }
+        parameters:
+          type: array
+          items: { $ref: "#/components/schemas/Parameter" }
+        format: { type: string }
+        provider: { $ref: "#/components/schemas/ResourceVersionReference" }
+        documentation: { $ref: "#/components/schemas/Documentation" }
+        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
+        contact_points:
+          type: array
+          items: { $ref: "#/components/schemas/ContactPointReference" }
+
+    ResourceIdentifier:
+      type: object
+      required: [id, source_iri, type, value]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        type: { type: string }
+        value: { type: string }
+
+    ResourceVersionReference:
+      type: object
+      required: [id, source_iri, name]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+
+    ContactPointReference:
+      type: object
+      required: [id, source_iri]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
 
     # -------------------------------------------------------------------------
     # Resource write schemas

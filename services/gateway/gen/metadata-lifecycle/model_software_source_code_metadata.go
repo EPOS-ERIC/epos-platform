@@ -21,22 +21,22 @@ var _ MappedNullable = &SoftwareSourceCodeMetadata{}
 
 // SoftwareSourceCodeMetadata struct for SoftwareSourceCodeMetadata
 type SoftwareSourceCodeMetadata struct {
-	Id                   string             `json:"id"`
-	SourceIri            string             `json:"source_iri"`
-	Name                 string             `json:"name"`
-	Description          string             `json:"description"`
-	ProgrammingLanguage  NullableString     `json:"programming_language,omitempty"`
-	Keywords             string             `json:"keywords"`
-	Repository           NullableString     `json:"repository,omitempty"`
-	License              NullableString     `json:"license,omitempty"`
-	SoftwareRequirements NullableString     `json:"software_requirements,omitempty"`
-	RuntimePlatform      NullableString     `json:"runtime_platform,omitempty"`
-	MainEntityOfPage     NullableString     `json:"main_entity_of_page,omitempty"`
-	Version              NullableString     `json:"version,omitempty"`
-	Creators             []Organization     `json:"creators"`
-	Identifiers          []Identifier       `json:"identifiers"`
-	ContactPoints        []ContactPoint     `json:"contact_points"`
-	Categories           []SoftwareCategory `json:"categories"`
+	Id                   string                  `json:"id"`
+	SourceIri            string                  `json:"source_iri"`
+	Name                 string                  `json:"name"`
+	Description          string                  `json:"description"`
+	ProgrammingLanguage  NullableString          `json:"programming_language,omitempty"`
+	Keywords             string                  `json:"keywords"`
+	Repository           NullableString          `json:"repository,omitempty"`
+	License              NullableString          `json:"license,omitempty"`
+	SoftwareRequirements NullableString          `json:"software_requirements,omitempty"`
+	RuntimePlatform      NullableString          `json:"runtime_platform,omitempty"`
+	MainEntityOfPage     NullableString          `json:"main_entity_of_page,omitempty"`
+	Version              NullableString          `json:"version,omitempty"`
+	Creators             []ResourceReference     `json:"creators"`
+	Identifiers          []Identifier            `json:"identifiers"`
+	ContactPoints        []ContactPointReference `json:"contact_points"`
+	Categories           []ResourceReference     `json:"categories"`
 }
 
 type _SoftwareSourceCodeMetadata SoftwareSourceCodeMetadata
@@ -45,7 +45,7 @@ type _SoftwareSourceCodeMetadata SoftwareSourceCodeMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareSourceCodeMetadata(id string, sourceIri string, name string, description string, keywords string, creators []Organization, identifiers []Identifier, contactPoints []ContactPoint, categories []SoftwareCategory) *SoftwareSourceCodeMetadata {
+func NewSoftwareSourceCodeMetadata(id string, sourceIri string, name string, description string, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []ContactPointReference, categories []ResourceReference) *SoftwareSourceCodeMetadata {
 	this := SoftwareSourceCodeMetadata{}
 	this.Id = id
 	this.SourceIri = sourceIri
@@ -489,9 +489,9 @@ func (o *SoftwareSourceCodeMetadata) UnsetVersion() {
 }
 
 // GetCreators returns the Creators field value
-func (o *SoftwareSourceCodeMetadata) GetCreators() []Organization {
+func (o *SoftwareSourceCodeMetadata) GetCreators() []ResourceReference {
 	if o == nil {
-		var ret []Organization
+		var ret []ResourceReference
 		return ret
 	}
 
@@ -500,7 +500,7 @@ func (o *SoftwareSourceCodeMetadata) GetCreators() []Organization {
 
 // GetCreatorsOk returns a tuple with the Creators field value
 // and a boolean to check if the value has been set.
-func (o *SoftwareSourceCodeMetadata) GetCreatorsOk() ([]Organization, bool) {
+func (o *SoftwareSourceCodeMetadata) GetCreatorsOk() ([]ResourceReference, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -508,7 +508,7 @@ func (o *SoftwareSourceCodeMetadata) GetCreatorsOk() ([]Organization, bool) {
 }
 
 // SetCreators sets field value
-func (o *SoftwareSourceCodeMetadata) SetCreators(v []Organization) {
+func (o *SoftwareSourceCodeMetadata) SetCreators(v []ResourceReference) {
 	o.Creators = v
 }
 
@@ -537,10 +537,10 @@ func (o *SoftwareSourceCodeMetadata) SetIdentifiers(v []Identifier) {
 }
 
 // GetContactPoints returns the ContactPoints field value
-// If the value is explicit nil, the zero value for []ContactPoint will be returned
-func (o *SoftwareSourceCodeMetadata) GetContactPoints() []ContactPoint {
+// If the value is explicit nil, the zero value for []ContactPointReference will be returned
+func (o *SoftwareSourceCodeMetadata) GetContactPoints() []ContactPointReference {
 	if o == nil {
-		var ret []ContactPoint
+		var ret []ContactPointReference
 		return ret
 	}
 
@@ -550,7 +550,7 @@ func (o *SoftwareSourceCodeMetadata) GetContactPoints() []ContactPoint {
 // GetContactPointsOk returns a tuple with the ContactPoints field value
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *SoftwareSourceCodeMetadata) GetContactPointsOk() ([]ContactPoint, bool) {
+func (o *SoftwareSourceCodeMetadata) GetContactPointsOk() ([]ContactPointReference, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -558,14 +558,14 @@ func (o *SoftwareSourceCodeMetadata) GetContactPointsOk() ([]ContactPoint, bool)
 }
 
 // SetContactPoints sets field value
-func (o *SoftwareSourceCodeMetadata) SetContactPoints(v []ContactPoint) {
+func (o *SoftwareSourceCodeMetadata) SetContactPoints(v []ContactPointReference) {
 	o.ContactPoints = v
 }
 
 // GetCategories returns the Categories field value
-func (o *SoftwareSourceCodeMetadata) GetCategories() []SoftwareCategory {
+func (o *SoftwareSourceCodeMetadata) GetCategories() []ResourceReference {
 	if o == nil {
-		var ret []SoftwareCategory
+		var ret []ResourceReference
 		return ret
 	}
 
@@ -574,7 +574,7 @@ func (o *SoftwareSourceCodeMetadata) GetCategories() []SoftwareCategory {
 
 // GetCategoriesOk returns a tuple with the Categories field value
 // and a boolean to check if the value has been set.
-func (o *SoftwareSourceCodeMetadata) GetCategoriesOk() ([]SoftwareCategory, bool) {
+func (o *SoftwareSourceCodeMetadata) GetCategoriesOk() ([]ResourceReference, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -582,7 +582,7 @@ func (o *SoftwareSourceCodeMetadata) GetCategoriesOk() ([]SoftwareCategory, bool
 }
 
 // SetCategories sets field value
-func (o *SoftwareSourceCodeMetadata) SetCategories(v []SoftwareCategory) {
+func (o *SoftwareSourceCodeMetadata) SetCategories(v []ResourceReference) {
 	o.Categories = v
 }
 

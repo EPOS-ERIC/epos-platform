@@ -26,15 +26,22 @@ func (c *MetadataLifecycle) CreateResource(ctx context.Context, actorID, groupID
 }
 
 func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+	c.log.Debug("get resource version", "resourceType", resourceType, "resourceID", resourceID, "versionID", versionID)
+
 	request := c.resources.GetResourceVersion(ctx, resourceType, resourceID, versionID)
 	if actorID != "" {
 		request = request.XEPOSUserID(actorID)
 	}
 
+	c.log.Debug("get resource version", "request", request)
+
 	record, response, err := request.Execute()
 	if err != nil {
+		c.log.Debug("get resource version", "error", err)
 		return domain.ResourceVersion{}, lifecycleError(response, err)
 	}
+
+	c.log.Debug("get resource version", "response", record)
 
 	return toDomainResourceVersion(record)
 }
@@ -163,7 +170,7 @@ func lifecycleError(response *http.Response, err error) error {
 		if response.Body != nil {
 			_ = response.Body.Close()
 		}
-		return &domain.UpstreamError{StatusCode: response.StatusCode}
+		return &domain.UpstreamError{StatusCode: response.StatusCode, WrappedError: err}
 	}
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return fmt.Errorf("metadata-lifecycle lifecycle request: %w", domain.ErrUpstreamTimeout)

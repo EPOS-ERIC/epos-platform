@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
@@ -24,6 +26,8 @@ type MetadataLifecycle struct {
 	contactPoints client.ContactPointsAPI
 	organizations client.OrganizationsAPI
 	categories    client.CategoriesAPI
+
+	log *slog.Logger
 }
 
 type ActorIdentity struct {
@@ -66,6 +70,8 @@ func NewMetadataLifecycle(baseURL string, upstreamCfg config.Upstream) (*Metadat
 		contactPoints: apiClient.ContactPointsAPI,
 		organizations: apiClient.OrganizationsAPI,
 		categories:    apiClient.CategoriesAPI,
+
+		log: logging.Get("metadata-lifecycle client"),
 	}, nil
 }
 

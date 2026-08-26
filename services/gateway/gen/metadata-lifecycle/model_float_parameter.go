@@ -21,6 +21,7 @@ var _ MappedNullable = &FloatParameter{}
 
 // FloatParameter struct for FloatParameter
 type FloatParameter struct {
+	Kind          string                 `json:"kind"`
 	Metadata      FloatParameterMetadata `json:"metadata"`
 	Minimum       NullableFloat64        `json:"minimum"`
 	Maximum       NullableFloat64        `json:"maximum"`
@@ -34,8 +35,9 @@ type _FloatParameter FloatParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewFloatParameter(metadata FloatParameterMetadata, minimum NullableFloat64, maximum NullableFloat64, default_ NullableFloat64, allowedValues []float64) *FloatParameter {
+func NewFloatParameter(kind string, metadata FloatParameterMetadata, minimum NullableFloat64, maximum NullableFloat64, default_ NullableFloat64, allowedValues []float64) *FloatParameter {
 	this := FloatParameter{}
+	this.Kind = kind
 	this.Metadata = metadata
 	this.Minimum = minimum
 	this.Maximum = maximum
@@ -50,6 +52,30 @@ func NewFloatParameter(metadata FloatParameterMetadata, minimum NullableFloat64,
 func NewFloatParameterWithDefaults() *FloatParameter {
 	this := FloatParameter{}
 	return &this
+}
+
+// GetKind returns the Kind field value
+func (o *FloatParameter) GetKind() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Kind
+}
+
+// GetKindOk returns a tuple with the Kind field value
+// and a boolean to check if the value has been set.
+func (o *FloatParameter) GetKindOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Kind, true
+}
+
+// SetKind sets field value
+func (o *FloatParameter) SetKind(v string) {
+	o.Kind = v
 }
 
 // GetMetadata returns the Metadata field value
@@ -188,6 +214,7 @@ func (o FloatParameter) MarshalJSON() ([]byte, error) {
 
 func (o FloatParameter) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["kind"] = o.Kind
 	toSerialize["metadata"] = o.Metadata
 	toSerialize["minimum"] = o.Minimum.Get()
 	toSerialize["maximum"] = o.Maximum.Get()
@@ -201,6 +228,7 @@ func (o *FloatParameter) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"kind",
 		"metadata",
 		"minimum",
 		"maximum",

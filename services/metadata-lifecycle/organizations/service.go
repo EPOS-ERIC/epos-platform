@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
@@ -243,10 +244,8 @@ func buildIdentifiers(requests []IdentifierRequest) ([]Identifier, error) {
 }
 
 func validateUUIDs(values []uuid.UUID) error {
-	for _, value := range values {
-		if value == uuid.Nil {
-			return ErrInvalid
-		}
+	if slices.Contains(values, uuid.Nil) {
+		return ErrInvalid
 	}
 	return nil
 }

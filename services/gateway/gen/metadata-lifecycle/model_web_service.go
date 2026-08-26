@@ -21,17 +21,17 @@ var _ MappedNullable = &WebService{}
 
 // WebService struct for WebService
 type WebService struct {
-	Id               string          `json:"id"`
-	Name             string          `json:"name"`
-	Description      string          `json:"description"`
-	TemplateUrl      string          `json:"template_url"`
-	Parameters       []Parameter     `json:"parameters,omitempty"`
-	Format           string          `json:"format"`
-	Provider         *Organization   `json:"provider,omitempty"`
-	Documentation    *Documentation  `json:"documentation,omitempty"`
-	SpatialCoverage  NullableSpatial `json:"spatial_coverage,omitempty"`
-	TemporalCoverage *Temporal       `json:"temporal_coverage,omitempty"`
-	ContactPoints    []ContactPoint  `json:"contact_points,omitempty"`
+	Id               string                  `json:"id"`
+	Name             string                  `json:"name"`
+	Description      string                  `json:"description"`
+	TemplateUrl      string                  `json:"template_url"`
+	Parameters       []Parameter             `json:"parameters,omitempty"`
+	Format           string                  `json:"format"`
+	Provider         *ResourceReference      `json:"provider,omitempty"`
+	Documentation    *Documentation          `json:"documentation,omitempty"`
+	SpatialCoverage  NullableSpatial         `json:"spatial_coverage,omitempty"`
+	TemporalCoverage *Temporal               `json:"temporal_coverage,omitempty"`
+	ContactPoints    []ContactPointReference `json:"contact_points,omitempty"`
 }
 
 type _WebService WebService
@@ -211,9 +211,9 @@ func (o *WebService) SetFormat(v string) {
 }
 
 // GetProvider returns the Provider field value if set, zero value otherwise.
-func (o *WebService) GetProvider() Organization {
+func (o *WebService) GetProvider() ResourceReference {
 	if o == nil || IsNil(o.Provider) {
-		var ret Organization
+		var ret ResourceReference
 		return ret
 	}
 	return *o.Provider
@@ -221,7 +221,7 @@ func (o *WebService) GetProvider() Organization {
 
 // GetProviderOk returns a tuple with the Provider field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *WebService) GetProviderOk() (*Organization, bool) {
+func (o *WebService) GetProviderOk() (*ResourceReference, bool) {
 	if o == nil || IsNil(o.Provider) {
 		return nil, false
 	}
@@ -237,8 +237,8 @@ func (o *WebService) HasProvider() bool {
 	return false
 }
 
-// SetProvider gets a reference to the given Organization and assigns it to the Provider field.
-func (o *WebService) SetProvider(v Organization) {
+// SetProvider gets a reference to the given ResourceReference and assigns it to the Provider field.
+func (o *WebService) SetProvider(v ResourceReference) {
 	o.Provider = &v
 }
 
@@ -350,9 +350,9 @@ func (o *WebService) SetTemporalCoverage(v Temporal) {
 }
 
 // GetContactPoints returns the ContactPoints field value if set, zero value otherwise.
-func (o *WebService) GetContactPoints() []ContactPoint {
+func (o *WebService) GetContactPoints() []ContactPointReference {
 	if o == nil || IsNil(o.ContactPoints) {
-		var ret []ContactPoint
+		var ret []ContactPointReference
 		return ret
 	}
 	return o.ContactPoints
@@ -360,7 +360,7 @@ func (o *WebService) GetContactPoints() []ContactPoint {
 
 // GetContactPointsOk returns a tuple with the ContactPoints field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *WebService) GetContactPointsOk() ([]ContactPoint, bool) {
+func (o *WebService) GetContactPointsOk() ([]ContactPointReference, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -376,8 +376,8 @@ func (o *WebService) HasContactPoints() bool {
 	return false
 }
 
-// SetContactPoints gets a reference to the given []ContactPoint and assigns it to the ContactPoints field.
-func (o *WebService) SetContactPoints(v []ContactPoint) {
+// SetContactPoints gets a reference to the given []ContactPointReference and assigns it to the ContactPoints field.
+func (o *WebService) SetContactPoints(v []ContactPointReference) {
 	o.ContactPoints = v
 }
 

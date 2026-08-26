@@ -59,6 +59,8 @@ func NewRouter(
 	discoveryHandler := handlers.NewDiscovery(discovery.NewService(metadataLifecycleClient))
 
 	r.Route("/v1", func(r chi.Router) {
+		r.Use(validateParams())
+
 		r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/imports/turtle", importsHandler.Turtle)
 
 		r.Route("/contact-points", func(r chi.Router) {

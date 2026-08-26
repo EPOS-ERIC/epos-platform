@@ -67,12 +67,10 @@ func toClientDatasetDraftMetadata(metadata domain.DatasetDraftMetadata) client.D
 	setIfPresent(metadata.AccrualPeriodicity, result.SetAccrualPeriodicity)
 	setIfPresent(metadata.QualityAnnotation, result.SetQualityAnnotation)
 	setIfPresent(metadata.AccessRight, result.SetAccessRight)
-	setIfPresent(metadata.SourceCreated, result.SetSourceCreated)
-	setIfPresent(metadata.SourceUpdated, result.SetSourceUpdated)
+	setIfPresent(metadata.SourceCreated, result.SetCreated)
+	setIfPresent(metadata.SourceUpdated, result.SetUpdated)
 
-	if metadata.ID != "" {
-		result.SetId(metadata.ID)
-	}
+	result.SetId(metadata.ID)
 
 	setPtrConv(metadata.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
 	setPtrConv(metadata.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
@@ -232,19 +230,72 @@ func toClientDistributionDrafts(values []domain.DistributionDraft) []client.Dist
 }
 
 func toClientDistributionDraft(value domain.DistributionDraft) client.DistributionDraft {
-	result := client.DistributionDraft{ //nolint:exhaustruct_v5 // optional values are set below
+	if value.DownloadableFile != nil {
+		result := &client.DownloadableFileDistributionDraft{ //nolint:exhaustruct_v5 // optional values are set below
+			Title:            value.Title,
+			Description:      new(value.Description),
+			Type:             value.Type,
+			DownloadableFile: client.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format},
+		}
+		result.SetId(value.ID)
+		setNullable(&result.License, value.License)
+		result.Issued.Set(value.Issued)
+		result.Modified.Set(value.Modified)
+		result.ByteSize.Set(value.ByteSize)
+
+		return client.DownloadableFileDistributionDraftAsDistributionDraft(result)
+	}
+
+	// has to be a webservice if it's not a DownloadableFile
+
+	result := &client.WebServiceDistributionDraft{ //nolint:exhaustruct_v5 // optional values are set below
 		Title:       value.Title,
 		Description: new(value.Description),
-		Type:        client.DistributionType(value.Type),
+		Type:        value.Type,
+		WebService:  toClientWebServiceDraft(*value.WebService),
 	}
 	result.SetId(value.ID)
-	setIfPresent(value.License, result.SetLicense)
-	setIfPresent(value.Issued, result.SetIssued)
-	setIfPresent(value.Modified, result.SetModified)
-	setIfPresent(value.ByteSize, result.SetByteSize)
-	if value.DownloadableFile != nil {
-		result.SetDownloadableFile(client.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format})
+	setNullable(&result.License, value.License)
+	result.Issued.Set(value.Issued)
+	result.Modified.Set(value.Modified)
+	result.ByteSize.Set(value.ByteSize)
+
+	return client.WebServiceDistributionDraftAsDistributionDraft(result)
+}
+
+func toClientWebServiceDraft(value domain.WebServiceDraft) client.WebServiceDraft {
+	result := client.WebServiceDraft{ //nolint:exhaustruct_v5 // optional values are set below
+		Name:        value.Name,
+		Description: new(value.Description),
+		TemplateUrl: value.TemplateURL,
+		Format:      value.Format,
 	}
+	result.SetId(value.ID)
+	if value.Provider != nil {
+		result.SetProvider(client.CanonicalReference{Id: value.Provider.ID})
+	}
+	setPtrConv(value.Documentation, toClientDocumentation, result.SetDocumentation)
+	setPtrConv(value.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
+	setPtrConv(value.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
+	setSliceConv(value.ContactPoints, toClientResourceReferences, result.SetContactPoints)
+
+	parameters := make([]client.Parameter, 0, len(value.Parameters))
+	for _, parameter := range value.Parameters {
+		if mapped, ok := parameter.(client.Parameter); ok {
+			parameters = append(parameters, mapped)
+		}
+	}
+	if len(parameters) > 0 {
+		result.SetParameters(parameters)
+	}
+
+	return result
+}
+
+func toClientDocumentation(value domain.Documentation) client.Documentation {
+	result := client.Documentation{Uri: value.URI} //nolint:exhaustruct_v5 // nullable fields are set below
+	setNullable(&result.Title, value.Title)
+	setNullable(&result.Description, value.Description)
 	return result
 }
 
@@ -259,45 +310,291 @@ func toDomainResourceVersion(record *client.ResourceRecord) (domain.ResourceVers
 		Revision:   record.Revision,
 		Status:     string(record.Status),
 		CreatedBy:  record.CreatedBy,
-		Group:      domain.ResourceGroupReference{ID: record.Group.Id, Name: record.Group.Name},
+		GroupID:    record.GroupId,
+		GroupName:  record.GroupName,
+		CreatedAt:  record.CreatedAt,
+		UpdatedAt:  record.UpdatedAt,
 	}
 
 	switch {
 	case record.Metadata.DatasetMetadata != nil:
 		metadata := record.Metadata.DatasetMetadata
-		result.Metadata = domain.DatasetResourceMetadata{
-			ID:          metadata.Id,
-			SourceIRI:   metadata.SourceIri,
-			Title:       metadata.Title,
-			Description: metadata.Description,
-			Keywords:    metadata.Keywords,
-			Status:      string(metadata.Status),
-			Created:     metadata.Created.Format(time.RFC3339Nano),
-			Updated:     metadata.Updated.Format(time.RFC3339Nano),
-		}
+		result.Metadata = toDomainDatasetResourceMetadata(metadata)
 	case record.Metadata.SoftwareApplicationMetadata != nil:
 		metadata := record.Metadata.SoftwareApplicationMetadata
-		result.Metadata = domain.SoftwareApplicationResourceMetadata{
-			ID:          metadata.Id,
-			SourceIRI:   metadata.SourceIri,
-			Name:        metadata.Name,
-			Description: metadata.Description,
-			Keywords:    metadata.Keywords,
-		}
+		result.Metadata = toDomainSoftwareApplicationResourceMetadata(metadata)
 	case record.Metadata.SoftwareSourceCodeMetadata != nil:
 		metadata := record.Metadata.SoftwareSourceCodeMetadata
-		result.Metadata = domain.SoftwareSourceCodeResourceMetadata{
-			ID:          metadata.Id,
-			SourceIRI:   metadata.SourceIri,
-			Name:        metadata.Name,
-			Description: metadata.Description,
-			Keywords:    metadata.Keywords,
-		}
+		result.Metadata = toDomainSoftwareSourceCodeResourceMetadata(metadata)
 	default:
 		return domain.ResourceVersion{}, fmt.Errorf("decode metadata-lifecycle resource metadata: response is empty")
 	}
 
 	return result, nil
+}
+
+func toDomainDatasetResourceMetadata(value *client.DatasetMetadata) domain.DatasetResourceMetadata {
+	return domain.DatasetResourceMetadata{
+		ID:                    value.Id,
+		SourceIRI:             value.SourceIri,
+		Title:                 value.Title,
+		Description:           value.Description,
+		Keywords:              value.Keywords,
+		AccrualPeriodicity:    value.AccrualPeriodicity.Get(),
+		QualityAnnotation:     value.QualityAnnotation.Get(),
+		AccessRight:           value.AccessRight.Get(),
+		Distributions:         toDomainDistributions(value.Distributions),
+		SpatialCoverage:       mapClientSpatial(value.SpatialCoverage.Get()),
+		TemporalCoverage:      mapClientTemporal(value.TemporalCoverage),
+		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toDomainIdentifier),
+		ContactPoints:         mapSlice(value.ContactPoints, toDomainContactPointReference),
+		Providers:             mapSlice(value.Providers, toDomainResourceVersionReference),
+		Categories:            mapSlice(value.Categories, toDomainResourceVersionReference),
+		SourceCreated:         value.Created.Get(),
+		SourceUpdated:         value.Updated.Get(),
+	}
+}
+
+func toDomainSoftwareApplicationResourceMetadata(value *client.SoftwareApplicationMetadata) domain.SoftwareApplicationResourceMetadata {
+	return domain.SoftwareApplicationResourceMetadata{
+		ID:               value.Id,
+		SourceIRI:        value.SourceIri,
+		Name:             value.Name,
+		Description:      value.Description,
+		MainEntityOfPage: value.MainEntityOfPage.Get(),
+		License:          value.License.Get(),
+		Version:          value.Version.Get(),
+		Keywords:         value.Keywords,
+		DownloadURL:      value.DownloadUrl.Get(),
+		Requirements:     value.Requirements.Get(),
+		OperatingSystem:  value.OperatingSystem.Get(),
+		Creators:         mapSlice(value.Creators, toDomainResourceVersionReference),
+		Identifiers:      mapSlice(value.Identifiers, toDomainIdentifier),
+		ContactPoints:    mapSlice(value.ContactPoints, toDomainContactPointReference),
+		Categories:       mapSlice(value.Categories, toDomainResourceVersionReference),
+	}
+}
+
+func toDomainSoftwareSourceCodeResourceMetadata(value *client.SoftwareSourceCodeMetadata) domain.SoftwareSourceCodeResourceMetadata {
+	return domain.SoftwareSourceCodeResourceMetadata{
+		ID:                   value.Id,
+		SourceIRI:            value.SourceIri,
+		Name:                 value.Name,
+		Description:          value.Description,
+		ProgrammingLanguage:  value.ProgrammingLanguage.Get(),
+		Keywords:             value.Keywords,
+		Repository:           value.Repository.Get(),
+		License:              value.License.Get(),
+		SoftwareRequirements: value.SoftwareRequirements.Get(),
+		RuntimePlatform:      value.RuntimePlatform.Get(),
+		MainEntityOfPage:     value.MainEntityOfPage.Get(),
+		Version:              value.Version.Get(),
+		Creators:             mapSlice(value.Creators, toDomainResourceVersionReference),
+		Identifiers:          mapSlice(value.Identifiers, toDomainIdentifier),
+		ContactPoints:        mapSlice(value.ContactPoints, toDomainContactPointReference),
+		Categories:           mapSlice(value.Categories, toDomainResourceVersionReference),
+	}
+}
+
+func toDomainResourceVersionReference(value client.ResourceReference) domain.ResourceVersionReference {
+	return domain.ResourceVersionReference{
+		ID:        value.Id,
+		SourceIRI: value.SourceIri,
+		Name:      value.Name,
+	}
+}
+
+func toDomainContactPointReference(value client.ContactPointReference) domain.ContactPointReference {
+	return domain.ContactPointReference{
+		ID:        value.Id,
+		SourceIRI: value.SourceIri,
+	}
+}
+
+func mapClientSpatial(value *client.Spatial) *domain.SpatialCoverage {
+	if value == nil {
+		return nil
+	}
+	return new(domain.SpatialCoverage{
+		Point:   toDomainCoordinatePtr(value.Point),
+		Polygon: mapSlice(value.Polygon, toDomainCoordinate),
+	})
+}
+
+func toDomainCoordinatePtr(value *client.Coordinate) *domain.Coordinate {
+	if value == nil {
+		return nil
+	}
+	return new(domain.Coordinate{
+		Latitude:  float64(value.Latitude),
+		Longitude: float64(value.Longitude),
+	})
+}
+
+func toDomainCoordinate(value client.Coordinate) domain.Coordinate {
+	return domain.Coordinate{
+		Latitude:  float64(value.Latitude),
+		Longitude: float64(value.Longitude),
+	}
+}
+
+func mapClientTemporal(value *client.Temporal) *domain.TemporalCoverage {
+	if value == nil {
+		return nil
+	}
+	return new(domain.TemporalCoverage{Start: value.Start.Get(), End: value.End.Get()})
+}
+
+func toDomainDistributions(values []client.Distribution) []domain.Distribution {
+	if values == nil {
+		return nil
+	}
+	result := make([]domain.Distribution, 0, len(values))
+	for _, value := range values {
+		switch {
+		case value.WebServiceDistribution != nil:
+			v := value.WebServiceDistribution
+			result = append(result, domain.WebServiceDistribution{
+				ID:          v.Id,
+				Title:       v.Title,
+				Description: v.Description,
+				License:     v.License.Get(),
+				Type:        v.Type,
+				Issued:      v.Issued.Get(),
+				Modified:    v.Modified.Get(),
+				ByteSize:    v.ByteSize.Get(),
+				WebService:  toDomainWebService(v.WebService),
+			})
+		case value.DownloadableFileDistribution != nil:
+			v := value.DownloadableFileDistribution
+			result = append(result, domain.DownloadableFileDistribution{
+				ID:          v.Id,
+				Title:       v.Title,
+				Description: v.Description,
+				License:     v.License.Get(),
+				Type:        v.Type,
+				Issued:      v.Issued.Get(),
+				Modified:    v.Modified.Get(),
+				ByteSize:    v.ByteSize.Get(),
+				DownloadableFile: domain.DownloadableFile{
+					URL:    v.DownloadableFile.Url,
+					Format: v.DownloadableFile.Format,
+				},
+			})
+		}
+	}
+	return result
+}
+
+func toDomainWebService(value client.WebService) domain.WebService {
+	return domain.WebService{
+		ID:               value.Id,
+		Name:             value.Name,
+		Description:      value.Description,
+		TemplateURL:      value.TemplateUrl,
+		Parameters:       toDomainParameters(value.Parameters),
+		Format:           value.Format,
+		Provider:         mapClientResourceReference(value.Provider),
+		Documentation:    mapClientDocumentation(value.Documentation),
+		SpatialCoverage:  mapClientSpatial(value.SpatialCoverage.Get()),
+		TemporalCoverage: mapClientTemporal(value.TemporalCoverage),
+		ContactPoints:    mapSlice(value.ContactPoints, toDomainContactPointReference),
+	}
+}
+
+func mapClientResourceReference(value *client.ResourceReference) *domain.ResourceVersionReference {
+	if value == nil {
+		return nil
+	}
+	return new(toDomainResourceVersionReference(*value))
+}
+
+func mapClientDocumentation(value *client.Documentation) *domain.Documentation {
+	if value == nil {
+		return nil
+	}
+	return new(domain.Documentation{
+		Title:       value.Title.Get(),
+		Description: value.Description.Get(),
+		URI:         value.Uri,
+	})
+}
+
+func toDomainParameters(values []client.Parameter) []domain.Parameter {
+	if values == nil {
+		return nil
+	}
+	result := make([]domain.Parameter, 0, len(values))
+	for _, value := range values {
+		switch {
+		case value.StringParameter != nil:
+			v := value.StringParameter
+			result = append(result, domain.StringParameter{
+				Metadata:      toDomainParameterMetadata(&v.Metadata),
+				Default:       v.Default.Get(),
+				AllowedValues: slices.Clone(v.AllowedValues),
+				Pattern:       v.Pattern,
+			})
+		case value.BooleanParameter != nil:
+			v := value.BooleanParameter
+			result = append(result, domain.BooleanParameter{
+				Metadata: toDomainParameterMetadata(&v.Metadata),
+				Default:  v.Default.Get(),
+			})
+		case value.IntegerParameter != nil:
+			v := value.IntegerParameter
+			result = append(result, domain.IntegerParameter{
+				Metadata:      toDomainParameterMetadata(&v.Metadata),
+				Minimum:       v.Minimum.Get(),
+				Maximum:       v.Maximum.Get(),
+				Default:       v.Default.Get(),
+				AllowedValues: slices.Clone(v.AllowedValues),
+			})
+		case value.FloatParameter != nil:
+			v := value.FloatParameter
+			result = append(result, domain.FloatParameter{
+				Metadata:      toDomainParameterMetadata(&v.Metadata),
+				Minimum:       v.Minimum.Get(),
+				Maximum:       v.Maximum.Get(),
+				Default:       v.Default.Get(),
+				AllowedValues: slices.Clone(v.AllowedValues),
+			})
+		case value.DateTimeParameter != nil:
+			v := value.DateTimeParameter
+			result = append(result, domain.DateTimeParameter{
+				Metadata: toDomainParameterMetadata(&v.Metadata),
+				Minimum:  v.Minimum.Get(),
+				Maximum:  v.Maximum.Get(),
+				Default:  v.Default.Get(),
+				Pattern:  v.Pattern,
+			})
+		}
+	}
+	return result
+}
+
+type parameterMetadataAccessor interface {
+	GetId() string
+	GetKind() string
+	GetVariable() string
+	GetProperty() string
+	GetLabel() string
+	GetRequired() bool
+	GetMultipleValues() bool
+	GetReadOnly() bool
+}
+
+func toDomainParameterMetadata(value parameterMetadataAccessor) domain.ParameterMetadata {
+	return domain.ParameterMetadata{
+		ID:             value.GetId(),
+		Kind:           value.GetKind(),
+		Variable:       value.GetVariable(),
+		Property:       value.GetProperty(),
+		Label:          value.GetLabel(),
+		Required:       value.GetRequired(),
+		MultipleValues: value.GetMultipleValues(),
+		ReadOnly:       value.GetReadOnly(),
+	}
 }
 
 func toDomainContactPoint(value client.ContactPoint) domain.ContactPoint {
@@ -345,26 +642,33 @@ func toDomainCategory(value client.CanonicalCategory) domain.Category {
 }
 
 func toClientCreateContactPointRequest(value domain.CreateContactPointInput) client.CreateContactPointRequest {
-	return client.CreateContactPointRequest{SourceIri: value.SourceIRI, Email: value.Email, Role: value.Role}
+	return client.CreateContactPointRequest{
+		SourceIri: value.SourceIRI,
+		Email:     value.Email,
+		Role:      value.Role,
+	}
 }
 
 func toClientReplaceContactPointRequest(value domain.ReplaceContactPointInput) client.ReplaceContactPointRequest {
-	return client.ReplaceContactPointRequest{Email: value.Email, Role: value.Role}
+	return client.ReplaceContactPointRequest{
+		Email: value.Email,
+		Role:  value.Role,
+	}
 }
 
 func toClientOrganizationIdentifierInput(value domain.OrganizationIdentifierInput) client.CreateOrganizationIdentifierRequest {
-	return client.CreateOrganizationIdentifierRequest{SourceIri: value.SourceIRI, Type: value.Type, Value: value.Value}
-}
-
-func toClientOrganizationIdentifierInputs(values []domain.OrganizationIdentifierInput) []client.CreateOrganizationIdentifierRequest {
-	return mapSlice(values, toClientOrganizationIdentifierInput)
+	return client.CreateOrganizationIdentifierRequest{
+		SourceIri: value.SourceIRI,
+		Type:      value.Type,
+		Value:     value.Value,
+	}
 }
 
 func toClientCreateCanonicalOrganizationRequest(value domain.CreateOrganizationInput) client.CreateCanonicalOrganizationRequest {
 	result := client.CreateCanonicalOrganizationRequest{ //nolint:exhaustruct_v5 // optional values are set below
 		SourceIri:       value.SourceIRI,
 		Name:            value.Name,
-		Identifiers:     toClientOrganizationIdentifierInputs(value.Identifiers),
+		Identifiers:     mapSlice(value.Identifiers, toClientOrganizationIdentifierInput),
 		Parents:         value.Parents,
 		ContactPointIds: value.ContactPointIDs,
 	}
@@ -382,7 +686,7 @@ func toClientReplaceCanonicalOrganizationRequest(value domain.ReplaceOrganizatio
 	result := client.ReplaceCanonicalOrganizationRequest{ //nolint:exhaustruct_v5 // optional values are set below
 		Name:            value.Name,
 		Address:         toClientOrganizationAddress(value.Address),
-		Identifiers:     toClientOrganizationIdentifierInputs(value.Identifiers),
+		Identifiers:     mapSlice(value.Identifiers, toClientOrganizationIdentifierInput),
 		Parents:         value.Parents,
 		ContactPointIds: value.ContactPointIDs,
 	}
@@ -458,7 +762,11 @@ func toClientReplaceGroupRequest(value domain.ReplaceGroupInput) client.ReplaceG
 }
 
 func toClientCreateCategoryRequest(value domain.CreateCategoryInput) client.CreateCategoryRequest {
-	return client.CreateCategoryRequest{SourceIri: value.SourceIRI, Name: value.Name, ParentCategoryId: value.ParentCategoryID}
+	return client.CreateCategoryRequest{
+		SourceIri:        value.SourceIRI,
+		Name:             value.Name,
+		ParentCategoryId: value.ParentCategoryID,
+	}
 }
 
 func toClientReplaceCategoryRequest(value domain.ReplaceCategoryInput) client.ReplaceCategoryRequest {
@@ -482,19 +790,18 @@ func toDomainDiscoveryItem(value client.DiscoveryItem) domain.DiscoveryItem {
 		Name:          value.Name,
 		Status:        string(value.Status),
 		Group:         toDomainDiscoveryReference(value.Group),
-		Providers:     toDomainDiscoveryReferences(value.Providers),
-		Creators:      toDomainDiscoveryReferences(value.Creators),
-		Categories:    toDomainDiscoveryReferences(value.Categories),
-		Distributions: toDomainDiscoveryReferences(value.Distributions),
+		Providers:     mapSlice(value.Providers, toDomainDiscoveryReference),
+		Creators:      mapSlice(value.Creators, toDomainDiscoveryReference),
+		Categories:    mapSlice(value.Categories, toDomainDiscoveryReference),
+		Distributions: mapSlice(value.Distributions, toDomainDiscoveryReference),
 	}
 }
 
-func toDomainDiscoveryReferences(values []client.DiscoveryReference) []domain.DiscoveryReference {
-	return mapSlice(values, toDomainDiscoveryReference)
-}
-
 func toDomainDiscoveryReference(value client.DiscoveryReference) domain.DiscoveryReference {
-	return domain.DiscoveryReference{ID: value.Id, Name: value.Name}
+	return domain.DiscoveryReference{
+		ID:   value.Id,
+		Name: value.Name,
+	}
 }
 
 func toDomainUser(value *client.User) (domain.User, error) {
@@ -511,7 +818,7 @@ func toDomainUser(value *client.User) (domain.User, error) {
 			Roles:        slices.Clone(membership.Roles),
 			Status:       membership.Status,
 			Permissions:  slices.Clone(membership.Permissions),
-			RoleRequests: toDomainRoleRequests(membership.RoleRequests),
+			RoleRequests: mapSlice(membership.RoleRequests, toDomainRoleRequest),
 			CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
 			UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
 		}
@@ -529,10 +836,6 @@ func toDomainUser(value *client.User) (domain.User, error) {
 		UpdatedAt:         value.UpdatedAt.Format(time.RFC3339Nano),
 		Memberships:       memberships,
 	}, nil
-}
-
-func toDomainRoleRequests(values []client.RoleRequest) []domain.RoleRequest {
-	return mapSlice(values, toDomainRoleRequest)
 }
 
 func toDomainRoleRequest(value client.RoleRequest) domain.RoleRequest {
@@ -584,7 +887,7 @@ func toDomainGroupMembership(value *client.GroupMembership) (domain.GroupMembers
 		Status:       value.Status,
 		Roles:        slices.Clone(value.Roles),
 		Permissions:  slices.Clone(value.Permissions),
-		RoleRequests: toDomainRoleRequests(value.RoleRequests),
+		RoleRequests: mapSlice(value.RoleRequests, toDomainRoleRequest),
 		CreatedAt:    value.CreatedAt,
 		UpdatedAt:    value.UpdatedAt,
 	}, nil
@@ -606,10 +909,6 @@ func toDomainUserSummary(value client.UserSummary) domain.UserSummary {
 	}
 }
 
-func toDomainUserSummaries(values []client.UserSummary) []domain.UserSummary {
-	return mapSlice(values, toDomainUserSummary)
-}
-
 func toDomainImportDiagnostic(value client.ImportDiagnostic) domain.ImportDiagnostic {
 	return domain.ImportDiagnostic(value)
 }
@@ -628,31 +927,46 @@ func toDomainImportResult(value client.ImportResult) domain.ImportResult {
 }
 
 func toClientRejectRequest(value domain.RejectResourceInput) client.RejectRequest {
-	return client.RejectRequest{Note: value.Note}
+	return client.RejectRequest{
+		Note: value.Note,
+	}
 }
 
 func toClientCopyResourceRequest(groupID string, value domain.CopyResourceInput) client.CopyResourceRequest {
-	return client.CopyResourceRequest{TargetGroupId: groupID, SourceIri: value.SourceIRI}
+	return client.CopyResourceRequest{
+		TargetGroupId: groupID,
+		SourceIri:     value.SourceIRI,
+	}
 }
 
 func toClientCreateMembershipRequest(roles []string) client.CreateMembershipRequest {
-	return client.CreateMembershipRequest{Roles: roles}
+	return client.CreateMembershipRequest{
+		Roles: roles,
+	}
 }
 
 func toClientMembershipDecisionRequest(status string) client.MembershipDecisionRequest {
-	return client.MembershipDecisionRequest{Status: status}
+	return client.MembershipDecisionRequest{
+		Status: status,
+	}
 }
 
 func toClientCreateRoleRequest(role string) client.CreateRoleRequest {
-	return client.CreateRoleRequest{Role: role}
+	return client.CreateRoleRequest{
+		Role: role,
+	}
 }
 
 func toClientRoleRequestDecisionRequest(status string) client.RoleRequestDecisionRequest {
-	return client.RoleRequestDecisionRequest{Status: status}
+	return client.RoleRequestDecisionRequest{
+		Status: status,
+	}
 }
 
 func toClientBlockUserRequest(reason string) client.BlockUserRequest {
-	return client.BlockUserRequest{Reason: reason}
+	return client.BlockUserRequest{
+		Reason: reason,
+	}
 }
 
 func toClientCreateUserRequest(identity ActorIdentity) client.CreateUserRequest {
@@ -662,4 +976,8 @@ func toClientCreateUserRequest(identity ActorIdentity) client.CreateUserRequest 
 		GivenName:  identity.GivenName,
 		FamilyName: identity.FamilyName,
 	}
+}
+
+func toDomainUserSummaries(values []client.UserSummary) []domain.UserSummary {
+	return mapSlice(values, toDomainUserSummary)
 }

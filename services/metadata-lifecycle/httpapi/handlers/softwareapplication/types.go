@@ -1,6 +1,8 @@
 package softwareapplication
 
 import (
+	"time"
+
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/google/uuid"
@@ -134,42 +136,35 @@ type record struct {
 	Revision   int32                          `json:"revision"`
 	Status     metadata.DatasetStatus         `json:"status"`
 	CreatedBy  string                         `json:"created_by"`
-	Group      categorySchemeResponse         `json:"group"`
+	GroupID    uuid.UUID                      `json:"group_id"`
+	GroupName  string                         `json:"group_name"`
+	CreatedAt  time.Time                      `json:"created_at"`
+	UpdatedAt  time.Time                      `json:"updated_at"`
 	Metadata   softwareApplicationResponseDTO `json:"metadata"`
 }
 
 type softwareApplicationResponseDTO struct {
-	ID               uuid.UUID               `json:"id"`
-	SourceIRI        string                  `json:"source_iri"`
-	Name             string                  `json:"name"`
-	Description      string                  `json:"description"`
-	MainEntityOfPage *string                 `json:"main_entity_of_page"`
-	License          *string                 `json:"license"`
-	Version          *string                 `json:"version"`
-	Keywords         string                  `json:"keywords"`
-	DownloadURL      *string                 `json:"download_url"`
-	Requirements     *string                 `json:"requirements"`
-	OperatingSystem  *string                 `json:"operating_system"`
-	Creators         []organizationResponse  `json:"creators"`
-	Identifiers      []identifierResponse    `json:"identifiers"`
-	Categories       []categoryResponse      `json:"categories"`
-	ContactPoints    *[]contactPointResponse `json:"contact_points"`
+	ID               uuid.UUID                `json:"id"`
+	SourceIRI        string                   `json:"source_iri"`
+	Name             string                   `json:"name"`
+	Description      string                   `json:"description"`
+	MainEntityOfPage *string                  `json:"main_entity_of_page"`
+	License          *string                  `json:"license"`
+	Version          *string                  `json:"version"`
+	Keywords         string                   `json:"keywords"`
+	DownloadURL      *string                  `json:"download_url"`
+	Requirements     *string                  `json:"requirements"`
+	OperatingSystem  *string                  `json:"operating_system"`
+	Creators         []resourceReference      `json:"creators"`
+	Identifiers      []identifierResponse     `json:"identifiers"`
+	Categories       []resourceReference      `json:"categories"`
+	ContactPoints    *[]contactPointReference `json:"contact_points"`
 }
 
-type organizationResponse struct {
-	ID            uuid.UUID               `json:"id"`
-	SourceIRI     string                  `json:"source_iri"`
-	Name          string                  `json:"name"`
-	Street        *string                 `json:"street"`
-	Locality      *string                 `json:"locality"`
-	PostalCode    *string                 `json:"postal_code"`
-	Country       *string                 `json:"country"`
-	LogoURL       *string                 `json:"logo_url"`
-	PageURL       *string                 `json:"page_url"`
-	Email         *string                 `json:"email"`
-	LEICode       *string                 `json:"lei_code"`
-	ContactPoints *[]contactPointResponse `json:"contact_points"`
-	Identifiers   []identifierResponse    `json:"identifiers"`
+type resourceReference struct {
+	ID        uuid.UUID `json:"id"`
+	SourceIRI string    `json:"source_iri"`
+	Name      string    `json:"name"`
 }
 
 type identifierResponse struct {
@@ -179,26 +174,6 @@ type identifierResponse struct {
 	Value     string                  `json:"value"`
 }
 
-type categoryResponse struct {
-	ID        uuid.UUID              `json:"id"`
-	SourceIRI string                 `json:"source_iri"`
-	Name      string                 `json:"name"`
-	Scheme    categorySchemeResponse `json:"scheme"`
-	Children  []categoryResponse     `json:"children"`
-}
-
-type categorySchemeResponse struct {
-	ID        uuid.UUID                `json:"id"`
-	SourceIRI string                   `json:"source_iri"`
-	Name      string                   `json:"name"`
-	Label     *string                  `json:"label"`
-	Logo      *string                  `json:"logo"`
-	Page      *string                  `json:"page"`
-	Color     *string                  `json:"color"`
-	Position  int32                    `json:"position"`
-	Concept   metadata.TopLevelConcept `json:"concept"`
-}
-
 func applicationResponse(value softwarelifecycle.Application, includeContacts bool) record {
 	return record{
 		ResourceID: value.ApplicationID,
@@ -206,7 +181,10 @@ func applicationResponse(value softwarelifecycle.Application, includeContacts bo
 		Revision:   value.Revision,
 		Status:     value.Status,
 		CreatedBy:  value.CreatedBy,
-		Group:      categorySchemeDTO(value.Group),
+		GroupID:    value.Group.ID,
+		GroupName:  value.Group.Name,
+		CreatedAt:  value.CreatedAt,
+		UpdatedAt:  value.UpdatedAt,
 		Metadata:   applicationMetadataDTO(value.Metadata, includeContacts),
 	}
 }
@@ -224,69 +202,41 @@ func applicationMetadataDTO(value metadata.SoftwareApplication, includeContacts 
 		DownloadURL:      value.DownloadURL,
 		Requirements:     value.Requirements,
 		OperatingSystem:  value.OperatingSystem,
-		Creators:         make([]organizationResponse, 0, len(value.Creators)),
+		Creators:         make([]resourceReference, 0, len(value.Creators)),
 		Identifiers:      make([]identifierResponse, 0, len(value.Identifiers)),
-		Categories:       make([]categoryResponse, 0, len(value.Categories)),
+		Categories:       make([]resourceReference, 0, len(value.Categories)),
 		ContactPoints:    nil,
 	}
 	for _, creator := range value.Creators {
-		result.Creators = append(result.Creators, organizationDTO(creator, includeContacts))
+		result.Creators = append(result.Creators, resourceReferenceDTO(creator.ID, creator.SourceIRI, creator.Name))
 	}
 	for _, identifier := range value.Identifiers {
 		result.Identifiers = append(result.Identifiers, identifierDTO(identifier))
 	}
 	for _, category := range value.Categories {
-		result.Categories = append(result.Categories, categoryDTO(category))
+		result.Categories = append(result.Categories, resourceReferenceDTO(category.ID, category.SourceIRI, category.Name))
 	}
 	if includeContacts {
-		contacts := make([]contactPointResponse, 0, len(value.ContactPoints))
+		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
 		for _, contact := range value.ContactPoints {
-			contacts = append(contacts, contactPointDTO(contact))
+			contacts = append(contacts, contactPointReferenceDTO(contact))
 		}
 		result.ContactPoints = &contacts
 	}
 	return result
 }
 
-type contactPointResponse struct {
-	ID        uuid.UUID                 `json:"id"`
-	SourceIRI string                    `json:"source_iri"`
-	Email     string                    `json:"email"`
-	Role      metadata.ContactPointRole `json:"role"`
+type contactPointReference struct {
+	ID        uuid.UUID `json:"id"`
+	SourceIRI string    `json:"source_iri"`
 }
 
-func contactPointDTO(value metadata.ContactPoint) contactPointResponse {
-	return contactPointResponse{ID: value.ID, SourceIRI: value.SourceIRI, Email: value.Email, Role: value.Role}
+func resourceReferenceDTO(id uuid.UUID, sourceIRI, name string) resourceReference {
+	return resourceReference{ID: id, SourceIRI: sourceIRI, Name: name}
 }
 
-func organizationDTO(value metadata.Organization, includeContacts bool) organizationResponse {
-	result := organizationResponse{
-		ID:            value.ID,
-		SourceIRI:     value.SourceIRI,
-		Name:          value.Name,
-		Street:        value.Street,
-		Locality:      value.Locality,
-		PostalCode:    value.PostalCode,
-		Country:       value.Country,
-		LogoURL:       value.LogoURL,
-		PageURL:       value.PageURL,
-		Email:         value.Email,
-		LEICode:       value.LEICode,
-		ContactPoints: nil,
-		Identifiers:   make([]identifierResponse, 0, len(value.Identifiers)),
-	}
-	for _, identifier := range value.Identifiers {
-		result.Identifiers = append(result.Identifiers, identifierDTO(identifier))
-	}
-	for _, contact := range value.ContactPoints {
-		if includeContacts {
-			if result.ContactPoints == nil {
-				result.ContactPoints = new([]contactPointResponse)
-			}
-			*result.ContactPoints = append(*result.ContactPoints, contactPointDTO(contact))
-		}
-	}
-	return result
+func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
+	return contactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
 }
 
 func identifierDTO(value metadata.Identifier) identifierResponse {
@@ -295,33 +245,5 @@ func identifierDTO(value metadata.Identifier) identifierResponse {
 		SourceIRI: value.SourceIRI,
 		Type:      value.Type,
 		Value:     value.Value,
-	}
-}
-
-func categoryDTO(value metadata.Category) categoryResponse {
-	result := categoryResponse{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Name:      value.Name,
-		Scheme:    categorySchemeDTO(value.Scheme),
-		Children:  make([]categoryResponse, 0, len(value.Children)),
-	}
-	for _, child := range value.Children {
-		result.Children = append(result.Children, categoryDTO(child))
-	}
-	return result
-}
-
-func categorySchemeDTO(value metadata.CategoryScheme) categorySchemeResponse {
-	return categorySchemeResponse{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Name:      value.Name,
-		Label:     value.Label,
-		Logo:      value.Logo,
-		Page:      value.Page,
-		Color:     value.Color,
-		Position:  value.Position,
-		Concept:   value.Concept,
 	}
 }

@@ -451,6 +451,8 @@ func applicationResult(ctx context.Context, q *sqlc.Queries, appID, versionID uu
 		Status:        metadata.DatasetStatus(version.Status),
 		CreatedBy:     version.CreatedBy,
 		Group:         categoryScheme(row.Group),
+		CreatedAt:     version.CreatedAt,
+		UpdatedAt:     version.UpdatedAt,
 		Metadata:      value,
 	}, nil
 }

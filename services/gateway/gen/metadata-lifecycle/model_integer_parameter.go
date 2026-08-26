@@ -21,6 +21,7 @@ var _ MappedNullable = &IntegerParameter{}
 
 // IntegerParameter struct for IntegerParameter
 type IntegerParameter struct {
+	Kind          string                   `json:"kind"`
 	Metadata      IntegerParameterMetadata `json:"metadata"`
 	Minimum       NullableInt64            `json:"minimum"`
 	Maximum       NullableInt64            `json:"maximum"`
@@ -34,8 +35,9 @@ type _IntegerParameter IntegerParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewIntegerParameter(metadata IntegerParameterMetadata, minimum NullableInt64, maximum NullableInt64, default_ NullableInt64, allowedValues []int64) *IntegerParameter {
+func NewIntegerParameter(kind string, metadata IntegerParameterMetadata, minimum NullableInt64, maximum NullableInt64, default_ NullableInt64, allowedValues []int64) *IntegerParameter {
 	this := IntegerParameter{}
+	this.Kind = kind
 	this.Metadata = metadata
 	this.Minimum = minimum
 	this.Maximum = maximum
@@ -50,6 +52,30 @@ func NewIntegerParameter(metadata IntegerParameterMetadata, minimum NullableInt6
 func NewIntegerParameterWithDefaults() *IntegerParameter {
 	this := IntegerParameter{}
 	return &this
+}
+
+// GetKind returns the Kind field value
+func (o *IntegerParameter) GetKind() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Kind
+}
+
+// GetKindOk returns a tuple with the Kind field value
+// and a boolean to check if the value has been set.
+func (o *IntegerParameter) GetKindOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Kind, true
+}
+
+// SetKind sets field value
+func (o *IntegerParameter) SetKind(v string) {
+	o.Kind = v
 }
 
 // GetMetadata returns the Metadata field value
@@ -188,6 +214,7 @@ func (o IntegerParameter) MarshalJSON() ([]byte, error) {
 
 func (o IntegerParameter) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["kind"] = o.Kind
 	toSerialize["metadata"] = o.Metadata
 	toSerialize["minimum"] = o.Minimum.Get()
 	toSerialize["maximum"] = o.Maximum.Get()
@@ -201,6 +228,7 @@ func (o *IntegerParameter) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"kind",
 		"metadata",
 		"minimum",
 		"maximum",

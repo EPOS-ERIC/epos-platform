@@ -1720,14 +1720,28 @@ components:
     ResourceRecord:
       type: object
       required:
-        [resource_id, version_id, revision, status, created_by, group, metadata]
+        [
+          resource_id,
+          version_id,
+          revision,
+          status,
+          created_by,
+          group_id,
+          group_name,
+          created_at,
+          updated_at,
+          metadata,
+        ]
       properties:
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         revision: { type: integer, format: int32 }
         status: { $ref: "#/components/schemas/DatasetStatus" }
         created_by: { type: string, format: uuid }
-        group: { $ref: "#/components/schemas/CategoryScheme" }
+        group_id: { type: string, format: uuid }
+        group_name: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
         metadata:
           anyOf:
             - { $ref: "#/components/schemas/DatasetMetadata" }
@@ -1829,19 +1843,22 @@ components:
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
         creators:
-          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
         identifiers:
           { type: array, items: { $ref: "#/components/schemas/Identifier" } }
         contact_points:
           {
             type: array,
             nullable: true,
-            items: { $ref: "#/components/schemas/ContactPoint" },
+            items: { $ref: "#/components/schemas/ContactPointReference" },
           }
         categories:
           {
             type: array,
-            items: { $ref: "#/components/schemas/SoftwareCategory" },
+            items: { $ref: "#/components/schemas/ResourceReference" },
           }
     SoftwareSourceCodeMetadata:
       type: object
@@ -1871,19 +1888,22 @@ components:
         main_entity_of_page: { type: string, nullable: true }
         version: { type: string, nullable: true }
         creators:
-          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
         identifiers:
           { type: array, items: { $ref: "#/components/schemas/Identifier" } }
         contact_points:
           {
             type: array,
             nullable: true,
-            items: { $ref: "#/components/schemas/ContactPoint" },
+            items: { $ref: "#/components/schemas/ContactPointReference" },
           }
         categories:
           {
             type: array,
-            items: { $ref: "#/components/schemas/SoftwareCategory" },
+            items: { $ref: "#/components/schemas/ResourceReference" },
           }
     SoftwareCategory:
       type: object
@@ -2077,8 +2097,8 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/CanonicalReference" },
           }
-        source_created: { type: string, format: date-time, nullable: true }
-        source_updated: { type: string, format: date-time, nullable: true }
+        created: { type: string, format: date-time, nullable: true }
+        updated: { type: string, format: date-time, nullable: true }
     DatasetMetadata:
       type: object
       required:
@@ -2093,9 +2113,6 @@ components:
           contact_points,
           providers,
           categories,
-          status,
-          created,
-          updated,
         ]
       properties:
         id: { type: string, format: uuid }
@@ -2116,34 +2133,80 @@ components:
           {
             type: array,
             nullable: true,
-            items: { $ref: "#/components/schemas/ContactPoint" },
+            items: { $ref: "#/components/schemas/ContactPointReference" },
           }
         providers:
-          { type: array, items: { $ref: "#/components/schemas/Organization" } }
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
         categories:
-          { type: array, items: { $ref: "#/components/schemas/Category" } }
-        source_created: { type: string, format: date-time, nullable: true }
-        source_updated: { type: string, format: date-time, nullable: true }
-        status: { $ref: "#/components/schemas/DatasetStatus" }
-        created: { type: string, format: date-time }
-        updated: { type: string, format: date-time }
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ResourceReference" },
+          }
+        created: { type: string, format: date-time, nullable: true }
+        updated: { type: string, format: date-time, nullable: true }
     Distribution:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistribution"
+        - $ref: "#/components/schemas/DownloadableFileDistribution"
+      discriminator:
+        propertyName: type
+        mapping:
+          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistribution"
+          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistribution"
+
+    WebServiceDistribution:
       type: object
-      required: [id, title, description, type]
+      additionalProperties: false
+      required: [id, title, description, type, web_service]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
-        type: { $ref: "#/components/schemas/DistributionType" }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true }
         web_service: { $ref: "#/components/schemas/WebService" }
-        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
-    DistributionDraft:
+
+    DownloadableFileDistribution:
       type: object
-      required: [title, type]
+      additionalProperties: false
+      required: [id, title, description, type, downloadable_file]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
+        downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
+
+    DistributionDraft:
+      oneOf:
+        - $ref: "#/components/schemas/WebServiceDistributionDraft"
+        - $ref: "#/components/schemas/DownloadableFileDistributionDraft"
+      discriminator:
+        propertyName: type
+        mapping:
+          "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE": "#/components/schemas/WebServiceDistributionDraft"
+          "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE": "#/components/schemas/DownloadableFileDistributionDraft"
+
+    WebServiceDistributionDraft:
+      type: object
+      additionalProperties: false
+      required: [title, type, web_service]
       properties:
         id:
           {
@@ -2154,17 +2217,37 @@ components:
         title: { type: string }
         description: { type: string, default: "" }
         license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
         byte_size: { type: integer, format: int64, nullable: true }
-        type:
-          allOf: [{ $ref: "#/components/schemas/DistributionType" }]
-          description: Must match selected delivery method.
         web_service: { $ref: "#/components/schemas/WebServiceDraft" }
+
+    DownloadableFileDistributionDraft:
+      type: object
+      additionalProperties: false
+      required: [title, type, downloadable_file]
+      properties:
+        id:
+          {
+            type: string,
+            format: uuid,
+            description: Accepted but generated by storage.,
+          }
+        title: { type: string }
+        description: { type: string, default: "" }
+        license: { type: string, nullable: true }
+        type:
+          type: string
+          enum:
+            - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
+        issued: { type: string, format: date-time, nullable: true }
+        modified: { type: string, format: date-time, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
-      oneOf:
-        - required: [web_service]
-        - required: [downloadable_file]
     WebServiceDraft:
       type: object
       required: [name, template_url, format]
@@ -2204,15 +2287,13 @@ components:
         - { $ref: "#/components/schemas/FloatParameter" }
         - { $ref: "#/components/schemas/DateTimeParameter" }
       discriminator:
-        propertyName: metadata.kind
+        propertyName: kind
         mapping:
-          {
-            STRING: "#/components/schemas/StringParameter",
-            BOOLEAN: "#/components/schemas/BooleanParameter",
-            INTEGER: "#/components/schemas/IntegerParameter",
-            FLOAT: "#/components/schemas/FloatParameter",
-            DATETIME: "#/components/schemas/DateTimeParameter",
-          }
+          STRING: "#/components/schemas/StringParameter"
+          BOOLEAN: "#/components/schemas/BooleanParameter"
+          INTEGER: "#/components/schemas/IntegerParameter"
+          FLOAT: "#/components/schemas/FloatParameter"
+          DATETIME: "#/components/schemas/DateTimeParameter"
     ParameterMetadata:
       {
         type: object,
@@ -2242,9 +2323,10 @@ components:
     StringParameter:
       {
         type: object,
-        required: [metadata, default, allowed_values, pattern],
+        required: [kind, metadata, default, allowed_values, pattern],
         properties:
           {
+            kind: { type: string, enum: [STRING] },
             metadata:
               {
                 allOf:
@@ -2264,9 +2346,10 @@ components:
     BooleanParameter:
       {
         type: object,
-        required: [metadata, default],
+        required: [kind, metadata, default],
         properties:
           {
+            kind: { type: string, enum: [BOOLEAN] },
             metadata:
               {
                 allOf:
@@ -2284,9 +2367,10 @@ components:
     IntegerParameter:
       {
         type: object,
-        required: [metadata, minimum, maximum, default, allowed_values],
+        required: [kind, metadata, minimum, maximum, default, allowed_values],
         properties:
           {
+            kind: { type: string, enum: [INTEGER] },
             metadata:
               {
                 allOf:
@@ -2308,9 +2392,10 @@ components:
     FloatParameter:
       {
         type: object,
-        required: [metadata, minimum, maximum, default, allowed_values],
+        required: [kind, metadata, minimum, maximum, default, allowed_values],
         properties:
           {
+            kind: { type: string, enum: [FLOAT] },
             metadata:
               {
                 allOf:
@@ -2332,9 +2417,10 @@ components:
     DateTimeParameter:
       {
         type: object,
-        required: [metadata, minimum, maximum, default, pattern],
+        required: [kind, metadata, minimum, maximum, default, pattern],
         properties:
           {
+            kind: { type: string, enum: [DATETIME] },
             metadata:
               {
                 allOf:
@@ -2363,18 +2449,34 @@ components:
         parameters:
           { type: array, items: { $ref: "#/components/schemas/Parameter" } }
         format: { type: string }
-        provider: { $ref: "#/components/schemas/Organization" }
+        provider: { $ref: "#/components/schemas/ResourceReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/Spatial" }
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
         contact_points:
-          { type: array, items: { $ref: "#/components/schemas/ContactPoint" } }
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ContactPointReference" },
+          }
     DownloadableFile:
       {
         type: object,
         required: [url, format],
         properties: { url: { type: string }, format: { type: string } },
       }
+    ResourceReference:
+      type: object
+      required: [id, source_iri, name]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
+        name: { type: string }
+    ContactPointReference:
+      type: object
+      required: [id, source_iri]
+      properties:
+        id: { type: string, format: uuid }
+        source_iri: { type: string }
     Documentation:
       {
         type: object,

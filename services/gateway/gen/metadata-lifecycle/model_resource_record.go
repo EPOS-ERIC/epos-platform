@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // checks if the ResourceRecord type satisfies the MappedNullable interface at compile time
@@ -26,7 +27,10 @@ type ResourceRecord struct {
 	Revision   int32                  `json:"revision"`
 	Status     DatasetStatus          `json:"status"`
 	CreatedBy  string                 `json:"created_by"`
-	Group      CategoryScheme         `json:"group"`
+	GroupId    string                 `json:"group_id"`
+	GroupName  string                 `json:"group_name"`
+	CreatedAt  time.Time              `json:"created_at"`
+	UpdatedAt  time.Time              `json:"updated_at"`
 	Metadata   ResourceRecordMetadata `json:"metadata"`
 }
 
@@ -36,14 +40,17 @@ type _ResourceRecord ResourceRecord
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewResourceRecord(resourceId string, versionId string, revision int32, status DatasetStatus, createdBy string, group CategoryScheme, metadata ResourceRecordMetadata) *ResourceRecord {
+func NewResourceRecord(resourceId string, versionId string, revision int32, status DatasetStatus, createdBy string, groupId string, groupName string, createdAt time.Time, updatedAt time.Time, metadata ResourceRecordMetadata) *ResourceRecord {
 	this := ResourceRecord{}
 	this.ResourceId = resourceId
 	this.VersionId = versionId
 	this.Revision = revision
 	this.Status = status
 	this.CreatedBy = createdBy
-	this.Group = group
+	this.GroupId = groupId
+	this.GroupName = groupName
+	this.CreatedAt = createdAt
+	this.UpdatedAt = updatedAt
 	this.Metadata = metadata
 	return &this
 }
@@ -176,28 +183,100 @@ func (o *ResourceRecord) SetCreatedBy(v string) {
 	o.CreatedBy = v
 }
 
-// GetGroup returns the Group field value
-func (o *ResourceRecord) GetGroup() CategoryScheme {
+// GetGroupId returns the GroupId field value
+func (o *ResourceRecord) GetGroupId() string {
 	if o == nil {
-		var ret CategoryScheme
+		var ret string
 		return ret
 	}
 
-	return o.Group
+	return o.GroupId
 }
 
-// GetGroupOk returns a tuple with the Group field value
+// GetGroupIdOk returns a tuple with the GroupId field value
 // and a boolean to check if the value has been set.
-func (o *ResourceRecord) GetGroupOk() (*CategoryScheme, bool) {
+func (o *ResourceRecord) GetGroupIdOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Group, true
+	return &o.GroupId, true
 }
 
-// SetGroup sets field value
-func (o *ResourceRecord) SetGroup(v CategoryScheme) {
-	o.Group = v
+// SetGroupId sets field value
+func (o *ResourceRecord) SetGroupId(v string) {
+	o.GroupId = v
+}
+
+// GetGroupName returns the GroupName field value
+func (o *ResourceRecord) GetGroupName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.GroupName
+}
+
+// GetGroupNameOk returns a tuple with the GroupName field value
+// and a boolean to check if the value has been set.
+func (o *ResourceRecord) GetGroupNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.GroupName, true
+}
+
+// SetGroupName sets field value
+func (o *ResourceRecord) SetGroupName(v string) {
+	o.GroupName = v
+}
+
+// GetCreatedAt returns the CreatedAt field value
+func (o *ResourceRecord) GetCreatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.CreatedAt
+}
+
+// GetCreatedAtOk returns a tuple with the CreatedAt field value
+// and a boolean to check if the value has been set.
+func (o *ResourceRecord) GetCreatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.CreatedAt, true
+}
+
+// SetCreatedAt sets field value
+func (o *ResourceRecord) SetCreatedAt(v time.Time) {
+	o.CreatedAt = v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value
+func (o *ResourceRecord) GetUpdatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value
+// and a boolean to check if the value has been set.
+func (o *ResourceRecord) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.UpdatedAt, true
+}
+
+// SetUpdatedAt sets field value
+func (o *ResourceRecord) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = v
 }
 
 // GetMetadata returns the Metadata field value
@@ -239,7 +318,10 @@ func (o ResourceRecord) ToMap() (map[string]interface{}, error) {
 	toSerialize["revision"] = o.Revision
 	toSerialize["status"] = o.Status
 	toSerialize["created_by"] = o.CreatedBy
-	toSerialize["group"] = o.Group
+	toSerialize["group_id"] = o.GroupId
+	toSerialize["group_name"] = o.GroupName
+	toSerialize["created_at"] = o.CreatedAt
+	toSerialize["updated_at"] = o.UpdatedAt
 	toSerialize["metadata"] = o.Metadata
 	return toSerialize, nil
 }
@@ -254,7 +336,10 @@ func (o *ResourceRecord) UnmarshalJSON(data []byte) (err error) {
 		"revision",
 		"status",
 		"created_by",
-		"group",
+		"group_id",
+		"group_name",
+		"created_at",
+		"updated_at",
 		"metadata",
 	}
 

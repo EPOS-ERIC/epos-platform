@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
@@ -19,6 +20,8 @@ type SourceCode struct {
 	Status       metadata.DatasetStatus
 	CreatedBy    string
 	Group        metadata.CategoryScheme
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 	Metadata     metadata.SoftwareSourceCode
 }
 

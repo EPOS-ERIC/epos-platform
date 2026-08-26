@@ -340,5 +340,15 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 	for _, item := range categories {
 		value.Categories = append(value.Categories, category(item.Category.ID, item.Category.SourceIri, item.Category.Name, item.Group))
 	}
-	return softwarelifecycle.SourceCode{SourceCodeID: row.SoftwareSourceCodeVersion.SoftwareSourceCodeID, VersionID: row.SoftwareSourceCodeVersion.ID, Revision: row.SoftwareSourceCodeVersion.Revision, Status: metadata.DatasetStatus(row.SoftwareSourceCodeVersion.Status), CreatedBy: row.SoftwareSourceCodeVersion.CreatedBy, Group: categoryScheme(row.Group), Metadata: value}, nil
+	return softwarelifecycle.SourceCode{
+		SourceCodeID: row.SoftwareSourceCodeVersion.SoftwareSourceCodeID,
+		VersionID:    row.SoftwareSourceCodeVersion.ID,
+		Revision:     row.SoftwareSourceCodeVersion.Revision,
+		Status:       metadata.DatasetStatus(row.SoftwareSourceCodeVersion.Status),
+		CreatedBy:    row.SoftwareSourceCodeVersion.CreatedBy,
+		Group:        categoryScheme(row.Group),
+		CreatedAt:    row.SoftwareSourceCodeVersion.CreatedAt,
+		UpdatedAt:    row.SoftwareSourceCodeVersion.UpdatedAt,
+		Metadata:     value,
+	}, nil
 }

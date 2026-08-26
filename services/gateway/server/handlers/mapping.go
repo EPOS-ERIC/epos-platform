@@ -45,8 +45,8 @@ func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.Dataset
 		ContactPoints:         mapSlice(value.ContactPoints, toDomainResourceReference),
 		Providers:             mapSlice(value.Providers, toDomainResourceReference),
 		Categories:            mapSlice(value.Categories, toDomainResourceReference),
-		SourceCreated:         value.SourceCreated,
-		SourceUpdated:         value.SourceUpdated,
+		SourceCreated:         value.Created,
+		SourceUpdated:         value.Updated,
 	}
 }
 
@@ -186,20 +186,199 @@ func toAPIResourceVersion(value domain.ResourceVersion) api.ResourceVersion {
 		Revision:   value.Revision,
 		Status:     value.Status,
 		CreatedBy:  value.CreatedBy,
+		GroupID:    value.GroupID,
+		GroupName:  value.GroupName,
+		CreatedAt:  value.CreatedAt,
+		UpdatedAt:  value.UpdatedAt,
 		Metadata:   nil,
-		Group:      api.ResourceGroupReference(value.Group),
 	}
 
 	switch metadata := value.Metadata.(type) {
 	case domain.DatasetResourceMetadata:
-		result.Metadata = api.DatasetResourceMetadata(metadata)
+		result.Metadata = toAPIDatasetResourceMetadata(metadata)
 	case domain.SoftwareApplicationResourceMetadata:
-		result.Metadata = api.SoftwareApplicationResourceMetadata(metadata)
+		result.Metadata = toAPISoftwareApplicationResourceMetadata(metadata)
 	case domain.SoftwareSourceCodeResourceMetadata:
-		result.Metadata = api.SoftwareSourceCodeResourceMetadata(metadata)
+		result.Metadata = toAPISoftwareSourceCodeResourceMetadata(metadata)
 	}
 
 	return result
+}
+
+func toAPIDatasetResourceMetadata(value domain.DatasetResourceMetadata) api.DatasetResourceMetadata {
+	return api.DatasetResourceMetadata{
+		ID:                    value.ID,
+		SourceIRI:             value.SourceIRI,
+		Title:                 value.Title,
+		Description:           value.Description,
+		Keywords:              value.Keywords,
+		AccrualPeriodicity:    value.AccrualPeriodicity,
+		QualityAnnotation:     value.QualityAnnotation,
+		AccessRight:           value.AccessRight,
+		Distributions:         toAPIDistributions(value.Distributions),
+		SpatialCoverage:       mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
+		TemporalCoverage:      mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
+		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toAPIIdentifierDraft),
+		ContactPoints:         mapSlice(value.ContactPoints, toAPIContactPointReference),
+		Providers:             mapSlice(value.Providers, toAPIResourceVersionReference),
+		Categories:            mapSlice(value.Categories, toAPIResourceVersionReference),
+		Created:               value.SourceCreated,
+		Updated:               value.SourceUpdated,
+	}
+}
+
+func toAPISoftwareApplicationResourceMetadata(value domain.SoftwareApplicationResourceMetadata) api.SoftwareApplicationResourceMetadata {
+	return api.SoftwareApplicationResourceMetadata{
+		ID:               value.ID,
+		SourceIRI:        value.SourceIRI,
+		Name:             value.Name,
+		Description:      value.Description,
+		MainEntityOfPage: value.MainEntityOfPage,
+		License:          value.License,
+		Version:          value.Version,
+		Keywords:         value.Keywords,
+		DownloadURL:      value.DownloadURL,
+		Requirements:     value.Requirements,
+		OperatingSystem:  value.OperatingSystem,
+		Creators:         mapSlice(value.Creators, toAPIResourceVersionReference),
+		Identifiers:      mapSlice(value.Identifiers, toAPIIdentifierDraft),
+		ContactPoints:    mapSlice(value.ContactPoints, toAPIContactPointReference),
+		Categories:       mapSlice(value.Categories, toAPIResourceVersionReference),
+	}
+}
+
+func toAPISoftwareSourceCodeResourceMetadata(value domain.SoftwareSourceCodeResourceMetadata) api.SoftwareSourceCodeResourceMetadata {
+	return api.SoftwareSourceCodeResourceMetadata{
+		ID:                   value.ID,
+		SourceIRI:            value.SourceIRI,
+		Name:                 value.Name,
+		Description:          value.Description,
+		ProgrammingLanguage:  value.ProgrammingLanguage,
+		Keywords:             value.Keywords,
+		Repository:           value.Repository,
+		License:              value.License,
+		SoftwareRequirements: value.SoftwareRequirements,
+		RuntimePlatform:      value.RuntimePlatform,
+		MainEntityOfPage:     value.MainEntityOfPage,
+		Version:              value.Version,
+		Creators:             mapSlice(value.Creators, toAPIResourceVersionReference),
+		Identifiers:          mapSlice(value.Identifiers, toAPIIdentifierDraft),
+		ContactPoints:        mapSlice(value.ContactPoints, toAPIContactPointReference),
+		Categories:           mapSlice(value.Categories, toAPIResourceVersionReference),
+	}
+}
+
+func toAPIIdentifierDraft(value domain.Identifier) api.IdentifierDraft {
+	return api.IdentifierDraft{ID: value.ID, SourceIRI: value.SourceIRI, Type: value.Type, Value: value.Value}
+}
+
+func toAPIResourceVersionReference(value domain.ResourceVersionReference) api.ResourceVersionReference {
+	return api.ResourceVersionReference{ID: value.ID, SourceIRI: value.SourceIRI, Name: value.Name}
+}
+
+func toAPIContactPointReference(value domain.ContactPointReference) api.ContactPointReference {
+	return api.ContactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
+}
+
+func toAPISpatialCoverage(value domain.SpatialCoverage) api.SpatialCoverage {
+	return api.SpatialCoverage{Point: mapPtr(value.Point, toAPICoordinate), Polygon: mapSlice(value.Polygon, toAPICoordinate)}
+}
+
+func toAPICoordinate(value domain.Coordinate) api.Coordinate {
+	return api.Coordinate{Latitude: value.Latitude, Longitude: value.Longitude}
+}
+
+func toAPITemporalCoverage(value domain.TemporalCoverage) api.TemporalCoverage {
+	return api.TemporalCoverage{Start: value.Start, End: value.End}
+}
+
+func toAPIDistributions(values []domain.Distribution) []api.Distribution {
+	if values == nil {
+		return nil
+	}
+	result := make([]api.Distribution, 0, len(values))
+	for _, value := range values {
+		switch value := value.(type) {
+		case domain.WebServiceDistribution:
+			result = append(result, api.WebServiceDistribution{
+				ID:          value.ID,
+				Title:       value.Title,
+				Description: value.Description,
+				License:     value.License,
+				Type:        value.Type,
+				Issued:      value.Issued,
+				Modified:    value.Modified,
+				ByteSize:    value.ByteSize,
+				WebService:  toAPIWebService(value.WebService),
+			})
+		case domain.DownloadableFileDistribution:
+			result = append(result, api.DownloadableFileDistribution{
+				ID:          value.ID,
+				Title:       value.Title,
+				Description: value.Description,
+				License:     value.License,
+				Type:        value.Type,
+				Issued:      value.Issued,
+				Modified:    value.Modified,
+				ByteSize:    value.ByteSize,
+				DownloadableFile: api.DownloadableFile{
+					URL:    value.DownloadableFile.URL,
+					Format: value.DownloadableFile.Format,
+				},
+			})
+		}
+	}
+	return result
+}
+
+func toAPIWebService(value domain.WebService) api.WebService {
+	return api.WebService{
+		ID:               value.ID,
+		Name:             value.Name,
+		Description:      value.Description,
+		TemplateURL:      value.TemplateURL,
+		Parameters:       toAPIParameters(value.Parameters),
+		Format:           value.Format,
+		Provider:         mapPtr(value.Provider, toAPIResourceVersionReference),
+		Documentation:    mapPtr(value.Documentation, func(value domain.Documentation) api.Documentation { return api.Documentation(value) }),
+		SpatialCoverage:  mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
+		TemporalCoverage: mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
+		ContactPoints:    mapSlice(value.ContactPoints, toAPIContactPointReference),
+	}
+}
+
+func toAPIParameters(values []domain.Parameter) []api.Parameter {
+	if values == nil {
+		return nil
+	}
+	result := make([]api.Parameter, 0, len(values))
+	for _, value := range values {
+		switch value := value.(type) {
+		case domain.StringParameter:
+			result = append(result, api.StringParameter{Kind: value.Metadata.Kind, Metadata: toAPIParameterMetadata(value.Metadata), Default: value.Default, AllowedValues: value.AllowedValues, Pattern: value.Pattern})
+		case domain.BooleanParameter:
+			result = append(result, api.BooleanParameter{Kind: value.Metadata.Kind, Metadata: toAPIParameterMetadata(value.Metadata), Default: value.Default})
+		case domain.IntegerParameter:
+			result = append(result, api.IntegerParameter{Kind: value.Metadata.Kind, Metadata: toAPIParameterMetadata(value.Metadata), Minimum: value.Minimum, Maximum: value.Maximum, Default: value.Default, AllowedValues: value.AllowedValues})
+		case domain.FloatParameter:
+			result = append(result, api.FloatParameter{Kind: value.Metadata.Kind, Metadata: toAPIParameterMetadata(value.Metadata), Minimum: value.Minimum, Maximum: value.Maximum, Default: value.Default, AllowedValues: value.AllowedValues})
+		case domain.DateTimeParameter:
+			result = append(result, api.DateTimeParameter{Kind: value.Metadata.Kind, Metadata: toAPIParameterMetadata(value.Metadata), Minimum: value.Minimum, Maximum: value.Maximum, Default: value.Default, Pattern: value.Pattern})
+		}
+	}
+	return result
+}
+
+func toAPIParameterMetadata(value domain.ParameterMetadata) api.ParameterMetadata {
+	return api.ParameterMetadata{
+		ID:             value.ID,
+		Variable:       value.Variable,
+		Property:       value.Property,
+		Label:          value.Label,
+		Required:       value.Required,
+		MultipleValues: value.MultipleValues,
+		ReadOnly:       value.ReadOnly,
+	}
 }
 
 func toAPIContactPoint(value domain.ContactPoint) api.ContactPoint {
@@ -509,7 +688,7 @@ func discoveryStatuses(values []string) ([]string, error) {
 func splitDiscoveryCSV(values []string) []string {
 	var result []string
 	for _, value := range values {
-		for _, part := range strings.Split(value, ",") {
+		for part := range strings.SplitSeq(value, ",") {
 			part = strings.TrimSpace(part)
 			if part != "" {
 				result = append(result, part)

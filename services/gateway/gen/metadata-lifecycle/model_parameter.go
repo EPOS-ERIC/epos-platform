@@ -70,7 +70,7 @@ func (dst *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	// check if the discriminator value is 'BOOLEAN'
-	if jsonDict["metadata.kind"] == "BOOLEAN" {
+	if jsonDict["kind"] == "BOOLEAN" {
 		// try to unmarshal JSON data into BooleanParameter
 		err = json.Unmarshal(data, &dst.BooleanParameter)
 		if err == nil {
@@ -82,7 +82,7 @@ func (dst *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	// check if the discriminator value is 'DATETIME'
-	if jsonDict["metadata.kind"] == "DATETIME" {
+	if jsonDict["kind"] == "DATETIME" {
 		// try to unmarshal JSON data into DateTimeParameter
 		err = json.Unmarshal(data, &dst.DateTimeParameter)
 		if err == nil {
@@ -94,7 +94,7 @@ func (dst *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	// check if the discriminator value is 'FLOAT'
-	if jsonDict["metadata.kind"] == "FLOAT" {
+	if jsonDict["kind"] == "FLOAT" {
 		// try to unmarshal JSON data into FloatParameter
 		err = json.Unmarshal(data, &dst.FloatParameter)
 		if err == nil {
@@ -106,7 +106,7 @@ func (dst *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	// check if the discriminator value is 'INTEGER'
-	if jsonDict["metadata.kind"] == "INTEGER" {
+	if jsonDict["kind"] == "INTEGER" {
 		// try to unmarshal JSON data into IntegerParameter
 		err = json.Unmarshal(data, &dst.IntegerParameter)
 		if err == nil {
@@ -118,7 +118,7 @@ func (dst *Parameter) UnmarshalJSON(data []byte) error {
 	}
 
 	// check if the discriminator value is 'STRING'
-	if jsonDict["metadata.kind"] == "STRING" {
+	if jsonDict["kind"] == "STRING" {
 		// try to unmarshal JSON data into StringParameter
 		err = json.Unmarshal(data, &dst.StringParameter)
 		if err == nil {

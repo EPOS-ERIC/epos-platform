@@ -274,11 +274,13 @@ func (m *mapper) addSoftwareRelations(
 func (m *mapper) dataset(source string) (domain.Dataset, error) {
 	id := ownedID("", "dataset", source)
 	dataset := domain.Dataset{
-		ID:                    id,
-		SourceIRI:             source,
-		Title:                 "",
-		Description:           "",
-		Keywords:              "",
+		ID:          id,
+		SourceIRI:   source,
+		Status:      domain.DatasetStatusDraft,
+		Title:       m.requiredString(source, dctTitle),
+		Description: m.optionalString(source, dctDescription),
+		Keywords:    strings.Join(m.strings(source, dcatKeyword), ","),
+
 		AccrualPeriodicity:    nil,
 		QualityAnnotation:     nil,
 		AccessRight:           nil,
@@ -289,15 +291,11 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 		ContactPoints:         nil,
 		Providers:             nil,
 		Categories:            nil,
-		Status:                domain.DatasetStatusDraft,
 		Created:               time.Time{},
 		Updated:               time.Time{},
 		SourceCreated:         nil,
 		SourceUpdated:         nil,
 	}
-	dataset.Title = m.requiredString(source, dctTitle)
-	dataset.Description = m.optionalString(source, dctDescription)
-	dataset.Keywords = strings.Join(m.strings(source, dcatKeyword), ",")
 
 	if value := m.optionalString(source, dctAccrualPeriodicity); value != "" {
 		dataset.AccrualPeriodicity = &value

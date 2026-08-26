@@ -22,26 +22,23 @@ var _ MappedNullable = &DatasetMetadata{}
 
 // DatasetMetadata struct for DatasetMetadata
 type DatasetMetadata struct {
-	Id                    string          `json:"id"`
-	SourceIri             string          `json:"source_iri"`
-	Title                 string          `json:"title"`
-	Description           string          `json:"description"`
-	Keywords              string          `json:"keywords"`
-	AccrualPeriodicity    NullableString  `json:"accrual_periodicity,omitempty"`
-	QualityAnnotation     NullableString  `json:"quality_annotation,omitempty"`
-	AccessRight           NullableString  `json:"access_right,omitempty"`
-	Distributions         []Distribution  `json:"distributions"`
-	SpatialCoverage       NullableSpatial `json:"spatial_coverage,omitempty"`
-	TemporalCoverage      *Temporal       `json:"temporal_coverage,omitempty"`
-	PersistentIdentifiers []Identifier    `json:"persistent_identifiers"`
-	ContactPoints         []ContactPoint  `json:"contact_points"`
-	Providers             []Organization  `json:"providers"`
-	Categories            []Category      `json:"categories"`
-	SourceCreated         NullableTime    `json:"source_created,omitempty"`
-	SourceUpdated         NullableTime    `json:"source_updated,omitempty"`
-	Status                DatasetStatus   `json:"status"`
-	Created               time.Time       `json:"created"`
-	Updated               time.Time       `json:"updated"`
+	Id                    string                  `json:"id"`
+	SourceIri             string                  `json:"source_iri"`
+	Title                 string                  `json:"title"`
+	Description           string                  `json:"description"`
+	Keywords              string                  `json:"keywords"`
+	AccrualPeriodicity    NullableString          `json:"accrual_periodicity,omitempty"`
+	QualityAnnotation     NullableString          `json:"quality_annotation,omitempty"`
+	AccessRight           NullableString          `json:"access_right,omitempty"`
+	Distributions         []Distribution          `json:"distributions"`
+	SpatialCoverage       NullableSpatial         `json:"spatial_coverage,omitempty"`
+	TemporalCoverage      *Temporal               `json:"temporal_coverage,omitempty"`
+	PersistentIdentifiers []Identifier            `json:"persistent_identifiers"`
+	ContactPoints         []ContactPointReference `json:"contact_points"`
+	Providers             []ResourceReference     `json:"providers"`
+	Categories            []ResourceReference     `json:"categories"`
+	Created               NullableTime            `json:"created,omitempty"`
+	Updated               NullableTime            `json:"updated,omitempty"`
 }
 
 type _DatasetMetadata DatasetMetadata
@@ -50,7 +47,7 @@ type _DatasetMetadata DatasetMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDatasetMetadata(id string, sourceIri string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []ContactPoint, providers []Organization, categories []Category, status DatasetStatus, created time.Time, updated time.Time) *DatasetMetadata {
+func NewDatasetMetadata(id string, sourceIri string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []ContactPointReference, providers []ResourceReference, categories []ResourceReference) *DatasetMetadata {
 	this := DatasetMetadata{}
 	this.Id = id
 	this.SourceIri = sourceIri
@@ -62,9 +59,6 @@ func NewDatasetMetadata(id string, sourceIri string, title string, description s
 	this.ContactPoints = contactPoints
 	this.Providers = providers
 	this.Categories = categories
-	this.Status = status
-	this.Created = created
-	this.Updated = updated
 	return &this
 }
 
@@ -449,10 +443,10 @@ func (o *DatasetMetadata) SetPersistentIdentifiers(v []Identifier) {
 }
 
 // GetContactPoints returns the ContactPoints field value
-// If the value is explicit nil, the zero value for []ContactPoint will be returned
-func (o *DatasetMetadata) GetContactPoints() []ContactPoint {
+// If the value is explicit nil, the zero value for []ContactPointReference will be returned
+func (o *DatasetMetadata) GetContactPoints() []ContactPointReference {
 	if o == nil {
-		var ret []ContactPoint
+		var ret []ContactPointReference
 		return ret
 	}
 
@@ -462,7 +456,7 @@ func (o *DatasetMetadata) GetContactPoints() []ContactPoint {
 // GetContactPointsOk returns a tuple with the ContactPoints field value
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetMetadata) GetContactPointsOk() ([]ContactPoint, bool) {
+func (o *DatasetMetadata) GetContactPointsOk() ([]ContactPointReference, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -470,14 +464,14 @@ func (o *DatasetMetadata) GetContactPointsOk() ([]ContactPoint, bool) {
 }
 
 // SetContactPoints sets field value
-func (o *DatasetMetadata) SetContactPoints(v []ContactPoint) {
+func (o *DatasetMetadata) SetContactPoints(v []ContactPointReference) {
 	o.ContactPoints = v
 }
 
 // GetProviders returns the Providers field value
-func (o *DatasetMetadata) GetProviders() []Organization {
+func (o *DatasetMetadata) GetProviders() []ResourceReference {
 	if o == nil {
-		var ret []Organization
+		var ret []ResourceReference
 		return ret
 	}
 
@@ -486,7 +480,7 @@ func (o *DatasetMetadata) GetProviders() []Organization {
 
 // GetProvidersOk returns a tuple with the Providers field value
 // and a boolean to check if the value has been set.
-func (o *DatasetMetadata) GetProvidersOk() ([]Organization, bool) {
+func (o *DatasetMetadata) GetProvidersOk() ([]ResourceReference, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -494,14 +488,14 @@ func (o *DatasetMetadata) GetProvidersOk() ([]Organization, bool) {
 }
 
 // SetProviders sets field value
-func (o *DatasetMetadata) SetProviders(v []Organization) {
+func (o *DatasetMetadata) SetProviders(v []ResourceReference) {
 	o.Providers = v
 }
 
 // GetCategories returns the Categories field value
-func (o *DatasetMetadata) GetCategories() []Category {
+func (o *DatasetMetadata) GetCategories() []ResourceReference {
 	if o == nil {
-		var ret []Category
+		var ret []ResourceReference
 		return ret
 	}
 
@@ -510,7 +504,7 @@ func (o *DatasetMetadata) GetCategories() []Category {
 
 // GetCategoriesOk returns a tuple with the Categories field value
 // and a boolean to check if the value has been set.
-func (o *DatasetMetadata) GetCategoriesOk() ([]Category, bool) {
+func (o *DatasetMetadata) GetCategoriesOk() ([]ResourceReference, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -518,166 +512,94 @@ func (o *DatasetMetadata) GetCategoriesOk() ([]Category, bool) {
 }
 
 // SetCategories sets field value
-func (o *DatasetMetadata) SetCategories(v []Category) {
+func (o *DatasetMetadata) SetCategories(v []ResourceReference) {
 	o.Categories = v
 }
 
-// GetSourceCreated returns the SourceCreated field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DatasetMetadata) GetSourceCreated() time.Time {
-	if o == nil || IsNil(o.SourceCreated.Get()) {
-		var ret time.Time
-		return ret
-	}
-	return *o.SourceCreated.Get()
-}
-
-// GetSourceCreatedOk returns a tuple with the SourceCreated field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetMetadata) GetSourceCreatedOk() (*time.Time, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.SourceCreated.Get(), o.SourceCreated.IsSet()
-}
-
-// HasSourceCreated returns a boolean if a field has been set.
-func (o *DatasetMetadata) HasSourceCreated() bool {
-	if o != nil && o.SourceCreated.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceCreated gets a reference to the given NullableTime and assigns it to the SourceCreated field.
-func (o *DatasetMetadata) SetSourceCreated(v time.Time) {
-	o.SourceCreated.Set(&v)
-}
-
-// SetSourceCreatedNil sets the value for SourceCreated to be an explicit nil
-func (o *DatasetMetadata) SetSourceCreatedNil() {
-	o.SourceCreated.Set(nil)
-}
-
-// UnsetSourceCreated ensures that no value is present for SourceCreated, not even an explicit nil
-func (o *DatasetMetadata) UnsetSourceCreated() {
-	o.SourceCreated.Unset()
-}
-
-// GetSourceUpdated returns the SourceUpdated field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DatasetMetadata) GetSourceUpdated() time.Time {
-	if o == nil || IsNil(o.SourceUpdated.Get()) {
-		var ret time.Time
-		return ret
-	}
-	return *o.SourceUpdated.Get()
-}
-
-// GetSourceUpdatedOk returns a tuple with the SourceUpdated field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetMetadata) GetSourceUpdatedOk() (*time.Time, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.SourceUpdated.Get(), o.SourceUpdated.IsSet()
-}
-
-// HasSourceUpdated returns a boolean if a field has been set.
-func (o *DatasetMetadata) HasSourceUpdated() bool {
-	if o != nil && o.SourceUpdated.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceUpdated gets a reference to the given NullableTime and assigns it to the SourceUpdated field.
-func (o *DatasetMetadata) SetSourceUpdated(v time.Time) {
-	o.SourceUpdated.Set(&v)
-}
-
-// SetSourceUpdatedNil sets the value for SourceUpdated to be an explicit nil
-func (o *DatasetMetadata) SetSourceUpdatedNil() {
-	o.SourceUpdated.Set(nil)
-}
-
-// UnsetSourceUpdated ensures that no value is present for SourceUpdated, not even an explicit nil
-func (o *DatasetMetadata) UnsetSourceUpdated() {
-	o.SourceUpdated.Unset()
-}
-
-// GetStatus returns the Status field value
-func (o *DatasetMetadata) GetStatus() DatasetStatus {
-	if o == nil {
-		var ret DatasetStatus
-		return ret
-	}
-
-	return o.Status
-}
-
-// GetStatusOk returns a tuple with the Status field value
-// and a boolean to check if the value has been set.
-func (o *DatasetMetadata) GetStatusOk() (*DatasetStatus, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.Status, true
-}
-
-// SetStatus sets field value
-func (o *DatasetMetadata) SetStatus(v DatasetStatus) {
-	o.Status = v
-}
-
-// GetCreated returns the Created field value
+// GetCreated returns the Created field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *DatasetMetadata) GetCreated() time.Time {
-	if o == nil {
+	if o == nil || IsNil(o.Created.Get()) {
 		var ret time.Time
 		return ret
 	}
-
-	return o.Created
+	return *o.Created.Get()
 }
 
-// GetCreatedOk returns a tuple with the Created field value
+// GetCreatedOk returns a tuple with the Created field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *DatasetMetadata) GetCreatedOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Created, true
+	return o.Created.Get(), o.Created.IsSet()
 }
 
-// SetCreated sets field value
+// HasCreated returns a boolean if a field has been set.
+func (o *DatasetMetadata) HasCreated() bool {
+	if o != nil && o.Created.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetCreated gets a reference to the given NullableTime and assigns it to the Created field.
 func (o *DatasetMetadata) SetCreated(v time.Time) {
-	o.Created = v
+	o.Created.Set(&v)
 }
 
-// GetUpdated returns the Updated field value
+// SetCreatedNil sets the value for Created to be an explicit nil
+func (o *DatasetMetadata) SetCreatedNil() {
+	o.Created.Set(nil)
+}
+
+// UnsetCreated ensures that no value is present for Created, not even an explicit nil
+func (o *DatasetMetadata) UnsetCreated() {
+	o.Created.Unset()
+}
+
+// GetUpdated returns the Updated field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *DatasetMetadata) GetUpdated() time.Time {
-	if o == nil {
+	if o == nil || IsNil(o.Updated.Get()) {
 		var ret time.Time
 		return ret
 	}
-
-	return o.Updated
+	return *o.Updated.Get()
 }
 
-// GetUpdatedOk returns a tuple with the Updated field value
+// GetUpdatedOk returns a tuple with the Updated field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *DatasetMetadata) GetUpdatedOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.Updated, true
+	return o.Updated.Get(), o.Updated.IsSet()
 }
 
-// SetUpdated sets field value
+// HasUpdated returns a boolean if a field has been set.
+func (o *DatasetMetadata) HasUpdated() bool {
+	if o != nil && o.Updated.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdated gets a reference to the given NullableTime and assigns it to the Updated field.
 func (o *DatasetMetadata) SetUpdated(v time.Time) {
-	o.Updated = v
+	o.Updated.Set(&v)
+}
+
+// SetUpdatedNil sets the value for Updated to be an explicit nil
+func (o *DatasetMetadata) SetUpdatedNil() {
+	o.Updated.Set(nil)
+}
+
+// UnsetUpdated ensures that no value is present for Updated, not even an explicit nil
+func (o *DatasetMetadata) UnsetUpdated() {
+	o.Updated.Unset()
 }
 
 func (o DatasetMetadata) MarshalJSON() ([]byte, error) {
@@ -717,15 +639,12 @@ func (o DatasetMetadata) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["providers"] = o.Providers
 	toSerialize["categories"] = o.Categories
-	if o.SourceCreated.IsSet() {
-		toSerialize["source_created"] = o.SourceCreated.Get()
+	if o.Created.IsSet() {
+		toSerialize["created"] = o.Created.Get()
 	}
-	if o.SourceUpdated.IsSet() {
-		toSerialize["source_updated"] = o.SourceUpdated.Get()
+	if o.Updated.IsSet() {
+		toSerialize["updated"] = o.Updated.Get()
 	}
-	toSerialize["status"] = o.Status
-	toSerialize["created"] = o.Created
-	toSerialize["updated"] = o.Updated
 	return toSerialize, nil
 }
 
@@ -744,9 +663,6 @@ func (o *DatasetMetadata) UnmarshalJSON(data []byte) (err error) {
 		"contact_points",
 		"providers",
 		"categories",
-		"status",
-		"created",
-		"updated",
 	}
 
 	allProperties := make(map[string]interface{})

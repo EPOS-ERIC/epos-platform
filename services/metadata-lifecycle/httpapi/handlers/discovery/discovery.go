@@ -198,7 +198,7 @@ func parseTimes(values url.Values) (*time.Time, *time.Time, error) {
 func split(values []string) []string {
 	var result []string
 	for _, value := range values {
-		for _, part := range strings.Split(value, ",") {
+		for part := range strings.SplitSeq(value, ",") {
 			if value := strings.TrimSpace(part); value != "" {
 				result = append(result, value)
 			}

@@ -440,6 +440,8 @@ func datasetResultFromRow(ctx context.Context, q *sqlc.Queries, version sqlc.Get
 		Status:    metadata.DatasetStatus(version.Status),
 		CreatedBy: version.CreatedBy,
 		Group:     categoryScheme(version.Group),
+		CreatedAt: version.CreatedAt,
+		UpdatedAt: version.UpdatedAt,
 		Metadata:  metadataValue,
 	}, nil
 }

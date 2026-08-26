@@ -4912,16 +4912,10 @@ components:
         revision: 0
         status: PUBLISHED
         created_by: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        group:
-          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          source_iri: source_iri
-          name: name
-          label: label
-          logo: logo
-          page: page
-          color: color
-          position: 6
-          concept: DATA
+        group_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        group_name: group_name
+        created_at: 2000-01-23T04:56:07.000+00:00
+        updated_at: 2000-01-23T04:56:07.000+00:00
         metadata:
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
@@ -4939,14 +4933,15 @@ components:
             type: http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
             issued: 2000-01-23T04:56:07.000+00:00
             modified: 2000-01-23T04:56:07.000+00:00
-            byte_size: 1
+            byte_size: 6
             web_service:
               id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               name: name
               description: description
               template_url: template_url
               parameters:
-              - metadata:
+              - kind: STRING
+                metadata:
                   id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                   kind: STRING
                   variable: variable
@@ -4960,7 +4955,8 @@ components:
                 - allowed_values
                 - allowed_values
                 pattern: pattern
-              - metadata:
+              - kind: STRING
+                metadata:
                   id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                   kind: STRING
                   variable: variable
@@ -4979,60 +4975,27 @@ components:
                 id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 source_iri: source_iri
                 name: name
-                street: street
-                locality: locality
-                postal_code: postal_code
-                country: country
-                logo_url: logo_url
-                page_url: page_url
-                email: email
-                lei_code: lei_code
-                contact_points:
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  email: email
-                  role: role
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  email: email
-                  role: role
-                identifiers:
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  type: type
-                  value: value
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  type: type
-                  value: value
               documentation:
                 title: title
                 description: description
                 uri: uri
               spatial_coverage:
                 point:
-                  latitude: 17.318410500297276
-                  longitude: 22.945559638799807
+                  latitude: -63.615366350946985
+                  longitude: 34.63682100059455
                 polygon:
-                - latitude: 17.318410500297276
-                  longitude: 22.945559638799807
-                - latitude: 17.318410500297276
-                  longitude: 22.945559638799807
+                - latitude: -63.615366350946985
+                  longitude: 34.63682100059455
+                - latitude: -63.615366350946985
+                  longitude: 34.63682100059455
               temporal_coverage:
                 start: 2000-01-23T04:56:07.000+00:00
                 end: 2000-01-23T04:56:07.000+00:00
               contact_points:
               - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 source_iri: source_iri
-                email: email
-                role: role
               - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 source_iri: source_iri
-                email: email
-                role: role
-            downloadable_file:
-              url: url
-              format: format
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             title: title
             description: description
@@ -5040,14 +5003,15 @@ components:
             type: http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
             issued: 2000-01-23T04:56:07.000+00:00
             modified: 2000-01-23T04:56:07.000+00:00
-            byte_size: 1
+            byte_size: 6
             web_service:
               id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               name: name
               description: description
               template_url: template_url
               parameters:
-              - metadata:
+              - kind: STRING
+                metadata:
                   id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                   kind: STRING
                   variable: variable
@@ -5061,7 +5025,8 @@ components:
                 - allowed_values
                 - allowed_values
                 pattern: pattern
-              - metadata:
+              - kind: STRING
+                metadata:
                   id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                   kind: STRING
                   variable: variable
@@ -5080,69 +5045,36 @@ components:
                 id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 source_iri: source_iri
                 name: name
-                street: street
-                locality: locality
-                postal_code: postal_code
-                country: country
-                logo_url: logo_url
-                page_url: page_url
-                email: email
-                lei_code: lei_code
-                contact_points:
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  email: email
-                  role: role
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  email: email
-                  role: role
-                identifiers:
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  type: type
-                  value: value
-                - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                  source_iri: source_iri
-                  type: type
-                  value: value
               documentation:
                 title: title
                 description: description
                 uri: uri
               spatial_coverage:
                 point:
-                  latitude: 17.318410500297276
-                  longitude: 22.945559638799807
+                  latitude: -63.615366350946985
+                  longitude: 34.63682100059455
                 polygon:
-                - latitude: 17.318410500297276
-                  longitude: 22.945559638799807
-                - latitude: 17.318410500297276
-                  longitude: 22.945559638799807
+                - latitude: -63.615366350946985
+                  longitude: 34.63682100059455
+                - latitude: -63.615366350946985
+                  longitude: 34.63682100059455
               temporal_coverage:
                 start: 2000-01-23T04:56:07.000+00:00
                 end: 2000-01-23T04:56:07.000+00:00
               contact_points:
               - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 source_iri: source_iri
-                email: email
-                role: role
               - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 source_iri: source_iri
-                email: email
-                role: role
-            downloadable_file:
-              url: url
-              format: format
           spatial_coverage:
             point:
-              latitude: 17.318410500297276
-              longitude: 22.945559638799807
+              latitude: -63.615366350946985
+              longitude: 34.63682100059455
             polygon:
-            - latitude: 17.318410500297276
-              longitude: 22.945559638799807
-            - latitude: 17.318410500297276
-              longitude: 22.945559638799807
+            - latitude: -63.615366350946985
+              longitude: 34.63682100059455
+            - latitude: -63.615366350946985
+              longitude: 34.63682100059455
           temporal_coverage:
             start: 2000-01-23T04:56:07.000+00:00
             end: 2000-01-23T04:56:07.000+00:00
@@ -5158,87 +5090,22 @@ components:
           contact_points:
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
-            email: email
-            role: role
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
-            email: email
-            role: role
           providers:
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
             name: name
-            street: street
-            locality: locality
-            postal_code: postal_code
-            country: country
-            logo_url: logo_url
-            page_url: page_url
-            email: email
-            lei_code: lei_code
-            contact_points:
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              email: email
-              role: role
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              email: email
-              role: role
-            identifiers:
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              type: type
-              value: value
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              type: type
-              value: value
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
             name: name
-            street: street
-            locality: locality
-            postal_code: postal_code
-            country: country
-            logo_url: logo_url
-            page_url: page_url
-            email: email
-            lei_code: lei_code
-            contact_points:
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              email: email
-              role: role
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              email: email
-              role: role
-            identifiers:
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              type: type
-              value: value
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              type: type
-              value: value
           categories:
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
             name: name
-            children:
-            - null
-            - null
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
             name: name
-            children:
-            - null
-            - null
-          source_created: 2000-01-23T04:56:07.000+00:00
-          source_updated: 2000-01-23T04:56:07.000+00:00
-          status: null
           created: 2000-01-23T04:56:07.000+00:00
           updated: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -5256,17 +5123,29 @@ components:
         created_by:
           format: uuid
           type: string
-        group:
-          $ref: "#/components/schemas/CategoryScheme"
+        group_id:
+          format: uuid
+          type: string
+        group_name:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
         metadata:
           $ref: "#/components/schemas/ResourceRecord_metadata"
       required:
+      - created_at
       - created_by
-      - group
+      - group_id
+      - group_name
       - metadata
       - resource_id
       - revision
       - status
+      - updated_at
       - version_id
       type: object
     SoftwareApplicationDraftMetadata:
@@ -5401,7 +5280,7 @@ components:
           type: string
         creators:
           items:
-            $ref: "#/components/schemas/Organization"
+            $ref: "#/components/schemas/ResourceReference"
           type: array
         identifiers:
           items:
@@ -5409,12 +5288,12 @@ components:
           type: array
         contact_points:
           items:
-            $ref: "#/components/schemas/ContactPoint"
+            $ref: "#/components/schemas/ContactPointReference"
           nullable: true
           type: array
         categories:
           items:
-            $ref: "#/components/schemas/SoftwareCategory"
+            $ref: "#/components/schemas/ResourceReference"
           type: array
       required:
       - categories
@@ -5463,7 +5342,7 @@ components:
           type: string
         creators:
           items:
-            $ref: "#/components/schemas/Organization"
+            $ref: "#/components/schemas/ResourceReference"
           type: array
         identifiers:
           items:
@@ -5471,12 +5350,12 @@ components:
           type: array
         contact_points:
           items:
-            $ref: "#/components/schemas/ContactPoint"
+            $ref: "#/components/schemas/ContactPointReference"
           nullable: true
           type: array
         categories:
           items:
-            $ref: "#/components/schemas/SoftwareCategory"
+            $ref: "#/components/schemas/ResourceReference"
           type: array
       required:
       - categories
@@ -5774,11 +5653,11 @@ components:
           items:
             $ref: "#/components/schemas/CanonicalReference"
           type: array
-        source_created:
+        created:
           format: date-time
           nullable: true
           type: string
-        source_updated:
+        updated:
           format: date-time
           nullable: true
           type: string
@@ -5804,14 +5683,15 @@ components:
           type: http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
           issued: 2000-01-23T04:56:07.000+00:00
           modified: 2000-01-23T04:56:07.000+00:00
-          byte_size: 1
+          byte_size: 6
           web_service:
             id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             name: name
             description: description
             template_url: template_url
             parameters:
-            - metadata:
+            - kind: STRING
+              metadata:
                 id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 kind: STRING
                 variable: variable
@@ -5825,7 +5705,8 @@ components:
               - allowed_values
               - allowed_values
               pattern: pattern
-            - metadata:
+            - kind: STRING
+              metadata:
                 id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 kind: STRING
                 variable: variable
@@ -5844,60 +5725,27 @@ components:
               id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               source_iri: source_iri
               name: name
-              street: street
-              locality: locality
-              postal_code: postal_code
-              country: country
-              logo_url: logo_url
-              page_url: page_url
-              email: email
-              lei_code: lei_code
-              contact_points:
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                email: email
-                role: role
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                email: email
-                role: role
-              identifiers:
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                type: type
-                value: value
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                type: type
-                value: value
             documentation:
               title: title
               description: description
               uri: uri
             spatial_coverage:
               point:
-                latitude: 17.318410500297276
-                longitude: 22.945559638799807
+                latitude: -63.615366350946985
+                longitude: 34.63682100059455
               polygon:
-              - latitude: 17.318410500297276
-                longitude: 22.945559638799807
-              - latitude: 17.318410500297276
-                longitude: 22.945559638799807
+              - latitude: -63.615366350946985
+                longitude: 34.63682100059455
+              - latitude: -63.615366350946985
+                longitude: 34.63682100059455
             temporal_coverage:
               start: 2000-01-23T04:56:07.000+00:00
               end: 2000-01-23T04:56:07.000+00:00
             contact_points:
             - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               source_iri: source_iri
-              email: email
-              role: role
             - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               source_iri: source_iri
-              email: email
-              role: role
-          downloadable_file:
-            url: url
-            format: format
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           title: title
           description: description
@@ -5905,14 +5753,15 @@ components:
           type: http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
           issued: 2000-01-23T04:56:07.000+00:00
           modified: 2000-01-23T04:56:07.000+00:00
-          byte_size: 1
+          byte_size: 6
           web_service:
             id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             name: name
             description: description
             template_url: template_url
             parameters:
-            - metadata:
+            - kind: STRING
+              metadata:
                 id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 kind: STRING
                 variable: variable
@@ -5926,7 +5775,8 @@ components:
               - allowed_values
               - allowed_values
               pattern: pattern
-            - metadata:
+            - kind: STRING
+              metadata:
                 id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
                 kind: STRING
                 variable: variable
@@ -5945,69 +5795,36 @@ components:
               id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               source_iri: source_iri
               name: name
-              street: street
-              locality: locality
-              postal_code: postal_code
-              country: country
-              logo_url: logo_url
-              page_url: page_url
-              email: email
-              lei_code: lei_code
-              contact_points:
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                email: email
-                role: role
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                email: email
-                role: role
-              identifiers:
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                type: type
-                value: value
-              - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-                source_iri: source_iri
-                type: type
-                value: value
             documentation:
               title: title
               description: description
               uri: uri
             spatial_coverage:
               point:
-                latitude: 17.318410500297276
-                longitude: 22.945559638799807
+                latitude: -63.615366350946985
+                longitude: 34.63682100059455
               polygon:
-              - latitude: 17.318410500297276
-                longitude: 22.945559638799807
-              - latitude: 17.318410500297276
-                longitude: 22.945559638799807
+              - latitude: -63.615366350946985
+                longitude: 34.63682100059455
+              - latitude: -63.615366350946985
+                longitude: 34.63682100059455
             temporal_coverage:
               start: 2000-01-23T04:56:07.000+00:00
               end: 2000-01-23T04:56:07.000+00:00
             contact_points:
             - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               source_iri: source_iri
-              email: email
-              role: role
             - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               source_iri: source_iri
-              email: email
-              role: role
-          downloadable_file:
-            url: url
-            format: format
         spatial_coverage:
           point:
-            latitude: 17.318410500297276
-            longitude: 22.945559638799807
+            latitude: -63.615366350946985
+            longitude: 34.63682100059455
           polygon:
-          - latitude: 17.318410500297276
-            longitude: 22.945559638799807
-          - latitude: 17.318410500297276
-            longitude: 22.945559638799807
+          - latitude: -63.615366350946985
+            longitude: 34.63682100059455
+          - latitude: -63.615366350946985
+            longitude: 34.63682100059455
         temporal_coverage:
           start: 2000-01-23T04:56:07.000+00:00
           end: 2000-01-23T04:56:07.000+00:00
@@ -6023,87 +5840,22 @@ components:
         contact_points:
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
-          email: email
-          role: role
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
-          email: email
-          role: role
         providers:
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
           name: name
-          street: street
-          locality: locality
-          postal_code: postal_code
-          country: country
-          logo_url: logo_url
-          page_url: page_url
-          email: email
-          lei_code: lei_code
-          contact_points:
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            email: email
-            role: role
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            email: email
-            role: role
-          identifiers:
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            type: type
-            value: value
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            type: type
-            value: value
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
           name: name
-          street: street
-          locality: locality
-          postal_code: postal_code
-          country: country
-          logo_url: logo_url
-          page_url: page_url
-          email: email
-          lei_code: lei_code
-          contact_points:
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            email: email
-            role: role
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            email: email
-            role: role
-          identifiers:
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            type: type
-            value: value
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            type: type
-            value: value
         categories:
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
           name: name
-          children:
-          - null
-          - null
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
           name: name
-          children:
-          - null
-          - null
-        source_created: 2000-01-23T04:56:07.000+00:00
-        source_updated: 2000-01-23T04:56:07.000+00:00
-        status: null
         created: 2000-01-23T04:56:07.000+00:00
         updated: 2000-01-23T04:56:07.000+00:00
       properties:
@@ -6141,37 +5893,28 @@ components:
           type: array
         contact_points:
           items:
-            $ref: "#/components/schemas/ContactPoint"
+            $ref: "#/components/schemas/ContactPointReference"
           nullable: true
           type: array
         providers:
           items:
-            $ref: "#/components/schemas/Organization"
+            $ref: "#/components/schemas/ResourceReference"
           type: array
         categories:
           items:
-            $ref: "#/components/schemas/Category"
+            $ref: "#/components/schemas/ResourceReference"
           type: array
-        source_created:
-          format: date-time
-          nullable: true
-          type: string
-        source_updated:
-          format: date-time
-          nullable: true
-          type: string
-        status:
-          $ref: "#/components/schemas/DatasetStatus"
         created:
           format: date-time
+          nullable: true
           type: string
         updated:
           format: date-time
+          nullable: true
           type: string
       required:
       - categories
       - contact_points
-      - created
       - description
       - distributions
       - id
@@ -6179,11 +5922,19 @@ components:
       - persistent_identifiers
       - providers
       - source_iri
-      - status
       - title
-      - updated
       type: object
     Distribution:
+      discriminator:
+        mapping:
+          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistribution"
+          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistribution"
+        propertyName: type
+      oneOf:
+      - $ref: "#/components/schemas/WebServiceDistribution"
+      - $ref: "#/components/schemas/DownloadableFileDistribution"
+    WebServiceDistribution:
+      additionalProperties: false
       example:
         id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
         title: title
@@ -6192,14 +5943,15 @@ components:
         type: http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
         issued: 2000-01-23T04:56:07.000+00:00
         modified: 2000-01-23T04:56:07.000+00:00
-        byte_size: 1
+        byte_size: 6
         web_service:
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           name: name
           description: description
           template_url: template_url
           parameters:
-          - metadata:
+          - kind: STRING
+            metadata:
               id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               kind: STRING
               variable: variable
@@ -6213,7 +5965,8 @@ components:
             - allowed_values
             - allowed_values
             pattern: pattern
-          - metadata:
+          - kind: STRING
+            metadata:
               id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               kind: STRING
               variable: variable
@@ -6232,60 +5985,27 @@ components:
             id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
             name: name
-            street: street
-            locality: locality
-            postal_code: postal_code
-            country: country
-            logo_url: logo_url
-            page_url: page_url
-            email: email
-            lei_code: lei_code
-            contact_points:
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              email: email
-              role: role
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              email: email
-              role: role
-            identifiers:
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              type: type
-              value: value
-            - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-              source_iri: source_iri
-              type: type
-              value: value
           documentation:
             title: title
             description: description
             uri: uri
           spatial_coverage:
             point:
-              latitude: 17.318410500297276
-              longitude: 22.945559638799807
+              latitude: -63.615366350946985
+              longitude: 34.63682100059455
             polygon:
-            - latitude: 17.318410500297276
-              longitude: 22.945559638799807
-            - latitude: 17.318410500297276
-              longitude: 22.945559638799807
+            - latitude: -63.615366350946985
+              longitude: 34.63682100059455
+            - latitude: -63.615366350946985
+              longitude: 34.63682100059455
           temporal_coverage:
             start: 2000-01-23T04:56:07.000+00:00
             end: 2000-01-23T04:56:07.000+00:00
           contact_points:
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
-            email: email
-            role: role
           - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             source_iri: source_iri
-            email: email
-            role: role
-        downloadable_file:
-          url: url
-          format: format
       properties:
         id:
           format: uuid
@@ -6298,7 +6018,9 @@ components:
           nullable: true
           type: string
         type:
-          $ref: "#/components/schemas/DistributionType"
+          enum:
+          - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
+          type: string
         issued:
           format: date-time
           nullable: true
@@ -6313,29 +6035,29 @@ components:
           type: integer
         web_service:
           $ref: "#/components/schemas/WebService"
-        downloadable_file:
-          $ref: "#/components/schemas/DownloadableFile"
       required:
       - description
       - id
       - title
       - type
+      - web_service
       type: object
-    DistributionDraft:
-      nullable: true
-      oneOf: []
+    DownloadableFileDistribution:
+      additionalProperties: false
       properties:
         id:
-          description: Accepted but generated by storage.
           format: uuid
           type: string
         title:
           type: string
         description:
-          default: ""
           type: string
         license:
           nullable: true
+          type: string
+        type:
+          enum:
+          - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
           type: string
         issued:
           format: date-time
@@ -6349,15 +6071,97 @@ components:
           format: int64
           nullable: true
           type: integer
-        type:
-          allOf:
-          - $ref: "#/components/schemas/DistributionType"
-          description: Must match selected delivery method.
-        web_service:
-          $ref: "#/components/schemas/WebServiceDraft"
         downloadable_file:
           $ref: "#/components/schemas/DownloadableFile"
       required:
+      - description
+      - downloadable_file
+      - id
+      - title
+      - type
+      type: object
+    DistributionDraft:
+      discriminator:
+        mapping:
+          http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE: "#/components/schemas/WebServiceDistributionDraft"
+          http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE: "#/components/schemas/DownloadableFileDistributionDraft"
+        propertyName: type
+      oneOf:
+      - $ref: "#/components/schemas/WebServiceDistributionDraft"
+      - $ref: "#/components/schemas/DownloadableFileDistributionDraft"
+    WebServiceDistributionDraft:
+      additionalProperties: false
+      properties:
+        id:
+          description: Accepted but generated by storage.
+          format: uuid
+          type: string
+        title:
+          type: string
+        description:
+          default: ""
+          type: string
+        license:
+          nullable: true
+          type: string
+        type:
+          enum:
+          - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
+          type: string
+        issued:
+          format: date-time
+          nullable: true
+          type: string
+        modified:
+          format: date-time
+          nullable: true
+          type: string
+        byte_size:
+          format: int64
+          nullable: true
+          type: integer
+        web_service:
+          $ref: "#/components/schemas/WebServiceDraft"
+      required:
+      - title
+      - type
+      - web_service
+      type: object
+    DownloadableFileDistributionDraft:
+      additionalProperties: false
+      properties:
+        id:
+          description: Accepted but generated by storage.
+          format: uuid
+          type: string
+        title:
+          type: string
+        description:
+          default: ""
+          type: string
+        license:
+          nullable: true
+          type: string
+        type:
+          enum:
+          - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
+          type: string
+        issued:
+          format: date-time
+          nullable: true
+          type: string
+        modified:
+          format: date-time
+          nullable: true
+          type: string
+        byte_size:
+          format: int64
+          nullable: true
+          type: integer
+        downloadable_file:
+          $ref: "#/components/schemas/DownloadableFile"
+      required:
+      - downloadable_file
       - title
       - type
       type: object
@@ -6413,7 +6217,7 @@ components:
           INTEGER: "#/components/schemas/IntegerParameter"
           FLOAT: "#/components/schemas/FloatParameter"
           DATETIME: "#/components/schemas/DateTimeParameter"
-        propertyName: metadata.kind
+        propertyName: kind
       oneOf:
       - $ref: "#/components/schemas/StringParameter"
       - $ref: "#/components/schemas/BooleanParameter"
@@ -6451,6 +6255,7 @@ components:
       type: object
     StringParameter:
       example:
+        kind: STRING
         metadata:
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           kind: STRING
@@ -6466,6 +6271,10 @@ components:
         - allowed_values
         pattern: pattern
       properties:
+        kind:
+          enum:
+          - STRING
+          type: string
         metadata:
           $ref: "#/components/schemas/StringParameter_metadata"
         default:
@@ -6480,11 +6289,16 @@ components:
       required:
       - allowed_values
       - default
+      - kind
       - metadata
       - pattern
       type: object
     BooleanParameter:
       properties:
+        kind:
+          enum:
+          - BOOLEAN
+          type: string
         metadata:
           $ref: "#/components/schemas/BooleanParameter_metadata"
         default:
@@ -6492,10 +6306,15 @@ components:
           type: boolean
       required:
       - default
+      - kind
       - metadata
       type: object
     IntegerParameter:
       properties:
+        kind:
+          enum:
+          - INTEGER
+          type: string
         metadata:
           $ref: "#/components/schemas/IntegerParameter_metadata"
         minimum:
@@ -6518,12 +6337,17 @@ components:
       required:
       - allowed_values
       - default
+      - kind
       - maximum
       - metadata
       - minimum
       type: object
     FloatParameter:
       properties:
+        kind:
+          enum:
+          - FLOAT
+          type: string
         metadata:
           $ref: "#/components/schemas/FloatParameter_metadata"
         minimum:
@@ -6546,12 +6370,17 @@ components:
       required:
       - allowed_values
       - default
+      - kind
       - maximum
       - metadata
       - minimum
       type: object
     DateTimeParameter:
       properties:
+        kind:
+          enum:
+          - DATETIME
+          type: string
         metadata:
           $ref: "#/components/schemas/DateTimeParameter_metadata"
         minimum:
@@ -6570,6 +6399,7 @@ components:
           type: string
       required:
       - default
+      - kind
       - maximum
       - metadata
       - minimum
@@ -6582,7 +6412,8 @@ components:
         description: description
         template_url: template_url
         parameters:
-        - metadata:
+        - kind: STRING
+          metadata:
             id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             kind: STRING
             variable: variable
@@ -6596,7 +6427,8 @@ components:
           - allowed_values
           - allowed_values
           pattern: pattern
-        - metadata:
+        - kind: STRING
+          metadata:
             id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             kind: STRING
             variable: variable
@@ -6615,57 +6447,27 @@ components:
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
           name: name
-          street: street
-          locality: locality
-          postal_code: postal_code
-          country: country
-          logo_url: logo_url
-          page_url: page_url
-          email: email
-          lei_code: lei_code
-          contact_points:
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            email: email
-            role: role
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            email: email
-            role: role
-          identifiers:
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            type: type
-            value: value
-          - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-            source_iri: source_iri
-            type: type
-            value: value
         documentation:
           title: title
           description: description
           uri: uri
         spatial_coverage:
           point:
-            latitude: 17.318410500297276
-            longitude: 22.945559638799807
+            latitude: -63.615366350946985
+            longitude: 34.63682100059455
           polygon:
-          - latitude: 17.318410500297276
-            longitude: 22.945559638799807
-          - latitude: 17.318410500297276
-            longitude: 22.945559638799807
+          - latitude: -63.615366350946985
+            longitude: 34.63682100059455
+          - latitude: -63.615366350946985
+            longitude: 34.63682100059455
         temporal_coverage:
           start: 2000-01-23T04:56:07.000+00:00
           end: 2000-01-23T04:56:07.000+00:00
         contact_points:
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
-          email: email
-          role: role
         - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           source_iri: source_iri
-          email: email
-          role: role
       properties:
         id:
           format: uuid
@@ -6683,7 +6485,7 @@ components:
         format:
           type: string
         provider:
-          $ref: "#/components/schemas/Organization"
+          $ref: "#/components/schemas/ResourceReference"
         documentation:
           $ref: "#/components/schemas/Documentation"
         spatial_coverage:
@@ -6692,7 +6494,7 @@ components:
           $ref: "#/components/schemas/Temporal"
         contact_points:
           items:
-            $ref: "#/components/schemas/ContactPoint"
+            $ref: "#/components/schemas/ContactPointReference"
           type: array
       required:
       - description
@@ -6702,9 +6504,6 @@ components:
       - template_url
       type: object
     DownloadableFile:
-      example:
-        url: url
-        format: format
       properties:
         url:
           type: string
@@ -6713,6 +6512,38 @@ components:
       required:
       - format
       - url
+      type: object
+    ResourceReference:
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        source_iri: source_iri
+        name: name
+      properties:
+        id:
+          format: uuid
+          type: string
+        source_iri:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - name
+      - source_iri
+      type: object
+    ContactPointReference:
+      example:
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        source_iri: source_iri
+      properties:
+        id:
+          format: uuid
+          type: string
+        source_iri:
+          type: string
+      required:
+      - id
+      - source_iri
       type: object
     Documentation:
       example:
@@ -7047,36 +6878,6 @@ components:
       - parents
       type: object
     Organization:
-      example:
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        source_iri: source_iri
-        name: name
-        street: street
-        locality: locality
-        postal_code: postal_code
-        country: country
-        logo_url: logo_url
-        page_url: page_url
-        email: email
-        lei_code: lei_code
-        contact_points:
-        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          source_iri: source_iri
-          email: email
-          role: role
-        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          source_iri: source_iri
-          email: email
-          role: role
-        identifiers:
-        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          source_iri: source_iri
-          type: type
-          value: value
-        - id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          source_iri: source_iri
-          type: type
-          value: value
       properties:
         id:
           format: uuid
@@ -7124,13 +6925,6 @@ components:
       - source_iri
       type: object
     Category:
-      example:
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        source_iri: source_iri
-        name: name
-        children:
-        - null
-        - null
       properties:
         id:
           format: uuid
@@ -7149,16 +6943,6 @@ components:
       - source_iri
       type: object
     CategoryScheme:
-      example:
-        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        source_iri: source_iri
-        name: name
-        label: label
-        logo: logo
-        page: page
-        color: color
-        position: 6
-        concept: DATA
       properties:
         id:
           format: uuid
@@ -7211,13 +6995,13 @@ components:
     Spatial:
       example:
         point:
-          latitude: 17.318410500297276
-          longitude: 22.945559638799807
+          latitude: -63.615366350946985
+          longitude: 34.63682100059455
         polygon:
-        - latitude: 17.318410500297276
-          longitude: 22.945559638799807
-        - latitude: 17.318410500297276
-          longitude: 22.945559638799807
+        - latitude: -63.615366350946985
+          longitude: 34.63682100059455
+        - latitude: -63.615366350946985
+          longitude: 34.63682100059455
       nullable: true
       oneOf: []
       properties:
@@ -7231,8 +7015,8 @@ components:
       type: object
     Coordinate:
       example:
-        latitude: 17.318410500297276
-        longitude: 22.945559638799807
+        latitude: -63.615366350946985
+        longitude: 34.63682100059455
       properties:
         latitude:
           maximum: 90

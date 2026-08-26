@@ -38,8 +38,8 @@ type DatasetDraftMetadata struct {
 	ContactPoints         []CanonicalReference `json:"contact_points,omitempty"`
 	Providers             []CanonicalReference `json:"providers,omitempty"`
 	Categories            []CanonicalReference `json:"categories,omitempty"`
-	SourceCreated         NullableTime         `json:"source_created,omitempty"`
-	SourceUpdated         NullableTime         `json:"source_updated,omitempty"`
+	Created               NullableTime         `json:"created,omitempty"`
+	Updated               NullableTime         `json:"updated,omitempty"`
 }
 
 type _DatasetDraftMetadata DatasetDraftMetadata
@@ -579,90 +579,90 @@ func (o *DatasetDraftMetadata) SetCategories(v []CanonicalReference) {
 	o.Categories = v
 }
 
-// GetSourceCreated returns the SourceCreated field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DatasetDraftMetadata) GetSourceCreated() time.Time {
-	if o == nil || IsNil(o.SourceCreated.Get()) {
+// GetCreated returns the Created field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *DatasetDraftMetadata) GetCreated() time.Time {
+	if o == nil || IsNil(o.Created.Get()) {
 		var ret time.Time
 		return ret
 	}
-	return *o.SourceCreated.Get()
+	return *o.Created.Get()
 }
 
-// GetSourceCreatedOk returns a tuple with the SourceCreated field value if set, nil otherwise
+// GetCreatedOk returns a tuple with the Created field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetDraftMetadata) GetSourceCreatedOk() (*time.Time, bool) {
+func (o *DatasetDraftMetadata) GetCreatedOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.SourceCreated.Get(), o.SourceCreated.IsSet()
+	return o.Created.Get(), o.Created.IsSet()
 }
 
-// HasSourceCreated returns a boolean if a field has been set.
-func (o *DatasetDraftMetadata) HasSourceCreated() bool {
-	if o != nil && o.SourceCreated.IsSet() {
+// HasCreated returns a boolean if a field has been set.
+func (o *DatasetDraftMetadata) HasCreated() bool {
+	if o != nil && o.Created.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetSourceCreated gets a reference to the given NullableTime and assigns it to the SourceCreated field.
-func (o *DatasetDraftMetadata) SetSourceCreated(v time.Time) {
-	o.SourceCreated.Set(&v)
+// SetCreated gets a reference to the given NullableTime and assigns it to the Created field.
+func (o *DatasetDraftMetadata) SetCreated(v time.Time) {
+	o.Created.Set(&v)
 }
 
-// SetSourceCreatedNil sets the value for SourceCreated to be an explicit nil
-func (o *DatasetDraftMetadata) SetSourceCreatedNil() {
-	o.SourceCreated.Set(nil)
+// SetCreatedNil sets the value for Created to be an explicit nil
+func (o *DatasetDraftMetadata) SetCreatedNil() {
+	o.Created.Set(nil)
 }
 
-// UnsetSourceCreated ensures that no value is present for SourceCreated, not even an explicit nil
-func (o *DatasetDraftMetadata) UnsetSourceCreated() {
-	o.SourceCreated.Unset()
+// UnsetCreated ensures that no value is present for Created, not even an explicit nil
+func (o *DatasetDraftMetadata) UnsetCreated() {
+	o.Created.Unset()
 }
 
-// GetSourceUpdated returns the SourceUpdated field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DatasetDraftMetadata) GetSourceUpdated() time.Time {
-	if o == nil || IsNil(o.SourceUpdated.Get()) {
+// GetUpdated returns the Updated field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *DatasetDraftMetadata) GetUpdated() time.Time {
+	if o == nil || IsNil(o.Updated.Get()) {
 		var ret time.Time
 		return ret
 	}
-	return *o.SourceUpdated.Get()
+	return *o.Updated.Get()
 }
 
-// GetSourceUpdatedOk returns a tuple with the SourceUpdated field value if set, nil otherwise
+// GetUpdatedOk returns a tuple with the Updated field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetDraftMetadata) GetSourceUpdatedOk() (*time.Time, bool) {
+func (o *DatasetDraftMetadata) GetUpdatedOk() (*time.Time, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.SourceUpdated.Get(), o.SourceUpdated.IsSet()
+	return o.Updated.Get(), o.Updated.IsSet()
 }
 
-// HasSourceUpdated returns a boolean if a field has been set.
-func (o *DatasetDraftMetadata) HasSourceUpdated() bool {
-	if o != nil && o.SourceUpdated.IsSet() {
+// HasUpdated returns a boolean if a field has been set.
+func (o *DatasetDraftMetadata) HasUpdated() bool {
+	if o != nil && o.Updated.IsSet() {
 		return true
 	}
 
 	return false
 }
 
-// SetSourceUpdated gets a reference to the given NullableTime and assigns it to the SourceUpdated field.
-func (o *DatasetDraftMetadata) SetSourceUpdated(v time.Time) {
-	o.SourceUpdated.Set(&v)
+// SetUpdated gets a reference to the given NullableTime and assigns it to the Updated field.
+func (o *DatasetDraftMetadata) SetUpdated(v time.Time) {
+	o.Updated.Set(&v)
 }
 
-// SetSourceUpdatedNil sets the value for SourceUpdated to be an explicit nil
-func (o *DatasetDraftMetadata) SetSourceUpdatedNil() {
-	o.SourceUpdated.Set(nil)
+// SetUpdatedNil sets the value for Updated to be an explicit nil
+func (o *DatasetDraftMetadata) SetUpdatedNil() {
+	o.Updated.Set(nil)
 }
 
-// UnsetSourceUpdated ensures that no value is present for SourceUpdated, not even an explicit nil
-func (o *DatasetDraftMetadata) UnsetSourceUpdated() {
-	o.SourceUpdated.Unset()
+// UnsetUpdated ensures that no value is present for Updated, not even an explicit nil
+func (o *DatasetDraftMetadata) UnsetUpdated() {
+	o.Updated.Unset()
 }
 
 func (o DatasetDraftMetadata) MarshalJSON() ([]byte, error) {
@@ -716,11 +716,11 @@ func (o DatasetDraftMetadata) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Categories) {
 		toSerialize["categories"] = o.Categories
 	}
-	if o.SourceCreated.IsSet() {
-		toSerialize["source_created"] = o.SourceCreated.Get()
+	if o.Created.IsSet() {
+		toSerialize["created"] = o.Created.Get()
 	}
-	if o.SourceUpdated.IsSet() {
-		toSerialize["source_updated"] = o.SourceUpdated.Get()
+	if o.Updated.IsSet() {
+		toSerialize["updated"] = o.Updated.Get()
 	}
 	return toSerialize, nil
 }

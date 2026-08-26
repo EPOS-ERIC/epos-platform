@@ -28,8 +28,8 @@ type datasetDraftRequest struct {
 	ContactPoints         []canonicalReference  `json:"contact_points"`
 	Providers             []canonicalReference  `json:"providers"`
 	Categories            []canonicalReference  `json:"categories"`
-	SourceCreated         *time.Time            `json:"source_created"`
-	SourceUpdated         *time.Time            `json:"source_updated"`
+	Created               *time.Time            `json:"created"`
+	Updated               *time.Time            `json:"updated"`
 }
 
 type createRequest struct {
@@ -75,6 +75,7 @@ type parameterRequest struct {
 
 func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 	var header struct {
+		Kind     metadata.ParameterKind `json:"kind"`
 		Metadata struct {
 			Kind metadata.ParameterKind `json:"kind"`
 		} `json:"metadata"`
@@ -143,8 +144,8 @@ func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 	default:
 		return fmt.Errorf("unsupported parameter kind %q", header.Metadata.Kind)
 	}
-	if p.value.Kind() != header.Metadata.Kind || p.value.GetMetadata().Kind != header.Metadata.Kind {
-		return fmt.Errorf("parameter kind mismatch: metadata=%q value=%q", header.Metadata.Kind, p.value.Kind())
+	if header.Kind != header.Metadata.Kind || p.value.Kind() != header.Kind || p.value.GetMetadata().Kind != header.Kind {
+		return fmt.Errorf("parameter kind mismatch: kind=%q metadata=%q value=%q", header.Kind, header.Metadata.Kind, p.value.Kind())
 	}
 	return nil
 }
@@ -186,47 +187,52 @@ func (p parameterMetadata) domain() metadata.ParameterMetadata {
 }
 
 type stringParameter struct {
-	Metadata      parameterMetadata `json:"metadata"`
-	Default       *string           `json:"default"`
-	AllowedValues []string          `json:"allowed_values"`
-	Pattern       string            `json:"pattern"`
+	Kind          metadata.ParameterKind `json:"kind"`
+	Metadata      parameterMetadata      `json:"metadata"`
+	Default       *string                `json:"default"`
+	AllowedValues []string               `json:"allowed_values"`
+	Pattern       string                 `json:"pattern"`
 }
 
 func (stringParameter) parameterResponse() {}
 
 type booleanParameter struct {
-	Metadata parameterMetadata `json:"metadata"`
-	Default  *bool             `json:"default"`
+	Kind     metadata.ParameterKind `json:"kind"`
+	Metadata parameterMetadata      `json:"metadata"`
+	Default  *bool                  `json:"default"`
 }
 
 func (booleanParameter) parameterResponse() {}
 
 type integerParameter struct {
-	Metadata      parameterMetadata `json:"metadata"`
-	Minimum       *int64            `json:"minimum"`
-	Maximum       *int64            `json:"maximum"`
-	Default       *int64            `json:"default"`
-	AllowedValues []int64           `json:"allowed_values"`
+	Kind          metadata.ParameterKind `json:"kind"`
+	Metadata      parameterMetadata      `json:"metadata"`
+	Minimum       *int64                 `json:"minimum"`
+	Maximum       *int64                 `json:"maximum"`
+	Default       *int64                 `json:"default"`
+	AllowedValues []int64                `json:"allowed_values"`
 }
 
 func (integerParameter) parameterResponse() {}
 
 type floatParameter struct {
-	Metadata      parameterMetadata `json:"metadata"`
-	Minimum       *float64          `json:"minimum"`
-	Maximum       *float64          `json:"maximum"`
-	Default       *float64          `json:"default"`
-	AllowedValues []float64         `json:"allowed_values"`
+	Kind          metadata.ParameterKind `json:"kind"`
+	Metadata      parameterMetadata      `json:"metadata"`
+	Minimum       *float64               `json:"minimum"`
+	Maximum       *float64               `json:"maximum"`
+	Default       *float64               `json:"default"`
+	AllowedValues []float64              `json:"allowed_values"`
 }
 
 func (floatParameter) parameterResponse() {}
 
 type dateTimeParameter struct {
-	Metadata parameterMetadata `json:"metadata"`
-	Minimum  *time.Time        `json:"minimum"`
-	Maximum  *time.Time        `json:"maximum"`
-	Default  *time.Time        `json:"default"`
-	Pattern  string            `json:"pattern"`
+	Kind     metadata.ParameterKind `json:"kind"`
+	Metadata parameterMetadata      `json:"metadata"`
+	Minimum  *time.Time             `json:"minimum"`
+	Maximum  *time.Time             `json:"maximum"`
+	Default  *time.Time             `json:"default"`
+	Pattern  string                 `json:"pattern"`
 }
 
 func (dateTimeParameter) parameterResponse() {}
@@ -252,8 +258,8 @@ type coordinate struct {
 }
 
 type spatial struct {
-	Point   *coordinate  `json:"point"`
-	Polygon []coordinate `json:"polygon"`
+	Point   *coordinate  `json:"point,omitempty"`
+	Polygon []coordinate `json:"polygon,omitempty"`
 }
 
 type temporal struct {
@@ -285,8 +291,8 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 		ContactPoints:         make([]metadata.ContactPoint, 0, len(r.ContactPoints)),
 		Providers:             make([]metadata.Organization, 0, len(r.Providers)),
 		Categories:            make([]metadata.Category, 0, len(r.Categories)),
-		SourceCreated:         r.SourceCreated,
-		SourceUpdated:         r.SourceUpdated,
+		SourceCreated:         r.Created,
+		SourceUpdated:         r.Updated,
 		Status:                "",
 		Created:               time.Time{},
 		Updated:               time.Time{},
@@ -471,31 +477,31 @@ type record struct {
 	Revision   int32                  `json:"revision"`
 	Status     metadata.DatasetStatus `json:"status"`
 	CreatedBy  string                 `json:"created_by"`
-	Group      categoryScheme         `json:"group"`
+	GroupID    uuid.UUID              `json:"group_id"`
+	GroupName  string                 `json:"group_name"`
+	CreatedAt  time.Time              `json:"created_at"`
+	UpdatedAt  time.Time              `json:"updated_at"`
 	Metadata   metadataResponse       `json:"metadata"`
 }
 
 type metadataResponse struct {
-	ID                    uuid.UUID              `json:"id"`
-	SourceIRI             string                 `json:"source_iri"`
-	Title                 string                 `json:"title"`
-	Description           string                 `json:"description"`
-	Keywords              string                 `json:"keywords"`
-	AccrualPeriodicity    *string                `json:"accrual_periodicity"`
-	QualityAnnotation     *string                `json:"quality_annotation"`
-	AccessRight           *string                `json:"access_right"`
-	Distributions         []distribution         `json:"distributions"`
-	SpatialCoverage       *spatial               `json:"spatial_coverage"`
-	TemporalCoverage      *temporal              `json:"temporal_coverage"`
-	PersistentIdentifiers []identifier           `json:"persistent_identifiers"`
-	ContactPoints         *[]contactPoint        `json:"contact_points,omitempty"`
-	Providers             []organization         `json:"providers"`
-	Categories            []category             `json:"categories"`
-	SourceCreated         *time.Time             `json:"source_created"`
-	SourceUpdated         *time.Time             `json:"source_updated"`
-	Status                metadata.DatasetStatus `json:"status"`
-	Created               time.Time              `json:"created"`
-	Updated               time.Time              `json:"updated"`
+	ID                    uuid.UUID                `json:"id"`
+	SourceIRI             string                   `json:"source_iri"`
+	Title                 string                   `json:"title"`
+	Description           string                   `json:"description"`
+	Keywords              string                   `json:"keywords"`
+	AccrualPeriodicity    *string                  `json:"accrual_periodicity"`
+	QualityAnnotation     *string                  `json:"quality_annotation"`
+	AccessRight           *string                  `json:"access_right"`
+	Distributions         []distribution           `json:"distributions"`
+	SpatialCoverage       *spatial                 `json:"spatial_coverage"`
+	TemporalCoverage      *temporal                `json:"temporal_coverage"`
+	PersistentIdentifiers []identifier             `json:"persistent_identifiers"`
+	ContactPoints         *[]contactPointReference `json:"contact_points,omitempty"`
+	Providers             []resourceReference      `json:"providers"`
+	Categories            []resourceReference      `json:"categories"`
+	Created               *time.Time               `json:"created"`
+	Updated               *time.Time               `json:"updated"`
 }
 
 type distribution struct {
@@ -507,64 +513,33 @@ type distribution struct {
 	Issued           *time.Time                `json:"issued"`
 	Modified         *time.Time                `json:"modified"`
 	ByteSize         *int64                    `json:"byte_size"`
-	WebService       *webService               `json:"web_service"`
-	DownloadableFile *downloadableFile         `json:"downloadable_file"`
+	WebService       *webService               `json:"web_service,omitempty"`
+	DownloadableFile *downloadableFile         `json:"downloadable_file,omitempty"`
 }
 
 type webService struct {
-	ID               uuid.UUID           `json:"id"`
-	Name             string              `json:"name"`
-	Description      string              `json:"description"`
-	TemplateURL      string              `json:"template_url"`
-	Parameters       []parameterResponse `json:"parameters"`
-	Format           string              `json:"format"`
-	Provider         *organization       `json:"provider"`
-	Documentation    *documentation      `json:"documentation"`
-	SpatialCoverage  *spatial            `json:"spatial_coverage"`
-	TemporalCoverage *temporal           `json:"temporal_coverage"`
-	ContactPoints    *[]contactPoint     `json:"contact_points,omitempty"`
+	ID               uuid.UUID                `json:"id"`
+	Name             string                   `json:"name"`
+	Description      string                   `json:"description"`
+	TemplateURL      string                   `json:"template_url"`
+	Parameters       []parameterResponse      `json:"parameters"`
+	Format           string                   `json:"format"`
+	Provider         *resourceReference       `json:"provider"`
+	Documentation    *documentation           `json:"documentation"`
+	SpatialCoverage  *spatial                 `json:"spatial_coverage"`
+	TemporalCoverage *temporal                `json:"temporal_coverage"`
+	ContactPoints    *[]contactPointReference `json:"contact_points,omitempty"`
 }
 
-type organization struct {
-	ID            uuid.UUID       `json:"id"`
-	SourceIRI     string          `json:"source_iri"`
-	Name          string          `json:"name"`
-	Street        *string         `json:"street"`
-	Locality      *string         `json:"locality"`
-	PostalCode    *string         `json:"postal_code"`
-	Country       *string         `json:"country"`
-	LogoURL       *string         `json:"logo_url"`
-	PageURL       *string         `json:"page_url"`
-	Email         *string         `json:"email"`
-	LEICode       *string         `json:"lei_code"`
-	ContactPoints *[]contactPoint `json:"contact_points,omitempty"`
-	Identifiers   []identifier    `json:"identifiers"`
+type resourceReference struct {
+	ID        uuid.UUID `json:"id"`
+	SourceIRI string    `json:"source_iri"`
+	Name      string    `json:"name"`
 }
 
-type category struct {
-	ID        uuid.UUID  `json:"id"`
-	SourceIRI string     `json:"source_iri"`
-	Name      string     `json:"name"`
-	Children  []category `json:"children"`
-}
-
-type categoryScheme struct {
-	ID        uuid.UUID                `json:"id"`
-	SourceIRI string                   `json:"source_iri"`
-	Name      string                   `json:"name"`
-	Label     *string                  `json:"label"`
-	Logo      *string                  `json:"logo"`
-	Page      *string                  `json:"page"`
-	Color     *string                  `json:"color"`
-	Position  int32                    `json:"position"`
-	Concept   metadata.TopLevelConcept `json:"concept"`
-}
-
-type contactPoint struct {
-	ID        uuid.UUID                 `json:"id"`
-	SourceIRI string                    `json:"source_iri"`
-	Email     string                    `json:"email"`
-	Role      metadata.ContactPointRole `json:"role"`
+type contactPointReference struct {
+	ID        uuid.UUID `json:"id"`
+	SourceIRI string    `json:"source_iri"`
 }
 
 func datasetResponse(value datasetlifecycle.Dataset, includeContacts bool) record {
@@ -574,7 +549,10 @@ func datasetResponse(value datasetlifecycle.Dataset, includeContacts bool) recor
 		Revision:   value.Revision,
 		Status:     value.Status,
 		CreatedBy:  value.CreatedBy,
-		Group:      categorySchemeDTO(value.Group),
+		GroupID:    value.Group.ID,
+		GroupName:  value.Group.Name,
+		CreatedAt:  value.CreatedAt,
+		UpdatedAt:  value.UpdatedAt,
 		Metadata:   datasetMetadataDTO(value.Metadata, includeContacts),
 	}
 }
@@ -594,13 +572,10 @@ func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataRe
 		TemporalCoverage:      temporalResponse(value.TemporalCoverage),
 		PersistentIdentifiers: make([]identifier, 0, len(value.PersistentIdentifiers)),
 		ContactPoints:         nil,
-		Providers:             make([]organization, 0, len(value.Providers)),
-		Categories:            make([]category, 0, len(value.Categories)),
-		SourceCreated:         value.SourceCreated,
-		SourceUpdated:         value.SourceUpdated,
-		Status:                value.Status,
-		Created:               value.Created,
-		Updated:               value.Updated,
+		Providers:             make([]resourceReference, 0, len(value.Providers)),
+		Categories:            make([]resourceReference, 0, len(value.Categories)),
+		Created:               value.SourceCreated,
+		Updated:               value.SourceUpdated,
 	}
 	for _, item := range value.Distributions {
 		result.Distributions = append(result.Distributions, distributionDTO(item, includeContacts))
@@ -609,17 +584,17 @@ func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataRe
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifierResponse(item))
 	}
 	if includeContacts {
-		contacts := make([]contactPoint, 0, len(value.ContactPoints))
+		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
 		for _, item := range value.ContactPoints {
-			contacts = append(contacts, contactPointDTO(item))
+			contacts = append(contacts, contactPointReferenceDTO(item))
 		}
 		result.ContactPoints = &contacts
 	}
 	for _, item := range value.Providers {
-		result.Providers = append(result.Providers, organizationDTO(item, includeContacts))
+		result.Providers = append(result.Providers, resourceReferenceDTO(item.ID, item.SourceIRI, item.Name))
 	}
 	for _, item := range value.Categories {
-		result.Categories = append(result.Categories, categoryDTO(item))
+		result.Categories = append(result.Categories, resourceReferenceDTO(item.ID, item.SourceIRI, item.Name))
 	}
 	return result
 }
@@ -668,7 +643,7 @@ func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 		result.Parameters = append(result.Parameters, parameterDTO(item))
 	}
 	if value.Provider != nil {
-		item := organizationDTO(*value.Provider, includeContacts)
+		item := resourceReferenceDTO(value.Provider.ID, value.Provider.SourceIRI, value.Provider.Name)
 		result.Provider = &item
 	}
 	if value.Documentation != nil {
@@ -679,9 +654,9 @@ func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 		}
 	}
 	if includeContacts {
-		contacts := make([]contactPoint, 0, len(value.ContactPoints))
+		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
 		for _, item := range value.ContactPoints {
-			contacts = append(contacts, contactPointDTO(item))
+			contacts = append(contacts, contactPointReferenceDTO(item))
 		}
 		result.ContactPoints = &contacts
 	}
@@ -693,34 +668,39 @@ func parameterDTO(value metadata.Parameter) parameterResponse {
 	switch item := value.(type) {
 	case metadata.StringParameter:
 		return stringParameter{
+			Kind:          item.Kind(),
 			Metadata:      metadataValue,
 			Default:       item.Default,
-			AllowedValues: item.AllowedValues,
+			AllowedValues: nonNilSlice(item.AllowedValues),
 			Pattern:       item.Pattern,
 		}
 	case metadata.BooleanParameter:
 		return booleanParameter{
+			Kind:     item.Kind(),
 			Metadata: metadataValue,
 			Default:  item.Default,
 		}
 	case metadata.IntegerParameter:
 		return integerParameter{
+			Kind:          item.Kind(),
 			Metadata:      metadataValue,
 			Minimum:       item.Minimum,
 			Maximum:       item.Maximum,
 			Default:       item.Default,
-			AllowedValues: item.AllowedValues,
+			AllowedValues: nonNilSlice(item.AllowedValues),
 		}
 	case metadata.FloatParameter:
 		return floatParameter{
+			Kind:          item.Kind(),
 			Metadata:      metadataValue,
 			Minimum:       item.Minimum,
 			Maximum:       item.Maximum,
 			Default:       item.Default,
-			AllowedValues: item.AllowedValues,
+			AllowedValues: nonNilSlice(item.AllowedValues),
 		}
 	case metadata.DateTimeParameter:
 		return dateTimeParameter{
+			Kind:     item.Kind(),
 			Metadata: metadataValue,
 			Minimum:  item.Minimum,
 			Maximum:  item.Maximum,
@@ -730,6 +710,13 @@ func parameterDTO(value metadata.Parameter) parameterResponse {
 	default:
 		return nil
 	}
+}
+
+func nonNilSlice[T any](values []T) []T {
+	if values == nil {
+		return []T{}
+	}
+	return values
 }
 
 func parameterMetadataResponse(value metadata.ParameterMetadata) parameterMetadata {
@@ -745,70 +732,12 @@ func parameterMetadataResponse(value metadata.ParameterMetadata) parameterMetada
 	}
 }
 
-func organizationDTO(value metadata.Organization, includeContacts bool) organization {
-	result := organization{
-		ID:            value.ID,
-		SourceIRI:     value.SourceIRI,
-		Name:          value.Name,
-		Street:        value.Street,
-		Locality:      value.Locality,
-		PostalCode:    value.PostalCode,
-		Country:       value.Country,
-		LogoURL:       value.LogoURL,
-		PageURL:       value.PageURL,
-		Email:         value.Email,
-		LEICode:       value.LEICode,
-		ContactPoints: nil,
-		Identifiers:   make([]identifier, 0, len(value.Identifiers)),
-	}
-	for _, item := range value.Identifiers {
-		result.Identifiers = append(result.Identifiers, identifierResponse(item))
-	}
-	for _, item := range value.ContactPoints {
-		if includeContacts {
-			if result.ContactPoints == nil {
-				result.ContactPoints = new([]contactPoint)
-			}
-			*result.ContactPoints = append(*result.ContactPoints, contactPointDTO(item))
-		}
-	}
-	return result
+func resourceReferenceDTO(id uuid.UUID, sourceIRI, name string) resourceReference {
+	return resourceReference{ID: id, SourceIRI: sourceIRI, Name: name}
 }
 
-func categoryDTO(value metadata.Category) category {
-	result := category{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Name:      value.Name,
-		Children:  make([]category, 0, len(value.Children)),
-	}
-	for _, item := range value.Children {
-		result.Children = append(result.Children, categoryDTO(item))
-	}
-	return result
-}
-
-func categorySchemeDTO(value metadata.CategoryScheme) categoryScheme {
-	return categoryScheme{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Name:      value.Name,
-		Label:     value.Label,
-		Logo:      value.Logo,
-		Page:      value.Page,
-		Color:     value.Color,
-		Position:  value.Position,
-		Concept:   value.Concept,
-	}
-}
-
-func contactPointDTO(value metadata.ContactPoint) contactPoint {
-	return contactPoint{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Email:     value.Email,
-		Role:      value.Role,
-	}
+func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
+	return contactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
 }
 
 func identifierResponse(value metadata.Identifier) identifier {

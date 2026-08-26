@@ -21,6 +21,7 @@ var _ MappedNullable = &StringParameter{}
 
 // StringParameter struct for StringParameter
 type StringParameter struct {
+	Kind          string                  `json:"kind"`
 	Metadata      StringParameterMetadata `json:"metadata"`
 	Default       NullableString          `json:"default"`
 	AllowedValues []string                `json:"allowed_values"`
@@ -33,8 +34,9 @@ type _StringParameter StringParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStringParameter(metadata StringParameterMetadata, default_ NullableString, allowedValues []string, pattern string) *StringParameter {
+func NewStringParameter(kind string, metadata StringParameterMetadata, default_ NullableString, allowedValues []string, pattern string) *StringParameter {
 	this := StringParameter{}
+	this.Kind = kind
 	this.Metadata = metadata
 	this.Default = default_
 	this.AllowedValues = allowedValues
@@ -48,6 +50,30 @@ func NewStringParameter(metadata StringParameterMetadata, default_ NullableStrin
 func NewStringParameterWithDefaults() *StringParameter {
 	this := StringParameter{}
 	return &this
+}
+
+// GetKind returns the Kind field value
+func (o *StringParameter) GetKind() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Kind
+}
+
+// GetKindOk returns a tuple with the Kind field value
+// and a boolean to check if the value has been set.
+func (o *StringParameter) GetKindOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Kind, true
+}
+
+// SetKind sets field value
+func (o *StringParameter) SetKind(v string) {
+	o.Kind = v
 }
 
 // GetMetadata returns the Metadata field value
@@ -158,6 +184,7 @@ func (o StringParameter) MarshalJSON() ([]byte, error) {
 
 func (o StringParameter) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["kind"] = o.Kind
 	toSerialize["metadata"] = o.Metadata
 	toSerialize["default"] = o.Default.Get()
 	toSerialize["allowed_values"] = o.AllowedValues
@@ -170,6 +197,7 @@ func (o *StringParameter) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"kind",
 		"metadata",
 		"default",
 		"allowed_values",
