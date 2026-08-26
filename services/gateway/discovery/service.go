@@ -17,8 +17,8 @@ type Service struct {
 	searcher ResourceSearcher
 }
 
-func NewService(backoffice *clients.Backoffice) *Service {
-	return &Service{searcher: backoffice}
+func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
+	return &Service{searcher: metadataLifecycle}
 }
 
 func (s *Service) Search(ctx context.Context, actorID string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {

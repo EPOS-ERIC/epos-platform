@@ -22,18 +22,18 @@ fmt:
 lint: fmt
 	golangci-lint run ./...
 
-BACKOFFICE_SPEC := ../backoffice/docs/openapi.yaml
-BACKOFFICE_CLIENT_GEN_DIR := gen/backoffice
+METADATA_LIFECYCLE_SPEC := ../metadata-lifecycle/docs/openapi.yaml
+METADATA_LIFECYCLE_CLIENT_GEN_DIR := gen/metadata-lifecycle
 generate: clean
 	openapi-generator generate -g go \
-		-i $(BACKOFFICE_SPEC) \
-		-o $(BACKOFFICE_CLIENT_GEN_DIR) \
+		-i $(METADATA_LIFECYCLE_SPEC) \
+		-o $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) \
 		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
-		-p packageName=backofficeclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
-	(cd $(BACKOFFICE_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
+		-p packageName=metadatalifecycleclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
+	(cd $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
 clean:
-	rm -rf $(BIN) $(BACKOFFICE_CLIENT_GEN_DIR)
+	rm -rf $(BIN) $(METADATA_LIFECYCLE_CLIENT_GEN_DIR)
 
 get-token:
 	curl -s -X POST http://localhost:8110/oauth/token \

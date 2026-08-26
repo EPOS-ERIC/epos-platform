@@ -52,7 +52,7 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.ErrorContext(r.Context(), "get user failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 		return
 	}
 
@@ -78,7 +78,7 @@ func (h *Users) List(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.ErrorContext(r.Context(), "list users failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 		return
 	}
 
@@ -171,7 +171,7 @@ func (h *Users) writeUserStateError(w http.ResponseWriter, r *http.Request, err 
 		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "user request timed out", err)
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 	}
 	return true
 }
@@ -215,7 +215,7 @@ func (h *Users) changeGlobalPermission(w http.ResponseWriter, r *http.Request, g
 		}
 
 		log.ErrorContext(r.Context(), "change global permission failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 		return
 	}
 
@@ -265,7 +265,7 @@ func (h *Users) changeGlobalRole(w http.ResponseWriter, r *http.Request, assign 
 		}
 
 		log.ErrorContext(r.Context(), "change global role failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 		return
 	}
 

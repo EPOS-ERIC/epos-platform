@@ -233,7 +233,7 @@ func (h *Groups) DeleteCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 // WithdrawMembershipRequest deletes the authenticated user's pending membership request.
-// TODO: since the handlers here and the ones in the backoffice currently are doing basically the same thing, maybe we should make them behave in a similar way for consistency
+// TODO: since the handlers here and the ones in the metadata-lifecycle currently are doing basically the same thing, maybe we should make them behave in a similar way for consistency
 func (h *Groups) WithdrawMembershipRequest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	actor, ok := AuthenticatedUserFromContext(ctx)
@@ -567,7 +567,7 @@ func writeGroupError(r *http.Request, w http.ResponseWriter, err error, operatio
 		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "group request timed out", err)
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 	}
 }
 
@@ -586,7 +586,7 @@ func writeMembershipError(r *http.Request, w http.ResponseWriter, err error, ope
 		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "membership request timed out", err)
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 	}
 }
 

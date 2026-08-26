@@ -9,9 +9,9 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
-func (c *Backoffice) SearchResources(ctx context.Context, actorID string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
+func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
 	if c == nil || c.resources == nil {
-		return nil, fmt.Errorf("backoffice resource client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle resource client is not configured")
 	}
 
 	request := c.resources.SearchResources(ctx)
@@ -45,7 +45,7 @@ func (c *Backoffice) SearchResources(ctx context.Context, actorID string, filter
 
 	items, response, err := request.Execute()
 	if err != nil {
-		return nil, wrapDiscoveryError("search backoffice resources", response, err)
+		return nil, wrapDiscoveryError("search metadata-lifecycle resources", response, err)
 	}
 
 	return mapSlice(items, toDomainDiscoveryItem), nil

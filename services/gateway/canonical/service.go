@@ -11,23 +11,23 @@ import (
 )
 
 type Service struct {
-	backoffice *clients.Backoffice
+	metadataLifecycle *clients.MetadataLifecycle
 }
 
-func NewService(backoffice *clients.Backoffice) *Service {
-	return &Service{backoffice: backoffice}
+func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
+	return &Service{metadataLifecycle: metadataLifecycle}
 }
 
 func (s *Service) ListContactPoints(ctx context.Context, actorID string) ([]domain.ContactPoint, error) {
 	if strings.TrimSpace(actorID) == "" {
 		return nil, fmt.Errorf("invalid contact-point actor: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return nil, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return nil, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	points, err := s.backoffice.ListContactPoints(ctx, actorID)
+	points, err := s.metadataLifecycle.ListContactPoints(ctx, actorID)
 	if err != nil {
-		return nil, fmt.Errorf("list contact points through backoffice: %w", err)
+		return nil, fmt.Errorf("list contact points through metadata-lifecycle: %w", err)
 	}
 	return points, nil
 }
@@ -36,12 +36,12 @@ func (s *Service) GetContactPoint(ctx context.Context, actorID, id string) (doma
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" {
 		return domain.ContactPoint{}, fmt.Errorf("invalid contact-point request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return domain.ContactPoint{}, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	point, err := s.backoffice.GetContactPoint(ctx, actorID, id)
+	point, err := s.metadataLifecycle.GetContactPoint(ctx, actorID, id)
 	if err != nil {
-		return domain.ContactPoint{}, fmt.Errorf("get contact point through backoffice: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("get contact point through metadata-lifecycle: %w", err)
 	}
 	return point, nil
 }
@@ -50,12 +50,12 @@ func (s *Service) CreateContactPoint(ctx context.Context, actorID string, input 
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(input.Email) == "" || strings.TrimSpace(input.Role) == "" {
 		return domain.ContactPoint{}, fmt.Errorf("invalid contact-point request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return domain.ContactPoint{}, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	point, err := s.backoffice.CreateContactPoint(ctx, actorID, input)
+	point, err := s.metadataLifecycle.CreateContactPoint(ctx, actorID, input)
 	if err != nil {
-		return domain.ContactPoint{}, fmt.Errorf("create contact point through backoffice: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("create contact point through metadata-lifecycle: %w", err)
 	}
 	return point, nil
 }
@@ -64,12 +64,12 @@ func (s *Service) ReplaceContactPoint(ctx context.Context, actorID, id string, i
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" || strings.TrimSpace(input.Email) == "" || strings.TrimSpace(input.Role) == "" {
 		return domain.ContactPoint{}, fmt.Errorf("invalid contact-point request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return domain.ContactPoint{}, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	point, err := s.backoffice.ReplaceContactPoint(ctx, actorID, id, input)
+	point, err := s.metadataLifecycle.ReplaceContactPoint(ctx, actorID, id, input)
 	if err != nil {
-		return domain.ContactPoint{}, fmt.Errorf("replace contact point through backoffice: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("replace contact point through metadata-lifecycle: %w", err)
 	}
 	return point, nil
 }
@@ -78,22 +78,22 @@ func (s *Service) DeleteContactPoint(ctx context.Context, actorID, id string) er
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" {
 		return fmt.Errorf("invalid contact-point request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	if err := s.backoffice.DeleteContactPoint(ctx, actorID, id); err != nil {
-		return fmt.Errorf("delete contact point through backoffice: %w", err)
+	if err := s.metadataLifecycle.DeleteContactPoint(ctx, actorID, id); err != nil {
+		return fmt.Errorf("delete contact point through metadata-lifecycle: %w", err)
 	}
 	return nil
 }
 
 func (s *Service) ListOrganizations(ctx context.Context) ([]domain.CanonicalOrganization, error) {
-	if s == nil || s.backoffice == nil {
-		return nil, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return nil, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	organizations, err := s.backoffice.ListOrganizations(ctx)
+	organizations, err := s.metadataLifecycle.ListOrganizations(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list organizations through backoffice: %w", err)
+		return nil, fmt.Errorf("list organizations through metadata-lifecycle: %w", err)
 	}
 	return organizations, nil
 }
@@ -102,12 +102,12 @@ func (s *Service) GetOrganization(ctx context.Context, id string) (domain.Canoni
 	if strings.TrimSpace(id) == "" {
 		return domain.CanonicalOrganization{}, fmt.Errorf("invalid organization id: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	organization, err := s.backoffice.GetOrganization(ctx, id)
+	organization, err := s.metadataLifecycle.GetOrganization(ctx, id)
 	if err != nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("get organization through backoffice: %w", err)
+		return domain.CanonicalOrganization{}, fmt.Errorf("get organization through metadata-lifecycle: %w", err)
 	}
 	return organization, nil
 }
@@ -116,12 +116,12 @@ func (s *Service) CreateOrganization(ctx context.Context, actorID string, input 
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(input.Name) == "" {
 		return domain.CanonicalOrganization{}, fmt.Errorf("invalid organization request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	organization, err := s.backoffice.CreateOrganization(ctx, actorID, input)
+	organization, err := s.metadataLifecycle.CreateOrganization(ctx, actorID, input)
 	if err != nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("create organization through backoffice: %w", err)
+		return domain.CanonicalOrganization{}, fmt.Errorf("create organization through metadata-lifecycle: %w", err)
 	}
 	return organization, nil
 }
@@ -130,12 +130,12 @@ func (s *Service) ReplaceOrganization(ctx context.Context, actorID, id string, i
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" || strings.TrimSpace(input.Name) == "" {
 		return domain.CanonicalOrganization{}, fmt.Errorf("invalid organization request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	organization, err := s.backoffice.ReplaceOrganization(ctx, actorID, id, input)
+	organization, err := s.metadataLifecycle.ReplaceOrganization(ctx, actorID, id, input)
 	if err != nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("replace organization through backoffice: %w", err)
+		return domain.CanonicalOrganization{}, fmt.Errorf("replace organization through metadata-lifecycle: %w", err)
 	}
 	return organization, nil
 }
@@ -144,11 +144,11 @@ func (s *Service) DeleteOrganization(ctx context.Context, actorID, id string) er
 	if strings.TrimSpace(actorID) == "" || strings.TrimSpace(id) == "" {
 		return fmt.Errorf("invalid organization request: %w", domain.ErrBadRequest)
 	}
-	if s == nil || s.backoffice == nil {
-		return fmt.Errorf("backoffice canonical client is not configured")
+	if s == nil || s.metadataLifecycle == nil {
+		return fmt.Errorf("metadata-lifecycle canonical client is not configured")
 	}
-	if err := s.backoffice.DeleteOrganization(ctx, actorID, id); err != nil {
-		return fmt.Errorf("delete organization through backoffice: %w", err)
+	if err := s.metadataLifecycle.DeleteOrganization(ctx, actorID, id); err != nil {
+		return fmt.Errorf("delete organization through metadata-lifecycle: %w", err)
 	}
 	return nil
 }

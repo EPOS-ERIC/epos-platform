@@ -50,7 +50,7 @@ func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.ErrorContext(ctx, "metadata import request failed", "error", err)
-		WriteError(ctx, w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(ctx, w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 		return
 	}
 

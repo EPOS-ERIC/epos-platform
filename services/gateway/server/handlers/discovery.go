@@ -49,6 +49,6 @@ func writeDiscoveryError(r *http.Request, w http.ResponseWriter, err error) {
 		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "discovery request timed out", err)
 	default:
 		log.ErrorContext(r.Context(), "discovery request failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 	}
 }

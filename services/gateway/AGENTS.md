@@ -2,7 +2,7 @@
 
 ## Workflow
 
-- Run the relevant generation target after changing an upstream API specification. Currently, `make generate` reads `../backoffice/docs/openapi.yaml` and regenerates `gen/backoffice`.
+- Run the relevant generation target after changing an upstream API specification. Currently, `make generate` reads `../metadata-lifecycle/docs/openapi.yaml` and regenerates `gen/metadata-lifecycle`.
 - Run `make test` for tests.
 - `make lint` formats before linting. Do not use gofmt on files individually, run make lint.
 

@@ -9,7 +9,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
-func (c *Backoffice) CreateResource(ctx context.Context, actorID, groupID, resourceType string, input domain.CreateResourceInput) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) CreateResource(ctx context.Context, actorID, groupID, resourceType string, input domain.CreateResourceInput) (domain.ResourceVersion, error) {
 	request, err := toClientCreateResourceRequest(resourceType, input.Metadata)
 	if err != nil {
 		return domain.ResourceVersion{}, err
@@ -25,7 +25,7 @@ func (c *Backoffice) CreateResource(ctx context.Context, actorID, groupID, resou
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) GetResourceVersion(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	request := c.resources.GetResourceVersion(ctx, resourceType, resourceID, versionID)
 	if actorID != "" {
 		request = request.XEPOSUserID(actorID)
@@ -39,7 +39,7 @@ func (c *Backoffice) GetResourceVersion(ctx context.Context, actorID, resourceTy
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) ReplaceResourceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string, input domain.ReplaceResourceDraftInput) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) ReplaceResourceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string, input domain.ReplaceResourceDraftInput) (domain.ResourceVersion, error) {
 	request, err := toClientReplaceResourceDraftRequest(input)
 	if err != nil {
 		return domain.ResourceVersion{}, err
@@ -56,14 +56,14 @@ func (c *Backoffice) ReplaceResourceDraft(ctx context.Context, actorID, resource
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) DiscardResourceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string) error {
+func (c *MetadataLifecycle) DiscardResourceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string) error {
 	response, err := c.resources.DiscardResourceDraft(ctx, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
 	return lifecycleError(response, err)
 }
 
-func (c *Backoffice) SubmitResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) SubmitResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.SubmitResource(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -73,7 +73,7 @@ func (c *Backoffice) SubmitResource(ctx context.Context, actorID, resourceType, 
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) WithdrawResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) WithdrawResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.WithdrawResource(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -83,7 +83,7 @@ func (c *Backoffice) WithdrawResource(ctx context.Context, actorID, resourceType
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) RejectResource(ctx context.Context, actorID, resourceType, resourceID, versionID string, input domain.RejectResourceInput) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) RejectResource(ctx context.Context, actorID, resourceType, resourceID, versionID string, input domain.RejectResourceInput) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.RejectResource(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		RejectRequest(toClientRejectRequest(input)).
@@ -94,7 +94,7 @@ func (c *Backoffice) RejectResource(ctx context.Context, actorID, resourceType, 
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) ReopenResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) ReopenResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.ReopenResource(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -104,7 +104,7 @@ func (c *Backoffice) ReopenResource(ctx context.Context, actorID, resourceType, 
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) PublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) PublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.PublishResource(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -114,7 +114,7 @@ func (c *Backoffice) PublishResource(ctx context.Context, actorID, resourceType,
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) UnpublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) UnpublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.UnpublishResource(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -124,7 +124,7 @@ func (c *Backoffice) UnpublishResource(ctx context.Context, actorID, resourceTyp
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) CreateResourceDraftFromPublication(ctx context.Context, actorID, resourceType, resourceID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) CreateResourceDraftFromPublication(ctx context.Context, actorID, resourceType, resourceID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.CreateResourceDraftFromPublication(ctx, resourceType, resourceID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -134,7 +134,7 @@ func (c *Backoffice) CreateResourceDraftFromPublication(ctx context.Context, act
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) CreateResourceDraftFromArchive(ctx context.Context, actorID, resourceType, resourceID string) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) CreateResourceDraftFromArchive(ctx context.Context, actorID, resourceType, resourceID string) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.CreateResourceDraftFromArchive(ctx, resourceType, resourceID).
 		XEPOSUserID(actorID).
 		Execute()
@@ -144,7 +144,7 @@ func (c *Backoffice) CreateResourceDraftFromArchive(ctx context.Context, actorID
 	return toDomainResourceVersion(record)
 }
 
-func (c *Backoffice) CopyResource(ctx context.Context, actorID, groupID, resourceType, resourceID string, input domain.CopyResourceInput) (domain.ResourceVersion, error) {
+func (c *MetadataLifecycle) CopyResource(ctx context.Context, actorID, groupID, resourceType, resourceID string, input domain.CopyResourceInput) (domain.ResourceVersion, error) {
 	record, response, err := c.resources.CopyResource(ctx, resourceType, resourceID).
 		XEPOSUserID(actorID).
 		CopyResourceRequest(toClientCopyResourceRequest(groupID, input)).
@@ -166,7 +166,7 @@ func lifecycleError(response *http.Response, err error) error {
 		return &domain.UpstreamError{StatusCode: response.StatusCode}
 	}
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return fmt.Errorf("backoffice lifecycle request: %w", domain.ErrUpstreamTimeout)
+		return fmt.Errorf("metadata-lifecycle lifecycle request: %w", domain.ErrUpstreamTimeout)
 	}
-	return fmt.Errorf("backoffice lifecycle request: %w", err)
+	return fmt.Errorf("metadata-lifecycle lifecycle request: %w", err)
 }

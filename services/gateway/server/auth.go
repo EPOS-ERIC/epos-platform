@@ -14,19 +14,19 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
-func authMiddleware(authenticator *auth.Service, provisioner *clients.Backoffice) func(http.Handler) http.Handler {
+func authMiddleware(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
 	return authMiddlewareRequired(authenticator, provisioner)
 }
 
-func authMiddlewareRequired(authenticator *auth.Service, provisioner *clients.Backoffice) func(http.Handler) http.Handler {
+func authMiddlewareRequired(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
 	return authMiddlewareWithMode(authenticator, provisioner, true)
 }
 
-func authMiddlewareOptional(authenticator *auth.Service, provisioner *clients.Backoffice) func(http.Handler) http.Handler {
+func authMiddlewareOptional(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
 	return authMiddlewareWithMode(authenticator, provisioner, false)
 }
 
-func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Backoffice, required bool) func(http.Handler) http.Handler {
+func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.MetadataLifecycle, required bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			span := trace.SpanFromContext(r.Context())

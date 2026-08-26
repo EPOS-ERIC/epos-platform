@@ -7,7 +7,7 @@ Monorepo for EPOS platform services, shared packages, and local development tool
 The repository currently contains five active backend services used in local development:
 
 - `services/gateway` (Go): API gateway/aggregation layer.
-- `services/backoffice` (Go): users, groups, memberships, authorization, and backoffice APIs.
+- `services/metadata-lifecycle` (Go): users, groups, memberships, authorization, and metadata-lifecycle APIs.
 - `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
 - `services/oss-aai-service` (Go): local authentication and authorization identity provider.
 
@@ -23,20 +23,20 @@ flowchart TB
 
     subgraph EDGE[Published host ports]
         GWE[gateway-service :32000]
-        BOE[backoffice-service :33000]
+        BOE[metadata-lifecycle-service :33000]
         DRE[data-retriever-service :8100]
         N4J[neo4j :7474/7687]
-        PBO[backoffice-db :5434]
+        PBO[metadata-lifecycle-db :5434]
         PDR[data-retriever-db :5433]
     end
 
     subgraph NET["epos-network - docker compose"]
         GW[gateway-service]
-        BO[backoffice-service]
+        BO[metadata-lifecycle-service]
         DR[data-retriever-service]
 
         NEO[(neo4j)]
-        BODB[(backoffice-db)]
+        BODB[(metadata-lifecycle-db)]
         DRDB[(data-retriever-db)]
     end
 
@@ -99,7 +99,7 @@ Shared Go modules live in `packages/go/` and are reused across services.
 |- apps/
 |- services/
 |  |- gateway/
-|  |- backoffice/
+|  |- metadata-lifecycle/
 |  |- data-retriever/
 |- packages/
 |  |- go/
@@ -129,7 +129,7 @@ make up KUBE_CONTEXT=kind-epos
 Common local endpoints:
 
 - Gateway API: `http://localhost:32000`
-- Backoffice API: `http://localhost:33000`
+- metadata-lifecycle API: `http://localhost:33000`
 - Data Retriever API: `http://localhost:8100`
 - OSS AAI API: `http://localhost:8110`
 - Neo4j Browser: `http://localhost:7474`
@@ -252,6 +252,6 @@ TODO: Correctly implement Hurl tests under `tests/hurl/`, then restore automatic
 ## Service documentation
 
 - Gateway: `services/gateway/README.md`
-- Backoffice: `services/backoffice/README.md`
+- metadata-lifecycle: `services/metadata-lifecycle/README.md`
 - Data Retriever: `services/data-retriever/README.md`
 - OSS AAI: `services/oss-aai-service/README.md`

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/backoffice"
+	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
 // Optional scalar, passed straight through
@@ -250,7 +250,7 @@ func toClientDistributionDraft(value domain.DistributionDraft) client.Distributi
 
 func toDomainResourceVersion(record *client.ResourceRecord) (domain.ResourceVersion, error) {
 	if record == nil {
-		return domain.ResourceVersion{}, fmt.Errorf("decode backoffice resource record: response is empty")
+		return domain.ResourceVersion{}, fmt.Errorf("decode metadata-lifecycle resource record: response is empty")
 	}
 
 	result := domain.ResourceVersion{ //nolint:exhaustruct_v5 // metadata is set from response variant below
@@ -294,7 +294,7 @@ func toDomainResourceVersion(record *client.ResourceRecord) (domain.ResourceVers
 			Keywords:    metadata.Keywords,
 		}
 	default:
-		return domain.ResourceVersion{}, fmt.Errorf("decode backoffice resource metadata: response is empty")
+		return domain.ResourceVersion{}, fmt.Errorf("decode metadata-lifecycle resource metadata: response is empty")
 	}
 
 	return result, nil
@@ -499,7 +499,7 @@ func toDomainDiscoveryReference(value client.DiscoveryReference) domain.Discover
 
 func toDomainUser(value *client.User) (domain.User, error) {
 	if value == nil {
-		return domain.User{}, fmt.Errorf("decode backoffice user: response is empty")
+		return domain.User{}, fmt.Errorf("decode metadata-lifecycle user: response is empty")
 	}
 
 	memberships := mapSlice(value.Memberships, func(membership client.UserMembership) domain.Membership {
@@ -546,7 +546,7 @@ func toDomainRoleRequest(value client.RoleRequest) domain.RoleRequest {
 
 func toDomainGroup(value *client.Group) (domain.Group, error) {
 	if value == nil {
-		return domain.Group{}, fmt.Errorf("decode backoffice group: response is empty")
+		return domain.Group{}, fmt.Errorf("decode metadata-lifecycle group: response is empty")
 	}
 
 	return domain.Group{
@@ -571,7 +571,7 @@ func toDomainGroups(values []client.Group) ([]domain.Group, error) {
 
 func toDomainGroupMembership(value *client.GroupMembership) (domain.GroupMembership, error) {
 	if value == nil {
-		return domain.GroupMembership{}, fmt.Errorf("decode backoffice membership: response is empty")
+		return domain.GroupMembership{}, fmt.Errorf("decode metadata-lifecycle membership: response is empty")
 	}
 
 	return domain.GroupMembership{

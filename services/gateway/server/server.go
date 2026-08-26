@@ -19,7 +19,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 )
 
-func Run(cfg config.Config, backofficeClient *clients.Backoffice, authService *auth.Service) error {
+func Run(cfg config.Config, metadataLifecycleClient *clients.MetadataLifecycle, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
@@ -38,9 +38,9 @@ func Run(cfg config.Config, backofficeClient *clients.Backoffice, authService *a
 		}
 	}()
 
-	lifecycleSvc := lifecycle.NewService(backofficeClient)
-	identitySvc := identity.NewService(backofficeClient)
-	router := NewRouter(lifecycleSvc, identitySvc, backofficeClient, authService, cfg.Server.CORSAllowOrigin)
+	lifecycleSvc := lifecycle.NewService(metadataLifecycleClient)
+	identitySvc := identity.NewService(metadataLifecycleClient)
+	router := NewRouter(lifecycleSvc, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct_v5

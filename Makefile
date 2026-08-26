@@ -22,12 +22,12 @@ populate-metadatone:
 	./packages/scripts/metadatone.sh
 
 clean: down
-	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data docker_backoffice-db-data
+	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data
 
 test:
 	$(MAKE) -C apps/platform test
 	$(MAKE) -C services/gateway test
-	$(MAKE) -C services/backoffice test
+	$(MAKE) -C services/metadata-lifecycle test
 	$(MAKE) -C services/data-retriever test
 	$(MAKE) -C services/oss-aai-service test
 
@@ -36,14 +36,14 @@ fmt:
 	$(MAKE) -C services/gateway fmt
 	$(MAKE) -C services/data-retriever fmt
 	$(MAKE) -C services/oss-aai-service fmt
-	$(MAKE) -C services/backoffice fmt
+	$(MAKE) -C services/metadata-lifecycle fmt
 
 lint:
 	$(MAKE) -C apps/platform lint
 	$(MAKE) -C services/gateway lint
 	$(MAKE) -C services/data-retriever lint
 	$(MAKE) -C services/oss-aai-service lint
-	$(MAKE) -C services/backoffice lint
+	$(MAKE) -C services/metadata-lifecycle lint
 
 helm-lint:
 	helm lint $(HELM_CHART) $(HELM_VALUES_ARG)
@@ -61,7 +61,7 @@ helm-uninstall:
 	helm uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
 
 test-schemathesis:
-# TODO: remove the exclude method flags when the backoffice endpoints are implemente
+# TODO: remove the exclude method flags when the metadata-lifecycle endpoints are implemente
 	schemathesis_env="$$(./packages/scripts/schemathesis-env.sh)" && eval "$$schemathesis_env" && docker run --rm \
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \

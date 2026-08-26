@@ -11,11 +11,11 @@ import (
 )
 
 type Service struct {
-	backoffice *clients.Backoffice
+	metadataLifecycle *clients.MetadataLifecycle
 }
 
-func NewService(backoffice *clients.Backoffice) *Service {
-	return &Service{backoffice: backoffice}
+func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
+	return &Service{metadataLifecycle: metadataLifecycle}
 }
 
 func (s *Service) Turtle(ctx context.Context, actorID string, body io.Reader) (*domain.ImportResult, error) {
@@ -24,7 +24,7 @@ func (s *Service) Turtle(ctx context.Context, actorID string, body io.Reader) (*
 		return nil, fmt.Errorf("read import body: %w: %v", domain.ErrBadRequest, err)
 	}
 
-	result, err := s.backoffice.ImportTurtle(ctx, actorID, content)
+	result, err := s.metadataLifecycle.ImportTurtle(ctx, actorID, content)
 	if err != nil {
 		return nil, fmt.Errorf("import Turtle metadata: %w", err)
 	}

@@ -206,6 +206,6 @@ func writeCanonicalError(r *http.Request, w http.ResponseWriter, err error, oper
 		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "canonical metadata request timed out", err)
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 	}
 }

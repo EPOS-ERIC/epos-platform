@@ -13,7 +13,7 @@ upstream:
   max_entries: 2048
 
 services:
-  backoffice:
-    url: "http://backoffice-service:5000/"
+  metadata-lifecycle:
+    url: "http://metadata-lifecycle-service:5000/"
   auth:
     url: "http://oss-aai-service:8080/"

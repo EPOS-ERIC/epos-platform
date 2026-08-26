@@ -14,7 +14,7 @@ info:
     - Supply an OAuth2 bearer token for authenticated reads and all write operations.
     - JSON request bodies must use `Content-Type: application/json`; other media types receive `415`.
     - Error responses use `application/problem+json` unless noted otherwise.
-    - Operations backed by Backoffice can return `503` when it is unavailable or `504` when a request times out.
+    - Operations backed by Metadata Lifecycle can return `503` when it is unavailable or `504` when a request times out.
 
     How to use this API:
     - Start with `/search` when you want to find resources by text, type, provider, time range, spatial area, or keywords.
@@ -80,7 +80,7 @@ paths:
         "415":
           description: Content-Type must be text/turtle
         "503":
-          description: Backoffice service unavailable
+          description: Metadata Lifecycle service unavailable
         "504":
           $ref: "#/components/responses/GatewayTimeout"
   /search:
@@ -400,7 +400,7 @@ paths:
       tags:
         - Groups
       summary: List groups
-      description: Retrieve public group metadata from Backoffice. Membership data is not included.
+      description: Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
       operationId: listGroups
       responses:
         "200":
@@ -433,7 +433,7 @@ paths:
       tags:
         - Groups
       summary: Get group by id
-      description: Retrieve public group metadata from Backoffice. Membership data is not included.
+      description: Retrieve public group metadata from Metadata Lifecycle. Membership data is not included.
       operationId: getGroup
       responses:
         "200":
@@ -1932,18 +1932,18 @@ components:
                 detail: "metadata search timed out"
 
     ServiceUnavailable:
-      description: Backoffice service unavailable
+      description: Metadata Lifecycle service unavailable
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
           examples:
-            backofficeUnavailable:
-              summary: Backoffice unavailable
+            metadataLifecycleUnavailable:
+              summary: Metadata Lifecycle unavailable
               value:
-                title: "backoffice_unavailable"
+                title: "metadata_lifecycle_unavailable"
                 status: 503
-                detail: "backoffice service unavailable"
+                detail: "metadata-lifecycle service unavailable"
 
   schemas:
     # -------------------------------------------------------------------------
@@ -2113,7 +2113,7 @@ components:
         type: { type: string }
         value: { type: string }
 
-    # TODO: add discriminator on the type field for either downloadable_file or web_service. define what const should the type be and reuse it in both the gateway & backoffice
+    # TODO: add discriminator on the type field for either downloadable_file or web_service. define what const should the type be and reuse it in both the gateway & metadata-lifecycle
     DistributionDraft:
       type: object
       required: [title, type]
@@ -2715,7 +2715,7 @@ components:
           items: { type: string, format: uuid }
     Group:
       type: object
-      description: Public group metadata returned by Backoffice.
+      description: Public group metadata returned by Metadata Lifecycle.
       required:
         - id
         - source_iri

@@ -300,7 +300,7 @@ func (h *Lifecycle) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
 
 // createDraft handles HTTP plumbing shared by draft-from-publication and
 // draft-from-archive endpoints. create is the operation-specific callback that
-// calls Backoffice to create a draft from the selected source.
+// calls Metadata Lifecycle to create a draft from the selected source.
 func (h *Lifecycle) createDraft(w http.ResponseWriter, r *http.Request, create func(context.Context, string, string, string) (domain.ResourceVersion, error)) {
 	ctx := r.Context()
 	actor, ok := AuthenticatedUserFromContext(ctx)
@@ -404,11 +404,11 @@ func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {
 		case http.StatusConflict:
 			WriteError(r.Context(), w, http.StatusConflict, "conflict", "lifecycle operation conflicts with resource state", nil)
 		default:
-			WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+			WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 		}
 		return
 	}
 
 	log.ErrorContext(r.Context(), "lifecycle request failed", "error", err)
-	WriteError(r.Context(), w, http.StatusServiceUnavailable, "backoffice_unavailable", "backoffice service unavailable", err)
+	WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 }

@@ -54,11 +54,11 @@ docker_build(
 )
 
 docker_build(
-    'epos-backoffice-dev:local',
+    'epos-metadata-lifecycle-dev:local',
     '.',
-    dockerfile='services/backoffice/Dockerfile.dev',
+    dockerfile='services/metadata-lifecycle/Dockerfile.dev',
     only=[
-        'services/backoffice',
+        'services/metadata-lifecycle',
         'packages/go/logging',
         'packages/go/observability',
         'packages/go/middleware',
@@ -66,7 +66,7 @@ docker_build(
         'packages/scripts/epos-banner.sh',
     ],
     live_update=[
-        sync('services/backoffice', '/workspace/services/backoffice'),
+        sync('services/metadata-lifecycle', '/workspace/services/metadata-lifecycle'),
         sync('packages/go/logging', '/workspace/packages/go/logging'),
         sync('packages/go/observability', '/workspace/packages/go/observability'),
         sync('packages/go/middleware', '/workspace/packages/go/middleware'),
@@ -115,10 +115,10 @@ docker_build(
 )
 
 dc_resource('data-retriever-db', labels=['infra'])
-dc_resource('backoffice-db', labels=['infra'])
+dc_resource('metadata-lifecycle-db', labels=['infra'])
 dc_resource('data-retriever-service', labels=['app'], resource_deps=['data-retriever-db'])
 dc_resource('oss-aai-service', labels=['app'])
 dc_resource('gateway-service', labels=['app'])
-dc_resource('backoffice-service', labels=['app'], resource_deps=['backoffice-db'])
+dc_resource('metadata-lifecycle-service', labels=['app'], resource_deps=['metadata-lifecycle-db'])
 dc_resource('platform-app', labels=['app'], resource_deps=['gateway-service'])
 dc_resource('otel-lgtm', labels=['observability'])

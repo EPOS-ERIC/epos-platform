@@ -21,20 +21,20 @@ services:
       timeout: 5s
       retries: 20
 
-  backoffice-db:
+  metadata-lifecycle-db:
     image: postgis/postgis:16-3.4-alpine
     environment:
-      - POSTGRES_DB=backoffice
-      - POSTGRES_USER=backoffice
-      - POSTGRES_PASSWORD=backoffice
+      - POSTGRES_DB=metadata-lifecycle
+      - POSTGRES_USER=metadata-lifecycle
+      - POSTGRES_PASSWORD=metadata-lifecycle
     ports:
       - "5434:5432"
     volumes:
-      - backoffice-db-data:/var/lib/postgresql/data
+      - metadata-lifecycle-db-data:/var/lib/postgresql/data
     networks:
       - epos-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U backoffice -d backoffice || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U metadata-lifecycle -d metadata-lifecycle || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -42,7 +42,7 @@ services:
   gateway-service:
     image: epos-gateway-dev:local
     depends_on:
-      backoffice-service:
+      metadata-lifecycle-service:
         condition: service_healthy
       oss-aai-service:
         condition: service_healthy
@@ -76,28 +76,28 @@ services:
       retries: 20
       start_period: 20s
 
-  backoffice-service:
-    image: epos-backoffice-dev:local
+  metadata-lifecycle-service:
+    image: epos-metadata-lifecycle-dev:local
     depends_on:
-      backoffice-db:
+      metadata-lifecycle-db:
         condition: service_healthy
     ports:
       - "33000:5000"
     environment:
       - LOG_LEVEL=DEBUG
-      - DB_HOST=backoffice-db
+      - DB_HOST=metadata-lifecycle-db
       - DB_PORT=5432
-      - DB_NAME=backoffice
-      - DB_USER=backoffice
-      - DB_PASSWORD=backoffice
-      - OTEL_SERVICE_NAME=backoffice
+      - DB_NAME=metadata-lifecycle
+      - DB_USER=metadata-lifecycle
+      - DB_PASSWORD=metadata-lifecycle
+      - OTEL_SERVICE_NAME=metadata-lifecycle
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     user: 0:0
     volumes:
-      - backoffice-gomod-cache:/go/pkg/mod
-      - backoffice-gobuild-cache:/root/.cache/go-build
+      - metadata-lifecycle-gomod-cache:/go/pkg/mod
+      - metadata-lifecycle-gobuild-cache:/root/.cache/go-build
     restart: on-failure
     networks:
       - epos-network
@@ -211,9 +211,9 @@ services:
 volumes:
   gateway-gomod-cache:
   gateway-gobuild-cache:
-  backoffice-gomod-cache:
-  backoffice-gobuild-cache:
-  backoffice-db-data:
+  metadata-lifecycle-gomod-cache:
+  metadata-lifecycle-gobuild-cache:
+  metadata-lifecycle-db-data:
   data-retriever-gomod-cache:
   data-retriever-gobuild-cache:
   data-retriever-db-data:
