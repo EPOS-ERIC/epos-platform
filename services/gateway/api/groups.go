@@ -2,7 +2,6 @@ package api
 
 type Group struct {
 	ID          string  `json:"id"`
-	SourceIRI   string  `json:"source_iri"`
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	Label       *string `json:"label"`
@@ -65,7 +64,6 @@ type RoleRequestDecisionRequest struct {
 }
 
 type CreateGroupRequest struct {
-	SourceIRI   *string `json:"source_iri,omitempty"`
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	Label       *string `json:"label"`
@@ -91,12 +89,10 @@ type Category struct {
 	ID               string  `json:"id"`
 	GroupID          string  `json:"group_id"`
 	ParentCategoryID *string `json:"parent_category_id"`
-	SourceIRI        string  `json:"source_iri"`
 	Name             string  `json:"name"`
 }
 
 type CreateCategoryRequest struct {
-	SourceIRI        *string `json:"source_iri,omitempty"`
 	Name             string  `json:"name"`
 	ParentCategoryID *string `json:"parent_category_id,omitempty"`
 }

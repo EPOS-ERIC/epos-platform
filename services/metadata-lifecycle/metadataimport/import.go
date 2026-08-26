@@ -122,12 +122,12 @@ func (s *Service) Import(ctx context.Context, actorID string, input io.Reader) (
 
 func validateDatasetGroups(batch Batch) error {
 	for _, dataset := range batch.Datasets {
-		schemes := make(map[string]struct{})
+		schemes := make(map[uuid.UUID]struct{})
 		for _, category := range dataset.Categories {
-			schemes[category.Scheme.SourceIRI] = struct{}{}
+			schemes[category.Scheme.ID] = struct{}{}
 		}
 		if len(schemes) != 1 {
-			return fmt.Errorf("dataset %q must reference categories from exactly one scheme", dataset.SourceIRI)
+			return fmt.Errorf("dataset %q must reference categories from exactly one scheme", dataset.ID)
 		}
 	}
 	return nil
@@ -138,28 +138,28 @@ func validateResourceGroups(batch Batch) error {
 		return err
 	}
 	for _, software := range batch.SoftwareApplications {
-		if err := validateSoftwareGroups(software.SourceIRI, software.Categories); err != nil {
+		if err := validateSoftwareGroups(software.ID, software.Categories); err != nil {
 			return err
 		}
 	}
 	for _, software := range batch.SoftwareSourceCodes {
-		if err := validateSoftwareGroups(software.SourceIRI, software.Categories); err != nil {
+		if err := validateSoftwareGroups(software.ID, software.Categories); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func validateSoftwareGroups(sourceIRI string, categories []metadata.Category) error {
+func validateSoftwareGroups(id uuid.UUID, categories []metadata.Category) error {
 	if len(categories) == 0 {
-		return fmt.Errorf("software %q must reference at least one category", sourceIRI)
+		return fmt.Errorf("software %q must reference at least one category", id)
 	}
-	schemes := make(map[string]struct{})
+	schemes := make(map[uuid.UUID]struct{})
 	for _, category := range categories {
-		schemes[category.Scheme.SourceIRI] = struct{}{}
+		schemes[category.Scheme.ID] = struct{}{}
 	}
 	if len(schemes) != 1 {
-		return fmt.Errorf("software %q must reference categories from exactly one scheme", sourceIRI)
+		return fmt.Errorf("software %q must reference categories from exactly one scheme", id)
 	}
 	return nil
 }

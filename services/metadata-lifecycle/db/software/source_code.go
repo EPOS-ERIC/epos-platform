@@ -19,7 +19,10 @@ import (
 func (r *SourceCodeRepo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error) {
 	var result softwarelifecycle.SourceCode
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
-		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{SourceIri: value.SourceIRI, GroupID: groupID, CreatedBy: actorID})
+		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{
+			GroupID:   groupID,
+			CreatedBy: actorID,
+		})
 		if err != nil {
 			return fmt.Errorf("create source code: %w", err)
 		}
@@ -155,11 +158,10 @@ func (r *SourceCodeRepo) DraftFromLatestArchive(ctx context.Context, actorID str
 	return r.clone(ctx, actorID, sourceCodeID, sourceCodeID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.SourceCode, error) {
+func (r *SourceCodeRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID) (softwarelifecycle.SourceCode, error) {
 	var targetID, versionID uuid.UUID
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		logical, err := q.CreateLifecycleSoftwareSourceCode(ctx, sqlc.CreateLifecycleSoftwareSourceCodeParams{
-			SourceIri: sourceIRI,
 			GroupID:   groupID,
 			CreatedBy: actorID,
 		})
@@ -263,7 +265,11 @@ func ReplaceSourceCodeVersionParams(id, sourceCodeID uuid.UUID, revision int32, 
 //nolint:dupl // Source code and application children require parallel typed SQLC operations.
 func PersistSourceCodeChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value metadata.SoftwareSourceCode) error {
 	for _, item := range value.Identifiers {
-		if err := q.AddLifecycleSoftwareSourceCodeIdentifier(ctx, sqlc.AddLifecycleSoftwareSourceCodeIdentifierParams{SourceIri: item.SourceIRI, Type: string(item.Type), Value: item.Value, SoftwareSourceCodeVersionID: &versionID}); err != nil {
+		if err := q.AddLifecycleSoftwareSourceCodeIdentifier(ctx, sqlc.AddLifecycleSoftwareSourceCodeIdentifierParams{
+			Type:                        string(item.Type),
+			Value:                       item.Value,
+			SoftwareSourceCodeVersionID: &versionID,
+		}); err != nil {
 			return fmt.Errorf("add source code identifier: %w", err)
 		}
 	}
@@ -308,7 +314,6 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 	}
 	value := metadata.SoftwareSourceCode{
 		ID:                   row.SoftwareSourceCodeVersion.ID,
-		SourceIRI:            row.SoftwareSourceCode.SourceIri,
 		Name:                 row.SoftwareSourceCodeVersion.Name,
 		Description:          row.SoftwareSourceCodeVersion.Description,
 		ProgrammingLanguage:  row.SoftwareSourceCodeVersion.ProgrammingLanguage,
@@ -338,7 +343,7 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 		value.ContactPoints = append(value.ContactPoints, contactPoint(item.ContactPoint))
 	}
 	for _, item := range categories {
-		value.Categories = append(value.Categories, category(item.Category.ID, item.Category.SourceIri, item.Category.Name, item.Group))
+		value.Categories = append(value.Categories, category(item.Category.ID, item.Category.Name, item.Group))
 	}
 	return softwarelifecycle.SourceCode{
 		SourceCodeID: row.SoftwareSourceCodeVersion.SoftwareSourceCodeID,

@@ -5,7 +5,6 @@ CREATE TYPE parameter_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DA
 CREATE TABLE identifiers (
     -- Identifier identity and RDF value metadata
     id                              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri                      text NOT NULL,
     type                            text NOT NULL,
     value                           text NOT NULL,
 
@@ -23,10 +22,10 @@ CREATE TABLE identifiers (
         software_source_code_version_id
     ) = 1)
 );
-CREATE UNIQUE INDEX identifiers_dataset_version_content_uq ON identifiers (dataset_version_id, source_iri, type, value) WHERE dataset_version_id IS NOT NULL;
-CREATE UNIQUE INDEX identifiers_organization_content_uq ON identifiers (organization_id, source_iri, type, value) WHERE organization_id IS NOT NULL;
-CREATE UNIQUE INDEX identifiers_software_application_version_content_uq ON identifiers (software_application_version_id, source_iri, type, value) WHERE software_application_version_id IS NOT NULL;
-CREATE UNIQUE INDEX identifiers_software_source_code_version_content_uq ON identifiers (software_source_code_version_id, source_iri, type, value) WHERE software_source_code_version_id IS NOT NULL;
+CREATE UNIQUE INDEX identifiers_dataset_version_content_uq ON identifiers (dataset_version_id, type, value) WHERE dataset_version_id IS NOT NULL;
+CREATE UNIQUE INDEX identifiers_organization_content_uq ON identifiers (organization_id, type, value) WHERE organization_id IS NOT NULL;
+CREATE UNIQUE INDEX identifiers_software_application_version_content_uq ON identifiers (software_application_version_id, type, value) WHERE software_application_version_id IS NOT NULL;
+CREATE UNIQUE INDEX identifiers_software_source_code_version_content_uq ON identifiers (software_source_code_version_id, type, value) WHERE software_source_code_version_id IS NOT NULL;
 
 CREATE TABLE dataset_version_providers (
     dataset_version_id uuid NOT NULL REFERENCES dataset_versions(id) ON DELETE CASCADE,

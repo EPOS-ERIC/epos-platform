@@ -84,9 +84,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	contactPoint, err := h.service.Create(r.Context(), actorID, contactpointdomain.CreateRequest{
-		SourceIRI: body.SourceIRI,
-		Email:     body.Email,
-		Role:      body.Role,
+		Email: body.Email,
+		Role:  body.Role,
 	})
 	if err != nil {
 		writeError(w, r, err, "create contact point")
@@ -162,16 +161,14 @@ func writeError(w http.ResponseWriter, r *http.Request, err error, operation str
 }
 
 type contactPointResponse struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
-	Email     string    `json:"email"`
-	Role      string    `json:"role"`
+	ID    uuid.UUID `json:"id"`
+	Email string    `json:"email"`
+	Role  string    `json:"role"`
 }
 
 type createContactPointRequest struct {
-	SourceIRI string `json:"source_iri"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 type replaceContactPointRequest struct {
@@ -181,9 +178,8 @@ type replaceContactPointRequest struct {
 
 func response(contactPoint contactpointdomain.ContactPoint) contactPointResponse {
 	return contactPointResponse{
-		ID:        contactPoint.ID,
-		SourceIRI: contactPoint.SourceIRI,
-		Email:     contactPoint.Email,
-		Role:      contactPoint.Role,
+		ID:    contactPoint.ID,
+		Email: contactPoint.Email,
+		Role:  contactPoint.Role,
 	}
 }

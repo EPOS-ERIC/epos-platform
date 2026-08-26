@@ -34,8 +34,15 @@ func validateParams() func(http.Handler) http.Handler {
 
 			for key, values := range query {
 				for _, value := range values {
-					if !utf8.ValidString(value) {
-						http.Error(w, "invalid query parameter '"+key+"': "+value, http.StatusBadRequest)
+					if !utf8.ValidString(value) || strings.ContainsRune(value, '\x00') {
+						handlers.WriteError(
+							r.Context(),
+							w,
+							http.StatusBadRequest,
+							"invalid_request",
+							"invalid query parameter '"+key+"': "+value,
+							nil,
+						)
 						return
 					}
 				}

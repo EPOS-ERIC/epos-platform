@@ -447,22 +447,19 @@ type Category struct {
 	ID               uuid.UUID
 	GroupID          uuid.UUID
 	ParentCategoryID *uuid.UUID
-	SourceIri        string
 	Name             string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
 
 type ContactPoint struct {
-	ID        uuid.UUID
-	SourceIri string
-	Email     string
-	Role      string
+	ID    uuid.UUID
+	Email string
+	Role  string
 }
 
 type Dataset struct {
 	ID        uuid.UUID
-	SourceIri string
 	GroupID   uuid.UUID
 	CreatedBy string
 	CreatedAt time.Time
@@ -547,7 +544,6 @@ type Group struct {
 	ID          uuid.UUID
 	Name        string
 	Description *string
-	SourceIri   string
 	Concept     TopLevelConcept
 	Label       *string
 	Logo        *string
@@ -602,7 +598,6 @@ type GroupRoleRequest struct {
 
 type Identifier struct {
 	ID                           uuid.UUID
-	SourceIri                    string
 	Type                         string
 	Value                        string
 	DatasetVersionID             *uuid.UUID
@@ -619,7 +614,6 @@ type NotificationEventType struct {
 
 type Organization struct {
 	ID         uuid.UUID
-	SourceIri  string
 	Name       string
 	Street     *string
 	Locality   *string
@@ -660,7 +654,6 @@ type RolePermission struct {
 
 type SoftwareApplication struct {
 	ID        uuid.UUID
-	SourceIri string
 	GroupID   uuid.UUID
 	CreatedBy string
 	CreatedAt time.Time
@@ -712,7 +705,6 @@ type SoftwareApplicationVersionCreator struct {
 
 type SoftwareSourceCode struct {
 	ID        uuid.UUID
-	SourceIri string
 	GroupID   uuid.UUID
 	CreatedBy string
 	CreatedAt time.Time

@@ -192,24 +192,23 @@ BEGIN
 END;
 $$;
 
--- Moving a resource would change its authorization boundary; changing source
--- IRI would change the stable identity shared by every version.
+-- Moving a resource would change its authorization boundary.
 CREATE FUNCTION enforce_immutable_logical_resource() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF NEW.source_iri <> OLD.source_iri OR NEW.group_id <> OLD.group_id THEN
-        RAISE EXCEPTION 'logical resource source IRI and group are immutable';
+    IF NEW.group_id <> OLD.group_id THEN
+        RAISE EXCEPTION 'logical resource group is immutable';
     END IF;
 
     RETURN NEW;
 END;
 $$;
 
--- A category's source IRI and group identify canonical shared metadata. Moving
--- either would silently change every resource version that references it.
+-- A category's group identifies canonical shared metadata. Moving it would
+-- silently change every resource version that references it.
 CREATE FUNCTION enforce_immutable_category() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF NEW.source_iri <> OLD.source_iri OR NEW.group_id <> OLD.group_id THEN
-        RAISE EXCEPTION 'category source IRI and group are immutable';
+    IF NEW.group_id <> OLD.group_id THEN
+        RAISE EXCEPTION 'category group is immutable';
     END IF;
 
     RETURN NEW;
@@ -230,31 +229,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-CREATE FUNCTION enforce_resource_source_iri_global_unique() RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    -- Serialize same-IRI writes across the three logical-resource tables.
-    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.source_iri, 0));
-
-    -- PostgreSQL cannot express uniqueness across three tables with an index.
-    IF TG_TABLE_NAME <> 'datasets'
-        AND EXISTS (SELECT 1 FROM datasets WHERE source_iri = NEW.source_iri) THEN
-        RAISE EXCEPTION 'resource source IRI must be globally unique';
-    END IF;
-
-    IF TG_TABLE_NAME <> 'software_applications'
-        AND EXISTS (SELECT 1 FROM software_applications WHERE source_iri = NEW.source_iri) THEN
-        RAISE EXCEPTION 'resource source IRI must be globally unique';
-    END IF;
-
-    IF TG_TABLE_NAME <> 'software_source_codes'
-        AND EXISTS (SELECT 1 FROM software_source_codes WHERE source_iri = NEW.source_iri) THEN
-        RAISE EXCEPTION 'resource source IRI must be globally unique';
-    END IF;
-
-    RETURN NEW;
-END;
-$$;
-
 -- Version rows are mutable only while DRAFT. Lifecycle transitions may update
 -- their own attribution fields but may not change version metadata.
 CREATE FUNCTION enforce_version_lifecycle_mutability() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -363,17 +337,8 @@ CREATE TRIGGER organization_memberships_acyclic
 BEFORE INSERT OR UPDATE ON organization_memberships
 FOR EACH ROW EXECUTE FUNCTION enforce_organization_acyclic();
 CREATE TRIGGER identifiers_immutable_owner BEFORE UPDATE ON identifiers FOR EACH ROW EXECUTE FUNCTION enforce_immutable_identifier_owner();
--- Enforce source IRI uniqueness across logical resource tables, which a normal
--- per-table unique constraint cannot express.
-CREATE TRIGGER datasets_source_iri_global_unique BEFORE INSERT OR UPDATE OF source_iri ON datasets FOR EACH ROW EXECUTE FUNCTION enforce_resource_source_iri_global_unique();
-CREATE TRIGGER software_applications_source_iri_global_unique BEFORE INSERT OR UPDATE OF source_iri ON software_applications FOR EACH ROW EXECUTE FUNCTION enforce_resource_source_iri_global_unique();
-CREATE TRIGGER software_source_codes_source_iri_global_unique BEFORE INSERT OR UPDATE OF source_iri ON software_source_codes FOR EACH ROW EXECUTE FUNCTION enforce_resource_source_iri_global_unique();
-
 -- +goose Down
 
-DROP TRIGGER IF EXISTS software_source_codes_source_iri_global_unique ON software_source_codes;
-DROP TRIGGER IF EXISTS software_applications_source_iri_global_unique ON software_applications;
-DROP TRIGGER IF EXISTS datasets_source_iri_global_unique ON datasets;
 DROP TRIGGER IF EXISTS identifiers_immutable_owner ON identifiers;
 DROP TRIGGER IF EXISTS categories_immutable ON categories;
 DROP TRIGGER IF EXISTS organization_memberships_acyclic ON organization_memberships;
@@ -400,4 +365,4 @@ DROP TRIGGER IF EXISTS software_source_code_version_categories_group ON software
 DROP TRIGGER IF EXISTS software_application_version_categories_group ON software_application_version_categories;
 DROP TRIGGER IF EXISTS dataset_version_categories_group ON dataset_version_categories;
 DROP TRIGGER IF EXISTS categories_acyclic ON categories;
-DROP FUNCTION IF EXISTS enforce_organization_acyclic(), enforce_version_lifecycle_mutability(), enforce_resource_source_iri_global_unique(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();
+DROP FUNCTION IF EXISTS enforce_organization_acyclic(), enforce_version_lifecycle_mutability(), enforce_immutable_identifier_owner(), enforce_immutable_category(), enforce_immutable_logical_resource(), assign_first_user_admin(), set_updated_at(), enforce_category_resource_group(), enforce_category_acyclic(), enforce_fixed_authorization_scopes();

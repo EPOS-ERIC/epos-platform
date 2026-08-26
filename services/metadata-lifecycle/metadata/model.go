@@ -10,7 +10,6 @@ import (
 
 type Dataset struct {
 	ID                    uuid.UUID
-	SourceIRI             string
 	Title                 string
 	Description           string
 	Keywords              string
@@ -79,7 +78,6 @@ type WebService struct {
 
 type SoftwareApplication struct {
 	ID               uuid.UUID
-	SourceIRI        string
 	Name             string
 	Description      string
 	MainEntityOfPage *string
@@ -97,7 +95,6 @@ type SoftwareApplication struct {
 
 type SoftwareSourceCode struct {
 	ID                   uuid.UUID
-	SourceIRI            string
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
@@ -121,7 +118,6 @@ type Documentation struct {
 
 type Organization struct {
 	ID            uuid.UUID
-	SourceIRI     string
 	Name          string
 	Street        *string
 	Locality      *string
@@ -136,16 +132,14 @@ type Organization struct {
 }
 
 type Category struct {
-	ID        uuid.UUID
-	SourceIRI string
-	Name      string
-	Scheme    CategoryScheme
-	Children  []Category
+	ID       uuid.UUID
+	Name     string
+	Scheme   CategoryScheme
+	Children []Category
 }
 
 type CategoryScheme struct {
 	ID          uuid.UUID
-	SourceIRI   string
 	Name        string
 	Description *string
 	Label       *string
@@ -171,15 +165,13 @@ type Temporal struct {
 }
 
 type Identifier struct {
-	ID        uuid.UUID
-	SourceIRI string
-	Type      IdentifierType
-	Value     string
+	ID    uuid.UUID
+	Type  IdentifierType
+	Value string
 }
 
 type ContactPoint struct {
-	ID        uuid.UUID
-	SourceIRI string
-	Email     string
-	Role      ContactPointRole
+	ID    uuid.UUID
+	Email string
+	Role  ContactPointRole
 }

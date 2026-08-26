@@ -21,15 +21,14 @@ var _ MappedNullable = &CategoryScheme{}
 
 // CategoryScheme struct for CategoryScheme
 type CategoryScheme struct {
-	Id        string         `json:"id"`
-	SourceIri string         `json:"source_iri"`
-	Name      string         `json:"name"`
-	Label     NullableString `json:"label,omitempty"`
-	Logo      NullableString `json:"logo,omitempty"`
-	Page      NullableString `json:"page,omitempty"`
-	Color     NullableString `json:"color,omitempty"`
-	Position  int32          `json:"position"`
-	Concept   string         `json:"concept"`
+	Id       string         `json:"id"`
+	Name     string         `json:"name"`
+	Label    NullableString `json:"label,omitempty"`
+	Logo     NullableString `json:"logo,omitempty"`
+	Page     NullableString `json:"page,omitempty"`
+	Color    NullableString `json:"color,omitempty"`
+	Position int32          `json:"position"`
+	Concept  string         `json:"concept"`
 }
 
 type _CategoryScheme CategoryScheme
@@ -38,10 +37,9 @@ type _CategoryScheme CategoryScheme
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCategoryScheme(id string, sourceIri string, name string, position int32, concept string) *CategoryScheme {
+func NewCategoryScheme(id string, name string, position int32, concept string) *CategoryScheme {
 	this := CategoryScheme{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	this.Position = position
 	this.Concept = concept
@@ -78,30 +76,6 @@ func (o *CategoryScheme) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *CategoryScheme) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *CategoryScheme) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *CategoryScheme) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *CategoryScheme) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -359,7 +333,6 @@ func (o CategoryScheme) MarshalJSON() ([]byte, error) {
 func (o CategoryScheme) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	if o.Label.IsSet() {
 		toSerialize["label"] = o.Label.Get()
@@ -384,7 +357,6 @@ func (o *CategoryScheme) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 		"position",
 		"concept",

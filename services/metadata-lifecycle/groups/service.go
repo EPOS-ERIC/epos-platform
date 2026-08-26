@@ -19,7 +19,6 @@ var (
 // Group is public group metadata.
 type Group struct {
 	ID          uuid.UUID
-	SourceIRI   string
 	Name        string
 	Description *string
 	Label       *string
@@ -34,12 +33,10 @@ type Category struct {
 	ID               uuid.UUID
 	GroupID          uuid.UUID
 	ParentCategoryID *uuid.UUID
-	SourceIRI        string
 	Name             string
 }
 
 type CreateCategoryRequest struct {
-	SourceIRI        string
 	Name             string
 	ParentCategoryID *uuid.UUID
 }
@@ -50,7 +47,6 @@ type ReplaceCategoryRequest struct {
 }
 
 type CreateRequest struct {
-	SourceIRI   string
 	Name        string
 	Description *string
 	Label       *string
@@ -103,7 +99,6 @@ func New(store Store, authorizer Authorizer) *Service {
 func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (Group, error) {
 	actorID = strings.TrimSpace(actorID)
 	request.Name = strings.TrimSpace(request.Name)
-	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
 	request.Concept = strings.TrimSpace(request.Concept)
 	if actorID == "" || request.Name == "" || request.Concept == "" {
 		return Group{}, ErrInvalid
@@ -121,15 +116,8 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 	}
 
 	id := uuid.New()
-	sourceIRI := request.SourceIRI
-	if sourceIRI == "" {
-		// TODO: define once and for all how to handle source iri for new resources
-		sourceIRI = "urn:epos:group:" + id.String()
-	}
-
 	group, err := s.store.Create(ctx, Group{
 		ID:          id,
-		SourceIRI:   sourceIRI,
 		Name:        request.Name,
 		Description: request.Description,
 		Label:       request.Label,
@@ -222,7 +210,6 @@ func (s *Service) GetCategory(ctx context.Context, groupID, categoryID uuid.UUID
 
 func (s *Service) CreateCategory(ctx context.Context, actorID string, groupID uuid.UUID, request CreateCategoryRequest) (Category, error) {
 	actorID = strings.TrimSpace(actorID)
-	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
 	request.Name = strings.TrimSpace(request.Name)
 	if actorID == "" || groupID == uuid.Nil || request.Name == "" {
 		return Category{}, ErrInvalid
@@ -237,16 +224,10 @@ func (s *Service) CreateCategory(ctx context.Context, actorID string, groupID uu
 	}
 
 	id := uuid.New()
-	sourceIRI := request.SourceIRI
-	if sourceIRI == "" {
-		sourceIRI = "urn:epos:category:" + id.String()
-	}
-
 	category, err := s.store.CreateCategory(ctx, Category{
 		ID:               id,
 		GroupID:          groupID,
 		ParentCategoryID: request.ParentCategoryID,
-		SourceIRI:        sourceIRI,
 		Name:             request.Name,
 	})
 	if err != nil {

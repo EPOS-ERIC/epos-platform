@@ -1,9 +1,8 @@
 -- name: CreateLifecycleSoftwareSourceCode :one
 INSERT INTO
-    software_source_codes (source_iri, group_id, created_by)
+    software_source_codes (group_id, created_by)
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(group_id),
         sqlc.arg(created_by)
     )
@@ -306,13 +305,11 @@ inserted AS (
 identifiers AS (
     INSERT INTO
         identifiers (
-            source_iri,
             TYPE,
             value,
             software_source_code_version_id
         )
     SELECT
-        source_iri,
         TYPE,
         value,
         (
@@ -416,14 +413,12 @@ FROM
 -- name: AddLifecycleSoftwareSourceCodeIdentifier :exec
 INSERT INTO
     identifiers (
-        source_iri,
         TYPE,
         value,
         software_source_code_version_id
     )
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(software_source_code_version_id)

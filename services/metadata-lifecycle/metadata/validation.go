@@ -77,8 +77,8 @@ func (d Dataset) Validate() error {
 
 // Validate checks software application identity and references.
 func (s SoftwareApplication) Validate() error {
-	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
-		return fmt.Errorf("ID, source IRI, and name are required")
+	if s.ID == uuid.Nil || s.Name == "" {
+		return fmt.Errorf("ID and name are required")
 	}
 	if err := validateContactPoints(s.ContactPoints, "software application contact point"); err != nil {
 		return err
@@ -88,8 +88,8 @@ func (s SoftwareApplication) Validate() error {
 
 // Validate checks software source code identity and references.
 func (s SoftwareSourceCode) Validate() error {
-	if s.ID == uuid.Nil || s.SourceIRI == "" || s.Name == "" {
-		return fmt.Errorf("ID, source IRI, and name are required")
+	if s.ID == uuid.Nil || s.Name == "" {
+		return fmt.Errorf("ID and name are required")
 	}
 	if err := validateContactPoints(s.ContactPoints, "software source code contact point"); err != nil {
 		return err

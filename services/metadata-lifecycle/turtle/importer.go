@@ -147,19 +147,19 @@ func mapGraph(g *graph, options Options) (Batch, error) {
 
 	for _, dataset := range datasets {
 		if err := dataset.Validate(); err != nil {
-			return Batch{}, fmt.Errorf("validate dataset %q: %w", dataset.SourceIRI, err)
+			return Batch{}, fmt.Errorf("validate dataset %q: %w", dataset.ID, err)
 		}
 	}
 
 	for _, software := range softwareApplications {
 		if err := software.Validate(); err != nil {
-			return Batch{}, fmt.Errorf("validate software application %q: %w", software.SourceIRI, err)
+			return Batch{}, fmt.Errorf("validate software application %q: %w", software.ID, err)
 		}
 	}
 
 	for _, software := range softwareSourceCodes {
 		if err := software.Validate(); err != nil {
-			return Batch{}, fmt.Errorf("validate software source code %q: %w", software.SourceIRI, err)
+			return Batch{}, fmt.Errorf("validate software source code %q: %w", software.ID, err)
 		}
 	}
 
@@ -180,7 +180,6 @@ func mapGraph(g *graph, options Options) (Batch, error) {
 func (m *mapper) softwareApplication(source string) (domain.SoftwareApplication, error) {
 	result := domain.SoftwareApplication{
 		ID:               sharedID("software-application", source),
-		SourceIRI:        source,
 		Name:             m.requiredString(source, schemaName),
 		Description:      m.optionalString(source, schemaDescription),
 		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)),
@@ -206,7 +205,6 @@ func (m *mapper) softwareApplication(source string) (domain.SoftwareApplication,
 func (m *mapper) softwareSourceCode(source string) (domain.SoftwareSourceCode, error) {
 	result := domain.SoftwareSourceCode{
 		ID:                   sharedID("software-source-code", source),
-		SourceIRI:            source,
 		Name:                 m.requiredString(source, schemaName),
 		Description:          m.optionalString(source, schemaDescription),
 		ProgrammingLanguage:  stringPtr(m.optionalString(source, schemaProgrammingLanguage)),
@@ -275,7 +273,6 @@ func (m *mapper) dataset(source string) (domain.Dataset, error) {
 	id := ownedID("", "dataset", source)
 	dataset := domain.Dataset{
 		ID:          id,
-		SourceIRI:   source,
 		Status:      domain.DatasetStatusDraft,
 		Title:       m.requiredString(source, dctTitle),
 		Description: m.optionalString(source, dctDescription),
@@ -606,7 +603,6 @@ func (m *mapper) scheme(source string) (domain.CategoryScheme, error) {
 	}
 	result := domain.CategoryScheme{
 		ID:          sharedID("category-scheme", source),
-		SourceIRI:   source,
 		Name:        m.optionalString(source, dctTitle),
 		Description: stringPtr(m.optionalString(source, dctDescription)),
 		Label:       stringPtr(m.optionalString(source, skosPrefLabel)),
@@ -654,11 +650,10 @@ func (m *mapper) category(source string, active map[string]bool) (domain.Categor
 		return domain.Category{}, err
 	}
 	result := domain.Category{
-		ID:        sharedID("category", source),
-		SourceIRI: source,
-		Name:      m.requiredString(source, skosPrefLabel),
-		Scheme:    scheme,
-		Children:  nil,
+		ID:       sharedID("category", source),
+		Name:     m.requiredString(source, skosPrefLabel),
+		Scheme:   scheme,
+		Children: nil,
 	}
 	parents := m.graph.refs(source, skosBroader)
 	if len(parents) > 1 {
@@ -669,7 +664,7 @@ func (m *mapper) category(source string, active map[string]bool) (domain.Categor
 		if err != nil {
 			return domain.Category{}, err
 		}
-		m.categoryEdges[parent.SourceIRI+"\x00"+result.SourceIRI] = CategoryEdge{ParentID: parent.ID, ChildID: result.ID}
+		m.categoryEdges[edgeKey(parent.ID, result.ID)] = CategoryEdge{ParentID: parent.ID, ChildID: result.ID}
 	}
 	m.categories[source] = result
 	return result, nil
@@ -690,7 +685,6 @@ func (m *mapper) organization(source string, active map[string]bool) (domain.Org
 	}
 	result := domain.Organization{
 		ID:            sharedID("organization", source),
-		SourceIRI:     source,
 		Name:          m.optionalString(source, schemaLegalName),
 		Street:        stringPtr(m.optionalString(address, schemaStreetAddress)),
 		Locality:      stringPtr(m.optionalString(address, schemaAddressLocality)),
@@ -726,7 +720,7 @@ func (m *mapper) organization(source string, active map[string]bool) (domain.Org
 		if err != nil {
 			return domain.Organization{}, err
 		}
-		m.organizationEdges[parent.SourceIRI+"\x00"+result.SourceIRI] = OrganizationEdge{ParentID: parent.ID, ChildID: result.ID}
+		m.organizationEdges[edgeKey(parent.ID, result.ID)] = OrganizationEdge{ParentID: parent.ID, ChildID: result.ID}
 	}
 	m.organizations[source] = result
 	return result, nil
@@ -757,10 +751,9 @@ func (m *mapper) contact(source string) (domain.ContactPoint, error) {
 		return domain.ContactPoint{}, fmt.Errorf("contact point %q requires email and role", source)
 	}
 	result := domain.ContactPoint{
-		ID:        sharedID("contact-point", source),
-		SourceIRI: source,
-		Email:     email,
-		Role:      domain.ContactPointRole(role),
+		ID:    sharedID("contact-point", source),
+		Email: email,
+		Role:  domain.ContactPointRole(role),
 	}
 	m.contacts[source] = result
 	return result, nil
@@ -789,19 +782,16 @@ func (m *mapper) identifier(source string, owner uuid.UUID, ownerIRI string) (do
 		value = m.optionalString(source, skosPrefLabel)
 	}
 	if typ == "" || value == "" {
-		return domain.Identifier{ID: uuid.Nil, SourceIRI: "", Type: "", Value: ""}, false
+		return domain.Identifier{ID: uuid.Nil, Type: "", Value: ""}, false
 	}
 	key := source
-	sourceIRI := source
 	if ownerIRI != "" {
 		key = ownerIRI + "\x00" + typ + "\x00" + value
-		sourceIRI = source + "|owner=" + ownerIRI + "|type=" + typ + "|value=" + value
 	}
 	return domain.Identifier{
-		ID:        ownedID(owner.String(), "identifier", key),
-		SourceIRI: sourceIRI,
-		Type:      domain.IdentifierType(typ),
-		Value:     value,
+		ID:    ownedID(owner.String(), "identifier", key),
+		Type:  domain.IdentifierType(typ),
+		Value: value,
 	}, true
 }
 
@@ -1043,6 +1033,10 @@ func mapValues[T any](values map[string]T) []T {
 		result = append(result, value)
 	}
 	return result
+}
+
+func edgeKey(parentID, childID uuid.UUID) string {
+	return parentID.String() + "\x00" + childID.String()
 }
 
 func mapEdges(values map[string]CategoryEdge) []CategoryEdge {

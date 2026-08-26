@@ -33,7 +33,6 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 	var result datasetlifecycle.Dataset
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		dataset, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
-			SourceIri: value.SourceIRI,
 			GroupID:   groupID,
 			CreatedBy: actorID,
 		})
@@ -58,7 +57,6 @@ func (r *Repo) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUI
 		if err != nil {
 			return err
 		}
-		result.Metadata.SourceIRI = dataset.SourceIri
 		return nil
 	})
 	return result, lifecycleError(err)
@@ -268,7 +266,7 @@ func (r *Repo) DraftFromLatestArchive(ctx context.Context, actorID string, datas
 	return r.clone(ctx, actorID, datasetID, datasetID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (datasetlifecycle.Dataset, error) {
+func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (datasetlifecycle.Dataset, error) {
 	var result datasetlifecycle.Dataset
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		source, err := q.GetPublishedLifecycleDatasetVersion(ctx, sourceDatasetID)
@@ -276,7 +274,6 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 			return fmt.Errorf("get published source version: %w", err)
 		}
 		logical, err := q.CreateLifecycleDataset(ctx, sqlc.CreateLifecycleDatasetParams{
-			SourceIri: sourceIRI,
 			GroupID:   targetGroupID,
 			CreatedBy: actorID,
 		})
@@ -298,7 +295,6 @@ func (r *Repo) CopyPublished(ctx context.Context, actorID string, sourceDatasetI
 		if err != nil {
 			return err
 		}
-		result.Metadata.SourceIRI = logical.SourceIri
 		return nil
 	})
 	return result, lifecycleError(err)
@@ -456,7 +452,6 @@ func temporal(start, end *time.Time) *metadata.Temporal {
 func PersistDatasetChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, value metadata.Dataset) error {
 	for _, identifier := range value.PersistentIdentifiers {
 		if err := q.AddLifecycleDatasetIdentifier(ctx, sqlc.AddLifecycleDatasetIdentifierParams{
-			SourceIri:        identifier.SourceIRI,
 			Type:             string(identifier.Type),
 			Value:            identifier.Value,
 			DatasetVersionID: &versionID,
@@ -685,7 +680,6 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 
 	result := metadata.Dataset{
 		ID:                    version.ID,
-		SourceIRI:             version.SourceIri,
 		Title:                 version.Title,
 		Description:           version.Description,
 		Keywords:              version.Keywords,
@@ -727,12 +721,10 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 
 	for _, item := range categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:        item.ID,
-			SourceIRI: item.SourceIri,
-			Name:      item.Name,
+			ID:   item.ID,
+			Name: item.Name,
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
-				SourceIRI:   "",
 				Name:        "",
 				Description: nil,
 				Label:       nil,
@@ -901,7 +893,6 @@ func spatialFromGeometry(point *geom.Point, polygon *geom.Polygon) (*metadata.Sp
 func organization(value sqlc.Organization) metadata.Organization {
 	return metadata.Organization{
 		ID:            value.ID,
-		SourceIRI:     value.SourceIri,
 		Name:          value.Name,
 		Street:        value.Street,
 		Locality:      value.Locality,
@@ -918,26 +909,23 @@ func organization(value sqlc.Organization) metadata.Organization {
 
 func contactPoint(value sqlc.ContactPoint) metadata.ContactPoint {
 	return metadata.ContactPoint{
-		ID:        value.ID,
-		SourceIRI: value.SourceIri,
-		Email:     value.Email,
-		Role:      metadata.ContactPointRole(value.Role),
+		ID:    value.ID,
+		Email: value.Email,
+		Role:  metadata.ContactPointRole(value.Role),
 	}
 }
 
 func identifier(value sqlc.Identifier) metadata.Identifier {
 	return metadata.Identifier{
-		ID:        value.ID,
-		SourceIRI: value.SourceIri,
-		Type:      metadata.IdentifierType(value.Type),
-		Value:     value.Value,
+		ID:    value.ID,
+		Type:  metadata.IdentifierType(value.Type),
+		Value: value.Value,
 	}
 }
 
 func categoryScheme(value sqlc.Group) metadata.CategoryScheme {
 	return metadata.CategoryScheme{
 		ID:          value.ID,
-		SourceIRI:   value.SourceIri,
 		Name:        value.Name,
 		Description: value.Description,
 		Label:       value.Label,

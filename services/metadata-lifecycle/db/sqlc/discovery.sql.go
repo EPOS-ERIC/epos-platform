@@ -18,7 +18,6 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    resource.source_iri,
     version.name
 FROM
     software_applications AS resource
@@ -32,7 +31,6 @@ WHERE
         OR lower(
             concat_ws(
                 ' ',
-                resource.source_iri,
                 version.name,
                 version.description,
                 version.keywords
@@ -88,7 +86,6 @@ type SearchDiscoveryApplicationsRow struct {
 	VersionID  uuid.UUID
 	GroupID    uuid.UUID
 	Status     ResourceStatus
-	SourceIri  string
 	Name       string
 }
 
@@ -112,7 +109,6 @@ func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDis
 			&i.VersionID,
 			&i.GroupID,
 			&i.Status,
-			&i.SourceIri,
 			&i.Name,
 		); err != nil {
 			return nil, err
@@ -131,7 +127,6 @@ SELECT
     version.id AS version_id,
     dataset.group_id,
     version.status,
-    dataset.source_iri,
     version.title AS name
 FROM
     datasets AS dataset
@@ -145,7 +140,6 @@ WHERE
         OR lower(
             concat_ws(
                 ' ',
-                dataset.source_iri,
                 version.title,
                 version.description,
                 version.keywords
@@ -229,7 +223,6 @@ type SearchDiscoveryDatasetsRow struct {
 	VersionID  uuid.UUID
 	GroupID    uuid.UUID
 	Status     ResourceStatus
-	SourceIri  string
 	Name       string
 }
 
@@ -256,7 +249,6 @@ func (q *Queries) SearchDiscoveryDatasets(ctx context.Context, arg SearchDiscove
 			&i.VersionID,
 			&i.GroupID,
 			&i.Status,
-			&i.SourceIri,
 			&i.Name,
 		); err != nil {
 			return nil, err
@@ -275,7 +267,6 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    resource.source_iri,
     version.name
 FROM
     software_source_codes AS resource
@@ -289,7 +280,6 @@ WHERE
         OR lower(
             concat_ws(
                 ' ',
-                resource.source_iri,
                 version.name,
                 version.description,
                 version.keywords
@@ -345,7 +335,6 @@ type SearchDiscoverySourceCodesRow struct {
 	VersionID  uuid.UUID
 	GroupID    uuid.UUID
 	Status     ResourceStatus
-	SourceIri  string
 	Name       string
 }
 
@@ -369,7 +358,6 @@ func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDisc
 			&i.VersionID,
 			&i.GroupID,
 			&i.Status,
-			&i.SourceIri,
 			&i.Name,
 		); err != nil {
 			return nil, err

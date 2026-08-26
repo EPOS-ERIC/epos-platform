@@ -21,9 +21,8 @@ var _ MappedNullable = &CreateContactPointRequest{}
 
 // CreateContactPointRequest struct for CreateContactPointRequest
 type CreateContactPointRequest struct {
-	SourceIri *string `json:"source_iri,omitempty"`
-	Email     string  `json:"email"`
-	Role      string  `json:"role"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 type _CreateContactPointRequest CreateContactPointRequest
@@ -45,38 +44,6 @@ func NewCreateContactPointRequest(email string, role string) *CreateContactPoint
 func NewCreateContactPointRequestWithDefaults() *CreateContactPointRequest {
 	this := CreateContactPointRequest{}
 	return &this
-}
-
-// GetSourceIri returns the SourceIri field value if set, zero value otherwise.
-func (o *CreateContactPointRequest) GetSourceIri() string {
-	if o == nil || IsNil(o.SourceIri) {
-		var ret string
-		return ret
-	}
-	return *o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CreateContactPointRequest) GetSourceIriOk() (*string, bool) {
-	if o == nil || IsNil(o.SourceIri) {
-		return nil, false
-	}
-	return o.SourceIri, true
-}
-
-// HasSourceIri returns a boolean if a field has been set.
-func (o *CreateContactPointRequest) HasSourceIri() bool {
-	if o != nil && !IsNil(o.SourceIri) {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceIri gets a reference to the given string and assigns it to the SourceIri field.
-func (o *CreateContactPointRequest) SetSourceIri(v string) {
-	o.SourceIri = &v
 }
 
 // GetEmail returns the Email field value
@@ -137,9 +104,6 @@ func (o CreateContactPointRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateContactPointRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.SourceIri) {
-		toSerialize["source_iri"] = o.SourceIri
-	}
 	toSerialize["email"] = o.Email
 	toSerialize["role"] = o.Role
 	return toSerialize, nil

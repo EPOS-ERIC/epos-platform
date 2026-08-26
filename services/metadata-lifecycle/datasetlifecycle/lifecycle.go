@@ -41,8 +41,8 @@ type Authorizer interface {
 	CanReadContactPoint(context.Context, string) (authz.Result, error)
 }
 
-// Dataset is version metadata with lifecycle identity. Metadata.SourceIRI is
-// logical dataset source IRI and is immutable after creation.
+// Dataset is version metadata with lifecycle identity. DatasetID is the
+// logical dataset and is immutable after creation.
 type Dataset struct {
 	DatasetID uuid.UUID
 	VersionID uuid.UUID
@@ -70,7 +70,7 @@ type Repository interface {
 	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (Dataset, error)
 	DraftFromPublication(context.Context, string, uuid.UUID) (Dataset, error)
 	DraftFromLatestArchive(context.Context, string, uuid.UUID) (Dataset, error)
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (Dataset, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (Dataset, error)
 }
 
 type Service struct {
@@ -85,13 +85,9 @@ func New(authorizer Authorizer, repository Repository) *Service {
 
 // CreateDraft creates a dataset draft in groupID.
 func (s *Service) CreateDraft(ctx context.Context, actorID string, groupID uuid.UUID, value metadata.Dataset) (Dataset, error) {
-	if strings.TrimSpace(value.SourceIRI) == "" {
-		return Dataset{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
-	}
 	if err := s.authorizeGroup(ctx, actorID, groupID, permissionCreate); err != nil {
 		return Dataset{}, operationError("authorize draft creation", err)
 	}
-	value.SourceIRI = strings.TrimSpace(value.SourceIRI)
 	dataset, err := s.repository.CreateDraft(ctx, actorID, groupID, value)
 	if err != nil {
 		return Dataset{}, operationError("create draft", err)
@@ -234,14 +230,11 @@ func (s *Service) DraftFromLatestArchive(ctx context.Context, actorID string, da
 }
 
 // CopyPublished copies published dataset metadata into targetGroupID.
-func (s *Service) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID, sourceIRI string) (Dataset, error) {
-	if strings.TrimSpace(sourceIRI) == "" {
-		return Dataset{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
-	}
+func (s *Service) CopyPublished(ctx context.Context, actorID string, sourceDatasetID, targetGroupID uuid.UUID) (Dataset, error) {
 	if err := s.authorizeGroup(ctx, actorID, targetGroupID, permissionCreate); err != nil {
 		return Dataset{}, operationError("authorize dataset copy", err)
 	}
-	dataset, err := s.repository.CopyPublished(ctx, actorID, sourceDatasetID, targetGroupID, strings.TrimSpace(sourceIRI))
+	dataset, err := s.repository.CopyPublished(ctx, actorID, sourceDatasetID, targetGroupID)
 	return dataset, operationError("copy published dataset", err)
 }
 

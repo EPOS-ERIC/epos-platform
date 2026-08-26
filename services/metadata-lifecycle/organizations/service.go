@@ -21,7 +21,6 @@ var (
 
 type Organization struct {
 	ID                    uuid.UUID
-	SourceIRI             string
 	Name                  string
 	Street                *string
 	Locality              *string
@@ -37,20 +36,17 @@ type Organization struct {
 }
 
 type Identifier struct {
-	ID        uuid.UUID
-	SourceIRI string
-	Type      string
-	Value     string
+	ID    uuid.UUID
+	Type  string
+	Value string
 }
 
 type IdentifierRequest struct {
-	SourceIRI string
-	Type      string
-	Value     string
+	Type  string
+	Value string
 }
 
 type CreateRequest struct {
-	SourceIRI       string
 	Name            string
 	Street          *string
 	Locality        *string
@@ -103,7 +99,6 @@ func New(store Store, authorizer Authorizer) *Service {
 
 func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (Organization, error) {
 	actorID = strings.TrimSpace(actorID)
-	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
 	request.Name = strings.TrimSpace(request.Name)
 	if actorID == "" || request.Name == "" {
 		return Organization{}, ErrInvalid
@@ -124,12 +119,8 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 	}
 
 	organizationID := uuid.New()
-	if request.SourceIRI == "" {
-		request.SourceIRI = "urn:epos:organization:" + organizationID.String()
-	}
 	identifiers := make([]Identifier, 0, len(request.Identifiers))
 	for _, item := range request.Identifiers {
-		item.SourceIRI = strings.TrimSpace(item.SourceIRI)
 		item.Type = strings.TrimSpace(item.Type)
 		item.Value = strings.TrimSpace(item.Value)
 		if item.Type == "" || item.Value == "" {
@@ -137,21 +128,16 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 		}
 
 		id := uuid.New()
-		if item.SourceIRI == "" {
-			item.SourceIRI = "urn:epos:identifier:" + id.String()
-		}
 
 		identifiers = append(identifiers, Identifier{
-			ID:        id,
-			SourceIRI: item.SourceIRI,
-			Type:      item.Type,
-			Value:     item.Value,
+			ID:    id,
+			Type:  item.Type,
+			Value: item.Value,
 		})
 	}
 
 	organization, err := s.store.Create(ctx, Organization{
 		ID:                    organizationID,
-		SourceIRI:             request.SourceIRI,
 		Name:                  request.Name,
 		Street:                request.Street,
 		Locality:              request.Locality,
@@ -228,17 +214,17 @@ func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) erro
 func buildIdentifiers(requests []IdentifierRequest) ([]Identifier, error) {
 	identifiers := make([]Identifier, 0, len(requests))
 	for _, item := range requests {
-		item.SourceIRI = strings.TrimSpace(item.SourceIRI)
 		item.Type = strings.TrimSpace(item.Type)
 		item.Value = strings.TrimSpace(item.Value)
 		if item.Type == "" || item.Value == "" {
 			return nil, ErrInvalid
 		}
 		id := uuid.New()
-		if item.SourceIRI == "" {
-			item.SourceIRI = "urn:epos:identifier:" + id.String()
-		}
-		identifiers = append(identifiers, Identifier{ID: id, SourceIRI: item.SourceIRI, Type: item.Type, Value: item.Value})
+		identifiers = append(identifiers, Identifier{
+			ID:    id,
+			Type:  item.Type,
+			Value: item.Value,
+		})
 	}
 	return identifiers, nil
 }

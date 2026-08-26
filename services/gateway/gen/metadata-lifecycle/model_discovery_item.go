@@ -24,7 +24,6 @@ type DiscoveryItem struct {
 	Type          string               `json:"type"`
 	ResourceId    string               `json:"resource_id"`
 	VersionId     string               `json:"version_id"`
-	SourceIri     string               `json:"source_iri"`
 	Name          string               `json:"name"`
 	Status        DatasetStatus        `json:"status"`
 	Group         DiscoveryReference   `json:"group"`
@@ -40,12 +39,11 @@ type _DiscoveryItem DiscoveryItem
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDiscoveryItem(type_ string, resourceId string, versionId string, sourceIri string, name string, status DatasetStatus, group DiscoveryReference) *DiscoveryItem {
+func NewDiscoveryItem(type_ string, resourceId string, versionId string, name string, status DatasetStatus, group DiscoveryReference) *DiscoveryItem {
 	this := DiscoveryItem{}
 	this.Type = type_
 	this.ResourceId = resourceId
 	this.VersionId = versionId
-	this.SourceIri = sourceIri
 	this.Name = name
 	this.Status = status
 	this.Group = group
@@ -130,30 +128,6 @@ func (o *DiscoveryItem) GetVersionIdOk() (*string, bool) {
 // SetVersionId sets field value
 func (o *DiscoveryItem) SetVersionId(v string) {
 	o.VersionId = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *DiscoveryItem) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *DiscoveryItem) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *DiscoveryItem) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -369,7 +343,6 @@ func (o DiscoveryItem) ToMap() (map[string]interface{}, error) {
 	toSerialize["type"] = o.Type
 	toSerialize["resource_id"] = o.ResourceId
 	toSerialize["version_id"] = o.VersionId
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	toSerialize["status"] = o.Status
 	toSerialize["group"] = o.Group
@@ -396,7 +369,6 @@ func (o *DiscoveryItem) UnmarshalJSON(data []byte) (err error) {
 		"type",
 		"resource_id",
 		"version_id",
-		"source_iri",
 		"name",
 		"status",
 		"group",

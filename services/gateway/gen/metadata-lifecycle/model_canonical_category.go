@@ -24,7 +24,6 @@ type CanonicalCategory struct {
 	Id               string         `json:"id"`
 	GroupId          string         `json:"group_id"`
 	ParentCategoryId NullableString `json:"parent_category_id"`
-	SourceIri        string         `json:"source_iri"`
 	Name             string         `json:"name"`
 }
 
@@ -34,12 +33,11 @@ type _CanonicalCategory CanonicalCategory
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCanonicalCategory(id string, groupId string, parentCategoryId NullableString, sourceIri string, name string) *CanonicalCategory {
+func NewCanonicalCategory(id string, groupId string, parentCategoryId NullableString, name string) *CanonicalCategory {
 	this := CanonicalCategory{}
 	this.Id = id
 	this.GroupId = groupId
 	this.ParentCategoryId = parentCategoryId
-	this.SourceIri = sourceIri
 	this.Name = name
 	return &this
 }
@@ -126,30 +124,6 @@ func (o *CanonicalCategory) SetParentCategoryId(v string) {
 	o.ParentCategoryId.Set(&v)
 }
 
-// GetSourceIri returns the SourceIri field value
-func (o *CanonicalCategory) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *CanonicalCategory) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *CanonicalCategory) SetSourceIri(v string) {
-	o.SourceIri = v
-}
-
 // GetName returns the Name field value
 func (o *CanonicalCategory) GetName() string {
 	if o == nil {
@@ -187,7 +161,6 @@ func (o CanonicalCategory) ToMap() (map[string]interface{}, error) {
 	toSerialize["id"] = o.Id
 	toSerialize["group_id"] = o.GroupId
 	toSerialize["parent_category_id"] = o.ParentCategoryId.Get()
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	return toSerialize, nil
 }
@@ -200,7 +173,6 @@ func (o *CanonicalCategory) UnmarshalJSON(data []byte) (err error) {
 		"id",
 		"group_id",
 		"parent_category_id",
-		"source_iri",
 		"name",
 	}
 

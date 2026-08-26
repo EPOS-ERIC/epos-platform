@@ -30,7 +30,6 @@ CREATE TABLE groups (
     description text,
 
     -- Category scheme metadata: groups own exactly one scheme
-    source_iri  text NOT NULL UNIQUE,
     concept     top_level_concept NOT NULL,
     label       text,
     logo        text,

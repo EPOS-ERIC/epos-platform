@@ -9,7 +9,6 @@ import (
 )
 
 type applicationRequest struct {
-	SourceIRI        string               `json:"source_iri"`
 	Name             string               `json:"name"`
 	Description      string               `json:"description"`
 	MainEntityOfPage *string              `json:"main_entity_of_page"`
@@ -36,9 +35,8 @@ type canonicalReference struct {
 }
 
 type identifierRequest struct {
-	SourceIRI string                  `json:"source_iri"`
-	Type      metadata.IdentifierType `json:"type"`
-	Value     string                  `json:"value"`
+	Type  metadata.IdentifierType `json:"type"`
+	Value string                  `json:"value"`
 }
 
 type replaceDraftRequest struct {
@@ -53,13 +51,11 @@ type rejectRequest struct {
 
 type copyRequest struct {
 	TargetGroupID uuid.UUID `json:"target_group_id"`
-	SourceIRI     string    `json:"source_iri"`
 }
 
 func (r applicationRequest) domain() metadata.SoftwareApplication {
 	result := metadata.SoftwareApplication{
 		ID:               uuid.Nil,
-		SourceIRI:        r.SourceIRI,
 		Name:             r.Name,
 		Description:      r.Description,
 		MainEntityOfPage: r.MainEntityOfPage,
@@ -77,7 +73,6 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 	for _, creator := range r.Creators {
 		result.Creators = append(result.Creators, metadata.Organization{
 			ID:            creator.ID,
-			SourceIRI:     "",
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -93,20 +88,17 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 	}
 	for _, identifier := range r.Identifiers {
 		result.Identifiers = append(result.Identifiers, metadata.Identifier{
-			ID:        uuid.Nil,
-			SourceIRI: identifier.SourceIRI,
-			Type:      identifier.Type,
-			Value:     identifier.Value,
+			ID:    uuid.Nil,
+			Type:  identifier.Type,
+			Value: identifier.Value,
 		})
 	}
 	for _, category := range r.Categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:        category.ID,
-			SourceIRI: "",
-			Name:      "",
+			ID:   category.ID,
+			Name: "",
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
-				SourceIRI:   "",
 				Name:        "",
 				Description: nil,
 				Label:       nil,
@@ -121,10 +113,9 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 	}
 	for _, contact := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:        contact.ID,
-			SourceIRI: "",
-			Email:     "",
-			Role:      "",
+			ID:    contact.ID,
+			Email: "",
+			Role:  "",
 		})
 	}
 	return result
@@ -145,7 +136,6 @@ type record struct {
 
 type softwareApplicationResponseDTO struct {
 	ID               uuid.UUID                `json:"id"`
-	SourceIRI        string                   `json:"source_iri"`
 	Name             string                   `json:"name"`
 	Description      string                   `json:"description"`
 	MainEntityOfPage *string                  `json:"main_entity_of_page"`
@@ -162,16 +152,14 @@ type softwareApplicationResponseDTO struct {
 }
 
 type resourceReference struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
-	Name      string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type identifierResponse struct {
-	ID        uuid.UUID               `json:"id"`
-	SourceIRI string                  `json:"source_iri"`
-	Type      metadata.IdentifierType `json:"type"`
-	Value     string                  `json:"value"`
+	ID    uuid.UUID               `json:"id"`
+	Type  metadata.IdentifierType `json:"type"`
+	Value string                  `json:"value"`
 }
 
 func applicationResponse(value softwarelifecycle.Application, includeContacts bool) record {
@@ -192,7 +180,6 @@ func applicationResponse(value softwarelifecycle.Application, includeContacts bo
 func applicationMetadataDTO(value metadata.SoftwareApplication, includeContacts bool) softwareApplicationResponseDTO {
 	result := softwareApplicationResponseDTO{
 		ID:               value.ID,
-		SourceIRI:        value.SourceIRI,
 		Name:             value.Name,
 		Description:      value.Description,
 		MainEntityOfPage: value.MainEntityOfPage,
@@ -208,13 +195,13 @@ func applicationMetadataDTO(value metadata.SoftwareApplication, includeContacts 
 		ContactPoints:    nil,
 	}
 	for _, creator := range value.Creators {
-		result.Creators = append(result.Creators, resourceReferenceDTO(creator.ID, creator.SourceIRI, creator.Name))
+		result.Creators = append(result.Creators, resourceReferenceDTO(creator.ID, creator.Name))
 	}
 	for _, identifier := range value.Identifiers {
 		result.Identifiers = append(result.Identifiers, identifierDTO(identifier))
 	}
 	for _, category := range value.Categories {
-		result.Categories = append(result.Categories, resourceReferenceDTO(category.ID, category.SourceIRI, category.Name))
+		result.Categories = append(result.Categories, resourceReferenceDTO(category.ID, category.Name))
 	}
 	if includeContacts {
 		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
@@ -227,23 +214,22 @@ func applicationMetadataDTO(value metadata.SoftwareApplication, includeContacts 
 }
 
 type contactPointReference struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
+	ID uuid.UUID `json:"id"`
 }
 
-func resourceReferenceDTO(id uuid.UUID, sourceIRI, name string) resourceReference {
-	return resourceReference{ID: id, SourceIRI: sourceIRI, Name: name}
+func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
+	return resourceReference{ID: id, Name: name}
 }
 
 func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
-	return contactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
+	// TODO: we can probably skip the struct here and just use the id (also is this duplicated?)
+	return contactPointReference{ID: value.ID}
 }
 
 func identifierDTO(value metadata.Identifier) identifierResponse {
 	return identifierResponse{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Type:      value.Type,
-		Value:     value.Value,
+		ID:    value.ID,
+		Type:  value.Type,
+		Value: value.Value,
 	}
 }

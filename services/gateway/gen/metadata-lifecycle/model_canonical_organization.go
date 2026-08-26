@@ -22,7 +22,6 @@ var _ MappedNullable = &CanonicalOrganization{}
 // CanonicalOrganization struct for CanonicalOrganization
 type CanonicalOrganization struct {
 	Id              string                       `json:"id"`
-	SourceIri       string                       `json:"source_iri"`
 	Name            string                       `json:"name"`
 	Address         CanonicalOrganizationAddress `json:"address"`
 	LogoUrl         NullableString               `json:"logo_url,omitempty"`
@@ -40,10 +39,9 @@ type _CanonicalOrganization CanonicalOrganization
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCanonicalOrganization(id string, sourceIri string, name string, address CanonicalOrganizationAddress, identifiers []Identifier, parents []string, contactPointIds []string) *CanonicalOrganization {
+func NewCanonicalOrganization(id string, name string, address CanonicalOrganizationAddress, identifiers []Identifier, parents []string, contactPointIds []string) *CanonicalOrganization {
 	this := CanonicalOrganization{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	this.Address = address
 	this.Identifiers = identifiers
@@ -82,30 +80,6 @@ func (o *CanonicalOrganization) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *CanonicalOrganization) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *CanonicalOrganization) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *CanonicalOrganization) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *CanonicalOrganization) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -411,7 +385,6 @@ func (o CanonicalOrganization) MarshalJSON() ([]byte, error) {
 func (o CanonicalOrganization) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	toSerialize["address"] = o.Address
 	if o.LogoUrl.IsSet() {
@@ -438,7 +411,6 @@ func (o *CanonicalOrganization) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 		"address",
 		"identifiers",

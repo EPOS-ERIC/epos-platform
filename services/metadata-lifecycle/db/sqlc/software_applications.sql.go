@@ -86,7 +86,6 @@ func (q *Queries) AddLifecycleSoftwareApplicationCreator(ctx context.Context, ar
 const addLifecycleSoftwareApplicationIdentifier = `-- name: AddLifecycleSoftwareApplicationIdentifier :exec
 INSERT INTO
     identifiers (
-        source_iri,
         TYPE,
         value,
         software_application_version_id
@@ -95,25 +94,18 @@ VALUES
     (
         $1,
         $2,
-        $3,
-        $4
+        $3
     )
 `
 
 type AddLifecycleSoftwareApplicationIdentifierParams struct {
-	SourceIri                    string
 	Type                         string
 	Value                        string
 	SoftwareApplicationVersionID *uuid.UUID
 }
 
 func (q *Queries) AddLifecycleSoftwareApplicationIdentifier(ctx context.Context, arg AddLifecycleSoftwareApplicationIdentifierParams) error {
-	_, err := q.db.Exec(ctx, addLifecycleSoftwareApplicationIdentifier,
-		arg.SourceIri,
-		arg.Type,
-		arg.Value,
-		arg.SoftwareApplicationVersionID,
-	)
+	_, err := q.db.Exec(ctx, addLifecycleSoftwareApplicationIdentifier, arg.Type, arg.Value, arg.SoftwareApplicationVersionID)
 	return err
 }
 
@@ -162,13 +154,11 @@ inserted AS (
 identifiers AS (
     INSERT INTO
         identifiers (
-            source_iri,
             TYPE,
             value,
             software_application_version_id
         )
     SELECT
-        source_iri,
         TYPE,
         value,
         (
@@ -348,29 +338,26 @@ func (q *Queries) CloneLifecycleSoftwareApplicationVersion(ctx context.Context, 
 
 const createLifecycleSoftwareApplication = `-- name: CreateLifecycleSoftwareApplication :one
 INSERT INTO
-    software_applications (source_iri, group_id, created_by)
+    software_applications (group_id, created_by)
 VALUES
     (
         $1,
-        $2,
-        $3
+        $2
     )
 RETURNING
-    id, source_iri, group_id, created_by, created_at
+    id, group_id, created_by, created_at
 `
 
 type CreateLifecycleSoftwareApplicationParams struct {
-	SourceIri string
 	GroupID   uuid.UUID
 	CreatedBy string
 }
 
 func (q *Queries) CreateLifecycleSoftwareApplication(ctx context.Context, arg CreateLifecycleSoftwareApplicationParams) (SoftwareApplication, error) {
-	row := q.db.QueryRow(ctx, createLifecycleSoftwareApplication, arg.SourceIri, arg.GroupID, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, createLifecycleSoftwareApplication, arg.GroupID, arg.CreatedBy)
 	var i SoftwareApplication
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -667,7 +654,7 @@ func (q *Queries) GetLatestArchivedLifecycleSoftwareApplicationVersion(ctx conte
 
 const getLifecycleSoftwareApplication = `-- name: GetLifecycleSoftwareApplication :one
 SELECT
-    id, source_iri, group_id, created_by, created_at
+    id, group_id, created_by, created_at
 FROM
     software_applications
 WHERE
@@ -679,7 +666,6 @@ func (q *Queries) GetLifecycleSoftwareApplication(ctx context.Context, id uuid.U
 	var i SoftwareApplication
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -690,8 +676,8 @@ func (q *Queries) GetLifecycleSoftwareApplication(ctx context.Context, id uuid.U
 const getLifecycleSoftwareApplicationVersion = `-- name: GetLifecycleSoftwareApplicationVersion :one
 SELECT
     version.id, version.software_application_id, version.status, version.revision, version.name, version.description, version.main_entity_of_page, version.license, version.version, version.keywords, version.download_url, version.requirements, version.operating_system, version.created_by, version.created_at, version.updated_at, version.submitted_by, version.submitted_at, version.published_by, version.published_at, version.archived_by, version.archived_at, version.rejected_by, version.rejected_at, version.rejection_note,
-    application.id, application.source_iri, application.group_id, application.created_by, application.created_at,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.source_iri, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    application.id, application.group_id, application.created_by, application.created_at,
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     software_application_versions AS version
     JOIN software_applications AS application ON application.id = version.software_application_id
@@ -742,14 +728,12 @@ func (q *Queries) GetLifecycleSoftwareApplicationVersion(ctx context.Context, ar
 		&i.SoftwareApplicationVersion.RejectedAt,
 		&i.SoftwareApplicationVersion.RejectionNote,
 		&i.SoftwareApplication.ID,
-		&i.SoftwareApplication.SourceIri,
 		&i.SoftwareApplication.GroupID,
 		&i.SoftwareApplication.CreatedBy,
 		&i.SoftwareApplication.CreatedAt,
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.SourceIri,
 		&i.Group.Concept,
 		&i.Group.Label,
 		&i.Group.Logo,
@@ -807,8 +791,8 @@ func (q *Queries) GetPublishedLifecycleSoftwareApplicationVersion(ctx context.Co
 
 const listLifecycleSoftwareApplicationCategories = `-- name: ListLifecycleSoftwareApplicationCategories :many
 SELECT
-    category.id, category.group_id, category.parent_category_id, category.source_iri, category.name, category.created_at, category.updated_at,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.source_iri, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    category.id, category.group_id, category.parent_category_id, category.name, category.created_at, category.updated_at,
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     software_application_version_categories AS link
     JOIN categories AS category ON category.id = link.category_id
@@ -837,14 +821,12 @@ func (q *Queries) ListLifecycleSoftwareApplicationCategories(ctx context.Context
 			&i.Category.ID,
 			&i.Category.GroupID,
 			&i.Category.ParentCategoryID,
-			&i.Category.SourceIri,
 			&i.Category.Name,
 			&i.Category.CreatedAt,
 			&i.Category.UpdatedAt,
 			&i.Group.ID,
 			&i.Group.Name,
 			&i.Group.Description,
-			&i.Group.SourceIri,
 			&i.Group.Concept,
 			&i.Group.Label,
 			&i.Group.Logo,
@@ -866,7 +848,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationCategories(ctx context.Context
 
 const listLifecycleSoftwareApplicationContactPoints = `-- name: ListLifecycleSoftwareApplicationContactPoints :many
 SELECT
-    contact.id, contact.source_iri, contact.email, contact.role
+    contact.id, contact.email, contact.role
 FROM
     software_application_version_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -889,12 +871,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationContactPoints(ctx context.Cont
 	var items []ListLifecycleSoftwareApplicationContactPointsRow
 	for rows.Next() {
 		var i ListLifecycleSoftwareApplicationContactPointsRow
-		if err := rows.Scan(
-			&i.ContactPoint.ID,
-			&i.ContactPoint.SourceIri,
-			&i.ContactPoint.Email,
-			&i.ContactPoint.Role,
-		); err != nil {
+		if err := rows.Scan(&i.ContactPoint.ID, &i.ContactPoint.Email, &i.ContactPoint.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -907,7 +884,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationContactPoints(ctx context.Cont
 
 const listLifecycleSoftwareApplicationCreators = `-- name: ListLifecycleSoftwareApplicationCreators :many
 SELECT
-    organization.id, organization.source_iri, organization.name, organization.street, organization.locality, organization.postal_code, organization.country, organization.logo_url, organization.page_url, organization.email, organization.lei_code
+    organization.id, organization.name, organization.street, organization.locality, organization.postal_code, organization.country, organization.logo_url, organization.page_url, organization.email, organization.lei_code
 FROM
     software_application_version_creators AS link
     JOIN organizations AS organization ON organization.id = link.organization_id
@@ -928,7 +905,6 @@ func (q *Queries) ListLifecycleSoftwareApplicationCreators(ctx context.Context, 
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
-			&i.SourceIri,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -951,7 +927,7 @@ func (q *Queries) ListLifecycleSoftwareApplicationCreators(ctx context.Context, 
 
 const listLifecycleSoftwareApplicationIdentifiers = `-- name: ListLifecycleSoftwareApplicationIdentifiers :many
 SELECT
-    identifier.id, identifier.source_iri, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
+    identifier.id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
 FROM
     identifiers AS identifier
 WHERE
@@ -975,7 +951,6 @@ func (q *Queries) ListLifecycleSoftwareApplicationIdentifiers(ctx context.Contex
 		var i ListLifecycleSoftwareApplicationIdentifiersRow
 		if err := rows.Scan(
 			&i.Identifier.ID,
-			&i.Identifier.SourceIri,
 			&i.Identifier.Type,
 			&i.Identifier.Value,
 			&i.Identifier.DatasetVersionID,

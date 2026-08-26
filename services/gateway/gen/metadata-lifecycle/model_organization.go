@@ -22,7 +22,6 @@ var _ MappedNullable = &Organization{}
 // Organization struct for Organization
 type Organization struct {
 	Id            string         `json:"id"`
-	SourceIri     string         `json:"source_iri"`
 	Name          string         `json:"name"`
 	Street        NullableString `json:"street,omitempty"`
 	Locality      NullableString `json:"locality,omitempty"`
@@ -42,10 +41,9 @@ type _Organization Organization
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrganization(id string, sourceIri string, name string) *Organization {
+func NewOrganization(id string, name string) *Organization {
 	this := Organization{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	return &this
 }
@@ -80,30 +78,6 @@ func (o *Organization) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *Organization) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *Organization) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *Organization) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *Organization) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -550,7 +524,6 @@ func (o Organization) MarshalJSON() ([]byte, error) {
 func (o Organization) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	if o.Street.IsSet() {
 		toSerialize["street"] = o.Street.Get()
@@ -591,7 +564,6 @@ func (o *Organization) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 	}
 

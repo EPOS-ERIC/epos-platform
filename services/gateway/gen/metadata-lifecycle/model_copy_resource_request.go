@@ -22,7 +22,6 @@ var _ MappedNullable = &CopyResourceRequest{}
 // CopyResourceRequest struct for CopyResourceRequest
 type CopyResourceRequest struct {
 	TargetGroupId string `json:"target_group_id"`
-	SourceIri     string `json:"source_iri"`
 }
 
 type _CopyResourceRequest CopyResourceRequest
@@ -31,10 +30,9 @@ type _CopyResourceRequest CopyResourceRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCopyResourceRequest(targetGroupId string, sourceIri string) *CopyResourceRequest {
+func NewCopyResourceRequest(targetGroupId string) *CopyResourceRequest {
 	this := CopyResourceRequest{}
 	this.TargetGroupId = targetGroupId
-	this.SourceIri = sourceIri
 	return &this
 }
 
@@ -70,30 +68,6 @@ func (o *CopyResourceRequest) SetTargetGroupId(v string) {
 	o.TargetGroupId = v
 }
 
-// GetSourceIri returns the SourceIri field value
-func (o *CopyResourceRequest) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *CopyResourceRequest) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *CopyResourceRequest) SetSourceIri(v string) {
-	o.SourceIri = v
-}
-
 func (o CopyResourceRequest) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -105,7 +79,6 @@ func (o CopyResourceRequest) MarshalJSON() ([]byte, error) {
 func (o CopyResourceRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["target_group_id"] = o.TargetGroupId
-	toSerialize["source_iri"] = o.SourceIri
 	return toSerialize, nil
 }
 
@@ -115,7 +88,6 @@ func (o *CopyResourceRequest) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"target_group_id",
-		"source_iri",
 	}
 
 	allProperties := make(map[string]interface{})

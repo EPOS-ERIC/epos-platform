@@ -21,7 +21,6 @@ var _ MappedNullable = &CreateCanonicalOrganizationRequest{}
 
 // CreateCanonicalOrganizationRequest struct for CreateCanonicalOrganizationRequest
 type CreateCanonicalOrganizationRequest struct {
-	SourceIri       *string                                    `json:"source_iri,omitempty"`
 	Name            string                                     `json:"name"`
 	Address         *CreateCanonicalOrganizationRequestAddress `json:"address,omitempty"`
 	LogoUrl         NullableString                             `json:"logo_url,omitempty"`
@@ -51,38 +50,6 @@ func NewCreateCanonicalOrganizationRequest(name string) *CreateCanonicalOrganiza
 func NewCreateCanonicalOrganizationRequestWithDefaults() *CreateCanonicalOrganizationRequest {
 	this := CreateCanonicalOrganizationRequest{}
 	return &this
-}
-
-// GetSourceIri returns the SourceIri field value if set, zero value otherwise.
-func (o *CreateCanonicalOrganizationRequest) GetSourceIri() string {
-	if o == nil || IsNil(o.SourceIri) {
-		var ret string
-		return ret
-	}
-	return *o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CreateCanonicalOrganizationRequest) GetSourceIriOk() (*string, bool) {
-	if o == nil || IsNil(o.SourceIri) {
-		return nil, false
-	}
-	return o.SourceIri, true
-}
-
-// HasSourceIri returns a boolean if a field has been set.
-func (o *CreateCanonicalOrganizationRequest) HasSourceIri() bool {
-	if o != nil && !IsNil(o.SourceIri) {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceIri gets a reference to the given string and assigns it to the SourceIri field.
-func (o *CreateCanonicalOrganizationRequest) SetSourceIri(v string) {
-	o.SourceIri = &v
 }
 
 // GetName returns the Name field value
@@ -419,9 +386,6 @@ func (o CreateCanonicalOrganizationRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateCanonicalOrganizationRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.SourceIri) {
-		toSerialize["source_iri"] = o.SourceIri
-	}
 	toSerialize["name"] = o.Name
 	if !IsNil(o.Address) {
 		toSerialize["address"] = o.Address

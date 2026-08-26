@@ -23,7 +23,6 @@ var _ MappedNullable = &DatasetMetadata{}
 // DatasetMetadata struct for DatasetMetadata
 type DatasetMetadata struct {
 	Id                    string                  `json:"id"`
-	SourceIri             string                  `json:"source_iri"`
 	Title                 string                  `json:"title"`
 	Description           string                  `json:"description"`
 	Keywords              string                  `json:"keywords"`
@@ -47,10 +46,9 @@ type _DatasetMetadata DatasetMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDatasetMetadata(id string, sourceIri string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []ContactPointReference, providers []ResourceReference, categories []ResourceReference) *DatasetMetadata {
+func NewDatasetMetadata(id string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []ContactPointReference, providers []ResourceReference, categories []ResourceReference) *DatasetMetadata {
 	this := DatasetMetadata{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Title = title
 	this.Description = description
 	this.Keywords = keywords
@@ -92,30 +90,6 @@ func (o *DatasetMetadata) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *DatasetMetadata) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *DatasetMetadata) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *DatasetMetadata) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *DatasetMetadata) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetTitle returns the Title field value
@@ -613,7 +587,6 @@ func (o DatasetMetadata) MarshalJSON() ([]byte, error) {
 func (o DatasetMetadata) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["title"] = o.Title
 	toSerialize["description"] = o.Description
 	toSerialize["keywords"] = o.Keywords
@@ -654,7 +627,6 @@ func (o *DatasetMetadata) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"title",
 		"description",
 		"keywords",

@@ -71,7 +71,6 @@ type Candidate struct {
 	VersionID  uuid.UUID
 	GroupID    uuid.UUID
 	Status     Status
-	SourceIRI  string
 	Name       string
 }
 
@@ -132,7 +131,6 @@ type Item struct {
 	Type          ResourceType `json:"type"`
 	ResourceID    uuid.UUID    `json:"resource_id"`
 	VersionID     uuid.UUID    `json:"version_id"`
-	SourceIRI     string       `json:"source_iri"`
 	Name          string       `json:"name"`
 	Status        Status       `json:"status"`
 	Group         Reference    `json:"group"`
@@ -217,7 +215,6 @@ func (s *Service) item(ctx context.Context, actorID *string, candidate Candidate
 		Type:       candidate.Type,
 		ResourceID: candidate.ResourceID,
 		VersionID:  candidate.VersionID,
-		SourceIRI:  candidate.SourceIRI,
 		Name:       candidate.Name,
 		Status:     candidate.Status,
 		Group: Reference{

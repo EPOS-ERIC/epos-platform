@@ -1,10 +1,9 @@
 package domain
 
 type ContactPoint struct {
-	ID        string
-	SourceIRI string
-	Email     string
-	Role      string
+	ID    string
+	Email string
+	Role  string
 }
 
 type OrganizationAddress struct {
@@ -16,7 +15,6 @@ type OrganizationAddress struct {
 
 type CanonicalOrganization struct {
 	ID              string
-	SourceIRI       string
 	Name            string
 	Address         OrganizationAddress
 	LogoURL         *string
@@ -29,13 +27,11 @@ type CanonicalOrganization struct {
 }
 
 type OrganizationIdentifierInput struct {
-	SourceIRI *string
-	Type      string
-	Value     string
+	Type  string
+	Value string
 }
 
 type CreateOrganizationInput struct {
-	SourceIRI       *string
 	Name            string
 	Address         *OrganizationAddress
 	LogoURL         *string
@@ -60,9 +56,8 @@ type ReplaceOrganizationInput struct {
 }
 
 type CreateContactPointInput struct {
-	SourceIRI *string
-	Email     string
-	Role      string
+	Email string
+	Role  string
 }
 
 type ReplaceContactPointInput struct {

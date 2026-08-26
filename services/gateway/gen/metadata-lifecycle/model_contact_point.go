@@ -21,10 +21,9 @@ var _ MappedNullable = &ContactPoint{}
 
 // ContactPoint struct for ContactPoint
 type ContactPoint struct {
-	Id        string `json:"id"`
-	SourceIri string `json:"source_iri"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
+	Id    string `json:"id"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 type _ContactPoint ContactPoint
@@ -33,10 +32,9 @@ type _ContactPoint ContactPoint
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewContactPoint(id string, sourceIri string, email string, role string) *ContactPoint {
+func NewContactPoint(id string, email string, role string) *ContactPoint {
 	this := ContactPoint{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Email = email
 	this.Role = role
 	return &this
@@ -72,30 +70,6 @@ func (o *ContactPoint) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *ContactPoint) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *ContactPoint) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *ContactPoint) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *ContactPoint) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetEmail returns the Email field value
@@ -157,7 +131,6 @@ func (o ContactPoint) MarshalJSON() ([]byte, error) {
 func (o ContactPoint) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["email"] = o.Email
 	toSerialize["role"] = o.Role
 	return toSerialize, nil
@@ -169,7 +142,6 @@ func (o *ContactPoint) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"email",
 		"role",
 	}

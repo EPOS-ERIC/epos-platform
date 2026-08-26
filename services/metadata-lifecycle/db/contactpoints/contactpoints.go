@@ -50,10 +50,9 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (contactpoints.ContactPoin
 
 func (r *Repo) Create(ctx context.Context, contactPoint contactpoints.ContactPoint) (contactpoints.ContactPoint, error) {
 	row, err := r.CreateContactPoint(ctx, sqlc.CreateContactPointParams{
-		ID:        contactPoint.ID,
-		SourceIri: contactPoint.SourceIRI,
-		Email:     contactPoint.Email,
-		Role:      contactPoint.Role,
+		ID:    contactPoint.ID,
+		Email: contactPoint.Email,
+		Role:  contactPoint.Role,
 	})
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
@@ -101,9 +100,8 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 
 func mapContactPoint(row sqlc.ContactPoint) contactpoints.ContactPoint {
 	return contactpoints.ContactPoint{
-		ID:        row.ID,
-		SourceIRI: row.SourceIri,
-		Email:     row.Email,
-		Role:      row.Role,
+		ID:    row.ID,
+		Email: row.Email,
+		Role:  row.Role,
 	}
 }

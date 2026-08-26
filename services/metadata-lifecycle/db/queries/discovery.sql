@@ -4,7 +4,6 @@ SELECT
     version.id AS version_id,
     dataset.group_id,
     version.status,
-    dataset.source_iri,
     version.title AS name
 FROM
     datasets AS dataset
@@ -18,7 +17,6 @@ WHERE
         OR lower(
             concat_ws(
                 ' ',
-                dataset.source_iri,
                 version.title,
                 version.description,
                 version.keywords
@@ -91,7 +89,6 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    resource.source_iri,
     version.name
 FROM
     software_applications AS resource
@@ -105,7 +102,6 @@ WHERE
         OR lower(
             concat_ws(
                 ' ',
-                resource.source_iri,
                 version.name,
                 version.description,
                 version.keywords
@@ -153,7 +149,6 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    resource.source_iri,
     version.name
 FROM
     software_source_codes AS resource
@@ -167,7 +162,6 @@ WHERE
         OR lower(
             concat_ws(
                 ' ',
-                resource.source_iri,
                 version.name,
                 version.description,
                 version.keywords

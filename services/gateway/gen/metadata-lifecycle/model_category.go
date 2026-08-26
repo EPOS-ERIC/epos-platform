@@ -21,10 +21,9 @@ var _ MappedNullable = &Category{}
 
 // Category struct for Category
 type Category struct {
-	Id        string     `json:"id"`
-	SourceIri string     `json:"source_iri"`
-	Name      string     `json:"name"`
-	Children  []Category `json:"children,omitempty"`
+	Id       string     `json:"id"`
+	Name     string     `json:"name"`
+	Children []Category `json:"children,omitempty"`
 }
 
 type _Category Category
@@ -33,10 +32,9 @@ type _Category Category
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCategory(id string, sourceIri string, name string) *Category {
+func NewCategory(id string, name string) *Category {
 	this := Category{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	return &this
 }
@@ -71,30 +69,6 @@ func (o *Category) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *Category) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *Category) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *Category) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *Category) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -164,7 +138,6 @@ func (o Category) MarshalJSON() ([]byte, error) {
 func (o Category) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	if !IsNil(o.Children) {
 		toSerialize["children"] = o.Children
@@ -178,7 +151,6 @@ func (o *Category) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 	}
 

@@ -58,8 +58,8 @@ func mapSliceErr[T, K any](values []T, f func(T) (K, error)) ([]K, error) {
 
 func toClientDatasetDraftMetadata(metadata domain.DatasetDraftMetadata) client.DatasetDraftMetadata {
 	result := client.DatasetDraftMetadata{ //nolint:exhaustruct_v5 // we set the values manually later
-		SourceIri: metadata.SourceIRI,
-		Title:     metadata.Title,
+		// TODO: see if we can skip the struct and just use the title as a string
+		Title: metadata.Title,
 	}
 
 	setIfPresent(metadata.Description, result.SetDescription)
@@ -139,8 +139,8 @@ func toClientReplaceResourceDraftRequest(input domain.ReplaceResourceDraftInput)
 
 func toClientSoftwareApplicationDraftMetadata(metadata domain.SoftwareApplicationDraftMetadata) client.SoftwareApplicationDraftMetadata {
 	result := client.SoftwareApplicationDraftMetadata{ //nolint:exhaustruct_v5 // optional values are set below
-		SourceIri: metadata.SourceIRI,
-		Name:      metadata.Name,
+		// TODO: see if we can skip the struct and just use the title as a string
+		Name: metadata.Name,
 	}
 
 	setIfPresent(metadata.Description, result.SetDescription)
@@ -161,8 +161,8 @@ func toClientSoftwareApplicationDraftMetadata(metadata domain.SoftwareApplicatio
 
 func toClientSoftwareSourceCodeDraftMetadata(metadata domain.SoftwareSourceCodeDraftMetadata) client.SoftwareSourceCodeDraftMetadata {
 	result := client.SoftwareSourceCodeDraftMetadata{ //nolint:exhaustruct_v5 // optional values are set below
-		SourceIri: metadata.SourceIRI,
-		Name:      metadata.Name,
+		// TODO: see if we can skip the struct and just use the title as a string
+		Name: metadata.Name,
 	}
 
 	setIfPresent(metadata.Description, result.SetDescription)
@@ -191,9 +191,8 @@ func toClientResourceReferences(values []domain.ResourceReference) []client.Cano
 func toClientIdentifierDrafts(values []domain.Identifier) []client.IdentifierDraft {
 	return mapSlice(values, func(value domain.Identifier) client.IdentifierDraft {
 		result := client.IdentifierDraft{ //nolint:exhaustruct_v5 // optional ID is set below
-			SourceIri: value.SourceIRI,
-			Type:      value.Type,
-			Value:     value.Value,
+			Type:  value.Type,
+			Value: value.Value,
 		}
 		result.SetId(value.ID)
 		return result
@@ -336,7 +335,6 @@ func toDomainResourceVersion(record *client.ResourceRecord) (domain.ResourceVers
 func toDomainDatasetResourceMetadata(value *client.DatasetMetadata) domain.DatasetResourceMetadata {
 	return domain.DatasetResourceMetadata{
 		ID:                    value.Id,
-		SourceIRI:             value.SourceIri,
 		Title:                 value.Title,
 		Description:           value.Description,
 		Keywords:              value.Keywords,
@@ -358,7 +356,6 @@ func toDomainDatasetResourceMetadata(value *client.DatasetMetadata) domain.Datas
 func toDomainSoftwareApplicationResourceMetadata(value *client.SoftwareApplicationMetadata) domain.SoftwareApplicationResourceMetadata {
 	return domain.SoftwareApplicationResourceMetadata{
 		ID:               value.Id,
-		SourceIRI:        value.SourceIri,
 		Name:             value.Name,
 		Description:      value.Description,
 		MainEntityOfPage: value.MainEntityOfPage.Get(),
@@ -378,7 +375,6 @@ func toDomainSoftwareApplicationResourceMetadata(value *client.SoftwareApplicati
 func toDomainSoftwareSourceCodeResourceMetadata(value *client.SoftwareSourceCodeMetadata) domain.SoftwareSourceCodeResourceMetadata {
 	return domain.SoftwareSourceCodeResourceMetadata{
 		ID:                   value.Id,
-		SourceIRI:            value.SourceIri,
 		Name:                 value.Name,
 		Description:          value.Description,
 		ProgrammingLanguage:  value.ProgrammingLanguage.Get(),
@@ -398,16 +394,15 @@ func toDomainSoftwareSourceCodeResourceMetadata(value *client.SoftwareSourceCode
 
 func toDomainResourceVersionReference(value client.ResourceReference) domain.ResourceVersionReference {
 	return domain.ResourceVersionReference{
-		ID:        value.Id,
-		SourceIRI: value.SourceIri,
-		Name:      value.Name,
+		ID:   value.Id,
+		Name: value.Name,
 	}
 }
 
 func toDomainContactPointReference(value client.ContactPointReference) domain.ContactPointReference {
+	// TODO: see if we can skip the struct and just use the id directly
 	return domain.ContactPointReference{
-		ID:        value.Id,
-		SourceIRI: value.SourceIri,
+		ID: value.Id,
 	}
 }
 
@@ -599,17 +594,15 @@ func toDomainParameterMetadata(value parameterMetadataAccessor) domain.Parameter
 
 func toDomainContactPoint(value client.ContactPoint) domain.ContactPoint {
 	return domain.ContactPoint{
-		ID:        value.Id,
-		SourceIRI: value.SourceIri,
-		Email:     value.Email,
-		Role:      value.Role,
+		ID:    value.Id,
+		Email: value.Email,
+		Role:  value.Role,
 	}
 }
 
 func toDomainCanonicalOrganization(value client.CanonicalOrganization) domain.CanonicalOrganization {
 	return domain.CanonicalOrganization{
 		ID:              value.Id,
-		SourceIRI:       value.SourceIri,
 		Name:            value.Name,
 		Address:         toDomainOrganizationAddress(value.Address),
 		LogoURL:         value.LogoUrl.Get(),
@@ -624,10 +617,9 @@ func toDomainCanonicalOrganization(value client.CanonicalOrganization) domain.Ca
 
 func toDomainIdentifier(value client.Identifier) domain.Identifier {
 	return domain.Identifier{
-		ID:        value.Id,
-		SourceIRI: value.SourceIri,
-		Type:      value.Type,
-		Value:     value.Value,
+		ID:    value.Id,
+		Type:  value.Type,
+		Value: value.Value,
 	}
 }
 
@@ -636,16 +628,14 @@ func toDomainCategory(value client.CanonicalCategory) domain.Category {
 		ID:               value.Id,
 		GroupID:          value.GroupId,
 		ParentCategoryID: value.ParentCategoryId.Get(),
-		SourceIRI:        value.SourceIri,
 		Name:             value.Name,
 	}
 }
 
 func toClientCreateContactPointRequest(value domain.CreateContactPointInput) client.CreateContactPointRequest {
 	return client.CreateContactPointRequest{
-		SourceIri: value.SourceIRI,
-		Email:     value.Email,
-		Role:      value.Role,
+		Email: value.Email,
+		Role:  value.Role,
 	}
 }
 
@@ -658,15 +648,13 @@ func toClientReplaceContactPointRequest(value domain.ReplaceContactPointInput) c
 
 func toClientOrganizationIdentifierInput(value domain.OrganizationIdentifierInput) client.CreateOrganizationIdentifierRequest {
 	return client.CreateOrganizationIdentifierRequest{
-		SourceIri: value.SourceIRI,
-		Type:      value.Type,
-		Value:     value.Value,
+		Type:  value.Type,
+		Value: value.Value,
 	}
 }
 
 func toClientCreateCanonicalOrganizationRequest(value domain.CreateOrganizationInput) client.CreateCanonicalOrganizationRequest {
 	result := client.CreateCanonicalOrganizationRequest{ //nolint:exhaustruct_v5 // optional values are set below
-		SourceIri:       value.SourceIRI,
 		Name:            value.Name,
 		Identifiers:     mapSlice(value.Identifiers, toClientOrganizationIdentifierInput),
 		Parents:         value.Parents,
@@ -734,10 +722,9 @@ func setNullable(value *client.NullableString, input *string) {
 
 func toClientCreateGroupRequest(value domain.CreateGroupInput) client.CreateGroupRequest {
 	result := client.CreateGroupRequest{ //nolint:exhaustruct_v5 // optional values are set below
-		SourceIri: value.SourceIRI,
-		Name:      value.Name,
-		Position:  value.Position,
-		Concept:   value.Concept,
+		Name:     value.Name,
+		Position: value.Position,
+		Concept:  value.Concept,
 	}
 	setNullable(&result.Description, value.Description)
 	setNullable(&result.Label, value.Label)
@@ -763,7 +750,6 @@ func toClientReplaceGroupRequest(value domain.ReplaceGroupInput) client.ReplaceG
 
 func toClientCreateCategoryRequest(value domain.CreateCategoryInput) client.CreateCategoryRequest {
 	return client.CreateCategoryRequest{
-		SourceIri:        value.SourceIRI,
 		Name:             value.Name,
 		ParentCategoryId: value.ParentCategoryID,
 	}
@@ -786,7 +772,6 @@ func toDomainDiscoveryItem(value client.DiscoveryItem) domain.DiscoveryItem {
 		Type:          value.Type,
 		ResourceID:    value.ResourceId,
 		VersionID:     value.VersionId,
-		SourceIRI:     value.SourceIri,
 		Name:          value.Name,
 		Status:        string(value.Status),
 		Group:         toDomainDiscoveryReference(value.Group),
@@ -854,7 +839,6 @@ func toDomainGroup(value *client.Group) (domain.Group, error) {
 
 	return domain.Group{
 		ID:          value.Id,
-		SourceIRI:   value.SourceIri,
 		Name:        value.Name,
 		Description: value.Description.Get(),
 		Label:       value.Label.Get(),
@@ -933,9 +917,9 @@ func toClientRejectRequest(value domain.RejectResourceInput) client.RejectReques
 }
 
 func toClientCopyResourceRequest(groupID string, value domain.CopyResourceInput) client.CopyResourceRequest {
+	// TODO: see if we can skip the struct and just use the id directly
 	return client.CopyResourceRequest{
 		TargetGroupId: groupID,
-		SourceIri:     value.SourceIRI,
 	}
 }
 

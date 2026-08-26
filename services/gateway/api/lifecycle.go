@@ -6,7 +6,6 @@ import "time"
 
 type DatasetDraftMetadata struct {
 	ID                    string              `json:"id,omitempty"`
-	SourceIRI             string              `json:"source_iri"`
 	Title                 string              `json:"title"`
 	Description           *string             `json:"description,omitempty"`
 	Keywords              *string             `json:"keywords,omitempty"`
@@ -25,7 +24,6 @@ type DatasetDraftMetadata struct {
 }
 
 type SoftwareApplicationDraftMetadata struct {
-	SourceIRI        string              `json:"source_iri"`
 	Name             string              `json:"name"`
 	Description      *string             `json:"description,omitempty"`
 	Keywords         *string             `json:"keywords,omitempty"`
@@ -42,7 +40,6 @@ type SoftwareApplicationDraftMetadata struct {
 }
 
 type SoftwareSourceCodeDraftMetadata struct {
-	SourceIRI            string              `json:"source_iri"`
 	Name                 string              `json:"name"`
 	Description          *string             `json:"description,omitempty"`
 	Keywords             *string             `json:"keywords,omitempty"`
@@ -64,10 +61,9 @@ type ResourceReference struct {
 }
 
 type IdentifierDraft struct {
-	ID        string `json:"id,omitempty"`
-	SourceIRI string `json:"source_iri"`
-	Type      string `json:"type"`
-	Value     string `json:"value"`
+	ID    string `json:"id,omitempty"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type DistributionDraft struct {
@@ -156,9 +152,7 @@ type ReplaceSoftwareSourceCodeDraftRequest struct {
 	Metadata     SoftwareSourceCodeDraftMetadata `json:"metadata"`
 }
 
-type CopyResourceRequest struct {
-	SourceIRI string `json:"source_iri"`
-}
+type CopyResourceRequest struct{} // TODO: simplify this
 
 type RejectResourceRequest struct {
 	Note string `json:"note"`
@@ -183,7 +177,6 @@ type ResourceVersionMetadata interface {
 
 type DatasetResourceMetadata struct {
 	ID                    string                     `json:"id"`
-	SourceIRI             string                     `json:"source_iri"`
 	Title                 string                     `json:"title"`
 	Description           string                     `json:"description"`
 	Keywords              string                     `json:"keywords"`
@@ -205,7 +198,6 @@ func (DatasetResourceMetadata) resourceVersionMetadata() {}
 
 type SoftwareApplicationResourceMetadata struct {
 	ID               string                     `json:"id"`
-	SourceIRI        string                     `json:"source_iri"`
 	Name             string                     `json:"name"`
 	Description      string                     `json:"description"`
 	MainEntityOfPage *string                    `json:"main_entity_of_page"`
@@ -225,7 +217,6 @@ func (SoftwareApplicationResourceMetadata) resourceVersionMetadata() {}
 
 type SoftwareSourceCodeResourceMetadata struct {
 	ID                   string                     `json:"id"`
-	SourceIRI            string                     `json:"source_iri"`
 	Name                 string                     `json:"name"`
 	Description          string                     `json:"description"`
 	ProgrammingLanguage  *string                    `json:"programming_language"`
@@ -245,14 +236,13 @@ type SoftwareSourceCodeResourceMetadata struct {
 func (SoftwareSourceCodeResourceMetadata) resourceVersionMetadata() {}
 
 type ResourceVersionReference struct {
-	ID        string `json:"id"`
-	SourceIRI string `json:"source_iri"`
-	Name      string `json:"name"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type ContactPointReference struct {
-	ID        string `json:"id"`
-	SourceIRI string `json:"source_iri"`
+	// TODO: this can probably just be the id instead of the struct
+	ID string `json:"id"`
 }
 
 type Distribution interface {

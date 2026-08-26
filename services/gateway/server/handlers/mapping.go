@@ -31,7 +31,6 @@ func mapSlice[T, K any](in []T, f func(T) K) []K {
 func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.DatasetDraftMetadata {
 	return domain.DatasetDraftMetadata{
 		ID:                    value.ID,
-		SourceIRI:             value.SourceIRI,
 		Title:                 value.Title,
 		Description:           value.Description,
 		Keywords:              value.Keywords,
@@ -52,7 +51,6 @@ func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.Dataset
 
 func toDomainSoftwareApplicationDraftMetadata(value api.SoftwareApplicationDraftMetadata) domain.SoftwareApplicationDraftMetadata {
 	return domain.SoftwareApplicationDraftMetadata{
-		SourceIRI:        value.SourceIRI,
 		Name:             value.Name,
 		Description:      value.Description,
 		Keywords:         value.Keywords,
@@ -71,7 +69,6 @@ func toDomainSoftwareApplicationDraftMetadata(value api.SoftwareApplicationDraft
 
 func toDomainSoftwareSourceCodeDraftMetadata(value api.SoftwareSourceCodeDraftMetadata) domain.SoftwareSourceCodeDraftMetadata {
 	return domain.SoftwareSourceCodeDraftMetadata{
-		SourceIRI:            value.SourceIRI,
 		Name:                 value.Name,
 		Description:          value.Description,
 		Keywords:             value.Keywords,
@@ -156,7 +153,8 @@ func toDomainRejectResourceInput(value api.RejectResourceRequest) domain.RejectR
 }
 
 func toDomainCopyResourceInput(value api.CopyResourceRequest) domain.CopyResourceInput {
-	return domain.CopyResourceInput(value)
+	// TODO: remove this, no body anyway
+	return domain.CopyResourceInput{}
 }
 
 func toDomainReplaceResourceDraftInput(revision int32, metadata domain.DraftMetadata) domain.ReplaceResourceDraftInput {
@@ -208,7 +206,6 @@ func toAPIResourceVersion(value domain.ResourceVersion) api.ResourceVersion {
 func toAPIDatasetResourceMetadata(value domain.DatasetResourceMetadata) api.DatasetResourceMetadata {
 	return api.DatasetResourceMetadata{
 		ID:                    value.ID,
-		SourceIRI:             value.SourceIRI,
 		Title:                 value.Title,
 		Description:           value.Description,
 		Keywords:              value.Keywords,
@@ -230,7 +227,6 @@ func toAPIDatasetResourceMetadata(value domain.DatasetResourceMetadata) api.Data
 func toAPISoftwareApplicationResourceMetadata(value domain.SoftwareApplicationResourceMetadata) api.SoftwareApplicationResourceMetadata {
 	return api.SoftwareApplicationResourceMetadata{
 		ID:               value.ID,
-		SourceIRI:        value.SourceIRI,
 		Name:             value.Name,
 		Description:      value.Description,
 		MainEntityOfPage: value.MainEntityOfPage,
@@ -250,7 +246,6 @@ func toAPISoftwareApplicationResourceMetadata(value domain.SoftwareApplicationRe
 func toAPISoftwareSourceCodeResourceMetadata(value domain.SoftwareSourceCodeResourceMetadata) api.SoftwareSourceCodeResourceMetadata {
 	return api.SoftwareSourceCodeResourceMetadata{
 		ID:                   value.ID,
-		SourceIRI:            value.SourceIRI,
 		Name:                 value.Name,
 		Description:          value.Description,
 		ProgrammingLanguage:  value.ProgrammingLanguage,
@@ -269,15 +264,25 @@ func toAPISoftwareSourceCodeResourceMetadata(value domain.SoftwareSourceCodeReso
 }
 
 func toAPIIdentifierDraft(value domain.Identifier) api.IdentifierDraft {
-	return api.IdentifierDraft{ID: value.ID, SourceIRI: value.SourceIRI, Type: value.Type, Value: value.Value}
+	return api.IdentifierDraft{
+		ID:    value.ID,
+		Type:  value.Type,
+		Value: value.Value,
+	}
 }
 
 func toAPIResourceVersionReference(value domain.ResourceVersionReference) api.ResourceVersionReference {
-	return api.ResourceVersionReference{ID: value.ID, SourceIRI: value.SourceIRI, Name: value.Name}
+	return api.ResourceVersionReference{
+		ID:   value.ID,
+		Name: value.Name,
+	}
 }
 
 func toAPIContactPointReference(value domain.ContactPointReference) api.ContactPointReference {
-	return api.ContactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
+	// TODO: skip the struct and just use the id
+	return api.ContactPointReference{
+		ID: value.ID,
+	}
 }
 
 func toAPISpatialCoverage(value domain.SpatialCoverage) api.SpatialCoverage {
@@ -382,17 +387,24 @@ func toAPIParameterMetadata(value domain.ParameterMetadata) api.ParameterMetadat
 }
 
 func toAPIContactPoint(value domain.ContactPoint) api.ContactPoint {
-	return api.ContactPoint(value)
+	return api.ContactPoint{
+		ID:    value.ID,
+		Email: value.Email,
+		Role:  value.Role,
+	}
 }
 
 func toAPIOrganizationIdentifier(value domain.Identifier) api.OrganizationIdentifier {
-	return api.OrganizationIdentifier(value)
+	return api.OrganizationIdentifier{
+		ID:    value.ID,
+		Type:  value.Type,
+		Value: value.Value,
+	}
 }
 
 func toAPICanonicalOrganization(value domain.CanonicalOrganization) api.CanonicalOrganization {
 	return api.CanonicalOrganization{
 		ID:              value.ID,
-		SourceIRI:       value.SourceIRI,
 		Name:            value.Name,
 		Address:         api.OrganizationAddress(value.Address),
 		LogoURL:         value.LogoURL,
@@ -410,11 +422,17 @@ func toDomainOrganizationAddress(value api.OrganizationAddress) domain.Organizat
 }
 
 func toDomainOrganizationIdentifierInput(value api.OrganizationIdentifierRequest) domain.OrganizationIdentifierInput {
-	return domain.OrganizationIdentifierInput(value)
+	return domain.OrganizationIdentifierInput{
+		Type:  value.Type,
+		Value: value.Value,
+	}
 }
 
 func toDomainCreateContactPointInput(value api.CreateContactPointRequest) domain.CreateContactPointInput {
-	return domain.CreateContactPointInput(value)
+	return domain.CreateContactPointInput{
+		Email: value.Email,
+		Role:  value.Role,
+	}
 }
 
 func toDomainReplaceContactPointInput(value api.ReplaceContactPointRequest) domain.ReplaceContactPointInput {
@@ -423,7 +441,6 @@ func toDomainReplaceContactPointInput(value api.ReplaceContactPointRequest) doma
 
 func toDomainCreateOrganizationInput(value api.CreateOrganizationRequest) domain.CreateOrganizationInput {
 	return domain.CreateOrganizationInput{
-		SourceIRI:       value.SourceIRI,
 		Name:            value.Name,
 		Address:         mapPtr(value.Address, toDomainOrganizationAddress),
 		LogoURL:         value.LogoURL,
@@ -586,7 +603,6 @@ func toAPIDiscoveryItem(value domain.DiscoveryItem) api.DiscoveryItem {
 		Type:          value.Type,
 		ResourceID:    value.ResourceID,
 		VersionID:     value.VersionID,
-		SourceIRI:     value.SourceIRI,
 		Name:          value.Name,
 		Status:        value.Status,
 		Group:         toAPIReference(value.Group),

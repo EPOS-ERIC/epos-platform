@@ -21,7 +21,6 @@ var _ MappedNullable = &CreateGroupRequest{}
 
 // CreateGroupRequest struct for CreateGroupRequest
 type CreateGroupRequest struct {
-	SourceIri   *string        `json:"source_iri,omitempty"`
 	Name        string         `json:"name"`
 	Description NullableString `json:"description,omitempty"`
 	Label       NullableString `json:"label,omitempty"`
@@ -51,38 +50,6 @@ func NewCreateGroupRequest(name string, concept string) *CreateGroupRequest {
 func NewCreateGroupRequestWithDefaults() *CreateGroupRequest {
 	this := CreateGroupRequest{}
 	return &this
-}
-
-// GetSourceIri returns the SourceIri field value if set, zero value otherwise.
-func (o *CreateGroupRequest) GetSourceIri() string {
-	if o == nil || IsNil(o.SourceIri) {
-		var ret string
-		return ret
-	}
-	return *o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CreateGroupRequest) GetSourceIriOk() (*string, bool) {
-	if o == nil || IsNil(o.SourceIri) {
-		return nil, false
-	}
-	return o.SourceIri, true
-}
-
-// HasSourceIri returns a boolean if a field has been set.
-func (o *CreateGroupRequest) HasSourceIri() bool {
-	if o != nil && !IsNil(o.SourceIri) {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceIri gets a reference to the given string and assigns it to the SourceIri field.
-func (o *CreateGroupRequest) SetSourceIri(v string) {
-	o.SourceIri = &v
 }
 
 // GetName returns the Name field value
@@ -390,9 +357,6 @@ func (o CreateGroupRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateGroupRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.SourceIri) {
-		toSerialize["source_iri"] = o.SourceIri
-	}
 	toSerialize["name"] = o.Name
 	if o.Description.IsSet() {
 		toSerialize["description"] = o.Description.Get()

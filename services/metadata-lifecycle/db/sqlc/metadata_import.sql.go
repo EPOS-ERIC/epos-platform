@@ -34,30 +34,23 @@ func (q *Queries) AddImportOrganizationContactPoint(ctx context.Context, arg Add
 
 const addImportOrganizationIdentifier = `-- name: AddImportOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (source_iri, TYPE, value, organization_id)
+    identifiers (TYPE, value, organization_id)
 VALUES
     (
         $1,
         $2,
-        $3,
-        $4
+        $3
     )
 `
 
 type AddImportOrganizationIdentifierParams struct {
-	SourceIri      string
 	Type           string
 	Value          string
 	OrganizationID *uuid.UUID
 }
 
 func (q *Queries) AddImportOrganizationIdentifier(ctx context.Context, arg AddImportOrganizationIdentifierParams) error {
-	_, err := q.db.Exec(ctx, addImportOrganizationIdentifier,
-		arg.SourceIri,
-		arg.Type,
-		arg.Value,
-		arg.OrganizationID,
-	)
+	_, err := q.db.Exec(ctx, addImportOrganizationIdentifier, arg.Type, arg.Value, arg.OrganizationID)
 	return err
 }
 
@@ -79,6 +72,102 @@ type AddImportOrganizationMembershipParams struct {
 func (q *Queries) AddImportOrganizationMembership(ctx context.Context, arg AddImportOrganizationMembershipParams) error {
 	_, err := q.db.Exec(ctx, addImportOrganizationMembership, arg.ChildOrganizationID, arg.ParentOrganizationID)
 	return err
+}
+
+const createImportDataset = `-- name: CreateImportDataset :one
+INSERT INTO
+    datasets (id, group_id, created_by)
+VALUES
+    (
+        $1,
+        $2,
+        $3
+    )
+RETURNING
+    id,
+    group_id,
+    created_by,
+    created_at
+`
+
+type CreateImportDatasetParams struct {
+	ID        uuid.UUID
+	GroupID   uuid.UUID
+	CreatedBy string
+}
+
+func (q *Queries) CreateImportDataset(ctx context.Context, arg CreateImportDatasetParams) (Dataset, error) {
+	row := q.db.QueryRow(ctx, createImportDataset, arg.ID, arg.GroupID, arg.CreatedBy)
+	var i Dataset
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createImportSoftwareApplication = `-- name: CreateImportSoftwareApplication :one
+INSERT INTO
+    software_applications (id, group_id, created_by)
+VALUES
+    (
+        $1,
+        $2,
+        $3
+    )
+RETURNING
+    id, group_id, created_by, created_at
+`
+
+type CreateImportSoftwareApplicationParams struct {
+	ID        uuid.UUID
+	GroupID   uuid.UUID
+	CreatedBy string
+}
+
+func (q *Queries) CreateImportSoftwareApplication(ctx context.Context, arg CreateImportSoftwareApplicationParams) (SoftwareApplication, error) {
+	row := q.db.QueryRow(ctx, createImportSoftwareApplication, arg.ID, arg.GroupID, arg.CreatedBy)
+	var i SoftwareApplication
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createImportSoftwareSourceCode = `-- name: CreateImportSoftwareSourceCode :one
+INSERT INTO
+    software_source_codes (id, group_id, created_by)
+VALUES
+    (
+        $1,
+        $2,
+        $3
+    )
+RETURNING
+    id, group_id, created_by, created_at
+`
+
+type CreateImportSoftwareSourceCodeParams struct {
+	ID        uuid.UUID
+	GroupID   uuid.UUID
+	CreatedBy string
+}
+
+func (q *Queries) CreateImportSoftwareSourceCode(ctx context.Context, arg CreateImportSoftwareSourceCodeParams) (SoftwareSourceCode, error) {
+	row := q.db.QueryRow(ctx, createImportSoftwareSourceCode, arg.ID, arg.GroupID, arg.CreatedBy)
+	var i SoftwareSourceCode
+	err := row.Scan(
+		&i.ID,
+		&i.GroupID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const deleteImportOrganizationContactPoints = `-- name: DeleteImportOrganizationContactPoints :exec
@@ -119,7 +208,7 @@ func (q *Queries) DeleteImportOrganizationMemberships(ctx context.Context, child
 
 const getImportDataset = `-- name: GetImportDataset :one
 SELECT
-    d.id, d.source_iri, d.group_id, d.created_by, d.created_at,
+    d.id, d.group_id, d.created_by, d.created_at,
     v.id AS active_version_id,
     v.status AS active_status,
     v.revision AS active_revision
@@ -128,14 +217,13 @@ FROM
     LEFT JOIN dataset_versions v ON v.dataset_id = d.id
     AND v.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
 WHERE
-    d.source_iri = $1 FOR
+    d.id = $1 FOR
 UPDATE
     OF d
 `
 
 type GetImportDatasetRow struct {
 	ID              uuid.UUID
-	SourceIri       string
 	GroupID         uuid.UUID
 	CreatedBy       string
 	CreatedAt       time.Time
@@ -144,12 +232,11 @@ type GetImportDatasetRow struct {
 	ActiveRevision  *int32
 }
 
-func (q *Queries) GetImportDataset(ctx context.Context, sourceIri string) (GetImportDatasetRow, error) {
-	row := q.db.QueryRow(ctx, getImportDataset, sourceIri)
+func (q *Queries) GetImportDataset(ctx context.Context, id uuid.UUID) (GetImportDatasetRow, error) {
+	row := q.db.QueryRow(ctx, getImportDataset, id)
 	var i GetImportDatasetRow
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -162,7 +249,7 @@ func (q *Queries) GetImportDataset(ctx context.Context, sourceIri string) (GetIm
 
 const getImportSoftwareApplication = `-- name: GetImportSoftwareApplication :one
 SELECT
-    resource.id, resource.source_iri, resource.group_id, resource.created_by, resource.created_at,
+    resource.id, resource.group_id, resource.created_by, resource.created_at,
     version.id AS active_version_id,
     version.status AS active_status,
     version.revision AS active_revision
@@ -171,14 +258,13 @@ FROM
     LEFT JOIN software_application_versions AS version ON version.software_application_id = resource.id
     AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
 WHERE
-    resource.source_iri = $1 FOR
+    resource.id = $1 FOR
 UPDATE
     OF resource
 `
 
 type GetImportSoftwareApplicationRow struct {
 	ID              uuid.UUID
-	SourceIri       string
 	GroupID         uuid.UUID
 	CreatedBy       string
 	CreatedAt       time.Time
@@ -187,12 +273,11 @@ type GetImportSoftwareApplicationRow struct {
 	ActiveRevision  *int32
 }
 
-func (q *Queries) GetImportSoftwareApplication(ctx context.Context, sourceIri string) (GetImportSoftwareApplicationRow, error) {
-	row := q.db.QueryRow(ctx, getImportSoftwareApplication, sourceIri)
+func (q *Queries) GetImportSoftwareApplication(ctx context.Context, id uuid.UUID) (GetImportSoftwareApplicationRow, error) {
+	row := q.db.QueryRow(ctx, getImportSoftwareApplication, id)
 	var i GetImportSoftwareApplicationRow
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -205,7 +290,7 @@ func (q *Queries) GetImportSoftwareApplication(ctx context.Context, sourceIri st
 
 const getImportSoftwareSourceCode = `-- name: GetImportSoftwareSourceCode :one
 SELECT
-    resource.id, resource.source_iri, resource.group_id, resource.created_by, resource.created_at,
+    resource.id, resource.group_id, resource.created_by, resource.created_at,
     version.id AS active_version_id,
     version.status AS active_status,
     version.revision AS active_revision
@@ -214,14 +299,13 @@ FROM
     LEFT JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
     AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
 WHERE
-    resource.source_iri = $1 FOR
+    resource.id = $1 FOR
 UPDATE
     OF resource
 `
 
 type GetImportSoftwareSourceCodeRow struct {
 	ID              uuid.UUID
-	SourceIri       string
 	GroupID         uuid.UUID
 	CreatedBy       string
 	CreatedAt       time.Time
@@ -230,12 +314,11 @@ type GetImportSoftwareSourceCodeRow struct {
 	ActiveRevision  *int32
 }
 
-func (q *Queries) GetImportSoftwareSourceCode(ctx context.Context, sourceIri string) (GetImportSoftwareSourceCodeRow, error) {
-	row := q.db.QueryRow(ctx, getImportSoftwareSourceCode, sourceIri)
+func (q *Queries) GetImportSoftwareSourceCode(ctx context.Context, id uuid.UUID) (GetImportSoftwareSourceCodeRow, error) {
+	row := q.db.QueryRow(ctx, getImportSoftwareSourceCode, id)
 	var i GetImportSoftwareSourceCodeRow
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -274,7 +357,6 @@ INSERT INTO
         id,
         group_id,
         parent_category_id,
-        source_iri,
         name
     )
 VALUES
@@ -282,9 +364,8 @@ VALUES
         $1,
         $2,
         NULL,
-        $3,
-        $4
-    ) ON CONFLICT (source_iri) DO
+        $3
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     name = EXCLUDED.name,
@@ -296,10 +377,9 @@ RETURNING
 `
 
 type UpsertImportCategoryParams struct {
-	ID        uuid.UUID
-	GroupID   uuid.UUID
-	SourceIri string
-	Name      string
+	ID      uuid.UUID
+	GroupID uuid.UUID
+	Name    string
 }
 
 type UpsertImportCategoryRow struct {
@@ -308,12 +388,7 @@ type UpsertImportCategoryRow struct {
 }
 
 func (q *Queries) UpsertImportCategory(ctx context.Context, arg UpsertImportCategoryParams) (UpsertImportCategoryRow, error) {
-	row := q.db.QueryRow(ctx, upsertImportCategory,
-		arg.ID,
-		arg.GroupID,
-		arg.SourceIri,
-		arg.Name,
-	)
+	row := q.db.QueryRow(ctx, upsertImportCategory, arg.ID, arg.GroupID, arg.Name)
 	var i UpsertImportCategoryRow
 	err := row.Scan(&i.ID, &i.GroupID)
 	return i, err
@@ -321,14 +396,13 @@ func (q *Queries) UpsertImportCategory(ctx context.Context, arg UpsertImportCate
 
 const upsertImportContactPoint = `-- name: UpsertImportContactPoint :one
 INSERT INTO
-    contact_points (id, source_iri, email, role)
+    contact_points (id, email, role)
 VALUES
     (
         $1,
         $2,
-        $3,
-        $4
-    ) ON CONFLICT (source_iri) DO
+        $3
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     email = EXCLUDED.email,
@@ -338,19 +412,13 @@ RETURNING
 `
 
 type UpsertImportContactPointParams struct {
-	ID        uuid.UUID
-	SourceIri string
-	Email     string
-	Role      string
+	ID    uuid.UUID
+	Email string
+	Role  string
 }
 
 func (q *Queries) UpsertImportContactPoint(ctx context.Context, arg UpsertImportContactPointParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, upsertImportContactPoint,
-		arg.ID,
-		arg.SourceIri,
-		arg.Email,
-		arg.Role,
-	)
+	row := q.db.QueryRow(ctx, upsertImportContactPoint, arg.ID, arg.Email, arg.Role)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
@@ -362,7 +430,6 @@ INSERT INTO
         id,
         name,
         description,
-        source_iri,
         concept,
         label,
         logo,
@@ -380,9 +447,8 @@ VALUES
         $6,
         $7,
         $8,
-        $9,
-        $10
-    ) ON CONFLICT (source_iri) DO
+        $9
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     name = EXCLUDED.name,
@@ -402,7 +468,6 @@ type UpsertImportGroupParams struct {
 	ID          uuid.UUID
 	Name        string
 	Description *string
-	SourceIri   string
 	Concept     TopLevelConcept
 	Label       *string
 	Logo        *string
@@ -416,7 +481,6 @@ func (q *Queries) UpsertImportGroup(ctx context.Context, arg UpsertImportGroupPa
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.SourceIri,
 		arg.Concept,
 		arg.Label,
 		arg.Logo,
@@ -433,7 +497,6 @@ const upsertImportOrganization = `-- name: UpsertImportOrganization :one
 INSERT INTO
     organizations (
         id,
-        source_iri,
         name,
         street,
         locality,
@@ -455,9 +518,8 @@ VALUES
         $7,
         $8,
         $9,
-        $10,
-        $11
-    ) ON CONFLICT (source_iri) DO
+        $10
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     name = EXCLUDED.name,
@@ -475,7 +537,6 @@ RETURNING
 
 type UpsertImportOrganizationParams struct {
 	ID         uuid.UUID
-	SourceIri  string
 	Name       string
 	Street     *string
 	Locality   *string
@@ -490,7 +551,6 @@ type UpsertImportOrganizationParams struct {
 func (q *Queries) UpsertImportOrganization(ctx context.Context, arg UpsertImportOrganizationParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, upsertImportOrganization,
 		arg.ID,
-		arg.SourceIri,
 		arg.Name,
 		arg.Street,
 		arg.Locality,

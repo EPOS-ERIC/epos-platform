@@ -30,7 +30,7 @@ type datasetService interface {
 	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
 	DraftFromPublication(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error)
 	DraftFromLatestArchive(context.Context, string, uuid.UUID) (datasetlifecycle.Dataset, error)
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (datasetlifecycle.Dataset, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, error)
 }
 
 type handler struct {
@@ -228,16 +228,15 @@ func (h *handler) Copy(w http.ResponseWriter, r *http.Request) {
 	}
 	var request struct {
 		TargetGroupID uuid.UUID `json:"target_group_id"`
-		SourceIRI     string    `json:"source_iri"`
 	}
 	if !transport.Decode(w, r, &request) {
 		return
 	}
-	if request.TargetGroupID == uuid.Nil || strings.TrimSpace(request.SourceIRI) == "" {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id and source_iri are required")
+	if request.TargetGroupID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id is required")
 		return
 	}
-	dataset, err := h.service.CopyPublished(r.Context(), actor, sourceID, request.TargetGroupID, request.SourceIRI)
+	dataset, err := h.service.CopyPublished(r.Context(), actor, sourceID, request.TargetGroupID)
 	h.writeDataset(r, w, dataset, err, http.StatusCreated)
 }
 

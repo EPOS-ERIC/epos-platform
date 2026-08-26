@@ -30,7 +30,7 @@ type sourceCodeService interface {
 	DraftFromPublication(context.Context, string, uuid.UUID) (softwarelifecycle.SourceCode, error)
 	DraftFromLatestArchive(context.Context, string, uuid.UUID) (softwarelifecycle.SourceCode, error)
 	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.SourceCode, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
 }
 
 type Handler struct {
@@ -218,12 +218,12 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 	if !transport.Decode(w, r, &request) {
 		return
 	}
-	if request.TargetGroupID == uuid.Nil || strings.TrimSpace(request.SourceIRI) == "" {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id and source_iri are required")
+	if request.TargetGroupID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id is required")
 		return
 	}
 
-	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, request.TargetGroupID, request.SourceIRI)
+	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, request.TargetGroupID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 

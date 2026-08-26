@@ -11,7 +11,6 @@ type DraftMetadata interface {
 
 type DatasetDraftMetadata struct {
 	ID                    string
-	SourceIRI             string
 	Title                 string
 	Description           *string
 	Keywords              *string
@@ -32,7 +31,6 @@ type DatasetDraftMetadata struct {
 func (DatasetDraftMetadata) draftMetadata() {}
 
 type SoftwareApplicationDraftMetadata struct {
-	SourceIRI        string
 	Name             string
 	Description      *string
 	Keywords         *string
@@ -51,7 +49,6 @@ type SoftwareApplicationDraftMetadata struct {
 func (SoftwareApplicationDraftMetadata) draftMetadata() {}
 
 type SoftwareSourceCodeDraftMetadata struct {
-	SourceIRI            string
 	Name                 string
 	Description          *string
 	Keywords             *string
@@ -75,10 +72,9 @@ type ResourceReference struct {
 }
 
 type Identifier struct {
-	ID        string
-	SourceIRI string
-	Type      string
-	Value     string
+	ID    string
+	Type  string
+	Value string
 }
 
 type DistributionDraft struct {
@@ -145,9 +141,7 @@ type ReplaceResourceDraftInput struct {
 	Metadata DraftMetadata
 }
 
-type CopyResourceInput struct {
-	SourceIRI string
-}
+type CopyResourceInput struct{} // TODO: we can probably simplify this and remove the body
 
 type RejectResourceInput struct {
 	Note string
@@ -172,7 +166,6 @@ type ResourceVersionMetadata interface {
 
 type DatasetResourceMetadata struct {
 	ID                    string
-	SourceIRI             string
 	Title                 string
 	Description           string
 	Keywords              string
@@ -194,7 +187,6 @@ func (DatasetResourceMetadata) resourceVersionMetadata() {}
 
 type SoftwareApplicationResourceMetadata struct {
 	ID               string
-	SourceIRI        string
 	Name             string
 	Description      string
 	MainEntityOfPage *string
@@ -214,7 +206,6 @@ func (SoftwareApplicationResourceMetadata) resourceVersionMetadata() {}
 
 type SoftwareSourceCodeResourceMetadata struct {
 	ID                   string
-	SourceIRI            string
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
@@ -234,14 +225,12 @@ type SoftwareSourceCodeResourceMetadata struct {
 func (SoftwareSourceCodeResourceMetadata) resourceVersionMetadata() {}
 
 type ResourceVersionReference struct {
-	ID        string
-	SourceIRI string
-	Name      string
+	ID   string
+	Name string
 }
 
 type ContactPointReference struct {
-	ID        string
-	SourceIRI string
+	ID string
 }
 
 type Distribution interface {

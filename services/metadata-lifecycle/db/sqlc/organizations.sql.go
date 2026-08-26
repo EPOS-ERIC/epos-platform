@@ -15,7 +15,6 @@ const createOrganization = `-- name: CreateOrganization :one
 INSERT INTO
     organizations (
         id,
-        source_iri,
         name,
         street,
         locality,
@@ -37,16 +36,14 @@ VALUES
         $7,
         $8,
         $9,
-        $10,
-        $11
+        $10
     )
 RETURNING
-    id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+    id, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
 `
 
 type CreateOrganizationParams struct {
 	ID         uuid.UUID
-	SourceIri  string
 	Name       string
 	Street     *string
 	Locality   *string
@@ -61,7 +58,6 @@ type CreateOrganizationParams struct {
 func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganizationParams) (Organization, error) {
 	row := q.db.QueryRow(ctx, createOrganization,
 		arg.ID,
-		arg.SourceIri,
 		arg.Name,
 		arg.Street,
 		arg.Locality,
@@ -75,7 +71,6 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 	var i Organization
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -111,20 +106,18 @@ func (q *Queries) CreateOrganizationContactPoint(ctx context.Context, arg Create
 
 const createOrganizationIdentifier = `-- name: CreateOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (id, source_iri, TYPE, value, organization_id)
+    identifiers (id, TYPE, value, organization_id)
 VALUES
     (
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
     )
 `
 
 type CreateOrganizationIdentifierParams struct {
 	ID             uuid.UUID
-	SourceIri      string
 	Type           string
 	Value          string
 	OrganizationID *uuid.UUID
@@ -133,7 +126,6 @@ type CreateOrganizationIdentifierParams struct {
 func (q *Queries) CreateOrganizationIdentifier(ctx context.Context, arg CreateOrganizationIdentifierParams) error {
 	_, err := q.db.Exec(ctx, createOrganizationIdentifier,
 		arg.ID,
-		arg.SourceIri,
 		arg.Type,
 		arg.Value,
 		arg.OrganizationID,
@@ -215,7 +207,6 @@ func (q *Queries) DeleteOrganizationParents(ctx context.Context, organizationID 
 const getOrganization = `-- name: GetOrganization :one
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -236,7 +227,6 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 	var i Organization
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -253,7 +243,6 @@ func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (Organizati
 const getOrganizationForUpdate = `-- name: GetOrganizationForUpdate :one
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -275,7 +264,6 @@ func (q *Queries) GetOrganizationForUpdate(ctx context.Context, id uuid.UUID) (O
 	var i Organization
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.Name,
 		&i.Street,
 		&i.Locality,
@@ -354,7 +342,7 @@ func (q *Queries) ListOrganizationContactPointIDs(ctx context.Context, organizat
 const listOrganizationIdentifiers = `-- name: ListOrganizationIdentifiers :many
 SELECT
     organization_id,
-    identifier.id, identifier.source_iri, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
+    identifier.id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
 FROM
     identifiers AS identifier
 WHERE
@@ -381,7 +369,6 @@ func (q *Queries) ListOrganizationIdentifiers(ctx context.Context, organizationI
 		if err := rows.Scan(
 			&i.OrganizationID,
 			&i.Identifier.ID,
-			&i.Identifier.SourceIri,
 			&i.Identifier.Type,
 			&i.Identifier.Value,
 			&i.Identifier.DatasetVersionID,
@@ -435,7 +422,6 @@ func (q *Queries) ListOrganizationParents(ctx context.Context, organizationIds [
 const listOrganizations = `-- name: ListOrganizations :many
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -462,7 +448,6 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]Organization, error)
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
-			&i.SourceIri,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -486,7 +471,6 @@ func (q *Queries) ListOrganizations(ctx context.Context) ([]Organization, error)
 const listOrganizationsByIDs = `-- name: ListOrganizationsByIDs :many
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -513,7 +497,6 @@ func (q *Queries) ListOrganizationsByIDs(ctx context.Context, organizationIds []
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
-			&i.SourceIri,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -550,7 +533,7 @@ SET
 WHERE
     id = $10
 RETURNING
-    id, source_iri, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
+    id, name, street, locality, postal_code, country, logo_url, page_url, email, lei_code
 `
 
 type ReplaceOrganizationParams struct {
@@ -582,7 +565,6 @@ func (q *Queries) ReplaceOrganization(ctx context.Context, arg ReplaceOrganizati
 	var i Organization
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.Name,
 		&i.Street,
 		&i.Locality,

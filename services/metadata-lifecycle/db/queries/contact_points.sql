@@ -1,7 +1,6 @@
 -- name: ListContactPoints :many
 SELECT
     id,
-    source_iri,
     email,
     role
 FROM
@@ -14,7 +13,6 @@ ORDER BY
 -- name: GetContactPoint :one
 SELECT
     id,
-    source_iri,
     email,
     role
 FROM
@@ -24,17 +22,15 @@ WHERE
 
 -- name: CreateContactPoint :one
 INSERT INTO
-    contact_points (id, source_iri, email, role)
+    contact_points (id, email, role)
 VALUES
     (
         sqlc.arg(id),
-        sqlc.arg(source_iri),
         sqlc.arg(email),
         sqlc.arg(role)
     )
 RETURNING
     id,
-    source_iri,
     email,
     role;
 
@@ -54,6 +50,5 @@ WHERE
     id = sqlc.arg(id)
 RETURNING
     id,
-    source_iri,
     email,
     role;

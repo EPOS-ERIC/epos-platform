@@ -5,7 +5,6 @@ CREATE TABLE categories (
     id                 uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     group_id           uuid NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     parent_category_id uuid,
-    source_iri         text NOT NULL UNIQUE,
 
     -- Category metadata
     name               text NOT NULL,
@@ -32,7 +31,6 @@ CREATE UNIQUE INDEX categories_sibling_name_uq
 CREATE TABLE organizations (
     -- Canonical organization identity
     id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri  text NOT NULL UNIQUE,
 
     -- Schema.org organization metadata
     name        text NOT NULL UNIQUE,
@@ -54,7 +52,6 @@ CREATE TABLE organization_memberships (
 CREATE TABLE contact_points (
     -- Canonical contact-point identity
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri text NOT NULL UNIQUE,
 
     -- Contact-point metadata
     email      text NOT NULL,

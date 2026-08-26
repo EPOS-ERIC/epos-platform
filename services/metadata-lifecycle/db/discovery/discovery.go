@@ -53,7 +53,6 @@ func (r *Repo) Search(ctx context.Context, filter discovery.Filter) ([]discovery
 			VersionID:  row.VersionID,
 			GroupID:    row.GroupID,
 			Status:     discovery.Status(row.Status),
-			SourceIRI:  row.SourceIri,
 			Name:       row.Name,
 		})
 	}
@@ -75,7 +74,6 @@ func (r *Repo) Search(ctx context.Context, filter discovery.Filter) ([]discovery
 			VersionID:  row.VersionID,
 			GroupID:    row.GroupID,
 			Status:     discovery.Status(row.Status),
-			SourceIRI:  row.SourceIri,
 			Name:       row.Name,
 		})
 	}
@@ -97,7 +95,6 @@ func (r *Repo) Search(ctx context.Context, filter discovery.Filter) ([]discovery
 			VersionID:  row.VersionID,
 			GroupID:    row.GroupID,
 			Status:     discovery.Status(row.Status),
-			SourceIRI:  row.SourceIri,
 			Name:       row.Name,
 		})
 	}

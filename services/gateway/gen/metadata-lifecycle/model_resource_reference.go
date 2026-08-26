@@ -21,9 +21,8 @@ var _ MappedNullable = &ResourceReference{}
 
 // ResourceReference struct for ResourceReference
 type ResourceReference struct {
-	Id        string `json:"id"`
-	SourceIri string `json:"source_iri"`
-	Name      string `json:"name"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type _ResourceReference ResourceReference
@@ -32,10 +31,9 @@ type _ResourceReference ResourceReference
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewResourceReference(id string, sourceIri string, name string) *ResourceReference {
+func NewResourceReference(id string, name string) *ResourceReference {
 	this := ResourceReference{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	return &this
 }
@@ -70,30 +68,6 @@ func (o *ResourceReference) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *ResourceReference) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *ResourceReference) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *ResourceReference) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *ResourceReference) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -131,7 +105,6 @@ func (o ResourceReference) MarshalJSON() ([]byte, error) {
 func (o ResourceReference) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	return toSerialize, nil
 }
@@ -142,7 +115,6 @@ func (o *ResourceReference) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 	}
 

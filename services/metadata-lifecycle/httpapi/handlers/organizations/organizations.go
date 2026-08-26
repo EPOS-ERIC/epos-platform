@@ -47,13 +47,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	identifiers := make([]organizationdomain.IdentifierRequest, 0, len(body.Identifiers))
 	for _, item := range body.Identifiers {
 		identifiers = append(identifiers, organizationdomain.IdentifierRequest{
-			SourceIRI: item.SourceIRI,
-			Type:      item.Type,
-			Value:     item.Value,
+			Type:  item.Type,
+			Value: item.Value,
 		})
 	}
 	item, err := h.service.Create(r.Context(), actorID, organizationdomain.CreateRequest{
-		SourceIRI:       body.SourceIRI,
 		Name:            body.Name,
 		Street:          body.Address.Street,
 		Locality:        body.Address.Locality,
@@ -148,9 +146,8 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 	identifiers := make([]organizationdomain.IdentifierRequest, 0, len(*body.Identifiers))
 	for _, item := range *body.Identifiers {
 		identifiers = append(identifiers, organizationdomain.IdentifierRequest{
-			SourceIRI: item.SourceIRI,
-			Type:      item.Type,
-			Value:     item.Value,
+			Type:  item.Type,
+			Value: item.Value,
 		})
 	}
 	item, err := h.service.Replace(r.Context(), actorID, id, organizationdomain.ReplaceRequest{
@@ -218,7 +215,6 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 type organizationResponse struct {
 	ID                    uuid.UUID    `json:"id"`
-	SourceIRI             string       `json:"source_iri"`
 	Name                  string       `json:"name"`
 	Address               address      `json:"address"`
 	LogoURL               *string      `json:"logo_url"`
@@ -238,14 +234,12 @@ type address struct {
 }
 
 type identifier struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
-	Type      string    `json:"type"`
-	Value     string    `json:"value"`
+	ID    uuid.UUID `json:"id"`
+	Type  string    `json:"type"`
+	Value string    `json:"value"`
 }
 
 type createOrganizationRequest struct {
-	SourceIRI       string                    `json:"source_iri"`
 	Name            string                    `json:"name"`
 	Address         organizationAddress       `json:"address"`
 	LogoURL         *string                   `json:"logo_url"`
@@ -265,9 +259,8 @@ type organizationAddress struct {
 }
 
 type createIdentifierRequest struct {
-	SourceIRI string `json:"source_iri"`
-	Type      string `json:"type"`
-	Value     string `json:"value"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type replaceOrganizationRequest struct {
@@ -319,17 +312,15 @@ func response(value organizationdomain.Organization) organizationResponse {
 	identifiers := make([]identifier, 0, len(value.Identifiers))
 	for _, item := range value.Identifiers {
 		identifiers = append(identifiers, identifier{
-			ID:        item.ID,
-			SourceIRI: item.SourceIRI,
-			Type:      item.Type,
-			Value:     item.Value,
+			ID:    item.ID,
+			Type:  item.Type,
+			Value: item.Value,
 		})
 	}
 
 	return organizationResponse{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Name:      value.Name,
+		ID:   value.ID,
+		Name: value.Name,
 		Address: address{
 			Street:     value.Street,
 			Locality:   value.Locality,

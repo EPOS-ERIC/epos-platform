@@ -1,9 +1,8 @@
 -- name: CreateLifecycleSoftwareApplication :one
 INSERT INTO
-    software_applications (source_iri, group_id, created_by)
+    software_applications (group_id, created_by)
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(group_id),
         sqlc.arg(created_by)
     )
@@ -301,13 +300,11 @@ inserted AS (
 identifiers AS (
     INSERT INTO
         identifiers (
-            source_iri,
             TYPE,
             value,
             software_application_version_id
         )
     SELECT
-        source_iri,
         TYPE,
         value,
         (
@@ -410,14 +407,12 @@ FROM
 -- name: AddLifecycleSoftwareApplicationIdentifier :exec
 INSERT INTO
     identifiers (
-        source_iri,
         TYPE,
         value,
         software_application_version_id
     )
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(software_application_version_id)

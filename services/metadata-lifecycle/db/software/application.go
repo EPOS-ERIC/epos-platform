@@ -23,7 +23,6 @@ func (r *ApplicationRepo) CreateDraft(
 	var result softwarelifecycle.Application
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		app, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
-			SourceIri: value.SourceIRI,
 			GroupID:   groupID,
 			CreatedBy: actorID,
 		})
@@ -196,11 +195,10 @@ func (r *ApplicationRepo) DraftFromLatestArchive(ctx context.Context, actorID st
 	return r.clone(ctx, actorID, appID, appID, sqlc.ResourceStatusARCHIVED, uuid.Nil, true)
 }
 
-func (r *ApplicationRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID, sourceIRI string) (softwarelifecycle.Application, error) {
+func (r *ApplicationRepo) CopyPublished(ctx context.Context, actorID string, sourceID, groupID uuid.UUID) (softwarelifecycle.Application, error) {
 	var targetID uuid.UUID
 	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
 		app, err := q.CreateLifecycleSoftwareApplication(ctx, sqlc.CreateLifecycleSoftwareApplicationParams{
-			SourceIri: sourceIRI,
 			GroupID:   groupID,
 			CreatedBy: actorID,
 		})
@@ -334,7 +332,6 @@ func PersistApplicationChildren(
 		if err := q.AddLifecycleSoftwareApplicationIdentifier(
 			ctx,
 			sqlc.AddLifecycleSoftwareApplicationIdentifierParams{
-				SourceIri:                    item.SourceIRI,
 				Type:                         string(item.Type),
 				Value:                        item.Value,
 				SoftwareApplicationVersionID: &versionID,
@@ -406,7 +403,6 @@ func applicationResult(ctx context.Context, q *sqlc.Queries, appID, versionID uu
 	}
 	value := metadata.SoftwareApplication{
 		ID:               row.SoftwareApplicationVersion.ID,
-		SourceIRI:        row.SoftwareApplication.SourceIri,
 		Name:             row.SoftwareApplicationVersion.Name,
 		Description:      row.SoftwareApplicationVersion.Description,
 		MainEntityOfPage: row.SoftwareApplicationVersion.MainEntityOfPage,
@@ -438,7 +434,6 @@ func applicationResult(ctx context.Context, q *sqlc.Queries, appID, versionID uu
 		cat := item.Category
 		value.Categories = append(value.Categories, category(
 			cat.ID,
-			cat.SourceIri,
 			cat.Name,
 			item.Group,
 		))

@@ -4,7 +4,6 @@ SELECT
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -25,7 +24,6 @@ SELECT
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -45,7 +43,6 @@ INSERT INTO
         id,
         name,
         description,
-        source_iri,
         concept,
         label,
         logo,
@@ -58,7 +55,6 @@ VALUES
         sqlc.arg(id),
         sqlc.arg(name),
         sqlc.arg(description),
-        sqlc.arg(source_iri),
         sqlc.arg(concept),
         sqlc.arg(label),
         sqlc.arg(logo),
@@ -70,7 +66,6 @@ RETURNING
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -98,7 +93,6 @@ RETURNING
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -176,7 +170,6 @@ SELECT
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at
@@ -194,7 +187,6 @@ SELECT
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at
@@ -210,7 +202,6 @@ INSERT INTO
         id,
         group_id,
         parent_category_id,
-        source_iri,
         name
     )
 VALUES
@@ -218,14 +209,12 @@ VALUES
         sqlc.arg(id),
         sqlc.arg(group_id),
         sqlc.narg(parent_category_id),
-        sqlc.arg(source_iri),
         sqlc.arg(name)
     )
 RETURNING
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at;
@@ -244,7 +233,6 @@ RETURNING
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at;

@@ -14,7 +14,6 @@ import (
 
 type datasetDraftRequest struct {
 	ID                    uuid.UUID             `json:"id"`
-	SourceIRI             string                `json:"source_iri"`
 	Title                 string                `json:"title"`
 	Description           string                `json:"description"`
 	Keywords              string                `json:"keywords"`
@@ -268,16 +267,14 @@ type temporal struct {
 }
 
 type identifier struct {
-	ID        uuid.UUID               `json:"id"`
-	SourceIRI string                  `json:"source_iri"`
-	Type      metadata.IdentifierType `json:"type"`
-	Value     string                  `json:"value"`
+	ID    uuid.UUID               `json:"id"`
+	Type  metadata.IdentifierType `json:"type"`
+	Value string                  `json:"value"`
 }
 
 func (r datasetDraftRequest) domain() metadata.Dataset {
 	result := metadata.Dataset{
 		ID:                    r.ID,
-		SourceIRI:             r.SourceIRI,
 		Title:                 r.Title,
 		Description:           r.Description,
 		Keywords:              r.Keywords,
@@ -305,16 +302,14 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 	}
 	for _, value := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:        value.ID,
-			SourceIRI: "",
-			Email:     "",
-			Role:      "",
+			ID:    value.ID,
+			Email: "",
+			Role:  "",
 		})
 	}
 	for _, value := range r.Providers {
 		result.Providers = append(result.Providers, metadata.Organization{
 			ID:            value.ID,
-			SourceIRI:     "",
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -330,12 +325,10 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 	}
 	for _, value := range r.Categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:        value.ID,
-			SourceIRI: "",
-			Name:      "",
+			ID:   value.ID,
+			Name: "",
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
-				SourceIRI:   "",
 				Name:        "",
 				Description: nil,
 				Label:       nil,
@@ -397,7 +390,6 @@ func (r webServiceRequest) domain() metadata.WebService {
 	if r.Provider != nil {
 		result.Provider = &metadata.Organization{
 			ID:            r.Provider.ID,
-			SourceIRI:     "",
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -420,10 +412,9 @@ func (r webServiceRequest) domain() metadata.WebService {
 	}
 	for _, value := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:        value.ID,
-			SourceIRI: "",
-			Email:     "",
-			Role:      "",
+			ID:    value.ID,
+			Email: "",
+			Role:  "",
 		})
 	}
 	return result
@@ -464,10 +455,9 @@ func temporalDomain(value *temporal) *metadata.Temporal {
 
 func (i identifier) domain() metadata.Identifier {
 	return metadata.Identifier{
-		ID:        i.ID,
-		SourceIRI: i.SourceIRI,
-		Type:      i.Type,
-		Value:     i.Value,
+		ID:    i.ID,
+		Type:  i.Type,
+		Value: i.Value,
 	}
 }
 
@@ -486,7 +476,6 @@ type record struct {
 
 type metadataResponse struct {
 	ID                    uuid.UUID                `json:"id"`
-	SourceIRI             string                   `json:"source_iri"`
 	Title                 string                   `json:"title"`
 	Description           string                   `json:"description"`
 	Keywords              string                   `json:"keywords"`
@@ -532,14 +521,13 @@ type webService struct {
 }
 
 type resourceReference struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
-	Name      string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type contactPointReference struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
+	// TODO: we can probably just use the id skipping the struct?
+	ID uuid.UUID `json:"id"`
 }
 
 func datasetResponse(value datasetlifecycle.Dataset, includeContacts bool) record {
@@ -560,7 +548,6 @@ func datasetResponse(value datasetlifecycle.Dataset, includeContacts bool) recor
 func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataResponse {
 	result := metadataResponse{
 		ID:                    value.ID,
-		SourceIRI:             value.SourceIRI,
 		Title:                 value.Title,
 		Description:           value.Description,
 		Keywords:              value.Keywords,
@@ -591,10 +578,10 @@ func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataRe
 		result.ContactPoints = &contacts
 	}
 	for _, item := range value.Providers {
-		result.Providers = append(result.Providers, resourceReferenceDTO(item.ID, item.SourceIRI, item.Name))
+		result.Providers = append(result.Providers, resourceReferenceDTO(item.ID, item.Name))
 	}
 	for _, item := range value.Categories {
-		result.Categories = append(result.Categories, resourceReferenceDTO(item.ID, item.SourceIRI, item.Name))
+		result.Categories = append(result.Categories, resourceReferenceDTO(item.ID, item.Name))
 	}
 	return result
 }
@@ -643,7 +630,7 @@ func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 		result.Parameters = append(result.Parameters, parameterDTO(item))
 	}
 	if value.Provider != nil {
-		item := resourceReferenceDTO(value.Provider.ID, value.Provider.SourceIRI, value.Provider.Name)
+		item := resourceReferenceDTO(value.Provider.ID, value.Provider.Name)
 		result.Provider = &item
 	}
 	if value.Documentation != nil {
@@ -732,20 +719,20 @@ func parameterMetadataResponse(value metadata.ParameterMetadata) parameterMetada
 	}
 }
 
-func resourceReferenceDTO(id uuid.UUID, sourceIRI, name string) resourceReference {
-	return resourceReference{ID: id, SourceIRI: sourceIRI, Name: name}
+func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
+	return resourceReference{ID: id, Name: name}
 }
 
 func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
-	return contactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
+	// TODO: we can probably skip the struct here and just use the ID
+	return contactPointReference{ID: value.ID}
 }
 
 func identifierResponse(value metadata.Identifier) identifier {
 	return identifier{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Type:      value.Type,
-		Value:     value.Value,
+		ID:    value.ID,
+		Type:  value.Type,
+		Value: value.Value,
 	}
 }
 

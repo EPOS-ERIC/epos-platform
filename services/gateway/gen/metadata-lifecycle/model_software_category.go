@@ -21,11 +21,10 @@ var _ MappedNullable = &SoftwareCategory{}
 
 // SoftwareCategory struct for SoftwareCategory
 type SoftwareCategory struct {
-	Id        string             `json:"id"`
-	SourceIri string             `json:"source_iri"`
-	Name      string             `json:"name"`
-	Scheme    CategoryScheme     `json:"scheme"`
-	Children  []SoftwareCategory `json:"children"`
+	Id       string             `json:"id"`
+	Name     string             `json:"name"`
+	Scheme   CategoryScheme     `json:"scheme"`
+	Children []SoftwareCategory `json:"children"`
 }
 
 type _SoftwareCategory SoftwareCategory
@@ -34,10 +33,9 @@ type _SoftwareCategory SoftwareCategory
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareCategory(id string, sourceIri string, name string, scheme CategoryScheme, children []SoftwareCategory) *SoftwareCategory {
+func NewSoftwareCategory(id string, name string, scheme CategoryScheme, children []SoftwareCategory) *SoftwareCategory {
 	this := SoftwareCategory{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	this.Scheme = scheme
 	this.Children = children
@@ -74,30 +72,6 @@ func (o *SoftwareCategory) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *SoftwareCategory) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *SoftwareCategory) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *SoftwareCategory) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *SoftwareCategory) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -183,7 +157,6 @@ func (o SoftwareCategory) MarshalJSON() ([]byte, error) {
 func (o SoftwareCategory) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	toSerialize["scheme"] = o.Scheme
 	toSerialize["children"] = o.Children
@@ -196,7 +169,6 @@ func (o *SoftwareCategory) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 		"scheme",
 		"children",

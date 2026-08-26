@@ -21,7 +21,6 @@ var _ MappedNullable = &SoftwareSourceCodeDraftMetadata{}
 
 // SoftwareSourceCodeDraftMetadata struct for SoftwareSourceCodeDraftMetadata
 type SoftwareSourceCodeDraftMetadata struct {
-	SourceIri            string               `json:"source_iri"`
 	Name                 string               `json:"name"`
 	Description          *string              `json:"description,omitempty"`
 	ProgrammingLanguage  NullableString       `json:"programming_language,omitempty"`
@@ -44,9 +43,8 @@ type _SoftwareSourceCodeDraftMetadata SoftwareSourceCodeDraftMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareSourceCodeDraftMetadata(sourceIri string, name string) *SoftwareSourceCodeDraftMetadata {
+func NewSoftwareSourceCodeDraftMetadata(name string) *SoftwareSourceCodeDraftMetadata {
 	this := SoftwareSourceCodeDraftMetadata{}
-	this.SourceIri = sourceIri
 	this.Name = name
 	return &this
 }
@@ -57,30 +55,6 @@ func NewSoftwareSourceCodeDraftMetadata(sourceIri string, name string) *Software
 func NewSoftwareSourceCodeDraftMetadataWithDefaults() *SoftwareSourceCodeDraftMetadata {
 	this := SoftwareSourceCodeDraftMetadata{}
 	return &this
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *SoftwareSourceCodeDraftMetadata) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *SoftwareSourceCodeDraftMetadata) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *SoftwareSourceCodeDraftMetadata) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -610,7 +584,6 @@ func (o SoftwareSourceCodeDraftMetadata) MarshalJSON() ([]byte, error) {
 
 func (o SoftwareSourceCodeDraftMetadata) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	if !IsNil(o.Description) {
 		toSerialize["description"] = o.Description
@@ -659,7 +632,6 @@ func (o *SoftwareSourceCodeDraftMetadata) UnmarshalJSON(data []byte) (err error)
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"source_iri",
 		"name",
 	}
 

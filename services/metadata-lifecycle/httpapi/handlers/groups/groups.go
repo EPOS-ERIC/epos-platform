@@ -50,7 +50,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	group, err := h.service.Create(r.Context(), actorID, groupdomain.CreateRequest{
-		SourceIRI:   body.SourceIRI,
 		Name:        body.Name,
 		Description: body.Description,
 		Label:       body.Label,
@@ -198,12 +197,8 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request := groupdomain.CreateCategoryRequest{
-		SourceIRI:        "",
 		Name:             body.Name,
 		ParentCategoryID: body.ParentCategoryID,
-	}
-	if body.SourceIRI != nil {
-		request.SourceIRI = *body.SourceIRI
 	}
 
 	category, err := h.service.CreateCategory(r.Context(), actorID, groupID, request)
@@ -383,7 +378,6 @@ func groupIDPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 
 type groupResponse struct {
 	ID          uuid.UUID `json:"id"`
-	SourceIRI   string    `json:"source_iri"`
 	Name        string    `json:"name"`
 	Description *string   `json:"description"`
 	Label       *string   `json:"label"`
@@ -398,12 +392,10 @@ type categoryResponse struct {
 	ID               uuid.UUID  `json:"id"`
 	GroupID          uuid.UUID  `json:"group_id"`
 	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
-	SourceIRI        string     `json:"source_iri"`
 	Name             string     `json:"name"`
 }
 
 type createCategoryRequest struct {
-	SourceIRI        *string    `json:"source_iri"`
 	Name             string     `json:"name"`
 	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
 }
@@ -438,7 +430,6 @@ func (r replaceCategoryRequest) domain() (groupdomain.ReplaceCategoryRequest, er
 }
 
 type createGroupRequest struct {
-	SourceIRI   string  `json:"source_iri"`
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	Label       *string `json:"label"`
@@ -536,7 +527,6 @@ func nullableString(raw json.RawMessage) (*string, error) {
 func response(group groupdomain.Group) groupResponse {
 	return groupResponse{
 		ID:          group.ID,
-		SourceIRI:   group.SourceIRI,
 		Name:        group.Name,
 		Description: group.Description,
 		Label:       group.Label,
@@ -553,7 +543,6 @@ func categoryResponseFromDomain(category groupdomain.Category) categoryResponse 
 		ID:               category.ID,
 		GroupID:          category.GroupID,
 		ParentCategoryID: category.ParentCategoryID,
-		SourceIRI:        category.SourceIRI,
 		Name:             category.Name,
 	}
 }

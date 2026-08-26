@@ -9,7 +9,6 @@ import (
 )
 
 type sourceCodeRequest struct {
-	SourceIRI            string               `json:"source_iri"`
 	Name                 string               `json:"name"`
 	Description          string               `json:"description"`
 	ProgrammingLanguage  *string              `json:"programming_language"`
@@ -44,7 +43,6 @@ type rejectionRequest struct {
 
 type copyRequest struct {
 	TargetGroupID uuid.UUID `json:"target_group_id"`
-	SourceIRI     string    `json:"source_iri"`
 }
 
 type canonicalReference struct {
@@ -52,9 +50,8 @@ type canonicalReference struct {
 }
 
 type identifierRequest struct {
-	SourceIRI string                  `json:"source_iri"`
-	Type      metadata.IdentifierType `json:"type"`
-	Value     string                  `json:"value"`
+	Type  metadata.IdentifierType `json:"type"`
+	Value string                  `json:"value"`
 }
 
 type sourceCodeRecord struct {
@@ -72,7 +69,6 @@ type sourceCodeRecord struct {
 
 type sourceCodeMetadataResponse struct {
 	ID                   uuid.UUID                `json:"id"`
-	SourceIRI            string                   `json:"source_iri"`
 	Name                 string                   `json:"name"`
 	Description          string                   `json:"description"`
 	ProgrammingLanguage  *string                  `json:"programming_language"`
@@ -90,15 +86,13 @@ type sourceCodeMetadataResponse struct {
 }
 
 type resourceReference struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
-	Name      string    `json:"name"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	result := metadata.SoftwareSourceCode{
 		ID:                   uuid.Nil,
-		SourceIRI:            r.SourceIRI,
 		Name:                 r.Name,
 		Description:          r.Description,
 		ProgrammingLanguage:  r.ProgrammingLanguage,
@@ -117,7 +111,6 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	for _, creator := range r.Creators {
 		result.Creators = append(result.Creators, metadata.Organization{
 			ID:            creator.ID,
-			SourceIRI:     "",
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -133,20 +126,17 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	}
 	for _, value := range r.Identifiers {
 		result.Identifiers = append(result.Identifiers, metadata.Identifier{
-			ID:        uuid.Nil,
-			SourceIRI: value.SourceIRI,
-			Type:      value.Type,
-			Value:     value.Value,
+			ID:    uuid.Nil,
+			Type:  value.Type,
+			Value: value.Value,
 		})
 	}
 	for _, value := range r.Categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:        value.ID,
-			SourceIRI: "",
-			Name:      "",
+			ID:   value.ID,
+			Name: "",
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
-				SourceIRI:   "",
 				Name:        "",
 				Description: nil,
 				Label:       nil,
@@ -161,10 +151,9 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	}
 	for _, value := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:        value.ID,
-			SourceIRI: "",
-			Email:     "",
-			Role:      "",
+			ID:    value.ID,
+			Email: "",
+			Role:  "",
 		})
 	}
 	return result
@@ -188,7 +177,6 @@ func sourceCodeResponse(value softwarelifecycle.SourceCode, includeContacts bool
 func sourceCodeMetadataDTO(value metadata.SoftwareSourceCode, includeContacts bool) sourceCodeMetadataResponse {
 	result := sourceCodeMetadataResponse{
 		ID:                   value.ID,
-		SourceIRI:            value.SourceIRI,
 		Name:                 value.Name,
 		Description:          value.Description,
 		ProgrammingLanguage:  value.ProgrammingLanguage,
@@ -205,13 +193,13 @@ func sourceCodeMetadataDTO(value metadata.SoftwareSourceCode, includeContacts bo
 		ContactPoints:        nil,
 	}
 	for _, creator := range value.Creators {
-		result.Creators = append(result.Creators, resourceReferenceDTO(creator.ID, creator.SourceIRI, creator.Name))
+		result.Creators = append(result.Creators, resourceReferenceDTO(creator.ID, creator.Name))
 	}
 	for _, item := range value.Identifiers {
 		result.Identifiers = append(result.Identifiers, identifierDTO(item))
 	}
 	for _, item := range value.Categories {
-		result.Categories = append(result.Categories, resourceReferenceDTO(item.ID, item.SourceIRI, item.Name))
+		result.Categories = append(result.Categories, resourceReferenceDTO(item.ID, item.Name))
 	}
 	if includeContacts {
 		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
@@ -224,30 +212,28 @@ func sourceCodeMetadataDTO(value metadata.SoftwareSourceCode, includeContacts bo
 }
 
 type contactPointReference struct {
-	ID        uuid.UUID `json:"id"`
-	SourceIRI string    `json:"source_iri"`
+	ID uuid.UUID `json:"id"`
 }
 
-func resourceReferenceDTO(id uuid.UUID, sourceIRI, name string) resourceReference {
-	return resourceReference{ID: id, SourceIRI: sourceIRI, Name: name}
+func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
+	return resourceReference{ID: id, Name: name}
 }
 
 func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
-	return contactPointReference{ID: value.ID, SourceIRI: value.SourceIRI}
+	// TODO: we can probably skip the struct here and just use the id (also is this duplicated?)
+	return contactPointReference{ID: value.ID}
 }
 
 func identifierDTO(value metadata.Identifier) identifierResponse {
 	return identifierResponse{
-		ID:        value.ID,
-		SourceIRI: value.SourceIRI,
-		Type:      value.Type,
-		Value:     value.Value,
+		ID:    value.ID,
+		Type:  value.Type,
+		Value: value.Value,
 	}
 }
 
 type identifierResponse struct {
-	ID        uuid.UUID               `json:"id"`
-	SourceIRI string                  `json:"source_iri"`
-	Type      metadata.IdentifierType `json:"type"`
-	Value     string                  `json:"value"`
+	ID    uuid.UUID               `json:"id"`
+	Type  metadata.IdentifierType `json:"type"`
+	Value string                  `json:"value"`
 }

@@ -53,7 +53,6 @@ func (r *Repo) Create(
 
 		_, err = q.CreateOrganization(ctx, sqlc.CreateOrganizationParams{
 			ID:         organization.ID,
-			SourceIri:  organization.SourceIRI,
 			Name:       organization.Name,
 			Street:     organization.Street,
 			Locality:   organization.Locality,
@@ -74,7 +73,6 @@ func (r *Repo) Create(
 		for _, identifier := range identifiers {
 			err := q.CreateOrganizationIdentifier(ctx, sqlc.CreateOrganizationIdentifierParams{
 				ID:             identifier.ID,
-				SourceIri:      identifier.SourceIRI,
 				Type:           identifier.Type,
 				Value:          identifier.Value,
 				OrganizationID: &organization.ID,
@@ -234,7 +232,6 @@ func insertOrganizationChildren(ctx context.Context, q *sqlc.Queries, id uuid.UU
 	for _, identifier := range identifiers {
 		err := q.CreateOrganizationIdentifier(ctx, sqlc.CreateOrganizationIdentifierParams{
 			ID:             identifier.ID,
-			SourceIri:      identifier.SourceIRI,
 			Type:           identifier.Type,
 			Value:          identifier.Value,
 			OrganizationID: &id,
@@ -333,10 +330,9 @@ func (r *Repo) loadWithQueries(ctx context.Context, q *sqlc.Queries, rows []sqlc
 		}
 		organizationIndex := byID[*item.OrganizationID]
 		result[organizationIndex].Identifiers = append(result[organizationIndex].Identifiers, organizations.Identifier{
-			ID:        item.Identifier.ID,
-			SourceIRI: item.Identifier.SourceIri,
-			Type:      item.Identifier.Type,
-			Value:     item.Identifier.Value,
+			ID:    item.Identifier.ID,
+			Type:  item.Identifier.Type,
+			Value: item.Identifier.Value,
 		})
 	}
 	for _, item := range parents {
@@ -352,7 +348,6 @@ func (r *Repo) loadWithQueries(ctx context.Context, q *sqlc.Queries, rows []sqlc
 func mapOrganization(row sqlc.Organization) organizations.Organization {
 	return organizations.Organization{
 		ID:                    row.ID,
-		SourceIRI:             row.SourceIri,
 		Name:                  row.Name,
 		Street:                row.Street,
 		Locality:              row.Locality,

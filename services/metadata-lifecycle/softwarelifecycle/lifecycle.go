@@ -86,8 +86,8 @@ func operationError(operation string, err error) error {
 
 func validateIdentifiers(values []metadata.Identifier) error {
 	for _, value := range values {
-		if strings.TrimSpace(value.SourceIRI) == "" || strings.TrimSpace(string(value.Type)) == "" || strings.TrimSpace(value.Value) == "" {
-			return fmt.Errorf("identifier source IRI, type, and value are required: %w", ErrInvalid)
+		if strings.TrimSpace(string(value.Type)) == "" || strings.TrimSpace(value.Value) == "" {
+			return fmt.Errorf("identifier type and value are required: %w", ErrInvalid)
 		}
 	}
 	return nil

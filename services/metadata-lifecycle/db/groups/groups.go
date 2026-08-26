@@ -55,7 +55,6 @@ func (r *Repo) Create(ctx context.Context, group groups.Group) (groups.Group, er
 		ID:          group.ID,
 		Name:        group.Name,
 		Description: group.Description,
-		SourceIri:   group.SourceIRI,
 		Concept:     sqlc.TopLevelConcept(group.Concept),
 		Label:       group.Label,
 		Logo:        group.Logo,
@@ -170,7 +169,6 @@ func (r *Repo) CreateCategory(ctx context.Context, category groups.Category) (gr
 		ID:               category.ID,
 		GroupID:          category.GroupID,
 		ParentCategoryID: category.ParentCategoryID,
-		SourceIri:        category.SourceIRI,
 		Name:             category.Name,
 	})
 	if err != nil {
@@ -857,7 +855,6 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 func mapGroup(row sqlc.Group) groups.Group {
 	return groups.Group{
 		ID:          row.ID,
-		SourceIRI:   row.SourceIri,
 		Name:        row.Name,
 		Description: row.Description,
 		Label:       row.Label,
@@ -874,7 +871,6 @@ func mapCategory(row sqlc.Category) groups.Category {
 		ID:               row.ID,
 		GroupID:          row.GroupID,
 		ParentCategoryID: row.ParentCategoryID,
-		SourceIRI:        row.SourceIri,
 		Name:             row.Name,
 	}
 }

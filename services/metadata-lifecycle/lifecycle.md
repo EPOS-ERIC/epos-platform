@@ -8,22 +8,22 @@ It does not define HTTP endpoints, UI layouts, migration order, or notification 
 
 ## Terms
 
-| Term                    | Meaning                                                                                                                      |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Logical dataset         | Stable identity shared by all versions. Owns source IRI and belongs to one group.                                            |
-| Dataset version         | Editable or historical metadata for one logical dataset.                                                                     |
-| Logical software        | Stable identity shared by all versions of one software application or source code. Owns source IRI and belongs to one group. |
-| Software version        | Editable or historical metadata for one logical software resource.                                                           |
-| Active change version   | Single `DRAFT`, `SUBMITTED`, or `REJECTED` version for one logical resource.                                                 |
-| Group                   | Canonical category scheme, resource ownership, and authorization boundary stored in one `groups` row.                        |
-| Category scheme         | Category-hierarchy aspect of a group; not a separate authorization resource.                                                 |
-| Category                | Node inside category scheme. A subcategory is category with parent category, not separate type.                              |
-| Canonical category      | Shared live category persisted in its owning group's category scheme.                                                        |
-| Canonical organization  | Shared live organization managed directly in metadata lifecycle without lifecycle states.                                    |
-| Canonical contact point | Shared live contact record managed directly in metadata lifecycle without lifecycle states.                                  |
-| Identifier              | Value owned by exactly one resource version or organization; never shared.                                                   |
-| Group member            | Active, unblocked user with `ACTIVE` membership in group and access to its category scheme.                                  |
-| Direct grant            | Additive permission assigned outside a role.                                                                                 |
+| Term                    | Meaning                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| Logical dataset         | Stable UUID shared by all versions and owned by one group.                                            |
+| Dataset version         | Editable or historical metadata for one logical dataset.                                              |
+| Logical software        | Stable UUID shared by all versions of one software application or source code and owned by one group. |
+| Software version        | Editable or historical metadata for one logical software resource.                                    |
+| Active change version   | Single `DRAFT`, `SUBMITTED`, or `REJECTED` version for one logical resource.                          |
+| Group                   | Canonical category scheme, resource ownership, and authorization boundary stored in one `groups` row. |
+| Category scheme         | Category-hierarchy aspect of a group; not a separate authorization resource.                          |
+| Category                | Node inside category scheme. A subcategory is category with parent category, not separate type.       |
+| Canonical category      | Shared live category persisted in its owning group's category scheme.                                 |
+| Canonical organization  | Shared live organization managed directly in metadata lifecycle without lifecycle states.             |
+| Canonical contact point | Shared live contact record managed directly in metadata lifecycle without lifecycle states.           |
+| Identifier              | Value owned by exactly one resource version or organization; never shared.                            |
+| Group member            | Active, unblocked user with `ACTIVE` membership in group and access to its category scheme.           |
+| Direct grant            | Additive permission assigned outside a role.                                                          |
 
 ## Resource Lifecycle
 
@@ -41,20 +41,20 @@ Datasets, software applications, and software source codes use same lifecycle. A
 
 ### Transitions
 
-| Action                        | From                | To          | Required access                        | Rules and effects                                                                                                     |
-| ----------------------------- | ------------------- | ----------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Create empty draft            | None                | `DRAFT`     | `resource.create` in group             | Creates logical resource and first version. Source IRI must be unique.                                                |
-| Create draft from publication | `PUBLISHED`         | New `DRAFT` | `resource.create` in resource group    | Clones version-owned metadata and canonical links.                                                                    |
-| Create draft after unpublish  | Latest `ARCHIVED`   | New `DRAFT` | `resource.create` in resource group    | Performs same clone when logical resource has no publication.                                                         |
-| Copy published resource       | `PUBLISHED`         | New `DRAFT` | `resource.create` in target group      | Creates independent logical resource with caller-supplied new source IRI; clones content and links except categories. |
-| Edit                          | `DRAFT`             | `DRAFT`     | `resource.edit` in resource group      | Any authorized group member may edit. Requires current revision.                                                      |
-| Submit                        | `DRAFT`             | `SUBMITTED` | `resource.submit` in resource group    | Version becomes immutable.                                                                                            |
-| Withdraw                      | `SUBMITTED`         | `DRAFT`     | `resource.withdraw` in resource group  | Removes submission from review.                                                                                       |
-| Reject                        | `SUBMITTED`         | `REJECTED`  | `resource.reject` in resource group    | Non-empty rejection note required. Latest note replaces previous note.                                                |
-| Reopen                        | `REJECTED`          | `DRAFT`     | `resource.reopen` in resource group    | Makes version editable; latest rejection note remains visible.                                                        |
-| Publish                       | `SUBMITTED`         | `PUBLISHED` | `resource.publish` in resource group   | Self-publication allowed. Existing publication becomes `ARCHIVED`; rejection fields are cleared.                      |
-| Discard                       | `DRAFT`, `REJECTED` | Deleted     | `resource.discard` in resource group   | Permanently deletes active change version. Deletes logical resource too when no versions remain.                      |
-| Unpublish                     | `PUBLISHED`         | `ARCHIVED`  | `resource.unpublish` in resource group | No reason required. Logical resource remains available for a future draft.                                            |
+| Action                        | From                | To          | Required access                        | Rules and effects                                                                                       |
+| ----------------------------- | ------------------- | ----------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Create empty draft            | None                | `DRAFT`     | `resource.create` in group             | Creates logical resource with a generated UUID and its first version.                                   |
+| Create draft from publication | `PUBLISHED`         | New `DRAFT` | `resource.create` in resource group    | Clones version-owned metadata and canonical links.                                                      |
+| Create draft after unpublish  | Latest `ARCHIVED`   | New `DRAFT` | `resource.create` in resource group    | Performs same clone when logical resource has no publication.                                           |
+| Copy published resource       | `PUBLISHED`         | New `DRAFT` | `resource.create` in target group      | Creates independent logical resource with a generated UUID; clones content and links except categories. |
+| Edit                          | `DRAFT`             | `DRAFT`     | `resource.edit` in resource group      | Any authorized group member may edit. Requires current revision.                                        |
+| Submit                        | `DRAFT`             | `SUBMITTED` | `resource.submit` in resource group    | Version becomes immutable.                                                                              |
+| Withdraw                      | `SUBMITTED`         | `DRAFT`     | `resource.withdraw` in resource group  | Removes submission from review.                                                                         |
+| Reject                        | `SUBMITTED`         | `REJECTED`  | `resource.reject` in resource group    | Non-empty rejection note required. Latest note replaces previous note.                                  |
+| Reopen                        | `REJECTED`          | `DRAFT`     | `resource.reopen` in resource group    | Makes version editable; latest rejection note remains visible.                                          |
+| Publish                       | `SUBMITTED`         | `PUBLISHED` | `resource.publish` in resource group   | Self-publication allowed. Existing publication becomes `ARCHIVED`; rejection fields are cleared.        |
+| Discard                       | `DRAFT`, `REJECTED` | Deleted     | `resource.discard` in resource group   | Permanently deletes active change version. Deletes logical resource too when no versions remain.        |
+| Unpublish                     | `PUBLISHED`         | `ARCHIVED`  | `resource.unpublish` in resource group | No reason required. Logical resource remains available for a future draft.                              |
 
 ### Invariants
 
@@ -63,14 +63,14 @@ Datasets, software applications, and software source codes use same lifecycle. A
 | One active change version per logical resource     | Unique constraint across `DRAFT`, `SUBMITTED`, and `REJECTED`.                                           |
 | At most one published version per logical resource | Unique constraint on `PUBLISHED`.                                                                        |
 | Group is immutable                                 | Stored on logical resource; copy creates new logical resource rather than moving original.               |
-| Source IRI is immutable and globally unique        | Stored on logical resource.                                                                              |
+| Logical resource UUID is immutable                 | Stored on logical resource.                                                                              |
 | Submitted and historical versions are immutable    | Lifecycle transitions may change status; confirmed canonical deletion may remove links from any version. |
 | Group edits cannot silently overwrite each other   | Draft updates use optimistic revision checks; stale writes fail with conflict.                           |
 | Publishing is atomic                               | Old-version archival and new publication commit together.                                                |
 
-Draft creation for an existing logical resource fails with conflict when an active change version exists. `resource.create` is authorized against requested group before an empty logical resource exists; every later action uses stored logical-resource group. Source IRI comparison trims surrounding whitespace and then uses exact case-sensitive stored value. Latest archive means greatest `archived_at`, with version ID as deterministic tie-breaker.
+Draft creation for an existing logical resource fails with conflict when an active change version exists. `resource.create` is authorized against requested group before an empty logical resource exists; every later action uses stored logical-resource group. Latest archive means greatest `archived_at`, with version ID as deterministic tie-breaker.
 
-Published resource may be copied into same or different group. Source is public, so source-group membership is not required; caller needs `resource.create` in target group. Copy creates new logical resource and first `DRAFT`; caller supplies new globally unique source IRI. Original remains unchanged. Copy clones descriptive metadata, identifiers, and organization links. Dataset copies also clone distributions, web services, and contact-point links. Identifier rows receive new internal IDs but preserve source IRI, type, and value. Target draft has zero categories.
+Published resource may be copied into same or different group. Source is public, so source-group membership is not required; caller needs `resource.create` in target group. Copy creates new logical resource with a generated UUID and first `DRAFT`; original remains unchanged. Copy clones descriptive metadata, identifiers, and organization links. Dataset copies also clone distributions, web services, and contact-point links. Identifier rows receive new internal IDs and preserve type and value. Target draft has zero categories.
 
 Published resource lists return current `PUBLISHED` versions grouped by logical resource group. Published versions, canonical organizations, groups, and canonical categories are publicly readable without authentication. Public group and category representations expose canonical metadata but never memberships, roles, grants, or role requests. Contact points are excluded from public resource representations because they contain email addresses. Any active group member may read every non-public version in that group. Global `ADMIN` may read everything.
 
@@ -120,7 +120,7 @@ Organization hierarchy allows multiple parents. Direct self-links and indirect c
 
 ### Contact Points
 
-Contact points are canonical live entities managed directly in metadata lifecycle. They have source IRI, email, and role, and no lifecycle states.
+Contact points are canonical live entities managed directly in metadata lifecycle. They have UUID, email, and role, and no lifecycle states.
 
 | Action      | Required access        | Effect                                                                                |
 | ----------- | ---------------------- | ------------------------------------------------------------------------------------- |
@@ -134,7 +134,7 @@ Dataset version, software version, and version-owned web service may each refere
 
 Identifier is owned value, not shared canonical entity. Dataset version, organization, software-application version, or software-source-code version may own zero or more identifiers. Each identifier has exactly one owner and owner never changes.
 
-Creating draft clones published/archived version identifiers. Cross-group resource copy also clones identifiers. Every clone receives new internal ID while preserving source IRI, type, and value. Identical identifier content is allowed under different owners. Editing identifier affects only owner. Deleting owner deletes owned identifiers.
+Creating draft clones published/archived version identifiers. Cross-group resource copy also clones identifiers. Every clone receives new internal ID while preserving type and value. Identical identifier content is allowed under different owners. Editing identifier affects only owner. Deleting owner deletes owned identifiers.
 
 Future external organization management and migration are outside this document.
 
@@ -144,13 +144,13 @@ Category scheme is a tree or forest. Each canonical category has zero or one par
 
 Categories are managed outside resource lifecycle. An active group member with `category.manage` in category's group may create, edit, reparent, or delete canonical categories in that group. Editors may select only existing canonical categories from resource group's category scheme while editing a draft; they cannot create or propose categories through a resource. `category_scheme.manage` manages category-scheme metadata separately and does not grant category management.
 
-Canonical category has stable UUID and immutable, globally unique source IRI. Its group is immutable. Category changes take effect immediately for every dataset version and software resource that references category. Category deletion remains a confirmed destructive operation.
+Canonical category has stable UUID. Its group is immutable. Category changes take effect immediately for every dataset version and software resource that references category. Category deletion remains a confirmed destructive operation.
 
 ### Category Schema Requirements
 
-The `categories` table stores `id` as stable UUID, `group_id` as direct owning-group foreign key, nullable `parent_category_id`, immutable `source_iri`, `name`. `parent_category_id` must reference a category in same `group_id`; this represents a tree or forest without separate hierarchy-link table.
+The `categories` table stores `id` as stable UUID, `group_id` as direct owning-group foreign key, nullable `parent_category_id`, and `name`. `parent_category_id` must reference a category in same `group_id`; this represents a tree or forest without separate hierarchy-link table.
 
-Resource-version category-reference tables store canonical `category_id` values only. They must enforce that referenced category's `group_id` equals owning resource's `group_id`. They do not copy category name, source IRI, parent, or other category fields.
+Resource-version category-reference tables store canonical `category_id` values only. They must enforce that referenced category's `group_id` equals owning resource's `group_id`. They do not copy category name, parent, or other category fields.
 
 ## Authorization Model
 
@@ -281,39 +281,39 @@ Global events are administrator-only. Only explicitly configured security events
 
 ### Lifecycle
 
-| Table                                         | Key columns                                                                                                                                                | Constraints                                                                                                                                          |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `groups`                                      | Group fields: `id`, `name`, `description`; category scheme fields: `source_iri`, `concept`, `label`, `logo`, `page`, `color`, `position`; actor/timestamps | One row represents group and its category scheme; unique name and category scheme source IRI; no special `all` group.                                |
-| `categories`                                  | `id` UUID, `group_id`, `parent_category_id`, `source_iri`, `name`, normalized name                                                                         | Zero/one parent in same group; acyclic; immutable group and source IRI; source IRI globally unique; normalized name unique among siblings/top level. |
-| `organizations`                               | `id`, `source_iri`, `name`, address, logo, page, email, LEI fields                                                                                         | Local canonical organization; unique source IRI and name.                                                                                            |
-| `identifiers`                                 | `id`, `source_iri`, `type`, `value`, one nullable owner FK per supported owner type                                                                        | Exactly one owner; immutable owner; unique owner plus trimmed case-sensitive `(source_iri, type, value)`; owner deletion cascades.                   |
-| `organization_memberships`                    | `child_organization_id`, `parent_organization_id`                                                                                                          | Multiple parents allowed; self-links/cycles forbidden; confirmed organization deletion removes links.                                                |
-| `contact_points`                              | `id`, `source_iri`, `email`, `role`                                                                                                                        | Unique source IRI and `(email, role)`; canonical shared record.                                                                                      |
-| `organization_contact_points`                 | `organization_id`, `contact_point_id`                                                                                                                      | Unique link; organization or contact-point deletion cascades link.                                                                                   |
-| `datasets`                                    | `id`, `source_iri`, `group_id`, `created_by`                                                                                                               | Logical dataset; immutable source IRI and group.                                                                                                     |
-| `software_applications`                       | `id`, `source_iri`, `group_id`, `created_by`                                                                                                               | Logical software application; immutable source IRI and group.                                                                                        |
-| `software_source_codes`                       | `id`, `source_iri`, `group_id`, `created_by`                                                                                                               | Logical software source code; immutable source IRI and group.                                                                                        |
-| `dataset_versions`                            | `id`, `dataset_id`, `status`, `revision`, metadata, source timestamps, actor/timestamps, latest rejection fields                                           | One published and one active change version per dataset.                                                                                             |
-| `software_application_versions`               | `id`, `software_application_id`, `status`, `revision`, application metadata, actor/timestamps, latest rejection fields                                     | One published and one active change version per software application.                                                                                |
-| `software_source_code_versions`               | `id`, `software_source_code_id`, `status`, `revision`, source-code metadata, actor/timestamps, latest rejection fields                                     | One published and one active change version per software source code.                                                                                |
-| Version-owned metadata tables                 | `dataset_version_id`, entity fields                                                                                                                        | Cascade when draft/rejected version is discarded.                                                                                                    |
-| `dataset_version_providers`                   | `dataset_version_id`, `organization_id`                                                                                                                    | Unique per version/organization; organization deletion cascades link.                                                                                |
-| Version-owned web services                    | `dataset_version_id`, optional `provider_organization_id`                                                                                                  | Organization deletion clears provider link.                                                                                                          |
-| `software_application_version_creators`       | `software_application_version_id`, `organization_id`                                                                                                       | Unique per version/organization; organization deletion cascades link.                                                                                |
-| `software_source_code_version_creators`       | `software_source_code_version_id`, `organization_id`                                                                                                       | Unique per version/organization; organization deletion cascades link.                                                                                |
-| `software_application_version_contact_points` | `software_application_version_id`, `contact_point_id`                                                                                                      | Unique link; contact-point deletion cascades link.                                                                                                   |
-| `software_source_code_version_contact_points` | `software_source_code_version_id`, `contact_point_id`                                                                                                      | Unique link; contact-point deletion cascades link.                                                                                                   |
-| `dataset_version_contact_points`              | `dataset_version_id`, `contact_point_id`                                                                                                                   | Unique link; contact-point deletion cascades link.                                                                                                   |
-| `web_service_contact_points`                  | `web_service_id`, `contact_point_id`                                                                                                                       | Unique link; contact-point deletion cascades link.                                                                                                   |
-| `dataset_version_categories`                  | `dataset_version_id`, `group_id`, `category_id`                                                                                                            | Stores canonical category IDs only; category `group_id` must equal dataset group; category deletion cascades link.                                   |
-| `software_application_version_categories`     | `software_application_version_id`, `group_id`, `category_id`                                                                                               | Stores canonical category IDs only; category `group_id` must equal software application group; category deletion cascades link.                      |
-| `software_source_code_version_categories`     | `software_source_code_version_id`, `group_id`, `category_id`                                                                                               | Stores canonical category IDs only; category `group_id` must equal software source code group; category deletion cascades link.                      |
+| Table                                         | Key columns                                                                                                                                  | Constraints                                                                                                                     |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `groups`                                      | Group fields: `id`, `name`, `description`; category scheme fields: `concept`, `label`, `logo`, `page`, `color`, `position`; actor/timestamps | One row represents group and its category scheme; unique name; no special `all` group.                                          |
+| `categories`                                  | `id` UUID, `group_id`, `parent_category_id`, `name`, normalized name                                                                         | Zero/one parent in same group; acyclic; immutable group; normalized name unique among siblings/top level.                       |
+| `organizations`                               | `id`, `name`, address, logo, page, email, LEI fields                                                                                         | Local canonical organization; unique name.                                                                                      |
+| `identifiers`                                 | `id`, `type`, `value`, one nullable owner FK per supported owner type                                                                        | Exactly one owner; immutable owner; unique owner plus trimmed case-sensitive `(type, value)`; owner deletion cascades.          |
+| `organization_memberships`                    | `child_organization_id`, `parent_organization_id`                                                                                            | Multiple parents allowed; self-links/cycles forbidden; confirmed organization deletion removes links.                           |
+| `contact_points`                              | `id`, `email`, `role`                                                                                                                        | Unique `(email, role)`; canonical shared record.                                                                                |
+| `organization_contact_points`                 | `organization_id`, `contact_point_id`                                                                                                        | Unique link; organization or contact-point deletion cascades link.                                                              |
+| `datasets`                                    | `id`, `group_id`, `created_by`                                                                                                               | Logical dataset; immutable UUID and group.                                                                                      |
+| `software_applications`                       | `id`, `group_id`, `created_by`                                                                                                               | Logical software application; immutable UUID and group.                                                                         |
+| `software_source_codes`                       | `id`, `group_id`, `created_by`                                                                                                               | Logical software source code; immutable UUID and group.                                                                         |
+| `dataset_versions`                            | `id`, `dataset_id`, `status`, `revision`, metadata, source timestamps, actor/timestamps, latest rejection fields                             | One published and one active change version per dataset.                                                                        |
+| `software_application_versions`               | `id`, `software_application_id`, `status`, `revision`, application metadata, actor/timestamps, latest rejection fields                       | One published and one active change version per software application.                                                           |
+| `software_source_code_versions`               | `id`, `software_source_code_id`, `status`, `revision`, source-code metadata, actor/timestamps, latest rejection fields                       | One published and one active change version per software source code.                                                           |
+| Version-owned metadata tables                 | `dataset_version_id`, entity fields                                                                                                          | Cascade when draft/rejected version is discarded.                                                                               |
+| `dataset_version_providers`                   | `dataset_version_id`, `organization_id`                                                                                                      | Unique per version/organization; organization deletion cascades link.                                                           |
+| Version-owned web services                    | `dataset_version_id`, optional `provider_organization_id`                                                                                    | Organization deletion clears provider link.                                                                                     |
+| `software_application_version_creators`       | `software_application_version_id`, `organization_id`                                                                                         | Unique per version/organization; organization deletion cascades link.                                                           |
+| `software_source_code_version_creators`       | `software_source_code_version_id`, `organization_id`                                                                                         | Unique per version/organization; organization deletion cascades link.                                                           |
+| `software_application_version_contact_points` | `software_application_version_id`, `contact_point_id`                                                                                        | Unique link; contact-point deletion cascades link.                                                                              |
+| `software_source_code_version_contact_points` | `software_source_code_version_id`, `contact_point_id`                                                                                        | Unique link; contact-point deletion cascades link.                                                                              |
+| `dataset_version_contact_points`              | `dataset_version_id`, `contact_point_id`                                                                                                     | Unique link; contact-point deletion cascades link.                                                                              |
+| `web_service_contact_points`                  | `web_service_id`, `contact_point_id`                                                                                                         | Unique link; contact-point deletion cascades link.                                                                              |
+| `dataset_version_categories`                  | `dataset_version_id`, `group_id`, `category_id`                                                                                              | Stores canonical category IDs only; category `group_id` must equal dataset group; category deletion cascades link.              |
+| `software_application_version_categories`     | `software_application_version_id`, `group_id`, `category_id`                                                                                 | Stores canonical category IDs only; category `group_id` must equal software application group; category deletion cascades link. |
+| `software_source_code_version_categories`     | `software_source_code_version_id`, `group_id`, `category_id`                                                                                 | Stores canonical category IDs only; category `group_id` must equal software source code group; category deletion cascades link. |
 
 All resource-version tables store latest `rejection_note`, `rejected_by`, and `rejected_at`; repeated rejection replaces these fields and successful publication clears them. Lifecycle actor and timestamp fields record submission, publication, archival, and latest rejection without a generic event-history table. Dataset versions also retain nullable `source_created_at` and `source_updated_at` from upstream metadata; these do not represent metadata lifecycle record creation or editing.
 
-`groups` row is one canonical group/category-scheme object: it owns categories, defines resource ownership, and is the authorization boundary. Separate `category_schemes` table is removed; `categories.scheme_id` becomes `categories.group_id`. Categories have stable UUIDs, immutable source IRIs, and one nullable parent instead of many-to-many child table. Partial unique constraints enforce normalized sibling and top-level names. Resource versions link only canonical category IDs from own group and do not snapshot category fields.
+`groups` row is one canonical group/category-scheme object: it owns categories, defines resource ownership, and is the authorization boundary. Separate `category_schemes` table is removed; `categories.scheme_id` becomes `categories.group_id`. Categories have stable UUIDs and one nullable parent instead of many-to-many child table. Partial unique constraints enforce normalized sibling and top-level names. Resource versions link only canonical category IDs from own group and do not snapshot category fields.
 
-Logical resource tables hold stable identity, immutable source IRI, and group. Source IRI is globally unique across all logical resource types. Their version tables hold mutable metadata and lifecycle state. A new version references same logical row; a copy creates new logical row with new source IRI. `based_on_version_id` is not stored.
+Logical resource tables hold stable UUID identity and group. Their version tables hold mutable metadata and lifecycle state. A new version references the same logical row; a copy creates a new logical row with a new UUID. `based_on_version_id` is not stored.
 
 `identifiers` owner columns are `dataset_version_id`, `organization_id`, `software_application_version_id`, and `software_source_code_version_id`; exactly-one check prevents sharing and orphan rows. Content may repeat across owners. Resource-version cloning creates new identifier IDs. UUID conflict with different owner fails rather than transferring ownership.
 
@@ -354,28 +354,28 @@ Notification preferences do not add columns to `users`.
 
 ## Required Scenarios
 
-| Scenario                                                              | Result                                                                                                              |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Editor and reviewer roles assigned to same user                       | User may submit and publish own submission.                                                                         |
-| Two editors update same draft revision                                | First succeeds; second receives conflict.                                                                           |
-| Editor copies published dataset to another group                      | New logical dataset/draft uses new source IRI, copied identifier values in new rows, and zero categories.           |
-| Editor creates software-application draft from publication            | New version has same logical application/source IRI and cloned metadata, creators, identifiers, and category links. |
-| Editor copies published software source code                          | New logical source code/draft has new source IRI, cloned metadata, creators, and identifiers, and zero categories.  |
-| Editor links category from another group's category scheme            | Denied even when editor belongs to both groups.                                                                     |
-| Editor attempts to create category through dataset draft              | Denied; category management is outside dataset lifecycle.                                                           |
-| Category manager creates category with duplicate sibling name         | Denied after normalized-name comparison.                                                                            |
-| Client previews referenced category impact, then requests delete      | Full subtree and every dataset/software link are deleted atomically, including published/archived links.            |
-| Client previews referenced organization impact, then requests delete  | Resource/hierarchy links and owned identifiers are removed, then organization is deleted.                           |
-| Contact-point manager edits canonical contact                         | Change is visible through every dataset-version/web-service reference.                                              |
-| Client previews referenced contact-point impact, then requests delete | All contact links are removed, then contact point is deleted.                                                       |
-| Group owns no resource                                                | Category scheme, categories, memberships, access assignments, requests, and subscriptions are deleted with group.   |
-| Group Admin unpublishes resource                                      | Public version becomes archived; later draft may publish normally.                                                  |
-| Role manager tries to assign `GROUP_ADMIN`                            | Denied; only global `ADMIN` may assign it.                                                                          |
-| Membership is revoked                                                 | Membership and related access/subscriptions/pending requests are deleted; user may request again.                   |
-| Blocked user performs public read                                     | Allowed.                                                                                                            |
-| Blocked user attempts authenticated action                            | Denied and configured global security event emitted; stored access remains dormant.                                 |
-| System Admin unblocks user                                            | Prior memberships, roles, grants, and subscriptions become effective again when otherwise valid.                    |
-| New System Admin or global event is added                             | System Admin is subscribed to all global events by default and may opt out.                                         |
-| Non-admin attempts metadata import                                    | Denied.                                                                                                             |
-| Identifier is linked to second owner                                  | Denied; copy requires new identifier row.                                                                           |
-| Attempt blocks/removes last active System Admin                       | Denied.                                                                                                             |
+| Scenario                                                              | Result                                                                                                            |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Editor and reviewer roles assigned to same user                       | User may submit and publish own submission.                                                                       |
+| Two editors update same draft revision                                | First succeeds; second receives conflict.                                                                         |
+| Editor copies published dataset to another group                      | New logical dataset/draft uses new UUID, copied identifier values in new rows, and zero categories.               |
+| Editor creates software-application draft from publication            | New version has same logical application UUID and cloned metadata, creators, identifiers, and category links.     |
+| Editor copies published software source code                          | New logical source code/draft has new UUID, cloned metadata, creators, and identifiers, and zero categories.      |
+| Editor links category from another group's category scheme            | Denied even when editor belongs to both groups.                                                                   |
+| Editor attempts to create category through dataset draft              | Denied; category management is outside dataset lifecycle.                                                         |
+| Category manager creates category with duplicate sibling name         | Denied after normalized-name comparison.                                                                          |
+| Client previews referenced category impact, then requests delete      | Full subtree and every dataset/software link are deleted atomically, including published/archived links.          |
+| Client previews referenced organization impact, then requests delete  | Resource/hierarchy links and owned identifiers are removed, then organization is deleted.                         |
+| Contact-point manager edits canonical contact                         | Change is visible through every dataset-version/web-service reference.                                            |
+| Client previews referenced contact-point impact, then requests delete | All contact links are removed, then contact point is deleted.                                                     |
+| Group owns no resource                                                | Category scheme, categories, memberships, access assignments, requests, and subscriptions are deleted with group. |
+| Group Admin unpublishes resource                                      | Public version becomes archived; later draft may publish normally.                                                |
+| Role manager tries to assign `GROUP_ADMIN`                            | Denied; only global `ADMIN` may assign it.                                                                        |
+| Membership is revoked                                                 | Membership and related access/subscriptions/pending requests are deleted; user may request again.                 |
+| Blocked user performs public read                                     | Allowed.                                                                                                          |
+| Blocked user attempts authenticated action                            | Denied and configured global security event emitted; stored access remains dormant.                               |
+| System Admin unblocks user                                            | Prior memberships, roles, grants, and subscriptions become effective again when otherwise valid.                  |
+| New System Admin or global event is added                             | System Admin is subscribed to all global events by default and may opt out.                                       |
+| Non-admin attempts metadata import                                    | Denied.                                                                                                           |
+| Identifier is linked to second owner                                  | Denied; copy requires new identifier row.                                                                         |
+| Attempt blocks/removes last active System Admin                       | Denied.                                                                                                           |

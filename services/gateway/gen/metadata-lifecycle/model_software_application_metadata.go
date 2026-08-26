@@ -22,7 +22,6 @@ var _ MappedNullable = &SoftwareApplicationMetadata{}
 // SoftwareApplicationMetadata struct for SoftwareApplicationMetadata
 type SoftwareApplicationMetadata struct {
 	Id               string                  `json:"id"`
-	SourceIri        string                  `json:"source_iri"`
 	Name             string                  `json:"name"`
 	Description      string                  `json:"description"`
 	MainEntityOfPage NullableString          `json:"main_entity_of_page,omitempty"`
@@ -44,10 +43,9 @@ type _SoftwareApplicationMetadata SoftwareApplicationMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareApplicationMetadata(id string, sourceIri string, name string, description string, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []ContactPointReference, categories []ResourceReference) *SoftwareApplicationMetadata {
+func NewSoftwareApplicationMetadata(id string, name string, description string, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []ContactPointReference, categories []ResourceReference) *SoftwareApplicationMetadata {
 	this := SoftwareApplicationMetadata{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	this.Description = description
 	this.Keywords = keywords
@@ -88,30 +86,6 @@ func (o *SoftwareApplicationMetadata) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *SoftwareApplicationMetadata) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *SoftwareApplicationMetadata) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *SoftwareApplicationMetadata) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *SoftwareApplicationMetadata) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -553,7 +527,6 @@ func (o SoftwareApplicationMetadata) MarshalJSON() ([]byte, error) {
 func (o SoftwareApplicationMetadata) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	toSerialize["description"] = o.Description
 	if o.MainEntityOfPage.IsSet() {
@@ -590,7 +563,6 @@ func (o *SoftwareApplicationMetadata) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 		"description",
 		"keywords",

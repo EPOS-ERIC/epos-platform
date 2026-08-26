@@ -144,7 +144,6 @@ INSERT INTO
         id,
         name,
         description,
-        source_iri,
         concept,
         label,
         logo,
@@ -162,14 +161,12 @@ VALUES
         $6,
         $7,
         $8,
-        $9,
-        $10
+        $9
     )
 RETURNING
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -184,7 +181,6 @@ type CreateGroupParams struct {
 	ID          uuid.UUID
 	Name        string
 	Description *string
-	SourceIri   string
 	Concept     TopLevelConcept
 	Label       *string
 	Logo        *string
@@ -198,7 +194,6 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		arg.ID,
 		arg.Name,
 		arg.Description,
-		arg.SourceIri,
 		arg.Concept,
 		arg.Label,
 		arg.Logo,
@@ -211,7 +206,6 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.SourceIri,
 		&i.Concept,
 		&i.Label,
 		&i.Logo,
@@ -230,7 +224,6 @@ INSERT INTO
         id,
         group_id,
         parent_category_id,
-        source_iri,
         name
     )
 VALUES
@@ -238,14 +231,12 @@ VALUES
         $1,
         $2,
         $3,
-        $4,
-        $5
+        $4
     )
 RETURNING
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at
@@ -255,7 +246,6 @@ type CreateGroupCategoryParams struct {
 	ID               uuid.UUID
 	GroupID          uuid.UUID
 	ParentCategoryID *uuid.UUID
-	SourceIri        string
 	Name             string
 }
 
@@ -264,7 +254,6 @@ func (q *Queries) CreateGroupCategory(ctx context.Context, arg CreateGroupCatego
 		arg.ID,
 		arg.GroupID,
 		arg.ParentCategoryID,
-		arg.SourceIri,
 		arg.Name,
 	)
 	var i Category
@@ -272,7 +261,6 @@ func (q *Queries) CreateGroupCategory(ctx context.Context, arg CreateGroupCatego
 		&i.ID,
 		&i.GroupID,
 		&i.ParentCategoryID,
-		&i.SourceIri,
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -525,7 +513,6 @@ SELECT
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -547,7 +534,6 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error)
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.SourceIri,
 		&i.Concept,
 		&i.Label,
 		&i.Logo,
@@ -565,7 +551,6 @@ SELECT
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at
@@ -588,7 +573,6 @@ func (q *Queries) GetGroupCategory(ctx context.Context, arg GetGroupCategoryPara
 		&i.ID,
 		&i.GroupID,
 		&i.ParentCategoryID,
-		&i.SourceIri,
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -747,7 +731,6 @@ SELECT
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at
@@ -774,7 +757,6 @@ func (q *Queries) ListGroupCategories(ctx context.Context, groupID uuid.UUID) ([
 			&i.ID,
 			&i.GroupID,
 			&i.ParentCategoryID,
-			&i.SourceIri,
 			&i.Name,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -934,7 +916,6 @@ SELECT
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -965,7 +946,6 @@ func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {
 			&i.ID,
 			&i.Name,
 			&i.Description,
-			&i.SourceIri,
 			&i.Concept,
 			&i.Label,
 			&i.Logo,
@@ -1100,7 +1080,6 @@ RETURNING
     id,
     name,
     description,
-    source_iri,
     concept,
     label,
     logo,
@@ -1140,7 +1119,6 @@ func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Gro
 		&i.ID,
 		&i.Name,
 		&i.Description,
-		&i.SourceIri,
 		&i.Concept,
 		&i.Label,
 		&i.Logo,
@@ -1167,7 +1145,6 @@ RETURNING
     id,
     group_id,
     parent_category_id,
-    source_iri,
     name,
     created_at,
     updated_at
@@ -1192,7 +1169,6 @@ func (q *Queries) ReplaceGroupCategory(ctx context.Context, arg ReplaceGroupCate
 		&i.ID,
 		&i.GroupID,
 		&i.ParentCategoryID,
-		&i.SourceIri,
 		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,

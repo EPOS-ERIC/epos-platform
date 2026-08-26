@@ -19,16 +19,14 @@ var (
 )
 
 type ContactPoint struct {
-	ID        uuid.UUID
-	SourceIRI string
-	Email     string
-	Role      string
+	ID    uuid.UUID
+	Email string
+	Role  string
 }
 
 type CreateRequest struct {
-	SourceIRI string
-	Email     string
-	Role      string
+	Email string
+	Role  string
 }
 
 type ReplaceRequest struct {
@@ -89,7 +87,6 @@ func (s *Service) Get(ctx context.Context, actorID string, id uuid.UUID) (Contac
 
 func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (ContactPoint, error) {
 	actorID = strings.TrimSpace(actorID)
-	request.SourceIRI = strings.TrimSpace(request.SourceIRI)
 	request.Email = strings.TrimSpace(request.Email)
 	request.Role = strings.TrimSpace(request.Role)
 	if actorID == "" || request.Email == "" || request.Role == "" {
@@ -101,17 +98,11 @@ func (s *Service) Create(ctx context.Context, actorID string, request CreateRequ
 	}
 
 	id := uuid.New()
-	sourceIRI := request.SourceIRI
-	if sourceIRI == "" {
-		// TODO: define the "urn:epos" as a app level constant instead of hard coding it in different places
-		sourceIRI = "urn:epos:contact-point:" + id.String()
-	}
 
 	contactPoint, err := s.store.Create(ctx, ContactPoint{
-		ID:        id,
-		SourceIRI: sourceIRI,
-		Email:     request.Email,
-		Role:      request.Role,
+		ID:    id,
+		Email: request.Email,
+		Role:  request.Role,
 	})
 	if err != nil {
 		return ContactPoint{}, fmt.Errorf("create contact point: %w", err)

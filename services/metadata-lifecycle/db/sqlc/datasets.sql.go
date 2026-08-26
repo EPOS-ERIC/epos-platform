@@ -59,30 +59,23 @@ func (q *Queries) AddLifecycleDatasetContactPoint(ctx context.Context, arg AddLi
 
 const addLifecycleDatasetIdentifier = `-- name: AddLifecycleDatasetIdentifier :exec
 INSERT INTO
-    identifiers (source_iri, TYPE, value, dataset_version_id)
+    identifiers (TYPE, value, dataset_version_id)
 VALUES
     (
         $1,
         $2,
-        $3,
-        $4
+        $3
     )
 `
 
 type AddLifecycleDatasetIdentifierParams struct {
-	SourceIri        string
 	Type             string
 	Value            string
 	DatasetVersionID *uuid.UUID
 }
 
 func (q *Queries) AddLifecycleDatasetIdentifier(ctx context.Context, arg AddLifecycleDatasetIdentifierParams) error {
-	_, err := q.db.Exec(ctx, addLifecycleDatasetIdentifier,
-		arg.SourceIri,
-		arg.Type,
-		arg.Value,
-		arg.DatasetVersionID,
-	)
+	_, err := q.db.Exec(ctx, addLifecycleDatasetIdentifier, arg.Type, arg.Value, arg.DatasetVersionID)
 	return err
 }
 
@@ -381,9 +374,8 @@ inserted AS (
 ),
 identifiers AS (
     INSERT INTO
-        identifiers (source_iri, TYPE, value, dataset_version_id)
+        identifiers (TYPE, value, dataset_version_id)
     SELECT
-        source_iri,
         TYPE,
         value,
         (
@@ -662,33 +654,29 @@ func (q *Queries) CloneLifecycleDatasetVersion(ctx context.Context, arg CloneLif
 
 const createLifecycleDataset = `-- name: CreateLifecycleDataset :one
 INSERT INTO
-    datasets (source_iri, group_id, created_by)
+    datasets (group_id, created_by)
 VALUES
     (
         $1,
-        $2,
-        $3
+        $2
     )
 RETURNING
     id,
-    source_iri,
     group_id,
     created_by,
     created_at
 `
 
 type CreateLifecycleDatasetParams struct {
-	SourceIri string
 	GroupID   uuid.UUID
 	CreatedBy string
 }
 
 func (q *Queries) CreateLifecycleDataset(ctx context.Context, arg CreateLifecycleDatasetParams) (Dataset, error) {
-	row := q.db.QueryRow(ctx, createLifecycleDataset, arg.SourceIri, arg.GroupID, arg.CreatedBy)
+	row := q.db.QueryRow(ctx, createLifecycleDataset, arg.GroupID, arg.CreatedBy)
 	var i Dataset
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -1019,7 +1007,6 @@ func (q *Queries) GetLatestArchivedLifecycleDatasetVersion(ctx context.Context, 
 const getLifecycleDataset = `-- name: GetLifecycleDataset :one
 SELECT
     id,
-    source_iri,
     group_id,
     created_by,
     created_at
@@ -1034,7 +1021,6 @@ func (q *Queries) GetLifecycleDataset(ctx context.Context, id uuid.UUID) (Datase
 	var i Dataset
 	err := row.Scan(
 		&i.ID,
-		&i.SourceIri,
 		&i.GroupID,
 		&i.CreatedBy,
 		&i.CreatedAt,
@@ -1044,7 +1030,7 @@ func (q *Queries) GetLifecycleDataset(ctx context.Context, id uuid.UUID) (Datase
 
 const getLifecycleDatasetGroup = `-- name: GetLifecycleDatasetGroup :one
 SELECT
-    owning_group.id, owning_group.name, owning_group.description, owning_group.source_iri, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     datasets AS dataset
     JOIN groups AS owning_group ON owning_group.id = dataset.group_id
@@ -1063,7 +1049,6 @@ func (q *Queries) GetLifecycleDatasetGroup(ctx context.Context, datasetID uuid.U
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.SourceIri,
 		&i.Group.Concept,
 		&i.Group.Label,
 		&i.Group.Logo,
@@ -1106,8 +1091,7 @@ SELECT
     version.rejected_by,
     version.rejected_at,
     version.rejection_note,
-    dataset.source_iri,
-    owning_group.id, owning_group.name, owning_group.description, owning_group.source_iri, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
+    owning_group.id, owning_group.name, owning_group.description, owning_group.concept, owning_group.label, owning_group.logo, owning_group.page, owning_group.color, owning_group.position, owning_group.created_at, owning_group.updated_at
 FROM
     dataset_versions AS version
     JOIN datasets AS dataset ON dataset.id = version.dataset_id
@@ -1151,7 +1135,6 @@ type GetLifecycleDatasetVersionRow struct {
 	RejectedBy         *string
 	RejectedAt         *time.Time
 	RejectionNote      *string
-	SourceIri          string
 	Group              Group
 }
 
@@ -1187,11 +1170,9 @@ func (q *Queries) GetLifecycleDatasetVersion(ctx context.Context, arg GetLifecyc
 		&i.RejectedBy,
 		&i.RejectedAt,
 		&i.RejectionNote,
-		&i.SourceIri,
 		&i.Group.ID,
 		&i.Group.Name,
 		&i.Group.Description,
-		&i.Group.SourceIri,
 		&i.Group.Concept,
 		&i.Group.Label,
 		&i.Group.Logo,
@@ -1253,7 +1234,6 @@ func (q *Queries) GetPublishedLifecycleDatasetVersion(ctx context.Context, datas
 const listLifecycleDatasetCategories = `-- name: ListLifecycleDatasetCategories :many
 SELECT
     category.id,
-    category.source_iri,
     category.name,
     category.group_id
 FROM
@@ -1266,10 +1246,9 @@ ORDER BY
 `
 
 type ListLifecycleDatasetCategoriesRow struct {
-	ID        uuid.UUID
-	SourceIri string
-	Name      string
-	GroupID   uuid.UUID
+	ID      uuid.UUID
+	Name    string
+	GroupID uuid.UUID
 }
 
 func (q *Queries) ListLifecycleDatasetCategories(ctx context.Context, datasetVersionID uuid.UUID) ([]ListLifecycleDatasetCategoriesRow, error) {
@@ -1281,12 +1260,7 @@ func (q *Queries) ListLifecycleDatasetCategories(ctx context.Context, datasetVer
 	var items []ListLifecycleDatasetCategoriesRow
 	for rows.Next() {
 		var i ListLifecycleDatasetCategoriesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.SourceIri,
-			&i.Name,
-			&i.GroupID,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.Name, &i.GroupID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1300,7 +1274,6 @@ func (q *Queries) ListLifecycleDatasetCategories(ctx context.Context, datasetVer
 const listLifecycleDatasetContactPoints = `-- name: ListLifecycleDatasetContactPoints :many
 SELECT
     contact.id,
-    contact.source_iri,
     contact.email,
     contact.role
 FROM
@@ -1321,12 +1294,7 @@ func (q *Queries) ListLifecycleDatasetContactPoints(ctx context.Context, dataset
 	var items []ContactPoint
 	for rows.Next() {
 		var i ContactPoint
-		if err := rows.Scan(
-			&i.ID,
-			&i.SourceIri,
-			&i.Email,
-			&i.Role,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.Email, &i.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1339,7 +1307,7 @@ func (q *Queries) ListLifecycleDatasetContactPoints(ctx context.Context, dataset
 
 const listLifecycleDatasetIdentifiers = `-- name: ListLifecycleDatasetIdentifiers :many
 SELECT
-    identifier.id, identifier.source_iri, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
+    identifier.id, identifier.type, identifier.value, identifier.dataset_version_id, identifier.organization_id, identifier.software_application_version_id, identifier.software_source_code_version_id
 FROM
     identifiers AS identifier
 WHERE
@@ -1363,7 +1331,6 @@ func (q *Queries) ListLifecycleDatasetIdentifiers(ctx context.Context, datasetVe
 		var i ListLifecycleDatasetIdentifiersRow
 		if err := rows.Scan(
 			&i.Identifier.ID,
-			&i.Identifier.SourceIri,
 			&i.Identifier.Type,
 			&i.Identifier.Value,
 			&i.Identifier.DatasetVersionID,
@@ -1384,7 +1351,6 @@ func (q *Queries) ListLifecycleDatasetIdentifiers(ctx context.Context, datasetVe
 const listLifecycleDatasetProviders = `-- name: ListLifecycleDatasetProviders :many
 SELECT
     organization.id,
-    organization.source_iri,
     organization.name,
     organization.street,
     organization.locality,
@@ -1414,7 +1380,6 @@ func (q *Queries) ListLifecycleDatasetProviders(ctx context.Context, datasetVers
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
-			&i.SourceIri,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -1482,7 +1447,7 @@ func (q *Queries) ListLifecycleDistributions(ctx context.Context, datasetVersion
 const listLifecycleOrganizationContactPoints = `-- name: ListLifecycleOrganizationContactPoints :many
 SELECT
     link.organization_id,
-    contact.id, contact.source_iri, contact.email, contact.role
+    contact.id, contact.email, contact.role
 FROM
     organization_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -1510,7 +1475,6 @@ func (q *Queries) ListLifecycleOrganizationContactPoints(ctx context.Context, or
 		if err := rows.Scan(
 			&i.OrganizationID,
 			&i.ContactPoint.ID,
-			&i.ContactPoint.SourceIri,
 			&i.ContactPoint.Email,
 			&i.ContactPoint.Role,
 		); err != nil {
@@ -1527,7 +1491,6 @@ func (q *Queries) ListLifecycleOrganizationContactPoints(ctx context.Context, or
 const listLifecycleOrganizations = `-- name: ListLifecycleOrganizations :many
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -1556,7 +1519,6 @@ func (q *Queries) ListLifecycleOrganizations(ctx context.Context, organizationId
 		var i Organization
 		if err := rows.Scan(
 			&i.ID,
-			&i.SourceIri,
 			&i.Name,
 			&i.Street,
 			&i.Locality,
@@ -1580,7 +1542,7 @@ func (q *Queries) ListLifecycleOrganizations(ctx context.Context, organizationId
 const listLifecycleWebServiceContactPoints = `-- name: ListLifecycleWebServiceContactPoints :many
 SELECT
     link.web_service_id,
-    contact.id, contact.source_iri, contact.email, contact.role
+    contact.id, contact.email, contact.role
 FROM
     web_service_contact_points AS link
     JOIN contact_points AS contact ON contact.id = link.contact_point_id
@@ -1608,7 +1570,6 @@ func (q *Queries) ListLifecycleWebServiceContactPoints(ctx context.Context, webS
 		if err := rows.Scan(
 			&i.WebServiceID,
 			&i.ContactPoint.ID,
-			&i.ContactPoint.SourceIri,
 			&i.ContactPoint.Email,
 			&i.ContactPoint.Role,
 		); err != nil {

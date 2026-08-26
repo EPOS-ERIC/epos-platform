@@ -58,8 +58,8 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid dataset metadata", err)
 			return
 		}
-		if value.SourceIRI == "" || value.Title == "" {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and title are required", nil)
+		if value.Title == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "title is required", nil)
 			return
 		}
 		input.Metadata = toDomainDatasetDraftMetadata(value)
@@ -69,8 +69,8 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software application metadata", err)
 			return
 		}
-		if value.SourceIRI == "" || value.Name == "" {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and name are required", nil)
+		if value.Name == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "name is required", nil)
 			return
 		}
 		input.Metadata = toDomainSoftwareApplicationDraftMetadata(value)
@@ -80,8 +80,8 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software source code metadata", err)
 			return
 		}
-		if value.SourceIRI == "" || value.Name == "" {
-			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri and name are required", nil)
+		if value.Name == "" {
+			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "name is required", nil)
 			return
 		}
 		input.Metadata = toDomainSoftwareSourceCodeDraftMetadata(value)
@@ -351,10 +351,6 @@ func (h *Lifecycle) Copy(w http.ResponseWriter, r *http.Request) {
 
 	var request api.CopyResourceRequest
 	if !decodeJSON(r, w, &request) {
-		return
-	}
-	if strings.TrimSpace(request.SourceIRI) == "" {
-		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "source_iri is required", nil)
 		return
 	}
 	record, err := h.service.Copy(ctx, actor.ID, groupID, resourceType, id, toDomainCopyResourceInput(request))

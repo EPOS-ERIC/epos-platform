@@ -21,9 +21,8 @@ var _ MappedNullable = &CreateOrganizationIdentifierRequest{}
 
 // CreateOrganizationIdentifierRequest struct for CreateOrganizationIdentifierRequest
 type CreateOrganizationIdentifierRequest struct {
-	SourceIri *string `json:"source_iri,omitempty"`
-	Type      string  `json:"type"`
-	Value     string  `json:"value"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type _CreateOrganizationIdentifierRequest CreateOrganizationIdentifierRequest
@@ -45,38 +44,6 @@ func NewCreateOrganizationIdentifierRequest(type_ string, value string) *CreateO
 func NewCreateOrganizationIdentifierRequestWithDefaults() *CreateOrganizationIdentifierRequest {
 	this := CreateOrganizationIdentifierRequest{}
 	return &this
-}
-
-// GetSourceIri returns the SourceIri field value if set, zero value otherwise.
-func (o *CreateOrganizationIdentifierRequest) GetSourceIri() string {
-	if o == nil || IsNil(o.SourceIri) {
-		var ret string
-		return ret
-	}
-	return *o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *CreateOrganizationIdentifierRequest) GetSourceIriOk() (*string, bool) {
-	if o == nil || IsNil(o.SourceIri) {
-		return nil, false
-	}
-	return o.SourceIri, true
-}
-
-// HasSourceIri returns a boolean if a field has been set.
-func (o *CreateOrganizationIdentifierRequest) HasSourceIri() bool {
-	if o != nil && !IsNil(o.SourceIri) {
-		return true
-	}
-
-	return false
-}
-
-// SetSourceIri gets a reference to the given string and assigns it to the SourceIri field.
-func (o *CreateOrganizationIdentifierRequest) SetSourceIri(v string) {
-	o.SourceIri = &v
 }
 
 // GetType returns the Type field value
@@ -137,9 +104,6 @@ func (o CreateOrganizationIdentifierRequest) MarshalJSON() ([]byte, error) {
 
 func (o CreateOrganizationIdentifierRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if !IsNil(o.SourceIri) {
-		toSerialize["source_iri"] = o.SourceIri
-	}
 	toSerialize["type"] = o.Type
 	toSerialize["value"] = o.Value
 	return toSerialize, nil

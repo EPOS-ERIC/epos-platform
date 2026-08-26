@@ -123,7 +123,6 @@ paths:
                     - type: dataset
                       resource_id: "550e8400-e29b-41d4-a716-446655440000"
                       version_id: "550e8400-e29b-41d4-a716-446655440002"
-                      source_iri: "https://www.epos-eu.org/dataset/example"
                       name: "Example dataset"
                       status: PUBLISHED
                       group:
@@ -416,7 +415,6 @@ paths:
                   summary: Public group metadata
                   value:
                     - id: "550e8400-e29b-41d4-a716-446655440001"
-                      source_iri: "https://example.org/groups/satd"
                       name: "Satellite Data"
                       description: "Geospatial data obtained from Satellite measurements"
                       label: "Satellite Data"
@@ -1977,10 +1975,9 @@ components:
     DatasetDraftMetadata:
       type: object
       additionalProperties: false
-      required: [source_iri, title]
+      required: [title]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         title: { type: string }
         description: { type: string }
         keywords: { type: string }
@@ -2020,9 +2017,8 @@ components:
     SoftwareApplicationDraftMetadata:
       type: object
       additionalProperties: false
-      required: [source_iri, name]
+      required: [name]
       properties:
-        source_iri: { type: string }
         name: { type: string }
         description: { type: string }
         keywords: { type: string }
@@ -2056,9 +2052,8 @@ components:
     SoftwareSourceCodeDraftMetadata:
       type: object
       additionalProperties: false
-      required: [source_iri, name]
+      required: [name]
       properties:
-        source_iri: { type: string }
         name: { type: string }
         description: { type: string }
         keywords: { type: string }
@@ -2098,18 +2093,16 @@ components:
 
     SoftwareIdentifier:
       type: object
-      required: [source_iri, type, value]
+      required: [type, value]
       properties:
-        source_iri: { type: string }
         type: { type: string }
         value: { type: string }
 
     IdentifierDraft:
       type: object
-      required: [source_iri, type, value]
+      required: [type, value]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         type: { type: string }
         value: { type: string }
 
@@ -2389,10 +2382,7 @@ components:
 
     CopyResourceRequest:
       type: object
-      required: [source_iri]
       additionalProperties: false
-      properties:
-        source_iri: { type: string, format: uri }
 
     RejectResourceRequest:
       type: object
@@ -2439,7 +2429,6 @@ components:
       required:
         [
           id,
-          source_iri,
           title,
           description,
           keywords,
@@ -2452,7 +2441,6 @@ components:
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         title: { type: string }
         description: { type: string }
         keywords: { type: string }
@@ -2485,7 +2473,6 @@ components:
       required:
         [
           id,
-          source_iri,
           name,
           description,
           keywords,
@@ -2497,7 +2484,6 @@ components:
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         name: { type: string }
         description: { type: string }
         main_entity_of_page: { type: string, nullable: true }
@@ -2526,7 +2512,6 @@ components:
       required:
         [
           id,
-          source_iri,
           name,
           description,
           keywords,
@@ -2538,7 +2523,6 @@ components:
       additionalProperties: false
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         name: { type: string }
         description: { type: string }
         programming_language: { type: string, nullable: true }
@@ -2631,27 +2615,24 @@ components:
 
     ResourceIdentifier:
       type: object
-      required: [id, source_iri, type, value]
+      required: [id, type, value]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         type: { type: string }
         value: { type: string }
 
     ResourceVersionReference:
       type: object
-      required: [id, source_iri, name]
+      required: [id, name]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         name: { type: string }
 
     ContactPointReference:
       type: object
-      required: [id, source_iri]
+      required: [id]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
 
     # -------------------------------------------------------------------------
     # Resource write schemas
@@ -2734,7 +2715,6 @@ components:
         - type
         - resource_id
         - version_id
-        - source_iri
         - name
         - status
         - group
@@ -2747,8 +2727,6 @@ components:
         version_id:
           type: string
           format: uuid
-        source_iri:
-          type: string
         name:
           type: string
         status:
@@ -2852,19 +2830,17 @@ components:
             type: string
     Category:
       type: object
-      required: [id, group_id, parent_category_id, source_iri, name]
+      required: [id, group_id, parent_category_id, name]
       properties:
         id: { type: string, format: uuid }
         group_id: { type: string, format: uuid }
         parent_category_id: { type: string, format: uuid, nullable: true }
-        source_iri: { type: string }
         name: { type: string }
     CreateCategoryRequest:
       type: object
       required: [name]
       additionalProperties: false
       properties:
-        source_iri: { type: string }
         name: { type: string }
         parent_category_id: { type: string, format: uuid, nullable: true }
     ReplaceCategoryRequest:
@@ -2879,7 +2855,6 @@ components:
       required: [name, concept]
       additionalProperties: false
       properties:
-        source_iri: { type: string }
         name: { type: string }
         description: { type: string, nullable: true }
         label: { type: string, nullable: true }
@@ -2903,10 +2878,9 @@ components:
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
     ContactPoint:
       type: object
-      required: [id, source_iri, email, role]
+      required: [id, email, role]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         email: { type: string }
         role: { type: string }
     CreateContactPointRequest:
@@ -2914,7 +2888,6 @@ components:
       required: [email, role]
       additionalProperties: false
       properties:
-        source_iri: { type: string }
         email: { type: string }
         role: { type: string }
     ReplaceContactPointRequest:
@@ -2934,10 +2907,9 @@ components:
         country: { type: string, nullable: true }
     OrganizationIdentifier:
       type: object
-      required: [id, source_iri, type, value]
+      required: [id, type, value]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         type: { type: string }
         value: { type: string }
     OrganizationIdentifierRequest:
@@ -2945,16 +2917,13 @@ components:
       required: [type, value]
       additionalProperties: false
       properties:
-        source_iri: { type: string }
         type: { type: string }
         value: { type: string }
     CanonicalOrganization:
       type: object
-      required:
-        [id, source_iri, name, address, identifiers, parents, contact_point_ids]
+      required: [id, name, address, identifiers, parents, contact_point_ids]
       properties:
         id: { type: string, format: uuid }
-        source_iri: { type: string }
         name: { type: string }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
         logo_url: { type: string, nullable: true }
@@ -2975,7 +2944,6 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        source_iri: { type: string }
         name: { type: string }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
         logo_url: { type: string, nullable: true }
@@ -3027,7 +2995,6 @@ components:
       description: Public group metadata returned by Metadata Lifecycle.
       required:
         - id
-        - source_iri
         - name
         - position
         - concept
@@ -3035,8 +3002,6 @@ components:
         id:
           type: string
           format: uuid
-        source_iri:
-          type: string
         name:
           type: string
         description:

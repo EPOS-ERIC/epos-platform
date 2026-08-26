@@ -31,7 +31,7 @@ type Service interface {
 	DraftFromPublication(context.Context, string, uuid.UUID) (softwarelifecycle.Application, error)
 	DraftFromLatestArchive(context.Context, string, uuid.UUID) (softwarelifecycle.Application, error)
 	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.Application, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, error)
 }
 
 type Handler struct {
@@ -216,11 +216,11 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if request.TargetGroupID == uuid.Nil || strings.TrimSpace(request.SourceIRI) == "" {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id and source_iri are required")
+	if request.TargetGroupID == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id is required")
 		return
 	}
-	application, err := h.service.CopyPublished(r.Context(), actorID, sourceID, request.TargetGroupID, request.SourceIRI)
+	application, err := h.service.CopyPublished(r.Context(), actorID, sourceID, request.TargetGroupID)
 	h.writeApplication(r, w, application, true, err, http.StatusCreated)
 }
 

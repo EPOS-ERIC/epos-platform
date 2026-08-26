@@ -17,7 +17,6 @@ type DiscoveryItem struct {
 	Type          string
 	ResourceID    string
 	VersionID     string
-	SourceIRI     string
 	Name          string
 	Status        string
 	Group         DiscoveryReference

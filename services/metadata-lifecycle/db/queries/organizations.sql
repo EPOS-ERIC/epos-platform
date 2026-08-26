@@ -1,7 +1,6 @@
 -- name: ListOrganizations :many
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -19,7 +18,6 @@ ORDER BY
 -- name: GetOrganization :one
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -37,7 +35,6 @@ WHERE
 -- name: GetOrganizationForUpdate :one
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -57,7 +54,6 @@ UPDATE
 -- name: ListOrganizationsByIDs :many
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -84,7 +80,6 @@ WHERE
 INSERT INTO
     organizations (
         id,
-        source_iri,
         name,
         street,
         locality,
@@ -98,7 +93,6 @@ INSERT INTO
 VALUES
     (
         sqlc.arg(id),
-        sqlc.arg(source_iri),
         sqlc.arg(name),
         sqlc.narg(street),
         sqlc.narg(locality),
@@ -114,11 +108,10 @@ RETURNING
 
 -- name: CreateOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (id, source_iri, TYPE, value, organization_id)
+    identifiers (id, TYPE, value, organization_id)
 VALUES
     (
         sqlc.arg(id),
-        sqlc.arg(source_iri),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(organization_id)

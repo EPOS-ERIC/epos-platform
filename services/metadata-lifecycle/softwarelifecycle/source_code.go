@@ -38,7 +38,7 @@ type SourceCodeRepository interface {
 	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (SourceCode, error)
 	DraftFromPublication(context.Context, string, uuid.UUID) (SourceCode, error)
 	DraftFromLatestArchive(context.Context, string, uuid.UUID) (SourceCode, error)
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (SourceCode, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (SourceCode, error)
 }
 
 type SourceCodeService struct {
@@ -184,24 +184,16 @@ func (s *SourceCodeService) DraftFromLatestArchive(ctx context.Context, actorID 
 }
 
 // CopyPublished copies published source code metadata into targetGroupID.
-func (s *SourceCodeService) CopyPublished(ctx context.Context, actorID string, sourceSourceCodeID, targetGroupID uuid.UUID, sourceIRI string) (SourceCode, error) {
-	sourceIRI = strings.TrimSpace(sourceIRI)
-	if sourceIRI == "" {
-		return SourceCode{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
-	}
+func (s *SourceCodeService) CopyPublished(ctx context.Context, actorID string, sourceSourceCodeID, targetGroupID uuid.UUID) (SourceCode, error) {
 	if err := authorizeGroup(ctx, s.authorizer, actorID, targetGroupID, permissionCreate); err != nil {
 		return SourceCode{}, operationError("authorize source code copy", err)
 	}
-	sourceCode, err := s.repository.CopyPublished(ctx, actorID, sourceSourceCodeID, targetGroupID, sourceIRI)
+	sourceCode, err := s.repository.CopyPublished(ctx, actorID, sourceSourceCodeID, targetGroupID)
 	return sourceCode, operationError("copy published source code", err)
 }
 
 func normalizeSourceCode(value *metadata.SoftwareSourceCode) error {
-	value.SourceIRI = strings.TrimSpace(value.SourceIRI)
 	value.Name = strings.TrimSpace(value.Name)
-	if value.SourceIRI == "" {
-		return fmt.Errorf("source IRI is required: %w", ErrInvalid)
-	}
 	if value.Name == "" {
 		return fmt.Errorf("name is required: %w", ErrInvalid)
 	}

@@ -21,8 +21,7 @@ var _ MappedNullable = &ContactPointReference{}
 
 // ContactPointReference struct for ContactPointReference
 type ContactPointReference struct {
-	Id        string `json:"id"`
-	SourceIri string `json:"source_iri"`
+	Id string `json:"id"`
 }
 
 type _ContactPointReference ContactPointReference
@@ -31,10 +30,9 @@ type _ContactPointReference ContactPointReference
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewContactPointReference(id string, sourceIri string) *ContactPointReference {
+func NewContactPointReference(id string) *ContactPointReference {
 	this := ContactPointReference{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	return &this
 }
 
@@ -70,30 +68,6 @@ func (o *ContactPointReference) SetId(v string) {
 	o.Id = v
 }
 
-// GetSourceIri returns the SourceIri field value
-func (o *ContactPointReference) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *ContactPointReference) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *ContactPointReference) SetSourceIri(v string) {
-	o.SourceIri = v
-}
-
 func (o ContactPointReference) MarshalJSON() ([]byte, error) {
 	toSerialize, err := o.ToMap()
 	if err != nil {
@@ -105,7 +79,6 @@ func (o ContactPointReference) MarshalJSON() ([]byte, error) {
 func (o ContactPointReference) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	return toSerialize, nil
 }
 
@@ -115,7 +88,6 @@ func (o *ContactPointReference) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 	}
 
 	allProperties := make(map[string]interface{})

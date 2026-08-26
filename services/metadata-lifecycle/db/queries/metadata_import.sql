@@ -4,7 +4,6 @@ INSERT INTO
         id,
         name,
         description,
-        source_iri,
         concept,
         label,
         logo,
@@ -17,14 +16,13 @@ VALUES
         sqlc.arg(id),
         sqlc.arg(name),
         sqlc.narg(description),
-        sqlc.arg(source_iri),
         sqlc.arg(concept),
         sqlc.narg(label),
         sqlc.narg(logo),
         sqlc.narg(PAGE),
         sqlc.narg(color),
         sqlc.arg(position)
-    ) ON CONFLICT (source_iri) DO
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     name = EXCLUDED.name,
@@ -43,7 +41,6 @@ RETURNING
 INSERT INTO
     organizations (
         id,
-        source_iri,
         name,
         street,
         locality,
@@ -57,7 +54,6 @@ INSERT INTO
 VALUES
     (
         sqlc.arg(id),
-        sqlc.arg(source_iri),
         sqlc.arg(name),
         sqlc.narg(street),
         sqlc.narg(locality),
@@ -67,7 +63,7 @@ VALUES
         sqlc.narg(page_url),
         sqlc.narg(email),
         sqlc.narg(lei_code)
-    ) ON CONFLICT (source_iri) DO
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     name = EXCLUDED.name,
@@ -90,10 +86,9 @@ WHERE
 
 -- name: AddImportOrganizationIdentifier :exec
 INSERT INTO
-    identifiers (source_iri, TYPE, value, organization_id)
+    identifiers (TYPE, value, organization_id)
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(organization_id)
@@ -131,14 +126,13 @@ VALUES
 
 -- name: UpsertImportContactPoint :one
 INSERT INTO
-    contact_points (id, source_iri, email, role)
+    contact_points (id, email, role)
 VALUES
     (
         sqlc.arg(id),
-        sqlc.arg(source_iri),
         sqlc.arg(email),
         sqlc.arg(role)
-    ) ON CONFLICT (source_iri) DO
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     email = EXCLUDED.email,
@@ -152,7 +146,6 @@ INSERT INTO
         id,
         group_id,
         parent_category_id,
-        source_iri,
         name
     )
 VALUES
@@ -160,9 +153,8 @@ VALUES
         sqlc.arg(id),
         sqlc.arg(group_id),
         NULL,
-        sqlc.arg(source_iri),
         sqlc.arg(name)
-    ) ON CONFLICT (source_iri) DO
+    ) ON CONFLICT (id) DO
 UPDATE
 SET
     name = EXCLUDED.name,
@@ -193,9 +185,24 @@ FROM
     LEFT JOIN dataset_versions v ON v.dataset_id = d.id
     AND v.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
 WHERE
-    d.source_iri = sqlc.arg(source_iri) FOR
+    d.id = sqlc.arg(id) FOR
 UPDATE
     OF d;
+
+-- name: CreateImportDataset :one
+INSERT INTO
+    datasets (id, group_id, created_by)
+VALUES
+    (
+        sqlc.arg(id),
+        sqlc.arg(group_id),
+        sqlc.arg(created_by)
+    )
+RETURNING
+    id,
+    group_id,
+    created_by,
+    created_at;
 
 -- name: GetImportSoftwareApplication :one
 SELECT
@@ -208,9 +215,21 @@ FROM
     LEFT JOIN software_application_versions AS version ON version.software_application_id = resource.id
     AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
 WHERE
-    resource.source_iri = sqlc.arg(source_iri) FOR
+    resource.id = sqlc.arg(id) FOR
 UPDATE
     OF resource;
+
+-- name: CreateImportSoftwareApplication :one
+INSERT INTO
+    software_applications (id, group_id, created_by)
+VALUES
+    (
+        sqlc.arg(id),
+        sqlc.arg(group_id),
+        sqlc.arg(created_by)
+    )
+RETURNING
+    *;
 
 -- name: GetImportSoftwareSourceCode :one
 SELECT
@@ -223,6 +242,18 @@ FROM
     LEFT JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
     AND version.status IN ('DRAFT', 'SUBMITTED', 'REJECTED')
 WHERE
-    resource.source_iri = sqlc.arg(source_iri) FOR
+    resource.id = sqlc.arg(id) FOR
 UPDATE
     OF resource;
+
+-- name: CreateImportSoftwareSourceCode :one
+INSERT INTO
+    software_source_codes (id, group_id, created_by)
+VALUES
+    (
+        sqlc.arg(id),
+        sqlc.arg(group_id),
+        sqlc.arg(created_by)
+    )
+RETURNING
+    *;

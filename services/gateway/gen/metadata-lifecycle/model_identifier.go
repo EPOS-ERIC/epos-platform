@@ -21,10 +21,9 @@ var _ MappedNullable = &Identifier{}
 
 // Identifier struct for Identifier
 type Identifier struct {
-	Id        string `json:"id"`
-	SourceIri string `json:"source_iri"`
-	Type      string `json:"type"`
-	Value     string `json:"value"`
+	Id    string `json:"id"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type _Identifier Identifier
@@ -33,10 +32,9 @@ type _Identifier Identifier
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewIdentifier(id string, sourceIri string, type_ string, value string) *Identifier {
+func NewIdentifier(id string, type_ string, value string) *Identifier {
 	this := Identifier{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Type = type_
 	this.Value = value
 	return &this
@@ -72,30 +70,6 @@ func (o *Identifier) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *Identifier) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *Identifier) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *Identifier) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *Identifier) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetType returns the Type field value
@@ -157,7 +131,6 @@ func (o Identifier) MarshalJSON() ([]byte, error) {
 func (o Identifier) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["type"] = o.Type
 	toSerialize["value"] = o.Value
 	return toSerialize, nil
@@ -169,7 +142,6 @@ func (o *Identifier) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"type",
 		"value",
 	}

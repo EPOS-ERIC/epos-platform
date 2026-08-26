@@ -38,7 +38,7 @@ type ApplicationRepository interface {
 	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (Application, error)
 	DraftFromPublication(context.Context, string, uuid.UUID) (Application, error)
 	DraftFromLatestArchive(context.Context, string, uuid.UUID) (Application, error)
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID, string) (Application, error)
+	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (Application, error)
 }
 
 type ApplicationService struct {
@@ -184,24 +184,16 @@ func (s *ApplicationService) DraftFromLatestArchive(ctx context.Context, actorID
 }
 
 // CopyPublished copies published application metadata into targetGroupID.
-func (s *ApplicationService) CopyPublished(ctx context.Context, actorID string, sourceApplicationID, targetGroupID uuid.UUID, sourceIRI string) (Application, error) {
-	sourceIRI = strings.TrimSpace(sourceIRI)
-	if sourceIRI == "" {
-		return Application{}, fmt.Errorf("source IRI is required: %w", ErrInvalid)
-	}
+func (s *ApplicationService) CopyPublished(ctx context.Context, actorID string, sourceApplicationID, targetGroupID uuid.UUID) (Application, error) {
 	if err := authorizeGroup(ctx, s.authorizer, actorID, targetGroupID, permissionCreate); err != nil {
 		return Application{}, operationError("authorize application copy", err)
 	}
-	application, err := s.repository.CopyPublished(ctx, actorID, sourceApplicationID, targetGroupID, sourceIRI)
+	application, err := s.repository.CopyPublished(ctx, actorID, sourceApplicationID, targetGroupID)
 	return application, operationError("copy published application", err)
 }
 
 func normalizeApplication(value *metadata.SoftwareApplication) error {
-	value.SourceIRI = strings.TrimSpace(value.SourceIRI)
 	value.Name = strings.TrimSpace(value.Name)
-	if value.SourceIRI == "" {
-		return fmt.Errorf("source IRI is required: %w", ErrInvalid)
-	}
 	if value.Name == "" {
 		return fmt.Errorf("name is required: %w", ErrInvalid)
 	}

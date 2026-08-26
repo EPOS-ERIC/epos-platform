@@ -1,15 +1,13 @@
 -- name: CreateLifecycleDataset :one
 INSERT INTO
-    datasets (source_iri, group_id, created_by)
+    datasets (group_id, created_by)
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(group_id),
         sqlc.arg(created_by)
     )
 RETURNING
     id,
-    source_iri,
     group_id,
     created_by,
     created_at;
@@ -207,7 +205,6 @@ WHERE
 -- name: GetLifecycleDataset :one
 SELECT
     id,
-    source_iri,
     group_id,
     created_by,
     created_at
@@ -323,9 +320,8 @@ inserted AS (
 ),
 identifiers AS (
     INSERT INTO
-        identifiers (source_iri, TYPE, value, dataset_version_id)
+        identifiers (TYPE, value, dataset_version_id)
     SELECT
-        source_iri,
         TYPE,
         value,
         (
@@ -575,10 +571,9 @@ FROM
 
 -- name: AddLifecycleDatasetIdentifier :exec
 INSERT INTO
-    identifiers (source_iri, TYPE, value, dataset_version_id)
+    identifiers (TYPE, value, dataset_version_id)
 VALUES
     (
-        sqlc.arg(source_iri),
         sqlc.arg(TYPE),
         sqlc.arg(value),
         sqlc.arg(dataset_version_id)
@@ -782,7 +777,6 @@ SELECT
     version.rejected_by,
     version.rejected_at,
     version.rejection_note,
-    dataset.source_iri,
     sqlc.embed(owning_group)
 FROM
     dataset_versions AS version
@@ -814,7 +808,6 @@ ORDER BY
 -- name: ListLifecycleDatasetProviders :many
 SELECT
     organization.id,
-    organization.source_iri,
     organization.name,
     organization.street,
     organization.locality,
@@ -835,7 +828,6 @@ ORDER BY
 -- name: ListLifecycleOrganizations :many
 SELECT
     id,
-    source_iri,
     name,
     street,
     locality,
@@ -868,7 +860,6 @@ ORDER BY
 -- name: ListLifecycleDatasetContactPoints :many
 SELECT
     contact.id,
-    contact.source_iri,
     contact.email,
     contact.role
 FROM
@@ -882,7 +873,6 @@ ORDER BY
 -- name: ListLifecycleDatasetCategories :many
 SELECT
     category.id,
-    category.source_iri,
     category.name,
     category.group_id
 FROM

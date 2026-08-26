@@ -8,7 +8,8 @@ AUTH_USERNAME=${SCHEMATHESIS_AUTH_USERNAME:-admin@admin.org}
 AUTH_PASSWORD=${SCHEMATHESIS_AUTH_PASSWORD:-adminadmin}
 AUTH_CLIENT_ID=${SCHEMATHESIS_AUTH_CLIENT_ID:-local-dev-client}
 AUTH_CLIENT_SECRET=${SCHEMATHESIS_AUTH_CLIENT_SECRET:-dev-secret}
-TARGET_GROUP_SOURCE_IRI=${SCHEMATHESIS_TARGET_GROUP_SOURCE_IRI:-category:seismology}
+TARGET_GROUP_ID=${SCHEMATHESIS_TARGET_GROUP_ID:-}
+TARGET_GROUP_NAME=${SCHEMATHESIS_TARGET_GROUP_NAME:-Seismology}
 
 log() {
   printf '%s\n' "$*" >&2
@@ -68,11 +69,17 @@ fi
 
 auth_header="Authorization: Bearer $token"
 
-log "Resolving target group '$TARGET_GROUP_SOURCE_IRI'"
-groups_response=$(fetch_json GET "$GATEWAY_API_URL/groups" "" --header "$auth_header")
-group_id=$(printf '%s' "$groups_response" | jq -r --arg source_iri "$TARGET_GROUP_SOURCE_IRI" 'map(select(.source_iri == $source_iri)) | .[0].id // empty')
+if [ -n "$TARGET_GROUP_ID" ]; then
+  group_id=$TARGET_GROUP_ID
+  target_group_label=$TARGET_GROUP_ID
+else
+  log "Resolving target group '$TARGET_GROUP_NAME'"
+  groups_response=$(fetch_json GET "$GATEWAY_API_URL/groups" "" --header "$auth_header")
+  group_id=$(printf '%s' "$groups_response" | jq -r --arg name "$TARGET_GROUP_NAME" 'map(select(.name == $name)) | .[0].id // empty')
+  target_group_label=$TARGET_GROUP_NAME
+fi
 if [ -z "$group_id" ]; then
-  log "Target group '$TARGET_GROUP_SOURCE_IRI' not found"
+  log "Target group '$target_group_label' not found"
   exit 1
 fi
 
@@ -80,7 +87,7 @@ log "Resolving target category"
 categories_response=$(fetch_json GET "$GATEWAY_API_URL/groups/$group_id/categories" "" --header "$auth_header")
 category_id=$(printf '%s' "$categories_response" | jq -r '.[0].id // empty')
 if [ -z "$category_id" ]; then
-  log "Target group '$TARGET_GROUP_SOURCE_IRI' has no categories"
+  log "Target group '$target_group_label' has no categories"
   exit 1
 fi
 

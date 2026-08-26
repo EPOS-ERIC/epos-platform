@@ -13,42 +13,29 @@ import (
 
 const createContactPoint = `-- name: CreateContactPoint :one
 INSERT INTO
-    contact_points (id, source_iri, email, role)
+    contact_points (id, email, role)
 VALUES
     (
         $1,
         $2,
-        $3,
-        $4
+        $3
     )
 RETURNING
     id,
-    source_iri,
     email,
     role
 `
 
 type CreateContactPointParams struct {
-	ID        uuid.UUID
-	SourceIri string
-	Email     string
-	Role      string
+	ID    uuid.UUID
+	Email string
+	Role  string
 }
 
 func (q *Queries) CreateContactPoint(ctx context.Context, arg CreateContactPointParams) (ContactPoint, error) {
-	row := q.db.QueryRow(ctx, createContactPoint,
-		arg.ID,
-		arg.SourceIri,
-		arg.Email,
-		arg.Role,
-	)
+	row := q.db.QueryRow(ctx, createContactPoint, arg.ID, arg.Email, arg.Role)
 	var i ContactPoint
-	err := row.Scan(
-		&i.ID,
-		&i.SourceIri,
-		&i.Email,
-		&i.Role,
-	)
+	err := row.Scan(&i.ID, &i.Email, &i.Role)
 	return i, err
 }
 
@@ -70,7 +57,6 @@ func (q *Queries) DeleteContactPoint(ctx context.Context, id uuid.UUID) (int64, 
 const getContactPoint = `-- name: GetContactPoint :one
 SELECT
     id,
-    source_iri,
     email,
     role
 FROM
@@ -82,19 +68,13 @@ WHERE
 func (q *Queries) GetContactPoint(ctx context.Context, id uuid.UUID) (ContactPoint, error) {
 	row := q.db.QueryRow(ctx, getContactPoint, id)
 	var i ContactPoint
-	err := row.Scan(
-		&i.ID,
-		&i.SourceIri,
-		&i.Email,
-		&i.Role,
-	)
+	err := row.Scan(&i.ID, &i.Email, &i.Role)
 	return i, err
 }
 
 const listContactPoints = `-- name: ListContactPoints :many
 SELECT
     id,
-    source_iri,
     email,
     role
 FROM
@@ -114,12 +94,7 @@ func (q *Queries) ListContactPoints(ctx context.Context) ([]ContactPoint, error)
 	var items []ContactPoint
 	for rows.Next() {
 		var i ContactPoint
-		if err := rows.Scan(
-			&i.ID,
-			&i.SourceIri,
-			&i.Email,
-			&i.Role,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.Email, &i.Role); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -140,7 +115,6 @@ WHERE
     id = $3
 RETURNING
     id,
-    source_iri,
     email,
     role
 `
@@ -154,11 +128,6 @@ type ReplaceContactPointParams struct {
 func (q *Queries) ReplaceContactPoint(ctx context.Context, arg ReplaceContactPointParams) (ContactPoint, error) {
 	row := q.db.QueryRow(ctx, replaceContactPoint, arg.Email, arg.Role, arg.ID)
 	var i ContactPoint
-	err := row.Scan(
-		&i.ID,
-		&i.SourceIri,
-		&i.Email,
-		&i.Role,
-	)
+	err := row.Scan(&i.ID, &i.Email, &i.Role)
 	return i, err
 }

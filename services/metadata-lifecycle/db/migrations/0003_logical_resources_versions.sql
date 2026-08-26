@@ -4,21 +4,18 @@ CREATE TYPE resource_status AS ENUM ('DRAFT', 'SUBMITTED', 'REJECTED', 'PUBLISHE
 
 CREATE TABLE datasets (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri text NOT NULL UNIQUE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
     created_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE software_applications (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri text NOT NULL UNIQUE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
     created_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE software_source_codes (
     id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    source_iri text NOT NULL UNIQUE,
     group_id   uuid NOT NULL REFERENCES groups(id) ON DELETE RESTRICT,
     created_by text NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at timestamptz NOT NULL DEFAULT now()

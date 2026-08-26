@@ -1,10 +1,9 @@
 package api
 
 type ContactPoint struct {
-	ID        string `json:"id"`
-	SourceIRI string `json:"source_iri"`
-	Email     string `json:"email"`
-	Role      string `json:"role"`
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 type OrganizationAddress struct {
@@ -15,15 +14,13 @@ type OrganizationAddress struct {
 }
 
 type OrganizationIdentifier struct {
-	ID        string `json:"id"`
-	SourceIRI string `json:"source_iri"`
-	Type      string `json:"type"`
-	Value     string `json:"value"`
+	ID    string `json:"id"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type CanonicalOrganization struct {
 	ID              string                   `json:"id"`
-	SourceIRI       string                   `json:"source_iri"`
 	Name            string                   `json:"name"`
 	Address         OrganizationAddress      `json:"address"`
 	LogoURL         *string                  `json:"logo_url"`
@@ -36,9 +33,8 @@ type CanonicalOrganization struct {
 }
 
 type CreateContactPointRequest struct {
-	SourceIRI *string `json:"source_iri,omitempty"`
-	Email     string  `json:"email"`
-	Role      string  `json:"role"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 type ReplaceContactPointRequest struct {
@@ -47,13 +43,11 @@ type ReplaceContactPointRequest struct {
 }
 
 type OrganizationIdentifierRequest struct {
-	SourceIRI *string `json:"source_iri,omitempty"`
-	Type      string  `json:"type"`
-	Value     string  `json:"value"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 }
 
 type CreateOrganizationRequest struct {
-	SourceIRI       *string                         `json:"source_iri,omitempty"`
 	Name            string                          `json:"name"`
 	Address         *OrganizationAddress            `json:"address,omitempty"`
 	LogoURL         *string                         `json:"logo_url"`

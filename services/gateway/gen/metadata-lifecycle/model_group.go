@@ -22,7 +22,6 @@ var _ MappedNullable = &Group{}
 // Group struct for Group
 type Group struct {
 	Id          string         `json:"id"`
-	SourceIri   string         `json:"source_iri"`
 	Name        string         `json:"name"`
 	Description NullableString `json:"description,omitempty"`
 	Label       NullableString `json:"label,omitempty"`
@@ -39,10 +38,9 @@ type _Group Group
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewGroup(id string, sourceIri string, name string, position int32, concept string) *Group {
+func NewGroup(id string, name string, position int32, concept string) *Group {
 	this := Group{}
 	this.Id = id
-	this.SourceIri = sourceIri
 	this.Name = name
 	this.Position = position
 	this.Concept = concept
@@ -79,30 +77,6 @@ func (o *Group) GetIdOk() (*string, bool) {
 // SetId sets field value
 func (o *Group) SetId(v string) {
 	o.Id = v
-}
-
-// GetSourceIri returns the SourceIri field value
-func (o *Group) GetSourceIri() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.SourceIri
-}
-
-// GetSourceIriOk returns a tuple with the SourceIri field value
-// and a boolean to check if the value has been set.
-func (o *Group) GetSourceIriOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return &o.SourceIri, true
-}
-
-// SetSourceIri sets field value
-func (o *Group) SetSourceIri(v string) {
-	o.SourceIri = v
 }
 
 // GetName returns the Name field value
@@ -403,7 +377,6 @@ func (o Group) MarshalJSON() ([]byte, error) {
 func (o Group) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["id"] = o.Id
-	toSerialize["source_iri"] = o.SourceIri
 	toSerialize["name"] = o.Name
 	if o.Description.IsSet() {
 		toSerialize["description"] = o.Description.Get()
@@ -431,7 +404,6 @@ func (o *Group) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"id",
-		"source_iri",
 		"name",
 		"position",
 		"concept",

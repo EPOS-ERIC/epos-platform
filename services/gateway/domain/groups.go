@@ -2,7 +2,6 @@ package domain
 
 type Group struct {
 	ID          string
-	SourceIRI   string
 	Name        string
 	Description *string
 	Label       *string
@@ -17,12 +16,10 @@ type Category struct {
 	ID               string
 	GroupID          string
 	ParentCategoryID *string
-	SourceIRI        string
 	Name             string
 }
 
 type CreateGroupInput struct {
-	SourceIRI   *string
 	Name        string
 	Description *string
 	Label       *string
@@ -45,7 +42,6 @@ type ReplaceGroupInput struct {
 }
 
 type CreateCategoryInput struct {
-	SourceIRI        *string
 	Name             string
 	ParentCategoryID *string
 }
