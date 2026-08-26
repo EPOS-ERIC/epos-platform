@@ -6,7 +6,6 @@ Monorepo for EPOS platform services, shared packages, and local development tool
 
 The repository currently contains five active backend services used in local development:
 
-- `services/metadata-lifecycle` (Kotlin): metadata lifecycle and versioning APIs backed by Neo4j.
 - `services/gateway` (Go): API gateway/aggregation layer.
 - `services/backoffice` (Go): users, groups, memberships, authorization, and backoffice APIs.
 - `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
@@ -24,7 +23,6 @@ flowchart TB
 
     subgraph EDGE[Published host ports]
         GWE[gateway-service :32000]
-        MLE[metadata-lifecycle-service :8080]
         BOE[backoffice-service :33000]
         DRE[data-retriever-service :8100]
         N4J[neo4j :7474/7687]
@@ -34,7 +32,6 @@ flowchart TB
 
     subgraph NET["epos-network - docker compose"]
         GW[gateway-service]
-        ML[metadata-lifecycle-service]
         BO[backoffice-service]
         DR[data-retriever-service]
 
@@ -104,7 +101,6 @@ Shared Go modules live in `packages/go/` and are reused across services.
 |  |- gateway/
 |  |- backoffice/
 |  |- data-retriever/
-|  `- metadata-lifecycle/
 |- packages/
 |  |- go/
 |  |- shacl/
@@ -132,8 +128,6 @@ make up KUBE_CONTEXT=kind-epos
 
 Common local endpoints:
 
-- Metadata Lifecycle API: `http://localhost:8080`
-- Metadata Lifecycle Swagger: `http://localhost:8080/swagger`
 - Gateway API: `http://localhost:32000`
 - Backoffice API: `http://localhost:33000`
 - Data Retriever API: `http://localhost:8100`
@@ -179,11 +173,9 @@ make helm-uninstall
 The platform Helm chart lives under `helm/epos-platform` and deploys the backend services plus optional development datastores:
 
 - `gateway`
-- `metadata-lifecycle`
 - `data-retriever`
 - `oss-aai`
 - optional PostgreSQL instance for `data-retriever`
-- optional Neo4j instance for `metadata-lifecycle`
 
 Validate the chart locally:
 
@@ -251,7 +243,6 @@ Pipeline behavior:
 Published Docker image names:
 
 - `ghcr.io/epos-eric/epos-platform/gateway`
-- `ghcr.io/epos-eric/epos-platform/metadata-lifecycle`
 - `ghcr.io/epos-eric/epos-platform/data-retriever`
 
 Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Schemathesis tests against the gateway OpenAPI contract.
@@ -260,7 +251,6 @@ TODO: Correctly implement Hurl tests under `tests/hurl/`, then restore automatic
 
 ## Service documentation
 
-- Metadata Lifecycle: `services/metadata-lifecycle/README.md`
 - Gateway: `services/gateway/README.md`
 - Backoffice: `services/backoffice/README.md`
 - Data Retriever: `services/data-retriever/README.md`

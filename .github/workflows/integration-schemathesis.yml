@@ -5,7 +5,6 @@ on:
     paths:
       - "tests/schemathesis/**"
       - "services/gateway/**"
-      - "services/metadata-lifecycle/**"
       - "services/backoffice/**"
       - "services/oss-aai-service/**"
       - "packages/go/logging/**"
@@ -29,7 +28,6 @@ on:
     paths:
       - "tests/schemathesis/**"
       - "services/gateway/**"
-      - "services/metadata-lifecycle/**"
       - "services/backoffice/**"
       - "services/oss-aai-service/**"
       - "packages/go/logging/**"
@@ -55,7 +53,7 @@ jobs:
     secrets: inherit
     with:
       job-name: Schemathesis tests
-      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-backoffice-dev:local -f services/backoffice/Dockerfile.dev . && docker build -t epos-metadata-lifecycle-dev:local -f services/metadata-lifecycle/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
+      build-dev-images-command: docker build -t epos-gateway-dev:local -f services/gateway/Dockerfile.dev . && docker build -t epos-backoffice-dev:local -f services/backoffice/Dockerfile.dev . && docker build -t epos-oss-aai-dev:local -f services/oss-aai-service/Dockerfile.dev .
       compose-up-command: docker compose -f docker/compose.dev.yaml up -d --wait gateway-service backoffice-service oss-aai-service
       populate-command: make populate-metadatone
       wait-url: http://localhost:32000/health

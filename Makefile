@@ -29,14 +29,12 @@ test:
 	$(MAKE) -C services/gateway test
 	$(MAKE) -C services/backoffice test
 	$(MAKE) -C services/data-retriever test
-	$(MAKE) -C services/metadata-lifecycle test
 	$(MAKE) -C services/oss-aai-service test
 
 fmt:
 	$(MAKE) -C apps/platform fmt
 	$(MAKE) -C services/gateway fmt
 	$(MAKE) -C services/data-retriever fmt
-	$(MAKE) -C services/metadata-lifecycle fmt
 	$(MAKE) -C services/oss-aai-service fmt
 	$(MAKE) -C services/backoffice fmt
 
@@ -44,7 +42,6 @@ lint:
 	$(MAKE) -C apps/platform lint
 	$(MAKE) -C services/gateway lint
 	$(MAKE) -C services/data-retriever lint
-	$(MAKE) -C services/metadata-lifecycle lint
 	$(MAKE) -C services/oss-aai-service lint
 	$(MAKE) -C services/backoffice lint
 
