@@ -94,4 +94,11 @@ test-hurl:
 		--variable baseUrl=http://host.docker.internal:32000 \
 		--test /tests
 
-.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis
+get-dev-token:
+	curl -s -X POST http://localhost:8110/oauth/token \
+		-u local-dev-client:dev-secret \
+		-d grant_type=password \
+		-d username=admin@admin.org \
+		-d password=adminadmin
+
+.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis get-dev-token

@@ -35,12 +35,4 @@ generate: clean
 clean:
 	rm -rf $(BIN) $(METADATA_LIFECYCLE_CLIENT_GEN_DIR)
 
-get-token:
-	curl -s -X POST http://localhost:8110/oauth/token \
-		-u local-dev-client:dev-secret \
-		-d grant_type=password \
-		-d username=admin@admin.org \
-		-d password=adminadmin
-
-
 .PHONY: build build-docker generate test fmt lint clean
