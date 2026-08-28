@@ -3,7 +3,6 @@ package discovery
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -14,11 +13,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalid = errors.New("invalid discovery search")
-	ErrDenied  = errors.New("discovery preview requires authentication")
 )
 
 type Repository interface {
@@ -77,7 +71,7 @@ func New(
 func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
 	for _, status := range filter.VersioningStatuses {
 		if status != domain.Published && actor == nil {
-			return nil, fmt.Errorf("versioningStatus requires authentication: %w", ErrDenied)
+			return nil, fmt.Errorf("versioningStatus requires authentication: %w", domain.ErrDiscoveryDenied)
 		}
 	}
 
@@ -130,7 +124,7 @@ func (s *Service) canRead(ctx context.Context, actor *domain.Actor, candidate do
 	case domain.SoftwareSourceCode:
 		result, err = s.authorizer.CanReadSoftwareSourceCodeVersion(ctx, actorID, candidate.ResourceID, candidate.VersionID)
 	default:
-		return false, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, ErrInvalid)
+		return false, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, domain.ErrInvalidDiscovery)
 	}
 	if err != nil {
 		return false, fmt.Errorf("authorize discovery item: %w", err)

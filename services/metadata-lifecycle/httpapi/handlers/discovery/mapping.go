@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	discoveryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/twpayne/go-geom"
@@ -59,13 +58,13 @@ func parseSpatialFilter(value string) (*string, error) {
 	}
 	geometry, err := wkt.Unmarshal(value)
 	if err != nil {
-		return nil, fmt.Errorf("invalid spatialFilter: %w", discoveryservice.ErrInvalid)
+		return nil, fmt.Errorf("invalid spatialFilter: %w", domain.ErrInvalidDiscovery)
 	}
 	switch geometry.(type) {
 	case *geom.Point, *geom.Polygon:
 		return &value, nil
 	default:
-		return nil, fmt.Errorf("spatialFilter must be POINT or POLYGON: %w", discoveryservice.ErrInvalid)
+		return nil, fmt.Errorf("spatialFilter must be POINT or POLYGON: %w", domain.ErrInvalidDiscovery)
 	}
 }
 
@@ -77,7 +76,7 @@ func parseStatuses(values []string) ([]domain.Status, error) {
 		switch status {
 		case domain.Published, domain.Draft, domain.Submitted, domain.Archived, domain.Rejected:
 		default:
-			return nil, fmt.Errorf("unsupported versioningStatus %q: %w", value, discoveryservice.ErrInvalid)
+			return nil, fmt.Errorf("unsupported versioningStatus %q: %w", value, domain.ErrInvalidDiscovery)
 		}
 		if !seen[status] {
 			result = append(result, status)
@@ -101,7 +100,7 @@ func parseTypes(values []string) ([]domain.ResourceType, error) {
 		switch resourceType {
 		case domain.Dataset, domain.SoftwareApplication, domain.SoftwareSourceCode:
 		default:
-			return nil, fmt.Errorf("unsupported resource type %q: %w", value, discoveryservice.ErrInvalid)
+			return nil, fmt.Errorf("unsupported resource type %q: %w", value, domain.ErrInvalidDiscovery)
 		}
 		if !seen[resourceType] {
 			result = append(result, resourceType)
@@ -119,7 +118,7 @@ func parseUUIDs(values []string) ([]uuid.UUID, error) {
 	for _, value := range values {
 		id, err := uuid.Parse(strings.TrimSpace(value))
 		if err != nil {
-			return nil, fmt.Errorf("invalid UUID %q: %w", value, discoveryservice.ErrInvalid)
+			return nil, fmt.Errorf("invalid UUID %q: %w", value, domain.ErrInvalidDiscovery)
 		}
 		result = append(result, id)
 	}
@@ -134,7 +133,7 @@ func parseTimes(values url.Values) (*time.Time, *time.Time, error) {
 		}
 		parsed, err := time.Parse(time.RFC3339, value)
 		if err != nil {
-			return nil, fmt.Errorf("invalid %s: %w", key, discoveryservice.ErrInvalid)
+			return nil, fmt.Errorf("invalid %s: %w", key, domain.ErrInvalidDiscovery)
 		}
 		return &parsed, nil
 	}

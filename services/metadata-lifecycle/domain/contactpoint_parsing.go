@@ -1,13 +1,10 @@
 package domain
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
 )
-
-var ErrInvalidContactPoint = errors.New("invalid contact point")
 
 // NewContactPointInput validates and normalizes editable contact-point fields.
 func NewContactPointInput(value ContactPointInput) (ContactPointInput, error) {

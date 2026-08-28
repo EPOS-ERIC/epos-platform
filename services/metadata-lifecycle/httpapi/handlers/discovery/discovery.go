@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 )
@@ -40,10 +39,10 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	items, err := h.service.Search(r.Context(), actor, filter)
 	if err != nil {
 		switch {
-		case errors.Is(err, discovery.ErrInvalid):
+		case errors.Is(err, domain.ErrInvalidDiscovery):
 			log.DebugContext(r.Context(), "discovery search invalid", "error", err)
 			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", err.Error())
-		case errors.Is(err, discovery.ErrDenied):
+		case errors.Is(err, domain.ErrDiscoveryDenied):
 			log.DebugContext(r.Context(), "discovery search denied", "error", err)
 			transport.WriteProblem(w, http.StatusUnauthorized, "unauthorized", "authentication is required for non-published discovery results")
 		default:

@@ -1,13 +1,10 @@
 package domain
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
 )
-
-var ErrInvalidCategory = errors.New("invalid category")
 
 // NewCategoryInput validates and normalizes editable category fields.
 func NewCategoryInput(value CategoryInput) (CategoryInput, error) {

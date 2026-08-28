@@ -8,7 +8,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -45,7 +44,7 @@ func (r *Repo) Get(ctx context.Context, id uuid.UUID) (domain.Group, error) {
 	group, err := r.GetGroupByID(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		// TODO: move sentinel errors to the domain package instead of the service
-		return domain.Group{}, groupservice.ErrNotFound
+		return domain.Group{}, domain.ErrGroupNotFound
 	}
 	if err != nil {
 		return domain.Group{}, fmt.Errorf("get group by id: %w", err)
@@ -65,7 +64,7 @@ func (r *Repo) Create(ctx context.Context, input domain.GroupInput) (domain.Grou
 	if err != nil {
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
-			return domain.Group{}, groupservice.ErrConflict
+			return domain.Group{}, domain.ErrGroupConflict
 		}
 
 		return domain.Group{}, fmt.Errorf("insert group: %w", err)
@@ -82,12 +81,12 @@ func (r *Repo) Create(ctx context.Context, input domain.GroupInput) (domain.Grou
 func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.GroupInput) (domain.Group, error) {
 	row, err := r.ReplaceGroup(ctx, toReplaceGroupParams(id, input))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Group{}, groupservice.ErrNotFound
+		return domain.Group{}, domain.ErrGroupNotFound
 	}
 	if err != nil {
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
-			return domain.Group{}, groupservice.ErrConflict
+			return domain.Group{}, domain.ErrGroupConflict
 		}
 
 		return domain.Group{}, fmt.Errorf("update group: %w", err)
@@ -111,9 +110,9 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	case "DELETED":
 		return nil
 	case "NOT_FOUND":
-		return groupservice.ErrNotFound
+		return domain.ErrGroupNotFound
 	case "CONFLICT":
-		return groupservice.ErrConflict
+		return domain.ErrGroupConflict
 	default:
 		return fmt.Errorf("unexpected group deletion outcome %q", outcome)
 	}

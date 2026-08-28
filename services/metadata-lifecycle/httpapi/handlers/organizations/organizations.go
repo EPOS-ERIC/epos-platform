@@ -9,7 +9,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
-	organizationservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -140,13 +139,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
-	case errors.Is(err, organizationservice.ErrInvalid):
+	case errors.Is(err, domain.ErrInvalidOrganization):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization request")
-	case errors.Is(err, organizationservice.ErrForbidden):
+	case errors.Is(err, domain.ErrOrganizationForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization operation is not permitted")
-	case errors.Is(err, organizationservice.ErrConflict):
+	case errors.Is(err, domain.ErrOrganizationConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "organization already exists")
-	case errors.Is(err, organizationservice.ErrNotFound):
+	case errors.Is(err, domain.ErrOrganizationNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "organization not found")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)

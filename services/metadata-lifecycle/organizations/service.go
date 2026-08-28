@@ -3,19 +3,11 @@ package organizations
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalid   = errors.New("invalid organization")
-	ErrNotFound  = errors.New("organization not found")
-	ErrForbidden = errors.New("organization operation forbidden")
-	ErrConflict  = errors.New("organization conflict")
 )
 
 type Store interface {
@@ -45,7 +37,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 		return domain.Organization{}, fmt.Errorf("authorize organization creation: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Organization{}, ErrForbidden
+		return domain.Organization{}, domain.ErrOrganizationForbidden
 	}
 
 	organization, err := s.store.Create(ctx, input)
@@ -58,7 +50,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 
 func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.OrganizationInput) (domain.Organization, error) {
 	if id == uuid.Nil {
-		return domain.Organization{}, ErrInvalid
+		return domain.Organization{}, domain.ErrInvalidOrganization
 	}
 
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
@@ -66,7 +58,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 		return domain.Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Organization{}, ErrForbidden
+		return domain.Organization{}, domain.ErrOrganizationForbidden
 	}
 
 	organization, err := s.store.Replace(ctx, id, input)
@@ -78,7 +70,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 
 func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
 	if id == uuid.Nil {
-		return ErrInvalid
+		return domain.ErrInvalidOrganization
 	}
 
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
@@ -86,7 +78,7 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID
 		return fmt.Errorf("authorize organization deletion: %w", err)
 	}
 	if !allowed.Allowed {
-		return ErrForbidden
+		return domain.ErrOrganizationForbidden
 	}
 
 	if err := s.store.Delete(ctx, id); err != nil {
@@ -107,7 +99,7 @@ func (s *Service) List(ctx context.Context) ([]domain.Organization, error) {
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (domain.Organization, error) {
 	if id == uuid.Nil {
-		return domain.Organization{}, ErrInvalid
+		return domain.Organization{}, domain.ErrInvalidOrganization
 	}
 
 	organization, err := s.store.Get(ctx, id)

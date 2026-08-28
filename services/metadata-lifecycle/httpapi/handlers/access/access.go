@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
@@ -360,13 +359,13 @@ func permissionPath(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
-	case errors.Is(err, accessservice.ErrInvalid):
+	case errors.Is(err, domain.ErrInvalidAccess):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group access request")
-	case errors.Is(err, accessservice.ErrForbidden):
+	case errors.Is(err, domain.ErrAccessForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "group access operation is not permitted")
-	case errors.Is(err, accessservice.ErrNotFound):
+	case errors.Is(err, domain.ErrAccessNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "not_found", "group or user not found")
-	case errors.Is(err, accessservice.ErrConflict):
+	case errors.Is(err, domain.ErrAccessConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "group membership request conflicts with existing membership")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)

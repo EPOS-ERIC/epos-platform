@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	categoryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
@@ -172,13 +171,13 @@ func categoryPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, uuid.UUID,
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
-	case errors.Is(err, categoryservice.ErrInvalid):
+	case errors.Is(err, domain.ErrInvalidCategory):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category request")
-	case errors.Is(err, categoryservice.ErrForbidden):
+	case errors.Is(err, domain.ErrCategoryForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
-	case errors.Is(err, categoryservice.ErrNotFound):
+	case errors.Is(err, domain.ErrCategoryNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
-	case errors.Is(err, categoryservice.ErrConflict):
+	case errors.Is(err, domain.ErrCategoryConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "category conflicts with existing category")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)

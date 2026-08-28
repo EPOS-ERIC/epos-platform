@@ -1,14 +1,11 @@
 package domain
 
 import (
-	"errors"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 )
-
-var ErrInvalidOrganization = errors.New("invalid organization")
 
 // NewOrganizationInput validates and normalizes editable organization fields.
 func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {

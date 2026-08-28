@@ -1,13 +1,10 @@
 package domain
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/google/uuid"
 )
-
-var ErrInvalidGroup = errors.New("invalid group")
 
 // NewGroupInput validates and normalizes editable group fields.
 func NewGroupInput(value GroupInput) (GroupInput, error) {

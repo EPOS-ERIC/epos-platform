@@ -3,19 +3,11 @@ package categories
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalid   = errors.New("invalid category")
-	ErrNotFound  = errors.New("category not found")
-	ErrForbidden = errors.New("category operation forbidden")
-	ErrConflict  = errors.New("category conflict")
 )
 
 type Store interface {
@@ -41,7 +33,7 @@ func New(store Store, authorizer Authorizer) *Service {
 
 func (s *Service) List(ctx context.Context, groupID uuid.UUID) ([]domain.Category, error) {
 	if groupID == uuid.Nil {
-		return nil, ErrInvalid
+		return nil, domain.ErrInvalidCategory
 	}
 
 	items, err := s.store.List(ctx, groupID)
@@ -54,7 +46,7 @@ func (s *Service) List(ctx context.Context, groupID uuid.UUID) ([]domain.Categor
 
 func (s *Service) Get(ctx context.Context, groupID, categoryID uuid.UUID) (domain.Category, error) {
 	if groupID == uuid.Nil || categoryID == uuid.Nil {
-		return domain.Category{}, ErrInvalid
+		return domain.Category{}, domain.ErrInvalidCategory
 	}
 
 	item, err := s.store.Get(ctx, groupID, categoryID)
@@ -67,7 +59,7 @@ func (s *Service) Get(ctx context.Context, groupID, categoryID uuid.UUID) (domai
 
 func (s *Service) Create(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
 	if groupID == uuid.Nil {
-		return domain.Category{}, ErrInvalid
+		return domain.Category{}, domain.ErrInvalidCategory
 	}
 
 	if err := s.authorize(ctx, actorID, groupID); err != nil {
@@ -84,7 +76,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, groupID uuid
 
 func (s *Service) Replace(ctx context.Context, actorID domain.Actor, groupID, categoryID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
 	if groupID == uuid.Nil || categoryID == uuid.Nil {
-		return domain.Category{}, ErrInvalid
+		return domain.Category{}, domain.ErrInvalidCategory
 	}
 
 	if err := s.authorize(ctx, actorID, groupID); err != nil {
@@ -101,7 +93,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, groupID, ca
 
 func (s *Service) Delete(ctx context.Context, actorID domain.Actor, groupID, categoryID uuid.UUID) error {
 	if groupID == uuid.Nil || categoryID == uuid.Nil {
-		return ErrInvalid
+		return domain.ErrInvalidCategory
 	}
 
 	if err := s.authorize(ctx, actorID, groupID); err != nil {
@@ -121,7 +113,7 @@ func (s *Service) authorize(ctx context.Context, actorID domain.Actor, groupID u
 		return fmt.Errorf("authorize category management: %w", err)
 	}
 	if !allowed.Allowed {
-		return ErrForbidden
+		return domain.ErrCategoryForbidden
 	}
 	return nil
 }

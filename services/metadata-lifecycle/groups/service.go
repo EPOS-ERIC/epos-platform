@@ -3,19 +3,11 @@ package groups
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-)
-
-var (
-	ErrInvalid   = errors.New("invalid group")
-	ErrNotFound  = errors.New("group not found")
-	ErrForbidden = errors.New("action forbidden on group")
-	ErrConflict  = errors.New("group operation conflict")
 )
 
 type Store interface {
@@ -46,7 +38,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 		return domain.Group{}, fmt.Errorf("authorize group creation: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Group{}, ErrForbidden
+		return domain.Group{}, domain.ErrGroupForbidden
 	}
 
 	group, err := s.store.Create(ctx, input)
@@ -59,7 +51,7 @@ func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain
 
 func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.GroupInput) (domain.Group, error) {
 	if id == uuid.Nil {
-		return domain.Group{}, ErrInvalid
+		return domain.Group{}, domain.ErrInvalidGroup
 	}
 
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "category_scheme.manage")
@@ -67,7 +59,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 		return domain.Group{}, fmt.Errorf("authorize group replacement: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Group{}, ErrForbidden
+		return domain.Group{}, domain.ErrGroupForbidden
 	}
 
 	group, err := s.store.Replace(ctx, id, input)
@@ -80,7 +72,7 @@ func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUI
 
 func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
 	if id == uuid.Nil {
-		return ErrInvalid
+		return domain.ErrInvalidGroup
 	}
 
 	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
@@ -88,7 +80,7 @@ func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID
 		return fmt.Errorf("authorize group deletion: %w", err)
 	}
 	if !allowed.Allowed {
-		return ErrForbidden
+		return domain.ErrGroupForbidden
 	}
 
 	if err := s.store.Delete(ctx, id); err != nil {
@@ -109,7 +101,7 @@ func (s *Service) List(ctx context.Context) ([]domain.Group, error) {
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID) (domain.Group, error) {
 	if id == uuid.Nil {
-		return domain.Group{}, ErrInvalid
+		return domain.Group{}, domain.ErrInvalidGroup
 	}
 
 	group, err := s.store.Get(ctx, id)

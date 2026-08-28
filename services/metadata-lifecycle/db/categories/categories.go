@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	categoryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -26,7 +25,7 @@ func New(db *pgxpool.Pool) *Repo {
 func (r *Repo) List(ctx context.Context, groupID uuid.UUID) ([]domain.Category, error) {
 	_, err := r.GetGroupByID(ctx, groupID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, categoryservice.ErrNotFound
+		return nil, domain.ErrCategoryNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("check group: %w", err)
@@ -55,7 +54,7 @@ func (r *Repo) Get(ctx context.Context, groupID, categoryID uuid.UUID) (domain.C
 		ID:      categoryID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Category{}, categoryservice.ErrNotFound
+		return domain.Category{}, domain.ErrCategoryNotFound
 	}
 	if err != nil {
 		return domain.Category{}, fmt.Errorf("get group category: %w", err)
@@ -76,11 +75,11 @@ func (r *Repo) Create(ctx context.Context, groupID uuid.UUID, input domain.Categ
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
-				return domain.Category{}, categoryservice.ErrConflict
+				return domain.Category{}, domain.ErrCategoryConflict
 			case "23503":
-				return domain.Category{}, categoryservice.ErrNotFound
+				return domain.Category{}, domain.ErrCategoryNotFound
 			case "P0001":
-				return domain.Category{}, categoryservice.ErrInvalid
+				return domain.Category{}, domain.ErrInvalidCategory
 			}
 		}
 		return domain.Category{}, fmt.Errorf("insert category: %w", err)
@@ -97,17 +96,17 @@ func (r *Repo) Create(ctx context.Context, groupID uuid.UUID, input domain.Categ
 func (r *Repo) Replace(ctx context.Context, groupID, categoryID uuid.UUID, input domain.CategoryInput) (domain.Category, error) {
 	row, err := r.ReplaceGroupCategory(ctx, toReplaceCategoryParams(groupID, categoryID, input))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Category{}, categoryservice.ErrNotFound
+		return domain.Category{}, domain.ErrCategoryNotFound
 	}
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505":
-				return domain.Category{}, categoryservice.ErrConflict
+				return domain.Category{}, domain.ErrCategoryConflict
 			case "23503":
-				return domain.Category{}, categoryservice.ErrNotFound
+				return domain.Category{}, domain.ErrCategoryNotFound
 			case "23514", "P0001":
-				return domain.Category{}, categoryservice.ErrInvalid
+				return domain.Category{}, domain.ErrInvalidCategory
 			}
 		}
 		return domain.Category{}, fmt.Errorf("update category: %w", err)
@@ -130,7 +129,7 @@ func (r *Repo) Delete(ctx context.Context, groupID, categoryID uuid.UUID) error 
 		return fmt.Errorf("delete category row: %w", err)
 	}
 	if rows == 0 {
-		return categoryservice.ErrNotFound
+		return domain.ErrCategoryNotFound
 	}
 
 	return nil

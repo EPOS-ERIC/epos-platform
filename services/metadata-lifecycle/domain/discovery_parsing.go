@@ -1,14 +1,11 @@
 package domain
 
 import (
-	"errors"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 )
-
-var ErrInvalidDiscovery = errors.New("invalid discovery")
 
 // NewDiscoveryFilter validates and normalizes discovery search criteria.
 func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {

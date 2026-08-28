@@ -1,14 +1,11 @@
 package domain
 
 import (
-	"errors"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
 )
-
-var ErrInvalidAccess = errors.New("invalid group access")
 
 // NewGroupRole validates and normalizes a role path value.
 func NewGroupRole(value string) (GroupRole, error) {

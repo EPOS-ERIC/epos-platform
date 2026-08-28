@@ -8,7 +8,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -149,13 +148,13 @@ func groupIDPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
-	case errors.Is(err, groupservice.ErrInvalid):
+	case errors.Is(err, domain.ErrInvalidGroup):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group request")
-	case errors.Is(err, groupservice.ErrForbidden):
+	case errors.Is(err, domain.ErrGroupForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "group operation is not permitted")
-	case errors.Is(err, groupservice.ErrConflict):
+	case errors.Is(err, domain.ErrGroupConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "group operation conflicts with existing data")
-	case errors.Is(err, groupservice.ErrNotFound):
+	case errors.Is(err, domain.ErrGroupNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)

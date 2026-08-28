@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
@@ -153,13 +152,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
-	case errors.Is(err, contactpointservice.ErrInvalid):
+	case errors.Is(err, domain.ErrInvalidContactPoint):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point request")
-	case errors.Is(err, contactpointservice.ErrForbidden):
+	case errors.Is(err, domain.ErrContactPointForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "contact point operation is not permitted")
-	case errors.Is(err, contactpointservice.ErrConflict):
+	case errors.Is(err, domain.ErrContactPointConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "contact point already exists")
-	case errors.Is(err, contactpointservice.ErrNotFound):
+	case errors.Is(err, domain.ErrContactPointNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "contact_point_not_found", "contact point not found")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
