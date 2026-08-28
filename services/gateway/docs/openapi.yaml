@@ -1986,6 +1986,11 @@ components:
     # Shared enums
     # -------------------------------------------------------------------------
 
+    NonBlankString:
+      type: string
+      minLength: 1
+      pattern: '[^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
+
     DiscoveryResourceType:
       type: string
       description: Resource type identifier used in discovery results.
@@ -2015,7 +2020,7 @@ components:
       additionalProperties: false
       required: [title]
       properties:
-        title: { type: string, minLength: 1, pattern: '\S' }
+        title: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string }
         keywords: { type: string }
         accrual_periodicity: { type: string, nullable: true }
@@ -2056,7 +2061,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string }
         keywords: { type: string }
         license: { type: string, nullable: true }
@@ -2091,7 +2096,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string }
         keywords: { type: string }
         repository: { type: string, format: uri }
@@ -2128,16 +2133,16 @@ components:
       additionalProperties: false
       required: [type, value]
       properties:
-        type: { type: string, minLength: 1, pattern: '\S' }
-        value: { type: string, minLength: 1, pattern: '\S' }
+        type: { $ref: "#/components/schemas/NonBlankString" }
+        value: { $ref: "#/components/schemas/NonBlankString" }
 
     IdentifierDraft:
       type: object
       additionalProperties: false
       required: [type, value]
       properties:
-        type: { type: string, minLength: 1, pattern: '\S' }
-        value: { type: string, minLength: 1, pattern: '\S' }
+        type: { $ref: "#/components/schemas/NonBlankString" }
+        value: { $ref: "#/components/schemas/NonBlankString" }
 
     DistributionDraft:
       oneOf:
@@ -2189,13 +2194,13 @@ components:
       additionalProperties: false
       required: [name, template_url, format]
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string }
-        template_url: { type: string, minLength: 1, pattern: '\S' }
+        template_url: { $ref: "#/components/schemas/NonBlankString" }
         parameters:
           type: array
           items: { $ref: "#/components/schemas/ParameterDraft" }
-        format: { type: string, minLength: 1, pattern: '\S' }
+        format: { $ref: "#/components/schemas/NonBlankString" }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
@@ -2386,8 +2391,8 @@ components:
       additionalProperties: false
       required: [url, format]
       properties:
-        url: { type: string, minLength: 1, pattern: '\S' }
-        format: { type: string, minLength: 1, pattern: '\S' }
+        url: { $ref: "#/components/schemas/NonBlankString" }
+        format: { $ref: "#/components/schemas/NonBlankString" }
 
     Documentation:
       type: object
@@ -2396,7 +2401,7 @@ components:
       properties:
         title: { type: string, nullable: true }
         description: { type: string, nullable: true }
-        uri: { type: string, minLength: 1, pattern: '\S' }
+        uri: { $ref: "#/components/schemas/NonBlankString" }
 
     SpatialCoverage:
       type: object
@@ -2512,7 +2517,7 @@ components:
       required: [note]
       additionalProperties: false
       properties:
-        note: { type: string, minLength: 1, pattern: '\S' }
+        note: { $ref: "#/components/schemas/NonBlankString" }
 
     ResourceVersion:
       type: object
@@ -2882,9 +2887,7 @@ components:
       additionalProperties: false
       properties:
         reason:
-          type: string
-          minLength: 1
-          pattern: '\S'
+          $ref: "#/components/schemas/NonBlankString"
 
     MembershipRole:
       type: string
@@ -2959,21 +2962,21 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         parent_category_id: { type: string, format: uuid, nullable: true }
     ReplaceCategoryRequest:
       type: object
       required: [name, parent_category_id]
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         parent_category_id: { type: string, format: uuid, nullable: true }
     CreateGroupRequest:
       type: object
       required: [name, concept]
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
         label: { type: string, nullable: true }
         logo: { type: string, nullable: true }
@@ -2986,7 +2989,7 @@ components:
       required: [name, concept]
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         description: { type: string, nullable: true }
         label: { type: string, nullable: true }
         logo: { type: string, nullable: true }
@@ -3006,15 +3009,15 @@ components:
       required: [email, role]
       additionalProperties: false
       properties:
-        email: { type: string, minLength: 1, pattern: '\S' }
-        role: { type: string, minLength: 1, pattern: '\S' }
+        email: { $ref: "#/components/schemas/NonBlankString" }
+        role: { $ref: "#/components/schemas/NonBlankString" }
     ReplaceContactPointRequest:
       type: object
       required: [email, role]
       additionalProperties: false
       properties:
-        email: { type: string, minLength: 1, pattern: '\S' }
-        role: { type: string, minLength: 1, pattern: '\S' }
+        email: { $ref: "#/components/schemas/NonBlankString" }
+        role: { $ref: "#/components/schemas/NonBlankString" }
     OrganizationAddress:
       type: object
       required: [street, locality, postal_code, country]
@@ -3036,8 +3039,8 @@ components:
       required: [type, value]
       additionalProperties: false
       properties:
-        type: { type: string, minLength: 1, pattern: '\S' }
-        value: { type: string, minLength: 1, pattern: '\S' }
+        type: { $ref: "#/components/schemas/NonBlankString" }
+        value: { $ref: "#/components/schemas/NonBlankString" }
     CanonicalOrganization:
       type: object
       required: [id, name, address, identifiers, parents, contact_point_ids]
@@ -3063,7 +3066,7 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
         logo_url: { type: string, nullable: true }
         page_url: { type: string, nullable: true }
@@ -3094,7 +3097,7 @@ components:
         ]
       additionalProperties: false
       properties:
-        name: { type: string, minLength: 1, pattern: '\S' }
+        name: { $ref: "#/components/schemas/NonBlankString" }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
         logo_url: { type: string, nullable: true }
         page_url: { type: string, nullable: true }
