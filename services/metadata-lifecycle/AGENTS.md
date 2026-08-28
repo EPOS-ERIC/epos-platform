@@ -21,10 +21,15 @@
 ## Domain And Mapping
 
 - PUT only, no PATCH. Required field is `T`, nullable scalar is `*T`, collection is `[]T`; absent and `null` both decode to `nil` and mean clear. Do not use `optionalString`, `Field[T]`, or `*[]T`.
-- `XInput` holds caller-supplied fields, `X` is `XInput` plus system IDs. `NewXInput` owns all input validation; `NewX(id, XInput, children…)` delegates to `NewXInput` and child constructors. Pass `XInput` as a struct, not flattened params. Keep fields exported and re-validate in `NewX` intentionally.
-- Split child `ChildInput`/`Child` only when a second caller needs it. Do not embed `XInput` in `X` unless names and types are an identical subset.
-- Use one request type for create and replace PUT when possible; define required DTO fields as `T` and validate via `NewXInput`, no pre-check in mapping. Service and DB trust validated input; DB reads reassemble through `NewX`.
-- Per package: `types.go` plus `mapping.go` plus logic/handler/repo. `domain/` is `*_types.go` plus `*_parsing.go`; handler `mapping.go` is DTO to domain, repo `mapping.go` is `sqlc` to domain including `toCreate*Params` and `toDomain*`. Prefer generic `mapSlice` over per-type loops.
+- `XInput` holds caller-supplied fields, `X` is `XInput` plus system IDs. `NewXInput` owns input validation and normalization; `NewX` revalidates and canonicalizes persisted values, including reads. Pass input as a struct. Services and DB trust validated input.
+- Keep transport, domain, and persistence types separate and map explicitly at boundaries. Use one request type for create and replace when shapes match. Generate system IDs in storage.
+- Split child input and persisted child types only when another caller needs the distinction.
+
+## Actors And Errors
+
+- Use typed `domain.Actor`. Parse at transport boundary with `NewActor`; services trust parsed actors and skip trim/empty checks.
+- Optional actor: absent is allowed, malformed header writes `400`; required actor writes `401` when absent. Convert `domain.Actor` to `string` at adapter boundaries when string required.
+- Handler package use shared service-error mapping function. Match wrapped sentinels with `errors.Is`, keep status/code pairs consistent.
 
 ## Workflow
 
