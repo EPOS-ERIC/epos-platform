@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	"github.com/google/uuid"
 )
 
 func toDomainOrganizationInput(value organizationRequest) (domain.OrganizationInput, error) {
@@ -47,6 +48,11 @@ func toResponse(value domain.Organization) organizationResponse {
 	for _, item := range value.Identifiers {
 		identifiers = append(identifiers, identifier(item))
 	}
+	// normalize to empty lists when nil
+	parents := make([]uuid.UUID, len(value.Parents))
+	copy(parents, value.Parents)
+	contactPointIDs := make([]uuid.UUID, len(value.ContactPoints))
+	copy(contactPointIDs, value.ContactPoints)
 
 	return organizationResponse{
 		ID:   value.ID,
@@ -62,7 +68,7 @@ func toResponse(value domain.Organization) organizationResponse {
 		Email:                 value.Email,
 		LEICode:               value.LEICode,
 		Identifiers:           identifiers,
-		ParentOrganizationIDs: value.Parents,
-		ContactPointIDs:       value.ContactPoints,
+		ParentOrganizationIDs: parents,
+		ContactPointIDs:       contactPointIDs,
 	}
 }
