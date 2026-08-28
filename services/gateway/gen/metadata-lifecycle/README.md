@@ -110,7 +110,7 @@ Class | Method | HTTP request | Description
 *ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/groups/{group_id}/resources | Create resource draft
 *ResourcesAPI* | [**CreateResourceDraftFromArchive**](docs/ResourcesAPI.md#createresourcedraftfromarchive) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-archive | Create resource draft from archive
 *ResourcesAPI* | [**CreateResourceDraftFromPublication**](docs/ResourcesAPI.md#createresourcedraftfrompublication) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-publication | Create resource draft from publication
-*ResourcesAPI* | [**DiscardResourceDraft**](docs/ResourcesAPI.md#discardresourcedraft) | **Delete** /api/v1/resources/{resource_id}/versions/{version_id}/draft | Discard resource draft
+*ResourcesAPI* | [**DiscardResourceDraft**](docs/ResourcesAPI.md#discardresourcedraft) | **Delete** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft | Discard resource draft
 *ResourcesAPI* | [**GetResourceVersion**](docs/ResourcesAPI.md#getresourceversion) | **Get** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id} | Read resource version
 *ResourcesAPI* | [**PublishResource**](docs/ResourcesAPI.md#publishresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/publish | Publish resource submission
 *ResourcesAPI* | [**RejectResource**](docs/ResourcesAPI.md#rejectresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reject | Reject resource submission

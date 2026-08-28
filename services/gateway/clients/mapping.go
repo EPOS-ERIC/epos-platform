@@ -70,7 +70,9 @@ func toClientDatasetDraftMetadata(metadata domain.DatasetDraftMetadata) client.D
 	setIfPresent(metadata.SourceCreated, result.SetCreated)
 	setIfPresent(metadata.SourceUpdated, result.SetUpdated)
 
-	result.SetId(metadata.ID)
+	if metadata.ID != "" {
+		result.SetId(metadata.ID)
+	}
 
 	setPtrConv(metadata.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
 	setPtrConv(metadata.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
@@ -194,7 +196,9 @@ func toClientIdentifierDrafts(values []domain.Identifier) []client.IdentifierDra
 			Type:  value.Type,
 			Value: value.Value,
 		}
-		result.SetId(value.ID)
+		if value.ID != "" {
+			result.SetId(value.ID)
+		}
 		return result
 	})
 }

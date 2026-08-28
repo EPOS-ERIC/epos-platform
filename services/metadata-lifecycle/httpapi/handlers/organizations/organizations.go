@@ -73,6 +73,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization management permission required")
 		case errors.Is(err, organizationdomain.ErrConflict):
 			transport.WriteProblem(w, http.StatusConflict, "conflict", "organization already exists")
+		case errors.Is(err, organizationdomain.ErrNotFound):
+			transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "referenced organization or contact point not found")
 		default:
 			log.ErrorContext(r.Context(), "create organization failed", "error", err)
 			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create organization failed")

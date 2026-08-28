@@ -272,6 +272,7 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
         "504": { $ref: "#/components/responses/GatewayTimeout" }
@@ -679,6 +680,8 @@ paths:
       responses:
         "204":
           description: Membership deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -1248,34 +1251,6 @@ paths:
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
         "504": { $ref: "#/components/responses/GatewayTimeout" }
 
-  /resources/{resourceType}/{id}/versions/{versionId}:
-    parameters:
-      - $ref: "#/components/parameters/LifecycleResourceType"
-      - $ref: "#/components/parameters/ResourceId"
-      - $ref: "#/components/parameters/VersionId"
-    get:
-      tags:
-        - Resources
-      summary: Get resource version
-      description: Returns a published version publicly, or a non-public version when caller has access to its group.
-      operationId: getResourceVersion
-      security:
-        - {}
-        - bearerAuth: []
-      responses:
-        "200":
-          description: Resource version found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceVersion"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
   /resources/{id}/versions/{versionId}/draft:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -1311,6 +1286,12 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
         "504": { $ref: "#/components/responses/GatewayTimeout" }
+
+  /resources/{resourceType}/{id}/versions/{versionId}/draft:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
     delete:
       tags:
         - Resources
@@ -1328,15 +1309,46 @@ paths:
                 $ref: "#/components/schemas/WriteResult"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
         "404":
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
         "503": { $ref: "#/components/responses/ServiceUnavailable" }
         "504": { $ref: "#/components/responses/GatewayTimeout" }
 
+  /resources/{resourceType}/{id}/versions/{versionId}:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/VersionId"
+    get:
+      tags:
+        - Resources
+      summary: Get resource version
+      description: Returns a published version publicly, or a non-public version when caller has access to its group.
+      operationId: getResourceVersion
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceVersion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
   /resources/{resourceType}/{id}/versions/{versionId}/submit:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1364,6 +1376,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/versions/{versionId}/withdraw:
     parameters:
@@ -1392,6 +1408,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/versions/{versionId}/reject:
     parameters:
@@ -1427,6 +1447,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/versions/{versionId}/reopen:
     parameters:
@@ -1455,6 +1479,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/versions/{versionId}/publish:
     parameters:
@@ -1483,6 +1511,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/versions/{versionId}/unpublish:
     parameters:
@@ -1511,6 +1543,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/draft-from-publication:
     parameters:
@@ -1538,6 +1574,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
   /resources/{resourceType}/{id}/draft-from-archive:
     parameters:
@@ -1565,6 +1605,10 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalServerError"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+        "504": { $ref: "#/components/responses/GatewayTimeout" }
 
 components:
   securitySchemes:
@@ -1978,7 +2022,7 @@ components:
       required: [title]
       properties:
         id: { type: string, format: uuid }
-        title: { type: string }
+        title: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string }
         keywords: { type: string }
         accrual_periodicity: { type: string, nullable: true }
@@ -2019,7 +2063,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string }
         keywords: { type: string }
         license: { type: string, nullable: true }
@@ -2054,7 +2098,7 @@ components:
       additionalProperties: false
       required: [name]
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string }
         keywords: { type: string }
         repository: { type: string, format: uri }
@@ -2087,24 +2131,27 @@ components:
 
     ResourceReference:
       type: object
+      additionalProperties: false
       required: [id]
       properties:
         id: { type: string, format: uuid }
 
     SoftwareIdentifier:
       type: object
+      additionalProperties: false
       required: [type, value]
       properties:
-        type: { type: string }
-        value: { type: string }
+        type: { type: string, minLength: 1, pattern: '\S' }
+        value: { type: string, minLength: 1, pattern: '\S' }
 
     IdentifierDraft:
       type: object
+      additionalProperties: false
       required: [type, value]
       properties:
         id: { type: string, format: uuid }
-        type: { type: string }
-        value: { type: string }
+        type: { type: string, minLength: 1, pattern: '\S' }
+        value: { type: string, minLength: 1, pattern: '\S' }
 
     DistributionDraft:
       oneOf:
@@ -2155,16 +2202,17 @@ components:
 
     WebServiceDraft:
       type: object
+      additionalProperties: false
       required: [name, template_url, format]
       properties:
         id: { type: string, format: uuid }
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string }
-        template_url: { type: string }
+        template_url: { type: string, minLength: 1, pattern: '\S' }
         parameters:
           type: array
           items: { $ref: "#/components/schemas/Parameter" }
-        format: { type: string }
+        format: { type: string, minLength: 1, pattern: '\S' }
         provider: { $ref: "#/components/schemas/ResourceReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
@@ -2193,6 +2241,7 @@ components:
 
     ParameterMetadata:
       type: object
+      additionalProperties: false
       required:
         [id, variable, property, label, required, multiple_values, read_only]
       properties:
@@ -2206,6 +2255,7 @@ components:
 
     StringParameter:
       type: object
+      additionalProperties: false
       required: [kind, metadata, default, allowed_values, pattern]
       properties:
         kind: { type: string, enum: [STRING] }
@@ -2216,6 +2266,7 @@ components:
 
     BooleanParameter:
       type: object
+      additionalProperties: false
       required: [kind, metadata, default]
       properties:
         kind: { type: string, enum: [BOOLEAN] }
@@ -2224,6 +2275,7 @@ components:
 
     IntegerParameter:
       type: object
+      additionalProperties: false
       required: [kind, metadata, minimum, maximum, default, allowed_values]
       properties:
         kind: { type: string, enum: [INTEGER] }
@@ -2235,6 +2287,7 @@ components:
 
     FloatParameter:
       type: object
+      additionalProperties: false
       required: [kind, metadata, minimum, maximum, default, allowed_values]
       properties:
         kind: { type: string, enum: [FLOAT] }
@@ -2246,6 +2299,7 @@ components:
 
     DateTimeParameter:
       type: object
+      additionalProperties: false
       required: [kind, metadata, minimum, maximum, default, pattern]
       properties:
         kind: { type: string, enum: [DATETIME] }
@@ -2261,21 +2315,24 @@ components:
 
     DownloadableFile:
       type: object
+      additionalProperties: false
       required: [url, format]
       properties:
-        url: { type: string }
-        format: { type: string }
+        url: { type: string, minLength: 1, pattern: '\S' }
+        format: { type: string, minLength: 1, pattern: '\S' }
 
     Documentation:
       type: object
+      additionalProperties: false
       required: [uri]
       properties:
         title: { type: string, nullable: true }
         description: { type: string, nullable: true }
-        uri: { type: string }
+        uri: { type: string, minLength: 1, pattern: '\S' }
 
     SpatialCoverage:
       type: object
+      additionalProperties: false
       properties:
         point: { $ref: "#/components/schemas/Coordinate" }
         polygon:
@@ -2290,6 +2347,7 @@ components:
 
     Coordinate:
       type: object
+      additionalProperties: false
       required: [latitude, longitude]
       properties:
         latitude: { type: number, minimum: -90, maximum: 90 }
@@ -2297,6 +2355,7 @@ components:
 
     TemporalCoverage:
       type: object
+      additionalProperties: false
       properties:
         start: { type: string, format: date-time, nullable: true }
         end: { type: string, format: date-time, nullable: true }
@@ -2345,7 +2404,7 @@ components:
       required: [resource_type, revision, metadata]
       properties:
         resource_type: { type: string, enum: [dataset] }
-        revision: { type: integer, format: int32 }
+        revision: { type: integer, format: int32, minimum: 1 }
         metadata: { $ref: "#/components/schemas/DatasetDraftMetadata" }
 
     ReplaceSoftwareApplicationDraftRequest:
@@ -2389,7 +2448,7 @@ components:
       required: [note]
       additionalProperties: false
       properties:
-        note: { type: string, minLength: 1 }
+        note: { type: string, minLength: 1, pattern: '\S' }
 
     ResourceVersion:
       type: object
@@ -2767,6 +2826,7 @@ components:
         reason:
           type: string
           minLength: 1
+          pattern: '\S'
 
     MembershipRole:
       type: string
@@ -2841,21 +2901,21 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         parent_category_id: { type: string, format: uuid, nullable: true }
     ReplaceCategoryRequest:
       type: object
       required: [name, parent_category_id]
       additionalProperties: false
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         parent_category_id: { type: string, format: uuid, nullable: true }
     CreateGroupRequest:
       type: object
       required: [name, concept]
       additionalProperties: false
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string, nullable: true }
         label: { type: string, nullable: true }
         logo: { type: string, nullable: true }
@@ -2868,7 +2928,7 @@ components:
       required: [name, description, label, logo, page, color, position, concept]
       additionalProperties: false
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string, nullable: true }
         label: { type: string, nullable: true }
         logo: { type: string, nullable: true }
@@ -2888,18 +2948,19 @@ components:
       required: [email, role]
       additionalProperties: false
       properties:
-        email: { type: string }
-        role: { type: string }
+        email: { type: string, minLength: 1, pattern: '\S' }
+        role: { type: string, minLength: 1, pattern: '\S' }
     ReplaceContactPointRequest:
       type: object
       required: [email, role]
       additionalProperties: false
       properties:
-        email: { type: string }
-        role: { type: string }
+        email: { type: string, minLength: 1, pattern: '\S' }
+        role: { type: string, minLength: 1, pattern: '\S' }
     OrganizationAddress:
       type: object
       required: [street, locality, postal_code, country]
+      additionalProperties: false
       properties:
         street: { type: string, nullable: true }
         locality: { type: string, nullable: true }
@@ -2917,8 +2978,8 @@ components:
       required: [type, value]
       additionalProperties: false
       properties:
-        type: { type: string }
-        value: { type: string }
+        type: { type: string, minLength: 1, pattern: '\S' }
+        value: { type: string, minLength: 1, pattern: '\S' }
     CanonicalOrganization:
       type: object
       required: [id, name, address, identifiers, parents, contact_point_ids]
@@ -2944,7 +3005,7 @@ components:
       required: [name]
       additionalProperties: false
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
         logo_url: { type: string, nullable: true }
         page_url: { type: string, nullable: true }
@@ -2975,7 +3036,7 @@ components:
         ]
       additionalProperties: false
       properties:
-        name: { type: string }
+        name: { type: string, minLength: 1, pattern: '\S' }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
         logo_url: { type: string, nullable: true }
         page_url: { type: string, nullable: true }

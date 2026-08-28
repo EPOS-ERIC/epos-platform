@@ -64,7 +64,7 @@ func (c *MetadataLifecycle) ReplaceResourceDraft(ctx context.Context, actorID, r
 }
 
 func (c *MetadataLifecycle) DiscardResourceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string) error {
-	response, err := c.resources.DiscardResourceDraft(ctx, resourceID, versionID).
+	response, err := c.resources.DiscardResourceDraft(ctx, resourceType, resourceID, versionID).
 		XEPOSUserID(actorID).
 		Execute()
 	return lifecycleError(response, err)

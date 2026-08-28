@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"unicode/utf8"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -25,32 +24,6 @@ func authMiddlewareRequired(authenticator *auth.Service, provisioner *clients.Me
 
 func authMiddlewareOptional(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
 	return authMiddlewareWithMode(authenticator, provisioner, false)
-}
-
-func validateParams() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			query := r.URL.Query()
-
-			for key, values := range query {
-				for _, value := range values {
-					if !utf8.ValidString(value) || strings.ContainsRune(value, '\x00') {
-						handlers.WriteError(
-							r.Context(),
-							w,
-							http.StatusBadRequest,
-							"invalid_request",
-							"invalid query parameter '"+key+"': "+value,
-							nil,
-						)
-						return
-					}
-				}
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
 }
 
 func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.MetadataLifecycle, required bool) func(http.Handler) http.Handler {

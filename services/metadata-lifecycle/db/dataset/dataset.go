@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -255,7 +256,11 @@ func (r *Repo) Discard(ctx context.Context, datasetID, versionID uuid.UUID) erro
 	if errors.Is(err, pgx.ErrNoRows) {
 		return datasetlifecycle.ErrConflict
 	}
-	return fmt.Errorf("discard dataset transaction: %w", err)
+	if err != nil {
+		return fmt.Errorf("discard dataset transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Repo) DraftFromPublication(ctx context.Context, actorID string, datasetID uuid.UUID) (datasetlifecycle.Dataset, error) {
@@ -611,25 +616,58 @@ func spatialGeometry(value *metadata.Spatial) (*geom.Point, *geom.Polygon, error
 		return nil, nil, nil
 	}
 	if value.Point != nil && len(value.Polygon) != 0 {
-		return nil, nil, fmt.Errorf("spatial coverage cannot contain both point and polygon")
+		return nil, nil, fmt.Errorf("spatial coverage cannot contain both point and polygon: %w", datasetlifecycle.ErrInvalid)
 	}
 	if value.Point != nil {
-		point := geom.NewPointFlat(geom.XY, []float64{value.Point.Longitude, value.Point.Latitude})
-		point.SetSRID(4326)
-		return point, nil, nil
+		point, err := parsePoint(*value.Point)
+		return point, nil, err
 	}
 	if len(value.Polygon) == 0 {
 		return nil, nil, nil
 	}
-	coordinates := make([]geom.Coord, len(value.Polygon))
-	for i, coordinate := range value.Polygon {
-		coordinates[i] = geom.Coord{coordinate.Longitude, coordinate.Latitude}
+	polygon, err := parsePolygon(value.Polygon)
+	return nil, polygon, err
+}
+
+func parsePoint(value metadata.Coordinate) (*geom.Point, error) {
+	coordinate, err := parseCoordinate(value)
+	if err != nil {
+		return nil, err
 	}
 
-	polygon := geom.NewPolygon(geom.XY).MustSetCoords([][]geom.Coord{coordinates})
-	polygon.SetSRID(4326)
+	return geom.NewPointFlat(geom.XY, coordinate).SetSRID(4326), nil
+}
 
-	return nil, polygon, nil
+func parsePolygon(values []metadata.Coordinate) (*geom.Polygon, error) {
+	if len(values) < 4 {
+		return nil, fmt.Errorf("polygon must contain at least four coordinates: %w", datasetlifecycle.ErrInvalid)
+	}
+	if values[0] != values[len(values)-1] {
+		return nil, fmt.Errorf("polygon must be closed: %w", datasetlifecycle.ErrInvalid)
+	}
+
+	coordinates := make([]geom.Coord, len(values))
+	for i, value := range values {
+		coordinate, err := parseCoordinate(value)
+		if err != nil {
+			return nil, err
+		}
+		coordinates[i] = coordinate
+	}
+
+	polygon, err := geom.NewPolygon(geom.XY).SetCoords([][]geom.Coord{coordinates})
+	if err != nil {
+		return nil, fmt.Errorf("parse polygon coordinates: %w: %w", err, datasetlifecycle.ErrInvalid)
+	}
+
+	return polygon.SetSRID(4326), nil
+}
+
+func parseCoordinate(value metadata.Coordinate) (geom.Coord, error) {
+	if math.IsNaN(value.Latitude) || math.IsNaN(value.Longitude) || value.Latitude < -90 || value.Latitude > 90 || value.Longitude < -180 || value.Longitude > 180 {
+		return nil, fmt.Errorf("coordinate is outside WGS84 bounds: %w", datasetlifecycle.ErrInvalid)
+	}
+	return geom.Coord{value.Longitude, value.Latitude}, nil
 }
 
 func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetLifecycleDatasetVersionRow) (metadata.Dataset, error) {

@@ -177,7 +177,9 @@ func (r *Repo) CreateCategory(ctx context.Context, category groups.Category) (gr
 			switch pgErr.Code {
 			case "23505":
 				return groups.Category{}, groups.ErrConflict
-			case "23503", "P0001":
+			case "23503":
+				return groups.Category{}, groups.ErrNotFound
+			case "P0001":
 				return groups.Category{}, groups.ErrInvalid
 			}
 		}
@@ -202,7 +204,9 @@ func (r *Repo) ReplaceCategory(ctx context.Context, groupID, categoryID uuid.UUI
 			switch pgErr.Code {
 			case "23505":
 				return groups.Category{}, groups.ErrConflict
-			case "23503", "23514", "P0001":
+			case "23503":
+				return groups.Category{}, groups.ErrNotFound
+			case "23514", "P0001":
 				return groups.Category{}, groups.ErrInvalid
 			}
 		}

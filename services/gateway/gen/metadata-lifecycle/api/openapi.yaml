@@ -1185,76 +1185,6 @@ paths:
       tags:
       - Resources
   /api/v1/resources/{resource_id}/versions/{version_id}/draft:
-    delete:
-      description: Permanently deletes selected DRAFT or REJECTED version and removes
-        its logical resource when no versions remain.
-      operationId: discardResourceDraft
-      parameters:
-      - explode: false
-        in: path
-        name: resource_id
-        required: true
-        schema:
-          format: uuid
-          type: string
-        style: simple
-      - explode: false
-        in: path
-        name: version_id
-        required: true
-        schema:
-          format: uuid
-          type: string
-        style: simple
-      - explode: false
-        in: header
-        name: X-EPOS-User-ID
-        required: true
-        schema:
-          type: string
-        style: simple
-      responses:
-        "204":
-          description: Resource draft discarded
-        "400":
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-          description: Invalid request
-        "401":
-          content:
-            text/plain:
-              schema:
-                type: string
-          description: Missing or invalid actor header
-        "403":
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-          description: Access denied
-        "404":
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-          description: Resource or selected version not found
-        "409":
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-          description: Lifecycle or revision conflict
-        "500":
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/Problem"
-          description: Internal server error
-      summary: Discard resource draft
-      tags:
-      - Resources
     put:
       description: Atomically replaces all mutable draft metadata when supplied revision
         matches selected version.
@@ -1333,6 +1263,88 @@ paths:
                 $ref: "#/components/schemas/Problem"
           description: Internal server error
       summary: Replace resource draft
+      tags:
+      - Resources
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft:
+    delete:
+      description: Permanently deletes selected DRAFT or REJECTED version and removes
+        its logical resource when no versions remain.
+      operationId: discardResourceDraft
+      parameters:
+      - explode: false
+        in: path
+        name: resource_type
+        required: true
+        schema:
+          enum:
+          - dataset
+          - software-application
+          - software-source-code
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: resource_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: version_id
+        required: true
+        schema:
+          format: uuid
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: X-EPOS-User-ID
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          description: Resource draft discarded
+        "400":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Invalid request
+        "401":
+          content:
+            text/plain:
+              schema:
+                type: string
+          description: Missing or invalid actor header
+        "403":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Access denied
+        "404":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Resource or selected version not found
+        "409":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Lifecycle or revision conflict
+        "500":
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+          description: Internal server error
+      summary: Discard resource draft
       tags:
       - Resources
   /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit:

@@ -269,7 +269,10 @@ func (h *Groups) RequestMembership(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var request api.CreateMembershipRequest
-	if !decodeJSON(r, w, &request) || request.Roles == nil {
+	if !decodeJSON(r, w, &request) {
+		return
+	}
+	if request.Roles == nil {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "roles is required", nil)
 		return
 	}
@@ -301,7 +304,10 @@ func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var request api.MembershipDecisionRequest
-	if !decodeJSON(r, w, &request) || !request.Status.IsDecision() {
+	if !decodeJSON(r, w, &request) {
+		return
+	}
+	if !request.Status.IsDecision() {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACTIVE or REJECTED", nil)
 		return
 	}
@@ -440,7 +446,10 @@ func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
 
 	var request api.CreateRoleRequest
 	// TODO: use an enum
-	if !decodeJSON(r, w, &request) || (request.Role != "EDITOR" && request.Role != "REVIEWER") {
+	if !decodeJSON(r, w, &request) {
+		return
+	}
+	if request.Role != "EDITOR" && request.Role != "REVIEWER" {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "role must be EDITOR or REVIEWER", nil)
 		return
 	}
@@ -472,7 +481,10 @@ func (h *Groups) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request
 	}
 
 	var request api.RoleRequestDecisionRequest
-	if !decodeJSON(r, w, &request) || (request.Status != "ACCEPTED" && request.Status != "REJECTED") {
+	if !decodeJSON(r, w, &request) {
+		return
+	}
+	if request.Status != "ACCEPTED" && request.Status != "REJECTED" {
 		WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACCEPTED or REJECTED", nil)
 		return
 	}

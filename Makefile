@@ -1,13 +1,27 @@
-HELM_RELEASE ?= epos-platform
-HELM_CHART ?= helm/epos-platform
-HELM_NAMESPACE ?= epos-platform
-HELM_VALUES ?= $(HELM_CHART)/values.yaml
-HELM_SET_ARGS ?=
-KUBE_CONTEXT ?=
-
-HELM_CONTEXT_ARG := $(if $(KUBE_CONTEXT),--kube-context $(KUBE_CONTEXT),)
-HELM_VALUES_ARG := $(if $(HELM_VALUES),--values $(HELM_VALUES),)
-TILT_CONTEXT_ARG := $(if $(KUBE_CONTEXT),--context $(KUBE_CONTEXT),)
+# Stateful workflows belong in Hurl. This suite fuzzes schema contracts only.
+SCHEMATHESIS_EXCLUDE_PATHS := \
+	--exclude-path /search \
+	--exclude-path /imports/turtle \
+	--exclude-path /groups/{groupId}/membership-requests \
+	--exclude-path /groups/{groupId}/memberships/{userId} \
+	--exclude-path /groups/{groupId}/memberships/{userId}/roles/{role} \
+	--exclude-path /groups/{groupId}/memberships/{userId}/permissions/{permission} \
+	--exclude-path /groups/{groupId}/role-requests \
+	--exclude-path /groups/{groupId}/role-requests/{requestId} \
+	--exclude-path /groups/{groupId}/resources \
+	--exclude-path /groups/{groupId}/resources/{resourceType}/{id}/copy \
+	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/submit \
+	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/withdraw \
+	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/reject \
+	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/reopen \
+	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/publish \
+	--exclude-path /resources/{resourceType}/{id}/versions/{versionId}/unpublish \
+	--exclude-path /resources/{resourceType}/{id}/draft-from-publication \
+	--exclude-path /resources/{resourceType}/{id}/draft-from-archive \
+	--exclude-path /users/{id}/block \
+	--exclude-path /users/{id}/unblock \
+	--exclude-path /users/{id}/global-roles/{role} \
+	--exclude-path /users/{id}/global-permissions/{permission}
 
 up: 
 	tilt up $(TILT_CONTEXT_ARG)
@@ -45,23 +59,7 @@ lint:
 	$(MAKE) -C services/oss-aai-service lint
 	$(MAKE) -C services/metadata-lifecycle lint
 
-helm-lint:
-	helm lint $(HELM_CHART) $(HELM_VALUES_ARG)
-
-helm-template:
-	helm template $(HELM_RELEASE) $(HELM_CHART) --namespace $(HELM_NAMESPACE) $(HELM_VALUES_ARG) $(HELM_SET_ARGS)
-
-helm-deploy:
-	helm upgrade --install $(HELM_RELEASE) $(HELM_CHART) --namespace $(HELM_NAMESPACE) --create-namespace $(HELM_CONTEXT_ARG) $(HELM_VALUES_ARG) $(HELM_SET_ARGS)
-
-helm-status:
-	helm status $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
-
-helm-uninstall:
-	helm uninstall $(HELM_RELEASE) --namespace $(HELM_NAMESPACE) $(HELM_CONTEXT_ARG)
-
 test-schemathesis:
-# TODO: remove the exclude method flags when the metadata-lifecycle endpoints are implemente
 	schemathesis_env="$$(./packages/scripts/schemathesis-env.sh)" && eval "$$schemathesis_env" && docker run --rm \
 		--add-host host.docker.internal:host-gateway \
 		-v "$(CURDIR):/work:ro" \
@@ -74,16 +72,29 @@ test-schemathesis:
 		-e SCHEMATHESIS_RESOURCE_ID="$$SCHEMATHESIS_RESOURCE_ID" \
 		-e SCHEMATHESIS_RESOURCE_VERSION_ID="$$SCHEMATHESIS_RESOURCE_VERSION_ID" \
 		-e SCHEMATHESIS_PROVIDER_ID="$$SCHEMATHESIS_PROVIDER_ID" \
+		-e SCHEMATHESIS_CONTACT_POINT_ID="$$SCHEMATHESIS_CONTACT_POINT_ID" \
+		-e SCHEMATHESIS_ORGANIZATION_ID="$$SCHEMATHESIS_ORGANIZATION_ID" \
+		-e SCHEMATHESIS_USER_ID="$$SCHEMATHESIS_USER_ID" \
+		-e SCHEMATHESIS_MEMBERSHIP_USER_ID="$$SCHEMATHESIS_MEMBERSHIP_USER_ID" \
+		-e SCHEMATHESIS_ROLE_REQUEST_ID="$$SCHEMATHESIS_ROLE_REQUEST_ID" \
+		-e SCHEMATHESIS_DRAFT_RESOURCE_ID="$$SCHEMATHESIS_DRAFT_RESOURCE_ID" \
+		-e SCHEMATHESIS_DRAFT_RESOURCE_VERSION_ID="$$SCHEMATHESIS_DRAFT_RESOURCE_VERSION_ID" \
+		-e SCHEMATHESIS_PUBLISHED_RESOURCE_ID="$$SCHEMATHESIS_PUBLISHED_RESOURCE_ID" \
+		-e SCHEMATHESIS_PUBLISHED_RESOURCE_VERSION_ID="$$SCHEMATHESIS_PUBLISHED_RESOURCE_VERSION_ID" \
+		-e SCHEMATHESIS_ARCHIVED_RESOURCE_ID="$$SCHEMATHESIS_ARCHIVED_RESOURCE_ID" \
+		-e SCHEMATHESIS_ARCHIVED_RESOURCE_VERSION_ID="$$SCHEMATHESIS_ARCHIVED_RESOURCE_VERSION_ID" \
 		ghcr.io/schemathesis/schemathesis:latest \
 		run \
 		$$SCHEMATHESIS_EXCLUDE_RESOURCE_PATH \
+		$(SCHEMATHESIS_EXCLUDE_PATHS) \
+		--exclude-method DELETE \
+		--exclude-method PUT \
 		--url "http://host.docker.internal:32000/v1" \
+		--phases examples,coverage,fuzzing \
 		--suppress-health-check=filter_too_much \
 		--exclude-checks unsupported_method,missing_required_header,ignored_auth,negative_data_rejection \
-		--exclude-method POST \
-		--exclude-method PUT \
-		--exclude-method PATCH \
-		--exclude-method DELETE \
+		--generation-deterministic \
+		--generation-allow-x00 false \
 		/work/services/gateway/docs/openapi.yaml
 
 test-hurl:
@@ -101,4 +112,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint helm-lint helm-template helm-deploy helm-status helm-uninstall test-schemathesis get-dev-token
+.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint test-schemathesis get-dev-token

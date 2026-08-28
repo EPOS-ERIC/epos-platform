@@ -59,8 +59,6 @@ func NewRouter(
 	discoveryHandler := handlers.NewDiscovery(discovery.NewService(metadataLifecycleClient))
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Use(validateParams())
-
 		r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/imports/turtle", importsHandler.Turtle)
 
 		r.Route("/contact-points", func(r chi.Router) {
@@ -130,7 +128,7 @@ func NewRouter(
 			r.With(authMiddlewareOptional(authService, metadataLifecycleClient)).Get("/{resourceType}/{id}/versions/{versionId}", lifecycleHandler.Get)
 			r.With(authMiddleware(authService, metadataLifecycleClient)).Put("/{id}/versions/{versionId}/draft", lifecycleHandler.ReplaceDraft)
 			r.With(authMiddleware(authService, metadataLifecycleClient)).Delete("/{resourceType}/{id}/versions/{versionId}/draft", lifecycleHandler.Discard)
-			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/versions/{versionId}/{action}", lifecycleHandler.Action)
+			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/versions/{versionId}/{action:submit|withdraw|reject|reopen|publish|unpublish}", lifecycleHandler.Action)
 			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/draft-from-publication", lifecycleHandler.DraftFromPublication)
 			r.With(authMiddleware(authService, metadataLifecycleClient)).Post("/{resourceType}/{id}/draft-from-archive", lifecycleHandler.DraftFromArchive)
 		})

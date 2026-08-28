@@ -438,6 +438,11 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "500": { $ref: "#/components/responses/InternalServerError" }
+  /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft:
+    parameters:
+      - { $ref: "#/components/parameters/ResourceType" }
+      - { $ref: "#/components/parameters/ResourceID" }
+      - { $ref: "#/components/parameters/VersionID" }
     delete:
       tags: [Resources]
       operationId: discardResourceDraft

@@ -40,7 +40,7 @@ func (r *Repo) Create(
 			return fmt.Errorf("check organization parents: %w", err)
 		}
 		if len(parentRows) != len(parents) {
-			return organizations.ErrInvalid
+			return organizations.ErrNotFound
 		}
 
 		contactRows, err := q.ListContactPointIDs(ctx, contactPointIDs)
@@ -48,7 +48,7 @@ func (r *Repo) Create(
 			return fmt.Errorf("check contact points: %w", err)
 		}
 		if len(contactRows) != len(contactPointIDs) {
-			return organizations.ErrInvalid
+			return organizations.ErrNotFound
 		}
 
 		_, err = q.CreateOrganization(ctx, sqlc.CreateOrganizationParams{
@@ -148,7 +148,7 @@ func (r *Repo) Replace(
 			return fmt.Errorf("check organization parents: %w", err)
 		}
 		if len(parentRows) != len(parents) {
-			return organizations.ErrInvalid
+			return organizations.ErrNotFound
 		}
 
 		contactRows, err := q.ListContactPointIDs(ctx, contactPointIDs)
@@ -156,7 +156,7 @@ func (r *Repo) Replace(
 			return fmt.Errorf("check contact points: %w", err)
 		}
 		if len(contactRows) != len(contactPointIDs) {
-			return organizations.ErrInvalid
+			return organizations.ErrNotFound
 		}
 
 		_, err = q.ReplaceOrganization(ctx, sqlc.ReplaceOrganizationParams{

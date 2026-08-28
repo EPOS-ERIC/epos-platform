@@ -90,11 +90,12 @@ type ResourcesAPI interface {
 		Permanently deletes selected DRAFT or REJECTED version and removes its logical resource when no versions remain.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@param resourceType
 		@param resourceId
 		@param versionId
 		@return ApiDiscardResourceDraftRequest
 	*/
-	DiscardResourceDraft(ctx context.Context, resourceId string, versionId string) ApiDiscardResourceDraftRequest
+	DiscardResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiDiscardResourceDraftRequest
 
 	// DiscardResourceDraftExecute executes the request
 	DiscardResourceDraftExecute(r ApiDiscardResourceDraftRequest) (*http.Response, error)
@@ -995,11 +996,12 @@ func (a *ResourcesAPIService) CreateResourceDraftFromPublicationExecute(r ApiCre
 }
 
 type ApiDiscardResourceDraftRequest struct {
-	ctx         context.Context
-	ApiService  ResourcesAPI
-	resourceId  string
-	versionId   string
-	xEPOSUserID *string
+	ctx          context.Context
+	ApiService   ResourcesAPI
+	resourceType string
+	resourceId   string
+	versionId    string
+	xEPOSUserID  *string
 }
 
 func (r ApiDiscardResourceDraftRequest) XEPOSUserID(xEPOSUserID string) ApiDiscardResourceDraftRequest {
@@ -1017,16 +1019,18 @@ DiscardResourceDraft Discard resource draft
 Permanently deletes selected DRAFT or REJECTED version and removes its logical resource when no versions remain.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param resourceType
 	@param resourceId
 	@param versionId
 	@return ApiDiscardResourceDraftRequest
 */
-func (a *ResourcesAPIService) DiscardResourceDraft(ctx context.Context, resourceId string, versionId string) ApiDiscardResourceDraftRequest {
+func (a *ResourcesAPIService) DiscardResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiDiscardResourceDraftRequest {
 	return ApiDiscardResourceDraftRequest{
-		ApiService: a,
-		ctx:        ctx,
-		resourceId: resourceId,
-		versionId:  versionId,
+		ApiService:   a,
+		ctx:          ctx,
+		resourceType: resourceType,
+		resourceId:   resourceId,
+		versionId:    versionId,
 	}
 }
 
@@ -1043,7 +1047,8 @@ func (a *ResourcesAPIService) DiscardResourceDraftExecute(r ApiDiscardResourceDr
 		return nil, &GenericOpenAPIError{error: err.Error()}
 	}
 
-	localVarPath := localBasePath + "/api/v1/resources/{resource_id}/versions/{version_id}/draft"
+	localVarPath := localBasePath + "/api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft"
+	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", url.PathEscape(parameterValueToString(r.resourceType, "resourceType")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", url.PathEscape(parameterValueToString(r.resourceId, "resourceId")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"version_id"+"}", url.PathEscape(parameterValueToString(r.versionId, "versionId")), -1)
 

@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"mime"
@@ -35,7 +38,18 @@ func decodeJSON(r *http.Request, w http.ResponseWriter, value any) bool {
 		return false
 	}
 
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20))
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20))
+	if err != nil {
+		if mbErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
+			WriteError(r.Context(), w, http.StatusRequestEntityTooLarge, "request_too_large",
+				fmt.Sprintf("request body exceeds %d bytes", mbErr.Limit), err)
+			return false
+		}
+		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid JSON request body", err)
+		return false
+	}
+
+	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(value); err != nil {
 		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid JSON request body", err)
@@ -50,6 +64,7 @@ func decodeJSON(r *http.Request, w http.ResponseWriter, value any) bool {
 }
 
 func validUUID(value string) bool {
+	// TODO: parse don't validate
 	_, err := uuid.Parse(value)
 	return err == nil
 }
