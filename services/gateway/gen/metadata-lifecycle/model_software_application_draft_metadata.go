@@ -21,19 +21,19 @@ var _ MappedNullable = &SoftwareApplicationDraftMetadata{}
 
 // SoftwareApplicationDraftMetadata struct for SoftwareApplicationDraftMetadata
 type SoftwareApplicationDraftMetadata struct {
-	Name             string               `json:"name"`
-	Description      *string              `json:"description,omitempty"`
-	MainEntityOfPage NullableString       `json:"main_entity_of_page,omitempty"`
-	License          NullableString       `json:"license,omitempty"`
-	Version          NullableString       `json:"version,omitempty"`
-	Keywords         *string              `json:"keywords,omitempty"`
-	DownloadUrl      NullableString       `json:"download_url,omitempty"`
-	Requirements     NullableString       `json:"requirements,omitempty"`
-	OperatingSystem  NullableString       `json:"operating_system,omitempty"`
-	Creators         []CanonicalReference `json:"creators,omitempty"`
-	Identifiers      []IdentifierDraft    `json:"identifiers,omitempty"`
-	Categories       []CanonicalReference `json:"categories,omitempty"`
-	ContactPoints    []CanonicalReference `json:"contact_points,omitempty"`
+	Name             string            `json:"name"`
+	Description      *string           `json:"description,omitempty"`
+	MainEntityOfPage NullableString    `json:"main_entity_of_page,omitempty"`
+	License          NullableString    `json:"license,omitempty"`
+	Version          NullableString    `json:"version,omitempty"`
+	Keywords         *string           `json:"keywords,omitempty"`
+	DownloadUrl      NullableString    `json:"download_url,omitempty"`
+	Requirements     NullableString    `json:"requirements,omitempty"`
+	OperatingSystem  NullableString    `json:"operating_system,omitempty"`
+	Creators         []string          `json:"creators,omitempty"`
+	Identifiers      []IdentifierDraft `json:"identifiers,omitempty"`
+	Categories       []string          `json:"categories,omitempty"`
+	ContactPoints    []string          `json:"contact_points,omitempty"`
 }
 
 type _SoftwareApplicationDraftMetadata SoftwareApplicationDraftMetadata
@@ -403,9 +403,9 @@ func (o *SoftwareApplicationDraftMetadata) UnsetOperatingSystem() {
 }
 
 // GetCreators returns the Creators field value if set, zero value otherwise.
-func (o *SoftwareApplicationDraftMetadata) GetCreators() []CanonicalReference {
+func (o *SoftwareApplicationDraftMetadata) GetCreators() []string {
 	if o == nil || IsNil(o.Creators) {
-		var ret []CanonicalReference
+		var ret []string
 		return ret
 	}
 	return o.Creators
@@ -413,7 +413,7 @@ func (o *SoftwareApplicationDraftMetadata) GetCreators() []CanonicalReference {
 
 // GetCreatorsOk returns a tuple with the Creators field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SoftwareApplicationDraftMetadata) GetCreatorsOk() ([]CanonicalReference, bool) {
+func (o *SoftwareApplicationDraftMetadata) GetCreatorsOk() ([]string, bool) {
 	if o == nil || IsNil(o.Creators) {
 		return nil, false
 	}
@@ -429,8 +429,8 @@ func (o *SoftwareApplicationDraftMetadata) HasCreators() bool {
 	return false
 }
 
-// SetCreators gets a reference to the given []CanonicalReference and assigns it to the Creators field.
-func (o *SoftwareApplicationDraftMetadata) SetCreators(v []CanonicalReference) {
+// SetCreators gets a reference to the given []string and assigns it to the Creators field.
+func (o *SoftwareApplicationDraftMetadata) SetCreators(v []string) {
 	o.Creators = v
 }
 
@@ -467,9 +467,9 @@ func (o *SoftwareApplicationDraftMetadata) SetIdentifiers(v []IdentifierDraft) {
 }
 
 // GetCategories returns the Categories field value if set, zero value otherwise.
-func (o *SoftwareApplicationDraftMetadata) GetCategories() []CanonicalReference {
+func (o *SoftwareApplicationDraftMetadata) GetCategories() []string {
 	if o == nil || IsNil(o.Categories) {
-		var ret []CanonicalReference
+		var ret []string
 		return ret
 	}
 	return o.Categories
@@ -477,7 +477,7 @@ func (o *SoftwareApplicationDraftMetadata) GetCategories() []CanonicalReference 
 
 // GetCategoriesOk returns a tuple with the Categories field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SoftwareApplicationDraftMetadata) GetCategoriesOk() ([]CanonicalReference, bool) {
+func (o *SoftwareApplicationDraftMetadata) GetCategoriesOk() ([]string, bool) {
 	if o == nil || IsNil(o.Categories) {
 		return nil, false
 	}
@@ -493,15 +493,15 @@ func (o *SoftwareApplicationDraftMetadata) HasCategories() bool {
 	return false
 }
 
-// SetCategories gets a reference to the given []CanonicalReference and assigns it to the Categories field.
-func (o *SoftwareApplicationDraftMetadata) SetCategories(v []CanonicalReference) {
+// SetCategories gets a reference to the given []string and assigns it to the Categories field.
+func (o *SoftwareApplicationDraftMetadata) SetCategories(v []string) {
 	o.Categories = v
 }
 
 // GetContactPoints returns the ContactPoints field value if set, zero value otherwise.
-func (o *SoftwareApplicationDraftMetadata) GetContactPoints() []CanonicalReference {
+func (o *SoftwareApplicationDraftMetadata) GetContactPoints() []string {
 	if o == nil || IsNil(o.ContactPoints) {
-		var ret []CanonicalReference
+		var ret []string
 		return ret
 	}
 	return o.ContactPoints
@@ -509,7 +509,7 @@ func (o *SoftwareApplicationDraftMetadata) GetContactPoints() []CanonicalReferen
 
 // GetContactPointsOk returns a tuple with the ContactPoints field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *SoftwareApplicationDraftMetadata) GetContactPointsOk() ([]CanonicalReference, bool) {
+func (o *SoftwareApplicationDraftMetadata) GetContactPointsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -525,8 +525,8 @@ func (o *SoftwareApplicationDraftMetadata) HasContactPoints() bool {
 	return false
 }
 
-// SetContactPoints gets a reference to the given []CanonicalReference and assigns it to the ContactPoints field.
-func (o *SoftwareApplicationDraftMetadata) SetContactPoints(v []CanonicalReference) {
+// SetContactPoints gets a reference to the given []string and assigns it to the ContactPoints field.
+func (o *SoftwareApplicationDraftMetadata) SetContactPoints(v []string) {
 	o.ContactPoints = v
 }
 

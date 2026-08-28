@@ -226,17 +226,12 @@ func (h *handler) Copy(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var request struct {
-		TargetGroupID uuid.UUID `json:"target_group_id"`
-	}
-	if !transport.Decode(w, r, &request) {
+	targetGroupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
-	if request.TargetGroupID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id is required")
-		return
-	}
-	dataset, err := h.service.CopyPublished(r.Context(), actor, sourceID, request.TargetGroupID)
+	dataset, err := h.service.CopyPublished(r.Context(), actor, sourceID, targetGroupID)
 	h.writeDataset(r, w, dataset, err, http.StatusCreated)
 }
 

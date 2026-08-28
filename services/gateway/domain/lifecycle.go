@@ -21,9 +21,9 @@ type DatasetDraftMetadata struct {
 	SpatialCoverage       *SpatialCoverage
 	TemporalCoverage      *TemporalCoverage
 	PersistentIdentifiers []Identifier
-	ContactPoints         []ResourceReference
-	Providers             []ResourceReference
-	Categories            []ResourceReference
+	ContactPoints         []string
+	Providers             []string
+	Categories            []string
 	SourceCreated         *time.Time
 	SourceUpdated         *time.Time
 }
@@ -40,10 +40,10 @@ type SoftwareApplicationDraftMetadata struct {
 	Requirements     *string
 	OperatingSystem  *string
 	MainEntityOfPage *string
-	Creators         []ResourceReference
+	Creators         []string
 	Identifiers      []Identifier
-	Categories       []ResourceReference
-	ContactPoints    []ResourceReference
+	Categories       []string
+	ContactPoints    []string
 }
 
 func (SoftwareApplicationDraftMetadata) draftMetadata() {}
@@ -59,17 +59,13 @@ type SoftwareSourceCodeDraftMetadata struct {
 	RuntimePlatform      *string
 	MainEntityOfPage     *string
 	Version              *string
-	Creators             []ResourceReference
+	Creators             []string
 	Identifiers          []Identifier
-	Categories           []ResourceReference
-	ContactPoints        []ResourceReference
+	Categories           []string
+	ContactPoints        []string
 }
 
 func (SoftwareSourceCodeDraftMetadata) draftMetadata() {}
-
-type ResourceReference struct {
-	ID string
-}
 
 type Identifier struct {
 	ID    string
@@ -97,11 +93,11 @@ type WebServiceDraft struct {
 	TemplateURL      string
 	Parameters       []any
 	Format           string
-	Provider         *ResourceReference
+	Provider         *string
 	Documentation    *Documentation
 	SpatialCoverage  *SpatialCoverage
 	TemporalCoverage *TemporalCoverage
-	ContactPoints    []ResourceReference
+	ContactPoints    []string
 }
 
 type DownloadableFile struct {
@@ -141,8 +137,6 @@ type ReplaceResourceDraftInput struct {
 	Metadata DraftMetadata
 }
 
-type CopyResourceInput struct{} // TODO: we can probably simplify this and remove the body
-
 type RejectResourceInput struct {
 	Note string
 }
@@ -176,7 +170,7 @@ type DatasetResourceMetadata struct {
 	SpatialCoverage       *SpatialCoverage
 	TemporalCoverage      *TemporalCoverage
 	PersistentIdentifiers []Identifier
-	ContactPoints         []ContactPointReference
+	ContactPoints         []string
 	Providers             []ResourceVersionReference
 	Categories            []ResourceVersionReference
 	SourceCreated         *time.Time
@@ -198,7 +192,7 @@ type SoftwareApplicationResourceMetadata struct {
 	OperatingSystem  *string
 	Creators         []ResourceVersionReference
 	Identifiers      []Identifier
-	ContactPoints    []ContactPointReference
+	ContactPoints    []string
 	Categories       []ResourceVersionReference
 }
 
@@ -218,7 +212,7 @@ type SoftwareSourceCodeResourceMetadata struct {
 	Version              *string
 	Creators             []ResourceVersionReference
 	Identifiers          []Identifier
-	ContactPoints        []ContactPointReference
+	ContactPoints        []string
 	Categories           []ResourceVersionReference
 }
 
@@ -227,10 +221,6 @@ func (SoftwareSourceCodeResourceMetadata) resourceVersionMetadata() {}
 type ResourceVersionReference struct {
 	ID   string
 	Name string
-}
-
-type ContactPointReference struct {
-	ID string
 }
 
 type Distribution interface {
@@ -276,7 +266,7 @@ type WebService struct {
 	Documentation    *Documentation
 	SpatialCoverage  *SpatialCoverage
 	TemporalCoverage *TemporalCoverage
-	ContactPoints    []ContactPointReference
+	ContactPoints    []string
 }
 
 type Parameter interface {

@@ -21,17 +21,17 @@ var _ MappedNullable = &WebService{}
 
 // WebService struct for WebService
 type WebService struct {
-	Id               string                  `json:"id"`
-	Name             string                  `json:"name"`
-	Description      string                  `json:"description"`
-	TemplateUrl      string                  `json:"template_url"`
-	Parameters       []Parameter             `json:"parameters,omitempty"`
-	Format           string                  `json:"format"`
-	Provider         *ResourceReference      `json:"provider,omitempty"`
-	Documentation    *Documentation          `json:"documentation,omitempty"`
-	SpatialCoverage  NullableSpatial         `json:"spatial_coverage,omitempty"`
-	TemporalCoverage *Temporal               `json:"temporal_coverage,omitempty"`
-	ContactPoints    []ContactPointReference `json:"contact_points,omitempty"`
+	Id               string             `json:"id"`
+	Name             string             `json:"name"`
+	Description      string             `json:"description"`
+	TemplateUrl      string             `json:"template_url"`
+	Parameters       []Parameter        `json:"parameters,omitempty"`
+	Format           string             `json:"format"`
+	Provider         *ResourceReference `json:"provider,omitempty"`
+	Documentation    *Documentation     `json:"documentation,omitempty"`
+	SpatialCoverage  NullableSpatial    `json:"spatial_coverage,omitempty"`
+	TemporalCoverage *Temporal          `json:"temporal_coverage,omitempty"`
+	ContactPoints    []string           `json:"contact_points,omitempty"`
 }
 
 type _WebService WebService
@@ -350,9 +350,9 @@ func (o *WebService) SetTemporalCoverage(v Temporal) {
 }
 
 // GetContactPoints returns the ContactPoints field value if set, zero value otherwise.
-func (o *WebService) GetContactPoints() []ContactPointReference {
+func (o *WebService) GetContactPoints() []string {
 	if o == nil || IsNil(o.ContactPoints) {
-		var ret []ContactPointReference
+		var ret []string
 		return ret
 	}
 	return o.ContactPoints
@@ -360,7 +360,7 @@ func (o *WebService) GetContactPoints() []ContactPointReference {
 
 // GetContactPointsOk returns a tuple with the ContactPoints field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *WebService) GetContactPointsOk() ([]ContactPointReference, bool) {
+func (o *WebService) GetContactPointsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -376,8 +376,8 @@ func (o *WebService) HasContactPoints() bool {
 	return false
 }
 
-// SetContactPoints gets a reference to the given []ContactPointReference and assigns it to the ContactPoints field.
-func (o *WebService) SetContactPoints(v []ContactPointReference) {
+// SetContactPoints gets a reference to the given []string and assigns it to the ContactPoints field.
+func (o *WebService) SetContactPoints(v []string) {
 	o.ContactPoints = v
 }
 

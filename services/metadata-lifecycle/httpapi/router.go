@@ -142,7 +142,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish", resources.Unpublish)
 		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-publication", resources.DraftFromPublication)
 		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-archive", resources.DraftFromArchive)
-		r.Post("/resources/{resource_type}/{resource_id}/copies", resources.Copy)
+		r.Post("/groups/{group_id}/resources/{resource_type}/{resource_id}/copies", resources.Copy)
 	})
 
 	return observability.NewHTTPHandler(r, "/")

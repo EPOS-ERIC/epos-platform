@@ -349,11 +349,7 @@ func (h *Lifecycle) Copy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request api.CopyResourceRequest
-	if !decodeJSON(r, w, &request) {
-		return
-	}
-	record, err := h.service.Copy(ctx, actor.ID, groupID, resourceType, id, toDomainCopyResourceInput(request))
+	record, err := h.service.Copy(ctx, actor.ID, groupID, resourceType, id)
 	if err != nil {
 		writeLifecycleError(r, w, err)
 		return

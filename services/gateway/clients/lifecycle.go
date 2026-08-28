@@ -151,10 +151,9 @@ func (c *MetadataLifecycle) CreateResourceDraftFromArchive(ctx context.Context, 
 	return toDomainResourceVersion(record)
 }
 
-func (c *MetadataLifecycle) CopyResource(ctx context.Context, actorID, groupID, resourceType, resourceID string, input domain.CopyResourceInput) (domain.ResourceVersion, error) {
-	record, response, err := c.resources.CopyResource(ctx, resourceType, resourceID).
+func (c *MetadataLifecycle) CopyResource(ctx context.Context, actorID, groupID, resourceType, resourceID string) (domain.ResourceVersion, error) {
+	record, response, err := c.resources.CopyResource(ctx, groupID, resourceType, resourceID).
 		XEPOSUserID(actorID).
-		CopyResourceRequest(toClientCopyResourceRequest(groupID, input)).
 		Execute()
 	if err != nil {
 		return domain.ResourceVersion{}, lifecycleError(response, err)

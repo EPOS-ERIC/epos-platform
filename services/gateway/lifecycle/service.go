@@ -126,8 +126,8 @@ func (s *Service) DraftFromArchive(ctx context.Context, actorID, resourceType, r
 	return result, nil
 }
 
-func (s *Service) Copy(ctx context.Context, actorID, groupID, resourceType, resourceID string, input domain.CopyResourceInput) (domain.ResourceVersion, error) {
-	result, err := s.metadataLifecycle.CopyResource(ctx, actorID, groupID, resourceType, resourceID, input)
+func (s *Service) Copy(ctx context.Context, actorID, groupID, resourceType, resourceID string) (domain.ResourceVersion, error) {
+	result, err := s.metadataLifecycle.CopyResource(ctx, actorID, groupID, resourceType, resourceID)
 	if err != nil {
 		return domain.ResourceVersion{}, fmt.Errorf("copy resource: %w", err)
 	}

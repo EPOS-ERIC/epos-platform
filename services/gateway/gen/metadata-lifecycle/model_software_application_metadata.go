@@ -21,20 +21,20 @@ var _ MappedNullable = &SoftwareApplicationMetadata{}
 
 // SoftwareApplicationMetadata struct for SoftwareApplicationMetadata
 type SoftwareApplicationMetadata struct {
-	Id               string                  `json:"id"`
-	Name             string                  `json:"name"`
-	Description      string                  `json:"description"`
-	MainEntityOfPage NullableString          `json:"main_entity_of_page,omitempty"`
-	License          NullableString          `json:"license,omitempty"`
-	Version          NullableString          `json:"version,omitempty"`
-	Keywords         string                  `json:"keywords"`
-	DownloadUrl      NullableString          `json:"download_url,omitempty"`
-	Requirements     NullableString          `json:"requirements,omitempty"`
-	OperatingSystem  NullableString          `json:"operating_system,omitempty"`
-	Creators         []ResourceReference     `json:"creators"`
-	Identifiers      []Identifier            `json:"identifiers"`
-	ContactPoints    []ContactPointReference `json:"contact_points"`
-	Categories       []ResourceReference     `json:"categories"`
+	Id               string              `json:"id"`
+	Name             string              `json:"name"`
+	Description      string              `json:"description"`
+	MainEntityOfPage NullableString      `json:"main_entity_of_page,omitempty"`
+	License          NullableString      `json:"license,omitempty"`
+	Version          NullableString      `json:"version,omitempty"`
+	Keywords         string              `json:"keywords"`
+	DownloadUrl      NullableString      `json:"download_url,omitempty"`
+	Requirements     NullableString      `json:"requirements,omitempty"`
+	OperatingSystem  NullableString      `json:"operating_system,omitempty"`
+	Creators         []ResourceReference `json:"creators"`
+	Identifiers      []Identifier        `json:"identifiers"`
+	ContactPoints    []string            `json:"contact_points"`
+	Categories       []ResourceReference `json:"categories"`
 }
 
 type _SoftwareApplicationMetadata SoftwareApplicationMetadata
@@ -43,7 +43,7 @@ type _SoftwareApplicationMetadata SoftwareApplicationMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareApplicationMetadata(id string, name string, description string, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []ContactPointReference, categories []ResourceReference) *SoftwareApplicationMetadata {
+func NewSoftwareApplicationMetadata(id string, name string, description string, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []string, categories []ResourceReference) *SoftwareApplicationMetadata {
 	this := SoftwareApplicationMetadata{}
 	this.Id = id
 	this.Name = name
@@ -467,10 +467,10 @@ func (o *SoftwareApplicationMetadata) SetIdentifiers(v []Identifier) {
 }
 
 // GetContactPoints returns the ContactPoints field value
-// If the value is explicit nil, the zero value for []ContactPointReference will be returned
-func (o *SoftwareApplicationMetadata) GetContactPoints() []ContactPointReference {
+// If the value is explicit nil, the zero value for []string will be returned
+func (o *SoftwareApplicationMetadata) GetContactPoints() []string {
 	if o == nil {
-		var ret []ContactPointReference
+		var ret []string
 		return ret
 	}
 
@@ -480,7 +480,7 @@ func (o *SoftwareApplicationMetadata) GetContactPoints() []ContactPointReference
 // GetContactPointsOk returns a tuple with the ContactPoints field value
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *SoftwareApplicationMetadata) GetContactPointsOk() ([]ContactPointReference, bool) {
+func (o *SoftwareApplicationMetadata) GetContactPointsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -488,7 +488,7 @@ func (o *SoftwareApplicationMetadata) GetContactPointsOk() ([]ContactPointRefere
 }
 
 // SetContactPoints sets field value
-func (o *SoftwareApplicationMetadata) SetContactPoints(v []ContactPointReference) {
+func (o *SoftwareApplicationMetadata) SetContactPoints(v []string) {
 	o.ContactPoints = v
 }
 

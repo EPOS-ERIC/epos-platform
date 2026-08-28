@@ -214,16 +214,13 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var request copyRequest
-	if !transport.Decode(w, r, &request) {
-		return
-	}
-	if request.TargetGroupID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "target_group_id is required")
+	targetGroupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
 
-	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, request.TargetGroupID)
+	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, targetGroupID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 

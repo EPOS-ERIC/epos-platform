@@ -79,9 +79,9 @@ func toClientDatasetDraftMetadata(metadata domain.DatasetDraftMetadata) client.D
 
 	setSliceConv(metadata.Distributions, toClientDistributionDrafts, result.SetDistributions)
 	setSliceConv(metadata.PersistentIdentifiers, toClientIdentifierDrafts, result.SetPersistentIdentifiers)
-	setSliceConv(metadata.ContactPoints, toClientResourceReferences, result.SetContactPoints)
-	setSliceConv(metadata.Providers, toClientResourceReferences, result.SetProviders)
-	setSliceConv(metadata.Categories, toClientResourceReferences, result.SetCategories)
+	setSliceConv(metadata.ContactPoints, toClientIDs, result.SetContactPoints)
+	setSliceConv(metadata.Providers, toClientIDs, result.SetProviders)
+	setSliceConv(metadata.Categories, toClientIDs, result.SetCategories)
 
 	return result
 }
@@ -153,10 +153,10 @@ func toClientSoftwareApplicationDraftMetadata(metadata domain.SoftwareApplicatio
 	setIfPresent(metadata.MainEntityOfPage, result.SetMainEntityOfPage)
 	setIfPresent(metadata.Requirements, result.SetRequirements)
 	setIfPresent(metadata.OperatingSystem, result.SetOperatingSystem)
-	setSliceConv(metadata.Creators, toClientResourceReferences, result.SetCreators)
+	setSliceConv(metadata.Creators, toClientIDs, result.SetCreators)
 	setSliceConv(metadata.Identifiers, toClientIdentifierDrafts, result.SetIdentifiers)
-	setSliceConv(metadata.Categories, toClientResourceReferences, result.SetCategories)
-	setSliceConv(metadata.ContactPoints, toClientResourceReferences, result.SetContactPoints)
+	setSliceConv(metadata.Categories, toClientIDs, result.SetCategories)
+	setSliceConv(metadata.ContactPoints, toClientIDs, result.SetContactPoints)
 
 	return result
 }
@@ -176,18 +176,16 @@ func toClientSoftwareSourceCodeDraftMetadata(metadata domain.SoftwareSourceCodeD
 	setIfPresent(metadata.RuntimePlatform, result.SetRuntimePlatform)
 	setIfPresent(metadata.MainEntityOfPage, result.SetMainEntityOfPage)
 	setIfPresent(metadata.Version, result.SetVersion)
-	setSliceConv(metadata.Creators, toClientResourceReferences, result.SetCreators)
+	setSliceConv(metadata.Creators, toClientIDs, result.SetCreators)
 	setSliceConv(metadata.Identifiers, toClientIdentifierDrafts, result.SetIdentifiers)
-	setSliceConv(metadata.Categories, toClientResourceReferences, result.SetCategories)
-	setSliceConv(metadata.ContactPoints, toClientResourceReferences, result.SetContactPoints)
+	setSliceConv(metadata.Categories, toClientIDs, result.SetCategories)
+	setSliceConv(metadata.ContactPoints, toClientIDs, result.SetContactPoints)
 
 	return result
 }
 
-func toClientResourceReferences(values []domain.ResourceReference) []client.CanonicalReference {
-	return mapSlice(values, func(value domain.ResourceReference) client.CanonicalReference {
-		return client.CanonicalReference{Id: value.ID}
-	})
+func toClientIDs(values []string) []string {
+	return slices.Clone(values)
 }
 
 func toClientIdentifierDrafts(values []domain.Identifier) []client.IdentifierDraft {
@@ -275,12 +273,12 @@ func toClientWebServiceDraft(value domain.WebServiceDraft) client.WebServiceDraf
 	}
 	result.SetId(value.ID)
 	if value.Provider != nil {
-		result.SetProvider(client.CanonicalReference{Id: value.Provider.ID})
+		result.SetProvider(*value.Provider)
 	}
 	setPtrConv(value.Documentation, toClientDocumentation, result.SetDocumentation)
 	setPtrConv(value.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
 	setPtrConv(value.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
-	setSliceConv(value.ContactPoints, toClientResourceReferences, result.SetContactPoints)
+	setSliceConv(value.ContactPoints, toClientIDs, result.SetContactPoints)
 
 	parameters := make([]client.Parameter, 0, len(value.Parameters))
 	for _, parameter := range value.Parameters {
@@ -349,7 +347,7 @@ func toDomainDatasetResourceMetadata(value *client.DatasetMetadata) domain.Datas
 		SpatialCoverage:       mapClientSpatial(value.SpatialCoverage.Get()),
 		TemporalCoverage:      mapClientTemporal(value.TemporalCoverage),
 		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toDomainIdentifier),
-		ContactPoints:         mapSlice(value.ContactPoints, toDomainContactPointReference),
+		ContactPoints:         slices.Clone(value.ContactPoints),
 		Providers:             mapSlice(value.Providers, toDomainResourceVersionReference),
 		Categories:            mapSlice(value.Categories, toDomainResourceVersionReference),
 		SourceCreated:         value.Created.Get(),
@@ -371,7 +369,7 @@ func toDomainSoftwareApplicationResourceMetadata(value *client.SoftwareApplicati
 		OperatingSystem:  value.OperatingSystem.Get(),
 		Creators:         mapSlice(value.Creators, toDomainResourceVersionReference),
 		Identifiers:      mapSlice(value.Identifiers, toDomainIdentifier),
-		ContactPoints:    mapSlice(value.ContactPoints, toDomainContactPointReference),
+		ContactPoints:    slices.Clone(value.ContactPoints),
 		Categories:       mapSlice(value.Categories, toDomainResourceVersionReference),
 	}
 }
@@ -391,7 +389,7 @@ func toDomainSoftwareSourceCodeResourceMetadata(value *client.SoftwareSourceCode
 		Version:              value.Version.Get(),
 		Creators:             mapSlice(value.Creators, toDomainResourceVersionReference),
 		Identifiers:          mapSlice(value.Identifiers, toDomainIdentifier),
-		ContactPoints:        mapSlice(value.ContactPoints, toDomainContactPointReference),
+		ContactPoints:        slices.Clone(value.ContactPoints),
 		Categories:           mapSlice(value.Categories, toDomainResourceVersionReference),
 	}
 }
@@ -400,13 +398,6 @@ func toDomainResourceVersionReference(value client.ResourceReference) domain.Res
 	return domain.ResourceVersionReference{
 		ID:   value.Id,
 		Name: value.Name,
-	}
-}
-
-func toDomainContactPointReference(value client.ContactPointReference) domain.ContactPointReference {
-	// TODO: see if we can skip the struct and just use the id directly
-	return domain.ContactPointReference{
-		ID: value.Id,
 	}
 }
 
@@ -497,7 +488,7 @@ func toDomainWebService(value client.WebService) domain.WebService {
 		Documentation:    mapClientDocumentation(value.Documentation),
 		SpatialCoverage:  mapClientSpatial(value.SpatialCoverage.Get()),
 		TemporalCoverage: mapClientTemporal(value.TemporalCoverage),
-		ContactPoints:    mapSlice(value.ContactPoints, toDomainContactPointReference),
+		ContactPoints:    slices.Clone(value.ContactPoints),
 	}
 }
 
@@ -917,13 +908,6 @@ func toDomainImportResult(value client.ImportResult) domain.ImportResult {
 func toClientRejectRequest(value domain.RejectResourceInput) client.RejectRequest {
 	return client.RejectRequest{
 		Note: value.Note,
-	}
-}
-
-func toClientCopyResourceRequest(groupID string, value domain.CopyResourceInput) client.CopyResourceRequest {
-	// TODO: see if we can skip the struct and just use the id directly
-	return client.CopyResourceRequest{
-		TargetGroupId: groupID,
 	}
 }
 

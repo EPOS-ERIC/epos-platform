@@ -22,13 +22,10 @@ model_boolean_parameter_metadata.go
 model_canonical_category.go
 model_canonical_organization.go
 model_canonical_organization_address.go
-model_canonical_reference.go
 model_category.go
 model_category_scheme.go
 model_contact_point.go
-model_contact_point_reference.go
 model_coordinate.go
-model_copy_resource_request.go
 model_create_canonical_organization_request.go
 model_create_canonical_organization_request_address.go
 model_create_category_request.go

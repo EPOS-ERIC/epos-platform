@@ -9,20 +9,20 @@ import (
 )
 
 type sourceCodeRequest struct {
-	Name                 string               `json:"name"`
-	Description          string               `json:"description"`
-	ProgrammingLanguage  *string              `json:"programming_language"`
-	Keywords             string               `json:"keywords"`
-	Repository           *string              `json:"repository"`
-	License              *string              `json:"license"`
-	SoftwareRequirements *string              `json:"software_requirements"`
-	RuntimePlatform      *string              `json:"runtime_platform"`
-	MainEntityOfPage     *string              `json:"main_entity_of_page"`
-	Version              *string              `json:"version"`
-	Creators             []canonicalReference `json:"creators"`
-	Identifiers          []identifierRequest  `json:"identifiers"`
-	Categories           []canonicalReference `json:"categories"`
-	ContactPoints        []canonicalReference `json:"contact_points"`
+	Name                 string              `json:"name"`
+	Description          string              `json:"description"`
+	ProgrammingLanguage  *string             `json:"programming_language"`
+	Keywords             string              `json:"keywords"`
+	Repository           *string             `json:"repository"`
+	License              *string             `json:"license"`
+	SoftwareRequirements *string             `json:"software_requirements"`
+	RuntimePlatform      *string             `json:"runtime_platform"`
+	MainEntityOfPage     *string             `json:"main_entity_of_page"`
+	Version              *string             `json:"version"`
+	Creators             []uuid.UUID         `json:"creators"`
+	Identifiers          []identifierRequest `json:"identifiers"`
+	Categories           []uuid.UUID         `json:"categories"`
+	ContactPoints        []uuid.UUID         `json:"contact_points"`
 }
 
 type createRequest struct {
@@ -39,14 +39,6 @@ type replaceDraftRequest struct {
 
 type rejectionRequest struct {
 	Note string `json:"note"`
-}
-
-type copyRequest struct {
-	TargetGroupID uuid.UUID `json:"target_group_id"`
-}
-
-type canonicalReference struct {
-	ID uuid.UUID `json:"id"`
 }
 
 type identifierRequest struct {
@@ -68,21 +60,21 @@ type sourceCodeRecord struct {
 }
 
 type sourceCodeMetadataResponse struct {
-	ID                   uuid.UUID                `json:"id"`
-	Name                 string                   `json:"name"`
-	Description          string                   `json:"description"`
-	ProgrammingLanguage  *string                  `json:"programming_language"`
-	Keywords             string                   `json:"keywords"`
-	Repository           *string                  `json:"repository"`
-	License              *string                  `json:"license"`
-	SoftwareRequirements *string                  `json:"software_requirements"`
-	RuntimePlatform      *string                  `json:"runtime_platform"`
-	MainEntityOfPage     *string                  `json:"main_entity_of_page"`
-	Version              *string                  `json:"version"`
-	Creators             []resourceReference      `json:"creators"`
-	Identifiers          []identifierResponse     `json:"identifiers"`
-	Categories           []resourceReference      `json:"categories"`
-	ContactPoints        *[]contactPointReference `json:"contact_points"`
+	ID                   uuid.UUID            `json:"id"`
+	Name                 string               `json:"name"`
+	Description          string               `json:"description"`
+	ProgrammingLanguage  *string              `json:"programming_language"`
+	Keywords             string               `json:"keywords"`
+	Repository           *string              `json:"repository"`
+	License              *string              `json:"license"`
+	SoftwareRequirements *string              `json:"software_requirements"`
+	RuntimePlatform      *string              `json:"runtime_platform"`
+	MainEntityOfPage     *string              `json:"main_entity_of_page"`
+	Version              *string              `json:"version"`
+	Creators             []resourceReference  `json:"creators"`
+	Identifiers          []identifierResponse `json:"identifiers"`
+	Categories           []resourceReference  `json:"categories"`
+	ContactPoints        *[]uuid.UUID         `json:"contact_points"`
 }
 
 type resourceReference struct {
@@ -110,7 +102,7 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	}
 	for _, creator := range r.Creators {
 		result.Creators = append(result.Creators, metadata.Organization{
-			ID:            creator.ID,
+			ID:            creator,
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -133,7 +125,7 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	}
 	for _, value := range r.Categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:   value.ID,
+			ID:   value,
 			Name: "",
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
@@ -151,7 +143,7 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 	}
 	for _, value := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:    value.ID,
+			ID:    value,
 			Email: "",
 			Role:  "",
 		})
@@ -202,26 +194,17 @@ func sourceCodeMetadataDTO(value metadata.SoftwareSourceCode, includeContacts bo
 		result.Categories = append(result.Categories, resourceReferenceDTO(item.ID, item.Name))
 	}
 	if includeContacts {
-		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
+		contacts := make([]uuid.UUID, 0, len(value.ContactPoints))
 		for _, item := range value.ContactPoints {
-			contacts = append(contacts, contactPointReferenceDTO(item))
+			contacts = append(contacts, item.ID)
 		}
 		result.ContactPoints = &contacts
 	}
 	return result
 }
 
-type contactPointReference struct {
-	ID uuid.UUID `json:"id"`
-}
-
 func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
 	return resourceReference{ID: id, Name: name}
-}
-
-func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
-	// TODO: we can probably skip the struct here and just use the id (also is this duplicated?)
-	return contactPointReference{ID: value.ID}
 }
 
 func identifierDTO(value metadata.Identifier) identifierResponse {

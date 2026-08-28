@@ -22,22 +22,22 @@ var _ MappedNullable = &DatasetMetadata{}
 
 // DatasetMetadata struct for DatasetMetadata
 type DatasetMetadata struct {
-	Id                    string                  `json:"id"`
-	Title                 string                  `json:"title"`
-	Description           string                  `json:"description"`
-	Keywords              string                  `json:"keywords"`
-	AccrualPeriodicity    NullableString          `json:"accrual_periodicity,omitempty"`
-	QualityAnnotation     NullableString          `json:"quality_annotation,omitempty"`
-	AccessRight           NullableString          `json:"access_right,omitempty"`
-	Distributions         []Distribution          `json:"distributions"`
-	SpatialCoverage       NullableSpatial         `json:"spatial_coverage,omitempty"`
-	TemporalCoverage      *Temporal               `json:"temporal_coverage,omitempty"`
-	PersistentIdentifiers []Identifier            `json:"persistent_identifiers"`
-	ContactPoints         []ContactPointReference `json:"contact_points"`
-	Providers             []ResourceReference     `json:"providers"`
-	Categories            []ResourceReference     `json:"categories"`
-	Created               NullableTime            `json:"created,omitempty"`
-	Updated               NullableTime            `json:"updated,omitempty"`
+	Id                    string              `json:"id"`
+	Title                 string              `json:"title"`
+	Description           string              `json:"description"`
+	Keywords              string              `json:"keywords"`
+	AccrualPeriodicity    NullableString      `json:"accrual_periodicity,omitempty"`
+	QualityAnnotation     NullableString      `json:"quality_annotation,omitempty"`
+	AccessRight           NullableString      `json:"access_right,omitempty"`
+	Distributions         []Distribution      `json:"distributions"`
+	SpatialCoverage       NullableSpatial     `json:"spatial_coverage,omitempty"`
+	TemporalCoverage      *Temporal           `json:"temporal_coverage,omitempty"`
+	PersistentIdentifiers []Identifier        `json:"persistent_identifiers"`
+	ContactPoints         []string            `json:"contact_points"`
+	Providers             []ResourceReference `json:"providers"`
+	Categories            []ResourceReference `json:"categories"`
+	Created               NullableTime        `json:"created,omitempty"`
+	Updated               NullableTime        `json:"updated,omitempty"`
 }
 
 type _DatasetMetadata DatasetMetadata
@@ -46,7 +46,7 @@ type _DatasetMetadata DatasetMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDatasetMetadata(id string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []ContactPointReference, providers []ResourceReference, categories []ResourceReference) *DatasetMetadata {
+func NewDatasetMetadata(id string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []string, providers []ResourceReference, categories []ResourceReference) *DatasetMetadata {
 	this := DatasetMetadata{}
 	this.Id = id
 	this.Title = title
@@ -417,10 +417,10 @@ func (o *DatasetMetadata) SetPersistentIdentifiers(v []Identifier) {
 }
 
 // GetContactPoints returns the ContactPoints field value
-// If the value is explicit nil, the zero value for []ContactPointReference will be returned
-func (o *DatasetMetadata) GetContactPoints() []ContactPointReference {
+// If the value is explicit nil, the zero value for []string will be returned
+func (o *DatasetMetadata) GetContactPoints() []string {
 	if o == nil {
-		var ret []ContactPointReference
+		var ret []string
 		return ret
 	}
 
@@ -430,7 +430,7 @@ func (o *DatasetMetadata) GetContactPoints() []ContactPointReference {
 // GetContactPointsOk returns a tuple with the ContactPoints field value
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetMetadata) GetContactPointsOk() ([]ContactPointReference, bool) {
+func (o *DatasetMetadata) GetContactPointsOk() ([]string, bool) {
 	if o == nil || IsNil(o.ContactPoints) {
 		return nil, false
 	}
@@ -438,7 +438,7 @@ func (o *DatasetMetadata) GetContactPointsOk() ([]ContactPointReference, bool) {
 }
 
 // SetContactPoints sets field value
-func (o *DatasetMetadata) SetContactPoints(v []ContactPointReference) {
+func (o *DatasetMetadata) SetContactPoints(v []string) {
 	o.ContactPoints = v
 }
 

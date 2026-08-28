@@ -106,7 +106,7 @@ Class | Method | HTTP request | Description
 *OrganizationsAPI* | [**GetOrganization**](docs/OrganizationsAPI.md#getorganization) | **Get** /api/v1/organizations/{organization_id} | Get organization
 *OrganizationsAPI* | [**ListOrganizations**](docs/OrganizationsAPI.md#listorganizations) | **Get** /api/v1/organizations | List organizations
 *OrganizationsAPI* | [**ReplaceOrganization**](docs/OrganizationsAPI.md#replaceorganization) | **Put** /api/v1/organizations/{organization_id} | Replace organization
-*ResourcesAPI* | [**CopyResource**](docs/ResourcesAPI.md#copyresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/copies | Copy published resource
+*ResourcesAPI* | [**CopyResource**](docs/ResourcesAPI.md#copyresource) | **Post** /api/v1/groups/{group_id}/resources/{resource_type}/{resource_id}/copies | Copy published resource
 *ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/groups/{group_id}/resources | Create resource draft
 *ResourcesAPI* | [**CreateResourceDraftFromArchive**](docs/ResourcesAPI.md#createresourcedraftfromarchive) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-archive | Create resource draft from archive
 *ResourcesAPI* | [**CreateResourceDraftFromPublication**](docs/ResourcesAPI.md#createresourcedraftfrompublication) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-publication | Create resource draft from publication
@@ -138,13 +138,10 @@ Class | Method | HTTP request | Description
  - [CanonicalCategory](docs/CanonicalCategory.md)
  - [CanonicalOrganization](docs/CanonicalOrganization.md)
  - [CanonicalOrganizationAddress](docs/CanonicalOrganizationAddress.md)
- - [CanonicalReference](docs/CanonicalReference.md)
  - [Category](docs/Category.md)
  - [CategoryScheme](docs/CategoryScheme.md)
  - [ContactPoint](docs/ContactPoint.md)
- - [ContactPointReference](docs/ContactPointReference.md)
  - [Coordinate](docs/Coordinate.md)
- - [CopyResourceRequest](docs/CopyResourceRequest.md)
  - [CreateCanonicalOrganizationRequest](docs/CreateCanonicalOrganizationRequest.md)
  - [CreateCanonicalOrganizationRequestAddress](docs/CreateCanonicalOrganizationRequestAddress.md)
  - [CreateCategoryRequest](docs/CreateCategoryRequest.md)

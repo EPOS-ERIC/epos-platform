@@ -24,9 +24,9 @@ type datasetDraftRequest struct {
 	SpatialCoverage       *spatial              `json:"spatial_coverage"`
 	TemporalCoverage      *temporal             `json:"temporal_coverage"`
 	PersistentIdentifiers []identifier          `json:"persistent_identifiers"`
-	ContactPoints         []canonicalReference  `json:"contact_points"`
-	Providers             []canonicalReference  `json:"providers"`
-	Categories            []canonicalReference  `json:"categories"`
+	ContactPoints         []uuid.UUID           `json:"contact_points"`
+	Providers             []uuid.UUID           `json:"providers"`
+	Categories            []uuid.UUID           `json:"categories"`
 	Created               *time.Time            `json:"created"`
 	Updated               *time.Time            `json:"updated"`
 }
@@ -51,21 +51,17 @@ type distributionRequest struct {
 }
 
 type webServiceRequest struct {
-	ID               uuid.UUID            `json:"id"`
-	Name             string               `json:"name"`
-	Description      string               `json:"description"`
-	TemplateURL      string               `json:"template_url"`
-	Parameters       []parameterRequest   `json:"parameters"`
-	Format           string               `json:"format"`
-	Provider         *canonicalReference  `json:"provider"`
-	Documentation    *documentation       `json:"documentation"`
-	SpatialCoverage  *spatial             `json:"spatial_coverage"`
-	TemporalCoverage *temporal            `json:"temporal_coverage"`
-	ContactPoints    []canonicalReference `json:"contact_points"`
-}
-
-type canonicalReference struct {
-	ID uuid.UUID `json:"id"`
+	ID               uuid.UUID          `json:"id"`
+	Name             string             `json:"name"`
+	Description      string             `json:"description"`
+	TemplateURL      string             `json:"template_url"`
+	Parameters       []parameterRequest `json:"parameters"`
+	Format           string             `json:"format"`
+	Provider         *uuid.UUID         `json:"provider"`
+	Documentation    *documentation     `json:"documentation"`
+	SpatialCoverage  *spatial           `json:"spatial_coverage"`
+	TemporalCoverage *temporal          `json:"temporal_coverage"`
+	ContactPoints    []uuid.UUID        `json:"contact_points"`
 }
 
 type parameterRequest struct {
@@ -302,14 +298,14 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 	}
 	for _, value := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:    value.ID,
+			ID:    value,
 			Email: "",
 			Role:  "",
 		})
 	}
 	for _, value := range r.Providers {
 		result.Providers = append(result.Providers, metadata.Organization{
-			ID:            value.ID,
+			ID:            value,
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -325,7 +321,7 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 	}
 	for _, value := range r.Categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:   value.ID,
+			ID:   value,
 			Name: "",
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
@@ -389,7 +385,7 @@ func (r webServiceRequest) domain() metadata.WebService {
 	}
 	if r.Provider != nil {
 		result.Provider = &metadata.Organization{
-			ID:            r.Provider.ID,
+			ID:            *r.Provider,
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -412,7 +408,7 @@ func (r webServiceRequest) domain() metadata.WebService {
 	}
 	for _, value := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:    value.ID,
+			ID:    value,
 			Email: "",
 			Role:  "",
 		})
@@ -475,22 +471,22 @@ type record struct {
 }
 
 type metadataResponse struct {
-	ID                    uuid.UUID                `json:"id"`
-	Title                 string                   `json:"title"`
-	Description           string                   `json:"description"`
-	Keywords              string                   `json:"keywords"`
-	AccrualPeriodicity    *string                  `json:"accrual_periodicity"`
-	QualityAnnotation     *string                  `json:"quality_annotation"`
-	AccessRight           *string                  `json:"access_right"`
-	Distributions         []distribution           `json:"distributions"`
-	SpatialCoverage       *spatial                 `json:"spatial_coverage"`
-	TemporalCoverage      *temporal                `json:"temporal_coverage"`
-	PersistentIdentifiers []identifier             `json:"persistent_identifiers"`
-	ContactPoints         *[]contactPointReference `json:"contact_points,omitempty"`
-	Providers             []resourceReference      `json:"providers"`
-	Categories            []resourceReference      `json:"categories"`
-	Created               *time.Time               `json:"created"`
-	Updated               *time.Time               `json:"updated"`
+	ID                    uuid.UUID           `json:"id"`
+	Title                 string              `json:"title"`
+	Description           string              `json:"description"`
+	Keywords              string              `json:"keywords"`
+	AccrualPeriodicity    *string             `json:"accrual_periodicity"`
+	QualityAnnotation     *string             `json:"quality_annotation"`
+	AccessRight           *string             `json:"access_right"`
+	Distributions         []distribution      `json:"distributions"`
+	SpatialCoverage       *spatial            `json:"spatial_coverage"`
+	TemporalCoverage      *temporal           `json:"temporal_coverage"`
+	PersistentIdentifiers []identifier        `json:"persistent_identifiers"`
+	ContactPoints         *[]uuid.UUID        `json:"contact_points,omitempty"`
+	Providers             []resourceReference `json:"providers"`
+	Categories            []resourceReference `json:"categories"`
+	Created               *time.Time          `json:"created"`
+	Updated               *time.Time          `json:"updated"`
 }
 
 type distribution struct {
@@ -507,27 +503,22 @@ type distribution struct {
 }
 
 type webService struct {
-	ID               uuid.UUID                `json:"id"`
-	Name             string                   `json:"name"`
-	Description      string                   `json:"description"`
-	TemplateURL      string                   `json:"template_url"`
-	Parameters       []parameterResponse      `json:"parameters"`
-	Format           string                   `json:"format"`
-	Provider         *resourceReference       `json:"provider"`
-	Documentation    *documentation           `json:"documentation"`
-	SpatialCoverage  *spatial                 `json:"spatial_coverage"`
-	TemporalCoverage *temporal                `json:"temporal_coverage"`
-	ContactPoints    *[]contactPointReference `json:"contact_points,omitempty"`
+	ID               uuid.UUID           `json:"id"`
+	Name             string              `json:"name"`
+	Description      string              `json:"description"`
+	TemplateURL      string              `json:"template_url"`
+	Parameters       []parameterResponse `json:"parameters"`
+	Format           string              `json:"format"`
+	Provider         *resourceReference  `json:"provider"`
+	Documentation    *documentation      `json:"documentation"`
+	SpatialCoverage  *spatial            `json:"spatial_coverage"`
+	TemporalCoverage *temporal           `json:"temporal_coverage"`
+	ContactPoints    *[]uuid.UUID        `json:"contact_points,omitempty"`
 }
 
 type resourceReference struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
-}
-
-type contactPointReference struct {
-	// TODO: we can probably just use the id skipping the struct?
-	ID uuid.UUID `json:"id"`
 }
 
 func datasetResponse(value datasetlifecycle.Dataset, includeContacts bool) record {
@@ -571,9 +562,9 @@ func datasetMetadataDTO(value metadata.Dataset, includeContacts bool) metadataRe
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifierResponse(item))
 	}
 	if includeContacts {
-		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
+		contacts := make([]uuid.UUID, 0, len(value.ContactPoints))
 		for _, item := range value.ContactPoints {
-			contacts = append(contacts, contactPointReferenceDTO(item))
+			contacts = append(contacts, item.ID)
 		}
 		result.ContactPoints = &contacts
 	}
@@ -641,9 +632,9 @@ func webServiceDTO(value metadata.WebService, includeContacts bool) webService {
 		}
 	}
 	if includeContacts {
-		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
+		contacts := make([]uuid.UUID, 0, len(value.ContactPoints))
 		for _, item := range value.ContactPoints {
-			contacts = append(contacts, contactPointReferenceDTO(item))
+			contacts = append(contacts, item.ID)
 		}
 		result.ContactPoints = &contacts
 	}
@@ -721,11 +712,6 @@ func parameterMetadataResponse(value metadata.ParameterMetadata) parameterMetada
 
 func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
 	return resourceReference{ID: id, Name: name}
-}
-
-func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
-	// TODO: we can probably skip the struct here and just use the ID
-	return contactPointReference{ID: value.ID}
 }
 
 func identifierResponse(value metadata.Identifier) identifier {

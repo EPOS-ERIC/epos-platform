@@ -2,7 +2,7 @@ package api
 
 import "time"
 
-// TODO: check the whole apis for inconsistencies and try to clean it up. we don't need a difference between ResourceReference and ResourceVersionReference for example
+// TODO: check the whole apis for inconsistencies and try to clean it up. like we could have the draft bodies be struct and then embed them into normal get responses that adds the ids and stuff
 
 type DatasetDraftMetadata struct {
 	ID                    string              `json:"id,omitempty"`
@@ -16,48 +16,44 @@ type DatasetDraftMetadata struct {
 	SpatialCoverage       *SpatialCoverage    `json:"spatial_coverage,omitempty"`
 	TemporalCoverage      *TemporalCoverage   `json:"temporal_coverage,omitempty"`
 	PersistentIdentifiers []IdentifierDraft   `json:"persistent_identifiers,omitempty"`
-	ContactPoints         []ResourceReference `json:"contact_points,omitempty"`
-	Providers             []ResourceReference `json:"providers,omitempty"`
-	Categories            []ResourceReference `json:"categories,omitempty"`
+	ContactPoints         []string            `json:"contact_points,omitempty"`
+	Providers             []string            `json:"providers,omitempty"`
+	Categories            []string            `json:"categories,omitempty"`
 	Created               *time.Time          `json:"created,omitempty"`
 	Updated               *time.Time          `json:"updated,omitempty"`
 }
 
 type SoftwareApplicationDraftMetadata struct {
-	Name             string              `json:"name"`
-	Description      *string             `json:"description,omitempty"`
-	Keywords         *string             `json:"keywords,omitempty"`
-	License          *string             `json:"license,omitempty"`
-	Version          *string             `json:"version,omitempty"`
-	DownloadURL      *string             `json:"download_url,omitempty"`
-	Requirements     *string             `json:"requirements,omitempty"`
-	OperatingSystem  *string             `json:"operating_system,omitempty"`
-	MainEntityOfPage *string             `json:"main_entity_of_page,omitempty"`
-	Creators         []ResourceReference `json:"creators,omitempty"`
-	Identifiers      []IdentifierDraft   `json:"identifiers,omitempty"`
-	Categories       []ResourceReference `json:"categories,omitempty"`
-	ContactPoints    []ResourceReference `json:"contact_points,omitempty"`
+	Name             string            `json:"name"`
+	Description      *string           `json:"description,omitempty"`
+	Keywords         *string           `json:"keywords,omitempty"`
+	License          *string           `json:"license,omitempty"`
+	Version          *string           `json:"version,omitempty"`
+	DownloadURL      *string           `json:"download_url,omitempty"`
+	Requirements     *string           `json:"requirements,omitempty"`
+	OperatingSystem  *string           `json:"operating_system,omitempty"`
+	MainEntityOfPage *string           `json:"main_entity_of_page,omitempty"`
+	Creators         []string          `json:"creators,omitempty"`
+	Identifiers      []IdentifierDraft `json:"identifiers,omitempty"`
+	Categories       []string          `json:"categories,omitempty"`
+	ContactPoints    []string          `json:"contact_points,omitempty"`
 }
 
 type SoftwareSourceCodeDraftMetadata struct {
-	Name                 string              `json:"name"`
-	Description          *string             `json:"description,omitempty"`
-	Keywords             *string             `json:"keywords,omitempty"`
-	Repository           *string             `json:"repository,omitempty"`
-	ProgrammingLanguage  *string             `json:"programming_language,omitempty"`
-	License              *string             `json:"license,omitempty"`
-	SoftwareRequirements *string             `json:"software_requirements,omitempty"`
-	RuntimePlatform      *string             `json:"runtime_platform,omitempty"`
-	MainEntityOfPage     *string             `json:"main_entity_of_page,omitempty"`
-	Version              *string             `json:"version,omitempty"`
-	Creators             []ResourceReference `json:"creators,omitempty"`
-	Identifiers          []IdentifierDraft   `json:"identifiers,omitempty"`
-	Categories           []ResourceReference `json:"categories,omitempty"`
-	ContactPoints        []ResourceReference `json:"contact_points,omitempty"`
-}
-
-type ResourceReference struct {
-	ID string `json:"id"`
+	Name                 string            `json:"name"`
+	Description          *string           `json:"description,omitempty"`
+	Keywords             *string           `json:"keywords,omitempty"`
+	Repository           *string           `json:"repository,omitempty"`
+	ProgrammingLanguage  *string           `json:"programming_language,omitempty"`
+	License              *string           `json:"license,omitempty"`
+	SoftwareRequirements *string           `json:"software_requirements,omitempty"`
+	RuntimePlatform      *string           `json:"runtime_platform,omitempty"`
+	MainEntityOfPage     *string           `json:"main_entity_of_page,omitempty"`
+	Version              *string           `json:"version,omitempty"`
+	Creators             []string          `json:"creators,omitempty"`
+	Identifiers          []IdentifierDraft `json:"identifiers,omitempty"`
+	Categories           []string          `json:"categories,omitempty"`
+	ContactPoints        []string          `json:"contact_points,omitempty"`
 }
 
 type IdentifierDraft struct {
@@ -80,17 +76,17 @@ type DistributionDraft struct {
 }
 
 type WebServiceDraft struct {
-	ID               string              `json:"id,omitempty"`
-	Name             string              `json:"name"`
-	Description      string              `json:"description"`
-	TemplateURL      string              `json:"template_url"`
-	Parameters       []any               `json:"parameters,omitempty"`
-	Format           string              `json:"format"`
-	Provider         *ResourceReference  `json:"provider,omitempty"`
-	Documentation    *Documentation      `json:"documentation,omitempty"`
-	SpatialCoverage  *SpatialCoverage    `json:"spatial_coverage,omitempty"`
-	TemporalCoverage *TemporalCoverage   `json:"temporal_coverage,omitempty"`
-	ContactPoints    []ResourceReference `json:"contact_points,omitempty"`
+	ID               string            `json:"id,omitempty"`
+	Name             string            `json:"name"`
+	Description      string            `json:"description"`
+	TemplateURL      string            `json:"template_url"`
+	Parameters       []any             `json:"parameters,omitempty"`
+	Format           string            `json:"format"`
+	Provider         *string           `json:"provider,omitempty"`
+	Documentation    *Documentation    `json:"documentation,omitempty"`
+	SpatialCoverage  *SpatialCoverage  `json:"spatial_coverage,omitempty"`
+	TemporalCoverage *TemporalCoverage `json:"temporal_coverage,omitempty"`
+	ContactPoints    []string          `json:"contact_points,omitempty"`
 }
 
 type DownloadableFile struct {
@@ -152,8 +148,6 @@ type ReplaceSoftwareSourceCodeDraftRequest struct {
 	Metadata     SoftwareSourceCodeDraftMetadata `json:"metadata"`
 }
 
-type CopyResourceRequest struct{} // TODO: simplify this
-
 type RejectResourceRequest struct {
 	Note string `json:"note"`
 }
@@ -187,7 +181,7 @@ type DatasetResourceMetadata struct {
 	SpatialCoverage       *SpatialCoverage           `json:"spatial_coverage,omitempty"`
 	TemporalCoverage      *TemporalCoverage          `json:"temporal_coverage,omitempty"`
 	PersistentIdentifiers []IdentifierDraft          `json:"persistent_identifiers"`
-	ContactPoints         []ContactPointReference    `json:"contact_points"`
+	ContactPoints         []string                   `json:"contact_points"`
 	Providers             []ResourceVersionReference `json:"providers"`
 	Categories            []ResourceVersionReference `json:"categories"`
 	Created               *time.Time                 `json:"created"`
@@ -209,7 +203,7 @@ type SoftwareApplicationResourceMetadata struct {
 	OperatingSystem  *string                    `json:"operating_system"`
 	Creators         []ResourceVersionReference `json:"creators"`
 	Identifiers      []IdentifierDraft          `json:"identifiers"`
-	ContactPoints    []ContactPointReference    `json:"contact_points"`
+	ContactPoints    []string                   `json:"contact_points"`
 	Categories       []ResourceVersionReference `json:"categories"`
 }
 
@@ -229,7 +223,7 @@ type SoftwareSourceCodeResourceMetadata struct {
 	Version              *string                    `json:"version"`
 	Creators             []ResourceVersionReference `json:"creators"`
 	Identifiers          []IdentifierDraft          `json:"identifiers"`
-	ContactPoints        []ContactPointReference    `json:"contact_points"`
+	ContactPoints        []string                   `json:"contact_points"`
 	Categories           []ResourceVersionReference `json:"categories"`
 }
 
@@ -238,11 +232,6 @@ func (SoftwareSourceCodeResourceMetadata) resourceVersionMetadata() {}
 type ResourceVersionReference struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
-}
-
-type ContactPointReference struct {
-	// TODO: this can probably just be the id instead of the struct
-	ID string `json:"id"`
 }
 
 type Distribution interface {
@@ -288,7 +277,7 @@ type WebService struct {
 	Documentation    *Documentation            `json:"documentation,omitempty"`
 	SpatialCoverage  *SpatialCoverage          `json:"spatial_coverage,omitempty"`
 	TemporalCoverage *TemporalCoverage         `json:"temporal_coverage,omitempty"`
-	ContactPoints    []ContactPointReference   `json:"contact_points,omitempty"`
+	ContactPoints    []string                  `json:"contact_points,omitempty"`
 }
 
 type Parameter interface {

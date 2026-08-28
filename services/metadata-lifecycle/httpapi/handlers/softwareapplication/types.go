@@ -9,29 +9,25 @@ import (
 )
 
 type applicationRequest struct {
-	Name             string               `json:"name"`
-	Description      string               `json:"description"`
-	MainEntityOfPage *string              `json:"main_entity_of_page"`
-	License          *string              `json:"license"`
-	Version          *string              `json:"version"`
-	Keywords         string               `json:"keywords"`
-	DownloadURL      *string              `json:"download_url"`
-	Requirements     *string              `json:"requirements"`
-	OperatingSystem  *string              `json:"operating_system"`
-	Creators         []canonicalReference `json:"creators"`
-	Identifiers      []identifierRequest  `json:"identifiers"`
-	Categories       []canonicalReference `json:"categories"`
-	ContactPoints    []canonicalReference `json:"contact_points"`
+	Name             string              `json:"name"`
+	Description      string              `json:"description"`
+	MainEntityOfPage *string             `json:"main_entity_of_page"`
+	License          *string             `json:"license"`
+	Version          *string             `json:"version"`
+	Keywords         string              `json:"keywords"`
+	DownloadURL      *string             `json:"download_url"`
+	Requirements     *string             `json:"requirements"`
+	OperatingSystem  *string             `json:"operating_system"`
+	Creators         []uuid.UUID         `json:"creators"`
+	Identifiers      []identifierRequest `json:"identifiers"`
+	Categories       []uuid.UUID         `json:"categories"`
+	ContactPoints    []uuid.UUID         `json:"contact_points"`
 }
 
 type createRequest struct {
 	GroupID      uuid.UUID          `json:"group_id,omitempty"`
 	ResourceType string             `json:"resource_type"`
 	Metadata     applicationRequest `json:"metadata"`
-}
-
-type canonicalReference struct {
-	ID uuid.UUID `json:"id"`
 }
 
 type identifierRequest struct {
@@ -47,10 +43,6 @@ type replaceDraftRequest struct {
 
 type rejectRequest struct {
 	Note string `json:"note"`
-}
-
-type copyRequest struct {
-	TargetGroupID uuid.UUID `json:"target_group_id"`
 }
 
 func (r applicationRequest) domain() metadata.SoftwareApplication {
@@ -72,7 +64,7 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 	}
 	for _, creator := range r.Creators {
 		result.Creators = append(result.Creators, metadata.Organization{
-			ID:            creator.ID,
+			ID:            creator,
 			Name:          "",
 			Street:        nil,
 			Locality:      nil,
@@ -95,7 +87,7 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 	}
 	for _, category := range r.Categories {
 		result.Categories = append(result.Categories, metadata.Category{
-			ID:   category.ID,
+			ID:   category,
 			Name: "",
 			Scheme: metadata.CategoryScheme{
 				ID:          uuid.Nil,
@@ -113,7 +105,7 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 	}
 	for _, contact := range r.ContactPoints {
 		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:    contact.ID,
+			ID:    contact,
 			Email: "",
 			Role:  "",
 		})
@@ -135,20 +127,20 @@ type record struct {
 }
 
 type softwareApplicationResponseDTO struct {
-	ID               uuid.UUID                `json:"id"`
-	Name             string                   `json:"name"`
-	Description      string                   `json:"description"`
-	MainEntityOfPage *string                  `json:"main_entity_of_page"`
-	License          *string                  `json:"license"`
-	Version          *string                  `json:"version"`
-	Keywords         string                   `json:"keywords"`
-	DownloadURL      *string                  `json:"download_url"`
-	Requirements     *string                  `json:"requirements"`
-	OperatingSystem  *string                  `json:"operating_system"`
-	Creators         []resourceReference      `json:"creators"`
-	Identifiers      []identifierResponse     `json:"identifiers"`
-	Categories       []resourceReference      `json:"categories"`
-	ContactPoints    *[]contactPointReference `json:"contact_points"`
+	ID               uuid.UUID            `json:"id"`
+	Name             string               `json:"name"`
+	Description      string               `json:"description"`
+	MainEntityOfPage *string              `json:"main_entity_of_page"`
+	License          *string              `json:"license"`
+	Version          *string              `json:"version"`
+	Keywords         string               `json:"keywords"`
+	DownloadURL      *string              `json:"download_url"`
+	Requirements     *string              `json:"requirements"`
+	OperatingSystem  *string              `json:"operating_system"`
+	Creators         []resourceReference  `json:"creators"`
+	Identifiers      []identifierResponse `json:"identifiers"`
+	Categories       []resourceReference  `json:"categories"`
+	ContactPoints    *[]uuid.UUID         `json:"contact_points"`
 }
 
 type resourceReference struct {
@@ -204,26 +196,17 @@ func applicationMetadataDTO(value metadata.SoftwareApplication, includeContacts 
 		result.Categories = append(result.Categories, resourceReferenceDTO(category.ID, category.Name))
 	}
 	if includeContacts {
-		contacts := make([]contactPointReference, 0, len(value.ContactPoints))
+		contacts := make([]uuid.UUID, 0, len(value.ContactPoints))
 		for _, contact := range value.ContactPoints {
-			contacts = append(contacts, contactPointReferenceDTO(contact))
+			contacts = append(contacts, contact.ID)
 		}
 		result.ContactPoints = &contacts
 	}
 	return result
 }
 
-type contactPointReference struct {
-	ID uuid.UUID `json:"id"`
-}
-
 func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
 	return resourceReference{ID: id, Name: name}
-}
-
-func contactPointReferenceDTO(value metadata.ContactPoint) contactPointReference {
-	// TODO: we can probably skip the struct here and just use the id (also is this duplicated?)
-	return contactPointReference{ID: value.ID}
 }
 
 func identifierDTO(value metadata.Identifier) identifierResponse {

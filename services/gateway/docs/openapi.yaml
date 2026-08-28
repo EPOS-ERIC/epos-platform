@@ -1227,12 +1227,6 @@ paths:
       operationId: copyResource
       security:
         - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CopyResourceRequest"
       responses:
         "201":
           description: Resource copied
@@ -2043,17 +2037,17 @@ components:
         contact_points:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         providers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         categories:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         created: { type: string, format: date-time, nullable: true }
         updated: { type: string, format: date-time, nullable: true }
@@ -2075,7 +2069,7 @@ components:
         creators:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         identifiers:
           {
@@ -2085,12 +2079,12 @@ components:
         categories:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         contact_points:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
 
     SoftwareSourceCodeDraftMetadata:
@@ -2111,7 +2105,7 @@ components:
         creators:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         identifiers:
           {
@@ -2121,20 +2115,14 @@ components:
         categories:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
         contact_points:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
 
-    ResourceReference:
-      type: object
-      additionalProperties: false
-      required: [id]
-      properties:
-        id: { type: string, format: uuid }
 
     SoftwareIdentifier:
       type: object
@@ -2213,14 +2201,14 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Parameter" }
         format: { type: string, minLength: 1, pattern: '\S' }
-        provider: { $ref: "#/components/schemas/ResourceReference" }
+        provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points:
           {
             type: array,
-            items: { $ref: "#/components/schemas/ResourceReference" },
+            items: { type: string, format: uuid },
           }
 
     Parameter:
@@ -2439,10 +2427,6 @@ components:
           software-application: "#/components/schemas/ReplaceSoftwareApplicationDraftRequest"
           software-source-code: "#/components/schemas/ReplaceSoftwareSourceCodeDraftRequest"
 
-    CopyResourceRequest:
-      type: object
-      additionalProperties: false
-
     RejectResourceRequest:
       type: object
       required: [note]
@@ -2517,7 +2501,7 @@ components:
         contact_points:
           type: array
           nullable: true
-          items: { $ref: "#/components/schemas/ContactPointReference" }
+          items: { type: string, format: uuid }
         providers:
           type: array
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
@@ -2561,7 +2545,7 @@ components:
         contact_points:
           type: array
           nullable: true
-          items: { $ref: "#/components/schemas/ContactPointReference" }
+          items: { type: string, format: uuid }
         categories:
           type: array
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
@@ -2601,7 +2585,7 @@ components:
         contact_points:
           type: array
           nullable: true
-          items: { $ref: "#/components/schemas/ContactPointReference" }
+          items: { type: string, format: uuid }
         categories:
           type: array
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
@@ -2670,7 +2654,7 @@ components:
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points:
           type: array
-          items: { $ref: "#/components/schemas/ContactPointReference" }
+          items: { type: string, format: uuid }
 
     ResourceIdentifier:
       type: object
@@ -2686,12 +2670,6 @@ components:
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
-
-    ContactPointReference:
-      type: object
-      required: [id]
-      properties:
-        id: { type: string, format: uuid }
 
     # -------------------------------------------------------------------------
     # Resource write schemas

@@ -41,9 +41,9 @@ func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.Dataset
 		SpatialCoverage:       mapPtr(value.SpatialCoverage, toDomainSpatialCoverage),
 		TemporalCoverage:      mapPtr(value.TemporalCoverage, toDomainTemporalCoverage),
 		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toDomainIdentifierDraft),
-		ContactPoints:         mapSlice(value.ContactPoints, toDomainResourceReference),
-		Providers:             mapSlice(value.Providers, toDomainResourceReference),
-		Categories:            mapSlice(value.Categories, toDomainResourceReference),
+		ContactPoints:         value.ContactPoints,
+		Providers:             value.Providers,
+		Categories:            value.Categories,
 		SourceCreated:         value.Created,
 		SourceUpdated:         value.Updated,
 	}
@@ -60,10 +60,10 @@ func toDomainSoftwareApplicationDraftMetadata(value api.SoftwareApplicationDraft
 		Requirements:     value.Requirements,
 		OperatingSystem:  value.OperatingSystem,
 		MainEntityOfPage: value.MainEntityOfPage,
-		Creators:         mapSlice(value.Creators, toDomainResourceReference),
+		Creators:         value.Creators,
 		Identifiers:      mapSlice(value.Identifiers, toDomainIdentifierDraft),
-		Categories:       mapSlice(value.Categories, toDomainResourceReference),
-		ContactPoints:    mapSlice(value.ContactPoints, toDomainResourceReference),
+		Categories:       value.Categories,
+		ContactPoints:    value.ContactPoints,
 	}
 }
 
@@ -79,15 +79,11 @@ func toDomainSoftwareSourceCodeDraftMetadata(value api.SoftwareSourceCodeDraftMe
 		RuntimePlatform:      value.RuntimePlatform,
 		MainEntityOfPage:     value.MainEntityOfPage,
 		Version:              value.Version,
-		Creators:             mapSlice(value.Creators, toDomainResourceReference),
+		Creators:             value.Creators,
 		Identifiers:          mapSlice(value.Identifiers, toDomainIdentifierDraft),
-		Categories:           mapSlice(value.Categories, toDomainResourceReference),
-		ContactPoints:        mapSlice(value.ContactPoints, toDomainResourceReference),
+		Categories:           value.Categories,
+		ContactPoints:        value.ContactPoints,
 	}
-}
-
-func toDomainResourceReference(value api.ResourceReference) domain.ResourceReference {
-	return domain.ResourceReference(value)
 }
 
 func toDomainIdentifierDraft(value api.IdentifierDraft) domain.Identifier {
@@ -129,11 +125,11 @@ func toDomainWebServiceDraft(value api.WebServiceDraft) domain.WebServiceDraft {
 		TemplateURL:      value.TemplateURL,
 		Parameters:       value.Parameters,
 		Format:           value.Format,
-		Provider:         mapPtr(value.Provider, toDomainResourceReference),
+		Provider:         value.Provider,
 		Documentation:    mapPtr(value.Documentation, toDomainDocumentation),
 		SpatialCoverage:  mapPtr(value.SpatialCoverage, toDomainSpatialCoverage),
 		TemporalCoverage: mapPtr(value.TemporalCoverage, toDomainTemporalCoverage),
-		ContactPoints:    mapSlice(value.ContactPoints, toDomainResourceReference),
+		ContactPoints:    value.ContactPoints,
 	}
 }
 
@@ -150,11 +146,6 @@ func toDomainTemporalCoverage(value api.TemporalCoverage) domain.TemporalCoverag
 
 func toDomainRejectResourceInput(value api.RejectResourceRequest) domain.RejectResourceInput {
 	return domain.RejectResourceInput(value)
-}
-
-func toDomainCopyResourceInput(value api.CopyResourceRequest) domain.CopyResourceInput {
-	// TODO: remove this, no body anyway
-	return domain.CopyResourceInput{}
 }
 
 func toDomainReplaceResourceDraftInput(revision int32, metadata domain.DraftMetadata) domain.ReplaceResourceDraftInput {
@@ -216,7 +207,7 @@ func toAPIDatasetResourceMetadata(value domain.DatasetResourceMetadata) api.Data
 		SpatialCoverage:       mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
 		TemporalCoverage:      mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
 		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toAPIIdentifierDraft),
-		ContactPoints:         mapSlice(value.ContactPoints, toAPIContactPointReference),
+		ContactPoints:         value.ContactPoints,
 		Providers:             mapSlice(value.Providers, toAPIResourceVersionReference),
 		Categories:            mapSlice(value.Categories, toAPIResourceVersionReference),
 		Created:               value.SourceCreated,
@@ -238,7 +229,7 @@ func toAPISoftwareApplicationResourceMetadata(value domain.SoftwareApplicationRe
 		OperatingSystem:  value.OperatingSystem,
 		Creators:         mapSlice(value.Creators, toAPIResourceVersionReference),
 		Identifiers:      mapSlice(value.Identifiers, toAPIIdentifierDraft),
-		ContactPoints:    mapSlice(value.ContactPoints, toAPIContactPointReference),
+		ContactPoints:    value.ContactPoints,
 		Categories:       mapSlice(value.Categories, toAPIResourceVersionReference),
 	}
 }
@@ -258,7 +249,7 @@ func toAPISoftwareSourceCodeResourceMetadata(value domain.SoftwareSourceCodeReso
 		Version:              value.Version,
 		Creators:             mapSlice(value.Creators, toAPIResourceVersionReference),
 		Identifiers:          mapSlice(value.Identifiers, toAPIIdentifierDraft),
-		ContactPoints:        mapSlice(value.ContactPoints, toAPIContactPointReference),
+		ContactPoints:        value.ContactPoints,
 		Categories:           mapSlice(value.Categories, toAPIResourceVersionReference),
 	}
 }
@@ -275,13 +266,6 @@ func toAPIResourceVersionReference(value domain.ResourceVersionReference) api.Re
 	return api.ResourceVersionReference{
 		ID:   value.ID,
 		Name: value.Name,
-	}
-}
-
-func toAPIContactPointReference(value domain.ContactPointReference) api.ContactPointReference {
-	// TODO: skip the struct and just use the id
-	return api.ContactPointReference{
-		ID: value.ID,
 	}
 }
 
@@ -348,7 +332,7 @@ func toAPIWebService(value domain.WebService) api.WebService {
 		Documentation:    mapPtr(value.Documentation, func(value domain.Documentation) api.Documentation { return api.Documentation(value) }),
 		SpatialCoverage:  mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
 		TemporalCoverage: mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
-		ContactPoints:    mapSlice(value.ContactPoints, toAPIContactPointReference),
+		ContactPoints:    value.ContactPoints,
 	}
 }
 
