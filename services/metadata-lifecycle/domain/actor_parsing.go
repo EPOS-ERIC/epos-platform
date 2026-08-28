@@ -15,3 +15,10 @@ func NewActor(value string) (Actor, error) {
 	}
 	return Actor(value), nil
 }
+
+func (a *Actor) OptionalString() *string {
+	if a == nil {
+		return nil
+	}
+	return new(string(*a))
+}

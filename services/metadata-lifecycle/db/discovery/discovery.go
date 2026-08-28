@@ -6,104 +6,46 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repo struct {
-	db *pgxpool.Pool
+	*sqlc.Queries
 }
 
-func New(pool *pgxpool.Pool) *Repo { return &Repo{db: pool} }
+func New(pool *pgxpool.Pool) *Repo { return &Repo{Queries: sqlc.New(pool)} }
 
-func (r *Repo) Search(ctx context.Context, filter discovery.Filter) ([]discovery.Candidate, error) {
-	q := sqlc.New(r.db)
-	statuses := make([]string, 0, len(filter.VersioningStatuses))
-	for _, value := range filter.VersioningStatuses {
-		statuses = append(statuses, string(value))
-	}
-
-	types := make([]string, 0, len(filter.Types))
-	for _, value := range filter.Types {
-		types = append(types, string(value))
-	}
-
-	query := optionalString(filter.Query)
-	spatial := optionalString(filter.SpatialFilter)
-	var result []discovery.Candidate
-
-	datasets, err := q.SearchDiscoveryDatasets(ctx, sqlc.SearchDiscoveryDatasetsParams{
-		VersioningStatuses: statuses,
-		Query:              query,
-		SpatialFilter:      spatial,
-		DateFrom:           filter.DateFrom,
-		DateTo:             filter.DateTo,
-		ProviderIds:        filter.Providers,
-		Keywords:           filter.Keywords,
-		ResourceTypes:      types,
-	})
+func (r *Repo) Search(ctx context.Context, filter domain.DiscoveryFilter) ([]domain.DiscoveryCandidate, error) {
+	datasets, err := r.SearchDiscoveryDatasets(ctx, toSearchDiscoveryDatasetsParams(filter))
 	if err != nil {
 		return nil, fmt.Errorf("search datasets: %w", err)
 	}
 
-	for _, row := range datasets {
-		result = append(result, discovery.Candidate{
-			Type:       discovery.Dataset,
-			ResourceID: row.ResourceID,
-			VersionID:  row.VersionID,
-			GroupID:    row.GroupID,
-			Status:     discovery.Status(row.Status),
-			Name:       row.Name,
-		})
+	result, err := toDatasetCandidates(datasets)
+	if err != nil {
+		return nil, fmt.Errorf("map datasets: %w", err)
 	}
 
-	applications, err := q.SearchDiscoveryApplications(ctx, sqlc.SearchDiscoveryApplicationsParams{
-		VersioningStatuses: statuses,
-		Query:              query,
-		ProviderIds:        filter.Providers,
-		Keywords:           filter.Keywords,
-		ResourceTypes:      types,
-	})
+	applications, err := r.SearchDiscoveryApplications(ctx, toSearchDiscoveryApplicationsParams(filter))
 	if err != nil {
 		return nil, fmt.Errorf("search software applications: %w", err)
 	}
-	for _, row := range applications {
-		result = append(result, discovery.Candidate{
-			Type:       discovery.SoftwareApplication,
-			ResourceID: row.ResourceID,
-			VersionID:  row.VersionID,
-			GroupID:    row.GroupID,
-			Status:     discovery.Status(row.Status),
-			Name:       row.Name,
-		})
+	applicationCandidates, err := toApplicationCandidates(applications)
+	if err != nil {
+		return nil, fmt.Errorf("map software applications: %w", err)
 	}
+	result = append(result, applicationCandidates...)
 
-	sourceCodes, err := q.SearchDiscoverySourceCodes(ctx, sqlc.SearchDiscoverySourceCodesParams{
-		VersioningStatuses: statuses,
-		Query:              query,
-		ProviderIds:        filter.Providers,
-		Keywords:           filter.Keywords,
-		ResourceTypes:      types,
-	})
+	sourceCodes, err := r.SearchDiscoverySourceCodes(ctx, toSearchDiscoverySourceCodesParams(filter))
 	if err != nil {
 		return nil, fmt.Errorf("search software source codes: %w", err)
 	}
-	for _, row := range sourceCodes {
-		result = append(result, discovery.Candidate{
-			Type:       discovery.SoftwareSourceCode,
-			ResourceID: row.ResourceID,
-			VersionID:  row.VersionID,
-			GroupID:    row.GroupID,
-			Status:     discovery.Status(row.Status),
-			Name:       row.Name,
-		})
+	sourceCodeCandidates, err := toSourceCodeCandidates(sourceCodes)
+	if err != nil {
+		return nil, fmt.Errorf("map software source codes: %w", err)
 	}
-	return result, nil
-}
+	result = append(result, sourceCodeCandidates...)
 
-func optionalString(value string) *string {
-	if value == "" {
-		return nil
-	}
-	return &value
+	return result, nil
 }
