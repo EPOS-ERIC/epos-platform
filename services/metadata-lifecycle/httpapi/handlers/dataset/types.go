@@ -13,7 +13,6 @@ import (
 )
 
 type datasetDraftRequest struct {
-	ID                    uuid.UUID             `json:"id"`
 	Title                 string                `json:"title"`
 	Description           string                `json:"description"`
 	Keywords              string                `json:"keywords"`
@@ -23,7 +22,7 @@ type datasetDraftRequest struct {
 	Distributions         []distributionRequest `json:"distributions"`
 	SpatialCoverage       *spatial              `json:"spatial_coverage"`
 	TemporalCoverage      *temporal             `json:"temporal_coverage"`
-	PersistentIdentifiers []identifier          `json:"persistent_identifiers"`
+	PersistentIdentifiers []identifierDraft     `json:"persistent_identifiers"`
 	ContactPoints         []uuid.UUID           `json:"contact_points"`
 	Providers             []uuid.UUID           `json:"providers"`
 	Categories            []uuid.UUID           `json:"categories"`
@@ -32,13 +31,11 @@ type datasetDraftRequest struct {
 }
 
 type createRequest struct {
-	GroupID      uuid.UUID           `json:"group_id,omitempty"`
 	ResourceType string              `json:"resource_type"`
 	Metadata     datasetDraftRequest `json:"metadata"`
 }
 
 type distributionRequest struct {
-	ID               uuid.UUID                 `json:"id"`
 	Title            string                    `json:"title"`
 	Description      string                    `json:"description"`
 	License          *string                   `json:"license"`
@@ -51,7 +48,6 @@ type distributionRequest struct {
 }
 
 type webServiceRequest struct {
-	ID               uuid.UUID          `json:"id"`
 	Name             string             `json:"name"`
 	Description      string             `json:"description"`
 	TemplateURL      string             `json:"template_url"`
@@ -81,7 +77,7 @@ func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 
 	switch header.Metadata.Kind {
 	case metadata.ParameterKindString:
-		var value stringParameter
+		var value stringParameterDraft
 		if err := decodeStrictBytes(data, &value); err != nil {
 			return err
 		}
@@ -92,7 +88,7 @@ func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 			Pattern:       value.Pattern,
 		}
 	case metadata.ParameterKindBoolean:
-		var value booleanParameter
+		var value booleanParameterDraft
 		if err := decodeStrictBytes(data, &value); err != nil {
 			return err
 		}
@@ -101,7 +97,7 @@ func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 			Default:  value.Default,
 		}
 	case metadata.ParameterKindInteger:
-		var value integerParameter
+		var value integerParameterDraft
 		if err := decodeStrictBytes(data, &value); err != nil {
 			return err
 		}
@@ -113,7 +109,7 @@ func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 			AllowedValues: value.AllowedValues,
 		}
 	case metadata.ParameterKindFloat:
-		var value floatParameter
+		var value floatParameterDraft
 		if err := decodeStrictBytes(data, &value); err != nil {
 			return err
 		}
@@ -125,7 +121,7 @@ func (p *parameterRequest) UnmarshalJSON(data []byte) error {
 			AllowedValues: value.AllowedValues,
 		}
 	case metadata.ParameterKindDateTime:
-		var value dateTimeParameter
+		var value dateTimeParameterDraft
 		if err := decodeStrictBytes(data, &value); err != nil {
 			return err
 		}
@@ -168,9 +164,19 @@ type parameterMetadata struct {
 	ReadOnly       bool                   `json:"read_only"`
 }
 
-func (p parameterMetadata) domain() metadata.ParameterMetadata {
+type parameterDraftMetadata struct {
+	Kind           metadata.ParameterKind `json:"kind"`
+	Variable       string                 `json:"variable"`
+	Property       string                 `json:"property"`
+	Label          string                 `json:"label"`
+	Required       bool                   `json:"required"`
+	MultipleValues bool                   `json:"multiple_values"`
+	ReadOnly       bool                   `json:"read_only"`
+}
+
+func (p parameterDraftMetadata) domain() metadata.ParameterMetadata {
 	return metadata.ParameterMetadata{
-		ID:             p.ID,
+		ID:             uuid.Nil,
 		Kind:           p.Kind,
 		Variable:       p.Variable,
 		Property:       p.Property,
@@ -189,6 +195,14 @@ type stringParameter struct {
 	Pattern       string                 `json:"pattern"`
 }
 
+type stringParameterDraft struct {
+	Kind          metadata.ParameterKind `json:"kind"`
+	Metadata      parameterDraftMetadata `json:"metadata"`
+	Default       *string                `json:"default"`
+	AllowedValues []string               `json:"allowed_values"`
+	Pattern       string                 `json:"pattern"`
+}
+
 func (stringParameter) parameterResponse() {}
 
 type booleanParameter struct {
@@ -197,11 +211,26 @@ type booleanParameter struct {
 	Default  *bool                  `json:"default"`
 }
 
+type booleanParameterDraft struct {
+	Kind     metadata.ParameterKind `json:"kind"`
+	Metadata parameterDraftMetadata `json:"metadata"`
+	Default  *bool                  `json:"default"`
+}
+
 func (booleanParameter) parameterResponse() {}
 
 type integerParameter struct {
 	Kind          metadata.ParameterKind `json:"kind"`
 	Metadata      parameterMetadata      `json:"metadata"`
+	Minimum       *int64                 `json:"minimum"`
+	Maximum       *int64                 `json:"maximum"`
+	Default       *int64                 `json:"default"`
+	AllowedValues []int64                `json:"allowed_values"`
+}
+
+type integerParameterDraft struct {
+	Kind          metadata.ParameterKind `json:"kind"`
+	Metadata      parameterDraftMetadata `json:"metadata"`
 	Minimum       *int64                 `json:"minimum"`
 	Maximum       *int64                 `json:"maximum"`
 	Default       *int64                 `json:"default"`
@@ -219,11 +248,29 @@ type floatParameter struct {
 	AllowedValues []float64              `json:"allowed_values"`
 }
 
+type floatParameterDraft struct {
+	Kind          metadata.ParameterKind `json:"kind"`
+	Metadata      parameterDraftMetadata `json:"metadata"`
+	Minimum       *float64               `json:"minimum"`
+	Maximum       *float64               `json:"maximum"`
+	Default       *float64               `json:"default"`
+	AllowedValues []float64              `json:"allowed_values"`
+}
+
 func (floatParameter) parameterResponse() {}
 
 type dateTimeParameter struct {
 	Kind     metadata.ParameterKind `json:"kind"`
 	Metadata parameterMetadata      `json:"metadata"`
+	Minimum  *time.Time             `json:"minimum"`
+	Maximum  *time.Time             `json:"maximum"`
+	Default  *time.Time             `json:"default"`
+	Pattern  string                 `json:"pattern"`
+}
+
+type dateTimeParameterDraft struct {
+	Kind     metadata.ParameterKind `json:"kind"`
+	Metadata parameterDraftMetadata `json:"metadata"`
 	Minimum  *time.Time             `json:"minimum"`
 	Maximum  *time.Time             `json:"maximum"`
 	Default  *time.Time             `json:"default"`
@@ -262,6 +309,11 @@ type temporal struct {
 	End   *time.Time `json:"end"`
 }
 
+type identifierDraft struct {
+	Type  metadata.IdentifierType `json:"type"`
+	Value string                  `json:"value"`
+}
+
 type identifier struct {
 	ID    uuid.UUID               `json:"id"`
 	Type  metadata.IdentifierType `json:"type"`
@@ -270,7 +322,7 @@ type identifier struct {
 
 func (r datasetDraftRequest) domain() metadata.Dataset {
 	result := metadata.Dataset{
-		ID:                    r.ID,
+		ID:                    uuid.Nil,
 		Title:                 r.Title,
 		Description:           r.Description,
 		Keywords:              r.Keywords,
@@ -342,7 +394,7 @@ func (r datasetDraftRequest) domain() metadata.Dataset {
 
 func (r distributionRequest) domain() metadata.Distribution {
 	result := metadata.Distribution{
-		ID:               r.ID,
+		ID:               uuid.Nil,
 		Title:            r.Title,
 		Description:      r.Description,
 		License:          r.License,
@@ -368,7 +420,7 @@ func (r distributionRequest) domain() metadata.Distribution {
 
 func (r webServiceRequest) domain() metadata.WebService {
 	result := metadata.WebService{
-		ID:               r.ID,
+		ID:               uuid.Nil,
 		Name:             r.Name,
 		Description:      r.Description,
 		TemplateURL:      r.TemplateURL,
@@ -449,9 +501,9 @@ func temporalDomain(value *temporal) *metadata.Temporal {
 	}
 }
 
-func (i identifier) domain() metadata.Identifier {
+func (i identifierDraft) domain() metadata.Identifier {
 	return metadata.Identifier{
-		ID:    i.ID,
+		ID:    uuid.Nil,
 		Type:  i.Type,
 		Value: i.Value,
 	}

@@ -52,17 +52,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if !transport.Decode(w, r, &request) {
 		return
 	}
-	// TODO: use an helper for stuff like this
-	groupID := request.GroupID
-	if groupIDPath := chi.URLParam(r, "group_id"); groupIDPath != "" {
-		parsed, parseErr := uuid.Parse(groupIDPath)
-		if parseErr != nil {
-			groupID = uuid.Nil
-		} else {
-			groupID = parsed
-		}
-	}
-	if groupID == uuid.Nil {
+	groupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil || groupID == uuid.Nil {
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}

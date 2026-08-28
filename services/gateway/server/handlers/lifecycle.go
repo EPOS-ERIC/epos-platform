@@ -54,7 +54,7 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 	switch resourceType {
 	case datasetType:
 		var value api.DatasetDraftMetadata
-		if err := json.Unmarshal(envelope.Metadata, &value); err != nil {
+		if err := api.DecodeDraftMetadata(envelope.Metadata, &value); err != nil {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid dataset metadata", err)
 			return
 		}
@@ -65,7 +65,7 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 		input.Metadata = toDomainDatasetDraftMetadata(value)
 	case softwareApplicationType:
 		var value api.SoftwareApplicationDraftMetadata
-		if err := json.Unmarshal(envelope.Metadata, &value); err != nil {
+		if err := api.DecodeDraftMetadata(envelope.Metadata, &value); err != nil {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software application metadata", err)
 			return
 		}
@@ -76,7 +76,7 @@ func (h *Lifecycle) Create(w http.ResponseWriter, r *http.Request) {
 		input.Metadata = toDomainSoftwareApplicationDraftMetadata(value)
 	case softwareSourceCodeType:
 		var value api.SoftwareSourceCodeDraftMetadata
-		if err := json.Unmarshal(envelope.Metadata, &value); err != nil {
+		if err := api.DecodeDraftMetadata(envelope.Metadata, &value); err != nil {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software source code metadata", err)
 			return
 		}
@@ -165,21 +165,21 @@ func (h *Lifecycle) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 	switch resourceType {
 	case datasetType:
 		var metadata api.DatasetDraftMetadata
-		if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+		if err := api.DecodeDraftMetadata(envelope.Metadata, &metadata); err != nil {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid dataset metadata", err)
 			return
 		}
 		input = toDomainReplaceResourceDraftInput(envelope.Revision, toDomainDatasetDraftMetadata(metadata))
 	case softwareApplicationType:
 		var metadata api.SoftwareApplicationDraftMetadata
-		if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+		if err := api.DecodeDraftMetadata(envelope.Metadata, &metadata); err != nil {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software application metadata", err)
 			return
 		}
 		input = toDomainReplaceResourceDraftInput(envelope.Revision, toDomainSoftwareApplicationDraftMetadata(metadata))
 	case softwareSourceCodeType:
 		var metadata api.SoftwareSourceCodeDraftMetadata
-		if err := json.Unmarshal(envelope.Metadata, &metadata); err != nil {
+		if err := api.DecodeDraftMetadata(envelope.Metadata, &metadata); err != nil {
 			WriteError(ctx, w, http.StatusBadRequest, "invalid_request", "invalid software source code metadata", err)
 			return
 		}

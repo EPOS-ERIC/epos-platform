@@ -5,10 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
@@ -19,68 +19,11 @@ var (
 	ErrConflict  = errors.New("organization conflict")
 )
 
-type Organization struct {
-	ID                    uuid.UUID
-	Name                  string
-	Street                *string
-	Locality              *string
-	PostalCode            *string
-	Country               *string
-	LogoURL               *string
-	PageURL               *string
-	Email                 *string
-	LEICode               *string
-	Identifiers           []Identifier
-	ParentOrganizationIDs []uuid.UUID
-	ContactPointIDs       []uuid.UUID
-}
-
-type Identifier struct {
-	ID    uuid.UUID
-	Type  string
-	Value string
-}
-
-type IdentifierRequest struct {
-	Type  string
-	Value string
-}
-
-type CreateRequest struct {
-	Name            string
-	Street          *string
-	Locality        *string
-	PostalCode      *string
-	Country         *string
-	LogoURL         *string
-	PageURL         *string
-	Email           *string
-	LEICode         *string
-	Identifiers     []IdentifierRequest
-	Parents         []uuid.UUID
-	ContactPointIDs []uuid.UUID
-}
-
-type ReplaceRequest struct {
-	Name            string
-	Street          *string
-	Locality        *string
-	PostalCode      *string
-	Country         *string
-	LogoURL         *string
-	PageURL         *string
-	Email           *string
-	LEICode         *string
-	Identifiers     []IdentifierRequest
-	Parents         []uuid.UUID
-	ContactPointIDs []uuid.UUID
-}
-
 type Store interface {
-	List(context.Context) ([]Organization, error)
-	Get(context.Context, uuid.UUID) (Organization, error)
-	Create(context.Context, Organization, []Identifier, []uuid.UUID, []uuid.UUID) (Organization, error)
-	Replace(context.Context, uuid.UUID, ReplaceRequest, []Identifier, []uuid.UUID, []uuid.UUID) (Organization, error)
+	List(context.Context) ([]domain.Organization, error)
+	Get(context.Context, uuid.UUID) (domain.Organization, error)
+	Create(context.Context, domain.OrganizationInput) (domain.Organization, error)
+	Replace(context.Context, uuid.UUID, domain.OrganizationInput) (domain.Organization, error)
 	Delete(context.Context, uuid.UUID) error
 }
 
@@ -97,95 +40,46 @@ func New(store Store, authorizer Authorizer) *Service {
 	return &Service{store: store, authorizer: authorizer}
 }
 
-func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (Organization, error) {
+func (s *Service) Create(ctx context.Context, actorID string, input domain.OrganizationInput) (domain.Organization, error) {
+	// TODO: maybe we could create a custom type alias for the actor? so that we can skip having to trim and check it every time (parse, don't validate)
 	actorID = strings.TrimSpace(actorID)
-	request.Name = strings.TrimSpace(request.Name)
-	if actorID == "" || request.Name == "" {
-		return Organization{}, ErrInvalid
-	}
-	if err := validateUUIDs(request.Parents); err != nil {
-		return Organization{}, err
-	}
-	if err := validateUUIDs(request.ContactPointIDs); err != nil {
-		return Organization{}, err
+	if actorID == "" {
+		return domain.Organization{}, ErrInvalid
 	}
 
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
 	if err != nil {
-		return Organization{}, fmt.Errorf("authorize organization creation: %w", err)
+		return domain.Organization{}, fmt.Errorf("authorize organization creation: %w", err)
 	}
 	if !allowed.Allowed {
-		return Organization{}, ErrForbidden
+		return domain.Organization{}, ErrForbidden
 	}
 
-	organizationID := uuid.New()
-	identifiers := make([]Identifier, 0, len(request.Identifiers))
-	for _, item := range request.Identifiers {
-		item.Type = strings.TrimSpace(item.Type)
-		item.Value = strings.TrimSpace(item.Value)
-		if item.Type == "" || item.Value == "" {
-			return Organization{}, ErrInvalid
-		}
-
-		id := uuid.New()
-
-		identifiers = append(identifiers, Identifier{
-			ID:    id,
-			Type:  item.Type,
-			Value: item.Value,
-		})
-	}
-
-	organization, err := s.store.Create(ctx, Organization{
-		ID:                    organizationID,
-		Name:                  request.Name,
-		Street:                request.Street,
-		Locality:              request.Locality,
-		PostalCode:            request.PostalCode,
-		Country:               request.Country,
-		LogoURL:               request.LogoURL,
-		PageURL:               request.PageURL,
-		Email:                 request.Email,
-		LEICode:               request.LEICode,
-		Identifiers:           nil,
-		ParentOrganizationIDs: nil,
-		ContactPointIDs:       nil,
-	}, identifiers, request.Parents, request.ContactPointIDs)
+	organization, err := s.store.Create(ctx, input)
 	if err != nil {
-		return Organization{}, fmt.Errorf("create organization: %w", err)
+		return domain.Organization{}, fmt.Errorf("create organization: %w", err)
 	}
 
 	return organization, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, request ReplaceRequest) (Organization, error) {
+func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, input domain.OrganizationInput) (domain.Organization, error) {
 	actorID = strings.TrimSpace(actorID)
-	request.Name = strings.TrimSpace(request.Name)
-	if actorID == "" || id == uuid.Nil || request.Name == "" {
-		return Organization{}, ErrInvalid
-	}
-	if err := validateUUIDs(request.Parents); err != nil {
-		return Organization{}, err
-	}
-	if err := validateUUIDs(request.ContactPointIDs); err != nil {
-		return Organization{}, err
+	if actorID == "" || id == uuid.Nil {
+		return domain.Organization{}, ErrInvalid
 	}
 
 	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
 	if err != nil {
-		return Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
+		return domain.Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
 	}
 	if !allowed.Allowed {
-		return Organization{}, ErrForbidden
+		return domain.Organization{}, ErrForbidden
 	}
 
-	identifiers, err := buildIdentifiers(request.Identifiers)
+	organization, err := s.store.Replace(ctx, id, input)
 	if err != nil {
-		return Organization{}, err
-	}
-	organization, err := s.store.Replace(ctx, id, request, identifiers, request.Parents, request.ContactPointIDs)
-	if err != nil {
-		return Organization{}, fmt.Errorf("replace organization: %w", err)
+		return domain.Organization{}, fmt.Errorf("replace organization: %w", err)
 	}
 	return organization, nil
 }
@@ -211,32 +105,7 @@ func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) erro
 	return nil
 }
 
-func buildIdentifiers(requests []IdentifierRequest) ([]Identifier, error) {
-	identifiers := make([]Identifier, 0, len(requests))
-	for _, item := range requests {
-		item.Type = strings.TrimSpace(item.Type)
-		item.Value = strings.TrimSpace(item.Value)
-		if item.Type == "" || item.Value == "" {
-			return nil, ErrInvalid
-		}
-		id := uuid.New()
-		identifiers = append(identifiers, Identifier{
-			ID:    id,
-			Type:  item.Type,
-			Value: item.Value,
-		})
-	}
-	return identifiers, nil
-}
-
-func validateUUIDs(values []uuid.UUID) error {
-	if slices.Contains(values, uuid.Nil) {
-		return ErrInvalid
-	}
-	return nil
-}
-
-func (s *Service) List(ctx context.Context) ([]Organization, error) {
+func (s *Service) List(ctx context.Context) ([]domain.Organization, error) {
 	organizations, err := s.store.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list organizations: %w", err)
@@ -245,14 +114,14 @@ func (s *Service) List(ctx context.Context) ([]Organization, error) {
 	return organizations, nil
 }
 
-func (s *Service) Get(ctx context.Context, id uuid.UUID) (Organization, error) {
+func (s *Service) Get(ctx context.Context, id uuid.UUID) (domain.Organization, error) {
 	if id == uuid.Nil {
-		return Organization{}, ErrInvalid
+		return domain.Organization{}, ErrInvalid
 	}
 
 	organization, err := s.store.Get(ctx, id)
 	if err != nil {
-		return Organization{}, fmt.Errorf("get organization: %w", err)
+		return domain.Organization{}, fmt.Errorf("get organization: %w", err)
 	}
 
 	return organization, nil

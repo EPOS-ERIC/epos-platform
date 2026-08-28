@@ -10,7 +10,6 @@ type DraftMetadata interface {
 }
 
 type DatasetDraftMetadata struct {
-	ID                    string
 	Title                 string
 	Description           *string
 	Keywords              *string
@@ -20,7 +19,7 @@ type DatasetDraftMetadata struct {
 	Distributions         []DistributionDraft
 	SpatialCoverage       *SpatialCoverage
 	TemporalCoverage      *TemporalCoverage
-	PersistentIdentifiers []Identifier
+	PersistentIdentifiers []IdentifierDraft
 	ContactPoints         []string
 	Providers             []string
 	Categories            []string
@@ -41,7 +40,7 @@ type SoftwareApplicationDraftMetadata struct {
 	OperatingSystem  *string
 	MainEntityOfPage *string
 	Creators         []string
-	Identifiers      []Identifier
+	Identifiers      []IdentifierDraft
 	Categories       []string
 	ContactPoints    []string
 }
@@ -60,7 +59,7 @@ type SoftwareSourceCodeDraftMetadata struct {
 	MainEntityOfPage     *string
 	Version              *string
 	Creators             []string
-	Identifiers          []Identifier
+	Identifiers          []IdentifierDraft
 	Categories           []string
 	ContactPoints        []string
 }
@@ -73,8 +72,12 @@ type Identifier struct {
 	Value string
 }
 
+type IdentifierDraft struct {
+	Type  string
+	Value string
+}
+
 type DistributionDraft struct {
-	ID               string
 	Title            string
 	Description      string
 	License          *string
@@ -87,11 +90,10 @@ type DistributionDraft struct {
 }
 
 type WebServiceDraft struct {
-	ID               string
 	Name             string
 	Description      string
 	TemplateURL      string
-	Parameters       []any
+	Parameters       []ParameterDraft
 	Format           string
 	Provider         *string
 	Documentation    *Documentation
@@ -272,6 +274,66 @@ type WebService struct {
 type Parameter interface {
 	parameter()
 }
+
+type ParameterDraft interface {
+	parameterDraft()
+}
+
+type ParameterDraftMetadata struct {
+	Kind           string
+	Variable       string
+	Property       string
+	Label          string
+	Required       bool
+	MultipleValues bool
+	ReadOnly       bool
+}
+
+type StringParameterDraft struct {
+	Metadata      ParameterDraftMetadata
+	Default       *string
+	AllowedValues []string
+	Pattern       string
+}
+
+func (StringParameterDraft) parameterDraft() {}
+
+type BooleanParameterDraft struct {
+	Metadata ParameterDraftMetadata
+	Default  *bool
+}
+
+func (BooleanParameterDraft) parameterDraft() {}
+
+type IntegerParameterDraft struct {
+	Metadata      ParameterDraftMetadata
+	Minimum       *int64
+	Maximum       *int64
+	Default       *int64
+	AllowedValues []int64
+}
+
+func (IntegerParameterDraft) parameterDraft() {}
+
+type FloatParameterDraft struct {
+	Metadata      ParameterDraftMetadata
+	Minimum       *float64
+	Maximum       *float64
+	Default       *float64
+	AllowedValues []float64
+}
+
+func (FloatParameterDraft) parameterDraft() {}
+
+type DateTimeParameterDraft struct {
+	Metadata ParameterDraftMetadata
+	Minimum  *time.Time
+	Maximum  *time.Time
+	Default  *time.Time
+	Pattern  string
+}
+
+func (DateTimeParameterDraft) parameterDraft() {}
 
 type ParameterMetadata struct {
 	ID             string

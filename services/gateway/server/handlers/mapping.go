@@ -30,7 +30,6 @@ func mapSlice[T, K any](in []T, f func(T) K) []K {
 
 func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.DatasetDraftMetadata {
 	return domain.DatasetDraftMetadata{
-		ID:                    value.ID,
 		Title:                 value.Title,
 		Description:           value.Description,
 		Keywords:              value.Keywords,
@@ -86,8 +85,8 @@ func toDomainSoftwareSourceCodeDraftMetadata(value api.SoftwareSourceCodeDraftMe
 	}
 }
 
-func toDomainIdentifierDraft(value api.IdentifierDraft) domain.Identifier {
-	return domain.Identifier(value)
+func toDomainIdentifierDraft(value api.IdentifierDraft) domain.IdentifierDraft {
+	return domain.IdentifierDraft(value)
 }
 
 func toDomainCoordinate(value api.Coordinate) domain.Coordinate {
@@ -104,7 +103,6 @@ func toDomainDownloadableFile(value api.DownloadableFile) domain.DownloadableFil
 
 func toDomainDistribution(value api.DistributionDraft) domain.DistributionDraft {
 	return domain.DistributionDraft{
-		ID:               value.ID,
 		Title:            value.Title,
 		Description:      value.Description,
 		License:          value.License,
@@ -119,17 +117,51 @@ func toDomainDistribution(value api.DistributionDraft) domain.DistributionDraft 
 
 func toDomainWebServiceDraft(value api.WebServiceDraft) domain.WebServiceDraft {
 	return domain.WebServiceDraft{
-		ID:               value.ID,
 		Name:             value.Name,
 		Description:      value.Description,
 		TemplateURL:      value.TemplateURL,
-		Parameters:       value.Parameters,
+		Parameters:       mapParameterDrafts(value.Parameters),
 		Format:           value.Format,
 		Provider:         value.Provider,
 		Documentation:    mapPtr(value.Documentation, toDomainDocumentation),
 		SpatialCoverage:  mapPtr(value.SpatialCoverage, toDomainSpatialCoverage),
 		TemporalCoverage: mapPtr(value.TemporalCoverage, toDomainTemporalCoverage),
 		ContactPoints:    value.ContactPoints,
+	}
+}
+
+func mapParameterDrafts(values []api.ParameterDraft) []domain.ParameterDraft {
+	if values == nil {
+		return nil
+	}
+
+	result := make([]domain.ParameterDraft, 0, len(values))
+	for _, value := range values {
+		switch value := value.(type) {
+		case api.StringParameterDraft:
+			result = append(result, domain.StringParameterDraft{Metadata: toDomainParameterDraftMetadata(value.Metadata), Default: value.Default, AllowedValues: value.AllowedValues, Pattern: value.Pattern})
+		case api.BooleanParameterDraft:
+			result = append(result, domain.BooleanParameterDraft{Metadata: toDomainParameterDraftMetadata(value.Metadata), Default: value.Default})
+		case api.IntegerParameterDraft:
+			result = append(result, domain.IntegerParameterDraft{Metadata: toDomainParameterDraftMetadata(value.Metadata), Minimum: value.Minimum, Maximum: value.Maximum, Default: value.Default, AllowedValues: value.AllowedValues})
+		case api.FloatParameterDraft:
+			result = append(result, domain.FloatParameterDraft{Metadata: toDomainParameterDraftMetadata(value.Metadata), Minimum: value.Minimum, Maximum: value.Maximum, Default: value.Default, AllowedValues: value.AllowedValues})
+		case api.DateTimeParameterDraft:
+			result = append(result, domain.DateTimeParameterDraft{Metadata: toDomainParameterDraftMetadata(value.Metadata), Minimum: value.Minimum, Maximum: value.Maximum, Default: value.Default, Pattern: value.Pattern})
+		}
+	}
+	return result
+}
+
+func toDomainParameterDraftMetadata(value api.ParameterDraftMetadata) domain.ParameterDraftMetadata {
+	return domain.ParameterDraftMetadata{
+		Kind:           value.Kind,
+		Variable:       value.Variable,
+		Property:       value.Property,
+		Label:          value.Label,
+		Required:       value.Required,
+		MultipleValues: value.MultipleValues,
+		ReadOnly:       value.ReadOnly,
 	}
 }
 
@@ -206,7 +238,7 @@ func toAPIDatasetResourceMetadata(value domain.DatasetResourceMetadata) api.Data
 		Distributions:         toAPIDistributions(value.Distributions),
 		SpatialCoverage:       mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
 		TemporalCoverage:      mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
-		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toAPIIdentifierDraft),
+		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toAPIIdentifier),
 		ContactPoints:         value.ContactPoints,
 		Providers:             mapSlice(value.Providers, toAPIResourceVersionReference),
 		Categories:            mapSlice(value.Categories, toAPIResourceVersionReference),
@@ -228,7 +260,7 @@ func toAPISoftwareApplicationResourceMetadata(value domain.SoftwareApplicationRe
 		Requirements:     value.Requirements,
 		OperatingSystem:  value.OperatingSystem,
 		Creators:         mapSlice(value.Creators, toAPIResourceVersionReference),
-		Identifiers:      mapSlice(value.Identifiers, toAPIIdentifierDraft),
+		Identifiers:      mapSlice(value.Identifiers, toAPIIdentifier),
 		ContactPoints:    value.ContactPoints,
 		Categories:       mapSlice(value.Categories, toAPIResourceVersionReference),
 	}
@@ -248,14 +280,14 @@ func toAPISoftwareSourceCodeResourceMetadata(value domain.SoftwareSourceCodeReso
 		MainEntityOfPage:     value.MainEntityOfPage,
 		Version:              value.Version,
 		Creators:             mapSlice(value.Creators, toAPIResourceVersionReference),
-		Identifiers:          mapSlice(value.Identifiers, toAPIIdentifierDraft),
+		Identifiers:          mapSlice(value.Identifiers, toAPIIdentifier),
 		ContactPoints:        value.ContactPoints,
 		Categories:           mapSlice(value.Categories, toAPIResourceVersionReference),
 	}
 }
 
-func toAPIIdentifierDraft(value domain.Identifier) api.IdentifierDraft {
-	return api.IdentifierDraft{
+func toAPIIdentifier(value domain.Identifier) api.Identifier {
+	return api.Identifier{
 		ID:    value.ID,
 		Type:  value.Type,
 		Value: value.Value,

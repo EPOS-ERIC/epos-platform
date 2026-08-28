@@ -26,7 +26,6 @@ type sourceCodeRequest struct {
 }
 
 type createRequest struct {
-	GroupID      uuid.UUID         `json:"group_id,omitempty"`
 	ResourceType string            `json:"resource_type"`
 	Metadata     sourceCodeRequest `json:"metadata"`
 }

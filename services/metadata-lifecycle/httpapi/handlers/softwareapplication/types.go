@@ -25,7 +25,6 @@ type applicationRequest struct {
 }
 
 type createRequest struct {
-	GroupID      uuid.UUID          `json:"group_id,omitempty"`
 	ResourceType string             `json:"resource_type"`
 	Metadata     applicationRequest `json:"metadata"`
 }

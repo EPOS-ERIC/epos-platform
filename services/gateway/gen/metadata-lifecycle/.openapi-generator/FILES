@@ -18,6 +18,7 @@ configuration.go
 git_push.sh
 model_block_user_request.go
 model_boolean_parameter.go
+model_boolean_parameter_draft.go
 model_boolean_parameter_metadata.go
 model_canonical_category.go
 model_canonical_organization.go
@@ -43,6 +44,7 @@ model_dataset_draft_metadata.go
 model_dataset_metadata.go
 model_dataset_status.go
 model_date_time_parameter.go
+model_date_time_parameter_draft.go
 model_date_time_parameter_metadata.go
 model_discovery_item.go
 model_discovery_reference.go
@@ -54,6 +56,7 @@ model_downloadable_file.go
 model_downloadable_file_distribution.go
 model_downloadable_file_distribution_draft.go
 model_float_parameter.go
+model_float_parameter_draft.go
 model_float_parameter_metadata.go
 model_group.go
 model_group_membership.go
@@ -63,11 +66,14 @@ model_identifier_draft.go
 model_import_diagnostic.go
 model_import_result.go
 model_integer_parameter.go
+model_integer_parameter_draft.go
 model_integer_parameter_metadata.go
 model_membership_decision_request.go
 model_membership_user.go
 model_organization.go
 model_parameter.go
+model_parameter_draft.go
+model_parameter_draft_metadata.go
 model_parameter_kind.go
 model_parameter_metadata.go
 model_problem.go
@@ -93,6 +99,7 @@ model_software_source_code_draft_metadata.go
 model_software_source_code_metadata.go
 model_spatial.go
 model_string_parameter.go
+model_string_parameter_draft.go
 model_string_parameter_metadata.go
 model_temporal.go
 model_user.go

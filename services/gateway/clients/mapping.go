@@ -70,10 +70,6 @@ func toClientDatasetDraftMetadata(metadata domain.DatasetDraftMetadata) client.D
 	setIfPresent(metadata.SourceCreated, result.SetCreated)
 	setIfPresent(metadata.SourceUpdated, result.SetUpdated)
 
-	if metadata.ID != "" {
-		result.SetId(metadata.ID)
-	}
-
 	setPtrConv(metadata.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
 	setPtrConv(metadata.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
 
@@ -188,14 +184,11 @@ func toClientIDs(values []string) []string {
 	return slices.Clone(values)
 }
 
-func toClientIdentifierDrafts(values []domain.Identifier) []client.IdentifierDraft {
-	return mapSlice(values, func(value domain.Identifier) client.IdentifierDraft {
-		result := client.IdentifierDraft{ //nolint:exhaustruct_v5 // optional ID is set below
+func toClientIdentifierDrafts(values []domain.IdentifierDraft) []client.IdentifierDraft {
+	return mapSlice(values, func(value domain.IdentifierDraft) client.IdentifierDraft {
+		result := client.IdentifierDraft{
 			Type:  value.Type,
 			Value: value.Value,
-		}
-		if value.ID != "" {
-			result.SetId(value.ID)
 		}
 		return result
 	})
@@ -238,7 +231,6 @@ func toClientDistributionDraft(value domain.DistributionDraft) client.Distributi
 			Type:             value.Type,
 			DownloadableFile: client.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format},
 		}
-		result.SetId(value.ID)
 		setNullable(&result.License, value.License)
 		result.Issued.Set(value.Issued)
 		result.Modified.Set(value.Modified)
@@ -255,7 +247,6 @@ func toClientDistributionDraft(value domain.DistributionDraft) client.Distributi
 		Type:        value.Type,
 		WebService:  toClientWebServiceDraft(*value.WebService),
 	}
-	result.SetId(value.ID)
 	setNullable(&result.License, value.License)
 	result.Issued.Set(value.Issued)
 	result.Modified.Set(value.Modified)
@@ -271,7 +262,6 @@ func toClientWebServiceDraft(value domain.WebServiceDraft) client.WebServiceDraf
 		TemplateUrl: value.TemplateURL,
 		Format:      value.Format,
 	}
-	result.SetId(value.ID)
 	if value.Provider != nil {
 		result.SetProvider(*value.Provider)
 	}
@@ -280,17 +270,59 @@ func toClientWebServiceDraft(value domain.WebServiceDraft) client.WebServiceDraf
 	setPtrConv(value.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
 	setSliceConv(value.ContactPoints, toClientIDs, result.SetContactPoints)
 
-	parameters := make([]client.Parameter, 0, len(value.Parameters))
-	for _, parameter := range value.Parameters {
-		if mapped, ok := parameter.(client.Parameter); ok {
-			parameters = append(parameters, mapped)
-		}
-	}
+	parameters := mapSlice(value.Parameters, toClientParameterDraft)
 	if len(parameters) > 0 {
 		result.SetParameters(parameters)
 	}
 
 	return result
+}
+
+func toClientParameterDraft(value domain.ParameterDraft) client.ParameterDraft {
+	metadata := toClientParameterDraftMetadata(parameterDraftMetadata(value))
+	switch value := value.(type) {
+	case domain.StringParameterDraft:
+		return client.StringParameterDraftAsParameterDraft(&client.StringParameterDraft{Kind: "STRING", Metadata: metadata, Default: *client.NewNullableString(value.Default), AllowedValues: value.AllowedValues, Pattern: value.Pattern})
+	case domain.BooleanParameterDraft:
+		return client.BooleanParameterDraftAsParameterDraft(&client.BooleanParameterDraft{Kind: "BOOLEAN", Metadata: metadata, Default: *client.NewNullableBool(value.Default)})
+	case domain.IntegerParameterDraft:
+		return client.IntegerParameterDraftAsParameterDraft(&client.IntegerParameterDraft{Kind: "INTEGER", Metadata: metadata, Minimum: *client.NewNullableInt64(value.Minimum), Maximum: *client.NewNullableInt64(value.Maximum), Default: *client.NewNullableInt64(value.Default), AllowedValues: value.AllowedValues})
+	case domain.FloatParameterDraft:
+		return client.FloatParameterDraftAsParameterDraft(&client.FloatParameterDraft{Kind: "FLOAT", Metadata: metadata, Minimum: *client.NewNullableFloat64(value.Minimum), Maximum: *client.NewNullableFloat64(value.Maximum), Default: *client.NewNullableFloat64(value.Default), AllowedValues: value.AllowedValues})
+	case domain.DateTimeParameterDraft:
+		return client.DateTimeParameterDraftAsParameterDraft(&client.DateTimeParameterDraft{Kind: "DATETIME", Metadata: metadata, Minimum: *client.NewNullableTime(value.Minimum), Maximum: *client.NewNullableTime(value.Maximum), Default: *client.NewNullableTime(value.Default), Pattern: value.Pattern})
+	default:
+		return client.ParameterDraft{} //nolint:exhaustruct_v5 // unsupported draft parameters are omitted by the generated union
+	}
+}
+
+func parameterDraftMetadata(value domain.ParameterDraft) domain.ParameterDraftMetadata {
+	switch value := value.(type) {
+	case domain.StringParameterDraft:
+		return value.Metadata
+	case domain.BooleanParameterDraft:
+		return value.Metadata
+	case domain.IntegerParameterDraft:
+		return value.Metadata
+	case domain.FloatParameterDraft:
+		return value.Metadata
+	case domain.DateTimeParameterDraft:
+		return value.Metadata
+	default:
+		return domain.ParameterDraftMetadata{} //nolint:exhaustruct_v5 // unsupported draft parameters are omitted by the generated union
+	}
+}
+
+func toClientParameterDraftMetadata(value domain.ParameterDraftMetadata) client.ParameterDraftMetadata {
+	return client.ParameterDraftMetadata{
+		Kind:           client.ParameterKind(value.Kind),
+		Variable:       value.Variable,
+		Property:       value.Property,
+		Label:          value.Label,
+		Required:       value.Required,
+		MultipleValues: value.MultipleValues,
+		ReadOnly:       value.ReadOnly,
+	}
 }
 
 func toClientDocumentation(value domain.Documentation) client.Documentation {

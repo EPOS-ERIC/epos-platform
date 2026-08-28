@@ -2015,7 +2015,6 @@ components:
       additionalProperties: false
       required: [title]
       properties:
-        id: { type: string, format: uuid }
         title: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string }
         keywords: { type: string }
@@ -2137,7 +2136,6 @@ components:
       additionalProperties: false
       required: [type, value]
       properties:
-        id: { type: string, format: uuid }
         type: { type: string, minLength: 1, pattern: '\S' }
         value: { type: string, minLength: 1, pattern: '\S' }
 
@@ -2157,7 +2155,6 @@ components:
       additionalProperties: false
       required: [title, type, web_service]
       properties:
-        id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -2175,7 +2172,6 @@ components:
       additionalProperties: false
       required: [title, type, downloadable_file]
       properties:
-        id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
         license: { type: string, nullable: true }
@@ -2193,13 +2189,12 @@ components:
       additionalProperties: false
       required: [name, template_url, format]
       properties:
-        id: { type: string, format: uuid }
         name: { type: string, minLength: 1, pattern: '\S' }
         description: { type: string }
         template_url: { type: string, minLength: 1, pattern: '\S' }
         parameters:
           type: array
-          items: { $ref: "#/components/schemas/Parameter" }
+          items: { $ref: "#/components/schemas/ParameterDraft" }
         format: { type: string, minLength: 1, pattern: '\S' }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
@@ -2226,6 +2221,91 @@ components:
           INTEGER: "#/components/schemas/IntegerParameter"
           FLOAT: "#/components/schemas/FloatParameter"
           DATETIME: "#/components/schemas/DateTimeParameter"
+
+    ParameterDraft:
+      oneOf:
+        - $ref: "#/components/schemas/StringParameterDraft"
+        - $ref: "#/components/schemas/BooleanParameterDraft"
+        - $ref: "#/components/schemas/IntegerParameterDraft"
+        - $ref: "#/components/schemas/FloatParameterDraft"
+        - $ref: "#/components/schemas/DateTimeParameterDraft"
+      discriminator:
+        propertyName: kind
+        mapping:
+          STRING: "#/components/schemas/StringParameterDraft"
+          BOOLEAN: "#/components/schemas/BooleanParameterDraft"
+          INTEGER: "#/components/schemas/IntegerParameterDraft"
+          FLOAT: "#/components/schemas/FloatParameterDraft"
+          DATETIME: "#/components/schemas/DateTimeParameterDraft"
+
+    ParameterDraftMetadata:
+      type: object
+      additionalProperties: false
+      required: [kind, variable, property, label, required, multiple_values, read_only]
+      properties:
+        kind: { $ref: "#/components/schemas/ParameterKind" }
+        variable: { type: string }
+        property: { type: string }
+        label: { type: string }
+        required: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
+
+    StringParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, metadata, default, allowed_values, pattern]
+      properties:
+        kind: { type: string, enum: [STRING] }
+        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        default: { type: string, nullable: true }
+        allowed_values: { type: array, items: { type: string } }
+        pattern: { type: string }
+
+    BooleanParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, metadata, default]
+      properties:
+        kind: { type: string, enum: [BOOLEAN] }
+        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        default: { type: boolean, nullable: true }
+
+    IntegerParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      properties:
+        kind: { type: string, enum: [INTEGER] }
+        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        minimum: { type: integer, format: int64, nullable: true }
+        maximum: { type: integer, format: int64, nullable: true }
+        default: { type: integer, format: int64, nullable: true }
+        allowed_values: { type: array, items: { type: integer, format: int64 } }
+
+    FloatParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      properties:
+        kind: { type: string, enum: [FLOAT] }
+        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        minimum: { type: number, format: double, nullable: true }
+        maximum: { type: number, format: double, nullable: true }
+        default: { type: number, format: double, nullable: true }
+        allowed_values: { type: array, items: { type: number, format: double } }
+
+    DateTimeParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, metadata, minimum, maximum, default, pattern]
+      properties:
+        kind: { type: string, enum: [DATETIME] }
+        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        minimum: { type: string, format: date-time, nullable: true }
+        maximum: { type: string, format: date-time, nullable: true }
+        default: { type: string, format: date-time, nullable: true }
+        pattern: { type: string }
 
     ParameterMetadata:
       type: object
