@@ -764,7 +764,7 @@ func toClientCreateGroupRequest(value domain.CreateGroupInput) client.CreateGrou
 func toClientReplaceGroupRequest(value domain.ReplaceGroupInput) client.ReplaceGroupRequest {
 	result := client.ReplaceGroupRequest{ //nolint:exhaustruct_v5 // optional values are set below
 		Name:     value.Name,
-		Position: value.Position,
+		Position: &value.Position,
 		Concept:  value.Concept,
 	}
 	setNullable(&result.Description, value.Description)

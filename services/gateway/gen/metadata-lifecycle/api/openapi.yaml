@@ -4590,14 +4590,8 @@ components:
           - SOFTWARE
           type: string
       required:
-      - color
       - concept
-      - description
-      - label
-      - logo
       - name
-      - page
-      - position
       type: object
     MembershipUser:
       additionalProperties: false

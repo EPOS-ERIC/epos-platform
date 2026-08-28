@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
@@ -18,46 +18,11 @@ var (
 	ErrConflict  = errors.New("group operation conflict")
 )
 
-// Group is public group metadata.
-type Group struct {
-	ID          uuid.UUID
-	Name        string
-	Description *string
-	Label       *string
-	Logo        *string
-	Page        *string
-	Color       *string
-	Position    int32
-	Concept     string
-}
-
-type CreateRequest struct {
-	Name        string
-	Description *string
-	Label       *string
-	Logo        *string
-	Page        *string
-	Color       *string
-	Position    int32
-	Concept     string
-}
-
-type ReplaceRequest struct {
-	Name        string
-	Description *string
-	Label       *string
-	Logo        *string
-	Page        *string
-	Color       *string
-	Position    int32
-	Concept     string
-}
-
 type Store interface {
-	List(ctx context.Context) ([]Group, error)
-	Get(ctx context.Context, id uuid.UUID) (Group, error)
-	Create(ctx context.Context, group Group) (Group, error)
-	Replace(ctx context.Context, id uuid.UUID, request ReplaceRequest) (Group, error)
+	List(ctx context.Context) ([]domain.Group, error)
+	Get(ctx context.Context, id uuid.UUID) (domain.Group, error)
+	Create(ctx context.Context, input domain.GroupInput) (domain.Group, error)
+	Replace(ctx context.Context, id uuid.UUID, input domain.GroupInput) (domain.Group, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -75,78 +40,50 @@ func New(store Store, authorizer Authorizer) *Service {
 	return &Service{store: store, authorizer: authorizer}
 }
 
-func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (Group, error) {
-	actorID = strings.TrimSpace(actorID)
-	request.Name = strings.TrimSpace(request.Name)
-	request.Concept = strings.TrimSpace(request.Concept)
-	if actorID == "" || request.Name == "" || request.Concept == "" {
-		return Group{}, ErrInvalid
-	}
-	if request.Concept != "DATA" && request.Concept != "FACILITIES" && request.Concept != "SOFTWARE" {
-		return Group{}, ErrInvalid
-	}
-
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.GroupInput) (domain.Group, error) {
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
 	if err != nil {
-		return Group{}, fmt.Errorf("authorize group creation: %w", err)
+		return domain.Group{}, fmt.Errorf("authorize group creation: %w", err)
 	}
 	if !allowed.Allowed {
-		return Group{}, ErrForbidden
+		return domain.Group{}, ErrForbidden
 	}
 
-	id := uuid.New()
-	group, err := s.store.Create(ctx, Group{
-		ID:          id,
-		Name:        request.Name,
-		Description: request.Description,
-		Label:       request.Label,
-		Logo:        request.Logo,
-		Page:        request.Page,
-		Color:       request.Color,
-		Position:    request.Position,
-		Concept:     request.Concept,
-	})
+	group, err := s.store.Create(ctx, input)
 	if err != nil {
-		return Group{}, fmt.Errorf("create group: %w", err)
+		return domain.Group{}, fmt.Errorf("create group: %w", err)
 	}
 
 	return group, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, request ReplaceRequest) (Group, error) {
-	actorID = strings.TrimSpace(actorID)
-	request.Name = strings.TrimSpace(request.Name)
-	request.Concept = strings.TrimSpace(request.Concept)
-	if actorID == "" || id == uuid.Nil || request.Name == "" || request.Concept == "" {
-		return Group{}, ErrInvalid
-	}
-	if request.Concept != "DATA" && request.Concept != "FACILITIES" && request.Concept != "SOFTWARE" {
-		return Group{}, ErrInvalid
+func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.GroupInput) (domain.Group, error) {
+	if id == uuid.Nil {
+		return domain.Group{}, ErrInvalid
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "category_scheme.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "category_scheme.manage")
 	if err != nil {
-		return Group{}, fmt.Errorf("authorize group replacement: %w", err)
+		return domain.Group{}, fmt.Errorf("authorize group replacement: %w", err)
 	}
 	if !allowed.Allowed {
-		return Group{}, ErrForbidden
+		return domain.Group{}, ErrForbidden
 	}
 
-	group, err := s.store.Replace(ctx, id, request)
+	group, err := s.store.Replace(ctx, id, input)
 	if err != nil {
-		return Group{}, fmt.Errorf("replace group: %w", err)
+		return domain.Group{}, fmt.Errorf("replace group: %w", err)
 	}
 
 	return group, nil
 }
 
-func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" || id == uuid.Nil {
+func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
+	if id == uuid.Nil {
 		return ErrInvalid
 	}
 
-	allowed, err := s.authorizer.AuthorizeAdmin(ctx, actorID)
+	allowed, err := s.authorizer.AuthorizeAdmin(ctx, string(actorID))
 	if err != nil {
 		return fmt.Errorf("authorize group deletion: %w", err)
 	}
@@ -161,7 +98,7 @@ func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) erro
 	return nil
 }
 
-func (s *Service) List(ctx context.Context) ([]Group, error) {
+func (s *Service) List(ctx context.Context) ([]domain.Group, error) {
 	groups, err := s.store.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list groups: %w", err)
@@ -170,14 +107,14 @@ func (s *Service) List(ctx context.Context) ([]Group, error) {
 	return groups, nil
 }
 
-func (s *Service) Get(ctx context.Context, id uuid.UUID) (Group, error) {
+func (s *Service) Get(ctx context.Context, id uuid.UUID) (domain.Group, error) {
 	if id == uuid.Nil {
-		return Group{}, ErrInvalid
+		return domain.Group{}, ErrInvalid
 	}
 
 	group, err := s.store.Get(ctx, id)
 	if err != nil {
-		return Group{}, fmt.Errorf("get group: %w", err)
+		return domain.Group{}, fmt.Errorf("get group: %w", err)
 	}
 
 	return group, nil

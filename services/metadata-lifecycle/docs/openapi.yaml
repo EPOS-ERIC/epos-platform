@@ -1573,7 +1573,7 @@ components:
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
     ReplaceGroupRequest:
       type: object
-      required: [name, description, label, logo, page, color, position, concept]
+      required: [name, concept]
       additionalProperties: false
       properties:
         name: { type: string }

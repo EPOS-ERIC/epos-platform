@@ -3,13 +3,12 @@ package groups
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	groupdomain "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -18,11 +17,11 @@ import (
 var log = logging.Get("groups-handler")
 
 type service interface {
-	Create(context.Context, string, groupdomain.CreateRequest) (groupdomain.Group, error)
-	Replace(context.Context, string, uuid.UUID, groupdomain.ReplaceRequest) (groupdomain.Group, error)
-	Delete(context.Context, string, uuid.UUID) error
-	List(context.Context) ([]groupdomain.Group, error)
-	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
+	Create(context.Context, domain.Actor, domain.GroupInput) (domain.Group, error)
+	Replace(context.Context, domain.Actor, uuid.UUID, domain.GroupInput) (domain.Group, error)
+	Delete(context.Context, domain.Actor, uuid.UUID) error
+	List(context.Context) ([]domain.Group, error)
+	Get(context.Context, uuid.UUID) (domain.Group, error)
 }
 
 type Handler struct {
@@ -34,115 +33,75 @@ func New(service service) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
 
-	var body createGroupRequest
+	var body groupRequest
 	if !transport.Decode(w, r, &body) {
 		return
 	}
 
-	group, err := h.service.Create(r.Context(), actorID, groupdomain.CreateRequest{
-		Name:        body.Name,
-		Description: body.Description,
-		Label:       body.Label,
-		Logo:        body.Logo,
-		Page:        body.Page,
-		Color:       body.Color,
-		Position:    body.Position,
-		Concept:     body.Concept,
-	})
+	input, err := toDomainGroupInput(body)
 	if err != nil {
-		switch {
-		case errors.Is(err, groupdomain.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
-		case errors.Is(err, groupdomain.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global admin required")
-		case errors.Is(err, groupdomain.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "group already exists")
-		default:
-			log.ErrorContext(r.Context(), "create group failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create group failed")
-		}
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusCreated, response(group))
+	group, err := h.service.Create(r.Context(), actorID, input)
+	if err != nil {
+		writeError(w, r, err, "create group")
+		return
+	}
+
+	transport.WriteJSON(w, http.StatusCreated, toResponse(group))
 }
 
 func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
 
-	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
-	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+	id, ok := groupIDPath(w, r)
+	if !ok {
 		return
 	}
 
-	var body replaceGroupRequest
+	var body groupRequest
 	if !transport.Decode(w, r, &body) {
 		return
 	}
 
-	request, err := body.domain()
+	input, err := toDomainGroupInput(body)
 	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "all mutable group fields are required")
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
 		return
 	}
 
-	group, err := h.service.Replace(r.Context(), actorID, id, request)
-	// TODO: maybe we should look into generalizing error handling in handlers
+	group, err := h.service.Replace(r.Context(), actorID, id, input)
 	if err != nil {
-		switch {
-		case errors.Is(err, groupdomain.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
-		case errors.Is(err, groupdomain.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category scheme management permission required")
-		case errors.Is(err, groupdomain.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
-		case errors.Is(err, groupdomain.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "group already exists")
-		default:
-			log.ErrorContext(r.Context(), "replace group failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "replace group failed")
-		}
+		writeError(w, r, err, "replace group")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusOK, response(group))
+	transport.WriteJSON(w, http.StatusOK, toResponse(group))
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
 
-	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
-	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+	id, ok := groupIDPath(w, r)
+	if !ok {
 		return
 	}
 
 	if err := h.service.Delete(r.Context(), actorID, id); err != nil {
-		switch {
-		case errors.Is(err, groupdomain.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
-		case errors.Is(err, groupdomain.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global admin required")
-		case errors.Is(err, groupdomain.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
-		case errors.Is(err, groupdomain.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "group owns logical resources")
-		default:
-			log.ErrorContext(r.Context(), "delete group failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete group failed")
-		}
+		writeError(w, r, err, "delete group")
 		return
 	}
 
@@ -152,158 +111,54 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	groups, err := h.service.List(r.Context())
 	if err != nil {
-		log.ErrorContext(r.Context(), "list groups failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "list groups failed")
+		writeError(w, r, err, "list groups")
 		return
 	}
 
 	result := make([]groupResponse, 0, len(groups))
 	for _, group := range groups {
-		result = append(result, response(group))
+		result = append(result, toResponse(group))
 	}
 
 	transport.WriteJSON(w, http.StatusOK, result)
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
-	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+	id, ok := groupIDPath(w, r)
+	if !ok {
 		return
 	}
 
 	group, err := h.service.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, groupdomain.ErrNotFound) {
-			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
-			return
-		}
-
-		log.ErrorContext(r.Context(), "get group failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get group failed")
+		writeError(w, r, err, "get group")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusOK, response(group))
+	transport.WriteJSON(w, http.StatusOK, toResponse(group))
 }
 
-type groupResponse struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Description *string   `json:"description"`
-	Label       *string   `json:"label"`
-	Logo        *string   `json:"logo"`
-	Page        *string   `json:"page"`
-	Color       *string   `json:"color"`
-	Position    int32     `json:"position"`
-	Concept     string    `json:"concept"`
+func groupIDPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
+	if err != nil || id == uuid.Nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+		return uuid.Nil, false
+	}
+	return id, true
 }
 
-type createGroupRequest struct {
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
-	Label       *string `json:"label"`
-	Logo        *string `json:"logo"`
-	Page        *string `json:"page"`
-	Color       *string `json:"color"`
-	Position    int32   `json:"position"`
-	Concept     string  `json:"concept"`
-}
-
-type replaceGroupRequest struct {
-	Name        json.RawMessage `json:"name"`
-	Description json.RawMessage `json:"description"`
-	Label       json.RawMessage `json:"label"`
-	Logo        json.RawMessage `json:"logo"`
-	Page        json.RawMessage `json:"page"`
-	Color       json.RawMessage `json:"color"`
-	Position    json.RawMessage `json:"position"`
-	Concept     json.RawMessage `json:"concept"`
-}
-
-func (r replaceGroupRequest) domain() (groupdomain.ReplaceRequest, error) {
-	name, err := requiredString(r.Name)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-	description, err := nullableString(r.Description)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-	label, err := nullableString(r.Label)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-	logo, err := nullableString(r.Logo)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-	page, err := nullableString(r.Page)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-	color, err := nullableString(r.Color)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-	var position int32
-	if len(r.Position) == 0 || json.Unmarshal(r.Position, &position) != nil {
-		return groupdomain.ReplaceRequest{}, errors.New("invalid position")
-	}
-	concept, err := requiredString(r.Concept)
-	if err != nil {
-		return groupdomain.ReplaceRequest{}, err
-	}
-
-	return groupdomain.ReplaceRequest{
-		Name:        name,
-		Description: description,
-		Label:       label,
-		Logo:        logo,
-		Page:        page,
-		Color:       color,
-		Position:    position,
-		Concept:     concept,
-	}, nil
-}
-
-func requiredString(raw json.RawMessage) (string, error) {
-	if len(raw) == 0 || string(raw) == "null" {
-		return "", errors.New("required string is missing")
-	}
-
-	var value string
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return "", fmt.Errorf("decode string: %w", err)
-	}
-	return value, nil
-}
-
-func nullableString(raw json.RawMessage) (*string, error) {
-	if len(raw) == 0 {
-		return nil, errors.New("nullable string is missing")
-	}
-	if string(raw) == "null" {
-		return nil, nil
-	}
-
-	var value string
-	if err := json.Unmarshal(raw, &value); err != nil {
-		return nil, fmt.Errorf("decode nullable string: %w", err)
-	}
-	return &value, nil
-}
-
-func response(group groupdomain.Group) groupResponse {
-	return groupResponse{
-		ID:          group.ID,
-		Name:        group.Name,
-		Description: group.Description,
-		Label:       group.Label,
-		Logo:        group.Logo,
-		Page:        group.Page,
-		Color:       group.Color,
-		Position:    group.Position,
-		Concept:     group.Concept,
+func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
+	switch {
+	case errors.Is(err, groupservice.ErrInvalid):
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group request")
+	case errors.Is(err, groupservice.ErrForbidden):
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "group operation is not permitted")
+	case errors.Is(err, groupservice.ErrConflict):
+		transport.WriteProblem(w, http.StatusConflict, "conflict", "group operation conflicts with existing data")
+	case errors.Is(err, groupservice.ErrNotFound):
+		transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
+	default:
+		log.ErrorContext(r.Context(), operation+" failed", "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
 	}
 }

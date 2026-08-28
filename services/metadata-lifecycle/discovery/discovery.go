@@ -11,7 +11,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/google/uuid"
@@ -39,7 +38,7 @@ type SoftwareSourceCodeReader interface {
 }
 
 type GroupReader interface {
-	Get(context.Context, uuid.UUID) (groups.Group, error)
+	Get(context.Context, uuid.UUID) (domain.Group, error)
 }
 
 type Authorizer interface {

@@ -22,12 +22,12 @@ var _ MappedNullable = &ReplaceGroupRequest{}
 // ReplaceGroupRequest struct for ReplaceGroupRequest
 type ReplaceGroupRequest struct {
 	Name        string         `json:"name"`
-	Description NullableString `json:"description"`
-	Label       NullableString `json:"label"`
-	Logo        NullableString `json:"logo"`
-	Page        NullableString `json:"page"`
-	Color       NullableString `json:"color"`
-	Position    int32          `json:"position"`
+	Description NullableString `json:"description,omitempty"`
+	Label       NullableString `json:"label,omitempty"`
+	Logo        NullableString `json:"logo,omitempty"`
+	Page        NullableString `json:"page,omitempty"`
+	Color       NullableString `json:"color,omitempty"`
+	Position    *int32         `json:"position,omitempty"`
 	Concept     string         `json:"concept"`
 }
 
@@ -37,15 +37,9 @@ type _ReplaceGroupRequest ReplaceGroupRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceGroupRequest(name string, description, label, logo, page, color NullableString, position int32, concept string) *ReplaceGroupRequest {
+func NewReplaceGroupRequest(name, concept string) *ReplaceGroupRequest {
 	this := ReplaceGroupRequest{}
 	this.Name = name
-	this.Description = description
-	this.Label = label
-	this.Logo = logo
-	this.Page = page
-	this.Color = color
-	this.Position = position
 	this.Concept = concept
 	return &this
 }
@@ -82,18 +76,16 @@ func (o *ReplaceGroupRequest) SetName(v string) {
 	o.Name = v
 }
 
-// GetDescription returns the Description field value
-// If the value is explicit nil, the zero value for string will be returned
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ReplaceGroupRequest) GetDescription() string {
-	if o == nil || o.Description.Get() == nil {
+	if o == nil || IsNil(o.Description.Get()) {
 		var ret string
 		return ret
 	}
-
 	return *o.Description.Get()
 }
 
-// GetDescriptionOk returns a tuple with the Description field value
+// GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReplaceGroupRequest) GetDescriptionOk() (*string, bool) {
@@ -103,23 +95,40 @@ func (o *ReplaceGroupRequest) GetDescriptionOk() (*string, bool) {
 	return o.Description.Get(), o.Description.IsSet()
 }
 
-// SetDescription sets field value
+// HasDescription returns a boolean if a field has been set.
+func (o *ReplaceGroupRequest) HasDescription() bool {
+	if o != nil && o.Description.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
 func (o *ReplaceGroupRequest) SetDescription(v string) {
 	o.Description.Set(&v)
 }
 
-// GetLabel returns the Label field value
-// If the value is explicit nil, the zero value for string will be returned
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *ReplaceGroupRequest) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *ReplaceGroupRequest) UnsetDescription() {
+	o.Description.Unset()
+}
+
+// GetLabel returns the Label field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ReplaceGroupRequest) GetLabel() string {
-	if o == nil || o.Label.Get() == nil {
+	if o == nil || IsNil(o.Label.Get()) {
 		var ret string
 		return ret
 	}
-
 	return *o.Label.Get()
 }
 
-// GetLabelOk returns a tuple with the Label field value
+// GetLabelOk returns a tuple with the Label field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReplaceGroupRequest) GetLabelOk() (*string, bool) {
@@ -129,23 +138,40 @@ func (o *ReplaceGroupRequest) GetLabelOk() (*string, bool) {
 	return o.Label.Get(), o.Label.IsSet()
 }
 
-// SetLabel sets field value
+// HasLabel returns a boolean if a field has been set.
+func (o *ReplaceGroupRequest) HasLabel() bool {
+	if o != nil && o.Label.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetLabel gets a reference to the given NullableString and assigns it to the Label field.
 func (o *ReplaceGroupRequest) SetLabel(v string) {
 	o.Label.Set(&v)
 }
 
-// GetLogo returns the Logo field value
-// If the value is explicit nil, the zero value for string will be returned
+// SetLabelNil sets the value for Label to be an explicit nil
+func (o *ReplaceGroupRequest) SetLabelNil() {
+	o.Label.Set(nil)
+}
+
+// UnsetLabel ensures that no value is present for Label, not even an explicit nil
+func (o *ReplaceGroupRequest) UnsetLabel() {
+	o.Label.Unset()
+}
+
+// GetLogo returns the Logo field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ReplaceGroupRequest) GetLogo() string {
-	if o == nil || o.Logo.Get() == nil {
+	if o == nil || IsNil(o.Logo.Get()) {
 		var ret string
 		return ret
 	}
-
 	return *o.Logo.Get()
 }
 
-// GetLogoOk returns a tuple with the Logo field value
+// GetLogoOk returns a tuple with the Logo field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReplaceGroupRequest) GetLogoOk() (*string, bool) {
@@ -155,23 +181,40 @@ func (o *ReplaceGroupRequest) GetLogoOk() (*string, bool) {
 	return o.Logo.Get(), o.Logo.IsSet()
 }
 
-// SetLogo sets field value
+// HasLogo returns a boolean if a field has been set.
+func (o *ReplaceGroupRequest) HasLogo() bool {
+	if o != nil && o.Logo.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetLogo gets a reference to the given NullableString and assigns it to the Logo field.
 func (o *ReplaceGroupRequest) SetLogo(v string) {
 	o.Logo.Set(&v)
 }
 
-// GetPage returns the Page field value
-// If the value is explicit nil, the zero value for string will be returned
+// SetLogoNil sets the value for Logo to be an explicit nil
+func (o *ReplaceGroupRequest) SetLogoNil() {
+	o.Logo.Set(nil)
+}
+
+// UnsetLogo ensures that no value is present for Logo, not even an explicit nil
+func (o *ReplaceGroupRequest) UnsetLogo() {
+	o.Logo.Unset()
+}
+
+// GetPage returns the Page field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ReplaceGroupRequest) GetPage() string {
-	if o == nil || o.Page.Get() == nil {
+	if o == nil || IsNil(o.Page.Get()) {
 		var ret string
 		return ret
 	}
-
 	return *o.Page.Get()
 }
 
-// GetPageOk returns a tuple with the Page field value
+// GetPageOk returns a tuple with the Page field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReplaceGroupRequest) GetPageOk() (*string, bool) {
@@ -181,23 +224,40 @@ func (o *ReplaceGroupRequest) GetPageOk() (*string, bool) {
 	return o.Page.Get(), o.Page.IsSet()
 }
 
-// SetPage sets field value
+// HasPage returns a boolean if a field has been set.
+func (o *ReplaceGroupRequest) HasPage() bool {
+	if o != nil && o.Page.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPage gets a reference to the given NullableString and assigns it to the Page field.
 func (o *ReplaceGroupRequest) SetPage(v string) {
 	o.Page.Set(&v)
 }
 
-// GetColor returns the Color field value
-// If the value is explicit nil, the zero value for string will be returned
+// SetPageNil sets the value for Page to be an explicit nil
+func (o *ReplaceGroupRequest) SetPageNil() {
+	o.Page.Set(nil)
+}
+
+// UnsetPage ensures that no value is present for Page, not even an explicit nil
+func (o *ReplaceGroupRequest) UnsetPage() {
+	o.Page.Unset()
+}
+
+// GetColor returns the Color field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ReplaceGroupRequest) GetColor() string {
-	if o == nil || o.Color.Get() == nil {
+	if o == nil || IsNil(o.Color.Get()) {
 		var ret string
 		return ret
 	}
-
 	return *o.Color.Get()
 }
 
-// GetColorOk returns a tuple with the Color field value
+// GetColorOk returns a tuple with the Color field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReplaceGroupRequest) GetColorOk() (*string, bool) {
@@ -207,33 +267,60 @@ func (o *ReplaceGroupRequest) GetColorOk() (*string, bool) {
 	return o.Color.Get(), o.Color.IsSet()
 }
 
-// SetColor sets field value
+// HasColor returns a boolean if a field has been set.
+func (o *ReplaceGroupRequest) HasColor() bool {
+	if o != nil && o.Color.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetColor gets a reference to the given NullableString and assigns it to the Color field.
 func (o *ReplaceGroupRequest) SetColor(v string) {
 	o.Color.Set(&v)
 }
 
-// GetPosition returns the Position field value
+// SetColorNil sets the value for Color to be an explicit nil
+func (o *ReplaceGroupRequest) SetColorNil() {
+	o.Color.Set(nil)
+}
+
+// UnsetColor ensures that no value is present for Color, not even an explicit nil
+func (o *ReplaceGroupRequest) UnsetColor() {
+	o.Color.Unset()
+}
+
+// GetPosition returns the Position field value if set, zero value otherwise.
 func (o *ReplaceGroupRequest) GetPosition() int32 {
-	if o == nil {
+	if o == nil || IsNil(o.Position) {
 		var ret int32
 		return ret
 	}
-
-	return o.Position
+	return *o.Position
 }
 
-// GetPositionOk returns a tuple with the Position field value
+// GetPositionOk returns a tuple with the Position field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 func (o *ReplaceGroupRequest) GetPositionOk() (*int32, bool) {
-	if o == nil {
+	if o == nil || IsNil(o.Position) {
 		return nil, false
 	}
-	return &o.Position, true
+	return o.Position, true
 }
 
-// SetPosition sets field value
+// HasPosition returns a boolean if a field has been set.
+func (o *ReplaceGroupRequest) HasPosition() bool {
+	if o != nil && !IsNil(o.Position) {
+		return true
+	}
+
+	return false
+}
+
+// SetPosition gets a reference to the given int32 and assigns it to the Position field.
 func (o *ReplaceGroupRequest) SetPosition(v int32) {
-	o.Position = v
+	o.Position = &v
 }
 
 // GetConcept returns the Concept field value
@@ -271,12 +358,24 @@ func (o ReplaceGroupRequest) MarshalJSON() ([]byte, error) {
 func (o ReplaceGroupRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
-	toSerialize["description"] = o.Description.Get()
-	toSerialize["label"] = o.Label.Get()
-	toSerialize["logo"] = o.Logo.Get()
-	toSerialize["page"] = o.Page.Get()
-	toSerialize["color"] = o.Color.Get()
-	toSerialize["position"] = o.Position
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
+	}
+	if o.Label.IsSet() {
+		toSerialize["label"] = o.Label.Get()
+	}
+	if o.Logo.IsSet() {
+		toSerialize["logo"] = o.Logo.Get()
+	}
+	if o.Page.IsSet() {
+		toSerialize["page"] = o.Page.Get()
+	}
+	if o.Color.IsSet() {
+		toSerialize["color"] = o.Color.Get()
+	}
+	if !IsNil(o.Position) {
+		toSerialize["position"] = o.Position
+	}
 	toSerialize["concept"] = o.Concept
 	return toSerialize, nil
 }
@@ -287,12 +386,6 @@ func (o *ReplaceGroupRequest) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"name",
-		"description",
-		"label",
-		"logo",
-		"page",
-		"color",
-		"position",
 		"concept",
 	}
 

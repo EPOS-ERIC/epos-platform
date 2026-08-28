@@ -7,7 +7,8 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -22,81 +23,82 @@ func New(db *pgxpool.Pool) *Repo {
 	return &Repo{Queries: sqlc.New(db)}
 }
 
-func (r *Repo) List(ctx context.Context) ([]groups.Group, error) {
+func (r *Repo) List(ctx context.Context) ([]domain.Group, error) {
 	rows, err := r.ListGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list groups: %w", err)
 	}
 
-	result := make([]groups.Group, 0, len(rows))
+	result := make([]domain.Group, 0, len(rows))
 	for _, row := range rows {
-		result = append(result, mapGroup(row))
+		group, err := toDomainGroup(row)
+		if err != nil {
+			return nil, fmt.Errorf("construct group %s: %w", row.ID, err)
+		}
+		result = append(result, group)
 	}
 
 	return result, nil
 }
 
-func (r *Repo) Get(ctx context.Context, id uuid.UUID) (groups.Group, error) {
+func (r *Repo) Get(ctx context.Context, id uuid.UUID) (domain.Group, error) {
 	group, err := r.GetGroupByID(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return groups.Group{}, groups.ErrNotFound
+		// TODO: move sentinel errors to the domain package instead of the service
+		return domain.Group{}, groupservice.ErrNotFound
 	}
 	if err != nil {
-		return groups.Group{}, fmt.Errorf("get group by id: %w", err)
+		return domain.Group{}, fmt.Errorf("get group by id: %w", err)
 	}
 
-	return mapGroup(group), nil
+	result, err := toDomainGroup(group)
+	if err != nil {
+		return domain.Group{}, fmt.Errorf("construct group %s: %w", group.ID, err)
+	}
+
+	return result, nil
 }
 
-func (r *Repo) Create(ctx context.Context, group groups.Group) (groups.Group, error) {
-	row, err := r.CreateGroup(ctx, sqlc.CreateGroupParams{
-		ID:          group.ID,
-		Name:        group.Name,
-		Description: group.Description,
-		Concept:     sqlc.TopLevelConcept(group.Concept),
-		Label:       group.Label,
-		Logo:        group.Logo,
-		Page:        group.Page,
-		Color:       group.Color,
-		Position:    group.Position,
-	})
+func (r *Repo) Create(ctx context.Context, input domain.GroupInput) (domain.Group, error) {
+	id := uuid.New()
+	row, err := r.CreateGroup(ctx, toCreateGroupParams(id, input))
 	if err != nil {
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
-			return groups.Group{}, groups.ErrConflict
+			return domain.Group{}, groupservice.ErrConflict
 		}
 
-		return groups.Group{}, fmt.Errorf("insert group: %w", err)
+		return domain.Group{}, fmt.Errorf("insert group: %w", err)
 	}
 
-	return mapGroup(row), nil
+	group, err := toDomainGroup(row)
+	if err != nil {
+		return domain.Group{}, fmt.Errorf("construct group %s: %w", row.ID, err)
+	}
+
+	return group, nil
 }
 
-func (r *Repo) Replace(ctx context.Context, id uuid.UUID, request groups.ReplaceRequest) (groups.Group, error) {
-	row, err := r.ReplaceGroup(ctx, sqlc.ReplaceGroupParams{
-		ID:          id,
-		Name:        request.Name,
-		Description: request.Description,
-		Label:       request.Label,
-		Logo:        request.Logo,
-		Page:        request.Page,
-		Color:       request.Color,
-		Position:    request.Position,
-		Concept:     sqlc.TopLevelConcept(request.Concept),
-	})
+func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.GroupInput) (domain.Group, error) {
+	row, err := r.ReplaceGroup(ctx, toReplaceGroupParams(id, input))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return groups.Group{}, groups.ErrNotFound
+		return domain.Group{}, groupservice.ErrNotFound
 	}
 	if err != nil {
 		pgErr, ok := errors.AsType[*pgconn.PgError](err)
 		if ok && pgErr.Code == "23505" {
-			return groups.Group{}, groups.ErrConflict
+			return domain.Group{}, groupservice.ErrConflict
 		}
 
-		return groups.Group{}, fmt.Errorf("update group: %w", err)
+		return domain.Group{}, fmt.Errorf("update group: %w", err)
 	}
 
-	return mapGroup(row), nil
+	group, err := toDomainGroup(row)
+	if err != nil {
+		return domain.Group{}, fmt.Errorf("construct group %s: %w", row.ID, err)
+	}
+
+	return group, nil
 }
 
 func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -109,24 +111,10 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	case "DELETED":
 		return nil
 	case "NOT_FOUND":
-		return groups.ErrNotFound
+		return groupservice.ErrNotFound
 	case "CONFLICT":
-		return groups.ErrConflict
+		return groupservice.ErrConflict
 	default:
 		return fmt.Errorf("unexpected group deletion outcome %q", outcome)
-	}
-}
-
-func mapGroup(row sqlc.Group) groups.Group {
-	return groups.Group{
-		ID:          row.ID,
-		Name:        row.Name,
-		Description: row.Description,
-		Label:       row.Label,
-		Logo:        row.Logo,
-		Page:        row.Page,
-		Color:       row.Color,
-		Position:    row.Position,
-		Concept:     string(row.Concept),
 	}
 }
