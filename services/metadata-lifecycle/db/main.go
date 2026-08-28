@@ -10,6 +10,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
+	accessdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/access"
 	authdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/authz"
 	categorydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/categories"
 	contactpointdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/contactpoints"
@@ -38,6 +39,7 @@ type PostgresDB struct {
 	Authorization        *authdb.Repo
 	Identity             *identitydb.Repo
 	Groups               *groupdb.Repo
+	Access               *accessdb.Repo
 	Categories           *categorydb.Repo
 	Organizations        *organizationdb.Repo
 	ContactPoints        *contactpointdb.Repo
@@ -101,6 +103,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
 		Identity:             &identitydb.Repo{Queries: sqlc.New(db), DB: db},
 		Groups:               groupdb.New(db),
+		Access:               accessdb.New(db),
 		Categories:           categorydb.New(db),
 		Organizations:        organizationdb.New(db),
 		ContactPoints:        contactpointdb.New(db),

@@ -1,0 +1,624 @@
+// Package access provides PostgreSQL persistence for group access.
+package access
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type Repo struct {
+	*sqlc.Queries
+	db *pgxpool.Pool
+}
+
+func New(db *pgxpool.Pool) *Repo {
+	return &Repo{Queries: sqlc.New(db), db: db}
+}
+
+func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain.Membership, error) {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return nil, accessservice.ErrNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("check group: %w", err)
+	}
+
+	rows, err := r.ListGroupMemberships(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list group memberships: %w", err)
+	}
+
+	roles, err := r.ListGroupMembershipRoles(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list group membership roles: %w", err)
+	}
+
+	permissions, err := r.ListGroupMembershipPermissions(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list group membership permissions: %w", err)
+	}
+
+	requests, err := r.ListPendingGroupRoleRequests(ctx, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("list pending group role requests: %w", err)
+	}
+
+	rolesByUser := make(map[string][]domain.GroupRole)
+	for _, role := range roles {
+		value, err := domain.NewGroupRole(role.RoleKey)
+		if err != nil {
+			return nil, fmt.Errorf("construct group role: %w", err)
+		}
+		rolesByUser[role.UserID] = append(rolesByUser[role.UserID], value)
+	}
+
+	permissionsByUser := make(map[string][]string)
+	for _, permission := range permissions {
+		permissionsByUser[permission.UserID] = append(permissionsByUser[permission.UserID], permission.PermissionKey)
+	}
+
+	requestsByUser := make(map[string][]domain.RoleRequest)
+	for _, request := range requests {
+		value, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
+		if err != nil {
+			return nil, fmt.Errorf("construct role request %s: %w", request.ID, err)
+		}
+		requestsByUser[request.UserID] = append(requestsByUser[request.UserID], value)
+	}
+
+	result := make([]domain.Membership, 0, len(rows))
+	for _, row := range rows {
+		membership, err := toDomainMembership(
+			domain.MembershipUser{
+				ID:         row.User.ID,
+				GivenName:  row.User.GivenName,
+				FamilyName: row.User.FamilyName,
+				Email:      row.User.Email,
+			},
+			row.GroupMembership,
+			rolesByUser[row.GroupMembership.UserID],
+			permissionsByUser[row.GroupMembership.UserID],
+			requestsByUser[row.GroupMembership.UserID],
+		)
+		if err != nil {
+			return nil, fmt.Errorf("construct membership for %s: %w", row.GroupMembership.UserID, err)
+		}
+		result = append(result, membership)
+	}
+
+	return result, nil
+}
+
+func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID string, roles []domain.GroupRole) (domain.Membership, error) {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return domain.Membership{}, accessservice.ErrNotFound
+	} else if err != nil {
+		return domain.Membership{}, fmt.Errorf("check group: %w", err)
+	}
+
+	user, err := r.GetUserByID(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.Membership{}, accessservice.ErrNotFound
+	}
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("check user: %w", err)
+	}
+
+	var membership domain.Membership
+	err = dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
+		row, err := q.RequestGroupMembership(ctx, sqlc.RequestGroupMembershipParams{
+			UserID:  userID,
+			GroupID: groupID,
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return accessservice.ErrConflict
+		}
+		if err != nil {
+			return fmt.Errorf("request membership: %w", err)
+		}
+
+		requests := make([]domain.RoleRequest, 0, len(roles))
+		for _, role := range roles {
+			request, err := q.CreatePendingGroupRoleRequest(ctx, sqlc.CreatePendingGroupRoleRequestParams{
+				UserID:  userID,
+				GroupID: groupID,
+				RoleKey: string(role),
+			})
+			if err != nil {
+				return fmt.Errorf("create role request: %w", err)
+			}
+
+			requestValue, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
+			if err != nil {
+				return fmt.Errorf("construct role request %s: %w", request.ID, err)
+			}
+			requests = append(requests, requestValue)
+		}
+
+		membership, err = toDomainMembership(
+			domain.MembershipUser{
+				ID:         user.ID,
+				GivenName:  user.GivenName,
+				FamilyName: user.FamilyName,
+				Email:      user.Email,
+			},
+			row,
+			nil,
+			nil,
+			requests,
+		)
+		if err != nil {
+			return fmt.Errorf("construct membership: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("request membership transaction: %w", err)
+	}
+
+	return membership, nil
+}
+
+func (r *Repo) WithdrawMembershipRequest(ctx context.Context, groupID uuid.UUID, userID string) error {
+	rows, err := r.WithdrawGroupMembershipRequest(ctx, sqlc.WithdrawGroupMembershipRequestParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return fmt.Errorf("withdraw membership request: %w", err)
+	}
+
+	if rows == 0 {
+		return accessservice.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *Repo) RevokeMembership(ctx context.Context, groupID uuid.UUID, userID string) error {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check group: %w", err)
+	}
+
+	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check user: %w", err)
+	}
+
+	rows, err := r.RevokeGroupMembership(ctx, sqlc.RevokeGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return fmt.Errorf("revoke membership: %w", err)
+	}
+	if rows == 0 {
+		return accessservice.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) (domain.RoleRequest, error) {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return domain.RoleRequest{}, accessservice.ErrNotFound
+	} else if err != nil {
+		return domain.RoleRequest{}, fmt.Errorf("check group: %w", err)
+	}
+
+	if _, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	}); errors.Is(err, pgx.ErrNoRows) {
+		return domain.RoleRequest{}, accessservice.ErrNotFound
+	} else if err != nil {
+		return domain.RoleRequest{}, fmt.Errorf("check membership: %w", err)
+	}
+
+	request, err := r.CreateGroupRoleRequest(ctx, sqlc.CreateGroupRoleRequestParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: string(role),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.RoleRequest{}, accessservice.ErrConflict
+	}
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+		return domain.RoleRequest{}, accessservice.ErrConflict
+	}
+	if err != nil {
+		return domain.RoleRequest{}, fmt.Errorf("create role request: %w", err)
+	}
+
+	result, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
+	if err != nil {
+		return domain.RoleRequest{}, fmt.Errorf("construct role request %s: %w", request.ID, err)
+	}
+
+	return result, nil
+}
+
+// ApplyRoleRequestDecision accepts or rejects a pending role request and records the
+// decision actor and time. Acceptance assigns the requested role atomically,
+// then returns the target user's updated membership.
+func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID uuid.UUID, status domain.RoleRequestStatus, actorID string) (domain.Membership, error) {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return domain.Membership{}, accessservice.ErrNotFound
+	} else if err != nil {
+		return domain.Membership{}, fmt.Errorf("check group: %w", err)
+	}
+
+	var request sqlc.GroupRoleRequest
+	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
+		value, err := q.ApplyRoleRequestDecision(ctx, sqlc.ApplyRoleRequestDecisionParams{
+			Status:    sqlc.RoleRequestStatus(status),
+			DecidedBy: &actorID,
+			RequestID: requestID,
+			GroupID:   groupID,
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return accessservice.ErrConflict
+		}
+		if err != nil {
+			return fmt.Errorf("update role request: %w", err)
+		}
+		request = value
+
+		if status == domain.RoleRequestAccepted {
+			if err := q.AssignGroupRoleFromRequest(ctx, sqlc.AssignGroupRoleFromRequestParams{
+				AssignedBy: actorID,
+				RequestID:  requestID,
+				GroupID:    groupID,
+			}); err != nil {
+				return fmt.Errorf("assign requested role: %w", err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("decide role request transaction: %w", err)
+	}
+
+	membership, err := r.loadMembership(ctx, request.GroupID, request.UserID)
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("load decided role membership: %w", err)
+	}
+
+	return membership, nil
+}
+
+func (r *Repo) WithdrawRoleRequest(ctx context.Context, groupID, requestID uuid.UUID, userID string) error {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check group: %w", err)
+	}
+
+	rows, err := r.WithdrawGroupRoleRequest(ctx, sqlc.WithdrawGroupRoleRequestParams{
+		RequestID: requestID,
+		GroupID:   groupID,
+		UserID:    userID,
+	})
+	if err != nil {
+		return fmt.Errorf("withdraw role request: %w", err)
+	}
+	if rows == 0 {
+		return accessservice.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *Repo) AssignRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole, actorID string) error {
+	exists, err := r.checkRoleTarget(ctx, groupID, userID, role)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	rows, err := r.AssignGroupRole(ctx, sqlc.AssignGroupRoleParams{
+		UserID:     userID,
+		GroupID:    groupID,
+		RoleKey:    string(role),
+		AssignedBy: actorID,
+	})
+	if err != nil {
+		return fmt.Errorf("assign role: %w", err)
+	}
+	if rows == 0 {
+		return accessservice.ErrConflict
+	}
+
+	return nil
+}
+
+func (r *Repo) RemoveRole(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) error {
+	if _, err := r.checkRoleTarget(ctx, groupID, userID, role); err != nil {
+		return err
+	}
+
+	if _, err := r.RemoveGroupRole(ctx, sqlc.RemoveGroupRoleParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: string(role),
+	}); err != nil {
+		return fmt.Errorf("remove role: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) GrantPermission(ctx context.Context, groupID uuid.UUID, userID, permission, actorID string) error {
+	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
+		return err
+	}
+
+	if err := r.GrantGroupPermission(ctx, sqlc.GrantGroupPermissionParams{
+		UserID:        userID,
+		GroupID:       groupID,
+		PermissionKey: permission,
+		GrantedBy:     actorID,
+	}); err != nil {
+		return fmt.Errorf("grant permission: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) RevokePermission(ctx context.Context, groupID uuid.UUID, userID, permission string) error {
+	if err := r.checkPermissionTarget(ctx, groupID, userID, permission); err != nil {
+		return err
+	}
+
+	if err := r.RevokeGroupPermission(ctx, sqlc.RevokeGroupPermissionParams{
+		UserID:        userID,
+		GroupID:       groupID,
+		PermissionKey: permission,
+	}); err != nil {
+		return fmt.Errorf("revoke permission: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repo) checkPermissionTarget(ctx context.Context, groupID uuid.UUID, userID, permission string) error {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check group: %w", err)
+	}
+
+	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrNotFound
+	} else if err != nil {
+		return fmt.Errorf("check user: %w", err)
+	}
+
+	membership, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("check membership: %w", err)
+	}
+	if membership.GroupMembership.Status != sqlc.MembershipStatusACTIVE {
+		return accessservice.ErrConflict
+	}
+
+	scope, err := r.GetPermissionScope(ctx, permission)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return accessservice.ErrInvalid
+	}
+	if err != nil {
+		return fmt.Errorf("check permission: %w", err)
+	}
+	if scope != sqlc.PermissionScopeGROUP {
+		return accessservice.ErrInvalid
+	}
+
+	return nil
+}
+
+// checkRoleTarget validates the target membership and pending-request state.
+// It reports whether the requested role is already assigned.
+func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID string, role domain.GroupRole) (bool, error) {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return false, accessservice.ErrNotFound
+	} else if err != nil {
+		return false, fmt.Errorf("check group: %w", err)
+	}
+
+	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		return false, accessservice.ErrNotFound
+	} else if err != nil {
+		return false, fmt.Errorf("check user: %w", err)
+	}
+
+	membership, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, accessservice.ErrNotFound
+	}
+	if err != nil {
+		return false, fmt.Errorf("check membership: %w", err)
+	}
+	if membership.GroupMembership.Status != sqlc.MembershipStatusACTIVE {
+		return false, accessservice.ErrConflict
+	}
+
+	_, err = r.GetPendingGroupRoleRequest(ctx, sqlc.GetPendingGroupRoleRequestParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: string(role),
+	})
+	if err == nil {
+		return false, accessservice.ErrConflict
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return false, fmt.Errorf("check pending role request: %w", err)
+	}
+
+	exists, err := r.GroupMembershipRoleExists(ctx, sqlc.GroupMembershipRoleExistsParams{
+		UserID:  userID,
+		GroupID: groupID,
+		RoleKey: string(role),
+	})
+	if err != nil {
+		return false, fmt.Errorf("check group role: %w", err)
+	}
+	if exists {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// DecideMembership changes a pending membership to ACTIVE or REJECTED.
+// Rejection also marks its pending role requests as rejected in the same transaction.
+func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID string, status domain.MembershipStatus, actorID string) (domain.Membership, error) {
+	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
+		return domain.Membership{}, accessservice.ErrNotFound
+	} else if err != nil {
+		return domain.Membership{}, fmt.Errorf("check group: %w", err)
+	}
+
+	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
+		return domain.Membership{}, accessservice.ErrNotFound
+	} else if err != nil {
+		return domain.Membership{}, fmt.Errorf("check user: %w", err)
+	}
+
+	var membership sqlc.GroupMembership
+	err := dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
+		row, err := q.DecideGroupMembership(ctx, sqlc.DecideGroupMembershipParams{
+			Status:  sqlc.MembershipStatus(status),
+			GroupID: groupID,
+			UserID:  userID,
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return accessservice.ErrConflict
+		}
+		if err != nil {
+			return fmt.Errorf("update membership: %w", err)
+		}
+
+		membership = row
+
+		if status == domain.MembershipRejected {
+			if err := q.RejectPendingGroupRoleRequests(ctx, sqlc.RejectPendingGroupRoleRequestsParams{
+				DecidedBy: &actorID,
+				GroupID:   groupID,
+				UserID:    userID,
+			}); err != nil {
+				return fmt.Errorf("reject pending role requests: %w", err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("decide membership transaction: %w", err)
+	}
+
+	result, err := r.loadMembership(ctx, membership.GroupID, membership.UserID)
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("load decided membership: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID string) (domain.Membership, error) {
+	row, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
+		GroupID: groupID,
+		UserID:  userID,
+	})
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("get membership: %w", err)
+	}
+
+	roles, err := r.ListGroupMembershipRoles(ctx, groupID)
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("list membership roles: %w", err)
+	}
+
+	permissions, err := r.ListGroupMembershipPermissions(ctx, groupID)
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("list membership permissions: %w", err)
+	}
+
+	requests, err := r.ListPendingGroupRoleRequests(ctx, groupID)
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("list pending role requests: %w", err)
+	}
+
+	memberRoles := make([]domain.GroupRole, 0)
+	for _, role := range roles {
+		if role.UserID != userID {
+			continue
+		}
+		value, err := domain.NewGroupRole(role.RoleKey)
+		if err != nil {
+			return domain.Membership{}, fmt.Errorf("construct group role: %w", err)
+		}
+		memberRoles = append(memberRoles, value)
+	}
+
+	memberPermissions := make([]string, 0)
+	for _, permission := range permissions {
+		if permission.UserID == userID {
+			memberPermissions = append(memberPermissions, permission.PermissionKey)
+		}
+	}
+
+	memberRequests := make([]domain.RoleRequest, 0)
+	for _, request := range requests {
+		if request.UserID != userID {
+			continue
+		}
+		value, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
+		if err != nil {
+			return domain.Membership{}, fmt.Errorf("construct role request %s: %w", request.ID, err)
+		}
+		memberRequests = append(memberRequests, value)
+	}
+
+	membership, err := toDomainMembership(
+		domain.MembershipUser{
+			ID:         row.User.ID,
+			GivenName:  row.User.GivenName,
+			FamilyName: row.User.FamilyName,
+			Email:      row.User.Email,
+		},
+		row.GroupMembership,
+		memberRoles,
+		memberPermissions,
+		memberRequests,
+	)
+	if err != nil {
+		return domain.Membership{}, fmt.Errorf("construct membership: %w", err)
+	}
+
+	return membership, nil
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	categoryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
@@ -15,6 +16,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/docs"
 	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
+	accessapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/access"
 	categoriesapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
@@ -81,33 +83,32 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Post("/users/{user_id}/unblock", identity.UnblockUser)
 		r.Post("/internal/users", identity.Create)
 
-		groupService := groupservice.New(database.Groups, authorizer)
-		groups := groupsapi.New(groupService)
-		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
+		groupHandler := groupsapi.New(groupservice.New(database.Groups, authorizer))
+		accessHandler := accessapi.New(accessservice.New(database.Access, authorizer))
 		categoryHandler := categoriesapi.New(categoryservice.New(database.Categories, authorizer))
 
-		r.Get("/groups", groups.List)
-		r.Post("/groups", groups.Create)
-		r.Get("/groups/{group_id}", groups.Get)
-		r.Put("/groups/{group_id}", groups.Replace)
-		r.Delete("/groups/{group_id}", groups.Delete)
+		r.Get("/groups", groupHandler.List)
+		r.Post("/groups", groupHandler.Create)
+		r.Get("/groups/{group_id}", groupHandler.Get)
+		r.Put("/groups/{group_id}", groupHandler.Replace)
+		r.Delete("/groups/{group_id}", groupHandler.Delete)
 		r.Post("/groups/{group_id}/categories", categoryHandler.Create)
 		r.Get("/groups/{group_id}/categories", categoryHandler.List)
 		r.Get("/groups/{group_id}/categories/{category_id}", categoryHandler.Get)
 		r.Put("/groups/{group_id}/categories/{category_id}", categoryHandler.Replace)
 		r.Delete("/groups/{group_id}/categories/{category_id}", categoryHandler.Delete)
-		r.Get("/groups/{group_id}/memberships", groupAccess.ListMemberships)
-		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)
-		r.Delete("/groups/{group_id}/membership-requests", groupAccess.WithdrawMembershipRequest)
-		r.Patch("/groups/{group_id}/memberships/{user_id}", groupAccess.DecideMembership)
-		r.Delete("/groups/{group_id}/memberships/{user_id}", groupAccess.RevokeMembership)
-		r.Post("/groups/{group_id}/role-requests", groupAccess.RequestRole)
-		r.Patch("/groups/{group_id}/role-requests/{request_id}", groupAccess.ApplyRoleRequestDecision)
-		r.Delete("/groups/{group_id}/role-requests/{request_id}", groupAccess.WithdrawRoleRequest)
-		r.Put("/groups/{group_id}/memberships/{user_id}/roles/{role}", groupAccess.AssignRole)
-		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", groupAccess.RemoveRole)
-		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.GrantPermission)
-		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", groupAccess.RevokePermission)
+		r.Get("/groups/{group_id}/memberships", accessHandler.ListMemberships)
+		r.Post("/groups/{group_id}/membership-requests", accessHandler.RequestMembership)
+		r.Delete("/groups/{group_id}/membership-requests", accessHandler.WithdrawMembershipRequest)
+		r.Patch("/groups/{group_id}/memberships/{user_id}", accessHandler.DecideMembership)
+		r.Delete("/groups/{group_id}/memberships/{user_id}", accessHandler.RevokeMembership)
+		r.Post("/groups/{group_id}/role-requests", accessHandler.RequestRole)
+		r.Patch("/groups/{group_id}/role-requests/{request_id}", accessHandler.ApplyRoleRequestDecision)
+		r.Delete("/groups/{group_id}/role-requests/{request_id}", accessHandler.WithdrawRoleRequest)
+		r.Put("/groups/{group_id}/memberships/{user_id}/roles/{role}", accessHandler.AssignRole)
+		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", accessHandler.RemoveRole)
+		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", accessHandler.GrantPermission)
+		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", accessHandler.RevokePermission)
 
 		contactPoints := contactpointsapi.New(contactpointservice.New(database.ContactPoints, authorizer))
 		r.Get("/contact-points", contactPoints.List)
@@ -130,7 +131,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		applications := softwareapplication.New(applicationService)
 		sourceCodes := softwaresourcecode.New(sourceCodeService)
 		resources := resource.New(datasets, applications, sourceCodes)
-		discoveryHandler := discoveryapi.New(discovery.New(database.Discovery, authorizer, datasetService, applicationService, sourceCodeService, groupService))
+		discoveryHandler := discoveryapi.New(discovery.New(database.Discovery, authorizer, datasetService, applicationService, sourceCodeService, groupservice.New(database.Groups, authorizer)))
 
 		r.Get("/resources", discoveryHandler.Search)
 		r.Post("/groups/{group_id}/resources", resources.Create)

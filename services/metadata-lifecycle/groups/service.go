@@ -12,8 +12,10 @@ import (
 )
 
 var (
-	ErrInvalid  = errors.New("invalid group")
-	ErrNotFound = errors.New("group not found")
+	ErrInvalid   = errors.New("invalid group")
+	ErrNotFound  = errors.New("group not found")
+	ErrForbidden = errors.New("action forbidden on group")
+	ErrConflict  = errors.New("group operation conflict")
 )
 
 // Group is public group metadata.
