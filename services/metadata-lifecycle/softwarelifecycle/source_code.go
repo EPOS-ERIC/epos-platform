@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/google/uuid"
 )
@@ -92,7 +92,7 @@ func (s *SourceCodeService) ReplaceDraft(ctx context.Context, actorID string, so
 	if err := normalizeSourceCode(&value); err != nil {
 		return SourceCode{}, err
 	}
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionEdit); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionEdit); err != nil {
 		return SourceCode{}, operationError("authorize source code draft replacement", err)
 	}
 	sourceCode, err := s.repository.ReplaceDraft(ctx, sourceCodeID, versionID, revision, value)
@@ -101,7 +101,7 @@ func (s *SourceCodeService) ReplaceDraft(ctx context.Context, actorID string, so
 
 // Submit submits a source code draft for review.
 func (s *SourceCodeService) Submit(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionSubmit); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionSubmit); err != nil {
 		return SourceCode{}, operationError("authorize source code submission", err)
 	}
 	sourceCode, err := s.repository.Submit(ctx, actorID, sourceCodeID, versionID)
@@ -110,7 +110,7 @@ func (s *SourceCodeService) Submit(ctx context.Context, actorID string, sourceCo
 
 // Withdraw withdraws a submitted source code version.
 func (s *SourceCodeService) Withdraw(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionWithdraw); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionWithdraw); err != nil {
 		return SourceCode{}, operationError("authorize source code withdrawal", err)
 	}
 	sourceCode, err := s.repository.Withdraw(ctx, sourceCodeID, versionID)
@@ -123,7 +123,7 @@ func (s *SourceCodeService) Reject(ctx context.Context, actorID string, sourceCo
 	if note == "" {
 		return SourceCode{}, fmt.Errorf("rejection note is required: %w", ErrInvalid)
 	}
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionReject); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionReject); err != nil {
 		return SourceCode{}, operationError("authorize source code rejection", err)
 	}
 	sourceCode, err := s.repository.Reject(ctx, actorID, sourceCodeID, versionID, note)
@@ -132,7 +132,7 @@ func (s *SourceCodeService) Reject(ctx context.Context, actorID string, sourceCo
 
 // Reopen reopens a rejected source code version.
 func (s *SourceCodeService) Reopen(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionReopen); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionReopen); err != nil {
 		return SourceCode{}, operationError("authorize source code reopening", err)
 	}
 	sourceCode, err := s.repository.Reopen(ctx, sourceCodeID, versionID)
@@ -141,7 +141,7 @@ func (s *SourceCodeService) Reopen(ctx context.Context, actorID string, sourceCo
 
 // Publish publishes a submitted source code version.
 func (s *SourceCodeService) Publish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionPublish); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionPublish); err != nil {
 		return SourceCode{}, operationError("authorize source code publication", err)
 	}
 	sourceCode, err := s.repository.Publish(ctx, actorID, sourceCodeID, versionID)
@@ -150,7 +150,7 @@ func (s *SourceCodeService) Publish(ctx context.Context, actorID string, sourceC
 
 // Discard removes a source code draft or rejected version.
 func (s *SourceCodeService) Discard(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) error {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionDiscard); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionDiscard); err != nil {
 		return operationError("authorize source code discard", err)
 	}
 	return operationError("discard source code version", s.repository.Discard(ctx, sourceCodeID, versionID))
@@ -158,7 +158,7 @@ func (s *SourceCodeService) Discard(ctx context.Context, actorID string, sourceC
 
 // Unpublish archives a published source code version.
 func (s *SourceCodeService) Unpublish(ctx context.Context, actorID string, sourceCodeID, versionID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionUnpublish); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionUnpublish); err != nil {
 		return SourceCode{}, operationError("authorize source code unpublication", err)
 	}
 	sourceCode, err := s.repository.Unpublish(ctx, actorID, sourceCodeID, versionID)
@@ -167,7 +167,7 @@ func (s *SourceCodeService) Unpublish(ctx context.Context, actorID string, sourc
 
 // DraftFromPublication creates a draft from published source code metadata.
 func (s *SourceCodeService) DraftFromPublication(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionCreate); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionCreate); err != nil {
 		return SourceCode{}, operationError("authorize source code draft creation", err)
 	}
 	sourceCode, err := s.repository.DraftFromPublication(ctx, actorID, sourceCodeID)
@@ -176,7 +176,7 @@ func (s *SourceCodeService) DraftFromPublication(ctx context.Context, actorID st
 
 // DraftFromLatestArchive creates a draft from the latest archived version.
 func (s *SourceCodeService) DraftFromLatestArchive(ctx context.Context, actorID string, sourceCodeID uuid.UUID) (SourceCode, error) {
-	if err := authorizeResource(ctx, s.authorizer, actorID, authz.ResourceTypeSoftwareSourceCode, sourceCodeID, permissionCreate); err != nil {
+	if err := authorizeResource(ctx, s.authorizer, actorID, domain.SoftwareSourceCode, sourceCodeID, permissionCreate); err != nil {
 		return SourceCode{}, operationError("authorize source code draft creation", err)
 	}
 	sourceCode, err := s.repository.DraftFromLatestArchive(ctx, actorID, sourceCodeID)

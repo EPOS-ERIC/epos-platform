@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
@@ -36,9 +35,9 @@ type GroupReader interface {
 }
 
 type Authorizer interface {
-	CanReadDatasetVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
+	CanReadDatasetVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
+	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
+	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 }
 
 type Service struct {
@@ -114,7 +113,7 @@ func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain
 
 func (s *Service) canRead(ctx context.Context, actor *domain.Actor, candidate domain.DiscoveryCandidate) (bool, error) {
 	actorID := actor.OptionalString()
-	var result authz.Result
+	var result domain.Result
 	var err error
 	switch candidate.Type {
 	case domain.Dataset:

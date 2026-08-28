@@ -4,26 +4,27 @@ import (
 	"context"
 	"testing"
 
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
 type fakeRepository struct {
-	user         User
+	user         domain.User
 	admin        bool
 	global       bool
 	member       bool
 	anyMember    bool
 	groupAllowed bool
 	datasetGroup uuid.UUID
-	scope        PermissionScope
+	scope        domain.PermissionScope
 	published    bool
 }
 
-func (r fakeRepository) User(context.Context, string) (User, error) {
+func (r fakeRepository) User(context.Context, string) (domain.User, error) {
 	return r.user, nil
 }
 
-func (r fakeRepository) PermissionScope(context.Context, string) (PermissionScope, error) {
+func (r fakeRepository) PermissionScope(context.Context, string) (domain.PermissionScope, error) {
 	return r.scope, nil
 }
 func (r fakeRepository) IsGlobalAdmin(context.Context, string) (bool, error) { return r.admin, nil }
@@ -63,30 +64,30 @@ func (r fakeRepository) IsDatasetPublished(context.Context, uuid.UUID) (bool, er
 	return r.published, nil
 }
 
-func (r fakeRepository) DatasetVersionAuthz(_ context.Context, datasetID, _ uuid.UUID) (VersionAuthz, error) {
-	return VersionAuthz{ResourceID: datasetID, GroupID: r.datasetGroup, Status: func() ResourceStatus {
+func (r fakeRepository) DatasetVersionAuthz(_ context.Context, datasetID, _ uuid.UUID) (domain.VersionAuthz, error) {
+	return domain.VersionAuthz{ResourceID: datasetID, GroupID: r.datasetGroup, Status: func() domain.Status {
 		if r.published {
-			return ResourceStatusPublished
+			return domain.Published
 		}
-		return ResourceStatusDraft
+		return domain.Draft
 	}()}, nil
 }
 
-func (r fakeRepository) SoftwareApplicationVersionAuthz(_ context.Context, applicationID, _ uuid.UUID) (VersionAuthz, error) {
-	return VersionAuthz{ResourceID: applicationID, GroupID: r.datasetGroup, Status: func() ResourceStatus {
+func (r fakeRepository) SoftwareApplicationVersionAuthz(_ context.Context, applicationID, _ uuid.UUID) (domain.VersionAuthz, error) {
+	return domain.VersionAuthz{ResourceID: applicationID, GroupID: r.datasetGroup, Status: func() domain.Status {
 		if r.published {
-			return ResourceStatusPublished
+			return domain.Published
 		}
-		return ResourceStatusDraft
+		return domain.Draft
 	}()}, nil
 }
 
-func (r fakeRepository) SoftwareSourceCodeVersionAuthz(_ context.Context, sourceCodeID, _ uuid.UUID) (VersionAuthz, error) {
-	return VersionAuthz{ResourceID: sourceCodeID, GroupID: r.datasetGroup, Status: func() ResourceStatus {
+func (r fakeRepository) SoftwareSourceCodeVersionAuthz(_ context.Context, sourceCodeID, _ uuid.UUID) (domain.VersionAuthz, error) {
+	return domain.VersionAuthz{ResourceID: sourceCodeID, GroupID: r.datasetGroup, Status: func() domain.Status {
 		if r.published {
-			return ResourceStatusPublished
+			return domain.Published
 		}
-		return ResourceStatusDraft
+		return domain.Draft
 	}()}, nil
 }
 
@@ -102,14 +103,14 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 	t.Parallel()
 	groupID := uuid.New()
 	authorizer := New(fakeRepository{
-		user:         User{Status: UserStatusActive},
+		user:         domain.User{Status: domain.UserStatusActive},
 		member:       true,
 		groupAllowed: true,
 		datasetGroup: groupID,
-		scope:        PermissionScopeGroup,
+		scope:        domain.PermissionScopeGroup,
 	})
 
-	result, err := authorizer.AuthorizeResource(context.Background(), "user-1", ResourceTypeDataset, uuid.New(), "resource.edit")
+	result, err := authorizer.AuthorizeResource(context.Background(), "user-1", domain.Dataset, uuid.New(), "resource.edit")
 	if err != nil {
 		t.Fatalf("authorize resource: %v", err)
 	}
@@ -120,7 +121,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 
 func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 	t.Parallel()
-	authorizer := New(fakeRepository{user: User{Status: UserStatusBlocked}, scope: PermissionScopeGroup})
+	authorizer := New(fakeRepository{user: domain.User{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
 
 	result, err := authorizer.AuthorizeGroup(context.Background(), "user-1", uuid.New(), "resource.edit")
 	if err != nil {
@@ -134,9 +135,9 @@ func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	t.Parallel()
 	authorizer := New(fakeRepository{
-		user:   User{Status: UserStatusActive},
+		user:   domain.User{Status: domain.UserStatusActive},
 		global: true,
-		scope:  PermissionScopeGlobal,
+		scope:  domain.PermissionScopeGlobal,
 	})
 
 	result, err := authorizer.AuthorizeGlobal(context.Background(), "user-1", "organization.manage")
@@ -152,7 +153,7 @@ func TestCanReadPublishedResourceWithoutUser(t *testing.T) {
 	t.Parallel()
 	authorizer := New(fakeRepository{datasetGroup: uuid.New(), published: true})
 
-	result, err := authorizer.CanReadResource(context.Background(), nil, ResourceTypeDataset, uuid.New())
+	result, err := authorizer.CanReadResource(context.Background(), nil, domain.Dataset, uuid.New())
 	if err != nil {
 		t.Fatalf("read published resource: %v", err)
 	}
@@ -178,7 +179,7 @@ func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := New(fakeRepository{
-				user:      User{Status: UserStatusActive},
+				user:      domain.User{Status: domain.UserStatusActive},
 				admin:     test.admin,
 				anyMember: test.member,
 			}).CanReadContactPoint(ctx, userID)

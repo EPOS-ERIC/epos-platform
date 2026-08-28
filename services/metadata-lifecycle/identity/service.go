@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
@@ -41,10 +41,10 @@ type Store interface {
 }
 
 type Authorizer interface {
-	CanReadUser(context.Context, string, string) (authz.Result, error)
-	CanListUsers(context.Context, string) (authz.Result, error)
-	AuthorizeAdmin(context.Context, string) (authz.Result, error)
-	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
+	CanReadUser(context.Context, string, string) (domain.Result, error)
+	CanListUsers(context.Context, string) (domain.Result, error)
+	AuthorizeAdmin(context.Context, string) (domain.Result, error)
+	AuthorizeGlobal(context.Context, string, string) (domain.Result, error)
 }
 
 // TODO: should we move these domain definitions to a separate package? (and the same for all other service structs)

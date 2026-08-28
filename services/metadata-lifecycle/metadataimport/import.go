@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/google/uuid"
 )
@@ -76,7 +76,7 @@ type Parser interface {
 }
 
 type Authorizer interface {
-	AuthorizeAdmin(context.Context, string) (authz.Result, error)
+	AuthorizeAdmin(context.Context, string) (domain.Result, error)
 }
 
 type Repository interface {

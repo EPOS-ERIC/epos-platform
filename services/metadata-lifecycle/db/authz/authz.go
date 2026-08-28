@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -16,26 +16,36 @@ type Repo struct {
 	*sqlc.Queries
 }
 
-func (r *Repo) User(ctx context.Context, userID string) (authz.User, error) {
+func (r *Repo) User(ctx context.Context, userID string) (domain.User, error) {
 	user, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return authz.User{}, authz.ErrNotFound
+		return domain.User{}, domain.ErrAuthorizationNotFound
 	}
 	if err != nil {
-		return authz.User{}, fmt.Errorf("get authorization user: %w", err)
+		return domain.User{}, fmt.Errorf("get authorization user: %w", err)
 	}
-	return authz.User{ID: user.ID, Status: authz.UserStatus(user.Status)}, nil
+	result, err := toDomainUser(user)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("construct authorization user: %w", err)
+	}
+
+	return result, nil
 }
 
-func (r *Repo) PermissionScope(ctx context.Context, key string) (authz.PermissionScope, error) {
+func (r *Repo) PermissionScope(ctx context.Context, key string) (domain.PermissionScope, error) {
 	scope, err := r.GetPermissionScope(ctx, key)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", authz.ErrNotFound
+		return "", domain.ErrAuthorizationNotFound
 	}
 	if err != nil {
 		return "", fmt.Errorf("get permission scope: %w", err)
 	}
-	return authz.PermissionScope(scope), nil
+	result, err := toDomainPermissionScope(scope)
+	if err != nil {
+		return "", fmt.Errorf("construct permission scope: %w", err)
+	}
+
+	return result, nil
 }
 
 func (r *Repo) HasGlobalPermission(ctx context.Context, userID, permissionKey string) (bool, error) {
@@ -43,7 +53,11 @@ func (r *Repo) HasGlobalPermission(ctx context.Context, userID, permissionKey st
 		UserID:        userID,
 		PermissionKey: permissionKey,
 	})
-	return allowed, wrap("check global permission", err)
+	if err != nil {
+		return false, fmt.Errorf("check global permission: %w", err)
+	}
+
+	return allowed, nil
 }
 
 func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.UUID) (bool, error) {
@@ -51,7 +65,11 @@ func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.U
 		UserID:  userID,
 		GroupID: groupID,
 	})
-	return active, wrap("check active membership", err)
+	if err != nil {
+		return false, fmt.Errorf("check active membership: %w", err)
+	}
+
+	return active, nil
 }
 
 func (r *Repo) HasGroupRole(ctx context.Context, userID string, groupID uuid.UUID, roleKey string) (bool, error) {
@@ -60,7 +78,11 @@ func (r *Repo) HasGroupRole(ctx context.Context, userID string, groupID uuid.UUI
 		GroupID: groupID,
 		RoleKey: roleKey,
 	})
-	return hasRole, wrap("check group role", err)
+	if err != nil {
+		return false, fmt.Errorf("check group role: %w", err)
+	}
+
+	return hasRole, nil
 }
 
 func (r *Repo) HasGroupPermission(ctx context.Context, userID string, groupID uuid.UUID, permissionKey string) (bool, error) {
@@ -69,90 +91,102 @@ func (r *Repo) HasGroupPermission(ctx context.Context, userID string, groupID uu
 		GroupID:       groupID,
 		PermissionKey: permissionKey,
 	})
-	return allowed, wrap("check group permission", err)
+	if err != nil {
+		return false, fmt.Errorf("check group permission: %w", err)
+	}
+
+	return allowed, nil
 }
 
-func (r *Repo) DatasetVersionAuthz(ctx context.Context, datasetID, versionID uuid.UUID) (authz.VersionAuthz, error) {
+func (r *Repo) DatasetVersionAuthz(ctx context.Context, datasetID, versionID uuid.UUID) (domain.VersionAuthz, error) {
 	version, err := r.GetDatasetVersionAuthorization(ctx, sqlc.GetDatasetVersionAuthorizationParams{
 		DatasetID: datasetID,
 		VersionID: versionID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return authz.VersionAuthz{}, authz.ErrNotFound
+		return domain.VersionAuthz{}, domain.ErrAuthorizationNotFound
 	}
 	if err != nil {
-		return authz.VersionAuthz{}, fmt.Errorf("get dataset version authorization: %w", err)
+		return domain.VersionAuthz{}, fmt.Errorf("get dataset version authorization: %w", err)
 	}
-	return authz.VersionAuthz{
-		ResourceID: version.DatasetID,
-		GroupID:    version.GroupID,
-		Status:     authz.ResourceStatus(version.Status),
-	}, nil
+	result, err := toDomainVersionAuthz(version.DatasetID, version.GroupID, version.Status)
+	if err != nil {
+		return domain.VersionAuthz{}, fmt.Errorf("construct dataset version authorization: %w", err)
+	}
+
+	return result, nil
 }
 
-func (r *Repo) SoftwareApplicationVersionAuthz(ctx context.Context, applicationID, versionID uuid.UUID) (authz.VersionAuthz, error) {
+func (r *Repo) SoftwareApplicationVersionAuthz(ctx context.Context, applicationID, versionID uuid.UUID) (domain.VersionAuthz, error) {
 	version, err := r.GetSoftwareApplicationVersionAuthorization(ctx, sqlc.GetSoftwareApplicationVersionAuthorizationParams{
 		SoftwareApplicationID: applicationID,
 		VersionID:             versionID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return authz.VersionAuthz{}, authz.ErrNotFound
+		return domain.VersionAuthz{}, domain.ErrAuthorizationNotFound
 	}
 	if err != nil {
-		return authz.VersionAuthz{}, fmt.Errorf("get software application version authorization: %w", err)
+		return domain.VersionAuthz{}, fmt.Errorf("get software application version authorization: %w", err)
 	}
-	return authz.VersionAuthz{
-		ResourceID: version.SoftwareApplicationID,
-		GroupID:    version.GroupID,
-		Status:     authz.ResourceStatus(version.Status),
-	}, nil
+	result, err := toDomainVersionAuthz(version.SoftwareApplicationID, version.GroupID, version.Status)
+	if err != nil {
+		return domain.VersionAuthz{}, fmt.Errorf("construct software application version authorization: %w", err)
+	}
+
+	return result, nil
 }
 
-func (r *Repo) SoftwareSourceCodeVersionAuthz(ctx context.Context, sourceCodeID, versionID uuid.UUID) (authz.VersionAuthz, error) {
+func (r *Repo) SoftwareSourceCodeVersionAuthz(ctx context.Context, sourceCodeID, versionID uuid.UUID) (domain.VersionAuthz, error) {
 	version, err := r.GetSoftwareSourceCodeVersionAuthorization(ctx, sqlc.GetSoftwareSourceCodeVersionAuthorizationParams{
 		SoftwareSourceCodeID: sourceCodeID,
 		VersionID:            versionID,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
-		return authz.VersionAuthz{}, authz.ErrNotFound
+		return domain.VersionAuthz{}, domain.ErrAuthorizationNotFound
 	}
 	if err != nil {
-		return authz.VersionAuthz{}, fmt.Errorf("get software source code version authorization: %w", err)
+		return domain.VersionAuthz{}, fmt.Errorf("get software source code version authorization: %w", err)
 	}
-	return authz.VersionAuthz{
-		ResourceID: version.SoftwareSourceCodeID,
-		GroupID:    version.GroupID,
-		Status:     authz.ResourceStatus(version.Status),
-	}, nil
+	result, err := toDomainVersionAuthz(version.SoftwareSourceCodeID, version.GroupID, version.Status)
+	if err != nil {
+		return domain.VersionAuthz{}, fmt.Errorf("construct software source code version authorization: %w", err)
+	}
+
+	return result, nil
 }
 
 func (r *Repo) DatasetGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUID, error) {
 	resource, err := r.GetDatasetGroup(ctx, resourceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, authz.ErrNotFound
+		return uuid.Nil, domain.ErrAuthorizationNotFound
 	}
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("get dataset group: %w", err)
+	}
+
 	return resource, nil
 }
 
 func (r *Repo) SoftwareApplicationGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUID, error) {
 	resource, err := r.GetSoftwareApplicationGroup(ctx, resourceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, authz.ErrNotFound
+		return uuid.Nil, domain.ErrAuthorizationNotFound
 	}
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("get software application group: %w", err)
+	}
+
 	return resource, nil
 }
 
 func (r *Repo) SoftwareSourceCodeGroup(ctx context.Context, resourceID uuid.UUID) (uuid.UUID, error) {
 	resource, err := r.GetSoftwareSourceCodeGroup(ctx, resourceID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return uuid.Nil, authz.ErrNotFound
+		return uuid.Nil, domain.ErrAuthorizationNotFound
 	}
-	return resource, nil
-}
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("get software source code group: %w", err)
+	}
 
-func wrap(operation string, err error) error {
-	if err == nil {
-		return nil
-	}
-	return fmt.Errorf("%s: %w", operation, err)
+	return resource, nil
 }

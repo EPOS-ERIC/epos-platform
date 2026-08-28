@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/google/uuid"
 )
@@ -33,21 +33,21 @@ const (
 )
 
 type ApplicationAuthorizer interface {
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
-	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadContactPoint(context.Context, string) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
+	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
+	CanReadContactPoint(context.Context, string) (domain.Result, error)
 }
 
 type SourceCodeAuthorizer interface {
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
-	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (authz.Result, error)
-	CanReadContactPoint(context.Context, string) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
+	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
+	CanReadContactPoint(context.Context, string) (domain.Result, error)
 }
 
 func authorizeGroup(ctx context.Context, authorizer interface {
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 }, actorID string, groupID uuid.UUID, permission string,
 ) error {
 	result, err := authorizer.AuthorizeGroup(ctx, actorID, groupID, permission)
@@ -61,8 +61,8 @@ func authorizeGroup(ctx context.Context, authorizer interface {
 }
 
 func authorizeResource(ctx context.Context, authorizer interface {
-	AuthorizeResource(context.Context, string, authz.ResourceType, uuid.UUID, string) (authz.Result, error)
-}, actorID string, resourceType authz.ResourceType, resourceID uuid.UUID, permission string,
+	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+}, actorID string, resourceType domain.ResourceType, resourceID uuid.UUID, permission string,
 ) error {
 	result, err := authorizer.AuthorizeResource(ctx, actorID, resourceType, resourceID, permission)
 	if err != nil {

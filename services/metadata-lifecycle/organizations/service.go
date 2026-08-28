@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -19,7 +18,7 @@ type Store interface {
 }
 
 type Authorizer interface {
-	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
+	AuthorizeGlobal(context.Context, string, string) (domain.Result, error)
 }
 
 type Service struct {

@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
@@ -26,14 +25,14 @@ type Store interface {
 }
 
 type Authorizer interface {
-	AuthorizeActiveUser(context.Context, string) (authz.Result, error)
-	CanListGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
-	CanManageGroupMemberships(context.Context, string, uuid.UUID) (authz.Result, error)
-	CanRevokeGroupMembership(context.Context, string, uuid.UUID, string) (authz.Result, error)
-	CanRequestGroupRole(context.Context, string, uuid.UUID) (authz.Result, error)
-	CanManageGroupRoles(context.Context, string, uuid.UUID) (authz.Result, error)
-	CanManageSpecificGroupRole(context.Context, string, uuid.UUID, string) (authz.Result, error)
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
+	AuthorizeActiveUser(context.Context, string) (domain.Result, error)
+	CanListGroupMemberships(context.Context, string, uuid.UUID) (domain.Result, error)
+	CanManageGroupMemberships(context.Context, string, uuid.UUID) (domain.Result, error)
+	CanRevokeGroupMembership(context.Context, string, uuid.UUID, string) (domain.Result, error)
+	CanRequestGroupRole(context.Context, string, uuid.UUID) (domain.Result, error)
+	CanManageGroupRoles(context.Context, string, uuid.UUID) (domain.Result, error)
+	CanManageSpecificGroupRole(context.Context, string, uuid.UUID, string) (domain.Result, error)
+	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 }
 
 type Service struct {
