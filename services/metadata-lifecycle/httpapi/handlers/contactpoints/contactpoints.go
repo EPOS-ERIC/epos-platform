@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
-	contactpointdomain "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
+	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -16,11 +17,11 @@ import (
 var log = logging.Get("contact-points-handler")
 
 type service interface {
-	List(context.Context, string) ([]contactpointdomain.ContactPoint, error)
-	Get(context.Context, string, uuid.UUID) (contactpointdomain.ContactPoint, error)
-	Create(context.Context, string, contactpointdomain.CreateRequest) (contactpointdomain.ContactPoint, error)
-	Replace(context.Context, string, uuid.UUID, contactpointdomain.ReplaceRequest) (contactpointdomain.ContactPoint, error)
-	Delete(context.Context, string, uuid.UUID) error
+	List(context.Context, domain.Actor) ([]domain.ContactPoint, error)
+	Get(context.Context, domain.Actor, uuid.UUID) (domain.ContactPoint, error)
+	Create(context.Context, domain.Actor, domain.ContactPointInput) (domain.ContactPoint, error)
+	Replace(context.Context, domain.Actor, uuid.UUID, domain.ContactPointInput) (domain.ContactPoint, error)
+	Delete(context.Context, domain.Actor, uuid.UUID) error
 }
 
 type Handler struct {
@@ -32,7 +33,7 @@ func New(service service) *Handler {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -45,14 +46,14 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 	result := make([]contactPointResponse, 0, len(contactPoints))
 	for _, contactPoint := range contactPoints {
-		result = append(result, response(contactPoint))
+		result = append(result, toResponse(contactPoint))
 	}
 
 	transport.WriteJSON(w, http.StatusOK, result)
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -69,34 +70,37 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusOK, response(contactPoint))
+	transport.WriteJSON(w, http.StatusOK, toResponse(contactPoint))
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
 
-	var body createContactPointRequest
+	var body contactPointRequest
 	if !transport.Decode(w, r, &body) {
 		return
 	}
 
-	contactPoint, err := h.service.Create(r.Context(), actorID, contactpointdomain.CreateRequest{
-		Email: body.Email,
-		Role:  body.Role,
-	})
+	input, err := toDomainContactPointInput(body)
+	if err != nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point")
+		return
+	}
+
+	contactPoint, err := h.service.Create(r.Context(), actorID, input)
 	if err != nil {
 		writeError(w, r, err, "create contact point")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusCreated, response(contactPoint))
+	transport.WriteJSON(w, http.StatusCreated, toResponse(contactPoint))
 }
 
 func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -107,25 +111,28 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body replaceContactPointRequest
+	var body contactPointRequest
 	if !transport.Decode(w, r, &body) {
 		return
 	}
 
-	contactPoint, err := h.service.Replace(r.Context(), actorID, id, contactpointdomain.ReplaceRequest{
-		Email: body.Email,
-		Role:  body.Role,
-	})
+	input, err := toDomainContactPointInput(body)
+	if err != nil {
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point")
+		return
+	}
+
+	contactPoint, err := h.service.Replace(r.Context(), actorID, id, input)
 	if err != nil {
 		writeError(w, r, err, "replace contact point")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusOK, response(contactPoint))
+	transport.WriteJSON(w, http.StatusOK, toResponse(contactPoint))
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -146,40 +153,16 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
-	case errors.Is(err, contactpointdomain.ErrInvalid):
+	case errors.Is(err, contactpointservice.ErrInvalid):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid contact point request")
-	case errors.Is(err, contactpointdomain.ErrForbidden):
+	case errors.Is(err, contactpointservice.ErrForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "contact point operation is not permitted")
-	case errors.Is(err, contactpointdomain.ErrConflict):
+	case errors.Is(err, contactpointservice.ErrConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "contact point already exists")
-	case errors.Is(err, contactpointdomain.ErrNotFound):
+	case errors.Is(err, contactpointservice.ErrNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "contact_point_not_found", "contact point not found")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
-	}
-}
-
-type contactPointResponse struct {
-	ID    uuid.UUID `json:"id"`
-	Email string    `json:"email"`
-	Role  string    `json:"role"`
-}
-
-type createContactPointRequest struct {
-	Email string `json:"email"`
-	Role  string `json:"role"`
-}
-
-type replaceContactPointRequest struct {
-	Email string `json:"email"`
-	Role  string `json:"role"`
-}
-
-func response(contactPoint contactpointdomain.ContactPoint) contactPointResponse {
-	return contactPointResponse{
-		ID:    contactPoint.ID,
-		Email: contactPoint.Email,
-		Role:  contactPoint.Role,
 	}
 }

@@ -6,6 +6,11 @@ formatters:
     - goimports
   exclusions:
     generated: disable
+  settings:
+    gofumpt:
+      extra:
+        group-params: true
+        balance-calls: true
 linters:
   default: standard
   enable:

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -40,14 +39,8 @@ func New(store Store, authorizer Authorizer) *Service {
 	return &Service{store: store, authorizer: authorizer}
 }
 
-func (s *Service) Create(ctx context.Context, actorID string, input domain.OrganizationInput) (domain.Organization, error) {
-	// TODO: maybe we could create a custom type alias for the actor? so that we can skip having to trim and check it every time (parse, don't validate)
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" {
-		return domain.Organization{}, ErrInvalid
-	}
-
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
+func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.OrganizationInput) (domain.Organization, error) {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("authorize organization creation: %w", err)
 	}
@@ -63,13 +56,12 @@ func (s *Service) Create(ctx context.Context, actorID string, input domain.Organ
 	return organization, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, input domain.OrganizationInput) (domain.Organization, error) {
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" || id == uuid.Nil {
+func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.OrganizationInput) (domain.Organization, error) {
+	if id == uuid.Nil {
 		return domain.Organization{}, ErrInvalid
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
 	if err != nil {
 		return domain.Organization{}, fmt.Errorf("authorize organization replacement: %w", err)
 	}
@@ -84,13 +76,12 @@ func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, inp
 	return organization, nil
 }
 
-func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" || id == uuid.Nil {
+func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
+	if id == uuid.Nil {
 		return ErrInvalid
 	}
 
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "organization.manage")
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "organization.manage")
 	if err != nil {
 		return fmt.Errorf("authorize organization deletion: %w", err)
 	}

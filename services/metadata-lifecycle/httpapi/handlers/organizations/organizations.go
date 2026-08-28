@@ -19,9 +19,9 @@ var log = logging.Get("organizations-handler")
 type service interface {
 	List(context.Context) ([]domain.Organization, error)
 	Get(context.Context, uuid.UUID) (domain.Organization, error)
-	Create(context.Context, string, domain.OrganizationInput) (domain.Organization, error)
-	Replace(context.Context, string, uuid.UUID, domain.OrganizationInput) (domain.Organization, error)
-	Delete(context.Context, string, uuid.UUID) error
+	Create(context.Context, domain.Actor, domain.OrganizationInput) (domain.Organization, error)
+	Replace(context.Context, domain.Actor, uuid.UUID, domain.OrganizationInput) (domain.Organization, error)
+	Delete(context.Context, domain.Actor, uuid.UUID) error
 }
 
 type Handler struct {
@@ -33,7 +33,7 @@ func New(service service) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -50,19 +50,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.service.Create(r.Context(), actorID, input)
 	if err != nil {
-		switch {
-		case errors.Is(err, organizationservice.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization")
-		case errors.Is(err, organizationservice.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization management permission required")
-		case errors.Is(err, organizationservice.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "organization already exists")
-		case errors.Is(err, organizationservice.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "referenced organization or contact point not found")
-		default:
-			log.ErrorContext(r.Context(), "create organization failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create organization failed")
-		}
+		writeError(w, r, err, "create organization")
 		return
 	}
 
@@ -95,15 +83,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	item, err := h.service.Get(r.Context(), id)
 	if err != nil {
-		switch {
-		case errors.Is(err, organizationservice.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization")
-		case errors.Is(err, organizationservice.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "organization not found")
-		default:
-			log.ErrorContext(r.Context(), "get organization failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get organization failed")
-		}
+		writeError(w, r, err, "get organization")
 		return
 	}
 
@@ -111,7 +91,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -132,19 +112,7 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.service.Replace(r.Context(), actorID, id, input)
 	if err != nil {
-		switch {
-		case errors.Is(err, organizationservice.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization")
-		case errors.Is(err, organizationservice.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization management permission required")
-		case errors.Is(err, organizationservice.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "organization not found")
-		case errors.Is(err, organizationservice.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "organization already exists")
-		default:
-			log.ErrorContext(r.Context(), "replace organization failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "replace organization failed")
-		}
+		writeError(w, r, err, "replace organization")
 		return
 	}
 
@@ -152,7 +120,7 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actorID, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -163,19 +131,25 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.Delete(r.Context(), actorID, id); err != nil {
-		switch {
-		case errors.Is(err, organizationservice.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization")
-		case errors.Is(err, organizationservice.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization management permission required")
-		case errors.Is(err, organizationservice.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "organization not found")
-		default:
-			log.ErrorContext(r.Context(), "delete organization failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete organization failed")
-		}
+		writeError(w, r, err, "delete organization")
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
+	switch {
+	case errors.Is(err, organizationservice.ErrInvalid):
+		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid organization request")
+	case errors.Is(err, organizationservice.ErrForbidden):
+		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "organization operation is not permitted")
+	case errors.Is(err, organizationservice.ErrConflict):
+		transport.WriteProblem(w, http.StatusConflict, "conflict", "organization already exists")
+	case errors.Is(err, organizationservice.ErrNotFound):
+		transport.WriteProblem(w, http.StatusNotFound, "organization_not_found", "organization not found")
+	default:
+		log.ErrorContext(r.Context(), operation+" failed", "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
+	}
 }

@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
@@ -18,27 +18,11 @@ var (
 	ErrConflict  = errors.New("contact point conflict")
 )
 
-type ContactPoint struct {
-	ID    uuid.UUID
-	Email string
-	Role  string
-}
-
-type CreateRequest struct {
-	Email string
-	Role  string
-}
-
-type ReplaceRequest struct {
-	Email string
-	Role  string
-}
-
 type Store interface {
-	List(context.Context) ([]ContactPoint, error)
-	Get(context.Context, uuid.UUID) (ContactPoint, error)
-	Create(context.Context, ContactPoint) (ContactPoint, error)
-	Replace(context.Context, uuid.UUID, ReplaceRequest) (ContactPoint, error)
+	List(context.Context) ([]domain.ContactPoint, error)
+	Get(context.Context, uuid.UUID) (domain.ContactPoint, error)
+	Create(context.Context, domain.ContactPointInput) (domain.ContactPoint, error)
+	Replace(context.Context, uuid.UUID, domain.ContactPointInput) (domain.ContactPoint, error)
 	Delete(context.Context, uuid.UUID) error
 }
 
@@ -56,7 +40,7 @@ func New(store Store, authorizer Authorizer) *Service {
 	return &Service{store: store, authorizer: authorizer}
 }
 
-func (s *Service) List(ctx context.Context, actorID string) ([]ContactPoint, error) {
+func (s *Service) List(ctx context.Context, actorID domain.Actor) ([]domain.ContactPoint, error) {
 	if err := s.authorize(ctx, actorID); err != nil {
 		return nil, err
 	}
@@ -69,71 +53,54 @@ func (s *Service) List(ctx context.Context, actorID string) ([]ContactPoint, err
 	return contactPoints, nil
 }
 
-func (s *Service) Get(ctx context.Context, actorID string, id uuid.UUID) (ContactPoint, error) {
+func (s *Service) Get(ctx context.Context, actorID domain.Actor, id uuid.UUID) (domain.ContactPoint, error) {
 	if id == uuid.Nil {
-		return ContactPoint{}, ErrInvalid
+		return domain.ContactPoint{}, ErrInvalid
 	}
 	if err := s.authorize(ctx, actorID); err != nil {
-		return ContactPoint{}, err
+		return domain.ContactPoint{}, err
 	}
 
 	contactPoint, err := s.store.Get(ctx, id)
 	if err != nil {
-		return ContactPoint{}, fmt.Errorf("get contact point: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("get contact point: %w", err)
 	}
 
 	return contactPoint, nil
 }
 
-func (s *Service) Create(ctx context.Context, actorID string, request CreateRequest) (ContactPoint, error) {
-	actorID = strings.TrimSpace(actorID)
-	request.Email = strings.TrimSpace(request.Email)
-	request.Role = strings.TrimSpace(request.Role)
-	if actorID == "" || request.Email == "" || request.Role == "" {
-		return ContactPoint{}, ErrInvalid
+func (s *Service) Create(ctx context.Context, actorID domain.Actor, input domain.ContactPointInput) (domain.ContactPoint, error) {
+	if err := s.authorizeManage(ctx, actorID); err != nil {
+		return domain.ContactPoint{}, err
+	}
+
+	contactPoint, err := s.store.Create(ctx, input)
+	if err != nil {
+		return domain.ContactPoint{}, fmt.Errorf("create contact point: %w", err)
+	}
+
+	return contactPoint, nil
+}
+
+func (s *Service) Replace(ctx context.Context, actorID domain.Actor, id uuid.UUID, input domain.ContactPointInput) (domain.ContactPoint, error) {
+	if id == uuid.Nil {
+		return domain.ContactPoint{}, ErrInvalid
 	}
 
 	if err := s.authorizeManage(ctx, actorID); err != nil {
-		return ContactPoint{}, err
+		return domain.ContactPoint{}, err
 	}
 
-	id := uuid.New()
-
-	contactPoint, err := s.store.Create(ctx, ContactPoint{
-		ID:    id,
-		Email: request.Email,
-		Role:  request.Role,
-	})
+	contactPoint, err := s.store.Replace(ctx, id, input)
 	if err != nil {
-		return ContactPoint{}, fmt.Errorf("create contact point: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("replace contact point: %w", err)
 	}
 
 	return contactPoint, nil
 }
 
-func (s *Service) Replace(ctx context.Context, actorID string, id uuid.UUID, request ReplaceRequest) (ContactPoint, error) {
-	actorID = strings.TrimSpace(actorID)
-	request.Email = strings.TrimSpace(request.Email)
-	request.Role = strings.TrimSpace(request.Role)
-	if actorID == "" || id == uuid.Nil || request.Email == "" || request.Role == "" {
-		return ContactPoint{}, ErrInvalid
-	}
-
-	if err := s.authorizeManage(ctx, actorID); err != nil {
-		return ContactPoint{}, err
-	}
-
-	contactPoint, err := s.store.Replace(ctx, id, request)
-	if err != nil {
-		return ContactPoint{}, fmt.Errorf("replace contact point: %w", err)
-	}
-
-	return contactPoint, nil
-}
-
-func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) error {
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" || id == uuid.Nil {
+func (s *Service) Delete(ctx context.Context, actorID domain.Actor, id uuid.UUID) error {
+	if id == uuid.Nil {
 		return ErrInvalid
 	}
 
@@ -148,8 +115,8 @@ func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) erro
 	return nil
 }
 
-func (s *Service) authorizeManage(ctx context.Context, actorID string) error {
-	allowed, err := s.authorizer.AuthorizeGlobal(ctx, actorID, "contact_point.manage")
+func (s *Service) authorizeManage(ctx context.Context, actorID domain.Actor) error {
+	allowed, err := s.authorizer.AuthorizeGlobal(ctx, string(actorID), "contact_point.manage")
 	if err != nil {
 		return fmt.Errorf("authorize contact point management: %w", err)
 	}
@@ -159,13 +126,8 @@ func (s *Service) authorizeManage(ctx context.Context, actorID string) error {
 	return nil
 }
 
-func (s *Service) authorize(ctx context.Context, actorID string) error {
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" {
-		return ErrInvalid
-	}
-
-	allowed, err := s.authorizer.CanReadContactPoint(ctx, actorID)
+func (s *Service) authorize(ctx context.Context, actorID domain.Actor) error {
+	allowed, err := s.authorizer.CanReadContactPoint(ctx, string(actorID))
 	if err != nil {
 		return fmt.Errorf("authorize contact point read: %w", err)
 	}

@@ -38,7 +38,7 @@ func (r *Repo) PermissionScope(ctx context.Context, key string) (authz.Permissio
 	return authz.PermissionScope(scope), nil
 }
 
-func (r *Repo) HasGlobalPermission(ctx context.Context, userID string, permissionKey string) (bool, error) {
+func (r *Repo) HasGlobalPermission(ctx context.Context, userID, permissionKey string) (bool, error) {
 	allowed, err := r.Queries.HasGlobalPermission(ctx, sqlc.HasGlobalPermissionParams{
 		UserID:        userID,
 		PermissionKey: permissionKey,

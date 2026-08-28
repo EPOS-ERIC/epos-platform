@@ -8,6 +8,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -22,68 +23,80 @@ func New(db *pgxpool.Pool) *Repo {
 	return &Repo{Queries: sqlc.New(db)}
 }
 
-func (r *Repo) List(ctx context.Context) ([]contactpoints.ContactPoint, error) {
+func (r *Repo) List(ctx context.Context) ([]domain.ContactPoint, error) {
 	rows, err := r.ListContactPoints(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list contact points: %w", err)
 	}
 
-	result := make([]contactpoints.ContactPoint, 0, len(rows))
+	result := make([]domain.ContactPoint, 0, len(rows))
 	for _, row := range rows {
-		result = append(result, mapContactPoint(row))
+		contactPoint, err := toDomainContactPoint(row)
+		if err != nil {
+			return nil, fmt.Errorf("construct contact point %s: %w", row.ID, err)
+		}
+		result = append(result, contactPoint)
 	}
 
 	return result, nil
 }
 
-func (r *Repo) Get(ctx context.Context, id uuid.UUID) (contactpoints.ContactPoint, error) {
+func (r *Repo) Get(ctx context.Context, id uuid.UUID) (domain.ContactPoint, error) {
 	row, err := r.GetContactPoint(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return contactpoints.ContactPoint{}, contactpoints.ErrNotFound
+		return domain.ContactPoint{}, contactpoints.ErrNotFound
 	}
 	if err != nil {
-		return contactpoints.ContactPoint{}, fmt.Errorf("get contact point: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("get contact point: %w", err)
 	}
 
-	return mapContactPoint(row), nil
+	contactPoint, err := toDomainContactPoint(row)
+	if err != nil {
+		return domain.ContactPoint{}, fmt.Errorf("construct contact point %s: %w", row.ID, err)
+	}
+
+	return contactPoint, nil
 }
 
-func (r *Repo) Create(ctx context.Context, contactPoint contactpoints.ContactPoint) (contactpoints.ContactPoint, error) {
-	row, err := r.CreateContactPoint(ctx, sqlc.CreateContactPointParams{
-		ID:    contactPoint.ID,
-		Email: contactPoint.Email,
-		Role:  contactPoint.Role,
-	})
+func (r *Repo) Create(ctx context.Context, input domain.ContactPointInput) (domain.ContactPoint, error) {
+	id := uuid.New()
+	row, err := r.CreateContactPoint(ctx, toCreateContactPointParams(id, input))
 	if err != nil {
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return contactpoints.ContactPoint{}, contactpoints.ErrConflict
+			return domain.ContactPoint{}, contactpoints.ErrConflict
 		}
 
-		return contactpoints.ContactPoint{}, fmt.Errorf("insert contact point: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("insert contact point: %w", err)
 	}
 
-	return mapContactPoint(row), nil
+	contactPoint, err := toDomainContactPoint(row)
+	if err != nil {
+		return domain.ContactPoint{}, fmt.Errorf("construct contact point %s: %w", row.ID, err)
+	}
+
+	return contactPoint, nil
 }
 
-func (r *Repo) Replace(ctx context.Context, id uuid.UUID, request contactpoints.ReplaceRequest) (contactpoints.ContactPoint, error) {
-	row, err := r.ReplaceContactPoint(ctx, sqlc.ReplaceContactPointParams{
-		ID:    id,
-		Email: request.Email,
-		Role:  request.Role,
-	})
+func (r *Repo) Replace(ctx context.Context, id uuid.UUID, input domain.ContactPointInput) (domain.ContactPoint, error) {
+	row, err := r.ReplaceContactPoint(ctx, toReplaceContactPointParams(id, input))
 	if errors.Is(err, pgx.ErrNoRows) {
-		return contactpoints.ContactPoint{}, contactpoints.ErrNotFound
+		return domain.ContactPoint{}, contactpoints.ErrNotFound
 	}
 	if err != nil {
 		// TODO: maybe we can create an helper to do this check and reuse in the various db packages?
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
-			return contactpoints.ContactPoint{}, contactpoints.ErrConflict
+			return domain.ContactPoint{}, contactpoints.ErrConflict
 		}
 
-		return contactpoints.ContactPoint{}, fmt.Errorf("update contact point: %w", err)
+		return domain.ContactPoint{}, fmt.Errorf("update contact point: %w", err)
 	}
 
-	return mapContactPoint(row), nil
+	contactPoint, err := toDomainContactPoint(row)
+	if err != nil {
+		return domain.ContactPoint{}, fmt.Errorf("construct contact point %s: %w", row.ID, err)
+	}
+
+	return contactPoint, nil
 }
 
 func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -96,12 +109,4 @@ func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
-}
-
-func mapContactPoint(row sqlc.ContactPoint) contactpoints.ContactPoint {
-	return contactpoints.ContactPoint{
-		ID:    row.ID,
-		Email: row.Email,
-		Role:  row.Role,
-	}
 }
