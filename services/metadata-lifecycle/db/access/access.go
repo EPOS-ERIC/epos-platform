@@ -24,7 +24,7 @@ func New(db *pgxpool.Pool) *Repo {
 	return &Repo{Queries: sqlc.New(db), db: db}
 }
 
-func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain.Membership, error) {
+func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
 		return nil, domain.ErrAccessNotFound
 	} else if err != nil {
@@ -74,9 +74,9 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 		requestsByUser[request.UserID] = append(requestsByUser[request.UserID], value)
 	}
 
-	result := make([]domain.Membership, 0, len(rows))
+	result := make([]domain.GroupMembership, 0, len(rows))
 	for _, row := range rows {
-		membership, err := toDomainMembership(
+		membership, err := toDomainGroupMembership(
 			domain.MembershipUser{
 				ID:         row.User.ID,
 				GivenName:  row.User.GivenName,
@@ -97,22 +97,22 @@ func (r *Repo) ListMemberships(ctx context.Context, groupID uuid.UUID) ([]domain
 	return result, nil
 }
 
-func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID string, roles []domain.GroupRole) (domain.Membership, error) {
+func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID string, roles []domain.GroupRole) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.Membership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	} else if err != nil {
-		return domain.Membership{}, fmt.Errorf("check group: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("check group: %w", err)
 	}
 
 	user, err := r.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.Membership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	}
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("check user: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("check user: %w", err)
 	}
 
-	var membership domain.Membership
+	var membership domain.GroupMembership
 	err = dbtx.Run(ctx, r.db, r.Queries, func(q *sqlc.Queries) error {
 		row, err := q.RequestGroupMembership(ctx, sqlc.RequestGroupMembershipParams{
 			UserID:  userID,
@@ -143,7 +143,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 			requests = append(requests, requestValue)
 		}
 
-		membership, err = toDomainMembership(
+		membership, err = toDomainGroupMembership(
 			domain.MembershipUser{
 				ID:         user.ID,
 				GivenName:  user.GivenName,
@@ -162,7 +162,7 @@ func (r *Repo) RequestMembership(ctx context.Context, groupID uuid.UUID, userID 
 		return nil
 	})
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("request membership transaction: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("request membership transaction: %w", err)
 	}
 
 	return membership, nil
@@ -253,11 +253,11 @@ func (r *Repo) RequestRole(ctx context.Context, groupID uuid.UUID, userID string
 // ApplyRoleRequestDecision accepts or rejects a pending role request and records the
 // decision actor and time. Acceptance assigns the requested role atomically,
 // then returns the target user's updated membership.
-func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID uuid.UUID, status domain.RoleRequestStatus, actorID string) (domain.Membership, error) {
+func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID uuid.UUID, status domain.RoleRequestStatus, actorID string) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.Membership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	} else if err != nil {
-		return domain.Membership{}, fmt.Errorf("check group: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("check group: %w", err)
 	}
 
 	var request sqlc.GroupRoleRequest
@@ -289,12 +289,12 @@ func (r *Repo) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID 
 		return nil
 	})
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("decide role request transaction: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("decide role request transaction: %w", err)
 	}
 
 	membership, err := r.loadMembership(ctx, request.GroupID, request.UserID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("load decided role membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("load decided role membership: %w", err)
 	}
 
 	return membership, nil
@@ -495,17 +495,17 @@ func (r *Repo) checkRoleTarget(ctx context.Context, groupID uuid.UUID, userID st
 
 // DecideMembership changes a pending membership to ACTIVE or REJECTED.
 // Rejection also marks its pending role requests as rejected in the same transaction.
-func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID string, status domain.MembershipStatus, actorID string) (domain.Membership, error) {
+func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID string, status domain.MembershipStatus, actorID string) (domain.GroupMembership, error) {
 	if _, err := r.GetGroupByID(ctx, groupID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.Membership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	} else if err != nil {
-		return domain.Membership{}, fmt.Errorf("check group: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("check group: %w", err)
 	}
 
 	if _, err := r.GetUserByID(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return domain.Membership{}, domain.ErrAccessNotFound
+		return domain.GroupMembership{}, domain.ErrAccessNotFound
 	} else if err != nil {
-		return domain.Membership{}, fmt.Errorf("check user: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("check user: %w", err)
 	}
 
 	var membership sqlc.GroupMembership
@@ -537,39 +537,39 @@ func (r *Repo) DecideMembership(ctx context.Context, groupID uuid.UUID, userID s
 		return nil
 	})
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("decide membership transaction: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("decide membership transaction: %w", err)
 	}
 
 	result, err := r.loadMembership(ctx, membership.GroupID, membership.UserID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("load decided membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("load decided membership: %w", err)
 	}
 
 	return result, nil
 }
 
-func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID string) (domain.Membership, error) {
+func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID string) (domain.GroupMembership, error) {
 	row, err := r.GetGroupMembership(ctx, sqlc.GetGroupMembershipParams{
 		GroupID: groupID,
 		UserID:  userID,
 	})
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("get membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("get membership: %w", err)
 	}
 
 	roles, err := r.ListGroupMembershipRoles(ctx, groupID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("list membership roles: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("list membership roles: %w", err)
 	}
 
 	permissions, err := r.ListGroupMembershipPermissions(ctx, groupID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("list membership permissions: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("list membership permissions: %w", err)
 	}
 
 	requests, err := r.ListPendingGroupRoleRequests(ctx, groupID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("list pending role requests: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("list pending role requests: %w", err)
 	}
 
 	memberRoles := make([]domain.GroupRole, 0)
@@ -579,7 +579,7 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		}
 		value, err := domain.NewGroupRole(role.RoleKey)
 		if err != nil {
-			return domain.Membership{}, fmt.Errorf("construct group role: %w", err)
+			return domain.GroupMembership{}, fmt.Errorf("construct group role: %w", err)
 		}
 		memberRoles = append(memberRoles, value)
 	}
@@ -598,12 +598,12 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		}
 		value, err := toDomainRoleRequest(request.ID, request.RoleKey, string(request.Status), request.RequestedAt)
 		if err != nil {
-			return domain.Membership{}, fmt.Errorf("construct role request %s: %w", request.ID, err)
+			return domain.GroupMembership{}, fmt.Errorf("construct role request %s: %w", request.ID, err)
 		}
 		memberRequests = append(memberRequests, value)
 	}
 
-	membership, err := toDomainMembership(
+	membership, err := toDomainGroupMembership(
 		domain.MembershipUser{
 			ID:         row.User.ID,
 			GivenName:  row.User.GivenName,
@@ -616,7 +616,7 @@ func (r *Repo) loadMembership(ctx context.Context, groupID uuid.UUID, userID str
 		memberRequests,
 	)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("construct membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("construct membership: %w", err)
 	}
 
 	return membership, nil

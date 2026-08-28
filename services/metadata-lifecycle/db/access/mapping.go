@@ -32,14 +32,14 @@ func toDomainRoleRequest(id uuid.UUID, role, status string, requestedAt time.Tim
 	return result, nil
 }
 
-func toDomainMembership(
+func toDomainGroupMembership(
 	user domain.MembershipUser,
 	membership sqlc.GroupMembership,
 	roles []domain.GroupRole,
 	permissions []string,
 	roleRequests []domain.RoleRequest,
-) (domain.Membership, error) {
-	result, err := domain.NewMembership(domain.Membership{
+) (domain.GroupMembership, error) {
+	result, err := domain.NewGroupMembership(domain.GroupMembership{
 		User:         user,
 		Status:       domain.MembershipStatus(membership.Status),
 		Roles:        roles,
@@ -49,7 +49,7 @@ func toDomainMembership(
 		UpdatedAt:    membership.UpdatedAt,
 	})
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("construct membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("construct membership: %w", err)
 	}
 
 	return result, nil

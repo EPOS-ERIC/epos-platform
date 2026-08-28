@@ -23,17 +23,17 @@ import (
 	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
 	groupsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
-	identityapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/identity"
 	imports "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwareapplication"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwaresourcecode"
-	identityservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/identity"
+	usersapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
 	organizationservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
+	usersservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -71,17 +71,17 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 
 		r.Post("/imports/turtle", importsHandler.Turtle)
 
-		identity := identityapi.New(identityservice.New(database.Identity, authorizer))
+		users := usersapi.New(usersservice.New(database.Users, authorizer))
 
-		r.Get("/users/{user_id}", identity.GetByID)
-		r.Get("/users", identity.List)
-		r.Put("/users/{user_id}/global-permissions/{permission}", identity.GrantGlobalPermission)
-		r.Delete("/users/{user_id}/global-permissions/{permission}", identity.RevokeGlobalPermission)
-		r.Put("/users/{user_id}/global-roles/{role}", identity.AssignGlobalRole)
-		r.Delete("/users/{user_id}/global-roles/{role}", identity.RemoveGlobalRole)
-		r.Post("/users/{user_id}/block", identity.BlockUser)
-		r.Post("/users/{user_id}/unblock", identity.UnblockUser)
-		r.Post("/internal/users", identity.Create)
+		r.Get("/users/{user_id}", users.GetByID)
+		r.Get("/users", users.List)
+		r.Put("/users/{user_id}/global-permissions/{permission}", users.GrantGlobalPermission)
+		r.Delete("/users/{user_id}/global-permissions/{permission}", users.RevokeGlobalPermission)
+		r.Put("/users/{user_id}/global-roles/{role}", users.AssignGlobalRole)
+		r.Delete("/users/{user_id}/global-roles/{role}", users.RemoveGlobalRole)
+		r.Post("/users/{user_id}/block", users.BlockUser)
+		r.Post("/users/{user_id}/unblock", users.UnblockUser)
+		r.Post("/internal/users", users.Create)
 
 		groupHandler := groupsapi.New(groupservice.New(database.Groups, authorizer))
 		accessHandler := accessapi.New(accessservice.New(database.Access, authorizer))

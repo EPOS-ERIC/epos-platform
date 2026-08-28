@@ -25,8 +25,8 @@ const (
 	PermissionScopeGroup  PermissionScope = "GROUP"
 )
 
-// User contains the user fields needed for authorization decisions.
-type User struct {
+// AuthorizationUser contains the user fields needed for authorization decisions.
+type AuthorizationUser struct {
 	ID     string
 	Status UserStatus
 }

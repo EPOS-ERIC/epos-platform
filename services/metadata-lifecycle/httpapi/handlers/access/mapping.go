@@ -24,7 +24,7 @@ func toRoles(value membershipRequest) ([]domain.GroupRole, error) {
 	return roles, nil
 }
 
-func toMembershipResponse(value domain.Membership) membershipResponse {
+func toMembershipResponse(value domain.GroupMembership) membershipResponse {
 	roles := make([]string, 0, len(value.Roles))
 	for _, role := range value.Roles {
 		roles = append(roles, string(role))

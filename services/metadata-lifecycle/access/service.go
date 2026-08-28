@@ -10,13 +10,13 @@ import (
 )
 
 type Store interface {
-	ListMemberships(context.Context, uuid.UUID) ([]domain.Membership, error)
-	RequestMembership(context.Context, uuid.UUID, string, []domain.GroupRole) (domain.Membership, error)
+	ListMemberships(context.Context, uuid.UUID) ([]domain.GroupMembership, error)
+	RequestMembership(context.Context, uuid.UUID, string, []domain.GroupRole) (domain.GroupMembership, error)
 	WithdrawMembershipRequest(context.Context, uuid.UUID, string) error
-	DecideMembership(context.Context, uuid.UUID, string, domain.MembershipStatus, string) (domain.Membership, error)
+	DecideMembership(context.Context, uuid.UUID, string, domain.MembershipStatus, string) (domain.GroupMembership, error)
 	RevokeMembership(context.Context, uuid.UUID, string) error
 	RequestRole(context.Context, uuid.UUID, string, domain.GroupRole) (domain.RoleRequest, error)
-	ApplyRoleRequestDecision(context.Context, uuid.UUID, uuid.UUID, domain.RoleRequestStatus, string) (domain.Membership, error)
+	ApplyRoleRequestDecision(context.Context, uuid.UUID, uuid.UUID, domain.RoleRequestStatus, string) (domain.GroupMembership, error)
 	WithdrawRoleRequest(context.Context, uuid.UUID, uuid.UUID, string) error
 	AssignRole(context.Context, uuid.UUID, string, domain.GroupRole, string) error
 	RemoveRole(context.Context, uuid.UUID, string, domain.GroupRole) error
@@ -44,7 +44,7 @@ func New(store Store, authorizer Authorizer) *Service {
 	return &Service{store: store, authorizer: authorizer}
 }
 
-func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) ([]domain.Membership, error) {
+func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) ([]domain.GroupMembership, error) {
 	if groupID == uuid.Nil {
 		return nil, domain.ErrInvalidAccess
 	}
@@ -65,22 +65,22 @@ func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, gro
 	return memberships, nil
 }
 
-func (s *Service) RequestMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, roles []domain.GroupRole) (domain.Membership, error) {
+func (s *Service) RequestMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, roles []domain.GroupRole) (domain.GroupMembership, error) {
 	if groupID == uuid.Nil {
-		return domain.Membership{}, domain.ErrInvalidAccess
+		return domain.GroupMembership{}, domain.ErrInvalidAccess
 	}
 
 	allowed, err := s.authorizer.AuthorizeActiveUser(ctx, string(actorID))
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("authorize membership request: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("authorize membership request: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Membership{}, domain.ErrAccessForbidden
+		return domain.GroupMembership{}, domain.ErrAccessForbidden
 	}
 
 	membership, err := s.store.RequestMembership(ctx, groupID, string(actorID), roles)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("request group membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("request group membership: %w", err)
 	}
 
 	return membership, nil
@@ -106,22 +106,22 @@ func (s *Service) WithdrawMembershipRequest(ctx context.Context, actorID domain.
 	return nil
 }
 
-func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, status domain.MembershipStatus) (domain.Membership, error) {
+func (s *Service) DecideMembership(ctx context.Context, actorID domain.Actor, groupID uuid.UUID, userID string, status domain.MembershipStatus) (domain.GroupMembership, error) {
 	if groupID == uuid.Nil || userID == "" {
-		return domain.Membership{}, domain.ErrInvalidAccess
+		return domain.GroupMembership{}, domain.ErrInvalidAccess
 	}
 
 	allowed, err := s.authorizer.CanManageGroupMemberships(ctx, string(actorID), groupID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("authorize membership decision: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("authorize membership decision: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Membership{}, domain.ErrAccessForbidden
+		return domain.GroupMembership{}, domain.ErrAccessForbidden
 	}
 
 	membership, err := s.store.DecideMembership(ctx, groupID, userID, status, string(actorID))
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("decide group membership: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("decide group membership: %w", err)
 	}
 
 	return membership, nil
@@ -168,22 +168,22 @@ func (s *Service) RequestRole(ctx context.Context, actorID domain.Actor, groupID
 	return request, nil
 }
 
-func (s *Service) ApplyRoleRequestDecision(ctx context.Context, actorID domain.Actor, groupID, requestID uuid.UUID, status domain.RoleRequestStatus) (domain.Membership, error) {
+func (s *Service) ApplyRoleRequestDecision(ctx context.Context, actorID domain.Actor, groupID, requestID uuid.UUID, status domain.RoleRequestStatus) (domain.GroupMembership, error) {
 	if groupID == uuid.Nil || requestID == uuid.Nil {
-		return domain.Membership{}, domain.ErrInvalidAccess
+		return domain.GroupMembership{}, domain.ErrInvalidAccess
 	}
 
 	allowed, err := s.authorizer.CanManageGroupRoles(ctx, string(actorID), groupID)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("authorize role request decision: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("authorize role request decision: %w", err)
 	}
 	if !allowed.Allowed {
-		return domain.Membership{}, domain.ErrAccessForbidden
+		return domain.GroupMembership{}, domain.ErrAccessForbidden
 	}
 
 	membership, err := s.store.ApplyRoleRequestDecision(ctx, groupID, requestID, status, string(actorID))
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("decide group role request: %w", err)
+		return domain.GroupMembership{}, fmt.Errorf("decide group role request: %w", err)
 	}
 
 	return membership, nil

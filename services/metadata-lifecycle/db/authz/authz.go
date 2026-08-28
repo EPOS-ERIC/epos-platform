@@ -16,17 +16,17 @@ type Repo struct {
 	*sqlc.Queries
 }
 
-func (r *Repo) User(ctx context.Context, userID string) (domain.User, error) {
+func (r *Repo) User(ctx context.Context, userID string) (domain.AuthorizationUser, error) {
 	user, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.User{}, domain.ErrAuthorizationNotFound
+		return domain.AuthorizationUser{}, domain.ErrAuthorizationNotFound
 	}
 	if err != nil {
-		return domain.User{}, fmt.Errorf("get authorization user: %w", err)
+		return domain.AuthorizationUser{}, fmt.Errorf("get authorization user: %w", err)
 	}
 	result, err := toDomainUser(user)
 	if err != nil {
-		return domain.User{}, fmt.Errorf("construct authorization user: %w", err)
+		return domain.AuthorizationUser{}, fmt.Errorf("construct authorization user: %w", err)
 	}
 
 	return result, nil

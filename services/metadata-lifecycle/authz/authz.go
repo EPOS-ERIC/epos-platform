@@ -11,7 +11,7 @@ import (
 )
 
 type repository interface {
-	User(context.Context, string) (domain.User, error)
+	User(context.Context, string) (domain.AuthorizationUser, error)
 	PermissionScope(context.Context, string) (domain.PermissionScope, error)
 	IsGlobalAdmin(context.Context, string) (bool, error)
 	HasGlobalPermission(context.Context, string, string) (bool, error)
@@ -598,16 +598,16 @@ func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceT
 	}
 }
 
-func (a *Authorizer) activeUser(ctx context.Context, userID string) (domain.User, domain.Result, error) {
+func (a *Authorizer) activeUser(ctx context.Context, userID string) (domain.AuthorizationUser, domain.Result, error) {
 	user, err := a.repository.User(ctx, userID)
 	if errors.Is(err, domain.ErrAuthorizationNotFound) {
-		return domain.User{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user not found"}, nil
+		return domain.AuthorizationUser{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user not found"}, nil
 	}
 	if err != nil {
-		return domain.User{}, domain.Result{}, fmt.Errorf("load user: %w", err)
+		return domain.AuthorizationUser{}, domain.Result{}, fmt.Errorf("load user: %w", err)
 	}
 	if user.Status != domain.UserStatusActive {
-		return domain.User{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user is not active"}, nil
+		return domain.AuthorizationUser{ID: "", Status: ""}, domain.Result{Allowed: false, Reason: "user is not active"}, nil
 	}
 	return user, domain.Result{Allowed: true, Reason: ""}, nil
 }

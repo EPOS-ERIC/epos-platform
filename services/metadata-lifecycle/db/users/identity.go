@@ -1,5 +1,5 @@
-// Package identity provides PostgreSQL persistence for external identity resolution.
-package identity
+// Package users provides PostgreSQL persistence for Metadata Lifecycle users.
+package users
 
 import (
 	"context"
@@ -9,9 +9,10 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
-	identitydomain "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/identity"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,13 +21,13 @@ type Repo struct {
 	DB *pgxpool.Pool
 }
 
-func (r *Repo) ListUsers(ctx context.Context) ([]identitydomain.UserSummary, error) {
+func (r *Repo) ListUsers(ctx context.Context) ([]domain.UserSummary, error) {
 	rows, err := r.Queries.ListUsers(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
 
-	users := make([]identitydomain.UserSummary, 0, len(rows))
+	users := make([]domain.UserSummary, 0, len(rows))
 	for _, row := range rows {
 		roles, err := r.GetUserGlobalRoles(ctx, row.ID)
 		if err != nil {
@@ -38,33 +39,29 @@ func (r *Repo) ListUsers(ctx context.Context) ([]identitydomain.UserSummary, err
 			return nil, fmt.Errorf("get global permissions for %s: %w", row.ID, err)
 		}
 
-		users = append(users, identitydomain.UserSummary{
-			ID:                row.ID,
-			Email:             row.Email,
-			GivenName:         row.GivenName,
-			FamilyName:        row.FamilyName,
-			Status:            string(row.Status),
-			GlobalRoles:       roles,
-			GlobalPermissions: permissions,
-		})
+		user, err := toDomainUserSummary(row, roles, permissions)
+		if err != nil {
+			return nil, fmt.Errorf("construct user summary %s: %w", row.ID, err)
+		}
+		users = append(users, user)
 	}
 
 	return users, nil
 }
 
-func (r *Repo) GetUserByID(ctx context.Context, userID string) (identitydomain.User, error) {
+func (r *Repo) GetUserByID(ctx context.Context, userID string) (domain.User, error) {
 	user, err := r.Queries.GetUserByID(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.User{}, identitydomain.ErrNotFound
+		return domain.User{}, domain.ErrUserNotFound
 	}
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user by id: %w", err)
+		return domain.User{}, fmt.Errorf("get user by id: %w", err)
 	}
 
-	return r.mapUser(ctx, user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
+	return r.loadUser(ctx, user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt)
 }
 
-func (r *Repo) mapUser(
+func (r *Repo) loadUser(
 	ctx context.Context,
 	id,
 	email,
@@ -73,40 +70,44 @@ func (r *Repo) mapUser(
 	status sqlc.UserStatus,
 	createdAt,
 	updatedAt time.Time,
-) (identitydomain.User, error) {
+) (domain.User, error) {
 	globalRoles, err := r.GetUserGlobalRoles(ctx, id)
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user global roles: %w", err)
+		return domain.User{}, fmt.Errorf("get user global roles: %w", err)
 	}
 
 	globalPermissions, err := r.GetUserGlobalPermissions(ctx, id)
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user global permissions: %w", err)
+		return domain.User{}, fmt.Errorf("get user global permissions: %w", err)
 	}
 
 	memberships, err := r.GetUserMemberships(ctx, id)
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user memberships: %w", err)
+		return domain.User{}, fmt.Errorf("get user memberships: %w", err)
 	}
 
 	roles, err := r.GetUserMembershipRoles(ctx, id)
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user membership roles: %w", err)
+		return domain.User{}, fmt.Errorf("get user membership roles: %w", err)
 	}
 
 	permissions, err := r.GetUserMembershipPermissions(ctx, id)
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user membership permissions: %w", err)
+		return domain.User{}, fmt.Errorf("get user membership permissions: %w", err)
 	}
 
 	roleRequests, err := r.ListPendingUserGroupRoleRequests(ctx, id)
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("get user pending role requests: %w", err)
+		return domain.User{}, fmt.Errorf("get user pending role requests: %w", err)
 	}
 
-	rolesByGroup := make(map[uuid.UUID][]string)
+	rolesByGroup := make(map[uuid.UUID][]domain.GroupRole)
 	for _, role := range roles {
-		rolesByGroup[role.GroupID] = append(rolesByGroup[role.GroupID], role.RoleKey)
+		value, err := domain.NewGroupRole(role.RoleKey)
+		if err != nil {
+			return domain.User{}, fmt.Errorf("construct group role: %w", err)
+		}
+		rolesByGroup[role.GroupID] = append(rolesByGroup[role.GroupID], value)
 	}
 
 	permissionsByGroup := make(map[uuid.UUID][]string)
@@ -114,46 +115,39 @@ func (r *Repo) mapUser(
 		permissionsByGroup[permission.GroupID] = append(permissionsByGroup[permission.GroupID], permission.PermissionKey)
 	}
 
-	roleRequestsByGroup := make(map[uuid.UUID][]identitydomain.RoleRequest)
+	roleRequestsByGroup := make(map[uuid.UUID][]domain.RoleRequest)
 	for _, request := range roleRequests {
-		roleRequestsByGroup[request.GroupID] = append(roleRequestsByGroup[request.GroupID], identitydomain.RoleRequest{
-			ID:          request.ID,
-			GroupID:     request.GroupID,
-			Role:        request.RoleKey,
-			Status:      string(request.Status),
-			RequestedAt: request.RequestedAt,
-		})
+		value, err := toDomainRoleRequest(request.ID, request.RoleKey, request.Status, request.RequestedAt)
+		if err != nil {
+			return domain.User{}, fmt.Errorf("construct role request %s: %w", request.ID, err)
+		}
+		roleRequestsByGroup[request.GroupID] = append(roleRequestsByGroup[request.GroupID], value)
 	}
 
-	userMemberships := make([]identitydomain.Membership, 0, len(memberships))
+	userMemberships := make([]domain.UserMembership, 0, len(memberships))
 	for _, membership := range memberships {
-		userMemberships = append(userMemberships, identitydomain.Membership{
-			GroupID:      membership.GroupID,
-			GroupName:    membership.GroupName,
+		value, err := domain.NewUserMembership(domain.UserMembership{
+			Group: domain.GroupReference{
+				ID:   membership.GroupID,
+				Name: membership.GroupName,
+			},
 			Roles:        rolesByGroup[membership.GroupID],
-			Status:       string(membership.Status),
+			Status:       domain.MembershipStatus(membership.Status),
 			Permissions:  permissionsByGroup[membership.GroupID],
-			RoleRequests: append([]identitydomain.RoleRequest{}, roleRequestsByGroup[membership.GroupID]...),
+			RoleRequests: roleRequestsByGroup[membership.GroupID],
 			CreatedAt:    membership.CreatedAt,
 			UpdatedAt:    membership.UpdatedAt,
 		})
+		if err != nil {
+			return domain.User{}, fmt.Errorf("construct membership for %s: %w", membership.GroupID, err)
+		}
+		userMemberships = append(userMemberships, value)
 	}
 
-	return identitydomain.User{
-		ID:                id,
-		Email:             email,
-		GivenName:         givenName,
-		FamilyName:        familyName,
-		Status:            string(status),
-		CreatedAt:         createdAt,
-		UpdatedAt:         updatedAt,
-		GlobalRoles:       append([]string{}, globalRoles...),
-		GlobalPermissions: append([]string{}, globalPermissions...),
-		Memberships:       userMemberships,
-	}, nil
+	return toDomainUser(id, email, givenName, familyName, status, createdAt, updatedAt, globalRoles, globalPermissions, userMemberships)
 }
 
-func (r *Repo) CreateUser(ctx context.Context, claims identitydomain.Claims) (identitydomain.User, error) {
+func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain.User, error) {
 	user, err := r.Queries.CreateUser(ctx, sqlc.CreateUserParams{
 		ID:         claims.ID,
 		Email:      claims.Email,
@@ -161,16 +155,30 @@ func (r *Repo) CreateUser(ctx context.Context, claims identitydomain.Claims) (id
 		FamilyName: claims.FamilyName,
 	})
 	if err != nil {
-		return identitydomain.User{}, fmt.Errorf("create user: %w", err)
+		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok && pgErr.Code == "23505" {
+			return domain.User{}, domain.ErrUserConflict
+		}
+		return domain.User{}, fmt.Errorf("create user: %w", err)
 	}
 
-	return mapUser(user.ID, user.Email, user.GivenName, user.FamilyName, user.Status, user.CreatedAt, user.UpdatedAt), nil
+	return toDomainUser(
+		user.ID,
+		user.Email,
+		user.GivenName,
+		user.FamilyName,
+		user.Status,
+		user.CreatedAt,
+		user.UpdatedAt,
+		[]string{},
+		[]string{},
+		[]domain.UserMembership{},
+	)
 }
 
 func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, grantedBy string) error {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.ErrNotFound
+		return domain.ErrUserNotFound
 	}
 	if err != nil {
 		return fmt.Errorf("check target user: %w", err)
@@ -178,14 +186,14 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, gr
 
 	scope, err := r.GetPermissionScope(ctx, permission)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.ErrInvalid
+		return domain.ErrInvalidUser
 	}
 	if err != nil {
 		return fmt.Errorf("check permission: %w", err)
 	}
 
 	if scope != sqlc.PermissionScopeGLOBAL {
-		return identitydomain.ErrInvalid
+		return domain.ErrInvalidUser
 	}
 
 	err = r.Queries.GrantGlobalPermission(ctx, sqlc.GrantGlobalPermissionParams{
@@ -203,7 +211,7 @@ func (r *Repo) GrantGlobalPermission(ctx context.Context, userID, permission, gr
 func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission string) error {
 	_, err := r.GetAuthorizationUser(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.ErrNotFound
+		return domain.ErrUserNotFound
 	}
 	if err != nil {
 		return fmt.Errorf("check target user: %w", err)
@@ -211,14 +219,14 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission st
 
 	scope, err := r.GetPermissionScope(ctx, permission)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.ErrInvalid
+		return domain.ErrInvalidUser
 	}
 	if err != nil {
 		return fmt.Errorf("check permission: %w", err)
 	}
 
 	if scope != sqlc.PermissionScopeGLOBAL {
-		return identitydomain.ErrInvalid
+		return domain.ErrInvalidUser
 	}
 
 	err = r.Queries.RevokeGlobalPermission(ctx, sqlc.RevokeGlobalPermissionParams{
@@ -234,11 +242,11 @@ func (r *Repo) RevokeGlobalPermission(ctx context.Context, userID, permission st
 
 func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role string) error {
 	if role != "ADMIN" {
-		return identitydomain.ErrInvalid
+		return domain.ErrInvalidUser
 	}
 
 	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.ErrNotFound
+		return domain.ErrUserNotFound
 	} else if err != nil {
 		return fmt.Errorf("check target user: %w", err)
 	}
@@ -267,11 +275,11 @@ func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role st
 
 func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error {
 	if role != "ADMIN" {
-		return identitydomain.ErrInvalid
+		return domain.ErrInvalidUser
 	}
 
 	if _, err := r.GetAuthorizationUser(ctx, userID); errors.Is(err, pgx.ErrNoRows) {
-		return identitydomain.ErrNotFound
+		return domain.ErrUserNotFound
 	} else if err != nil {
 		return fmt.Errorf("check target user: %w", err)
 	}
@@ -294,7 +302,7 @@ func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error 
 				return fmt.Errorf("count active global admins: %w", err)
 			}
 			if admins == 0 {
-				return identitydomain.ErrConflict
+				return domain.ErrUserConflict
 			}
 		}
 		return nil
@@ -317,7 +325,7 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 
 		_, err := queries.GetAuthorizationUser(ctx, userID)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return identitydomain.ErrNotFound
+			return domain.ErrUserNotFound
 		}
 		if err != nil {
 			return fmt.Errorf("check target user: %w", err)
@@ -340,7 +348,7 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 			return fmt.Errorf("count active global admins: %w", err)
 		}
 		if admins == 0 {
-			return identitydomain.ErrConflict
+			return domain.ErrUserConflict
 		}
 
 		return nil
@@ -364,7 +372,7 @@ func (r *Repo) UnblockUser(ctx context.Context, userID string) error {
 
 		_, err := queries.GetAuthorizationUser(ctx, userID)
 		if errors.Is(err, pgx.ErrNoRows) {
-			return identitydomain.ErrNotFound
+			return domain.ErrUserNotFound
 		}
 		if err != nil {
 			return fmt.Errorf("check target user: %w", err)
@@ -381,19 +389,4 @@ func (r *Repo) UnblockUser(ctx context.Context, userID string) error {
 	}
 
 	return nil
-}
-
-func mapUser(id, email, givenName, familyName string, status sqlc.UserStatus, createdAt, updatedAt time.Time) identitydomain.User {
-	return identitydomain.User{
-		ID:                id,
-		Email:             email,
-		GivenName:         givenName,
-		FamilyName:        familyName,
-		Status:            string(status),
-		CreatedAt:         createdAt,
-		UpdatedAt:         updatedAt,
-		GlobalRoles:       []string{},
-		GlobalPermissions: []string{},
-		Memberships:       []identitydomain.Membership{},
-	}
 }

@@ -8,13 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func toDomainUser(row sqlc.GetAuthorizationUserRow) (domain.User, error) {
+func toDomainUser(row sqlc.GetAuthorizationUserRow) (domain.AuthorizationUser, error) {
 	status, err := domain.NewPersistedUserStatus(string(row.Status))
 	if err != nil {
-		return domain.User{}, fmt.Errorf("invalid user status: %w", err)
+		return domain.AuthorizationUser{}, fmt.Errorf("invalid user status: %w", err)
 	}
 
-	return domain.User{ID: row.ID, Status: status}, nil
+	return domain.AuthorizationUser{ID: row.ID, Status: status}, nil
 }
 
 func toDomainPermissionScope(scope sqlc.PermissionScope) (domain.PermissionScope, error) {

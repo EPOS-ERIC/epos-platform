@@ -9,7 +9,7 @@ import (
 )
 
 type fakeRepository struct {
-	user         domain.User
+	user         domain.AuthorizationUser
 	admin        bool
 	global       bool
 	member       bool
@@ -20,7 +20,7 @@ type fakeRepository struct {
 	published    bool
 }
 
-func (r fakeRepository) User(context.Context, string) (domain.User, error) {
+func (r fakeRepository) User(context.Context, string) (domain.AuthorizationUser, error) {
 	return r.user, nil
 }
 
@@ -103,7 +103,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 	t.Parallel()
 	groupID := uuid.New()
 	authorizer := New(fakeRepository{
-		user:         domain.User{Status: domain.UserStatusActive},
+		user:         domain.AuthorizationUser{Status: domain.UserStatusActive},
 		member:       true,
 		groupAllowed: true,
 		datasetGroup: groupID,
@@ -121,7 +121,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 
 func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 	t.Parallel()
-	authorizer := New(fakeRepository{user: domain.User{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
+	authorizer := New(fakeRepository{user: domain.AuthorizationUser{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
 
 	result, err := authorizer.AuthorizeGroup(context.Background(), "user-1", uuid.New(), "resource.edit")
 	if err != nil {
@@ -135,7 +135,7 @@ func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	t.Parallel()
 	authorizer := New(fakeRepository{
-		user:   domain.User{Status: domain.UserStatusActive},
+		user:   domain.AuthorizationUser{Status: domain.UserStatusActive},
 		global: true,
 		scope:  domain.PermissionScopeGlobal,
 	})
@@ -179,7 +179,7 @@ func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := New(fakeRepository{
-				user:      domain.User{Status: domain.UserStatusActive},
+				user:      domain.AuthorizationUser{Status: domain.UserStatusActive},
 				admin:     test.admin,
 				anyMember: test.member,
 			}).CanReadContactPoint(ctx, userID)

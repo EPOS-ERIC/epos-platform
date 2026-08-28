@@ -92,21 +92,21 @@ func NewRoleRequest(value RoleRequest) (RoleRequest, error) {
 	return value, nil
 }
 
-// NewMembership creates a valid membership projection.
-func NewMembership(value Membership) (Membership, error) {
+// NewGroupMembership creates a valid group membership projection.
+func NewGroupMembership(value GroupMembership) (GroupMembership, error) {
 	user, err := NewMembershipUser(value.User)
 	if err != nil {
-		return Membership{}, err
+		return GroupMembership{}, err
 	}
 	status, err := NewPersistedMembershipStatus(string(value.Status))
 	if err != nil {
-		return Membership{}, err
+		return GroupMembership{}, err
 	}
 
 	roles := slices.Clone(value.Roles)
 	for _, role := range roles {
 		if role != GroupRoleEditor && role != GroupRoleReviewer && role != GroupRoleAdmin {
-			return Membership{}, ErrInvalidAccess
+			return GroupMembership{}, ErrInvalidAccess
 		}
 	}
 
@@ -114,7 +114,7 @@ func NewMembership(value Membership) (Membership, error) {
 	for _, request := range value.RoleRequests {
 		request, err := NewRoleRequest(request)
 		if err != nil {
-			return Membership{}, err
+			return GroupMembership{}, err
 		}
 		roleRequests = append(roleRequests, request)
 	}

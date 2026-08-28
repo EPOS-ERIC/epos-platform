@@ -49,8 +49,8 @@ type RoleRequest struct {
 	RequestedAt time.Time
 }
 
-// Membership is a complete group membership returned by the domain.
-type Membership struct {
+// GroupMembership is a complete group membership returned by group access operations.
+type GroupMembership struct {
 	User         MembershipUser
 	Status       MembershipStatus
 	Roles        []GroupRole

@@ -17,13 +17,13 @@ import (
 var log = logging.Get("access-handler")
 
 type service interface {
-	ListMemberships(context.Context, domain.Actor, uuid.UUID) ([]domain.Membership, error)
-	RequestMembership(context.Context, domain.Actor, uuid.UUID, []domain.GroupRole) (domain.Membership, error)
+	ListMemberships(context.Context, domain.Actor, uuid.UUID) ([]domain.GroupMembership, error)
+	RequestMembership(context.Context, domain.Actor, uuid.UUID, []domain.GroupRole) (domain.GroupMembership, error)
 	WithdrawMembershipRequest(context.Context, domain.Actor, uuid.UUID) error
-	DecideMembership(context.Context, domain.Actor, uuid.UUID, string, domain.MembershipStatus) (domain.Membership, error)
+	DecideMembership(context.Context, domain.Actor, uuid.UUID, string, domain.MembershipStatus) (domain.GroupMembership, error)
 	RevokeMembership(context.Context, domain.Actor, uuid.UUID, string) error
 	RequestRole(context.Context, domain.Actor, uuid.UUID, domain.GroupRole) (domain.RoleRequest, error)
-	ApplyRoleRequestDecision(context.Context, domain.Actor, uuid.UUID, uuid.UUID, domain.RoleRequestStatus) (domain.Membership, error)
+	ApplyRoleRequestDecision(context.Context, domain.Actor, uuid.UUID, uuid.UUID, domain.RoleRequestStatus) (domain.GroupMembership, error)
 	WithdrawRoleRequest(context.Context, domain.Actor, uuid.UUID, uuid.UUID) error
 	AssignRole(context.Context, domain.Actor, uuid.UUID, string, domain.GroupRole) error
 	RemoveRole(context.Context, domain.Actor, uuid.UUID, string, domain.GroupRole) error

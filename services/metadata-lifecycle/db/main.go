@@ -17,11 +17,11 @@ import (
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
 	discoverydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/discovery"
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/groups"
-	identitydb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/identity"
 	importdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/metadataimport"
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/organizations"
 	softwaredb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/software"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
+	usersdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/users"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -37,7 +37,7 @@ var embedMigrations embed.FS
 type PostgresDB struct {
 	db                   *pgxpool.Pool
 	Authorization        *authdb.Repo
-	Identity             *identitydb.Repo
+	Users                *usersdb.Repo
 	Groups               *groupdb.Repo
 	Access               *accessdb.Repo
 	Categories           *categorydb.Repo
@@ -101,7 +101,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 	return &PostgresDB{
 		db:                   db,
 		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
-		Identity:             &identitydb.Repo{Queries: sqlc.New(db), DB: db},
+		Users:                &usersdb.Repo{Queries: sqlc.New(db), DB: db},
 		Groups:               groupdb.New(db),
 		Access:               accessdb.New(db),
 		Categories:           categorydb.New(db),
