@@ -4,32 +4,41 @@ package imports
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
 )
 
-type importService interface {
-	Import(context.Context, string, io.Reader) (metadataimport.Result, error)
+type service interface {
+	Import(context.Context, domain.Actor, domain.ImportBatch) (domain.ImportResult, error)
 }
 
-type handler struct {
-	service importService
+type parser interface {
+	Parse(io.Reader) (domain.ImportBatch, error)
+}
+
+type Handler struct {
+	service service
+	parser  parser
 }
 
 var log = logging.Get("import-handler")
 
 // New creates a Turtle import handler.
-func New(service importService) *handler {
-	return &handler{service: service}
+func New(service service, parser parser) *Handler {
+	return &Handler{
+		service: service,
+		parser:  parser,
+	}
 }
 
-func (h *handler) Turtle(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+func (h *Handler) Turtle(w http.ResponseWriter, r *http.Request) {
+	actor, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -38,61 +47,27 @@ func (h *handler) Turtle(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Content-Type must be text/turtle", http.StatusUnsupportedMediaType)
 		return
 	}
-	result, err := h.service.Import(r.Context(), actorID, http.MaxBytesReader(w, r.Body, 50<<20))
+	batch, err := h.parser.Parse(http.MaxBytesReader(w, r.Body, 50<<20))
+	if err != nil {
+		writeImportError(r, w, fmt.Errorf("parse Turtle: %w: %w", domain.ErrInvalidImport, err))
+		return
+	}
+
+	result, err := h.service.Import(r.Context(), actor, batch)
 	if err != nil {
 		writeImportError(r, w, err)
 		return
 	}
-	transport.WriteJSON(w, http.StatusOK, resultResponse{
-		Groups:               result.Groups,
-		Categories:           result.Categories,
-		Organizations:        result.Organizations,
-		ContactPoints:        result.ContactPoints,
-		Datasets:             result.Datasets,
-		SoftwareApplications: result.SoftwareApplications,
-		SoftwareSourceCodes:  result.SoftwareSourceCodes,
-		Warnings:             diagnostics(result.Warnings),
-	})
-}
-
-type resultResponse struct {
-	Groups               int          `json:"groups"`
-	Categories           int          `json:"categories"`
-	Organizations        int          `json:"organizations"`
-	ContactPoints        int          `json:"contact_points"`
-	Datasets             int          `json:"datasets"`
-	SoftwareApplications int          `json:"software_applications"`
-	SoftwareSourceCodes  int          `json:"software_source_codes"`
-	Warnings             []diagnostic `json:"warnings"`
-}
-
-type diagnostic struct {
-	Severity  metadataimport.Severity `json:"severity"`
-	Subject   string                  `json:"subject"`
-	Predicate string                  `json:"predicate"`
-	Message   string                  `json:"message"`
-}
-
-func diagnostics(values []metadataimport.Diagnostic) []diagnostic {
-	result := make([]diagnostic, 0, len(values))
-	for _, value := range values {
-		result = append(result, diagnostic{
-			Severity:  value.Severity,
-			Subject:   value.Subject,
-			Predicate: value.Predicate,
-			Message:   value.Message,
-		})
-	}
-	return result
+	transport.WriteJSON(w, http.StatusOK, toResponse(result))
 }
 
 func writeImportError(r *http.Request, w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, metadataimport.ErrDenied):
+	case errors.Is(err, domain.ErrImportForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global admin required")
-	case errors.Is(err, metadataimport.ErrInvalid):
+	case errors.Is(err, domain.ErrInvalidImport):
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_import", err.Error())
-	case errors.Is(err, metadataimport.ErrConflict):
+	case errors.Is(err, domain.ErrImportConflict):
 		transport.WriteProblem(w, http.StatusConflict, "import_conflict", err.Error())
 	default:
 		log.ErrorContext(r.Context(), "metadata import failed", "error", err)

@@ -67,7 +67,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		// TODO: group the endpoints better with r.Route
 		authorizer := authz.New(database.Authorization)
 
-		importsHandler := imports.New(metadataimport.New(turtle.Parser{}, authorizer, database.Imports))
+		importsHandler := imports.New(metadataimport.New(authorizer, database.Imports), turtle.Parser{})
 
 		r.Post("/imports/turtle", importsHandler.Turtle)
 
