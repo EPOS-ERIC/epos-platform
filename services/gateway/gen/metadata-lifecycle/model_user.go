@@ -40,7 +40,7 @@ type _User User
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUser(id string, email string, givenName string, familyName string, status string, globalRoles []string, globalPermissions []string, createdAt time.Time, updatedAt time.Time, memberships []UserMembership) *User {
+func NewUser(id, email, givenName, familyName, status string, globalRoles, globalPermissions []string, createdAt, updatedAt time.Time, memberships []UserMembership) *User {
 	this := User{}
 	this.Id = id
 	this.Email = email

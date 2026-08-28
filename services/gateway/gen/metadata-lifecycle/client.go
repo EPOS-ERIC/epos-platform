@@ -138,7 +138,7 @@ func contains(haystack []string, needle string) bool {
 }
 
 // Verify optional parameters are of the correct type.
-func typeCheckParameter(obj interface{}, expected string, name string) error {
+func typeCheckParameter(obj interface{}, expected, name string) error {
 	// Make sure there is an object.
 	if obj == nil {
 		return nil
@@ -172,7 +172,7 @@ func parameterValueToString(obj interface{}, key string) string {
 
 // parameterAddToHeaderOrQuery adds the provided object to the request header or url query
 // supporting deep object syntax
-func parameterAddToHeaderOrQuery(headerOrQueryParams interface{}, keyPrefix string, obj interface{}, style string, collectionType string) {
+func parameterAddToHeaderOrQuery(headerOrQueryParams interface{}, keyPrefix string, obj interface{}, style, collectionType string) {
 	v := reflect.ValueOf(obj)
 	value := ""
 	if v == reflect.ValueOf(nil) {
@@ -310,7 +310,7 @@ type formFile struct {
 // prepareRequest build the request
 func (c *APIClient) prepareRequest(
 	ctx context.Context,
-	path string, method string,
+	path, method string,
 	postBody interface{},
 	headerParams map[string]string,
 	queryParams url.Values,

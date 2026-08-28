@@ -32,7 +32,7 @@ type _Identifier Identifier
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewIdentifier(id string, type_ string, value string) *Identifier {
+func NewIdentifier(id, type_, value string) *Identifier {
 	this := Identifier{}
 	this.Id = id
 	this.Type = type_

@@ -37,7 +37,7 @@ type _CreateGroupRequest CreateGroupRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateGroupRequest(name string, concept string) *CreateGroupRequest {
+func NewCreateGroupRequest(name, concept string) *CreateGroupRequest {
 	this := CreateGroupRequest{}
 	this.Name = name
 	this.Concept = concept

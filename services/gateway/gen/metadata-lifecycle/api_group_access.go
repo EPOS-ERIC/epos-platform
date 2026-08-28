@@ -30,7 +30,7 @@ type GroupAccessAPI interface {
 		@param requestId
 		@return ApiApplyRoleRequestDecisionRequest
 	*/
-	ApplyRoleRequestDecision(ctx context.Context, groupId string, requestId string) ApiApplyRoleRequestDecisionRequest
+	ApplyRoleRequestDecision(ctx context.Context, groupId, requestId string) ApiApplyRoleRequestDecisionRequest
 
 	// ApplyRoleRequestDecisionExecute executes the request
 	//  @return GroupMembership
@@ -47,7 +47,7 @@ type GroupAccessAPI interface {
 		@param role
 		@return ApiAssignGroupRoleRequest
 	*/
-	AssignGroupRole(ctx context.Context, groupId string, userId string, role string) ApiAssignGroupRoleRequest
+	AssignGroupRole(ctx context.Context, groupId, userId, role string) ApiAssignGroupRoleRequest
 
 	// AssignGroupRoleExecute executes the request
 	AssignGroupRoleExecute(r ApiAssignGroupRoleRequest) (*http.Response, error)
@@ -62,7 +62,7 @@ type GroupAccessAPI interface {
 		@param userId
 		@return ApiDecideGroupMembershipRequest
 	*/
-	DecideGroupMembership(ctx context.Context, groupId string, userId string) ApiDecideGroupMembershipRequest
+	DecideGroupMembership(ctx context.Context, groupId, userId string) ApiDecideGroupMembershipRequest
 
 	// DecideGroupMembershipExecute executes the request
 	//  @return GroupMembership
@@ -79,7 +79,7 @@ type GroupAccessAPI interface {
 		@param permission
 		@return ApiGrantGroupPermissionRequest
 	*/
-	GrantGroupPermission(ctx context.Context, groupId string, userId string, permission string) ApiGrantGroupPermissionRequest
+	GrantGroupPermission(ctx context.Context, groupId, userId, permission string) ApiGrantGroupPermissionRequest
 
 	// GrantGroupPermissionExecute executes the request
 	GrantGroupPermissionExecute(r ApiGrantGroupPermissionRequest) (*http.Response, error)
@@ -110,7 +110,7 @@ type GroupAccessAPI interface {
 		@param role
 		@return ApiRemoveGroupRoleRequest
 	*/
-	RemoveGroupRole(ctx context.Context, groupId string, userId string, role string) ApiRemoveGroupRoleRequest
+	RemoveGroupRole(ctx context.Context, groupId, userId, role string) ApiRemoveGroupRoleRequest
 
 	// RemoveGroupRoleExecute executes the request
 	RemoveGroupRoleExecute(r ApiRemoveGroupRoleRequest) (*http.Response, error)
@@ -155,7 +155,7 @@ type GroupAccessAPI interface {
 		@param userId
 		@return ApiRevokeGroupMembershipRequest
 	*/
-	RevokeGroupMembership(ctx context.Context, groupId string, userId string) ApiRevokeGroupMembershipRequest
+	RevokeGroupMembership(ctx context.Context, groupId, userId string) ApiRevokeGroupMembershipRequest
 
 	// RevokeGroupMembershipExecute executes the request
 	RevokeGroupMembershipExecute(r ApiRevokeGroupMembershipRequest) (*http.Response, error)
@@ -171,7 +171,7 @@ type GroupAccessAPI interface {
 		@param permission
 		@return ApiRevokeGroupPermissionRequest
 	*/
-	RevokeGroupPermission(ctx context.Context, groupId string, userId string, permission string) ApiRevokeGroupPermissionRequest
+	RevokeGroupPermission(ctx context.Context, groupId, userId, permission string) ApiRevokeGroupPermissionRequest
 
 	// RevokeGroupPermissionExecute executes the request
 	RevokeGroupPermissionExecute(r ApiRevokeGroupPermissionRequest) (*http.Response, error)
@@ -200,7 +200,7 @@ type GroupAccessAPI interface {
 		@param requestId
 		@return ApiWithdrawGroupRoleRequestRequest
 	*/
-	WithdrawGroupRoleRequest(ctx context.Context, groupId string, requestId string) ApiWithdrawGroupRoleRequestRequest
+	WithdrawGroupRoleRequest(ctx context.Context, groupId, requestId string) ApiWithdrawGroupRoleRequestRequest
 
 	// WithdrawGroupRoleRequestExecute executes the request
 	WithdrawGroupRoleRequestExecute(r ApiWithdrawGroupRoleRequestRequest) (*http.Response, error)
@@ -242,7 +242,7 @@ Requires group.role.manage in this group, global.role.manage, or global ADMIN.
 	@param requestId
 	@return ApiApplyRoleRequestDecisionRequest
 */
-func (a *GroupAccessAPIService) ApplyRoleRequestDecision(ctx context.Context, groupId string, requestId string) ApiApplyRoleRequestDecisionRequest {
+func (a *GroupAccessAPIService) ApplyRoleRequestDecision(ctx context.Context, groupId, requestId string) ApiApplyRoleRequestDecisionRequest {
 	return ApiApplyRoleRequestDecisionRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -432,7 +432,7 @@ Idempotent. Group role managers assign EDITOR or REVIEWER in their group; global
 	@param role
 	@return ApiAssignGroupRoleRequest
 */
-func (a *GroupAccessAPIService) AssignGroupRole(ctx context.Context, groupId string, userId string, role string) ApiAssignGroupRoleRequest {
+func (a *GroupAccessAPIService) AssignGroupRole(ctx context.Context, groupId, userId, role string) ApiAssignGroupRoleRequest {
 	return ApiAssignGroupRoleRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -611,7 +611,7 @@ Requires group.membership.manage in this group, global.membership.manage, or glo
 	@param userId
 	@return ApiDecideGroupMembershipRequest
 */
-func (a *GroupAccessAPIService) DecideGroupMembership(ctx context.Context, groupId string, userId string) ApiDecideGroupMembershipRequest {
+func (a *GroupAccessAPIService) DecideGroupMembership(ctx context.Context, groupId, userId string) ApiDecideGroupMembershipRequest {
 	return ApiDecideGroupMembershipRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -801,7 +801,7 @@ Idempotent. Requires group.permission.manage in this group or global ADMIN.
 	@param permission
 	@return ApiGrantGroupPermissionRequest
 */
-func (a *GroupAccessAPIService) GrantGroupPermission(ctx context.Context, groupId string, userId string, permission string) ApiGrantGroupPermissionRequest {
+func (a *GroupAccessAPIService) GrantGroupPermission(ctx context.Context, groupId, userId, permission string) ApiGrantGroupPermissionRequest {
 	return ApiGrantGroupPermissionRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1133,7 +1133,7 @@ Idempotent. Group role managers remove EDITOR or REVIEWER in their group; global
 	@param role
 	@return ApiRemoveGroupRoleRequest
 */
-func (a *GroupAccessAPIService) RemoveGroupRole(ctx context.Context, groupId string, userId string, role string) ApiRemoveGroupRoleRequest {
+func (a *GroupAccessAPIService) RemoveGroupRole(ctx context.Context, groupId, userId, role string) ApiRemoveGroupRoleRequest {
 	return ApiRemoveGroupRoleRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1686,7 +1686,7 @@ Requires group.membership.manage in this group, global.membership.manage, or glo
 	@param userId
 	@return ApiRevokeGroupMembershipRequest
 */
-func (a *GroupAccessAPIService) RevokeGroupMembership(ctx context.Context, groupId string, userId string) ApiRevokeGroupMembershipRequest {
+func (a *GroupAccessAPIService) RevokeGroupMembership(ctx context.Context, groupId, userId string) ApiRevokeGroupMembershipRequest {
 	return ApiRevokeGroupMembershipRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1837,7 +1837,7 @@ Idempotent. Requires group.permission.manage in this group or global ADMIN.
 	@param permission
 	@return ApiRevokeGroupPermissionRequest
 */
-func (a *GroupAccessAPIService) RevokeGroupPermission(ctx context.Context, groupId string, userId string, permission string) ApiRevokeGroupPermissionRequest {
+func (a *GroupAccessAPIService) RevokeGroupPermission(ctx context.Context, groupId, userId, permission string) ApiRevokeGroupPermissionRequest {
 	return ApiRevokeGroupPermissionRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2155,7 +2155,7 @@ Deletes caller's own pending role request.
 	@param requestId
 	@return ApiWithdrawGroupRoleRequestRequest
 */
-func (a *GroupAccessAPIService) WithdrawGroupRoleRequest(ctx context.Context, groupId string, requestId string) ApiWithdrawGroupRoleRequestRequest {
+func (a *GroupAccessAPIService) WithdrawGroupRoleRequest(ctx context.Context, groupId, requestId string) ApiWithdrawGroupRoleRequestRequest {
 	return ApiWithdrawGroupRoleRequestRequest{
 		ApiService: a,
 		ctx:        ctx,

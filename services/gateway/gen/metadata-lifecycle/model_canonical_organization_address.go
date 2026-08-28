@@ -33,7 +33,7 @@ type _CanonicalOrganizationAddress CanonicalOrganizationAddress
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCanonicalOrganizationAddress(street NullableString, locality NullableString, postalCode NullableString, country NullableString) *CanonicalOrganizationAddress {
+func NewCanonicalOrganizationAddress(street, locality, postalCode, country NullableString) *CanonicalOrganizationAddress {
 	this := CanonicalOrganizationAddress{}
 	this.Street = street
 	this.Locality = locality

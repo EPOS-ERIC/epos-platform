@@ -38,7 +38,7 @@ type _GroupMembership GroupMembership
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewGroupMembership(user MembershipUser, status string, roles []string, permissions []string, roleRequests []RoleRequest, createdAt time.Time, updatedAt time.Time) *GroupMembership {
+func NewGroupMembership(user MembershipUser, status string, roles, permissions []string, roleRequests []RoleRequest, createdAt, updatedAt time.Time) *GroupMembership {
 	this := GroupMembership{}
 	this.User = user
 	this.Status = status

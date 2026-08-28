@@ -40,7 +40,7 @@ type _WebService WebService
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWebService(id string, name string, description string, templateUrl string, format string) *WebService {
+func NewWebService(id, name, description, templateUrl, format string) *WebService {
 	this := WebService{}
 	this.Id = id
 	this.Name = name

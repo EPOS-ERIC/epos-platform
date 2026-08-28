@@ -38,7 +38,7 @@ type _WebServiceDistributionDraft WebServiceDistributionDraft
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWebServiceDistributionDraft(title string, type_ string, webService WebServiceDraft) *WebServiceDistributionDraft {
+func NewWebServiceDistributionDraft(title, type_ string, webService WebServiceDraft) *WebServiceDistributionDraft {
 	this := WebServiceDistributionDraft{}
 	this.Title = title
 	var description string = ""

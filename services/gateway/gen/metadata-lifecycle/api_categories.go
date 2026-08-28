@@ -45,7 +45,7 @@ type CategoriesAPI interface {
 		@param categoryId
 		@return ApiDeleteGroupCategoryRequest
 	*/
-	DeleteGroupCategory(ctx context.Context, groupId string, categoryId string) ApiDeleteGroupCategoryRequest
+	DeleteGroupCategory(ctx context.Context, groupId, categoryId string) ApiDeleteGroupCategoryRequest
 
 	// DeleteGroupCategoryExecute executes the request
 	DeleteGroupCategoryExecute(r ApiDeleteGroupCategoryRequest) (*http.Response, error)
@@ -60,7 +60,7 @@ type CategoriesAPI interface {
 		@param categoryId
 		@return ApiGetGroupCategoryRequest
 	*/
-	GetGroupCategory(ctx context.Context, groupId string, categoryId string) ApiGetGroupCategoryRequest
+	GetGroupCategory(ctx context.Context, groupId, categoryId string) ApiGetGroupCategoryRequest
 
 	// GetGroupCategoryExecute executes the request
 	//  @return CanonicalCategory
@@ -84,14 +84,14 @@ type CategoriesAPI interface {
 	/*
 		ReplaceGroupCategory Replace group category
 
-		Replaces category name and parent. Requires category.manage in the group. Parent may be null for a top-level category.
+		Replaces category name and parent. Requires category.manage in the group. Parent may be omitted or null for a top-level category.
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param groupId
 		@param categoryId
 		@return ApiReplaceGroupCategoryRequest
 	*/
-	ReplaceGroupCategory(ctx context.Context, groupId string, categoryId string) ApiReplaceGroupCategoryRequest
+	ReplaceGroupCategory(ctx context.Context, groupId, categoryId string) ApiReplaceGroupCategoryRequest
 
 	// ReplaceGroupCategoryExecute executes the request
 	//  @return CanonicalCategory
@@ -318,7 +318,7 @@ Deletes the category and complete descendant subtree, atomically unlinking affec
 	@param categoryId
 	@return ApiDeleteGroupCategoryRequest
 */
-func (a *CategoriesAPIService) DeleteGroupCategory(ctx context.Context, groupId string, categoryId string) ApiDeleteGroupCategoryRequest {
+func (a *CategoriesAPIService) DeleteGroupCategory(ctx context.Context, groupId, categoryId string) ApiDeleteGroupCategoryRequest {
 	return ApiDeleteGroupCategoryRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -472,7 +472,7 @@ Returns a public category owned by the path group.
 	@param categoryId
 	@return ApiGetGroupCategoryRequest
 */
-func (a *CategoriesAPIService) GetGroupCategory(ctx context.Context, groupId string, categoryId string) ApiGetGroupCategoryRequest {
+func (a *CategoriesAPIService) GetGroupCategory(ctx context.Context, groupId, categoryId string) ApiGetGroupCategoryRequest {
 	return ApiGetGroupCategoryRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -753,14 +753,14 @@ func (r ApiReplaceGroupCategoryRequest) Execute() (*CanonicalCategory, *http.Res
 /*
 ReplaceGroupCategory Replace group category
 
-Replaces category name and parent. Requires category.manage in the group. Parent may be null for a top-level category.
+Replaces category name and parent. Requires category.manage in the group. Parent may be omitted or null for a top-level category.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param groupId
 	@param categoryId
 	@return ApiReplaceGroupCategoryRequest
 */
-func (a *CategoriesAPIService) ReplaceGroupCategory(ctx context.Context, groupId string, categoryId string) ApiReplaceGroupCategoryRequest {
+func (a *CategoriesAPIService) ReplaceGroupCategory(ctx context.Context, groupId, categoryId string) ApiReplaceGroupCategoryRequest {
 	return ApiReplaceGroupCategoryRequest{
 		ApiService: a,
 		ctx:        ctx,

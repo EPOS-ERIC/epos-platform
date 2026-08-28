@@ -33,7 +33,7 @@ type _MembershipUser MembershipUser
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewMembershipUser(id string, givenName string, familyName string, email string) *MembershipUser {
+func NewMembershipUser(id, givenName, familyName, email string) *MembershipUser {
 	this := MembershipUser{}
 	this.Id = id
 	this.GivenName = givenName

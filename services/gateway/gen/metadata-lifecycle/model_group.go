@@ -38,7 +38,7 @@ type _Group Group
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewGroup(id string, name string, position int32, concept string) *Group {
+func NewGroup(id, name string, position int32, concept string) *Group {
 	this := Group{}
 	this.Id = id
 	this.Name = name

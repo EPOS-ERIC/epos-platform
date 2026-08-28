@@ -38,7 +38,7 @@ type _ReplaceCanonicalOrganizationRequest ReplaceCanonicalOrganizationRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceCanonicalOrganizationRequest(name string, address CanonicalOrganizationAddress, logoUrl NullableString, pageUrl NullableString, email NullableString, leiCode NullableString, identifiers []CreateOrganizationIdentifierRequest, parents []string, contactPointIds []string) *ReplaceCanonicalOrganizationRequest {
+func NewReplaceCanonicalOrganizationRequest(name string, address CanonicalOrganizationAddress, logoUrl, pageUrl, email, leiCode NullableString, identifiers []CreateOrganizationIdentifierRequest, parents, contactPointIds []string) *ReplaceCanonicalOrganizationRequest {
 	this := ReplaceCanonicalOrganizationRequest{}
 	this.Name = name
 	this.Address = address

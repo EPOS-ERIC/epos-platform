@@ -36,7 +36,7 @@ type _UserSummary UserSummary
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUserSummary(id string, email string, givenName string, familyName string, status string, globalRoles []string, globalPermissions []string) *UserSummary {
+func NewUserSummary(id, email, givenName, familyName, status string, globalRoles, globalPermissions []string) *UserSummary {
 	this := UserSummary{}
 	this.Id = id
 	this.Email = email

@@ -38,7 +38,7 @@ type _DownloadableFileDistributionDraft DownloadableFileDistributionDraft
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDownloadableFileDistributionDraft(title string, type_ string, downloadableFile DownloadableFile) *DownloadableFileDistributionDraft {
+func NewDownloadableFileDistributionDraft(title, type_ string, downloadableFile DownloadableFile) *DownloadableFileDistributionDraft {
 	this := DownloadableFileDistributionDraft{}
 	this.Title = title
 	var description string = ""

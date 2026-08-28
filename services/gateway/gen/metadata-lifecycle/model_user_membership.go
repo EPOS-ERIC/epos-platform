@@ -37,7 +37,7 @@ type _UserMembership UserMembership
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUserMembership(group GroupReference, roles []string, status string, permissions []string, roleRequests []RoleRequest, createdAt time.Time, updatedAt time.Time) *UserMembership {
+func NewUserMembership(group GroupReference, roles []string, status string, permissions []string, roleRequests []RoleRequest, createdAt, updatedAt time.Time) *UserMembership {
 	this := UserMembership{}
 	this.Group = group
 	this.Roles = roles

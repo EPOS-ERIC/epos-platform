@@ -46,7 +46,7 @@ type _DatasetMetadata DatasetMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDatasetMetadata(id string, title string, description string, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []string, providers []ResourceReference, categories []ResourceReference) *DatasetMetadata {
+func NewDatasetMetadata(id, title, description, keywords string, distributions []Distribution, persistentIdentifiers []Identifier, contactPoints []string, providers, categories []ResourceReference) *DatasetMetadata {
 	this := DatasetMetadata{}
 	this.Id = id
 	this.Title = title

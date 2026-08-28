@@ -37,7 +37,7 @@ type _CategoryScheme CategoryScheme
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCategoryScheme(id string, name string, position int32, concept string) *CategoryScheme {
+func NewCategoryScheme(id, name string, position int32, concept string) *CategoryScheme {
 	this := CategoryScheme{}
 	this.Id = id
 	this.Name = name

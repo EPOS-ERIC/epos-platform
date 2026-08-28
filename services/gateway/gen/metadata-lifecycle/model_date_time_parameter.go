@@ -36,7 +36,7 @@ type _DateTimeParameter DateTimeParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDateTimeParameter(kind string, metadata DateTimeParameterMetadata, minimum NullableTime, maximum NullableTime, default_ NullableTime, pattern string) *DateTimeParameter {
+func NewDateTimeParameter(kind string, metadata DateTimeParameterMetadata, minimum, maximum, default_ NullableTime, pattern string) *DateTimeParameter {
 	this := DateTimeParameter{}
 	this.Kind = kind
 	this.Metadata = metadata

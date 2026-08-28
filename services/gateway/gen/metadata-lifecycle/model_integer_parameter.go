@@ -35,7 +35,7 @@ type _IntegerParameter IntegerParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewIntegerParameter(kind string, metadata IntegerParameterMetadata, minimum NullableInt64, maximum NullableInt64, default_ NullableInt64, allowedValues []int64) *IntegerParameter {
+func NewIntegerParameter(kind string, metadata IntegerParameterMetadata, minimum, maximum, default_ NullableInt64, allowedValues []int64) *IntegerParameter {
 	this := IntegerParameter{}
 	this.Kind = kind
 	this.Metadata = metadata

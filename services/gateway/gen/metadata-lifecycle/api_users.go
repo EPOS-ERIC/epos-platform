@@ -30,7 +30,7 @@ type UsersAPI interface {
 		@param role
 		@return ApiAssignGlobalRoleRequest
 	*/
-	AssignGlobalRole(ctx context.Context, userId string, role string) ApiAssignGlobalRoleRequest
+	AssignGlobalRole(ctx context.Context, userId, role string) ApiAssignGlobalRoleRequest
 
 	// AssignGlobalRoleExecute executes the request
 	AssignGlobalRoleExecute(r ApiAssignGlobalRoleRequest) (*http.Response, error)
@@ -74,7 +74,7 @@ type UsersAPI interface {
 		@param permission
 		@return ApiGrantGlobalPermissionRequest
 	*/
-	GrantGlobalPermission(ctx context.Context, userId string, permission string) ApiGrantGlobalPermissionRequest
+	GrantGlobalPermission(ctx context.Context, userId, permission string) ApiGrantGlobalPermissionRequest
 
 	// GrantGlobalPermissionExecute executes the request
 	GrantGlobalPermissionExecute(r ApiGrantGlobalPermissionRequest) (*http.Response, error)
@@ -103,7 +103,7 @@ type UsersAPI interface {
 		@param role
 		@return ApiRemoveGlobalRoleRequest
 	*/
-	RemoveGlobalRole(ctx context.Context, userId string, role string) ApiRemoveGlobalRoleRequest
+	RemoveGlobalRole(ctx context.Context, userId, role string) ApiRemoveGlobalRoleRequest
 
 	// RemoveGlobalRoleExecute executes the request
 	RemoveGlobalRoleExecute(r ApiRemoveGlobalRoleRequest) (*http.Response, error)
@@ -118,7 +118,7 @@ type UsersAPI interface {
 		@param permission
 		@return ApiRevokeGlobalPermissionRequest
 	*/
-	RevokeGlobalPermission(ctx context.Context, userId string, permission string) ApiRevokeGlobalPermissionRequest
+	RevokeGlobalPermission(ctx context.Context, userId, permission string) ApiRevokeGlobalPermissionRequest
 
 	// RevokeGlobalPermissionExecute executes the request
 	RevokeGlobalPermissionExecute(r ApiRevokeGlobalPermissionRequest) (*http.Response, error)
@@ -168,7 +168,7 @@ Idempotent. Requires active global ADMIN. Only ADMIN is a valid global role.
 	@param role
 	@return ApiAssignGlobalRoleRequest
 */
-func (a *UsersAPIService) AssignGlobalRole(ctx context.Context, userId string, role string) ApiAssignGlobalRoleRequest {
+func (a *UsersAPIService) AssignGlobalRole(ctx context.Context, userId, role string) ApiAssignGlobalRoleRequest {
 	return ApiAssignGlobalRoleRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -685,7 +685,7 @@ Idempotent. Requires global.permission.manage or global ADMIN.
 	@param permission
 	@return ApiGrantGlobalPermissionRequest
 */
-func (a *UsersAPIService) GrantGlobalPermission(ctx context.Context, userId string, permission string) ApiGrantGlobalPermissionRequest {
+func (a *UsersAPIService) GrantGlobalPermission(ctx context.Context, userId, permission string) ApiGrantGlobalPermissionRequest {
 	return ApiGrantGlobalPermissionRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -987,7 +987,7 @@ Idempotent. Requires active global ADMIN. Removing the last active ADMIN is reje
 	@param role
 	@return ApiRemoveGlobalRoleRequest
 */
-func (a *UsersAPIService) RemoveGlobalRole(ctx context.Context, userId string, role string) ApiRemoveGlobalRoleRequest {
+func (a *UsersAPIService) RemoveGlobalRole(ctx context.Context, userId, role string) ApiRemoveGlobalRoleRequest {
 	return ApiRemoveGlobalRoleRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -1158,7 +1158,7 @@ Idempotent. Requires global.permission.manage or global ADMIN.
 	@param permission
 	@return ApiRevokeGlobalPermissionRequest
 */
-func (a *UsersAPIService) RevokeGlobalPermission(ctx context.Context, userId string, permission string) ApiRevokeGlobalPermissionRequest {
+func (a *UsersAPIService) RevokeGlobalPermission(ctx context.Context, userId, permission string) ApiRevokeGlobalPermissionRequest {
 	return ApiRevokeGlobalPermissionRequest{
 		ApiService: a,
 		ctx:        ctx,

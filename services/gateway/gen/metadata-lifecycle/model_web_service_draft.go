@@ -39,7 +39,7 @@ type _WebServiceDraft WebServiceDraft
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWebServiceDraft(name string, templateUrl string, format string) *WebServiceDraft {
+func NewWebServiceDraft(name, templateUrl, format string) *WebServiceDraft {
 	this := WebServiceDraft{}
 	this.Name = name
 	var description string = ""

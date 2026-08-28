@@ -39,7 +39,7 @@ type _DiscoveryItem DiscoveryItem
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDiscoveryItem(type_ string, resourceId string, versionId string, name string, status DatasetStatus, group DiscoveryReference) *DiscoveryItem {
+func NewDiscoveryItem(type_, resourceId, versionId, name string, status DatasetStatus, group DiscoveryReference) *DiscoveryItem {
 	this := DiscoveryItem{}
 	this.Type = type_
 	this.ResourceId = resourceId

@@ -37,7 +37,7 @@ type _ReplaceGroupRequest ReplaceGroupRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceGroupRequest(name string, description NullableString, label NullableString, logo NullableString, page NullableString, color NullableString, position int32, concept string) *ReplaceGroupRequest {
+func NewReplaceGroupRequest(name string, description, label, logo, page, color NullableString, position int32, concept string) *ReplaceGroupRequest {
 	this := ReplaceGroupRequest{}
 	this.Name = name
 	this.Description = description

@@ -31,7 +31,7 @@ type _ReplaceContactPointRequest ReplaceContactPointRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceContactPointRequest(email string, role string) *ReplaceContactPointRequest {
+func NewReplaceContactPointRequest(email, role string) *ReplaceContactPointRequest {
 	this := ReplaceContactPointRequest{}
 	this.Email = email
 	this.Role = role

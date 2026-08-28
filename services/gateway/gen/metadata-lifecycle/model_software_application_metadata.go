@@ -43,7 +43,7 @@ type _SoftwareApplicationMetadata SoftwareApplicationMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareApplicationMetadata(id string, name string, description string, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []string, categories []ResourceReference) *SoftwareApplicationMetadata {
+func NewSoftwareApplicationMetadata(id, name, description, keywords string, creators []ResourceReference, identifiers []Identifier, contactPoints []string, categories []ResourceReference) *SoftwareApplicationMetadata {
 	this := SoftwareApplicationMetadata{}
 	this.Id = id
 	this.Name = name

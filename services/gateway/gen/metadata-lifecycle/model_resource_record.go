@@ -40,7 +40,7 @@ type _ResourceRecord ResourceRecord
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewResourceRecord(resourceId string, versionId string, revision int32, status DatasetStatus, createdBy string, groupId string, groupName string, createdAt time.Time, updatedAt time.Time, metadata ResourceRecordMetadata) *ResourceRecord {
+func NewResourceRecord(resourceId, versionId string, revision int32, status DatasetStatus, createdBy, groupId, groupName string, createdAt, updatedAt time.Time, metadata ResourceRecordMetadata) *ResourceRecord {
 	this := ResourceRecord{}
 	this.ResourceId = resourceId
 	this.VersionId = versionId

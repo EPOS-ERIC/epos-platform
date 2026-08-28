@@ -29,23 +29,6 @@ type Group struct {
 	Concept     string
 }
 
-type Category struct {
-	ID               uuid.UUID
-	GroupID          uuid.UUID
-	ParentCategoryID *uuid.UUID
-	Name             string
-}
-
-type CreateCategoryRequest struct {
-	Name             string
-	ParentCategoryID *uuid.UUID
-}
-
-type ReplaceCategoryRequest struct {
-	Name             string
-	ParentCategoryID *uuid.UUID
-}
-
 type CreateRequest struct {
 	Name        string
 	Description *string
@@ -74,17 +57,11 @@ type Store interface {
 	Create(ctx context.Context, group Group) (Group, error)
 	Replace(ctx context.Context, id uuid.UUID, request ReplaceRequest) (Group, error)
 	Delete(ctx context.Context, id uuid.UUID) error
-	ListCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error)
-	GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error)
-	CreateCategory(ctx context.Context, category Category) (Category, error)
-	ReplaceCategory(ctx context.Context, groupID, categoryID uuid.UUID, request ReplaceCategoryRequest) (Category, error)
-	DeleteCategory(ctx context.Context, groupID, categoryID uuid.UUID) error
 }
 
 type Authorizer interface {
 	AuthorizeAdmin(context.Context, string) (authz.Result, error)
 	AuthorizeGlobal(context.Context, string, string) (authz.Result, error)
-	AuthorizeGroup(context.Context, string, uuid.UUID, string) (authz.Result, error)
 }
 
 type Service struct {
@@ -177,105 +154,6 @@ func (s *Service) Delete(ctx context.Context, actorID string, id uuid.UUID) erro
 
 	if err := s.store.Delete(ctx, id); err != nil {
 		return fmt.Errorf("delete group: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Service) ListCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error) {
-	if groupID == uuid.Nil {
-		return nil, ErrInvalid
-	}
-
-	categories, err := s.store.ListCategories(ctx, groupID)
-	if err != nil {
-		return nil, fmt.Errorf("list categories: %w", err)
-	}
-
-	return categories, nil
-}
-
-func (s *Service) GetCategory(ctx context.Context, groupID, categoryID uuid.UUID) (Category, error) {
-	if groupID == uuid.Nil || categoryID == uuid.Nil {
-		return Category{}, ErrInvalid
-	}
-
-	category, err := s.store.GetCategory(ctx, groupID, categoryID)
-	if err != nil {
-		return Category{}, fmt.Errorf("get category: %w", err)
-	}
-
-	return category, nil
-}
-
-func (s *Service) CreateCategory(ctx context.Context, actorID string, groupID uuid.UUID, request CreateCategoryRequest) (Category, error) {
-	actorID = strings.TrimSpace(actorID)
-	request.Name = strings.TrimSpace(request.Name)
-	if actorID == "" || groupID == uuid.Nil || request.Name == "" {
-		return Category{}, ErrInvalid
-	}
-
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "category.manage")
-	if err != nil {
-		return Category{}, fmt.Errorf("authorize category creation: %w", err)
-	}
-	if !allowed.Allowed {
-		return Category{}, ErrForbidden
-	}
-
-	id := uuid.New()
-	category, err := s.store.CreateCategory(ctx, Category{
-		ID:               id,
-		GroupID:          groupID,
-		ParentCategoryID: request.ParentCategoryID,
-		Name:             request.Name,
-	})
-	if err != nil {
-		return Category{}, fmt.Errorf("create category: %w", err)
-	}
-
-	return category, nil
-}
-
-func (s *Service) ReplaceCategory(ctx context.Context, actorID string, groupID, categoryID uuid.UUID, request ReplaceCategoryRequest) (Category, error) {
-	actorID = strings.TrimSpace(actorID)
-	request.Name = strings.TrimSpace(request.Name)
-	if actorID == "" || groupID == uuid.Nil || categoryID == uuid.Nil || request.Name == "" {
-		return Category{}, ErrInvalid
-	}
-
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "category.manage")
-	if err != nil {
-		return Category{}, fmt.Errorf("authorize category replacement: %w", err)
-	}
-	if !allowed.Allowed {
-		return Category{}, ErrForbidden
-	}
-
-	category, err := s.store.ReplaceCategory(ctx, groupID, categoryID, request)
-	if err != nil {
-		return Category{}, fmt.Errorf("replace category: %w", err)
-	}
-
-	return category, nil
-}
-
-func (s *Service) DeleteCategory(ctx context.Context, actorID string, groupID, categoryID uuid.UUID) error {
-	actorID = strings.TrimSpace(actorID)
-	if actorID == "" || groupID == uuid.Nil || categoryID == uuid.Nil {
-		return ErrInvalid
-	}
-
-	allowed, err := s.authorizer.AuthorizeGroup(ctx, actorID, groupID, "category.manage")
-	if err != nil {
-		return fmt.Errorf("authorize category deletion: %w", err)
-	}
-	if !allowed.Allowed {
-		return ErrForbidden
-	}
-
-	if err := s.store.DeleteCategory(ctx, groupID, categoryID); err != nil {
-		return fmt.Errorf("delete category: %w", err)
 	}
 
 	return nil

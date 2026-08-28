@@ -37,7 +37,7 @@ type _IntegerParameterMetadata IntegerParameterMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewIntegerParameterMetadata(id string, kind string, variable string, property string, label string, required bool, multipleValues bool, readOnly bool) *IntegerParameterMetadata {
+func NewIntegerParameterMetadata(id, kind, variable, property, label string, required, multipleValues, readOnly bool) *IntegerParameterMetadata {
 	this := IntegerParameterMetadata{}
 	this.Id = id
 	this.Kind = kind

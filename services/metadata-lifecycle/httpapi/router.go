@@ -8,12 +8,14 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	categoryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/docs"
 	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
+	categoriesapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
 	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
@@ -82,17 +84,18 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		groupService := groupservice.New(database.Groups, authorizer)
 		groups := groupsapi.New(groupService)
 		groupAccess := groupsapi.NewAccess(groupservice.NewAccess(database.Groups, authorizer))
+		categoryHandler := categoriesapi.New(categoryservice.New(database.Categories, authorizer))
 
 		r.Get("/groups", groups.List)
 		r.Post("/groups", groups.Create)
 		r.Get("/groups/{group_id}", groups.Get)
 		r.Put("/groups/{group_id}", groups.Replace)
 		r.Delete("/groups/{group_id}", groups.Delete)
-		r.Post("/groups/{group_id}/categories", groups.CreateCategory)
-		r.Get("/groups/{group_id}/categories", groups.ListCategories)
-		r.Get("/groups/{group_id}/categories/{category_id}", groups.GetCategory)
-		r.Put("/groups/{group_id}/categories/{category_id}", groups.ReplaceCategory)
-		r.Delete("/groups/{group_id}/categories/{category_id}", groups.DeleteCategory)
+		r.Post("/groups/{group_id}/categories", categoryHandler.Create)
+		r.Get("/groups/{group_id}/categories", categoryHandler.List)
+		r.Get("/groups/{group_id}/categories/{category_id}", categoryHandler.Get)
+		r.Put("/groups/{group_id}/categories/{category_id}", categoryHandler.Replace)
+		r.Delete("/groups/{group_id}/categories/{category_id}", categoryHandler.Delete)
 		r.Get("/groups/{group_id}/memberships", groupAccess.ListMemberships)
 		r.Post("/groups/{group_id}/membership-requests", groupAccess.RequestMembership)
 		r.Delete("/groups/{group_id}/membership-requests", groupAccess.WithdrawMembershipRequest)

@@ -39,7 +39,7 @@ type _WebServiceDistribution WebServiceDistribution
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewWebServiceDistribution(id string, title string, description string, type_ string, webService WebService) *WebServiceDistribution {
+func NewWebServiceDistribution(id, title, description, type_ string, webService WebService) *WebServiceDistribution {
 	this := WebServiceDistribution{}
 	this.Id = id
 	this.Title = title

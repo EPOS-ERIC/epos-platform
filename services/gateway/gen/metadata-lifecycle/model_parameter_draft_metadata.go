@@ -36,7 +36,7 @@ type _ParameterDraftMetadata ParameterDraftMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewParameterDraftMetadata(kind ParameterKind, variable string, property string, label string, required bool, multipleValues bool, readOnly bool) *ParameterDraftMetadata {
+func NewParameterDraftMetadata(kind ParameterKind, variable, property, label string, required, multipleValues, readOnly bool) *ParameterDraftMetadata {
 	this := ParameterDraftMetadata{}
 	this.Kind = kind
 	this.Variable = variable

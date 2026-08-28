@@ -34,7 +34,7 @@ type _RoleRequest RoleRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRoleRequest(id string, role string, status string, requestedAt time.Time) *RoleRequest {
+func NewRoleRequest(id, role, status string, requestedAt time.Time) *RoleRequest {
 	this := RoleRequest{}
 	this.Id = id
 	this.Role = role

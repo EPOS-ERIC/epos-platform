@@ -32,7 +32,7 @@ type ResourcesAPI interface {
 		@param resourceId
 		@return ApiCopyResourceRequest
 	*/
-	CopyResource(ctx context.Context, groupId string, resourceType string, resourceId string) ApiCopyResourceRequest
+	CopyResource(ctx context.Context, groupId, resourceType, resourceId string) ApiCopyResourceRequest
 
 	// CopyResourceExecute executes the request
 	//  @return ResourceRecord
@@ -63,7 +63,7 @@ type ResourcesAPI interface {
 		@param resourceId
 		@return ApiCreateResourceDraftFromArchiveRequest
 	*/
-	CreateResourceDraftFromArchive(ctx context.Context, resourceType string, resourceId string) ApiCreateResourceDraftFromArchiveRequest
+	CreateResourceDraftFromArchive(ctx context.Context, resourceType, resourceId string) ApiCreateResourceDraftFromArchiveRequest
 
 	// CreateResourceDraftFromArchiveExecute executes the request
 	//  @return ResourceRecord
@@ -79,7 +79,7 @@ type ResourcesAPI interface {
 		@param resourceId
 		@return ApiCreateResourceDraftFromPublicationRequest
 	*/
-	CreateResourceDraftFromPublication(ctx context.Context, resourceType string, resourceId string) ApiCreateResourceDraftFromPublicationRequest
+	CreateResourceDraftFromPublication(ctx context.Context, resourceType, resourceId string) ApiCreateResourceDraftFromPublicationRequest
 
 	// CreateResourceDraftFromPublicationExecute executes the request
 	//  @return ResourceRecord
@@ -96,7 +96,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiDiscardResourceDraftRequest
 	*/
-	DiscardResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiDiscardResourceDraftRequest
+	DiscardResourceDraft(ctx context.Context, resourceType, resourceId, versionId string) ApiDiscardResourceDraftRequest
 
 	// DiscardResourceDraftExecute executes the request
 	DiscardResourceDraftExecute(r ApiDiscardResourceDraftRequest) (*http.Response, error)
@@ -112,7 +112,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiGetResourceVersionRequest
 	*/
-	GetResourceVersion(ctx context.Context, resourceType string, resourceId string, versionId string) ApiGetResourceVersionRequest
+	GetResourceVersion(ctx context.Context, resourceType, resourceId, versionId string) ApiGetResourceVersionRequest
 
 	// GetResourceVersionExecute executes the request
 	//  @return ResourceRecord
@@ -129,7 +129,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiPublishResourceRequest
 	*/
-	PublishResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiPublishResourceRequest
+	PublishResource(ctx context.Context, resourceType, resourceId, versionId string) ApiPublishResourceRequest
 
 	// PublishResourceExecute executes the request
 	//  @return ResourceRecord
@@ -146,7 +146,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiRejectResourceRequest
 	*/
-	RejectResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiRejectResourceRequest
+	RejectResource(ctx context.Context, resourceType, resourceId, versionId string) ApiRejectResourceRequest
 
 	// RejectResourceExecute executes the request
 	//  @return ResourceRecord
@@ -163,7 +163,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiReopenResourceRequest
 	*/
-	ReopenResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiReopenResourceRequest
+	ReopenResource(ctx context.Context, resourceType, resourceId, versionId string) ApiReopenResourceRequest
 
 	// ReopenResourceExecute executes the request
 	//  @return ResourceRecord
@@ -179,7 +179,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiReplaceResourceDraftRequest
 	*/
-	ReplaceResourceDraft(ctx context.Context, resourceId string, versionId string) ApiReplaceResourceDraftRequest
+	ReplaceResourceDraft(ctx context.Context, resourceId, versionId string) ApiReplaceResourceDraftRequest
 
 	// ReplaceResourceDraftExecute executes the request
 	//  @return ResourceRecord
@@ -213,7 +213,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiSubmitResourceRequest
 	*/
-	SubmitResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiSubmitResourceRequest
+	SubmitResource(ctx context.Context, resourceType, resourceId, versionId string) ApiSubmitResourceRequest
 
 	// SubmitResourceExecute executes the request
 	//  @return ResourceRecord
@@ -230,7 +230,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiUnpublishResourceRequest
 	*/
-	UnpublishResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiUnpublishResourceRequest
+	UnpublishResource(ctx context.Context, resourceType, resourceId, versionId string) ApiUnpublishResourceRequest
 
 	// UnpublishResourceExecute executes the request
 	//  @return ResourceRecord
@@ -247,7 +247,7 @@ type ResourcesAPI interface {
 		@param versionId
 		@return ApiWithdrawResourceRequest
 	*/
-	WithdrawResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiWithdrawResourceRequest
+	WithdrawResource(ctx context.Context, resourceType, resourceId, versionId string) ApiWithdrawResourceRequest
 
 	// WithdrawResourceExecute executes the request
 	//  @return ResourceRecord
@@ -286,7 +286,7 @@ Creates an independent DRAFT resource in target group from the source PUBLISHED 
 	@param resourceId
 	@return ApiCopyResourceRequest
 */
-func (a *ResourcesAPIService) CopyResource(ctx context.Context, groupId string, resourceType string, resourceId string) ApiCopyResourceRequest {
+func (a *ResourcesAPIService) CopyResource(ctx context.Context, groupId, resourceType, resourceId string) ApiCopyResourceRequest {
 	return ApiCopyResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -650,7 +650,7 @@ Clones latest ARCHIVED version when selected logical resource has no active publ
 	@param resourceId
 	@return ApiCreateResourceDraftFromArchiveRequest
 */
-func (a *ResourcesAPIService) CreateResourceDraftFromArchive(ctx context.Context, resourceType string, resourceId string) ApiCreateResourceDraftFromArchiveRequest {
+func (a *ResourcesAPIService) CreateResourceDraftFromArchive(ctx context.Context, resourceType, resourceId string) ApiCreateResourceDraftFromArchiveRequest {
 	return ApiCreateResourceDraftFromArchiveRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -833,7 +833,7 @@ Clones current PUBLISHED version and its version-owned metadata into a new DRAFT
 	@param resourceId
 	@return ApiCreateResourceDraftFromPublicationRequest
 */
-func (a *ResourcesAPIService) CreateResourceDraftFromPublication(ctx context.Context, resourceType string, resourceId string) ApiCreateResourceDraftFromPublicationRequest {
+func (a *ResourcesAPIService) CreateResourceDraftFromPublication(ctx context.Context, resourceType, resourceId string) ApiCreateResourceDraftFromPublicationRequest {
 	return ApiCreateResourceDraftFromPublicationRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -1018,7 +1018,7 @@ Permanently deletes selected DRAFT or REJECTED version and removes its logical r
 	@param versionId
 	@return ApiDiscardResourceDraftRequest
 */
-func (a *ResourcesAPIService) DiscardResourceDraft(ctx context.Context, resourceType string, resourceId string, versionId string) ApiDiscardResourceDraftRequest {
+func (a *ResourcesAPIService) DiscardResourceDraft(ctx context.Context, resourceType, resourceId, versionId string) ApiDiscardResourceDraftRequest {
 	return ApiDiscardResourceDraftRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -1193,7 +1193,7 @@ Returns the selected resource version. Published dataset responses may be full o
 	@param versionId
 	@return ApiGetResourceVersionRequest
 */
-func (a *ResourcesAPIService) GetResourceVersion(ctx context.Context, resourceType string, resourceId string, versionId string) ApiGetResourceVersionRequest {
+func (a *ResourcesAPIService) GetResourceVersion(ctx context.Context, resourceType, resourceId, versionId string) ApiGetResourceVersionRequest {
 	return ApiGetResourceVersionRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -1368,7 +1368,7 @@ Publishes selected SUBMITTED version and atomically archives any current publica
 	@param versionId
 	@return ApiPublishResourceRequest
 */
-func (a *ResourcesAPIService) PublishResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiPublishResourceRequest {
+func (a *ResourcesAPIService) PublishResource(ctx context.Context, resourceType, resourceId, versionId string) ApiPublishResourceRequest {
 	return ApiPublishResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -1561,7 +1561,7 @@ Changes selected SUBMITTED version to REJECTED. A non-empty rejection note is re
 	@param versionId
 	@return ApiRejectResourceRequest
 */
-func (a *ResourcesAPIService) RejectResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiRejectResourceRequest {
+func (a *ResourcesAPIService) RejectResource(ctx context.Context, resourceType, resourceId, versionId string) ApiRejectResourceRequest {
 	return ApiRejectResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -1753,7 +1753,7 @@ Returns selected REJECTED version to editable DRAFT status while retaining rejec
 	@param versionId
 	@return ApiReopenResourceRequest
 */
-func (a *ResourcesAPIService) ReopenResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiReopenResourceRequest {
+func (a *ResourcesAPIService) ReopenResource(ctx context.Context, resourceType, resourceId, versionId string) ApiReopenResourceRequest {
 	return ApiReopenResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -1944,7 +1944,7 @@ Atomically replaces all mutable draft metadata when supplied revision matches se
 	@param versionId
 	@return ApiReplaceResourceDraftRequest
 */
-func (a *ResourcesAPIService) ReplaceResourceDraft(ctx context.Context, resourceId string, versionId string) ApiReplaceResourceDraftRequest {
+func (a *ResourcesAPIService) ReplaceResourceDraft(ctx context.Context, resourceId, versionId string) ApiReplaceResourceDraftRequest {
 	return ApiReplaceResourceDraftRequest{
 		ApiService: a,
 		ctx:        ctx,
@@ -2358,7 +2358,7 @@ Changes selected DRAFT version to SUBMITTED and makes its metadata immutable.
 	@param versionId
 	@return ApiSubmitResourceRequest
 */
-func (a *ResourcesAPIService) SubmitResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiSubmitResourceRequest {
+func (a *ResourcesAPIService) SubmitResource(ctx context.Context, resourceType, resourceId, versionId string) ApiSubmitResourceRequest {
 	return ApiSubmitResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -2545,7 +2545,7 @@ Archives selected PUBLISHED version without creating a replacement draft.
 	@param versionId
 	@return ApiUnpublishResourceRequest
 */
-func (a *ResourcesAPIService) UnpublishResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiUnpublishResourceRequest {
+func (a *ResourcesAPIService) UnpublishResource(ctx context.Context, resourceType, resourceId, versionId string) ApiUnpublishResourceRequest {
 	return ApiUnpublishResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,
@@ -2732,7 +2732,7 @@ Returns selected SUBMITTED version to editable DRAFT status.
 	@param versionId
 	@return ApiWithdrawResourceRequest
 */
-func (a *ResourcesAPIService) WithdrawResource(ctx context.Context, resourceType string, resourceId string, versionId string) ApiWithdrawResourceRequest {
+func (a *ResourcesAPIService) WithdrawResource(ctx context.Context, resourceType, resourceId, versionId string) ApiWithdrawResourceRequest {
 	return ApiWithdrawResourceRequest{
 		ApiService:   a,
 		ctx:          ctx,

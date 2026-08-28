@@ -39,7 +39,7 @@ type _CanonicalOrganization CanonicalOrganization
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCanonicalOrganization(id string, name string, address CanonicalOrganizationAddress, identifiers []Identifier, parents []string, contactPointIds []string) *CanonicalOrganization {
+func NewCanonicalOrganization(id, name string, address CanonicalOrganizationAddress, identifiers []Identifier, parents, contactPointIds []string) *CanonicalOrganization {
 	this := CanonicalOrganization{}
 	this.Id = id
 	this.Name = name

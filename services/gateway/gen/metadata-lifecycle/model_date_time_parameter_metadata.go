@@ -37,7 +37,7 @@ type _DateTimeParameterMetadata DateTimeParameterMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDateTimeParameterMetadata(id string, kind string, variable string, property string, label string, required bool, multipleValues bool, readOnly bool) *DateTimeParameterMetadata {
+func NewDateTimeParameterMetadata(id, kind, variable, property, label string, required, multipleValues, readOnly bool) *DateTimeParameterMetadata {
 	this := DateTimeParameterMetadata{}
 	this.Id = id
 	this.Kind = kind

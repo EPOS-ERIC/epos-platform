@@ -31,7 +31,7 @@ type _GroupReference GroupReference
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewGroupReference(id string, name string) *GroupReference {
+func NewGroupReference(id, name string) *GroupReference {
 	this := GroupReference{}
 	this.Id = id
 	this.Name = name

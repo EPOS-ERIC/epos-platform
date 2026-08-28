@@ -21,11 +21,6 @@ type service interface {
 	Create(context.Context, string, groupdomain.CreateRequest) (groupdomain.Group, error)
 	Replace(context.Context, string, uuid.UUID, groupdomain.ReplaceRequest) (groupdomain.Group, error)
 	Delete(context.Context, string, uuid.UUID) error
-	ListCategories(context.Context, uuid.UUID) ([]groupdomain.Category, error)
-	GetCategory(context.Context, uuid.UUID, uuid.UUID) (groupdomain.Category, error)
-	CreateCategory(context.Context, string, uuid.UUID, groupdomain.CreateCategoryRequest) (groupdomain.Category, error)
-	ReplaceCategory(context.Context, string, uuid.UUID, uuid.UUID, groupdomain.ReplaceCategoryRequest) (groupdomain.Category, error)
-	DeleteCategory(context.Context, string, uuid.UUID, uuid.UUID) error
 	List(context.Context) ([]groupdomain.Group, error)
 	Get(context.Context, uuid.UUID) (groupdomain.Group, error)
 }
@@ -154,181 +149,6 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) ListCategories(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := groupIDPath(w, r)
-	if !ok {
-		return
-	}
-
-	categories, err := h.service.ListCategories(r.Context(), groupID)
-	if err != nil {
-		if errors.Is(err, groupdomain.ErrNotFound) {
-			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
-			return
-		}
-
-		log.ErrorContext(r.Context(), "list group categories failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "list group categories failed")
-
-		return
-	}
-
-	result := make([]categoryResponse, 0, len(categories))
-	for _, category := range categories {
-		result = append(result, categoryResponseFromDomain(category))
-	}
-
-	transport.WriteJSON(w, http.StatusOK, result)
-}
-
-func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := groupIDPath(w, r)
-	if !ok {
-		return
-	}
-	actorID, ok := transport.Actor(w, r)
-	if !ok {
-		return
-	}
-
-	var body createCategoryRequest
-	if !transport.Decode(w, r, &body) {
-		return
-	}
-
-	request := groupdomain.CreateCategoryRequest{
-		Name:             body.Name,
-		ParentCategoryID: body.ParentCategoryID,
-	}
-
-	category, err := h.service.CreateCategory(r.Context(), actorID, groupID, request)
-	if err != nil {
-		switch {
-		case errors.Is(err, groupdomain.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category")
-		case errors.Is(err, groupdomain.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
-		case errors.Is(err, groupdomain.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
-		case errors.Is(err, groupdomain.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "category conflicts with existing category")
-		default:
-			log.ErrorContext(r.Context(), "create group category failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "create group category failed")
-		}
-		return
-	}
-
-	transport.WriteJSON(w, http.StatusCreated, categoryResponseFromDomain(category))
-}
-
-func (h *Handler) GetCategory(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := groupIDPath(w, r)
-	if !ok {
-		return
-	}
-	categoryID, err := uuid.Parse(chi.URLParam(r, "category_id"))
-	if err != nil || categoryID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category id")
-		return
-	}
-
-	category, err := h.service.GetCategory(r.Context(), groupID, categoryID)
-	if err != nil {
-		if errors.Is(err, groupdomain.ErrNotFound) {
-			transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
-			return
-		}
-
-		log.ErrorContext(r.Context(), "get group category failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "get group category failed")
-
-		return
-	}
-
-	transport.WriteJSON(w, http.StatusOK, categoryResponseFromDomain(category))
-}
-
-func (h *Handler) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := groupIDPath(w, r)
-	if !ok {
-		return
-	}
-	categoryID, err := uuid.Parse(chi.URLParam(r, "category_id"))
-	if err != nil || categoryID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category id")
-		return
-	}
-	actorID, ok := transport.Actor(w, r)
-	if !ok {
-		return
-	}
-
-	var body replaceCategoryRequest
-	if !transport.Decode(w, r, &body) {
-		return
-	}
-
-	request, err := body.domain()
-	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "name and parent_category_id are required")
-		return
-	}
-
-	category, err := h.service.ReplaceCategory(r.Context(), actorID, groupID, categoryID, request)
-	if err != nil {
-		switch {
-		case errors.Is(err, groupdomain.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category")
-		case errors.Is(err, groupdomain.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
-		case errors.Is(err, groupdomain.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
-		case errors.Is(err, groupdomain.ErrConflict):
-			transport.WriteProblem(w, http.StatusConflict, "conflict", "category conflicts with existing category")
-		default:
-			log.ErrorContext(r.Context(), "replace group category failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "replace group category failed")
-		}
-		return
-	}
-
-	transport.WriteJSON(w, http.StatusOK, categoryResponseFromDomain(category))
-}
-
-func (h *Handler) DeleteCategory(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := groupIDPath(w, r)
-	if !ok {
-		return
-	}
-	categoryID, err := uuid.Parse(chi.URLParam(r, "category_id"))
-	if err != nil || categoryID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category id")
-		return
-	}
-	actorID, ok := transport.Actor(w, r)
-	if !ok {
-		return
-	}
-
-	if err := h.service.DeleteCategory(r.Context(), actorID, groupID, categoryID); err != nil {
-		switch {
-		case errors.Is(err, groupdomain.ErrInvalid):
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid category")
-		case errors.Is(err, groupdomain.ErrForbidden):
-			transport.WriteProblem(w, http.StatusForbidden, "forbidden", "category management permission required")
-		case errors.Is(err, groupdomain.ErrNotFound):
-			transport.WriteProblem(w, http.StatusNotFound, "category_not_found", "category not found")
-		default:
-			log.ErrorContext(r.Context(), "delete group category failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "delete group category failed")
-		}
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	groups, err := h.service.List(r.Context())
 	if err != nil {
@@ -367,15 +187,6 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	transport.WriteJSON(w, http.StatusOK, response(group))
 }
 
-func groupIDPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
-	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
-		return uuid.Nil, false
-	}
-	return id, true
-}
-
 type groupResponse struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
@@ -386,47 +197,6 @@ type groupResponse struct {
 	Color       *string   `json:"color"`
 	Position    int32     `json:"position"`
 	Concept     string    `json:"concept"`
-}
-
-type categoryResponse struct {
-	ID               uuid.UUID  `json:"id"`
-	GroupID          uuid.UUID  `json:"group_id"`
-	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
-	Name             string     `json:"name"`
-}
-
-type createCategoryRequest struct {
-	Name             string     `json:"name"`
-	ParentCategoryID *uuid.UUID `json:"parent_category_id"`
-}
-
-type replaceCategoryRequest struct {
-	Name             json.RawMessage `json:"name"`
-	ParentCategoryID json.RawMessage `json:"parent_category_id"`
-}
-
-func (r replaceCategoryRequest) domain() (groupdomain.ReplaceCategoryRequest, error) {
-	name, err := requiredString(r.Name)
-	if err != nil {
-		return groupdomain.ReplaceCategoryRequest{}, err
-	}
-	if len(r.ParentCategoryID) == 0 {
-		return groupdomain.ReplaceCategoryRequest{}, errors.New("parent category is missing")
-	}
-
-	var parent *uuid.UUID
-	if string(r.ParentCategoryID) != "null" {
-		var value uuid.UUID
-		if err := json.Unmarshal(r.ParentCategoryID, &value); err != nil || value == uuid.Nil {
-			return groupdomain.ReplaceCategoryRequest{}, errors.New("invalid parent category")
-		}
-		parent = &value
-	}
-
-	return groupdomain.ReplaceCategoryRequest{
-		Name:             name,
-		ParentCategoryID: parent,
-	}, nil
 }
 
 type createGroupRequest struct {
@@ -535,14 +305,5 @@ func response(group groupdomain.Group) groupResponse {
 		Color:       group.Color,
 		Position:    group.Position,
 		Concept:     group.Concept,
-	}
-}
-
-func categoryResponseFromDomain(category groupdomain.Category) categoryResponse {
-	return categoryResponse{
-		ID:               category.ID,
-		GroupID:          category.GroupID,
-		ParentCategoryID: category.ParentCategoryID,
-		Name:             category.Name,
 	}
 }

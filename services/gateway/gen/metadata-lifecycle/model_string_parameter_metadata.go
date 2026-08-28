@@ -37,7 +37,7 @@ type _StringParameterMetadata StringParameterMetadata
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewStringParameterMetadata(id string, kind string, variable string, property string, label string, required bool, multipleValues bool, readOnly bool) *StringParameterMetadata {
+func NewStringParameterMetadata(id, kind, variable, property, label string, required, multipleValues, readOnly bool) *StringParameterMetadata {
 	this := StringParameterMetadata{}
 	this.Id = id
 	this.Kind = kind

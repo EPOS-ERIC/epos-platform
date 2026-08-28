@@ -31,7 +31,7 @@ type _CreateContactPointRequest CreateContactPointRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateContactPointRequest(email string, role string) *CreateContactPointRequest {
+func NewCreateContactPointRequest(email, role string) *CreateContactPointRequest {
 	this := CreateContactPointRequest{}
 	this.Email = email
 	this.Role = role

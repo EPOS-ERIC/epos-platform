@@ -100,7 +100,7 @@ func NewConfiguration() *Configuration {
 }
 
 // AddDefaultHeader adds a new HTTP header to the default header in the request
-func (c *Configuration) AddDefaultHeader(key string, value string) {
+func (c *Configuration) AddDefaultHeader(key, value string) {
 	c.DefaultHeader[key] = value
 }
 

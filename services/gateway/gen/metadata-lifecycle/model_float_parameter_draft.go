@@ -35,7 +35,7 @@ type _FloatParameterDraft FloatParameterDraft
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewFloatParameterDraft(kind string, metadata ParameterDraftMetadata, minimum NullableFloat64, maximum NullableFloat64, default_ NullableFloat64, allowedValues []float64) *FloatParameterDraft {
+func NewFloatParameterDraft(kind string, metadata ParameterDraftMetadata, minimum, maximum, default_ NullableFloat64, allowedValues []float64) *FloatParameterDraft {
 	this := FloatParameterDraft{}
 	this.Kind = kind
 	this.Metadata = metadata

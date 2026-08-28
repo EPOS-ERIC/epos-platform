@@ -22,7 +22,7 @@ var _ MappedNullable = &ReplaceCategoryRequest{}
 // ReplaceCategoryRequest struct for ReplaceCategoryRequest
 type ReplaceCategoryRequest struct {
 	Name             string         `json:"name"`
-	ParentCategoryId NullableString `json:"parent_category_id"`
+	ParentCategoryId NullableString `json:"parent_category_id,omitempty"`
 }
 
 type _ReplaceCategoryRequest ReplaceCategoryRequest
@@ -31,10 +31,9 @@ type _ReplaceCategoryRequest ReplaceCategoryRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewReplaceCategoryRequest(name string, parentCategoryId NullableString) *ReplaceCategoryRequest {
+func NewReplaceCategoryRequest(name string) *ReplaceCategoryRequest {
 	this := ReplaceCategoryRequest{}
 	this.Name = name
-	this.ParentCategoryId = parentCategoryId
 	return &this
 }
 
@@ -70,18 +69,16 @@ func (o *ReplaceCategoryRequest) SetName(v string) {
 	o.Name = v
 }
 
-// GetParentCategoryId returns the ParentCategoryId field value
-// If the value is explicit nil, the zero value for string will be returned
+// GetParentCategoryId returns the ParentCategoryId field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ReplaceCategoryRequest) GetParentCategoryId() string {
-	if o == nil || o.ParentCategoryId.Get() == nil {
+	if o == nil || IsNil(o.ParentCategoryId.Get()) {
 		var ret string
 		return ret
 	}
-
 	return *o.ParentCategoryId.Get()
 }
 
-// GetParentCategoryIdOk returns a tuple with the ParentCategoryId field value
+// GetParentCategoryIdOk returns a tuple with the ParentCategoryId field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReplaceCategoryRequest) GetParentCategoryIdOk() (*string, bool) {
@@ -91,9 +88,28 @@ func (o *ReplaceCategoryRequest) GetParentCategoryIdOk() (*string, bool) {
 	return o.ParentCategoryId.Get(), o.ParentCategoryId.IsSet()
 }
 
-// SetParentCategoryId sets field value
+// HasParentCategoryId returns a boolean if a field has been set.
+func (o *ReplaceCategoryRequest) HasParentCategoryId() bool {
+	if o != nil && o.ParentCategoryId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetParentCategoryId gets a reference to the given NullableString and assigns it to the ParentCategoryId field.
 func (o *ReplaceCategoryRequest) SetParentCategoryId(v string) {
 	o.ParentCategoryId.Set(&v)
+}
+
+// SetParentCategoryIdNil sets the value for ParentCategoryId to be an explicit nil
+func (o *ReplaceCategoryRequest) SetParentCategoryIdNil() {
+	o.ParentCategoryId.Set(nil)
+}
+
+// UnsetParentCategoryId ensures that no value is present for ParentCategoryId, not even an explicit nil
+func (o *ReplaceCategoryRequest) UnsetParentCategoryId() {
+	o.ParentCategoryId.Unset()
 }
 
 func (o ReplaceCategoryRequest) MarshalJSON() ([]byte, error) {
@@ -107,7 +123,9 @@ func (o ReplaceCategoryRequest) MarshalJSON() ([]byte, error) {
 func (o ReplaceCategoryRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["name"] = o.Name
-	toSerialize["parent_category_id"] = o.ParentCategoryId.Get()
+	if o.ParentCategoryId.IsSet() {
+		toSerialize["parent_category_id"] = o.ParentCategoryId.Get()
+	}
 	return toSerialize, nil
 }
 
@@ -117,7 +135,6 @@ func (o *ReplaceCategoryRequest) UnmarshalJSON(data []byte) (err error) {
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
 		"name",
-		"parent_category_id",
 	}
 
 	allProperties := make(map[string]interface{})

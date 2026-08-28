@@ -35,7 +35,7 @@ type _IntegerParameterDraft IntegerParameterDraft
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewIntegerParameterDraft(kind string, metadata ParameterDraftMetadata, minimum NullableInt64, maximum NullableInt64, default_ NullableInt64, allowedValues []int64) *IntegerParameterDraft {
+func NewIntegerParameterDraft(kind string, metadata ParameterDraftMetadata, minimum, maximum, default_ NullableInt64, allowedValues []int64) *IntegerParameterDraft {
 	this := IntegerParameterDraft{}
 	this.Kind = kind
 	this.Metadata = metadata

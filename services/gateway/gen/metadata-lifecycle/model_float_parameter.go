@@ -35,7 +35,7 @@ type _FloatParameter FloatParameter
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewFloatParameter(kind string, metadata FloatParameterMetadata, minimum NullableFloat64, maximum NullableFloat64, default_ NullableFloat64, allowedValues []float64) *FloatParameter {
+func NewFloatParameter(kind string, metadata FloatParameterMetadata, minimum, maximum, default_ NullableFloat64, allowedValues []float64) *FloatParameter {
 	this := FloatParameter{}
 	this.Kind = kind
 	this.Metadata = metadata

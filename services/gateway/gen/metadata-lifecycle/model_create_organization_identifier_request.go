@@ -31,7 +31,7 @@ type _CreateOrganizationIdentifierRequest CreateOrganizationIdentifierRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCreateOrganizationIdentifierRequest(type_ string, value string) *CreateOrganizationIdentifierRequest {
+func NewCreateOrganizationIdentifierRequest(type_, value string) *CreateOrganizationIdentifierRequest {
 	this := CreateOrganizationIdentifierRequest{}
 	this.Type = type_
 	this.Value = value

@@ -33,7 +33,7 @@ type _SoftwareCategory SoftwareCategory
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSoftwareCategory(id string, name string, scheme CategoryScheme, children []SoftwareCategory) *SoftwareCategory {
+func NewSoftwareCategory(id, name string, scheme CategoryScheme, children []SoftwareCategory) *SoftwareCategory {
 	this := SoftwareCategory{}
 	this.Id = id
 	this.Name = name

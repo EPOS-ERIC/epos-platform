@@ -37,7 +37,7 @@ type _ImportResult ImportResult
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewImportResult(groups int32, categories int32, organizations int32, contactPoints int32, datasets int32, softwareApplications int32, softwareSourceCodes int32, warnings []ImportDiagnostic) *ImportResult {
+func NewImportResult(groups, categories, organizations, contactPoints, datasets, softwareApplications, softwareSourceCodes int32, warnings []ImportDiagnostic) *ImportResult {
 	this := ImportResult{}
 	this.Groups = groups
 	this.Categories = categories

@@ -36,7 +36,7 @@ type _DateTimeParameterDraft DateTimeParameterDraft
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDateTimeParameterDraft(kind string, metadata ParameterDraftMetadata, minimum NullableTime, maximum NullableTime, default_ NullableTime, pattern string) *DateTimeParameterDraft {
+func NewDateTimeParameterDraft(kind string, metadata ParameterDraftMetadata, minimum, maximum, default_ NullableTime, pattern string) *DateTimeParameterDraft {
 	this := DateTimeParameterDraft{}
 	this.Kind = kind
 	this.Metadata = metadata

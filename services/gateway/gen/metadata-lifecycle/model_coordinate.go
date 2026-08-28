@@ -31,7 +31,7 @@ type _Coordinate Coordinate
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCoordinate(latitude float32, longitude float32) *Coordinate {
+func NewCoordinate(latitude, longitude float32) *Coordinate {
 	this := Coordinate{}
 	this.Latitude = latitude
 	this.Longitude = longitude

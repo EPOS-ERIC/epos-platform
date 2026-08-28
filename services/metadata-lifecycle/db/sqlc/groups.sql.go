@@ -218,56 +218,6 @@ func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (Group
 	return i, err
 }
 
-const createGroupCategory = `-- name: CreateGroupCategory :one
-INSERT INTO
-    categories (
-        id,
-        group_id,
-        parent_category_id,
-        name
-    )
-VALUES
-    (
-        $1,
-        $2,
-        $3,
-        $4
-    )
-RETURNING
-    id,
-    group_id,
-    parent_category_id,
-    name,
-    created_at,
-    updated_at
-`
-
-type CreateGroupCategoryParams struct {
-	ID               uuid.UUID
-	GroupID          uuid.UUID
-	ParentCategoryID *uuid.UUID
-	Name             string
-}
-
-func (q *Queries) CreateGroupCategory(ctx context.Context, arg CreateGroupCategoryParams) (Category, error) {
-	row := q.db.QueryRow(ctx, createGroupCategory,
-		arg.ID,
-		arg.GroupID,
-		arg.ParentCategoryID,
-		arg.Name,
-	)
-	var i Category
-	err := row.Scan(
-		&i.ID,
-		&i.GroupID,
-		&i.ParentCategoryID,
-		&i.Name,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const createGroupRoleRequest = `-- name: CreateGroupRoleRequest :one
 INSERT INTO
     group_role_requests (user_id, group_id, role_key)
@@ -487,27 +437,6 @@ func (q *Queries) DeleteGroup(ctx context.Context, id uuid.UUID) (string, error)
 	return outcome, err
 }
 
-const deleteGroupCategory = `-- name: DeleteGroupCategory :execrows
-DELETE FROM
-    categories
-WHERE
-    group_id = $1
-    AND id = $2
-`
-
-type DeleteGroupCategoryParams struct {
-	GroupID uuid.UUID
-	ID      uuid.UUID
-}
-
-func (q *Queries) DeleteGroupCategory(ctx context.Context, arg DeleteGroupCategoryParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteGroupCategory, arg.GroupID, arg.ID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
-}
-
 const getGroupByID = `-- name: GetGroupByID :one
 SELECT
     id,
@@ -540,40 +469,6 @@ func (q *Queries) GetGroupByID(ctx context.Context, id uuid.UUID) (Group, error)
 		&i.Page,
 		&i.Color,
 		&i.Position,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getGroupCategory = `-- name: GetGroupCategory :one
-SELECT
-    id,
-    group_id,
-    parent_category_id,
-    name,
-    created_at,
-    updated_at
-FROM
-    categories
-WHERE
-    group_id = $1
-    AND id = $2
-`
-
-type GetGroupCategoryParams struct {
-	GroupID uuid.UUID
-	ID      uuid.UUID
-}
-
-func (q *Queries) GetGroupCategory(ctx context.Context, arg GetGroupCategoryParams) (Category, error) {
-	row := q.db.QueryRow(ctx, getGroupCategory, arg.GroupID, arg.ID)
-	var i Category
-	err := row.Scan(
-		&i.ID,
-		&i.GroupID,
-		&i.ParentCategoryID,
-		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -724,51 +619,6 @@ func (q *Queries) GroupMembershipRoleExists(ctx context.Context, arg GroupMember
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
-}
-
-const listGroupCategories = `-- name: ListGroupCategories :many
-SELECT
-    id,
-    group_id,
-    parent_category_id,
-    name,
-    created_at,
-    updated_at
-FROM
-    categories
-WHERE
-    group_id = $1
-ORDER BY
-    parent_category_id NULLS FIRST,
-    lower(trim(name)),
-    id
-`
-
-func (q *Queries) ListGroupCategories(ctx context.Context, groupID uuid.UUID) ([]Category, error) {
-	rows, err := q.db.Query(ctx, listGroupCategories, groupID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Category
-	for rows.Next() {
-		var i Category
-		if err := rows.Scan(
-			&i.ID,
-			&i.GroupID,
-			&i.ParentCategoryID,
-			&i.Name,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const listGroupMembershipPermissions = `-- name: ListGroupMembershipPermissions :many
@@ -1125,51 +975,6 @@ func (q *Queries) ReplaceGroup(ctx context.Context, arg ReplaceGroupParams) (Gro
 		&i.Page,
 		&i.Color,
 		&i.Position,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const replaceGroupCategory = `-- name: ReplaceGroupCategory :one
-UPDATE
-    categories
-SET
-    name = $1,
-    parent_category_id = $2,
-    updated_at = NOW()
-WHERE
-    group_id = $3
-    AND id = $4
-RETURNING
-    id,
-    group_id,
-    parent_category_id,
-    name,
-    created_at,
-    updated_at
-`
-
-type ReplaceGroupCategoryParams struct {
-	Name             string
-	ParentCategoryID *uuid.UUID
-	GroupID          uuid.UUID
-	ID               uuid.UUID
-}
-
-func (q *Queries) ReplaceGroupCategory(ctx context.Context, arg ReplaceGroupCategoryParams) (Category, error) {
-	row := q.db.QueryRow(ctx, replaceGroupCategory,
-		arg.Name,
-		arg.ParentCategoryID,
-		arg.GroupID,
-		arg.ID,
-	)
-	var i Category
-	err := row.Scan(
-		&i.ID,
-		&i.GroupID,
-		&i.ParentCategoryID,
-		&i.Name,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

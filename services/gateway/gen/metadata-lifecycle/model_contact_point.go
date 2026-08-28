@@ -32,7 +32,7 @@ type _ContactPoint ContactPoint
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewContactPoint(id string, email string, role string) *ContactPoint {
+func NewContactPoint(id, email, role string) *ContactPoint {
 	this := ContactPoint{}
 	this.Id = id
 	this.Email = email
