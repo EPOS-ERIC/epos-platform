@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/google/uuid"
 )
 
@@ -21,11 +20,11 @@ type DatasetReader interface {
 }
 
 type SoftwareApplicationReader interface {
-	Read(context.Context, *string, uuid.UUID, uuid.UUID) (softwarelifecycle.Application, bool, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareApplicationVersion, bool, error)
 }
 
 type SoftwareSourceCodeReader interface {
-	Read(context.Context, *string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, bool, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, bool, error)
 }
 
 type GroupReader interface {
@@ -144,7 +143,6 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 	var categoryReferences []domain.DiscoveryReference
 	var distributionReferences []domain.DiscoveryReference
 
-	actorID := actor.OptionalString()
 	switch candidate.Type {
 	case domain.Dataset:
 		value, _, err := s.datasets.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
@@ -164,7 +162,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 			return domain.DiscoveryItem{}, fmt.Errorf("map discovery dataset distributions: %w", err)
 		}
 	case domain.SoftwareApplication:
-		value, _, err := s.sotfwareApplications.Read(ctx, actorID, candidate.ResourceID, candidate.VersionID)
+		value, _, err := s.sotfwareApplications.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
 		if err != nil {
 			return domain.DiscoveryItem{}, fmt.Errorf("read discovery application: %w", err)
 		}
@@ -177,7 +175,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 			return domain.DiscoveryItem{}, fmt.Errorf("map discovery application categories: %w", err)
 		}
 	case domain.SoftwareSourceCode:
-		value, _, err := s.softwareSourceCodes.Read(ctx, actorID, candidate.ResourceID, candidate.VersionID)
+		value, _, err := s.softwareSourceCodes.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
 		if err != nil {
 			return domain.DiscoveryItem{}, fmt.Errorf("read discovery source code: %w", err)
 		}

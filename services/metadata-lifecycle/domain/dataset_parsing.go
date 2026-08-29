@@ -23,14 +23,14 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return DatasetInput{}, fmt.Errorf("dataset temporal coverage: %w", err)
 	}
-	if err := validateDatasetReferences(value.ContactPointIDs, "contact point"); err != nil {
-		return DatasetInput{}, err
+	if err := validateUUIDList(value.ContactPointIDs, "contact point"); err != nil {
+		return DatasetInput{}, fmt.Errorf("dataset contact points: %w: %w", err, ErrInvalidDataset)
 	}
-	if err := validateDatasetReferences(value.ProviderIDs, "provider"); err != nil {
-		return DatasetInput{}, err
+	if err := validateUUIDList(value.ProviderIDs, "provider"); err != nil {
+		return DatasetInput{}, fmt.Errorf("dataset providers: %w: %w", err, ErrInvalidDataset)
 	}
-	if err := validateDatasetReferences(value.CategoryIDs, "category"); err != nil {
-		return DatasetInput{}, err
+	if err := validateUUIDList(value.CategoryIDs, "category"); err != nil {
+		return DatasetInput{}, fmt.Errorf("dataset categories: %w: %w", err, ErrInvalidDataset)
 	}
 
 	identifiers := make([]IdentifierInput, len(value.PersistentIdentifiers))
@@ -117,10 +117,10 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 	if err := validateContactPoints(value.ContactPoints, "dataset contact point"); err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset contact points: %w: %w", err, ErrInvalidDataset)
 	}
-	if err := validateOrganizations(value.Providers); err != nil {
+	if err := validateOrganizations(value.Providers, "provider"); err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset providers: %w: %w", err, ErrInvalidDataset)
 	}
-	if err := validateCategories(value.Categories); err != nil {
+	if err := validateCategories(value.Categories, "category"); err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset categories: %w: %w", err, ErrInvalidDataset)
 	}
 
@@ -137,6 +137,8 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 }
 
 // NewDatasetVersion validates a complete persisted dataset version.
+//
+//nolint:dupl // Resource version constructors intentionally share lifecycle validation.
 func NewDatasetVersion(
 	datasetID, versionID uuid.UUID,
 	revision int32,
@@ -193,6 +195,7 @@ func NewDatasetVersion(
 }
 
 // Validate validates persisted or imported dataset metadata.
+// TODO: delete this and make the callers instead just create their object using the correct parsing functions
 func (value DatasetMetadata) Validate() error {
 	_, err := NewDatasetMetadata(value)
 	return err
@@ -291,8 +294,8 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if value.ProviderID != nil && *value.ProviderID == uuid.Nil {
 		return WebServiceInput{}, fmt.Errorf("web service provider ID is required: %w", ErrInvalidDataset)
 	}
-	if err := validateDatasetReferences(value.ContactPointIDs, "web service contact point"); err != nil {
-		return WebServiceInput{}, err
+	if err := validateUUIDList(value.ContactPointIDs, "web service contact point"); err != nil {
+		return WebServiceInput{}, fmt.Errorf("web service contact points: %w: %w", err, ErrInvalidDataset)
 	}
 	if value.Documentation != nil && strings.TrimSpace(value.Documentation.URI) == "" {
 		return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
@@ -378,20 +381,6 @@ func validateWebService(value WebService) error {
 			return fmt.Errorf("duplicate parameter variable %q: %w", variable, ErrInvalidDataset)
 		}
 		seenVariables[variable] = struct{}{}
-	}
-	return nil
-}
-
-func validateDatasetReferences(values []uuid.UUID, name string) error {
-	seen := make(map[uuid.UUID]struct{}, len(values))
-	for _, value := range values {
-		if value == uuid.Nil {
-			return fmt.Errorf("%s ID is required: %w", name, ErrInvalidDataset)
-		}
-		if _, exists := seen[value]; exists {
-			return fmt.Errorf("duplicate %s %q: %w", name, value, ErrInvalidDataset)
-		}
-		seen[value] = struct{}{}
 	}
 	return nil
 }

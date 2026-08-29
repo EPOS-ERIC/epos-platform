@@ -1,10 +1,10 @@
 package softwaresourcecode
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
@@ -41,15 +41,15 @@ type rejectionRequest struct {
 }
 
 type identifierRequest struct {
-	Type  metadata.IdentifierType `json:"type"`
-	Value string                  `json:"value"`
+	Type  domain.IdentifierType `json:"type"`
+	Value string                `json:"value"`
 }
 
 type sourceCodeRecord struct {
 	ResourceID uuid.UUID                  `json:"resource_id"`
 	VersionID  uuid.UUID                  `json:"version_id"`
 	Revision   int32                      `json:"revision"`
-	Status     metadata.DatasetStatus     `json:"status"`
+	Status     domain.Status              `json:"status"`
 	CreatedBy  string                     `json:"created_by"`
 	GroupID    uuid.UUID                  `json:"group_id"`
 	GroupName  string                     `json:"group_name"`
@@ -81,9 +81,12 @@ type resourceReference struct {
 	Name string    `json:"name"`
 }
 
-func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
-	result := metadata.SoftwareSourceCode{
-		ID:                   uuid.Nil,
+func (r sourceCodeRequest) rawInput() domain.SoftwareSourceCodeInput {
+	identifiers := make([]domain.IdentifierInput, 0, len(r.Identifiers))
+	for _, identifier := range r.Identifiers {
+		identifiers = append(identifiers, domain.IdentifierInput{Type: identifier.Type, Value: identifier.Value})
+	}
+	return domain.SoftwareSourceCodeInput{
 		Name:                 r.Name,
 		Description:          r.Description,
 		ProgrammingLanguage:  r.ProgrammingLanguage,
@@ -94,69 +97,47 @@ func (r sourceCodeRequest) domain() metadata.SoftwareSourceCode {
 		RuntimePlatform:      r.RuntimePlatform,
 		MainEntityOfPage:     r.MainEntityOfPage,
 		Version:              r.Version,
-		Creators:             make([]metadata.Organization, 0, len(r.Creators)),
-		Identifiers:          make([]metadata.Identifier, 0, len(r.Identifiers)),
-		Categories:           make([]metadata.Category, 0, len(r.Categories)),
-		ContactPoints:        make([]metadata.ContactPoint, 0, len(r.ContactPoints)),
+		CreatorIDs:           r.Creators,
+		ContactPointIDs:      r.ContactPoints,
+		CategoryIDs:          r.Categories,
+		Identifiers:          identifiers,
 	}
-	for _, creator := range r.Creators {
-		result.Creators = append(result.Creators, metadata.Organization{
-			ID:            creator,
-			Name:          "",
-			Street:        nil,
-			Locality:      nil,
-			PostalCode:    nil,
-			Country:       nil,
-			LogoURL:       nil,
-			PageURL:       nil,
-			Email:         nil,
-			LEICode:       nil,
-			ContactPoints: nil,
-			Identifiers:   nil,
-		})
-	}
-	for _, value := range r.Identifiers {
-		result.Identifiers = append(result.Identifiers, metadata.Identifier{
-			ID:    uuid.Nil,
-			Type:  value.Type,
-			Value: value.Value,
-		})
-	}
-	for _, value := range r.Categories {
-		result.Categories = append(result.Categories, metadata.Category{
-			ID:   value,
-			Name: "",
-			Scheme: metadata.CategoryScheme{
-				ID:          uuid.Nil,
-				Name:        "",
-				Description: nil,
-				Label:       nil,
-				Logo:        nil,
-				Page:        nil,
-				Color:       nil,
-				Position:    0,
-				Concept:     "",
-			},
-			Children: nil,
-		})
-	}
-	for _, value := range r.ContactPoints {
-		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:    value,
-			Email: "",
-			Role:  "",
-		})
-	}
-	return result
 }
 
-func sourceCodeResponse(value softwarelifecycle.SourceCode, includeContacts bool) sourceCodeRecord {
+func (r sourceCodeRequest) input() (domain.SoftwareSourceCodeInput, error) {
+	value, err := domain.NewSoftwareSourceCodeInput(r.rawInput())
+	if err != nil {
+		return domain.SoftwareSourceCodeInput{}, fmt.Errorf("parse software source code input: %w", err)
+	}
+	return value, nil
+}
+
+func (r replaceDraftRequest) input() (domain.SoftwareSourceCodeDraftInput, error) {
+	value, err := domain.NewSoftwareSourceCodeDraftInput(domain.SoftwareSourceCodeDraftInput{
+		Revision: r.Revision,
+		Metadata: r.Metadata.rawInput(),
+	})
+	if err != nil {
+		return domain.SoftwareSourceCodeDraftInput{}, fmt.Errorf("parse software source code draft input: %w", err)
+	}
+	return value, nil
+}
+
+func (r rejectionRequest) input() (domain.SoftwareSourceCodeRejectionInput, error) {
+	value, err := domain.NewSoftwareSourceCodeRejectionInput(domain.SoftwareSourceCodeRejectionInput{Note: r.Note})
+	if err != nil {
+		return domain.SoftwareSourceCodeRejectionInput{}, fmt.Errorf("parse software source code rejection input: %w", err)
+	}
+	return value, nil
+}
+
+func sourceCodeResponse(value domain.SoftwareSourceCodeVersion, includeContacts bool) sourceCodeRecord {
 	return sourceCodeRecord{
-		ResourceID: value.SourceCodeID,
+		ResourceID: value.SoftwareSourceCodeID,
 		VersionID:  value.VersionID,
 		Revision:   value.Revision,
 		Status:     value.Status,
-		CreatedBy:  value.CreatedBy,
+		CreatedBy:  string(value.CreatedBy),
 		GroupID:    value.Group.ID,
 		GroupName:  value.Group.Name,
 		CreatedAt:  value.CreatedAt,
@@ -165,7 +146,7 @@ func sourceCodeResponse(value softwarelifecycle.SourceCode, includeContacts bool
 	}
 }
 
-func sourceCodeMetadataDTO(value metadata.SoftwareSourceCode, includeContacts bool) sourceCodeMetadataResponse {
+func sourceCodeMetadataDTO(value domain.SoftwareSourceCodeMetadata, includeContacts bool) sourceCodeMetadataResponse {
 	result := sourceCodeMetadataResponse{
 		ID:                   value.ID,
 		Name:                 value.Name,
@@ -206,7 +187,7 @@ func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
 	return resourceReference{ID: id, Name: name}
 }
 
-func identifierDTO(value metadata.Identifier) identifierResponse {
+func identifierDTO(value domain.Identifier) identifierResponse {
 	return identifierResponse{
 		ID:    value.ID,
 		Type:  value.Type,
@@ -215,7 +196,7 @@ func identifierDTO(value metadata.Identifier) identifierResponse {
 }
 
 type identifierResponse struct {
-	ID    uuid.UUID               `json:"id"`
-	Type  metadata.IdentifierType `json:"type"`
-	Value string                  `json:"value"`
+	ID    uuid.UUID             `json:"id"`
+	Type  domain.IdentifierType `json:"type"`
+	Value string                `json:"value"`
 }

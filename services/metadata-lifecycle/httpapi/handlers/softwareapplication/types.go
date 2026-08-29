@@ -1,10 +1,10 @@
 package softwareapplication
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
 
@@ -30,8 +30,8 @@ type createRequest struct {
 }
 
 type identifierRequest struct {
-	Type  metadata.IdentifierType `json:"type"`
-	Value string                  `json:"value"`
+	Type  domain.IdentifierType `json:"type"`
+	Value string                `json:"value"`
 }
 
 type replaceDraftRequest struct {
@@ -44,9 +44,12 @@ type rejectRequest struct {
 	Note string `json:"note"`
 }
 
-func (r applicationRequest) domain() metadata.SoftwareApplication {
-	result := metadata.SoftwareApplication{
-		ID:               uuid.Nil,
+func (r applicationRequest) rawInput() domain.SoftwareApplicationInput {
+	identifiers := make([]domain.IdentifierInput, 0, len(r.Identifiers))
+	for _, identifier := range r.Identifiers {
+		identifiers = append(identifiers, domain.IdentifierInput{Type: identifier.Type, Value: identifier.Value})
+	}
+	return domain.SoftwareApplicationInput{
 		Name:             r.Name,
 		Description:      r.Description,
 		MainEntityOfPage: r.MainEntityOfPage,
@@ -56,67 +59,45 @@ func (r applicationRequest) domain() metadata.SoftwareApplication {
 		DownloadURL:      r.DownloadURL,
 		Requirements:     r.Requirements,
 		OperatingSystem:  r.OperatingSystem,
-		Creators:         make([]metadata.Organization, 0, len(r.Creators)),
-		Identifiers:      make([]metadata.Identifier, 0, len(r.Identifiers)),
-		Categories:       make([]metadata.Category, 0, len(r.Categories)),
-		ContactPoints:    make([]metadata.ContactPoint, 0, len(r.ContactPoints)),
+		CreatorIDs:       r.Creators,
+		ContactPointIDs:  r.ContactPoints,
+		CategoryIDs:      r.Categories,
+		Identifiers:      identifiers,
 	}
-	for _, creator := range r.Creators {
-		result.Creators = append(result.Creators, metadata.Organization{
-			ID:            creator,
-			Name:          "",
-			Street:        nil,
-			Locality:      nil,
-			PostalCode:    nil,
-			Country:       nil,
-			LogoURL:       nil,
-			PageURL:       nil,
-			Email:         nil,
-			LEICode:       nil,
-			ContactPoints: nil,
-			Identifiers:   nil,
-		})
+}
+
+func (r applicationRequest) input() (domain.SoftwareApplicationInput, error) {
+	value, err := domain.NewSoftwareApplicationInput(r.rawInput())
+	if err != nil {
+		return domain.SoftwareApplicationInput{}, fmt.Errorf("parse software application input: %w", err)
 	}
-	for _, identifier := range r.Identifiers {
-		result.Identifiers = append(result.Identifiers, metadata.Identifier{
-			ID:    uuid.Nil,
-			Type:  identifier.Type,
-			Value: identifier.Value,
-		})
+	return value, nil
+}
+
+func (r replaceDraftRequest) input() (domain.SoftwareApplicationDraftInput, error) {
+	value, err := domain.NewSoftwareApplicationDraftInput(domain.SoftwareApplicationDraftInput{
+		Revision: r.Revision,
+		Metadata: r.Metadata.rawInput(),
+	})
+	if err != nil {
+		return domain.SoftwareApplicationDraftInput{}, fmt.Errorf("parse software application draft input: %w", err)
 	}
-	for _, category := range r.Categories {
-		result.Categories = append(result.Categories, metadata.Category{
-			ID:   category,
-			Name: "",
-			Scheme: metadata.CategoryScheme{
-				ID:          uuid.Nil,
-				Name:        "",
-				Description: nil,
-				Label:       nil,
-				Logo:        nil,
-				Page:        nil,
-				Color:       nil,
-				Position:    0,
-				Concept:     "",
-			},
-			Children: nil,
-		})
+	return value, nil
+}
+
+func (r rejectRequest) input() (domain.SoftwareApplicationRejectionInput, error) {
+	value, err := domain.NewSoftwareApplicationRejectionInput(domain.SoftwareApplicationRejectionInput{Note: r.Note})
+	if err != nil {
+		return domain.SoftwareApplicationRejectionInput{}, fmt.Errorf("parse software application rejection input: %w", err)
 	}
-	for _, contact := range r.ContactPoints {
-		result.ContactPoints = append(result.ContactPoints, metadata.ContactPoint{
-			ID:    contact,
-			Email: "",
-			Role:  "",
-		})
-	}
-	return result
+	return value, nil
 }
 
 type record struct {
 	ResourceID uuid.UUID                      `json:"resource_id"`
 	VersionID  uuid.UUID                      `json:"version_id"`
 	Revision   int32                          `json:"revision"`
-	Status     metadata.DatasetStatus         `json:"status"`
+	Status     domain.Status                  `json:"status"`
 	CreatedBy  string                         `json:"created_by"`
 	GroupID    uuid.UUID                      `json:"group_id"`
 	GroupName  string                         `json:"group_name"`
@@ -148,18 +129,18 @@ type resourceReference struct {
 }
 
 type identifierResponse struct {
-	ID    uuid.UUID               `json:"id"`
-	Type  metadata.IdentifierType `json:"type"`
-	Value string                  `json:"value"`
+	ID    uuid.UUID             `json:"id"`
+	Type  domain.IdentifierType `json:"type"`
+	Value string                `json:"value"`
 }
 
-func applicationResponse(value softwarelifecycle.Application, includeContacts bool) record {
+func applicationResponse(value domain.SoftwareApplicationVersion, includeContacts bool) record {
 	return record{
-		ResourceID: value.ApplicationID,
+		ResourceID: value.SoftwareApplicationID,
 		VersionID:  value.VersionID,
 		Revision:   value.Revision,
 		Status:     value.Status,
-		CreatedBy:  value.CreatedBy,
+		CreatedBy:  string(value.CreatedBy),
 		GroupID:    value.Group.ID,
 		GroupName:  value.Group.Name,
 		CreatedAt:  value.CreatedAt,
@@ -168,7 +149,7 @@ func applicationResponse(value softwarelifecycle.Application, includeContacts bo
 	}
 }
 
-func applicationMetadataDTO(value metadata.SoftwareApplication, includeContacts bool) softwareApplicationResponseDTO {
+func applicationMetadataDTO(value domain.SoftwareApplicationMetadata, includeContacts bool) softwareApplicationResponseDTO {
 	result := softwareApplicationResponseDTO{
 		ID:               value.ID,
 		Name:             value.Name,
@@ -208,7 +189,7 @@ func resourceReferenceDTO(id uuid.UUID, name string) resourceReference {
 	return resourceReference{ID: id, Name: name}
 }
 
-func identifierDTO(value metadata.Identifier) identifierResponse {
+func identifierDTO(value domain.Identifier) identifierResponse {
 	return identifierResponse{
 		ID:    value.ID,
 		Type:  value.Type,

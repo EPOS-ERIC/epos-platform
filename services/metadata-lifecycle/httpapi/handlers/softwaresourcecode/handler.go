@@ -8,9 +8,8 @@ import (
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -18,19 +17,19 @@ import (
 var log = logging.Get("software-source-code-handler")
 
 type sourceCodeService interface {
-	CreateDraft(context.Context, string, uuid.UUID, metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error)
-	Read(context.Context, *string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, bool, error)
-	ReplaceDraft(context.Context, string, uuid.UUID, uuid.UUID, int32, metadata.SoftwareSourceCode) (softwarelifecycle.SourceCode, error)
-	Submit(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Withdraw(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Reject(context.Context, string, uuid.UUID, uuid.UUID, string) (softwarelifecycle.SourceCode, error)
-	Reopen(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Publish(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Unpublish(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	DraftFromPublication(context.Context, string, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	DraftFromLatestArchive(context.Context, string, uuid.UUID) (softwarelifecycle.SourceCode, error)
-	Discard(context.Context, string, uuid.UUID, uuid.UUID) error
-	CopyPublished(context.Context, string, uuid.UUID, uuid.UUID) (softwarelifecycle.SourceCode, error)
+	CreateDraft(context.Context, domain.Actor, uuid.UUID, domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, bool, error)
+	ReplaceDraft(context.Context, domain.Actor, uuid.UUID, uuid.UUID, domain.SoftwareSourceCodeDraftInput) (domain.SoftwareSourceCodeVersion, error)
+	Submit(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	Withdraw(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	Reject(context.Context, domain.Actor, uuid.UUID, uuid.UUID, domain.SoftwareSourceCodeRejectionInput) (domain.SoftwareSourceCodeVersion, error)
+	Reopen(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	Publish(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	Unpublish(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	DraftFromPublication(context.Context, domain.Actor, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	DraftFromLatestArchive(context.Context, domain.Actor, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	Discard(context.Context, domain.Actor, uuid.UUID, uuid.UUID) error
+	CopyPublished(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 }
 
 type Handler struct {
@@ -43,7 +42,7 @@ func New(service sourceCodeService) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actor, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -57,7 +56,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := h.service.CreateDraft(r.Context(), actorID, groupID, request.Metadata.domain())
+	input, err := request.Metadata.input()
+	if err != nil {
+		writeLifecycleError(r, w, err)
+		return
+	}
+	value, err := h.service.CreateDraft(r.Context(), actor, groupID, input)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 
@@ -70,14 +74,9 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	actorID, present, ok := transport.OptionalActor(w, r)
+	actor, ok := transport.OptionalActorValue(w, r)
 	if !ok {
 		return
-	}
-
-	var actor *string
-	if present {
-		actor = &actorID
 	}
 
 	value, includeContacts, err := h.service.Read(r.Context(), actor, sourceCodeID, versionID)
@@ -85,7 +84,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
@@ -95,32 +94,37 @@ func (h *Handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := h.service.ReplaceDraft(r.Context(), actorID, sourceCodeID, versionID, request.Revision, request.Metadata.domain())
+	input, err := request.input()
+	if err != nil {
+		writeLifecycleError(r, w, err)
+		return
+	}
+	value, err := h.service.ReplaceDraft(r.Context(), actor, sourceCodeID, versionID, input)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) Submit(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.Submit(r.Context(), actorID, sourceCodeID, versionID)
+	value, err := h.service.Submit(r.Context(), actor, sourceCodeID, versionID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.Withdraw(r.Context(), actorID, sourceCodeID, versionID)
+	value, err := h.service.Withdraw(r.Context(), actor, sourceCodeID, versionID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
@@ -130,67 +134,72 @@ func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := h.service.Reject(r.Context(), actorID, sourceCodeID, versionID, request.Note)
+	rejection, err := request.input()
+	if err != nil {
+		writeLifecycleError(r, w, err)
+		return
+	}
+	value, err := h.service.Reject(r.Context(), actor, sourceCodeID, versionID, rejection)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) Reopen(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.Reopen(r.Context(), actorID, sourceCodeID, versionID)
+	value, err := h.service.Reopen(r.Context(), actor, sourceCodeID, versionID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) Publish(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.Publish(r.Context(), actorID, sourceCodeID, versionID)
+	value, err := h.service.Publish(r.Context(), actor, sourceCodeID, versionID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) Unpublish(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.Unpublish(r.Context(), actorID, sourceCodeID, versionID)
+	value, err := h.service.Unpublish(r.Context(), actor, sourceCodeID, versionID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusOK)
 }
 
 func (h *Handler) DraftFromPublication(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, ok := resourceIDs(w, r)
+	actor, sourceCodeID, ok := resourceIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.DraftFromPublication(r.Context(), actorID, sourceCodeID)
+	value, err := h.service.DraftFromPublication(r.Context(), actor, sourceCodeID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 
 func (h *Handler) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, ok := resourceIDs(w, r)
+	actor, sourceCodeID, ok := resourceIDs(w, r)
 	if !ok {
 		return
 	}
 
-	value, err := h.service.DraftFromLatestArchive(r.Context(), actorID, sourceCodeID)
+	value, err := h.service.DraftFromLatestArchive(r.Context(), actor, sourceCodeID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 
 func (h *Handler) Discard(w http.ResponseWriter, r *http.Request) {
-	actorID, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
+	actor, sourceCodeID, versionID, ok := lifecycleIDs(w, r)
 	if !ok {
 		return
 	}
 
-	if err := h.service.Discard(r.Context(), actorID, sourceCodeID, versionID); err != nil {
+	if err := h.service.Discard(r.Context(), actor, sourceCodeID, versionID); err != nil {
 		writeLifecycleError(r, w, err)
 		return
 	}
@@ -198,7 +207,7 @@ func (h *Handler) Discard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.Actor(w, r)
+	actor, ok := transport.ActorValue(w, r)
 	if !ok {
 		return
 	}
@@ -212,11 +221,11 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, err := h.service.CopyPublished(r.Context(), actorID, sourceCodeID, targetGroupID)
+	value, err := h.service.CopyPublished(r.Context(), actor, sourceCodeID, targetGroupID)
 	h.writeSourceCode(r, w, value, true, err, http.StatusCreated)
 }
 
-func (h *Handler) writeSourceCode(r *http.Request, w http.ResponseWriter, value softwarelifecycle.SourceCode, includeContacts bool, err error, status int) {
+func (h *Handler) writeSourceCode(r *http.Request, w http.ResponseWriter, value domain.SoftwareSourceCodeVersion, includeContacts bool, err error, status int) {
 	if err != nil {
 		writeLifecycleError(r, w, err)
 		return
@@ -224,8 +233,8 @@ func (h *Handler) writeSourceCode(r *http.Request, w http.ResponseWriter, value 
 	transport.WriteJSON(w, status, sourceCodeResponse(value, includeContacts))
 }
 
-func lifecycleIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, uuid.UUID, bool) {
-	actorID, sourceCodeID, ok := resourceIDs(w, r)
+func lifecycleIDs(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UUID, uuid.UUID, bool) {
+	actor, sourceCodeID, ok := resourceIDs(w, r)
 	if !ok {
 		return "", uuid.Nil, uuid.Nil, false
 	}
@@ -233,11 +242,11 @@ func lifecycleIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, uu
 	if !ok {
 		return "", uuid.Nil, uuid.Nil, false
 	}
-	return actorID, sourceCodeID, versionID, true
+	return actor, sourceCodeID, versionID, true
 }
 
-func resourceIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, bool) {
-	actorID, ok := transport.Actor(w, r)
+func resourceIDs(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UUID, bool) {
+	actor, ok := transport.ActorValue(w, r)
 	if !ok {
 		return "", uuid.Nil, false
 	}
@@ -245,7 +254,7 @@ func resourceIDs(w http.ResponseWriter, r *http.Request) (string, uuid.UUID, boo
 	if !ok {
 		return "", uuid.Nil, false
 	}
-	return actorID, sourceCodeID, true
+	return actor, sourceCodeID, true
 }
 
 func sourceCodeID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
@@ -267,18 +276,21 @@ func pathUUID(w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
 
 func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {
 	switch {
-	case errors.Is(err, softwarelifecycle.ErrDenied):
+	case errors.Is(err, domain.ErrSoftwareSourceCodeForbidden):
 		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "access denied")
-	case errors.Is(err, softwarelifecycle.ErrNotFound):
+	case errors.Is(err, domain.ErrSoftwareSourceCodeNotFound):
 		transport.WriteProblem(w, http.StatusNotFound, "software_source_code_not_found", "software source code or version not found")
-	case errors.Is(err, softwarelifecycle.ErrConflict):
+	case errors.Is(err, domain.ErrSoftwareSourceCodeConflict):
 		transport.WriteProblem(w, http.StatusConflict, "conflict", "software source code lifecycle conflict")
-	case errors.Is(err, softwarelifecycle.ErrInvalid):
+	case errors.Is(err, domain.ErrSoftwareSourceCodeInvalid):
 		detail := err.Error()
 		if index := strings.LastIndex(detail, ": "); index > 0 {
 			detail = detail[:index]
 		}
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", detail)
+	case errors.Is(err, domain.ErrSoftwareSourceCodeInternal):
+		log.ErrorContext(r.Context(), "software source code request failed", "method", r.Method, "path", r.URL.Path, "error", err)
+		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "software source code request failed")
 	default:
 		log.ErrorContext(r.Context(), "software source code request failed", "method", r.Method, "path", r.URL.Path, "error", err)
 		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "software source code request failed")

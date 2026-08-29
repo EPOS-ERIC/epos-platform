@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -13,11 +14,11 @@ func NewOrganizationInput(value OrganizationInput) (OrganizationInput, error) {
 	if value.Name == "" {
 		return OrganizationInput{}, ErrInvalidOrganization
 	}
-	if err := validateUUIDs(value.Parents); err != nil {
-		return OrganizationInput{}, err
+	if err := validateUUIDList(value.Parents, "parent"); err != nil {
+		return OrganizationInput{}, fmt.Errorf("organization parents: %w: %w", err, ErrInvalidOrganization)
 	}
-	if err := validateUUIDs(value.ContactPoints); err != nil {
-		return OrganizationInput{}, err
+	if err := validateUUIDList(value.ContactPoints, "contact point"); err != nil {
+		return OrganizationInput{}, fmt.Errorf("organization contact points: %w: %w", err, ErrInvalidOrganization)
 	}
 	for i := range value.Identifiers {
 		identifierInput, err := NewOrganizationIdentifierInput(value.Identifiers[i])
@@ -92,11 +93,4 @@ func NewOrganizationIdentifier(id uuid.UUID, value OrganizationIdentifierInput) 
 		return OrganizationIdentifier{}, err
 	}
 	return OrganizationIdentifier{ID: id, Type: value.Type, Value: value.Value}, nil
-}
-
-func validateUUIDs(values []uuid.UUID) error {
-	if slices.Contains(values, uuid.Nil) {
-		return ErrInvalidOrganization
-	}
-	return nil
 }

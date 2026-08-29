@@ -40,14 +40,28 @@ func validateContactPoints(values []ContactPoint, label string) error {
 	return nil
 }
 
-func validateOrganizations(values []OrganizationMetadata) error {
+func validateUUIDList(values []uuid.UUID, label string) error {
+	seen := make(map[uuid.UUID]struct{}, len(values))
+	for _, value := range values {
+		if value == uuid.Nil {
+			return fmt.Errorf("%s ID is required: %w", label, ErrInvalidResource)
+		}
+		if _, exists := seen[value]; exists {
+			return fmt.Errorf("duplicate %s %q: %w", label, value, ErrInvalidResource)
+		}
+		seen[value] = struct{}{}
+	}
+	return nil
+}
+
+func validateOrganizations(values []OrganizationMetadata, relation string) error {
 	seen := make(map[uuid.UUID]struct{}, len(values))
 	for _, value := range values {
 		if err := validateOrganization(value); err != nil {
-			return fmt.Errorf("resource provider: %w", err)
+			return fmt.Errorf("resource %s: %w", relation, err)
 		}
 		if _, exists := seen[value.ID]; exists {
-			return fmt.Errorf("duplicate resource provider %q: %w", value.ID, ErrInvalidResource)
+			return fmt.Errorf("duplicate resource %s %q: %w", relation, value.ID, ErrInvalidResource)
 		}
 		seen[value.ID] = struct{}{}
 	}
@@ -71,14 +85,14 @@ func validateOrganization(value OrganizationMetadata) error {
 	return validateContactPoints(value.ContactPoints, "organization contact point")
 }
 
-func validateCategories(values []CategoryMetadata) error {
+func validateCategories(values []CategoryMetadata, relation string) error {
 	seen := make(map[uuid.UUID]struct{}, len(values))
 	for _, value := range values {
 		if err := validateCategory(value); err != nil {
-			return fmt.Errorf("resource category: %w", err)
+			return fmt.Errorf("resource %s: %w", relation, err)
 		}
 		if _, exists := seen[value.ID]; exists {
-			return fmt.Errorf("duplicate resource category %q: %w", value.ID, ErrInvalidResource)
+			return fmt.Errorf("duplicate resource %s %q: %w", relation, value.ID, ErrInvalidResource)
 		}
 		seen[value.ID] = struct{}{}
 	}

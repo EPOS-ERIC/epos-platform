@@ -19,7 +19,8 @@ import (
 	groupdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/groups"
 	importdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/metadataimport"
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/organizations"
-	softwaredb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/software"
+	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
+	softwaresourcecodesdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwaresourcecodes"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	usersdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/users"
 	"github.com/jackc/pgx/v5"
@@ -46,8 +47,8 @@ type PostgresDB struct {
 	Discovery            *discoverydb.Repo
 	Datasets             *datasetdb.Repo
 	Imports              *importdb.Repo
-	SoftwareApplications *softwaredb.ApplicationRepo
-	SoftwareSourceCodes  *softwaredb.SourceCodeRepo
+	SoftwareApplications *softwareapplicationsdb.Repo
+	SoftwareSourceCodes  *softwaresourcecodesdb.Repo
 }
 
 // Open connects to PostgreSQL, applies migrations, and builds repositories.
@@ -110,8 +111,8 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		Discovery:            discoverydb.New(db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),
-		SoftwareApplications: softwaredb.NewApplicationRepo(db),
-		SoftwareSourceCodes:  softwaredb.NewSourceCodeRepo(db),
+		SoftwareApplications: softwareapplicationsdb.New(db),
+		SoftwareSourceCodes:  softwaresourcecodesdb.New(db),
 	}, nil
 }
 

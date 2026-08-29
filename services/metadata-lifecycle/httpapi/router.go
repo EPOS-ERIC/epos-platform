@@ -31,7 +31,8 @@ import (
 	usersapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
 	organizationservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
 	usersservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 	"github.com/go-chi/chi/v5"
@@ -125,8 +126,8 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Delete("/organizations/{organization_id}", organizations.Delete)
 
 		datasetService := datasets.New(database.Datasets, authorizer)
-		applicationService := softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications)
-		sourceCodeService := softwarelifecycle.NewSourceCodeService(authorizer, database.SoftwareSourceCodes)
+		applicationService := softwareapplications.New(database.SoftwareApplications, authorizer)
+		sourceCodeService := softwaresourcecodes.New(database.SoftwareSourceCodes, authorizer)
 		datasets := dataset.New(datasetService)
 		applications := softwareapplication.New(applicationService)
 		sourceCodes := softwaresourcecode.New(sourceCodeService)

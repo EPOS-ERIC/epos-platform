@@ -9,7 +9,8 @@ import (
 
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
-	softwaredb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/software"
+	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
+	softwaresourcecodesdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwaresourcecodes"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -105,11 +106,11 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		if err != nil {
 			return fmt.Errorf("create imported application: %w", err)
 		}
-		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwaredb.ApplicationVersionParams(logical.ID, actorID, value))
+		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwareapplicationsdb.ToCreateVersionParams(logical.ID, actorID, value.Input()))
 		if err != nil {
 			return fmt.Errorf("create imported application version: %w", err)
 		}
-		if err := softwaredb.PersistApplicationChildren(ctx, q, version.ID, value); err != nil {
+		if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 			return fmt.Errorf("persist imported application metadata: %w", err)
 		}
 		return nil
@@ -121,11 +122,11 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 		return fmt.Errorf("application %q belongs to another group: %w", value.ID, domain.ErrImportConflict)
 	}
 	if existing.ActiveVersionID == nil {
-		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwaredb.ApplicationVersionParams(existing.ID, actorID, value))
+		version, err := q.CreateLifecycleSoftwareApplicationVersion(ctx, softwareapplicationsdb.ToCreateVersionParams(existing.ID, actorID, value.Input()))
 		if err != nil {
 			return fmt.Errorf("create imported application draft: %w", err)
 		}
-		if err := softwaredb.PersistApplicationChildren(ctx, q, version.ID, value); err != nil {
+		if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 			return fmt.Errorf("persist imported application metadata: %w", err)
 		}
 		return nil
@@ -133,14 +134,14 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
 		return fmt.Errorf("application %q has non-draft active change: %w", value.ID, domain.ErrImportConflict)
 	}
-	version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, softwaredb.ReplaceApplicationVersionParams(*existing.ActiveVersionID, existing.ID, *existing.ActiveRevision, value))
+	version, err := q.ReplaceLifecycleSoftwareApplicationDraft(ctx, softwareapplicationsdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value.Input()))
 	if err != nil {
 		return fmt.Errorf("replace imported application draft: %w", err)
 	}
 	if err := q.DeleteLifecycleSoftwareApplicationVersionChildren(ctx, &version.ID); err != nil {
 		return fmt.Errorf("clear imported application draft: %w", err)
 	}
-	if err := softwaredb.PersistApplicationChildren(ctx, q, version.ID, value); err != nil {
+	if err := softwareapplicationsdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 		return fmt.Errorf("persist imported application metadata: %w", err)
 	}
 	return nil
@@ -163,11 +164,11 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		if err != nil {
 			return fmt.Errorf("create imported source code: %w", err)
 		}
-		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaredb.SourceCodeVersionParams(logical.ID, actorID, value))
+		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaresourcecodesdb.ToCreateVersionParams(logical.ID, actorID, value.Input()))
 		if err != nil {
 			return fmt.Errorf("create imported source code version: %w", err)
 		}
-		if err := softwaredb.PersistSourceCodeChildren(ctx, q, version.ID, value); err != nil {
+		if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 			return fmt.Errorf("persist imported source code metadata: %w", err)
 		}
 		return nil
@@ -179,11 +180,11 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 		return fmt.Errorf("source code %q belongs to another group: %w", value.ID, domain.ErrImportConflict)
 	}
 	if existing.ActiveVersionID == nil {
-		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaredb.SourceCodeVersionParams(existing.ID, actorID, value))
+		version, err := q.CreateLifecycleSoftwareSourceCodeVersion(ctx, softwaresourcecodesdb.ToCreateVersionParams(existing.ID, actorID, value.Input()))
 		if err != nil {
 			return fmt.Errorf("create imported source code draft: %w", err)
 		}
-		if err := softwaredb.PersistSourceCodeChildren(ctx, q, version.ID, value); err != nil {
+		if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 			return fmt.Errorf("persist imported source code metadata: %w", err)
 		}
 		return nil
@@ -191,14 +192,14 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 	if *existing.ActiveStatus != sqlc.ResourceStatusDRAFT {
 		return fmt.Errorf("source code %q has non-draft active change: %w", value.ID, domain.ErrImportConflict)
 	}
-	version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, softwaredb.ReplaceSourceCodeVersionParams(*existing.ActiveVersionID, existing.ID, *existing.ActiveRevision, value))
+	version, err := q.ReplaceLifecycleSoftwareSourceCodeDraft(ctx, softwaresourcecodesdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value.Input()))
 	if err != nil {
 		return fmt.Errorf("replace imported source code draft: %w", err)
 	}
 	if err := q.DeleteLifecycleSoftwareSourceCodeVersionChildren(ctx, &version.ID); err != nil {
 		return fmt.Errorf("clear imported source code draft: %w", err)
 	}
-	if err := softwaredb.PersistSourceCodeChildren(ctx, q, version.ID, value); err != nil {
+	if err := softwaresourcecodesdb.PersistChildren(ctx, q, version.ID, value.Input()); err != nil {
 		return fmt.Errorf("persist imported source code metadata: %w", err)
 	}
 	return nil
