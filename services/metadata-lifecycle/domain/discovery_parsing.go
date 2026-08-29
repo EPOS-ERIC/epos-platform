@@ -12,22 +12,20 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	value.Query = normalizedOptionalString(value.Query)
 	value.SpatialFilter = normalizedOptionalString(value.SpatialFilter)
 
-	if value.Types != nil {
-		types := make([]ResourceType, 0, len(value.Types))
-		for _, resourceType := range value.Types {
-			resourceType = ResourceType(strings.TrimSpace(string(resourceType)))
-			if resourceType == "" {
-				continue
-			}
-			if !validResourceType(resourceType) {
-				return DiscoveryFilter{}, ErrInvalidDiscovery
-			}
-			if !slices.Contains(types, resourceType) {
-				types = append(types, resourceType)
-			}
+	types := make([]ResourceType, 0, len(value.Types))
+	for _, resourceType := range value.Types {
+		resourceType = ResourceType(strings.TrimSpace(string(resourceType)))
+		if resourceType == "" {
+			continue
 		}
-		value.Types = types
+		if !validResourceType(resourceType) {
+			return DiscoveryFilter{}, ErrInvalidDiscovery
+		}
+		if !slices.Contains(types, resourceType) {
+			types = append(types, resourceType)
+		}
 	}
+	value.Types = types
 
 	statuses := make([]Status, 0, len(value.VersioningStatuses))
 	for _, status := range value.VersioningStatuses {
@@ -50,7 +48,9 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	if slices.Contains(value.Providers, uuid.Nil) {
 		return DiscoveryFilter{}, ErrInvalidDiscovery
 	}
-	value.Providers = slices.Clone(value.Providers)
+	providers := make([]uuid.UUID, len(value.Providers))
+	copy(providers, value.Providers)
+	value.Providers = providers
 	value.Keywords = normalizedStrings(value.Keywords)
 
 	if value.DateFrom != nil && value.DateTo != nil && value.DateFrom.After(*value.DateTo) {
@@ -159,9 +159,6 @@ func validStatus(value Status) bool {
 }
 
 func normalizedStrings(values []string) []string {
-	if values == nil {
-		return nil
-	}
 	result := make([]string, 0, len(values))
 	for _, value := range values {
 		value = strings.TrimSpace(value)
