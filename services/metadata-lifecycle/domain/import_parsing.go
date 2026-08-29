@@ -3,7 +3,6 @@ package domain
 import (
 	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/google/uuid"
 )
 
@@ -38,7 +37,7 @@ func validateDatasetGroups(batch ImportBatch) error {
 	return nil
 }
 
-func validateSoftwareGroups(id uuid.UUID, categories []metadata.Category) error {
+func validateSoftwareGroups(id uuid.UUID, categories []CategoryMetadata) error {
 	if len(categories) == 0 {
 		return fmt.Errorf("software %q must reference at least one category", id)
 	}

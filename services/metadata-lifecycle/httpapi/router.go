@@ -11,7 +11,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	categoryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasetlifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/docs"
@@ -124,7 +124,7 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 		r.Put("/organizations/{organization_id}", organizations.Replace)
 		r.Delete("/organizations/{organization_id}", organizations.Delete)
 
-		datasetService := datasetlifecycle.New(authorizer, database.Datasets)
+		datasetService := datasets.New(database.Datasets, authorizer)
 		applicationService := softwarelifecycle.NewApplicationService(authorizer, database.SoftwareApplications)
 		sourceCodeService := softwarelifecycle.NewSourceCodeService(authorizer, database.SoftwareSourceCodes)
 		datasets := dataset.New(datasetService)

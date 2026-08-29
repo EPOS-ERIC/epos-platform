@@ -6,24 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type ResourceType string
-
-const (
-	Dataset             ResourceType = "dataset"
-	SoftwareApplication ResourceType = "software-application"
-	SoftwareSourceCode  ResourceType = "software-source-code"
-)
-
-type Status string
-
-const (
-	Published Status = "PUBLISHED"
-	Draft     Status = "DRAFT"
-	Submitted Status = "SUBMITTED"
-	Archived  Status = "ARCHIVED"
-	Rejected  Status = "REJECTED"
-)
-
 // DiscoveryFilter contains validated search criteria for resource discovery.
 type DiscoveryFilter struct {
 	Query              *string

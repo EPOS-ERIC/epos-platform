@@ -7,9 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasetlifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwarelifecycle"
 	"github.com/google/uuid"
 )
@@ -19,7 +17,7 @@ type Repository interface {
 }
 
 type DatasetReader interface {
-	Read(context.Context, *string, uuid.UUID, uuid.UUID) (datasetlifecycle.Dataset, bool, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.DatasetVersion, bool, error)
 }
 
 type SoftwareApplicationReader interface {
@@ -149,7 +147,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 	actorID := actor.OptionalString()
 	switch candidate.Type {
 	case domain.Dataset:
-		value, _, err := s.datasets.Read(ctx, actorID, candidate.ResourceID, candidate.VersionID)
+		value, _, err := s.datasets.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
 		if err != nil {
 			return domain.DiscoveryItem{}, fmt.Errorf("read discovery dataset: %w", err)
 		}
@@ -200,7 +198,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 	return item, nil
 }
 
-func organizationReferences(values []metadata.Organization) ([]domain.DiscoveryReference, error) {
+func organizationReferences(values []domain.OrganizationMetadata) ([]domain.DiscoveryReference, error) {
 	result := make([]domain.DiscoveryReference, 0, len(values))
 	for _, value := range values {
 		reference, err := domain.NewDiscoveryReference(value.ID, value.Name)
@@ -212,7 +210,7 @@ func organizationReferences(values []metadata.Organization) ([]domain.DiscoveryR
 	return result, nil
 }
 
-func categoryReferencesFor(values []metadata.Category) ([]domain.DiscoveryReference, error) {
+func categoryReferencesFor(values []domain.CategoryMetadata) ([]domain.DiscoveryReference, error) {
 	result := make([]domain.DiscoveryReference, 0, len(values))
 	for _, value := range values {
 		reference, err := domain.NewDiscoveryReference(value.ID, value.Name)
@@ -224,7 +222,7 @@ func categoryReferencesFor(values []metadata.Category) ([]domain.DiscoveryRefere
 	return result, nil
 }
 
-func distributionReferencesFor(values []metadata.Distribution) ([]domain.DiscoveryReference, error) {
+func distributionReferencesFor(values []domain.Distribution) ([]domain.DiscoveryReference, error) {
 	// TODO: don't need the ids of the distributions here it could be just a list with the names
 	result := make([]domain.DiscoveryReference, 0, len(values))
 	for _, value := range values {

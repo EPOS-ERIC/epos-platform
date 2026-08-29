@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
 
+// TODO: since we store json in the db we should have a test here or something that makes sure we always have the correct shape passed through to avoid inconsistencies in the data in the db
+
 type parameterRecord struct {
-	kind     metadata.ParameterKind
-	metadata metadata.ParameterMetadata
+	kind     domain.ParameterKind
+	metadata domain.ParameterMetadata
 	config   json.RawMessage
 }
 
-func encodeParameter(parameter metadata.Parameter) (parameterRecord, error) {
+func encodeParameter(parameter domain.Parameter) (parameterRecord, error) {
 	if parameter == nil {
 		return parameterRecord{}, fmt.Errorf("parameter is required")
 	}
@@ -24,31 +26,31 @@ func encodeParameter(parameter metadata.Parameter) (parameterRecord, error) {
 		err    error
 	)
 	switch value := parameter.(type) {
-	case metadata.StringParameter:
+	case domain.StringParameter:
 		config, err = json.Marshal(struct {
 			Default       *string  `json:"default,omitempty"`
 			AllowedValues []string `json:"allowed_values,omitempty"`
 			Pattern       string   `json:"pattern,omitempty"`
 		}{value.Default, value.AllowedValues, value.Pattern})
-	case metadata.BooleanParameter:
+	case domain.BooleanParameter:
 		config, err = json.Marshal(struct {
 			Default *bool `json:"default,omitempty"`
 		}{value.Default})
-	case metadata.IntegerParameter:
+	case domain.IntegerParameter:
 		config, err = json.Marshal(struct {
 			Minimum       *int64  `json:"minimum,omitempty"`
 			Maximum       *int64  `json:"maximum,omitempty"`
 			Default       *int64  `json:"default,omitempty"`
 			AllowedValues []int64 `json:"allowed_values,omitempty"`
 		}{value.Minimum, value.Maximum, value.Default, value.AllowedValues})
-	case metadata.FloatParameter:
+	case domain.FloatParameter:
 		config, err = json.Marshal(struct {
 			Minimum       *float64  `json:"minimum,omitempty"`
 			Maximum       *float64  `json:"maximum,omitempty"`
 			Default       *float64  `json:"default,omitempty"`
 			AllowedValues []float64 `json:"allowed_values,omitempty"`
 		}{value.Minimum, value.Maximum, value.Default, value.AllowedValues})
-	case metadata.DateTimeParameter:
+	case domain.DateTimeParameter:
 		config, err = json.Marshal(struct {
 			Minimum *time.Time `json:"minimum,omitempty"`
 			Maximum *time.Time `json:"maximum,omitempty"`
@@ -65,11 +67,11 @@ func encodeParameter(parameter metadata.Parameter) (parameterRecord, error) {
 	return parameterRecord{kind: parameter.Kind(), metadata: parameter.GetMetadata(), config: config}, nil
 }
 
-func decodeParameter(record parameterRecord) (metadata.Parameter, error) {
+func decodeParameter(record parameterRecord) (domain.Parameter, error) {
 	record.metadata.Kind = record.kind
 
 	switch record.kind {
-	case metadata.ParameterKindString:
+	case domain.ParameterKindString:
 		var config struct {
 			Default       *string  `json:"default"`
 			AllowedValues []string `json:"allowed_values"`
@@ -78,24 +80,24 @@ func decodeParameter(record parameterRecord) (metadata.Parameter, error) {
 		if err := json.Unmarshal(record.config, &config); err != nil {
 			return nil, fmt.Errorf("decode string parameter config: %w", err)
 		}
-		return metadata.StringParameter{
+		return domain.StringParameter{
 			Metadata:      record.metadata,
 			Default:       config.Default,
 			AllowedValues: config.AllowedValues,
 			Pattern:       config.Pattern,
 		}, nil
-	case metadata.ParameterKindBoolean:
+	case domain.ParameterKindBoolean:
 		var config struct {
 			Default *bool `json:"default"`
 		}
 		if err := json.Unmarshal(record.config, &config); err != nil {
 			return nil, fmt.Errorf("decode boolean parameter config: %w", err)
 		}
-		return metadata.BooleanParameter{
+		return domain.BooleanParameter{
 			Metadata: record.metadata,
 			Default:  config.Default,
 		}, nil
-	case metadata.ParameterKindInteger:
+	case domain.ParameterKindInteger:
 		var config struct {
 			Minimum       *int64  `json:"minimum"`
 			Maximum       *int64  `json:"maximum"`
@@ -105,14 +107,14 @@ func decodeParameter(record parameterRecord) (metadata.Parameter, error) {
 		if err := json.Unmarshal(record.config, &config); err != nil {
 			return nil, fmt.Errorf("decode integer parameter config: %w", err)
 		}
-		return metadata.IntegerParameter{
+		return domain.IntegerParameter{
 			Metadata:      record.metadata,
 			Minimum:       config.Minimum,
 			Maximum:       config.Maximum,
 			Default:       config.Default,
 			AllowedValues: config.AllowedValues,
 		}, nil
-	case metadata.ParameterKindFloat:
+	case domain.ParameterKindFloat:
 		var config struct {
 			Minimum       *float64  `json:"minimum"`
 			Maximum       *float64  `json:"maximum"`
@@ -122,14 +124,14 @@ func decodeParameter(record parameterRecord) (metadata.Parameter, error) {
 		if err := json.Unmarshal(record.config, &config); err != nil {
 			return nil, fmt.Errorf("decode float parameter config: %w", err)
 		}
-		return metadata.FloatParameter{
+		return domain.FloatParameter{
 			Metadata:      record.metadata,
 			Minimum:       config.Minimum,
 			Maximum:       config.Maximum,
 			Default:       config.Default,
 			AllowedValues: config.AllowedValues,
 		}, nil
-	case metadata.ParameterKindDateTime:
+	case domain.ParameterKindDateTime:
 		var config struct {
 			Minimum *time.Time `json:"minimum"`
 			Maximum *time.Time `json:"maximum"`
@@ -139,7 +141,7 @@ func decodeParameter(record parameterRecord) (metadata.Parameter, error) {
 		if err := json.Unmarshal(record.config, &config); err != nil {
 			return nil, fmt.Errorf("decode datetime parameter config: %w", err)
 		}
-		return metadata.DateTimeParameter{
+		return domain.DateTimeParameter{
 			Metadata: record.metadata,
 			Minimum:  config.Minimum,
 			Maximum:  config.Maximum,

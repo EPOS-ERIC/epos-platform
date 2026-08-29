@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	metadata "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	rdf "github.com/deiu/rdf2go"
 	"github.com/google/uuid"
 )
@@ -30,10 +29,10 @@ func (Parser) Parse(input io.Reader) (domain.ImportBatch, error) {
 type mapper struct {
 	graph             *graph
 	warnings          []domain.ImportDiagnostic
-	schemes           map[string]metadata.CategoryScheme
-	categories        map[string]metadata.Category
-	organizations     map[string]metadata.Organization
-	contacts          map[string]metadata.ContactPoint
+	schemes           map[string]domain.Group
+	categories        map[string]domain.CategoryMetadata
+	organizations     map[string]domain.OrganizationMetadata
+	contacts          map[string]domain.ContactPoint
 	categoryEdges     map[string]domain.ImportCategoryEdge
 	organizationEdges map[string]domain.ImportOrganizationEdge
 }
@@ -42,17 +41,17 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 	m := &mapper{
 		graph:             g,
 		warnings:          nil,
-		schemes:           make(map[string]metadata.CategoryScheme),
-		categories:        make(map[string]metadata.Category),
-		organizations:     make(map[string]metadata.Organization),
-		contacts:          make(map[string]metadata.ContactPoint),
+		schemes:           make(map[string]domain.Group),
+		categories:        make(map[string]domain.CategoryMetadata),
+		organizations:     make(map[string]domain.OrganizationMetadata),
+		contacts:          make(map[string]domain.ContactPoint),
 		categoryEdges:     make(map[string]domain.ImportCategoryEdge),
 		organizationEdges: make(map[string]domain.ImportOrganizationEdge),
 	}
 
-	var datasets []metadata.Dataset
-	var softwareApplications []metadata.SoftwareApplication
-	var softwareSourceCodes []metadata.SoftwareSourceCode
+	var datasets []domain.DatasetMetadata
+	var softwareApplications []domain.SoftwareApplicationMetadata
+	var softwareSourceCodes []domain.SoftwareSourceCodeMetadata
 
 	for _, source := range m.graph.subjects(rdfType, dcatDataset) {
 		dataset, err := m.dataset(source)
@@ -157,8 +156,8 @@ func mapGraph(g *graph) (domain.ImportBatch, error) {
 	return batch, nil
 }
 
-func (m *mapper) softwareApplication(source string) (metadata.SoftwareApplication, error) {
-	result := metadata.SoftwareApplication{
+func (m *mapper) softwareApplication(source string) (domain.SoftwareApplicationMetadata, error) {
+	result := domain.SoftwareApplicationMetadata{
 		ID:               sharedID("software-application", source),
 		Name:             m.requiredString(source, schemaName),
 		Description:      m.optionalString(source, schemaDescription),
@@ -176,14 +175,14 @@ func (m *mapper) softwareApplication(source string) (metadata.SoftwareApplicatio
 	}
 
 	if err := m.addSoftwareRelations(source, result.ID, &result.Creators, &result.Identifiers, &result.ContactPoints, &result.Categories); err != nil {
-		return metadata.SoftwareApplication{}, err
+		return domain.SoftwareApplicationMetadata{}, err
 	}
 
 	return result, nil
 }
 
-func (m *mapper) softwareSourceCode(source string) (metadata.SoftwareSourceCode, error) {
-	result := metadata.SoftwareSourceCode{
+func (m *mapper) softwareSourceCode(source string) (domain.SoftwareSourceCodeMetadata, error) {
+	result := domain.SoftwareSourceCodeMetadata{
 		ID:                   sharedID("software-source-code", source),
 		Name:                 m.requiredString(source, schemaName),
 		Description:          m.optionalString(source, schemaDescription),
@@ -202,7 +201,7 @@ func (m *mapper) softwareSourceCode(source string) (metadata.SoftwareSourceCode,
 	}
 
 	if err := m.addSoftwareRelations(source, result.ID, &result.Creators, &result.Identifiers, &result.ContactPoints, &result.Categories); err != nil {
-		return metadata.SoftwareSourceCode{}, err
+		return domain.SoftwareSourceCodeMetadata{}, err
 	}
 
 	return result, nil
@@ -211,10 +210,10 @@ func (m *mapper) softwareSourceCode(source string) (metadata.SoftwareSourceCode,
 func (m *mapper) addSoftwareRelations(
 	source string,
 	owner uuid.UUID,
-	creators *[]metadata.Organization,
-	identifiers *[]metadata.Identifier,
-	contacts *[]metadata.ContactPoint,
-	categories *[]metadata.Category,
+	creators *[]domain.OrganizationMetadata,
+	identifiers *[]domain.Identifier,
+	contacts *[]domain.ContactPoint,
+	categories *[]domain.CategoryMetadata,
 ) error {
 	for _, identifierSource := range m.graph.refs(source, schemaIdentifier) {
 		if identifier, ok := m.identifier(identifierSource, owner, source); ok {
@@ -249,11 +248,10 @@ func (m *mapper) addSoftwareRelations(
 	return nil
 }
 
-func (m *mapper) dataset(source string) (metadata.Dataset, error) {
+func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 	id := ownedID("", "dataset", source)
-	dataset := metadata.Dataset{
+	dataset := domain.DatasetMetadata{
 		ID:          id,
-		Status:      metadata.DatasetStatusDraft,
 		Title:       m.requiredString(source, dctTitle),
 		Description: m.optionalString(source, dctDescription),
 		Keywords:    strings.Join(m.strings(source, dcatKeyword), ","),
@@ -268,8 +266,6 @@ func (m *mapper) dataset(source string) (metadata.Dataset, error) {
 		ContactPoints:         nil,
 		Providers:             nil,
 		Categories:            nil,
-		Created:               time.Time{},
-		Updated:               time.Time{},
 		SourceCreated:         nil,
 		SourceUpdated:         nil,
 	}
@@ -316,7 +312,7 @@ func (m *mapper) dataset(source string) (metadata.Dataset, error) {
 	for _, ref := range m.graph.refs(source, dcatTheme) {
 		category, err := m.category(ref, map[string]bool{})
 		if err != nil {
-			return metadata.Dataset{}, err
+			return domain.DatasetMetadata{}, err
 		}
 		dataset.Categories = append(dataset.Categories, category)
 	}
@@ -324,7 +320,7 @@ func (m *mapper) dataset(source string) (metadata.Dataset, error) {
 	for _, ref := range m.graph.refs(source, dcatContactPoint) {
 		contact, err := m.contact(ref)
 		if err != nil {
-			return metadata.Dataset{}, err
+			return domain.DatasetMetadata{}, err
 		}
 		dataset.ContactPoints = append(dataset.ContactPoints, contact)
 	}
@@ -332,7 +328,7 @@ func (m *mapper) dataset(source string) (metadata.Dataset, error) {
 	for _, ref := range m.graph.refs(source, dctPublisher) {
 		organization, err := m.organization(ref, make(map[string]bool))
 		if err != nil {
-			return metadata.Dataset{}, err
+			return domain.DatasetMetadata{}, err
 		}
 		dataset.Providers = append(dataset.Providers, organization)
 	}
@@ -340,7 +336,7 @@ func (m *mapper) dataset(source string) (metadata.Dataset, error) {
 	for _, ref := range m.graph.refs(source, dcatDistributionLink) {
 		distribution, err := m.distribution(ref, id)
 		if err != nil {
-			return metadata.Dataset{}, err
+			return domain.DatasetMetadata{}, err
 		}
 		dataset.Distributions = append(dataset.Distributions, distribution)
 	}
@@ -348,8 +344,8 @@ func (m *mapper) dataset(source string) (metadata.Dataset, error) {
 	return dataset, nil
 }
 
-func (m *mapper) distribution(source string, owner uuid.UUID) (metadata.Distribution, error) {
-	distribution := metadata.Distribution{
+func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distribution, error) {
+	distribution := domain.Distribution{
 		ID:               ownedID(owner.String(), "distribution", source),
 		Title:            m.requiredString(source, dctTitle),
 		Description:      m.optionalString(source, dctDescription),
@@ -377,20 +373,20 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (metadata.Distribu
 	if service, ok := m.firstString(source, dctConformsTo); ok && m.graph.hasType(service, "https://www.epos-eu.org/epos-dcat-ap#WebService") {
 		webService, err := m.webService(service, distribution.ID, m.optionalString(source, dctFormat))
 		if err != nil {
-			return metadata.Distribution{}, err
+			return domain.Distribution{}, err
 		}
 		distribution.WebService = &webService
 	} else if url, ok := m.firstString(source, dcatDownloadURL); ok {
 		format := m.optionalString(source, dctFormat)
-		distribution.DownloadableFile = &metadata.DownloadableFile{URL: url, Format: format}
+		distribution.DownloadableFile = &domain.DownloadableFile{URL: url, Format: format}
 	} else if url, ok := m.firstString(source, dcatAccessURL); ok {
 		format := m.optionalString(source, dctFormat)
-		distribution.DownloadableFile = &metadata.DownloadableFile{URL: url, Format: format}
+		distribution.DownloadableFile = &domain.DownloadableFile{URL: url, Format: format}
 	}
 
 	typeValue, err := distribution.DeliveryType()
 	if err != nil {
-		return metadata.Distribution{}, fmt.Errorf("distribution %q: %w", source, err)
+		return domain.Distribution{}, fmt.Errorf("distribution %q: %w", source, err)
 	}
 
 	distribution.Type = typeValue
@@ -398,8 +394,8 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (metadata.Distribu
 	return distribution, nil
 }
 
-func (m *mapper) webService(source string, owner uuid.UUID, format string) (metadata.WebService, error) {
-	service := metadata.WebService{
+func (m *mapper) webService(source string, owner uuid.UUID, format string) (domain.WebService, error) {
+	service := domain.WebService{
 		ID:               ownedID(owner.String(), "web-service", source),
 		Name:             m.optionalString(source, schemaName),
 		Description:      m.optionalString(source, schemaDescription),
@@ -427,12 +423,12 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (meta
 
 	providers := m.graph.refs(source, schemaProvider)
 	if len(providers) > 1 {
-		return metadata.WebService{}, fmt.Errorf("web service must have at most one provider")
+		return domain.WebService{}, fmt.Errorf("web service must have at most one provider")
 	}
 	if len(providers) == 1 {
 		item, err := m.organization(providers[0], make(map[string]bool))
 		if err != nil {
-			return metadata.WebService{}, err
+			return domain.WebService{}, err
 		}
 		service.Provider = &item
 	}
@@ -440,14 +436,14 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (meta
 	for _, contact := range m.graph.refs(source, dcatContactPoint) {
 		item, err := m.contact(contact)
 		if err != nil {
-			return metadata.WebService{}, err
+			return domain.WebService{}, err
 		}
 		service.ContactPoints = append(service.ContactPoints, item)
 	}
 
 	for _, documentation := range m.graph.refs(source, dctConformsTo) {
 		if m.graph.hasType(documentation, hydraAPIDocumentation) {
-			item := metadata.Documentation{
+			item := domain.Documentation{
 				Title:       stringPtr(m.optionalString(documentation, hydraTitle)),
 				Description: stringPtr(m.optionalString(documentation, hydraDescription)),
 				URI:         m.optionalString(documentation, hydraEntrypoint),
@@ -470,7 +466,7 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (meta
 			for _, mapping := range m.graph.refs(property, hydraMapping) {
 				parameter, err := m.parameter(mapping, service.ID)
 				if err != nil {
-					return metadata.WebService{}, err
+					return domain.WebService{}, err
 				}
 				service.Parameters = append(service.Parameters, parameter)
 			}
@@ -480,8 +476,8 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (meta
 	return service, nil
 }
 
-func (m *mapper) parameter(source string, owner uuid.UUID) (metadata.Parameter, error) {
-	parameterMetadata := metadata.ParameterMetadata{
+func (m *mapper) parameter(source string, owner uuid.UUID) (domain.Parameter, error) {
+	parameterMetadata := domain.ParameterMetadata{
 		ID:             ownedID(owner.String(), "parameter", source),
 		Kind:           "",
 		Variable:       m.requiredString(source, hydraVariable),
@@ -512,13 +508,13 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (metadata.Parameter, 
 		if hasDefault {
 			defaultValue = &defaultValueText
 		}
-		return metadata.BooleanParameter{
+		return domain.BooleanParameter{
 			Metadata: parameterMetadata,
 			Default:  defaultValue,
 		}, nil
 	case rdfsDatatypeInteger:
 		defaultValue := m.intPtr(source, schemaDefaultValue)
-		return metadata.IntegerParameter{
+		return domain.IntegerParameter{
 			Metadata:      parameterMetadata,
 			Minimum:       m.intPtr(source, schemaMinValue),
 			Maximum:       m.intPtr(source, schemaMaxValue),
@@ -527,7 +523,7 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (metadata.Parameter, 
 		}, nil
 	case rdfsDatatypeFloat:
 		defaultValue := m.floatPtr(source, schemaDefaultValue)
-		return metadata.FloatParameter{
+		return domain.FloatParameter{
 			Metadata:      parameterMetadata,
 			Minimum:       m.floatPtr(source, schemaMinValue),
 			Maximum:       m.floatPtr(source, schemaMaxValue),
@@ -535,7 +531,7 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (metadata.Parameter, 
 			AllowedValues: m.validFloatValues(source, defaultValue),
 		}, nil
 	case rdfsDatatypeDateTime:
-		return metadata.DateTimeParameter{
+		return domain.DateTimeParameter{
 			Metadata: parameterMetadata,
 			Minimum:  timePtr(m.time(source, schemaMinValue)),
 			Maximum:  timePtr(m.time(source, schemaMaxValue)),
@@ -557,7 +553,7 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (metadata.Parameter, 
 			})
 			allowed = nil
 		}
-		return metadata.StringParameter{
+		return domain.StringParameter{
 			Metadata:      parameterMetadata,
 			Default:       pointer,
 			AllowedValues: allowed,
@@ -566,22 +562,22 @@ func (m *mapper) parameter(source string, owner uuid.UUID) (metadata.Parameter, 
 	}
 }
 
-func (m *mapper) scheme(source string) (metadata.CategoryScheme, error) {
+func (m *mapper) scheme(source string) (domain.Group, error) {
 	if value, ok := m.schemes[source]; ok {
 		return value, nil
 	}
-	concept := metadata.TopLevelConcept("")
+	concept := domain.TopLevelConcept("")
 	for _, top := range m.graph.refs(source, skosHasTopConcept) {
 		switch top {
 		case "category:facets/dataset-theme":
-			concept = metadata.TopLevelConceptData
+			concept = domain.TopLevelConceptData
 		case "category:facets/facility-theme":
-			concept = metadata.TopLevelConceptFacilities
+			concept = domain.TopLevelConceptFacilities
 		case "category:facets/software-theme":
-			concept = metadata.TopLevelConceptSoftware
+			concept = domain.TopLevelConceptSoftware
 		}
 	}
-	result := metadata.CategoryScheme{
+	result := domain.Group{
 		ID:          sharedID("category-scheme", source),
 		Name:        m.optionalString(source, dctTitle),
 		Description: stringPtr(m.optionalString(source, dctDescription)),
@@ -590,14 +586,14 @@ func (m *mapper) scheme(source string) (metadata.CategoryScheme, error) {
 		Page:        stringPtr(m.optionalString(source, foafHomepage)),
 		Color:       stringPtr(m.optionalString(source, schemaColor)),
 		Position:    int32(m.int64(source, schemaOrderItemNumber)),
-		Concept:     metadata.TopLevelConcept(""),
+		Concept:     "",
 	}
 	if result.Name == "" {
 		result.Name = m.optionalString(source, skosPrefLabel)
 	}
-	result.Concept = concept
-	if !result.Concept.Valid() {
-		return metadata.CategoryScheme{}, fmt.Errorf("category scheme %q has unsupported top concept", source)
+	result.Concept = string(concept)
+	if !concept.Valid() {
+		return domain.Group{}, fmt.Errorf("category scheme %q has unsupported top concept", source)
 	}
 	m.schemes[source] = result
 	return result, nil
@@ -612,9 +608,9 @@ func (m *mapper) supportedScheme(source string) bool {
 	return false
 }
 
-func (m *mapper) category(source string, active map[string]bool) (metadata.Category, error) {
+func (m *mapper) category(source string, active map[string]bool) (domain.CategoryMetadata, error) {
 	if active[source] {
-		return metadata.Category{}, fmt.Errorf("category hierarchy cycle at %q", source)
+		return domain.CategoryMetadata{}, fmt.Errorf("category hierarchy cycle at %q", source)
 	}
 	if value, ok := m.categories[source]; ok {
 		return value, nil
@@ -623,13 +619,13 @@ func (m *mapper) category(source string, active map[string]bool) (metadata.Categ
 	defer delete(active, source)
 	schemeIRI, ok := m.firstString(source, skosInScheme)
 	if !ok {
-		return metadata.Category{}, fmt.Errorf("category %q has no scheme", source)
+		return domain.CategoryMetadata{}, fmt.Errorf("category %q has no scheme", source)
 	}
 	scheme, err := m.scheme(schemeIRI)
 	if err != nil {
-		return metadata.Category{}, err
+		return domain.CategoryMetadata{}, err
 	}
-	result := metadata.Category{
+	result := domain.CategoryMetadata{
 		ID:       sharedID("category", source),
 		Name:     m.requiredString(source, skosPrefLabel),
 		Scheme:   scheme,
@@ -637,12 +633,12 @@ func (m *mapper) category(source string, active map[string]bool) (metadata.Categ
 	}
 	parents := m.graph.refs(source, skosBroader)
 	if len(parents) > 1 {
-		return metadata.Category{}, fmt.Errorf("category %q has multiple parents", source)
+		return domain.CategoryMetadata{}, fmt.Errorf("category %q has multiple parents", source)
 	}
 	for _, parentIRI := range parents {
 		parent, err := m.category(parentIRI, active)
 		if err != nil {
-			return metadata.Category{}, err
+			return domain.CategoryMetadata{}, err
 		}
 		m.categoryEdges[edgeKey(parent.ID, result.ID)] = domain.ImportCategoryEdge{ParentID: parent.ID, ChildID: result.ID}
 	}
@@ -650,9 +646,9 @@ func (m *mapper) category(source string, active map[string]bool) (metadata.Categ
 	return result, nil
 }
 
-func (m *mapper) organization(source string, active map[string]bool) (metadata.Organization, error) {
+func (m *mapper) organization(source string, active map[string]bool) (domain.OrganizationMetadata, error) {
 	if active[source] {
-		return metadata.Organization{}, fmt.Errorf("organization hierarchy cycle at %q", source)
+		return domain.OrganizationMetadata{}, fmt.Errorf("organization hierarchy cycle at %q", source)
 	}
 	if value, ok := m.organizations[source]; ok {
 		return value, nil
@@ -663,7 +659,7 @@ func (m *mapper) organization(source string, active map[string]bool) (metadata.O
 	if references := m.graph.refs(source, schemaAddress); len(references) > 0 {
 		address = references[0]
 	}
-	result := metadata.Organization{
+	result := domain.OrganizationMetadata{
 		ID:            sharedID("organization", source),
 		Name:          m.optionalString(source, schemaLegalName),
 		Street:        stringPtr(m.optionalString(address, schemaStreetAddress)),
@@ -681,7 +677,7 @@ func (m *mapper) organization(source string, active map[string]bool) (metadata.O
 		result.Name = m.optionalString(source, schemaName)
 	}
 	if result.Name == "" {
-		return metadata.Organization{}, fmt.Errorf("organization %q has no name", source)
+		return domain.OrganizationMetadata{}, fmt.Errorf("organization %q has no name", source)
 	}
 	for _, identifierSource := range m.graph.refs(source, schemaIdentifier) {
 		if identifier, ok := m.identifier(identifierSource, result.ID, source); ok {
@@ -691,14 +687,14 @@ func (m *mapper) organization(source string, active map[string]bool) (metadata.O
 	for _, contactSource := range m.graph.refs(source, dcatContactPoint) {
 		contact, err := m.contact(contactSource)
 		if err != nil {
-			return metadata.Organization{}, err
+			return domain.OrganizationMetadata{}, err
 		}
 		result.ContactPoints = append(result.ContactPoints, contact)
 	}
 	for _, parentIRI := range m.graph.refs(source, schemaMemberOf) {
 		parent, err := m.organization(parentIRI, active)
 		if err != nil {
-			return metadata.Organization{}, err
+			return domain.OrganizationMetadata{}, err
 		}
 		m.organizationEdges[edgeKey(parent.ID, result.ID)] = domain.ImportOrganizationEdge{ParentID: parent.ID, ChildID: result.ID}
 	}
@@ -721,26 +717,26 @@ func normalizeRange(value string) string {
 	}
 }
 
-func (m *mapper) contact(source string) (metadata.ContactPoint, error) {
+func (m *mapper) contact(source string) (domain.ContactPoint, error) {
 	if value, ok := m.contacts[source]; ok {
 		return value, nil
 	}
 	email := m.optionalString(source, schemaEmail)
 	role := m.optionalString(source, schemaContactType)
 	if email == "" || role == "" {
-		return metadata.ContactPoint{}, fmt.Errorf("contact point %q requires email and role", source)
+		return domain.ContactPoint{}, fmt.Errorf("contact point %q requires email and role", source)
 	}
-	result := metadata.ContactPoint{
+	result := domain.ContactPoint{
 		ID:    sharedID("contact-point", source),
 		Email: email,
-		Role:  metadata.ContactPointRole(role),
+		Role:  role,
 	}
 	m.contacts[source] = result
 	return result, nil
 }
 
-func (m *mapper) identifiers(subject string, owner uuid.UUID) []metadata.Identifier {
-	result := make([]metadata.Identifier, 0)
+func (m *mapper) identifiers(subject string, owner uuid.UUID) []domain.Identifier {
+	result := make([]domain.Identifier, 0)
 	for _, identifierSource := range m.graph.refs(subject, dctIdentifier) {
 		if identifier, ok := m.identifier(identifierSource, owner, subject); ok {
 			result = append(result, identifier)
@@ -749,7 +745,7 @@ func (m *mapper) identifiers(subject string, owner uuid.UUID) []metadata.Identif
 	return result
 }
 
-func (m *mapper) identifier(source string, owner uuid.UUID, ownerIRI string) (metadata.Identifier, bool) {
+func (m *mapper) identifier(source string, owner uuid.UUID, ownerIRI string) (domain.Identifier, bool) {
 	typ := m.optionalString(source, admsSchemeAgency)
 	value := m.optionalString(source, "http://www.w3.org/2004/02/skos/core#notation")
 	if typ == "" {
@@ -762,15 +758,15 @@ func (m *mapper) identifier(source string, owner uuid.UUID, ownerIRI string) (me
 		value = m.optionalString(source, skosPrefLabel)
 	}
 	if typ == "" || value == "" {
-		return metadata.Identifier{ID: uuid.Nil, Type: "", Value: ""}, false
+		return domain.Identifier{ID: uuid.Nil, Type: "", Value: ""}, false
 	}
 	key := source
 	if ownerIRI != "" {
 		key = ownerIRI + "\x00" + typ + "\x00" + value
 	}
-	return metadata.Identifier{
+	return domain.Identifier{
 		ID:    ownedID(owner.String(), "identifier", key),
-		Type:  metadata.IdentifierType(typ),
+		Type:  domain.IdentifierType(typ),
 		Value: value,
 	}, true
 }
@@ -914,39 +910,39 @@ func (m *mapper) validFloatValues(source string, defaultValue *float64) []float6
 	return values
 }
 
-func (m *mapper) temporal(source string) *metadata.Temporal {
+func (m *mapper) temporal(source string) *domain.Temporal {
 	start := m.time(source, schemaStartDate)
 	end := m.time(source, schemaEndDate)
 	if start.IsZero() && end.IsZero() {
 		return nil
 	}
-	return &metadata.Temporal{Start: timePtr(start), End: timePtr(end)}
+	return &domain.Temporal{Start: timePtr(start), End: timePtr(end)}
 }
 
-func (m *mapper) spatial(source string) *metadata.Spatial {
+func (m *mapper) spatial(source string) *domain.Spatial {
 	wkt := m.optionalString(source, locnGeometry)
 	upper := strings.ToUpper(wkt)
 	if strings.HasPrefix(upper, "POINT(") {
 		values := strings.TrimSuffix(strings.TrimPrefix(wkt, "POINT("), ")")
 		var longitude, latitude float64
 		if _, err := fmt.Sscan(values, &longitude, &latitude); err == nil {
-			return &metadata.Spatial{
-				Point:   &metadata.Coordinate{Longitude: longitude, Latitude: latitude},
+			return &domain.Spatial{
+				Point:   &domain.Coordinate{Longitude: longitude, Latitude: latitude},
 				Polygon: nil,
 			}
 		}
 	}
 	if strings.HasPrefix(upper, "POLYGON((") {
 		values := strings.TrimSuffix(strings.TrimPrefix(wkt, "POLYGON(("), "))")
-		coordinates := make([]metadata.Coordinate, 0)
+		coordinates := make([]domain.Coordinate, 0)
 		for pair := range strings.SplitSeq(values, ",") {
 			var longitude, latitude float64
 			if _, err := fmt.Sscan(strings.TrimSpace(pair), &longitude, &latitude); err != nil {
 				return nil
 			}
-			coordinates = append(coordinates, metadata.Coordinate{Longitude: longitude, Latitude: latitude})
+			coordinates = append(coordinates, domain.Coordinate{Longitude: longitude, Latitude: latitude})
 		}
-		return &metadata.Spatial{Point: nil, Polygon: coordinates}
+		return &domain.Spatial{Point: nil, Polygon: coordinates}
 	}
 	return nil
 }

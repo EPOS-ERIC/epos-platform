@@ -1,18 +1,15 @@
 package domain
 
-import (
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
-	"github.com/google/uuid"
-)
+import "github.com/google/uuid"
 
 type ImportBatch struct {
-	CategorySchemes      []metadata.CategoryScheme
-	Categories           []metadata.Category
-	Organizations        []metadata.Organization
-	ContactPoints        []metadata.ContactPoint
-	Datasets             []metadata.Dataset
-	SoftwareApplications []metadata.SoftwareApplication
-	SoftwareSourceCodes  []metadata.SoftwareSourceCode
+	CategorySchemes      []Group
+	Categories           []CategoryMetadata
+	Organizations        []OrganizationMetadata
+	ContactPoints        []ContactPoint
+	Datasets             []DatasetMetadata
+	SoftwareApplications []SoftwareApplicationMetadata
+	SoftwareSourceCodes  []SoftwareSourceCodeMetadata
 	CategoryEdges        []ImportCategoryEdge
 	OrganizationEdges    []ImportOrganizationEdge
 	Warnings             []ImportDiagnostic

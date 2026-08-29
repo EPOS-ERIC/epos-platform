@@ -12,7 +12,6 @@ import (
 	softwaredb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/software"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadata"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -90,7 +89,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
-func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID string, value metadata.SoftwareApplication, groupIDs, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) error {
+func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID string, value domain.SoftwareApplicationMetadata, groupIDs, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) error {
 	groupID, err := softwareGroupID(value.Categories, groupIDs)
 	if err != nil {
 		return fmt.Errorf("software application %q: %w", value.ID, err)
@@ -148,7 +147,7 @@ func importSoftwareApplication(ctx context.Context, q *sqlc.Queries, actorID str
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
-func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID string, value metadata.SoftwareSourceCode, groupIDs, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) error {
+func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID string, value domain.SoftwareSourceCodeMetadata, groupIDs, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) error {
 	groupID, err := softwareGroupID(value.Categories, groupIDs)
 	if err != nil {
 		return fmt.Errorf("software source code %q: %w", value.ID, err)
@@ -205,7 +204,7 @@ func importSoftwareSourceCode(ctx context.Context, q *sqlc.Queries, actorID stri
 	return nil
 }
 
-func softwareGroupID(categories []metadata.Category, groupIDs map[uuid.UUID]uuid.UUID) (uuid.UUID, error) {
+func softwareGroupID(categories []domain.CategoryMetadata, groupIDs map[uuid.UUID]uuid.UUID) (uuid.UUID, error) {
 	if len(categories) == 0 {
 		return uuid.Nil, fmt.Errorf("no category group: %w", domain.ErrInvalidImport)
 	}
@@ -216,7 +215,7 @@ func softwareGroupID(categories []metadata.Category, groupIDs map[uuid.UUID]uuid
 	return groupID, nil
 }
 
-func remapSoftwareApplicationReferences(value *metadata.SoftwareApplication, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
+func remapSoftwareApplicationReferences(value *domain.SoftwareApplicationMetadata, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
 	for i := range value.Creators {
 		value.Creators[i].ID = organizationIDs[value.Creators[i].ID]
 	}
@@ -228,7 +227,7 @@ func remapSoftwareApplicationReferences(value *metadata.SoftwareApplication, org
 	}
 }
 
-func remapSoftwareSourceCodeReferences(value *metadata.SoftwareSourceCode, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
+func remapSoftwareSourceCodeReferences(value *domain.SoftwareSourceCodeMetadata, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
 	for i := range value.Creators {
 		value.Creators[i].ID = organizationIDs[value.Creators[i].ID]
 	}
@@ -240,7 +239,7 @@ func remapSoftwareSourceCodeReferences(value *metadata.SoftwareSourceCode, organ
 	}
 }
 
-func importGroups(ctx context.Context, q *sqlc.Queries, schemes []metadata.CategoryScheme) (map[uuid.UUID]uuid.UUID, error) {
+func importGroups(ctx context.Context, q *sqlc.Queries, schemes []domain.Group) (map[uuid.UUID]uuid.UUID, error) {
 	ids := make(map[uuid.UUID]uuid.UUID, len(schemes))
 	for _, scheme := range schemes {
 		id, err := q.UpsertImportGroup(ctx, sqlc.UpsertImportGroupParams{
@@ -318,7 +317,7 @@ func importOrganizations(ctx context.Context, q *sqlc.Queries, batch domain.Impo
 	return ids, nil
 }
 
-func importOrganizationContactPoints(ctx context.Context, q *sqlc.Queries, organizations []metadata.Organization, organizationIDs, contactIDs map[uuid.UUID]uuid.UUID) error {
+func importOrganizationContactPoints(ctx context.Context, q *sqlc.Queries, organizations []domain.OrganizationMetadata, organizationIDs, contactIDs map[uuid.UUID]uuid.UUID) error {
 	for _, organization := range organizations {
 		organizationID := organizationIDs[organization.ID]
 		if err := q.DeleteImportOrganizationContactPoints(ctx, organizationID); err != nil {
@@ -340,7 +339,7 @@ func importOrganizationContactPoints(ctx context.Context, q *sqlc.Queries, organ
 	return nil
 }
 
-func importContactPoints(ctx context.Context, q *sqlc.Queries, contacts []metadata.ContactPoint) (map[uuid.UUID]uuid.UUID, error) {
+func importContactPoints(ctx context.Context, q *sqlc.Queries, contacts []domain.ContactPoint) (map[uuid.UUID]uuid.UUID, error) {
 	ids := make(map[uuid.UUID]uuid.UUID, len(contacts))
 	for _, contact := range contacts {
 		id, err := q.UpsertImportContactPoint(ctx, sqlc.UpsertImportContactPointParams{
@@ -398,13 +397,24 @@ func importDataset(
 	ctx context.Context,
 	q *sqlc.Queries,
 	actorID string,
-	value metadata.Dataset,
+	value domain.DatasetMetadata,
 	groupIDs map[uuid.UUID]uuid.UUID,
 	organizationIDs, contactIDs map[uuid.UUID]uuid.UUID,
 	categoryIDs map[uuid.UUID]uuid.UUID,
 ) error {
-	groupID := groupIDs[value.Categories[0].Scheme.ID]
-	remapDatasetReferences(&value, organizationIDs, contactIDs, categoryIDs)
+	if len(value.Categories) == 0 {
+		return fmt.Errorf("dataset %q has no category group: %w", value.ID, domain.ErrInvalidImport)
+	}
+	groupID, ok := groupIDs[value.Categories[0].Scheme.ID]
+	if !ok {
+		return fmt.Errorf("dataset %q references unknown category scheme: %w", value.ID, domain.ErrInvalidImport)
+	}
+	valueInput := value.Input()
+	remapDatasetReferences(&valueInput, organizationIDs, contactIDs, categoryIDs)
+	valueInput, err := domain.NewDatasetInput(valueInput)
+	if err != nil {
+		return fmt.Errorf("validate imported dataset %q: %w", value.ID, err)
+	}
 
 	existing, err := q.GetImportDataset(ctx, value.ID)
 	switch {
@@ -417,7 +427,7 @@ func importDataset(
 		if createErr != nil {
 			return fmt.Errorf("create imported dataset %q: %w", value.ID, createErr)
 		}
-		params, buildErr := datasetdb.VersionParams(logical.ID, actorID, value)
+		params, buildErr := datasetdb.ToCreateVersionParams(logical.ID, actorID, valueInput)
 		if buildErr != nil {
 			return fmt.Errorf("build imported dataset version: %w", buildErr)
 		}
@@ -425,7 +435,7 @@ func importDataset(
 		if createErr != nil {
 			return fmt.Errorf("create imported draft %q: %w", value.ID, createErr)
 		}
-		if err := datasetdb.PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
+		if err := datasetdb.PersistChildren(ctx, q, version.ID, valueInput); err != nil {
 			return fmt.Errorf("persist imported dataset metadata: %w", err)
 		}
 		return nil
@@ -434,7 +444,7 @@ func importDataset(
 	case existing.GroupID != groupID:
 		return fmt.Errorf("dataset %q belongs to another group: %w", value.ID, domain.ErrImportConflict)
 	case existing.ActiveVersionID == nil:
-		params, buildErr := datasetdb.VersionParams(existing.ID, actorID, value)
+		params, buildErr := datasetdb.ToCreateVersionParams(existing.ID, actorID, valueInput)
 		if buildErr != nil {
 			return fmt.Errorf("build imported dataset version: %w", buildErr)
 		}
@@ -442,14 +452,14 @@ func importDataset(
 		if createErr != nil {
 			return fmt.Errorf("create imported draft %q: %w", value.ID, createErr)
 		}
-		if err := datasetdb.PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
+		if err := datasetdb.PersistChildren(ctx, q, version.ID, valueInput); err != nil {
 			return fmt.Errorf("persist imported dataset metadata: %w", err)
 		}
 		return nil
 	case *existing.ActiveStatus != sqlc.ResourceStatusDRAFT:
 		return fmt.Errorf("dataset %q has non-draft active change: %w", value.ID, domain.ErrImportConflict)
 	default:
-		params, buildErr := datasetdb.ReplaceParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, value)
+		params, buildErr := datasetdb.ToReplaceDraftParams(existing.ID, *existing.ActiveVersionID, *existing.ActiveRevision, valueInput)
 		if buildErr != nil {
 			return fmt.Errorf("build imported draft replacement: %w", buildErr)
 		}
@@ -460,33 +470,33 @@ func importDataset(
 		if err := q.DeleteLifecycleDatasetVersionChildren(ctx, &version.ID); err != nil {
 			return fmt.Errorf("clear imported draft %q: %w", value.ID, err)
 		}
-		if err := datasetdb.PersistDatasetChildren(ctx, q, version.ID, value); err != nil {
+		if err := datasetdb.PersistChildren(ctx, q, version.ID, valueInput); err != nil {
 			return fmt.Errorf("persist imported dataset metadata: %w", err)
 		}
 		return nil
 	}
 }
 
-func remapDatasetReferences(value *metadata.Dataset, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
-	for i := range value.Providers {
-		value.Providers[i].ID = organizationIDs[value.Providers[i].ID]
+func remapDatasetReferences(value *domain.DatasetInput, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
+	for i := range value.ProviderIDs {
+		value.ProviderIDs[i] = organizationIDs[value.ProviderIDs[i]]
 	}
-	for i := range value.ContactPoints {
-		value.ContactPoints[i].ID = contactIDs[value.ContactPoints[i].ID]
+	for i := range value.ContactPointIDs {
+		value.ContactPointIDs[i] = contactIDs[value.ContactPointIDs[i]]
 	}
-	for i := range value.Categories {
-		value.Categories[i].ID = categoryIDs[value.Categories[i].ID]
+	for i := range value.CategoryIDs {
+		value.CategoryIDs[i] = categoryIDs[value.CategoryIDs[i]]
 	}
 	for i := range value.Distributions {
 		service := value.Distributions[i].WebService
 		if service == nil {
 			continue
 		}
-		if service.Provider != nil {
-			service.Provider.ID = organizationIDs[service.Provider.ID]
+		if service.ProviderID != nil {
+			*service.ProviderID = organizationIDs[*service.ProviderID]
 		}
-		for j := range service.ContactPoints {
-			service.ContactPoints[j].ID = contactIDs[service.ContactPoints[j].ID]
+		for j := range service.ContactPointIDs {
+			service.ContactPointIDs[j] = contactIDs[service.ContactPointIDs[j]]
 		}
 	}
 }
