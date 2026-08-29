@@ -20,7 +20,7 @@ const (
 	webSessionCookie = "session_token"
 	csrfCookie       = "csrf_token"
 	webSessionTTL    = 24 * time.Hour
-	accessTokenTTL   = 15 * time.Minute
+	accessTokenTTL   = 24 * time.Hour
 	refreshTokenTTL  = 24 * time.Hour
 )
 
@@ -890,9 +890,4 @@ func issuerURL(r *http.Request) string {
 	}
 
 	return scheme + "://" + host + "/oauth2"
-}
-
-func originURL(r *http.Request) string {
-	issuer := issuerURL(r)
-	return strings.TrimSuffix(issuer, "/oauth2")
 }
