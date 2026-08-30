@@ -2111,11 +2111,14 @@ type ApiSearchResourcesRequest struct {
 	xEPOSUserID      *string
 	q                *string
 	type_            *[]ResourceType
+	concept          *[]string
+	groupId          *string
 	spatialFilter    *string
 	dateFrom         *time.Time
 	dateTo           *time.Time
 	provider         *string
 	keywords         *string
+	editorId         *string
 	versioningStatus *[]string
 }
 
@@ -2132,6 +2135,18 @@ func (r ApiSearchResourcesRequest) Q(q string) ApiSearchResourcesRequest {
 // Comma-separated resource types.
 func (r ApiSearchResourcesRequest) Type_(type_ []ResourceType) ApiSearchResourcesRequest {
 	r.type_ = &type_
+	return r
+}
+
+// Comma-separated group concepts. Resources matching any value are returned.
+func (r ApiSearchResourcesRequest) Concept(concept []string) ApiSearchResourcesRequest {
+	r.concept = &concept
+	return r
+}
+
+// Filter resources belonging to a group.
+func (r ApiSearchResourcesRequest) GroupId(groupId string) ApiSearchResourcesRequest {
+	r.groupId = &groupId
 	return r
 }
 
@@ -2160,6 +2175,12 @@ func (r ApiSearchResourcesRequest) Provider(provider string) ApiSearchResourcesR
 // Comma-separated keywords. All values must match.
 func (r ApiSearchResourcesRequest) Keywords(keywords string) ApiSearchResourcesRequest {
 	r.keywords = &keywords
+	return r
+}
+
+// Filter resources by the user who created the resource version.
+func (r ApiSearchResourcesRequest) EditorId(editorId string) ApiSearchResourcesRequest {
+	r.editorId = &editorId
 	return r
 }
 
@@ -2218,6 +2239,12 @@ func (a *ResourcesAPIService) SearchResourcesExecute(r ApiSearchResourcesRequest
 	if r.type_ != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "csv")
 	}
+	if r.concept != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "concept", r.concept, "form", "csv")
+	}
+	if r.groupId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "groupId", r.groupId, "form", "")
+	}
 	if r.spatialFilter != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "spatialFilter", r.spatialFilter, "form", "")
 	}
@@ -2232,6 +2259,9 @@ func (a *ResourcesAPIService) SearchResourcesExecute(r ApiSearchResourcesRequest
 	}
 	if r.keywords != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "keywords", r.keywords, "form", "")
+	}
+	if r.editorId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "editorId", r.editorId, "form", "")
 	}
 	if r.versioningStatus != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "versioningStatus", r.versioningStatus, "form", "csv")

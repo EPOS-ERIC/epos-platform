@@ -1,16 +1,39 @@
 package domain
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/twpayne/go-geom"
+	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
 // NewDiscoveryFilter validates and normalizes discovery search criteria.
 func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	value.Query = normalizedOptionalString(value.Query)
-	value.SpatialFilter = normalizedOptionalString(value.SpatialFilter)
+	value.EditorID = normalizedOptionalString(value.EditorID)
+	if err := validateSpatialFilter(value.SpatialFilter); err != nil {
+		return DiscoveryFilter{}, err
+	}
+	concepts := make([]TopLevelConcept, 0, len(value.Concepts))
+	for _, concept := range value.Concepts {
+		concept = TopLevelConcept(strings.ToUpper(strings.TrimSpace(string(concept))))
+		if concept == "" {
+			continue
+		}
+		if !concept.Valid() {
+			return DiscoveryFilter{}, ErrInvalidDiscovery
+		}
+		if !slices.Contains(concepts, concept) {
+			concepts = append(concepts, concept)
+		}
+	}
+	value.Concepts = concepts
+	if value.GroupID != nil && *value.GroupID == uuid.Nil {
+		return DiscoveryFilter{}, ErrInvalidDiscovery
+	}
 
 	types := make([]ResourceType, 0, len(value.Types))
 	for _, resourceType := range value.Types {
@@ -58,6 +81,71 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	}
 
 	return value, nil
+}
+
+// NewSpatialFilter parses and validates a WKT POINT or POLYGON filter.
+func NewSpatialFilter(value string) (*SpatialFilter, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+
+	geometry, err := wkt.Unmarshal(value)
+	if err != nil {
+		return nil, fmt.Errorf("invalid spatial filter: %w: %w", err, ErrInvalidDiscovery)
+	}
+
+	filter := &SpatialFilter{
+		Point:   nil,
+		Polygon: nil,
+	}
+	switch geometry := geometry.(type) {
+	case *geom.Point:
+		filter.Point = &Coordinate{Longitude: geometry.X(), Latitude: geometry.Y()}
+	case *geom.Polygon:
+		rings := geometry.Coords()
+		if len(rings) != 1 {
+			return nil, fmt.Errorf("spatial filter polygon must have one ring: %w", ErrInvalidDiscovery)
+		}
+		filter.Polygon = make([]Coordinate, len(rings[0]))
+		for i, coordinate := range rings[0] {
+			filter.Polygon[i] = Coordinate{Longitude: coordinate.X(), Latitude: coordinate.Y()}
+		}
+	default:
+		return nil, fmt.Errorf("spatial filter must be POINT or POLYGON: %w", ErrInvalidDiscovery)
+	}
+
+	if err := validateSpatialFilter(filter); err != nil {
+		return nil, err
+	}
+	return filter, nil
+}
+
+func validateSpatialFilter(value *SpatialFilter) error {
+	if value == nil {
+		return nil
+	}
+	if value.Point != nil && len(value.Polygon) != 0 {
+		return fmt.Errorf("spatial filter cannot contain both point and polygon: %w", ErrInvalidDiscovery)
+	}
+	if value.Point != nil {
+		if err := validateCoordinate(*value.Point); err != nil {
+			return fmt.Errorf("spatial filter point: %w: %w", err, ErrInvalidDiscovery)
+		}
+		return nil
+	}
+	if len(value.Polygon) < 4 {
+		return fmt.Errorf("spatial filter polygon must contain at least four coordinates: %w", ErrInvalidDiscovery)
+	}
+	for _, coordinate := range value.Polygon {
+		if err := validateCoordinate(coordinate); err != nil {
+			return fmt.Errorf("spatial filter polygon: %w: %w", err, ErrInvalidDiscovery)
+		}
+	}
+	if value.Polygon[0] != value.Polygon[len(value.Polygon)-1] {
+		return fmt.Errorf("spatial filter polygon must be closed: %w", ErrInvalidDiscovery)
+	}
+	return nil
 }
 
 // NewDiscoveryCandidate validates a persisted discovery result.

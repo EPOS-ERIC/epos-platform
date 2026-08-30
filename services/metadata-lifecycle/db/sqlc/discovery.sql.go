@@ -22,12 +22,21 @@ SELECT
 FROM
     software_applications AS resource
     JOIN software_application_versions AS version ON version.software_application_id = resource.id
+    JOIN groups AS resource_group ON resource_group.id = resource.group_id
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
-        $2::text IS NULL
+        cardinality($2::text []) = 0
+        OR resource_group.concept = ANY($2::text []::top_level_concept [])
+    )
+    AND (
+        $3::uuid IS NULL
+        OR resource.group_id = $3::uuid
+    )
+    AND (
+        $4::text IS NULL
         OR lower(
             concat_ws(
                 ' ',
@@ -35,10 +44,10 @@ WHERE
                 version.description,
                 version.keywords
             )
-        ) LIKE '%' || lower($2::text) || '%'
+        ) LIKE '%' || lower($4::text) || '%'
     )
     AND (
-        cardinality($3::uuid []) = 0
+        cardinality($5::uuid []) = 0
         OR EXISTS (
             SELECT
                 1
@@ -46,16 +55,16 @@ WHERE
                 software_application_version_creators AS creator
             WHERE
                 creator.software_application_version_id = version.id
-                AND creator.organization_id = ANY($3::uuid [])
+                AND creator.organization_id = ANY($5::uuid [])
         )
     )
     AND (
-        cardinality($4::text []) = 0
+        cardinality($6::text []) = 0
         OR NOT EXISTS (
             SELECT
                 1
             FROM
-                unnest($4::text []) AS requested(keyword)
+                unnest($6::text []) AS requested(keyword)
             WHERE
                 NOT EXISTS (
                     SELECT
@@ -68,16 +77,23 @@ WHERE
         )
     )
     AND (
-        cardinality($5::text []) = 0
-        OR 'software-application' = ANY($5::text [])
+        $7::text IS NULL
+        OR version.created_by = $7::text
+    )
+    AND (
+        cardinality($8::text []) = 0
+        OR 'software-application' = ANY($8::text [])
     )
 `
 
 type SearchDiscoveryApplicationsParams struct {
 	VersioningStatuses []string
+	Concepts           []string
+	GroupID            *uuid.UUID
 	Query              *string
 	ProviderIds        []uuid.UUID
 	Keywords           []string
+	EditorID           *string
 	ResourceTypes      []string
 }
 
@@ -92,9 +108,12 @@ type SearchDiscoveryApplicationsRow struct {
 func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDiscoveryApplicationsParams) ([]SearchDiscoveryApplicationsRow, error) {
 	rows, err := q.db.Query(ctx, searchDiscoveryApplications,
 		arg.VersioningStatuses,
+		arg.Concepts,
+		arg.GroupID,
 		arg.Query,
 		arg.ProviderIds,
 		arg.Keywords,
+		arg.EditorID,
 		arg.ResourceTypes,
 	)
 	if err != nil {
@@ -131,12 +150,21 @@ SELECT
 FROM
     datasets AS dataset
     JOIN dataset_versions AS version ON version.dataset_id = dataset.id
+    JOIN groups AS resource_group ON resource_group.id = dataset.group_id
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
-        $2::text IS NULL
+        cardinality($2::text []) = 0
+        OR resource_group.concept = ANY($2::text []::top_level_concept [])
+    )
+    AND (
+        $3::uuid IS NULL
+        OR dataset.group_id = $3::uuid
+    )
+    AND (
+        $4::text IS NULL
         OR lower(
             concat_ws(
                 ' ',
@@ -144,31 +172,31 @@ WHERE
                 version.description,
                 version.keywords
             )
-        ) LIKE '%' || lower($2::text) || '%'
+        ) LIKE '%' || lower($4::text) || '%'
     )
     AND (
-        $3::text IS NULL
+        $5::text IS NULL
         OR ST_Intersects(
             version.spatial_point,
-            ST_GeomFromText($3::text, 4326)
+            ST_GeomFromText($5::text, 4326)
         )
         OR ST_Intersects(
             version.spatial_polygon,
-            ST_GeomFromText($3::text, 4326)
+            ST_GeomFromText($5::text, 4326)
         )
     )
     AND (
-        $4::timestamptz IS NULL
+        $6::timestamptz IS NULL
         OR version.temporal_end IS NULL
-        OR version.temporal_end >= $4::timestamptz
+        OR version.temporal_end >= $6::timestamptz
     )
     AND (
-        $5::timestamptz IS NULL
+        $7::timestamptz IS NULL
         OR version.temporal_start IS NULL
-        OR version.temporal_start <= $5::timestamptz
+        OR version.temporal_start <= $7::timestamptz
     )
     AND (
-        cardinality($6::uuid []) = 0
+        cardinality($8::uuid []) = 0
         OR EXISTS (
             SELECT
                 1
@@ -176,16 +204,16 @@ WHERE
                 dataset_version_providers AS provider
             WHERE
                 provider.dataset_version_id = version.id
-                AND provider.organization_id = ANY($6::uuid [])
+                AND provider.organization_id = ANY($8::uuid [])
         )
     )
     AND (
-        cardinality($7::text []) = 0
+        cardinality($9::text []) = 0
         OR NOT EXISTS (
             SELECT
                 1
             FROM
-                unnest($7::text []) AS requested(keyword)
+                unnest($9::text []) AS requested(keyword)
             WHERE
                 NOT EXISTS (
                     SELECT
@@ -198,8 +226,12 @@ WHERE
         )
     )
     AND (
-        cardinality($8::text []) = 0
-        OR 'dataset' = ANY($8::text [])
+        $10::text IS NULL
+        OR version.created_by = $10::text
+    )
+    AND (
+        cardinality($11::text []) = 0
+        OR 'dataset' = ANY($11::text [])
     )
 ORDER BY
     lower(version.title),
@@ -209,12 +241,15 @@ ORDER BY
 
 type SearchDiscoveryDatasetsParams struct {
 	VersioningStatuses []string
+	Concepts           []string
+	GroupID            *uuid.UUID
 	Query              *string
 	SpatialFilter      *string
 	DateFrom           *time.Time
 	DateTo             *time.Time
 	ProviderIds        []uuid.UUID
 	Keywords           []string
+	EditorID           *string
 	ResourceTypes      []string
 }
 
@@ -229,12 +264,15 @@ type SearchDiscoveryDatasetsRow struct {
 func (q *Queries) SearchDiscoveryDatasets(ctx context.Context, arg SearchDiscoveryDatasetsParams) ([]SearchDiscoveryDatasetsRow, error) {
 	rows, err := q.db.Query(ctx, searchDiscoveryDatasets,
 		arg.VersioningStatuses,
+		arg.Concepts,
+		arg.GroupID,
 		arg.Query,
 		arg.SpatialFilter,
 		arg.DateFrom,
 		arg.DateTo,
 		arg.ProviderIds,
 		arg.Keywords,
+		arg.EditorID,
 		arg.ResourceTypes,
 	)
 	if err != nil {
@@ -271,12 +309,21 @@ SELECT
 FROM
     software_source_codes AS resource
     JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
+    JOIN groups AS resource_group ON resource_group.id = resource.group_id
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
-        $2::text IS NULL
+        cardinality($2::text []) = 0
+        OR resource_group.concept = ANY($2::text []::top_level_concept [])
+    )
+    AND (
+        $3::uuid IS NULL
+        OR resource.group_id = $3::uuid
+    )
+    AND (
+        $4::text IS NULL
         OR lower(
             concat_ws(
                 ' ',
@@ -284,10 +331,10 @@ WHERE
                 version.description,
                 version.keywords
             )
-        ) LIKE '%' || lower($2::text) || '%'
+        ) LIKE '%' || lower($4::text) || '%'
     )
     AND (
-        cardinality($3::uuid []) = 0
+        cardinality($5::uuid []) = 0
         OR EXISTS (
             SELECT
                 1
@@ -295,16 +342,16 @@ WHERE
                 software_source_code_version_creators AS creator
             WHERE
                 creator.software_source_code_version_id = version.id
-                AND creator.organization_id = ANY($3::uuid [])
+                AND creator.organization_id = ANY($5::uuid [])
         )
     )
     AND (
-        cardinality($4::text []) = 0
+        cardinality($6::text []) = 0
         OR NOT EXISTS (
             SELECT
                 1
             FROM
-                unnest($4::text []) AS requested(keyword)
+                unnest($6::text []) AS requested(keyword)
             WHERE
                 NOT EXISTS (
                     SELECT
@@ -317,16 +364,23 @@ WHERE
         )
     )
     AND (
-        cardinality($5::text []) = 0
-        OR 'software-source-code' = ANY($5::text [])
+        $7::text IS NULL
+        OR version.created_by = $7::text
+    )
+    AND (
+        cardinality($8::text []) = 0
+        OR 'software-source-code' = ANY($8::text [])
     )
 `
 
 type SearchDiscoverySourceCodesParams struct {
 	VersioningStatuses []string
+	Concepts           []string
+	GroupID            *uuid.UUID
 	Query              *string
 	ProviderIds        []uuid.UUID
 	Keywords           []string
+	EditorID           *string
 	ResourceTypes      []string
 }
 
@@ -341,9 +395,12 @@ type SearchDiscoverySourceCodesRow struct {
 func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDiscoverySourceCodesParams) ([]SearchDiscoverySourceCodesRow, error) {
 	rows, err := q.db.Query(ctx, searchDiscoverySourceCodes,
 		arg.VersioningStatuses,
+		arg.Concepts,
+		arg.GroupID,
 		arg.Query,
 		arg.ProviderIds,
 		arg.Keywords,
+		arg.EditorID,
 		arg.ResourceTypes,
 	)
 	if err != nil {

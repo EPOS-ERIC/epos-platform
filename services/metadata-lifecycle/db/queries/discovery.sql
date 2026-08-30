@@ -8,9 +8,20 @@ SELECT
 FROM
     datasets AS dataset
     JOIN dataset_versions AS version ON version.dataset_id = dataset.id
+    JOIN groups AS resource_group ON resource_group.id = dataset.group_id
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
+    )
+    AND (
+        cardinality(sqlc.arg(concepts)::text []) = 0
+        OR resource_group.concept = ANY(
+            sqlc.arg(concepts)::text []::top_level_concept []
+        )
+    )
+    AND (
+        sqlc.narg(group_id)::uuid IS NULL
+        OR dataset.group_id = sqlc.narg(group_id)::uuid
     )
     AND (
         sqlc.narg(query)::text IS NULL
@@ -75,6 +86,10 @@ WHERE
         )
     )
     AND (
+        sqlc.narg(editor_id)::text IS NULL
+        OR version.created_by = sqlc.narg(editor_id)::text
+    )
+    AND (
         cardinality(sqlc.arg(resource_types)::text []) = 0
         OR 'dataset' = ANY(sqlc.arg(resource_types)::text [])
     )
@@ -93,9 +108,20 @@ SELECT
 FROM
     software_applications AS resource
     JOIN software_application_versions AS version ON version.software_application_id = resource.id
+    JOIN groups AS resource_group ON resource_group.id = resource.group_id
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
+    )
+    AND (
+        cardinality(sqlc.arg(concepts)::text []) = 0
+        OR resource_group.concept = ANY(
+            sqlc.arg(concepts)::text []::top_level_concept []
+        )
+    )
+    AND (
+        sqlc.narg(group_id)::uuid IS NULL
+        OR resource.group_id = sqlc.narg(group_id)::uuid
     )
     AND (
         sqlc.narg(query)::text IS NULL
@@ -139,6 +165,10 @@ WHERE
         )
     )
     AND (
+        sqlc.narg(editor_id)::text IS NULL
+        OR version.created_by = sqlc.narg(editor_id)::text
+    )
+    AND (
         cardinality(sqlc.arg(resource_types)::text []) = 0
         OR 'software-application' = ANY(sqlc.arg(resource_types)::text [])
     );
@@ -153,9 +183,20 @@ SELECT
 FROM
     software_source_codes AS resource
     JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
+    JOIN groups AS resource_group ON resource_group.id = resource.group_id
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
+    )
+    AND (
+        cardinality(sqlc.arg(concepts)::text []) = 0
+        OR resource_group.concept = ANY(
+            sqlc.arg(concepts)::text []::top_level_concept []
+        )
+    )
+    AND (
+        sqlc.narg(group_id)::uuid IS NULL
+        OR resource.group_id = sqlc.narg(group_id)::uuid
     )
     AND (
         sqlc.narg(query)::text IS NULL
@@ -197,6 +238,10 @@ WHERE
                         lower(trim(stored.keyword)) = lower(trim(requested.keyword))
                 )
         )
+    )
+    AND (
+        sqlc.narg(editor_id)::text IS NULL
+        OR version.created_by = sqlc.narg(editor_id)::text
     )
     AND (
         cardinality(sqlc.arg(resource_types)::text []) = 0

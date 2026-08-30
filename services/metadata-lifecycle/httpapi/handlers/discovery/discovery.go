@@ -36,6 +36,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
+	log.DebugContext(r.Context(), "discovery search", "filter", filter)
 	items, err := h.service.Search(r.Context(), actor, filter)
 	if err != nil {
 		switch {
@@ -51,6 +52,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	log.DebugContext(r.Context(), "discovery search succeeded", "items", len(items))
 
 	transport.WriteJSON(w, http.StatusOK, toResponse(items))
 }

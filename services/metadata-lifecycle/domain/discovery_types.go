@@ -10,12 +10,21 @@ import (
 type DiscoveryFilter struct {
 	Query              *string
 	Types              []ResourceType
-	SpatialFilter      *string
+	Concepts           []TopLevelConcept
+	GroupID            *uuid.UUID
+	SpatialFilter      *SpatialFilter
 	DateFrom           *time.Time
 	DateTo             *time.Time
 	Providers          []uuid.UUID
 	Keywords           []string
+	EditorID           *string
 	VersioningStatuses []Status
+}
+
+// SpatialFilter contains a validated WGS84 geometry used for discovery.
+type SpatialFilter struct {
+	Point   *Coordinate
+	Polygon []Coordinate
 }
 
 // DiscoveryCandidate is the resource summary returned by persistence.

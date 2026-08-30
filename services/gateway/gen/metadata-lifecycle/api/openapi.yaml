@@ -946,6 +946,30 @@ paths:
             $ref: "#/components/schemas/ResourceType"
           type: array
         style: form
+      - description: Comma-separated group concepts. Resources matching any value
+          are returned.
+        explode: false
+        in: query
+        name: concept
+        required: false
+        schema:
+          items:
+            enum:
+            - DATA
+            - FACILITIES
+            - SOFTWARE
+            type: string
+          type: array
+        style: form
+      - description: Filter resources belonging to a group.
+        explode: true
+        in: query
+        name: groupId
+        required: false
+        schema:
+          format: uuid
+          type: string
+        style: form
       - description: WKT geometry intersecting dataset coverage.
         explode: true
         in: query
@@ -982,6 +1006,14 @@ paths:
         explode: true
         in: query
         name: keywords
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter resources by the user who created the resource version.
+        explode: true
+        in: query
+        name: editorId
         required: false
         schema:
           type: string
@@ -3854,6 +3886,32 @@ components:
           $ref: "#/components/schemas/ResourceType"
         type: array
       style: form
+    SearchConcept:
+      description: Comma-separated group concepts. Resources matching any value are
+        returned.
+      explode: false
+      in: query
+      name: concept
+      required: false
+      schema:
+        items:
+          enum:
+          - DATA
+          - FACILITIES
+          - SOFTWARE
+          type: string
+        type: array
+      style: form
+    SearchGroup:
+      description: Filter resources belonging to a group.
+      explode: true
+      in: query
+      name: groupId
+      required: false
+      schema:
+        format: uuid
+        type: string
+      style: form
     SearchSpatialFilter:
       description: WKT geometry intersecting dataset coverage.
       explode: true
@@ -3895,6 +3953,15 @@ components:
       explode: true
       in: query
       name: keywords
+      required: false
+      schema:
+        type: string
+      style: form
+    SearchEditor:
+      description: Filter resources by the user who created the resource version.
+      explode: true
+      in: query
+      name: editorId
       required: false
       schema:
         type: string

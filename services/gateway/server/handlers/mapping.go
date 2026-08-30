@@ -635,6 +635,12 @@ var discoveryTypeNames = map[string]struct{}{
 	"software-source-code": {},
 }
 
+var discoveryConceptNames = map[string]struct{}{
+	"DATA":       {},
+	"FACILITIES": {},
+	"SOFTWARE":   {},
+}
+
 // TODO: use a domain level enum
 var discoveryStatusNames = map[string]struct{}{
 	"PUBLISHED": {},
@@ -661,6 +667,10 @@ func toDomainDiscoveryFilter(values url.Values) (domain.DiscoveryFilter, error) 
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
 	}
+	concepts, err := discoveryCSV(values["concept"], discoveryConceptNames, "concept")
+	if err != nil {
+		return domain.DiscoveryFilter{}, err
+	}
 	statuses, err := discoveryStatuses(values["versioningStatus"])
 	if err != nil {
 		return domain.DiscoveryFilter{}, err
@@ -669,11 +679,14 @@ func toDomainDiscoveryFilter(values url.Values) (domain.DiscoveryFilter, error) 
 	return domain.DiscoveryFilter{
 		Query:              strings.TrimSpace(values.Get("q")),
 		Types:              types,
+		Concepts:           concepts,
+		GroupID:            strings.TrimSpace(values.Get("groupId")),
 		SpatialFilter:      strings.TrimSpace(values.Get("spatialFilter")),
 		DateFrom:           dateFrom,
 		DateTo:             dateTo,
 		Provider:           strings.Join(splitDiscoveryCSV(values["provider"]), ","),
 		Keywords:           strings.Join(splitDiscoveryCSV(values["keywords"]), ","),
+		EditorID:           strings.TrimSpace(values.Get("editorId")),
 		VersioningStatuses: statuses,
 	}, nil
 }

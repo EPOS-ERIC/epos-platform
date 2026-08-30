@@ -5,11 +5,14 @@ import "time"
 type DiscoveryFilter struct {
 	Query              string
 	Types              []string
+	Concepts           []string
+	GroupID            string
 	SpatialFilter      string
 	DateFrom           *time.Time
 	DateTo             *time.Time
 	Provider           string
 	Keywords           string
+	EditorID           string
 	VersioningStatuses []string
 }
 

@@ -7,9 +7,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 )
+
+var log = logging.Get("discovery-service")
 
 type Repository interface {
 	Search(context.Context, domain.DiscoveryFilter) ([]domain.DiscoveryCandidate, error)
@@ -71,10 +74,13 @@ func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain
 		}
 	}
 
+	// TODO: don't do the query before knowing what the user has access to. better to have custom query that returns correct things maybe?
 	candidates, err := s.repository.Search(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("search discovery: %w", err)
 	}
+
+	log.DebugContext(ctx, "discovery search", "candidates", len(candidates))
 
 	items := make([]domain.DiscoveryItem, 0, len(candidates))
 	for _, candidate := range candidates {
@@ -93,6 +99,8 @@ func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain
 
 		items = append(items, item)
 	}
+
+	log.DebugContext(ctx, "discovery search", "items filtered", len(items))
 
 	slices.SortFunc(items, func(left, right domain.DiscoveryItem) int {
 		leftName, rightName := strings.ToLower(left.Name), strings.ToLower(right.Name)

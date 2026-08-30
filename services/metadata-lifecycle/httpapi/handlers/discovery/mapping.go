@@ -9,8 +9,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"github.com/twpayne/go-geom"
-	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
 func filterFromRequest(r *http.Request) (domain.DiscoveryFilter, error) {
@@ -23,6 +21,14 @@ func filterFromRequest(r *http.Request) (domain.DiscoveryFilter, error) {
 	if err != nil {
 		return domain.DiscoveryFilter{}, fmt.Errorf("parse type: %w", err)
 	}
+	var groupID *uuid.UUID
+	if value := values.Get("groupId"); value != "" {
+		parsed, err := uuid.Parse(value)
+		if err != nil {
+			return domain.DiscoveryFilter{}, fmt.Errorf("parse groupId: %w", err)
+		}
+		groupID = &parsed
+	}
 	providers, err := parseUUIDs(split(values["provider"]))
 	if err != nil {
 		return domain.DiscoveryFilter{}, fmt.Errorf("parse provider: %w", err)
@@ -31,19 +37,25 @@ func filterFromRequest(r *http.Request) (domain.DiscoveryFilter, error) {
 	if err != nil {
 		return domain.DiscoveryFilter{}, fmt.Errorf("parse date range: %w", err)
 	}
-	spatialFilter, err := parseSpatialFilter(values.Get("spatialFilter"))
-	if err != nil {
-		return domain.DiscoveryFilter{}, err
+	var spatialFilter *domain.SpatialFilter
+	if value := values.Get("spatialFilter"); value != "" {
+		spatialFilter, err = domain.NewSpatialFilter(value)
+		if err != nil {
+			return domain.DiscoveryFilter{}, fmt.Errorf("parse spatialFilter: %w", err)
+		}
 	}
 
 	filter, err := domain.NewDiscoveryFilter(domain.DiscoveryFilter{
 		Query:              new(values.Get("q")),
 		Types:              types,
+		Concepts:           parseConcepts(split(values["concept"])),
+		GroupID:            groupID,
 		SpatialFilter:      spatialFilter,
 		DateFrom:           from,
 		DateTo:             to,
 		Providers:          providers,
 		Keywords:           split(values["keywords"]),
+		EditorID:           new(values.Get("editorId")),
 		VersioningStatuses: statuses,
 	})
 	if err != nil {
@@ -52,20 +64,12 @@ func filterFromRequest(r *http.Request) (domain.DiscoveryFilter, error) {
 	return filter, nil
 }
 
-func parseSpatialFilter(value string) (*string, error) {
-	if value == "" {
-		return nil, nil
+func parseConcepts(values []string) []domain.TopLevelConcept {
+	result := make([]domain.TopLevelConcept, 0, len(values))
+	for _, value := range values {
+		result = append(result, domain.TopLevelConcept(value))
 	}
-	geometry, err := wkt.Unmarshal(value)
-	if err != nil {
-		return nil, fmt.Errorf("invalid spatialFilter: %w", domain.ErrInvalidDiscovery)
-	}
-	switch geometry.(type) {
-	case *geom.Point, *geom.Polygon:
-		return &value, nil
-	default:
-		return nil, fmt.Errorf("spatialFilter must be POINT or POLYGON: %w", domain.ErrInvalidDiscovery)
-	}
+	return result
 }
 
 func parseStatuses(values []string) ([]domain.Status, error) {

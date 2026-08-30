@@ -359,11 +359,14 @@ paths:
         - { $ref: "#/components/parameters/ActorOptional" }
         - { $ref: "#/components/parameters/SearchQuery" }
         - { $ref: "#/components/parameters/SearchType" }
+        - { $ref: "#/components/parameters/SearchConcept" }
+        - { $ref: "#/components/parameters/SearchGroup" }
         - { $ref: "#/components/parameters/SearchSpatialFilter" }
         - { $ref: "#/components/parameters/SearchDateFrom" }
         - { $ref: "#/components/parameters/SearchDateTo" }
         - { $ref: "#/components/parameters/SearchProvider" }
         - { $ref: "#/components/parameters/SearchKeywords" }
+        - { $ref: "#/components/parameters/SearchEditor" }
         - { $ref: "#/components/parameters/SearchVersioningStatus" }
       responses:
         "200":
@@ -1134,6 +1137,24 @@ components:
         items: { $ref: "#/components/schemas/ResourceType" }
       style: form
       explode: false
+    SearchConcept:
+      name: concept
+      in: query
+      required: false
+      description: Comma-separated group concepts. Resources matching any value are returned.
+      schema:
+        type: array
+        items:
+          type: string
+          enum: [DATA, FACILITIES, SOFTWARE]
+      style: form
+      explode: false
+    SearchGroup:
+      name: groupId
+      in: query
+      required: false
+      description: Filter resources belonging to a group.
+      schema: { type: string, format: uuid }
     SearchSpatialFilter:
       name: spatialFilter
       in: query
@@ -1161,6 +1182,12 @@ components:
       in: query
       required: false
       description: Comma-separated keywords. All values must match.
+      schema: { type: string }
+    SearchEditor:
+      name: editorId
+      in: query
+      required: false
+      description: Filter resources by the user who created the resource version.
       schema: { type: string }
     SearchVersioningStatus:
       name: versioningStatus
@@ -1756,26 +1783,14 @@ components:
         download_url: { type: string, nullable: true }
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
-        creators:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        creators: { type: array, items: { type: string, format: uuid } }
         identifiers:
           {
             type: array,
             items: { $ref: "#/components/schemas/IdentifierDraft" },
           }
-        categories:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        categories: { type: array, items: { type: string, format: uuid } }
+        contact_points: { type: array, items: { type: string, format: uuid } }
     SoftwareSourceCodeDraftMetadata:
       type: object
       required: [name]
@@ -1790,26 +1805,14 @@ components:
         runtime_platform: { type: string, nullable: true }
         main_entity_of_page: { type: string, nullable: true }
         version: { type: string, nullable: true }
-        creators:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        creators: { type: array, items: { type: string, format: uuid } }
         identifiers:
           {
             type: array,
             items: { $ref: "#/components/schemas/IdentifierDraft" },
           }
-        categories:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        categories: { type: array, items: { type: string, format: uuid } }
+        contact_points: { type: array, items: { type: string, format: uuid } }
     SoftwareApplicationMetadata:
       type: object
       required:
@@ -1842,11 +1845,7 @@ components:
         identifiers:
           { type: array, items: { $ref: "#/components/schemas/Identifier" } }
         contact_points:
-          {
-            type: array,
-            nullable: true,
-            items: { type: string, format: uuid },
-          }
+          { type: array, nullable: true, items: { type: string, format: uuid } }
         categories:
           {
             type: array,
@@ -1885,11 +1884,7 @@ components:
         identifiers:
           { type: array, items: { $ref: "#/components/schemas/Identifier" } }
         contact_points:
-          {
-            type: array,
-            nullable: true,
-            items: { type: string, format: uuid },
-          }
+          { type: array, nullable: true, items: { type: string, format: uuid } }
         categories:
           {
             type: array,
@@ -2053,21 +2048,9 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/IdentifierDraft" },
           }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        providers:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        categories:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        contact_points: { type: array, items: { type: string, format: uuid } }
+        providers: { type: array, items: { type: string, format: uuid } }
+        categories: { type: array, items: { type: string, format: uuid } }
         created: { type: string, format: date-time, nullable: true }
         updated: { type: string, format: date-time, nullable: true }
     DatasetMetadata:
@@ -2099,11 +2082,7 @@ components:
         persistent_identifiers:
           { type: array, items: { $ref: "#/components/schemas/Identifier" } }
         contact_points:
-          {
-            type: array,
-            nullable: true,
-            items: { type: string, format: uuid },
-          }
+          { type: array, nullable: true, items: { type: string, format: uuid } }
         providers:
           {
             type: array,
@@ -2217,13 +2196,12 @@ components:
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/Spatial" }
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
-        contact_points:
+        contact_points: { type: array, items: { type: string, format: uuid } }
+        parameters:
           {
             type: array,
-            items: { type: string, format: uuid },
+            items: { $ref: "#/components/schemas/ParameterDraft" },
           }
-        parameters:
-          { type: array, items: { $ref: "#/components/schemas/ParameterDraft" } }
     Parameter:
       oneOf:
         - { $ref: "#/components/schemas/StringParameter" }
@@ -2282,7 +2260,8 @@ components:
       }
     ParameterDraftMetadata:
       type: object
-      required: [kind, variable, property, label, required, multiple_values, read_only]
+      required:
+        [kind, variable, property, label, required, multiple_values, read_only]
       properties:
         kind: { $ref: "#/components/schemas/ParameterKind" }
         variable: { type: string }
@@ -2470,11 +2449,7 @@ components:
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/Spatial" }
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        contact_points: { type: array, items: { type: string, format: uuid } }
     DownloadableFile:
       {
         type: object,
@@ -2513,11 +2488,7 @@ components:
       {
         type: object,
         required: [type, value],
-        properties:
-          {
-            type: { type: string },
-            value: { type: string },
-          },
+        properties: { type: { type: string }, value: { type: string } },
       }
     ContactPoint:
       {

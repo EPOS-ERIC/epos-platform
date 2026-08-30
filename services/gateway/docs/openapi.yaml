@@ -101,6 +101,9 @@ paths:
       parameters:
         - $ref: "#/components/parameters/Q"
         - $ref: "#/components/parameters/TypeFilter"
+        - $ref: "#/components/parameters/ConceptFilter"
+        - $ref: "#/components/parameters/GroupFilter"
+        - $ref: "#/components/parameters/EditorFilter"
         - $ref: "#/components/parameters/SpatialFilter"
         - $ref: "#/components/parameters/DateFrom"
         - $ref: "#/components/parameters/DateTo"
@@ -1774,6 +1777,37 @@ components:
       style: form
       explode: false
 
+    ConceptFilter:
+      name: concept
+      in: query
+      required: false
+      description: |
+        Filter results to one or more catalogue concepts. Pass comma-separated
+        values in a single parameter: `?concept=DATA,SOFTWARE`.
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/DiscoveryConcept"
+      style: form
+      explode: false
+
+    GroupFilter:
+      name: groupId
+      in: query
+      required: false
+      description: Filter results to resources belonging to the specified group.
+      schema:
+        type: string
+        format: uuid
+
+    EditorFilter:
+      name: editorId
+      in: query
+      required: false
+      description: Filter results by the user who created the resource version.
+      schema:
+        type: string
+
     SpatialFilter:
       name: spatialFilter
       in: query
@@ -1999,6 +2033,11 @@ components:
         - software-application
         - software-source-code
 
+    DiscoveryConcept:
+      type: string
+      description: Catalogue concept used to classify a resource.
+      enum: [DATA, FACILITIES, SOFTWARE]
+
     VersioningStatus:
       type: string
       description: Lowercase lifecycle state returned by write operations.
@@ -2038,21 +2077,9 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/IdentifierDraft" },
           }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        providers:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        categories:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        contact_points: { type: array, items: { type: string, format: uuid } }
+        providers: { type: array, items: { type: string, format: uuid } }
+        categories: { type: array, items: { type: string, format: uuid } }
         created: { type: string, format: date-time, nullable: true }
         updated: { type: string, format: date-time, nullable: true }
 
@@ -2070,26 +2097,14 @@ components:
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
         main_entity_of_page: { type: string, format: uri }
-        creators:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        creators: { type: array, items: { type: string, format: uuid } }
         identifiers:
           {
             type: array,
             items: { $ref: "#/components/schemas/SoftwareIdentifier" },
           }
-        categories:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        categories: { type: array, items: { type: string, format: uuid } }
+        contact_points: { type: array, items: { type: string, format: uuid } }
 
     SoftwareSourceCodeDraftMetadata:
       type: object
@@ -2106,27 +2121,14 @@ components:
         runtime_platform: { type: string, nullable: true }
         main_entity_of_page: { type: string, format: uri }
         version: { type: string, nullable: true }
-        creators:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        creators: { type: array, items: { type: string, format: uuid } }
         identifiers:
           {
             type: array,
             items: { $ref: "#/components/schemas/SoftwareIdentifier" },
           }
-        categories:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
-
+        categories: { type: array, items: { type: string, format: uuid } }
+        contact_points: { type: array, items: { type: string, format: uuid } }
 
     SoftwareIdentifier:
       type: object
@@ -2205,11 +2207,7 @@ components:
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
-        contact_points:
-          {
-            type: array,
-            items: { type: string, format: uuid },
-          }
+        contact_points: { type: array, items: { type: string, format: uuid } }
 
     Parameter:
       oneOf:
@@ -2246,7 +2244,8 @@ components:
     ParameterDraftMetadata:
       type: object
       additionalProperties: false
-      required: [kind, variable, property, label, required, multiple_values, read_only]
+      required:
+        [kind, variable, property, label, required, multiple_values, read_only]
       properties:
         kind: { $ref: "#/components/schemas/ParameterKind" }
         variable: { type: string }

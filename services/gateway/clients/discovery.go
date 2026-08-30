@@ -24,6 +24,12 @@ func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string,
 	if len(filter.Types) != 0 {
 		request = request.Type_(toClientResourceTypes(filter.Types))
 	}
+	if len(filter.Concepts) != 0 {
+		request = request.Concept(filter.Concepts)
+	}
+	if filter.GroupID != "" {
+		request = request.GroupId(filter.GroupID)
+	}
 	if filter.SpatialFilter != "" {
 		request = request.SpatialFilter(filter.SpatialFilter)
 	}
@@ -39,12 +45,16 @@ func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string,
 	if filter.Keywords != "" {
 		request = request.Keywords(filter.Keywords)
 	}
+	if filter.EditorID != "" {
+		request = request.EditorId(filter.EditorID)
+	}
 	if len(filter.VersioningStatuses) != 0 {
 		request = request.VersioningStatus(filter.VersioningStatuses)
 	}
 
 	items, response, err := request.Execute()
 	if err != nil {
+		c.log.ErrorContext(ctx, "search metadata-lifecycle resources", "error", err)
 		return nil, wrapDiscoveryError("search metadata-lifecycle resources", response, err)
 	}
 
