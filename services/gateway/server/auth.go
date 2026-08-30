@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
@@ -73,7 +72,6 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Me
 			}
 
 			user := handlers.ToAPIUser(resolved)
-			ctx := logging.WithActor(r.Context(), user.ID)
 
 			span.SetAttributes(
 				attribute.String("auth.result", "authenticated"),
@@ -82,7 +80,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Me
 				attribute.Bool("enduser.is_global_admin", user.IsGlobalAdmin()),
 			)
 
-			ctx = handlers.WithAuthenticatedUser(ctx, user)
+			ctx := handlers.WithAuthenticatedUser(r.Context(), user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

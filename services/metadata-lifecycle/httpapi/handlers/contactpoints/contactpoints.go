@@ -32,7 +32,7 @@ func New(service service) *Handler {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -52,7 +52,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -73,7 +73,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -99,7 +99,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -131,7 +131,7 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}

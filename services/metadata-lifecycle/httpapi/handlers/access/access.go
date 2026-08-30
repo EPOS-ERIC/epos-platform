@@ -303,7 +303,7 @@ func (h *Handler) RevokePermission(w http.ResponseWriter, r *http.Request) {
 }
 
 func accessPath(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UUID, bool) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return "", uuid.Nil, false
 	}

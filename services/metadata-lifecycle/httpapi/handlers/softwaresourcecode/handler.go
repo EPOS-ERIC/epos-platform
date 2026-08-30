@@ -42,7 +42,7 @@ func New(service sourceCodeService) *Handler {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	actor, ok := transport.ActorValue(w, r)
+	actor, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -74,7 +74,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	actor, ok := transport.OptionalActorValue(w, r)
+	actor, ok := transport.OptionalActor(w, r)
 	if !ok {
 		return
 	}
@@ -207,7 +207,7 @@ func (h *Handler) Discard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
-	actor, ok := transport.ActorValue(w, r)
+	actor, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -246,7 +246,7 @@ func lifecycleIDs(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UU
 }
 
 func resourceIDs(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UUID, bool) {
-	actor, ok := transport.ActorValue(w, r)
+	actor, ok := transport.Actor(w, r)
 	if !ok {
 		return "", uuid.Nil, false
 	}

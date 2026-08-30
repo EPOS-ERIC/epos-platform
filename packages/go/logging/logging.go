@@ -29,16 +29,6 @@ var (
 
 var nonAlphaNum = regexp.MustCompile(`[^A-Z0-9]+`)
 
-type requestContextKey struct{}
-type actorContextKey struct{}
-
-// Request carries request-scoped metadata that should be attached to context-aware log records.
-type Request struct {
-	Method string
-	Path   string
-	Query  string
-}
-
 func parseLevel(value string) (slog.Level, bool) {
 	switch strings.ToUpper(value) {
 	case "DEBUG":
@@ -177,28 +167,6 @@ func Close() error {
 	return nil
 }
 
-// WithRequest returns a context enriched with request-scoped logging metadata.
-func WithRequest(ctx context.Context, request Request) context.Context {
-	return context.WithValue(ctx, requestContextKey{}, request)
-}
-
-// WithActor returns a context enriched with authenticated actor ID.
-func WithActor(ctx context.Context, actorID string) context.Context {
-	return context.WithValue(ctx, actorContextKey{}, actorID)
-}
-
-// RequestFromContext returns request-scoped logging metadata stored in ctx, if present.
-func RequestFromContext(ctx context.Context) (Request, bool) {
-	request, ok := ctx.Value(requestContextKey{}).(Request)
-	return request, ok
-}
-
-// ActorFromContext returns authenticated actor ID stored in ctx, if present.
-func ActorFromContext(ctx context.Context) (string, bool) {
-	actorID, ok := ctx.Value(actorContextKey{}).(string)
-	return actorID, ok
-}
-
 type contextHandler struct {
 	next slog.Handler
 }
@@ -208,33 +176,11 @@ func (h *contextHandler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h *contextHandler) Handle(ctx context.Context, record slog.Record) error {
-	request, hasRequest := RequestFromContext(ctx)
-	actorID, hasActor := ActorFromContext(ctx)
-	if !hasRequest && !hasActor {
-		return h.next.Handle(ctx, record)
-	}
-
 	enriched := record.Clone()
 	attrs := make([]slog.Attr, 0, 2)
 	requestAttrs := make([]any, 0, 4)
-	if hasRequest && request.Method != "" {
-		requestAttrs = append(requestAttrs, slog.String("method", request.Method))
-	}
-	if hasRequest && request.Path != "" {
-		requestAttrs = append(requestAttrs, slog.String("path", request.Path))
-	}
-	if hasRequest && request.Query != "" {
-		requestAttrs = append(requestAttrs, slog.String("query", request.Query))
-	}
 	if len(requestAttrs) > 0 {
 		attrs = append(attrs, slog.Group("request", requestAttrs...))
-	}
-	if hasActor {
-		actorAttrs := make([]any, 0, 1)
-		if actorID != "" {
-			actorAttrs = append(actorAttrs, slog.String("id", actorID))
-		}
-		attrs = append(attrs, slog.Group("actor", actorAttrs...))
 	}
 	if len(attrs) > 0 {
 		enriched.AddAttrs(attrs...)

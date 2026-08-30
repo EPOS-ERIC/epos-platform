@@ -26,7 +26,7 @@ func New(service Service) *Handler {
 }
 
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
-	actor, ok := transport.OptionalActorValue(w, r)
+	actor, ok := transport.OptionalActor(w, r)
 	if !ok {
 		return
 	}

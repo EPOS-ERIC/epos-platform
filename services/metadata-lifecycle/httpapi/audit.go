@@ -6,35 +6,35 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func auditMiddleware(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := logging.WithRequest(r.Context(), logging.Request{
-				Method: r.Method,
-				Path:   r.URL.Path,
-				Query:  r.URL.RawQuery,
-			})
-
-			if actorID := strings.TrimSpace(r.Header.Get(transport.ActorHeader)); actorID != "" {
-				ctx = logging.WithActor(ctx, actorID)
-			}
-
 			rw := &auditResponseWriter{
 				ResponseWriter: w,
 				status:         http.StatusOK,
 				wroteHeader:    false,
 			}
-			next.ServeHTTP(rw, r.WithContext(ctx))
+			next.ServeHTTP(rw, r)
+
+			span := trace.SpanFromContext(r.Context())
+
+			if actorID := strings.TrimSpace(r.Header.Get(transport.ActorHeader)); actorID != "" {
+				span.SetAttributes(
+					// "enduser" is an otel-specific naming
+					attribute.String("enduser.id", actorID),
+				)
+			}
 
 			switch rw.status {
 			case http.StatusUnauthorized:
-				log.WarnContext(ctx, "access denied", "event", "authentication_required", "status", rw.status)
+				log.WarnContext(r.Context(), "access denied", "event", "authentication_required", "status", rw.status)
 			case http.StatusForbidden:
-				log.WarnContext(ctx, "access denied", "event", "authorization_denied", "status", rw.status)
+				log.WarnContext(r.Context(), "access denied", "event", "authorization_denied", "status", rw.status)
 			}
 		})
 	}

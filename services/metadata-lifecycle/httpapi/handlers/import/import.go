@@ -38,7 +38,7 @@ func New(service service, parser parser) *Handler {
 }
 
 func (h *Handler) Turtle(w http.ResponseWriter, r *http.Request) {
-	actor, ok := transport.ActorValue(w, r)
+	actor, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}

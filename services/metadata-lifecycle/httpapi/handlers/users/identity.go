@@ -38,7 +38,7 @@ func New(service service) *Handler {
 }
 
 func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -58,7 +58,7 @@ func (h *Handler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -94,7 +94,7 @@ func (h *Handler) RemoveGlobalRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) BlockUser(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -123,7 +123,7 @@ func (h *Handler) BlockUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UnblockUser(w http.ResponseWriter, r *http.Request) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return
 	}
@@ -214,7 +214,7 @@ func userIDPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 func permissionPath(w http.ResponseWriter, r *http.Request) (domain.Actor, string, string, bool) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return "", "", "", false
 	}
@@ -233,7 +233,7 @@ func permissionPath(w http.ResponseWriter, r *http.Request) (domain.Actor, strin
 }
 
 func rolePath(w http.ResponseWriter, r *http.Request) (domain.Actor, string, string, bool) {
-	actorID, ok := transport.ActorValue(w, r)
+	actorID, ok := transport.Actor(w, r)
 	if !ok {
 		return "", "", "", false
 	}

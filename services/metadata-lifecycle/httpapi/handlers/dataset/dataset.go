@@ -69,7 +69,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	actor, ok := transport.OptionalActorValue(w, r)
+	actor, ok := transport.OptionalActor(w, r)
 	if !ok {
 		return
 	}
@@ -257,7 +257,7 @@ func (h *handler) writeDataset(r *http.Request, w http.ResponseWriter, dataset d
 }
 
 func actor(w http.ResponseWriter, r *http.Request) (domain.Actor, bool) {
-	return transport.ActorValue(w, r)
+	return transport.Actor(w, r)
 }
 
 func datasetID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
