@@ -801,12 +801,22 @@ func toDomainDiscoveryItem(value client.DiscoveryItem) domain.DiscoveryItem {
 		VersionID:     value.VersionId,
 		Name:          value.Name,
 		Status:        string(value.Status),
+		UpdatedAt:     value.UpdatedAt,
+		Concept:       value.Concept,
+		CreatedBy:     toDomainDiscoveryCreatedBy(value.CreatedBy),
 		Group:         toDomainDiscoveryReference(value.Group),
 		Providers:     mapSlice(value.Providers, toDomainDiscoveryReference),
 		Creators:      mapSlice(value.Creators, toDomainDiscoveryReference),
 		Categories:    mapSlice(value.Categories, toDomainDiscoveryReference),
 		Distributions: mapSlice(value.Distributions, toDomainDiscoveryReference),
 	}
+}
+
+func toDomainDiscoveryCreatedBy(value *client.DiscoveryCreatedBy) *domain.DiscoveryReference {
+	if value == nil {
+		return nil
+	}
+	return &domain.DiscoveryReference{ID: value.Id, Name: value.Name}
 }
 
 func toDomainDiscoveryReference(value client.DiscoveryReference) domain.DiscoveryReference {

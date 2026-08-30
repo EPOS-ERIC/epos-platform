@@ -1702,7 +1702,7 @@ components:
           { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
     DiscoveryItem:
       type: object
-      required: [type, resource_id, version_id, name, status, group]
+      required: [type, resource_id, version_id, name, status, updated_at, concept, group]
       properties:
         type:
           {
@@ -1713,6 +1713,9 @@ components:
         version_id: { type: string, format: uuid }
         name: { type: string }
         status: { $ref: "#/components/schemas/DatasetStatus" }
+        updated_at: { type: string, format: date-time }
+        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
+        created_by: { $ref: "#/components/schemas/DiscoveryCreatedBy" }
         group: { $ref: "#/components/schemas/DiscoveryReference" }
         providers:
           {
@@ -1739,6 +1742,12 @@ components:
       required: [id, name]
       properties:
         id: { type: string, format: uuid }
+        name: { type: string }
+    DiscoveryCreatedBy:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
         name: { type: string }
     ResourceRecord:
       type: object

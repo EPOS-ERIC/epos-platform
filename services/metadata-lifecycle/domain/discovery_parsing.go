@@ -157,6 +157,13 @@ func NewDiscoveryCandidate(value DiscoveryCandidate) (DiscoveryCandidate, error)
 	if !validResourceType(value.Type) || !validStatus(value.Status) || value.Name == "" {
 		return DiscoveryCandidate{}, ErrInvalidDiscovery
 	}
+	if value.CreatedBy != nil {
+		createdBy, err := NewDiscoveryCreatedBy(value.CreatedBy.ID, value.CreatedBy.Name)
+		if err != nil {
+			return DiscoveryCandidate{}, err
+		}
+		value.CreatedBy = &createdBy
+	}
 	return value, nil
 }
 
@@ -168,11 +175,22 @@ func NewDiscoveryReference(id uuid.UUID, name string) (DiscoveryReference, error
 	return DiscoveryReference{ID: id, Name: name}, nil
 }
 
+// NewDiscoveryCreatedBy creates a valid creator projection.
+func NewDiscoveryCreatedBy(id, name string) (DiscoveryCreatedBy, error) {
+	id = strings.TrimSpace(id)
+	name = strings.TrimSpace(name)
+	if id == "" || name == "" {
+		return DiscoveryCreatedBy{}, ErrInvalidDiscovery
+	}
+	return DiscoveryCreatedBy{ID: id, Name: name}, nil
+}
+
 // NewDiscoveryItem assembles a validated discovery item from its candidate and relationships.
 func NewDiscoveryItem(
 	candidate DiscoveryCandidate,
 	group DiscoveryReference,
 	providers, creators, categories, distributions []DiscoveryReference,
+	includeCreatedBy bool,
 ) (DiscoveryItem, error) {
 	validatedCandidate, err := NewDiscoveryCandidate(candidate)
 	if err != nil {
@@ -198,6 +216,14 @@ func NewDiscoveryItem(
 	if err != nil {
 		return DiscoveryItem{}, err
 	}
+	var validatedCreatedBy *DiscoveryCreatedBy
+	if includeCreatedBy && validatedCandidate.CreatedBy != nil {
+		createdBy, err := NewDiscoveryCreatedBy(validatedCandidate.CreatedBy.ID, validatedCandidate.CreatedBy.Name)
+		if err != nil {
+			return DiscoveryItem{}, err
+		}
+		validatedCreatedBy = &createdBy
+	}
 
 	return DiscoveryItem{
 		Type:          validatedCandidate.Type,
@@ -205,6 +231,9 @@ func NewDiscoveryItem(
 		VersionID:     validatedCandidate.VersionID,
 		Name:          validatedCandidate.Name,
 		Status:        validatedCandidate.Status,
+		UpdatedAt:     validatedCandidate.UpdatedAt,
+		Concept:       validatedCandidate.Concept,
+		CreatedBy:     validatedCreatedBy,
 		Group:         validatedGroup,
 		Providers:     validatedProviders,
 		Creators:      validatedCreators,

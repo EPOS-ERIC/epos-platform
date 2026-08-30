@@ -162,6 +162,7 @@ Class | Method | HTTP request | Description
  - [DateTimeParameter](docs/DateTimeParameter.md)
  - [DateTimeParameterDraft](docs/DateTimeParameterDraft.md)
  - [DateTimeParameterMetadata](docs/DateTimeParameterMetadata.md)
+ - [DiscoveryCreatedBy](docs/DiscoveryCreatedBy.md)
  - [DiscoveryItem](docs/DiscoveryItem.md)
  - [DiscoveryReference](docs/DiscoveryReference.md)
  - [Distribution](docs/Distribution.md)

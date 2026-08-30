@@ -4879,6 +4879,11 @@ components:
         version_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
         name: name
         status: PUBLISHED
+        updated_at: 2000-01-23T04:56:07.000+00:00
+        concept: DATA
+        created_by:
+          id: id
+          name: name
         group:
           id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
           name: name
@@ -4919,6 +4924,17 @@ components:
           type: string
         status:
           $ref: "#/components/schemas/DatasetStatus"
+        updated_at:
+          format: date-time
+          type: string
+        concept:
+          enum:
+          - DATA
+          - FACILITIES
+          - SOFTWARE
+          type: string
+        created_by:
+          $ref: "#/components/schemas/DiscoveryCreatedBy"
         group:
           $ref: "#/components/schemas/DiscoveryReference"
         providers:
@@ -4938,11 +4954,13 @@ components:
             $ref: "#/components/schemas/DiscoveryReference"
           type: array
       required:
+      - concept
       - group
       - name
       - resource_id
       - status
       - type
+      - updated_at
       - version_id
       type: object
     DiscoveryReference:
@@ -4952,6 +4970,19 @@ components:
       properties:
         id:
           format: uuid
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - name
+      type: object
+    DiscoveryCreatedBy:
+      example:
+        id: id
+        name: name
+      properties:
+        id:
           type: string
         name:
           type: string

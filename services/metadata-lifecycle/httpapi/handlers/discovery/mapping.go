@@ -173,6 +173,9 @@ func toResponse(values []domain.DiscoveryItem) []discoveryItemResponse {
 			VersionID:     value.VersionID,
 			Name:          value.Name,
 			Status:        value.Status,
+			UpdatedAt:     value.UpdatedAt,
+			Concept:       value.Concept,
+			CreatedBy:     toCreatedByResponse(value.CreatedBy),
 			Group:         discoveryReferenceResponse(value.Group),
 			Providers:     toReferenceResponses(value.Providers),
 			Creators:      toReferenceResponses(value.Creators),
@@ -181,6 +184,13 @@ func toResponse(values []domain.DiscoveryItem) []discoveryItemResponse {
 		})
 	}
 	return result
+}
+
+func toCreatedByResponse(value *domain.DiscoveryCreatedBy) *discoveryCreatedByResponse {
+	if value == nil {
+		return nil
+	}
+	return &discoveryCreatedByResponse{ID: value.ID, Name: value.Name}
 }
 
 func toReferenceResponses(values []domain.DiscoveryReference) []discoveryReferenceResponse {

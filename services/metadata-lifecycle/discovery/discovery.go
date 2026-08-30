@@ -68,6 +68,9 @@ func New(
 }
 
 func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
+	includeCreatedBy := slices.ContainsFunc(filter.VersioningStatuses, func(status domain.Status) bool {
+		return status != domain.Published
+	})
 	for _, status := range filter.VersioningStatuses {
 		if status != domain.Published && actor == nil {
 			return nil, fmt.Errorf("versioningStatus requires authentication: %w", domain.ErrDiscoveryDenied)
@@ -92,7 +95,7 @@ func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain
 			continue
 		}
 
-		item, err := s.item(ctx, actor, candidate)
+		item, err := s.item(ctx, actor, candidate, includeCreatedBy)
 		if err != nil {
 			return nil, err
 		}
@@ -136,7 +139,7 @@ func (s *Service) canRead(ctx context.Context, actor *domain.Actor, candidate do
 	return result.Allowed, nil
 }
 
-func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domain.DiscoveryCandidate) (domain.DiscoveryItem, error) {
+func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domain.DiscoveryCandidate, includeCreatedBy bool) (domain.DiscoveryItem, error) {
 	group, err := s.groups.Get(ctx, candidate.GroupID)
 	if err != nil {
 		return domain.DiscoveryItem{}, fmt.Errorf("get discovery group: %w", err)
@@ -197,7 +200,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 		}
 	}
 
-	item, err := domain.NewDiscoveryItem(candidate, groupReference, providers, creators, categoryReferences, distributionReferences)
+	item, err := domain.NewDiscoveryItem(candidate, groupReference, providers, creators, categoryReferences, distributionReferences, includeCreatedBy)
 	if err != nil {
 		return domain.DiscoveryItem{}, fmt.Errorf("construct discovery item: %w", err)
 	}

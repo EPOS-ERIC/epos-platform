@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // checks if the DiscoveryItem type satisfies the MappedNullable interface at compile time
@@ -26,6 +27,9 @@ type DiscoveryItem struct {
 	VersionId     string               `json:"version_id"`
 	Name          string               `json:"name"`
 	Status        DatasetStatus        `json:"status"`
+	UpdatedAt     time.Time            `json:"updated_at"`
+	Concept       string               `json:"concept"`
+	CreatedBy     *DiscoveryCreatedBy  `json:"created_by,omitempty"`
 	Group         DiscoveryReference   `json:"group"`
 	Providers     []DiscoveryReference `json:"providers,omitempty"`
 	Creators      []DiscoveryReference `json:"creators,omitempty"`
@@ -39,13 +43,15 @@ type _DiscoveryItem DiscoveryItem
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDiscoveryItem(type_, resourceId, versionId, name string, status DatasetStatus, group DiscoveryReference) *DiscoveryItem {
+func NewDiscoveryItem(type_, resourceId, versionId, name string, status DatasetStatus, updatedAt time.Time, concept string, group DiscoveryReference) *DiscoveryItem {
 	this := DiscoveryItem{}
 	this.Type = type_
 	this.ResourceId = resourceId
 	this.VersionId = versionId
 	this.Name = name
 	this.Status = status
+	this.UpdatedAt = updatedAt
+	this.Concept = concept
 	this.Group = group
 	return &this
 }
@@ -176,6 +182,86 @@ func (o *DiscoveryItem) GetStatusOk() (*DatasetStatus, bool) {
 // SetStatus sets field value
 func (o *DiscoveryItem) SetStatus(v DatasetStatus) {
 	o.Status = v
+}
+
+// GetUpdatedAt returns the UpdatedAt field value
+func (o *DiscoveryItem) GetUpdatedAt() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.UpdatedAt
+}
+
+// GetUpdatedAtOk returns a tuple with the UpdatedAt field value
+// and a boolean to check if the value has been set.
+func (o *DiscoveryItem) GetUpdatedAtOk() (*time.Time, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.UpdatedAt, true
+}
+
+// SetUpdatedAt sets field value
+func (o *DiscoveryItem) SetUpdatedAt(v time.Time) {
+	o.UpdatedAt = v
+}
+
+// GetConcept returns the Concept field value
+func (o *DiscoveryItem) GetConcept() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Concept
+}
+
+// GetConceptOk returns a tuple with the Concept field value
+// and a boolean to check if the value has been set.
+func (o *DiscoveryItem) GetConceptOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Concept, true
+}
+
+// SetConcept sets field value
+func (o *DiscoveryItem) SetConcept(v string) {
+	o.Concept = v
+}
+
+// GetCreatedBy returns the CreatedBy field value if set, zero value otherwise.
+func (o *DiscoveryItem) GetCreatedBy() DiscoveryCreatedBy {
+	if o == nil || IsNil(o.CreatedBy) {
+		var ret DiscoveryCreatedBy
+		return ret
+	}
+	return *o.CreatedBy
+}
+
+// GetCreatedByOk returns a tuple with the CreatedBy field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DiscoveryItem) GetCreatedByOk() (*DiscoveryCreatedBy, bool) {
+	if o == nil || IsNil(o.CreatedBy) {
+		return nil, false
+	}
+	return o.CreatedBy, true
+}
+
+// HasCreatedBy returns a boolean if a field has been set.
+func (o *DiscoveryItem) HasCreatedBy() bool {
+	if o != nil && !IsNil(o.CreatedBy) {
+		return true
+	}
+
+	return false
+}
+
+// SetCreatedBy gets a reference to the given DiscoveryCreatedBy and assigns it to the CreatedBy field.
+func (o *DiscoveryItem) SetCreatedBy(v DiscoveryCreatedBy) {
+	o.CreatedBy = &v
 }
 
 // GetGroup returns the Group field value
@@ -345,6 +431,11 @@ func (o DiscoveryItem) ToMap() (map[string]interface{}, error) {
 	toSerialize["version_id"] = o.VersionId
 	toSerialize["name"] = o.Name
 	toSerialize["status"] = o.Status
+	toSerialize["updated_at"] = o.UpdatedAt
+	toSerialize["concept"] = o.Concept
+	if !IsNil(o.CreatedBy) {
+		toSerialize["created_by"] = o.CreatedBy
+	}
 	toSerialize["group"] = o.Group
 	if !IsNil(o.Providers) {
 		toSerialize["providers"] = o.Providers
@@ -371,6 +462,8 @@ func (o *DiscoveryItem) UnmarshalJSON(data []byte) (err error) {
 		"version_id",
 		"name",
 		"status",
+		"updated_at",
+		"concept",
 		"group",
 	}
 

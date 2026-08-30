@@ -4,11 +4,16 @@ SELECT
     version.id AS version_id,
     dataset.group_id,
     version.status,
-    version.title AS name
+    version.title AS name,
+    version.updated_at,
+    resource_group.concept,
+    version.created_by AS created_by_id,
+    concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     datasets AS dataset
     JOIN dataset_versions AS version ON version.dataset_id = dataset.id
     JOIN groups AS resource_group ON resource_group.id = dataset.group_id
+    JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
@@ -104,11 +109,16 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    version.name
+    version.name,
+    version.updated_at,
+    resource_group.concept,
+    version.created_by AS created_by_id,
+    concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_applications AS resource
     JOIN software_application_versions AS version ON version.software_application_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []
@@ -179,11 +189,16 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    version.name
+    version.name,
+    version.updated_at,
+    resource_group.concept,
+    version.created_by AS created_by_id,
+    concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_source_codes AS resource
     JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         sqlc.arg(versioning_statuses)::text []::resource_status []

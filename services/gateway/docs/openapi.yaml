@@ -2838,6 +2838,8 @@ components:
         - version_id
         - name
         - status
+        - updated_at
+        - concept
         - group
       properties:
         type:
@@ -2853,6 +2855,14 @@ components:
         status:
           type: string
           enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+        updated_at:
+          type: string
+          format: date-time
+        concept:
+          type: string
+          enum: [DATA, FACILITIES, SOFTWARE]
+        created_by:
+          $ref: "#/components/schemas/Reference"
         group:
           $ref: "#/components/schemas/Reference"
         providers:

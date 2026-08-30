@@ -5,7 +5,6 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
-	"github.com/google/uuid"
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/wkt"
 )
@@ -85,14 +84,17 @@ func toSearchDiscoverySourceCodesParams(filter domain.DiscoveryFilter) sqlc.Sear
 func toDatasetCandidates(rows []sqlc.SearchDiscoveryDatasetsRow) ([]domain.DiscoveryCandidate, error) {
 	result := make([]domain.DiscoveryCandidate, 0, len(rows))
 	for _, row := range rows {
-		candidate, err := toDiscoveryCandidate(
-			domain.Dataset,
-			row.ResourceID,
-			row.VersionID,
-			row.GroupID,
-			string(row.Status),
-			row.Name,
-		)
+		candidate, err := toDiscoveryCandidate(domain.DiscoveryCandidate{
+			Type:       domain.Dataset,
+			ResourceID: row.ResourceID,
+			VersionID:  row.VersionID,
+			GroupID:    row.GroupID,
+			Status:     domain.Status(row.Status),
+			Name:       row.Name,
+			UpdatedAt:  row.UpdatedAt,
+			Concept:    domain.TopLevelConcept(row.Concept),
+			CreatedBy:  &domain.DiscoveryCreatedBy{ID: row.CreatedByID, Name: row.CreatedByName},
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -104,14 +106,17 @@ func toDatasetCandidates(rows []sqlc.SearchDiscoveryDatasetsRow) ([]domain.Disco
 func toApplicationCandidates(rows []sqlc.SearchDiscoveryApplicationsRow) ([]domain.DiscoveryCandidate, error) {
 	result := make([]domain.DiscoveryCandidate, 0, len(rows))
 	for _, row := range rows {
-		candidate, err := toDiscoveryCandidate(
-			domain.SoftwareApplication,
-			row.ResourceID,
-			row.VersionID,
-			row.GroupID,
-			string(row.Status),
-			row.Name,
-		)
+		candidate, err := toDiscoveryCandidate(domain.DiscoveryCandidate{
+			Type:       domain.SoftwareApplication,
+			ResourceID: row.ResourceID,
+			VersionID:  row.VersionID,
+			GroupID:    row.GroupID,
+			Status:     domain.Status(row.Status),
+			Name:       row.Name,
+			UpdatedAt:  row.UpdatedAt,
+			Concept:    domain.TopLevelConcept(row.Concept),
+			CreatedBy:  &domain.DiscoveryCreatedBy{ID: row.CreatedByID, Name: row.CreatedByName},
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -123,14 +128,17 @@ func toApplicationCandidates(rows []sqlc.SearchDiscoveryApplicationsRow) ([]doma
 func toSourceCodeCandidates(rows []sqlc.SearchDiscoverySourceCodesRow) ([]domain.DiscoveryCandidate, error) {
 	result := make([]domain.DiscoveryCandidate, 0, len(rows))
 	for _, row := range rows {
-		candidate, err := toDiscoveryCandidate(
-			domain.SoftwareSourceCode,
-			row.ResourceID,
-			row.VersionID,
-			row.GroupID,
-			string(row.Status),
-			row.Name,
-		)
+		candidate, err := toDiscoveryCandidate(domain.DiscoveryCandidate{
+			Type:       domain.SoftwareSourceCode,
+			ResourceID: row.ResourceID,
+			VersionID:  row.VersionID,
+			GroupID:    row.GroupID,
+			Status:     domain.Status(row.Status),
+			Name:       row.Name,
+			UpdatedAt:  row.UpdatedAt,
+			Concept:    domain.TopLevelConcept(row.Concept),
+			CreatedBy:  &domain.DiscoveryCreatedBy{ID: row.CreatedByID, Name: row.CreatedByName},
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -139,15 +147,8 @@ func toSourceCodeCandidates(rows []sqlc.SearchDiscoverySourceCodesRow) ([]domain
 	return result, nil
 }
 
-func toDiscoveryCandidate(resourceType domain.ResourceType, resourceID, versionID, groupID uuid.UUID, status, name string) (domain.DiscoveryCandidate, error) {
-	candidate, err := domain.NewDiscoveryCandidate(domain.DiscoveryCandidate{
-		Type:       resourceType,
-		ResourceID: resourceID,
-		VersionID:  versionID,
-		GroupID:    groupID,
-		Status:     domain.Status(status),
-		Name:       name,
-	})
+func toDiscoveryCandidate(value domain.DiscoveryCandidate) (domain.DiscoveryCandidate, error) {
+	candidate, err := domain.NewDiscoveryCandidate(value)
 	if err != nil {
 		return domain.DiscoveryCandidate{}, fmt.Errorf("bad discovery candidate: %w", err)
 	}

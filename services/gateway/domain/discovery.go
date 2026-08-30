@@ -17,11 +17,15 @@ type DiscoveryFilter struct {
 }
 
 type DiscoveryItem struct {
-	Type          string
-	ResourceID    string
-	VersionID     string
-	Name          string
-	Status        string
+	Type       string
+	ResourceID string
+	VersionID  string
+	Name       string
+	Status     string
+	UpdatedAt  time.Time
+	Concept    string
+	// TODO: creator should be string string but group and the other references should be uuid for the id and string for the name
+	CreatedBy     *DiscoveryReference
 	Group         DiscoveryReference
 	Providers     []DiscoveryReference
 	Creators      []DiscoveryReference

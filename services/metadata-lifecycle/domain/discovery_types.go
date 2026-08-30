@@ -35,6 +35,9 @@ type DiscoveryCandidate struct {
 	GroupID    uuid.UUID
 	Status     Status
 	Name       string
+	UpdatedAt  time.Time
+	Concept    TopLevelConcept
+	CreatedBy  *DiscoveryCreatedBy
 }
 
 // DiscoveryItem is a resource summary returned by discovery.
@@ -44,6 +47,9 @@ type DiscoveryItem struct {
 	VersionID     uuid.UUID
 	Name          string
 	Status        Status
+	UpdatedAt     time.Time
+	Concept       TopLevelConcept
+	CreatedBy     *DiscoveryCreatedBy
 	Group         DiscoveryReference
 	Providers     []DiscoveryReference
 	Creators      []DiscoveryReference
@@ -54,5 +60,11 @@ type DiscoveryItem struct {
 // DiscoveryReference identifies related metadata attached to a resource.
 type DiscoveryReference struct {
 	ID   uuid.UUID
+	Name string
+}
+
+// DiscoveryCreatedBy identifies the user who created a resource version.
+type DiscoveryCreatedBy struct {
+	ID   string
 	Name string
 }

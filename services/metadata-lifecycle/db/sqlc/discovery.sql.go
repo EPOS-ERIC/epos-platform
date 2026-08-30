@@ -18,18 +18,25 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    version.name
+    version.name,
+    version.updated_at,
+    resource_group.concept,
+    version.created_by AS created_by_id,
+    concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_applications AS resource
     JOIN software_application_versions AS version ON version.software_application_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
         cardinality($2::text []) = 0
-        OR resource_group.concept = ANY($2::text []::top_level_concept [])
+        OR resource_group.concept = ANY(
+            $2::text []::top_level_concept []
+        )
     )
     AND (
         $3::uuid IS NULL
@@ -98,11 +105,15 @@ type SearchDiscoveryApplicationsParams struct {
 }
 
 type SearchDiscoveryApplicationsRow struct {
-	ResourceID uuid.UUID
-	VersionID  uuid.UUID
-	GroupID    uuid.UUID
-	Status     ResourceStatus
-	Name       string
+	ResourceID    uuid.UUID
+	VersionID     uuid.UUID
+	GroupID       uuid.UUID
+	Status        ResourceStatus
+	Name          string
+	UpdatedAt     time.Time
+	Concept       TopLevelConcept
+	CreatedByID   string
+	CreatedByName string
 }
 
 func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDiscoveryApplicationsParams) ([]SearchDiscoveryApplicationsRow, error) {
@@ -129,6 +140,10 @@ func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDis
 			&i.GroupID,
 			&i.Status,
 			&i.Name,
+			&i.UpdatedAt,
+			&i.Concept,
+			&i.CreatedByID,
+			&i.CreatedByName,
 		); err != nil {
 			return nil, err
 		}
@@ -146,18 +161,25 @@ SELECT
     version.id AS version_id,
     dataset.group_id,
     version.status,
-    version.title AS name
+    version.title AS name,
+    version.updated_at,
+    resource_group.concept,
+    version.created_by AS created_by_id,
+    concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     datasets AS dataset
     JOIN dataset_versions AS version ON version.dataset_id = dataset.id
     JOIN groups AS resource_group ON resource_group.id = dataset.group_id
+    JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
         cardinality($2::text []) = 0
-        OR resource_group.concept = ANY($2::text []::top_level_concept [])
+        OR resource_group.concept = ANY(
+            $2::text []::top_level_concept []
+        )
     )
     AND (
         $3::uuid IS NULL
@@ -254,11 +276,15 @@ type SearchDiscoveryDatasetsParams struct {
 }
 
 type SearchDiscoveryDatasetsRow struct {
-	ResourceID uuid.UUID
-	VersionID  uuid.UUID
-	GroupID    uuid.UUID
-	Status     ResourceStatus
-	Name       string
+	ResourceID    uuid.UUID
+	VersionID     uuid.UUID
+	GroupID       uuid.UUID
+	Status        ResourceStatus
+	Name          string
+	UpdatedAt     time.Time
+	Concept       TopLevelConcept
+	CreatedByID   string
+	CreatedByName string
 }
 
 func (q *Queries) SearchDiscoveryDatasets(ctx context.Context, arg SearchDiscoveryDatasetsParams) ([]SearchDiscoveryDatasetsRow, error) {
@@ -288,6 +314,10 @@ func (q *Queries) SearchDiscoveryDatasets(ctx context.Context, arg SearchDiscove
 			&i.GroupID,
 			&i.Status,
 			&i.Name,
+			&i.UpdatedAt,
+			&i.Concept,
+			&i.CreatedByID,
+			&i.CreatedByName,
 		); err != nil {
 			return nil, err
 		}
@@ -305,18 +335,25 @@ SELECT
     version.id AS version_id,
     resource.group_id,
     version.status,
-    version.name
+    version.name,
+    version.updated_at,
+    resource_group.concept,
+    version.created_by AS created_by_id,
+    concat_ws(' ', creator.given_name, creator.family_name) AS created_by_name
 FROM
     software_source_codes AS resource
     JOIN software_source_code_versions AS version ON version.software_source_code_id = resource.id
     JOIN groups AS resource_group ON resource_group.id = resource.group_id
+    JOIN users AS creator ON creator.id = version.created_by
 WHERE
     version.status = ANY(
         $1::text []::resource_status []
     )
     AND (
         cardinality($2::text []) = 0
-        OR resource_group.concept = ANY($2::text []::top_level_concept [])
+        OR resource_group.concept = ANY(
+            $2::text []::top_level_concept []
+        )
     )
     AND (
         $3::uuid IS NULL
@@ -385,11 +422,15 @@ type SearchDiscoverySourceCodesParams struct {
 }
 
 type SearchDiscoverySourceCodesRow struct {
-	ResourceID uuid.UUID
-	VersionID  uuid.UUID
-	GroupID    uuid.UUID
-	Status     ResourceStatus
-	Name       string
+	ResourceID    uuid.UUID
+	VersionID     uuid.UUID
+	GroupID       uuid.UUID
+	Status        ResourceStatus
+	Name          string
+	UpdatedAt     time.Time
+	Concept       TopLevelConcept
+	CreatedByID   string
+	CreatedByName string
 }
 
 func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDiscoverySourceCodesParams) ([]SearchDiscoverySourceCodesRow, error) {
@@ -416,6 +457,10 @@ func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDisc
 			&i.GroupID,
 			&i.Status,
 			&i.Name,
+			&i.UpdatedAt,
+			&i.Concept,
+			&i.CreatedByID,
+			&i.CreatedByName,
 		); err != nil {
 			return nil, err
 		}

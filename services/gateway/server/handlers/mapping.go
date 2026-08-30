@@ -621,12 +621,23 @@ func toAPIDiscoveryItem(value domain.DiscoveryItem) api.DiscoveryItem {
 		VersionID:     value.VersionID,
 		Name:          value.Name,
 		Status:        value.Status,
+		UpdatedAt:     value.UpdatedAt.Format(time.RFC3339Nano),
+		Concept:       value.Concept,
+		CreatedBy:     toAPIOptionalReference(value.CreatedBy),
 		Group:         toAPIReference(value.Group),
 		Providers:     mapSlice(value.Providers, toAPIReference),
 		Creators:      mapSlice(value.Creators, toAPIReference),
 		Categories:    mapSlice(value.Categories, toAPIReference),
 		Distributions: mapSlice(value.Distributions, toAPIReference),
 	}
+}
+
+func toAPIOptionalReference(value *domain.DiscoveryReference) *api.Reference {
+	if value == nil {
+		return nil
+	}
+	reference := toAPIReference(*value)
+	return &reference
 }
 
 var discoveryTypeNames = map[string]struct{}{
