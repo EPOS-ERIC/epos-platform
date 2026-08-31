@@ -7,9 +7,6 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
@@ -45,11 +42,8 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
 )
 
-// Run starts the metadata-lifecycle HTTP server until shutdown.
-func Run(cfg config.Config, log *slog.Logger) error {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
+// RunJson starts the metadata-lifecycle HTTP server until shutdown.
+func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.PostgresDB) error {
 	// Set up OpenTelemetry.
 	otelShutdown, err := observability.Start(ctx, observability.Config{
 		MetricsExportInterval: 5 * time.Second,
@@ -63,36 +57,26 @@ func Run(cfg config.Config, log *slog.Logger) error {
 		}
 	}()
 
-	database, err := db.Open(log, cfg)
-	if err != nil {
-		return fmt.Errorf("open database: %w", err)
-	}
-	defer func() {
-		if closeErr := database.Close(); closeErr != nil {
-			log.Error("database close failed", "error", closeErr)
-		}
-	}()
-
 	turtler := turtle.New(log)
-	authorizer := authz.New(log, database.Authorization)
-	usersSvc := users.New(log, database.Users, authorizer)
-	importSvc := metadataimport.New(log, database.Imports, authorizer)
-	groupsSvc := groups.New(log, database.Groups, authorizer)
-	accessSvc := access.New(log, database.Access, authorizer)
-	categoriesSvc := categories.New(log, database.Categories, authorizer)
-	contactPointSvc := contactpoints.New(log, database.ContactPoints, authorizer)
-	organizationsSvc := organizations.New(log, database.Organizations, authorizer)
-	datasetSvc := datasets.New(log, database.Datasets, authorizer)
-	applicationSvc := softwareapplications.New(log, database.SoftwareApplications, authorizer)
-	sourceCodeSvc := softwaresourcecodes.New(log, database.SoftwareSourceCodes, authorizer)
-	discoverySvc := discovery.New(log, database.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
+	authorizer := authz.New(log, db.Authorization)
+	usersSvc := users.New(log, db.Users, authorizer)
+	importSvc := metadataimport.New(log, db.Imports, authorizer)
+	groupsSvc := groups.New(log, db.Groups, authorizer)
+	accessSvc := access.New(log, db.Access, authorizer)
+	categoriesSvc := categories.New(log, db.Categories, authorizer)
+	contactPointSvc := contactpoints.New(log, db.ContactPoints, authorizer)
+	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
+	datasetSvc := datasets.New(log, db.Datasets, authorizer)
+	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer)
+	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer)
+	discoverySvc := discovery.New(log, db.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
 
 	datasetsHandler := datasetapi.New(log, datasetSvc)
 	applicationsHandler := softwareapplicationapi.New(log, applicationSvc)
 	sourceCodesHandler := softwaresourcecodeapi.New(log, sourceCodeSvc)
 
 	router := httpapi.NewRouter(httpapi.Router{
-		Health:        healthapi.New(log, database),
+		Health:        healthapi.New(log, db),
 		Imports:       importsapi.New(log, importSvc, turtler),
 		Users:         usersapi.New(log, usersSvc),
 		Groups:        groupsapi.New(log, groupsSvc),

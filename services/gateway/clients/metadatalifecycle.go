@@ -26,6 +26,8 @@ type MetadataLifecycle struct {
 	organizations client.OrganizationsAPI
 	categories    client.CategoriesAPI
 
+	grpc *GRPCMetadataLifecycle
+
 	log *slog.Logger
 }
 
@@ -59,6 +61,13 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.U
 	clientConfig.HTTPClient = upstreamClient.StandardClient()
 
 	apiClient := client.NewAPIClient(clientConfig)
+
+	// TODO: we are doing this just to hook up the provisioning of users for now, later we will only have the grpc service
+	grpc, err := NewGRPCMetadataLifecycle(log, "metadata-lifecycle-service:5001")
+	if err != nil {
+		return nil, fmt.Errorf("TODO: %w", err)
+	}
+
 	return &MetadataLifecycle{
 		identity:      apiClient.InternalIdentityAPI,
 		users:         apiClient.UsersAPI,
@@ -69,6 +78,9 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.U
 		contactPoints: apiClient.ContactPointsAPI,
 		organizations: apiClient.OrganizationsAPI,
 		categories:    apiClient.CategoriesAPI,
+
+		// TODO: we are doing this just to hook up the provisioning of users for now, later we will only have the grpc service
+		grpc: grpc,
 
 		log: log,
 	}, nil
@@ -368,7 +380,8 @@ func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID str
 func (c *MetadataLifecycle) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	user, err := c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {
-		user, err = c.CreateUser(ctx, identity)
+		// user, err = c.CreateUser(ctx, identity)
+		user, err = c.grpc.ProvisionUser(ctx, identity)
 		if errors.Is(err, domain.ErrConflict) {
 			user, err = c.GetUserByID(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 		}

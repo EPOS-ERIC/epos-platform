@@ -10,6 +10,7 @@ import (
 
 type Config struct {
 	ServerPort     string        `envconfig:"PORT" default:"5000"`
+	GRPCServerPort string        `envconfig:"GRPC_PORT" default:"5001"`
 	RequestTimeout time.Duration `envconfig:"REQUEST_TIMEOUT" default:"30s"`
 	ReadTimeout    time.Duration `envconfig:"READ_TIMEOUT" default:"15s"`
 	WriteTimeout   time.Duration `envconfig:"WRITE_TIMEOUT" default:"30s"`
@@ -40,6 +41,9 @@ func Load() (Config, error) {
 func (c *Config) Validate() error {
 	if c.ServerPort == "" {
 		return fmt.Errorf("port is required")
+	}
+	if c.GRPCServerPort == "" {
+		return fmt.Errorf("GRPC port is required")
 	}
 	if c.RequestTimeout <= 0 {
 		return fmt.Errorf("request_timeout must be greater than zero")
