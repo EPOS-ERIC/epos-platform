@@ -10,10 +10,17 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repo struct {
 	*sqlc.Queries
+}
+
+func New(db *pgxpool.Pool) *Repo {
+	return &Repo{
+		Queries: sqlc.New(db),
+	}
 }
 
 func (r *Repo) User(ctx context.Context, userID string) (domain.AuthorizationUser, error) {

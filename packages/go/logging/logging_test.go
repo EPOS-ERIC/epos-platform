@@ -1,93 +1,46 @@
 package logging
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"log/slog"
-	"sync"
 	"testing"
 )
 
-func resetLoggingState(t *testing.T) {
-	t.Helper()
-
-	if logFile != nil {
-		if err := logFile.Close(); err != nil {
-			t.Fatalf("close log file: %v", err)
-		}
+func TestConfiguredLevel(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  slog.Level
+	}{
+		{name: "default", want: slog.LevelInfo},
+		{name: "debug", value: "DEBUG", want: slog.LevelDebug},
+		{name: "info", value: "INFO", want: slog.LevelInfo},
+		{name: "warn", value: "WARN", want: slog.LevelWarn},
+		{name: "error", value: "ERROR", want: slog.LevelError},
+		{name: "invalid", value: "INVALID", want: slog.LevelInfo},
 	}
 
-	level = slog.LevelInfo
-	base = nil
-	once = sync.Once{}
-	logFile = nil
-}
-
-func TestComponentLevelEnvKey(t *testing.T) {
-	got := componentLevelEnvKey("gateway-http-client")
-	if got != "LOG_LEVEL_GATEWAY_HTTP_CLIENT" {
-		t.Fatalf("componentLevelEnvKey() = %q, want %q", got, "LOG_LEVEL_GATEWAY_HTTP_CLIENT")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("LOG_LEVEL", test.value)
+			if got := configuredLevel(); got != test.want {
+				t.Fatalf("configuredLevel() = %v, want %v", got, test.want)
+			}
+		})
 	}
 }
 
-func TestGetUsesComponentLevelOverride(t *testing.T) {
-	resetLoggingState(t)
+func TestNewUsesConfiguredLevel(t *testing.T) {
 	t.Setenv("LOG_LEVEL", "DEBUG")
-	t.Setenv("LOG_LEVEL_GATEWAY_HTTP_CLIENT", "INFO")
 
-	ctx := context.Background()
-	upstreamLogger := Get("gateway-http-client")
-	otherLogger := Get("server")
-
-	if upstreamLogger.Enabled(ctx, slog.LevelDebug) {
-		t.Fatal("expected gateway-http-client logger to disable debug level")
-	}
-
-	if !upstreamLogger.Enabled(ctx, slog.LevelInfo) {
-		t.Fatal("expected gateway-http-client logger to enable info level")
-	}
-
-	if !otherLogger.Enabled(ctx, slog.LevelDebug) {
-		t.Fatal("expected other component logger to inherit global debug level")
-	}
-}
-
-func TestGetUsesComponentLevelOverrideWithOtel(t *testing.T) {
-	resetLoggingState(t)
-	t.Setenv("LOG_LEVEL", "DEBUG")
-	t.Setenv("LOG_LEVEL_GATEWAY_HTTP_CLIENT", "INFO")
-	t.Setenv("OTEL_SERVICE_NAME", "gateway")
-
-	logger := Get("gateway-http-client")
-	if logger.Enabled(context.Background(), slog.LevelDebug) {
-		t.Fatal("expected gateway-http-client logger to disable debug level with otel enabled")
-	}
-}
-
-func TestGetFallsBackToGlobalLevelForInvalidComponentOverride(t *testing.T) {
-	resetLoggingState(t)
-	t.Setenv("LOG_LEVEL", "DEBUG")
-	t.Setenv("LOG_LEVEL_GATEWAY_HTTP_CLIENT", "INVALID")
-
-	logger := Get("gateway-http-client")
+	logger := New("test")
 	if !logger.Enabled(context.Background(), slog.LevelDebug) {
-		t.Fatal("expected invalid component override to fall back to global debug level")
-	}
-}
-
-func TestContextHandlerSkipsMissingRequest(t *testing.T) {
-	var output bytes.Buffer
-	logger := slog.New(newHandler(&output, slog.LevelInfo)).With("component", "test")
-
-	logger.InfoContext(context.Background(), "request log")
-
-	var payload map[string]any
-	if err := json.Unmarshal(output.Bytes(), &payload); err != nil {
-		t.Fatalf("unmarshal log output: %v", err)
+		t.Fatal("expected debug logging to be enabled")
 	}
 
-	if _, ok := payload["request"]; ok {
-		t.Fatalf("unexpected request field = %#v", payload["request"])
+	t.Setenv("LOG_LEVEL", "INFO")
+	logger = New("test")
+	if logger.Enabled(context.Background(), slog.LevelDebug) {
+		t.Fatal("expected debug logging to be disabled")
 	}
 }

@@ -88,7 +88,7 @@ flowchart TB
 
 Shared Go modules live in `packages/go/` and are reused across services.
 
-- `packages/go/logging`: structured JSON logging with component loggers (`logging.Get("component")`).
+- `packages/go/logging`: structured JSON logging via `logging.New("service-name")`, with component loggers created by `logger.With(...)`.
 - `packages/go/postgres`: shared PostgreSQL connection bootstrap from env configuration.
 - `packages/go/migrations`: shared `.sql` migration runner (sorted file execution).
 

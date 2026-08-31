@@ -18,7 +18,14 @@ import (
 
 type Repo struct {
 	*sqlc.Queries
-	DB *pgxpool.Pool
+	db *pgxpool.Pool
+}
+
+func New(db *pgxpool.Pool) *Repo {
+	return &Repo{
+		Queries: sqlc.New(db),
+		db:      db,
+	}
 }
 
 func (r *Repo) ListUsers(ctx context.Context) ([]domain.UserSummary, error) {
@@ -251,11 +258,11 @@ func (r *Repo) AssignGlobalRole(ctx context.Context, userID, assignedBy, role st
 		return fmt.Errorf("check target user: %w", err)
 	}
 
-	if r.DB == nil {
+	if r.db == nil {
 		return fmt.Errorf("identity database pool is not configured")
 	}
 
-	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global role changes: %w", err)
 		}
@@ -284,11 +291,11 @@ func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error 
 		return fmt.Errorf("check target user: %w", err)
 	}
 
-	if r.DB == nil {
+	if r.db == nil {
 		return fmt.Errorf("identity database pool is not configured")
 	}
 
-	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global role changes: %w", err)
 		}
@@ -314,11 +321,11 @@ func (r *Repo) RemoveGlobalRole(ctx context.Context, userID, role string) error 
 }
 
 func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) error {
-	if r.DB == nil {
+	if r.db == nil {
 		return fmt.Errorf("identity database pool is not configured")
 	}
 
-	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global admin changes: %w", err)
 		}
@@ -361,11 +368,11 @@ func (r *Repo) BlockUser(ctx context.Context, actorID, userID, reason string) er
 }
 
 func (r *Repo) UnblockUser(ctx context.Context, userID string) error {
-	if r.DB == nil {
+	if r.db == nil {
 		return fmt.Errorf("identity database pool is not configured")
 	}
 
-	err := dbtx.Run(ctx, r.DB, r.Queries, func(queries *sqlc.Queries) error {
+	err := dbtx.Run(ctx, r.db, r.Queries, func(queries *sqlc.Queries) error {
 		if err := queries.LockGlobalAdminChanges(ctx); err != nil {
 			return fmt.Errorf("lock global admin changes: %w", err)
 		}

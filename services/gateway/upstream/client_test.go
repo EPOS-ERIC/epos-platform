@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -404,7 +405,7 @@ func TestClientCancelsColdMissInflightAfterCallerContextCancellation(t *testing.
 func newTestClient(t *testing.T, transport *stubTransport, timeout, ttl time.Duration) *Client {
 	t.Helper()
 
-	client, err := NewClient(Config{
+	client, err := NewClient(slog.Default(), Config{
 		Timeout:     timeout,
 		RealTimeout: time.Second,
 		CacheTTL:    ttl,

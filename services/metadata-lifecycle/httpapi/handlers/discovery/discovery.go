@@ -4,9 +4,9 @@ package discovery
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 )
@@ -17,12 +17,14 @@ type Service interface {
 
 type Handler struct {
 	service Service
+	log     *slog.Logger
 }
 
-var log = logging.Get("discovery-handler")
-
-func New(service Service) *Handler {
-	return &Handler{service: service}
+func New(log *slog.Logger, service Service) *Handler {
+	return &Handler{
+		service: service,
+		log:     log.With("component", "discovery-handler"),
+	}
 }
 
 func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
@@ -33,26 +35,26 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	filter, err := filterFromRequest(r)
 	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", err.Error())
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", err.Error())
 		return
 	}
-	log.DebugContext(r.Context(), "discovery search", "filter", filter)
+	h.log.DebugContext(r.Context(), "discovery search", "filter", filter)
 	items, err := h.service.Search(r.Context(), actor, filter)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrInvalidDiscovery):
-			log.DebugContext(r.Context(), "discovery search invalid", "error", err)
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", err.Error())
+			h.log.DebugContext(r.Context(), "discovery search invalid", "error", err)
+			transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", err.Error())
 		case errors.Is(err, domain.ErrDiscoveryDenied):
-			log.DebugContext(r.Context(), "discovery search denied", "error", err)
-			transport.WriteProblem(w, http.StatusUnauthorized, "unauthorized", "authentication is required for non-published discovery results")
+			h.log.DebugContext(r.Context(), "discovery search denied", "error", err)
+			transport.WriteProblem(h.log, w, http.StatusUnauthorized, "unauthorized", "authentication is required for non-published discovery results")
 		default:
-			log.ErrorContext(r.Context(), "discovery search failed", "error", err)
-			transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "discovery search failed")
+			h.log.ErrorContext(r.Context(), "discovery search failed", "error", err)
+			transport.WriteProblem(h.log, w, http.StatusInternalServerError, "internal_server_error", "discovery search failed")
 		}
 		return
 	}
-	log.DebugContext(r.Context(), "discovery search succeeded", "items", len(items))
+	h.log.DebugContext(r.Context(), "discovery search succeeded", "items", len(items))
 
-	transport.WriteJSON(w, http.StatusOK, toResponse(items))
+	transport.WriteJSON(h.log, w, http.StatusOK, toResponse(items))
 }

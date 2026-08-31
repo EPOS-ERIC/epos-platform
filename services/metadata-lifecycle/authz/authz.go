@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -32,11 +33,15 @@ type repository interface {
 
 type Authorizer struct {
 	repository repository
+	log        *slog.Logger
 }
 
 // New creates an authorizer backed by repository.
-func New(repository repository) *Authorizer {
-	return &Authorizer{repository: repository}
+func New(log *slog.Logger, repository repository) *Authorizer {
+	return &Authorizer{
+		repository: repository,
+		log:        log.With("component", "authz-service"),
+	}
 }
 
 func (a *Authorizer) CanReadUser(ctx context.Context, actorID, targetID string) (domain.Result, error) {

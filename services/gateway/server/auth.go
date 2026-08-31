@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -13,19 +14,19 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
-func authMiddleware(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
-	return authMiddlewareRequired(authenticator, provisioner)
+func authMiddleware(log *slog.Logger, authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
+	return authMiddlewareRequired(log, authenticator, provisioner)
 }
 
-func authMiddlewareRequired(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
-	return authMiddlewareWithMode(authenticator, provisioner, true)
+func authMiddlewareRequired(log *slog.Logger, authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
+	return authMiddlewareWithMode(log, authenticator, provisioner, true)
 }
 
-func authMiddlewareOptional(authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
-	return authMiddlewareWithMode(authenticator, provisioner, false)
+func authMiddlewareOptional(log *slog.Logger, authenticator *auth.Service, provisioner *clients.MetadataLifecycle) func(http.Handler) http.Handler {
+	return authMiddlewareWithMode(log, authenticator, provisioner, false)
 }
 
-func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.MetadataLifecycle, required bool) func(http.Handler) http.Handler {
+func authMiddlewareWithMode(log *slog.Logger, authenticator *auth.Service, provisioner *clients.MetadataLifecycle, required bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			span := trace.SpanFromContext(r.Context())
@@ -39,7 +40,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Me
 
 				span.SetAttributes(attribute.String("auth.result", "missing_token"))
 				log.WarnContext(r.Context(), "missing bearer token")
-				handlers.WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+				handlers.WriteError(log, r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 				return
 			}
 
@@ -48,13 +49,13 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Me
 				if errors.Is(err, auth.ErrUnauthorized) {
 					span.SetAttributes(attribute.String("auth.result", "invalid_token"))
 					log.WarnContext(r.Context(), "invalid bearer token")
-					handlers.WriteError(r.Context(), w, http.StatusUnauthorized, "invalid_token", "token is invalid", nil)
+					handlers.WriteError(log, r.Context(), w, http.StatusUnauthorized, "invalid_token", "token is invalid", nil)
 					return
 				}
 
 				span.SetAttributes(attribute.String("auth.result", "auth_service_unavailable"))
 				log.ErrorContext(r.Context(), "authentication service unavailable", "error", err)
-				handlers.WriteError(r.Context(), w, http.StatusServiceUnavailable, "auth_service_unavailable", "authentication service unavailable", err)
+				handlers.WriteError(log, r.Context(), w, http.StatusServiceUnavailable, "auth_service_unavailable", "authentication service unavailable", err)
 				return
 			}
 
@@ -67,7 +68,7 @@ func authMiddlewareWithMode(authenticator *auth.Service, provisioner *clients.Me
 			if err != nil {
 				span.SetAttributes(attribute.String("auth.result", "user_provisioning_failed"))
 				log.ErrorContext(r.Context(), "user provisioning failed", "error", err)
-				handlers.WriteError(r.Context(), w, http.StatusServiceUnavailable, "user_provisioning_failed", "user provisioning failed", err)
+				handlers.WriteError(log, r.Context(), w, http.StatusServiceUnavailable, "user_provisioning_failed", "user provisioning failed", err)
 				return
 			}
 

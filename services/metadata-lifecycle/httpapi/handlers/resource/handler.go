@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
@@ -37,14 +38,16 @@ type Handler struct {
 	dataset             typedHandler
 	softwareApplication typedHandler
 	softwareSourceCode  typedHandler
+	log                 *slog.Logger
 }
 
 // New creates a resource-type dispatch handler.
-func New(dataset, softwareApplication, softwareSourceCode typedHandler) *Handler {
+func New(log *slog.Logger, dataset, softwareApplication, softwareSourceCode typedHandler) *Handler {
 	return &Handler{
 		dataset:             dataset,
 		softwareApplication: softwareApplication,
 		softwareSourceCode:  softwareSourceCode,
+		log:                 log.With("component", "resources-handler"),
 	}
 }
 
@@ -106,7 +109,7 @@ func (h *Handler) dispatch(w http.ResponseWriter, r *http.Request, call func(typ
 		// TODO: use a helper for stuff like this
 		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 10<<20))
 		if err != nil {
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
+			transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
 			return
 		}
 		r.Body = io.NopCloser(bytes.NewReader(body))
@@ -114,7 +117,7 @@ func (h *Handler) dispatch(w http.ResponseWriter, r *http.Request, call func(typ
 			ResourceType string `json:"resource_type"`
 		}
 		if err := json.Unmarshal(body, &envelope); err != nil {
-			transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
+			transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
 			return
 		}
 		resourceType = envelope.ResourceType
@@ -129,7 +132,7 @@ func (h *Handler) dispatch(w http.ResponseWriter, r *http.Request, call func(typ
 	case SoftwareSourceCode:
 		handler = h.softwareSourceCode
 	default:
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid resource_type")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid resource_type")
 		return
 	}
 	call(handler)

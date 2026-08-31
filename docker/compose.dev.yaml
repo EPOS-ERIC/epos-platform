@@ -50,9 +50,6 @@ services:
       - "32000:5000"
     environment:
       - LOG_LEVEL=DEBUG
-      # - LOG_LEVEL_GATEWAY_HTTP_CLIENT=DEBUG
-      - LOG_LEVEL_GATEWAY_HTTP_CLIENT=INFO
-      - LOG_LEVEL_METADATA_READER=INFO
 
       - OTEL_SERVICE_NAME=gateway
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318

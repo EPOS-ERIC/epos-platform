@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -11,19 +12,43 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi"
+	accessapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/access"
+	categoriesapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
+	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
+	datasetapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
+	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
+	groupsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/groups"
+	healthapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
+	importsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
+	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
+	resourceapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/resource"
+	softwareapplicationapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwareapplication"
+	softwaresourcecodeapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwaresourcecode"
+	usersapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
+
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
 )
 
 // Run starts the metadata-lifecycle HTTP server until shutdown.
-func Run(cfg config.Config) error {
+func Run(cfg config.Config, log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-
-	log := logging.Get("server")
 
 	// Set up OpenTelemetry.
 	otelShutdown, err := observability.Start(ctx, observability.Config{
@@ -38,7 +63,7 @@ func Run(cfg config.Config) error {
 		}
 	}()
 
-	database, err := db.Open(cfg)
+	database, err := db.Open(log, cfg)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}
@@ -48,14 +73,43 @@ func Run(cfg config.Config) error {
 		}
 	}()
 
-	// TODO: create services here and inject into router
-	router := httpapi.NewRouter(database)
-	handler := requestTimeoutHandler(router, cfg.RequestTimeout)
+	turtler := turtle.New(log)
+	authorizer := authz.New(log, database.Authorization)
+	usersSvc := users.New(log, database.Users, authorizer)
+	importSvc := metadataimport.New(log, database.Imports, authorizer)
+	groupsSvc := groups.New(log, database.Groups, authorizer)
+	accessSvc := access.New(log, database.Access, authorizer)
+	categoriesSvc := categories.New(log, database.Categories, authorizer)
+	contactPointSvc := contactpoints.New(log, database.ContactPoints, authorizer)
+	organizationsSvc := organizations.New(log, database.Organizations, authorizer)
+	datasetSvc := datasets.New(log, database.Datasets, authorizer)
+	applicationSvc := softwareapplications.New(log, database.SoftwareApplications, authorizer)
+	sourceCodeSvc := softwaresourcecodes.New(log, database.SoftwareSourceCodes, authorizer)
+	discoverySvc := discovery.New(log, database.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
+
+	datasetsHandler := datasetapi.New(log, datasetSvc)
+	applicationsHandler := softwareapplicationapi.New(log, applicationSvc)
+	sourceCodesHandler := softwaresourcecodeapi.New(log, sourceCodeSvc)
+
+	router := httpapi.NewRouter(httpapi.Router{
+		Health:        healthapi.New(log, database),
+		Imports:       importsapi.New(log, importSvc, turtler),
+		Users:         usersapi.New(log, usersSvc),
+		Groups:        groupsapi.New(log, groupsSvc),
+		Access:        accessapi.New(log, accessSvc),
+		Categories:    categoriesapi.New(log, categoriesSvc),
+		ContactPoints: contactpointsapi.New(log, contactPointSvc),
+		Organizations: organizationsapi.New(log, organizationsSvc),
+		Resources:     resourceapi.New(log, datasetsHandler, applicationsHandler, sourceCodesHandler),
+		Discovery:     discoveryapi.New(log, discoverySvc),
+
+		Log: log,
+	})
 
 	srv := &http.Server{ //nolint:exhaustruct_v5
 		BaseContext:  func(net.Listener) context.Context { return ctx },
 		Addr:         ":" + cfg.ServerPort,
-		Handler:      handler,
+		Handler:      http.TimeoutHandler(router, cfg.RequestTimeout, "request timeout\n"),
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 		IdleTimeout:  cfg.IdleTimeout,
@@ -86,8 +140,4 @@ func Run(cfg config.Config) error {
 	log.Info("server shutdown complete")
 
 	return nil
-}
-
-func requestTimeoutHandler(next http.Handler, timeout time.Duration) http.Handler {
-	return http.TimeoutHandler(next, timeout, "request timeout\n")
 }

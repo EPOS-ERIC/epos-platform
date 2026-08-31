@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 )
@@ -25,15 +25,15 @@ type parser interface {
 type Handler struct {
 	service service
 	parser  parser
+	log     *slog.Logger
 }
 
-var log = logging.Get("import-handler")
-
 // New creates a Turtle import handler.
-func New(service service, parser parser) *Handler {
+func New(log *slog.Logger, service service, parser parser) *Handler {
 	return &Handler{
 		service: service,
 		parser:  parser,
+		log:     log.With("component", "import-handler"),
 	}
 }
 
@@ -49,28 +49,28 @@ func (h *Handler) Turtle(w http.ResponseWriter, r *http.Request) {
 	}
 	batch, err := h.parser.Parse(http.MaxBytesReader(w, r.Body, 50<<20))
 	if err != nil {
-		writeImportError(r, w, fmt.Errorf("parse Turtle: %w: %w", domain.ErrInvalidImport, err))
+		writeImportError(h.log, r, w, fmt.Errorf("parse Turtle: %w: %w", domain.ErrInvalidImport, err))
 		return
 	}
 
 	result, err := h.service.Import(r.Context(), actor, batch)
 	if err != nil {
-		writeImportError(r, w, err)
+		writeImportError(h.log, r, w, err)
 		return
 	}
-	transport.WriteJSON(w, http.StatusOK, toResponse(result))
+	transport.WriteJSON(h.log, w, http.StatusOK, toResponse(result))
 }
 
-func writeImportError(r *http.Request, w http.ResponseWriter, err error) {
+func writeImportError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain.ErrImportForbidden):
-		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "global admin required")
+		transport.WriteProblem(log, w, http.StatusForbidden, "forbidden", "global admin required")
 	case errors.Is(err, domain.ErrInvalidImport):
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_import", err.Error())
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_import", err.Error())
 	case errors.Is(err, domain.ErrImportConflict):
-		transport.WriteProblem(w, http.StatusConflict, "import_conflict", err.Error())
+		transport.WriteProblem(log, w, http.StatusConflict, "import_conflict", err.Error())
 	default:
 		log.ErrorContext(r.Context(), "metadata import failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "metadata import failed")
+		transport.WriteProblem(log, w, http.StatusInternalServerError, "internal_server_error", "metadata import failed")
 	}
 }

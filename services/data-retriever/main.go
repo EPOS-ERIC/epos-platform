@@ -19,12 +19,7 @@ import (
 )
 
 func main() {
-	log := logging.Get("data-retriever")
-	defer func() {
-		if err := logging.Close(); err != nil {
-			log.Error("failed to close logging", "error", err)
-		}
-	}()
+	log := logging.New("data-retriever").With("service", "data-retriever")
 
 	otelShutdown, err := observability.Start(context.Background(), observability.Config{})
 	if err != nil {
@@ -64,6 +59,7 @@ func main() {
 
 	maxBodyBytes := int64(1 << 20)
 	handler := server.NewRouter(
+		log,
 		repository.NewRetrievalPostgresRepository(db),
 		retriever.NewClient(timeout, maxBodyBytes),
 		db,

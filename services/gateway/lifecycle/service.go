@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
@@ -18,10 +17,10 @@ type Service struct {
 }
 
 // NewService builds lifecycle service for Metadata Lifecycle lifecycle operations.
-func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
+func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) *Service {
 	return &Service{
 		metadataLifecycle: metadataLifecycle,
-		log:               logging.Get("lifecycle-service"),
+		log:               log.With("component", "lifecycle-service"),
 	}
 }
 

@@ -2,54 +2,51 @@
 package httpapi
 
 import (
+	"log/slog"
 	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
-	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
-	categoryservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
-	contactpointservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/docs"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
-	accessapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/access"
-	categoriesapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
-	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
-	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
-	groupsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/groups"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/access"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
 	imports "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
-	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/resource"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwareapplication"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwaresourcecode"
-	usersapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
-	organizationservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
-	usersservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
 	"github.com/go-chi/chi/v5"
 )
 
-var log = logging.Get("routes")
+type Router struct {
+	Imports       *imports.Handler
+	Users         *users.Handler
+	Groups        *groups.Handler
+	Access        *access.Handler
+	Categories    *categories.Handler
+	ContactPoints *contactpoints.Handler
+	Organizations *organizations.Handler
+	Resources     *resource.Handler
+	Discovery     *discovery.Handler
+	Health        *health.Handler
+
+	Log *slog.Logger
+}
 
 // NewRouter builds the metadata lifecycle HTTP handler and routes.
 // TODO: inject services inside of here, don't create them in the function
-func NewRouter(database *db.PostgresDB) http.Handler {
+func NewRouter(router Router) http.Handler {
+	log := router.Log.With("component", "routes")
 	log.Info("creating HTTP handler")
 
 	r := chi.NewRouter()
-	r.Use(auditMiddleware(log))
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Get("/health", health.New(database).ServeHTTP)
+	r.Use(auditMiddleware(router.Log))
+	r.Use(middleware.Logger(router.Log))
+	r.Use(middleware.Recoverer(router.Log))
+	r.Get("/health", router.Health.ServeHTTP)
 	r.Get("/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
 		if _, err := w.Write(docs.GetSpec()); err != nil {
@@ -66,88 +63,68 @@ func NewRouter(database *db.PostgresDB) http.Handler {
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 	r.Route("/api/v1", func(r chi.Router) {
 		// TODO: group the endpoints better with r.Route
-		authorizer := authz.New(database.Authorization)
 
-		importsHandler := imports.New(metadataimport.New(authorizer, database.Imports), turtle.Parser{})
+		r.Post("/imports/turtle", router.Imports.Turtle)
 
-		r.Post("/imports/turtle", importsHandler.Turtle)
+		r.Get("/users/{user_id}", router.Users.GetByID)
+		r.Get("/users", router.Users.List)
+		r.Put("/users/{user_id}/global-permissions/{permission}", router.Users.GrantGlobalPermission)
+		r.Delete("/users/{user_id}/global-permissions/{permission}", router.Users.RevokeGlobalPermission)
+		r.Put("/users/{user_id}/global-roles/{role}", router.Users.AssignGlobalRole)
+		r.Delete("/users/{user_id}/global-roles/{role}", router.Users.RemoveGlobalRole)
+		r.Post("/users/{user_id}/block", router.Users.BlockUser)
+		r.Post("/users/{user_id}/unblock", router.Users.UnblockUser)
+		r.Post("/internal/users", router.Users.Create)
 
-		users := usersapi.New(usersservice.New(database.Users, authorizer))
+		r.Get("/groups", router.Groups.List)
+		r.Post("/groups", router.Groups.Create)
+		r.Get("/groups/{group_id}", router.Groups.Get)
+		r.Put("/groups/{group_id}", router.Groups.Replace)
+		r.Delete("/groups/{group_id}", router.Groups.Delete)
+		r.Post("/groups/{group_id}/categories", router.Categories.Create)
+		r.Get("/groups/{group_id}/categories", router.Categories.List)
+		r.Get("/groups/{group_id}/categories/{category_id}", router.Categories.Get)
+		r.Put("/groups/{group_id}/categories/{category_id}", router.Categories.Replace)
+		r.Delete("/groups/{group_id}/categories/{category_id}", router.Categories.Delete)
+		r.Get("/groups/{group_id}/memberships", router.Access.ListMemberships)
+		r.Post("/groups/{group_id}/membership-requests", router.Access.RequestMembership)
+		r.Delete("/groups/{group_id}/membership-requests", router.Access.WithdrawMembershipRequest)
+		r.Patch("/groups/{group_id}/memberships/{user_id}", router.Access.DecideMembership)
+		r.Delete("/groups/{group_id}/memberships/{user_id}", router.Access.RevokeMembership)
+		r.Post("/groups/{group_id}/role-requests", router.Access.RequestRole)
+		r.Patch("/groups/{group_id}/role-requests/{request_id}", router.Access.ApplyRoleRequestDecision)
+		r.Delete("/groups/{group_id}/role-requests/{request_id}", router.Access.WithdrawRoleRequest)
+		r.Put("/groups/{group_id}/memberships/{user_id}/roles/{role}", router.Access.AssignRole)
+		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", router.Access.RemoveRole)
+		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", router.Access.GrantPermission)
+		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", router.Access.RevokePermission)
 
-		r.Get("/users/{user_id}", users.GetByID)
-		r.Get("/users", users.List)
-		r.Put("/users/{user_id}/global-permissions/{permission}", users.GrantGlobalPermission)
-		r.Delete("/users/{user_id}/global-permissions/{permission}", users.RevokeGlobalPermission)
-		r.Put("/users/{user_id}/global-roles/{role}", users.AssignGlobalRole)
-		r.Delete("/users/{user_id}/global-roles/{role}", users.RemoveGlobalRole)
-		r.Post("/users/{user_id}/block", users.BlockUser)
-		r.Post("/users/{user_id}/unblock", users.UnblockUser)
-		r.Post("/internal/users", users.Create)
+		r.Get("/contact-points", router.ContactPoints.List)
+		r.Post("/contact-points", router.ContactPoints.Create)
+		r.Get("/contact-points/{contact_point_id}", router.ContactPoints.Get)
+		r.Put("/contact-points/{contact_point_id}", router.ContactPoints.Replace)
+		r.Delete("/contact-points/{contact_point_id}", router.ContactPoints.Delete)
 
-		groupHandler := groupsapi.New(groupservice.New(database.Groups, authorizer))
-		accessHandler := accessapi.New(accessservice.New(database.Access, authorizer))
-		categoryHandler := categoriesapi.New(categoryservice.New(database.Categories, authorizer))
+		r.Get("/organizations", router.Organizations.List)
+		r.Post("/organizations", router.Organizations.Create)
+		r.Get("/organizations/{organization_id}", router.Organizations.Get)
+		r.Put("/organizations/{organization_id}", router.Organizations.Replace)
+		r.Delete("/organizations/{organization_id}", router.Organizations.Delete)
 
-		r.Get("/groups", groupHandler.List)
-		r.Post("/groups", groupHandler.Create)
-		r.Get("/groups/{group_id}", groupHandler.Get)
-		r.Put("/groups/{group_id}", groupHandler.Replace)
-		r.Delete("/groups/{group_id}", groupHandler.Delete)
-		r.Post("/groups/{group_id}/categories", categoryHandler.Create)
-		r.Get("/groups/{group_id}/categories", categoryHandler.List)
-		r.Get("/groups/{group_id}/categories/{category_id}", categoryHandler.Get)
-		r.Put("/groups/{group_id}/categories/{category_id}", categoryHandler.Replace)
-		r.Delete("/groups/{group_id}/categories/{category_id}", categoryHandler.Delete)
-		r.Get("/groups/{group_id}/memberships", accessHandler.ListMemberships)
-		r.Post("/groups/{group_id}/membership-requests", accessHandler.RequestMembership)
-		r.Delete("/groups/{group_id}/membership-requests", accessHandler.WithdrawMembershipRequest)
-		r.Patch("/groups/{group_id}/memberships/{user_id}", accessHandler.DecideMembership)
-		r.Delete("/groups/{group_id}/memberships/{user_id}", accessHandler.RevokeMembership)
-		r.Post("/groups/{group_id}/role-requests", accessHandler.RequestRole)
-		r.Patch("/groups/{group_id}/role-requests/{request_id}", accessHandler.ApplyRoleRequestDecision)
-		r.Delete("/groups/{group_id}/role-requests/{request_id}", accessHandler.WithdrawRoleRequest)
-		r.Put("/groups/{group_id}/memberships/{user_id}/roles/{role}", accessHandler.AssignRole)
-		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", accessHandler.RemoveRole)
-		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", accessHandler.GrantPermission)
-		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", accessHandler.RevokePermission)
-
-		contactPoints := contactpointsapi.New(contactpointservice.New(database.ContactPoints, authorizer))
-		r.Get("/contact-points", contactPoints.List)
-		r.Post("/contact-points", contactPoints.Create)
-		r.Get("/contact-points/{contact_point_id}", contactPoints.Get)
-		r.Put("/contact-points/{contact_point_id}", contactPoints.Replace)
-		r.Delete("/contact-points/{contact_point_id}", contactPoints.Delete)
-
-		organizations := organizationsapi.New(organizationservice.New(database.Organizations, authorizer))
-		r.Get("/organizations", organizations.List)
-		r.Post("/organizations", organizations.Create)
-		r.Get("/organizations/{organization_id}", organizations.Get)
-		r.Put("/organizations/{organization_id}", organizations.Replace)
-		r.Delete("/organizations/{organization_id}", organizations.Delete)
-
-		datasetService := datasets.New(database.Datasets, authorizer)
-		applicationService := softwareapplications.New(database.SoftwareApplications, authorizer)
-		sourceCodeService := softwaresourcecodes.New(database.SoftwareSourceCodes, authorizer)
-		datasets := dataset.New(datasetService)
-		applications := softwareapplication.New(applicationService)
-		sourceCodes := softwaresourcecode.New(sourceCodeService)
-		resources := resource.New(datasets, applications, sourceCodes)
-		discoveryHandler := discoveryapi.New(discovery.New(database.Discovery, authorizer, datasetService, applicationService, sourceCodeService, groupservice.New(database.Groups, authorizer)))
-
-		r.Get("/resources", discoveryHandler.Search)
-		r.Post("/groups/{group_id}/resources", resources.Create)
-		r.Get("/resources/{resource_type}/{resource_id}/versions/{version_id}", resources.Get)
-		r.Put("/resources/{resource_id}/versions/{version_id}/draft", resources.ReplaceDraft)
-		r.Delete("/resources/{resource_type}/{resource_id}/versions/{version_id}/draft", resources.Discard)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/submit", resources.Submit)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw", resources.Withdraw)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/reject", resources.Reject)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen", resources.Reopen)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/publish", resources.Publish)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish", resources.Unpublish)
-		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-publication", resources.DraftFromPublication)
-		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-archive", resources.DraftFromArchive)
-		r.Post("/groups/{group_id}/resources/{resource_type}/{resource_id}/copies", resources.Copy)
+		r.Get("/resources", router.Discovery.Search)
+		r.Post("/groups/{group_id}/resources", router.Resources.Create)
+		r.Get("/resources/{resource_type}/{resource_id}/versions/{version_id}", router.Resources.Get)
+		r.Put("/resources/{resource_id}/versions/{version_id}/draft", router.Resources.ReplaceDraft)
+		r.Delete("/resources/{resource_type}/{resource_id}/versions/{version_id}/draft", router.Resources.Discard)
+		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/submit", router.Resources.Submit)
+		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw", router.Resources.Withdraw)
+		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/reject", router.Resources.Reject)
+		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen", router.Resources.Reopen)
+		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/publish", router.Resources.Publish)
+		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish", router.Resources.Unpublish)
+		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-publication", router.Resources.DraftFromPublication)
+		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-archive", router.Resources.DraftFromArchive)
+		r.Post("/groups/{group_id}/resources/{resource_type}/{resource_id}/copies", router.Resources.Copy)
 	})
 
 	return observability.NewHTTPHandler(r, "/")

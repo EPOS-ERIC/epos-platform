@@ -11,7 +11,6 @@ import (
 
 	nethttp "net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -79,7 +78,7 @@ func (e *upstreamStatusError) Error() string {
 }
 
 // NewClient creates a cached upstream HTTP client from Config.
-func NewClient(cfg Config) (*Client, error) {
+func NewClient(log *slog.Logger, cfg Config) (*Client, error) {
 	if cfg.Timeout <= 0 {
 		return nil, fmt.Errorf("timeout must be greater than zero")
 	}
@@ -109,7 +108,7 @@ func NewClient(cfg Config) (*Client, error) {
 		realTimeout: cfg.RealTimeout,
 		cacheTTL:    cfg.CacheTTL,
 		maxEntries:  cfg.MaxEntries,
-		log:         logging.Get("gateway-http-client"),
+		log:         log,
 		now:         time.Now,
 		mu:          sync.Mutex{},
 		cache:       make(map[string]*cacheEntry),

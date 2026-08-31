@@ -2,6 +2,7 @@ package authz
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -102,7 +103,7 @@ func (r fakeRepository) IsSoftwareSourceCodePublished(context.Context, uuid.UUID
 func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 	t.Parallel()
 	groupID := uuid.New()
-	authorizer := New(fakeRepository{
+	authorizer := New(slog.Default(), fakeRepository{
 		user:         domain.AuthorizationUser{Status: domain.UserStatusActive},
 		member:       true,
 		groupAllowed: true,
@@ -121,7 +122,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 
 func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 	t.Parallel()
-	authorizer := New(fakeRepository{user: domain.AuthorizationUser{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
+	authorizer := New(slog.Default(), fakeRepository{user: domain.AuthorizationUser{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
 
 	result, err := authorizer.AuthorizeGroup(context.Background(), "user-1", uuid.New(), "resource.edit")
 	if err != nil {
@@ -134,7 +135,7 @@ func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
 
 func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 	t.Parallel()
-	authorizer := New(fakeRepository{
+	authorizer := New(slog.Default(), fakeRepository{
 		user:   domain.AuthorizationUser{Status: domain.UserStatusActive},
 		global: true,
 		scope:  domain.PermissionScopeGlobal,
@@ -151,7 +152,7 @@ func TestAuthorizeGlobalAllowsGlobalGrant(t *testing.T) {
 
 func TestCanReadPublishedResourceWithoutUser(t *testing.T) {
 	t.Parallel()
-	authorizer := New(fakeRepository{datasetGroup: uuid.New(), published: true})
+	authorizer := New(slog.Default(), fakeRepository{datasetGroup: uuid.New(), published: true})
 
 	result, err := authorizer.CanReadResource(context.Background(), nil, domain.Dataset, uuid.New())
 	if err != nil {
@@ -178,7 +179,7 @@ func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
 		{name: "global admin", admin: true, allowed: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			result, err := New(fakeRepository{
+			result, err := New(slog.Default(), fakeRepository{
 				user:      domain.AuthorizationUser{Status: domain.UserStatusActive},
 				admin:     test.admin,
 				anyMember: test.member,

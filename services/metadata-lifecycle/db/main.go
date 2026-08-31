@@ -7,8 +7,8 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"log/slog"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
 	accessdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/access"
 	authdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/authz"
@@ -21,7 +21,6 @@ import (
 	organizationdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/organizations"
 	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
 	softwaresourcecodesdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwaresourcecodes"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	usersdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/users"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -29,8 +28,6 @@ import (
 	"github.com/pressly/goose/v3"
 	pgxgeom "github.com/twpayne/pgx-geom"
 )
-
-var log = logging.Get("db")
 
 //go:embed migrations/*.sql
 var embedMigrations embed.FS
@@ -52,7 +49,7 @@ type PostgresDB struct {
 }
 
 // Open connects to PostgreSQL, applies migrations, and builds repositories.
-func Open(cfg config.Config) (*PostgresDB, error) {
+func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s dbname=%s user=%s password=%s sslmode=disable",
 		cfg.DBHost,
@@ -70,7 +67,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 		_ = migrationDB.Close()
 		return nil, fmt.Errorf("ping migration db: %w", err)
 	}
-	if err := runMigrations(migrationDB); err != nil {
+	if err := runMigrations(log, migrationDB); err != nil {
 		_ = migrationDB.Close()
 		return nil, err
 	}
@@ -101,14 +98,14 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 	// TODO: align the initialization of the db packages
 	return &PostgresDB{
 		db:                   db,
-		Authorization:        &authdb.Repo{Queries: sqlc.New(db)},
-		Users:                &usersdb.Repo{Queries: sqlc.New(db), DB: db},
+		Authorization:        authdb.New(db),
+		Users:                usersdb.New(db),
 		Groups:               groupdb.New(db),
 		Access:               accessdb.New(db),
 		Categories:           categorydb.New(db),
 		Organizations:        organizationdb.New(db),
 		ContactPoints:        contactpointdb.New(db),
-		Discovery:            discoverydb.New(db),
+		Discovery:            discoverydb.New(log, db),
 		Datasets:             datasetdb.New(db),
 		Imports:              importdb.New(db),
 		SoftwareApplications: softwareapplicationsdb.New(db),
@@ -116,7 +113,7 @@ func Open(cfg config.Config) (*PostgresDB, error) {
 	}, nil
 }
 
-func runMigrations(db *sql.DB) error {
+func runMigrations(log *slog.Logger, db *sql.DB) error {
 	migrationsFS, err := fs.Sub(embedMigrations, "migrations")
 	if err != nil {
 		return fmt.Errorf("create migrations filesystem: %w", err)

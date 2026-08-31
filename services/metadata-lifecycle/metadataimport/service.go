@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
@@ -20,13 +21,15 @@ type Repository interface {
 type Service struct {
 	authorizer Authorizer
 	repository Repository
+	log        *slog.Logger
 }
 
 // New creates an authorized metadata import service.
-func New(authorizer Authorizer, repository Repository) *Service {
+func New(log *slog.Logger, repository Repository, authorizer Authorizer) *Service {
 	return &Service{
 		authorizer: authorizer,
 		repository: repository,
+		log:        log.With("component", "import-service"),
 	}
 }
 

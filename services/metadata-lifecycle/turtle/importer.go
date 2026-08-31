@@ -4,6 +4,7 @@ package turtle
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -14,7 +15,16 @@ import (
 )
 
 // Parser adapts Turtle parsing to the import handler parser interface.
-type Parser struct{}
+type Parser struct {
+	log *slog.Logger
+}
+
+// New creates a TTL Parsers
+func New(log *slog.Logger) *Parser {
+	return &Parser{
+		log: log.With("component", "turtle"),
+	}
+}
 
 // Parse converts Turtle input into a metadata import batch.
 func (Parser) Parse(input io.Reader) (domain.ImportBatch, error) {

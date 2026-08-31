@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 )
@@ -33,10 +34,15 @@ type Authorizer interface {
 type Service struct {
 	store      Store
 	authorizer Authorizer
+	log        *slog.Logger
 }
 
-func New(store Store, authorizer Authorizer) *Service {
-	return &Service{store: store, authorizer: authorizer}
+func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
+	return &Service{
+		store:      store,
+		authorizer: authorizer,
+		log:        log.With("component", "users-service"),
+	}
 }
 
 func (s *Service) GetByID(ctx context.Context, actorID domain.Actor, userID string) (domain.User, error) {

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/urlutil"
 )
@@ -39,7 +38,7 @@ type Service struct {
 }
 
 // NewService builds auth service for token validation against external provider.
-func NewService(baseURL string, upstreamCfg config.Upstream) (*Service, error) {
+func NewService(log *slog.Logger, baseURL string, upstreamCfg config.Upstream) (*Service, error) {
 	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("normalize auth base URL: %w", err)
@@ -47,7 +46,7 @@ func NewService(baseURL string, upstreamCfg config.Upstream) (*Service, error) {
 
 	// TODO: see if we need an upstream client here too or if a default http client is fine
 	return &Service{
-		log:     logging.Get("auth-service"),
+		log:     log.With("component", "auth-service"),
 		baseURL: normalizedBaseURL,
 		client: &http.Client{
 			Transport:     nil,

@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/repository"
@@ -18,12 +18,11 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/data-retriever/swagger"
 )
 
-var log = logging.Get("data-retriever-handler")
-
 type Handler struct {
 	repo       repository.RetrievalRepository
 	client     retrievalClient
 	healthPing healthPinger
+	log        *slog.Logger
 }
 
 type healthPinger interface {
@@ -34,11 +33,16 @@ type retrievalClient interface {
 	Execute(rctx context.Context, req domain.ValidatedRequest) (retriever.Result, error)
 }
 
-func NewRouter(repo repository.RetrievalRepository, client retrievalClient, healthPing healthPinger) http.Handler {
-	h := &Handler{repo: repo, client: client, healthPing: healthPing}
+func NewRouter(log *slog.Logger, repo repository.RetrievalRepository, client retrievalClient, healthPing healthPinger) http.Handler {
+	h := &Handler{
+		repo:       repo,
+		client:     client,
+		healthPing: healthPing,
+		log:        log.With("component", "data-retriever-handler"),
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", h.health)
-	mux.HandleFunc("GET /openapi.yaml", openAPISpec)
+	mux.HandleFunc("GET /openapi.yaml", h.openAPISpec)
 	mux.HandleFunc("GET /swagger", swaggerRedirect)
 	mux.Handle("/swagger/", http.StripPrefix("/swagger", http.FileServer(http.FS(swagger.GetUI()))))
 	mux.HandleFunc("POST /api/v2/retrieve", h.retrieve)
@@ -49,7 +53,7 @@ func NewRouter(repo repository.RetrievalRepository, client retrievalClient, heal
 
 func (h *Handler) health(w http.ResponseWriter, r *http.Request) {
 	if h.healthPing == nil {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+		writeJSON(h.log, w, http.StatusOK, map[string]string{"status": "ok"})
 		return
 	}
 
@@ -57,22 +61,22 @@ func (h *Handler) health(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	if err := h.healthPing.PingContext(ctx); err != nil {
-		log.Error("health check failed", "component", "database", "error", err)
-		writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "degraded", "reason": "database unreachable"})
+		h.log.ErrorContext(r.Context(), "health check failed", "component", "database", "error", err)
+		writeJSON(h.log, w, http.StatusServiceUnavailable, map[string]string{"status": "degraded", "reason": "database unreachable"})
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	writeJSON(h.log, w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func swaggerRedirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/swagger/", http.StatusMovedPermanently)
 }
 
-func openAPISpec(w http.ResponseWriter, _ *http.Request) {
+func (h *Handler) openAPISpec(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/yaml; charset=utf-8")
 	if _, err := w.Write(swagger.GetSpec()); err != nil {
-		log.Error("failed to write openapi spec", "error", err)
+		h.log.ErrorContext(r.Context(), "failed to write openapi spec", "error", err)
 	}
 }
 
@@ -82,29 +86,29 @@ func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
 
 	var req domain.RetrieveRequest
 	if err := decoder.Decode(&req); err != nil {
-		log.Warn("invalid retrieve request body", "error", err)
-		writeError(w, http.StatusBadRequest, err.Error())
+		h.log.WarnContext(r.Context(), "invalid retrieve request body", "error", err)
+		writeError(h.log, w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	validated, err := req.Validate()
 	if err != nil {
-		log.Warn("invalid retrieve request", "source_id", req.SourceID, "error", err)
-		writeError(w, http.StatusBadRequest, err.Error())
+		h.log.WarnContext(r.Context(), "invalid retrieve request", "source_id", req.SourceID, "error", err)
+		writeError(h.log, w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	result, err := h.client.Execute(r.Context(), validated)
 	if err != nil {
-		log.Error("failed retrieval upstream call", "source_id", validated.SourceID, "method", validated.Method, "url", validated.GeneratedURL, "error", err)
-		writeError(w, http.StatusBadGateway, err.Error())
+		h.log.ErrorContext(r.Context(), "failed retrieval upstream call", "source_id", validated.SourceID, "method", validated.Method, "url", validated.GeneratedURL, "error", err)
+		writeError(h.log, w, http.StatusBadGateway, err.Error())
 		return
 	}
 
 	record, err := h.repo.Create(r.Context(), validated, result)
 	if err != nil {
-		log.Error("failed storing retrieval record", "source_id", validated.SourceID, "method", validated.Method, "url", validated.GeneratedURL, "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.log.ErrorContext(r.Context(), "failed storing retrieval record", "source_id", validated.SourceID, "method", validated.Method, "url", validated.GeneratedURL, "error", err)
+		writeError(h.log, w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -126,31 +130,31 @@ func (h *Handler) retrieve(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		log.Warn("invalid retrieval id", "id", r.PathValue("id"), "error", err)
-		writeError(w, http.StatusBadRequest, "invalid id")
+		h.log.WarnContext(r.Context(), "invalid retrieval id", "id", r.PathValue("id"), "error", err)
+		writeError(h.log, w, http.StatusBadRequest, "invalid id")
 		return
 	}
 
 	record, err := h.repo.GetByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("retrieval record not found", "id", id)
-			writeError(w, http.StatusNotFound, "record not found")
+			h.log.WarnContext(r.Context(), "retrieval record not found", "id", id)
+			writeError(h.log, w, http.StatusNotFound, "record not found")
 			return
 		}
-		log.Error("failed reading retrieval by id", "id", id, "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.log.ErrorContext(r.Context(), "failed reading retrieval by id", "id", id, "error", err)
+		writeError(h.log, w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeJSON(w, http.StatusOK, record)
+	writeJSON(h.log, w, http.StatusOK, record)
 }
 
 func (h *Handler) search(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	if q == "" {
-		log.Warn("missing search query")
-		writeError(w, http.StatusBadRequest, "q is required")
+		h.log.WarnContext(r.Context(), "missing search query")
+		writeError(h.log, w, http.StatusBadRequest, "q is required")
 		return
 	}
 
@@ -169,12 +173,12 @@ func (h *Handler) search(w http.ResponseWriter, r *http.Request) {
 		pageSize,
 	)
 	if err != nil {
-		log.Error("failed searching retrieval records", "query", q, "error", err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		h.log.ErrorContext(r.Context(), "failed searching retrieval records", "query", q, "error", err)
+		writeError(h.log, w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{"items": results, "total": len(results)})
+	writeJSON(h.log, w, http.StatusOK, map[string]any{"items": results, "total": len(results)})
 }
 
 func parsePositiveInt(raw string, fallback int) int {
@@ -188,7 +192,7 @@ func parsePositiveInt(raw string, fallback int) int {
 	return v
 }
 
-func writeJSON(w http.ResponseWriter, code int, payload any) {
+func writeJSON(log *slog.Logger, w http.ResponseWriter, code int, payload any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
@@ -196,6 +200,6 @@ func writeJSON(w http.ResponseWriter, code int, payload any) {
 	}
 }
 
-func writeError(w http.ResponseWriter, code int, message string) {
-	writeJSON(w, code, map[string]string{"error": message})
+func writeError(log *slog.Logger, w http.ResponseWriter, code int, message string) {
+	writeJSON(log, w, code, map[string]string{"error": message})
 }

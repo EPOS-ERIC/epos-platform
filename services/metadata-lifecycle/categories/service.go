@@ -4,6 +4,7 @@ package categories
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -24,10 +25,15 @@ type Authorizer interface {
 type Service struct {
 	store      Store
 	authorizer Authorizer
+	log        *slog.Logger
 }
 
-func New(store Store, authorizer Authorizer) *Service {
-	return &Service{store: store, authorizer: authorizer}
+func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
+	return &Service{
+		store:      store,
+		authorizer: authorizer,
+		log:        log.With("component", "categories-service"),
+	}
 }
 
 func (s *Service) List(ctx context.Context, groupID uuid.UUID) ([]domain.Category, error) {

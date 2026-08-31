@@ -4,16 +4,14 @@ package groups
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
-
-var log = logging.Get("groups-handler")
 
 type service interface {
 	Create(context.Context, domain.Actor, domain.GroupInput) (domain.Group, error)
@@ -25,10 +23,14 @@ type service interface {
 
 type Handler struct {
 	service service
+	log     *slog.Logger
 }
 
-func New(service service) *Handler {
-	return &Handler{service: service}
+func New(log *slog.Logger, service service) *Handler {
+	return &Handler{
+		service: service,
+		log:     log.With("component", "groups-handler"),
+	}
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -38,23 +40,23 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body groupRequest
-	if !transport.Decode(w, r, &body) {
+	if !transport.Decode(h.log, w, r, &body) {
 		return
 	}
 
 	input, err := toDomainGroupInput(body)
 	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group")
 		return
 	}
 
 	group, err := h.service.Create(r.Context(), actorID, input)
 	if err != nil {
-		writeError(w, r, err, "create group")
+		writeError(h.log, w, r, err, "create group")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusCreated, toResponse(group))
+	transport.WriteJSON(h.log, w, http.StatusCreated, toResponse(group))
 }
 
 func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
@@ -63,29 +65,29 @@ func (h *Handler) Replace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := groupIDPath(w, r)
+	id, ok := groupIDPath(h.log, w, r)
 	if !ok {
 		return
 	}
 
 	var body groupRequest
-	if !transport.Decode(w, r, &body) {
+	if !transport.Decode(h.log, w, r, &body) {
 		return
 	}
 
 	input, err := toDomainGroupInput(body)
 	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group")
 		return
 	}
 
 	group, err := h.service.Replace(r.Context(), actorID, id, input)
 	if err != nil {
-		writeError(w, r, err, "replace group")
+		writeError(h.log, w, r, err, "replace group")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusOK, toResponse(group))
+	transport.WriteJSON(h.log, w, http.StatusOK, toResponse(group))
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -94,13 +96,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, ok := groupIDPath(w, r)
+	id, ok := groupIDPath(h.log, w, r)
 	if !ok {
 		return
 	}
 
 	if err := h.service.Delete(r.Context(), actorID, id); err != nil {
-		writeError(w, r, err, "delete group")
+		writeError(h.log, w, r, err, "delete group")
 		return
 	}
 
@@ -110,7 +112,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	groups, err := h.service.List(r.Context())
 	if err != nil {
-		writeError(w, r, err, "list groups")
+		writeError(h.log, w, r, err, "list groups")
 		return
 	}
 
@@ -119,45 +121,45 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		result = append(result, toResponse(group))
 	}
 
-	transport.WriteJSON(w, http.StatusOK, result)
+	transport.WriteJSON(h.log, w, http.StatusOK, result)
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	id, ok := groupIDPath(w, r)
+	id, ok := groupIDPath(h.log, w, r)
 	if !ok {
 		return
 	}
 
 	group, err := h.service.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, r, err, "get group")
+		writeError(h.log, w, r, err, "get group")
 		return
 	}
 
-	transport.WriteJSON(w, http.StatusOK, toResponse(group))
+	transport.WriteJSON(h.log, w, http.StatusOK, toResponse(group))
 }
 
-func groupIDPath(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+func groupIDPath(log *slog.Logger, w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	id, err := uuid.Parse(chi.URLParam(r, "group_id"))
 	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group id")
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_request", "invalid group id")
 		return uuid.Nil, false
 	}
 	return id, true
 }
 
-func writeError(w http.ResponseWriter, r *http.Request, err error, operation string) {
+func writeError(log *slog.Logger, w http.ResponseWriter, r *http.Request, err error, operation string) {
 	switch {
 	case errors.Is(err, domain.ErrInvalidGroup):
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group request")
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_request", "invalid group request")
 	case errors.Is(err, domain.ErrGroupForbidden):
-		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "group operation is not permitted")
+		transport.WriteProblem(log, w, http.StatusForbidden, "forbidden", "group operation is not permitted")
 	case errors.Is(err, domain.ErrGroupConflict):
-		transport.WriteProblem(w, http.StatusConflict, "conflict", "group operation conflicts with existing data")
+		transport.WriteProblem(log, w, http.StatusConflict, "conflict", "group operation conflicts with existing data")
 	case errors.Is(err, domain.ErrGroupNotFound):
-		transport.WriteProblem(w, http.StatusNotFound, "group_not_found", "group not found")
+		transport.WriteProblem(log, w, http.StatusNotFound, "group_not_found", "group not found")
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
+		transport.WriteProblem(log, w, http.StatusInternalServerError, "internal_server_error", operation+" failed")
 	}
 }

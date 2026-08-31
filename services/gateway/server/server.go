@@ -4,13 +4,13 @@ package server
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
@@ -19,11 +19,12 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 )
 
-func Run(cfg config.Config, metadataLifecycleClient *clients.MetadataLifecycle, authService *auth.Service) error {
+func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, authService *auth.Service) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	log := logging.Get("server")
+	baseLog := log
+	log = log.With("component", "server")
 
 	// Set up OpenTelemetry.
 	otelShutdown, err := observability.Start(ctx, observability.Config{
@@ -38,9 +39,9 @@ func Run(cfg config.Config, metadataLifecycleClient *clients.MetadataLifecycle, 
 		}
 	}()
 
-	lifecycleSvc := lifecycle.NewService(metadataLifecycleClient)
+	lifecycleSvc := lifecycle.NewService(baseLog, metadataLifecycleClient)
 	identitySvc := identity.NewService(metadataLifecycleClient)
-	router := NewRouter(lifecycleSvc, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
+	router := NewRouter(baseLog, lifecycleSvc, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct_v5

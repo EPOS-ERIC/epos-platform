@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -39,7 +40,7 @@ func (f fakeClientBinary) Execute(_ context.Context, _ domain.ValidatedRequest) 
 }
 
 func TestOpenAPIEndpoint(t *testing.T) {
-	router := NewRouter(fakeRepo{}, fakeClient{}, nil)
+	router := NewRouter(slog.Default(), fakeRepo{}, fakeClient{}, nil)
 	req := httptest.NewRequest(http.MethodGet, "/openapi.yaml", nil)
 	rr := httptest.NewRecorder()
 
@@ -50,7 +51,7 @@ func TestOpenAPIEndpoint(t *testing.T) {
 }
 
 func TestRetrieveRejectsDeleteBody(t *testing.T) {
-	router := NewRouter(fakeRepo{}, fakeClient{}, nil)
+	router := NewRouter(slog.Default(), fakeRepo{}, fakeClient{}, nil)
 	body := `{"source_id":"svc","method":"DELETE","url_template":"https://example.org/{id}","path_params":{"id":"1"},"body":{"content_type":"text/plain","raw":"x"}}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v2/retrieve", strings.NewReader(body))
 	rr := httptest.NewRecorder()
@@ -70,7 +71,7 @@ func TestRetrieveRejectsDeleteBody(t *testing.T) {
 }
 
 func TestRetrieveReturnsRawPayload(t *testing.T) {
-	router := NewRouter(fakeRepo{}, fakeClient{}, nil)
+	router := NewRouter(slog.Default(), fakeRepo{}, fakeClient{}, nil)
 	body := `{"source_id":"svc","method":"GET","url_template":"https://example.org/{id}","path_params":{"id":"1"}}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v2/retrieve", strings.NewReader(body))
 	rr := httptest.NewRecorder()
@@ -88,7 +89,7 @@ func TestRetrieveReturnsRawPayload(t *testing.T) {
 }
 
 func TestRetrieveRedirectsForBinaryPayload(t *testing.T) {
-	router := NewRouter(fakeRepo{}, fakeClientBinary{}, nil)
+	router := NewRouter(slog.Default(), fakeRepo{}, fakeClientBinary{}, nil)
 	body := `{"source_id":"svc","method":"GET","url_template":"https://example.org/files/{id}","path_params":{"id":"1"}}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v2/retrieve", strings.NewReader(body))
 	rr := httptest.NewRecorder()
