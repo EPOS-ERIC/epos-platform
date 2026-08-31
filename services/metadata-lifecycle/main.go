@@ -7,12 +7,7 @@ import (
 )
 
 func main() {
-	log := logging.Get("metadata-lifecycle")
-	defer func() {
-		if err := logging.Close(); err != nil {
-			log.Error("failed to close logging", "error", err)
-		}
-	}()
+	log := logging.New("metadata-lifecycle").With("service", "metadata-lifecycle")
 
 	log.Info("metadata-lifecycle service started")
 
@@ -24,7 +19,7 @@ func main() {
 
 	log.Debug("config loaded", "listen", cfg.ServerPort)
 
-	if err := server.Run(cfg); err != nil {
+	if err := server.Run(cfg, log); err != nil {
 		log.Error("server failed", "error", err)
 		panic(err)
 	}

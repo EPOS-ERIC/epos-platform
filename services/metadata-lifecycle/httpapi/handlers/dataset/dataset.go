@@ -4,17 +4,15 @@ package dataset
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
-
-var log = logging.Get("dataset-handler")
 
 type datasetService interface {
 	CreateDraft(context.Context, domain.Actor, uuid.UUID, domain.DatasetInput) (domain.DatasetVersion, error)
@@ -34,30 +32,34 @@ type datasetService interface {
 
 type handler struct {
 	service datasetService
+	log     *slog.Logger
 }
 
 // New creates a dataset HTTP handler.
-func New(service datasetService) *handler {
-	return &handler{service: service}
+func New(log *slog.Logger, service datasetService) *handler {
+	return &handler{
+		service: service,
+		log: log.With("component", "datasets-handler"),
+	}
 }
 
 func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
 	var request createRequest
-	if !transport.Decode(w, r, &request) {
+	if !transport.Decode(h.log, w, r, &request) {
 		return
 	}
 	groupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
 	if err != nil || groupID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
 	value, err := domain.NewDatasetInput(request.Metadata.domain())
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	dataset, err := h.service.CreateDraft(r.Context(), actor, groupID, value)
@@ -65,7 +67,7 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
-	datasetID, ok := datasetID(w, r)
+	datasetID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -73,36 +75,36 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return
 	}
 	dataset, includeContacts, err := h.service.Read(r.Context(), actor, datasetID, versionID)
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	if !includeContacts {
-		transport.WriteJSON(w, http.StatusOK, datasetResponse(dataset, false))
+		transport.WriteJSON(h.log, w, http.StatusOK, datasetResponse(dataset, false))
 		return
 	}
-	transport.WriteJSON(w, http.StatusOK, datasetResponse(dataset, true))
+	transport.WriteJSON(h.log, w, http.StatusOK, datasetResponse(dataset, true))
 }
 
 func (h *handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
-	datasetID, ok := datasetID(w, r)
+	datasetID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
 	var request replaceDraftRequest
-	if !transport.Decode(w, r, &request) {
+	if !transport.Decode(h.log, w, r, &request) {
 		return
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -111,7 +113,7 @@ func (h *handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 		Metadata: request.Metadata.domain(),
 	})
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	dataset, err := h.service.ReplaceDraft(r.Context(), actor, datasetID, versionID, value)
@@ -123,15 +125,15 @@ func (h *handler) transition(
 	r *http.Request,
 	action func(context.Context, domain.Actor, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error),
 ) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
-	datasetID, ok := datasetID(w, r)
+	datasetID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -148,25 +150,25 @@ func (h *handler) Withdraw(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) Reject(w http.ResponseWriter, r *http.Request) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
-	datasetID, ok := datasetID(w, r)
+	datasetID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return
 	}
 	var request rejectionRequest
-	if !transport.Decode(w, r, &request) {
+	if !transport.Decode(h.log, w, r, &request) {
 		return
 	}
 	value, err := domain.NewDatasetRejectionInput(domain.DatasetRejectionInput{Note: request.Note})
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	dataset, err := h.service.Reject(r.Context(), actor, datasetID, versionID, value)
@@ -190,11 +192,11 @@ func (h *handler) createDraft(
 	r *http.Request,
 	action func(context.Context, domain.Actor, uuid.UUID) (domain.DatasetVersion, error),
 ) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
-	datasetID, ok := datasetID(w, r)
+	datasetID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -211,37 +213,37 @@ func (h *handler) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) Discard(w http.ResponseWriter, r *http.Request) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
-	datasetID, ok := datasetID(w, r)
+	datasetID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return
 	}
 	if err := h.service.Discard(r.Context(), actor, datasetID, versionID); err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handler) Copy(w http.ResponseWriter, r *http.Request) {
-	actor, ok := actor(w, r)
+	actor, ok := actor(h.log, w, r)
 	if !ok {
 		return
 	}
-	sourceID, ok := datasetID(w, r)
+	sourceID, ok := datasetID(h.log, w, r)
 	if !ok {
 		return
 	}
 	targetGroupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
 	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
 	dataset, err := h.service.CopyPublished(r.Context(), actor, sourceID, targetGroupID)
@@ -250,49 +252,49 @@ func (h *handler) Copy(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) writeDataset(r *http.Request, w http.ResponseWriter, dataset domain.DatasetVersion, err error, status int) {
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
-	transport.WriteJSON(w, status, datasetResponse(dataset, true))
+	transport.WriteJSON(h.log, w, status, datasetResponse(dataset, true))
 }
 
-func actor(w http.ResponseWriter, r *http.Request) (domain.Actor, bool) {
+func actor(log *slog.Logger, w http.ResponseWriter, r *http.Request) (domain.Actor, bool) {
 	return transport.Actor(w, r)
 }
 
-func datasetID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	return pathUUID(w, chi.URLParam(r, "resource_id"), "dataset")
+func datasetID(log *slog.Logger, w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	return pathUUID(log, w, chi.URLParam(r, "resource_id"), "dataset")
 }
 
-func versionID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	return pathUUID(w, chi.URLParam(r, "version_id"), "version")
+func versionID(log *slog.Logger, w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	return pathUUID(log, w, chi.URLParam(r, "version_id"), "version")
 }
 
-func pathUUID(w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
+func pathUUID(log *slog.Logger, w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid "+resource+" id")
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_request", "invalid "+resource+" id")
 		return uuid.Nil, false
 	}
 	return id, true
 }
 
-func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {
+func writeLifecycleError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain.ErrDatasetForbidden):
-		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "access denied")
+		transport.WriteProblem(log, w, http.StatusForbidden, "forbidden", "access denied")
 	case errors.Is(err, domain.ErrDatasetNotFound):
-		transport.WriteProblem(w, http.StatusNotFound, "dataset_not_found", "dataset or version not found")
+		transport.WriteProblem(log, w, http.StatusNotFound, "dataset_not_found", "dataset or version not found")
 	case errors.Is(err, domain.ErrDatasetConflict):
-		transport.WriteProblem(w, http.StatusConflict, "conflict", "dataset lifecycle conflict")
+		transport.WriteProblem(log, w, http.StatusConflict, "conflict", "dataset lifecycle conflict")
 	case errors.Is(err, domain.ErrInvalidDataset):
 		detail := err.Error()
 		if index := strings.LastIndex(detail, ": "); index > 0 {
 			detail = detail[:index]
 		}
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", detail)
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_request", detail)
 	default:
 		log.ErrorContext(r.Context(), "dataset request failed", "method", r.Method, "path", r.URL.Path, "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "dataset request failed")
+		transport.WriteProblem(log, w, http.StatusInternalServerError, "internal_server_error", "dataset request failed")
 	}
 }

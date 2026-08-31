@@ -3,13 +3,10 @@ package middleware
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 )
-
-var log = logging.Get("http")
 
 type responseWriter struct {
 	http.ResponseWriter
@@ -31,19 +28,22 @@ func (rw *responseWriter) Write(b []byte) (int, error) {
 	return size, nil
 }
 
-func Logger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startedAt := time.Now()
-		rw := &responseWriter{ResponseWriter: w, status: 200, size: 0}
-		next.ServeHTTP(rw, r)
-		duration := time.Since(startedAt)
+func Logger(log *slog.Logger) func(http.Handler) http.Handler {
+	log = log.With("component", "request")
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			startedAt := time.Now()
+			rw := &responseWriter{ResponseWriter: w, status: 200, size: 0}
+			next.ServeHTTP(rw, r)
+			duration := time.Since(startedAt)
 
-		if shouldSkipHealthLog(r, rw.status) {
-			return
-		}
+			if shouldSkipHealthLog(r, rw.status) {
+				return
+			}
 
-		log.InfoContext(r.Context(), "http request", "method", r.Method, "path", r.URL.Path, "status", rw.status, "duration", duration.String())
-	})
+			log.InfoContext(r.Context(), "http request", "method", r.Method, "path", r.URL.Path, "status", rw.status, "duration", duration.String())
+		})
+	}
 }
 
 func shouldSkipHealthLog(r *http.Request, status int) bool {
@@ -68,18 +68,21 @@ func CORSAllowOrigin(allowOrigin string) func(http.Handler) http.Handler {
 }
 
 // Recoverer handles panics and returns an internal server error response.
-func Recoverer(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if err := recover(); err != nil {
-				log.ErrorContext(r.Context(), "panic recovered", "error", err)
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusInternalServerError)
-				if _, err := w.Write([]byte(`{"error": "Internal Server Error"}`)); err != nil {
-					log.ErrorContext(r.Context(), "failed to write error response", "error", err)
+func Recoverer(log *slog.Logger) func(http.Handler) http.Handler {
+	log = log.With("component", "recovery")
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if err := recover(); err != nil {
+					log.ErrorContext(r.Context(), "panic recovered", "error", err)
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusInternalServerError)
+					if _, err := w.Write([]byte(`{"error": "Internal Server Error"}`)); err != nil {
+						log.ErrorContext(r.Context(), "failed to write error response", "error", err)
+					}
 				}
-			}
-		}()
-		next.ServeHTTP(w, r)
-	})
+			}()
+			next.ServeHTTP(w, r)
+		})
+	}
 }

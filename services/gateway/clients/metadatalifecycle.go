@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
@@ -37,13 +36,13 @@ type ActorIdentity struct {
 	FamilyName     string
 }
 
-func NewMetadataLifecycle(baseURL string, upstreamCfg config.Upstream) (*MetadataLifecycle, error) {
+func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.Upstream) (*MetadataLifecycle, error) {
 	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("normalize metadata-lifecycle base URL: %w", err)
 	}
 
-	upstreamClient, err := upstream.NewClient(upstream.Config{
+	upstreamClient, err := upstream.NewClient(log.With("component", "upstream"), upstream.Config{
 		Service:     "metadata-lifecycle",
 		Timeout:     upstreamCfg.Timeout,
 		RealTimeout: upstreamCfg.RealTimeout,
@@ -71,7 +70,7 @@ func NewMetadataLifecycle(baseURL string, upstreamCfg config.Upstream) (*Metadat
 		organizations: apiClient.OrganizationsAPI,
 		categories:    apiClient.CategoriesAPI,
 
-		log: logging.Get("metadata-lifecycle client"),
+		log: log,
 	}, nil
 }
 

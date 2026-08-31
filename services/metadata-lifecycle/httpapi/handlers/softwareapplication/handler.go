@@ -4,17 +4,15 @@ package softwareapplication
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 
-	"github.com/EPOS-ERIC/epos-platform/packages/go/logging"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/transport"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
-
-var log = logging.Get("software-application-handler")
 
 // Service is the software application lifecycle behavior used by Handler.
 type Service interface {
@@ -35,11 +33,15 @@ type Service interface {
 
 type Handler struct {
 	service Service
+	log     *slog.Logger
 }
 
 // New creates a software application HTTP handler.
-func New(service Service) *Handler {
-	return &Handler{service: service}
+func New(log *slog.Logger, service Service) *Handler {
+	return &Handler{
+		service: service,
+		log: log.With("component", "software-applications-handler"),
+	}
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -48,17 +50,17 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request createRequest
-	if !transport.Decode(w, r, &request) {
+	if !transport.Decode(h.log, w, r, &request) {
 		return
 	}
 	groupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
 	if err != nil || groupID == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
 	value, err := request.Metadata.input()
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	application, err := h.service.CreateDraft(r.Context(), actor, groupID, value)
@@ -66,11 +68,11 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	applicationID, ok := applicationID(w, r)
+	applicationID, ok := applicationID(h.log, w, r)
 	if !ok {
 		return
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -84,18 +86,18 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
 	var request replaceDraftRequest
-	if !transport.Decode(w, r, &request) {
+	if !transport.Decode(h.log, w, r, &request) {
 		return
 	}
 
 	value, err := request.input()
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	application, err := h.service.ReplaceDraft(r.Context(), actor, applicationID, versionID, value)
@@ -103,7 +105,7 @@ func (h *Handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Submit(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
@@ -112,7 +114,7 @@ func (h *Handler) Submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
@@ -121,17 +123,17 @@ func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
 	var request rejectRequest
-	if !transport.Decode(w, r, &request) {
+	if !transport.Decode(h.log, w, r, &request) {
 		return
 	}
 	value, err := request.input()
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	application, err := h.service.Reject(r.Context(), actor, applicationID, versionID, value)
@@ -139,7 +141,7 @@ func (h *Handler) Reject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Reopen(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
@@ -148,7 +150,7 @@ func (h *Handler) Reopen(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Publish(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
@@ -157,7 +159,7 @@ func (h *Handler) Publish(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Unpublish(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
@@ -170,7 +172,7 @@ func (h *Handler) DraftFromPublication(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	applicationID, ok := applicationID(w, r)
+	applicationID, ok := applicationID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -183,7 +185,7 @@ func (h *Handler) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	applicationID, ok := applicationID(w, r)
+	applicationID, ok := applicationID(h.log, w, r)
 	if !ok {
 		return
 	}
@@ -192,12 +194,12 @@ func (h *Handler) DraftFromArchive(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Discard(w http.ResponseWriter, r *http.Request) {
-	actor, applicationID, versionID, ok := commandIDs(w, r)
+	actor, applicationID, versionID, ok := h.commandIDs(w, r)
 	if !ok {
 		return
 	}
 	if err := h.service.Discard(r.Context(), actor, applicationID, versionID); err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -208,13 +210,13 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	sourceID, ok := applicationID(w, r)
+	sourceID, ok := applicationID(h.log, w, r)
 	if !ok {
 		return
 	}
 	targetGroupID, err := uuid.Parse(chi.URLParam(r, "group_id"))
 	if err != nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid group_id")
+		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
 	application, err := h.service.CopyPublished(r.Context(), actor, sourceID, targetGroupID)
@@ -223,64 +225,64 @@ func (h *Handler) Copy(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) writeApplication(r *http.Request, w http.ResponseWriter, application domain.SoftwareApplicationVersion, includeContacts bool, err error, status int) {
 	if err != nil {
-		writeLifecycleError(r, w, err)
+		writeLifecycleError(h.log, r, w, err)
 		return
 	}
-	transport.WriteJSON(w, status, applicationResponse(application, includeContacts))
+	transport.WriteJSON(h.log, w, status, applicationResponse(application, includeContacts))
 }
 
-func commandIDs(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UUID, uuid.UUID, bool) {
+func (h *Handler) commandIDs(w http.ResponseWriter, r *http.Request) (domain.Actor, uuid.UUID, uuid.UUID, bool) {
 	actor, ok := transport.Actor(w, r)
 	if !ok {
 		return "", uuid.Nil, uuid.Nil, false
 	}
-	applicationID, ok := applicationID(w, r)
+	applicationID, ok := applicationID(h.log, w, r)
 	if !ok {
 		return "", uuid.Nil, uuid.Nil, false
 	}
-	versionID, ok := versionID(w, r)
+	versionID, ok := versionID(h.log, w, r)
 	if !ok {
 		return "", uuid.Nil, uuid.Nil, false
 	}
 	return actor, applicationID, versionID, true
 }
 
-func applicationID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	return pathUUID(w, chi.URLParam(r, "resource_id"), "software application")
+func applicationID(log *slog.Logger, w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	return pathUUID(log, w, chi.URLParam(r, "resource_id"), "software application")
 }
 
-func versionID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
-	return pathUUID(w, chi.URLParam(r, "version_id"), "version")
+func versionID(log *slog.Logger, w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
+	return pathUUID(log, w, chi.URLParam(r, "version_id"), "version")
 }
 
-func pathUUID(w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
+func pathUUID(log *slog.Logger, w http.ResponseWriter, value, resource string) (uuid.UUID, bool) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", "invalid "+resource+" id")
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_request", "invalid "+resource+" id")
 		return uuid.Nil, false
 	}
 	return id, true
 }
 
-func writeLifecycleError(r *http.Request, w http.ResponseWriter, err error) {
+func writeLifecycleError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain.ErrSoftwareApplicationForbidden):
-		transport.WriteProblem(w, http.StatusForbidden, "forbidden", "access denied")
+		transport.WriteProblem(log, w, http.StatusForbidden, "forbidden", "access denied")
 	case errors.Is(err, domain.ErrSoftwareApplicationNotFound):
-		transport.WriteProblem(w, http.StatusNotFound, "software_application_not_found", "software application or version not found")
+		transport.WriteProblem(log, w, http.StatusNotFound, "software_application_not_found", "software application or version not found")
 	case errors.Is(err, domain.ErrSoftwareApplicationConflict):
-		transport.WriteProblem(w, http.StatusConflict, "conflict", "software application lifecycle conflict")
+		transport.WriteProblem(log, w, http.StatusConflict, "conflict", "software application lifecycle conflict")
 	case errors.Is(err, domain.ErrSoftwareApplicationInvalid):
 		detail := err.Error()
 		if index := strings.LastIndex(detail, ": "); index > 0 {
 			detail = detail[:index]
 		}
-		transport.WriteProblem(w, http.StatusBadRequest, "invalid_request", detail)
+		transport.WriteProblem(log, w, http.StatusBadRequest, "invalid_request", detail)
 	case errors.Is(err, domain.ErrSoftwareApplicationInternal):
 		log.ErrorContext(r.Context(), "software application request failed", "method", r.Method, "path", r.URL.Path, "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "software application request failed")
+		transport.WriteProblem(log, w, http.StatusInternalServerError, "internal_server_error", "software application request failed")
 	default:
 		log.ErrorContext(r.Context(), "software application request failed", "method", r.Method, "path", r.URL.Path, "error", err)
-		transport.WriteProblem(w, http.StatusInternalServerError, "internal_server_error", "software application request failed")
+		transport.WriteProblem(log, w, http.StatusInternalServerError, "internal_server_error", "software application request failed")
 	}
 }

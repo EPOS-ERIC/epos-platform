@@ -28,7 +28,6 @@ DATA_RETRIEVER_LISTEN_ADDR=:8100 ./data-retriever
 Logging environment variables:
 
 - `LOG_LEVEL` (optional: `DEBUG`, `INFO`, `WARN`, `ERROR`; default `INFO`)
-- `LOG_FILE` (optional: write JSON logs to file instead of stdout)
 
 Database environment variables:
 

@@ -12,12 +12,7 @@ import (
 )
 
 func main() {
-	log := logging.Get("gateway")
-	defer func() {
-		if err := logging.Close(); err != nil {
-			log.Error("failed to close logging", "error", err)
-		}
-	}()
+	log := logging.New("gateway").With("service", "gateway")
 
 	log.Info("gateway service started")
 
@@ -32,19 +27,19 @@ func main() {
 
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
-	metadataLifecycleClient, err := clients.NewMetadataLifecycle(cfg.Services.MetadataLifecycle.URL, cfg.Upstream)
+	metadataLifecycleClient, err := clients.NewMetadataLifecycle(log, cfg.Services.MetadataLifecycle.URL, cfg.Upstream)
 	if err != nil {
 		log.Error("invalid metadata-lifecycle service configuration", "error", err)
 		panic("invalid metadata-lifecycle service configuration")
 	}
 
-	authService, err := auth.NewService(cfg.Services.Auth.URL, cfg.Upstream)
+	authService, err := auth.NewService(log, cfg.Services.Auth.URL, cfg.Upstream)
 	if err != nil {
 		log.Error("invalid auth service configuration", "error", err)
 		panic("invalid auth service configuration")
 	}
 
-	if err := server.Run(*cfg, metadataLifecycleClient, authService); err != nil {
+	if err := server.Run(*cfg, log, metadataLifecycleClient, authService); err != nil {
 		log.Error("server failed", "error", err)
 		panic("server failed")
 	}

@@ -4,6 +4,7 @@ package access
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -38,10 +39,15 @@ type Authorizer interface {
 type Service struct {
 	store      Store
 	authorizer Authorizer
+	log        *slog.Logger
 }
 
-func New(store Store, authorizer Authorizer) *Service {
-	return &Service{store: store, authorizer: authorizer}
+func New(log *slog.Logger, store Store, authorizer Authorizer) *Service {
+	return &Service{
+		store:      store,
+		authorizer: authorizer,
+		log:        log.With("component", "access-service"),
+	}
 }
 
 func (s *Service) ListMemberships(ctx context.Context, actorID domain.Actor, groupID uuid.UUID) ([]domain.GroupMembership, error) {

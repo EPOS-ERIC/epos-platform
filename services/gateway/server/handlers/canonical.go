@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
@@ -11,95 +12,96 @@ import (
 
 type Canonical struct {
 	service *canonical.Service
+	log     *slog.Logger
 }
 
-func NewCanonical(service *canonical.Service) *Canonical {
-	return &Canonical{service: service}
+func NewCanonical(log *slog.Logger, service *canonical.Service) *Canonical {
+	return &Canonical{service: service, log: log.With("component", "canonical-handler")}
 }
 
 func (h *Canonical) ListContactPoints(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
 	points, err := h.service.ListContactPoints(r.Context(), actor.ID)
 	if err != nil {
-		writeCanonicalError(r, w, err, "list contact points")
+		writeCanonicalError(h.log, r, w, err, "list contact points")
 		return
 	}
 
 	result := mapSlice(points, toAPIContactPoint)
-	writeJSON(w, http.StatusOK, result)
+	writeJSON(h.log, w, http.StatusOK, result)
 }
 
 func (h *Canonical) GetContactPoint(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
-	id, ok := uuidParam(r.Context(), w, r, "contactPointId")
+	id, ok := uuidParam(h.log, r.Context(), w, r, "contactPointId")
 	if !ok {
 		return
 	}
 	point, err := h.service.GetContactPoint(r.Context(), actor.ID, id)
 	if err != nil {
-		writeCanonicalError(r, w, err, "get contact point")
+		writeCanonicalError(h.log, r, w, err, "get contact point")
 		return
 	}
-	writeJSON(w, http.StatusOK, toAPIContactPoint(point))
+	writeJSON(h.log, w, http.StatusOK, toAPIContactPoint(point))
 }
 
 func (h *Canonical) CreateContactPoint(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
 	var request api.CreateContactPointRequest
-	if !decodeJSON(r, w, &request) {
+	if !decodeJSON(h.log, r, w, &request) {
 		return
 	}
 
 	point, err := h.service.CreateContactPoint(r.Context(), actor.ID, toDomainCreateContactPointInput(request))
 	if err != nil {
-		writeCanonicalError(r, w, err, "create contact point")
+		writeCanonicalError(h.log, r, w, err, "create contact point")
 		return
 	}
-	writeJSON(w, http.StatusCreated, toAPIContactPoint(point))
+	writeJSON(h.log, w, http.StatusCreated, toAPIContactPoint(point))
 }
 
 func (h *Canonical) ReplaceContactPoint(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
-	id, ok := uuidParam(r.Context(), w, r, "contactPointId")
+	id, ok := uuidParam(h.log, r.Context(), w, r, "contactPointId")
 	if !ok {
 		return
 	}
 	var request api.ReplaceContactPointRequest
-	if !decodeJSON(r, w, &request) {
+	if !decodeJSON(h.log, r, w, &request) {
 		return
 	}
 
 	point, err := h.service.ReplaceContactPoint(r.Context(), actor.ID, id, toDomainReplaceContactPointInput(request))
 	if err != nil {
-		writeCanonicalError(r, w, err, "replace contact point")
+		writeCanonicalError(h.log, r, w, err, "replace contact point")
 		return
 	}
-	writeJSON(w, http.StatusOK, toAPIContactPoint(point))
+	writeJSON(h.log, w, http.StatusOK, toAPIContactPoint(point))
 }
 
 func (h *Canonical) DeleteContactPoint(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
-	id, ok := uuidParam(r.Context(), w, r, "contactPointId")
+	id, ok := uuidParam(h.log, r.Context(), w, r, "contactPointId")
 	if !ok {
 		return
 	}
 	if err := h.service.DeleteContactPoint(r.Context(), actor.ID, id); err != nil {
-		writeCanonicalError(r, w, err, "delete contact point")
+		writeCanonicalError(h.log, r, w, err, "delete contact point")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -108,104 +110,104 @@ func (h *Canonical) DeleteContactPoint(w http.ResponseWriter, r *http.Request) {
 func (h *Canonical) ListOrganizations(w http.ResponseWriter, r *http.Request) {
 	organizations, err := h.service.ListOrganizations(r.Context())
 	if err != nil {
-		writeCanonicalError(r, w, err, "list organizations")
+		writeCanonicalError(h.log, r, w, err, "list organizations")
 		return
 	}
 
 	result := mapSlice(organizations, toAPICanonicalOrganization)
-	writeJSON(w, http.StatusOK, result)
+	writeJSON(h.log, w, http.StatusOK, result)
 }
 
 func (h *Canonical) GetOrganization(w http.ResponseWriter, r *http.Request) {
-	id, ok := uuidParam(r.Context(), w, r, "organizationId")
+	id, ok := uuidParam(h.log, r.Context(), w, r, "organizationId")
 	if !ok {
 		return
 	}
 	organization, err := h.service.GetOrganization(r.Context(), id)
 	if err != nil {
-		writeCanonicalError(r, w, err, "get organization")
+		writeCanonicalError(h.log, r, w, err, "get organization")
 		return
 	}
-	writeJSON(w, http.StatusOK, toAPICanonicalOrganization(organization))
+	writeJSON(h.log, w, http.StatusOK, toAPICanonicalOrganization(organization))
 }
 
 func (h *Canonical) CreateOrganization(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
 	var request api.CreateOrganizationRequest
-	if !decodeJSON(r, w, &request) {
+	if !decodeJSON(h.log, r, w, &request) {
 		return
 	}
 	organization, err := h.service.CreateOrganization(r.Context(), actor.ID, toDomainCreateOrganizationInput(request))
 	if err != nil {
-		writeCanonicalError(r, w, err, "create organization")
+		writeCanonicalError(h.log, r, w, err, "create organization")
 		return
 	}
-	writeJSON(w, http.StatusCreated, toAPICanonicalOrganization(organization))
+	writeJSON(h.log, w, http.StatusCreated, toAPICanonicalOrganization(organization))
 }
 
 func (h *Canonical) ReplaceOrganization(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
-	id, ok := uuidParam(r.Context(), w, r, "organizationId")
+	id, ok := uuidParam(h.log, r.Context(), w, r, "organizationId")
 	if !ok {
 		return
 	}
 	var request api.ReplaceOrganizationRequest
-	if !decodeJSON(r, w, &request) {
+	if !decodeJSON(h.log, r, w, &request) {
 		return
 	}
 	organization, err := h.service.ReplaceOrganization(r.Context(), actor.ID, id, toDomainReplaceOrganizationInput(request))
 	if err != nil {
-		writeCanonicalError(r, w, err, "replace organization")
+		writeCanonicalError(h.log, r, w, err, "replace organization")
 		return
 	}
-	writeJSON(w, http.StatusOK, toAPICanonicalOrganization(organization))
+	writeJSON(h.log, w, http.StatusOK, toAPICanonicalOrganization(organization))
 }
 
 func (h *Canonical) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
-	actor, ok := authenticatedActor(r, w)
+	actor, ok := authenticatedActor(h.log, r, w)
 	if !ok {
 		return
 	}
-	id, ok := uuidParam(r.Context(), w, r, "organizationId")
+	id, ok := uuidParam(h.log, r.Context(), w, r, "organizationId")
 	if !ok {
 		return
 	}
 	if err := h.service.DeleteOrganization(r.Context(), actor.ID, id); err != nil {
-		writeCanonicalError(r, w, err, "delete organization")
+		writeCanonicalError(h.log, r, w, err, "delete organization")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func authenticatedActor(r *http.Request, w http.ResponseWriter) (api.User, bool) {
+func authenticatedActor(log *slog.Logger, r *http.Request, w http.ResponseWriter) (api.User, bool) {
 	actor, ok := AuthenticatedUserFromContext(r.Context())
 	if !ok {
-		WriteError(r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
+		WriteError(log, r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 	}
 	return actor, ok
 }
 
 //nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.
-func writeCanonicalError(r *http.Request, w http.ResponseWriter, err error, operation string) {
+func writeCanonicalError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error, operation string) {
 	switch {
 	case errors.Is(err, domain.ErrBadRequest):
-		WriteError(r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid canonical metadata request", err)
+		WriteError(log, r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid canonical metadata request", err)
 	case errors.Is(err, domain.ErrForbidden):
-		WriteError(r.Context(), w, http.StatusForbidden, "forbidden", "canonical metadata operation is not permitted", nil)
+		WriteError(log, r.Context(), w, http.StatusForbidden, "forbidden", "canonical metadata operation is not permitted", nil)
 	case errors.Is(err, domain.ErrNotFound):
-		WriteError(r.Context(), w, http.StatusNotFound, "not_found", "canonical metadata resource not found", nil)
+		WriteError(log, r.Context(), w, http.StatusNotFound, "not_found", "canonical metadata resource not found", nil)
 	case errors.Is(err, domain.ErrConflict):
-		WriteError(r.Context(), w, http.StatusConflict, "conflict", "canonical metadata operation conflicts with existing data", nil)
+		WriteError(log, r.Context(), w, http.StatusConflict, "conflict", "canonical metadata operation conflicts with existing data", nil)
 	case errors.Is(err, domain.ErrUpstreamTimeout):
-		WriteError(r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "canonical metadata request timed out", err)
+		WriteError(log, r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "canonical metadata request timed out", err)
 	default:
 		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
+		WriteError(log, r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
 	}
 }
