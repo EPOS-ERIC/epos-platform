@@ -140,10 +140,22 @@ func (w *WebServiceDraft) UnmarshalJSON(data []byte) error {
 
 func decodeParameterDraft(data json.RawMessage) (ParameterDraft, error) {
 	var header struct {
-		Kind string `json:"kind"`
+		Kind     string `json:"kind"`
+		Metadata struct {
+			Kind string `json:"kind"`
+		} `json:"metadata"`
 	}
-	if err := DecodeDraftMetadata(data, &header); err != nil {
+	if err := json.Unmarshal(data, &header); err != nil {
 		return nil, err
+	}
+	if header.Kind == "" {
+		return nil, fmt.Errorf("parameter kind is required")
+	}
+	if header.Metadata.Kind == "" {
+		return nil, fmt.Errorf("parameter metadata kind is required")
+	}
+	if header.Kind != header.Metadata.Kind {
+		return nil, fmt.Errorf("parameter kind mismatch: kind=%q metadata=%q", header.Kind, header.Metadata.Kind)
 	}
 
 	switch header.Kind {
