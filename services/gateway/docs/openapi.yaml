@@ -2070,7 +2070,12 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/DistributionDraft" },
           }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         persistent_identifiers:
           {
@@ -2205,7 +2210,12 @@ components:
         format: { $ref: "#/components/schemas/NonBlankString" }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points: { type: array, items: { type: string, format: uuid } }
 
@@ -2402,29 +2412,6 @@ components:
         description: { type: string, nullable: true }
         uri: { $ref: "#/components/schemas/NonBlankString" }
 
-    SpatialCoverage:
-      type: object
-      additionalProperties: false
-      properties:
-        point: { $ref: "#/components/schemas/Coordinate" }
-        polygon:
-          {
-            type: array,
-            minItems: 4,
-            items: { $ref: "#/components/schemas/Coordinate" },
-          }
-      oneOf:
-        - required: [point]
-        - required: [polygon]
-
-    Coordinate:
-      type: object
-      additionalProperties: false
-      required: [latitude, longitude]
-      properties:
-        latitude: { type: number, minimum: -90, maximum: 90 }
-        longitude: { type: number, minimum: -180, maximum: 180 }
-
     TemporalCoverage:
       type: object
       additionalProperties: false
@@ -2577,7 +2564,12 @@ components:
         distributions:
           type: array
           items: { $ref: "#/components/schemas/Distribution" }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         persistent_identifiers:
           type: array
@@ -2734,7 +2726,12 @@ components:
         format: { type: string }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points:
           type: array

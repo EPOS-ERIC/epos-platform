@@ -22,15 +22,16 @@ var _ MappedNullable = &DatasetMetadata{}
 
 // DatasetMetadata struct for DatasetMetadata
 type DatasetMetadata struct {
-	Id                    string              `json:"id"`
-	Title                 string              `json:"title"`
-	Description           string              `json:"description"`
-	Keywords              string              `json:"keywords"`
-	AccrualPeriodicity    NullableString      `json:"accrual_periodicity,omitempty"`
-	QualityAnnotation     NullableString      `json:"quality_annotation,omitempty"`
-	AccessRight           NullableString      `json:"access_right,omitempty"`
-	Distributions         []Distribution      `json:"distributions"`
-	SpatialCoverage       NullableSpatial     `json:"spatial_coverage,omitempty"`
+	Id                 string         `json:"id"`
+	Title              string         `json:"title"`
+	Description        string         `json:"description"`
+	Keywords           string         `json:"keywords"`
+	AccrualPeriodicity NullableString `json:"accrual_periodicity,omitempty"`
+	QualityAnnotation  NullableString `json:"quality_annotation,omitempty"`
+	AccessRight        NullableString `json:"access_right,omitempty"`
+	Distributions      []Distribution `json:"distributions"`
+	// WKT POINT or POLYGON geometry in EPSG:4326.
+	SpatialCoverage       NullableString      `json:"spatial_coverage,omitempty"`
 	TemporalCoverage      *Temporal           `json:"temporal_coverage,omitempty"`
 	PersistentIdentifiers []Identifier        `json:"persistent_identifiers"`
 	ContactPoints         []string            `json:"contact_points"`
@@ -318,9 +319,9 @@ func (o *DatasetMetadata) SetDistributions(v []Distribution) {
 }
 
 // GetSpatialCoverage returns the SpatialCoverage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DatasetMetadata) GetSpatialCoverage() Spatial {
+func (o *DatasetMetadata) GetSpatialCoverage() string {
 	if o == nil || IsNil(o.SpatialCoverage.Get()) {
-		var ret Spatial
+		var ret string
 		return ret
 	}
 	return *o.SpatialCoverage.Get()
@@ -329,7 +330,7 @@ func (o *DatasetMetadata) GetSpatialCoverage() Spatial {
 // GetSpatialCoverageOk returns a tuple with the SpatialCoverage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetMetadata) GetSpatialCoverageOk() (*Spatial, bool) {
+func (o *DatasetMetadata) GetSpatialCoverageOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -345,8 +346,8 @@ func (o *DatasetMetadata) HasSpatialCoverage() bool {
 	return false
 }
 
-// SetSpatialCoverage gets a reference to the given NullableSpatial and assigns it to the SpatialCoverage field.
-func (o *DatasetMetadata) SetSpatialCoverage(v Spatial) {
+// SetSpatialCoverage gets a reference to the given NullableString and assigns it to the SpatialCoverage field.
+func (o *DatasetMetadata) SetSpatialCoverage(v string) {
 	o.SpatialCoverage.Set(&v)
 }
 

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/twpayne/go-geom"
 )
 
 // DatasetInput contains caller-controlled dataset version fields.
@@ -15,7 +16,7 @@ type DatasetInput struct {
 	QualityAnnotation     *string
 	AccessRight           *string
 	Distributions         []DistributionInput
-	SpatialCoverage       *Spatial
+	SpatialCoverage       geom.T
 	TemporalCoverage      *Temporal
 	PersistentIdentifiers []IdentifierInput
 	ContactPointIDs       []uuid.UUID
@@ -46,7 +47,7 @@ type DatasetMetadata struct {
 	QualityAnnotation     *string
 	AccessRight           *string
 	Distributions         []Distribution
-	SpatialCoverage       *Spatial
+	SpatialCoverage       geom.T
 	TemporalCoverage      *Temporal
 	PersistentIdentifiers []Identifier
 	ContactPoints         []ContactPoint
@@ -92,7 +93,7 @@ type WebServiceInput struct {
 	Format           string
 	ProviderID       *uuid.UUID
 	Documentation    *Documentation
-	SpatialCoverage  *Spatial
+	SpatialCoverage  geom.T
 	TemporalCoverage *Temporal
 	ContactPointIDs  []uuid.UUID
 }
@@ -107,7 +108,7 @@ type WebService struct {
 	Format           string
 	Provider         *OrganizationMetadata
 	Documentation    *Documentation
-	SpatialCoverage  *Spatial
+	SpatialCoverage  geom.T
 	TemporalCoverage *Temporal
 	ContactPoints    []ContactPoint
 }
@@ -121,16 +122,6 @@ type Documentation struct {
 	Title       *string
 	Description *string
 	URI         string
-}
-
-type Coordinate struct {
-	Latitude  float64
-	Longitude float64
-}
-
-type Spatial struct {
-	Point   *Coordinate
-	Polygon []Coordinate
 }
 
 type Temporal struct {

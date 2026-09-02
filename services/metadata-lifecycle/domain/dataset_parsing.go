@@ -17,9 +17,6 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	if value.Title == "" {
 		return DatasetInput{}, fmt.Errorf("dataset title is required: %w", ErrInvalidDataset)
 	}
-	if err := validateSpatial(value.SpatialCoverage); err != nil {
-		return DatasetInput{}, fmt.Errorf("dataset spatial coverage: %w", err)
-	}
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return DatasetInput{}, fmt.Errorf("dataset temporal coverage: %w", err)
 	}
@@ -92,9 +89,6 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 	value.Title = strings.TrimSpace(value.Title)
 	if value.Title == "" {
 		return DatasetMetadata{}, fmt.Errorf("dataset title is required: %w", ErrInvalidDataset)
-	}
-	if err := validateSpatial(value.SpatialCoverage); err != nil {
-		return DatasetMetadata{}, fmt.Errorf("dataset spatial coverage: %w", err)
 	}
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset temporal coverage: %w", err)
@@ -285,9 +279,6 @@ func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	if value.Name == "" || value.TemplateURL == "" || value.Format == "" {
 		return WebServiceInput{}, fmt.Errorf("name, template URL, and format are required: %w", ErrInvalidDataset)
 	}
-	if err := validateSpatial(value.SpatialCoverage); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service spatial coverage: %w", err)
-	}
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return WebServiceInput{}, fmt.Errorf("web service temporal coverage: %w", err)
 	}
@@ -354,9 +345,6 @@ func validateWebService(value WebService) error {
 	if value.ID == uuid.Nil || strings.TrimSpace(value.Name) == "" || strings.TrimSpace(value.TemplateURL) == "" || strings.TrimSpace(value.Format) == "" {
 		return fmt.Errorf("ID, name, template URL, and format are required: %w", ErrInvalidDataset)
 	}
-	if err := validateSpatial(value.SpatialCoverage); err != nil {
-		return fmt.Errorf("spatial coverage: %w", err)
-	}
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return fmt.Errorf("temporal coverage: %w", err)
 	}
@@ -381,41 +369,6 @@ func validateWebService(value WebService) error {
 			return fmt.Errorf("duplicate parameter variable %q: %w", variable, ErrInvalidDataset)
 		}
 		seenVariables[variable] = struct{}{}
-	}
-	return nil
-}
-
-func validateSpatial(value *Spatial) error {
-	if value == nil {
-		return nil
-	}
-	if value.Point != nil && len(value.Polygon) != 0 {
-		return fmt.Errorf("spatial coverage cannot contain both point and polygon: %w", ErrInvalidDataset)
-	}
-	if value.Point != nil {
-		if err := validateCoordinate(*value.Point); err != nil {
-			return fmt.Errorf("point: %w", err)
-		}
-	}
-	if len(value.Polygon) != 0 {
-		if len(value.Polygon) < 4 {
-			return fmt.Errorf("polygon must contain at least four coordinates: %w", ErrInvalidDataset)
-		}
-		for _, coordinate := range value.Polygon {
-			if err := validateCoordinate(coordinate); err != nil {
-				return fmt.Errorf("polygon: %w", err)
-			}
-		}
-		if value.Polygon[0] != value.Polygon[len(value.Polygon)-1] {
-			return fmt.Errorf("polygon must be closed: %w", ErrInvalidDataset)
-		}
-	}
-	return nil
-}
-
-func validateCoordinate(value Coordinate) error {
-	if math.IsNaN(value.Latitude) || math.IsNaN(value.Longitude) || math.IsInf(value.Latitude, 0) || math.IsInf(value.Longitude, 0) || value.Latitude < -90 || value.Latitude > 90 || value.Longitude < -180 || value.Longitude > 180 {
-		return fmt.Errorf("coordinate is outside WGS84 bounds: %w", ErrInvalidDataset)
 	}
 	return nil
 }

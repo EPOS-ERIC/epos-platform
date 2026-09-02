@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/twpayne/go-geom"
 )
 
 // DiscoveryFilter contains validated search criteria for resource discovery.
@@ -12,19 +13,13 @@ type DiscoveryFilter struct {
 	Types              []ResourceType
 	Concepts           []TopLevelConcept
 	GroupID            *uuid.UUID
-	SpatialFilter      *SpatialFilter
+	SpatialFilter      geom.T
 	DateFrom           *time.Time
 	DateTo             *time.Time
 	Providers          []uuid.UUID
 	Keywords           []string
 	EditorID           *string
 	VersioningStatuses []Status
-}
-
-// SpatialFilter contains a validated WGS84 geometry used for discovery.
-type SpatialFilter struct {
-	Point   *Coordinate
-	Polygon []Coordinate
 }
 
 // DiscoveryCandidate is the resource summary returned by persistence.

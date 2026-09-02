@@ -18,7 +18,7 @@ type DatasetDraftMetadata struct {
 	QualityAnnotation     *string             `json:"quality_annotation,omitempty"`
 	AccessRight           *string             `json:"access_right,omitempty"`
 	Distributions         []DistributionDraft `json:"distributions,omitempty"`
-	SpatialCoverage       *SpatialCoverage    `json:"spatial_coverage,omitempty"`
+	SpatialCoverage       *string             `json:"spatial_coverage,omitempty"`
 	TemporalCoverage      *TemporalCoverage   `json:"temporal_coverage,omitempty"`
 	PersistentIdentifiers []IdentifierDraft   `json:"persistent_identifiers,omitempty"`
 	ContactPoints         []string            `json:"contact_points,omitempty"`
@@ -92,7 +92,7 @@ type WebServiceDraft struct {
 	Format           string            `json:"format"`
 	Provider         *string           `json:"provider,omitempty"`
 	Documentation    *Documentation    `json:"documentation,omitempty"`
-	SpatialCoverage  *SpatialCoverage  `json:"spatial_coverage,omitempty"`
+	SpatialCoverage  *string           `json:"spatial_coverage,omitempty"`
 	TemporalCoverage *TemporalCoverage `json:"temporal_coverage,omitempty"`
 	ContactPoints    []string          `json:"contact_points,omitempty"`
 }
@@ -106,7 +106,7 @@ func (w *WebServiceDraft) UnmarshalJSON(data []byte) error {
 		Format           string            `json:"format"`
 		Provider         *string           `json:"provider"`
 		Documentation    *Documentation    `json:"documentation"`
-		SpatialCoverage  *SpatialCoverage  `json:"spatial_coverage"`
+		SpatialCoverage  *string           `json:"spatial_coverage"`
 		TemporalCoverage *TemporalCoverage `json:"temporal_coverage"`
 		ContactPoints    []string          `json:"contact_points"`
 	}
@@ -146,7 +146,7 @@ func decodeParameterDraft(data json.RawMessage) (ParameterDraft, error) {
 		} `json:"metadata"`
 	}
 	if err := json.Unmarshal(data, &header); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decode parameter header: %w", err)
 	}
 	if header.Kind == "" {
 		return nil, fmt.Errorf("parameter kind is required")
@@ -201,16 +201,6 @@ type Documentation struct {
 	Title       *string `json:"title,omitempty"`
 	Description *string `json:"description,omitempty"`
 	URI         string  `json:"uri"`
-}
-
-type SpatialCoverage struct {
-	Point   *Coordinate  `json:"point,omitempty"`
-	Polygon []Coordinate `json:"polygon,omitempty"`
-}
-
-type Coordinate struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
 }
 
 type TemporalCoverage struct {
@@ -281,7 +271,7 @@ type DatasetResourceMetadata struct {
 	QualityAnnotation     *string                    `json:"quality_annotation"`
 	AccessRight           *string                    `json:"access_right"`
 	Distributions         []Distribution             `json:"distributions"`
-	SpatialCoverage       *SpatialCoverage           `json:"spatial_coverage,omitempty"`
+	SpatialCoverage       *string                    `json:"spatial_coverage,omitempty"`
 	TemporalCoverage      *TemporalCoverage          `json:"temporal_coverage,omitempty"`
 	PersistentIdentifiers []Identifier               `json:"persistent_identifiers"`
 	ContactPoints         []string                   `json:"contact_points"`
@@ -378,7 +368,7 @@ type WebService struct {
 	Format           string                    `json:"format"`
 	Provider         *ResourceVersionReference `json:"provider,omitempty"`
 	Documentation    *Documentation            `json:"documentation,omitempty"`
-	SpatialCoverage  *SpatialCoverage          `json:"spatial_coverage,omitempty"`
+	SpatialCoverage  *string                   `json:"spatial_coverage,omitempty"`
 	TemporalCoverage *TemporalCoverage         `json:"temporal_coverage,omitempty"`
 	ContactPoints    []string                  `json:"contact_points,omitempty"`
 }

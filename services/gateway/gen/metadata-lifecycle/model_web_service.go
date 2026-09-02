@@ -21,17 +21,18 @@ var _ MappedNullable = &WebService{}
 
 // WebService struct for WebService
 type WebService struct {
-	Id               string             `json:"id"`
-	Name             string             `json:"name"`
-	Description      string             `json:"description"`
-	TemplateUrl      string             `json:"template_url"`
-	Parameters       []Parameter        `json:"parameters,omitempty"`
-	Format           string             `json:"format"`
-	Provider         *ResourceReference `json:"provider,omitempty"`
-	Documentation    *Documentation     `json:"documentation,omitempty"`
-	SpatialCoverage  NullableSpatial    `json:"spatial_coverage,omitempty"`
-	TemporalCoverage *Temporal          `json:"temporal_coverage,omitempty"`
-	ContactPoints    []string           `json:"contact_points,omitempty"`
+	Id            string             `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	TemplateUrl   string             `json:"template_url"`
+	Parameters    []Parameter        `json:"parameters,omitempty"`
+	Format        string             `json:"format"`
+	Provider      *ResourceReference `json:"provider,omitempty"`
+	Documentation *Documentation     `json:"documentation,omitempty"`
+	// WKT POINT or POLYGON geometry in EPSG:4326.
+	SpatialCoverage  NullableString `json:"spatial_coverage,omitempty"`
+	TemporalCoverage *Temporal      `json:"temporal_coverage,omitempty"`
+	ContactPoints    []string       `json:"contact_points,omitempty"`
 }
 
 type _WebService WebService
@@ -275,9 +276,9 @@ func (o *WebService) SetDocumentation(v Documentation) {
 }
 
 // GetSpatialCoverage returns the SpatialCoverage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WebService) GetSpatialCoverage() Spatial {
+func (o *WebService) GetSpatialCoverage() string {
 	if o == nil || IsNil(o.SpatialCoverage.Get()) {
-		var ret Spatial
+		var ret string
 		return ret
 	}
 	return *o.SpatialCoverage.Get()
@@ -286,7 +287,7 @@ func (o *WebService) GetSpatialCoverage() Spatial {
 // GetSpatialCoverageOk returns a tuple with the SpatialCoverage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WebService) GetSpatialCoverageOk() (*Spatial, bool) {
+func (o *WebService) GetSpatialCoverageOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -302,8 +303,8 @@ func (o *WebService) HasSpatialCoverage() bool {
 	return false
 }
 
-// SetSpatialCoverage gets a reference to the given NullableSpatial and assigns it to the SpatialCoverage field.
-func (o *WebService) SetSpatialCoverage(v Spatial) {
+// SetSpatialCoverage gets a reference to the given NullableString and assigns it to the SpatialCoverage field.
+func (o *WebService) SetSpatialCoverage(v string) {
 	o.SpatialCoverage.Set(&v)
 }
 

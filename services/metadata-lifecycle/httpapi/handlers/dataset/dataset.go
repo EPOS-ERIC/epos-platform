@@ -39,7 +39,7 @@ type handler struct {
 func New(log *slog.Logger, service datasetService) *handler {
 	return &handler{
 		service: service,
-		log: log.With("component", "datasets-handler"),
+		log:     log.With("component", "datasets-handler"),
 	}
 }
 
@@ -57,7 +57,12 @@ func (h *handler) Create(w http.ResponseWriter, r *http.Request) {
 		transport.WriteProblem(h.log, w, http.StatusBadRequest, "invalid_request", "invalid group_id")
 		return
 	}
-	value, err := domain.NewDatasetInput(request.Metadata.domain())
+	metadata, err := request.Metadata.domain()
+	if err != nil {
+		writeLifecycleError(h.log, r, w, err)
+		return
+	}
+	value, err := domain.NewDatasetInput(metadata)
 	if err != nil {
 		writeLifecycleError(h.log, r, w, err)
 		return
@@ -108,9 +113,14 @@ func (h *handler) ReplaceDraft(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	metadata, err := request.Metadata.domain()
+	if err != nil {
+		writeLifecycleError(h.log, r, w, err)
+		return
+	}
 	value, err := domain.NewDatasetDraftInput(domain.DatasetDraftInput{
 		Revision: request.Revision,
-		Metadata: request.Metadata.domain(),
+		Metadata: metadata,
 	})
 	if err != nil {
 		writeLifecycleError(h.log, r, w, err)

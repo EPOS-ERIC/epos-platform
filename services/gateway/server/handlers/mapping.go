@@ -37,7 +37,7 @@ func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.Dataset
 		QualityAnnotation:     value.QualityAnnotation,
 		AccessRight:           value.AccessRight,
 		Distributions:         mapSlice(value.Distributions, toDomainDistribution),
-		SpatialCoverage:       mapPtr(value.SpatialCoverage, toDomainSpatialCoverage),
+		SpatialCoverage:       value.SpatialCoverage,
 		TemporalCoverage:      mapPtr(value.TemporalCoverage, toDomainTemporalCoverage),
 		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toDomainIdentifierDraft),
 		ContactPoints:         value.ContactPoints,
@@ -89,10 +89,6 @@ func toDomainIdentifierDraft(value api.IdentifierDraft) domain.IdentifierDraft {
 	return domain.IdentifierDraft(value)
 }
 
-func toDomainCoordinate(value api.Coordinate) domain.Coordinate {
-	return domain.Coordinate(value)
-}
-
 func toDomainDocumentation(value api.Documentation) domain.Documentation {
 	return domain.Documentation(value)
 }
@@ -124,7 +120,7 @@ func toDomainWebServiceDraft(value api.WebServiceDraft) domain.WebServiceDraft {
 		Format:           value.Format,
 		Provider:         value.Provider,
 		Documentation:    mapPtr(value.Documentation, toDomainDocumentation),
-		SpatialCoverage:  mapPtr(value.SpatialCoverage, toDomainSpatialCoverage),
+		SpatialCoverage:  value.SpatialCoverage,
 		TemporalCoverage: mapPtr(value.TemporalCoverage, toDomainTemporalCoverage),
 		ContactPoints:    value.ContactPoints,
 	}
@@ -162,13 +158,6 @@ func toDomainParameterDraftMetadata(value api.ParameterDraftMetadata) domain.Par
 		Required:       value.Required,
 		MultipleValues: value.MultipleValues,
 		ReadOnly:       value.ReadOnly,
-	}
-}
-
-func toDomainSpatialCoverage(value api.SpatialCoverage) domain.SpatialCoverage {
-	return domain.SpatialCoverage{
-		Point:   mapPtr(value.Point, toDomainCoordinate),
-		Polygon: mapSlice(value.Polygon, toDomainCoordinate),
 	}
 }
 
@@ -236,7 +225,7 @@ func toAPIDatasetResourceMetadata(value domain.DatasetResourceMetadata) api.Data
 		QualityAnnotation:     value.QualityAnnotation,
 		AccessRight:           value.AccessRight,
 		Distributions:         toAPIDistributions(value.Distributions),
-		SpatialCoverage:       mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
+		SpatialCoverage:       value.SpatialCoverage,
 		TemporalCoverage:      mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
 		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toAPIIdentifier),
 		ContactPoints:         value.ContactPoints,
@@ -301,14 +290,6 @@ func toAPIResourceVersionReference(value domain.ResourceVersionReference) api.Re
 	}
 }
 
-func toAPISpatialCoverage(value domain.SpatialCoverage) api.SpatialCoverage {
-	return api.SpatialCoverage{Point: mapPtr(value.Point, toAPICoordinate), Polygon: mapSlice(value.Polygon, toAPICoordinate)}
-}
-
-func toAPICoordinate(value domain.Coordinate) api.Coordinate {
-	return api.Coordinate{Latitude: value.Latitude, Longitude: value.Longitude}
-}
-
 func toAPITemporalCoverage(value domain.TemporalCoverage) api.TemporalCoverage {
 	return api.TemporalCoverage{Start: value.Start, End: value.End}
 }
@@ -362,7 +343,7 @@ func toAPIWebService(value domain.WebService) api.WebService {
 		Format:           value.Format,
 		Provider:         mapPtr(value.Provider, toAPIResourceVersionReference),
 		Documentation:    mapPtr(value.Documentation, func(value domain.Documentation) api.Documentation { return api.Documentation(value) }),
-		SpatialCoverage:  mapPtr(value.SpatialCoverage, toAPISpatialCoverage),
+		SpatialCoverage:  value.SpatialCoverage,
 		TemporalCoverage: mapPtr(value.TemporalCoverage, toAPITemporalCoverage),
 		ContactPoints:    value.ContactPoints,
 	}

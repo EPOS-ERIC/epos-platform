@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
+	"github.com/twpayne/go-geom"
+	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
 func (p *parameterRequest) UnmarshalJSON(data []byte) error {
@@ -112,7 +115,11 @@ func (p parameterDraftMetadata) domain() domain.ParameterMetadata {
 	}
 }
 
-func (r datasetDraftRequest) domain() domain.DatasetInput {
+func (r datasetDraftRequest) domain() (domain.DatasetInput, error) {
+	spatialCoverage, err := spatialGeometry(r.SpatialCoverage)
+	if err != nil {
+		return domain.DatasetInput{}, err
+	}
 	result := domain.DatasetInput{
 		Title:                 r.Title,
 		Description:           r.Description,
@@ -121,7 +128,7 @@ func (r datasetDraftRequest) domain() domain.DatasetInput {
 		QualityAnnotation:     r.QualityAnnotation,
 		AccessRight:           r.AccessRight,
 		Distributions:         make([]domain.DistributionInput, 0, len(r.Distributions)),
-		SpatialCoverage:       spatialDomain(r.SpatialCoverage),
+		SpatialCoverage:       spatialCoverage,
 		TemporalCoverage:      temporalDomain(r.TemporalCoverage),
 		PersistentIdentifiers: make([]domain.IdentifierInput, 0, len(r.PersistentIdentifiers)),
 		ContactPointIDs:       r.ContactPoints,
@@ -131,15 +138,19 @@ func (r datasetDraftRequest) domain() domain.DatasetInput {
 		SourceUpdated:         r.Updated,
 	}
 	for _, value := range r.Distributions {
-		result.Distributions = append(result.Distributions, value.domain())
+		distribution, err := value.domain()
+		if err != nil {
+			return domain.DatasetInput{}, err
+		}
+		result.Distributions = append(result.Distributions, distribution)
 	}
 	for _, value := range r.PersistentIdentifiers {
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, value.domain())
 	}
-	return result
+	return result, nil
 }
 
-func (r distributionRequest) domain() domain.DistributionInput {
+func (r distributionRequest) domain() (domain.DistributionInput, error) {
 	result := domain.DistributionInput{
 		Title:            r.Title,
 		Description:      r.Description,
@@ -152,7 +163,10 @@ func (r distributionRequest) domain() domain.DistributionInput {
 		DownloadableFile: nil,
 	}
 	if r.WebService != nil {
-		value := r.WebService.domain()
+		value, err := r.WebService.domain()
+		if err != nil {
+			return domain.DistributionInput{}, err
+		}
 		result.WebService = &value
 	}
 	if r.DownloadableFile != nil {
@@ -161,10 +175,14 @@ func (r distributionRequest) domain() domain.DistributionInput {
 			Format: r.DownloadableFile.Format,
 		}
 	}
-	return result
+	return result, nil
 }
 
-func (r webServiceRequest) domain() domain.WebServiceInput {
+func (r webServiceRequest) domain() (domain.WebServiceInput, error) {
+	spatialCoverage, err := spatialGeometry(r.SpatialCoverage)
+	if err != nil {
+		return domain.WebServiceInput{}, err
+	}
 	result := domain.WebServiceInput{
 		Name:             r.Name,
 		Description:      r.Description,
@@ -173,7 +191,7 @@ func (r webServiceRequest) domain() domain.WebServiceInput {
 		Format:           r.Format,
 		ProviderID:       r.Provider,
 		Documentation:    nil,
-		SpatialCoverage:  spatialDomain(r.SpatialCoverage),
+		SpatialCoverage:  spatialCoverage,
 		TemporalCoverage: temporalDomain(r.TemporalCoverage),
 		ContactPointIDs:  r.ContactPoints,
 	}
@@ -187,30 +205,33 @@ func (r webServiceRequest) domain() domain.WebServiceInput {
 			URI:         r.Documentation.URI,
 		}
 	}
-	return result
+	return result, nil
 }
 
-func spatialDomain(value *spatial) *domain.Spatial {
+func spatialGeometry(value *string) (geom.T, error) {
+	if value == nil {
+		return nil, nil
+	}
+	geometry, err := wkt.Unmarshal(strings.TrimSpace(*value))
+	if err != nil {
+		return nil, fmt.Errorf("invalid spatial coverage WKT: %w", err)
+	}
+	geometry, err = geom.SetSRID(geometry, 4326)
+	if err != nil {
+		return nil, fmt.Errorf("set spatial coverage SRID: %w", err)
+	}
+	return geometry, nil
+}
+
+func spatialResponse(value geom.T) *string {
 	if value == nil {
 		return nil
 	}
-	result := &domain.Spatial{
-		Point:   nil,
-		Polygon: make([]domain.Coordinate, 0, len(value.Polygon)),
+	wktValue, err := wkt.Marshal(value)
+	if err != nil {
+		return nil
 	}
-	if value.Point != nil {
-		result.Point = &domain.Coordinate{
-			Latitude:  value.Point.Latitude,
-			Longitude: value.Point.Longitude,
-		}
-	}
-	for _, coordinate := range value.Polygon {
-		result.Polygon = append(result.Polygon, domain.Coordinate{
-			Latitude:  coordinate.Latitude,
-			Longitude: coordinate.Longitude,
-		})
-	}
-	return result
+	return &wktValue
 }
 
 func temporalDomain(value *temporal) *domain.Temporal {
@@ -422,29 +443,6 @@ func identifierResponse(value domain.Identifier) identifier {
 		Type:  value.Type,
 		Value: value.Value,
 	}
-}
-
-func spatialResponse(value *domain.Spatial) *spatial {
-	if value == nil {
-		return nil
-	}
-	result := &spatial{
-		Point:   nil,
-		Polygon: make([]coordinate, 0, len(value.Polygon)),
-	}
-	if value.Point != nil {
-		result.Point = &coordinate{
-			Latitude:  value.Point.Latitude,
-			Longitude: value.Point.Longitude,
-		}
-	}
-	for _, item := range value.Polygon {
-		result.Polygon = append(result.Polygon, coordinate{
-			Latitude:  item.Latitude,
-			Longitude: item.Longitude,
-		})
-	}
-	return result
 }
 
 func temporalResponse(value *domain.Temporal) *temporal {

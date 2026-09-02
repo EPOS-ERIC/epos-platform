@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	geom "github.com/twpayne/go-geom"
+	go_geom "github.com/twpayne/go-geom"
 )
 
 type MembershipRole string
@@ -478,8 +478,7 @@ type DatasetVersion struct {
 	AccessRight        *string
 	SourceCreatedAt    *time.Time
 	SourceUpdatedAt    *time.Time
-	SpatialPoint       *geom.Point
-	SpatialPolygon     *geom.Polygon
+	SpatialCoverage    go_geom.T
 	TemporalStart      *time.Time
 	TemporalEnd        *time.Time
 	CreatedBy          string
@@ -786,8 +785,7 @@ type WebService struct {
 	DocumentationTitle       *string
 	DocumentationDescription *string
 	DocumentationUri         *string
-	SpatialPoint             *geom.Point
-	SpatialPolygon           *geom.Polygon
+	SpatialCoverage          go_geom.T
 	TemporalStart            *time.Time
 	TemporalEnd              *time.Time
 }

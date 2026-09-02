@@ -12,6 +12,8 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	rdf "github.com/deiu/rdf2go"
 	"github.com/google/uuid"
+	"github.com/twpayne/go-geom"
+	"github.com/twpayne/go-geom/encoding/wkt"
 )
 
 // Parser adapts Turtle parsing to the import handler parser interface.
@@ -929,32 +931,20 @@ func (m *mapper) temporal(source string) *domain.Temporal {
 	return &domain.Temporal{Start: timePtr(start), End: timePtr(end)}
 }
 
-func (m *mapper) spatial(source string) *domain.Spatial {
-	wkt := m.optionalString(source, locnGeometry)
-	upper := strings.ToUpper(wkt)
-	if strings.HasPrefix(upper, "POINT(") {
-		values := strings.TrimSuffix(strings.TrimPrefix(wkt, "POINT("), ")")
-		var longitude, latitude float64
-		if _, err := fmt.Sscan(values, &longitude, &latitude); err == nil {
-			return &domain.Spatial{
-				Point:   &domain.Coordinate{Longitude: longitude, Latitude: latitude},
-				Polygon: nil,
-			}
-		}
+func (m *mapper) spatial(source string) geom.T {
+	value := strings.TrimSpace(m.optionalString(source, locnGeometry))
+	if value == "" {
+		return nil
 	}
-	if strings.HasPrefix(upper, "POLYGON((") {
-		values := strings.TrimSuffix(strings.TrimPrefix(wkt, "POLYGON(("), "))")
-		coordinates := make([]domain.Coordinate, 0)
-		for pair := range strings.SplitSeq(values, ",") {
-			var longitude, latitude float64
-			if _, err := fmt.Sscan(strings.TrimSpace(pair), &longitude, &latitude); err != nil {
-				return nil
-			}
-			coordinates = append(coordinates, domain.Coordinate{Longitude: longitude, Latitude: latitude})
-		}
-		return &domain.Spatial{Point: nil, Polygon: coordinates}
+	geometry, err := wkt.Unmarshal(value)
+	if err != nil {
+		return nil
 	}
-	return nil
+	geometry, err = geom.SetSRID(geometry, 4326)
+	if err != nil {
+		return nil
+	}
+	return geometry
 }
 
 func sharedID(kind, source string) uuid.UUID {
