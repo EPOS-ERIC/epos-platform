@@ -39,7 +39,7 @@ type handler struct {
 func New(log *slog.Logger, service datasetService) *handler {
 	return &handler{
 		service: service,
-		log: log.With("component", "datasets-handler"),
+		log:     log.With("component", "datasets-handler"),
 	}
 }
 

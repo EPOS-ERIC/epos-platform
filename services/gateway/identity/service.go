@@ -4,6 +4,7 @@ package identity
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
@@ -12,31 +13,14 @@ import (
 
 type Service struct {
 	metadataLifecycle *clients.MetadataLifecycle
+	log               *slog.Logger
 }
 
-func NewService(metadataLifecycle *clients.MetadataLifecycle) *Service {
-	return &Service{metadataLifecycle: metadataLifecycle}
-}
-
-func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User, error) {
-	if id == "self" {
-		id = actorID
+func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) *Service {
+	return &Service{
+		metadataLifecycle: metadataLifecycle,
+		log:               log.With("TODO-service", "identity"),
 	}
-
-	if id == "" {
-		return domain.User{}, fmt.Errorf("invalid user id: %w", domain.ErrBadRequest)
-	}
-
-	if s == nil || s.metadataLifecycle == nil {
-		return domain.User{}, fmt.Errorf("metadata-lifecycle identity client is not configured")
-	}
-
-	user, err := s.metadataLifecycle.GetUserByID(ctx, id, actorID)
-	if err != nil {
-		return domain.User{}, fmt.Errorf("get user from metadata-lifecycle: %w", err)
-	}
-
-	return user, nil
 }
 
 func (s *Service) ListUsers(ctx context.Context, actorID string) ([]domain.UserSummary, error) {

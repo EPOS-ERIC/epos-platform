@@ -11,8 +11,8 @@ type MembershipUser struct {
 
 type RoleRequest struct {
 	ID          string
-	Role        string
-	Status      string
+	Role        GroupRole
+	Status      RoleRequestStatus
 	RequestedAt time.Time
 }
 

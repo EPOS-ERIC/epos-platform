@@ -35,5 +35,3 @@
 
 - `make generate` runs `go generate ./...`.
 - `make build` regenerates SQLC output before building.
-- `make test` runs `go test ./...`.
-- `make lint` formats before linting. Do not use gofmt on files individually, run make lint.

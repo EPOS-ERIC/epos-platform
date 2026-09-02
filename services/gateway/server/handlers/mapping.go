@@ -3,11 +3,14 @@ package handlers
 import (
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func mapPtr[T, K any](v *T, f func(T) K) *K {
@@ -26,6 +29,19 @@ func mapSlice[T, K any](in []T, f func(T) K) []K {
 		out[i] = f(v)
 	}
 	return out
+}
+
+func mapSliceErr[T, K any](in []T, f func(T) (K, error)) ([]K, error) {
+	out := make([]K, len(in))
+	for i, value := range in {
+		mapped, err := f(value)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = mapped
+	}
+
+	return out, nil
 }
 
 func toDomainDatasetDraftMetadata(value api.DatasetDraftMetadata) domain.DatasetDraftMetadata {
@@ -539,8 +555,8 @@ func toAPIMembershipUser(value domain.MembershipUser) api.MembershipUser {
 func toAPIRoleRequest(value domain.RoleRequest) api.RoleRequest {
 	return api.RoleRequest{
 		ID:          value.ID,
-		Role:        value.Role,
-		Status:      value.Status,
+		Role:        string(toAPIUserMembershipRole(value.Role)),
+		Status:      string(value.Status),
 		RequestedAt: value.RequestedAt.Format(time.RFC3339Nano),
 	}
 }
@@ -565,49 +581,174 @@ func toAPIReference(value domain.DiscoveryReference) api.Reference {
 	return api.Reference(value)
 }
 
-func toAPIGroupReference(value domain.Group) api.Reference {
-	return api.Reference{ID: value.ID, Name: value.Name}
-}
+func toAPIUserMembershipSummary(value *metadatalifecyclev1.UserMembership) (api.UserMembershipSummary, error) {
+	group := value.GetGroup()
+	reference := api.Reference{}
+	if group != nil {
+		reference = api.Reference{
+			ID:   group.GetId(),
+			Name: group.GetName(),
+		}
+	}
 
-func toAPIUserMembershipSummary(value domain.Membership) api.UserMembershipSummary {
+	roles, err := mapSliceErr(value.GetGroupRoles(), toAPIProtoMembershipRole)
+	if err != nil {
+		return api.UserMembershipSummary{}, err
+	}
+	status, err := toAPIProtoMembershipStatus(value.GetStatus())
+	if err != nil {
+		return api.UserMembershipSummary{}, err
+	}
+	roleRequests, err := mapSliceErr(value.GetRoleRequests(), toAPIProtoRoleRequest)
+	if err != nil {
+		return api.UserMembershipSummary{}, err
+	}
+
 	return api.UserMembershipSummary{
-		Group:        toAPIGroupReference(value.Group),
-		Roles:        mapSlice(value.Roles, toAPIMembershipRole),
-		Status:       toAPIMembershipStatus(value.Status),
-		Permissions:  append([]string{}, value.Permissions...),
-		RoleRequests: toAPIRoleRequests(value.RoleRequests),
-		CreatedAt:    value.CreatedAt,
-		UpdatedAt:    value.UpdatedAt,
+		Group:        reference,
+		Roles:        roles,
+		Status:       status,
+		Permissions:  slices.Clone(value.GetGroupPermissions()),
+		RoleRequests: roleRequests,
+		CreatedAt:    toAPITimestamp(value.GetCreatedAt()),
+		UpdatedAt:    toAPITimestamp(value.GetUpdatedAt()),
+	}, nil
+}
+
+func toAPIUserMembershipRole(value domain.GroupRole) api.MembershipRole {
+	switch value {
+	case domain.GroupRoleAdmin:
+		return api.MembershipGroupAdminRole
+	default:
+		return api.MembershipRole(value)
 	}
 }
 
-func ToAPIUser(value domain.User) api.User {
-	return api.User{
-		ID:                value.ID,
-		Email:             value.Email,
-		GivenName:         value.GivenName,
-		FamilyName:        value.FamilyName,
-		Status:            api.UserStatus(value.Status),
-		GlobalRoles:       append([]string{}, value.GlobalRoles...),
-		GlobalPermissions: append([]string{}, value.GlobalPermissions...),
-		Memberships:       mapSlice(value.Memberships, toAPIUserMembershipSummary),
-		CreatedAt:         value.CreatedAt,
-		UpdatedAt:         value.UpdatedAt,
+func toAPIProtoMembershipRole(value metadatalifecyclev1.GroupRole) (api.MembershipRole, error) {
+	switch value {
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_EDITOR:
+		return api.MembershipEditorRole, nil
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_REVIEWER:
+		return api.MembershipReviewerRole, nil
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_ADMIN:
+		return api.MembershipGroupAdminRole, nil
+	default:
+		return "", fmt.Errorf("unknown metadata-lifecycle group role: %s", value)
 	}
+}
+
+func toAPIProtoMembershipStatus(value metadatalifecyclev1.MembershipStatus) (api.MembershipStatus, error) {
+	switch value {
+	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_PENDING:
+		return api.MembershipPendingStatus, nil
+	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_ACTIVE:
+		return api.MembershipActiveStatus, nil
+	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_REJECTED:
+		return api.MembershipRejectedStatus, nil
+	default:
+		return "", fmt.Errorf("unknown metadata-lifecycle membership status: %s", value)
+	}
+}
+
+func toAPIProtoRoleRequest(value *metadatalifecyclev1.RoleRequest) (api.RoleRequest, error) {
+	role, err := toAPIProtoMembershipRole(value.GetGroupRole())
+	if err != nil {
+		return api.RoleRequest{}, err
+	}
+	status, err := toAPIProtoRoleRequestStatus(value.GetStatus())
+	if err != nil {
+		return api.RoleRequest{}, err
+	}
+
+	return api.RoleRequest{
+		ID:          value.GetId(),
+		Role:        string(role),
+		Status:      status,
+		RequestedAt: toAPITimestamp(value.GetRequestedAt()),
+	}, nil
+}
+
+func toAPIProtoRoleRequestStatus(value metadatalifecyclev1.RoleRequestStatus) (string, error) {
+	switch value {
+	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_PENDING:
+		return "PENDING", nil
+	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_ACCEPTED:
+		return "ACCEPTED", nil
+	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_REJECTED:
+		return "REJECTED", nil
+	default:
+		return "", fmt.Errorf("unknown metadata-lifecycle role request status: %s", value)
+	}
+}
+
+func toAPIUserStatus(value metadatalifecyclev1.UserStatus) (api.UserStatus, error) {
+	switch value {
+	case metadatalifecyclev1.UserStatus_USER_STATUS_ACTIVE:
+		return api.ActiveStatus, nil
+	case metadatalifecyclev1.UserStatus_USER_STATUS_BLOCKED:
+		return api.BlockedStatus, nil
+	default:
+		return "", fmt.Errorf("unknown metadata-lifecycle user status: %s", value)
+	}
+}
+
+func toAPIGlobalRole(value metadatalifecyclev1.GlobalRole) (string, error) {
+	switch value {
+	case metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN:
+		return "ADMIN", nil
+	default:
+		return "", fmt.Errorf("unknown metadata-lifecycle global role: %s", value)
+	}
+}
+
+func toAPITimestamp(value *timestamppb.Timestamp) string {
+	if value == nil {
+		return ""
+	}
+	return value.AsTime().Format(time.RFC3339Nano)
+}
+
+func ToAPIUser(value *metadatalifecyclev1.GetUserResponse) (api.User, error) {
+	status, err := toAPIUserStatus(value.GetStatus())
+	if err != nil {
+		return api.User{}, err
+	}
+	globalRoles, err := mapSliceErr(value.GetGlobalRoles(), toAPIGlobalRole)
+	if err != nil {
+		return api.User{}, err
+	}
+	memberships, err := mapSliceErr(value.GetMemberships(), toAPIUserMembershipSummary)
+	if err != nil {
+		return api.User{}, err
+	}
+
+	return api.User{
+		ID:                value.GetId(),
+		Email:             value.GetEmail(),
+		GivenName:         value.GetGivenName(),
+		FamilyName:        value.GetFamilyName(),
+		Status:            status,
+		GlobalRoles:       globalRoles,
+		GlobalPermissions: append([]string{}, value.GetGlobalPermissions()...),
+		Memberships:       memberships,
+		CreatedAt:         toAPITimestamp(value.GetCreatedAt()),
+		UpdatedAt:         toAPITimestamp(value.GetUpdatedAt()),
+	}, nil
 }
 
 func toAPIUserSummary(value domain.UserSummary) api.UserSummary {
-	return api.UserSummary{
-		ID:                value.ID,
-		Email:             value.Email,
-		GivenName:         value.GivenName,
-		FamilyName:        value.FamilyName,
-		Status:            api.UserStatus(value.Status),
-		GlobalRoles:       append([]string{}, value.GlobalRoles...),
-		GlobalPermissions: append([]string{}, value.GlobalPermissions...),
-		CreatedAt:         value.CreatedAt,
-		UpdatedAt:         value.UpdatedAt,
-	}
+	return api.UserSummary{}
+	// return api.UserSummary{
+	// 	ID:                value.ID,
+	// 	Email:             value.Email,
+	// 	GivenName:         value.GivenName,
+	// 	FamilyName:        value.FamilyName,
+	// 	Status:            api.UserStatus(value.Status),
+	// 	GlobalRoles:       append([]string{}, value.GlobalRoles...),
+	// 	GlobalPermissions: append([]string{}, value.GlobalPermissions...),
+	// 	CreatedAt:         value.CreatedAt,
+	// 	UpdatedAt:         value.UpdatedAt,
+	// }
 }
 
 func toAPIUserSummaries(values []domain.UserSummary) []api.UserSummary {

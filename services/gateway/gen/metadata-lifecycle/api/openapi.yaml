@@ -4318,7 +4318,6 @@ components:
         status:
           enum:
           - ACTIVE
-          - INACTIVE
           - BLOCKED
           type: string
         global_roles:
@@ -4378,7 +4377,6 @@ components:
         status:
           enum:
           - ACTIVE
-          - INACTIVE
           - BLOCKED
           type: string
         global_roles:

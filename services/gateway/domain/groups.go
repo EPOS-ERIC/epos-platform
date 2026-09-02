@@ -12,6 +12,11 @@ type Group struct {
 	Concept     string
 }
 
+type GroupSummary struct {
+	ID   string
+	Name string
+}
+
 type Category struct {
 	ID               string
 	GroupID          string

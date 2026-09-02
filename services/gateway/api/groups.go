@@ -45,7 +45,8 @@ type MembershipUser struct {
 }
 
 type RoleRequest struct {
-	ID          string `json:"id"`
+	ID string `json:"id"`
+	// TODO: this should be an enum. check for other fields that should be typed better following the openapi spec
 	Role        string `json:"role"`
 	Status      string `json:"status"`
 	RequestedAt string `json:"requested_at"`

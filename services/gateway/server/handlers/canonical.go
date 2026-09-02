@@ -185,7 +185,7 @@ func (h *Canonical) DeleteOrganization(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func authenticatedActor(log *slog.Logger, r *http.Request, w http.ResponseWriter) (api.User, bool) {
+func authenticatedActor(log *slog.Logger, r *http.Request, w http.ResponseWriter) (domain.User, bool) {
 	actor, ok := AuthenticatedUserFromContext(r.Context())
 	if !ok {
 		WriteError(log, r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)

@@ -120,7 +120,7 @@ func TestAuthorizeResourceUsesStoredGroup(t *testing.T) {
 	}
 }
 
-func TestAuthorizeGroupDeniesInactiveUser(t *testing.T) {
+func TestAuthorizeGroupDeniesBlockedUser(t *testing.T) {
 	t.Parallel()
 	authorizer := New(slog.Default(), fakeRepository{user: domain.AuthorizationUser{Status: domain.UserStatusBlocked}, scope: domain.PermissionScopeGroup})
 

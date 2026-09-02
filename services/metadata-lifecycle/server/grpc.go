@@ -34,10 +34,8 @@ func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
 
-	metadatalifecyclev1.RegisterIdentityServiceServer(
-		grpcServer,
-		grpcapi.NewIdentity(usersSvc),
-	)
+	metadatalifecyclev1.RegisterIdentityServiceServer(grpcServer, grpcapi.NewIdentity(usersSvc))
+	metadatalifecyclev1.RegisterUserServiceServer(grpcServer, grpcapi.NewUser(usersSvc))
 
 	listener, err := net.Listen("tcp", ":"+cfg.GRPCServerPort)
 	if err != nil {

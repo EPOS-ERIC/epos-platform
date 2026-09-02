@@ -131,10 +131,10 @@ func (r *Repo) loadUser(
 		roleRequestsByGroup[request.GroupID] = append(roleRequestsByGroup[request.GroupID], value)
 	}
 
-	userMemberships := make([]domain.UserMembership, 0, len(memberships))
+	userMemberships := make([]domain.Membership, 0, len(memberships))
 	for _, membership := range memberships {
-		value, err := domain.NewUserMembership(domain.UserMembership{
-			Group: domain.GroupReference{
+		value, err := domain.NewUserMembership(domain.Membership{
+			Group: domain.GroupSummary{
 				ID:   membership.GroupID,
 				Name: membership.GroupName,
 			},
@@ -178,7 +178,7 @@ func (r *Repo) CreateUser(ctx context.Context, claims domain.UserClaims) (domain
 		user.UpdatedAt,
 		[]string{},
 		[]string{},
-		[]domain.UserMembership{},
+		[]domain.Membership{},
 	)
 }
 

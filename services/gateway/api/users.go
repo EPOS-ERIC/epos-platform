@@ -63,9 +63,8 @@ type UserMembershipSummary struct {
 type UserStatus string
 
 const (
-	ActiveStatus   UserStatus = "ACTIVE"
-	InactiveStatus UserStatus = "INACTIVE"
-	BlockedStatus  UserStatus = "BLOCKED"
+	ActiveStatus  UserStatus = "ACTIVE"
+	BlockedStatus UserStatus = "BLOCKED"
 )
 
 func (u User) HasGlobalRole(role string) bool {

@@ -3,7 +3,6 @@ package clients
 import (
 	"fmt"
 	"slices"
-	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
@@ -826,49 +825,6 @@ func toDomainDiscoveryReference(value client.DiscoveryReference) domain.Discover
 	}
 }
 
-func toDomainUser(value *client.User) (domain.User, error) {
-	if value == nil {
-		return domain.User{}, fmt.Errorf("decode metadata-lifecycle user: response is empty")
-	}
-
-	memberships := mapSlice(value.Memberships, func(membership client.UserMembership) domain.Membership {
-		return domain.Membership{
-			Group: domain.Group{ //nolint:exhaustruct_v5 // membership reference only carries ID and name
-				ID:   membership.Group.Id,
-				Name: membership.Group.Name,
-			},
-			Roles:        slices.Clone(membership.Roles),
-			Status:       membership.Status,
-			Permissions:  slices.Clone(membership.Permissions),
-			RoleRequests: mapSlice(membership.RoleRequests, toDomainRoleRequest),
-			CreatedAt:    membership.CreatedAt.Format(time.RFC3339Nano),
-			UpdatedAt:    membership.UpdatedAt.Format(time.RFC3339Nano),
-		}
-	})
-
-	return domain.User{
-		ID:                value.Id,
-		Email:             value.Email,
-		GivenName:         value.GivenName,
-		FamilyName:        value.FamilyName,
-		Status:            value.Status,
-		GlobalRoles:       slices.Clone(value.GlobalRoles),
-		GlobalPermissions: slices.Clone(value.GlobalPermissions),
-		CreatedAt:         value.CreatedAt.Format(time.RFC3339Nano),
-		UpdatedAt:         value.UpdatedAt.Format(time.RFC3339Nano),
-		Memberships:       memberships,
-	}, nil
-}
-
-func toDomainRoleRequest(value client.RoleRequest) domain.RoleRequest {
-	return domain.RoleRequest{
-		ID:          value.Id,
-		Role:        value.Role,
-		Status:      value.Status,
-		RequestedAt: value.RequestedAt,
-	}
-}
-
 func toDomainGroup(value *client.Group) (domain.Group, error) {
 	if value == nil {
 		return domain.Group{}, fmt.Errorf("decode metadata-lifecycle group: response is empty")
@@ -891,43 +847,6 @@ func toDomainGroups(values []client.Group) ([]domain.Group, error) {
 	return mapSliceErr(values, func(value client.Group) (domain.Group, error) {
 		return toDomainGroup(new(value))
 	})
-}
-
-func toDomainGroupMembership(value *client.GroupMembership) (domain.GroupMembership, error) {
-	if value == nil {
-		return domain.GroupMembership{}, fmt.Errorf("decode metadata-lifecycle membership: response is empty")
-	}
-
-	return domain.GroupMembership{
-		User: domain.MembershipUser{
-			ID:         value.User.Id,
-			GivenName:  value.User.GivenName,
-			FamilyName: value.User.FamilyName,
-			Email:      value.User.Email,
-		},
-		Status:       value.Status,
-		Roles:        slices.Clone(value.Roles),
-		Permissions:  slices.Clone(value.Permissions),
-		RoleRequests: mapSlice(value.RoleRequests, toDomainRoleRequest),
-		CreatedAt:    value.CreatedAt,
-		UpdatedAt:    value.UpdatedAt,
-	}, nil
-}
-
-func toDomainGroupMembershipValue(value client.GroupMembership) (domain.GroupMembership, error) {
-	return toDomainGroupMembership(new(value))
-}
-
-func toDomainUserSummary(value client.UserSummary) domain.UserSummary {
-	return domain.UserSummary{ //nolint:exhaustruct_v5 // summary response has no timestamps
-		ID:                value.Id,
-		Email:             value.Email,
-		GivenName:         value.GivenName,
-		FamilyName:        value.FamilyName,
-		Status:            value.Status,
-		GlobalRoles:       slices.Clone(value.GlobalRoles),
-		GlobalPermissions: slices.Clone(value.GlobalPermissions),
-	}
 }
 
 func toDomainImportDiagnostic(value client.ImportDiagnostic) domain.ImportDiagnostic {
@@ -953,45 +872,8 @@ func toClientRejectRequest(value domain.RejectResourceInput) client.RejectReques
 	}
 }
 
-func toClientCreateMembershipRequest(roles []string) client.CreateMembershipRequest {
-	return client.CreateMembershipRequest{
-		Roles: roles,
-	}
-}
-
-func toClientMembershipDecisionRequest(status string) client.MembershipDecisionRequest {
-	return client.MembershipDecisionRequest{
-		Status: status,
-	}
-}
-
-func toClientCreateRoleRequest(role string) client.CreateRoleRequest {
-	return client.CreateRoleRequest{
-		Role: role,
-	}
-}
-
-func toClientRoleRequestDecisionRequest(status string) client.RoleRequestDecisionRequest {
-	return client.RoleRequestDecisionRequest{
-		Status: status,
-	}
-}
-
 func toClientBlockUserRequest(reason string) client.BlockUserRequest {
 	return client.BlockUserRequest{
 		Reason: reason,
 	}
-}
-
-func toClientCreateUserRequest(identity ActorIdentity) client.CreateUserRequest {
-	return client.CreateUserRequest{
-		Id:         identity.AuthIdentifier,
-		Email:      identity.Email,
-		GivenName:  identity.GivenName,
-		FamilyName: identity.FamilyName,
-	}
-}
-
-func toDomainUserSummaries(values []client.UserSummary) []domain.UserSummary {
-	return mapSlice(values, toDomainUserSummary)
 }

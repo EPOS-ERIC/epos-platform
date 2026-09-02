@@ -51,11 +51,12 @@ func (c *MetadataLifecycle) ListGroupMemberships(ctx context.Context, groupID, a
 	if c == nil || c.access == nil {
 		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
 	}
-	memberships, response, err := c.access.ListGroupMemberships(ctx, groupID).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return nil, wrapGroupAccessError("list metadata-lifecycle group memberships", response, err)
-	}
-	return mapSliceErr(memberships, toDomainGroupMembershipValue)
+	// memberships, response, err := c.access.ListGroupMemberships(ctx, groupID).XEPOSUserID(actorID).Execute()
+	// if err != nil {
+	// 	return nil, wrapGroupAccessError("list metadata-lifecycle group memberships", response, err)
+	// }
+	// return mapSliceErr(memberships, toDomainGroupMembershipValue)
+	return nil, nil
 }
 
 func (c *MetadataLifecycle) ListCategories(ctx context.Context, groupID string) ([]domain.Category, error) {

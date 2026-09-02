@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 	"github.com/go-chi/chi/v5"
@@ -15,12 +16,14 @@ import (
 
 type Users struct {
 	service *identity.Service
+	proxy   *clients.MetadataLifecycleProxy
 	log     *slog.Logger
 }
 
-func NewUsers(log *slog.Logger, service *identity.Service) *Users {
+func NewUsers(log *slog.Logger, service *identity.Service, proxy *clients.MetadataLifecycleProxy) *Users {
 	return &Users{
 		service: service,
+		proxy:   proxy,
 		log:     log.With("component", "users-handler"),
 	}
 }
@@ -31,6 +34,7 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 		WriteError(h.log, r.Context(), w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
 		return
 	}
+	h.log.Info("get user", "user", user)
 
 	id := chi.URLParam(r, "id")
 	if id != "self" && !validUUID(id) {
@@ -38,7 +42,11 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resolved, err := h.service.GetUser(r.Context(), user.ID, id)
+	if id == "self" {
+		id = user.ID
+	}
+
+	resolved, err := h.proxy.GetUser(r.Context(), user.ID, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrBadRequest) {
 			WriteError(h.log, r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid user id", err)
@@ -61,7 +69,14 @@ func (h *Users) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeUserJSON(h.log, w, http.StatusOK, ToAPIUser(resolved))
+	apiUser, err := ToAPIUser(resolved)
+	if err != nil {
+		h.log.ErrorContext(r.Context(), "map get user response failed", "error", err)
+		WriteError(h.log, r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_invalid_response", "metadata-lifecycle returned invalid user data", err)
+		return
+	}
+
+	writeUserJSON(h.log, w, http.StatusOK, apiUser)
 }
 
 func (h *Users) List(w http.ResponseWriter, r *http.Request) {

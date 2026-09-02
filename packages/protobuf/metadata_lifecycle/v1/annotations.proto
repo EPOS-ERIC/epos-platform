@@ -1,0 +1,18 @@
+// common/v1/annotations.proto
+syntax = "proto3";
+package metadata_lifecycle.v1;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+enum ActorRequirement {
+  ACTOR_REQUIREMENT_UNSPECIFIED = 0;
+  ACTOR_REQUIREMENT_NOT_NEEDED = 1;
+  ACTOR_REQUIREMENT_OPTIONAL = 2;
+  ACTOR_REQUIREMENT_REQUIRED = 3;
+}
+
+extend google.protobuf.MethodOptions {
+  ActorRequirement actor_requirement = 50000; // arbitrary unused field number in the extension range
+}

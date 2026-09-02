@@ -162,7 +162,7 @@ var File_metadata_lifecycle_v1_identity_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"$metadata_lifecycle/v1/identity.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\"\xa0\x01\n" +
+	"$metadata_lifecycle/v1/identity.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"\xa0\x01\n" +
 	"\x14ProvisionUserRequest\x12\x17\n" +
 	"\x02id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x02id\x12\x1d\n" +
 	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12&\n" +
@@ -176,9 +176,9 @@ const file_metadata_lifecycle_v1_identity_proto_rawDesc = "" +
 	"\n" +
 	"given_name\x18\x03 \x01(\tR\tgivenName\x12\x1f\n" +
 	"\vfamily_name\x18\x04 \x01(\tR\n" +
-	"familyName2}\n" +
-	"\x0fIdentityService\x12j\n" +
-	"\rProvisionUser\x12+.metadata_lifecycle.v1.ProvisionUserRequest\x1a,.metadata_lifecycle.v1.ProvisionUserResponseBgZegithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1b\x06proto3"
+	"familyName2\x83\x01\n" +
+	"\x0fIdentityService\x12p\n" +
+	"\rProvisionUser\x12+.metadata_lifecycle.v1.ProvisionUserRequest\x1a,.metadata_lifecycle.v1.ProvisionUserResponse\"\x04\x80\xb5\x18\x01BgZegithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1b\x06proto3"
 
 var (
 	file_metadata_lifecycle_v1_identity_proto_rawDescOnce sync.Once
@@ -212,6 +212,7 @@ func file_metadata_lifecycle_v1_identity_proto_init() {
 	if File_metadata_lifecycle_v1_identity_proto != nil {
 		return
 	}
+	file_metadata_lifecycle_v1_annotations_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

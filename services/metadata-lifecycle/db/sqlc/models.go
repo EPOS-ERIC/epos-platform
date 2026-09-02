@@ -403,9 +403,8 @@ func (ns NullTopLevelConcept) Value() (driver.Value, error) {
 type UserStatus string
 
 const (
-	UserStatusACTIVE   UserStatus = "ACTIVE"
-	UserStatusINACTIVE UserStatus = "INACTIVE"
-	UserStatusBLOCKED  UserStatus = "BLOCKED"
+	UserStatusACTIVE  UserStatus = "ACTIVE"
+	UserStatusBLOCKED UserStatus = "BLOCKED"
 )
 
 func (e *UserStatus) Scan(src interface{}) error {

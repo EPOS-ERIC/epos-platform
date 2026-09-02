@@ -1477,7 +1477,7 @@ components:
         email: { type: string, format: email }
         given_name: { type: string }
         family_name: { type: string }
-        status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] }
+        status: { type: string, enum: [ACTIVE, BLOCKED] }
         global_roles:
           type: array
           items: { type: string }
@@ -1507,7 +1507,7 @@ components:
         email: { type: string, format: email }
         given_name: { type: string }
         family_name: { type: string }
-        status: { type: string, enum: [ACTIVE, INACTIVE, BLOCKED] }
+        status: { type: string, enum: [ACTIVE, BLOCKED] }
         global_roles:
           type: array
           items: { type: string }

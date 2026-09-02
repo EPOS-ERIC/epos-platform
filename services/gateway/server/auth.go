@@ -59,7 +59,9 @@ func authMiddlewareWithMode(log *slog.Logger, authenticator *auth.Service, provi
 				return
 			}
 
-			resolved, err := provisioner.EnsureUser(r.Context(), clients.ActorIdentity{
+			log.DebugContext(r.Context(), "authenticated user", "identity", identity)
+
+			user, err := provisioner.EnsureUser(r.Context(), clients.ActorIdentity{
 				AuthIdentifier: identity.AuthIdentifier,
 				Email:          identity.Email,
 				GivenName:      identity.GivenName,
@@ -72,13 +74,13 @@ func authMiddlewareWithMode(log *slog.Logger, authenticator *auth.Service, provi
 				return
 			}
 
-			user := handlers.ToAPIUser(resolved)
+			log.DebugContext(r.Context(), "provisioned user", "resolved user", user)
 
 			span.SetAttributes(
 				attribute.String("auth.result", "authenticated"),
 				// "enduser" is an otel-specific naming
 				attribute.String("enduser.id", user.ID),
-				attribute.Bool("enduser.is_global_admin", user.IsGlobalAdmin()),
+				// attribute.Bool("enduser.is_global_admin", user.IsGlobalAdmin()), // TODO
 			)
 
 			ctx := handlers.WithAuthenticatedUser(r.Context(), user)

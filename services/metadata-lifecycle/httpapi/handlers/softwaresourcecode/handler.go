@@ -39,7 +39,7 @@ type Handler struct {
 func New(log *slog.Logger, service sourceCodeService) *Handler {
 	return &Handler{
 		service: service,
-		log: log.With("component", "software-source-codes-handler"),
+		log:     log.With("component", "software-source-codes-handler"),
 	}
 }
 

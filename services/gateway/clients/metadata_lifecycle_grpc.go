@@ -15,47 +15,27 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type GRPCMetadataLifecycle struct {
-	identityGRPC metadatalifecyclev1.IdentityServiceClient
-	grpcConn     *grpc.ClientConn
+const actorMetadataKey = "x-epos-user-id"
 
-	log *slog.Logger
-}
-
-func NewGRPCMetadataLifecycle(log *slog.Logger, baseURL string) (*GRPCMetadataLifecycle, error) {
+func NewMetadataLifecycleGRPC(log *slog.Logger, baseURL string) (*MetadataLifecycleProxy, *MetadataLifecycleIdentity, error) {
 	conn, err := grpc.NewClient(
 		baseURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("create metadata-lifecycle gRPC client: %w", err)
+		return nil, nil, fmt.Errorf("create metadata-lifecycle gRPC client: %w", err)
 	}
 
-	return &GRPCMetadataLifecycle{
+	proxy := &MetadataLifecycleProxy{
+		userGRPC: metadatalifecyclev1.NewUserServiceClient(conn),
+	}
+	identity := &MetadataLifecycleIdentity{
 		identityGRPC: metadatalifecyclev1.NewIdentityServiceClient(conn),
-		grpcConn:     conn,
-		log:          log.With("component", "grpc-server"),
-	}, nil
-}
-
-func (c *GRPCMetadataLifecycle) ProvisionUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
-	user, err := c.identityGRPC.ProvisionUser(ctx, &metadatalifecyclev1.ProvisionUserRequest{
-		Id:         identity.AuthIdentifier,
-		Email:      identity.Email,
-		GivenName:  identity.GivenName,
-		FamilyName: identity.FamilyName,
-	})
-	if err != nil {
-		return domain.User{}, wrapGRPCError("provision metadata-lifecycle user", err)
+		proxy:        proxy,
 	}
 
-	return domain.User{
-		ID:         user.Id,
-		Email:      user.Email,
-		GivenName:  user.GivenName,
-		FamilyName: user.FamilyName,
-	}, nil
+	return proxy, identity, nil
 }
 
 func wrapGRPCError(operation string, err error) error {

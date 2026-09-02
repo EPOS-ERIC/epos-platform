@@ -1,0 +1,426 @@
+- [x] Migrate `POST /api/v1/internal/users` to gRPC `ProvisionUser`
+  - [x] Add protobuf request, response, and RPC definition
+  - [x] Implement Metadata Lifecycle gRPC server adapter using `users.Service`
+  - [x] Add Gateway gRPC client and switch user provisioning to it
+
+- [ ] Complete gRPC migration foundation
+  - [ ] Pass `services.metadata-lifecycle-grpc.url` into `NewGRPCMetadataLifecycle` instead of using a hard-coded address
+  - [ ] Add a close method to `GRPCMetadataLifecycle`
+  - [ ] Coordinate Gateway shutdown so the gRPC client connection closes after in-flight calls finish
+  - [ ] Construct shared Metadata Lifecycle dependencies once for HTTP and gRPC while both transports exist
+  - [ ] Ensure gRPC and HTTP server startup errors propagate without panicking inside goroutines
+  - [ ] Ensure database shutdown waits until both servers have stopped
+  - [ ] Add shared protobuf validation, tracing, request logging, panic recovery, deadline, and error-mapping interceptors
+  - [ ] Preserve HTTP authorization and audit semantics in gRPC adapters
+  - [ ] Define gRPC authentication and service-to-service authorization for non-local environments
+  - [ ] Define per-endpoint rollout and rollback procedure for mixed Gateway and Metadata Lifecycle versions
+  - [ ] Keep each HTTP business endpoint and generated client available as a rollback path until its gRPC slice passes verification
+  - [ ] Add standard `grpc.health.v1.Health` service
+  - [ ] Add gRPC server and client health checks to local development configuration
+  - [ ] Add `buf lint` and protobuf compatibility checks to the protobuf workflow
+  - [ ] Add reusable gRPC adapter, client, status-mapping, and integration-test helpers
+
+- [ ] Migrate Users endpoints
+  - [ ] Migrate `GET /api/v1/users/{user_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.GetByID`
+    - [ ] Add Gateway client method with explicit protobuf-to-domain mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.GetUserByID` from the generated HTTP client to gRPC
+    - [ ] Test authorization, not-found, invalid-input, timeout, and successful response behavior
+  - [ ] Migrate `GET /api/v1/users`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.List`
+    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ListUsers` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, empty results, timeout, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/users/{user_id}/global-permissions/{permission}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.GrantGlobalPermission`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.GrantGlobalPermission` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, invalid permission, not-found, conflict, and success behavior
+  - [ ] Migrate `DELETE /api/v1/users/{user_id}/global-permissions/{permission}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.RevokeGlobalPermission`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.RevokeGlobalPermission` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, invalid permission, not-found, conflict, and success behavior
+  - [ ] Migrate `PUT /api/v1/users/{user_id}/global-roles/{role}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.AssignGlobalRole`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.AssignGlobalRole` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, invalid role, not-found, conflict, and success behavior
+  - [ ] Migrate `DELETE /api/v1/users/{user_id}/global-roles/{role}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.RemoveGlobalRole`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.RemoveGlobalRole` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, invalid role, not-found, conflict, and success behavior
+  - [ ] Migrate `POST /api/v1/users/{user_id}/block`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.BlockUser`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.BlockUser` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, reason validation, not-found, conflict, and success behavior
+  - [ ] Migrate `POST /api/v1/users/{user_id}/unblock`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `users.Service.UnblockUser`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.UnblockUser` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and success behavior
+
+- [ ] Migrate Groups endpoints
+  - [ ] Migrate `GET /api/v1/groups`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `groups.Service.List`
+    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ListGroups` from the generated HTTP client to gRPC
+    - [ ] Test authorization, empty results, timeout, and successful response behavior
+  - [ ] Migrate `GET /api/v1/groups/{group_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `groups.Service.Get`
+    - [ ] Add Gateway client method with explicit mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.GetGroup` from the generated HTTP client to gRPC
+    - [ ] Test authorization, not-found, invalid ID, timeout, and successful response behavior
+  - [ ] Migrate `POST /api/v1/groups`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `groups.Service.Create`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.CreateGroup` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, authorization, conflict, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/groups/{group_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `groups.Service.Replace`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.ReplaceGroup` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `groups.Service.Delete`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.DeleteGroup` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and successful response behavior
+
+- [ ] Migrate Categories endpoints
+  - [ ] Migrate `GET /api/v1/groups/{group_id}/categories`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `categories.Service.List`
+    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ListCategories` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, empty results, timeout, and successful response behavior
+  - [ ] Migrate `GET /api/v1/groups/{group_id}/categories/{category_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `categories.Service.Get`
+    - [ ] Add Gateway client method with explicit mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.GetCategory` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, invalid ID, and successful response behavior
+  - [ ] Migrate `POST /api/v1/groups/{group_id}/categories`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `categories.Service.Create`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.CreateCategory` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, authorization, conflict, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/groups/{group_id}/categories/{category_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `categories.Service.Replace`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.ReplaceCategory` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}/categories/{category_id}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `categories.Service.Delete`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.DeleteCategory` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and successful response behavior
+
+- [ ] Migrate Contact Points endpoints
+  - [ ] Migrate `GET /api/v1/contact-points`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `contactpoints.Service.List`
+    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ListContactPoints` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, empty results, timeout, and successful response behavior
+  - [ ] Migrate `GET /api/v1/contact-points/{contact_point_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `contactpoints.Service.Get`
+    - [ ] Add Gateway client method with explicit mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.GetContactPoint` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, invalid ID, and successful response behavior
+  - [ ] Migrate `POST /api/v1/contact-points`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `contactpoints.Service.Create`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.CreateContactPoint` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, authorization, conflict, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/contact-points/{contact_point_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `contactpoints.Service.Replace`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.ReplaceContactPoint` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/contact-points/{contact_point_id}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `contactpoints.Service.Delete`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.DeleteContactPoint` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and successful response behavior
+
+- [ ] Migrate Organizations endpoints
+  - [ ] Migrate `GET /api/v1/organizations`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `organizations.Service.List`
+    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ListOrganizations` from the generated HTTP client to gRPC
+    - [ ] Test empty results, timeout, and successful response behavior
+  - [ ] Migrate `GET /api/v1/organizations/{organization_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `organizations.Service.Get`
+    - [ ] Add Gateway client method with explicit mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.GetOrganization` from the generated HTTP client to gRPC
+    - [ ] Test not-found, invalid ID, timeout, and successful response behavior
+  - [ ] Migrate `POST /api/v1/organizations`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `organizations.Service.Create`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.CreateOrganization` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, conflict, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/organizations/{organization_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `organizations.Service.Replace`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.ReplaceOrganization` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, input validation, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/organizations/{organization_id}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `organizations.Service.Delete`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.DeleteOrganization` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, not-found, conflict, and successful response behavior
+
+- [ ] Migrate Group Access endpoints
+  - [ ] Migrate `GET /api/v1/groups/{group_id}/memberships`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.ListMemberships`
+    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ListGroupMemberships` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, empty results, and successful response behavior
+  - [ ] Migrate `POST /api/v1/groups/{group_id}/membership-requests`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.RequestMembership`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.RequestMembership` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, role validation, authorization, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}/membership-requests`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.WithdrawMembershipRequest`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.WithdrawMembershipRequest` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `PATCH /api/v1/groups/{group_id}/memberships/{user_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.DecideMembership`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.DecideMembership` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, decision validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}/memberships/{user_id}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.RevokeMembership`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.RevokeMembership` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/groups/{group_id}/role-requests`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.RequestRole`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.RequestRole` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, role validation, authorization, conflict, and successful response behavior
+  - [ ] Migrate `PATCH /api/v1/groups/{group_id}/role-requests/{request_id}`
+    - [ ] Add validated protobuf request, response, and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.ApplyRoleRequestDecision`
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.ApplyRoleRequestDecision` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, decision validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}/role-requests/{request_id}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.WithdrawRoleRequest`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.WithdrawRoleRequest` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.AssignRole`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.AssignGroupRole` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, role validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.RemoveRole`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.RemoveGroupRole` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, role validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/groups/{group_id}/memberships/{user_id}/permissions/{permission}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.GrantPermission`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.GrantGroupPermission` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, permission validation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/groups/{group_id}/memberships/{user_id}/permissions/{permission}`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using `access.Service.RevokePermission`
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.RevokeGroupPermission` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, permission validation, authorization, not-found, conflict, and successful response behavior
+
+- [ ] Migrate Resource CRUD and lifecycle endpoints
+  - [ ] Migrate `POST /api/v1/groups/{group_id}/resources`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `CreateDraft` operation
+    - [ ] Add Gateway client method with explicit resource-type input and response mapping
+    - [ ] Switch `MetadataLifecycle.CreateResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, validation, authorization, conflict, and successful response behavior
+  - [ ] Migrate `GET /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Read` operation
+    - [ ] Add Gateway client method with explicit resource-type and version mapping
+    - [ ] Switch `MetadataLifecycle.GetResourceVersion` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, authorization, not-found, invalid IDs, and successful response behavior
+  - [ ] Migrate `PUT /api/v1/resources/{resource_id}/versions/{version_id}/draft`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `ReplaceDraft` operation
+    - [ ] Add Gateway client method with explicit input and response mapping
+    - [ ] Switch `MetadataLifecycle.ReplaceResourceDraft` from the generated HTTP client to gRPC
+    - [ ] Test body resource-type dispatch, actor propagation, validation, authorization, not-found, and successful response behavior
+  - [ ] Migrate `DELETE /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/draft`
+    - [ ] Add validated protobuf request and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Discard` operation
+    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
+    - [ ] Switch `MetadataLifecycle.DiscardResourceDraft` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, not-found, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Submit` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.SubmitResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, invalid state, not-found, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Withdraw` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.WithdrawResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, invalid state, not-found, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reject`
+    - [ ] Add validated protobuf request, response, rejection input, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Reject` operation
+    - [ ] Add Gateway client method with explicit rejection input and response mapping
+    - [ ] Switch `MetadataLifecycle.RejectResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, rejection validation, authorization, invalid state, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Reopen` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.ReopenResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, invalid state, not-found, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/publish`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Publish` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.PublishResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, invalid state, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `Unpublish` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.UnpublishResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, invalid state, not-found, conflict, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/drafts/from-publication`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `DraftFromPublication` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.CreateResourceDraftFromPublication` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, source-state validation, and successful response behavior
+  - [ ] Migrate `POST /api/v1/resources/{resource_type}/{resource_id}/drafts/from-archive`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `DraftFromLatestArchive` operation
+    - [ ] Add Gateway client method with explicit response mapping
+    - [ ] Switch `MetadataLifecycle.CreateResourceDraftFromArchive` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, source-state validation, and successful response behavior
+  - [ ] Migrate `POST /api/v1/groups/{group_id}/resources/{resource_type}/{resource_id}/copies`
+    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [ ] Implement gRPC adapter using the typed resource service `CopyPublished` operation
+    - [ ] Add Gateway client method with explicit resource-type and response mapping
+    - [ ] Switch `MetadataLifecycle.CopyResource` from the generated HTTP client to gRPC
+    - [ ] Test resource-type dispatch, actor propagation, authorization, source-state validation, conflict, and successful response behavior
+
+- [ ] Migrate Discovery endpoint
+  - [ ] Migrate `GET /api/v1/resources`
+    - [ ] Add validated protobuf request, response, filter representation, and RPC definition
+    - [ ] Implement gRPC adapter using `discovery.Service.Search`
+    - [ ] Add Gateway client method with explicit search-result mapping and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.SearchResources` from the generated HTTP client to gRPC
+    - [ ] Test filter parsing, pagination, authorization, empty results, timeout, and successful response behavior
+
+- [ ] Migrate Turtle Import endpoint
+  - [ ] Migrate `POST /api/v1/imports/turtle`
+    - [ ] Add validated protobuf request, response, payload, import-result representation, and RPC definition
+    - [ ] Define maximum payload size, content type, timeout, and transaction behavior for gRPC
+    - [ ] Implement gRPC adapter using `metadataimport.Service.Import` and existing Turtle parsing
+    - [ ] Add Gateway client method with explicit payload, result, and gRPC error mapping
+    - [ ] Switch `MetadataLifecycle.ImportTurtle` from the generated HTTP client to gRPC
+    - [ ] Test actor propagation, payload limits, malformed Turtle, authorization, conflict, partial failure, timeout, and successful response behavior
+
+- [ ] Complete migration verification
+  - [ ] Confirm every Gateway Metadata Lifecycle business operation uses gRPC
+  - [ ] Confirm no deployed service or external integration still calls Metadata Lifecycle HTTP business endpoints directly
+  - [ ] Confirm Gateway public HTTP routes and response contracts remain unchanged
+  - [ ] Confirm gRPC error mappings preserve existing Gateway domain errors and HTTP status codes
+  - [ ] Confirm tracing, metrics, audit events, request IDs, deadlines, and logs remain correlated across Gateway and Metadata Lifecycle
+  - [ ] Run Metadata Lifecycle unit, integration, gRPC, and database tests
+  - [ ] Run Gateway unit, integration, route, and gRPC client tests
+  - [ ] Run protobuf lint, generation, compatibility, build, and test checks
+  - [ ] Run local Docker Compose smoke tests with gRPC health checks and graceful shutdown
+  - [ ] Run CI integration and Schemathesis checks against the unchanged Gateway contract
+
+- [ ] Remove Metadata Lifecycle HTTP transport after the migration gate passes
+  - [ ] Remove Gateway generated Metadata Lifecycle OpenAPI client usage
+  - [ ] Remove Gateway generated Metadata Lifecycle OpenAPI client files and generation target
+  - [ ] Remove Gateway HTTP client fields, constructors, request builders, model mappers, and HTTP error wrappers
+  - [ ] Remove Gateway Metadata Lifecycle HTTP upstream configuration, transport, timeout, and cache setup
+  - [ ] Remove Metadata Lifecycle HTTP handlers and handler-specific transport types and mappings
+  - [ ] Remove Metadata Lifecycle HTTP router and JSON server
+  - [ ] Remove Metadata Lifecycle OpenAPI specification, embedded docs, Scalar UI, and Swagger UI assets
+  - [ ] Remove Metadata Lifecycle HTTP port, request timeout, read timeout, write timeout, and idle timeout configuration that is no longer used
+  - [ ] Keep or replace the HTTP health endpoint only if an external probe still requires it
+  - [ ] Update Metadata Lifecycle startup to run only the gRPC server and standard gRPC health service
+
+- [ ] Simplify configuration and deployment
+  - [ ] Replace split `metadata-lifecycle` and `metadata-lifecycle-grpc` Gateway configuration with one gRPC Metadata Lifecycle configuration
+  - [ ] Update Gateway config validation, defaults, example config, and local config
+  - [ ] Update Metadata Lifecycle environment configuration and remove unused HTTP settings
+  - [ ] Update Docker Compose ports, dependencies, health checks, and service environment variables
+  - [ ] Update Tilt resources and port forwards
+  - [ ] Update Helm values, Services, Deployments, probes, NetworkPolicies, and ingress rules
+  - [ ] Update Dockerfiles and build contexts for the final protobuf and gRPC dependency set
+  - [ ] Update README, service documentation, API documentation, and local development instructions
+  - [ ] Update CI workflows and integration test commands for gRPC-only service health
+
+- [ ] Clean dependencies and shared libraries
+  - [ ] Run dependency graph and unused-import audit in Gateway and Metadata Lifecycle
+  - [ ] Remove HTTP/OpenAPI/Chi/grpc-gateway dependencies that are unused after transport removal
+  - [ ] Remove unused generated protobuf or validation dependencies only after regeneration confirms they are unused
+  - [ ] Regenerate and tidy every affected `go.mod` and `go.sum`
+  - [ ] Audit `packages/protobuf` for duplicate messages, obsolete RPCs, and generated artifacts
+  - [ ] Move genuinely shared protobuf messages into shared definitions without breaking field compatibility
+  - [ ] Remove dead shared-library helpers only after repository-wide usage search
+
+- [ ] Final runtime and contract validation
+  - [ ] Verify dependency injection has one authoritative Metadata Lifecycle service graph
+  - [ ] Verify Gateway gRPC connection creation, readiness, reuse, and closure
+  - [ ] Verify Metadata Lifecycle gRPC listener bind failures and serve failures are returned
+  - [ ] Verify SIGTERM and SIGINT stop accepting calls, finish bounded in-flight work, stop health reporting, and close the database
+  - [ ] Verify repeated startup and shutdown does not leak goroutines, listeners, connections, or telemetry providers
+  - [ ] Verify protobuf wire compatibility policy is documented and enforced for future changes
+  - [ ] Verify rollback procedure for Gateway and Metadata Lifecycle version mismatches
+  - [ ] Verify production transport security, certificates, rotation, and authorization configuration
+  - [ ] Verify dashboards, alerts, service names, RPC metrics, and runbooks use final gRPC operation names
+  - [ ] Run full repository build, lint, test, and container smoke-test suite

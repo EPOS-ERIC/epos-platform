@@ -3,6 +3,7 @@ syntax = "proto3";
 package metadata_lifecycle.v1;
 
 import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
@@ -22,5 +23,7 @@ message ProvisionUserResponse {
 
 service IdentityService {
   // Internal Gateway-to-Metadata-Lifecycle creation from verified authentication claims.
-  rpc ProvisionUser(ProvisionUserRequest) returns (ProvisionUserResponse);
+  rpc ProvisionUser(ProvisionUserRequest) returns (ProvisionUserResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
 }

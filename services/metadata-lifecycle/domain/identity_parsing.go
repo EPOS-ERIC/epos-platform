@@ -23,32 +23,32 @@ func NewUserClaims(value UserClaims) (UserClaims, error) {
 }
 
 // NewGroupReference validates and normalizes a persisted group reference.
-func NewGroupReference(value GroupReference) (GroupReference, error) {
+func NewGroupReference(value GroupSummary) (GroupSummary, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	if value.ID == uuid.Nil || value.Name == "" {
-		return GroupReference{}, ErrInvalidUser
+		return GroupSummary{}, ErrInvalidUser
 	}
 
 	return value, nil
 }
 
 // NewUserMembership validates and normalizes a persisted user membership.
-func NewUserMembership(value UserMembership) (UserMembership, error) {
+func NewUserMembership(value Membership) (Membership, error) {
 	group, err := NewGroupReference(value.Group)
 	if err != nil {
-		return UserMembership{}, err
+		return Membership{}, err
 	}
 
 	status, err := NewPersistedMembershipStatus(string(value.Status))
 	if err != nil {
-		return UserMembership{}, err
+		return Membership{}, err
 	}
 
 	roles := slices.Clone(value.Roles)
 	for i, role := range roles {
 		roles[i], err = NewGroupRole(string(role))
 		if err != nil {
-			return UserMembership{}, err
+			return Membership{}, err
 		}
 	}
 
@@ -56,7 +56,7 @@ func NewUserMembership(value UserMembership) (UserMembership, error) {
 	for _, request := range value.RoleRequests {
 		request, err := NewRoleRequest(request)
 		if err != nil {
-			return UserMembership{}, err
+			return Membership{}, err
 		}
 		roleRequests = append(roleRequests, request)
 	}
@@ -86,7 +86,7 @@ func NewUser(value User) (User, error) {
 		return User{}, err
 	}
 
-	memberships := make([]UserMembership, 0, len(value.Memberships))
+	memberships := make([]Membership, 0, len(value.Memberships))
 	for _, membership := range value.Memberships {
 		membership, err := NewUserMembership(membership)
 		if err != nil {

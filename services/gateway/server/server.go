@@ -40,7 +40,7 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	}()
 
 	lifecycleSvc := lifecycle.NewService(baseLog, metadataLifecycleClient)
-	identitySvc := identity.NewService(metadataLifecycleClient)
+	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
 	router := NewRouter(baseLog, lifecycleSvc, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
 	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
 

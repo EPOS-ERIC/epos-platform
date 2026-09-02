@@ -53,7 +53,7 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	lifecycleHandler := handlers.NewLifecycle(handlerLog, lifecycleService)
-	usersHandler := handlers.NewUsers(handlerLog, identityService)
+	usersHandler := handlers.NewUsers(handlerLog, identityService, metadataLifecycleClient.Proxy)
 	groupsHandler := handlers.NewGroups(handlerLog, groupservice.NewService(metadataLifecycleClient))
 	importsHandler := handlers.NewImports(handlerLog, imports.NewService(metadataLifecycleClient))
 	canonicalHandler := handlers.NewCanonical(handlerLog, canonical.NewService(metadataLifecycleClient))

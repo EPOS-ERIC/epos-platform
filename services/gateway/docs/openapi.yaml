@@ -2886,7 +2886,6 @@ components:
       type: string
       enum:
         - ACTIVE
-        - INACTIVE
         - BLOCKED
 
     BlockUserRequest:

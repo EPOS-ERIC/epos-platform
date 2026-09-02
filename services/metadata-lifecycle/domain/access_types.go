@@ -15,6 +15,13 @@ const (
 	GroupRoleAdmin    GroupRole = "GROUP_ADMIN"
 )
 
+// GlobalRole is a role that can be assigned to a user globally.
+type GlobalRole string
+
+const (
+	GlobalRoleAdmin GlobalRole = "ADMIN"
+)
+
 // MembershipStatus is the current state of a group membership.
 type MembershipStatus string
 
