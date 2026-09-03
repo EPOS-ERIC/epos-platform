@@ -23,6 +23,27 @@ func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) 
 	}
 }
 
+func (s *Service) GetUser(ctx context.Context, actorID, id string) (domain.User, error) {
+	if id == "self" {
+		id = actorID
+	}
+
+	if id == "" {
+		return domain.User{}, fmt.Errorf("invalid user id: %w", domain.ErrBadRequest)
+	}
+
+	if s == nil || s.metadataLifecycle == nil || s.metadataLifecycle.Identity == nil {
+		return domain.User{}, fmt.Errorf("metadata-lifecycle identity client is not configured")
+	}
+
+	user, err := s.metadataLifecycle.Identity.GetUserForAuth(ctx, actorID, id)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("get user from metadata-lifecycle: %w", err)
+	}
+
+	return user, nil
+}
+
 func (s *Service) ListUsers(ctx context.Context, actorID string) ([]domain.UserSummary, error) {
 	if s == nil || s.metadataLifecycle == nil {
 		return nil, fmt.Errorf("metadata-lifecycle identity client is not configured")

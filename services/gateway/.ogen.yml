@@ -1,0 +1,5 @@
+generator:
+  features:
+    disable:
+      - ogen/otel
+      - paths/client

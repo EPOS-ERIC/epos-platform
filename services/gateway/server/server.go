@@ -13,10 +13,15 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
+	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
+	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 )
 
 func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.MetadataLifecycle, authService *auth.Service) error {
@@ -41,8 +46,12 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 
 	lifecycleSvc := lifecycle.NewService(baseLog, metadataLifecycleClient)
 	identitySvc := identity.NewService(baseLog, metadataLifecycleClient)
-	router := NewRouter(baseLog, lifecycleSvc, identitySvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
-	handler := requestTimeoutHandler(router, cfg.Server.RequestTimeout)
+	canonicalSvc := canonical.NewService(metadataLifecycleClient)
+	discoverySvc := discovery.NewService(metadataLifecycleClient)
+	groupsSvc := groupservice.NewService(metadataLifecycleClient)
+	importsSvc := metadataimports.NewService(metadataLifecycleClient)
+	router := NewRouter(baseLog, canonicalSvc, discoverySvc, groupsSvc, lifecycleSvc, identitySvc, importsSvc, metadataLifecycleClient, authService, cfg.Server.CORSAllowOrigin)
+	handler := handlers.NewTimeoutHandler(baseLog, router, cfg.Server.RequestTimeout)
 
 	srv := &http.Server{ //nolint:exhaustruct_v5
 		BaseContext:  func(net.Listener) context.Context { return ctx },
@@ -78,8 +87,4 @@ func Run(cfg config.Config, log *slog.Logger, metadataLifecycleClient *clients.M
 	log.Info("server shutdown complete")
 
 	return nil
-}
-
-func requestTimeoutHandler(next http.Handler, timeout time.Duration) http.Handler {
-	return http.TimeoutHandler(next, timeout, "request timeout\n")
 }

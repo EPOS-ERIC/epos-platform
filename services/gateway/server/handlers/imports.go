@@ -1,68 +1,24 @@
+//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
-	"encoding/json"
-	"errors"
-	"log/slog"
-	"mime"
-	"net/http"
+	"context"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
+	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
-type Imports struct {
-	service *metadataimports.Service
-	log     *slog.Logger
-}
-
-func NewImports(log *slog.Logger, service *metadataimports.Service) *Imports {
-	return &Imports{
-		service: service,
-		log:     log.With("component", "imports-handler"),
-	}
-}
-
-func (h *Imports) Turtle(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
+func (h *ogenHandler) ImportTurtleMetadata(ctx context.Context, body gatewayapi.ImportTurtleMetadataReq) (*gatewayapi.ImportResult, error) {
+	actor, ok := actorID(ctx)
 	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
+		return nil, authMissing()
 	}
-	mediaType, _, err := mime.ParseMediaType(r.Header.Get("Content-Type"))
-	if err != nil || mediaType != "text/turtle" {
-		WriteError(h.log, ctx, w, http.StatusUnsupportedMediaType, "unsupported_media_type", "Content-Type must be text/turtle", nil)
-		return
-	}
-
-	result, err := h.service.Turtle(ctx, actor.ID, http.MaxBytesReader(w, r.Body, 50<<20))
+	v, err := h.imports.Turtle(ctx, actor, body)
 	if err != nil {
-		if errors.Is(err, domain.ErrBadRequest) {
-			WriteError(h.log, ctx, w, http.StatusBadRequest, "invalid_request", "invalid Turtle request body", err)
-			return
-		}
-		if errors.Is(err, domain.ErrForbidden) {
-			WriteError(h.log, ctx, w, http.StatusForbidden, "forbidden", "user access denied", err)
-			return
-		}
-		if errors.Is(err, domain.ErrConflict) {
-			WriteError(h.log, ctx, w, http.StatusConflict, "resource_conflict", "import conflicts with existing metadata", err)
-			return
-		}
-		if errors.Is(err, domain.ErrUpstreamTimeout) {
-			WriteError(h.log, ctx, w, http.StatusGatewayTimeout, "upstream_timeout", "metadata import request timed out", err)
-			return
-		}
-		h.log.ErrorContext(ctx, "metadata import request failed", "error", err)
-		WriteError(h.log, ctx, w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
-		return
+		return nil, err
 	}
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	response := toAPIImportResult(*result)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		h.log.ErrorContext(ctx, "encode metadata import response failed", "error", err)
+	result := &gatewayapi.ImportResult{Groups: int(v.Groups), Categories: int(v.Categories), Organizations: int(v.Organizations), ContactPoints: int(v.ContactPoints), Datasets: int(v.Datasets), SoftwareApplications: int(v.SoftwareApplications), SoftwareSourceCodes: int(v.SoftwareSourceCodes)}
+	for _, warning := range v.Warnings {
+		result.Warnings = append(result.Warnings, gatewayapi.ImportDiagnostic{Severity: warning.Severity, Subject: warning.Subject, Predicate: warning.Predicate, Message: warning.Message})
 	}
+	return result, nil
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	go_geom "github.com/twpayne/go-geom"
 )
 
 const searchDiscoveryApplications = `-- name: SearchDiscoveryApplications :many
@@ -197,14 +198,10 @@ WHERE
         ) LIKE '%' || lower($4::text) || '%'
     )
     AND (
-        $5::text IS NULL
+        $5::geometry IS NULL
         OR ST_Intersects(
-            version.spatial_point,
-            ST_GeomFromText($5::text, 4326)
-        )
-        OR ST_Intersects(
-            version.spatial_polygon,
-            ST_GeomFromText($5::text, 4326)
+            version.spatial_coverage,
+            $5::geometry
         )
     )
     AND (
@@ -266,7 +263,7 @@ type SearchDiscoveryDatasetsParams struct {
 	Concepts           []string
 	GroupID            *uuid.UUID
 	Query              *string
-	SpatialFilter      *string
+	SpatialFilter      go_geom.T
 	DateFrom           *time.Time
 	DateTo             *time.Time
 	ProviderIds        []uuid.UUID

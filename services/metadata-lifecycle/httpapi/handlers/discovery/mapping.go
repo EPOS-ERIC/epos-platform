@@ -9,6 +9,7 @@ import (
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
+	"github.com/twpayne/go-geom"
 )
 
 func filterFromRequest(r *http.Request) (domain.DiscoveryFilter, error) {
@@ -37,7 +38,7 @@ func filterFromRequest(r *http.Request) (domain.DiscoveryFilter, error) {
 	if err != nil {
 		return domain.DiscoveryFilter{}, fmt.Errorf("parse date range: %w", err)
 	}
-	var spatialFilter *domain.SpatialFilter
+	var spatialFilter geom.T
 	if value := values.Get("spatialFilter"); value != "" {
 		spatialFilter, err = domain.NewSpatialFilter(value)
 		if err != nil {

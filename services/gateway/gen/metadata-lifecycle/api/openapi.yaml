@@ -5060,15 +5060,7 @@ components:
                 title: title
                 description: description
                 uri: uri
-              spatial_coverage:
-                point:
-                  latitude: -63.615366350946985
-                  longitude: 34.63682100059455
-                polygon:
-                - latitude: -63.615366350946985
-                  longitude: 34.63682100059455
-                - latitude: -63.615366350946985
-                  longitude: 34.63682100059455
+              spatial_coverage: POINT (12.5 41.9)
               temporal_coverage:
                 start: 2000-01-23T04:56:07.000+00:00
                 end: 2000-01-23T04:56:07.000+00:00
@@ -5127,30 +5119,14 @@ components:
                 title: title
                 description: description
                 uri: uri
-              spatial_coverage:
-                point:
-                  latitude: -63.615366350946985
-                  longitude: 34.63682100059455
-                polygon:
-                - latitude: -63.615366350946985
-                  longitude: 34.63682100059455
-                - latitude: -63.615366350946985
-                  longitude: 34.63682100059455
+              spatial_coverage: POINT (12.5 41.9)
               temporal_coverage:
                 start: 2000-01-23T04:56:07.000+00:00
                 end: 2000-01-23T04:56:07.000+00:00
               contact_points:
               - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
               - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-          spatial_coverage:
-            point:
-              latitude: -63.615366350946985
-              longitude: 34.63682100059455
-            polygon:
-            - latitude: -63.615366350946985
-              longitude: 34.63682100059455
-            - latitude: -63.615366350946985
-              longitude: 34.63682100059455
+          spatial_coverage: POINT (12.5 41.9)
           temporal_coverage:
             start: 2000-01-23T04:56:07.000+00:00
             end: 2000-01-23T04:56:07.000+00:00
@@ -5670,7 +5646,11 @@ components:
             $ref: "#/components/schemas/DistributionDraft"
           type: array
         spatial_coverage:
-          $ref: "#/components/schemas/Spatial"
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
+          minLength: 1
+          nullable: true
+          type: string
         temporal_coverage:
           $ref: "#/components/schemas/Temporal"
         persistent_identifiers:
@@ -5765,15 +5745,7 @@ components:
               title: title
               description: description
               uri: uri
-            spatial_coverage:
-              point:
-                latitude: -63.615366350946985
-                longitude: 34.63682100059455
-              polygon:
-              - latitude: -63.615366350946985
-                longitude: 34.63682100059455
-              - latitude: -63.615366350946985
-                longitude: 34.63682100059455
+            spatial_coverage: POINT (12.5 41.9)
             temporal_coverage:
               start: 2000-01-23T04:56:07.000+00:00
               end: 2000-01-23T04:56:07.000+00:00
@@ -5832,30 +5804,14 @@ components:
               title: title
               description: description
               uri: uri
-            spatial_coverage:
-              point:
-                latitude: -63.615366350946985
-                longitude: 34.63682100059455
-              polygon:
-              - latitude: -63.615366350946985
-                longitude: 34.63682100059455
-              - latitude: -63.615366350946985
-                longitude: 34.63682100059455
+            spatial_coverage: POINT (12.5 41.9)
             temporal_coverage:
               start: 2000-01-23T04:56:07.000+00:00
               end: 2000-01-23T04:56:07.000+00:00
             contact_points:
             - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
             - 046b6c7f-0b8a-43b9-b35d-6489e6daee91
-        spatial_coverage:
-          point:
-            latitude: -63.615366350946985
-            longitude: 34.63682100059455
-          polygon:
-          - latitude: -63.615366350946985
-            longitude: 34.63682100059455
-          - latitude: -63.615366350946985
-            longitude: 34.63682100059455
+        spatial_coverage: POINT (12.5 41.9)
         temporal_coverage:
           start: 2000-01-23T04:56:07.000+00:00
           end: 2000-01-23T04:56:07.000+00:00
@@ -5905,7 +5861,11 @@ components:
             $ref: "#/components/schemas/Distribution"
           type: array
         spatial_coverage:
-          $ref: "#/components/schemas/Spatial"
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
+          minLength: 1
+          nullable: true
+          type: string
         temporal_coverage:
           $ref: "#/components/schemas/Temporal"
         persistent_identifiers:
@@ -6009,15 +5969,7 @@ components:
             title: title
             description: description
             uri: uri
-          spatial_coverage:
-            point:
-              latitude: -63.615366350946985
-              longitude: 34.63682100059455
-            polygon:
-            - latitude: -63.615366350946985
-              longitude: 34.63682100059455
-            - latitude: -63.615366350946985
-              longitude: 34.63682100059455
+          spatial_coverage: POINT (12.5 41.9)
           temporal_coverage:
             start: 2000-01-23T04:56:07.000+00:00
             end: 2000-01-23T04:56:07.000+00:00
@@ -6192,7 +6144,11 @@ components:
         documentation:
           $ref: "#/components/schemas/Documentation"
         spatial_coverage:
-          $ref: "#/components/schemas/Spatial"
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
+          minLength: 1
+          nullable: true
+          type: string
         temporal_coverage:
           $ref: "#/components/schemas/Temporal"
         contact_points:
@@ -6626,15 +6582,7 @@ components:
           title: title
           description: description
           uri: uri
-        spatial_coverage:
-          point:
-            latitude: -63.615366350946985
-            longitude: 34.63682100059455
-          polygon:
-          - latitude: -63.615366350946985
-            longitude: 34.63682100059455
-          - latitude: -63.615366350946985
-            longitude: 34.63682100059455
+        spatial_coverage: POINT (12.5 41.9)
         temporal_coverage:
           start: 2000-01-23T04:56:07.000+00:00
           end: 2000-01-23T04:56:07.000+00:00
@@ -6662,7 +6610,11 @@ components:
         documentation:
           $ref: "#/components/schemas/Documentation"
         spatial_coverage:
-          $ref: "#/components/schemas/Spatial"
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
+          minLength: 1
+          nullable: true
+          type: string
         temporal_coverage:
           $ref: "#/components/schemas/Temporal"
         contact_points:
@@ -7105,44 +7057,6 @@ components:
       - http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE
       - http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE
       type: string
-    Spatial:
-      example:
-        point:
-          latitude: -63.615366350946985
-          longitude: 34.63682100059455
-        polygon:
-        - latitude: -63.615366350946985
-          longitude: 34.63682100059455
-        - latitude: -63.615366350946985
-          longitude: 34.63682100059455
-      nullable: true
-      oneOf: []
-      properties:
-        point:
-          $ref: "#/components/schemas/Coordinate"
-        polygon:
-          items:
-            $ref: "#/components/schemas/Coordinate"
-          minItems: 4
-          type: array
-      type: object
-    Coordinate:
-      example:
-        latitude: -63.615366350946985
-        longitude: 34.63682100059455
-      properties:
-        latitude:
-          maximum: 90
-          minimum: -90
-          type: number
-        longitude:
-          maximum: 180
-          minimum: -180
-          type: number
-      required:
-      - latitude
-      - longitude
-      type: object
     Temporal:
       example:
         start: 2000-01-23T04:56:07.000+00:00

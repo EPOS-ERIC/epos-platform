@@ -2050,7 +2050,12 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/DistributionDraft" },
           }
-        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
         persistent_identifiers:
           {
@@ -2086,7 +2091,12 @@ components:
         access_right: { type: string, nullable: true }
         distributions:
           { type: array, items: { $ref: "#/components/schemas/Distribution" } }
-        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
         persistent_identifiers:
           { type: array, items: { $ref: "#/components/schemas/Identifier" } }
@@ -2203,7 +2213,12 @@ components:
         format: { type: string }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
         contact_points: { type: array, items: { type: string, format: uuid } }
         parameters:
@@ -2456,7 +2471,12 @@ components:
         format: { type: string }
         provider: { $ref: "#/components/schemas/ResourceReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/Spatial" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/Temporal" }
         contact_points: { type: array, items: { type: string, format: uuid } }
     DownloadableFile:
@@ -2695,29 +2715,6 @@ components:
             "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE",
             "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE",
           ],
-      }
-    Spatial:
-      type: object
-      properties:
-        point: { $ref: "#/components/schemas/Coordinate" }
-        polygon:
-          {
-            type: array,
-            minItems: 4,
-            items: { $ref: "#/components/schemas/Coordinate" },
-          }
-      oneOf:
-        - required: [point]
-        - required: [polygon]
-    Coordinate:
-      {
-        type: object,
-        required: [latitude, longitude],
-        properties:
-          {
-            latitude: { type: number, minimum: -90, maximum: 90 },
-            longitude: { type: number, minimum: -180, maximum: 180 },
-          },
       }
     Temporal:
       {

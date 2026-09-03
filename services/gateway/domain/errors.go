@@ -1,18 +1,56 @@
 // Package domain defines shared domain-level errors and contracts.
 package domain
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
-var ErrNotImplemented = errors.New("not implemented")
+// ErrorMetadata contains safe details intended for gateway clients.
+type ErrorMetadata struct {
+	Title  string
+	Detail string
+}
 
-var ErrNotFound = errors.New("not found")
+type metadataError struct {
+	err      error
+	metadata ErrorMetadata
+}
 
-var ErrBadRequest = errors.New("bad request")
+func (e *metadataError) Error() string {
+	return e.err.Error()
+}
 
-var ErrConflict = errors.New("conflict")
+func (e *metadataError) Unwrap() error {
+	return e.err
+}
 
-var ErrUpstreamTimeout = errors.New("upstream timeout")
+// WithErrorMetadata attaches client-safe details while preserving err's type.
+func WithErrorMetadata(err error, title, detail string) error {
+	if err == nil {
+		return nil
+	}
+	if title == "" {
+		return fmt.Errorf("error metadata title is required: %w", err)
+	}
+	return &metadataError{err: err, metadata: ErrorMetadata{Title: title, Detail: detail}}
+}
 
-var ErrForbidden = errors.New("forbidden")
+// ErrorMetadataFrom returns client-safe details attached to err or its cause.
+func ErrorMetadataFrom(err error) (ErrorMetadata, bool) {
+	var value *metadataError
+	if !errors.As(err, &value) {
+		return ErrorMetadata{Title: "", Detail: ""}, false
+	}
+	return value.metadata, true
+}
 
-var ErrUnauthorized = errors.New("unauthorized")
+var (
+	ErrNotImplemented  = errors.New("not implemented")
+	ErrNotFound        = errors.New("not found")
+	ErrBadRequest      = errors.New("bad request")
+	ErrConflict        = errors.New("conflict")
+	ErrUpstreamTimeout = errors.New("upstream timeout")
+	ErrForbidden       = errors.New("forbidden")
+	ErrUnauthorized    = errors.New("unauthorized")
+)

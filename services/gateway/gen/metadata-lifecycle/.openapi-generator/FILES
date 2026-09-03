@@ -1,5 +1,4 @@
 .gitignore
-.openapi-generator-ignore
 .travis.yml
 README.md
 api/openapi.yaml
@@ -26,7 +25,6 @@ model_canonical_organization_address.go
 model_category.go
 model_category_scheme.go
 model_contact_point.go
-model_coordinate.go
 model_create_canonical_organization_request.go
 model_create_canonical_organization_request_address.go
 model_create_category_request.go
@@ -98,7 +96,6 @@ model_software_application_metadata.go
 model_software_category.go
 model_software_source_code_draft_metadata.go
 model_software_source_code_metadata.go
-model_spatial.go
 model_string_parameter.go
 model_string_parameter_draft.go
 model_string_parameter_metadata.go

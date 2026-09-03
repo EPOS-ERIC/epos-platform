@@ -1,4 +1,5 @@
 docker_compose('docker/compose.dev.yaml')
+docker_prune_settings(disable=False, max_age_mins=1, num_builds=1)
 
 docker_build(
     'epos-platform-dev:local',

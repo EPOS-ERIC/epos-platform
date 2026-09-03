@@ -12,10 +12,12 @@ func Decode(log *slog.Logger, w http.ResponseWriter, r *http.Request, target any
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 10<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(target); err != nil {
+		log.ErrorContext(r.Context(), "decode JSON request failed", "method", r.Method, "path", r.URL.Path, "error", err)
 		WriteProblem(log, w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
 		return false
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		log.ErrorContext(r.Context(), "decode JSON request failed", "method", r.Method, "path", r.URL.Path, "error", err)
 		WriteProblem(log, w, http.StatusBadRequest, "invalid_request", "invalid JSON request")
 		return false
 	}

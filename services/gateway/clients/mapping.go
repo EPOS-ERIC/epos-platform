@@ -68,8 +68,8 @@ func toClientDatasetDraftMetadata(metadata domain.DatasetDraftMetadata) client.D
 	setIfPresent(metadata.AccessRight, result.SetAccessRight)
 	setIfPresent(metadata.SourceCreated, result.SetCreated)
 	setIfPresent(metadata.SourceUpdated, result.SetUpdated)
+	setIfPresent(metadata.SpatialCoverage, result.SetSpatialCoverage)
 
-	setPtrConv(metadata.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
 	setPtrConv(metadata.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
 
 	setSliceConv(metadata.Distributions, toClientDistributionDrafts, result.SetDistributions)
@@ -193,24 +193,6 @@ func toClientIdentifierDrafts(values []domain.IdentifierDraft) []client.Identifi
 	})
 }
 
-func toClientSpatialCoverage(value domain.SpatialCoverage) client.Spatial {
-	return client.Spatial{
-		Point:   toClientCoordinatePtr(value.Point),
-		Polygon: mapSlice(value.Polygon, toClientCoordinate),
-	}
-}
-
-func toClientCoordinatePtr(value *domain.Coordinate) *client.Coordinate {
-	if value == nil {
-		return nil
-	}
-	return &client.Coordinate{Latitude: float32(value.Latitude), Longitude: float32(value.Longitude)}
-}
-
-func toClientCoordinate(value domain.Coordinate) client.Coordinate {
-	return client.Coordinate{Latitude: float32(value.Latitude), Longitude: float32(value.Longitude)}
-}
-
 func toClientTemporalCoverage(value domain.TemporalCoverage) client.Temporal {
 	result := client.Temporal{} //nolint:exhaustruct_v5 // optional values are set below
 	setIfPresent(value.Start, result.SetStart)
@@ -265,7 +247,7 @@ func toClientWebServiceDraft(value domain.WebServiceDraft) client.WebServiceDraf
 		result.SetProvider(*value.Provider)
 	}
 	setPtrConv(value.Documentation, toClientDocumentation, result.SetDocumentation)
-	setPtrConv(value.SpatialCoverage, toClientSpatialCoverage, result.SetSpatialCoverage)
+	setIfPresent(value.SpatialCoverage, result.SetSpatialCoverage)
 	setPtrConv(value.TemporalCoverage, toClientTemporalCoverage, result.SetTemporalCoverage)
 	setSliceConv(value.ContactPoints, toClientIDs, result.SetContactPoints)
 
@@ -375,7 +357,7 @@ func toDomainDatasetResourceMetadata(value *client.DatasetMetadata) domain.Datas
 		QualityAnnotation:     value.QualityAnnotation.Get(),
 		AccessRight:           value.AccessRight.Get(),
 		Distributions:         toDomainDistributions(value.Distributions),
-		SpatialCoverage:       mapClientSpatial(value.SpatialCoverage.Get()),
+		SpatialCoverage:       value.SpatialCoverage.Get(),
 		TemporalCoverage:      mapClientTemporal(value.TemporalCoverage),
 		PersistentIdentifiers: mapSlice(value.PersistentIdentifiers, toDomainIdentifier),
 		ContactPoints:         slices.Clone(value.ContactPoints),
@@ -429,33 +411,6 @@ func toDomainResourceVersionReference(value client.ResourceReference) domain.Res
 	return domain.ResourceVersionReference{
 		ID:   value.Id,
 		Name: value.Name,
-	}
-}
-
-func mapClientSpatial(value *client.Spatial) *domain.SpatialCoverage {
-	if value == nil {
-		return nil
-	}
-	return new(domain.SpatialCoverage{
-		Point:   toDomainCoordinatePtr(value.Point),
-		Polygon: mapSlice(value.Polygon, toDomainCoordinate),
-	})
-}
-
-func toDomainCoordinatePtr(value *client.Coordinate) *domain.Coordinate {
-	if value == nil {
-		return nil
-	}
-	return new(domain.Coordinate{
-		Latitude:  float64(value.Latitude),
-		Longitude: float64(value.Longitude),
-	})
-}
-
-func toDomainCoordinate(value client.Coordinate) domain.Coordinate {
-	return domain.Coordinate{
-		Latitude:  float64(value.Latitude),
-		Longitude: float64(value.Longitude),
 	}
 }
 
@@ -517,7 +472,7 @@ func toDomainWebService(value client.WebService) domain.WebService {
 		Format:           value.Format,
 		Provider:         mapClientResourceReference(value.Provider),
 		Documentation:    mapClientDocumentation(value.Documentation),
-		SpatialCoverage:  mapClientSpatial(value.SpatialCoverage.Get()),
+		SpatialCoverage:  value.SpatialCoverage.Get(),
 		TemporalCoverage: mapClientTemporal(value.TemporalCoverage),
 		ContactPoints:    slices.Clone(value.ContactPoints),
 	}

@@ -1,59 +1,69 @@
+//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
-	"errors"
-	"log/slog"
-	"net/http"
+	"context"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
-type Discovery struct {
-	service *discovery.Service
-	log     *slog.Logger
-}
-
-func NewDiscovery(log *slog.Logger, service *discovery.Service) *Discovery {
-	return &Discovery{
-		service: service,
-		log:     log.With("component", "discovery-handler"),
+func (h *ogenHandler) DiscoverResources(ctx context.Context, q gatewayapi.DiscoverResourcesParams) ([]gatewayapi.DiscoveryItem, error) {
+	actor, _ := actorID(ctx)
+	filter := domain.DiscoveryFilter{}
+	if q.Q.Set {
+		filter.Query = q.Q.Value
 	}
-}
-
-func (h *Discovery) Search(w http.ResponseWriter, r *http.Request) {
-	filter, err := toDomainDiscoveryFilter(r.URL.Query())
+	if q.GroupId.Set {
+		filter.GroupID = q.GroupId.Value.String()
+	}
+	if q.EditorId.Set {
+		filter.EditorID = q.EditorId.Value
+	}
+	if q.SpatialFilter.Set {
+		filter.SpatialFilter = q.SpatialFilter.Value
+	}
+	for _, x := range q.Type {
+		filter.Types = append(filter.Types, string(x))
+	}
+	for _, x := range q.Concept {
+		filter.Concepts = append(filter.Concepts, string(x))
+	}
+	for _, x := range q.Provider {
+		if filter.Provider != "" {
+			filter.Provider += ","
+		}
+		filter.Provider += x.String()
+	}
+	for _, x := range q.Keywords {
+		if filter.Keywords != "" {
+			filter.Keywords += ","
+		}
+		filter.Keywords += x
+	}
+	for _, x := range q.VersioningStatus {
+		filter.VersioningStatuses = append(filter.VersioningStatuses, string(x))
+	}
+	if len(filter.VersioningStatuses) == 0 {
+		filter.VersioningStatuses = []string{"PUBLISHED"}
+	}
+	if q.DateFrom.Set {
+		filter.DateFrom = &q.DateFrom.Value
+	}
+	if q.DateTo.Set {
+		filter.DateTo = &q.DateTo.Value
+	}
+	v, err := h.discovery.Search(ctx, actor, filter)
 	if err != nil {
-		WriteError(h.log, r.Context(), w, http.StatusBadRequest, "invalid_request", err.Error(), err)
-		return
+		return nil, err
 	}
-
-	actorID := ""
-	if actor, ok := AuthenticatedUserFromContext(r.Context()); ok {
-		actorID = actor.ID
+	out := []gatewayapi.DiscoveryItem{}
+	for _, x := range v {
+		mapped, err := mapDiscovery(x)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, mapped)
 	}
-	items, err := h.service.Search(r.Context(), actorID, filter)
-	if err != nil {
-		writeDiscoveryError(h.log, r, w, err)
-		return
-	}
-
-	result := mapSlice(items, toAPIDiscoveryItem)
-	writeJSON(h.log, w, http.StatusOK, result)
-}
-
-func writeDiscoveryError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, domain.ErrBadRequest):
-		WriteError(log, r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid discovery request", err)
-	case errors.Is(err, domain.ErrUnauthorized):
-		WriteError(log, r.Context(), w, http.StatusUnauthorized, "unauthorized", "authentication is required for non-published discovery results", nil)
-	case errors.Is(err, domain.ErrForbidden):
-		WriteError(log, r.Context(), w, http.StatusForbidden, "forbidden", "discovery access denied", nil)
-	case errors.Is(err, domain.ErrUpstreamTimeout):
-		WriteError(log, r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "discovery request timed out", err)
-	default:
-		log.ErrorContext(r.Context(), "discovery request failed", "error", err)
-		WriteError(log, r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
-	}
+	return out, nil
 }

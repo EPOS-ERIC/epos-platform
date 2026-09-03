@@ -40,14 +40,10 @@ WHERE
         ) LIKE '%' || lower(sqlc.narg(query)::text) || '%'
     )
     AND (
-        sqlc.narg(spatial_filter)::text IS NULL
+        sqlc.narg(spatial_filter)::geometry IS NULL
         OR ST_Intersects(
-            version.spatial_point,
-            ST_GeomFromText(sqlc.narg(spatial_filter)::text, 4326)
-        )
-        OR ST_Intersects(
-            version.spatial_polygon,
-            ST_GeomFromText(sqlc.narg(spatial_filter)::text, 4326)
+            version.spatial_coverage,
+            sqlc.narg(spatial_filter)::geometry
         )
     )
     AND (

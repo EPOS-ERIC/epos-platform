@@ -7,7 +7,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
-	"github.com/twpayne/go-geom"
 )
 
 // ToCreateVersionParams builds SQLC parameters for a new dataset version.
@@ -15,10 +14,6 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 	var start, end *time.Time
 	if value.TemporalCoverage != nil {
 		start, end = value.TemporalCoverage.Start, value.TemporalCoverage.End
-	}
-	point, polygon, err := spatialGeometry(value.SpatialCoverage)
-	if err != nil {
-		return sqlc.CreateLifecycleDatasetVersionParams{}, fmt.Errorf("encode dataset geometry: %w", err)
 	}
 	return sqlc.CreateLifecycleDatasetVersionParams{
 		DatasetID:          datasetID,
@@ -30,8 +25,7 @@ func ToCreateVersionParams(datasetID uuid.UUID, actorID string, value domain.Dat
 		AccessRight:        value.AccessRight,
 		SourceCreatedAt:    value.SourceCreated,
 		SourceUpdatedAt:    value.SourceUpdated,
-		SpatialPoint:       point,
-		SpatialPolygon:     polygon,
+		SpatialCoverage:    value.SpatialCoverage,
 		TemporalStart:      start,
 		TemporalEnd:        end,
 		CreatedBy:          actorID,
@@ -53,8 +47,7 @@ func ToReplaceDraftParams(datasetID, id uuid.UUID, revision int32, value domain.
 		AccessRight:        p.AccessRight,
 		SourceCreatedAt:    p.SourceCreatedAt,
 		SourceUpdatedAt:    p.SourceUpdatedAt,
-		SpatialPoint:       p.SpatialPoint,
-		SpatialPolygon:     p.SpatialPolygon,
+		SpatialCoverage:    p.SpatialCoverage,
 		TemporalStart:      p.TemporalStart,
 		TemporalEnd:        p.TemporalEnd,
 		DatasetID:          datasetID,
@@ -88,81 +81,7 @@ func temporal(start, end *time.Time) *domain.Temporal {
 	return &domain.Temporal{Start: start, End: end}
 }
 
-func spatialGeometry(value *domain.Spatial) (*geom.Point, *geom.Polygon, error) {
-	if value == nil {
-		return nil, nil, nil
-	}
-	if value.Point != nil {
-		point, err := parsePoint(*value.Point)
-		return point, nil, err
-	}
-	if len(value.Polygon) == 0 {
-		return nil, nil, nil
-	}
-	polygon, err := parsePolygon(value.Polygon)
-	return nil, polygon, err
-}
-
-func parsePoint(value domain.Coordinate) (*geom.Point, error) {
-	coordinate, err := parseCoordinate(value)
-	if err != nil {
-		return nil, err
-	}
-
-	return geom.NewPointFlat(geom.XY, coordinate).SetSRID(4326), nil
-}
-
-func parsePolygon(values []domain.Coordinate) (*geom.Polygon, error) {
-	coordinates := make([]geom.Coord, len(values))
-	for i, value := range values {
-		coordinate, err := parseCoordinate(value)
-		if err != nil {
-			return nil, err
-		}
-		coordinates[i] = coordinate
-	}
-
-	polygon, err := geom.NewPolygon(geom.XY).SetCoords([][]geom.Coord{coordinates})
-	if err != nil {
-		return nil, fmt.Errorf("parse polygon coordinates: %w", err)
-	}
-
-	return polygon.SetSRID(4326), nil
-}
-
-func parseCoordinate(value domain.Coordinate) (geom.Coord, error) {
-	return geom.Coord{value.Longitude, value.Latitude}, nil
-}
-
-func spatialFromGeometry(point *geom.Point, polygon *geom.Polygon) (*domain.Spatial, error) {
-	if point == nil && polygon == nil {
-		return nil, nil
-	}
-	if point != nil {
-		return &domain.Spatial{
-			Point: &domain.Coordinate{
-				Longitude: point.X(),
-				Latitude:  point.Y(),
-			},
-			Polygon: nil,
-		}, nil
-	}
-	rings := polygon.Coords()
-	if len(rings) == 0 {
-		return nil, fmt.Errorf("invalid polygon geometry")
-	}
-	coordinates := make([]domain.Coordinate, len(rings[0]))
-	for i, coordinate := range rings[0] {
-		coordinates[i] = domain.Coordinate{Longitude: coordinate.X(), Latitude: coordinate.Y()}
-	}
-	return &domain.Spatial{Point: nil, Polygon: coordinates}, nil
-}
-
 func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
-	spatial, err := spatialFromGeometry(value.SpatialPoint, value.SpatialPolygon)
-	if err != nil {
-		return domain.WebService{}, fmt.Errorf("decode web service geometry: %w", err)
-	}
 	var documentation *domain.Documentation
 	if value.DocumentationUri != nil {
 		documentation = &domain.Documentation{
@@ -180,7 +99,7 @@ func toDomainWebService(value sqlc.WebService) (domain.WebService, error) {
 		Format:           value.Format,
 		Provider:         nil,
 		Documentation:    documentation,
-		SpatialCoverage:  spatial,
+		SpatialCoverage:  value.SpatialCoverage,
 		TemporalCoverage: temporal(value.TemporalStart, value.TemporalEnd),
 		ContactPoints:    nil,
 	}, nil

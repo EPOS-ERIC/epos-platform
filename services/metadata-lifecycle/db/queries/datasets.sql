@@ -24,8 +24,7 @@ INSERT INTO
         access_right,
         source_created_at,
         source_updated_at,
-        spatial_point,
-        spatial_polygon,
+        spatial_coverage,
         temporal_start,
         temporal_end,
         created_by
@@ -41,8 +40,7 @@ VALUES
         sqlc.narg(access_right),
         sqlc.narg(source_created_at),
         sqlc.narg(source_updated_at),
-        sqlc.narg(spatial_point),
-        sqlc.narg(spatial_polygon),
+        sqlc.narg(spatial_coverage),
         sqlc.narg(temporal_start),
         sqlc.narg(temporal_end),
         sqlc.arg(created_by)
@@ -62,8 +60,7 @@ SET
     access_right = sqlc.narg(access_right),
     source_created_at = sqlc.narg(source_created_at),
     source_updated_at = sqlc.narg(source_updated_at),
-    spatial_point = sqlc.narg(spatial_point),
-    spatial_polygon = sqlc.narg(spatial_polygon),
+    spatial_coverage = sqlc.narg(spatial_coverage),
     temporal_start = sqlc.narg(temporal_start),
     temporal_end = sqlc.narg(temporal_end),
     revision = revision + 1
@@ -292,8 +289,7 @@ inserted AS (
             access_right,
             source_created_at,
             source_updated_at,
-            spatial_point,
-            spatial_polygon,
+            spatial_coverage,
             temporal_start,
             temporal_end,
             created_by
@@ -308,8 +304,7 @@ inserted AS (
         access_right,
         source_created_at,
         source_updated_at,
-        spatial_point,
-        spatial_polygon,
+        spatial_coverage,
         temporal_start,
         temporal_end,
         sqlc.arg(actor_id)
@@ -398,8 +393,7 @@ web_services AS (
             documentation_title,
             documentation_description,
             documentation_uri,
-            spatial_point,
-            spatial_polygon,
+            spatial_coverage,
             temporal_start,
             temporal_end
         )
@@ -427,8 +421,7 @@ web_services AS (
         documentation_title,
         documentation_description,
         documentation_uri,
-        spatial_point,
-        spatial_polygon,
+        spatial_coverage,
         temporal_start,
         temporal_end
     FROM
@@ -622,8 +615,7 @@ INSERT INTO
         documentation_title,
         documentation_description,
         documentation_uri,
-        spatial_point,
-        spatial_polygon,
+        spatial_coverage,
         temporal_start,
         temporal_end
     )
@@ -638,8 +630,7 @@ VALUES
         sqlc.narg(documentation_title),
         sqlc.narg(documentation_description),
         sqlc.narg(documentation_uri),
-        sqlc.narg(spatial_point),
-        sqlc.narg(spatial_polygon),
+        sqlc.narg(spatial_coverage),
         sqlc.narg(temporal_start),
         sqlc.narg(temporal_end)
     )
@@ -761,8 +752,7 @@ SELECT
     version.access_right,
     version.source_created_at,
     version.source_updated_at,
-    version.spatial_point,
-    version.spatial_polygon,
+    version.spatial_coverage,
     version.temporal_start,
     version.temporal_end,
     version.created_by,

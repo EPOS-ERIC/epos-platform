@@ -17,7 +17,7 @@ type DatasetDraftMetadata struct {
 	QualityAnnotation     *string
 	AccessRight           *string
 	Distributions         []DistributionDraft
-	SpatialCoverage       *SpatialCoverage
+	SpatialCoverage       *string
 	TemporalCoverage      *TemporalCoverage
 	PersistentIdentifiers []IdentifierDraft
 	ContactPoints         []string
@@ -97,7 +97,7 @@ type WebServiceDraft struct {
 	Format           string
 	Provider         *string
 	Documentation    *Documentation
-	SpatialCoverage  *SpatialCoverage
+	SpatialCoverage  *string
 	TemporalCoverage *TemporalCoverage
 	ContactPoints    []string
 }
@@ -111,16 +111,6 @@ type Documentation struct {
 	Title       *string
 	Description *string
 	URI         string
-}
-
-type SpatialCoverage struct {
-	Point   *Coordinate
-	Polygon []Coordinate
-}
-
-type Coordinate struct {
-	Latitude  float64
-	Longitude float64
 }
 
 type TemporalCoverage struct {
@@ -169,7 +159,7 @@ type DatasetResourceMetadata struct {
 	QualityAnnotation     *string
 	AccessRight           *string
 	Distributions         []Distribution
-	SpatialCoverage       *SpatialCoverage
+	SpatialCoverage       *string
 	TemporalCoverage      *TemporalCoverage
 	PersistentIdentifiers []Identifier
 	ContactPoints         []string
@@ -266,7 +256,7 @@ type WebService struct {
 	Format           string
 	Provider         *ResourceVersionReference
 	Documentation    *Documentation
-	SpatialCoverage  *SpatialCoverage
+	SpatialCoverage  *string
 	TemporalCoverage *TemporalCoverage
 	ContactPoints    []string
 }

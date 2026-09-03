@@ -39,8 +39,7 @@ CREATE TABLE dataset_versions (
     -- from metadata-lifecycle record and lifecycle timestamps below.
     source_created_at   timestamptz,
     source_updated_at   timestamptz,
-    spatial_point       geometry(Point, 4326),
-    spatial_polygon     geometry(Polygon, 4326),
+    spatial_coverage    geometry(Geometry, 4326),
     temporal_start      timestamptz,
     temporal_end        timestamptz,
 
@@ -60,8 +59,6 @@ CREATE TABLE dataset_versions (
     rejected_at         timestamptz,
     rejection_note      text,
 
-    -- A coverage is either point or polygon; both may be absent.
-    CHECK (spatial_point IS NULL OR spatial_polygon IS NULL),
     CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
     CHECK (rejection_note IS NULL OR length(trim(rejection_note)) > 0)
 );

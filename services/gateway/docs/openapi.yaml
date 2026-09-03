@@ -69,20 +69,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImportResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "409":
-          description: Import conflicts with existing metadata
-        "415":
-          description: Content-Type must be text/turtle
-        "503":
-          description: Metadata Lifecycle service unavailable
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /search:
     get:
       tags:
@@ -131,15 +123,12 @@ paths:
                       group:
                         id: "550e8400-e29b-41d4-a716-446655440001"
                         name: "Example group"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /contact-points:
     get:
       tags: [Contact Points]
@@ -154,10 +143,12 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/ContactPoint" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     post:
       tags: [Contact Points]
       summary: Create reusable contact point
@@ -174,12 +165,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ContactPoint" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /contact-points/{contactPointId}:
     parameters:
       - {
@@ -199,12 +190,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ContactPoint" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     put:
       tags: [Contact Points]
       summary: Replace contact point
@@ -221,13 +212,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ContactPoint" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags: [Contact Points]
       summary: Delete contact point
@@ -235,12 +225,12 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         "204": { description: Contact point deleted }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /organizations:
     get:
       tags: [Organizations]
@@ -254,8 +244,12 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/CanonicalOrganization" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     post:
       tags: [Organizations]
       summary: Create reusable organization
@@ -272,13 +266,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CanonicalOrganization" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /organizations/{organizationId}:
     parameters:
       - {
@@ -297,10 +290,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CanonicalOrganization" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     put:
       tags: [Organizations]
       summary: Replace organization
@@ -317,13 +312,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CanonicalOrganization" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags: [Organizations]
       summary: Delete organization
@@ -331,13 +325,12 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         "204": { description: Organization deleted }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /users:
     get:
       tags:
@@ -367,15 +360,12 @@ paths:
                       global_roles: [ADMIN]
                       global_permissions: []
                       status: "ACTIVE"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups:
     post:
       tags: [Groups]
@@ -393,12 +383,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Group" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     get:
       tags:
         - Groups
@@ -424,10 +414,12 @@ paths:
                       label: "Satellite Data"
                       position: 0
                       concept: "DATA"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -444,14 +436,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Group"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     put:
       tags: [Groups]
       summary: Replace group
@@ -468,13 +458,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Group" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags: [Groups]
       summary: Delete group
@@ -482,13 +471,12 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         "204": { description: Group deleted }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/categories:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -504,10 +492,12 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Category" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     post:
       tags: [Groups]
       summary: Create group category
@@ -524,13 +514,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Category" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/categories/{categoryId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -545,10 +534,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Category" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     put:
       tags: [Groups]
       summary: Replace group category
@@ -565,13 +556,12 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Category" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags: [Groups]
       summary: Delete group category
@@ -579,12 +569,12 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         "204": { description: Category deleted }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/memberships:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -601,11 +591,12 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/GroupMembership" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/membership-requests:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -630,20 +621,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GroupMembership"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Memberships
@@ -655,19 +638,12 @@ paths:
       responses:
         "204":
           description: Membership request withdrawn
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/memberships/{userId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -683,18 +659,12 @@ paths:
       responses:
         "204":
           description: Membership deleted
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     patch:
       tags:
         - Memberships
@@ -716,21 +686,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GroupMembership"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/memberships/{userId}/roles/{role}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -747,20 +708,12 @@ paths:
       responses:
         "204":
           description: Role assigned
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Memberships
@@ -772,21 +725,12 @@ paths:
       responses:
         "204":
           description: Role removed
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/role-requests:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -811,21 +755,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RoleRequest"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/memberships/{userId}/permissions/{permission}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -842,20 +777,12 @@ paths:
       responses:
         "204":
           description: Permission granted
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Memberships
@@ -867,21 +794,12 @@ paths:
       responses:
         "204":
           description: Permission revoked
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/role-requests/{requestId}:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -912,20 +830,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GroupMembership"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Memberships
@@ -937,19 +847,12 @@ paths:
       responses:
         "204":
           description: Role request withdrawn
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /users/{id}:
     parameters:
       - $ref: "#/components/parameters/UserId"
@@ -1011,16 +914,12 @@ paths:
                         permissions: [resource.create, resource.edit]
                         created_at: "2026-06-17T12:48:45.574Z"
                         updated_at: "2026-06-17T12:48:45.574Z"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /users/{id}/global-permissions/{permission}:
     parameters:
       - $ref: "#/components/parameters/UserUUID"
@@ -1036,18 +935,12 @@ paths:
       responses:
         "204":
           description: Global permission granted
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Users
@@ -1059,18 +952,12 @@ paths:
       responses:
         "204":
           description: Global permission revoked
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /users/{id}/block:
     parameters:
       - $ref: "#/components/parameters/UserUUID"
@@ -1091,20 +978,12 @@ paths:
       responses:
         "204":
           description: User blocked
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /users/{id}/unblock:
     parameters:
       - $ref: "#/components/parameters/UserUUID"
@@ -1119,18 +998,12 @@ paths:
       responses:
         "204":
           description: User unblocked
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /users/{id}/global-roles/{role}:
     parameters:
       - $ref: "#/components/parameters/UserUUID"
@@ -1146,20 +1019,12 @@ paths:
       responses:
         "204":
           description: Global role assigned
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
     delete:
       tags:
         - Users
@@ -1171,20 +1036,12 @@ paths:
       responses:
         "204":
           description: Global role removed
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "504":
-          $ref: "#/components/responses/GatewayTimeout"
-        "503":
-          $ref: "#/components/responses/ServiceUnavailable"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/resources:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -1209,14 +1066,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /groups/{groupId}/resources/{resourceType}/{id}/copy:
     parameters:
       - $ref: "#/components/parameters/GroupId"
@@ -1237,17 +1092,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{id}/versions/{versionId}/draft:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -1273,17 +1123,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/draft:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1304,17 +1149,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1336,16 +1176,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceVersion"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/submit:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1365,19 +1201,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/withdraw:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1397,19 +1226,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/reject:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1436,19 +1258,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/reopen:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1468,19 +1283,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/publish:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1500,19 +1308,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/unpublish:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1532,19 +1333,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/draft-from-publication:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1563,19 +1357,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/draft-from-archive:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1594,19 +1381,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WriteResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/Conflict"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "503": { $ref: "#/components/responses/ServiceUnavailable" }
-        "504": { $ref: "#/components/responses/GatewayTimeout" }
-
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
 components:
   securitySchemes:
     bearerAuth:
@@ -1630,12 +1410,7 @@ components:
       required: true
       description: User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup.
       schema:
-        anyOf:
-          - type: string
-            enum:
-              - self
-          - type: string
-            format: uuid
+        type: string
         example: self
 
     UserUUID:
@@ -2070,7 +1845,12 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/DistributionDraft" },
           }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         persistent_identifiers:
           {
@@ -2205,7 +1985,12 @@ components:
         format: { $ref: "#/components/schemas/NonBlankString" }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points: { type: array, items: { type: string, format: uuid } }
 
@@ -2402,29 +2187,6 @@ components:
         description: { type: string, nullable: true }
         uri: { $ref: "#/components/schemas/NonBlankString" }
 
-    SpatialCoverage:
-      type: object
-      additionalProperties: false
-      properties:
-        point: { $ref: "#/components/schemas/Coordinate" }
-        polygon:
-          {
-            type: array,
-            minItems: 4,
-            items: { $ref: "#/components/schemas/Coordinate" },
-          }
-      oneOf:
-        - required: [point]
-        - required: [polygon]
-
-    Coordinate:
-      type: object
-      additionalProperties: false
-      required: [latitude, longitude]
-      properties:
-        latitude: { type: number, minimum: -90, maximum: 90 }
-        longitude: { type: number, minimum: -180, maximum: 180 }
-
     TemporalCoverage:
       type: object
       additionalProperties: false
@@ -2546,15 +2308,22 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
         metadata:
-          anyOf:
+          oneOf:
             - $ref: "#/components/schemas/DatasetResourceMetadata"
             - $ref: "#/components/schemas/SoftwareApplicationResourceMetadata"
             - $ref: "#/components/schemas/SoftwareSourceCodeResourceMetadata"
+          discriminator:
+            propertyName: resource_type
+            mapping:
+              dataset: "#/components/schemas/DatasetResourceMetadata"
+              software-application: "#/components/schemas/SoftwareApplicationResourceMetadata"
+              software-source-code: "#/components/schemas/SoftwareSourceCodeResourceMetadata"
 
     DatasetResourceMetadata:
       type: object
       required:
         [
+          resource_type,
           id,
           title,
           description,
@@ -2567,6 +2336,7 @@ components:
         ]
       additionalProperties: false
       properties:
+        resource_type: { type: string, enum: [dataset] }
         id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
@@ -2577,7 +2347,12 @@ components:
         distributions:
           type: array
           items: { $ref: "#/components/schemas/Distribution" }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         persistent_identifiers:
           type: array
@@ -2599,6 +2374,7 @@ components:
       type: object
       required:
         [
+          resource_type,
           id,
           name,
           description,
@@ -2610,6 +2386,7 @@ components:
         ]
       additionalProperties: false
       properties:
+        resource_type: { type: string, enum: [software-application] }
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
@@ -2638,6 +2415,7 @@ components:
       type: object
       required:
         [
+          resource_type,
           id,
           name,
           description,
@@ -2649,6 +2427,7 @@ components:
         ]
       additionalProperties: false
       properties:
+        resource_type: { type: string, enum: [software-source-code] }
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
@@ -2734,7 +2513,12 @@ components:
         format: { type: string }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
-        spatial_coverage: { $ref: "#/components/schemas/SpatialCoverage" }
+        spatial_coverage:
+          type: string
+          nullable: true
+          minLength: 1
+          description: WKT POINT or POLYGON geometry in EPSG:4326.
+          example: POINT (12.5 41.9)
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         contact_points:
           type: array

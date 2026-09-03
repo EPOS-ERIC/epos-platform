@@ -15,7 +15,7 @@ type datasetDraftRequest struct {
 	QualityAnnotation     *string               `json:"quality_annotation"`
 	AccessRight           *string               `json:"access_right"`
 	Distributions         []distributionRequest `json:"distributions"`
-	SpatialCoverage       *spatial              `json:"spatial_coverage"`
+	SpatialCoverage       *string               `json:"spatial_coverage"`
 	TemporalCoverage      *temporal             `json:"temporal_coverage"`
 	PersistentIdentifiers []identifierDraft     `json:"persistent_identifiers"`
 	ContactPoints         []uuid.UUID           `json:"contact_points"`
@@ -60,7 +60,7 @@ type webServiceRequest struct {
 	Format           string             `json:"format"`
 	Provider         *uuid.UUID         `json:"provider"`
 	Documentation    *documentation     `json:"documentation"`
-	SpatialCoverage  *spatial           `json:"spatial_coverage"`
+	SpatialCoverage  *string            `json:"spatial_coverage"`
 	TemporalCoverage *temporal          `json:"temporal_coverage"`
 	ContactPoints    []uuid.UUID        `json:"contact_points"`
 }
@@ -197,16 +197,6 @@ type documentation struct {
 	URI         string  `json:"uri"`
 }
 
-type coordinate struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
-
-type spatial struct {
-	Point   *coordinate  `json:"point,omitempty"`
-	Polygon []coordinate `json:"polygon,omitempty"`
-}
-
 type temporal struct {
 	Start *time.Time `json:"start"`
 	End   *time.Time `json:"end"`
@@ -245,7 +235,7 @@ type metadataResponse struct {
 	QualityAnnotation     *string             `json:"quality_annotation"`
 	AccessRight           *string             `json:"access_right"`
 	Distributions         []distribution      `json:"distributions"`
-	SpatialCoverage       *spatial            `json:"spatial_coverage"`
+	SpatialCoverage       *string             `json:"spatial_coverage"`
 	TemporalCoverage      *temporal           `json:"temporal_coverage"`
 	PersistentIdentifiers []identifier        `json:"persistent_identifiers"`
 	ContactPoints         *[]uuid.UUID        `json:"contact_points,omitempty"`
@@ -277,7 +267,7 @@ type webService struct {
 	Format           string              `json:"format"`
 	Provider         *resourceReference  `json:"provider"`
 	Documentation    *documentation      `json:"documentation"`
-	SpatialCoverage  *spatial            `json:"spatial_coverage"`
+	SpatialCoverage  *string             `json:"spatial_coverage"`
 	TemporalCoverage *temporal           `json:"temporal_coverage"`
 	ContactPoints    *[]uuid.UUID        `json:"contact_points,omitempty"`
 }

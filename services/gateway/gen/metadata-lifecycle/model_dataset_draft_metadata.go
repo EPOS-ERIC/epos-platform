@@ -22,21 +22,22 @@ var _ MappedNullable = &DatasetDraftMetadata{}
 
 // DatasetDraftMetadata Mutable dataset version metadata. Contact points, providers, and categories must reference existing canonical records by ID.
 type DatasetDraftMetadata struct {
-	Title                 string              `json:"title"`
-	Description           *string             `json:"description,omitempty"`
-	Keywords              *string             `json:"keywords,omitempty"`
-	AccrualPeriodicity    NullableString      `json:"accrual_periodicity,omitempty"`
-	QualityAnnotation     NullableString      `json:"quality_annotation,omitempty"`
-	AccessRight           NullableString      `json:"access_right,omitempty"`
-	Distributions         []DistributionDraft `json:"distributions,omitempty"`
-	SpatialCoverage       NullableSpatial     `json:"spatial_coverage,omitempty"`
-	TemporalCoverage      *Temporal           `json:"temporal_coverage,omitempty"`
-	PersistentIdentifiers []IdentifierDraft   `json:"persistent_identifiers,omitempty"`
-	ContactPoints         []string            `json:"contact_points,omitempty"`
-	Providers             []string            `json:"providers,omitempty"`
-	Categories            []string            `json:"categories,omitempty"`
-	Created               NullableTime        `json:"created,omitempty"`
-	Updated               NullableTime        `json:"updated,omitempty"`
+	Title              string              `json:"title"`
+	Description        *string             `json:"description,omitempty"`
+	Keywords           *string             `json:"keywords,omitempty"`
+	AccrualPeriodicity NullableString      `json:"accrual_periodicity,omitempty"`
+	QualityAnnotation  NullableString      `json:"quality_annotation,omitempty"`
+	AccessRight        NullableString      `json:"access_right,omitempty"`
+	Distributions      []DistributionDraft `json:"distributions,omitempty"`
+	// WKT POINT or POLYGON geometry in EPSG:4326.
+	SpatialCoverage       NullableString    `json:"spatial_coverage,omitempty"`
+	TemporalCoverage      *Temporal         `json:"temporal_coverage,omitempty"`
+	PersistentIdentifiers []IdentifierDraft `json:"persistent_identifiers,omitempty"`
+	ContactPoints         []string          `json:"contact_points,omitempty"`
+	Providers             []string          `json:"providers,omitempty"`
+	Categories            []string          `json:"categories,omitempty"`
+	Created               NullableTime      `json:"created,omitempty"`
+	Updated               NullableTime      `json:"updated,omitempty"`
 }
 
 type _DatasetDraftMetadata DatasetDraftMetadata
@@ -317,9 +318,9 @@ func (o *DatasetDraftMetadata) SetDistributions(v []DistributionDraft) {
 }
 
 // GetSpatialCoverage returns the SpatialCoverage field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DatasetDraftMetadata) GetSpatialCoverage() Spatial {
+func (o *DatasetDraftMetadata) GetSpatialCoverage() string {
 	if o == nil || IsNil(o.SpatialCoverage.Get()) {
-		var ret Spatial
+		var ret string
 		return ret
 	}
 	return *o.SpatialCoverage.Get()
@@ -328,7 +329,7 @@ func (o *DatasetDraftMetadata) GetSpatialCoverage() Spatial {
 // GetSpatialCoverageOk returns a tuple with the SpatialCoverage field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DatasetDraftMetadata) GetSpatialCoverageOk() (*Spatial, bool) {
+func (o *DatasetDraftMetadata) GetSpatialCoverageOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -344,8 +345,8 @@ func (o *DatasetDraftMetadata) HasSpatialCoverage() bool {
 	return false
 }
 
-// SetSpatialCoverage gets a reference to the given NullableSpatial and assigns it to the SpatialCoverage field.
-func (o *DatasetDraftMetadata) SetSpatialCoverage(v Spatial) {
+// SetSpatialCoverage gets a reference to the given NullableString and assigns it to the SpatialCoverage field.
+func (o *DatasetDraftMetadata) SetSpatialCoverage(v string) {
 	o.SpatialCoverage.Set(&v)
 }
 

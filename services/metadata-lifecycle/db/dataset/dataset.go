@@ -423,10 +423,6 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			continue
 		}
 		service := distribution.WebService
-		point, polygon, err := spatialGeometry(service.SpatialCoverage)
-		if err != nil {
-			return fmt.Errorf("encode web service geometry: %w", err)
-		}
 		var start, end *time.Time
 		if service.TemporalCoverage != nil {
 			start, end = service.TemporalCoverage.Start, service.TemporalCoverage.End
@@ -446,8 +442,7 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			DocumentationTitle:       title,
 			DocumentationDescription: description,
 			DocumentationUri:         uri,
-			SpatialPoint:             point,
-			SpatialPolygon:           polygon,
+			SpatialCoverage:          service.SpatialCoverage,
 			TemporalStart:            start,
 			TemporalEnd:              end,
 		})
@@ -534,11 +529,6 @@ func lifecycleError(err error) error {
 }
 
 func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetLifecycleDatasetVersionRow) (domain.DatasetMetadata, error) {
-	spatial, err := spatialFromGeometry(version.SpatialPoint, version.SpatialPolygon)
-	if err != nil {
-		return domain.DatasetMetadata{}, fmt.Errorf("decode dataset geometry: %w", err)
-	}
-
 	identifiers, err := q.ListLifecycleDatasetIdentifiers(ctx, &version.ID)
 	if err != nil {
 		return domain.DatasetMetadata{}, fmt.Errorf("list identifiers: %w", err)
@@ -578,7 +568,6 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 	if err != nil {
 		return domain.DatasetMetadata{}, fmt.Errorf("list distributions: %w", err)
 	}
-
 	result := domain.DatasetMetadata{
 		ID:                    version.ID,
 		Title:                 version.Title,
@@ -588,7 +577,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		QualityAnnotation:     version.QualityAnnotation,
 		AccessRight:           version.AccessRight,
 		Distributions:         nil,
-		SpatialCoverage:       spatial,
+		SpatialCoverage:       version.SpatialCoverage,
 		TemporalCoverage:      temporal(version.TemporalStart, version.TemporalEnd),
 		PersistentIdentifiers: nil,
 		ContactPoints:         nil,
