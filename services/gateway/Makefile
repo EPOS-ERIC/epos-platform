@@ -24,7 +24,11 @@ lint: fmt
 
 METADATA_LIFECYCLE_SPEC := ../metadata-lifecycle/docs/openapi.yaml
 METADATA_LIFECYCLE_CLIENT_GEN_DIR := gen/metadata-lifecycle
-generate: clean
+GATEWAY_SERVER_GEN_DIR := gen/gatewayapi
+
+generate: generate-metadata-lifecycle generate-gateway-server
+
+generate-metadata-lifecycle:
 	openapi-generator generate -g go \
 		-i $(METADATA_LIFECYCLE_SPEC) \
 		-o $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) \
@@ -32,7 +36,11 @@ generate: clean
 		-p packageName=metadatalifecycleclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
 	(cd $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
-clean:
-	rm -rf $(BIN) $(METADATA_LIFECYCLE_CLIENT_GEN_DIR)
+generate-gateway-server:
+	go generate .
+	(cd $(GATEWAY_SERVER_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
-.PHONY: build build-docker generate test fmt lint clean
+clean:
+	rm -rf $(BIN) $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) $(GATEWAY_SERVER_GEN_DIR)
+
+.PHONY: build build-docker generate generate-metadata-lifecycle generate-gateway-server test fmt lint clean

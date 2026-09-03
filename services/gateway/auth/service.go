@@ -67,6 +67,9 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 	result, err := s.Validate(ctx, token)
 	if err != nil {
 		s.log.ErrorContext(ctx, "auth token validation failed", "error", err)
+		if errors.Is(err, ErrUnauthorized) {
+			return Identity{}, ErrUnauthorized
+		}
 		return Identity{}, fmt.Errorf("%w: validate access token: %v", ErrProviderUnavailable, err)
 	}
 
@@ -98,6 +101,9 @@ func (s *Service) Validate(ctx context.Context, token string) (ValidationResult,
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return ValidationResult{}, ErrUnauthorized
+		}
 		return ValidationResult{}, fmt.Errorf("auth validation request failed: %s", resp.Status)
 	}
 

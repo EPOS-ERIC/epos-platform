@@ -1,616 +1,316 @@
+//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
-	"log/slog"
-	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/api"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
-	"github.com/go-chi/chi/v5"
+	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
-type Groups struct {
-	service *groupservice.Service
-	log     *slog.Logger
-}
-
-func NewGroups(log *slog.Logger, service *groupservice.Service) *Groups {
-	return &Groups{
-		service: service,
-		log:     log.With("component", "groups-handler"),
-	}
-}
-
-func (h *Groups) List(w http.ResponseWriter, r *http.Request) {
-	groups, err := h.service.List(r.Context())
+func (h *ogenHandler) ListGroups(ctx context.Context) ([]gatewayapi.Group, error) {
+	v, err := h.groups.List(ctx)
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "list groups")
-		return
+		return nil, err
 	}
-
-	result := mapSlice(groups, toAPIGroup)
-
-	writeJSON(h.log, w, http.StatusOK, result)
+	out := []gatewayapi.Group{}
+	for _, x := range v {
+		mapped, err := mapGroup(x)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, mapped)
+	}
+	return out, nil
 }
 
-func (h *Groups) Get(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := uuidParam(h.log, r.Context(), w, r, "groupId")
-	if !ok {
-		return
-	}
-
-	group, err := h.service.Get(r.Context(), groupID)
+func (h *ogenHandler) GetGroup(ctx context.Context, q gatewayapi.GetGroupParams) (*gatewayapi.Group, error) {
+	v, err := h.groups.Get(ctx, q.GroupId.String())
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "get group")
-		return
+		return nil, err
 	}
-
-	writeJSON(h.log, w, http.StatusOK, toAPIGroup(group))
-}
-
-func (h *Groups) Create(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-	var request api.CreateGroupRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	group, err := h.service.Create(ctx, actor.ID, toDomainCreateGroupInput(request))
+	r, err := mapGroup(v)
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "create group")
-		return
+		return nil, err
 	}
-	writeJSON(h.log, w, http.StatusCreated, toAPIGroup(group))
+	return &r, nil
 }
 
-func (h *Groups) Replace(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
+func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroupRequest) (*gatewayapi.Group, error) {
+	actor, ok := actorID(ctx)
 	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
+		return nil, authMissing()
 	}
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
+	in := domain.CreateGroupInput{Name: string(q.Name), Description: fromOptNilString(q.Description), Label: fromOptNilString(q.Label), Logo: fromOptNilString(q.Logo), Page: fromOptNilString(q.Page), Color: fromOptNilString(q.Color), Concept: string(q.Concept)}
+	if q.Position.Set {
+		in.Position = &q.Position.Value
 	}
-	var request api.ReplaceGroupRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	group, err := h.service.Replace(ctx, actor.ID, groupID, toDomainReplaceGroupInput(request))
+	v, err := h.groups.Create(ctx, actor, in)
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "replace group")
-		return
+		return nil, err
 	}
-	writeJSON(h.log, w, http.StatusOK, toAPIGroup(group))
-}
-
-func (h *Groups) Delete(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-	if err := h.service.Delete(ctx, actor.ID, groupID); err != nil {
-		writeGroupError(h.log, r, w, err, "delete group")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) ListMemberships(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-	memberships, err := h.service.ListMemberships(ctx, groupID, actor.ID)
+	r, err := mapGroup(v)
 	if err != nil {
-		writeMembershipError(h.log, r, w, err, "list group memberships")
-		return
+		return nil, err
 	}
-	result := mapSlice(memberships, toAPIGroupMembership)
-	writeJSON(h.log, w, http.StatusOK, result)
+	return &r, nil
 }
 
-func (h *Groups) ListCategories(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
+func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGroupRequest, params gatewayapi.ReplaceGroupParams) (*gatewayapi.Group, error) {
+	a, ok := actorID(ctx)
 	if !ok {
-		return
+		return nil, authMissing()
 	}
-	categories, err := h.service.ListCategories(ctx, groupID)
+	in := domain.ReplaceGroupInput{Name: string(q.Name), Description: fromOptNilString(q.Description), Label: fromOptNilString(q.Label), Logo: fromOptNilString(q.Logo), Page: fromOptNilString(q.Page), Color: fromOptNilString(q.Color), Concept: string(q.Concept)}
+	if q.Position.Set {
+		in.Position = q.Position.Value
+	}
+	v, err := h.groups.Replace(ctx, a, params.GroupId.String(), in)
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "list categories")
-		return
+		return nil, err
 	}
-	result := mapSlice(categories, toAPICategory)
-	writeJSON(h.log, w, http.StatusOK, result)
-}
-
-func (h *Groups) GetCategory(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-	categoryID, ok := uuidParam(h.log, ctx, w, r, "categoryId")
-	if !ok {
-		return
-	}
-	category, err := h.service.GetCategory(ctx, groupID, categoryID)
+	r, err := mapGroup(v)
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "get category")
-		return
+		return nil, err
 	}
-	writeJSON(h.log, w, http.StatusOK, toAPICategory(category))
+	return &r, nil
 }
-
-func (h *Groups) CreateCategory(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-	var request api.CreateCategoryRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	category, err := h.service.CreateCategory(ctx, actor.ID, groupID, toDomainCreateCategoryInput(request))
+func authMissing() error { return errMissingActor }
+func (h *ogenHandler) ListGroupCategories(ctx context.Context, q gatewayapi.ListGroupCategoriesParams) ([]gatewayapi.Category, error) {
+	v, err := h.groups.ListCategories(ctx, q.GroupId.String())
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "create category")
-		return
+		return nil, err
 	}
-	writeJSON(h.log, w, http.StatusCreated, toAPICategory(category))
+	out := []gatewayapi.Category{}
+	for _, x := range v {
+		mapped, err := mapCategory(x)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, mapped)
+	}
+	return out, nil
 }
 
-func (h *Groups) ReplaceCategory(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-	categoryID, ok := uuidParam(h.log, ctx, w, r, "categoryId")
-	if !ok {
-		return
-	}
-	var request api.ReplaceCategoryRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	category, err := h.service.ReplaceCategory(ctx, actor.ID, groupID, categoryID, toDomainReplaceCategoryInput(request))
+func (h *ogenHandler) GetGroupCategory(ctx context.Context, q gatewayapi.GetGroupCategoryParams) (*gatewayapi.Category, error) {
+	v, err := h.groups.GetCategory(ctx, q.GroupId.String(), q.CategoryId.String())
 	if err != nil {
-		writeGroupError(h.log, r, w, err, "replace category")
-		return
+		return nil, err
 	}
-	writeJSON(h.log, w, http.StatusOK, toAPICategory(category))
-}
-
-func (h *Groups) DeleteCategory(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-	categoryID, ok := uuidParam(h.log, ctx, w, r, "categoryId")
-	if !ok {
-		return
-	}
-	if err := h.service.DeleteCategory(ctx, actor.ID, groupID, categoryID); err != nil {
-		writeGroupError(h.log, r, w, err, "delete category")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
-// WithdrawMembershipRequest deletes the authenticated user's pending membership request.
-// TODO: since the handlers here and the ones in the metadata-lifecycle currently are doing basically the same thing, maybe we should make them behave in a similar way for consistency
-func (h *Groups) WithdrawMembershipRequest(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-
-	if err := h.service.WithdrawMembershipRequest(ctx, groupID, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "withdraw membership request")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) RequestMembership(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-
-	var request api.CreateMembershipRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	if request.Roles == nil {
-		WriteError(h.log, ctx, w, http.StatusBadRequest, "invalid_request", "roles is required", nil)
-		return
-	}
-
-	membership, err := h.service.RequestMembership(ctx, groupID, actor.ID, request.Roles)
+	r, err := mapCategory(v)
 	if err != nil {
-		writeMembershipError(h.log, r, w, err, "request membership")
-		return
+		return nil, err
 	}
-
-	writeJSON(h.log, w, http.StatusCreated, toAPIGroupMembership(membership))
+	return &r, nil
 }
 
-func (h *Groups) DecideMembership(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
+func (h *ogenHandler) CreateGroupCategory(ctx context.Context, q *gatewayapi.CreateCategoryRequest, params gatewayapi.CreateGroupCategoryParams) (*gatewayapi.Category, error) {
+	a, ok := actorID(ctx)
 	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
+		return nil, authMissing()
 	}
-
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
+	in := domain.CreateCategoryInput{Name: string(q.Name)}
+	if q.ParentCategoryID.Set && !q.ParentCategoryID.Null {
+		s := q.ParentCategoryID.Value.String()
+		in.ParentCategoryID = &s
 	}
-	userID, ok := uuidParam(h.log, ctx, w, r, "userId")
-	if !ok {
-		return
-	}
-
-	var request api.MembershipDecisionRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	if !request.Status.IsDecision() {
-		WriteError(h.log, ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACTIVE or REJECTED", nil)
-		return
-	}
-
-	membership, err := h.service.DecideMembership(ctx, groupID, userID, actor.ID, string(request.Status))
+	v, err := h.groups.CreateCategory(ctx, a, params.GroupId.String(), in)
 	if err != nil {
-		writeMembershipError(h.log, r, w, err, "decide membership")
-		return
+		return nil, err
 	}
-
-	writeJSON(h.log, w, http.StatusOK, toAPIGroupMembership(membership))
-}
-
-func (h *Groups) DeleteMembership(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-
-	userID, ok := uuidParam(h.log, ctx, w, r, "userId")
-	if !ok {
-		return
-	}
-
-	if err := h.service.RevokeMembership(ctx, groupID, userID, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "revoke membership")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) AssignGroupRole(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, userID, role, ok := groupRoleParams(h.log, ctx, w, r)
-	if !ok {
-		return
-	}
-
-	if err := h.service.AssignGroupRole(ctx, groupID, userID, role, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "assign group role")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) RemoveGroupRole(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, userID, role, ok := groupRoleParams(h.log, ctx, w, r)
-	if !ok {
-		return
-	}
-
-	if err := h.service.RemoveGroupRole(ctx, groupID, userID, role, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "remove group role")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) GrantGroupPermission(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, userID, permission, ok := groupPermissionParams(h.log, ctx, w, r)
-	if !ok {
-		return
-	}
-
-	if err := h.service.GrantGroupPermission(ctx, groupID, userID, permission, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "grant group permission")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) RevokeGroupPermission(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, userID, permission, ok := groupPermissionParams(h.log, ctx, w, r)
-	if !ok {
-		return
-	}
-
-	if err := h.service.RevokeGroupPermission(ctx, groupID, userID, permission, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "revoke group permission")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *Groups) RequestRole(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
-	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
-	}
-
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
-	}
-
-	var request api.CreateRoleRequest
-	// TODO: use an enum
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	if request.Role != "EDITOR" && request.Role != "REVIEWER" {
-		WriteError(h.log, ctx, w, http.StatusBadRequest, "invalid_request", "role must be EDITOR or REVIEWER", nil)
-		return
-	}
-
-	roleRequest, err := h.service.RequestRole(ctx, groupID, request.Role, actor.ID)
+	r, err := mapCategory(v)
 	if err != nil {
-		writeMembershipError(h.log, r, w, err, "request role")
-		return
+		return nil, err
 	}
-
-	writeJSON(h.log, w, http.StatusCreated, toAPIRoleRequest(roleRequest))
+	return &r, nil
 }
 
-func (h *Groups) ApplyRoleRequestDecision(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
+func (h *ogenHandler) ReplaceGroupCategory(ctx context.Context, q *gatewayapi.ReplaceCategoryRequest, params gatewayapi.ReplaceGroupCategoryParams) (*gatewayapi.Category, error) {
+	a, ok := actorID(ctx)
 	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
+		return nil, authMissing()
 	}
-
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
-	if !ok {
-		return
+	in := domain.ReplaceCategoryInput{Name: string(q.Name)}
+	if !q.ParentCategoryID.Null {
+		s := q.ParentCategoryID.Value.String()
+		in.ParentCategoryID = &s
 	}
-	requestID, ok := uuidParam(h.log, ctx, w, r, "requestId")
-	if !ok {
-		return
-	}
-
-	var request api.RoleRequestDecisionRequest
-	if !decodeJSON(h.log, r, w, &request) {
-		return
-	}
-	if request.Status != "ACCEPTED" && request.Status != "REJECTED" {
-		WriteError(h.log, ctx, w, http.StatusBadRequest, "invalid_request", "status must be ACCEPTED or REJECTED", nil)
-		return
-	}
-
-	membership, err := h.service.ApplyRoleRequestDecision(ctx, groupID, requestID, request.Status, actor.ID)
+	v, err := h.groups.ReplaceCategory(ctx, a, params.GroupId.String(), params.CategoryId.String(), in)
 	if err != nil {
-		writeMembershipError(h.log, r, w, err, "decide role request")
-		return
+		return nil, err
 	}
-
-	writeJSON(h.log, w, http.StatusOK, toAPIGroupMembership(membership))
+	r, err := mapCategory(v)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
 
-func (h *Groups) WithdrawRoleRequest(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	actor, ok := AuthenticatedUserFromContext(ctx)
+func (h *ogenHandler) ApplyRoleRequestDecision(ctx context.Context, q *gatewayapi.RoleRequestDecisionRequest, p gatewayapi.ApplyRoleRequestDecisionParams) (*gatewayapi.GroupMembership, error) {
+	a, ok := actorID(ctx)
 	if !ok {
-		WriteError(h.log, ctx, w, http.StatusUnauthorized, "missing_token", "bearer token required", nil)
-		return
+		return nil, authMissing()
 	}
+	v, err := h.groups.ApplyRoleRequestDecision(ctx, p.GroupId.String(), p.RequestId.String(), string(q.Status), a)
+	if err != nil {
+		return nil, err
+	}
+	r, err := mapMembership(v)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
 
-	groupID, ok := uuidParam(h.log, ctx, w, r, "groupId")
+func (h *ogenHandler) AssignGroupRole(ctx context.Context, p gatewayapi.AssignGroupRoleParams) error {
+	a, ok := actorID(ctx)
 	if !ok {
-		return
+		return authMissing()
 	}
-	requestID, ok := uuidParam(h.log, ctx, w, r, "requestId")
+	return h.groups.AssignGroupRole(ctx, p.GroupId.String(), p.UserId.String(), string(p.Role), a)
+}
+
+func (h *ogenHandler) RemoveGroupRole(ctx context.Context, p gatewayapi.RemoveGroupRoleParams) error {
+	a, ok := actorID(ctx)
 	if !ok {
-		return
+		return authMissing()
 	}
-
-	if err := h.service.WithdrawRoleRequest(ctx, groupID, requestID, actor.ID); err != nil {
-		writeMembershipError(h.log, r, w, err, "withdraw role request")
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	return h.groups.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId.String(), string(p.Role), a)
 }
 
-func groupRoleParams(log *slog.Logger, ctx context.Context, w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
-	groupID, ok := uuidParam(log, ctx, w, r, "groupId")
+func (h *ogenHandler) GrantGroupPermission(ctx context.Context, p gatewayapi.GrantGroupPermissionParams) error {
+	a, ok := actorID(ctx)
 	if !ok {
-		return "", "", "", false
+		return authMissing()
 	}
-
-	userID := chi.URLParam(r, "userId")
-	role := toAPIMembershipRole(chi.URLParam(r, "role"))
-	if !validUUID(userID) || !role.IsValid() {
-		WriteError(log, ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or role", nil)
-		return "", "", "", false
-	}
-
-	return groupID, userID, string(role), true
+	return h.groups.GrantGroupPermission(ctx, p.GroupId.String(), p.UserId.String(), string(p.Permission), a)
 }
 
-func groupPermissionParams(log *slog.Logger, ctx context.Context, w http.ResponseWriter, r *http.Request) (string, string, string, bool) {
-	groupID, ok := uuidParam(log, ctx, w, r, "groupId")
+func (h *ogenHandler) RevokeGroupPermission(ctx context.Context, p gatewayapi.RevokeGroupPermissionParams) error {
+	a, ok := actorID(ctx)
 	if !ok {
-		return "", "", "", false
+		return authMissing()
 	}
-
-	userID := chi.URLParam(r, "userId")
-	permission := chi.URLParam(r, "permission")
-	if !validUUID(userID) || !validGroupPermission(permission) {
-		WriteError(log, ctx, w, http.StatusBadRequest, "invalid_request", "invalid userId or permission", nil)
-		return "", "", "", false
-	}
-
-	return groupID, userID, permission, true
+	return h.groups.RevokeGroupPermission(ctx, p.GroupId.String(), p.UserId.String(), string(p.Permission), a)
 }
 
-func validGroupPermission(permission string) bool {
-	switch permission {
-	case "resource.create", "resource.edit", "resource.submit", "resource.withdraw", "resource.reopen", "resource.discard", "resource.reject", "resource.publish", "resource.unpublish", "group.membership.manage", "group.role.manage", "group.permission.manage", "category.manage":
-		return true
-	default:
-		return false
+func (h *ogenHandler) WithdrawGroupMembershipRequest(ctx context.Context, p gatewayapi.WithdrawGroupMembershipRequestParams) error {
+	a, ok := actorID(ctx)
+	if !ok {
+		return authMissing()
 	}
+	return h.groups.WithdrawMembershipRequest(ctx, p.GroupId.String(), a)
 }
 
-//nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.
-func writeGroupError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error, operation string) {
-	switch {
-	case errors.Is(err, domain.ErrBadRequest):
-		WriteError(log, r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid group id", err)
-	case errors.Is(err, domain.ErrNotFound):
-		WriteError(log, r.Context(), w, http.StatusNotFound, "not_found", "group not found", nil)
-	case errors.Is(err, domain.ErrForbidden):
-		WriteError(log, r.Context(), w, http.StatusForbidden, "forbidden", "group operation is not permitted", nil)
-	case errors.Is(err, domain.ErrConflict):
-		WriteError(log, r.Context(), w, http.StatusConflict, "conflict", "group operation conflicts with existing data", nil)
-	case errors.Is(err, domain.ErrUpstreamTimeout):
-		WriteError(log, r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "group request timed out", err)
-	default:
-		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(log, r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
+func (h *ogenHandler) WithdrawGroupRoleRequest(ctx context.Context, p gatewayapi.WithdrawGroupRoleRequestParams) error {
+	a, ok := actorID(ctx)
+	if !ok {
+		return authMissing()
 	}
+	return h.groups.WithdrawRoleRequest(ctx, p.GroupId.String(), p.RequestId.String(), a)
 }
 
-//nolint:dupl // Error mapping intentionally mirrors other gateway handler boundaries.
-func writeMembershipError(log *slog.Logger, r *http.Request, w http.ResponseWriter, err error, operation string) {
-	switch {
-	case errors.Is(err, domain.ErrBadRequest):
-		WriteError(log, r.Context(), w, http.StatusBadRequest, "invalid_request", "invalid membership request", err)
-	case errors.Is(err, domain.ErrForbidden):
-		WriteError(log, r.Context(), w, http.StatusForbidden, "forbidden", "membership operation is not permitted", nil)
-	case errors.Is(err, domain.ErrNotFound):
-		WriteError(log, r.Context(), w, http.StatusNotFound, "not_found", "group or membership not found", nil)
-	case errors.Is(err, domain.ErrConflict):
-		WriteError(log, r.Context(), w, http.StatusConflict, "conflict", "membership request conflicts with existing membership", nil)
-	case errors.Is(err, domain.ErrUpstreamTimeout):
-		WriteError(log, r.Context(), w, http.StatusGatewayTimeout, "upstream_timeout", "membership request timed out", err)
-	default:
-		log.ErrorContext(r.Context(), operation+" failed", "error", err)
-		WriteError(log, r.Context(), w, http.StatusServiceUnavailable, "metadata_lifecycle_unavailable", "metadata-lifecycle service unavailable", err)
+func (h *ogenHandler) RequestGroupRole(ctx context.Context, q *gatewayapi.CreateRoleRequest, p gatewayapi.RequestGroupRoleParams) (*gatewayapi.RoleRequest, error) {
+	a, ok := actorID(ctx)
+	if !ok {
+		return nil, authMissing()
 	}
+	v, err := h.groups.RequestRole(ctx, p.GroupId.String(), string(q.Role), a)
+	if err != nil {
+		return nil, err
+	}
+	r, err := mapRole(v)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
 
-func writeJSON(log *slog.Logger, w http.ResponseWriter, status int, value any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(value); err != nil {
-		log.Error("failed to encode group response", "error", err)
+func (h *ogenHandler) DeleteGroupCategory(ctx context.Context, params gatewayapi.DeleteGroupCategoryParams) error {
+	a, ok := actorID(ctx)
+	if !ok {
+		return authMissing()
 	}
+	if err := h.groups.DeleteCategory(ctx, a, params.GroupId.String(), params.CategoryId.String()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *ogenHandler) DeleteGroup(ctx context.Context, p gatewayapi.DeleteGroupParams) error {
+	a, ok := actorID(ctx)
+	if !ok {
+		return authMissing()
+	}
+	if err := h.groups.Delete(ctx, a, p.GroupId.String()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *ogenHandler) ListGroupMemberships(ctx context.Context, params gatewayapi.ListGroupMembershipsParams) ([]gatewayapi.GroupMembership, error) {
+	a, ok := actorID(ctx)
+	if !ok {
+		return nil, authMissing()
+	}
+	v, err := h.groups.ListMemberships(ctx, params.GroupId.String(), a)
+	if err != nil {
+		return nil, err
+	}
+	out := []gatewayapi.GroupMembership{}
+	for _, x := range v {
+		mapped, err := mapMembership(x)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, mapped)
+	}
+	return out, nil
+}
+
+func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.CreateMembershipRequest, params gatewayapi.RequestGroupMembershipParams) (*gatewayapi.GroupMembership, error) {
+	a, ok := actorID(ctx)
+	if !ok {
+		return nil, authMissing()
+	}
+	roles := make([]string, len(q.Roles))
+	for i := range q.Roles {
+		roles[i] = string(q.Roles[i])
+	}
+	v, err := h.groups.RequestMembership(ctx, params.GroupId.String(), a, roles)
+	if err != nil {
+		return nil, err
+	}
+	r, err := mapMembership(v)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (h *ogenHandler) DecideGroupMembership(ctx context.Context, q *gatewayapi.MembershipDecisionRequest, params gatewayapi.DecideGroupMembershipParams) (*gatewayapi.GroupMembership, error) {
+	a, ok := actorID(ctx)
+	if !ok {
+		return nil, authMissing()
+	}
+	v, err := h.groups.DecideMembership(ctx, params.GroupId.String(), params.UserId.String(), a, string(q.Status))
+	if err != nil {
+		return nil, err
+	}
+	r, err := mapMembership(v)
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (h *ogenHandler) DeleteGroupMembership(ctx context.Context, params gatewayapi.DeleteGroupMembershipParams) error {
+	a, ok := actorID(ctx)
+	if !ok {
+		return authMissing()
+	}
+	if err := h.groups.RevokeMembership(ctx, params.GroupId.String(), params.UserId.String(), a); err != nil {
+		return err
+	}
+	return nil
 }

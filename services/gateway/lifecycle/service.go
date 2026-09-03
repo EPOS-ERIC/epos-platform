@@ -3,6 +3,7 @@ package lifecycle
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -27,7 +28,7 @@ func NewService(log *slog.Logger, metadataLifecycle *clients.MetadataLifecycle) 
 func (s *Service) Create(ctx context.Context, actorID, groupID, resourceType string, input domain.CreateResourceInput) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.CreateResource(ctx, actorID, groupID, resourceType, input)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("create resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("create resource", err)
 	}
 	return result, nil
 }
@@ -38,7 +39,7 @@ func (s *Service) Get(ctx context.Context, actorID, resourceType, resourceID, ve
 	result, err := s.metadataLifecycle.GetResourceVersion(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
 		s.log.Debug("get resource version", "error", err)
-		return domain.ResourceVersion{}, fmt.Errorf("get resource version: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("get resource version", err)
 	}
 
 	s.log.Debug("get resource version", "response", result)
@@ -49,14 +50,14 @@ func (s *Service) Get(ctx context.Context, actorID, resourceType, resourceID, ve
 func (s *Service) ReplaceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string, input domain.ReplaceResourceDraftInput) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.ReplaceResourceDraft(ctx, actorID, resourceType, resourceID, versionID, input)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("replace resource draft: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("replace resource draft", err)
 	}
 	return result, nil
 }
 
 func (s *Service) Discard(ctx context.Context, actorID, resourceType, resourceID, versionID string) error {
 	if err := s.metadataLifecycle.DiscardResourceDraft(ctx, actorID, resourceType, resourceID, versionID); err != nil {
-		return fmt.Errorf("discard resource draft: %w", err)
+		return lifecycleError("discard resource draft", err)
 	}
 	return nil
 }
@@ -64,7 +65,7 @@ func (s *Service) Discard(ctx context.Context, actorID, resourceType, resourceID
 func (s *Service) Submit(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.SubmitResource(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("submit resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("submit resource", err)
 	}
 	return result, nil
 }
@@ -72,7 +73,7 @@ func (s *Service) Submit(ctx context.Context, actorID, resourceType, resourceID,
 func (s *Service) Withdraw(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.WithdrawResource(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("withdraw resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("withdraw resource", err)
 	}
 	return result, nil
 }
@@ -80,7 +81,7 @@ func (s *Service) Withdraw(ctx context.Context, actorID, resourceType, resourceI
 func (s *Service) Reject(ctx context.Context, actorID, resourceType, resourceID, versionID string, input domain.RejectResourceInput) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.RejectResource(ctx, actorID, resourceType, resourceID, versionID, input)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("reject resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("reject resource", err)
 	}
 	return result, nil
 }
@@ -88,7 +89,7 @@ func (s *Service) Reject(ctx context.Context, actorID, resourceType, resourceID,
 func (s *Service) Reopen(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.ReopenResource(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("reopen resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("reopen resource", err)
 	}
 	return result, nil
 }
@@ -96,7 +97,7 @@ func (s *Service) Reopen(ctx context.Context, actorID, resourceType, resourceID,
 func (s *Service) Publish(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.PublishResource(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("publish resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("publish resource", err)
 	}
 	return result, nil
 }
@@ -104,7 +105,7 @@ func (s *Service) Publish(ctx context.Context, actorID, resourceType, resourceID
 func (s *Service) Unpublish(ctx context.Context, actorID, resourceType, resourceID, versionID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.UnpublishResource(ctx, actorID, resourceType, resourceID, versionID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("unpublish resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("unpublish resource", err)
 	}
 	return result, nil
 }
@@ -112,7 +113,7 @@ func (s *Service) Unpublish(ctx context.Context, actorID, resourceType, resource
 func (s *Service) DraftFromPublication(ctx context.Context, actorID, resourceType, resourceID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.CreateResourceDraftFromPublication(ctx, actorID, resourceType, resourceID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("create draft from publication: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("create draft from publication", err)
 	}
 	return result, nil
 }
@@ -120,7 +121,7 @@ func (s *Service) DraftFromPublication(ctx context.Context, actorID, resourceTyp
 func (s *Service) DraftFromArchive(ctx context.Context, actorID, resourceType, resourceID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.CreateResourceDraftFromArchive(ctx, actorID, resourceType, resourceID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("create draft from archive: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("create draft from archive", err)
 	}
 	return result, nil
 }
@@ -128,7 +129,35 @@ func (s *Service) DraftFromArchive(ctx context.Context, actorID, resourceType, r
 func (s *Service) Copy(ctx context.Context, actorID, groupID, resourceType, resourceID string) (domain.ResourceVersion, error) {
 	result, err := s.metadataLifecycle.CopyResource(ctx, actorID, groupID, resourceType, resourceID)
 	if err != nil {
-		return domain.ResourceVersion{}, fmt.Errorf("copy resource: %w", err)
+		return domain.ResourceVersion{}, lifecycleError("copy resource", err)
 	}
 	return result, nil
+}
+
+func lifecycleError(operation string, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	title := "request_failed"
+	detail := operation + " failed"
+	switch {
+	case errors.Is(err, domain.ErrBadRequest):
+		title = "invalid_request"
+		detail = operation + " request is invalid"
+	case errors.Is(err, domain.ErrForbidden):
+		title = "forbidden"
+		detail = operation + " is not permitted"
+	case errors.Is(err, domain.ErrNotFound):
+		title = "not_found"
+		detail = "resource version not found"
+	case errors.Is(err, domain.ErrConflict):
+		title = "conflict"
+		detail = operation + " conflicts with resource state"
+	case errors.Is(err, domain.ErrUpstreamTimeout):
+		title = "upstream_timeout"
+		detail = operation + " request timed out"
+	}
+
+	return fmt.Errorf("lifecycle error: %w", domain.WithErrorMetadata(fmt.Errorf("%s: %w", operation, err), title, detail))
 }
