@@ -9,27 +9,17 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
-	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/go-chi/chi/v5"
 )
 
 func NewRouter(
 	log *slog.Logger,
-	canonicalService *canonical.Service,
-	discoveryService *discovery.Service,
-	groupsService *groupservice.Service,
-	lifecycleService *lifecycle.Service,
 	identityService *identity.Service,
-	importsService *metadataimports.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	authService *auth.Service,
 	corsAllowOrigin string,
@@ -59,12 +49,8 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	generatedHandler := handlers.NewOgenHandler(
-		canonicalService,
-		discoveryService,
-		groupsService,
 		identityService,
-		importsService,
-		lifecycleService,
+		metadataLifecycleClient,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,

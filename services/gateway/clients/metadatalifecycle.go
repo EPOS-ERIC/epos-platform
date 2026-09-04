@@ -88,7 +88,7 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.U
 	}, nil
 }
 
-func (c *MetadataLifecycle) ListGroups(ctx context.Context) ([]domain.Group, error) {
+func (c *MetadataLifecycle) ListGroups(ctx context.Context) ([]client.Group, error) {
 	if c == nil || c.groups == nil {
 		return nil, fmt.Errorf("metadata-lifecycle group client is not configured")
 	}
@@ -98,20 +98,24 @@ func (c *MetadataLifecycle) ListGroups(ctx context.Context) ([]domain.Group, err
 		return nil, wrapGroupError("list metadata-lifecycle groups", response, err)
 	}
 
-	return toDomainGroups(groups)
+	return groups, nil
 }
 
-func (c *MetadataLifecycle) GetGroup(ctx context.Context, id string) (domain.Group, error) {
+func (c *MetadataLifecycle) GetGroup(ctx context.Context, id string) (*client.Group, error) {
 	if c == nil || c.groups == nil {
-		return domain.Group{}, fmt.Errorf("metadata-lifecycle group client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle group client is not configured")
 	}
 
 	group, response, err := c.groups.GetGroup(ctx, id).Execute()
 	if err != nil {
-		return domain.Group{}, wrapGroupError("get metadata-lifecycle group", response, err)
+		return nil, wrapGroupError("get metadata-lifecycle group", response, err)
 	}
 
-	return toDomainGroup(group)
+	if group == nil {
+		return nil, fmt.Errorf("decode metadata-lifecycle group: response is empty")
+	}
+
+	return group, nil
 }
 
 func (c *MetadataLifecycle) WithdrawMembershipRequest(ctx context.Context, groupID, actorID string) error {
@@ -127,37 +131,32 @@ func (c *MetadataLifecycle) WithdrawMembershipRequest(ctx context.Context, group
 	return nil
 }
 
-func (c *MetadataLifecycle) RequestMembership(ctx context.Context, groupID, actorID string, roles []string) (domain.GroupMembership, error) {
+func (c *MetadataLifecycle) RequestMembership(ctx context.Context, groupID, actorID string, roles []string) (*client.GroupMembership, error) {
 	if c == nil || c.access == nil {
-		return domain.GroupMembership{}, fmt.Errorf("metadata-lifecycle group access client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
 	}
-
-	// membership, response, err := c.access.RequestGroupMembership(ctx, groupID).
-	// 	XEPOSUserID(actorID).
-	// 	CreateMembershipRequest(toClientCreateMembershipRequest(roles)).
-	// 	Execute()
-	// if err != nil {
-	// 	return domain.GroupMembership{}, wrapGroupAccessError("request metadata-lifecycle membership", response, err)
-	// }
-
-	// return toDomainGroupMembership(membership)
-	return domain.GroupMembership{}, nil
+	membership, response, err := c.access.RequestGroupMembership(ctx, groupID).
+		XEPOSUserID(actorID).
+		CreateMembershipRequest(client.CreateMembershipRequest{Roles: roles}).
+		Execute()
+	if err != nil {
+		return nil, wrapGroupAccessError("request metadata-lifecycle membership", response, err)
+	}
+	return membership, nil
 }
 
-func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userID, status, actorID string) (domain.GroupMembership, error) {
+func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userID, status, actorID string) (*client.GroupMembership, error) {
 	if c == nil || c.access == nil {
-		return domain.GroupMembership{}, fmt.Errorf("metadata-lifecycle group access client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
 	}
-
-	// membership, response, err := c.access.DecideGroupMembership(ctx, groupID, userID).
-	// 	XEPOSUserID(actorID).
-	// 	MembershipDecisionRequest(toClientMembershipDecisionRequest(status)).
-	// 	Execute()
-	// if err != nil {
-	// 	return domain.GroupMembership{}, wrapGroupAccessError("decide metadata-lifecycle membership", response, err)
-	// }
-
-	return domain.GroupMembership{}, nil
+	membership, response, err := c.access.DecideGroupMembership(ctx, groupID, userID).
+		XEPOSUserID(actorID).
+		MembershipDecisionRequest(client.MembershipDecisionRequest{Status: status}).
+		Execute()
+	if err != nil {
+		return nil, wrapGroupAccessError("decide metadata-lifecycle membership", response, err)
+	}
+	return membership, nil
 }
 
 func (c *MetadataLifecycle) RevokeMembership(ctx context.Context, groupID, userID, actorID string) error {
@@ -173,39 +172,32 @@ func (c *MetadataLifecycle) RevokeMembership(ctx context.Context, groupID, userI
 	return nil
 }
 
-func (c *MetadataLifecycle) RequestRole(ctx context.Context, groupID, role, actorID string) (domain.RoleRequest, error) {
+func (c *MetadataLifecycle) RequestRole(ctx context.Context, groupID, role, actorID string) (*client.RoleRequest, error) {
 	if c == nil || c.access == nil {
-		return domain.RoleRequest{}, fmt.Errorf("metadata-lifecycle group access client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
 	}
-
-	// request, response, err := c.access.RequestGroupRole(ctx, groupID).
-	// 	XEPOSUserID(actorID).
-	// 	CreateRoleRequest(toClientCreateRoleRequest(role)).
-	// 	Execute()
-	// if err != nil {
-	// 	return domain.RoleRequest{}, wrapGroupAccessError("request metadata-lifecycle role", response, err)
-	// }
-	// if request == nil {
-	// 	return domain.RoleRequest{}, fmt.Errorf("decode metadata-lifecycle role request: response is empty")
-	// }
-
-	return domain.RoleRequest{}, nil
+	request, response, err := c.access.RequestGroupRole(ctx, groupID).
+		XEPOSUserID(actorID).
+		CreateRoleRequest(client.CreateRoleRequest{Role: role}).
+		Execute()
+	if err != nil {
+		return nil, wrapGroupAccessError("request metadata-lifecycle role", response, err)
+	}
+	return request, nil
 }
 
-func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID, status, actorID string) (domain.GroupMembership, error) {
+func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID, status, actorID string) (*client.GroupMembership, error) {
 	if c == nil || c.access == nil {
-		return domain.GroupMembership{}, fmt.Errorf("metadata-lifecycle group access client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
 	}
-
-	// membership, response, err := c.access.ApplyRoleRequestDecision(ctx, groupID, requestID).
-	// 	XEPOSUserID(actorID).
-	// 	RoleRequestDecisionRequest(toClientRoleRequestDecisionRequest(status)).
-	// 	Execute()
-	// if err != nil {
-	// 	return domain.GroupMembership{}, wrapGroupAccessError("decide metadata-lifecycle role request", response, err)
-	// }
-
-	return domain.GroupMembership{}, nil
+	membership, response, err := c.access.ApplyRoleRequestDecision(ctx, groupID, requestID).
+		XEPOSUserID(actorID).
+		RoleRequestDecisionRequest(client.RoleRequestDecisionRequest{Status: status}).
+		Execute()
+	if err != nil {
+		return nil, wrapGroupAccessError("decide metadata-lifecycle role request", response, err)
+	}
+	return membership, nil
 }
 
 func (c *MetadataLifecycle) WithdrawRoleRequest(ctx context.Context, groupID, requestID, actorID string) error {
@@ -273,17 +265,17 @@ func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, 
 	return nil
 }
 
-func (c *MetadataLifecycle) ListUsers(ctx context.Context, actorID string) ([]domain.UserSummary, error) {
+func (c *MetadataLifecycle) ListUsers(ctx context.Context, actorID string) ([]client.UserSummary, error) {
 	if c == nil || c.users == nil {
-		return nil, fmt.Errorf("metadata-lifecycle identity client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle users client is not configured")
 	}
 
-	// users, response, err := c.users.ListUsers(ctx).XEPOSUserID(actorID).Execute()
-	// if err != nil {
-	// 	return nil, wrapUserError("list metadata-lifecycle users", response, err)
-	// }
+	users, response, err := c.users.ListUsers(ctx).XEPOSUserID(actorID).Execute()
+	if err != nil {
+		return nil, wrapUserError("list metadata-lifecycle users", response, err)
+	}
 
-	return nil, nil
+	return users, nil
 }
 
 func (c *MetadataLifecycle) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
@@ -345,7 +337,7 @@ func (c *MetadataLifecycle) BlockUser(ctx context.Context, actorID, userID, reas
 
 	response, err := c.users.BlockUser(ctx, userID).
 		XEPOSUserID(actorID).
-		BlockUserRequest(toClientBlockUserRequest(reason)).
+		BlockUserRequest(client.BlockUserRequest{Reason: reason}).
 		Execute()
 	if err != nil {
 		return wrapUserError("block metadata-lifecycle user", response, err)
@@ -370,7 +362,7 @@ func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID str
 func (c *MetadataLifecycle) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {
 	user, err := c.Identity.GetUserForAuth(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 	if errors.Is(err, domain.ErrNotFound) {
-		_, err = c.Identity.ProvisionUser(ctx, identity)
+		err = c.Identity.ProvisionUser(ctx, identity)
 		if err == nil || errors.Is(err, domain.ErrConflict) {
 			user, err = c.Identity.GetUserForAuth(ctx, identity.AuthIdentifier, identity.AuthIdentifier)
 		}
@@ -382,7 +374,7 @@ func (c *MetadataLifecycle) EnsureUser(ctx context.Context, identity ActorIdenti
 	return user, nil
 }
 
-func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, body []byte) (*domain.ImportResult, error) {
+func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, body []byte) (*client.ImportResult, error) {
 	if c == nil || c.imports == nil {
 		return nil, fmt.Errorf("metadata-lifecycle import client is not configured")
 	}
@@ -406,9 +398,7 @@ func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, bo
 	if result == nil {
 		return nil, fmt.Errorf("decode metadata-lifecycle import result: response is empty")
 	}
-
-	responseResult := toDomainImportResult(*result)
-	return &responseResult, nil
+	return result, nil
 }
 
 func wrapUserError(operation string, response *http.Response, err error) error {

@@ -31,6 +31,18 @@ type Membership struct {
 	UpdatedAt        time.Time
 }
 
+type GroupSummary struct {
+	ID   string
+	Name string
+}
+
+type RoleRequest struct {
+	ID          string
+	Role        GroupRole
+	Status      RoleRequestStatus
+	RequestedAt time.Time
+}
+
 type UserStatus string
 
 const (

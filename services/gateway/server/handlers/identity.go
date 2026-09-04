@@ -1,11 +1,12 @@
-//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
 func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserSummary, error) {
@@ -13,30 +14,31 @@ func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserSummary, 
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.identity.ListUsers(ctx, actor)
+	users, err := h.metadataLifecycle.ListUsers(ctx, actor)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list users: %w", err)
 	}
-	out := []gatewayapi.UserSummary{}
-	for _, x := range v {
-		roles := make([]string, len(x.GlobalRoles))
-		for i := range x.GlobalRoles {
-			roles[i] = string(x.GlobalRoles[i])
-		}
-		out = append(out, gatewayapi.UserSummary{
-			ID:                x.ID,
-			Email:             x.Email,
-			GivenName:         x.GivenName,
-			FamilyName:        x.FamilyName,
-			Status:            gatewayapi.UserStatus(x.Status),
-			GlobalRoles:       roles,
-			GlobalPermissions: x.GlobalPermissions,
-		})
+
+	out := make([]gatewayapi.UserSummary, len(users))
+	for i, user := range users {
+		out[i] = toAPIUserSummary(user)
 	}
 	return out, nil
 }
 
-func mapUser(v domain.User) (gatewayapi.User, error) {
+func toAPIUserSummary(user metadatalifecycleclient.UserSummary) gatewayapi.UserSummary {
+	return gatewayapi.UserSummary{
+		ID:                user.Id,
+		Email:             user.Email,
+		GivenName:         user.GivenName,
+		FamilyName:        user.FamilyName,
+		Status:            gatewayapi.UserStatus(user.Status),
+		GlobalRoles:       user.GlobalRoles,
+		GlobalPermissions: user.GlobalPermissions,
+	}
+}
+
+func toAPIUser(v domain.User) (gatewayapi.User, error) {
 	roles := make([]string, len(v.GlobalRoles))
 	for i := range v.GlobalRoles {
 		roles[i] = string(v.GlobalRoles[i])
@@ -65,7 +67,7 @@ func mapUser(v domain.User) (gatewayapi.User, error) {
 			membership.Roles = append(membership.Roles, gatewayapi.MembershipRole(role))
 		}
 		for _, request := range m.RoleRequests {
-			mapped, err := mapRole(request)
+			mapped, err := toAPIRoleRequest(request)
 			if err != nil {
 				return gatewayapi.User{}, err
 			}
@@ -83,9 +85,9 @@ func (h *ogenHandler) GetUser(ctx context.Context, p gatewayapi.GetUserParams) (
 	}
 	v, err := h.identity.GetUser(ctx, a, p.ID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get user: %w", err)
 	}
-	r, err := mapUser(v)
+	r, err := toAPIUser(v)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +99,8 @@ func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.Gr
 	if !ok {
 		return authMissing()
 	}
-	if err := h.identity.GrantGlobalPermission(ctx, a, p.ID.String(), string(p.Permission)); err != nil {
-		return err
+	if err := h.metadataLifecycle.GrantGlobalPermission(ctx, a, p.ID.String(), string(p.Permission)); err != nil {
+		return fmt.Errorf("grant global permission: %w", err)
 	}
 	return nil
 }
@@ -108,8 +110,8 @@ func (h *ogenHandler) RevokeGlobalPermission(ctx context.Context, p gatewayapi.R
 	if !ok {
 		return authMissing()
 	}
-	if err := h.identity.RevokeGlobalPermission(ctx, a, p.ID.String(), string(p.Permission)); err != nil {
-		return err
+	if err := h.metadataLifecycle.RevokeGlobalPermission(ctx, a, p.ID.String(), string(p.Permission)); err != nil {
+		return fmt.Errorf("revoke global permission: %w", err)
 	}
 	return nil
 }
@@ -119,8 +121,8 @@ func (h *ogenHandler) AssignGlobalRole(ctx context.Context, p gatewayapi.AssignG
 	if !ok {
 		return authMissing()
 	}
-	if err := h.identity.AssignGlobalRole(ctx, a, p.ID.String(), string(p.Role)); err != nil {
-		return err
+	if err := h.metadataLifecycle.AssignGlobalRole(ctx, a, p.ID.String(), string(p.Role)); err != nil {
+		return fmt.Errorf("assign global role: %w", err)
 	}
 	return nil
 }
@@ -130,8 +132,8 @@ func (h *ogenHandler) RemoveGlobalRole(ctx context.Context, p gatewayapi.RemoveG
 	if !ok {
 		return authMissing()
 	}
-	if err := h.identity.RemoveGlobalRole(ctx, a, p.ID.String(), string(p.Role)); err != nil {
-		return err
+	if err := h.metadataLifecycle.RemoveGlobalRole(ctx, a, p.ID.String(), string(p.Role)); err != nil {
+		return fmt.Errorf("remove global role: %w", err)
 	}
 	return nil
 }
@@ -141,8 +143,8 @@ func (h *ogenHandler) BlockUser(ctx context.Context, q *gatewayapi.BlockUserRequ
 	if !ok {
 		return authMissing()
 	}
-	if err := h.identity.BlockUser(ctx, a, p.ID.String(), string(q.Reason)); err != nil {
-		return err
+	if err := h.metadataLifecycle.BlockUser(ctx, a, p.ID.String(), string(q.Reason)); err != nil {
+		return fmt.Errorf("block user: %w", err)
 	}
 	return nil
 }
@@ -152,8 +154,8 @@ func (h *ogenHandler) UnblockUser(ctx context.Context, p gatewayapi.UnblockUserP
 	if !ok {
 		return authMissing()
 	}
-	if err := h.identity.UnblockUser(ctx, a, p.ID.String()); err != nil {
-		return err
+	if err := h.metadataLifecycle.UnblockUser(ctx, a, p.ID.String()); err != nil {
+		return fmt.Errorf("unblock user: %w", err)
 	}
 	return nil
 }

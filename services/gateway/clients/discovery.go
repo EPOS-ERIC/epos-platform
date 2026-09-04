@@ -5,11 +5,28 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
-func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
+type SearchResourcesInput struct {
+	Query         string
+	Types         []string
+	Concepts      []string
+	GroupID       string
+	SpatialFilter string
+	DateFrom      *time.Time
+	DateTo        *time.Time
+	Provider      string
+	// TODO: this should become an array of strings
+	Keywords           string
+	EditorID           string
+	VersioningStatuses []string
+}
+
+func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string, filter SearchResourcesInput) ([]client.DiscoveryItem, error) {
 	if c == nil || c.resources == nil {
 		return nil, fmt.Errorf("metadata-lifecycle resource client is not configured")
 	}
@@ -58,7 +75,7 @@ func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string,
 		return nil, wrapDiscoveryError("search metadata-lifecycle resources", response, err)
 	}
 
-	return mapSlice(items, toDomainDiscoveryItem), nil
+	return items, nil
 }
 
 func wrapDiscoveryError(operation string, response *http.Response, err error) error {

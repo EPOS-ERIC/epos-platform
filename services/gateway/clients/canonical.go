@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
-func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID string) ([]domain.ContactPoint, error) {
+func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID string) ([]client.ContactPoint, error) {
 	if c == nil || c.contactPoints == nil {
 		return nil, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
 	}
@@ -18,59 +19,59 @@ func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID strin
 		return nil, wrapCanonicalError("list metadata-lifecycle contact points", response, err)
 	}
 
-	return mapSlice(points, toDomainContactPoint), nil
+	return points, nil
 }
 
-func (c *MetadataLifecycle) GetContactPoint(ctx context.Context, actorID, id string) (domain.ContactPoint, error) {
+func (c *MetadataLifecycle) GetContactPoint(ctx context.Context, actorID, id string) (*client.ContactPoint, error) {
 	if c == nil || c.contactPoints == nil {
-		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
 	}
 
 	point, response, err := c.contactPoints.GetContactPoint(ctx, id).XEPOSUserID(actorID).Execute()
 	if err != nil {
-		return domain.ContactPoint{}, wrapCanonicalError("get metadata-lifecycle contact point", response, err)
+		return nil, wrapCanonicalError("get metadata-lifecycle contact point", response, err)
 	}
 	if point == nil {
-		return domain.ContactPoint{}, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
+		return nil, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
 	}
 
-	return toDomainContactPoint(*point), nil
+	return point, nil
 }
 
-func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID string, input domain.CreateContactPointInput) (domain.ContactPoint, error) {
+func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID string, request client.CreateContactPointRequest) (*client.ContactPoint, error) {
 	if c == nil || c.contactPoints == nil {
-		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
 	}
 
 	point, response, err := c.contactPoints.CreateContactPoint(ctx).
 		XEPOSUserID(actorID).
-		CreateContactPointRequest(toClientCreateContactPointRequest(input)).Execute()
+		CreateContactPointRequest(request).Execute()
 	if err != nil {
-		return domain.ContactPoint{}, wrapCanonicalError("create metadata-lifecycle contact point", response, err)
+		return nil, wrapCanonicalError("create metadata-lifecycle contact point", response, err)
 	}
 	if point == nil {
-		return domain.ContactPoint{}, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
+		return nil, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
 	}
 
-	return toDomainContactPoint(*point), nil
+	return point, nil
 }
 
-func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID, id string, input domain.ReplaceContactPointInput) (domain.ContactPoint, error) {
+func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID, id string, request client.ReplaceContactPointRequest) (*client.ContactPoint, error) {
 	if c == nil || c.contactPoints == nil {
-		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
 	}
 
 	point, response, err := c.contactPoints.ReplaceContactPoint(ctx, id).
 		XEPOSUserID(actorID).
-		ReplaceContactPointRequest(toClientReplaceContactPointRequest(input)).Execute()
+		ReplaceContactPointRequest(request).Execute()
 	if err != nil {
-		return domain.ContactPoint{}, wrapCanonicalError("replace metadata-lifecycle contact point", response, err)
+		return nil, wrapCanonicalError("replace metadata-lifecycle contact point", response, err)
 	}
 	if point == nil {
-		return domain.ContactPoint{}, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
+		return nil, fmt.Errorf("decode metadata-lifecycle contact-point: response is empty")
 	}
 
-	return toDomainContactPoint(*point), nil
+	return point, nil
 }
 
 func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID, id string) error {
@@ -86,7 +87,7 @@ func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID, id 
 	return nil
 }
 
-func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) ([]domain.CanonicalOrganization, error) {
+func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) ([]client.CanonicalOrganization, error) {
 	if c == nil || c.organizations == nil {
 		return nil, fmt.Errorf("metadata-lifecycle organization client is not configured")
 	}
@@ -96,63 +97,59 @@ func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) ([]domain.Can
 		return nil, wrapCanonicalError("list metadata-lifecycle organizations", response, err)
 	}
 
-	return mapSlice(organizations, toDomainCanonicalOrganization), nil
+	return organizations, nil
 }
 
-func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (domain.CanonicalOrganization, error) {
+func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (*client.CanonicalOrganization, error) {
 	if c == nil || c.organizations == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle organization client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle organization client is not configured")
 	}
 
 	organization, response, err := c.organizations.GetOrganization(ctx, id).Execute()
 	if err != nil {
-		return domain.CanonicalOrganization{}, wrapCanonicalError("get metadata-lifecycle organization", response, err)
+		return nil, wrapCanonicalError("get metadata-lifecycle organization", response, err)
 	}
 	if organization == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
+		return nil, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
 	}
 
-	return toDomainCanonicalOrganization(*organization), nil
+	return organization, nil
 }
 
-func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, input domain.CreateOrganizationInput) (domain.CanonicalOrganization, error) {
+func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, request client.CreateCanonicalOrganizationRequest) (*client.CanonicalOrganization, error) {
 	if c == nil || c.organizations == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle organization client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle organization client is not configured")
 	}
-
-	request := toClientCreateCanonicalOrganizationRequest(input)
 
 	organization, response, err := c.organizations.CreateOrganization(ctx).
 		XEPOSUserID(actorID).
 		CreateCanonicalOrganizationRequest(request).
 		Execute()
 	if err != nil {
-		return domain.CanonicalOrganization{}, wrapCanonicalError("create metadata-lifecycle organization", response, err)
+		return nil, wrapCanonicalError("create metadata-lifecycle organization", response, err)
 	}
 	if organization == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
+		return nil, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
 	}
-	return toDomainCanonicalOrganization(*organization), nil
+	return organization, nil
 }
 
-func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID, id string, input domain.ReplaceOrganizationInput) (domain.CanonicalOrganization, error) {
+func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID, id string, request client.ReplaceCanonicalOrganizationRequest) (*client.CanonicalOrganization, error) {
 	if c == nil || c.organizations == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle organization client is not configured")
+		return nil, fmt.Errorf("metadata-lifecycle organization client is not configured")
 	}
-
-	request := toClientReplaceCanonicalOrganizationRequest(input)
 
 	organization, response, err := c.organizations.ReplaceOrganization(ctx, id).
 		XEPOSUserID(actorID).
 		ReplaceCanonicalOrganizationRequest(request).
 		Execute()
 	if err != nil {
-		return domain.CanonicalOrganization{}, wrapCanonicalError("replace metadata-lifecycle organization", response, err)
+		return nil, wrapCanonicalError("replace metadata-lifecycle organization", response, err)
 	}
 	if organization == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
+		return nil, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
 	}
-	return toDomainCanonicalOrganization(*organization), nil
+	return organization, nil
 }
 
 func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID, id string) error {

@@ -3092,8 +3092,6 @@ func (s UserStatus) Validate() error {
 	switch s {
 	case "ACTIVE":
 		return nil
-	case "INACTIVE":
-		return nil
 	case "BLOCKED":
 		return nil
 	default:

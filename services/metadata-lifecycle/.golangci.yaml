@@ -40,3 +40,5 @@ linters:
     goconst:
       ignore-string-values:
         - "true"
+    exhaustruct_v5:
+      allow-empty-returns: true

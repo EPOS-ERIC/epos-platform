@@ -104,7 +104,7 @@ func buildResponse(cached *cachedResponse, meta CacheMetadata) *Response {
 	}
 
 	return &Response{
-		Response: &nethttp.Response{ //nolint:exhaustruct_v5
+		Response: &nethttp.Response{
 			Status:        cached.status,
 			StatusCode:    cached.statusCode,
 			Header:        header,

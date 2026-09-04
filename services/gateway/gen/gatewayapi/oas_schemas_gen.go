@@ -7942,16 +7942,14 @@ func (s *UserMembershipSummary) SetUpdatedAt(val time.Time) {
 type UserStatus string
 
 const (
-	UserStatusACTIVE   UserStatus = "ACTIVE"
-	UserStatusINACTIVE UserStatus = "INACTIVE"
-	UserStatusBLOCKED  UserStatus = "BLOCKED"
+	UserStatusACTIVE  UserStatus = "ACTIVE"
+	UserStatusBLOCKED UserStatus = "BLOCKED"
 )
 
 // AllValues returns all UserStatus values.
 func (UserStatus) AllValues() []UserStatus {
 	return []UserStatus{
 		UserStatusACTIVE,
-		UserStatusINACTIVE,
 		UserStatusBLOCKED,
 	}
 }
@@ -7960,8 +7958,6 @@ func (UserStatus) AllValues() []UserStatus {
 func (s UserStatus) MarshalText() ([]byte, error) {
 	switch s {
 	case UserStatusACTIVE:
-		return []byte(s), nil
-	case UserStatusINACTIVE:
 		return []byte(s), nil
 	case UserStatusBLOCKED:
 		return []byte(s), nil
@@ -7975,9 +7971,6 @@ func (s *UserStatus) UnmarshalText(data []byte) error {
 	switch UserStatus(data) {
 	case UserStatusACTIVE:
 		*s = UserStatusACTIVE
-		return nil
-	case UserStatusINACTIVE:
-		*s = UserStatusINACTIVE
 		return nil
 	case UserStatusBLOCKED:
 		*s = UserStatusBLOCKED

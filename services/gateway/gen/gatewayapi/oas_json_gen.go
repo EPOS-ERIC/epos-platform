@@ -15365,8 +15365,6 @@ func (s *UserStatus) Decode(d *jx.Decoder) error {
 	switch UserStatus(v) {
 	case UserStatusACTIVE:
 		*s = UserStatusACTIVE
-	case UserStatusINACTIVE:
-		*s = UserStatusINACTIVE
 	case UserStatusBLOCKED:
 		*s = UserStatusBLOCKED
 	default:

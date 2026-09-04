@@ -1,8 +1,9 @@
-//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
 	"context"
+	"fmt"
+	"io"
 
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
@@ -12,13 +13,30 @@ func (h *ogenHandler) ImportTurtleMetadata(ctx context.Context, body gatewayapi.
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.imports.Turtle(ctx, actor, body)
+	data, err := io.ReadAll(body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read import body: %w", err)
 	}
-	result := &gatewayapi.ImportResult{Groups: int(v.Groups), Categories: int(v.Categories), Organizations: int(v.Organizations), ContactPoints: int(v.ContactPoints), Datasets: int(v.Datasets), SoftwareApplications: int(v.SoftwareApplications), SoftwareSourceCodes: int(v.SoftwareSourceCodes)}
+	v, err := h.metadataLifecycle.ImportTurtle(ctx, actor, data)
+	if err != nil {
+		return nil, fmt.Errorf("import turtle metadata: %w", err)
+	}
+	result := &gatewayapi.ImportResult{
+		Groups:               int(v.Groups),
+		Categories:           int(v.Categories),
+		Organizations:        int(v.Organizations),
+		ContactPoints:        int(v.ContactPoints),
+		Datasets:             int(v.Datasets),
+		SoftwareApplications: int(v.SoftwareApplications),
+		SoftwareSourceCodes:  int(v.SoftwareSourceCodes),
+	}
 	for _, warning := range v.Warnings {
-		result.Warnings = append(result.Warnings, gatewayapi.ImportDiagnostic{Severity: warning.Severity, Subject: warning.Subject, Predicate: warning.Predicate, Message: warning.Message})
+		result.Warnings = append(result.Warnings, gatewayapi.ImportDiagnostic{
+			Severity:  warning.Severity,
+			Subject:   warning.Subject,
+			Predicate: warning.Predicate,
+			Message:   warning.Message,
+		})
 	}
 	return result, nil
 }

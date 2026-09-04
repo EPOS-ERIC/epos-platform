@@ -14,23 +14,18 @@ type MetadataLifecycleIdentity struct {
 	proxy        *MetadataLifecycleProxy
 }
 
-func (c *MetadataLifecycleIdentity) ProvisionUser(ctx context.Context, identity ActorIdentity) (domain.IdentityUser, error) {
-	user, err := c.identityGRPC.ProvisionUser(ctx, &metadatalifecyclev1.ProvisionUserRequest{
+func (c *MetadataLifecycleIdentity) ProvisionUser(ctx context.Context, identity ActorIdentity) error {
+	_, err := c.identityGRPC.ProvisionUser(ctx, &metadatalifecyclev1.ProvisionUserRequest{
 		Id:         identity.AuthIdentifier,
 		Email:      identity.Email,
 		GivenName:  identity.GivenName,
 		FamilyName: identity.FamilyName,
 	})
 	if err != nil {
-		return domain.IdentityUser{}, wrapGRPCError("provision metadata-lifecycle user", err)
+		return wrapGRPCError("provision metadata-lifecycle user", err)
 	}
 
-	return domain.IdentityUser{
-		ID:         user.Id,
-		Email:      user.Email,
-		GivenName:  user.GivenName,
-		FamilyName: user.FamilyName,
-	}, nil
+	return nil
 }
 
 func (c *MetadataLifecycleIdentity) GetUserForAuth(ctx context.Context, actorID, id string) (domain.User, error) {
@@ -55,18 +50,16 @@ func (c *MetadataLifecycleIdentity) GetUserForAuth(ctx context.Context, actorID,
 	}
 
 	return domain.User{
-		UserSummary: domain.UserSummary{
-			ID:                user.Id,
-			Email:             user.Email,
-			GivenName:         user.GivenName,
-			FamilyName:        user.FamilyName,
-			Status:            status,
-			GlobalRoles:       globalRoles,
-			GlobalPermissions: slices.Clone(user.GlobalPermissions),
-			CreatedAt:         user.GetCreatedAt().AsTime(),
-			UpdatedAt:         user.GetUpdatedAt().AsTime(),
-		},
-		Memberships: memberships,
+		ID:                user.Id,
+		Email:             user.Email,
+		GivenName:         user.GivenName,
+		FamilyName:        user.FamilyName,
+		Status:            status,
+		GlobalRoles:       globalRoles,
+		GlobalPermissions: slices.Clone(user.GlobalPermissions),
+		CreatedAt:         user.GetCreatedAt().AsTime(),
+		UpdatedAt:         user.GetUpdatedAt().AsTime(),
+		Memberships:       memberships,
 	}, nil
 }
 

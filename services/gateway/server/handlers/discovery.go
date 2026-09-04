@@ -1,16 +1,16 @@
-//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
 func (h *ogenHandler) DiscoverResources(ctx context.Context, q gatewayapi.DiscoverResourcesParams) ([]gatewayapi.DiscoveryItem, error) {
 	actor, _ := actorID(ctx)
-	filter := domain.DiscoveryFilter{}
+	filter := clients.SearchResourcesInput{}
 	if q.Q.Set {
 		filter.Query = q.Q.Value
 	}
@@ -53,13 +53,13 @@ func (h *ogenHandler) DiscoverResources(ctx context.Context, q gatewayapi.Discov
 	if q.DateTo.Set {
 		filter.DateTo = &q.DateTo.Value
 	}
-	v, err := h.discovery.Search(ctx, actor, filter)
+	v, err := h.metadataLifecycle.SearchResources(ctx, actor, filter)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("search resources: %w", err)
 	}
 	out := []gatewayapi.DiscoveryItem{}
 	for _, x := range v {
-		mapped, err := mapDiscovery(x)
+		mapped, err := toAPIDiscovery(x)
 		if err != nil {
 			return nil, err
 		}

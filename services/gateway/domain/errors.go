@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+// TODO: we should use the domain errors only for non proxied endpoints? or not? define this well and clean it up
+
 // ErrorMetadata contains safe details intended for gateway clients.
 type ErrorMetadata struct {
 	Title  string
@@ -33,14 +35,20 @@ func WithErrorMetadata(err error, title, detail string) error {
 	if title == "" {
 		return fmt.Errorf("error metadata title is required: %w", err)
 	}
-	return &metadataError{err: err, metadata: ErrorMetadata{Title: title, Detail: detail}}
+	return &metadataError{
+		err: err,
+		metadata: ErrorMetadata{
+			Title:  title,
+			Detail: detail,
+		},
+	}
 }
 
 // ErrorMetadataFrom returns client-safe details attached to err or its cause.
 func ErrorMetadataFrom(err error) (ErrorMetadata, bool) {
 	var value *metadataError
 	if !errors.As(err, &value) {
-		return ErrorMetadata{Title: "", Detail: ""}, false
+		return ErrorMetadata{}, false
 	}
 	return value.metadata, true
 }
@@ -54,3 +62,18 @@ var (
 	ErrForbidden       = errors.New("forbidden")
 	ErrUnauthorized    = errors.New("unauthorized")
 )
+
+// UpstreamError represents a failed request to a downstream service.
+// Response bodies stay inside the gateway and are not part of the public API.
+// TODO: why do we have these two error structs? can't we only use one?
+type UpstreamError struct {
+	StatusCode   int
+	WrappedError error
+}
+
+func (e *UpstreamError) Error() string {
+	if e.WrappedError != nil {
+		return fmt.Sprintf("upstream request failed: %s", e.WrappedError.Error())
+	}
+	return fmt.Sprintf("upstream request failed: %d", e.StatusCode)
+}
