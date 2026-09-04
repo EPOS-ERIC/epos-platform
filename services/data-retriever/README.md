@@ -37,6 +37,15 @@ Database environment variables:
 - `DATA_RETRIEVER_DB_USER` (default `data_retriever`)
 - `DATA_RETRIEVER_DB_PASSWORD` (default `data_retriever`)
 
+Runtime environment variables:
+
+- `DATA_RETRIEVER_HTTP_TIMEOUT` (default `30s`): outbound HTTP request timeout
+- `DATA_RETRIEVER_MIGRATIONS_DIR` (default `migrations`): SQL migration directory
+- `DATA_RETRIEVER_DB_CONNECT_MAX_ATTEMPTS` (default `20`)
+- `DATA_RETRIEVER_DB_CONNECT_RETRY_DELAY` (default `2s`)
+
+Standard OpenTelemetry SDK environment variables configure telemetry export. The repository development stack sends OTLP data to the local LGTM container.
+
 ## OpenAPI
 
 - Contract: `swagger/openapi.yaml`
@@ -53,3 +62,9 @@ Database environment variables:
 
 - SQL migrations: `migrations/`
 - Runtime migration runner is shared via `packages/go/migrations`.
+
+Migrations are applied automatically when the service starts.
+
+## Docker
+
+Build the production image from this directory with `make build-docker`. Set `IMAGE` to override the default image name and tag.
