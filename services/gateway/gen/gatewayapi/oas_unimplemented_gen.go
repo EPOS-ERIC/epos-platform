@@ -337,7 +337,7 @@ func (UnimplementedHandler) ListOrganizations(ctx context.Context) (r []Canonica
 // Retrieve all user profiles. Allowed to super admins only.
 //
 // GET /users
-func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserSummary, _ error) {
+func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserListItem, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

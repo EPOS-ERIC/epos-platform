@@ -19,7 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_GetUser_FullMethodName = "/metadata_lifecycle.v1.UserService/GetUser"
+	UserService_GetUser_FullMethodName                = "/metadata_lifecycle.v1.UserService/GetUser"
+	UserService_ListUsers_FullMethodName              = "/metadata_lifecycle.v1.UserService/ListUsers"
+	UserService_GrantGlobalPermission_FullMethodName  = "/metadata_lifecycle.v1.UserService/GrantGlobalPermission"
+	UserService_RevokeGlobalPermission_FullMethodName = "/metadata_lifecycle.v1.UserService/RevokeGlobalPermission"
+	UserService_AssignGlobalRole_FullMethodName       = "/metadata_lifecycle.v1.UserService/AssignGlobalRole"
+	UserService_RemoveGlobalRole_FullMethodName       = "/metadata_lifecycle.v1.UserService/RemoveGlobalRole"
+	UserService_BlockUser_FullMethodName              = "/metadata_lifecycle.v1.UserService/BlockUser"
+	UserService_UnblockUser_FullMethodName            = "/metadata_lifecycle.v1.UserService/UnblockUser"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -27,6 +34,13 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
 	GetUser(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	GrantGlobalPermission(ctx context.Context, in *GrantGlobalPermissionRequest, opts ...grpc.CallOption) (*GrantGlobalPermissionResponse, error)
+	RevokeGlobalPermission(ctx context.Context, in *RevokeGlobalPermissionRequest, opts ...grpc.CallOption) (*RevokeGlobalPermissionResponse, error)
+	AssignGlobalRole(ctx context.Context, in *AssignGlobalRoleRequest, opts ...grpc.CallOption) (*AssignGlobalRoleResponse, error)
+	RemoveGlobalRole(ctx context.Context, in *RemoveGlobalRoleRequest, opts ...grpc.CallOption) (*RemoveGlobalRoleResponse, error)
+	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
+	UnblockUser(ctx context.Context, in *UnblockUserRequest, opts ...grpc.CallOption) (*UnblockUserResponse, error)
 }
 
 type userServiceClient struct {
@@ -47,11 +61,88 @@ func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserRequest, opt
 	return out, nil
 }
 
+func (c *userServiceClient) ListUsers(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUsersResponse)
+	err := c.cc.Invoke(ctx, UserService_ListUsers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) GrantGlobalPermission(ctx context.Context, in *GrantGlobalPermissionRequest, opts ...grpc.CallOption) (*GrantGlobalPermissionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GrantGlobalPermissionResponse)
+	err := c.cc.Invoke(ctx, UserService_GrantGlobalPermission_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) RevokeGlobalPermission(ctx context.Context, in *RevokeGlobalPermissionRequest, opts ...grpc.CallOption) (*RevokeGlobalPermissionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevokeGlobalPermissionResponse)
+	err := c.cc.Invoke(ctx, UserService_RevokeGlobalPermission_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) AssignGlobalRole(ctx context.Context, in *AssignGlobalRoleRequest, opts ...grpc.CallOption) (*AssignGlobalRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AssignGlobalRoleResponse)
+	err := c.cc.Invoke(ctx, UserService_AssignGlobalRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) RemoveGlobalRole(ctx context.Context, in *RemoveGlobalRoleRequest, opts ...grpc.CallOption) (*RemoveGlobalRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RemoveGlobalRoleResponse)
+	err := c.cc.Invoke(ctx, UserService_RemoveGlobalRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BlockUserResponse)
+	err := c.cc.Invoke(ctx, UserService_BlockUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) UnblockUser(ctx context.Context, in *UnblockUserRequest, opts ...grpc.CallOption) (*UnblockUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UnblockUserResponse)
+	err := c.cc.Invoke(ctx, UserService_UnblockUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
 type UserServiceServer interface {
 	GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
+	GrantGlobalPermission(context.Context, *GrantGlobalPermissionRequest) (*GrantGlobalPermissionResponse, error)
+	RevokeGlobalPermission(context.Context, *RevokeGlobalPermissionRequest) (*RevokeGlobalPermissionResponse, error)
+	AssignGlobalRole(context.Context, *AssignGlobalRoleRequest) (*AssignGlobalRoleResponse, error)
+	RemoveGlobalRole(context.Context, *RemoveGlobalRoleRequest) (*RemoveGlobalRoleResponse, error)
+	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
+	UnblockUser(context.Context, *UnblockUserRequest) (*UnblockUserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -64,6 +155,27 @@ type UnimplementedUserServiceServer struct{}
 
 func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserRequest) (*GetUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
+}
+func (UnimplementedUserServiceServer) ListUsers(context.Context, *ListUsersRequest) (*ListUsersResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListUsers not implemented")
+}
+func (UnimplementedUserServiceServer) GrantGlobalPermission(context.Context, *GrantGlobalPermissionRequest) (*GrantGlobalPermissionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GrantGlobalPermission not implemented")
+}
+func (UnimplementedUserServiceServer) RevokeGlobalPermission(context.Context, *RevokeGlobalPermissionRequest) (*RevokeGlobalPermissionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RevokeGlobalPermission not implemented")
+}
+func (UnimplementedUserServiceServer) AssignGlobalRole(context.Context, *AssignGlobalRoleRequest) (*AssignGlobalRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AssignGlobalRole not implemented")
+}
+func (UnimplementedUserServiceServer) RemoveGlobalRole(context.Context, *RemoveGlobalRoleRequest) (*RemoveGlobalRoleResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveGlobalRole not implemented")
+}
+func (UnimplementedUserServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BlockUser not implemented")
+}
+func (UnimplementedUserServiceServer) UnblockUser(context.Context, *UnblockUserRequest) (*UnblockUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnblockUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -104,6 +216,132 @@ func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_ListUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUsersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).ListUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_ListUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).ListUsers(ctx, req.(*ListUsersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_GrantGlobalPermission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GrantGlobalPermissionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GrantGlobalPermission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GrantGlobalPermission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GrantGlobalPermission(ctx, req.(*GrantGlobalPermissionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_RevokeGlobalPermission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevokeGlobalPermissionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RevokeGlobalPermission(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RevokeGlobalPermission_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RevokeGlobalPermission(ctx, req.(*RevokeGlobalPermissionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_AssignGlobalRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AssignGlobalRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).AssignGlobalRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_AssignGlobalRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).AssignGlobalRole(ctx, req.(*AssignGlobalRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_RemoveGlobalRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveGlobalRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).RemoveGlobalRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_RemoveGlobalRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).RemoveGlobalRole(ctx, req.(*RemoveGlobalRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_BlockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).BlockUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_BlockUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).BlockUser(ctx, req.(*BlockUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_UnblockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnblockUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UnblockUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UnblockUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UnblockUser(ctx, req.(*UnblockUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +352,34 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUser",
 			Handler:    _UserService_GetUser_Handler,
+		},
+		{
+			MethodName: "ListUsers",
+			Handler:    _UserService_ListUsers_Handler,
+		},
+		{
+			MethodName: "GrantGlobalPermission",
+			Handler:    _UserService_GrantGlobalPermission_Handler,
+		},
+		{
+			MethodName: "RevokeGlobalPermission",
+			Handler:    _UserService_RevokeGlobalPermission_Handler,
+		},
+		{
+			MethodName: "AssignGlobalRole",
+			Handler:    _UserService_AssignGlobalRole_Handler,
+		},
+		{
+			MethodName: "RemoveGlobalRole",
+			Handler:    _UserService_RemoveGlobalRole_Handler,
+		},
+		{
+			MethodName: "BlockUser",
+			Handler:    _UserService_BlockUser_Handler,
+		},
+		{
+			MethodName: "UnblockUser",
+			Handler:    _UserService_UnblockUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

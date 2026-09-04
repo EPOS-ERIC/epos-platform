@@ -14,7 +14,6 @@ import (
 )
 
 type service interface {
-	List(context.Context, uuid.UUID) ([]domain.Category, error)
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.Category, error)
 	Create(context.Context, domain.Actor, uuid.UUID, domain.CategoryInput) (domain.Category, error)
 	Replace(context.Context, domain.Actor, uuid.UUID, uuid.UUID, domain.CategoryInput) (domain.Category, error)
@@ -31,41 +30,6 @@ func New(log *slog.Logger, service service) *Handler {
 		service: service,
 		log:     log.With("component", "categories-handler"),
 	}
-}
-
-func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	groupID, ok := groupIDPath(h.log, w, r)
-	if !ok {
-		return
-	}
-
-	items, err := h.service.List(r.Context(), groupID)
-	if err != nil {
-		writeError(h.log, w, r, err, "list group categories")
-		return
-	}
-
-	result := make([]categoryResponse, 0, len(items))
-	for _, item := range items {
-		result = append(result, toResponse(item))
-	}
-
-	transport.WriteJSON(h.log, w, http.StatusOK, result)
-}
-
-func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	groupID, categoryID, ok := categoryPath(h.log, w, r)
-	if !ok {
-		return
-	}
-
-	item, err := h.service.Get(r.Context(), groupID, categoryID)
-	if err != nil {
-		writeError(h.log, w, r, err, "get group category")
-		return
-	}
-
-	transport.WriteJSON(h.log, w, http.StatusOK, toResponse(item))
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {

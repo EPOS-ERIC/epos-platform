@@ -4,38 +4,83 @@ import (
 	"context"
 	"fmt"
 
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
-func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserSummary, error) {
+func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserListItem, error) {
 	actor, ok := actorID(ctx)
 	if !ok {
 		return nil, authMissing()
 	}
-	users, err := h.metadataLifecycle.ListUsers(ctx, actor)
+	response, err := h.metadataLifecycle.GRPC.ListUsers(ctx, actor)
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
+	if response == nil {
+		return nil, fmt.Errorf("list users: response is empty")
+	}
 
-	out := make([]gatewayapi.UserSummary, len(users))
-	for i, user := range users {
-		out[i] = toAPIUserSummary(user)
+	out := make([]gatewayapi.UserListItem, len(response.GetUsers()))
+	for i, user := range response.GetUsers() {
+		out[i], err = toAPIUserListItem(user)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return out, nil
 }
 
-func toAPIUserSummary(user metadatalifecycleclient.UserSummary) gatewayapi.UserSummary {
-	return gatewayapi.UserSummary{
-		ID:                user.Id,
-		Email:             user.Email,
-		GivenName:         user.GivenName,
-		FamilyName:        user.FamilyName,
-		Status:            gatewayapi.UserStatus(user.Status),
-		GlobalRoles:       user.GlobalRoles,
-		GlobalPermissions: user.GlobalPermissions,
+func toAPIUserListItem(user *metadatalifecyclev1.UserListItem) (gatewayapi.UserListItem, error) {
+	if user == nil {
+		return gatewayapi.UserListItem{}, fmt.Errorf("list users: response contains nil user")
 	}
+
+	status, err := toAPIUserStatus(user.GetStatus())
+	if err != nil {
+		return gatewayapi.UserListItem{}, err
+	}
+	globalRoles, err := toAPIGlobalRoles(user.GetGlobalRoles())
+	if err != nil {
+		return gatewayapi.UserListItem{}, err
+	}
+
+	return gatewayapi.UserListItem{
+		ID:                user.GetId(),
+		Email:             user.GetEmail(),
+		GivenName:         user.GetGivenName(),
+		FamilyName:        user.GetFamilyName(),
+		Status:            status,
+		GlobalRoles:       globalRoles,
+		GlobalPermissions: user.GetGlobalPermissions(),
+		CreatedAt:         user.GetCreatedAt().AsTime(),
+		UpdatedAt:         user.GetUpdatedAt().AsTime(),
+	}, nil
+}
+
+func toAPIUserStatus(value metadatalifecyclev1.UserStatus) (gatewayapi.UserStatus, error) {
+	switch value {
+	case metadatalifecyclev1.UserStatus_USER_STATUS_ACTIVE:
+		return gatewayapi.UserStatus("ACTIVE"), nil
+	case metadatalifecyclev1.UserStatus_USER_STATUS_BLOCKED:
+		return gatewayapi.UserStatus("BLOCKED"), nil
+	default:
+		return "", fmt.Errorf("metadata-lifecycle returned unknown user status: %v", value)
+	}
+}
+
+func toAPIGlobalRoles(values []metadatalifecyclev1.GlobalRole) ([]string, error) {
+	roles := make([]string, len(values))
+	for i, value := range values {
+		switch value {
+		case metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN:
+			roles[i] = "ADMIN"
+		default:
+			return nil, fmt.Errorf("metadata-lifecycle returned unknown global role: %v", value)
+		}
+	}
+	return roles, nil
 }
 
 func toAPIUser(v domain.User) (gatewayapi.User, error) {
@@ -99,7 +144,7 @@ func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.Gr
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.GrantGlobalPermission(ctx, a, p.ID.String(), string(p.Permission)); err != nil {
+	if err := h.metadataLifecycle.GRPC.GrantGlobalPermission(ctx, a, p.ID, string(p.Permission)); err != nil {
 		return fmt.Errorf("grant global permission: %w", err)
 	}
 	return nil
@@ -110,7 +155,7 @@ func (h *ogenHandler) RevokeGlobalPermission(ctx context.Context, p gatewayapi.R
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RevokeGlobalPermission(ctx, a, p.ID.String(), string(p.Permission)); err != nil {
+	if err := h.metadataLifecycle.RevokeGlobalPermission(ctx, a, p.ID, string(p.Permission)); err != nil {
 		return fmt.Errorf("revoke global permission: %w", err)
 	}
 	return nil
@@ -121,7 +166,7 @@ func (h *ogenHandler) AssignGlobalRole(ctx context.Context, p gatewayapi.AssignG
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.AssignGlobalRole(ctx, a, p.ID.String(), string(p.Role)); err != nil {
+	if err := h.metadataLifecycle.AssignGlobalRole(ctx, a, p.ID, string(p.Role)); err != nil {
 		return fmt.Errorf("assign global role: %w", err)
 	}
 	return nil
@@ -132,7 +177,7 @@ func (h *ogenHandler) RemoveGlobalRole(ctx context.Context, p gatewayapi.RemoveG
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RemoveGlobalRole(ctx, a, p.ID.String(), string(p.Role)); err != nil {
+	if err := h.metadataLifecycle.RemoveGlobalRole(ctx, a, p.ID, string(p.Role)); err != nil {
 		return fmt.Errorf("remove global role: %w", err)
 	}
 	return nil
@@ -143,7 +188,7 @@ func (h *ogenHandler) BlockUser(ctx context.Context, q *gatewayapi.BlockUserRequ
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.BlockUser(ctx, a, p.ID.String(), string(q.Reason)); err != nil {
+	if err := h.metadataLifecycle.BlockUser(ctx, a, p.ID, string(q.Reason)); err != nil {
 		return fmt.Errorf("block user: %w", err)
 	}
 	return nil
@@ -154,7 +199,7 @@ func (h *ogenHandler) UnblockUser(ctx context.Context, p gatewayapi.UnblockUserP
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.UnblockUser(ctx, a, p.ID.String()); err != nil {
+	if err := h.metadataLifecycle.UnblockUser(ctx, a, p.ID); err != nil {
 		return fmt.Errorf("unblock user: %w", err)
 	}
 	return nil

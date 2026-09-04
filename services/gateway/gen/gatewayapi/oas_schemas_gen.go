@@ -7771,6 +7771,8 @@ type User struct {
 	Status            UserStatus `json:"status"`
 	GlobalRoles       []string   `json:"global_roles"`
 	GlobalPermissions []string   `json:"global_permissions"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 	// Membership previews for this user.
 	Memberships []UserMembershipSummary `json:"memberships"`
 }
@@ -7808,6 +7810,16 @@ func (s *User) GetGlobalRoles() []string {
 // GetGlobalPermissions returns the value of GlobalPermissions.
 func (s *User) GetGlobalPermissions() []string {
 	return s.GlobalPermissions
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *User) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *User) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
 }
 
 // GetMemberships returns the value of Memberships.
@@ -7850,9 +7862,123 @@ func (s *User) SetGlobalPermissions(val []string) {
 	s.GlobalPermissions = val
 }
 
+// SetCreatedAt sets the value of CreatedAt.
+func (s *User) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *User) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
 // SetMemberships sets the value of Memberships.
 func (s *User) SetMemberships(val []UserMembershipSummary) {
 	s.Memberships = val
+}
+
+// User record returned by the user list endpoint.
+// Ref: #/components/schemas/UserListItem
+type UserListItem struct {
+	ID                string     `json:"id"`
+	Email             string     `json:"email"`
+	GivenName         string     `json:"given_name"`
+	FamilyName        string     `json:"family_name"`
+	Status            UserStatus `json:"status"`
+	GlobalRoles       []string   `json:"global_roles"`
+	GlobalPermissions []string   `json:"global_permissions"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+}
+
+// GetID returns the value of ID.
+func (s *UserListItem) GetID() string {
+	return s.ID
+}
+
+// GetEmail returns the value of Email.
+func (s *UserListItem) GetEmail() string {
+	return s.Email
+}
+
+// GetGivenName returns the value of GivenName.
+func (s *UserListItem) GetGivenName() string {
+	return s.GivenName
+}
+
+// GetFamilyName returns the value of FamilyName.
+func (s *UserListItem) GetFamilyName() string {
+	return s.FamilyName
+}
+
+// GetStatus returns the value of Status.
+func (s *UserListItem) GetStatus() UserStatus {
+	return s.Status
+}
+
+// GetGlobalRoles returns the value of GlobalRoles.
+func (s *UserListItem) GetGlobalRoles() []string {
+	return s.GlobalRoles
+}
+
+// GetGlobalPermissions returns the value of GlobalPermissions.
+func (s *UserListItem) GetGlobalPermissions() []string {
+	return s.GlobalPermissions
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *UserListItem) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *UserListItem) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// SetID sets the value of ID.
+func (s *UserListItem) SetID(val string) {
+	s.ID = val
+}
+
+// SetEmail sets the value of Email.
+func (s *UserListItem) SetEmail(val string) {
+	s.Email = val
+}
+
+// SetGivenName sets the value of GivenName.
+func (s *UserListItem) SetGivenName(val string) {
+	s.GivenName = val
+}
+
+// SetFamilyName sets the value of FamilyName.
+func (s *UserListItem) SetFamilyName(val string) {
+	s.FamilyName = val
+}
+
+// SetStatus sets the value of Status.
+func (s *UserListItem) SetStatus(val UserStatus) {
+	s.Status = val
+}
+
+// SetGlobalRoles sets the value of GlobalRoles.
+func (s *UserListItem) SetGlobalRoles(val []string) {
+	s.GlobalRoles = val
+}
+
+// SetGlobalPermissions sets the value of GlobalPermissions.
+func (s *UserListItem) SetGlobalPermissions(val []string) {
+	s.GlobalPermissions = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *UserListItem) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *UserListItem) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
 }
 
 // Embedded membership preview for one user-group relation.
@@ -7978,88 +8104,6 @@ func (s *UserStatus) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-// User record returned by user endpoints.
-// Ref: #/components/schemas/UserSummary
-type UserSummary struct {
-	ID                string     `json:"id"`
-	Email             string     `json:"email"`
-	GivenName         string     `json:"given_name"`
-	FamilyName        string     `json:"family_name"`
-	Status            UserStatus `json:"status"`
-	GlobalRoles       []string   `json:"global_roles"`
-	GlobalPermissions []string   `json:"global_permissions"`
-}
-
-// GetID returns the value of ID.
-func (s *UserSummary) GetID() string {
-	return s.ID
-}
-
-// GetEmail returns the value of Email.
-func (s *UserSummary) GetEmail() string {
-	return s.Email
-}
-
-// GetGivenName returns the value of GivenName.
-func (s *UserSummary) GetGivenName() string {
-	return s.GivenName
-}
-
-// GetFamilyName returns the value of FamilyName.
-func (s *UserSummary) GetFamilyName() string {
-	return s.FamilyName
-}
-
-// GetStatus returns the value of Status.
-func (s *UserSummary) GetStatus() UserStatus {
-	return s.Status
-}
-
-// GetGlobalRoles returns the value of GlobalRoles.
-func (s *UserSummary) GetGlobalRoles() []string {
-	return s.GlobalRoles
-}
-
-// GetGlobalPermissions returns the value of GlobalPermissions.
-func (s *UserSummary) GetGlobalPermissions() []string {
-	return s.GlobalPermissions
-}
-
-// SetID sets the value of ID.
-func (s *UserSummary) SetID(val string) {
-	s.ID = val
-}
-
-// SetEmail sets the value of Email.
-func (s *UserSummary) SetEmail(val string) {
-	s.Email = val
-}
-
-// SetGivenName sets the value of GivenName.
-func (s *UserSummary) SetGivenName(val string) {
-	s.GivenName = val
-}
-
-// SetFamilyName sets the value of FamilyName.
-func (s *UserSummary) SetFamilyName(val string) {
-	s.FamilyName = val
-}
-
-// SetStatus sets the value of Status.
-func (s *UserSummary) SetStatus(val UserStatus) {
-	s.Status = val
-}
-
-// SetGlobalRoles sets the value of GlobalRoles.
-func (s *UserSummary) SetGlobalRoles(val []string) {
-	s.GlobalRoles = val
-}
-
-// SetGlobalPermissions sets the value of GlobalPermissions.
-func (s *UserSummary) SetGlobalPermissions(val []string) {
-	s.GlobalPermissions = val
 }
 
 // Lowercase lifecycle state returned by write operations.

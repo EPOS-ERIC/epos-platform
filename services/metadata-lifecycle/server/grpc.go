@@ -9,9 +9,13 @@ import (
 	"buf.build/go/protovalidate"
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/grpcapi"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -33,9 +37,17 @@ func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
+	groupsSvc := groups.New(log, db.Groups, authorizer)
+	categoriesSvc := categories.New(log, db.Categories, authorizer)
+	contactPointsSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 
 	metadatalifecyclev1.RegisterIdentityServiceServer(grpcServer, grpcapi.NewIdentity(usersSvc))
 	metadatalifecyclev1.RegisterUserServiceServer(grpcServer, grpcapi.NewUser(usersSvc))
+	metadatalifecyclev1.RegisterGroupServiceServer(grpcServer, grpcapi.NewGroup(groupsSvc))
+	metadatalifecyclev1.RegisterCategoryServiceServer(grpcServer, grpcapi.NewCategory(categoriesSvc))
+	metadatalifecyclev1.RegisterContactPointServiceServer(grpcServer, grpcapi.NewContactPoint(contactPointsSvc))
+	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
+	metadatalifecyclev1.RegisterOrganizationServiceServer(grpcServer, grpcapi.NewOrganization(organizationsSvc))
 
 	listener, err := net.Listen("tcp", ":"+cfg.GRPCServerPort)
 	if err != nil {

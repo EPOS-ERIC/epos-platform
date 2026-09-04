@@ -27,7 +27,12 @@ func main() {
 
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
-	metadataLifecycleClient, err := clients.NewMetadataLifecycle(log, cfg.Services.MetadataLifecycle.URL, cfg.Upstream)
+	metadataLifecycleClient, err := clients.NewMetadataLifecycle(
+		log,
+		cfg.Services.MetadataLifecycle.URL,
+		cfg.Upstream,
+		cfg.Services.MetadataLifecycleGRPC.URL,
+	)
 	if err != nil {
 		log.Error("invalid metadata-lifecycle service configuration", "error", err)
 		panic("invalid metadata-lifecycle service configuration")

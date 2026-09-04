@@ -139,7 +139,7 @@ func decodeApplyRoleRequestDecisionParams(args [2]string, argsEscaped bool, r *h
 // AssignGlobalRoleParams is parameters of assignGlobalRole operation.
 type AssignGlobalRoleParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global role key.
 	Role GlobalRole
 }
@@ -150,7 +150,7 @@ func unpackAssignGlobalRoleParams(packed middleware.Parameters) (params AssignGl
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -187,7 +187,7 @@ func decodeAssignGlobalRoleParams(args [2]string, argsEscaped bool, r *http.Requ
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -449,7 +449,7 @@ func decodeAssignGroupRoleParams(args [3]string, argsEscaped bool, r *http.Reque
 // BlockUserParams is parameters of blockUser operation.
 type BlockUserParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 }
 
 func unpackBlockUserParams(packed middleware.Parameters) (params BlockUserParams) {
@@ -458,7 +458,7 @@ func unpackBlockUserParams(packed middleware.Parameters) (params BlockUserParams
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	return params
 }
@@ -488,7 +488,7 @@ func decodeBlockUserParams(args [1]string, argsEscaped bool, r *http.Request) (p
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -3009,7 +3009,7 @@ func decodeGetResourceVersionParams(args [3]string, argsEscaped bool, r *http.Re
 
 // GetUserParams is parameters of getUser operation.
 type GetUserParams struct {
-	// User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup.
+	// User identifier. Use `self` to resolve the authenticated user.
 	ID string
 }
 
@@ -3076,7 +3076,7 @@ func decodeGetUserParams(args [1]string, argsEscaped bool, r *http.Request) (par
 // GrantGlobalPermissionParams is parameters of grantGlobalPermission operation.
 type GrantGlobalPermissionParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global permission key.
 	Permission Permission
 }
@@ -3087,7 +3087,7 @@ func unpackGrantGlobalPermissionParams(packed middleware.Parameters) (params Gra
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -3124,7 +3124,7 @@ func decodeGrantGlobalPermissionParams(args [2]string, argsEscaped bool, r *http
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -3882,7 +3882,7 @@ func decodeRejectResourceVersionParams(args [3]string, argsEscaped bool, r *http
 // RemoveGlobalRoleParams is parameters of removeGlobalRole operation.
 type RemoveGlobalRoleParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global role key.
 	Role GlobalRole
 }
@@ -3893,7 +3893,7 @@ func unpackRemoveGlobalRoleParams(packed middleware.Parameters) (params RemoveGl
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -3930,7 +3930,7 @@ func decodeRemoveGlobalRoleParams(args [2]string, argsEscaped bool, r *http.Requ
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -4942,7 +4942,7 @@ func decodeRequestGroupRoleParams(args [1]string, argsEscaped bool, r *http.Requ
 // RevokeGlobalPermissionParams is parameters of revokeGlobalPermission operation.
 type RevokeGlobalPermissionParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global permission key.
 	Permission Permission
 }
@@ -4953,7 +4953,7 @@ func unpackRevokeGlobalPermissionParams(packed middleware.Parameters) (params Re
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -4990,7 +4990,7 @@ func decodeRevokeGlobalPermissionParams(args [2]string, argsEscaped bool, r *htt
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -5434,7 +5434,7 @@ func decodeSubmitResourceVersionParams(args [3]string, argsEscaped bool, r *http
 // UnblockUserParams is parameters of unblockUser operation.
 type UnblockUserParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 }
 
 func unpackUnblockUserParams(packed middleware.Parameters) (params UnblockUserParams) {
@@ -5443,7 +5443,7 @@ func unpackUnblockUserParams(packed middleware.Parameters) (params UnblockUserPa
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	return params
 }
@@ -5473,7 +5473,7 @@ func decodeUnblockUserParams(args [1]string, argsEscaped bool, r *http.Request) 
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}

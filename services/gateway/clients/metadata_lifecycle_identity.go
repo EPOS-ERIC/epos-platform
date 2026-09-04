@@ -11,7 +11,7 @@ import (
 
 type MetadataLifecycleIdentity struct {
 	identityGRPC metadatalifecyclev1.IdentityServiceClient
-	proxy        *MetadataLifecycleProxy
+	proxy        *MetadataLifecycleGRPC
 }
 
 func (c *MetadataLifecycleIdentity) ProvisionUser(ctx context.Context, identity ActorIdentity) error {

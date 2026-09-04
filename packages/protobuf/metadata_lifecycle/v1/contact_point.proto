@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message ContactPoint {
+  string id = 1;
+  string email = 2;
+  string role = 3;
+}
+
+message ListContactPointsRequest {}
+
+message ListContactPointsResponse {
+  repeated ContactPoint contact_points = 1;
+}
+
+message GetContactPointRequest {
+  string contact_point_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetContactPointResponse {
+  ContactPoint contact_point = 1;
+}
+
+message CreateContactPointRequest {
+  string email = 1 [(buf.validate.field).string.min_len = 1];
+  string role = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message CreateContactPointResponse {
+  ContactPoint contact_point = 1;
+}
+
+message ReplaceContactPointRequest {
+  string contact_point_id = 1 [(buf.validate.field).string.min_len = 1];
+  string email = 2 [(buf.validate.field).string.min_len = 1];
+  string role = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message ReplaceContactPointResponse {
+  ContactPoint contact_point = 1;
+}
+
+message DeleteContactPointRequest {
+  string contact_point_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteContactPointResponse {}
+
+service ContactPointService {
+  rpc ListContactPoints(ListContactPointsRequest) returns (ListContactPointsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc GetContactPoint(GetContactPointRequest) returns (GetContactPointResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc CreateContactPoint(CreateContactPointRequest) returns (CreateContactPointResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReplaceContactPoint(ReplaceContactPointRequest) returns (ReplaceContactPointResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DeleteContactPoint(DeleteContactPointRequest) returns (DeleteContactPointResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

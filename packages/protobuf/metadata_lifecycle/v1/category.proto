@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message ListCategoriesRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message CanonicalCategory {
+  string id = 1;
+  string group_id = 2;
+  optional string parent_category_id = 3;
+  string name = 4;
+}
+
+message ListCategoriesResponse {
+  repeated CanonicalCategory categories = 1;
+}
+
+message GetCategoryRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string category_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetCategoryResponse {
+  CanonicalCategory category = 1;
+}
+
+message CreateCategoryRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string parent_category_id = 3;
+}
+
+message CreateCategoryResponse {
+  CanonicalCategory category = 1;
+}
+
+message ReplaceCategoryRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string category_id = 2 [(buf.validate.field).string.min_len = 1];
+  string name = 3 [(buf.validate.field).string.min_len = 1];
+  optional string parent_category_id = 4;
+}
+
+message ReplaceCategoryResponse {
+  CanonicalCategory category = 1;
+}
+
+message DeleteCategoryRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string category_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteCategoryResponse {}
+
+service CategoryService {
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc GetCategory(GetCategoryRequest) returns (GetCategoryResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReplaceCategory(ReplaceCategoryRequest) returns (ReplaceCategoryResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

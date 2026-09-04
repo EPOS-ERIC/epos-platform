@@ -29,19 +29,9 @@ func NewUser(users *users.Service) *UserServer {
 }
 
 func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.GetUserRequest) (*metadatalifecyclev1.GetUserResponse, error) {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Unauthenticated, "actor required")
-	}
-
-	values := md.Get(actorMetadataKey)
-	if len(values) != 1 {
-		return nil, status.Error(codes.Unauthenticated, "actor required")
-	}
-
-	actor, err := domain.NewActor(values[0])
+	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid actor")
+		return nil, err
 	}
 
 	user, err := u.users.GetByID(ctx, actor, request.UserId)
@@ -78,6 +68,146 @@ func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.G
 	}, nil
 }
 
+func (u *UserServer) ListUsers(ctx context.Context, _ *metadatalifecyclev1.ListUsersRequest) (*metadatalifecyclev1.ListUsersResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	users, err := u.users.List(ctx, actor)
+	if err != nil {
+		return nil, toUserError(err)
+	}
+
+	result, err := mapSliceErr(users, toProtoUserListItem)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "map users")
+	}
+
+	return &metadatalifecyclev1.ListUsersResponse{Users: result}, nil
+}
+
+func (u *UserServer) GrantGlobalPermission(ctx context.Context, request *metadatalifecyclev1.GrantGlobalPermissionRequest) (*metadatalifecyclev1.GrantGlobalPermissionResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), request.GetPermission()); err != nil {
+		return nil, toUserMutationError("grant global permission", err)
+	}
+
+	return &metadatalifecyclev1.GrantGlobalPermissionResponse{}, nil
+}
+
+func (u *UserServer) RevokeGlobalPermission(ctx context.Context, request *metadatalifecyclev1.RevokeGlobalPermissionRequest) (*metadatalifecyclev1.RevokeGlobalPermissionResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.users.RevokeGlobalPermission(ctx, actor, request.GetUserId(), request.GetPermission()); err != nil {
+		return nil, toUserMutationError("revoke global permission", err)
+	}
+
+	return &metadatalifecyclev1.RevokeGlobalPermissionResponse{}, nil
+}
+
+func (u *UserServer) AssignGlobalRole(ctx context.Context, request *metadatalifecyclev1.AssignGlobalRoleRequest) (*metadatalifecyclev1.AssignGlobalRoleResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), request.GetRole()); err != nil {
+		return nil, toUserMutationError("assign global role", err)
+	}
+
+	return &metadatalifecyclev1.AssignGlobalRoleResponse{}, nil
+}
+
+func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalifecyclev1.RemoveGlobalRoleRequest) (*metadatalifecyclev1.RemoveGlobalRoleResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), request.GetRole()); err != nil {
+		return nil, toUserMutationError("remove global role", err)
+	}
+
+	return &metadatalifecyclev1.RemoveGlobalRoleResponse{}, nil
+}
+
+func (u *UserServer) BlockUser(ctx context.Context, request *metadatalifecyclev1.BlockUserRequest) (*metadatalifecyclev1.BlockUserResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.users.BlockUser(ctx, actor, request.GetUserId(), request.GetReason()); err != nil {
+		return nil, toUserMutationError("block user", err)
+	}
+
+	return &metadatalifecyclev1.BlockUserResponse{}, nil
+}
+
+func (u *UserServer) UnblockUser(ctx context.Context, request *metadatalifecyclev1.UnblockUserRequest) (*metadatalifecyclev1.UnblockUserResponse, error) {
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.users.UnblockUser(ctx, actor, request.GetUserId()); err != nil {
+		return nil, toUserMutationError("unblock user", err)
+	}
+
+	return &metadatalifecyclev1.UnblockUserResponse{}, nil
+}
+
+func actorFromContext(ctx context.Context) (domain.Actor, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return "", status.Error(codes.Unauthenticated, "actor required")
+	}
+
+	values := md.Get(actorMetadataKey)
+	if len(values) != 1 {
+		return "", status.Error(codes.Unauthenticated, "actor required")
+	}
+
+	actor, err := domain.NewActor(values[0])
+	if err != nil {
+		return "", status.Error(codes.InvalidArgument, "invalid actor")
+	}
+
+	return actor, nil
+}
+
+func toProtoUserListItem(value domain.UserSummary) (*metadatalifecyclev1.UserListItem, error) {
+	status, err := toProtoUserStatus(value.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	globalRoles, err := mapSliceErr(value.GlobalRoles, toProtoGlobalRole)
+	if err != nil {
+		return nil, err
+	}
+
+	return &metadatalifecyclev1.UserListItem{
+		Id:                value.ID,
+		Email:             value.Email,
+		GivenName:         value.GivenName,
+		FamilyName:        value.FamilyName,
+		Status:            status,
+		GlobalRoles:       globalRoles,
+		GlobalPermissions: slices.Clone(value.GlobalPermissions),
+		CreatedAt:         timestamppb.New(value.CreatedAt),
+		UpdatedAt:         timestamppb.New(value.UpdatedAt),
+	}, nil
+}
+
 func toUserError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrUserNotFound):
@@ -86,6 +216,21 @@ func toUserError(err error) error {
 		return status.Error(codes.PermissionDenied, "user read is not permitted")
 	default:
 		return status.Error(codes.Internal, "get user")
+	}
+}
+
+func toUserMutationError(operation string, err error) error {
+	switch {
+	case errors.Is(err, domain.ErrInvalidUser):
+		return status.Error(codes.InvalidArgument, "invalid user permission request")
+	case errors.Is(err, domain.ErrUserNotFound):
+		return status.Error(codes.NotFound, "user not found")
+	case errors.Is(err, domain.ErrUserConflict):
+		return status.Error(codes.Aborted, "global role change conflicts with current users")
+	case errors.Is(err, domain.ErrUserForbidden):
+		return status.Error(codes.PermissionDenied, "user permission change is not permitted")
+	default:
+		return status.Error(codes.Internal, operation)
 	}
 }
 

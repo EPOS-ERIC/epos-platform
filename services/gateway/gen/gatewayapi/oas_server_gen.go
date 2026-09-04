@@ -230,7 +230,7 @@ type Handler interface {
 	// Retrieve all user profiles. Allowed to super admins only.
 	//
 	// GET /users
-	ListUsers(ctx context.Context) ([]UserSummary, error)
+	ListUsers(ctx context.Context) ([]UserListItem, error)
 	// PublishResourceVersion implements publishResourceVersion operation.
 	//
 	// Publish resource version.

@@ -71,16 +71,6 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*CategoriesAPI* | [**CreateGroupCategory**](docs/CategoriesAPI.md#creategroupcategory) | **Post** /api/v1/groups/{group_id}/categories | Create group category
-*CategoriesAPI* | [**DeleteGroupCategory**](docs/CategoriesAPI.md#deletegroupcategory) | **Delete** /api/v1/groups/{group_id}/categories/{category_id} | Delete group category
-*CategoriesAPI* | [**GetGroupCategory**](docs/CategoriesAPI.md#getgroupcategory) | **Get** /api/v1/groups/{group_id}/categories/{category_id} | Get group category
-*CategoriesAPI* | [**ListGroupCategories**](docs/CategoriesAPI.md#listgroupcategories) | **Get** /api/v1/groups/{group_id}/categories | List group categories
-*CategoriesAPI* | [**ReplaceGroupCategory**](docs/CategoriesAPI.md#replacegroupcategory) | **Put** /api/v1/groups/{group_id}/categories/{category_id} | Replace group category
-*ContactPointsAPI* | [**CreateContactPoint**](docs/ContactPointsAPI.md#createcontactpoint) | **Post** /api/v1/contact-points | Create contact point
-*ContactPointsAPI* | [**DeleteContactPoint**](docs/ContactPointsAPI.md#deletecontactpoint) | **Delete** /api/v1/contact-points/{contact_point_id} | Delete contact point
-*ContactPointsAPI* | [**GetContactPoint**](docs/ContactPointsAPI.md#getcontactpoint) | **Get** /api/v1/contact-points/{contact_point_id} | Get contact point
-*ContactPointsAPI* | [**ListContactPoints**](docs/ContactPointsAPI.md#listcontactpoints) | **Get** /api/v1/contact-points | List contact points
-*ContactPointsAPI* | [**ReplaceContactPoint**](docs/ContactPointsAPI.md#replacecontactpoint) | **Put** /api/v1/contact-points/{contact_point_id} | Replace contact point
 *GroupAccessAPI* | [**ApplyRoleRequestDecision**](docs/GroupAccessAPI.md#applyrolerequestdecision) | **Patch** /api/v1/groups/{group_id}/role-requests/{request_id} | Accept or reject role request
 *GroupAccessAPI* | [**AssignGroupRole**](docs/GroupAccessAPI.md#assigngrouprole) | **Put** /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role} | Assign group role
 *GroupAccessAPI* | [**DecideGroupMembership**](docs/GroupAccessAPI.md#decidegroupmembership) | **Patch** /api/v1/groups/{group_id}/memberships/{user_id} | Accept or reject membership request
@@ -93,19 +83,9 @@ Class | Method | HTTP request | Description
 *GroupAccessAPI* | [**RevokeGroupPermission**](docs/GroupAccessAPI.md#revokegrouppermission) | **Delete** /api/v1/groups/{group_id}/memberships/{user_id}/permissions/{permission} | Revoke direct group permission
 *GroupAccessAPI* | [**WithdrawGroupMembershipRequest**](docs/GroupAccessAPI.md#withdrawgroupmembershiprequest) | **Delete** /api/v1/groups/{group_id}/membership-requests | Withdraw own membership request
 *GroupAccessAPI* | [**WithdrawGroupRoleRequest**](docs/GroupAccessAPI.md#withdrawgrouprolerequest) | **Delete** /api/v1/groups/{group_id}/role-requests/{request_id} | Withdraw own role request
-*GroupsAPI* | [**CreateGroup**](docs/GroupsAPI.md#creategroup) | **Post** /api/v1/groups | Create group
-*GroupsAPI* | [**DeleteGroup**](docs/GroupsAPI.md#deletegroup) | **Delete** /api/v1/groups/{group_id} | Delete group
-*GroupsAPI* | [**GetGroup**](docs/GroupsAPI.md#getgroup) | **Get** /api/v1/groups/{group_id} | Get group
-*GroupsAPI* | [**ListGroups**](docs/GroupsAPI.md#listgroups) | **Get** /api/v1/groups | List groups
-*GroupsAPI* | [**ReplaceGroup**](docs/GroupsAPI.md#replacegroup) | **Put** /api/v1/groups/{group_id} | Replace group
 *HealthAPI* | [**HealthCheck**](docs/HealthAPI.md#healthcheck) | **Get** /health | Health check
 *ImportsAPI* | [**ImportTurtleMetadata**](docs/ImportsAPI.md#importturtlemetadata) | **Post** /api/v1/imports/turtle | Import Turtle metadata
 *InternalIdentityAPI* | [**ProvisionUser**](docs/InternalIdentityAPI.md#provisionuser) | **Post** /api/v1/internal/users | Provision user
-*OrganizationsAPI* | [**CreateOrganization**](docs/OrganizationsAPI.md#createorganization) | **Post** /api/v1/organizations | Create organization
-*OrganizationsAPI* | [**DeleteOrganization**](docs/OrganizationsAPI.md#deleteorganization) | **Delete** /api/v1/organizations/{organization_id} | Delete organization
-*OrganizationsAPI* | [**GetOrganization**](docs/OrganizationsAPI.md#getorganization) | **Get** /api/v1/organizations/{organization_id} | Get organization
-*OrganizationsAPI* | [**ListOrganizations**](docs/OrganizationsAPI.md#listorganizations) | **Get** /api/v1/organizations | List organizations
-*OrganizationsAPI* | [**ReplaceOrganization**](docs/OrganizationsAPI.md#replaceorganization) | **Put** /api/v1/organizations/{organization_id} | Replace organization
 *ResourcesAPI* | [**CopyResource**](docs/ResourcesAPI.md#copyresource) | **Post** /api/v1/groups/{group_id}/resources/{resource_type}/{resource_id}/copies | Copy published resource
 *ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/groups/{group_id}/resources | Create resource draft
 *ResourcesAPI* | [**CreateResourceDraftFromArchive**](docs/ResourcesAPI.md#createresourcedraftfromarchive) | **Post** /api/v1/resources/{resource_type}/{resource_id}/drafts/from-archive | Create resource draft from archive
@@ -120,19 +100,11 @@ Class | Method | HTTP request | Description
 *ResourcesAPI* | [**SubmitResource**](docs/ResourcesAPI.md#submitresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit | Submit resource draft
 *ResourcesAPI* | [**UnpublishResource**](docs/ResourcesAPI.md#unpublishresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish | Unpublish resource version
 *ResourcesAPI* | [**WithdrawResource**](docs/ResourcesAPI.md#withdrawresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw | Withdraw resource submission
-*UsersAPI* | [**AssignGlobalRole**](docs/UsersAPI.md#assignglobalrole) | **Put** /api/v1/users/{user_id}/global-roles/{role} | Assign global role
-*UsersAPI* | [**BlockUser**](docs/UsersAPI.md#blockuser) | **Post** /api/v1/users/{user_id}/block | Block user
 *UsersAPI* | [**GetUser**](docs/UsersAPI.md#getuser) | **Get** /api/v1/users/{user_id} | Get user
-*UsersAPI* | [**GrantGlobalPermission**](docs/UsersAPI.md#grantglobalpermission) | **Put** /api/v1/users/{user_id}/global-permissions/{permission} | Grant global permission
-*UsersAPI* | [**ListUsers**](docs/UsersAPI.md#listusers) | **Get** /api/v1/users | List users
-*UsersAPI* | [**RemoveGlobalRole**](docs/UsersAPI.md#removeglobalrole) | **Delete** /api/v1/users/{user_id}/global-roles/{role} | Remove global role
-*UsersAPI* | [**RevokeGlobalPermission**](docs/UsersAPI.md#revokeglobalpermission) | **Delete** /api/v1/users/{user_id}/global-permissions/{permission} | Revoke global permission
-*UsersAPI* | [**UnblockUser**](docs/UsersAPI.md#unblockuser) | **Post** /api/v1/users/{user_id}/unblock | Unblock user
 
 
 ## Documentation For Models
 
- - [BlockUserRequest](docs/BlockUserRequest.md)
  - [BooleanParameter](docs/BooleanParameter.md)
  - [BooleanParameterDraft](docs/BooleanParameterDraft.md)
  - [BooleanParameterMetadata](docs/BooleanParameterMetadata.md)

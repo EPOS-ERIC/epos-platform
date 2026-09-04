@@ -1,41 +1,36 @@
 package handlers
 
 import (
+	"fmt"
+
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
-func toAPIGroup(v metadatalifecycleclient.Group) (gatewayapi.Group, error) {
-	id, err := parseUUID("group.id", v.Id)
-	if err != nil {
-		return gatewayapi.Group{}, err
+func toAPIProtoCategory(v *metadatalifecyclev1.CanonicalCategory) (gatewayapi.Category, error) {
+	if v == nil {
+		return gatewayapi.Category{}, fmt.Errorf("decode metadata-lifecycle category: response is empty")
 	}
-	return gatewayapi.Group{
-		ID:   id,
-		Name: v.Name,
-		Description: gatewayapi.OptNilString{
-			Value: value(v.Description.Get()),
-			Set:   v.Description.Get() != nil,
-		},
-		Label: gatewayapi.OptNilString{
-			Value: value(v.Label.Get()),
-			Set:   v.Label.Get() != nil,
-		},
-		Logo: gatewayapi.OptNilString{
-			Value: value(v.Logo.Get()),
-			Set:   v.Logo.Get() != nil,
-		},
-		Page: gatewayapi.OptNilString{
-			Value: value(v.Page.Get()),
-			Set:   v.Page.Get() != nil,
-		},
-		Color: gatewayapi.OptNilString{
-			Value: value(v.Color.Get()),
-			Set:   v.Color.Get() != nil,
-		},
-		Position: v.Position,
-		Concept:  gatewayapi.GroupConcept(v.Concept),
-	}, nil
+	id, err := parseUUID("category.id", v.Id)
+	if err != nil {
+		return gatewayapi.Category{}, err
+	}
+	groupID, err := parseUUID("category.group_id", v.GroupId)
+	if err != nil {
+		return gatewayapi.Category{}, err
+	}
+	result := gatewayapi.Category{ID: id, GroupID: groupID, Name: v.Name}
+	if v.ParentCategoryId != nil {
+		parentID, err := parseUUID("category.parent_category_id", *v.ParentCategoryId)
+		if err != nil {
+			return gatewayapi.Category{}, err
+		}
+		result.ParentCategoryID.SetTo(parentID)
+	} else {
+		result.ParentCategoryID.SetToNull()
+	}
+	return result, nil
 }
 
 func toAPICategory(v metadatalifecycleclient.CanonicalCategory) (gatewayapi.Category, error) {

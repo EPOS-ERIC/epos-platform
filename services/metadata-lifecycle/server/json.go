@@ -20,7 +20,6 @@ import (
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	datasetapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
 	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
-	groupsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/groups"
 	healthapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
 	importsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
@@ -79,7 +78,6 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 		Health:        healthapi.New(log, db),
 		Imports:       importsapi.New(log, importSvc, turtler),
 		Users:         usersapi.New(log, usersSvc),
-		Groups:        groupsapi.New(log, groupsSvc),
 		Access:        accessapi.New(log, accessSvc),
 		Categories:    categoriesapi.New(log, categoriesSvc),
 		ContactPoints: contactpointsapi.New(log, contactPointSvc),

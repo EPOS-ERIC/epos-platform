@@ -406,7 +406,7 @@ func encodeListOrganizationsResponse(response []CanonicalOrganization, w http.Re
 	return nil
 }
 
-func encodeListUsersResponse(response []UserSummary, w http.ResponseWriter) error {
+func encodeListUsersResponse(response []UserListItem, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 

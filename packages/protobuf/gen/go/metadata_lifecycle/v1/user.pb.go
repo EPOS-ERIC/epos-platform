@@ -274,6 +274,194 @@ func (RoleRequestStatus) EnumDescriptor() ([]byte, []int) {
 	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{4}
 }
 
+type ListUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersRequest) Reset() {
+	*x = ListUsersRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersRequest) ProtoMessage() {}
+
+func (x *ListUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersRequest.ProtoReflect.Descriptor instead.
+func (*ListUsersRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{0}
+}
+
+type UserListItem struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Id                string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Email             string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
+	GivenName         string                 `protobuf:"bytes,3,opt,name=given_name,json=givenName,proto3" json:"given_name,omitempty"`
+	FamilyName        string                 `protobuf:"bytes,4,opt,name=family_name,json=familyName,proto3" json:"family_name,omitempty"`
+	Status            UserStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=metadata_lifecycle.v1.UserStatus" json:"status,omitempty"`
+	GlobalRoles       []GlobalRole           `protobuf:"varint,6,rep,packed,name=global_roles,json=globalRoles,proto3,enum=metadata_lifecycle.v1.GlobalRole" json:"global_roles,omitempty"`
+	GlobalPermissions []string               `protobuf:"bytes,7,rep,name=global_permissions,json=globalPermissions,proto3" json:"global_permissions,omitempty"`
+	CreatedAt         *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt         *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *UserListItem) Reset() {
+	*x = UserListItem{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserListItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserListItem) ProtoMessage() {}
+
+func (x *UserListItem) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserListItem.ProtoReflect.Descriptor instead.
+func (*UserListItem) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *UserListItem) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *UserListItem) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *UserListItem) GetGivenName() string {
+	if x != nil {
+		return x.GivenName
+	}
+	return ""
+}
+
+func (x *UserListItem) GetFamilyName() string {
+	if x != nil {
+		return x.FamilyName
+	}
+	return ""
+}
+
+func (x *UserListItem) GetStatus() UserStatus {
+	if x != nil {
+		return x.Status
+	}
+	return UserStatus_USER_STATUS_UNSPECIFIED
+}
+
+func (x *UserListItem) GetGlobalRoles() []GlobalRole {
+	if x != nil {
+		return x.GlobalRoles
+	}
+	return nil
+}
+
+func (x *UserListItem) GetGlobalPermissions() []string {
+	if x != nil {
+		return x.GlobalPermissions
+	}
+	return nil
+}
+
+func (x *UserListItem) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *UserListItem) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+type ListUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*UserListItem        `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUsersResponse) Reset() {
+	*x = ListUsersResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUsersResponse) ProtoMessage() {}
+
+func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
+func (*ListUsersResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ListUsersResponse) GetUsers() []*UserListItem {
+	if x != nil {
+		return x.Users
+	}
+	return nil
+}
+
 type GetUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -283,7 +471,7 @@ type GetUserRequest struct {
 
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[0]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +483,7 @@ func (x *GetUserRequest) String() string {
 func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[0]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +496,7 @@ func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{0}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetUserRequest) GetUserId() string {
@@ -336,7 +524,7 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[1]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +536,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[1]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,7 +549,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{1}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetUserResponse) GetId() string {
@@ -434,6 +622,526 @@ func (x *GetUserResponse) GetMemberships() []*UserMembership {
 	return nil
 }
 
+type GrantGlobalPermissionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Permission    string                 `protobuf:"bytes,2,opt,name=permission,proto3" json:"permission,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantGlobalPermissionRequest) Reset() {
+	*x = GrantGlobalPermissionRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantGlobalPermissionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantGlobalPermissionRequest) ProtoMessage() {}
+
+func (x *GrantGlobalPermissionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantGlobalPermissionRequest.ProtoReflect.Descriptor instead.
+func (*GrantGlobalPermissionRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GrantGlobalPermissionRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GrantGlobalPermissionRequest) GetPermission() string {
+	if x != nil {
+		return x.Permission
+	}
+	return ""
+}
+
+type GrantGlobalPermissionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantGlobalPermissionResponse) Reset() {
+	*x = GrantGlobalPermissionResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantGlobalPermissionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantGlobalPermissionResponse) ProtoMessage() {}
+
+func (x *GrantGlobalPermissionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantGlobalPermissionResponse.ProtoReflect.Descriptor instead.
+func (*GrantGlobalPermissionResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{6}
+}
+
+type RevokeGlobalPermissionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Permission    string                 `protobuf:"bytes,2,opt,name=permission,proto3" json:"permission,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeGlobalPermissionRequest) Reset() {
+	*x = RevokeGlobalPermissionRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeGlobalPermissionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeGlobalPermissionRequest) ProtoMessage() {}
+
+func (x *RevokeGlobalPermissionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeGlobalPermissionRequest.ProtoReflect.Descriptor instead.
+func (*RevokeGlobalPermissionRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RevokeGlobalPermissionRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *RevokeGlobalPermissionRequest) GetPermission() string {
+	if x != nil {
+		return x.Permission
+	}
+	return ""
+}
+
+type RevokeGlobalPermissionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeGlobalPermissionResponse) Reset() {
+	*x = RevokeGlobalPermissionResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeGlobalPermissionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeGlobalPermissionResponse) ProtoMessage() {}
+
+func (x *RevokeGlobalPermissionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeGlobalPermissionResponse.ProtoReflect.Descriptor instead.
+func (*RevokeGlobalPermissionResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{8}
+}
+
+type AssignGlobalRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignGlobalRoleRequest) Reset() {
+	*x = AssignGlobalRoleRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignGlobalRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignGlobalRoleRequest) ProtoMessage() {}
+
+func (x *AssignGlobalRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignGlobalRoleRequest.ProtoReflect.Descriptor instead.
+func (*AssignGlobalRoleRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *AssignGlobalRoleRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AssignGlobalRoleRequest) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+type AssignGlobalRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AssignGlobalRoleResponse) Reset() {
+	*x = AssignGlobalRoleResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AssignGlobalRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AssignGlobalRoleResponse) ProtoMessage() {}
+
+func (x *AssignGlobalRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AssignGlobalRoleResponse.ProtoReflect.Descriptor instead.
+func (*AssignGlobalRoleResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{10}
+}
+
+type RemoveGlobalRoleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          string                 `protobuf:"bytes,2,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveGlobalRoleRequest) Reset() {
+	*x = RemoveGlobalRoleRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveGlobalRoleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveGlobalRoleRequest) ProtoMessage() {}
+
+func (x *RemoveGlobalRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveGlobalRoleRequest.ProtoReflect.Descriptor instead.
+func (*RemoveGlobalRoleRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *RemoveGlobalRoleRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *RemoveGlobalRoleRequest) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+type RemoveGlobalRoleResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RemoveGlobalRoleResponse) Reset() {
+	*x = RemoveGlobalRoleResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RemoveGlobalRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RemoveGlobalRoleResponse) ProtoMessage() {}
+
+func (x *RemoveGlobalRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RemoveGlobalRoleResponse.ProtoReflect.Descriptor instead.
+func (*RemoveGlobalRoleResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{12}
+}
+
+type BlockUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlockUserRequest) Reset() {
+	*x = BlockUserRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockUserRequest) ProtoMessage() {}
+
+func (x *BlockUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockUserRequest.ProtoReflect.Descriptor instead.
+func (*BlockUserRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *BlockUserRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *BlockUserRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type BlockUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BlockUserResponse) Reset() {
+	*x = BlockUserResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockUserResponse) ProtoMessage() {}
+
+func (x *BlockUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockUserResponse.ProtoReflect.Descriptor instead.
+func (*BlockUserResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{14}
+}
+
+type UnblockUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnblockUserRequest) Reset() {
+	*x = UnblockUserRequest{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnblockUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnblockUserRequest) ProtoMessage() {}
+
+func (x *UnblockUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnblockUserRequest.ProtoReflect.Descriptor instead.
+func (*UnblockUserRequest) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *UnblockUserRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type UnblockUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnblockUserResponse) Reset() {
+	*x = UnblockUserResponse{}
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnblockUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnblockUserResponse) ProtoMessage() {}
+
+func (x *UnblockUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnblockUserResponse.ProtoReflect.Descriptor instead.
+func (*UnblockUserResponse) Descriptor() ([]byte, []int) {
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{16}
+}
+
 type UserMembership struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	Group            *GroupReference        `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
@@ -449,7 +1157,7 @@ type UserMembership struct {
 
 func (x *UserMembership) Reset() {
 	*x = UserMembership{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[2]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -461,7 +1169,7 @@ func (x *UserMembership) String() string {
 func (*UserMembership) ProtoMessage() {}
 
 func (x *UserMembership) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[2]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -474,7 +1182,7 @@ func (x *UserMembership) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserMembership.ProtoReflect.Descriptor instead.
 func (*UserMembership) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{2}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UserMembership) GetGroup() *GroupReference {
@@ -538,7 +1246,7 @@ type RoleRequest struct {
 
 func (x *RoleRequest) Reset() {
 	*x = RoleRequest{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -550,7 +1258,7 @@ func (x *RoleRequest) String() string {
 func (*RoleRequest) ProtoMessage() {}
 
 func (x *RoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -563,7 +1271,7 @@ func (x *RoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoleRequest.ProtoReflect.Descriptor instead.
 func (*RoleRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{3}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *RoleRequest) GetId() string {
@@ -604,7 +1312,7 @@ type GroupReference struct {
 
 func (x *GroupReference) Reset() {
 	*x = GroupReference{}
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[4]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -616,7 +1324,7 @@ func (x *GroupReference) String() string {
 func (*GroupReference) ProtoMessage() {}
 
 func (x *GroupReference) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[4]
+	mi := &file_metadata_lifecycle_v1_user_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -629,7 +1337,7 @@ func (x *GroupReference) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GroupReference.ProtoReflect.Descriptor instead.
 func (*GroupReference) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{4}
+	return file_metadata_lifecycle_v1_user_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GroupReference) GetId() string {
@@ -650,7 +1358,24 @@ var File_metadata_lifecycle_v1_user_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\n" +
-	" metadata_lifecycle/v1/user.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\"2\n" +
+	" metadata_lifecycle/v1/user.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\"\x12\n" +
+	"\x10ListUsersRequest\"\x9a\x03\n" +
+	"\fUserListItem\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +
+	"\n" +
+	"given_name\x18\x03 \x01(\tR\tgivenName\x12\x1f\n" +
+	"\vfamily_name\x18\x04 \x01(\tR\n" +
+	"familyName\x129\n" +
+	"\x06status\x18\x05 \x01(\x0e2!.metadata_lifecycle.v1.UserStatusR\x06status\x12D\n" +
+	"\fglobal_roles\x18\x06 \x03(\x0e2!.metadata_lifecycle.v1.GlobalRoleR\vglobalRoles\x12-\n" +
+	"\x12global_permissions\x18\a \x03(\tR\x11globalPermissions\x129\n" +
+	"\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"N\n" +
+	"\x11ListUsersResponse\x129\n" +
+	"\x05users\x18\x01 \x03(\v2#.metadata_lifecycle.v1.UserListItemR\x05users\"2\n" +
 	"\x0eGetUserRequest\x12 \n" +
 	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\xe6\x03\n" +
 	"\x0fGetUserResponse\x12\x0e\n" +
@@ -668,7 +1393,34 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12G\n" +
 	"\vmemberships\x18\n" +
-	" \x03(\v2%.metadata_lifecycle.v1.UserMembershipR\vmemberships\"\xbd\x03\n" +
+	" \x03(\v2%.metadata_lifecycle.v1.UserMembershipR\vmemberships\"i\n" +
+	"\x1cGrantGlobalPermissionRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12'\n" +
+	"\n" +
+	"permission\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"permission\"\x1f\n" +
+	"\x1dGrantGlobalPermissionResponse\"j\n" +
+	"\x1dRevokeGlobalPermissionRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12'\n" +
+	"\n" +
+	"permission\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"permission\" \n" +
+	"\x1eRevokeGlobalPermissionResponse\"X\n" +
+	"\x17AssignGlobalRoleRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12\x1b\n" +
+	"\x04role\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"\x1a\n" +
+	"\x18AssignGlobalRoleResponse\"X\n" +
+	"\x17RemoveGlobalRoleRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12\x1b\n" +
+	"\x04role\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"\x1a\n" +
+	"\x18RemoveGlobalRoleResponse\"U\n" +
+	"\x10BlockUserRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\x12\x1f\n" +
+	"\x06reason\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06reason\"\x13\n" +
+	"\x11BlockUserResponse\"6\n" +
+	"\x12UnblockUserRequest\x12 \n" +
+	"\auser_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x06userId\"\x15\n" +
+	"\x13UnblockUserResponse\"\xbd\x03\n" +
 	"\x0eUserMembership\x12;\n" +
 	"\x05group\x18\x01 \x01(\v2%.metadata_lifecycle.v1.GroupReferenceR\x05group\x12A\n" +
 	"\vgroup_roles\x18\x02 \x03(\x0e2 .metadata_lifecycle.v1.GroupRoleR\n" +
@@ -712,9 +1464,16 @@ const file_metadata_lifecycle_v1_user_proto_rawDesc = "" +
 	"\x1fROLE_REQUEST_STATUS_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bROLE_REQUEST_STATUS_PENDING\x10\x01\x12 \n" +
 	"\x1cROLE_REQUEST_STATUS_ACCEPTED\x10\x02\x12 \n" +
-	"\x1cROLE_REQUEST_STATUS_REJECTED\x10\x032m\n" +
+	"\x1cROLE_REQUEST_STATUS_REJECTED\x10\x032\xb4\a\n" +
 	"\vUserService\x12^\n" +
-	"\aGetUser\x12%.metadata_lifecycle.v1.GetUserRequest\x1a&.metadata_lifecycle.v1.GetUserResponse\"\x04\x80\xb5\x18\x03BgZegithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1b\x06proto3"
+	"\aGetUser\x12%.metadata_lifecycle.v1.GetUserRequest\x1a&.metadata_lifecycle.v1.GetUserResponse\"\x04\x80\xb5\x18\x03\x12d\n" +
+	"\tListUsers\x12'.metadata_lifecycle.v1.ListUsersRequest\x1a(.metadata_lifecycle.v1.ListUsersResponse\"\x04\x80\xb5\x18\x03\x12\x88\x01\n" +
+	"\x15GrantGlobalPermission\x123.metadata_lifecycle.v1.GrantGlobalPermissionRequest\x1a4.metadata_lifecycle.v1.GrantGlobalPermissionResponse\"\x04\x80\xb5\x18\x03\x12\x8b\x01\n" +
+	"\x16RevokeGlobalPermission\x124.metadata_lifecycle.v1.RevokeGlobalPermissionRequest\x1a5.metadata_lifecycle.v1.RevokeGlobalPermissionResponse\"\x04\x80\xb5\x18\x03\x12y\n" +
+	"\x10AssignGlobalRole\x12..metadata_lifecycle.v1.AssignGlobalRoleRequest\x1a/.metadata_lifecycle.v1.AssignGlobalRoleResponse\"\x04\x80\xb5\x18\x03\x12y\n" +
+	"\x10RemoveGlobalRole\x12..metadata_lifecycle.v1.RemoveGlobalRoleRequest\x1a/.metadata_lifecycle.v1.RemoveGlobalRoleResponse\"\x04\x80\xb5\x18\x03\x12d\n" +
+	"\tBlockUser\x12'.metadata_lifecycle.v1.BlockUserRequest\x1a(.metadata_lifecycle.v1.BlockUserResponse\"\x04\x80\xb5\x18\x03\x12j\n" +
+	"\vUnblockUser\x12).metadata_lifecycle.v1.UnblockUserRequest\x1a*.metadata_lifecycle.v1.UnblockUserResponse\"\x04\x80\xb5\x18\x03BgZegithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1b\x06proto3"
 
 var (
 	file_metadata_lifecycle_v1_user_proto_rawDescOnce sync.Once
@@ -729,42 +1488,76 @@ func file_metadata_lifecycle_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_metadata_lifecycle_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_metadata_lifecycle_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_metadata_lifecycle_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_metadata_lifecycle_v1_user_proto_goTypes = []any{
-	(UserStatus)(0),               // 0: metadata_lifecycle.v1.UserStatus
-	(MembershipStatus)(0),         // 1: metadata_lifecycle.v1.MembershipStatus
-	(GroupRole)(0),                // 2: metadata_lifecycle.v1.GroupRole
-	(GlobalRole)(0),               // 3: metadata_lifecycle.v1.GlobalRole
-	(RoleRequestStatus)(0),        // 4: metadata_lifecycle.v1.RoleRequestStatus
-	(*GetUserRequest)(nil),        // 5: metadata_lifecycle.v1.GetUserRequest
-	(*GetUserResponse)(nil),       // 6: metadata_lifecycle.v1.GetUserResponse
-	(*UserMembership)(nil),        // 7: metadata_lifecycle.v1.UserMembership
-	(*RoleRequest)(nil),           // 8: metadata_lifecycle.v1.RoleRequest
-	(*GroupReference)(nil),        // 9: metadata_lifecycle.v1.GroupReference
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(UserStatus)(0),                        // 0: metadata_lifecycle.v1.UserStatus
+	(MembershipStatus)(0),                  // 1: metadata_lifecycle.v1.MembershipStatus
+	(GroupRole)(0),                         // 2: metadata_lifecycle.v1.GroupRole
+	(GlobalRole)(0),                        // 3: metadata_lifecycle.v1.GlobalRole
+	(RoleRequestStatus)(0),                 // 4: metadata_lifecycle.v1.RoleRequestStatus
+	(*ListUsersRequest)(nil),               // 5: metadata_lifecycle.v1.ListUsersRequest
+	(*UserListItem)(nil),                   // 6: metadata_lifecycle.v1.UserListItem
+	(*ListUsersResponse)(nil),              // 7: metadata_lifecycle.v1.ListUsersResponse
+	(*GetUserRequest)(nil),                 // 8: metadata_lifecycle.v1.GetUserRequest
+	(*GetUserResponse)(nil),                // 9: metadata_lifecycle.v1.GetUserResponse
+	(*GrantGlobalPermissionRequest)(nil),   // 10: metadata_lifecycle.v1.GrantGlobalPermissionRequest
+	(*GrantGlobalPermissionResponse)(nil),  // 11: metadata_lifecycle.v1.GrantGlobalPermissionResponse
+	(*RevokeGlobalPermissionRequest)(nil),  // 12: metadata_lifecycle.v1.RevokeGlobalPermissionRequest
+	(*RevokeGlobalPermissionResponse)(nil), // 13: metadata_lifecycle.v1.RevokeGlobalPermissionResponse
+	(*AssignGlobalRoleRequest)(nil),        // 14: metadata_lifecycle.v1.AssignGlobalRoleRequest
+	(*AssignGlobalRoleResponse)(nil),       // 15: metadata_lifecycle.v1.AssignGlobalRoleResponse
+	(*RemoveGlobalRoleRequest)(nil),        // 16: metadata_lifecycle.v1.RemoveGlobalRoleRequest
+	(*RemoveGlobalRoleResponse)(nil),       // 17: metadata_lifecycle.v1.RemoveGlobalRoleResponse
+	(*BlockUserRequest)(nil),               // 18: metadata_lifecycle.v1.BlockUserRequest
+	(*BlockUserResponse)(nil),              // 19: metadata_lifecycle.v1.BlockUserResponse
+	(*UnblockUserRequest)(nil),             // 20: metadata_lifecycle.v1.UnblockUserRequest
+	(*UnblockUserResponse)(nil),            // 21: metadata_lifecycle.v1.UnblockUserResponse
+	(*UserMembership)(nil),                 // 22: metadata_lifecycle.v1.UserMembership
+	(*RoleRequest)(nil),                    // 23: metadata_lifecycle.v1.RoleRequest
+	(*GroupReference)(nil),                 // 24: metadata_lifecycle.v1.GroupReference
+	(*timestamppb.Timestamp)(nil),          // 25: google.protobuf.Timestamp
 }
 var file_metadata_lifecycle_v1_user_proto_depIdxs = []int32{
-	0,  // 0: metadata_lifecycle.v1.GetUserResponse.status:type_name -> metadata_lifecycle.v1.UserStatus
-	3,  // 1: metadata_lifecycle.v1.GetUserResponse.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
-	10, // 2: metadata_lifecycle.v1.GetUserResponse.created_at:type_name -> google.protobuf.Timestamp
-	10, // 3: metadata_lifecycle.v1.GetUserResponse.updated_at:type_name -> google.protobuf.Timestamp
-	7,  // 4: metadata_lifecycle.v1.GetUserResponse.memberships:type_name -> metadata_lifecycle.v1.UserMembership
-	9,  // 5: metadata_lifecycle.v1.UserMembership.group:type_name -> metadata_lifecycle.v1.GroupReference
-	2,  // 6: metadata_lifecycle.v1.UserMembership.group_roles:type_name -> metadata_lifecycle.v1.GroupRole
-	1,  // 7: metadata_lifecycle.v1.UserMembership.status:type_name -> metadata_lifecycle.v1.MembershipStatus
-	8,  // 8: metadata_lifecycle.v1.UserMembership.role_requests:type_name -> metadata_lifecycle.v1.RoleRequest
-	10, // 9: metadata_lifecycle.v1.UserMembership.created_at:type_name -> google.protobuf.Timestamp
-	10, // 10: metadata_lifecycle.v1.UserMembership.updated_at:type_name -> google.protobuf.Timestamp
-	2,  // 11: metadata_lifecycle.v1.RoleRequest.group_role:type_name -> metadata_lifecycle.v1.GroupRole
-	4,  // 12: metadata_lifecycle.v1.RoleRequest.status:type_name -> metadata_lifecycle.v1.RoleRequestStatus
-	10, // 13: metadata_lifecycle.v1.RoleRequest.requested_at:type_name -> google.protobuf.Timestamp
-	5,  // 14: metadata_lifecycle.v1.UserService.GetUser:input_type -> metadata_lifecycle.v1.GetUserRequest
-	6,  // 15: metadata_lifecycle.v1.UserService.GetUser:output_type -> metadata_lifecycle.v1.GetUserResponse
-	15, // [15:16] is the sub-list for method output_type
-	14, // [14:15] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	0,  // 0: metadata_lifecycle.v1.UserListItem.status:type_name -> metadata_lifecycle.v1.UserStatus
+	3,  // 1: metadata_lifecycle.v1.UserListItem.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
+	25, // 2: metadata_lifecycle.v1.UserListItem.created_at:type_name -> google.protobuf.Timestamp
+	25, // 3: metadata_lifecycle.v1.UserListItem.updated_at:type_name -> google.protobuf.Timestamp
+	6,  // 4: metadata_lifecycle.v1.ListUsersResponse.users:type_name -> metadata_lifecycle.v1.UserListItem
+	0,  // 5: metadata_lifecycle.v1.GetUserResponse.status:type_name -> metadata_lifecycle.v1.UserStatus
+	3,  // 6: metadata_lifecycle.v1.GetUserResponse.global_roles:type_name -> metadata_lifecycle.v1.GlobalRole
+	25, // 7: metadata_lifecycle.v1.GetUserResponse.created_at:type_name -> google.protobuf.Timestamp
+	25, // 8: metadata_lifecycle.v1.GetUserResponse.updated_at:type_name -> google.protobuf.Timestamp
+	22, // 9: metadata_lifecycle.v1.GetUserResponse.memberships:type_name -> metadata_lifecycle.v1.UserMembership
+	24, // 10: metadata_lifecycle.v1.UserMembership.group:type_name -> metadata_lifecycle.v1.GroupReference
+	2,  // 11: metadata_lifecycle.v1.UserMembership.group_roles:type_name -> metadata_lifecycle.v1.GroupRole
+	1,  // 12: metadata_lifecycle.v1.UserMembership.status:type_name -> metadata_lifecycle.v1.MembershipStatus
+	23, // 13: metadata_lifecycle.v1.UserMembership.role_requests:type_name -> metadata_lifecycle.v1.RoleRequest
+	25, // 14: metadata_lifecycle.v1.UserMembership.created_at:type_name -> google.protobuf.Timestamp
+	25, // 15: metadata_lifecycle.v1.UserMembership.updated_at:type_name -> google.protobuf.Timestamp
+	2,  // 16: metadata_lifecycle.v1.RoleRequest.group_role:type_name -> metadata_lifecycle.v1.GroupRole
+	4,  // 17: metadata_lifecycle.v1.RoleRequest.status:type_name -> metadata_lifecycle.v1.RoleRequestStatus
+	25, // 18: metadata_lifecycle.v1.RoleRequest.requested_at:type_name -> google.protobuf.Timestamp
+	8,  // 19: metadata_lifecycle.v1.UserService.GetUser:input_type -> metadata_lifecycle.v1.GetUserRequest
+	5,  // 20: metadata_lifecycle.v1.UserService.ListUsers:input_type -> metadata_lifecycle.v1.ListUsersRequest
+	10, // 21: metadata_lifecycle.v1.UserService.GrantGlobalPermission:input_type -> metadata_lifecycle.v1.GrantGlobalPermissionRequest
+	12, // 22: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:input_type -> metadata_lifecycle.v1.RevokeGlobalPermissionRequest
+	14, // 23: metadata_lifecycle.v1.UserService.AssignGlobalRole:input_type -> metadata_lifecycle.v1.AssignGlobalRoleRequest
+	16, // 24: metadata_lifecycle.v1.UserService.RemoveGlobalRole:input_type -> metadata_lifecycle.v1.RemoveGlobalRoleRequest
+	18, // 25: metadata_lifecycle.v1.UserService.BlockUser:input_type -> metadata_lifecycle.v1.BlockUserRequest
+	20, // 26: metadata_lifecycle.v1.UserService.UnblockUser:input_type -> metadata_lifecycle.v1.UnblockUserRequest
+	9,  // 27: metadata_lifecycle.v1.UserService.GetUser:output_type -> metadata_lifecycle.v1.GetUserResponse
+	7,  // 28: metadata_lifecycle.v1.UserService.ListUsers:output_type -> metadata_lifecycle.v1.ListUsersResponse
+	11, // 29: metadata_lifecycle.v1.UserService.GrantGlobalPermission:output_type -> metadata_lifecycle.v1.GrantGlobalPermissionResponse
+	13, // 30: metadata_lifecycle.v1.UserService.RevokeGlobalPermission:output_type -> metadata_lifecycle.v1.RevokeGlobalPermissionResponse
+	15, // 31: metadata_lifecycle.v1.UserService.AssignGlobalRole:output_type -> metadata_lifecycle.v1.AssignGlobalRoleResponse
+	17, // 32: metadata_lifecycle.v1.UserService.RemoveGlobalRole:output_type -> metadata_lifecycle.v1.RemoveGlobalRoleResponse
+	19, // 33: metadata_lifecycle.v1.UserService.BlockUser:output_type -> metadata_lifecycle.v1.BlockUserResponse
+	21, // 34: metadata_lifecycle.v1.UserService.UnblockUser:output_type -> metadata_lifecycle.v1.UnblockUserResponse
+	27, // [27:35] is the sub-list for method output_type
+	19, // [19:27] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_metadata_lifecycle_v1_user_proto_init() }
@@ -779,7 +1572,7 @@ func file_metadata_lifecycle_v1_user_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_user_proto_rawDesc), len(file_metadata_lifecycle_v1_user_proto_rawDesc)),
 			NumEnums:      5,
-			NumMessages:   5,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

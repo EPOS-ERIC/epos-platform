@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
@@ -16,17 +17,13 @@ import (
 )
 
 type MetadataLifecycle struct {
-	identity      client.InternalIdentityAPI
-	users         client.UsersAPI
-	groups        client.GroupsAPI
-	access        client.GroupAccessAPI
-	resources     client.ResourcesAPI
-	imports       client.ImportsAPI
-	contactPoints client.ContactPointsAPI
-	organizations client.OrganizationsAPI
-	categories    client.CategoriesAPI
+	identity  client.InternalIdentityAPI
+	users     client.UsersAPI
+	access    client.GroupAccessAPI
+	resources client.ResourcesAPI
+	imports   client.ImportsAPI
 
-	Proxy    *MetadataLifecycleProxy
+	GRPC     *MetadataLifecycleGRPC
 	Identity *MetadataLifecycleIdentity
 
 	log *slog.Logger
@@ -39,7 +36,7 @@ type ActorIdentity struct {
 	FamilyName     string
 }
 
-func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.Upstream) (*MetadataLifecycle, error) {
+func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.Upstream, grpcBaseURL string) (*MetadataLifecycle, error) {
 	normalizedBaseURL, err := urlutil.NormalizeBaseURL(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("normalize metadata-lifecycle base URL: %w", err)
@@ -64,58 +61,54 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.U
 	apiClient := client.NewAPIClient(clientConfig)
 
 	// TODO: we are doing this just to hook up the provisioning of users for now, later we will only have the grpc service
-	proxy, identity, err := NewMetadataLifecycleGRPC(log, "metadata-lifecycle-service:5001")
+	grpc, identity, err := NewMetadataLifecycleGRPC(log, grpcBaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("TODO: %w", err)
 	}
 
 	return &MetadataLifecycle{
-		identity:      apiClient.InternalIdentityAPI,
-		users:         apiClient.UsersAPI,
-		groups:        apiClient.GroupsAPI,
-		access:        apiClient.GroupAccessAPI,
-		resources:     apiClient.ResourcesAPI,
-		imports:       apiClient.ImportsAPI,
-		contactPoints: apiClient.ContactPointsAPI,
-		organizations: apiClient.OrganizationsAPI,
-		categories:    apiClient.CategoriesAPI,
+		identity:  apiClient.InternalIdentityAPI,
+		users:     apiClient.UsersAPI,
+		access:    apiClient.GroupAccessAPI,
+		resources: apiClient.ResourcesAPI,
+		imports:   apiClient.ImportsAPI,
 
 		// TODO: we are doing this just to hook up the provisioning of users for now, later we will only have the grpc service
-		Proxy:    proxy,
+		GRPC:     grpc,
 		Identity: identity,
 
 		log: log,
 	}, nil
 }
 
-func (c *MetadataLifecycle) ListGroups(ctx context.Context) ([]client.Group, error) {
-	if c == nil || c.groups == nil {
-		return nil, fmt.Errorf("metadata-lifecycle group client is not configured")
+func (c *MetadataLifecycle) ListGroups(ctx context.Context) (*metadatalifecyclev1.ListGroupsResponse, error) {
+	if c == nil || c.GRPC == nil {
+		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	groups, response, err := c.groups.ListGroups(ctx).Execute()
+	response, err := c.GRPC.ListGroups(ctx)
 	if err != nil {
-		return nil, wrapGroupError("list metadata-lifecycle groups", response, err)
+		return nil, err
 	}
 
-	return groups, nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) GetGroup(ctx context.Context, id string) (*client.Group, error) {
-	if c == nil || c.groups == nil {
-		return nil, fmt.Errorf("metadata-lifecycle group client is not configured")
+func (c *MetadataLifecycle) GetGroup(ctx context.Context, request *metadatalifecyclev1.GetGroupRequest) (*metadatalifecyclev1.GetGroupResponse, error) {
+	if c == nil || c.GRPC == nil {
+		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	group, response, err := c.groups.GetGroup(ctx, id).Execute()
+	response, err := c.GRPC.GetGroup(ctx, request)
 	if err != nil {
-		return nil, wrapGroupError("get metadata-lifecycle group", response, err)
+		return nil, err
 	}
 
-	if group == nil {
+	if response == nil || response.Group == nil {
 		return nil, fmt.Errorf("decode metadata-lifecycle group: response is empty")
 	}
 
-	return group, nil
+	return response, nil
 }
 
 func (c *MetadataLifecycle) WithdrawMembershipRequest(ctx context.Context, groupID, actorID string) error {
@@ -265,98 +258,44 @@ func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, 
 	return nil
 }
 
-func (c *MetadataLifecycle) ListUsers(ctx context.Context, actorID string) ([]client.UserSummary, error) {
-	if c == nil || c.users == nil {
-		return nil, fmt.Errorf("metadata-lifecycle users client is not configured")
-	}
-
-	users, response, err := c.users.ListUsers(ctx).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return nil, wrapUserError("list metadata-lifecycle users", response, err)
-	}
-
-	return users, nil
-}
-
-func (c *MetadataLifecycle) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
-	if c == nil || c.users == nil {
-		return fmt.Errorf("metadata-lifecycle identity client is not configured")
-	}
-
-	response, err := c.users.GrantGlobalPermission(ctx, userID, permission).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return wrapUserError("grant metadata-lifecycle global permission", response, err)
-	}
-
-	return nil
-}
-
 func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
-	if c == nil || c.users == nil {
-		return fmt.Errorf("metadata-lifecycle identity client is not configured")
+	if c == nil || c.GRPC == nil {
+		return fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	response, err := c.users.RevokeGlobalPermission(ctx, userID, permission).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return wrapUserError("revoke metadata-lifecycle global permission", response, err)
-	}
-
-	return nil
+	return c.GRPC.RevokeGlobalPermission(ctx, actorID, userID, permission)
 }
 
 func (c *MetadataLifecycle) AssignGlobalRole(ctx context.Context, actorID, userID, role string) error {
-	if c == nil || c.users == nil {
-		return fmt.Errorf("metadata-lifecycle identity client is not configured")
+	if c == nil || c.GRPC == nil {
+		return fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	response, err := c.users.AssignGlobalRole(ctx, userID, role).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return wrapUserError("assign metadata-lifecycle global role", response, err)
-	}
-
-	return nil
+	return c.GRPC.AssignGlobalRole(ctx, actorID, userID, role)
 }
 
 func (c *MetadataLifecycle) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
-	if c == nil || c.users == nil {
-		return fmt.Errorf("metadata-lifecycle identity client is not configured")
+	if c == nil || c.GRPC == nil {
+		return fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	response, err := c.users.RemoveGlobalRole(ctx, userID, role).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return wrapUserError("remove metadata-lifecycle global role", response, err)
-	}
-
-	return nil
+	return c.GRPC.RemoveGlobalRole(ctx, actorID, userID, role)
 }
 
 func (c *MetadataLifecycle) BlockUser(ctx context.Context, actorID, userID, reason string) error {
-	if c == nil || c.users == nil {
-		return fmt.Errorf("metadata-lifecycle identity client is not configured")
+	if c == nil || c.GRPC == nil {
+		return fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	response, err := c.users.BlockUser(ctx, userID).
-		XEPOSUserID(actorID).
-		BlockUserRequest(client.BlockUserRequest{Reason: reason}).
-		Execute()
-	if err != nil {
-		return wrapUserError("block metadata-lifecycle user", response, err)
-	}
-
-	return nil
+	return c.GRPC.BlockUser(ctx, actorID, userID, reason)
 }
 
 func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID string) error {
-	if c == nil || c.users == nil {
-		return fmt.Errorf("metadata-lifecycle identity client is not configured")
+	if c == nil || c.GRPC == nil {
+		return fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 
-	response, err := c.users.UnblockUser(ctx, userID).XEPOSUserID(actorID).Execute()
-	if err != nil {
-		return wrapUserError("unblock metadata-lifecycle user", response, err)
-	}
-
-	return nil
+	return c.GRPC.UnblockUser(ctx, actorID, userID)
 }
 
 func (c *MetadataLifecycle) EnsureUser(ctx context.Context, identity ActorIdentity) (domain.User, error) {

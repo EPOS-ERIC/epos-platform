@@ -348,7 +348,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UserSummary"
+                  $ref: "#/components/schemas/UserListItem"
               examples:
                 list:
                   summary: User list
@@ -360,6 +360,8 @@ paths:
                       global_roles: [ADMIN]
                       global_permissions: []
                       status: "ACTIVE"
+                      created_at: "2026-06-17T12:48:45.574Z"
+                      updated_at: "2026-06-17T12:48:45.574Z"
         default:
           description: Gateway error
           content:
@@ -855,7 +857,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}:
     parameters:
-      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/GetUserID"
     get:
       tags:
         - Users
@@ -922,7 +924,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/global-permissions/{permission}:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/Permission"
     put:
       tags:
@@ -960,7 +962,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/block:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
     post:
       tags:
         - Users
@@ -986,7 +988,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/unblock:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
     post:
       tags:
         - Users
@@ -1006,7 +1008,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/global-roles/{role}:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/GlobalRole"
     put:
       tags:
@@ -1404,23 +1406,22 @@ components:
         type: string
         format: uuid
 
-    UserId:
+    GetUserID:
       name: id
       in: path
       required: true
-      description: User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup.
+      description: User identifier. Use `self` to resolve the authenticated user.
       schema:
         type: string
         example: self
 
-    UserUUID:
+    UserID:
       name: id
       in: path
       required: true
       description: User identifier.
       schema:
         type: string
-        format: uuid
 
     Permission:
       name: permission
@@ -2699,7 +2700,7 @@ components:
 
     User:
       allOf:
-        - $ref: "#/components/schemas/UserSummary"
+        - $ref: "#/components/schemas/UserListItem"
         - type: object
           description: User record returned by gateway user endpoints.
           required:
@@ -2711,9 +2712,9 @@ components:
               items:
                 $ref: "#/components/schemas/UserMembershipSummary"
 
-    UserSummary:
+    UserListItem:
       type: object
-      description: User record returned by user endpoints.
+      description: User record returned by the user list endpoint.
       required:
         - id
         - email
@@ -2722,6 +2723,8 @@ components:
         - status
         - global_roles
         - global_permissions
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -2741,6 +2744,12 @@ components:
           type: array
           items:
             type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     Category:
       type: object
       required: [id, group_id, parent_category_id, name]

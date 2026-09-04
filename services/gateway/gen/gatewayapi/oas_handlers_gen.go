@@ -4761,7 +4761,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 
 	var rawBody []byte
 
-	var response []UserSummary
+	var response []UserListItem
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4777,7 +4777,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = []UserSummary
+			Response = []UserListItem
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

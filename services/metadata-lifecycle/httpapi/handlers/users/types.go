@@ -9,10 +9,6 @@ type internalUserRequest struct {
 	FamilyName string `json:"family_name"`
 }
 
-type blockUserRequest struct {
-	Reason string `json:"reason"`
-}
-
 type userResponse struct {
 	ID                string                   `json:"id"`
 	Email             string                   `json:"email"`

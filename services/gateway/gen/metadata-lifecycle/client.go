@@ -48,21 +48,13 @@ type APIClient struct {
 
 	// API Services
 
-	CategoriesAPI CategoriesAPI
-
-	ContactPointsAPI ContactPointsAPI
-
 	GroupAccessAPI GroupAccessAPI
-
-	GroupsAPI GroupsAPI
 
 	HealthAPI HealthAPI
 
 	ImportsAPI ImportsAPI
 
 	InternalIdentityAPI InternalIdentityAPI
-
-	OrganizationsAPI OrganizationsAPI
 
 	ResourcesAPI ResourcesAPI
 
@@ -85,14 +77,10 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.CategoriesAPI = (*CategoriesAPIService)(&c.common)
-	c.ContactPointsAPI = (*ContactPointsAPIService)(&c.common)
 	c.GroupAccessAPI = (*GroupAccessAPIService)(&c.common)
-	c.GroupsAPI = (*GroupsAPIService)(&c.common)
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.ImportsAPI = (*ImportsAPIService)(&c.common)
 	c.InternalIdentityAPI = (*InternalIdentityAPIService)(&c.common)
-	c.OrganizationsAPI = (*OrganizationsAPIService)(&c.common)
 	c.ResourcesAPI = (*ResourcesAPIService)(&c.common)
 	c.UsersAPI = (*UsersAPIService)(&c.common)
 

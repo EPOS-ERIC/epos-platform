@@ -12,7 +12,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
 	imports "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
@@ -24,7 +23,6 @@ import (
 type Router struct {
 	Imports       *imports.Handler
 	Users         *users.Handler
-	Groups        *groups.Handler
 	Access        *access.Handler
 	Categories    *categories.Handler
 	ContactPoints *contactpoints.Handler
@@ -67,23 +65,9 @@ func NewRouter(router Router) http.Handler {
 		r.Post("/imports/turtle", router.Imports.Turtle)
 
 		r.Get("/users/{user_id}", router.Users.GetByID)
-		r.Get("/users", router.Users.List)
-		r.Put("/users/{user_id}/global-permissions/{permission}", router.Users.GrantGlobalPermission)
-		r.Delete("/users/{user_id}/global-permissions/{permission}", router.Users.RevokeGlobalPermission)
-		r.Put("/users/{user_id}/global-roles/{role}", router.Users.AssignGlobalRole)
-		r.Delete("/users/{user_id}/global-roles/{role}", router.Users.RemoveGlobalRole)
-		r.Post("/users/{user_id}/block", router.Users.BlockUser)
-		r.Post("/users/{user_id}/unblock", router.Users.UnblockUser)
 		r.Post("/internal/users", router.Users.Create)
 
-		r.Get("/groups", router.Groups.List)
-		r.Post("/groups", router.Groups.Create)
-		r.Get("/groups/{group_id}", router.Groups.Get)
-		r.Put("/groups/{group_id}", router.Groups.Replace)
-		r.Delete("/groups/{group_id}", router.Groups.Delete)
 		r.Post("/groups/{group_id}/categories", router.Categories.Create)
-		r.Get("/groups/{group_id}/categories", router.Categories.List)
-		r.Get("/groups/{group_id}/categories/{category_id}", router.Categories.Get)
 		r.Put("/groups/{group_id}/categories/{category_id}", router.Categories.Replace)
 		r.Delete("/groups/{group_id}/categories/{category_id}", router.Categories.Delete)
 		r.Get("/groups/{group_id}/memberships", router.Access.ListMemberships)
@@ -98,18 +82,6 @@ func NewRouter(router Router) http.Handler {
 		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", router.Access.RemoveRole)
 		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", router.Access.GrantPermission)
 		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", router.Access.RevokePermission)
-
-		r.Get("/contact-points", router.ContactPoints.List)
-		r.Post("/contact-points", router.ContactPoints.Create)
-		r.Get("/contact-points/{contact_point_id}", router.ContactPoints.Get)
-		r.Put("/contact-points/{contact_point_id}", router.ContactPoints.Replace)
-		r.Delete("/contact-points/{contact_point_id}", router.ContactPoints.Delete)
-
-		r.Get("/organizations", router.Organizations.List)
-		r.Post("/organizations", router.Organizations.Create)
-		r.Get("/organizations/{organization_id}", router.Organizations.Get)
-		r.Put("/organizations/{organization_id}", router.Organizations.Replace)
-		r.Delete("/organizations/{organization_id}", router.Organizations.Delete)
 
 		r.Get("/resources", router.Discovery.Search)
 		r.Post("/groups/{group_id}/resources", router.Resources.Create)

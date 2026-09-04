@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+// TODO: maybe we can extract this to a shared file because in the end the shape of the identifier is the same for software/organizations/dataset, so we avoid duplication
+message OrganizationIdentifier {
+  string id = 1;
+  string type = 2;
+  string value = 3;
+}
+
+message Organization {
+  string id = 1;
+  string name = 2;
+  optional string street = 3;
+  optional string locality = 4;
+  optional string postal_code = 5;
+  optional string country = 6;
+  optional string logo_url = 7;
+  optional string page_url = 8;
+  optional string email = 9;
+  optional string lei_code = 10;
+  repeated OrganizationIdentifier identifiers = 11;
+  repeated string parents = 12;
+  repeated string contact_point_ids = 13;
+}
+
+message OrganizationIdentifierInput {
+  string type = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListOrganizationsRequest {}
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+}
+
+message GetOrganizationRequest {
+  string organization_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message CreateOrganizationRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  optional string street = 2;
+  optional string locality = 3;
+  optional string postal_code = 4;
+  optional string country = 5;
+  optional string logo_url = 6;
+  optional string page_url = 7;
+  optional string email = 8;
+  optional string lei_code = 9;
+  repeated OrganizationIdentifierInput identifiers = 10;
+  repeated string parents = 11;
+  repeated string contact_point_ids = 12;
+}
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message ReplaceOrganizationRequest {
+  string organization_id = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string street = 3;
+  optional string locality = 4;
+  optional string postal_code = 5;
+  optional string country = 6;
+  optional string logo_url = 7;
+  optional string page_url = 8;
+  optional string email = 9;
+  optional string lei_code = 10;
+  repeated OrganizationIdentifierInput identifiers = 11;
+  repeated string parents = 12;
+  repeated string contact_point_ids = 13;
+}
+message ReplaceOrganizationResponse {
+  Organization organization = 1;
+}
+
+message DeleteOrganizationRequest {
+  string organization_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+message DeleteOrganizationResponse {}
+
+service OrganizationService {
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReplaceOrganization(ReplaceOrganizationRequest) returns (ReplaceOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

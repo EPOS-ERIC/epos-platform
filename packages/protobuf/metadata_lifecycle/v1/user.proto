@@ -8,10 +8,25 @@ import "metadata_lifecycle/v1/annotations.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
+message ListUsersRequest {}
+message UserListItem {
+  string id = 1;
+  string email = 2;
+  string given_name = 3;
+  string family_name = 4;
+  UserStatus status = 5;
+  repeated GlobalRole global_roles = 6;
+  repeated string global_permissions = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+message ListUsersResponse {
+  repeated UserListItem users = 1;
+}
+
 message GetUserRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
 }
-
 enum UserStatus {
   USER_STATUS_UNSPECIFIED = 0;
   USER_STATUS_ACTIVE = 1;
@@ -51,6 +66,42 @@ message GetUserResponse {
   google.protobuf.Timestamp updated_at = 9;
   repeated UserMembership memberships = 10;
 }
+
+message GrantGlobalPermissionRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  string permission = 2 [(buf.validate.field).string.min_len = 1];
+}
+message GrantGlobalPermissionResponse {}
+
+message RevokeGlobalPermissionRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  string permission = 2 [(buf.validate.field).string.min_len = 1];
+}
+message RevokeGlobalPermissionResponse {}
+
+message AssignGlobalRoleRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  string role = 2 [(buf.validate.field).string.min_len = 1];
+}
+message AssignGlobalRoleResponse {}
+
+message RemoveGlobalRoleRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  string role = 2 [(buf.validate.field).string.min_len = 1];
+}
+message RemoveGlobalRoleResponse {}
+
+message BlockUserRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+  string reason = 2 [(buf.validate.field).string.min_len = 1];
+}
+message BlockUserResponse {}
+
+message UnblockUserRequest {
+  string user_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+message UnblockUserResponse {}
+
 message UserMembership {
   GroupReference group = 1;
   repeated GroupRole group_roles = 2;
@@ -73,6 +124,27 @@ message GroupReference {
 
 service UserService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc GrantGlobalPermission(GrantGlobalPermissionRequest) returns (GrantGlobalPermissionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RevokeGlobalPermission(RevokeGlobalPermissionRequest) returns (RevokeGlobalPermissionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc AssignGlobalRole(AssignGlobalRoleRequest) returns (AssignGlobalRoleResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RemoveGlobalRole(RemoveGlobalRoleRequest) returns (RemoveGlobalRoleResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc BlockUser(BlockUserRequest) returns (BlockUserResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc UnblockUser(UnblockUserRequest) returns (UnblockUserResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }
 }
