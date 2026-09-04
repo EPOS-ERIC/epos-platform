@@ -1,108 +1,68 @@
 package handlers
 
 import (
-	"time"
-
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toClientParameterDraftMetadata(v gatewayapi.ParameterDraftMetadata) metadatalifecycleclient.ParameterDraftMetadata {
-	return metadatalifecycleclient.ParameterDraftMetadata{
-		Kind:           metadatalifecycleclient.ParameterKind(v.Kind),
-		Variable:       v.Variable,
-		Property:       v.Property,
-		Label:          v.Label,
-		Required:       v.Required,
-		MultipleValues: v.MultipleValues,
-		ReadOnly:       v.ReadOnly,
-	}
-}
-
-func toClientParameterDraft(v gatewayapi.ParameterDraft) metadatalifecycleclient.ParameterDraft {
+func toProtoParameterDraft(v gatewayapi.ParameterDraft) *metadatalifecyclev1.ParameterDraft {
 	switch {
 	case v.IsStringParameterDraft():
 		x := v.StringParameterDraft
-		return metadatalifecycleclient.StringParameterDraftAsParameterDraft(&metadatalifecycleclient.StringParameterDraft{
-			Kind:          "STRING",
-			Metadata:      toClientParameterDraftMetadata(x.Metadata),
-			Default:       *metadatalifecycleclient.NewNullableString(toClientNilStringPtr(x.Default)),
-			AllowedValues: x.AllowedValues,
-			Pattern:       x.Pattern,
-		})
+		return &metadatalifecyclev1.ParameterDraft{Metadata: protoParameterMetadata(x.Metadata), Value: &metadatalifecyclev1.ParameterDraft_String_{String_: &metadatalifecyclev1.StringParameterDraft{Default: protoString(x.Default), AllowedValues: x.AllowedValues, Pattern: x.Pattern}}}
 	case v.IsBooleanParameterDraft():
 		x := v.BooleanParameterDraft
-		return metadatalifecycleclient.BooleanParameterDraftAsParameterDraft(&metadatalifecycleclient.BooleanParameterDraft{
-			Kind:     "BOOLEAN",
-			Metadata: toClientParameterDraftMetadata(x.Metadata),
-			Default:  *metadatalifecycleclient.NewNullableBool(toClientNilBool(x.Default)),
-		})
+		return &metadatalifecyclev1.ParameterDraft{Metadata: protoParameterMetadata(x.Metadata), Value: &metadatalifecyclev1.ParameterDraft_Boolean{Boolean: &metadatalifecyclev1.BooleanParameterDraft{Default: protoBool(x.Default)}}}
 	case v.IsIntegerParameterDraft():
 		x := v.IntegerParameterDraft
-		return metadatalifecycleclient.IntegerParameterDraftAsParameterDraft(&metadatalifecycleclient.IntegerParameterDraft{
-			Kind:          "INTEGER",
-			Metadata:      toClientParameterDraftMetadata(x.Metadata),
-			Minimum:       *metadatalifecycleclient.NewNullableInt64(toClientNilInt64(x.Minimum)),
-			Maximum:       *metadatalifecycleclient.NewNullableInt64(toClientNilInt64(x.Maximum)),
-			Default:       *metadatalifecycleclient.NewNullableInt64(toClientNilInt64(x.Default)),
-			AllowedValues: x.AllowedValues,
-		})
+		return &metadatalifecyclev1.ParameterDraft{Metadata: protoParameterMetadata(x.Metadata), Value: &metadatalifecyclev1.ParameterDraft_Integer{Integer: &metadatalifecyclev1.IntegerParameterDraft{Minimum: protoInt64(x.Minimum), Maximum: protoInt64(x.Maximum), Default: protoInt64(x.Default), AllowedValues: x.AllowedValues}}}
 	case v.IsFloatParameterDraft():
 		x := v.FloatParameterDraft
-		return metadatalifecycleclient.FloatParameterDraftAsParameterDraft(&metadatalifecycleclient.FloatParameterDraft{
-			Kind:          "FLOAT",
-			Metadata:      toClientParameterDraftMetadata(x.Metadata),
-			Minimum:       *metadatalifecycleclient.NewNullableFloat64(toClientNilFloat64(x.Minimum)),
-			Maximum:       *metadatalifecycleclient.NewNullableFloat64(toClientNilFloat64(x.Maximum)),
-			Default:       *metadatalifecycleclient.NewNullableFloat64(toClientNilFloat64(x.Default)),
-			AllowedValues: x.AllowedValues,
-		})
+		return &metadatalifecyclev1.ParameterDraft{Metadata: protoParameterMetadata(x.Metadata), Value: &metadatalifecyclev1.ParameterDraft_Float{Float: &metadatalifecyclev1.FloatParameterDraft{Minimum: protoFloat(x.Minimum), Maximum: protoFloat(x.Maximum), Default: protoFloat(x.Default), AllowedValues: x.AllowedValues}}}
 	case v.IsDateTimeParameterDraft():
 		x := v.DateTimeParameterDraft
-		return metadatalifecycleclient.DateTimeParameterDraftAsParameterDraft(&metadatalifecycleclient.DateTimeParameterDraft{
-			Kind:     "DATETIME",
-			Metadata: toClientParameterDraftMetadata(x.Metadata),
-			Minimum:  *metadatalifecycleclient.NewNullableTime(toClientNilTime(x.Minimum)),
-			Maximum:  *metadatalifecycleclient.NewNullableTime(toClientNilTime(x.Maximum)),
-			Default:  *metadatalifecycleclient.NewNullableTime(toClientNilTime(x.Default)),
-			Pattern:  x.Pattern,
-		})
+		return &metadatalifecyclev1.ParameterDraft{Metadata: protoParameterMetadata(x.Metadata), Value: &metadatalifecyclev1.ParameterDraft_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameterDraft{Minimum: protoTime(x.Minimum), Maximum: protoTime(x.Maximum), Default: protoTime(x.Default), Pattern: x.Pattern}}}
 	default:
-		return metadatalifecycleclient.ParameterDraft{}
+		return nil
 	}
 }
 
-func toClientNilStringPtr(v gatewayapi.NilString) *string {
-	if v.Null {
-		return nil
-	}
-	return &v.Value
+func protoParameterMetadata(v gatewayapi.ParameterDraftMetadata) *metadatalifecyclev1.ParameterDraftMetadata {
+	return &metadatalifecyclev1.ParameterDraftMetadata{Variable: v.Variable, Property: v.Property, Label: v.Label, Required: v.Required, MultipleValues: v.MultipleValues, ReadOnly: v.ReadOnly}
 }
 
-func toClientNilBool(v gatewayapi.NilBool) *bool {
+func protoString(v gatewayapi.NilString) *string {
 	if v.Null {
 		return nil
 	}
-	return &v.Value
+	return new(v.Value)
 }
 
-func toClientNilInt64(v gatewayapi.NilInt64) *int64 {
+func protoBool(v gatewayapi.NilBool) *bool {
 	if v.Null {
 		return nil
 	}
-	return &v.Value
+	return new(v.Value)
 }
 
-func toClientNilFloat64(v gatewayapi.NilFloat64) *float64 {
+func protoInt64(v gatewayapi.NilInt64) *int64 {
 	if v.Null {
 		return nil
 	}
-	return &v.Value
+	return new(v.Value)
 }
 
-func toClientNilTime(v gatewayapi.NilDateTime) *time.Time {
+func protoFloat(v gatewayapi.NilFloat64) *float64 {
 	if v.Null {
 		return nil
 	}
-	return &v.Value
+	return new(v.Value)
+}
+
+func protoTime(v gatewayapi.NilDateTime) *timestamppb.Timestamp {
+	if v.Null {
+		return nil
+	}
+	return timestamppb.New(v.Value)
 }

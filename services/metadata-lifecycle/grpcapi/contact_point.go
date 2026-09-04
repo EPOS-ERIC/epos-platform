@@ -3,6 +3,7 @@ package grpcapi
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
@@ -99,7 +100,7 @@ func (c *ContactPointServer) DeleteContactPoint(ctx context.Context, request *me
 func parseContactPointID(value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return uuid.Nil, status.Error(codes.InvalidArgument, "invalid contact point id")
+		return uuid.Nil, fmt.Errorf("invalid contact point id: %w", status.Error(codes.InvalidArgument, "invalid contact point id"))
 	}
 	return id, nil
 }
@@ -111,14 +112,14 @@ func toProtoContactPoint(value domain.ContactPoint) *metadatalifecyclev1.Contact
 func toContactPointError(operation string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidContactPoint):
-		return status.Error(codes.InvalidArgument, "invalid contact point")
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid contact point"))
 	case errors.Is(err, domain.ErrContactPointForbidden):
-		return status.Error(codes.PermissionDenied, "contact point operation is not permitted")
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "contact point operation is not permitted"))
 	case errors.Is(err, domain.ErrContactPointNotFound):
-		return status.Error(codes.NotFound, "contact point not found")
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "contact point not found"))
 	case errors.Is(err, domain.ErrContactPointConflict):
-		return status.Error(codes.AlreadyExists, "contact point already exists")
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "contact point already exists"))
 	default:
-		return status.Error(codes.Internal, operation)
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
 	}
 }

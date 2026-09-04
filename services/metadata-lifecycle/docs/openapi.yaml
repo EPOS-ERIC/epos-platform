@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: EPOS Metadata Lifecycle API
   version: 2.0.0
-  description: Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
+  description: Public group metadata, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 servers:
   - url: /
 tags:
@@ -10,8 +10,6 @@ tags:
     description: Service availability.
   - name: Groups
     description: Public group metadata.
-  - name: Group Access
-    description: Group memberships, roles, role requests, and direct permissions.
   - name: Users
     description: User directory, profiles, and global permissions.
   - name: Resources
@@ -388,232 +386,6 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
         "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/memberships:
-    parameters: [{ $ref: "#/components/parameters/GroupID" }]
-    get:
-      tags: [Group Access]
-      operationId: listGroupMemberships
-      summary: List group memberships
-      description: Requires global ADMIN, global.membership.manage, global.role.manage, or matching active group membership/role/permission management permission.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "200":
-          description: Memberships returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/GroupMembership" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/membership-requests:
-    parameters: [{ $ref: "#/components/parameters/GroupID" }]
-    post:
-      tags: [Group Access]
-      operationId: requestGroupMembership
-      summary: Request group membership
-      description: Active user creates own PENDING membership with an explicit possibly-empty list of requested EDITOR and REVIEWER roles.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/CreateMembershipRequest" }
-      responses:
-        "201":
-          description: Membership requested
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/GroupMembership" }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: [Group Access]
-      operationId: withdrawGroupMembershipRequest
-      summary: Withdraw own membership request
-      description: Deletes caller's own PENDING membership request and pending role requests.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Membership request withdrawn }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/memberships/{user_id}:
-    parameters:
-      - { $ref: "#/components/parameters/GroupID" }
-      - { $ref: "#/components/parameters/UserID" }
-    patch:
-      tags: [Group Access]
-      operationId: decideGroupMembership
-      summary: Accept or reject membership request
-      description: Requires group.membership.manage in this group, global.membership.manage, or global ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/MembershipDecisionRequest" }
-      responses:
-        "200":
-          description: Membership decision applied
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/GroupMembership" }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: [Group Access]
-      operationId: revokeGroupMembership
-      summary: Revoke membership
-      description: Requires group.membership.manage in this group, global.membership.manage, or global ADMIN. Membership holding GROUP_ADMIN requires global.membership.manage or global ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Membership revoked }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/role-requests:
-    parameters: [{ $ref: "#/components/parameters/GroupID" }]
-    post:
-      tags: [Group Access]
-      operationId: requestGroupRole
-      summary: Request group role
-      description: Active group member requests EDITOR or REVIEWER for self.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/CreateRoleRequest" }
-      responses:
-        "201":
-          description: Role requested
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/RoleRequest" }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/role-requests/{request_id}:
-    parameters:
-      - { $ref: "#/components/parameters/GroupID" }
-      - { $ref: "#/components/parameters/RoleRequestID" }
-    patch:
-      tags: [Group Access]
-      operationId: applyRoleRequestDecision
-      summary: Accept or reject role request
-      description: Requires group.role.manage in this group, global.role.manage, or global ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/RoleRequestDecisionRequest" }
-      responses:
-        "200":
-          description: Role request decision applied
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/GroupMembership" }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: [Group Access]
-      operationId: withdrawGroupRoleRequest
-      summary: Withdraw own role request
-      description: Deletes caller's own pending role request.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Role request withdrawn }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/memberships/{user_id}/roles/{role}:
-    parameters:
-      - { $ref: "#/components/parameters/GroupID" }
-      - { $ref: "#/components/parameters/UserID" }
-      - { $ref: "#/components/parameters/GroupRole" }
-    put:
-      tags: [Group Access]
-      operationId: assignGroupRole
-      summary: Assign group role
-      description: Idempotent. Group role managers assign EDITOR or REVIEWER in their group; global role managers and global ADMIN may also assign GROUP_ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Role assigned }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: [Group Access]
-      operationId: removeGroupRole
-      summary: Remove group role
-      description: Idempotent. Group role managers remove EDITOR or REVIEWER in their group; global role managers and global ADMIN may also remove GROUP_ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Role removed }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/groups/{group_id}/memberships/{user_id}/permissions/{permission}:
-    parameters:
-      - { $ref: "#/components/parameters/GroupID" }
-      - { $ref: "#/components/parameters/UserID" }
-      - { $ref: "#/components/parameters/GroupPermission" }
-    put:
-      tags: [Group Access]
-      operationId: grantGroupPermission
-      summary: Grant direct group permission
-      description: Idempotent. Requires group.permission.manage in this group or global ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Permission granted }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-    delete:
-      tags: [Group Access]
-      operationId: revokeGroupPermission
-      summary: Revoke direct group permission
-      description: Idempotent. Requires group.permission.manage in this group or global ADMIN.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      responses:
-        "204": { description: Permission revoked }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
 components:
   parameters:
     Actor:
@@ -767,46 +539,6 @@ components:
       }
     UserID:
       { name: user_id, in: path, required: true, schema: { type: string } }
-    RoleRequestID:
-      {
-        name: request_id,
-        in: path,
-        required: true,
-        schema: { type: string, format: uuid },
-      }
-    GroupRole:
-      {
-        name: role,
-        in: path,
-        required: true,
-        schema: { type: string, enum: [EDITOR, REVIEWER, GROUP_ADMIN] },
-      }
-    GroupPermission:
-      {
-        name: permission,
-        in: path,
-        required: true,
-        schema:
-          {
-            type: string,
-            enum:
-              [
-                resource.create,
-                resource.edit,
-                resource.submit,
-                resource.withdraw,
-                resource.reopen,
-                resource.discard,
-                resource.reject,
-                resource.publish,
-                resource.unpublish,
-                group.membership.manage,
-                group.role.manage,
-                group.permission.manage,
-                category.manage,
-              ],
-          },
-      }
     GlobalPermission:
       {
         name: permission,
@@ -1111,43 +843,6 @@ components:
         color: { type: string, nullable: true }
         position: { type: integer, format: int32 }
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
-    MembershipUser:
-      type: object
-      required: [id, given_name, family_name, email]
-      additionalProperties: false
-      properties:
-        id: { type: string }
-        given_name: { type: string }
-        family_name: { type: string }
-        email: { type: string, format: email }
-    GroupMembership:
-      type: object
-      required:
-        [
-          user,
-          status,
-          roles,
-          permissions,
-          role_requests,
-          created_at,
-          updated_at,
-        ]
-      additionalProperties: false
-      properties:
-        user: { $ref: "#/components/schemas/MembershipUser" }
-        status: { type: string, enum: [PENDING, ACTIVE, REJECTED] }
-        roles:
-          type: array
-          items: { type: string, enum: [EDITOR, REVIEWER, GROUP_ADMIN] }
-        permissions:
-          type: array
-          items: { type: string }
-        role_requests:
-          type: array
-          description: Pending role requests only.
-          items: { $ref: "#/components/schemas/RoleRequest" }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
     RoleRequest:
       type: object
       required: [id, role, status, requested_at]
@@ -1157,33 +852,6 @@ components:
         role: { type: string, enum: [EDITOR, REVIEWER] }
         status: { type: string, enum: [PENDING, ACCEPTED, REJECTED] }
         requested_at: { type: string, format: date-time }
-    CreateMembershipRequest:
-      type: object
-      required: [roles]
-      additionalProperties: false
-      properties:
-        roles:
-          type: array
-          uniqueItems: true
-          items: { type: string, enum: [EDITOR, REVIEWER] }
-    MembershipDecisionRequest:
-      type: object
-      required: [status]
-      additionalProperties: false
-      properties:
-        status: { type: string, enum: [ACTIVE, REJECTED] }
-    CreateRoleRequest:
-      type: object
-      required: [role]
-      additionalProperties: false
-      properties:
-        role: { type: string, enum: [EDITOR, REVIEWER] }
-    RoleRequestDecisionRequest:
-      type: object
-      required: [status]
-      additionalProperties: false
-      properties:
-        status: { type: string, enum: [ACCEPTED, REJECTED] }
     ReplaceSoftwareApplicationDraftRequest:
       type: object
       required: [resource_type, revision, metadata]

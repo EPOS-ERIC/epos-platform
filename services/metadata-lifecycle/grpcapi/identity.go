@@ -3,6 +3,7 @@ package grpcapi
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
@@ -30,7 +31,7 @@ func (i *IdentityServer) ProvisionUser(ctx context.Context, req *metadatalifecyc
 		FamilyName: req.GetFamilyName(),
 	})
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid user claims")
+		return nil, fmt.Errorf("validate user claims: %w", status.Error(codes.InvalidArgument, "invalid user claims"))
 	}
 
 	user, err := i.users.Create(ctx, claims)
@@ -49,10 +50,10 @@ func (i *IdentityServer) ProvisionUser(ctx context.Context, req *metadatalifecyc
 func userStatusError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidUser):
-		return status.Error(codes.InvalidArgument, "invalid user claims")
+		return fmt.Errorf("provision user: %w", status.Error(codes.InvalidArgument, "invalid user claims"))
 	case errors.Is(err, domain.ErrUserConflict):
-		return status.Error(codes.AlreadyExists, "user already exists")
+		return fmt.Errorf("provision user: %w", status.Error(codes.AlreadyExists, "user already exists"))
 	default:
-		return status.Error(codes.Internal, "provision user")
+		return fmt.Errorf("provision user: %w", status.Error(codes.Internal, "provision user"))
 	}
 }

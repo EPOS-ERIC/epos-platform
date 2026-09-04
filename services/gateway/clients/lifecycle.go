@@ -2,175 +2,139 @@ package clients
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
-	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"github.com/google/uuid"
 )
 
-func (c *MetadataLifecycle) CreateResource(ctx context.Context, actorID, groupID string, request client.CreateResourceRequest) (*client.ResourceRecord, error) {
-	if c == nil || c.resources == nil {
-		return nil, fmt.Errorf("metadata-lifecycle resource client is not configured")
+func (c *MetadataLifecycle) CreateResourceDraft(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateResourceRequest) (*metadatalifecyclev1.CreateResourceResponse, error) {
+	if c == nil || c.GRPC == nil {
+		return nil, fmt.Errorf("metadata-lifecycle gRPC resource client is not configured")
 	}
-	record, response, err := c.resources.CreateResource(ctx, groupID).
-		XEPOSUserID(actorID).
-		CreateResourceRequest(request).Execute()
-	if err != nil {
-		return nil, lifecycleError(response, err)
-	}
-	return record, nil
+	return c.GRPC.CreateResource(ctx, actorID, request)
 }
 
-func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*client.ResourceRecord, error) {
-	c.log.Debug("get resource version", "resourceType", resourceType, "resourceID", resourceID, "versionID", versionID)
-
-	request := c.resources.GetResourceVersion(ctx, resourceType, resourceID, versionID)
-	if actorID != "" {
-		request = request.XEPOSUserID(actorID)
+func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*metadatalifecyclev1.GetResourceVersionResponse, error) {
+	if c == nil || c.GRPC == nil {
+		return nil, fmt.Errorf("metadata-lifecycle gRPC resource client is not configured")
 	}
-
-	c.log.Debug("get resource version", "request", request)
-
-	record, response, err := request.Execute()
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		c.log.Debug("get resource version", "error", err)
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-
-	c.log.Debug("get resource version", "response", record)
-
-	return record, nil
+	return c.GRPC.GetResourceVersion(ctx, actorID, &metadatalifecyclev1.GetResourceVersionRequest{
+		ResourceType: typ,
+		ResourceId:   resourceID,
+		VersionId:    versionID,
+	})
 }
 
-func (c *MetadataLifecycle) ReplaceResourceDraft(ctx context.Context, actorID, resourceID, versionID string, request client.ReplaceResourceDraftRequest) (*client.ResourceRecord, error) {
-	if c == nil || c.resources == nil {
-		return nil, fmt.Errorf("metadata-lifecycle resource client is not configured")
+func resourceTypeProto(value string) (metadatalifecyclev1.ResourceType, error) {
+	switch value {
+	case "dataset":
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET, nil
+	case "software-application":
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION, nil
+	case "software-source-code":
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE, nil
+	default:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_UNSPECIFIED, fmt.Errorf("invalid resource type %q", value)
 	}
-	record, response, err := c.resources.ReplaceResourceDraft(ctx, resourceID, versionID).
-		XEPOSUserID(actorID).
-		ReplaceResourceDraftRequest(request).
-		Execute()
-	if err != nil {
-		return nil, lifecycleError(response, err)
+}
+
+func (c *MetadataLifecycle) ReplaceResourceDraft(ctx context.Context, actorID, resourceID, versionID string, request *metadatalifecyclev1.ReplaceResourceDraftRequest) (*metadatalifecyclev1.ReplaceResourceDraftResponse, error) {
+	if c == nil || c.GRPC == nil {
+		return nil, fmt.Errorf("metadata-lifecycle gRPC resource client is not configured")
 	}
-	return record, nil
+	if request == nil {
+		return nil, fmt.Errorf("resource draft request is required")
+	}
+	request.ResourceId = resourceID
+	request.VersionId = versionID
+	return c.GRPC.ReplaceResourceDraft(ctx, actorID, request)
 }
 
 func (c *MetadataLifecycle) DiscardResourceDraft(ctx context.Context, actorID, resourceType, resourceID, versionID string) error {
-	response, err := c.resources.DiscardResourceDraft(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		Execute()
-	return lifecycleError(response, err)
-}
-
-func (c *MetadataLifecycle) SubmitResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.SubmitResource(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		Execute()
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return err
 	}
-	return record, nil
+	return c.GRPC.DiscardResourceDraft(ctx, actorID, &metadatalifecyclev1.DiscardResourceDraftRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID})
 }
 
-func (c *MetadataLifecycle) WithdrawResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.WithdrawResource(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) SubmitResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*metadatalifecyclev1.SubmitResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.SubmitResource(ctx, actorID, &metadatalifecyclev1.SubmitResourceRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID})
 }
 
-func (c *MetadataLifecycle) RejectResource(ctx context.Context, actorID, resourceType, resourceID, versionID string, request client.RejectRequest) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.RejectResource(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		RejectRequest(request).
-		Execute()
+func (c *MetadataLifecycle) WithdrawResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*metadatalifecyclev1.WithdrawResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.WithdrawResource(ctx, actorID, &metadatalifecyclev1.WithdrawResourceRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID})
 }
 
-func (c *MetadataLifecycle) ReopenResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.ReopenResource(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) RejectResource(ctx context.Context, actorID, resourceType, resourceID, versionID, note string) (*metadatalifecyclev1.RejectResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.RejectResource(ctx, actorID, &metadatalifecyclev1.RejectResourceRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID, Note: note})
 }
 
-func (c *MetadataLifecycle) PublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.PublishResource(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) ReopenResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*metadatalifecyclev1.ReopenResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.ReopenResource(ctx, actorID, &metadatalifecyclev1.ReopenResourceRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID})
 }
 
-func (c *MetadataLifecycle) UnpublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.UnpublishResource(ctx, resourceType, resourceID, versionID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) PublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*metadatalifecyclev1.PublishResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.PublishResource(ctx, actorID, &metadatalifecyclev1.PublishResourceRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID})
 }
 
-func (c *MetadataLifecycle) CreateResourceDraftFromPublication(ctx context.Context, actorID, resourceType, resourceID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.CreateResourceDraftFromPublication(ctx, resourceType, resourceID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) UnpublishResource(ctx context.Context, actorID, resourceType, resourceID, versionID string) (*metadatalifecyclev1.UnpublishResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.UnpublishResource(ctx, actorID, &metadatalifecyclev1.UnpublishResourceRequest{ResourceType: typ, ResourceId: resourceID, VersionId: versionID})
 }
 
-func (c *MetadataLifecycle) CreateResourceDraftFromArchive(ctx context.Context, actorID, resourceType, resourceID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.CreateResourceDraftFromArchive(ctx, resourceType, resourceID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) CreateResourceDraftFromPublication(ctx context.Context, actorID, resourceType, resourceID string) (*metadatalifecyclev1.DraftResourceFromPublicationResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.DraftResourceFromPublication(ctx, actorID, &metadatalifecyclev1.DraftResourceFromPublicationRequest{ResourceType: typ, ResourceId: resourceID})
 }
 
-func (c *MetadataLifecycle) CopyResource(ctx context.Context, actorID, groupID, resourceType, resourceID string) (*client.ResourceRecord, error) {
-	record, response, err := c.resources.CopyResource(ctx, groupID, resourceType, resourceID).
-		XEPOSUserID(actorID).
-		Execute()
+func (c *MetadataLifecycle) CreateResourceDraftFromArchive(ctx context.Context, actorID, resourceType, resourceID string) (*metadatalifecyclev1.DraftResourceFromLatestArchiveResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
 	if err != nil {
-		return nil, lifecycleError(response, err)
+		return nil, err
 	}
-	return record, nil
+	return c.GRPC.DraftResourceFromLatestArchive(ctx, actorID, &metadatalifecyclev1.DraftResourceFromLatestArchiveRequest{ResourceType: typ, ResourceId: resourceID})
 }
 
-func lifecycleError(response *http.Response, err error) error {
-	if err == nil {
-		return nil
+func (c *MetadataLifecycle) CopyResource(ctx context.Context, actorID, groupID, resourceType, resourceID string) (*metadatalifecyclev1.CopyPublishedResourceResponse, error) {
+	typ, err := resourceTypeProto(resourceType)
+	if err != nil {
+		return nil, err
 	}
-	if response != nil {
-		if response.Body != nil {
-			_ = response.Body.Close()
-		}
-		return &domain.UpstreamError{
-			StatusCode:   response.StatusCode,
-			WrappedError: err,
-		}
+	group, err := uuid.Parse(groupID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid group id: %w", err)
 	}
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return fmt.Errorf("metadata-lifecycle lifecycle request: %w", domain.ErrUpstreamTimeout)
-	}
-	return fmt.Errorf("metadata-lifecycle lifecycle request: %w", err)
+	return c.GRPC.CopyPublishedResource(ctx, actorID, &metadatalifecyclev1.CopyPublishedResourceRequest{ResourceType: typ, ResourceId: resourceID, GroupId: group.String()})
 }

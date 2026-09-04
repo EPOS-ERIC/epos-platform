@@ -3,10 +3,8 @@ package clients
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
-	client "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
 func (c *MetadataLifecycle) CreateGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateGroupRequest) (*metadatalifecyclev1.CreateGroupResponse, error) {
@@ -44,17 +42,11 @@ func (c *MetadataLifecycle) DeleteGroup(ctx context.Context, actorID string, req
 	return response, nil
 }
 
-func (c *MetadataLifecycle) ListGroupMemberships(ctx context.Context, groupID, actorID string) ([]client.GroupMembership, error) {
-	if c == nil || c.access == nil {
-		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
+func (c *MetadataLifecycle) ListGroupMemberships(ctx context.Context, actorID string, request *metadatalifecyclev1.ListGroupMembershipsRequest) (*metadatalifecyclev1.ListGroupMembershipsResponse, error) {
+	if c == nil || c.GRPC == nil {
+		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
-	memberships, response, err := c.access.ListGroupMemberships(ctx, groupID).
-		XEPOSUserID(actorID).
-		Execute()
-	if err != nil {
-		return nil, wrapGroupAccessError("list metadata-lifecycle group memberships", response, err)
-	}
-	return memberships, nil
+	return c.GRPC.ListGroupMemberships(ctx, actorID, request)
 }
 
 func (c *MetadataLifecycle) ListCategories(ctx context.Context, request *metadatalifecyclev1.ListCategoriesRequest) (*metadatalifecyclev1.ListCategoriesResponse, error) {
@@ -101,12 +93,4 @@ func (c *MetadataLifecycle) DeleteCategory(ctx context.Context, actorID string, 
 		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 	return c.GRPC.DeleteCategory(ctx, actorID, request)
-}
-
-func wrapGroupManagementError(operation string, response *http.Response, err error) error {
-	return wrapGroupAccessError(operation, response, err)
-}
-
-func wrapCategoryError(operation string, response *http.Response, err error) error {
-	return wrapGroupAccessError(operation, response, err)
 }

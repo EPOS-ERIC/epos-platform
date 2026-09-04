@@ -5,7 +5,6 @@ import (
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 )
 
 func toAPIProtoCategory(v *metadatalifecyclev1.CanonicalCategory) (gatewayapi.Category, error) {
@@ -31,35 +30,4 @@ func toAPIProtoCategory(v *metadatalifecyclev1.CanonicalCategory) (gatewayapi.Ca
 		result.ParentCategoryID.SetToNull()
 	}
 	return result, nil
-}
-
-func toAPICategory(v metadatalifecycleclient.CanonicalCategory) (gatewayapi.Category, error) {
-	id, err := parseUUID("category.id", v.Id)
-	if err != nil {
-		return gatewayapi.Category{}, err
-	}
-	groupID, err := parseUUID("category.group_id", v.GroupId)
-	if err != nil {
-		return gatewayapi.Category{}, err
-	}
-	r := gatewayapi.Category{
-		ID:      id,
-		GroupID: groupID,
-		Name:    v.Name,
-	}
-	if parent := v.ParentCategoryId.Get(); parent != nil {
-		parentID, err := parseUUID("category.parent_category_id", *parent)
-		if err != nil {
-			return gatewayapi.Category{}, err
-		}
-		r.ParentCategoryID.SetTo(parentID)
-	}
-	return r, nil
-}
-
-func value(v *string) string {
-	if v == nil {
-		return ""
-	}
-	return *v
 }

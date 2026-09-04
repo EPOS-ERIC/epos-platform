@@ -1,147 +1,114 @@
 package handlers
 
 import (
+	"time"
+
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toClientDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) metadatalifecycleclient.DatasetDraftMetadata {
-	r := metadatalifecycleclient.DatasetDraftMetadata{Title: string(v.Title)}
+func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalifecyclev1.DatasetDraftMetadata {
+	r := &metadatalifecyclev1.DatasetDraftMetadata{Title: string(v.Title), ContactPoints: uuidStrings(v.ContactPoints), Providers: uuidStrings(v.Providers), Categories: uuidStrings(v.Categories)}
 	if v.Description.Set {
-		r.SetDescription(v.Description.Value)
+		r.Description = new(v.Description.Value)
 	}
 	if v.Keywords.Set {
-		r.SetKeywords(v.Keywords.Value)
+		r.Keywords = new(v.Keywords.Value)
 	}
 	if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
-		r.SetAccrualPeriodicity(v.AccrualPeriodicity.Value)
+		r.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
 	}
 	if v.QualityAnnotation.Set && !v.QualityAnnotation.Null {
-		r.SetQualityAnnotation(v.QualityAnnotation.Value)
+		r.QualityAnnotation = new(v.QualityAnnotation.Value)
 	}
 	if v.AccessRight.Set && !v.AccessRight.Null {
-		r.SetAccessRight(v.AccessRight.Value)
+		r.AccessRight = new(v.AccessRight.Value)
 	}
 	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
-		r.SetSpatialCoverage(v.SpatialCoverage.Value)
+		r.SpatialCoverage = new(v.SpatialCoverage.Value)
 	}
-	if x := toClientTemporal(v.TemporalCoverage); x != nil {
-		r.SetTemporalCoverage(*x)
-	}
+	r.TemporalCoverage = toProtoTemporal(v.TemporalCoverage)
 	if v.Created.Set && !v.Created.Null {
-		r.SetCreated(v.Created.Value)
+		r.Created = timestampPtr(v.Created.Value)
 	}
 	if v.Updated.Set && !v.Updated.Null {
-		r.SetUpdated(v.Updated.Value)
+		r.Updated = timestampPtr(v.Updated.Value)
 	}
-	for _, x := range v.Distributions {
-		r.Distributions = append(r.Distributions, toClientDistributionDraft(x))
+	for _, id := range v.PersistentIdentifiers {
+		r.PersistentIdentifiers = append(r.PersistentIdentifiers, &metadatalifecyclev1.IdentifierDraft{Type: string(id.Type), Value: string(id.Value)})
 	}
-	for _, x := range v.PersistentIdentifiers {
-		r.PersistentIdentifiers = append(r.PersistentIdentifiers, metadatalifecycleclient.IdentifierDraft{
-			Type:  string(x.Type),
-			Value: string(x.Value),
-		})
-	}
-	for _, x := range v.ContactPoints {
-		r.ContactPoints = append(r.ContactPoints, x.String())
-	}
-	for _, x := range v.Providers {
-		r.Providers = append(r.Providers, x.String())
-	}
-	for _, x := range v.Categories {
-		r.Categories = append(r.Categories, x.String())
+	for _, distribution := range v.Distributions {
+		r.Distributions = append(r.Distributions, toProtoDistributionDraft(distribution))
 	}
 	return r
 }
 
-func toClientSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDraftMetadata) metadatalifecycleclient.SoftwareApplicationDraftMetadata {
-	r := metadatalifecycleclient.SoftwareApplicationDraftMetadata{
-		Name:        string(v.Name),
-		Description: &v.Description.Value,
+func timestampPtr(value time.Time) *timestamppb.Timestamp { return timestamppb.New(value) }
+
+func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDraftMetadata) *metadatalifecyclev1.SoftwareApplicationDraftMetadata {
+	r := &metadatalifecyclev1.SoftwareApplicationDraftMetadata{Name: string(v.Name), Creators: uuidStrings(v.Creators), Categories: uuidStrings(v.Categories), ContactPoints: uuidStrings(v.ContactPoints)}
+	if v.Description.Set {
+		r.Description = new(v.Description.Value)
 	}
-	if v.Keywords.Set {
-		r.SetKeywords(v.Keywords.Value)
+	if v.MainEntityOfPage.Set {
+		r.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 	}
 	if v.License.Set && !v.License.Null {
-		r.SetLicense(v.License.Value)
+		r.License = new(v.License.Value)
 	}
 	if v.Version.Set && !v.Version.Null {
-		r.SetVersion(v.Version.Value)
+		r.Version = new(v.Version.Value)
+	}
+	if v.Keywords.Set {
+		r.Keywords = new(v.Keywords.Value)
 	}
 	if v.DownloadURL.Set {
-		r.SetDownloadUrl(v.DownloadURL.Value.String())
+		r.DownloadUrl = new(v.DownloadURL.Value.String())
 	}
 	if v.Requirements.Set && !v.Requirements.Null {
-		r.SetRequirements(v.Requirements.Value)
+		r.Requirements = new(v.Requirements.Value)
 	}
 	if v.OperatingSystem.Set && !v.OperatingSystem.Null {
-		r.SetOperatingSystem(v.OperatingSystem.Value)
+		r.OperatingSystem = new(v.OperatingSystem.Value)
 	}
-	if v.MainEntityOfPage.Set {
-		r.SetMainEntityOfPage(v.MainEntityOfPage.Value.String())
-	}
-	for _, x := range v.Creators {
-		r.Creators = append(r.Creators, x.String())
-	}
-	for _, x := range v.Identifiers {
-		r.Identifiers = append(r.Identifiers, metadatalifecycleclient.IdentifierDraft{
-			Type:  string(x.Type),
-			Value: string(x.Value),
-		})
-	}
-	for _, x := range v.Categories {
-		r.Categories = append(r.Categories, x.String())
-	}
-	for _, x := range v.ContactPoints {
-		r.ContactPoints = append(r.ContactPoints, x.String())
+	for _, id := range v.Identifiers {
+		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierDraft{Type: string(id.Type), Value: string(id.Value)})
 	}
 	return r
 }
 
-func toClientSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraftMetadata) metadatalifecycleclient.SoftwareSourceCodeDraftMetadata {
-	r := metadatalifecycleclient.SoftwareSourceCodeDraftMetadata{
-		Name:        string(v.Name),
-		Description: &v.Description.Value,
-	}
-	if v.Keywords.Set {
-		r.SetKeywords(v.Keywords.Value)
-	}
-	if v.Repository.Set {
-		r.SetRepository(v.Repository.Value.String())
+func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraftMetadata) *metadatalifecyclev1.SoftwareSourceCodeDraftMetadata {
+	r := &metadatalifecyclev1.SoftwareSourceCodeDraftMetadata{Name: string(v.Name), Creators: uuidStrings(v.Creators), Categories: uuidStrings(v.Categories), ContactPoints: uuidStrings(v.ContactPoints)}
+	if v.Description.Set {
+		r.Description = new(v.Description.Value)
 	}
 	if v.ProgrammingLanguage.Set {
-		r.SetProgrammingLanguage(v.ProgrammingLanguage.Value)
+		r.ProgrammingLanguage = new(v.ProgrammingLanguage.Value)
+	}
+	if v.Keywords.Set {
+		r.Keywords = new(v.Keywords.Value)
+	}
+	if v.Repository.Set {
+		r.Repository = new(v.Repository.Value.String())
 	}
 	if v.License.Set && !v.License.Null {
-		r.SetLicense(v.License.Value)
+		r.License = new(v.License.Value)
 	}
 	if v.SoftwareRequirements.Set && !v.SoftwareRequirements.Null {
-		r.SetSoftwareRequirements(v.SoftwareRequirements.Value)
+		r.SoftwareRequirements = new(v.SoftwareRequirements.Value)
 	}
 	if v.RuntimePlatform.Set && !v.RuntimePlatform.Null {
-		r.SetRuntimePlatform(v.RuntimePlatform.Value)
+		r.RuntimePlatform = new(v.RuntimePlatform.Value)
 	}
 	if v.MainEntityOfPage.Set {
-		r.SetMainEntityOfPage(v.MainEntityOfPage.Value.String())
+		r.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 	}
 	if v.Version.Set && !v.Version.Null {
-		r.SetVersion(v.Version.Value)
+		r.Version = new(v.Version.Value)
 	}
-	for _, x := range v.Creators {
-		r.Creators = append(r.Creators, x.String())
-	}
-	for _, x := range v.Identifiers {
-		r.Identifiers = append(r.Identifiers, metadatalifecycleclient.IdentifierDraft{
-			Type:  string(x.Type),
-			Value: string(x.Value),
-		})
-	}
-	for _, x := range v.Categories {
-		r.Categories = append(r.Categories, x.String())
-	}
-	for _, x := range v.ContactPoints {
-		r.ContactPoints = append(r.ContactPoints, x.String())
+	for _, id := range v.Identifiers {
+		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierDraft{Type: string(id.Type), Value: string(id.Value)})
 	}
 	return r
 }

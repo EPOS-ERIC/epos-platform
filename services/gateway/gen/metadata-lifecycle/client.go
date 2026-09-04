@@ -1,7 +1,7 @@
 /*
 EPOS Metadata Lifecycle API
 
-Public group metadata, group access management, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
+Public group metadata, resource lifecycle, user access management, and internal identity transport. Authenticated endpoints require X-EPOS-User-ID.
 
 API version: 2.0.0
 */
@@ -48,8 +48,6 @@ type APIClient struct {
 
 	// API Services
 
-	GroupAccessAPI GroupAccessAPI
-
 	HealthAPI HealthAPI
 
 	ImportsAPI ImportsAPI
@@ -77,7 +75,6 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.GroupAccessAPI = (*GroupAccessAPIService)(&c.common)
 	c.HealthAPI = (*HealthAPIService)(&c.common)
 	c.ImportsAPI = (*ImportsAPIService)(&c.common)
 	c.InternalIdentityAPI = (*InternalIdentityAPIService)(&c.common)

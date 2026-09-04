@@ -19,13 +19,16 @@ test:
 dev: generate
 	go run .
 
+fix:
+	go fix ./...
+
 generate:
 	go generate ./...
 
 fmt:
 	golangci-lint fmt
 
-lint: fmt
+lint: fix fmt
 	golangci-lint run ./...
 
-.PHONY: build build-docker generate test fmt lint
+.PHONY: build build-docker generate test fmt lint fix dev

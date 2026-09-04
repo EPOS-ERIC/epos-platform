@@ -8,7 +8,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/docs"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
@@ -23,7 +22,6 @@ import (
 type Router struct {
 	Imports       *imports.Handler
 	Users         *users.Handler
-	Access        *access.Handler
 	Categories    *categories.Handler
 	ContactPoints *contactpoints.Handler
 	Organizations *organizations.Handler
@@ -70,33 +68,8 @@ func NewRouter(router Router) http.Handler {
 		r.Post("/groups/{group_id}/categories", router.Categories.Create)
 		r.Put("/groups/{group_id}/categories/{category_id}", router.Categories.Replace)
 		r.Delete("/groups/{group_id}/categories/{category_id}", router.Categories.Delete)
-		r.Get("/groups/{group_id}/memberships", router.Access.ListMemberships)
-		r.Post("/groups/{group_id}/membership-requests", router.Access.RequestMembership)
-		r.Delete("/groups/{group_id}/membership-requests", router.Access.WithdrawMembershipRequest)
-		r.Patch("/groups/{group_id}/memberships/{user_id}", router.Access.DecideMembership)
-		r.Delete("/groups/{group_id}/memberships/{user_id}", router.Access.RevokeMembership)
-		r.Post("/groups/{group_id}/role-requests", router.Access.RequestRole)
-		r.Patch("/groups/{group_id}/role-requests/{request_id}", router.Access.ApplyRoleRequestDecision)
-		r.Delete("/groups/{group_id}/role-requests/{request_id}", router.Access.WithdrawRoleRequest)
-		r.Put("/groups/{group_id}/memberships/{user_id}/roles/{role}", router.Access.AssignRole)
-		r.Delete("/groups/{group_id}/memberships/{user_id}/roles/{role}", router.Access.RemoveRole)
-		r.Put("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", router.Access.GrantPermission)
-		r.Delete("/groups/{group_id}/memberships/{user_id}/permissions/{permission}", router.Access.RevokePermission)
 
 		r.Get("/resources", router.Discovery.Search)
-		r.Post("/groups/{group_id}/resources", router.Resources.Create)
-		r.Get("/resources/{resource_type}/{resource_id}/versions/{version_id}", router.Resources.Get)
-		r.Put("/resources/{resource_id}/versions/{version_id}/draft", router.Resources.ReplaceDraft)
-		r.Delete("/resources/{resource_type}/{resource_id}/versions/{version_id}/draft", router.Resources.Discard)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/submit", router.Resources.Submit)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw", router.Resources.Withdraw)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/reject", router.Resources.Reject)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen", router.Resources.Reopen)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/publish", router.Resources.Publish)
-		r.Post("/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish", router.Resources.Unpublish)
-		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-publication", router.Resources.DraftFromPublication)
-		r.Post("/resources/{resource_type}/{resource_id}/drafts/from-archive", router.Resources.DraftFromArchive)
-		r.Post("/groups/{group_id}/resources/{resource_type}/{resource_id}/copies", router.Resources.Copy)
 	})
 
 	return observability.NewHTTPHandler(r, "/")

@@ -15,7 +15,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi"
-	accessapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/access"
 	categoriesapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	datasetapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
@@ -31,7 +30,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
@@ -50,18 +48,17 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 	if err != nil {
 		return fmt.Errorf("setup observability: %w", err)
 	}
-	defer func() {
-		if shutdownErr := otelShutdown(context.Background()); shutdownErr != nil {
+	defer func(shutdownCtx context.Context) {
+		if shutdownErr := otelShutdown(shutdownCtx); shutdownErr != nil {
 			log.Error("otel shutdown failed", "error", shutdownErr)
 		}
-	}()
+	}(context.WithoutCancel(ctx))
 
 	turtler := turtle.New(log)
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
 	importSvc := metadataimport.New(log, db.Imports, authorizer)
 	groupsSvc := groups.New(log, db.Groups, authorizer)
-	accessSvc := access.New(log, db.Access, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
@@ -78,7 +75,6 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 		Health:        healthapi.New(log, db),
 		Imports:       importsapi.New(log, importSvc, turtler),
 		Users:         usersapi.New(log, usersSvc),
-		Access:        accessapi.New(log, accessSvc),
 		Categories:    categoriesapi.New(log, categoriesSvc),
 		ContactPoints: contactpointsapi.New(log, contactPointSvc),
 		Organizations: organizationsapi.New(log, organizationsSvc),
@@ -111,7 +107,7 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 		log.Info("server terminated: stopping")
 	}
 
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {

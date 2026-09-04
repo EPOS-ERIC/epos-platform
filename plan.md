@@ -212,134 +212,38 @@
     - [x] Switch `MetadataLifecycle.DeleteOrganization` from the generated HTTP client to gRPC
   - [x] Remove Metadata Lifecycle HTTP organization routes and generated upstream HTTP operations after compilation verification
 
-- [ ] Migrate Group Access endpoints
-  - [ ] Migrate `GET /v1/groups/{groupId}/memberships`
-    - [ ] Add validated protobuf request, response, and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.ListMemberships`
-    - [ ] Add Gateway client method with explicit list mapping and gRPC error mapping
-    - [ ] Switch `MetadataLifecycle.ListGroupMemberships` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/groups/{groupId}/membership-requests`
-    - [ ] Add validated protobuf request, response, and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.RequestMembership`
-    - [ ] Add Gateway client method with explicit input and response mapping
-    - [ ] Switch `MetadataLifecycle.RequestMembership` from the generated HTTP client to gRPC
-  - [ ] Migrate `DELETE /v1/groups/{groupId}/membership-requests`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.WithdrawMembershipRequest`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.WithdrawMembershipRequest` from the generated HTTP client to gRPC
-  - [ ] Migrate `PATCH /v1/groups/{groupId}/memberships/{userId}`
-    - [ ] Add validated protobuf request, response, and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.DecideMembership`
-    - [ ] Add Gateway client method with explicit input and response mapping
-    - [ ] Switch `MetadataLifecycle.DecideMembership` from the generated HTTP client to gRPC
-  - [ ] Migrate `DELETE /v1/groups/{groupId}/memberships/{userId}`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.RevokeMembership`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.RevokeMembership` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/groups/{groupId}/role-requests`
-    - [ ] Add validated protobuf request, response, and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.RequestRole`
-    - [ ] Add Gateway client method with explicit input and response mapping
-    - [ ] Switch `MetadataLifecycle.RequestRole` from the generated HTTP client to gRPC
-  - [ ] Migrate `PATCH /v1/groups/{groupId}/role-requests/{requestId}`
-    - [ ] Add validated protobuf request, response, and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.ApplyRoleRequestDecision`
-    - [ ] Add Gateway client method with explicit input and response mapping
-    - [ ] Switch `MetadataLifecycle.ApplyRoleRequestDecision` from the generated HTTP client to gRPC
-  - [ ] Migrate `DELETE /v1/groups/{groupId}/role-requests/{requestId}`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.WithdrawRoleRequest`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.WithdrawRoleRequest` from the generated HTTP client to gRPC
-  - [ ] Migrate `PUT /v1/groups/{groupId}/memberships/{userId}/roles/{role}`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.AssignRole`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.AssignGroupRole` from the generated HTTP client to gRPC
-  - [ ] Migrate `DELETE /v1/groups/{groupId}/memberships/{userId}/roles/{role}`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.RemoveRole`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.RemoveGroupRole` from the generated HTTP client to gRPC
-  - [ ] Migrate `PUT /v1/groups/{groupId}/memberships/{userId}/permissions/{permission}`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.GrantPermission`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.GrantGroupPermission` from the generated HTTP client to gRPC
-  - [ ] Migrate `DELETE /v1/groups/{groupId}/memberships/{userId}/permissions/{permission}`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using `access.Service.RevokePermission`
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.RevokeGroupPermission` from the generated HTTP client to gRPC
+- [x] Migrate Group Access endpoints
+  - [x] Migrate Group Access HTTP endpoints
+    - [x] Add validated protobuf requests, responses, and RPC definitions
+    - [x] Implement gRPC adapter using `access.Service`
+    - [x] Add Gateway client methods with generated protobuf responses and gRPC error mapping
+    - [x] Switch Gateway Group Access calls from generated HTTP client to gRPC
+    - [x] Remove Metadata Lifecycle Group Access HTTP routes, handlers, and OpenAPI definitions
+    - [x] Regenerate Gateway upstream client without Group Access HTTP operations
+    - [x] Verify all Group Access endpoint contracts and error mappings
 
-- [ ] Migrate Resource CRUD and lifecycle endpoints
-  - [ ] Migrate `POST /v1/groups/{groupId}/resources`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `CreateDraft` operation
-    - [ ] Add Gateway client method with explicit resource-type input and response mapping
-    - [ ] Switch `MetadataLifecycle.CreateResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `GET /v1/resources/{resourceType}/{id}/versions/{versionId}`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Read` operation
-    - [ ] Add Gateway client method with explicit resource-type and version mapping
-    - [ ] Switch `MetadataLifecycle.GetResourceVersion` from the generated HTTP client to gRPC
-  - [ ] Migrate `PUT /v1/resources/{id}/versions/{versionId}/draft`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `ReplaceDraft` operation
-    - [ ] Add Gateway client method with explicit input and response mapping
-    - [ ] Switch `MetadataLifecycle.ReplaceResourceDraft` from the generated HTTP client to gRPC
-  - [ ] Migrate `DELETE /v1/resources/{resourceType}/{id}/versions/{versionId}/draft`
-    - [ ] Add validated protobuf request and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Discard` operation
-    - [ ] Add Gateway client method and map gRPC statuses to existing domain errors
-    - [ ] Switch `MetadataLifecycle.DiscardResourceDraft` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/versions/{versionId}/submit`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Submit` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.SubmitResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/versions/{versionId}/withdraw`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Withdraw` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.WithdrawResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/versions/{versionId}/reject`
-    - [ ] Add validated protobuf request, response, rejection input, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Reject` operation
-    - [ ] Add Gateway client method with explicit rejection input and response mapping
-    - [ ] Switch `MetadataLifecycle.RejectResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/versions/{versionId}/reopen`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Reopen` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.ReopenResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/versions/{versionId}/publish`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Publish` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.PublishResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/versions/{versionId}/unpublish`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `Unpublish` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.UnpublishResource` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/draft-from-publication`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `DraftFromPublication` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.CreateResourceDraftFromPublication` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/resources/{resourceType}/{id}/draft-from-archive`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `DraftFromLatestArchive` operation
-    - [ ] Add Gateway client method with explicit response mapping
-    - [ ] Switch `MetadataLifecycle.CreateResourceDraftFromArchive` from the generated HTTP client to gRPC
-  - [ ] Migrate `POST /v1/groups/{groupId}/resources/{resourceType}/{id}/copy`
-    - [ ] Add validated protobuf request, response, resource-type representation, and RPC definition
-    - [ ] Implement gRPC adapter using the typed resource service `CopyPublished` operation
-    - [ ] Add Gateway client method with explicit resource-type and response mapping
-    - [ ] Switch `MetadataLifecycle.CopyResource` from the generated HTTP client to gRPC
+  - [x] Migrate Resource CRUD and lifecycle endpoints
+    - [x] Resource migrations use explicit Gateway API <-> protobuf mappings; do not use `protojson`, JSON round-trips, or generated HTTP models as an adapter between Gateway and gRPC.
+  - [x] Migrate `POST /v1/groups/{groupId}/resources`
+    - [x] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [x] Implement gRPC adapter using the typed resource service `CreateDraft` operation
+    - [x] Add Gateway client method with explicit resource-type input and response mapping
+    - [x] Switch `MetadataLifecycle.CreateResource` from the generated HTTP client to gRPC
+  - [x] Migrate `GET /v1/resources/{resourceType}/{id}/versions/{versionId}`
+    - [x] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [x] Implement gRPC adapter using the typed resource service `Read` operation
+    - [x] Add Gateway client method with explicit resource-type and version mapping
+    - [x] Switch `MetadataLifecycle.GetResourceVersion` from the generated HTTP client to gRPC
+  - [x] Migrate `PUT /v1/resources/{id}/versions/{versionId}/draft`
+    - [x] Add validated protobuf request, response, resource-type representation, and RPC definition
+    - [x] Implement gRPC adapter using the typed resource service `ReplaceDraft` operation
+    - [x] Add Gateway client method with explicit input and response mapping
+    - [x] Switch `MetadataLifecycle.ReplaceResourceDraft` from the generated HTTP client to gRPC
+   - [x] Migrate remaining resource lifecycle and copy endpoints
+     - [x] Add validated typed protobuf requests, responses, resource types, and rejection input
+     - [x] Implement gRPC adapters across dataset, software-application, and software-source-code services
+     - [x] Add Gateway client methods with explicit response mapping and actor metadata
+     - [x] Switch corresponding `MetadataLifecycle` methods from generated HTTP client to gRPC
 
 - [ ] Migrate Discovery endpoint
   - [ ] Migrate `GET /v1/search`

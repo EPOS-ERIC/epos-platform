@@ -2,7 +2,6 @@
 .travis.yml
 README.md
 api/openapi.yaml
-api_group_access.go
 api_health.go
 api_imports.go
 api_internal_identity.go
@@ -26,10 +25,8 @@ model_create_category_request.go
 model_create_contact_point_request.go
 model_create_dataset_resource_request.go
 model_create_group_request.go
-model_create_membership_request.go
 model_create_organization_identifier_request.go
 model_create_resource_request.go
-model_create_role_request.go
 model_create_software_application_resource_request.go
 model_create_software_source_code_resource_request.go
 model_create_user_request.go
@@ -53,7 +50,6 @@ model_float_parameter.go
 model_float_parameter_draft.go
 model_float_parameter_metadata.go
 model_group.go
-model_group_membership.go
 model_group_reference.go
 model_identifier.go
 model_identifier_draft.go
@@ -62,8 +58,6 @@ model_import_result.go
 model_integer_parameter.go
 model_integer_parameter_draft.go
 model_integer_parameter_metadata.go
-model_membership_decision_request.go
-model_membership_user.go
 model_organization.go
 model_parameter.go
 model_parameter_draft.go
@@ -85,7 +79,6 @@ model_resource_record_metadata.go
 model_resource_reference.go
 model_resource_type.go
 model_role_request.go
-model_role_request_decision_request.go
 model_software_application_draft_metadata.go
 model_software_application_metadata.go
 model_software_category.go

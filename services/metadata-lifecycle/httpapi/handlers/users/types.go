@@ -22,16 +22,6 @@ type userResponse struct {
 	Memberships       []userMembershipResponse `json:"memberships"`
 }
 
-type userSummaryResponse struct {
-	ID                string   `json:"id"`
-	Email             string   `json:"email"`
-	GivenName         string   `json:"given_name"`
-	FamilyName        string   `json:"family_name"`
-	Status            string   `json:"status"`
-	GlobalRoles       []string `json:"global_roles"`
-	GlobalPermissions []string `json:"global_permissions"`
-}
-
 type userMembershipResponse struct {
 	Group        groupResponse         `json:"group"`
 	Roles        []string              `json:"roles"`

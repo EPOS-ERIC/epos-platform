@@ -42,18 +42,6 @@ func toUserResponse(value domain.User) userResponse {
 	}
 }
 
-func toUserSummaryResponse(value domain.UserSummary) userSummaryResponse {
-	return userSummaryResponse{
-		ID:         value.ID,
-		Email:      value.Email,
-		GivenName:  value.GivenName,
-		FamilyName: value.FamilyName,
-		Status:     string(value.Status),
-		// GlobalRoles:       slices.Clone(value.GlobalRoles),
-		GlobalPermissions: slices.Clone(value.GlobalPermissions),
-	}
-}
-
 func toUserMembershipResponse(value domain.Membership) userMembershipResponse {
 	roles := make([]string, 0, len(value.Roles))
 	for _, role := range value.Roles {

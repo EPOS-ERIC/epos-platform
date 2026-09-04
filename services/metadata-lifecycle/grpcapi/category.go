@@ -3,6 +3,7 @@ package grpcapi
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
@@ -24,7 +25,7 @@ func NewCategory(categories *categories.Service) *CategoryServer {
 func (c *CategoryServer) ListCategories(ctx context.Context, request *metadatalifecyclev1.ListCategoriesRequest) (*metadatalifecyclev1.ListCategoriesResponse, error) {
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
 	}
 
 	values, err := c.categories.List(ctx, groupID)
@@ -43,11 +44,11 @@ func (c *CategoryServer) ListCategories(ctx context.Context, request *metadatali
 func (c *CategoryServer) GetCategory(ctx context.Context, request *metadatalifecyclev1.GetCategoryRequest) (*metadatalifecyclev1.GetCategoryResponse, error) {
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
 	}
 	categoryID, err := uuid.Parse(request.GetCategoryId())
 	if err != nil || categoryID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid category id")
+		return nil, fmt.Errorf("invalid category id: %w", status.Error(codes.InvalidArgument, "invalid category id"))
 	}
 
 	value, err := c.categories.Get(ctx, groupID, categoryID)
@@ -65,11 +66,11 @@ func (c *CategoryServer) CreateCategory(ctx context.Context, request *metadatali
 	}
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
 	}
 	input, err := categoryInput(request.GetName(), request.ParentCategoryId)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid category")
+		return nil, fmt.Errorf("invalid category: %w", status.Error(codes.InvalidArgument, "invalid category"))
 	}
 	value, err := c.categories.Create(ctx, actor, groupID, input)
 	if err != nil {
@@ -89,7 +90,7 @@ func (c *CategoryServer) ReplaceCategory(ctx context.Context, request *metadatal
 	}
 	input, err := categoryInput(request.GetName(), request.ParentCategoryId)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid category")
+		return nil, fmt.Errorf("invalid category: %w", status.Error(codes.InvalidArgument, "invalid category"))
 	}
 	value, err := c.categories.Replace(ctx, actor, groupID, categoryID, input)
 	if err != nil {
@@ -116,11 +117,11 @@ func (c *CategoryServer) DeleteCategory(ctx context.Context, request *metadatali
 func parseCategoryIDs(group, category string) (uuid.UUID, uuid.UUID, error) {
 	groupID, err := uuid.Parse(group)
 	if err != nil || groupID == uuid.Nil {
-		return uuid.Nil, uuid.Nil, status.Error(codes.InvalidArgument, "invalid group id")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
 	}
 	categoryID, err := uuid.Parse(category)
 	if err != nil || categoryID == uuid.Nil {
-		return uuid.Nil, uuid.Nil, status.Error(codes.InvalidArgument, "invalid category id")
+		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid category id: %w", status.Error(codes.InvalidArgument, "invalid category id"))
 	}
 	return groupID, categoryID, nil
 }
@@ -153,10 +154,10 @@ func toProtoCategory(value domain.Category) *metadatalifecyclev1.CanonicalCatego
 func toCategoryError(operation string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidCategory):
-		return status.Error(codes.InvalidArgument, "invalid category")
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid category"))
 	case errors.Is(err, domain.ErrCategoryNotFound):
-		return status.Error(codes.NotFound, "category not found")
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "category not found"))
 	default:
-		return status.Error(codes.Internal, operation)
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
 	}
 }

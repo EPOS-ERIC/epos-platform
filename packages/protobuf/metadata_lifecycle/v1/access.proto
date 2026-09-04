@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/user.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message MembershipUser {
+  string id = 1;
+  string given_name = 2;
+  string family_name = 3;
+  string email = 4;
+}
+
+message GroupMembership {
+  MembershipUser user = 1;
+  string status = 2;
+  repeated string roles = 3;
+  repeated string permissions = 4;
+  repeated RoleRequest role_requests = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message ListGroupMembershipsRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+message ListGroupMembershipsResponse {
+  repeated GroupMembership memberships = 1;
+}
+
+message RequestMembershipRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string roles = 2;
+}
+message RequestMembershipResponse {
+  GroupMembership membership = 1;
+}
+
+message WithdrawMembershipRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+message WithdrawMembershipResponse {}
+
+message DecideMembershipRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string user_id = 2 [(buf.validate.field).string.min_len = 1];
+  string status = 3 [(buf.validate.field).string.min_len = 1];
+}
+message DecideMembershipResponse {
+  GroupMembership membership = 1;
+}
+
+message RevokeMembershipRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string user_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+message RevokeMembershipResponse {}
+
+message RequestRoleRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string role = 2 [(buf.validate.field).string.min_len = 1];
+}
+message RequestRoleResponse {
+  RoleRequest request = 1;
+}
+
+message ApplyRoleRequestDecisionRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string request_id = 2 [(buf.validate.field).string.min_len = 1];
+  string status = 3 [(buf.validate.field).string.min_len = 1];
+}
+message ApplyRoleRequestDecisionResponse {
+  GroupMembership membership = 1;
+}
+
+message WithdrawRoleRequestRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string request_id = 2 [(buf.validate.field).string.min_len = 1];
+}
+message WithdrawRoleRequestResponse {}
+
+message AssignRoleRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string user_id = 2 [(buf.validate.field).string.min_len = 1];
+  string role = 3 [(buf.validate.field).string.min_len = 1];
+}
+message AssignRoleResponse {}
+
+message RemoveRoleRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string user_id = 2 [(buf.validate.field).string.min_len = 1];
+  string role = 3 [(buf.validate.field).string.min_len = 1];
+}
+message RemoveRoleResponse {}
+
+message GrantPermissionRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string user_id = 2 [(buf.validate.field).string.min_len = 1];
+  string permission = 3 [(buf.validate.field).string.min_len = 1];
+}
+message GrantPermissionResponse {}
+
+message RevokePermissionRequest {
+  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string user_id = 2 [(buf.validate.field).string.min_len = 1];
+  string permission = 3 [(buf.validate.field).string.min_len = 1];
+}
+message RevokePermissionResponse {}
+
+service GroupAccessService {
+  rpc ListGroupMemberships(ListGroupMembershipsRequest) returns (ListGroupMembershipsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RequestMembership(RequestMembershipRequest) returns (RequestMembershipResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc WithdrawMembership(WithdrawMembershipRequest) returns (WithdrawMembershipResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DecideMembership(DecideMembershipRequest) returns (DecideMembershipResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RevokeMembership(RevokeMembershipRequest) returns (RevokeMembershipResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RequestRole(RequestRoleRequest) returns (RequestRoleResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ApplyRoleRequestDecision(ApplyRoleRequestDecisionRequest) returns (ApplyRoleRequestDecisionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc WithdrawRoleRequest(WithdrawRoleRequestRequest) returns (WithdrawRoleRequestResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RemoveRole(RemoveRoleRequest) returns (RemoveRoleResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc GrantPermission(GrantPermissionRequest) returns (GrantPermissionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RevokePermission(RevokePermissionRequest) returns (RevokePermissionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

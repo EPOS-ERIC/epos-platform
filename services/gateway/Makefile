@@ -19,8 +19,11 @@ test:
 fmt:
 	golangci-lint fmt
 
-lint: fmt
+lint: fix fmt
 	golangci-lint run ./...
+
+fix:
+	go fix ./...
 
 METADATA_LIFECYCLE_SPEC := ../metadata-lifecycle/docs/openapi.yaml
 METADATA_LIFECYCLE_CLIENT_GEN_DIR := gen/metadata-lifecycle
@@ -43,4 +46,4 @@ generate-gateway-server:
 clean:
 	rm -rf $(BIN) $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) $(GATEWAY_SERVER_GEN_DIR)
 
-.PHONY: build build-docker generate generate-metadata-lifecycle generate-gateway-server test fmt lint clean
+.PHONY: build build-docker generate generate-metadata-lifecycle generate-gateway-server test fmt lint clean fix

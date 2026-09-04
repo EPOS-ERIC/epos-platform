@@ -3,12 +3,12 @@ package handlers
 import (
 	"errors"
 
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	metadatalifecycleclient "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/metadata-lifecycle"
 	"github.com/google/uuid"
 )
 
-func toAPIResourceVersion(v *metadatalifecycleclient.ResourceRecord) (gatewayapi.ResourceVersion, error) {
+func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.ResourceVersion, error) {
 	if v == nil {
 		return gatewayapi.ResourceVersion{}, errors.New("decode metadata-lifecycle resource record: response is empty")
 	}
@@ -24,7 +24,7 @@ func toAPIResourceVersion(v *metadatalifecycleclient.ResourceRecord) (gatewayapi
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
-	metadata, err := toAPIResourceMetadata(v.Metadata)
+	metadata, err := toAPIResourceMetadata(v)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
@@ -36,28 +36,28 @@ func toAPIResourceVersion(v *metadatalifecycleclient.ResourceRecord) (gatewayapi
 		CreatedBy:  v.CreatedBy,
 		GroupID:    groupID,
 		GroupName:  v.GroupName,
-		CreatedAt:  v.CreatedAt,
-		UpdatedAt:  v.UpdatedAt,
+		CreatedAt:  v.CreatedAt.AsTime(),
+		UpdatedAt:  v.UpdatedAt.AsTime(),
 		Metadata:   metadata,
 	}, nil
 }
 
-func toAPIResourceMetadata(v metadatalifecycleclient.ResourceRecordMetadata) (gatewayapi.ResourceVersionMetadata, error) {
+func toAPIResourceMetadata(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.ResourceVersionMetadata, error) {
 	switch {
-	case v.DatasetMetadata != nil:
-		metadata, err := toAPIDatasetMetadata(*v.DatasetMetadata)
+	case v.GetDataset() != nil:
+		metadata, err := toAPIDatasetMetadata(v.GetDataset())
 		if err != nil {
 			return gatewayapi.ResourceVersionMetadata{}, err
 		}
 		return gatewayapi.NewDatasetResourceMetadataResourceVersionMetadata(metadata), nil
-	case v.SoftwareApplicationMetadata != nil:
-		metadata, mapErr := toAPISoftwareApplicationMetadata(*v.SoftwareApplicationMetadata)
+	case v.GetSoftwareApplication() != nil:
+		metadata, mapErr := toAPISoftwareApplicationMetadata(v.GetSoftwareApplication())
 		if mapErr != nil {
 			return gatewayapi.ResourceVersionMetadata{}, mapErr
 		}
 		return gatewayapi.NewSoftwareApplicationResourceMetadataResourceVersionMetadata(metadata), nil
-	case v.SoftwareSourceCodeMetadata != nil:
-		metadata, mapErr := toAPISoftwareSourceCodeMetadata(*v.SoftwareSourceCodeMetadata)
+	case v.GetSoftwareSourceCode() != nil:
+		metadata, mapErr := toAPISoftwareSourceCodeMetadata(v.GetSoftwareSourceCode())
 		if mapErr != nil {
 			return gatewayapi.ResourceVersionMetadata{}, mapErr
 		}
@@ -67,17 +67,17 @@ func toAPIResourceMetadata(v metadatalifecycleclient.ResourceRecordMetadata) (ga
 	}
 }
 
-func toAPIDatasetMetadata(v metadatalifecycleclient.DatasetMetadata) (gatewayapi.DatasetResourceMetadata, error) {
-	id, err := parseUUID("dataset.id", v.Id)
+func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatewayapi.DatasetResourceMetadata, error) {
+	id, err := parseUUID("dataset.id", v.GetId())
 	if err != nil {
 		return gatewayapi.DatasetResourceMetadata{}, err
 	}
 	result := gatewayapi.DatasetResourceMetadata{
 		ResourceType:       gatewayapi.DatasetResourceMetadataResourceTypeDataset,
 		ID:                 id,
-		Title:              v.Title,
-		Description:        v.Description,
-		Keywords:           v.Keywords,
+		Title:              v.GetTitle(),
+		Description:        v.GetDescription(),
+		Keywords:           v.GetKeywords(),
 		AccrualPeriodicity: toAPINilString(v.AccrualPeriodicity),
 		QualityAnnotation:  toAPINilString(v.QualityAnnotation),
 		AccessRight:        toAPINilString(v.AccessRight),
@@ -92,6 +92,9 @@ func toAPIDatasetMetadata(v metadatalifecycleclient.DatasetMetadata) (gatewayapi
 		})
 	}
 	for _, value := range v.PersistentIdentifiers {
+		if value == nil {
+			continue
+		}
 		mapped, err := toAPIIdentifier(value)
 		if err != nil {
 			return gatewayapi.DatasetResourceMetadata{}, err
@@ -114,6 +117,9 @@ func toAPIDatasetMetadata(v metadatalifecycleclient.DatasetMetadata) (gatewayapi
 		return gatewayapi.DatasetResourceMetadata{}, err
 	}
 	for _, value := range v.Distributions {
+		if value == nil {
+			continue
+		}
 		mapped, err := toAPIDistribution(value)
 		if err != nil {
 			return gatewayapi.DatasetResourceMetadata{}, err
@@ -123,16 +129,16 @@ func toAPIDatasetMetadata(v metadatalifecycleclient.DatasetMetadata) (gatewayapi
 	return result, nil
 }
 
-func toAPISoftwareApplicationMetadata(v metadatalifecycleclient.SoftwareApplicationMetadata) (gatewayapi.SoftwareApplicationResourceMetadata, error) {
-	id, err := parseUUID("software_application.id", v.Id)
+func toAPISoftwareApplicationMetadata(v *metadatalifecyclev1.SoftwareApplicationResourceMetadata) (gatewayapi.SoftwareApplicationResourceMetadata, error) {
+	id, err := parseUUID("software_application.id", v.GetId())
 	if err != nil {
 		return gatewayapi.SoftwareApplicationResourceMetadata{}, err
 	}
 	result := gatewayapi.SoftwareApplicationResourceMetadata{
 		ResourceType:     gatewayapi.SoftwareApplicationResourceMetadataResourceTypeSoftwareApplication,
 		ID:               id,
-		Name:             v.Name,
-		Description:      v.Description,
+		Name:             v.GetName(),
+		Description:      v.GetDescription(),
 		MainEntityOfPage: toAPINilString(v.MainEntityOfPage),
 		License:          toAPINilString(v.License),
 		Version:          toAPINilString(v.Version),
@@ -157,16 +163,16 @@ func toAPISoftwareApplicationMetadata(v metadatalifecycleclient.SoftwareApplicat
 	return result, err
 }
 
-func toAPISoftwareSourceCodeMetadata(v metadatalifecycleclient.SoftwareSourceCodeMetadata) (gatewayapi.SoftwareSourceCodeResourceMetadata, error) {
-	id, err := parseUUID("software_source_code.id", v.Id)
+func toAPISoftwareSourceCodeMetadata(v *metadatalifecyclev1.SoftwareSourceCodeResourceMetadata) (gatewayapi.SoftwareSourceCodeResourceMetadata, error) {
+	id, err := parseUUID("software_source_code.id", v.GetId())
 	if err != nil {
 		return gatewayapi.SoftwareSourceCodeResourceMetadata{}, err
 	}
 	result := gatewayapi.SoftwareSourceCodeResourceMetadata{
 		ResourceType:         gatewayapi.SoftwareSourceCodeResourceMetadataResourceTypeSoftwareSourceCode,
 		ID:                   id,
-		Name:                 v.Name,
-		Description:          v.Description,
+		Name:                 v.GetName(),
+		Description:          v.GetDescription(),
 		ProgrammingLanguage:  toAPINilString(v.ProgrammingLanguage),
 		Keywords:             v.Keywords,
 		Repository:           toAPINilString(v.Repository),
@@ -192,24 +198,30 @@ func toAPISoftwareSourceCodeMetadata(v metadatalifecycleclient.SoftwareSourceCod
 	return result, err
 }
 
-func toAPIReferences(values []metadatalifecycleclient.ResourceReference, field string) ([]gatewayapi.ResourceVersionReference, error) {
+func toAPIReferences(values []*metadatalifecyclev1.ResourceReference, field string) ([]gatewayapi.ResourceVersionReference, error) {
 	result := make([]gatewayapi.ResourceVersionReference, 0, len(values))
 	for _, value := range values {
-		id, err := parseUUID(field, value.Id)
+		if value == nil {
+			continue
+		}
+		id, err := parseUUID(field, value.GetId())
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, gatewayapi.ResourceVersionReference{
 			ID:   id,
-			Name: value.Name,
+			Name: value.GetName(),
 		})
 	}
 	return result, nil
 }
 
-func toAPIIdentifiers(values []metadatalifecycleclient.Identifier) ([]gatewayapi.ResourceIdentifier, error) {
+func toAPIIdentifiers(values []*metadatalifecyclev1.ResourceIdentifier) ([]gatewayapi.ResourceIdentifier, error) {
 	result := make([]gatewayapi.ResourceIdentifier, 0, len(values))
 	for _, value := range values {
+		if value == nil {
+			continue
+		}
 		mapped, err := toAPIIdentifier(value)
 		if err != nil {
 			return nil, err
@@ -219,15 +231,15 @@ func toAPIIdentifiers(values []metadatalifecycleclient.Identifier) ([]gatewayapi
 	return result, nil
 }
 
-func toAPIIdentifier(value metadatalifecycleclient.Identifier) (gatewayapi.ResourceIdentifier, error) {
-	id, err := parseUUID("resource_identifier.id", value.Id)
+func toAPIIdentifier(value *metadatalifecyclev1.ResourceIdentifier) (gatewayapi.ResourceIdentifier, error) {
+	id, err := parseUUID("resource_identifier.id", value.GetId())
 	if err != nil {
 		return gatewayapi.ResourceIdentifier{}, err
 	}
 	return gatewayapi.ResourceIdentifier{
 		ID:    id,
-		Type:  value.Type,
-		Value: value.Value,
+		Type:  value.GetType(),
+		Value: value.GetValue(),
 	}, nil
 }
 

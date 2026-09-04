@@ -24,7 +24,6 @@ linters:
     - containedctx
     - copyloopvar
     - wrapcheck
-    - exhaustruct_v5
   exclusions:
     paths:
       - ".*gen/.*"
@@ -34,11 +33,11 @@ linters:
         source: "^\\s*defer\\s+"
       - linters:
           - errcheck
-          - exhaustruct_v5
         path: ".*_test\\.go"
   settings:
     goconst:
       ignore-string-values:
         - "true"
-    exhaustruct_v5:
-      allow-empty-returns: true
+    wrapcheck:
+      extra-ignore-sigs:
+        - status.Error

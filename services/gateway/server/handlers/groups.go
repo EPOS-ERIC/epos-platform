@@ -225,7 +225,7 @@ func (h *ogenHandler) ApplyRoleRequestDecision(ctx context.Context, q *gatewayap
 	if err != nil {
 		return nil, fmt.Errorf("apply role request decision: %w", err)
 	}
-	r, err := toAPIMembership(*v)
+	r, err := toAPIProtoGroupMembership(v.Membership)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (h *ogenHandler) RequestGroupRole(ctx context.Context, q *gatewayapi.Create
 	if err != nil {
 		return nil, fmt.Errorf("request role: %w", err)
 	}
-	r, err := toAPIRole(*v)
+	r, err := toAPIProtoRoleRequest(v.Request)
 	if err != nil {
 		return nil, err
 	}
@@ -341,13 +341,13 @@ func (h *ogenHandler) ListGroupMemberships(ctx context.Context, params gatewayap
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.ListGroupMemberships(ctx, params.GroupId.String(), a)
+	v, err := h.metadataLifecycle.ListGroupMemberships(ctx, a, &metadatalifecyclev1.ListGroupMembershipsRequest{GroupId: params.GroupId.String()})
 	if err != nil {
 		return nil, fmt.Errorf("list group memberships: %w", err)
 	}
 	out := []gatewayapi.GroupMembership{}
-	for _, x := range v {
-		mapped, err := toAPIMembership(x)
+	for _, x := range v.Memberships {
+		mapped, err := toAPIProtoGroupMembership(x)
 		if err != nil {
 			return nil, err
 		}
@@ -369,7 +369,7 @@ func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.
 	if err != nil {
 		return nil, fmt.Errorf("request membership: %w", err)
 	}
-	r, err := toAPIMembership(*v)
+	r, err := toAPIProtoGroupMembership(v.Membership)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +385,7 @@ func (h *ogenHandler) DecideGroupMembership(ctx context.Context, q *gatewayapi.M
 	if err != nil {
 		return nil, fmt.Errorf("decide membership: %w", err)
 	}
-	r, err := toAPIMembership(*v)
+	r, err := toAPIProtoGroupMembership(v.Membership)
 	if err != nil {
 		return nil, err
 	}

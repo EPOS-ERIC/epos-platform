@@ -3,10 +3,8 @@ package clients
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 )
 
 func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID string) (*metadatalifecyclev1.ListContactPointsResponse, error) {
@@ -77,20 +75,4 @@ func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID stri
 		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
 	}
 	return c.GRPC.DeleteOrganization(ctx, actorID, request)
-}
-
-func wrapCanonicalError(operation string, response *http.Response, err error) error {
-	if response != nil {
-		switch response.StatusCode {
-		case http.StatusBadRequest:
-			return fmt.Errorf("%s: %w", operation, domain.ErrBadRequest)
-		case http.StatusForbidden:
-			return fmt.Errorf("%s: %w", operation, domain.ErrForbidden)
-		case http.StatusNotFound:
-			return fmt.Errorf("%s: %w", operation, domain.ErrNotFound)
-		case http.StatusConflict:
-			return fmt.Errorf("%s: %w", operation, domain.ErrConflict)
-		}
-	}
-	return wrapConnectionError(operation, err)
 }

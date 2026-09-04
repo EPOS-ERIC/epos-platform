@@ -13,6 +13,120 @@ type MetadataLifecycleGRPC struct {
 	categoryGRPC     metadatalifecyclev1.CategoryServiceClient
 	contactPointGRPC metadatalifecyclev1.ContactPointServiceClient
 	organizationGRPC metadatalifecyclev1.OrganizationServiceClient
+	accessGRPC       metadatalifecyclev1.GroupAccessServiceClient
+	resourceGRPC     metadatalifecyclev1.ResourceServiceClient
+}
+
+func (c *MetadataLifecycleGRPC) CreateResource(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateResourceRequest) (*metadatalifecyclev1.CreateResourceResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.resourceGRPC.CreateResource(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("create metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) GetResourceVersion(ctx context.Context, actorID string, request *metadatalifecyclev1.GetResourceVersionRequest) (*metadatalifecyclev1.GetResourceVersionResponse, error) {
+	if actorID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	}
+	response, err := c.resourceGRPC.GetResourceVersion(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("get metadata-lifecycle resource version", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) ReplaceResourceDraft(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceResourceDraftRequest) (*metadatalifecyclev1.ReplaceResourceDraftResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.resourceGRPC.ReplaceResourceDraft(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("replace metadata-lifecycle resource draft", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) DiscardResourceDraft(ctx context.Context, actorID string, request *metadatalifecyclev1.DiscardResourceDraftRequest) error {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	_, err := c.resourceGRPC.DiscardResourceDraft(ctx, request)
+	if err != nil {
+		return wrapGRPCError("discard metadata-lifecycle resource draft", err)
+	}
+	return nil
+}
+
+func (c *MetadataLifecycleGRPC) SubmitResource(ctx context.Context, actorID string, request *metadatalifecyclev1.SubmitResourceRequest) (*metadatalifecyclev1.SubmitResourceResponse, error) {
+	response, err := c.resourceGRPC.SubmitResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("submit metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) WithdrawResource(ctx context.Context, actorID string, request *metadatalifecyclev1.WithdrawResourceRequest) (*metadatalifecyclev1.WithdrawResourceResponse, error) {
+	response, err := c.resourceGRPC.WithdrawResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("withdraw metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) ReopenResource(ctx context.Context, actorID string, request *metadatalifecyclev1.ReopenResourceRequest) (*metadatalifecyclev1.ReopenResourceResponse, error) {
+	response, err := c.resourceGRPC.ReopenResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("reopen metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) PublishResource(ctx context.Context, actorID string, request *metadatalifecyclev1.PublishResourceRequest) (*metadatalifecyclev1.PublishResourceResponse, error) {
+	response, err := c.resourceGRPC.PublishResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("publish metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) UnpublishResource(ctx context.Context, actorID string, request *metadatalifecyclev1.UnpublishResourceRequest) (*metadatalifecyclev1.UnpublishResourceResponse, error) {
+	response, err := c.resourceGRPC.UnpublishResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("unpublish metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) RejectResource(ctx context.Context, actorID string, request *metadatalifecyclev1.RejectResourceRequest) (*metadatalifecyclev1.RejectResourceResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.resourceGRPC.RejectResource(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("reject metadata-lifecycle resource", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) DraftResourceFromPublication(ctx context.Context, actorID string, request *metadatalifecyclev1.DraftResourceFromPublicationRequest) (*metadatalifecyclev1.DraftResourceFromPublicationResponse, error) {
+	response, err := c.resourceGRPC.DraftResourceFromPublication(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("create metadata-lifecycle draft from publication", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) DraftResourceFromLatestArchive(ctx context.Context, actorID string, request *metadatalifecyclev1.DraftResourceFromLatestArchiveRequest) (*metadatalifecyclev1.DraftResourceFromLatestArchiveResponse, error) {
+	response, err := c.resourceGRPC.DraftResourceFromLatestArchive(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), request)
+	if err != nil {
+		return nil, wrapGRPCError("create metadata-lifecycle draft from archive", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) CopyPublishedResource(ctx context.Context, actorID string, request *metadatalifecyclev1.CopyPublishedResourceRequest) (*metadatalifecyclev1.CopyPublishedResourceResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.resourceGRPC.CopyPublishedResource(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("copy metadata-lifecycle published resource", err)
+	}
+	return response, nil
 }
 
 func (c *MetadataLifecycleGRPC) GetUser(ctx context.Context, actorID, id string) (*metadatalifecyclev1.GetUserResponse, error) {
@@ -186,6 +300,114 @@ func (c *MetadataLifecycleGRPC) DeleteOrganization(ctx context.Context, actorID 
 	response, err := c.organizationGRPC.DeleteOrganization(ctx, request)
 	if err != nil {
 		return nil, wrapGRPCError("delete metadata-lifecycle organization", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) ListGroupMemberships(ctx context.Context, actorID string, request *metadatalifecyclev1.ListGroupMembershipsRequest) (*metadatalifecyclev1.ListGroupMembershipsResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.ListGroupMemberships(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("list memberships", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) RequestMembership(ctx context.Context, actorID string, request *metadatalifecyclev1.RequestMembershipRequest) (*metadatalifecyclev1.RequestMembershipResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.RequestMembership(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("request membership", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) WithdrawMembership(ctx context.Context, actorID string, request *metadatalifecyclev1.WithdrawMembershipRequest) (*metadatalifecyclev1.WithdrawMembershipResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.WithdrawMembership(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("withdraw membership", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) DecideMembership(ctx context.Context, actorID string, request *metadatalifecyclev1.DecideMembershipRequest) (*metadatalifecyclev1.DecideMembershipResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.DecideMembership(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("decide membership", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) RevokeMembership(ctx context.Context, actorID string, request *metadatalifecyclev1.RevokeMembershipRequest) (*metadatalifecyclev1.RevokeMembershipResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.RevokeMembership(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("revoke membership", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) RequestRole(ctx context.Context, actorID string, request *metadatalifecyclev1.RequestRoleRequest) (*metadatalifecyclev1.RequestRoleResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.RequestRole(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("request role", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) ApplyRoleRequestDecision(ctx context.Context, actorID string, request *metadatalifecyclev1.ApplyRoleRequestDecisionRequest) (*metadatalifecyclev1.ApplyRoleRequestDecisionResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.ApplyRoleRequestDecision(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("decide role request", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) WithdrawRoleRequest(ctx context.Context, actorID string, request *metadatalifecyclev1.WithdrawRoleRequestRequest) (*metadatalifecyclev1.WithdrawRoleRequestResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.WithdrawRoleRequest(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("withdraw role request", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) AssignRole(ctx context.Context, actorID string, request *metadatalifecyclev1.AssignRoleRequest) (*metadatalifecyclev1.AssignRoleResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.AssignRole(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("assign role", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) RemoveRole(ctx context.Context, actorID string, request *metadatalifecyclev1.RemoveRoleRequest) (*metadatalifecyclev1.RemoveRoleResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.RemoveRole(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("remove role", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) GrantPermission(ctx context.Context, actorID string, request *metadatalifecyclev1.GrantPermissionRequest) (*metadatalifecyclev1.GrantPermissionResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.GrantPermission(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("grant permission", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) RevokePermission(ctx context.Context, actorID string, request *metadatalifecyclev1.RevokePermissionRequest) (*metadatalifecyclev1.RevokePermissionResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.accessGRPC.RevokePermission(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("revoke permission", err)
 	}
 	return response, nil
 }
