@@ -27,23 +27,6 @@ func (e *metadataError) Unwrap() error {
 	return e.err
 }
 
-// WithErrorMetadata attaches client-safe details while preserving err's type.
-func WithErrorMetadata(err error, title, detail string) error {
-	if err == nil {
-		return nil
-	}
-	if title == "" {
-		return fmt.Errorf("error metadata title is required: %w", err)
-	}
-	return &metadataError{
-		err: err,
-		metadata: ErrorMetadata{
-			Title:  title,
-			Detail: detail,
-		},
-	}
-}
-
 // ErrorMetadataFrom returns client-safe details attached to err or its cause.
 func ErrorMetadataFrom(err error) (ErrorMetadata, bool) {
 	var value *metadataError

@@ -36,9 +36,8 @@ type Upstream struct {
 }
 
 type Services struct {
-	MetadataLifecycle     Service `yaml:"metadata-lifecycle"`
-	MetadataLifecycleGRPC Service `yaml:"metadata-lifecycle-grpc"`
-	Auth                  Service `yaml:"auth"`
+	MetadataLifecycle Service `yaml:"metadata-lifecycle"`
+	Auth              Service `yaml:"auth"`
 }
 
 func Default() Config {
@@ -58,9 +57,8 @@ func Default() Config {
 			MaxEntries:  128,
 		},
 		Services: Services{
-			MetadataLifecycle:     Service{URL: ""},
-			MetadataLifecycleGRPC: Service{URL: ""},
-			Auth:                  Service{URL: ""},
+			MetadataLifecycle: Service{URL: ""},
+			Auth:              Service{URL: ""},
 		},
 	}
 }
@@ -113,10 +111,6 @@ func (c *Config) Validate() error {
 
 	if c.Services.MetadataLifecycle.URL == "" {
 		return fmt.Errorf("services.metadata-lifecycle.url is required")
-	}
-
-	if c.Services.MetadataLifecycleGRPC.URL == "" {
-		return fmt.Errorf("services.metadata-lifecycle-grpc.url is required")
 	}
 
 	if c.Services.Auth.URL == "" {

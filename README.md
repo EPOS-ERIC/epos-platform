@@ -7,7 +7,7 @@ Monorepo for EPOS platform services, shared packages, and local development tool
 The repository currently contains five active backend services used in local development:
 
 - `services/gateway` (Go): API gateway/aggregation layer.
-- `services/metadata-lifecycle` (Go): users, groups, memberships, authorization, and metadata-lifecycle APIs.
+- `services/metadata-lifecycle` (Go): internal gRPC users, groups, memberships, authorization, and metadata-lifecycle APIs.
 - `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
 - `services/oss-aai-service` (Go): local authentication and authorization identity provider.
 
@@ -23,7 +23,6 @@ flowchart TB
 
     subgraph EDGE[Published host ports]
         GWE[gateway-service :32000]
-        BOE[metadata-lifecycle-service :33000]
         DRE[data-retriever-service :8100]
         N4J[neo4j :7474/7687]
         PBO[metadata-lifecycle-db :5434]
@@ -47,23 +46,18 @@ flowchart TB
     end
 
     DEV --> GWE
-    DEV --> MLE
-    DEV --> BOE
     DEV --> DRE
     DEV --> N4J
 
     GWE --- GW
-    MLE --- ML
-    BOE --- BO
     DRE --- DR
     N4J --- NEO
     PBO --- BODB
     PDR --- DRDB
 
-    GW -->|depends_on started| ML
+    GW -->|depends_on started| BO
     BO -->|depends_on healthy| BODB
     DR -->|depends_on healthy| DRDB
-    ML -->|depends_on healthy| NEO
 
     GW -. uses .-> LOG
     BO -. uses .-> LOG
@@ -77,11 +71,11 @@ flowchart TB
     classDef shared fill:#6f4b1f,stroke:#4f3516,color:#ffffff,stroke-width:1px;
     classDef edge fill:#39424e,stroke:#1f252d,color:#ffffff,stroke-width:1px;
 
-    class GW,ML,BO,DR svc;
+    class GW,BO,DR svc;
     class NEO infra;
     class BODB,DRDB db;
     class LOG,PG,MIG shared;
-    class GWE,MLE,BOE,DRE,N4J,PBO,PDR edge;
+    class GWE,DRE,N4J,PBO,PDR edge;
 ```
 
 ## Shared Go packages
@@ -129,7 +123,6 @@ make up KUBE_CONTEXT=kind-epos
 Common local endpoints:
 
 - Gateway API: `http://localhost:32000`
-- metadata-lifecycle API: `http://localhost:33000`
 - Data Retriever API: `http://localhost:8100`
 - OSS AAI API: `http://localhost:8110`
 - Neo4j Browser: `http://localhost:7474`

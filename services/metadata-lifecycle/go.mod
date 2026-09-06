@@ -4,13 +4,9 @@ go 1.27
 
 require (
 	buf.build/go/protovalidate v1.3.0
-	github.com/EPOS-ERIC/epos-platform/packages/go/apidocs v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/go/logging v0.0.0
-	github.com/EPOS-ERIC/epos-platform/packages/go/middleware v0.0.0
-	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/protobuf v0.0.0
 	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25
-	github.com/go-chi/chi/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -18,8 +14,6 @@ require (
 	github.com/twpayne/go-geom v1.6.1
 	github.com/twpayne/pgx-geom v1.0.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0
-	go.opentelemetry.io/otel v1.46.0
-	go.opentelemetry.io/otel/trace v1.46.0
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
 )
@@ -29,19 +23,16 @@ require (
 	cel.dev/expr v0.25.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deiu/gon3 v0.0.0-20241212124032-93153c038193 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
-	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-sql-driver/mysql v1.10.0 // indirect
 	github.com/google/cel-go v0.30.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
@@ -68,17 +59,10 @@ require (
 	github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/bridges/otelslog v0.19.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.69.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.20.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.44.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.44.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.44.0 // indirect
+	go.opentelemetry.io/otel v1.46.0 // indirect
 	go.opentelemetry.io/otel/log v0.20.0 // indirect
 	go.opentelemetry.io/otel/metric v1.46.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.46.0 // indirect
-	go.opentelemetry.io/otel/sdk/log v0.20.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.46.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
+	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
@@ -95,10 +79,6 @@ require (
 )
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/logging => ../../packages/go/logging
-
-replace github.com/EPOS-ERIC/epos-platform/packages/go/apidocs => ../../packages/go/apidocs
-
-replace github.com/EPOS-ERIC/epos-platform/packages/go/middleware => ../../packages/go/middleware
 
 replace github.com/EPOS-ERIC/epos-platform/packages/go/observability => ../../packages/go/observability
 

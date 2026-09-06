@@ -5,68 +5,57 @@ import (
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 func (c *MetadataLifecycle) CreateGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateGroupRequest) (*metadatalifecyclev1.CreateGroupResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
-	}
-
-	response, err := c.GRPC.CreateGroup(ctx, actorID, request)
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.groups.CreateGroup(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, wrapGRPCError("create metadata-lifecycle group", err)
 	}
 	return response, nil
 }
 
 func (c *MetadataLifecycle) ReplaceGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceGroupRequest) (*metadatalifecyclev1.ReplaceGroupResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
-	}
-
-	response, err := c.GRPC.ReplaceGroup(ctx, actorID, request)
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.groups.ReplaceGroup(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, wrapGRPCError("replace metadata-lifecycle group", err)
 	}
 	return response, nil
 }
 
 func (c *MetadataLifecycle) DeleteGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteGroupRequest) (*metadatalifecyclev1.DeleteGroupResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
-	}
-	response, err := c.GRPC.DeleteGroup(ctx, actorID, request)
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.groups.DeleteGroup(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, wrapGRPCError("delete metadata-lifecycle group", err)
 	}
 	return response, nil
 }
 
 func (c *MetadataLifecycle) ListGroupMemberships(ctx context.Context, actorID string, request *metadatalifecyclev1.ListGroupMembershipsRequest) (*metadatalifecyclev1.ListGroupMembershipsResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.access.ListGroupMemberships(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("list memberships", err)
 	}
-	return c.GRPC.ListGroupMemberships(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) ListCategories(ctx context.Context, request *metadatalifecyclev1.ListCategoriesRequest) (*metadatalifecyclev1.ListCategoriesResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
-	}
-	response, err := c.GRPC.ListCategories(ctx, request)
+	response, err := c.categories.ListCategories(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, wrapGRPCError("list metadata-lifecycle categories", err)
 	}
 	return response, nil
 }
 
 func (c *MetadataLifecycle) GetCategory(ctx context.Context, request *metadatalifecyclev1.GetCategoryRequest) (*metadatalifecyclev1.GetCategoryResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
-	}
-	response, err := c.GRPC.GetCategory(ctx, request)
+	response, err := c.categories.GetCategory(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, wrapGRPCError("get metadata-lifecycle category", err)
 	}
 	if response == nil || response.Category == nil {
 		return nil, fmt.Errorf("decode metadata-lifecycle category: response is empty")
@@ -75,22 +64,28 @@ func (c *MetadataLifecycle) GetCategory(ctx context.Context, request *metadatali
 }
 
 func (c *MetadataLifecycle) CreateCategory(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateCategoryRequest) (*metadatalifecyclev1.CreateCategoryResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.categories.CreateCategory(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("create metadata-lifecycle category", err)
 	}
-	return c.GRPC.CreateCategory(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) ReplaceCategory(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceCategoryRequest) (*metadatalifecyclev1.ReplaceCategoryResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.categories.ReplaceCategory(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("replace metadata-lifecycle category", err)
 	}
-	return c.GRPC.ReplaceCategory(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) DeleteCategory(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteCategoryRequest) (*metadatalifecyclev1.DeleteCategoryResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.categories.DeleteCategory(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("delete metadata-lifecycle category", err)
 	}
-	return c.GRPC.DeleteCategory(ctx, actorID, request)
+	return response, nil
 }

@@ -36,14 +36,7 @@ func main() {
 		}
 	}()
 
-	go func() {
-		if err := server.RunJson(ctx, cfg, log, database); err != nil {
-			log.Error("server failed", "error", err)
-			panic(err)
-		}
-	}()
-
-	if err := server.RunGRPC(ctx, cfg, log, database); err != nil {
+	if err := server.Run(ctx, cfg, log, database); err != nil {
 		log.Error("grpc server failed", "error", err)
 		panic(err)
 	}

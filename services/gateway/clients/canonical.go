@@ -2,77 +2,95 @@ package clients
 
 import (
 	"context"
-	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID string) (*metadatalifecyclev1.ListContactPointsResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.ListContactPoints(ctx, &metadatalifecyclev1.ListContactPointsRequest{})
+	if err != nil {
+		return nil, wrapGRPCError("list metadata-lifecycle contact points", err)
 	}
-	return c.GRPC.ListContactPoints(ctx, actorID, &metadatalifecyclev1.ListContactPointsRequest{})
+	return response, nil
 }
 
 func (c *MetadataLifecycle) GetContactPoint(ctx context.Context, actorID, id string) (*metadatalifecyclev1.GetContactPointResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.GetContactPoint(ctx, &metadatalifecyclev1.GetContactPointRequest{ContactPointId: id})
+	if err != nil {
+		return nil, wrapGRPCError("get metadata-lifecycle contact point", err)
 	}
-	return c.GRPC.GetContactPoint(ctx, actorID, &metadatalifecyclev1.GetContactPointRequest{ContactPointId: id})
+	return response, nil
 }
 
 func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateContactPointRequest) (*metadatalifecyclev1.CreateContactPointResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.CreateContactPoint(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("create metadata-lifecycle contact point", err)
 	}
-	return c.GRPC.CreateContactPoint(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceContactPointRequest) (*metadatalifecyclev1.ReplaceContactPointResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.ReplaceContactPoint(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("replace metadata-lifecycle contact point", err)
 	}
-	return c.GRPC.ReplaceContactPoint(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteContactPointRequest) (*metadatalifecyclev1.DeleteContactPointResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.DeleteContactPoint(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("delete metadata-lifecycle contact point", err)
 	}
-	return c.GRPC.DeleteContactPoint(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	response, err := c.organizations.ListOrganizations(ctx, &metadatalifecyclev1.ListOrganizationsRequest{})
+	if err != nil {
+		return nil, wrapGRPCError("list metadata-lifecycle organizations", err)
 	}
-	return c.GRPC.ListOrganizations(ctx, &metadatalifecyclev1.ListOrganizationsRequest{})
+	return response, nil
 }
 
 func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (*metadatalifecyclev1.GetOrganizationResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	response, err := c.organizations.GetOrganization(ctx, &metadatalifecyclev1.GetOrganizationRequest{OrganizationId: id})
+	if err != nil {
+		return nil, wrapGRPCError("get metadata-lifecycle organization", err)
 	}
-	return c.GRPC.GetOrganization(ctx, &metadatalifecyclev1.GetOrganizationRequest{OrganizationId: id})
+	return response, nil
 }
 
 func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateOrganizationRequest) (*metadatalifecyclev1.CreateOrganizationResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.organizations.CreateOrganization(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("create metadata-lifecycle organization", err)
 	}
-	return c.GRPC.CreateOrganization(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceOrganizationRequest) (*metadatalifecyclev1.ReplaceOrganizationResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.organizations.ReplaceOrganization(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("replace metadata-lifecycle organization", err)
 	}
-	return c.GRPC.ReplaceOrganization(ctx, actorID, request)
+	return response, nil
 }
 
 func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteOrganizationRequest) (*metadatalifecyclev1.DeleteOrganizationResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.organizations.DeleteOrganization(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("delete metadata-lifecycle organization", err)
 	}
-	return c.GRPC.DeleteOrganization(ctx, actorID, request)
+	return response, nil
 }

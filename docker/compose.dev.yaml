@@ -34,7 +34,11 @@ services:
     networks:
       - epos-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U metadata-lifecycle -d metadata-lifecycle || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U metadata-lifecycle -d metadata-lifecycle || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -43,7 +47,7 @@ services:
     image: epos-gateway-dev:local
     depends_on:
       metadata-lifecycle-service:
-        condition: service_healthy
+        condition: service_started
       oss-aai-service:
         condition: service_healthy
     ports:
@@ -78,10 +82,9 @@ services:
     depends_on:
       metadata-lifecycle-db:
         condition: service_healthy
-    ports:
-      - "33000:5000"
     environment:
       - LOG_LEVEL=DEBUG
+      - SERVER_PORT=5000
       - DB_HOST=metadata-lifecycle-db
       - DB_PORT=5432
       - DB_NAME=metadata-lifecycle
@@ -98,16 +101,6 @@ services:
     restart: on-failure
     networks:
       - epos-network
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://localhost:5000/health >/dev/null || exit 1",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 20s
 
   platform-app:
     image: epos-platform-dev:local

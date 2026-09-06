@@ -2,7 +2,7 @@
 
 ## Workflow
 
-- Run the relevant generation target after changing an upstream API specification. Currently, `make generate` reads `../metadata-lifecycle/docs/openapi.yaml` and regenerates `gen/metadata-lifecycle`.
+- Run `make generate` after changing the Gateway OpenAPI specification; it regenerates `gen/gatewayapi`.
 
 ## Package Boundaries
 

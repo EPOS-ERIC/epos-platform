@@ -7,15 +7,11 @@ import (
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	"google.golang.org/grpc/metadata"
 )
 
-type MetadataLifecycleIdentity struct {
-	identityGRPC metadatalifecyclev1.IdentityServiceClient
-	proxy        *MetadataLifecycleGRPC
-}
-
-func (c *MetadataLifecycleIdentity) ProvisionUser(ctx context.Context, identity ActorIdentity) error {
-	_, err := c.identityGRPC.ProvisionUser(ctx, &metadatalifecyclev1.ProvisionUserRequest{
+func (c *MetadataLifecycle) ProvisionUser(ctx context.Context, identity domain.ActorIdentity) error {
+	_, err := c.identity.ProvisionUser(ctx, &metadatalifecyclev1.ProvisionUserRequest{
 		Id:         identity.AuthIdentifier,
 		Email:      identity.Email,
 		GivenName:  identity.GivenName,
@@ -28,15 +24,16 @@ func (c *MetadataLifecycleIdentity) ProvisionUser(ctx context.Context, identity 
 	return nil
 }
 
-func (c *MetadataLifecycleIdentity) GetUserForAuth(ctx context.Context, actorID, id string) (domain.User, error) {
-	user, err := c.proxy.GetUser(ctx, actorID, id)
+func (c *MetadataLifecycle) GetUser(ctx context.Context, actorID, id string) (domain.User, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	user, err := c.users.GetUser(ctx, &metadatalifecyclev1.GetUserRequest{UserId: id})
 	if err != nil {
-		return domain.User{}, err
+		return domain.User{}, wrapGRPCError("get metadata-lifecycle user", err)
 	}
 
 	status, err := fromProtoUserStatus(user.Status)
 	if err != nil {
-		return domain.User{}, fmt.Errorf("TODO: %w", err)
+		return domain.User{}, fmt.Errorf("map user status: %w", err)
 	}
 
 	globalRoles, err := mapSliceErr(user.GlobalRoles, fromProtoGlobalRole)
@@ -63,10 +60,10 @@ func (c *MetadataLifecycleIdentity) GetUserForAuth(ctx context.Context, actorID,
 	}, nil
 }
 
-func (c *MetadataLifecycleIdentity) mapMembership(membership *metadatalifecyclev1.UserMembership) (domain.Membership, error) {
+func (c *MetadataLifecycle) mapMembership(membership *metadatalifecyclev1.UserMembership) (domain.Membership, error) {
 	status, err := fromProtoMembershipStatus(membership.Status)
 	if err != nil {
-		return domain.Membership{}, fmt.Errorf("TODO: %w", err)
+		return domain.Membership{}, fmt.Errorf("map membership status: %w", err)
 	}
 
 	groupRoles, err := mapSliceErr(membership.GroupRoles, fromProtoGroupRole)
@@ -93,14 +90,14 @@ func (c *MetadataLifecycleIdentity) mapMembership(membership *metadatalifecyclev
 	}, nil
 }
 
-func (c *MetadataLifecycleIdentity) mapRoleRequest(request *metadatalifecyclev1.RoleRequest) (domain.RoleRequest, error) {
+func (c *MetadataLifecycle) mapRoleRequest(request *metadatalifecyclev1.RoleRequest) (domain.RoleRequest, error) {
 	status, err := fromProtoRoleRequestStatus(request.Status)
 	if err != nil {
-		return domain.RoleRequest{}, fmt.Errorf("TODO: %w", err)
+		return domain.RoleRequest{}, fmt.Errorf("map role request status: %w", err)
 	}
 	role, err := fromProtoGroupRole(request.GroupRole)
 	if err != nil {
-		return domain.RoleRequest{}, fmt.Errorf("TODO: %w", err)
+		return domain.RoleRequest{}, fmt.Errorf("map role request role: %w", err)
 	}
 	return domain.RoleRequest{
 		ID:          request.Id,

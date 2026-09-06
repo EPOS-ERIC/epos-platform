@@ -2,15 +2,19 @@ package clients
 
 import (
 	"context"
-	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"google.golang.org/grpc/metadata"
 )
 
 func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string, request *metadatalifecyclev1.SearchResourcesRequest) (*metadatalifecyclev1.SearchResourcesResponse, error) {
-	if c == nil || c.GRPC == nil {
-		return nil, fmt.Errorf("metadata-lifecycle gRPC client is not configured")
+	if actorID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	}
 
-	return c.GRPC.SearchResources(ctx, actorID, request)
+	response, err := c.discovery.SearchResources(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("search metadata-lifecycle resources", err)
+	}
+	return response, nil
 }

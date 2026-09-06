@@ -39,7 +39,7 @@ func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetConta
 	}
 	r, err := toAPIProtoContactPoint(v.ContactPoint)
 	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
+		return nil, fmt.Errorf("get contact point: %w", err)
 	}
 	return &r, nil
 }
@@ -47,7 +47,7 @@ func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetConta
 func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.CanonicalOrganization, error) {
 	v, err := h.metadataLifecycle.ListOrganizations(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("get organization: %w", err)
+		return nil, fmt.Errorf("list organizations: %w", err)
 	}
 	out := []gatewayapi.CanonicalOrganization{}
 	for _, x := range v.Organizations {
@@ -63,11 +63,11 @@ func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.Canon
 func (h *ogenHandler) GetOrganization(ctx context.Context, p gatewayapi.GetOrganizationParams) (*gatewayapi.CanonicalOrganization, error) {
 	v, err := h.metadataLifecycle.GetOrganization(ctx, p.OrganizationId.String())
 	if err != nil {
-		return nil, fmt.Errorf("create organization: %w", err)
+		return nil, fmt.Errorf("get organization: %w", err)
 	}
 	r, err := toAPIProtoOrganization(v.Organization)
 	if err != nil {
-		return nil, fmt.Errorf("replace organization: %w", err)
+		return nil, fmt.Errorf("get organization: %w", err)
 	}
 	return &r, nil
 }
@@ -79,11 +79,11 @@ func (h *ogenHandler) CreateOrganization(ctx context.Context, q *gatewayapi.Crea
 	}
 	v, err := h.metadataLifecycle.CreateOrganization(ctx, a, toProtoCreateOrganizationRequest(q))
 	if err != nil {
-		return nil, fmt.Errorf("create contact point: %w", err)
+		return nil, fmt.Errorf("create organization: %w", err)
 	}
 	r, err := toAPIProtoOrganization(v.Organization)
 	if err != nil {
-		return nil, fmt.Errorf("replace contact point: %w", err)
+		return nil, fmt.Errorf("create organization: %w", err)
 	}
 	return &r, nil
 }

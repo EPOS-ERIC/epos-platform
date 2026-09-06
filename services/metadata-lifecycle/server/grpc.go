@@ -33,17 +33,18 @@ import (
 
 const maxImportTurtleMessageSize = 10<<20 + 5
 
-func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.PostgresDB) error {
+func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.PostgresDB) error {
 	validator, err := protovalidate.New()
 	if err != nil {
 		return fmt.Errorf("create protobuf validator: %w", err)
 	}
 
-	grpcServer := grpc.NewServer(
+	server := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.UnaryInterceptor(validateUnaryRPC(validator)),
 		grpc.MaxRecvMsgSize(maxImportTurtleMessageSize),
 	)
+	// TODO: register the standard gRPC health service for readiness checks.
 
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
@@ -53,43 +54,43 @@ func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointsSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 
-	metadatalifecyclev1.RegisterIdentityServiceServer(grpcServer, grpcapi.NewIdentity(usersSvc))
-	metadatalifecyclev1.RegisterUserServiceServer(grpcServer, grpcapi.NewUser(usersSvc))
-	metadatalifecyclev1.RegisterImportServiceServer(grpcServer, grpcapi.NewImport(importSvc, turtler))
-	metadatalifecyclev1.RegisterGroupServiceServer(grpcServer, grpcapi.NewGroup(groupsSvc))
-	metadatalifecyclev1.RegisterCategoryServiceServer(grpcServer, grpcapi.NewCategory(categoriesSvc))
-	metadatalifecyclev1.RegisterContactPointServiceServer(grpcServer, grpcapi.NewContactPoint(contactPointsSvc))
+	metadatalifecyclev1.RegisterIdentityServiceServer(server, grpcapi.NewIdentity(usersSvc))
+	metadatalifecyclev1.RegisterUserServiceServer(server, grpcapi.NewUser(usersSvc))
+	metadatalifecyclev1.RegisterImportServiceServer(server, grpcapi.NewImport(importSvc, turtler))
+	metadatalifecyclev1.RegisterGroupServiceServer(server, grpcapi.NewGroup(groupsSvc))
+	metadatalifecyclev1.RegisterCategoryServiceServer(server, grpcapi.NewCategory(categoriesSvc))
+	metadatalifecyclev1.RegisterContactPointServiceServer(server, grpcapi.NewContactPoint(contactPointsSvc))
 	accessSvc := access.New(log, db.Access, authorizer)
-	metadatalifecyclev1.RegisterGroupAccessServiceServer(grpcServer, grpcapi.NewAccess(accessSvc))
+	metadatalifecyclev1.RegisterGroupAccessServiceServer(server, grpcapi.NewAccess(accessSvc))
 	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
-	metadatalifecyclev1.RegisterOrganizationServiceServer(grpcServer, grpcapi.NewOrganization(organizationsSvc))
+	metadatalifecyclev1.RegisterOrganizationServiceServer(server, grpcapi.NewOrganization(organizationsSvc))
 	datasetSvc := datasets.New(log, db.Datasets, authorizer)
 	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer)
 	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer)
-	metadatalifecyclev1.RegisterResourceServiceServer(grpcServer, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))
+	metadatalifecyclev1.RegisterResourceServiceServer(server, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))
 	discoverySvc := discovery.New(log, db.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
-	metadatalifecyclev1.RegisterDiscoveryServiceServer(grpcServer, grpcapi.NewDiscovery(discoverySvc))
+	metadatalifecyclev1.RegisterDiscoveryServiceServer(server, grpcapi.NewDiscovery(discoverySvc))
 
-	listener, err := net.Listen("tcp", ":"+cfg.GRPCServerPort)
+	listener, err := net.Listen("tcp", ":"+cfg.ServerPort)
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
 
 	srvErr := make(chan error, 1)
 	go func() {
-		log.Info("starting grpc server", "listen", cfg.GRPCServerPort)
-		srvErr <- grpcServer.Serve(listener)
+		log.Info("starting server", "listen", cfg.ServerPort)
+		srvErr <- server.Serve(listener)
 	}()
 
 	select {
 	case err := <-srvErr:
-		log.Error("grpc server failed", "error", err)
+		log.Error("server failed", "error", err)
 		return fmt.Errorf("listen and serve: %w", err)
 	case <-ctx.Done():
-		log.Info("grpc server terminated: stopping")
+		log.Info("server terminated: stopping")
 	}
 
-	grpcServer.GracefulStop()
+	server.GracefulStop()
 
 	log.Info("server shutdown complete")
 

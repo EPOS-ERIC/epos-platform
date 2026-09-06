@@ -36,6 +36,8 @@ func NewRouter(
 
 	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude health logs
 	r.Get("/health", health)
+
+	// TODO: modify the docs library to have this shared, like returning the routes directly
 	r.Get("/openapi.yaml", serveOpenAPISpec(log))
 	r.Get("/scalar", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/scalar/", http.StatusMovedPermanently)
@@ -53,7 +55,7 @@ func NewRouter(
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,
-		handlers.NewSecurityHandler(authService, metadataLifecycleClient),
+		handlers.NewSecurityHandler(authService, identityService),
 		gatewayapi.WithPathPrefix("/v1"),
 		gatewayapi.WithErrorHandler(handlers.NewErrorHandler(log)),
 	)

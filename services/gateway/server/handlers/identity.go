@@ -14,7 +14,7 @@ func (h *ogenHandler) ListUsers(ctx context.Context) ([]gatewayapi.UserListItem,
 	if !ok {
 		return nil, authMissing()
 	}
-	response, err := h.metadataLifecycle.GRPC.ListUsers(ctx, actor)
+	response, err := h.metadataLifecycle.ListUsers(ctx, actor)
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
@@ -144,7 +144,7 @@ func (h *ogenHandler) GrantGlobalPermission(ctx context.Context, p gatewayapi.Gr
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.GRPC.GrantGlobalPermission(ctx, a, p.ID, string(p.Permission)); err != nil {
+	if err := h.metadataLifecycle.GrantGlobalPermission(ctx, a, p.ID, string(p.Permission)); err != nil {
 		return fmt.Errorf("grant global permission: %w", err)
 	}
 	return nil
