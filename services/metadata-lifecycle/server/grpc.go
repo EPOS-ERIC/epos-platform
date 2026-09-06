@@ -15,6 +15,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/grpcapi"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
@@ -58,6 +59,8 @@ func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer)
 	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer)
 	metadatalifecyclev1.RegisterResourceServiceServer(grpcServer, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))
+	discoverySvc := discovery.New(log, db.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
+	metadatalifecyclev1.RegisterDiscoveryServiceServer(grpcServer, grpcapi.NewDiscovery(discoverySvc))
 
 	listener, err := net.Listen("tcp", ":"+cfg.GRPCServerPort)
 	if err != nil {

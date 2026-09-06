@@ -98,39 +98,6 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "415": { description: Content-Type must be text/turtle }
         "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/resources:
-    get:
-      tags: [Resources]
-      operationId: searchResources
-      summary: Discover resources
-      description: |
-        Returns summary records for discovered resources. Published records are public.
-        Other statuses require X-EPOS-User-ID and active access to the resource group
-        or global ADMIN. Results are returned as one mixed array without pagination.
-      parameters:
-        - { $ref: "#/components/parameters/ActorOptional" }
-        - { $ref: "#/components/parameters/SearchQuery" }
-        - { $ref: "#/components/parameters/SearchType" }
-        - { $ref: "#/components/parameters/SearchConcept" }
-        - { $ref: "#/components/parameters/SearchGroup" }
-        - { $ref: "#/components/parameters/SearchSpatialFilter" }
-        - { $ref: "#/components/parameters/SearchDateFrom" }
-        - { $ref: "#/components/parameters/SearchDateTo" }
-        - { $ref: "#/components/parameters/SearchProvider" }
-        - { $ref: "#/components/parameters/SearchKeywords" }
-        - { $ref: "#/components/parameters/SearchEditor" }
-        - { $ref: "#/components/parameters/SearchVersioningStatus" }
-      responses:
-        "200":
-          description: Discovered resources returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/DiscoveryItem" }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/groups/{group_id}/resources:
     parameters: [{ $ref: "#/components/parameters/GroupID" }]
     post:
@@ -402,88 +369,6 @@ components:
         required: false,
         schema: { type: string, format: uuid },
       }
-    SearchQuery:
-      name: q
-      in: query
-      required: false
-      schema: { type: string }
-    SearchType:
-      name: type
-      in: query
-      required: false
-      description: Comma-separated resource types.
-      schema:
-        type: array
-        items: { $ref: "#/components/schemas/ResourceType" }
-      style: form
-      explode: false
-    SearchConcept:
-      name: concept
-      in: query
-      required: false
-      description: Comma-separated group concepts. Resources matching any value are returned.
-      schema:
-        type: array
-        items:
-          type: string
-          enum: [DATA, FACILITIES, SOFTWARE]
-      style: form
-      explode: false
-    SearchGroup:
-      name: groupId
-      in: query
-      required: false
-      description: Filter resources belonging to a group.
-      schema: { type: string, format: uuid }
-    SearchSpatialFilter:
-      name: spatialFilter
-      in: query
-      required: false
-      description: WKT geometry intersecting dataset coverage.
-      schema: { type: string }
-    SearchDateFrom:
-      name: dateFrom
-      in: query
-      required: false
-      schema: { type: string, format: date-time }
-    SearchDateTo:
-      name: dateTo
-      in: query
-      required: false
-      schema: { type: string, format: date-time }
-    SearchProvider:
-      name: provider
-      in: query
-      required: false
-      description: Comma-separated provider or creator organization UUIDs.
-      schema: { type: string }
-    SearchKeywords:
-      name: keywords
-      in: query
-      required: false
-      description: Comma-separated keywords. All values must match.
-      schema: { type: string }
-    SearchEditor:
-      name: editorId
-      in: query
-      required: false
-      description: Filter resources by the user who created the resource version.
-      schema: { type: string }
-    SearchVersioningStatus:
-      name: versioningStatus
-      in: query
-      required: false
-      description: Comma-separated lifecycle statuses. Defaults to PUBLISHED; other statuses require authentication.
-      schema:
-        type: array
-        items:
-          {
-            type: string,
-            enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED],
-          }
-        default: [PUBLISHED]
-      style: form
-      explode: false
     ResourceType:
       {
         name: resource_type,
@@ -868,55 +753,6 @@ components:
         revision: { type: integer, format: int32, minimum: 1 }
         metadata:
           { $ref: "#/components/schemas/SoftwareSourceCodeDraftMetadata" }
-    DiscoveryItem:
-      type: object
-      required: [type, resource_id, version_id, name, status, updated_at, concept, group]
-      properties:
-        type:
-          {
-            type: string,
-            enum: [dataset, software-application, software-source-code],
-          }
-        resource_id: { type: string, format: uuid }
-        version_id: { type: string, format: uuid }
-        name: { type: string }
-        status: { $ref: "#/components/schemas/DatasetStatus" }
-        updated_at: { type: string, format: date-time }
-        concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
-        created_by: { $ref: "#/components/schemas/DiscoveryCreatedBy" }
-        group: { $ref: "#/components/schemas/DiscoveryReference" }
-        providers:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/DiscoveryReference" },
-          }
-        creators:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/DiscoveryReference" },
-          }
-        categories:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/DiscoveryReference" },
-          }
-        distributions:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/DiscoveryReference" },
-          }
-    DiscoveryReference:
-      type: object
-      required: [id, name]
-      properties:
-        id: { type: string, format: uuid }
-        name: { type: string }
-    DiscoveryCreatedBy:
-      type: object
-      required: [id, name]
-      properties:
-        id: { type: string }
-        name: { type: string }
     ResourceRecord:
       type: object
       required:

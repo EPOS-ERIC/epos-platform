@@ -12,6 +12,10 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 	if v == nil {
 		return gatewayapi.ResourceVersion{}, errors.New("decode metadata-lifecycle resource record: response is empty")
 	}
+	status, err := toAPIVersioningStatus(v.Status)
+	if err != nil {
+		return gatewayapi.ResourceVersion{}, err
+	}
 	resourceID, err := parseUUID("resource_version.resource_id", v.ResourceId)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
@@ -32,7 +36,7 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 		ResourceID: resourceID,
 		VersionID:  versionID,
 		Revision:   v.Revision,
-		Status:     string(v.Status),
+		Status:     status,
 		CreatedBy:  v.CreatedBy,
 		GroupID:    groupID,
 		GroupName:  v.GroupName,
@@ -40,6 +44,23 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 		UpdatedAt:  v.UpdatedAt.AsTime(),
 		Metadata:   metadata,
 	}, nil
+}
+
+func toAPIVersioningStatus(status metadatalifecyclev1.VersioningStatus) (gatewayapi.VersioningStatus, error) {
+	switch status {
+	case metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_PUBLISHED:
+		return gatewayapi.VersioningStatusPUBLISHED, nil
+	case metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_DRAFT:
+		return gatewayapi.VersioningStatusDRAFT, nil
+	case metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_SUBMITTED:
+		return gatewayapi.VersioningStatusSUBMITTED, nil
+	case metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_ARCHIVED:
+		return gatewayapi.VersioningStatusARCHIVED, nil
+	case metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_REJECTED:
+		return gatewayapi.VersioningStatusREJECTED, nil
+	default:
+		return "", errors.New("unknown versioning status")
+	}
 }
 
 func toAPIResourceMetadata(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.ResourceVersionMetadata, error) {

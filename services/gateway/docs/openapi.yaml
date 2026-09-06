@@ -1139,18 +1139,14 @@ paths:
     delete:
       tags:
         - Resources
-      summary: Discard resource draft version
-      description: Permanently discards an editable draft version.
+      summary: Delete resource draft version
+      description: Permanently deletes an existing editable draft version. This operation does not create or assign a lifecycle status.
       operationId: discardResourceDraftVersion
       security:
         - bearerAuth: []
       responses:
-        "200":
-          description: Draft version discarded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WriteResult"
+        "204":
+          description: Draft version deleted
         default:
           description: Gateway error
           content:
@@ -1652,7 +1648,7 @@ components:
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/DiscoveryVersioningStatus"
+          $ref: "#/components/schemas/VersioningStatus"
         default:
           - PUBLISHED
       style: form
@@ -1816,19 +1812,13 @@ components:
 
     VersioningStatus:
       type: string
-      description: Lowercase lifecycle state returned by write operations.
+      description: Lifecycle state used by resource and discovery operations.
       enum:
-        - published
-        - draft
-        - submitted
-        - archived
-        - discarded
-        - rejected
-
-    DiscoveryVersioningStatus:
-      type: string
-      description: Uppercase versioning state accepted by the discovery filter.
-      enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+        - PUBLISHED
+        - DRAFT
+        - SUBMITTED
+        - ARCHIVED
+        - REJECTED
 
     DatasetDraftMetadata:
       type: object
@@ -2301,7 +2291,7 @@ components:
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         revision: { type: integer, format: int32 }
-        status: { type: string }
+        status: { $ref: "#/components/schemas/VersioningStatus" }
         # TODO: make this not required, only have the creator if the user is authenticated and a member of a group, otherwise omit this field complitely, we don't want to leak other user's ids
         created_by: { type: string }
         group_id: { type: string, format: uuid }
@@ -2616,7 +2606,20 @@ components:
           type: string
 
     DiscoveryItem:
+      oneOf:
+        - $ref: "#/components/schemas/DatasetDiscoveryItem"
+        - $ref: "#/components/schemas/SoftwareApplicationDiscoveryItem"
+        - $ref: "#/components/schemas/SoftwareSourceCodeDiscoveryItem"
+      discriminator:
+        propertyName: type
+        mapping:
+          dataset: "#/components/schemas/DatasetDiscoveryItem"
+          software-application: "#/components/schemas/SoftwareApplicationDiscoveryItem"
+          software-source-code: "#/components/schemas/SoftwareSourceCodeDiscoveryItem"
+
+    DatasetDiscoveryItem:
       type: object
+      additionalProperties: false
       required:
         - type
         - resource_id
@@ -2627,45 +2630,85 @@ components:
         - concept
         - group
       properties:
-        type:
-          $ref: "#/components/schemas/DiscoveryResourceType"
-        resource_id:
-          type: string
-          format: uuid
-        version_id:
-          type: string
-          format: uuid
-        name:
-          type: string
+        type: { type: string, enum: [dataset] }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
         status:
-          type: string
-          enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
-        updated_at:
-          type: string
-          format: date-time
-        concept:
-          type: string
-          enum: [DATA, FACILITIES, SOFTWARE]
-        created_by:
-          $ref: "#/components/schemas/Reference"
-        group:
-          $ref: "#/components/schemas/Reference"
+          $ref: "#/components/schemas/VersioningStatus"
+        updated_at: { type: string, format: date-time }
+        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        created_by: { $ref: "#/components/schemas/Reference" }
+        group: { $ref: "#/components/schemas/Reference" }
         providers:
           type: array
-          items:
-            $ref: "#/components/schemas/Reference"
-        creators:
-          type: array
-          items:
-            $ref: "#/components/schemas/Reference"
+          items: { $ref: "#/components/schemas/Reference" }
         categories:
           type: array
-          items:
-            $ref: "#/components/schemas/Reference"
+          items: { $ref: "#/components/schemas/Reference" }
         distributions:
           type: array
-          items:
-            $ref: "#/components/schemas/Reference"
+          items: { $ref: "#/components/schemas/Reference" }
+
+    SoftwareApplicationDiscoveryItem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - resource_id
+        - version_id
+        - name
+        - status
+        - updated_at
+        - concept
+        - group
+      properties:
+        type: { type: string, enum: [software-application] }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
+        updated_at: { type: string, format: date-time }
+        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        created_by: { $ref: "#/components/schemas/Reference" }
+        group: { $ref: "#/components/schemas/Reference" }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
+
+    SoftwareSourceCodeDiscoveryItem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - resource_id
+        - version_id
+        - name
+        - status
+        - updated_at
+        - concept
+        - group
+      properties:
+        type: { type: string, enum: [software-source-code] }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
+        updated_at: { type: string, format: date-time }
+        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        created_by: { $ref: "#/components/schemas/Reference" }
+        group: { $ref: "#/components/schemas/Reference" }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
 
     UserStatus:
       type: string

@@ -551,6 +551,60 @@ func (s CreateSoftwareSourceCodeResourceRequestResourceType) Validate() error {
 	}
 }
 
+func (s *DatasetDiscoveryItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Concept.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "concept",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s DatasetDiscoveryItemType) Validate() error {
+	switch s {
+	case "dataset":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *DatasetDraftMetadata) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -865,78 +919,25 @@ func (s DiscoveryConcept) Validate() error {
 	}
 }
 
-func (s *DiscoveryItem) Validate() error {
-	if s == nil {
-		return validate.ErrNilPointer
-	}
-
-	var failures []validate.FieldError
-	if err := func() error {
-		if err := s.Type.Validate(); err != nil {
+func (s DiscoveryItem) Validate() error {
+	switch s.Type {
+	case DatasetDiscoveryItemDiscoveryItem:
+		if err := s.DatasetDiscoveryItem.Validate(); err != nil {
 			return err
 		}
 		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "type",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Status.Validate(); err != nil {
+	case SoftwareApplicationDiscoveryItemDiscoveryItem:
+		if err := s.SoftwareApplicationDiscoveryItem.Validate(); err != nil {
 			return err
 		}
 		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "status",
-			Error: err,
-		})
-	}
-	if err := func() error {
-		if err := s.Concept.Validate(); err != nil {
+	case SoftwareSourceCodeDiscoveryItemDiscoveryItem:
+		if err := s.SoftwareSourceCodeDiscoveryItem.Validate(); err != nil {
 			return err
 		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "concept",
-			Error: err,
-		})
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-	return nil
-}
-
-func (s DiscoveryItemConcept) Validate() error {
-	switch s {
-	case "DATA":
-		return nil
-	case "FACILITIES":
-		return nil
-	case "SOFTWARE":
 		return nil
 	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s DiscoveryItemStatus) Validate() error {
-	switch s {
-	case "PUBLISHED":
-		return nil
-	case "DRAFT":
-		return nil
-	case "SUBMITTED":
-		return nil
-	case "ARCHIVED":
-		return nil
-	case "REJECTED":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
+		return errors.Errorf("invalid type %q", s.Type)
 	}
 }
 
@@ -947,23 +948,6 @@ func (s DiscoveryResourceType) Validate() error {
 	case "software-application":
 		return nil
 	case "software-source-code":
-		return nil
-	default:
-		return errors.Errorf("invalid value: %v", s)
-	}
-}
-
-func (s DiscoveryVersioningStatus) Validate() error {
-	switch s {
-	case "PUBLISHED":
-		return nil
-	case "DRAFT":
-		return nil
-	case "SUBMITTED":
-		return nil
-	case "ARCHIVED":
-		return nil
-	case "REJECTED":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -2438,6 +2422,17 @@ func (s *ResourceVersion) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if err := s.Metadata.Validate(); err != nil {
 			return err
 		}
@@ -2562,6 +2557,60 @@ func (s RoleRequestStatus) Validate() error {
 	case "ACCEPTED":
 		return nil
 	case "REJECTED":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
+func (s *SoftwareApplicationDiscoveryItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Concept.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "concept",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s SoftwareApplicationDiscoveryItemType) Validate() error {
+	switch s {
+	case "software-application":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
@@ -2713,6 +2762,60 @@ func (s *SoftwareIdentifier) Validate() error {
 		return &validate.Error{Fields: failures}
 	}
 	return nil
+}
+
+func (s *SoftwareSourceCodeDiscoveryItem) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if err := s.Type.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "type",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Status.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if err := s.Concept.Validate(); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "concept",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s SoftwareSourceCodeDiscoveryItemType) Validate() error {
+	switch s {
+	case "software-source-code":
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
 }
 
 func (s *SoftwareSourceCodeDraftMetadata) Validate() error {
@@ -3146,17 +3249,15 @@ func (s UserStatus) Validate() error {
 
 func (s VersioningStatus) Validate() error {
 	switch s {
-	case "published":
+	case "PUBLISHED":
 		return nil
-	case "draft":
+	case "DRAFT":
 		return nil
-	case "submitted":
+	case "SUBMITTED":
 		return nil
-	case "archived":
+	case "ARCHIVED":
 		return nil
-	case "discarded":
-		return nil
-	case "rejected":
+	case "REJECTED":
 		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)

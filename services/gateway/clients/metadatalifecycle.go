@@ -17,10 +17,9 @@ import (
 )
 
 type MetadataLifecycle struct {
-	identity  client.InternalIdentityAPI
-	users     client.UsersAPI
-	resources client.ResourcesAPI
-	imports   client.ImportsAPI
+	identity client.InternalIdentityAPI
+	users    client.UsersAPI
+	imports  client.ImportsAPI
 
 	GRPC     *MetadataLifecycleGRPC
 	Identity *MetadataLifecycleIdentity
@@ -66,10 +65,9 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.U
 	}
 
 	return &MetadataLifecycle{
-		identity:  apiClient.InternalIdentityAPI,
-		users:     apiClient.UsersAPI,
-		resources: apiClient.ResourcesAPI,
-		imports:   apiClient.ImportsAPI,
+		identity: apiClient.InternalIdentityAPI,
+		users:    apiClient.UsersAPI,
+		imports:  apiClient.ImportsAPI,
 
 		// TODO: we are doing this just to hook up the provisioning of users for now, later we will only have the grpc service
 		GRPC:     grpc,

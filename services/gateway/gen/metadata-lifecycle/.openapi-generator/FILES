@@ -36,9 +36,6 @@ model_dataset_status.go
 model_date_time_parameter.go
 model_date_time_parameter_draft.go
 model_date_time_parameter_metadata.go
-model_discovery_created_by.go
-model_discovery_item.go
-model_discovery_reference.go
 model_distribution.go
 model_distribution_draft.go
 model_distribution_type.go

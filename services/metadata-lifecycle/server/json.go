@@ -13,12 +13,10 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/authz"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/config"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi"
 	categoriesapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	datasetapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
-	discoveryapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
 	healthapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
 	importsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
@@ -33,7 +31,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/datasets"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
@@ -58,15 +55,12 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
 	importSvc := metadataimport.New(log, db.Imports, authorizer)
-	groupsSvc := groups.New(log, db.Groups, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
 	datasetSvc := datasets.New(log, db.Datasets, authorizer)
 	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer)
 	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer)
-	discoverySvc := discovery.New(log, db.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
-
 	datasetsHandler := datasetapi.New(log, datasetSvc)
 	applicationsHandler := softwareapplicationapi.New(log, applicationSvc)
 	sourceCodesHandler := softwaresourcecodeapi.New(log, sourceCodeSvc)
@@ -79,7 +73,6 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 		ContactPoints: contactpointsapi.New(log, contactPointSvc),
 		Organizations: organizationsapi.New(log, organizationsSvc),
 		Resources:     resourceapi.New(log, datasetsHandler, applicationsHandler, sourceCodesHandler),
-		Discovery:     discoveryapi.New(log, discoverySvc),
 
 		Log: log,
 	})

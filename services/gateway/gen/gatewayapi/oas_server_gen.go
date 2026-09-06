@@ -113,10 +113,11 @@ type Handler interface {
 	DeleteOrganization(ctx context.Context, params DeleteOrganizationParams) error
 	// DiscardResourceDraftVersion implements discardResourceDraftVersion operation.
 	//
-	// Permanently discards an editable draft version.
+	// Permanently deletes an existing editable draft version. This operation does not create or assign a
+	// lifecycle status.
 	//
 	// DELETE /resources/{resourceType}/{id}/versions/{versionId}/draft
-	DiscardResourceDraftVersion(ctx context.Context, params DiscardResourceDraftVersionParams) (*WriteResult, error)
+	DiscardResourceDraftVersion(ctx context.Context, params DiscardResourceDraftVersionParams) error
 	// DiscoverResources implements discoverResources operation.
 	//
 	// Returns summary records for discovered resources. Published records are public. Other statuses

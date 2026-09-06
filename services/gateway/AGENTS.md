@@ -13,6 +13,7 @@
 - Keep outbound connection setup, gRPC metadata, deadlines, retries, and gRPC-status-to-Gateway-error mapping in `clients/`. Handlers must not call generated gRPC clients directly.
 - Generated protobuf response types may cross from `clients/` into `server/handlers/` only for a pure proxy endpoint. Handler maps protobuf directly to `api/` response types. Never expose direct protobuf types to the external api, always define explicit api types following the openapi specification and map protobuf to those.
 - Orchestration paths map protobuf to a minimal Gateway domain type before applying Gateway behavior. Do not store protobuf messages in Gateway domain objects or request context.
+- Do not create Gateway domain DTOs, services, or mappers that merely duplicate an upstream protobuf shape. Remove an obsolete proxy-only domain layer when the last caller migrates.
 - Keep shared HTTP middleware in `packages/go/middleware` instead of duplicating generic middleware in this service.
 - Keep package-private helper code in `internal/`.
 - Keep `main.go` limited to application wiring and startup.
@@ -27,6 +28,16 @@
 - Keep handlers thin: parse input, call a service, map domain errors to HTTP status, and encode the response.
 - Keep URL construction such as `href` in `server/handlers/`.
 - Validate new configuration fields and behavior in `config/Validate`.
+
+## Mapping Rules
+
+- Map exactly once at each transport boundary. For a pure proxy: `api request -> protobuf request` in the handler, then `protobuf response -> api response` in the handler. Do not introduce a Gateway domain type between those mappings.
+- For Gateway orchestration: client returns protobuf, the orchestration service maps only the fields it needs to a Gateway domain type, and the handler maps the final Gateway result to `api/`.
+- Keep request and response mappings for one resource family together in a dedicated `*_mapping.go` file. Do not place mapping functions in handler method files except small private helpers used by that one handler.
+- Name conversions by source and destination: `toProtoX`, `toAPIX`, and `fromProtoX`. Do not use ambiguous names such as `mapX`, `convertX`, or names that mix destination concepts such as `toAPIProtoX`.
+- Define shared protobuf-to-OpenAPI primitives (UUID, timestamp, nullable scalar, enum) once in `mapping_helpers.go`. Resource mappings must use those helpers instead of recreating nullable or timestamp semantics.
+- Mapping functions validate only representation-level invariants: required nested messages, enum values, UUID parsing, timestamp validity, and OpenAPI nullability. Business validation belongs in domain services.
+- A mapping function must not make network calls, read configuration, inspect authentication, or mutate state.
 
 ## gRPC
 

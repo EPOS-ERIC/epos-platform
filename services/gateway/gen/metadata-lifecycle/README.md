@@ -84,7 +84,6 @@ Class | Method | HTTP request | Description
 *ResourcesAPI* | [**RejectResource**](docs/ResourcesAPI.md#rejectresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reject | Reject resource submission
 *ResourcesAPI* | [**ReopenResource**](docs/ResourcesAPI.md#reopenresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/reopen | Reopen rejected resource
 *ResourcesAPI* | [**ReplaceResourceDraft**](docs/ResourcesAPI.md#replaceresourcedraft) | **Put** /api/v1/resources/{resource_id}/versions/{version_id}/draft | Replace resource draft
-*ResourcesAPI* | [**SearchResources**](docs/ResourcesAPI.md#searchresources) | **Get** /api/v1/resources | Discover resources
 *ResourcesAPI* | [**SubmitResource**](docs/ResourcesAPI.md#submitresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/submit | Submit resource draft
 *ResourcesAPI* | [**UnpublishResource**](docs/ResourcesAPI.md#unpublishresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/unpublish | Unpublish resource version
 *ResourcesAPI* | [**WithdrawResource**](docs/ResourcesAPI.md#withdrawresource) | **Post** /api/v1/resources/{resource_type}/{resource_id}/versions/{version_id}/withdraw | Withdraw resource submission
@@ -119,9 +118,6 @@ Class | Method | HTTP request | Description
  - [DateTimeParameter](docs/DateTimeParameter.md)
  - [DateTimeParameterDraft](docs/DateTimeParameterDraft.md)
  - [DateTimeParameterMetadata](docs/DateTimeParameterMetadata.md)
- - [DiscoveryCreatedBy](docs/DiscoveryCreatedBy.md)
- - [DiscoveryItem](docs/DiscoveryItem.md)
- - [DiscoveryReference](docs/DiscoveryReference.md)
  - [Distribution](docs/Distribution.md)
  - [DistributionDraft](docs/DistributionDraft.md)
  - [DistributionType](docs/DistributionType.md)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -28,10 +27,14 @@ func toAPIWriteResult(v *metadatalifecyclev1.ResourceRecord, resourceType string
 	if v == nil {
 		return nil, errors.New("resource operation returned empty response")
 	}
+	status, err := toAPIVersioningStatus(v.Status)
+	if err != nil {
+		return nil, fmt.Errorf("map versioning status: %w", err)
+	}
 	return &gatewayapi.WriteResult{
 		ResourceType: gatewayapi.WriteResourceType(resourceType),
 		ID:           v.ResourceId,
-		Status:       gatewayapi.VersioningStatus(strings.ToLower(string(v.Status))),
+		Status:       status,
 	}, nil
 }
 
@@ -71,19 +74,15 @@ func (h *ogenHandler) DraftFromArchive(ctx context.Context, p gatewayapi.DraftFr
 	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
 }
 
-func (h *ogenHandler) DiscardResourceDraftVersion(ctx context.Context, p gatewayapi.DiscardResourceDraftVersionParams) (*gatewayapi.WriteResult, error) {
+func (h *ogenHandler) DiscardResourceDraftVersion(ctx context.Context, p gatewayapi.DiscardResourceDraftVersionParams) error {
 	a, ok := actorID(ctx)
 	if !ok {
-		return nil, authMissing()
+		return authMissing()
 	}
 	if err := h.metadataLifecycle.DiscardResourceDraft(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String()); err != nil {
-		return nil, fmt.Errorf("discard resource draft: %w", err)
+		return fmt.Errorf("discard resource draft: %w", err)
 	}
-	return &gatewayapi.WriteResult{
-		ResourceType: gatewayapi.WriteResourceType(p.ResourceType),
-		ID:           p.ID.String(),
-		Status:       gatewayapi.VersioningStatusDiscarded,
-	}, nil
+	return nil
 }
 
 func (h *ogenHandler) SubmitResourceVersion(ctx context.Context, p gatewayapi.SubmitResourceVersionParams) (*gatewayapi.WriteResult, error) {
@@ -174,7 +173,15 @@ func (h *ogenHandler) CreateResource(ctx context.Context, q gatewayapi.CreateRes
 	if v == nil || v.Resource == nil {
 		return nil, errors.New("create resource returned empty response")
 	}
-	return &gatewayapi.WriteResult{ResourceType: gatewayapi.WriteResourceType(typ), ID: v.Resource.ResourceId, Status: gatewayapi.VersioningStatus(strings.ToLower(v.Resource.Status))}, nil
+	status, err := toAPIVersioningStatus(v.Resource.Status)
+	if err != nil {
+		return nil, fmt.Errorf("map versioning status: %w", err)
+	}
+	return &gatewayapi.WriteResult{
+		ResourceType: gatewayapi.WriteResourceType(typ),
+		ID:           v.Resource.ResourceId,
+		Status:       status,
+	}, nil
 }
 
 func (h *ogenHandler) ReplaceResourceDraftVersion(ctx context.Context, q gatewayapi.ReplaceResourceDraftRequest, p gatewayapi.ReplaceResourceDraftVersionParams) (*gatewayapi.WriteResult, error) {

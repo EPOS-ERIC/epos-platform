@@ -155,8 +155,12 @@ func toCategoryError(operation string, err error) error {
 	switch {
 	case errors.Is(err, domain.ErrInvalidCategory):
 		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid category"))
+	case errors.Is(err, domain.ErrCategoryForbidden):
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "category operation is not permitted"))
 	case errors.Is(err, domain.ErrCategoryNotFound):
 		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "category not found"))
+	case errors.Is(err, domain.ErrCategoryConflict):
+		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "category operation conflicts with existing data"))
 	default:
 		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
 	}

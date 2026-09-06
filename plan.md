@@ -245,13 +245,20 @@
      - [x] Add Gateway client methods with explicit response mapping and actor metadata
      - [x] Switch corresponding `MetadataLifecycle` methods from generated HTTP client to gRPC
 
-- [ ] Migrate Discovery endpoint
-  - [ ] Migrate `GET /v1/search`
-    - [ ] Add validated protobuf request, response, and filter representation and RPC definition
-    - [ ] Implement gRPC adapter using Metadata Lifecycle discovery service
-    - [ ] Add Gateway client method with explicit search-result mapping and gRPC error mapping
-    - [ ] Switch `MetadataLifecycle.SearchResources` from the generated HTTP client to gRPC
-    - [ ] Verify filter parsing, authorization, empty results, timeout, and successful response behavior; do not add pagination absent from the Gateway contract
+- [x] Migrate Discovery endpoint
+  - [x] Migrate `GET /v1/search`
+    - [x] Add validated protobuf request, response, and filter representation and RPC definition
+      - Decision: keep search criteria flat on `SearchResourcesRequest`; do not nest a `DiscoveryFilter` message.
+      - Decision: model `query`, `group_id`, `spatial_filter`, and `editor_id` as optional strings with `min_len: 1`; explicitly supplied empty values are invalid, while omitted values mean no filter.
+      - Decision: keep `date_from` and `date_to` as message fields; protobuf message presence already represents omission.
+      - Decision: use repeated `ResourceType`, `TopLevelConcept`, and shared `VersioningStatus` enum filters; require non-empty values for repeated `provider_ids` and `keywords`.
+      - Decision: Discovery accepts `PUBLISHED`, `DRAFT`, `SUBMITTED`, `ARCHIVED`, and `REJECTED`; `DISCARDED` remains unsupported. An empty status filter retains the existing `PUBLISHED` default.
+      - Decision: return one mixed repeated `DiscoveryItem` list, with explicit discovery references and no pagination; empty results preserve the Gateway JSON array contract.
+      - Decision: define `DiscoveryService.SearchResources` with optional actor metadata because published results are public and preview statuses require authentication.
+    - [x] Implement gRPC adapter using Metadata Lifecycle discovery service
+    - [x] Add Gateway client method with explicit search-result mapping and gRPC error mapping
+    - [x] Switch `MetadataLifecycle.SearchResources` from the generated HTTP client to gRPC
+    - [x] Verify filter parsing, authorization, empty results, timeout, and successful response behavior; do not add pagination absent from the Gateway contract
 
 - [ ] Migrate Turtle Import endpoint
   - [ ] Migrate `POST /v1/imports/turtle`

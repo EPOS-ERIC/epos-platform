@@ -133,19 +133,19 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 	switch item := value.(type) {
 	case domain.DatasetVersion:
 		response.ResourceId, response.VersionId = item.DatasetID.String(), item.VersionID.String()
-		response.Revision, response.Status = item.Revision, string(item.Status)
+		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
 		response.Metadata = &metadatalifecyclev1.ResourceVersion_Dataset{Dataset: datasetResourceMetadata(item.Metadata, includeContacts)}
 	case domain.SoftwareApplicationVersion:
 		response.ResourceId, response.VersionId = item.SoftwareApplicationID.String(), item.VersionID.String()
-		response.Revision, response.Status = item.Revision, string(item.Status)
+		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
 		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareApplication{SoftwareApplication: applicationResourceMetadata(item.Metadata, includeContacts)}
 	case domain.SoftwareSourceCodeVersion:
 		response.ResourceId, response.VersionId = item.SoftwareSourceCodeID.String(), item.VersionID.String()
-		response.Revision, response.Status = item.Revision, string(item.Status)
+		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
 		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareSourceCode{SoftwareSourceCode: sourceCodeResourceMetadata(item.Metadata, includeContacts)}
@@ -189,7 +189,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, resourceError(err)
 		}
-		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.DatasetID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: string(result.Status)}}, nil
+		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.DatasetID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
 	case *metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareApplication:
 		if value.SoftwareApplication == nil {
 			return nil, status.Error(codes.InvalidArgument, "software application metadata is required")
@@ -206,7 +206,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, resourceError(err)
 		}
-		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareApplicationID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: string(result.Status)}}, nil
+		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareApplicationID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
 	case *metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareSourceCode:
 		if value.SoftwareSourceCode == nil {
 			return nil, status.Error(codes.InvalidArgument, "software source code metadata is required")
@@ -223,7 +223,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if err != nil {
 			return nil, resourceError(err)
 		}
-		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: string(result.Status)}}, nil
+		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
 	default:
 		return nil, status.Error(codes.InvalidArgument, "resource metadata is required")
 	}
@@ -537,11 +537,11 @@ func (s *ResourceServer) draftResource(ctx context.Context, request draftResourc
 func lifecycleResponse(value any) (*metadatalifecyclev1.ResourceRecord, error) {
 	switch result := value.(type) {
 	case domain.DatasetVersion:
-		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.DatasetID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: string(result.Status)}, nil
+		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.DatasetID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}, nil
 	case domain.SoftwareApplicationVersion:
-		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareApplicationID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: string(result.Status)}, nil
+		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareApplicationID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}, nil
 	case domain.SoftwareSourceCodeVersion:
-		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: string(result.Status)}, nil
+		return &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}, nil
 	default:
 		return nil, status.Error(codes.Internal, "unsupported resource type") //nolint:wrapcheck
 	}
@@ -931,7 +931,21 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationMeta
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
 	}
-	return domain.SoftwareApplicationInput{Name: value.GetName(), Description: value.GetDescription(), MainEntityOfPage: value.MainEntityOfPage, License: value.License, Version: value.Version, Keywords: value.GetKeywords(), DownloadURL: value.DownloadUrl, Requirements: value.Requirements, OperatingSystem: value.OperatingSystem, CreatorIDs: creators, ContactPointIDs: contacts, CategoryIDs: categories, Identifiers: identifiers}, nil
+	return domain.SoftwareApplicationInput{
+		Name:             value.GetName(),
+		Description:      value.GetDescription(),
+		MainEntityOfPage: value.MainEntityOfPage,
+		License:          value.License,
+		Version:          value.Version,
+		Keywords:         value.GetKeywords(),
+		DownloadURL:      value.DownloadUrl,
+		Requirements:     value.Requirements,
+		OperatingSystem:  value.OperatingSystem,
+		CreatorIDs:       creators,
+		ContactPointIDs:  contacts,
+		CategoryIDs:      categories,
+		Identifiers:      identifiers,
+	}, nil
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
@@ -952,7 +966,22 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeMetada
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
 	}
-	return domain.SoftwareSourceCodeInput{Name: value.GetName(), Description: value.GetDescription(), ProgrammingLanguage: value.ProgrammingLanguage, Keywords: value.GetKeywords(), Repository: value.Repository, License: value.License, SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform, MainEntityOfPage: value.MainEntityOfPage, Version: value.Version, CreatorIDs: creators, ContactPointIDs: contacts, CategoryIDs: categories, Identifiers: identifiers}, nil
+	return domain.SoftwareSourceCodeInput{
+		Name:                 value.GetName(),
+		Description:          value.GetDescription(),
+		ProgrammingLanguage:  value.ProgrammingLanguage,
+		Keywords:             value.GetKeywords(),
+		Repository:           value.Repository,
+		License:              value.License,
+		SoftwareRequirements: value.SoftwareRequirements,
+		RuntimePlatform:      value.RuntimePlatform,
+		MainEntityOfPage:     value.MainEntityOfPage,
+		Version:              value.Version,
+		CreatorIDs:           creators,
+		ContactPointIDs:      contacts,
+		CategoryIDs:          categories,
+		Identifiers:          identifiers,
+	}, nil
 }
 
 func identifierInputs(values []*metadatalifecyclev1.Identifier) ([]domain.IdentifierInput, error) {
@@ -1012,6 +1041,23 @@ func temporalInput(value *metadatalifecyclev1.Temporal) (*domain.Temporal, error
 	return &domain.Temporal{Start: start, End: end}, nil
 }
 
+func toGRPCVersioningStatus(status domain.Status) metadatalifecyclev1.VersioningStatus {
+	switch status {
+	case domain.Published:
+		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_PUBLISHED
+	case domain.Draft:
+		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_DRAFT
+	case domain.Archived:
+		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_ARCHIVED
+	case domain.Rejected:
+		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_REJECTED
+	case domain.Submitted:
+		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_SUBMITTED
+	default:
+		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_UNSPECIFIED
+	}
+}
+
 func spatialInput(value *string) (geom.T, error) {
 	if value == nil {
 		return nil, nil
@@ -1028,7 +1074,14 @@ func spatialInput(value *string) (geom.T, error) {
 }
 
 func createResponse(resourceID, versionID uuid.UUID, revision int32, resourceStatus domain.Status) *metadatalifecyclev1.CreateResourceResponse {
-	return &metadatalifecyclev1.CreateResourceResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: resourceID.String(), VersionId: versionID.String(), Revision: revision, Status: string(resourceStatus)}}
+	return &metadatalifecyclev1.CreateResourceResponse{
+		Resource: &metadatalifecyclev1.ResourceRecord{
+			ResourceId: resourceID.String(),
+			VersionId:  versionID.String(),
+			Revision:   revision,
+			Status:     toGRPCVersioningStatus(resourceStatus),
+		},
+	}
 }
 
 func resourceError(err error) error {

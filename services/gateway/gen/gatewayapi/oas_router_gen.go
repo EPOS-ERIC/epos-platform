@@ -2722,7 +2722,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										switch method {
 										case "DELETE":
 											r.name = DiscardResourceDraftVersionOperation
-											r.summary = "Discard resource draft version"
+											r.summary = "Delete resource draft version"
 											r.operationID = "discardResourceDraftVersion"
 											r.operationGroup = ""
 											r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/draft"

@@ -15,6 +15,7 @@ type MetadataLifecycleGRPC struct {
 	organizationGRPC metadatalifecyclev1.OrganizationServiceClient
 	accessGRPC       metadatalifecyclev1.GroupAccessServiceClient
 	resourceGRPC     metadatalifecyclev1.ResourceServiceClient
+	discoveryGRPC    metadatalifecyclev1.DiscoveryServiceClient
 }
 
 func (c *MetadataLifecycleGRPC) CreateResource(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateResourceRequest) (*metadatalifecyclev1.CreateResourceResponse, error) {
@@ -33,6 +34,17 @@ func (c *MetadataLifecycleGRPC) GetResourceVersion(ctx context.Context, actorID 
 	response, err := c.resourceGRPC.GetResourceVersion(ctx, request)
 	if err != nil {
 		return nil, wrapGRPCError("get metadata-lifecycle resource version", err)
+	}
+	return response, nil
+}
+
+func (c *MetadataLifecycleGRPC) SearchResources(ctx context.Context, actorID string, request *metadatalifecyclev1.SearchResourcesRequest) (*metadatalifecyclev1.SearchResourcesResponse, error) {
+	if actorID != "" {
+		ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	}
+	response, err := c.discoveryGRPC.SearchResources(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("search metadata-lifecycle resources", err)
 	}
 	return response, nil
 }

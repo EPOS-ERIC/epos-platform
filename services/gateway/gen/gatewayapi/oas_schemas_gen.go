@@ -1091,6 +1091,176 @@ func (s *CreateSoftwareSourceCodeResourceRequestResourceType) UnmarshalText(data
 	}
 }
 
+// Ref: #/components/schemas/DatasetDiscoveryItem
+type DatasetDiscoveryItem struct {
+	Type          DatasetDiscoveryItemType `json:"type"`
+	ResourceID    uuid.UUID                `json:"resource_id"`
+	VersionID     uuid.UUID                `json:"version_id"`
+	Name          string                   `json:"name"`
+	Status        VersioningStatus         `json:"status"`
+	UpdatedAt     time.Time                `json:"updated_at"`
+	Concept       DiscoveryConcept         `json:"concept"`
+	CreatedBy     OptReference             `json:"created_by"`
+	Group         Reference                `json:"group"`
+	Providers     []Reference              `json:"providers"`
+	Categories    []Reference              `json:"categories"`
+	Distributions []Reference              `json:"distributions"`
+}
+
+// GetType returns the value of Type.
+func (s *DatasetDiscoveryItem) GetType() DatasetDiscoveryItemType {
+	return s.Type
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *DatasetDiscoveryItem) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *DatasetDiscoveryItem) GetVersionID() uuid.UUID {
+	return s.VersionID
+}
+
+// GetName returns the value of Name.
+func (s *DatasetDiscoveryItem) GetName() string {
+	return s.Name
+}
+
+// GetStatus returns the value of Status.
+func (s *DatasetDiscoveryItem) GetStatus() VersioningStatus {
+	return s.Status
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *DatasetDiscoveryItem) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetConcept returns the value of Concept.
+func (s *DatasetDiscoveryItem) GetConcept() DiscoveryConcept {
+	return s.Concept
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *DatasetDiscoveryItem) GetCreatedBy() OptReference {
+	return s.CreatedBy
+}
+
+// GetGroup returns the value of Group.
+func (s *DatasetDiscoveryItem) GetGroup() Reference {
+	return s.Group
+}
+
+// GetProviders returns the value of Providers.
+func (s *DatasetDiscoveryItem) GetProviders() []Reference {
+	return s.Providers
+}
+
+// GetCategories returns the value of Categories.
+func (s *DatasetDiscoveryItem) GetCategories() []Reference {
+	return s.Categories
+}
+
+// GetDistributions returns the value of Distributions.
+func (s *DatasetDiscoveryItem) GetDistributions() []Reference {
+	return s.Distributions
+}
+
+// SetType sets the value of Type.
+func (s *DatasetDiscoveryItem) SetType(val DatasetDiscoveryItemType) {
+	s.Type = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *DatasetDiscoveryItem) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *DatasetDiscoveryItem) SetVersionID(val uuid.UUID) {
+	s.VersionID = val
+}
+
+// SetName sets the value of Name.
+func (s *DatasetDiscoveryItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetStatus sets the value of Status.
+func (s *DatasetDiscoveryItem) SetStatus(val VersioningStatus) {
+	s.Status = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *DatasetDiscoveryItem) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetConcept sets the value of Concept.
+func (s *DatasetDiscoveryItem) SetConcept(val DiscoveryConcept) {
+	s.Concept = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *DatasetDiscoveryItem) SetCreatedBy(val OptReference) {
+	s.CreatedBy = val
+}
+
+// SetGroup sets the value of Group.
+func (s *DatasetDiscoveryItem) SetGroup(val Reference) {
+	s.Group = val
+}
+
+// SetProviders sets the value of Providers.
+func (s *DatasetDiscoveryItem) SetProviders(val []Reference) {
+	s.Providers = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *DatasetDiscoveryItem) SetCategories(val []Reference) {
+	s.Categories = val
+}
+
+// SetDistributions sets the value of Distributions.
+func (s *DatasetDiscoveryItem) SetDistributions(val []Reference) {
+	s.Distributions = val
+}
+
+type DatasetDiscoveryItemType string
+
+const (
+	DatasetDiscoveryItemTypeDataset DatasetDiscoveryItemType = "dataset"
+)
+
+// AllValues returns all DatasetDiscoveryItemType values.
+func (DatasetDiscoveryItemType) AllValues() []DatasetDiscoveryItemType {
+	return []DatasetDiscoveryItemType{
+		DatasetDiscoveryItemTypeDataset,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s DatasetDiscoveryItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case DatasetDiscoveryItemTypeDataset:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
+	switch DatasetDiscoveryItemType(data) {
+	case DatasetDiscoveryItemTypeDataset:
+		*s = DatasetDiscoveryItemTypeDataset
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
 	Title              NonBlankString      `json:"title"`
@@ -1710,6 +1880,9 @@ type DeleteGroupNoContent struct{}
 // DeleteOrganizationNoContent is response for DeleteOrganization operation.
 type DeleteOrganizationNoContent struct{}
 
+// DiscardResourceDraftVersionNoContent is response for DiscardResourceDraftVersion operation.
+type DiscardResourceDraftVersionNoContent struct{}
+
 // Catalogue concept used to classify a resource.
 // Ref: #/components/schemas/DiscoveryConcept
 type DiscoveryConcept string
@@ -1761,260 +1934,101 @@ func (s *DiscoveryConcept) UnmarshalText(data []byte) error {
 }
 
 // Ref: #/components/schemas/DiscoveryItem
+// DiscoveryItem represents sum type.
 type DiscoveryItem struct {
-	Type          DiscoveryResourceType `json:"type"`
-	ResourceID    uuid.UUID             `json:"resource_id"`
-	VersionID     uuid.UUID             `json:"version_id"`
-	Name          string                `json:"name"`
-	Status        DiscoveryItemStatus   `json:"status"`
-	UpdatedAt     time.Time             `json:"updated_at"`
-	Concept       DiscoveryItemConcept  `json:"concept"`
-	CreatedBy     OptReference          `json:"created_by"`
-	Group         Reference             `json:"group"`
-	Providers     []Reference           `json:"providers"`
-	Creators      []Reference           `json:"creators"`
-	Categories    []Reference           `json:"categories"`
-	Distributions []Reference           `json:"distributions"`
+	// Type selects the active sum variant, switch on this field.
+	Type                             DiscoveryItemType
+	DatasetDiscoveryItem             DatasetDiscoveryItem
+	SoftwareApplicationDiscoveryItem SoftwareApplicationDiscoveryItem
+	SoftwareSourceCodeDiscoveryItem  SoftwareSourceCodeDiscoveryItem
 }
 
-// GetType returns the value of Type.
-func (s *DiscoveryItem) GetType() DiscoveryResourceType {
-	return s.Type
-}
+// DiscoveryItemType is oneOf type of DiscoveryItem.
+type DiscoveryItemType string
 
-// GetResourceID returns the value of ResourceID.
-func (s *DiscoveryItem) GetResourceID() uuid.UUID {
-	return s.ResourceID
-}
-
-// GetVersionID returns the value of VersionID.
-func (s *DiscoveryItem) GetVersionID() uuid.UUID {
-	return s.VersionID
-}
-
-// GetName returns the value of Name.
-func (s *DiscoveryItem) GetName() string {
-	return s.Name
-}
-
-// GetStatus returns the value of Status.
-func (s *DiscoveryItem) GetStatus() DiscoveryItemStatus {
-	return s.Status
-}
-
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *DiscoveryItem) GetUpdatedAt() time.Time {
-	return s.UpdatedAt
-}
-
-// GetConcept returns the value of Concept.
-func (s *DiscoveryItem) GetConcept() DiscoveryItemConcept {
-	return s.Concept
-}
-
-// GetCreatedBy returns the value of CreatedBy.
-func (s *DiscoveryItem) GetCreatedBy() OptReference {
-	return s.CreatedBy
-}
-
-// GetGroup returns the value of Group.
-func (s *DiscoveryItem) GetGroup() Reference {
-	return s.Group
-}
-
-// GetProviders returns the value of Providers.
-func (s *DiscoveryItem) GetProviders() []Reference {
-	return s.Providers
-}
-
-// GetCreators returns the value of Creators.
-func (s *DiscoveryItem) GetCreators() []Reference {
-	return s.Creators
-}
-
-// GetCategories returns the value of Categories.
-func (s *DiscoveryItem) GetCategories() []Reference {
-	return s.Categories
-}
-
-// GetDistributions returns the value of Distributions.
-func (s *DiscoveryItem) GetDistributions() []Reference {
-	return s.Distributions
-}
-
-// SetType sets the value of Type.
-func (s *DiscoveryItem) SetType(val DiscoveryResourceType) {
-	s.Type = val
-}
-
-// SetResourceID sets the value of ResourceID.
-func (s *DiscoveryItem) SetResourceID(val uuid.UUID) {
-	s.ResourceID = val
-}
-
-// SetVersionID sets the value of VersionID.
-func (s *DiscoveryItem) SetVersionID(val uuid.UUID) {
-	s.VersionID = val
-}
-
-// SetName sets the value of Name.
-func (s *DiscoveryItem) SetName(val string) {
-	s.Name = val
-}
-
-// SetStatus sets the value of Status.
-func (s *DiscoveryItem) SetStatus(val DiscoveryItemStatus) {
-	s.Status = val
-}
-
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *DiscoveryItem) SetUpdatedAt(val time.Time) {
-	s.UpdatedAt = val
-}
-
-// SetConcept sets the value of Concept.
-func (s *DiscoveryItem) SetConcept(val DiscoveryItemConcept) {
-	s.Concept = val
-}
-
-// SetCreatedBy sets the value of CreatedBy.
-func (s *DiscoveryItem) SetCreatedBy(val OptReference) {
-	s.CreatedBy = val
-}
-
-// SetGroup sets the value of Group.
-func (s *DiscoveryItem) SetGroup(val Reference) {
-	s.Group = val
-}
-
-// SetProviders sets the value of Providers.
-func (s *DiscoveryItem) SetProviders(val []Reference) {
-	s.Providers = val
-}
-
-// SetCreators sets the value of Creators.
-func (s *DiscoveryItem) SetCreators(val []Reference) {
-	s.Creators = val
-}
-
-// SetCategories sets the value of Categories.
-func (s *DiscoveryItem) SetCategories(val []Reference) {
-	s.Categories = val
-}
-
-// SetDistributions sets the value of Distributions.
-func (s *DiscoveryItem) SetDistributions(val []Reference) {
-	s.Distributions = val
-}
-
-type DiscoveryItemConcept string
-
+// Possible values for DiscoveryItemType.
 const (
-	DiscoveryItemConceptDATA       DiscoveryItemConcept = "DATA"
-	DiscoveryItemConceptFACILITIES DiscoveryItemConcept = "FACILITIES"
-	DiscoveryItemConceptSOFTWARE   DiscoveryItemConcept = "SOFTWARE"
+	DatasetDiscoveryItemDiscoveryItem             DiscoveryItemType = "dataset"
+	SoftwareApplicationDiscoveryItemDiscoveryItem DiscoveryItemType = "software-application"
+	SoftwareSourceCodeDiscoveryItemDiscoveryItem  DiscoveryItemType = "software-source-code"
 )
 
-// AllValues returns all DiscoveryItemConcept values.
-func (DiscoveryItemConcept) AllValues() []DiscoveryItemConcept {
-	return []DiscoveryItemConcept{
-		DiscoveryItemConceptDATA,
-		DiscoveryItemConceptFACILITIES,
-		DiscoveryItemConceptSOFTWARE,
-	}
+// IsDatasetDiscoveryItem reports whether DiscoveryItem is DatasetDiscoveryItem.
+func (s DiscoveryItem) IsDatasetDiscoveryItem() bool {
+	return s.Type == DatasetDiscoveryItemDiscoveryItem
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s DiscoveryItemConcept) MarshalText() ([]byte, error) {
-	switch s {
-	case DiscoveryItemConceptDATA:
-		return []byte(s), nil
-	case DiscoveryItemConceptFACILITIES:
-		return []byte(s), nil
-	case DiscoveryItemConceptSOFTWARE:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
+// IsSoftwareApplicationDiscoveryItem reports whether DiscoveryItem is SoftwareApplicationDiscoveryItem.
+func (s DiscoveryItem) IsSoftwareApplicationDiscoveryItem() bool {
+	return s.Type == SoftwareApplicationDiscoveryItemDiscoveryItem
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DiscoveryItemConcept) UnmarshalText(data []byte) error {
-	switch DiscoveryItemConcept(data) {
-	case DiscoveryItemConceptDATA:
-		*s = DiscoveryItemConceptDATA
-		return nil
-	case DiscoveryItemConceptFACILITIES:
-		*s = DiscoveryItemConceptFACILITIES
-		return nil
-	case DiscoveryItemConceptSOFTWARE:
-		*s = DiscoveryItemConceptSOFTWARE
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
+// IsSoftwareSourceCodeDiscoveryItem reports whether DiscoveryItem is SoftwareSourceCodeDiscoveryItem.
+func (s DiscoveryItem) IsSoftwareSourceCodeDiscoveryItem() bool {
+	return s.Type == SoftwareSourceCodeDiscoveryItemDiscoveryItem
 }
 
-type DiscoveryItemStatus string
-
-const (
-	DiscoveryItemStatusPUBLISHED DiscoveryItemStatus = "PUBLISHED"
-	DiscoveryItemStatusDRAFT     DiscoveryItemStatus = "DRAFT"
-	DiscoveryItemStatusSUBMITTED DiscoveryItemStatus = "SUBMITTED"
-	DiscoveryItemStatusARCHIVED  DiscoveryItemStatus = "ARCHIVED"
-	DiscoveryItemStatusREJECTED  DiscoveryItemStatus = "REJECTED"
-)
-
-// AllValues returns all DiscoveryItemStatus values.
-func (DiscoveryItemStatus) AllValues() []DiscoveryItemStatus {
-	return []DiscoveryItemStatus{
-		DiscoveryItemStatusPUBLISHED,
-		DiscoveryItemStatusDRAFT,
-		DiscoveryItemStatusSUBMITTED,
-		DiscoveryItemStatusARCHIVED,
-		DiscoveryItemStatusREJECTED,
-	}
+// SetDatasetDiscoveryItem sets DiscoveryItem to DatasetDiscoveryItem.
+func (s *DiscoveryItem) SetDatasetDiscoveryItem(v DatasetDiscoveryItem) {
+	s.Type = DatasetDiscoveryItemDiscoveryItem
+	s.DatasetDiscoveryItem = v
 }
 
-// MarshalText implements encoding.TextMarshaler.
-func (s DiscoveryItemStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case DiscoveryItemStatusPUBLISHED:
-		return []byte(s), nil
-	case DiscoveryItemStatusDRAFT:
-		return []byte(s), nil
-	case DiscoveryItemStatusSUBMITTED:
-		return []byte(s), nil
-	case DiscoveryItemStatusARCHIVED:
-		return []byte(s), nil
-	case DiscoveryItemStatusREJECTED:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
+// GetDatasetDiscoveryItem returns DatasetDiscoveryItem and true boolean if DiscoveryItem is DatasetDiscoveryItem.
+func (s DiscoveryItem) GetDatasetDiscoveryItem() (v DatasetDiscoveryItem, ok bool) {
+	if !s.IsDatasetDiscoveryItem() {
+		return v, false
 	}
+	return s.DatasetDiscoveryItem, true
 }
 
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DiscoveryItemStatus) UnmarshalText(data []byte) error {
-	switch DiscoveryItemStatus(data) {
-	case DiscoveryItemStatusPUBLISHED:
-		*s = DiscoveryItemStatusPUBLISHED
-		return nil
-	case DiscoveryItemStatusDRAFT:
-		*s = DiscoveryItemStatusDRAFT
-		return nil
-	case DiscoveryItemStatusSUBMITTED:
-		*s = DiscoveryItemStatusSUBMITTED
-		return nil
-	case DiscoveryItemStatusARCHIVED:
-		*s = DiscoveryItemStatusARCHIVED
-		return nil
-	case DiscoveryItemStatusREJECTED:
-		*s = DiscoveryItemStatusREJECTED
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
+// NewDatasetDiscoveryItemDiscoveryItem returns new DiscoveryItem from DatasetDiscoveryItem.
+func NewDatasetDiscoveryItemDiscoveryItem(v DatasetDiscoveryItem) DiscoveryItem {
+	var s DiscoveryItem
+	s.SetDatasetDiscoveryItem(v)
+	return s
+}
+
+// SetSoftwareApplicationDiscoveryItem sets DiscoveryItem to SoftwareApplicationDiscoveryItem.
+func (s *DiscoveryItem) SetSoftwareApplicationDiscoveryItem(v SoftwareApplicationDiscoveryItem) {
+	s.Type = SoftwareApplicationDiscoveryItemDiscoveryItem
+	s.SoftwareApplicationDiscoveryItem = v
+}
+
+// GetSoftwareApplicationDiscoveryItem returns SoftwareApplicationDiscoveryItem and true boolean if DiscoveryItem is SoftwareApplicationDiscoveryItem.
+func (s DiscoveryItem) GetSoftwareApplicationDiscoveryItem() (v SoftwareApplicationDiscoveryItem, ok bool) {
+	if !s.IsSoftwareApplicationDiscoveryItem() {
+		return v, false
 	}
+	return s.SoftwareApplicationDiscoveryItem, true
+}
+
+// NewSoftwareApplicationDiscoveryItemDiscoveryItem returns new DiscoveryItem from SoftwareApplicationDiscoveryItem.
+func NewSoftwareApplicationDiscoveryItemDiscoveryItem(v SoftwareApplicationDiscoveryItem) DiscoveryItem {
+	var s DiscoveryItem
+	s.SetSoftwareApplicationDiscoveryItem(v)
+	return s
+}
+
+// SetSoftwareSourceCodeDiscoveryItem sets DiscoveryItem to SoftwareSourceCodeDiscoveryItem.
+func (s *DiscoveryItem) SetSoftwareSourceCodeDiscoveryItem(v SoftwareSourceCodeDiscoveryItem) {
+	s.Type = SoftwareSourceCodeDiscoveryItemDiscoveryItem
+	s.SoftwareSourceCodeDiscoveryItem = v
+}
+
+// GetSoftwareSourceCodeDiscoveryItem returns SoftwareSourceCodeDiscoveryItem and true boolean if DiscoveryItem is SoftwareSourceCodeDiscoveryItem.
+func (s DiscoveryItem) GetSoftwareSourceCodeDiscoveryItem() (v SoftwareSourceCodeDiscoveryItem, ok bool) {
+	if !s.IsSoftwareSourceCodeDiscoveryItem() {
+		return v, false
+	}
+	return s.SoftwareSourceCodeDiscoveryItem, true
+}
+
+// NewSoftwareSourceCodeDiscoveryItemDiscoveryItem returns new DiscoveryItem from SoftwareSourceCodeDiscoveryItem.
+func NewSoftwareSourceCodeDiscoveryItemDiscoveryItem(v SoftwareSourceCodeDiscoveryItem) DiscoveryItem {
+	var s DiscoveryItem
+	s.SetSoftwareSourceCodeDiscoveryItem(v)
+	return s
 }
 
 // Resource type identifier used in discovery results.
@@ -2061,70 +2075,6 @@ func (s *DiscoveryResourceType) UnmarshalText(data []byte) error {
 		return nil
 	case DiscoveryResourceTypeSoftwareSourceCode:
 		*s = DiscoveryResourceTypeSoftwareSourceCode
-		return nil
-	default:
-		return errors.Errorf("invalid value: %q", data)
-	}
-}
-
-// Uppercase versioning state accepted by the discovery filter.
-// Ref: #/components/schemas/DiscoveryVersioningStatus
-type DiscoveryVersioningStatus string
-
-const (
-	DiscoveryVersioningStatusPUBLISHED DiscoveryVersioningStatus = "PUBLISHED"
-	DiscoveryVersioningStatusDRAFT     DiscoveryVersioningStatus = "DRAFT"
-	DiscoveryVersioningStatusSUBMITTED DiscoveryVersioningStatus = "SUBMITTED"
-	DiscoveryVersioningStatusARCHIVED  DiscoveryVersioningStatus = "ARCHIVED"
-	DiscoveryVersioningStatusREJECTED  DiscoveryVersioningStatus = "REJECTED"
-)
-
-// AllValues returns all DiscoveryVersioningStatus values.
-func (DiscoveryVersioningStatus) AllValues() []DiscoveryVersioningStatus {
-	return []DiscoveryVersioningStatus{
-		DiscoveryVersioningStatusPUBLISHED,
-		DiscoveryVersioningStatusDRAFT,
-		DiscoveryVersioningStatusSUBMITTED,
-		DiscoveryVersioningStatusARCHIVED,
-		DiscoveryVersioningStatusREJECTED,
-	}
-}
-
-// MarshalText implements encoding.TextMarshaler.
-func (s DiscoveryVersioningStatus) MarshalText() ([]byte, error) {
-	switch s {
-	case DiscoveryVersioningStatusPUBLISHED:
-		return []byte(s), nil
-	case DiscoveryVersioningStatusDRAFT:
-		return []byte(s), nil
-	case DiscoveryVersioningStatusSUBMITTED:
-		return []byte(s), nil
-	case DiscoveryVersioningStatusARCHIVED:
-		return []byte(s), nil
-	case DiscoveryVersioningStatusREJECTED:
-		return []byte(s), nil
-	default:
-		return nil, errors.Errorf("invalid value: %q", s)
-	}
-}
-
-// UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DiscoveryVersioningStatus) UnmarshalText(data []byte) error {
-	switch DiscoveryVersioningStatus(data) {
-	case DiscoveryVersioningStatusPUBLISHED:
-		*s = DiscoveryVersioningStatusPUBLISHED
-		return nil
-	case DiscoveryVersioningStatusDRAFT:
-		*s = DiscoveryVersioningStatusDRAFT
-		return nil
-	case DiscoveryVersioningStatusSUBMITTED:
-		*s = DiscoveryVersioningStatusSUBMITTED
-		return nil
-	case DiscoveryVersioningStatusARCHIVED:
-		*s = DiscoveryVersioningStatusARCHIVED
-		return nil
-	case DiscoveryVersioningStatusREJECTED:
-		*s = DiscoveryVersioningStatusREJECTED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -6367,7 +6317,7 @@ type ResourceVersion struct {
 	ResourceID uuid.UUID               `json:"resource_id"`
 	VersionID  uuid.UUID               `json:"version_id"`
 	Revision   int32                   `json:"revision"`
-	Status     string                  `json:"status"`
+	Status     VersioningStatus        `json:"status"`
 	CreatedBy  string                  `json:"created_by"`
 	GroupID    uuid.UUID               `json:"group_id"`
 	GroupName  string                  `json:"group_name"`
@@ -6392,7 +6342,7 @@ func (s *ResourceVersion) GetRevision() int32 {
 }
 
 // GetStatus returns the value of Status.
-func (s *ResourceVersion) GetStatus() string {
+func (s *ResourceVersion) GetStatus() VersioningStatus {
 	return s.Status
 }
 
@@ -6442,7 +6392,7 @@ func (s *ResourceVersion) SetRevision(val int32) {
 }
 
 // SetStatus sets the value of Status.
-func (s *ResourceVersion) SetStatus(val string) {
+func (s *ResourceVersion) SetStatus(val VersioningStatus) {
 	s.Status = val
 }
 
@@ -6792,6 +6742,165 @@ func (s *RoleRequestStatus) UnmarshalText(data []byte) error {
 		return nil
 	case RoleRequestStatusREJECTED:
 		*s = RoleRequestStatusREJECTED
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/SoftwareApplicationDiscoveryItem
+type SoftwareApplicationDiscoveryItem struct {
+	Type       SoftwareApplicationDiscoveryItemType `json:"type"`
+	ResourceID uuid.UUID                            `json:"resource_id"`
+	VersionID  uuid.UUID                            `json:"version_id"`
+	Name       string                               `json:"name"`
+	Status     VersioningStatus                     `json:"status"`
+	UpdatedAt  time.Time                            `json:"updated_at"`
+	Concept    DiscoveryConcept                     `json:"concept"`
+	CreatedBy  OptReference                         `json:"created_by"`
+	Group      Reference                            `json:"group"`
+	Creators   []Reference                          `json:"creators"`
+	Categories []Reference                          `json:"categories"`
+}
+
+// GetType returns the value of Type.
+func (s *SoftwareApplicationDiscoveryItem) GetType() SoftwareApplicationDiscoveryItemType {
+	return s.Type
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *SoftwareApplicationDiscoveryItem) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *SoftwareApplicationDiscoveryItem) GetVersionID() uuid.UUID {
+	return s.VersionID
+}
+
+// GetName returns the value of Name.
+func (s *SoftwareApplicationDiscoveryItem) GetName() string {
+	return s.Name
+}
+
+// GetStatus returns the value of Status.
+func (s *SoftwareApplicationDiscoveryItem) GetStatus() VersioningStatus {
+	return s.Status
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SoftwareApplicationDiscoveryItem) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetConcept returns the value of Concept.
+func (s *SoftwareApplicationDiscoveryItem) GetConcept() DiscoveryConcept {
+	return s.Concept
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *SoftwareApplicationDiscoveryItem) GetCreatedBy() OptReference {
+	return s.CreatedBy
+}
+
+// GetGroup returns the value of Group.
+func (s *SoftwareApplicationDiscoveryItem) GetGroup() Reference {
+	return s.Group
+}
+
+// GetCreators returns the value of Creators.
+func (s *SoftwareApplicationDiscoveryItem) GetCreators() []Reference {
+	return s.Creators
+}
+
+// GetCategories returns the value of Categories.
+func (s *SoftwareApplicationDiscoveryItem) GetCategories() []Reference {
+	return s.Categories
+}
+
+// SetType sets the value of Type.
+func (s *SoftwareApplicationDiscoveryItem) SetType(val SoftwareApplicationDiscoveryItemType) {
+	s.Type = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *SoftwareApplicationDiscoveryItem) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *SoftwareApplicationDiscoveryItem) SetVersionID(val uuid.UUID) {
+	s.VersionID = val
+}
+
+// SetName sets the value of Name.
+func (s *SoftwareApplicationDiscoveryItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SoftwareApplicationDiscoveryItem) SetStatus(val VersioningStatus) {
+	s.Status = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SoftwareApplicationDiscoveryItem) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetConcept sets the value of Concept.
+func (s *SoftwareApplicationDiscoveryItem) SetConcept(val DiscoveryConcept) {
+	s.Concept = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *SoftwareApplicationDiscoveryItem) SetCreatedBy(val OptReference) {
+	s.CreatedBy = val
+}
+
+// SetGroup sets the value of Group.
+func (s *SoftwareApplicationDiscoveryItem) SetGroup(val Reference) {
+	s.Group = val
+}
+
+// SetCreators sets the value of Creators.
+func (s *SoftwareApplicationDiscoveryItem) SetCreators(val []Reference) {
+	s.Creators = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *SoftwareApplicationDiscoveryItem) SetCategories(val []Reference) {
+	s.Categories = val
+}
+
+type SoftwareApplicationDiscoveryItemType string
+
+const (
+	SoftwareApplicationDiscoveryItemTypeSoftwareApplication SoftwareApplicationDiscoveryItemType = "software-application"
+)
+
+// AllValues returns all SoftwareApplicationDiscoveryItemType values.
+func (SoftwareApplicationDiscoveryItemType) AllValues() []SoftwareApplicationDiscoveryItemType {
+	return []SoftwareApplicationDiscoveryItemType{
+		SoftwareApplicationDiscoveryItemTypeSoftwareApplication,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SoftwareApplicationDiscoveryItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case SoftwareApplicationDiscoveryItemTypeSoftwareApplication:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SoftwareApplicationDiscoveryItemType) UnmarshalText(data []byte) error {
+	switch SoftwareApplicationDiscoveryItemType(data) {
+	case SoftwareApplicationDiscoveryItemTypeSoftwareApplication:
+		*s = SoftwareApplicationDiscoveryItemTypeSoftwareApplication
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -7172,6 +7281,165 @@ func (s *SoftwareIdentifier) SetType(val NonBlankString) {
 // SetValue sets the value of Value.
 func (s *SoftwareIdentifier) SetValue(val NonBlankString) {
 	s.Value = val
+}
+
+// Ref: #/components/schemas/SoftwareSourceCodeDiscoveryItem
+type SoftwareSourceCodeDiscoveryItem struct {
+	Type       SoftwareSourceCodeDiscoveryItemType `json:"type"`
+	ResourceID uuid.UUID                           `json:"resource_id"`
+	VersionID  uuid.UUID                           `json:"version_id"`
+	Name       string                              `json:"name"`
+	Status     VersioningStatus                    `json:"status"`
+	UpdatedAt  time.Time                           `json:"updated_at"`
+	Concept    DiscoveryConcept                    `json:"concept"`
+	CreatedBy  OptReference                        `json:"created_by"`
+	Group      Reference                           `json:"group"`
+	Creators   []Reference                         `json:"creators"`
+	Categories []Reference                         `json:"categories"`
+}
+
+// GetType returns the value of Type.
+func (s *SoftwareSourceCodeDiscoveryItem) GetType() SoftwareSourceCodeDiscoveryItemType {
+	return s.Type
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *SoftwareSourceCodeDiscoveryItem) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *SoftwareSourceCodeDiscoveryItem) GetVersionID() uuid.UUID {
+	return s.VersionID
+}
+
+// GetName returns the value of Name.
+func (s *SoftwareSourceCodeDiscoveryItem) GetName() string {
+	return s.Name
+}
+
+// GetStatus returns the value of Status.
+func (s *SoftwareSourceCodeDiscoveryItem) GetStatus() VersioningStatus {
+	return s.Status
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *SoftwareSourceCodeDiscoveryItem) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetConcept returns the value of Concept.
+func (s *SoftwareSourceCodeDiscoveryItem) GetConcept() DiscoveryConcept {
+	return s.Concept
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *SoftwareSourceCodeDiscoveryItem) GetCreatedBy() OptReference {
+	return s.CreatedBy
+}
+
+// GetGroup returns the value of Group.
+func (s *SoftwareSourceCodeDiscoveryItem) GetGroup() Reference {
+	return s.Group
+}
+
+// GetCreators returns the value of Creators.
+func (s *SoftwareSourceCodeDiscoveryItem) GetCreators() []Reference {
+	return s.Creators
+}
+
+// GetCategories returns the value of Categories.
+func (s *SoftwareSourceCodeDiscoveryItem) GetCategories() []Reference {
+	return s.Categories
+}
+
+// SetType sets the value of Type.
+func (s *SoftwareSourceCodeDiscoveryItem) SetType(val SoftwareSourceCodeDiscoveryItemType) {
+	s.Type = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *SoftwareSourceCodeDiscoveryItem) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *SoftwareSourceCodeDiscoveryItem) SetVersionID(val uuid.UUID) {
+	s.VersionID = val
+}
+
+// SetName sets the value of Name.
+func (s *SoftwareSourceCodeDiscoveryItem) SetName(val string) {
+	s.Name = val
+}
+
+// SetStatus sets the value of Status.
+func (s *SoftwareSourceCodeDiscoveryItem) SetStatus(val VersioningStatus) {
+	s.Status = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *SoftwareSourceCodeDiscoveryItem) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetConcept sets the value of Concept.
+func (s *SoftwareSourceCodeDiscoveryItem) SetConcept(val DiscoveryConcept) {
+	s.Concept = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *SoftwareSourceCodeDiscoveryItem) SetCreatedBy(val OptReference) {
+	s.CreatedBy = val
+}
+
+// SetGroup sets the value of Group.
+func (s *SoftwareSourceCodeDiscoveryItem) SetGroup(val Reference) {
+	s.Group = val
+}
+
+// SetCreators sets the value of Creators.
+func (s *SoftwareSourceCodeDiscoveryItem) SetCreators(val []Reference) {
+	s.Creators = val
+}
+
+// SetCategories sets the value of Categories.
+func (s *SoftwareSourceCodeDiscoveryItem) SetCategories(val []Reference) {
+	s.Categories = val
+}
+
+type SoftwareSourceCodeDiscoveryItemType string
+
+const (
+	SoftwareSourceCodeDiscoveryItemTypeSoftwareSourceCode SoftwareSourceCodeDiscoveryItemType = "software-source-code"
+)
+
+// AllValues returns all SoftwareSourceCodeDiscoveryItemType values.
+func (SoftwareSourceCodeDiscoveryItemType) AllValues() []SoftwareSourceCodeDiscoveryItemType {
+	return []SoftwareSourceCodeDiscoveryItemType{
+		SoftwareSourceCodeDiscoveryItemTypeSoftwareSourceCode,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s SoftwareSourceCodeDiscoveryItemType) MarshalText() ([]byte, error) {
+	switch s {
+	case SoftwareSourceCodeDiscoveryItemTypeSoftwareSourceCode:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *SoftwareSourceCodeDiscoveryItemType) UnmarshalText(data []byte) error {
+	switch SoftwareSourceCodeDiscoveryItemType(data) {
+	case SoftwareSourceCodeDiscoveryItemTypeSoftwareSourceCode:
+		*s = SoftwareSourceCodeDiscoveryItemTypeSoftwareSourceCode
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
 }
 
 // Ref: #/components/schemas/SoftwareSourceCodeDraftMetadata
@@ -8106,45 +8374,41 @@ func (s *UserStatus) UnmarshalText(data []byte) error {
 	}
 }
 
-// Lowercase lifecycle state returned by write operations.
+// Lifecycle state used by resource and discovery operations.
 // Ref: #/components/schemas/VersioningStatus
 type VersioningStatus string
 
 const (
-	VersioningStatusPublished VersioningStatus = "published"
-	VersioningStatusDraft     VersioningStatus = "draft"
-	VersioningStatusSubmitted VersioningStatus = "submitted"
-	VersioningStatusArchived  VersioningStatus = "archived"
-	VersioningStatusDiscarded VersioningStatus = "discarded"
-	VersioningStatusRejected  VersioningStatus = "rejected"
+	VersioningStatusPUBLISHED VersioningStatus = "PUBLISHED"
+	VersioningStatusDRAFT     VersioningStatus = "DRAFT"
+	VersioningStatusSUBMITTED VersioningStatus = "SUBMITTED"
+	VersioningStatusARCHIVED  VersioningStatus = "ARCHIVED"
+	VersioningStatusREJECTED  VersioningStatus = "REJECTED"
 )
 
 // AllValues returns all VersioningStatus values.
 func (VersioningStatus) AllValues() []VersioningStatus {
 	return []VersioningStatus{
-		VersioningStatusPublished,
-		VersioningStatusDraft,
-		VersioningStatusSubmitted,
-		VersioningStatusArchived,
-		VersioningStatusDiscarded,
-		VersioningStatusRejected,
+		VersioningStatusPUBLISHED,
+		VersioningStatusDRAFT,
+		VersioningStatusSUBMITTED,
+		VersioningStatusARCHIVED,
+		VersioningStatusREJECTED,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s VersioningStatus) MarshalText() ([]byte, error) {
 	switch s {
-	case VersioningStatusPublished:
+	case VersioningStatusPUBLISHED:
 		return []byte(s), nil
-	case VersioningStatusDraft:
+	case VersioningStatusDRAFT:
 		return []byte(s), nil
-	case VersioningStatusSubmitted:
+	case VersioningStatusSUBMITTED:
 		return []byte(s), nil
-	case VersioningStatusArchived:
+	case VersioningStatusARCHIVED:
 		return []byte(s), nil
-	case VersioningStatusDiscarded:
-		return []byte(s), nil
-	case VersioningStatusRejected:
+	case VersioningStatusREJECTED:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -8154,23 +8418,20 @@ func (s VersioningStatus) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *VersioningStatus) UnmarshalText(data []byte) error {
 	switch VersioningStatus(data) {
-	case VersioningStatusPublished:
-		*s = VersioningStatusPublished
+	case VersioningStatusPUBLISHED:
+		*s = VersioningStatusPUBLISHED
 		return nil
-	case VersioningStatusDraft:
-		*s = VersioningStatusDraft
+	case VersioningStatusDRAFT:
+		*s = VersioningStatusDRAFT
 		return nil
-	case VersioningStatusSubmitted:
-		*s = VersioningStatusSubmitted
+	case VersioningStatusSUBMITTED:
+		*s = VersioningStatusSUBMITTED
 		return nil
-	case VersioningStatusArchived:
-		*s = VersioningStatusArchived
+	case VersioningStatusARCHIVED:
+		*s = VersioningStatusARCHIVED
 		return nil
-	case VersioningStatusDiscarded:
-		*s = VersioningStatusDiscarded
-		return nil
-	case VersioningStatusRejected:
-		*s = VersioningStatusRejected
+	case VersioningStatusREJECTED:
+		*s = VersioningStatusREJECTED
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)

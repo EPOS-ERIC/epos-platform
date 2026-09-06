@@ -10,7 +10,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/docs"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
 	imports "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
@@ -26,7 +25,6 @@ type Router struct {
 	ContactPoints *contactpoints.Handler
 	Organizations *organizations.Handler
 	Resources     *resource.Handler
-	Discovery     *discovery.Handler
 	Health        *health.Handler
 
 	Log *slog.Logger
@@ -68,8 +66,6 @@ func NewRouter(router Router) http.Handler {
 		r.Post("/groups/{group_id}/categories", router.Categories.Create)
 		r.Put("/groups/{group_id}/categories/{category_id}", router.Categories.Replace)
 		r.Delete("/groups/{group_id}/categories/{category_id}", router.Categories.Delete)
-
-		r.Get("/resources", router.Discovery.Search)
 	})
 
 	return observability.NewHTTPHandler(r, "/")

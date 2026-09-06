@@ -1595,7 +1595,7 @@ type DiscoverResourcesParams struct {
 	Provider []uuid.UUID `json:",omitempty"`
 	// Filter by one or more versioning states. When omitted, defaults to `PUBLISHED`. Pass comma-separated
 	// values in a single parameter: `?versioningStatus=PUBLISHED,DRAFT`.
-	VersioningStatus []DiscoveryVersioningStatus `json:",omitempty"`
+	VersioningStatus []VersioningStatus `json:",omitempty"`
 	// Filter resources that carry all supplied keyword values. Pass comma-separated values in a single
 	// parameter: `?keywords=seismology,stations`.
 	Keywords []string `json:",omitempty"`
@@ -1689,7 +1689,7 @@ func unpackDiscoverResourcesParams(packed middleware.Parameters) (params Discove
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.VersioningStatus = v.([]DiscoveryVersioningStatus)
+			params.VersioningStatus = v.([]VersioningStatus)
 		}
 	}
 	{
@@ -2130,11 +2130,11 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 	}
 	// Set default value for query: versioningStatus.
 	{
-		var defaultVal0 []DiscoveryVersioningStatus
+		var defaultVal0 []VersioningStatus
 		{
-			var defaultVal0Elem DiscoveryVersioningStatus
+			var defaultVal0Elem VersioningStatus
 
-			val := DiscoveryVersioningStatus("PUBLISHED")
+			val := VersioningStatus("PUBLISHED")
 			defaultVal0Elem = val
 			defaultVal0 = append(defaultVal0, defaultVal0Elem)
 		}
@@ -2152,7 +2152,7 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
 				params.VersioningStatus = nil
 				return d.DecodeArray(func(d uri.Decoder) error {
-					var paramsDotVersioningStatusVal DiscoveryVersioningStatus
+					var paramsDotVersioningStatusVal VersioningStatus
 					if err := func() error {
 						val, err := d.DecodeValue()
 						if err != nil {
@@ -2164,7 +2164,7 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 							return err
 						}
 
-						paramsDotVersioningStatusVal = DiscoveryVersioningStatus(c)
+						paramsDotVersioningStatusVal = VersioningStatus(c)
 						return nil
 					}(); err != nil {
 						return err
