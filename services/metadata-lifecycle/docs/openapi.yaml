@@ -14,8 +14,6 @@ tags:
     description: User directory, profiles, and global permissions.
   - name: Resources
     description: Shared dataset and software resource lifecycle.
-  - name: Imports
-    description: Global administrator metadata import.
   - name: Contact Points
     description: Protected canonical contact-point reads.
   - name: Organizations
@@ -73,30 +71,6 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
-        "500": { $ref: "#/components/responses/InternalServerError" }
-  /api/v1/imports/turtle:
-    post:
-      tags: [Imports]
-      operationId: importTurtleMetadata
-      summary: Import Turtle metadata
-      description: Atomically creates or updates groups, categories, organizations, contact points, and dataset or software DRAFT content. Category schemes become groups. Every resource must reference categories from exactly one scheme. Global ADMIN only.
-      parameters: [{ $ref: "#/components/parameters/Actor" }]
-      requestBody:
-        required: true
-        content:
-          text/turtle:
-            schema: { type: string }
-      responses:
-        "200":
-          description: Import completed
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/ImportResult" }
-        "400": { $ref: "#/components/responses/Invalid" }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "409": { $ref: "#/components/responses/Conflict" }
-        "415": { description: Content-Type must be text/turtle }
         "500": { $ref: "#/components/responses/InternalServerError" }
   /api/v1/groups/{group_id}/resources:
     parameters: [{ $ref: "#/components/parameters/GroupID" }]
@@ -915,38 +889,6 @@ components:
             type: array,
             items: { $ref: "#/components/schemas/SoftwareCategory" },
           }
-    ImportResult:
-      type: object
-      required:
-        [
-          groups,
-          categories,
-          organizations,
-          contact_points,
-          datasets,
-          software_applications,
-          software_source_codes,
-          warnings,
-        ]
-      properties:
-        groups: { type: integer }
-        categories: { type: integer }
-        organizations: { type: integer }
-        contact_points: { type: integer }
-        datasets: { type: integer }
-        software_applications: { type: integer }
-        software_source_codes: { type: integer }
-        warnings:
-          type: array
-          items: { $ref: "#/components/schemas/ImportDiagnostic" }
-    ImportDiagnostic:
-      type: object
-      required: [severity, subject, predicate, message]
-      properties:
-        severity: { type: string, enum: [warning, error] }
-        subject: { type: string }
-        predicate: { type: string }
-        message: { type: string }
     ReplaceDraftRequest:
       type: object
       required: [resource_type, revision, metadata]

@@ -16,6 +16,16 @@ type MetadataLifecycleGRPC struct {
 	accessGRPC       metadatalifecyclev1.GroupAccessServiceClient
 	resourceGRPC     metadatalifecyclev1.ResourceServiceClient
 	discoveryGRPC    metadatalifecyclev1.DiscoveryServiceClient
+	importGRPC       metadatalifecyclev1.ImportServiceClient
+}
+
+func (c *MetadataLifecycleGRPC) ImportTurtle(ctx context.Context, actorID string, request *metadatalifecyclev1.ImportTurtleRequest) (*metadatalifecyclev1.ImportTurtleResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.importGRPC.ImportTurtle(ctx, request)
+	if err != nil {
+		return nil, wrapGRPCError("import metadata-lifecycle Turtle", err)
+	}
+	return response, nil
 }
 
 func (c *MetadataLifecycleGRPC) CreateResource(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateResourceRequest) (*metadatalifecyclev1.CreateResourceResponse, error) {

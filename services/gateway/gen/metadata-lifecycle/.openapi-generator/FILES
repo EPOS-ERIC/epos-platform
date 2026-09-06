@@ -3,7 +3,6 @@
 README.md
 api/openapi.yaml
 api_health.go
-api_imports.go
 api_internal_identity.go
 api_resources.go
 api_users.go
@@ -50,8 +49,6 @@ model_group.go
 model_group_reference.go
 model_identifier.go
 model_identifier_draft.go
-model_import_diagnostic.go
-model_import_result.go
 model_integer_parameter.go
 model_integer_parameter_draft.go
 model_integer_parameter_metadata.go

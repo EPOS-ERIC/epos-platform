@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
@@ -17,26 +18,13 @@ func (h *ogenHandler) ImportTurtleMetadata(ctx context.Context, body gatewayapi.
 	if err != nil {
 		return nil, fmt.Errorf("read import body: %w", err)
 	}
-	v, err := h.metadataLifecycle.ImportTurtle(ctx, actor, data)
+	v, err := h.metadataLifecycle.ImportTurtle(ctx, actor, importTurtleRequest(data))
 	if err != nil {
 		return nil, fmt.Errorf("import turtle metadata: %w", err)
 	}
-	result := &gatewayapi.ImportResult{
-		Groups:               int(v.Groups),
-		Categories:           int(v.Categories),
-		Organizations:        int(v.Organizations),
-		ContactPoints:        int(v.ContactPoints),
-		Datasets:             int(v.Datasets),
-		SoftwareApplications: int(v.SoftwareApplications),
-		SoftwareSourceCodes:  int(v.SoftwareSourceCodes),
-	}
-	for _, warning := range v.Warnings {
-		result.Warnings = append(result.Warnings, gatewayapi.ImportDiagnostic{
-			Severity:  warning.Severity,
-			Subject:   warning.Subject,
-			Predicate: warning.Predicate,
-			Message:   warning.Message,
-		})
-	}
-	return result, nil
+	return toGatewayImportResult(v)
+}
+
+func importTurtleRequest(data []byte) *metadatalifecyclev1.ImportTurtleRequest {
+	return &metadatalifecyclev1.ImportTurtleRequest{Turtle: data}
 }

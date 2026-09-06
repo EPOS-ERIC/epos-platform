@@ -18,9 +18,11 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/grpcapi"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwareapplications"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/softwaresourcecodes"
+	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
@@ -28,6 +30,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
+
+const maxImportTurtleMessageSize = 10<<20 + 5
 
 func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.PostgresDB) error {
 	validator, err := protovalidate.New()
@@ -38,16 +42,20 @@ func RunGRPC(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 	grpcServer := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.UnaryInterceptor(validateUnaryRPC(validator)),
+		grpc.MaxRecvMsgSize(maxImportTurtleMessageSize),
 	)
 
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
+	importSvc := metadataimport.New(log, db.Imports, authorizer)
+	turtler := turtle.New(log)
 	groupsSvc := groups.New(log, db.Groups, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointsSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 
 	metadatalifecyclev1.RegisterIdentityServiceServer(grpcServer, grpcapi.NewIdentity(usersSvc))
 	metadatalifecyclev1.RegisterUserServiceServer(grpcServer, grpcapi.NewUser(usersSvc))
+	metadatalifecyclev1.RegisterImportServiceServer(grpcServer, grpcapi.NewImport(importSvc, turtler))
 	metadatalifecyclev1.RegisterGroupServiceServer(grpcServer, grpcapi.NewGroup(groupsSvc))
 	metadatalifecyclev1.RegisterCategoryServiceServer(grpcServer, grpcapi.NewCategory(categoriesSvc))
 	metadatalifecyclev1.RegisterContactPointServiceServer(grpcServer, grpcapi.NewContactPoint(contactPointsSvc))

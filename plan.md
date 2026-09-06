@@ -260,14 +260,15 @@
     - [x] Switch `MetadataLifecycle.SearchResources` from the generated HTTP client to gRPC
     - [x] Verify filter parsing, authorization, empty results, timeout, and successful response behavior; do not add pagination absent from the Gateway contract
 
-- [ ] Migrate Turtle Import endpoint
-  - [ ] Migrate `POST /v1/imports/turtle`
-    - [ ] Add validated protobuf request, response, payload, import-result representation, and RPC definition
-    - [ ] Define maximum payload size, content type, timeout, and transaction behavior for gRPC
-    - [ ] Implement gRPC adapter using `metadataimport.Service.Import` and existing Turtle parsing
-    - [ ] Add Gateway client method with explicit payload, result, and gRPC error mapping
-    - [ ] Switch `MetadataLifecycle.ImportTurtle` from the generated HTTP client to gRPC
-    - [ ] Verify actor propagation, payload limits, malformed Turtle, authorization, conflict, atomic rollback, timeout, and successful response behavior
+- [x] Migrate Turtle Import endpoint
+  - [x] Migrate `POST /v1/imports/turtle`
+    - [x] Add validated protobuf request, response, payload, import-result representation, and RPC definition
+    - [x] Define 10 MiB maximum payload, `text/turtle` content type, 30-second Gateway timeout, and existing atomic transaction behavior for gRPC
+    - [x] Implement gRPC adapter using `metadataimport.Service.Import` and existing Turtle parsing
+    - [x] Add Gateway client method with explicit payload, result, and gRPC error mapping
+    - [x] Switch `MetadataLifecycle.ImportTurtle` from the generated HTTP client to gRPC
+    - [x] Verify actor propagation, payload limits, malformed Turtle, authorization, conflict, atomic rollback, timeout, and successful response behavior; no new automated tests added
+    - [x] Remove Metadata Lifecycle HTTP import route, handler, OpenAPI operation, and generated Gateway HTTP operation after verification
 
 - [ ] Complete migration verification
   - [ ] Confirm every Gateway Metadata Lifecycle business operation uses gRPC

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/config"
@@ -19,7 +18,6 @@ import (
 type MetadataLifecycle struct {
 	identity client.InternalIdentityAPI
 	users    client.UsersAPI
-	imports  client.ImportsAPI
 
 	GRPC     *MetadataLifecycleGRPC
 	Identity *MetadataLifecycleIdentity
@@ -67,7 +65,6 @@ func NewMetadataLifecycle(log *slog.Logger, baseURL string, upstreamCfg config.U
 	return &MetadataLifecycle{
 		identity: apiClient.InternalIdentityAPI,
 		users:    apiClient.UsersAPI,
-		imports:  apiClient.ImportsAPI,
 
 		// TODO: we are doing this just to hook up the provisioning of users for now, later we will only have the grpc service
 		GRPC:     grpc,
@@ -219,36 +216,10 @@ func (c *MetadataLifecycle) EnsureUser(ctx context.Context, identity ActorIdenti
 	return user, nil
 }
 
-func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, body []byte) (*client.ImportResult, error) {
-	if c == nil || c.imports == nil {
+func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, request *metadatalifecyclev1.ImportTurtleRequest) (*metadatalifecyclev1.ImportTurtleResponse, error) {
+	if c == nil || c.GRPC == nil {
 		return nil, fmt.Errorf("metadata-lifecycle import client is not configured")
 	}
 
-	result, response, err := c.imports.ImportTurtleMetadata(ctx).XEPOSUserID(actorID).Body(string(body)).Execute()
-	if err != nil {
-		if response != nil {
-			switch response.StatusCode {
-			case http.StatusBadRequest:
-				return nil, fmt.Errorf("metadata-lifecycle import rejected request: %w", domain.ErrBadRequest)
-			case http.StatusForbidden:
-				return nil, fmt.Errorf("metadata-lifecycle import forbidden: %w", domain.ErrForbidden)
-			case http.StatusConflict:
-				return nil, fmt.Errorf("metadata-lifecycle import conflict: %w", domain.ErrConflict)
-			}
-			return nil, fmt.Errorf("metadata-lifecycle import failed with status %d: %w", response.StatusCode, err)
-		}
-		return nil, wrapConnectionError("metadata-lifecycle import request", err)
-	}
-
-	if result == nil {
-		return nil, fmt.Errorf("decode metadata-lifecycle import result: response is empty")
-	}
-	return result, nil
-}
-
-func wrapConnectionError(operation string, err error) error {
-	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
-	}
-	return fmt.Errorf("%s: %w", operation, err)
+	return c.GRPC.ImportTurtle(ctx, actorID, request)
 }

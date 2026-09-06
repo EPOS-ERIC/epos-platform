@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
@@ -68,11 +67,7 @@ func NewRouter(
 
 func requestBodyLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		limit := int64(10 << 20)
-		if strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")), "text/turtle") {
-			limit = 50 << 20
-		}
-		r.Body = http.MaxBytesReader(w, r.Body, limit)
+		r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
 		next.ServeHTTP(w, r)
 	})
 }

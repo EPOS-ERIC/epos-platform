@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
@@ -70,6 +71,10 @@ func toClientStringPtr(v gatewayapi.OptNilString) *string {
 }
 
 func problemStatus(err error) int {
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+		return http.StatusRequestEntityTooLarge
+	}
+
 	switch {
 	case errors.Is(err, errMissingActor),
 		errors.Is(err, auth.ErrUnauthorized),
@@ -101,6 +106,9 @@ func problemDetails(err error) (int, string, string) {
 	status := problemStatus(err)
 	if metadata, ok := domain.ErrorMetadataFrom(err); ok {
 		return status, metadata.Title, metadata.Detail
+	}
+	if maxBytesErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
+		return status, "request_too_large", fmt.Sprintf("request body exceeds %d bytes", maxBytesErr.Limit)
 	}
 	switch {
 	case errors.Is(err, ogenerrors.ErrSecurityRequirementIsNotSatisfied):

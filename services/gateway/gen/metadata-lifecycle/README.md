@@ -72,7 +72,6 @@ All URIs are relative to *http://localhost*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *HealthAPI* | [**HealthCheck**](docs/HealthAPI.md#healthcheck) | **Get** /health | Health check
-*ImportsAPI* | [**ImportTurtleMetadata**](docs/ImportsAPI.md#importturtlemetadata) | **Post** /api/v1/imports/turtle | Import Turtle metadata
 *InternalIdentityAPI* | [**ProvisionUser**](docs/InternalIdentityAPI.md#provisionuser) | **Post** /api/v1/internal/users | Provision user
 *ResourcesAPI* | [**CopyResource**](docs/ResourcesAPI.md#copyresource) | **Post** /api/v1/groups/{group_id}/resources/{resource_type}/{resource_id}/copies | Copy published resource
 *ResourcesAPI* | [**CreateResource**](docs/ResourcesAPI.md#createresource) | **Post** /api/v1/groups/{group_id}/resources | Create resource draft
@@ -132,8 +131,6 @@ Class | Method | HTTP request | Description
  - [GroupReference](docs/GroupReference.md)
  - [Identifier](docs/Identifier.md)
  - [IdentifierDraft](docs/IdentifierDraft.md)
- - [ImportDiagnostic](docs/ImportDiagnostic.md)
- - [ImportResult](docs/ImportResult.md)
  - [IntegerParameter](docs/IntegerParameter.md)
  - [IntegerParameterDraft](docs/IntegerParameterDraft.md)
  - [IntegerParameterMetadata](docs/IntegerParameterMetadata.md)

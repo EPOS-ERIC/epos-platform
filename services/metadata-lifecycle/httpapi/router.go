@@ -11,7 +11,6 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/categories"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
-	imports "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
@@ -19,7 +18,6 @@ import (
 )
 
 type Router struct {
-	Imports       *imports.Handler
 	Users         *users.Handler
 	Categories    *categories.Handler
 	ContactPoints *contactpoints.Handler
@@ -57,8 +55,6 @@ func NewRouter(router Router) http.Handler {
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 	r.Route("/api/v1", func(r chi.Router) {
 		// TODO: group the endpoints better with r.Route
-
-		r.Post("/imports/turtle", router.Imports.Turtle)
 
 		r.Get("/users/{user_id}", router.Users.GetByID)
 		r.Post("/internal/users", router.Users.Create)

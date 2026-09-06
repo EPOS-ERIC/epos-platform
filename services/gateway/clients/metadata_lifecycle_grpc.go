@@ -37,6 +37,7 @@ func NewMetadataLifecycleGRPC(log *slog.Logger, baseURL string) (*MetadataLifecy
 		accessGRPC:       metadatalifecyclev1.NewGroupAccessServiceClient(conn),
 		resourceGRPC:     metadatalifecyclev1.NewResourceServiceClient(conn),
 		discoveryGRPC:    metadatalifecyclev1.NewDiscoveryServiceClient(conn),
+		importGRPC:       metadatalifecyclev1.NewImportServiceClient(conn),
 	}
 	identity := &MetadataLifecycleIdentity{
 		identityGRPC: metadatalifecyclev1.NewIdentityServiceClient(conn),

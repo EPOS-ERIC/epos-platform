@@ -18,14 +18,11 @@ import (
 	contactpointsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/contactpoints"
 	datasetapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/dataset"
 	healthapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/health"
-	importsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/import"
 	organizationsapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/organizations"
 	resourceapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/resource"
 	softwareapplicationapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwareapplication"
 	softwaresourcecodeapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/softwaresourcecode"
 	usersapi "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/httpapi/handlers/users"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/metadataimport"
-	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/turtle"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/users"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/categories"
@@ -51,10 +48,8 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 		}
 	}(context.WithoutCancel(ctx))
 
-	turtler := turtle.New(log)
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)
-	importSvc := metadataimport.New(log, db.Imports, authorizer)
 	categoriesSvc := categories.New(log, db.Categories, authorizer)
 	contactPointSvc := contactpoints.New(log, db.ContactPoints, authorizer)
 	organizationsSvc := organizations.New(log, db.Organizations, authorizer)
@@ -67,7 +62,6 @@ func RunJson(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Po
 
 	router := httpapi.NewRouter(httpapi.Router{
 		Health:        healthapi.New(log, db),
-		Imports:       importsapi.New(log, importSvc, turtler),
 		Users:         usersapi.New(log, usersSvc),
 		Categories:    categoriesapi.New(log, categoriesSvc),
 		ContactPoints: contactpointsapi.New(log, contactPointSvc),

@@ -50,8 +50,6 @@ type APIClient struct {
 
 	HealthAPI HealthAPI
 
-	ImportsAPI ImportsAPI
-
 	InternalIdentityAPI InternalIdentityAPI
 
 	ResourcesAPI ResourcesAPI
@@ -76,7 +74,6 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.HealthAPI = (*HealthAPIService)(&c.common)
-	c.ImportsAPI = (*ImportsAPIService)(&c.common)
 	c.InternalIdentityAPI = (*InternalIdentityAPIService)(&c.common)
 	c.ResourcesAPI = (*ResourcesAPIService)(&c.common)
 	c.UsersAPI = (*UsersAPIService)(&c.common)
