@@ -12,6 +12,8 @@ COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
 RUN go mod download
 
+RUN go install github.com/grpc-ecosystem/grpc-health-probe@v0.4.42
+
 COPY services/metadata-lifecycle /workspace/services/metadata-lifecycle
 
 EXPOSE 5000

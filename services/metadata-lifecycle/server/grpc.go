@@ -27,6 +27,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
@@ -44,7 +46,9 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 		grpc.UnaryInterceptor(validateUnaryRPC(validator)),
 		grpc.MaxRecvMsgSize(maxImportTurtleMessageSize),
 	)
-	// TODO: register the standard gRPC health service for readiness checks.
+	healthServer := health.NewServer()
+	healthpb.RegisterHealthServer(server, healthServer)
+	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
 	authorizer := authz.New(log, db.Authorization)
 	usersSvc := users.New(log, db.Users, authorizer)

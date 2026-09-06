@@ -47,7 +47,7 @@ services:
     image: epos-gateway-dev:local
     depends_on:
       metadata-lifecycle-service:
-        condition: service_started
+        condition: service_healthy
       oss-aai-service:
         condition: service_healthy
     ports:
@@ -101,6 +101,12 @@ services:
     restart: on-failure
     networks:
       - epos-network
+    healthcheck:
+      test: ["CMD", "grpc-health-probe", "-addr=localhost:5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   platform-app:
     image: epos-platform-dev:local
