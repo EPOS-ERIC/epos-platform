@@ -1,250 +1,109 @@
 # EPOS Platform
 
-Monorepo for EPOS platform services, shared packages, and local development tooling.
+Monorepo for the EPOS Platform web application, backend services, shared Go packages, and local development tooling.
 
-## Current status
+## Components
 
-The repository currently contains five active backend services used in local development:
+| Component                     | Purpose                                                        | Local URL                |
+| ----------------------------- | -------------------------------------------------------------- | ------------------------ |
+| `apps/platform`               | Angular web application                                        | `http://localhost:4200`  |
+| `services/gateway`            | Public API, authentication, and backend aggregation            | `http://localhost:32000` |
+| `services/metadata-lifecycle` | Metadata, users, groups, authorization, and resource lifecycle | `http://localhost:33000` |
+| `services/data-retriever`     | Outbound retrieval, payload caching, and cached-text search    | `http://localhost:8100`  |
+| `services/oss-aai-service`    | Local web login and OAuth2/OIDC provider                       | `http://localhost:8110`  |
 
-- `services/gateway` (Go): API gateway/aggregation layer.
-- `services/metadata-lifecycle` (Go): internal gRPC users, groups, memberships, authorization, and metadata-lifecycle APIs.
-- `services/data-retriever` (Go): templated outbound retrieval, payload caching, and search.
-- `services/oss-aai-service` (Go): local authentication and authorization identity provider.
-
-Local infrastructure and service wiring for development are defined in `docker/compose.dev.yaml` and orchestrated by Tilt.
-
-## Architecture (current dev setup)
-
-```mermaid
-flowchart TB
-    %% Based on docker/compose.dev.yaml and Tilt image wiring
-
-    DEV([Developer / Local Client])
-
-    subgraph EDGE[Published host ports]
-        GWE[gateway-service :32000]
-        DRE[data-retriever-service :8100]
-        N4J[neo4j :7474/7687]
-        PBO[metadata-lifecycle-db :5434]
-        PDR[data-retriever-db :5433]
-    end
-
-    subgraph NET["epos-network - docker compose"]
-        GW[gateway-service]
-        BO[metadata-lifecycle-service]
-        DR[data-retriever-service]
-
-        NEO[(neo4j)]
-        BODB[(metadata-lifecycle-db)]
-        DRDB[(data-retriever-db)]
-    end
-
-    subgraph SHARED[Shared Go packages used by dev images]
-        LOG[packages/go/logging]
-        PG[packages/go/postgres]
-        MIG[packages/go/migrations]
-    end
-
-    DEV --> GWE
-    DEV --> DRE
-    DEV --> N4J
-
-    GWE --- GW
-    DRE --- DR
-    N4J --- NEO
-    PBO --- BODB
-    PDR --- DRDB
-
-    GW -->|depends_on started| BO
-    BO -->|depends_on healthy| BODB
-    DR -->|depends_on healthy| DRDB
-
-    GW -. uses .-> LOG
-    BO -. uses .-> LOG
-    DR -. uses .-> LOG
-    DR -. uses .-> PG
-    DR -. uses .-> MIG
-
-    classDef svc fill:#0b5d8b,stroke:#083b59,color:#ffffff,stroke-width:1px;
-    classDef infra fill:#175c4c,stroke:#0f3d32,color:#ffffff,stroke-width:1px;
-    classDef db fill:#3f6b1d,stroke:#2d4c14,color:#ffffff,stroke-width:1px;
-    classDef shared fill:#6f4b1f,stroke:#4f3516,color:#ffffff,stroke-width:1px;
-    classDef edge fill:#39424e,stroke:#1f252d,color:#ffffff,stroke-width:1px;
-
-    class GW,BO,DR svc;
-    class NEO infra;
-    class BODB,DRDB db;
-    class LOG,PG,MIG shared;
-    class GWE,DRE,N4J,PBO,PDR edge;
-```
-
-## Shared Go packages
-
-Shared Go modules live in `packages/go/` and are reused across services.
-
-- `packages/go/logging`: structured JSON logging via `logging.New("service-name")`, with component loggers created by `logger.With(...)`.
-- `packages/go/postgres`: shared PostgreSQL connection bootstrap from env configuration.
-- `packages/go/migrations`: shared `.sql` migration runner (sorted file execution).
+The development stack also includes PostgreSQL databases for Metadata Lifecycle and Data Retriever, plus Grafana's OpenTelemetry LGTM stack for logs, metrics, traces, and profiles.
 
 ## Repository layout
 
 ```text
-.
-|- apps/
-|- services/
-|  |- gateway/
-|  |- metadata-lifecycle/
-|  |- data-retriever/
-|- packages/
-|  |- go/
-|  |- shacl/
-|  `- scripts/
-|- docker/
-|- helm/
-`- cli/
+apps/                 frontend applications
+services/             backend services
+packages/go/          shared Go modules
+packages/scripts/     development and test scripts
+docker/               local Docker Compose configuration
+tests/                Hurl and Schemathesis integration tests
+cli/                  repository CLI tooling
 ```
 
 ## Local development
 
-From repository root:
+### Prerequisites
+
+- Docker with Compose support
+- [Tilt](https://docs.tilt.dev/install.html)
+- GNU Make
+
+Start the complete development stack from the repository root:
 
 ```bash
 make up
 ```
 
-This starts Tilt and the local stack (service + infra containers).
+Tilt uses `docker/compose.dev.yaml`, builds development images, and live-updates the application and service containers. For a Kubernetes-backed Tilt environment, select the context explicitly with `make up KUBE_CONTEXT=kind-epos`.
 
-If you are using a Kubernetes-backed Tilt setup, pass the target Kubernetes context explicitly:
+Stop the stack with `make down`. Pass the same `KUBE_CONTEXT` when stopping a Kubernetes-backed environment.
+
+### Local endpoints
+
+- Platform UI: `http://localhost:4200`
+- Gateway API: `http://localhost:32000/v1`
+- Gateway Scalar UI: `http://localhost:32000/scalar/`
+- Gateway Swagger UI: `http://localhost:32000/swagger/`
+- Metadata Lifecycle API: `http://localhost:33000/api/v1`
+- Data Retriever API: `http://localhost:8100/api/v2`
+- OSS AAI: `http://localhost:8110`
+- Grafana: `http://localhost:3000`
+- Prometheus: `http://localhost:9090`
+- Pyroscope: `http://localhost:4040`
+
+The local PostgreSQL ports are `5433` for Data Retriever and `5434` for Metadata Lifecycle.
+
+### Local authentication and sample data
+
+The development identity provider seeds an administrator and OAuth client on first startup. Get an access token with:
 
 ```bash
-make up KUBE_CONTEXT=kind-epos
+make get-dev-token
 ```
 
-Common local endpoints:
+The local-only defaults are documented in `services/oss-aai-service/README.md` and must not be used outside development. Populate the running stack with sample metadata using `make populate`.
 
-- Gateway API: `http://localhost:32000`
-- Data Retriever API: `http://localhost:8100`
-- OSS AAI API: `http://localhost:8110`
-- Neo4j Browser: `http://localhost:7474`
+## Build, test, and lint
 
-Stop local development stack:
+The root targets fan out to the frontend and all four services:
 
 ```bash
-make down
-```
-
-Use the same context when stopping a Kubernetes-backed Tilt stack:
-
-```bash
-make down KUBE_CONTEXT=kind-epos
-```
-
-## Repository commands
-
-From repository root:
-
-```bash
-make up
-make down
 make test
 make fmt
 make lint
-make populate
-make helm-lint
-make helm-template
-make helm-deploy
-make helm-status
-make helm-uninstall
 ```
 
-- `make test|fmt|lint` fan out to all current services.
-- Service-specific build and Docker targets stay in each service `Makefile`.
-- Helm targets use `helm/epos-platform` by default and can share `KUBE_CONTEXT` with Tilt targets.
-
-## Helm Chart
-
-The platform Helm chart lives under `helm/epos-platform` and deploys the backend services plus optional development datastores:
-
-- `gateway`
-- `data-retriever`
-- `oss-aai`
-- optional PostgreSQL instance for `data-retriever`
-
-Validate the chart locally:
+Use each module's Makefile for builds, generated code, and module-specific commands. Integration suites run against an already-running development stack:
 
 ```bash
-make helm-lint
-make helm-template
+make test-hurl
+make test-schemathesis
 ```
 
-Deploy or update the chart in the current Kubernetes context:
+`test-schemathesis` obtains its own development token and fixture identifiers. Stateful API flows that require ordered setup are covered by Hurl rather than schema fuzzing.
 
-```bash
-make helm-deploy
-```
+## Generated code
 
-Deploy to a specific context and namespace:
+- Gateway server code and its Metadata Lifecycle client: run `make generate` in `services/gateway`.
+- Metadata Lifecycle SQLC code: run `make generate` in `services/metadata-lifecycle`.
+- Frontend API types: run `make codegen` in `apps/platform`.
 
-```bash
-make helm-deploy KUBE_CONTEXT=kind-epos HELM_NAMESPACE=epos-platform
-```
+Do not edit generated files directly. Change the owning OpenAPI specification or SQL source and regenerate.
 
-Inspect or remove the release:
+## CI
 
-```bash
-make helm-status KUBE_CONTEXT=kind-epos HELM_NAMESPACE=epos-platform
-make helm-uninstall KUBE_CONTEXT=kind-epos HELM_NAMESPACE=epos-platform
-```
+Workflows under `.github/workflows/` validate each application or service independently and run the Hurl and Schemathesis integration suites. Reusable workflow definitions are prefixed with `_`.
 
-Useful Helm Make variables:
+## Component documentation
 
-- `HELM_RELEASE`: Helm release name, default `epos-platform`.
-- `HELM_CHART`: chart path, default `helm/epos-platform`.
-- `HELM_NAMESPACE`: target namespace, default `epos-platform`.
-- `HELM_VALUES`: values file, default `helm/epos-platform/values.yaml`.
-- `HELM_SET_ARGS`: additional Helm CLI arguments, such as `--set gateway.image.tag=dev`.
-- `KUBE_CONTEXT`: Kubernetes context passed to Helm as `--kube-context` and Tilt as `--context`.
-
-Package the chart locally:
-
-```bash
-helm package helm/epos-platform --destination dist
-```
-
-For deployments using external datastores, disable the bundled datastore resources and provide connection settings through values:
-
-```bash
-make helm-template HELM_SET_ARGS='--set postgresql.dataRetriever.enabled=false --set postgresql.dataRetriever.host=data-retriever-db.example --set neo4j.enabled=false --set neo4j.uri=bolt://neo4j.example:7687'
-```
-
-## CI/CD Pipelines
-
-GitHub Actions workflows live under `.github/workflows/`:
-
-- `services-ci.yml`: runs Go/Gradle tests, lint, service builds, Docker image builds, Docker image publishing, and integration tests.
-- `helm-ci.yml`: runs Helm lint/render validation, packages the chart, uploads chart artifacts, and attaches release chart packages to GitHub Releases.
-- Hurl workflows are currently manual-only because their tests are not correctly implemented.
-
-Pipeline behavior:
-
-- Pull requests validate services, Docker builds, integration tests, and Helm chart rendering without publishing images.
-- Branch pushes publish Docker images to GitHub Container Registry using the branch name as the image tag.
-- Version tag pushes, such as `v1.2.3`, publish Docker images with both `v1.2.3` and `latest` tags.
-- Helm chart packages are uploaded as workflow artifacts for PR, branch, and tag runs.
-- Version tag pushes also attach the packaged Helm chart to the matching GitHub Release.
-
-Published Docker image names:
-
-- `ghcr.io/epos-eric/epos-platform/gateway`
-- `ghcr.io/epos-eric/epos-platform/data-retriever`
-
-Integration tests start the Docker Compose development stack from `docker/compose.dev.yaml`, wait for the gateway, then run Schemathesis tests against the gateway OpenAPI contract.
-
-TODO: Correctly implement Hurl tests under `tests/hurl/`, then restore automatic CI triggers in `integration-hurl.yml`.
-
-## Service documentation
-
-- Gateway: `services/gateway/README.md`
-- metadata-lifecycle: `services/metadata-lifecycle/README.md`
-- Data Retriever: `services/data-retriever/README.md`
-- OSS AAI: `services/oss-aai-service/README.md`
+- [Platform app](apps/platform/README.md)
+- [Gateway](services/gateway/README.md)
+- [Metadata Lifecycle](services/metadata-lifecycle/README.md)
+- [Data Retriever](services/data-retriever/README.md)
+- [OSS AAI](services/oss-aai-service/README.md)

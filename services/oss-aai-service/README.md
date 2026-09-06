@@ -1,6 +1,7 @@
 # OSS AAI Service
 
 Small Go application that provides:
+
 - User registration and login (HTML templates)
 - Session-based web authentication
 - OAuth2/OIDC-style token issuance, introspection and user info
@@ -15,17 +16,21 @@ make run
 
 Open: `http://localhost:8080`
 
+The repository Tilt stack publishes the same service at `http://localhost:8110`.
+
 ## Run with Docker
 
+From this directory:
+
 ```bash
-docker build -t oss-aai-service .
-docker run --rm -p 8080:8080 oss-aai-service
+make build-docker
+docker run --rm -p 8080:8080 epos-oss-aai-service:latest
 ```
 
 If you want persistent local data when using Docker:
 
 ```bash
-docker run --rm -p 8080:8080 -v $(pwd)/data:/app/data oss-aai-service
+docker run --rm -p 8080:8080 -v "$(pwd)/data:/app/data" epos-oss-aai-service:latest
 ```
 
 ## Default seeded accounts
@@ -45,6 +50,7 @@ docker run --rm -p 8080:8080 -v $(pwd)/data:/app/data oss-aai-service
     - `http://localhost:34000/silent-token-refresh.html`
     - `http://localhost:4200/testpath/last-page-redirect`
     - `http://localhost:4200/testpath/silent-token-refresh.html`
+    - `http://localhost:32000/last-page-redirect`
 
 The initial admin user can be updated or deleted after first login and will not be recreated.
 
@@ -64,6 +70,7 @@ If none of the `INITIAL_ADMIN_*` variables are set before the first startup, the
 ## Main endpoints
 
 - Health:
+  - `GET /health`
   - `GET /healthz`
 - Web UI:
   - `GET /register`
@@ -96,6 +103,7 @@ curl http://localhost:8080/oauth2/.well-known/openid-configuration
 ```
 
 The validation/introspection response includes:
+
 - `active`
 - `eduPersonUniqueId`
 - `firstname`
