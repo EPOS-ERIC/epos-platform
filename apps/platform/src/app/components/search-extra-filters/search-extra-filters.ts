@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { DataproviderFilter } from "../dataprovider-filter/dataprovider-filter";
-import { DatavisualizationFilter } from "../datavisualization-filter/datavisualization-filter";
+import { DataproviderFilter } from '../dataprovider-filter/dataprovider-filter';
+import { DatavisualizationFilter } from '../datavisualization-filter/datavisualization-filter';
 
 @Component({
   selector: 'app-search-extra-filters',

@@ -1,20 +1,16 @@
-//nolint:dupl,exhaustruct_v5,wrapcheck // Direct transport mapping intentionally constructs partial domain/response values and returns service errors unchanged for Ogen classification.
 package handlers
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
-	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/ogen-go/ogen/ogenerrors"
 )
 
@@ -23,26 +19,28 @@ var (
 	errProvisioningUnavailable = errors.New("user provisioning unavailable")
 )
 
-// ogenHandler is the HTTP boundary. It calls domain services directly; no
-// request is re-encoded or dispatched through a second HTTP transport.
+// ogenHandler is the HTTP boundary. Pure proxy operations call the concrete
+// Metadata Lifecycle client; identity orchestration remains in identity.Service.
 type ogenHandler struct {
-	canonical *canonical.Service
-	discovery *discovery.Service
-	groups    *groupservice.Service
-	identity  *identity.Service
-	imports   *metadataimports.Service
-	lifecycle *lifecycle.Service
+	metadataLifecycle *clients.MetadataLifecycle
+	identity          *identity.Service
 }
 
-func NewOgenHandler(c *canonical.Service, d *discovery.Service, g *groupservice.Service, i *identity.Service, m *metadataimports.Service, l *lifecycle.Service) *ogenHandler {
-	return &ogenHandler{canonical: c, discovery: d, groups: g, identity: i, imports: m, lifecycle: l}
+func NewOgenHandler(i *identity.Service, metadataLifecycle *clients.MetadataLifecycle) *ogenHandler {
+	return &ogenHandler{
+		metadataLifecycle: metadataLifecycle,
+		identity:          i,
+	}
 }
 
 var _ gatewayapi.Handler = (*ogenHandler)(nil)
 
 func (h *ogenHandler) NewError(ctx context.Context, err error) *gatewayapi.ProblemStatusCode {
 	status, title, detail := problemDetails(err)
-	response := gatewayapi.Problem{Title: title, Status: status}
+	response := gatewayapi.Problem{
+		Title:  title,
+		Status: status,
+	}
 	if detail != "" {
 		response.Detail = gatewayapi.NewOptString(detail)
 	}
@@ -65,7 +63,7 @@ func actorID(ctx context.Context) (string, bool) {
 	return user.ID, ok
 }
 
-func fromOptNilString(v gatewayapi.OptNilString) *string {
+func toClientStringPtr(v gatewayapi.OptNilString) *string {
 	if !v.Set || v.Null {
 		return nil
 	}
@@ -73,6 +71,10 @@ func fromOptNilString(v gatewayapi.OptNilString) *string {
 }
 
 func problemStatus(err error) int {
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
+		return http.StatusRequestEntityTooLarge
+	}
+
 	switch {
 	case errors.Is(err, errMissingActor),
 		errors.Is(err, auth.ErrUnauthorized),
@@ -90,6 +92,8 @@ func problemStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrUpstreamTimeout):
 		return http.StatusGatewayTimeout
+	case errors.Is(err, domain.ErrUpstreamUnavailable):
+		return http.StatusServiceUnavailable
 	case errors.Is(err, errAuthUnavailable), errors.Is(err, errProvisioningUnavailable):
 		return http.StatusServiceUnavailable
 	default:
@@ -104,6 +108,9 @@ func problemDetails(err error) (int, string, string) {
 	status := problemStatus(err)
 	if metadata, ok := domain.ErrorMetadataFrom(err); ok {
 		return status, metadata.Title, metadata.Detail
+	}
+	if maxBytesErr, ok := errors.AsType[*http.MaxBytesError](err); ok {
+		return status, "request_too_large", fmt.Sprintf("request body exceeds %d bytes", maxBytesErr.Limit)
 	}
 	switch {
 	case errors.Is(err, ogenerrors.ErrSecurityRequirementIsNotSatisfied):
@@ -124,9 +131,10 @@ func problemDetails(err error) (int, string, string) {
 		return status, "conflict", "operation conflicts with existing data"
 	case errors.Is(err, domain.ErrUpstreamTimeout):
 		return status, "upstream_timeout", "request timed out"
+	case errors.Is(err, domain.ErrUpstreamUnavailable):
+		return status, "upstream_unavailable", "upstream service is unavailable"
 	default:
-		switch status {
-		case http.StatusGatewayTimeout:
+		if status == http.StatusGatewayTimeout {
 			return status, "upstream_timeout", "request timed out"
 		}
 		return status, "request_failed", "request failed"

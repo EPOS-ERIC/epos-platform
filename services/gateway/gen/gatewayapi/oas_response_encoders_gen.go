@@ -162,15 +162,8 @@ func encodeDeleteOrganizationResponse(response *DeleteOrganizationNoContent, w h
 	return nil
 }
 
-func encodeDiscardResourceDraftVersionResponse(response *WriteResult, w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(200)
-
-	e := new(jx.Encoder)
-	response.Encode(e)
-	if _, err := e.WriteTo(w); err != nil {
-		return errors.Wrap(err, "write")
-	}
+func encodeDiscardResourceDraftVersionResponse(response *DiscardResourceDraftVersionNoContent, w http.ResponseWriter) error {
+	w.WriteHeader(204)
 
 	return nil
 }
@@ -406,7 +399,7 @@ func encodeListOrganizationsResponse(response []CanonicalOrganization, w http.Re
 	return nil
 }
 
-func encodeListUsersResponse(response []UserSummary, w http.ResponseWriter) error {
+func encodeListUsersResponse(response []UserListItem, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 

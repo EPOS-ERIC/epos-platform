@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message ProvisionUserRequest {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  string email = 2 [(buf.validate.field).string.email = true];
+  string given_name = 3 [(buf.validate.field).string.min_len = 1];
+  string family_name = 4 [(buf.validate.field).string.min_len = 1];
+}
+
+message ProvisionUserResponse {
+  string id = 1;
+  string email = 2;
+  string given_name = 3;
+  string family_name = 4;
+}
+
+service IdentityService {
+  // Internal Gateway-to-Metadata-Lifecycle creation from verified authentication claims.
+  rpc ProvisionUser(ProvisionUserRequest) returns (ProvisionUserResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+}

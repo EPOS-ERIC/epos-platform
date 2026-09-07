@@ -14,6 +14,6 @@ upstream:
 
 services:
   metadata-lifecycle:
-    url: "http://metadata-lifecycle:5000/"
+    url: "metadata-lifecycle:5000"
   auth:
     url: "http://oss-aai-service:8080/"

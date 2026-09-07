@@ -166,11 +166,12 @@ func (UnimplementedHandler) DeleteOrganization(ctx context.Context, params Delet
 
 // DiscardResourceDraftVersion implements discardResourceDraftVersion operation.
 //
-// Permanently discards an editable draft version.
+// Permanently deletes an existing editable draft version. This operation does not create or assign a
+// lifecycle status.
 //
 // DELETE /resources/{resourceType}/{id}/versions/{versionId}/draft
-func (UnimplementedHandler) DiscardResourceDraftVersion(ctx context.Context, params DiscardResourceDraftVersionParams) (r *WriteResult, _ error) {
-	return r, ht.ErrNotImplemented
+func (UnimplementedHandler) DiscardResourceDraftVersion(ctx context.Context, params DiscardResourceDraftVersionParams) error {
+	return ht.ErrNotImplemented
 }
 
 // DiscoverResources implements discoverResources operation.
@@ -337,7 +338,7 @@ func (UnimplementedHandler) ListOrganizations(ctx context.Context) (r []Canonica
 // Retrieve all user profiles. Allowed to super admins only.
 //
 // GET /users
-func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserSummary, _ error) {
+func (UnimplementedHandler) ListUsers(ctx context.Context) (r []UserListItem, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

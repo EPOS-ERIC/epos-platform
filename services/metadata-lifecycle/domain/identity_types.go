@@ -14,40 +14,32 @@ type UserClaims struct {
 	FamilyName string
 }
 
-// User contains a complete user profile and access projection.
-type User struct {
-	ID                string
-	Email             string
-	GivenName         string
-	FamilyName        string
-	Status            UserStatus
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
-	GlobalRoles       []string
-	GlobalPermissions []string
-	Memberships       []UserMembership
-}
-
-// UserSummary contains the user fields needed for directory listings.
 type UserSummary struct {
 	ID                string
 	Email             string
 	GivenName         string
 	FamilyName        string
 	Status            UserStatus
-	GlobalRoles       []string
+	GlobalRoles       []GlobalRole
 	GlobalPermissions []string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
-// GroupReference identifies the group attached to a user membership.
-type GroupReference struct {
+type User struct {
+	UserSummary
+	Memberships []Membership
+}
+
+// GroupSummary identifies the group attached to a user membership.
+type GroupSummary struct {
 	ID   uuid.UUID
 	Name string
 }
 
-// UserMembership is a membership projection from a user's perspective.
-type UserMembership struct {
-	Group        GroupReference
+// Membership is a membership projection from a user's perspective.
+type Membership struct {
+	Group        GroupSummary
 	Roles        []GroupRole
 	Status       MembershipStatus
 	Permissions  []string

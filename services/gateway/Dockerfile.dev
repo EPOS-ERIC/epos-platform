@@ -9,6 +9,7 @@ COPY packages/go/logging /workspace/packages/go/logging
 COPY packages/go/observability /workspace/packages/go/observability
 COPY packages/go/middleware /workspace/packages/go/middleware
 COPY packages/go/apidocs /workspace/packages/go/apidocs
+COPY packages/protobuf /workspace/packages/protobuf
 COPY packages/scripts/epos-banner.sh /usr/local/bin/epos-banner.sh
 
 RUN go mod download

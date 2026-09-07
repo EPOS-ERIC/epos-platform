@@ -209,7 +209,7 @@ Group roles and additive group permissions may be assigned only to active member
 ### Decision Order
 
 1. Allow public read without requiring user identity; blocked user has public-read access only.
-2. Reject authenticated action for missing, inactive, or blocked user.
+2. Reject authenticated action for missing or blocked user.
 3. Allow global `ADMIN` without membership or resource grants.
 4. Evaluate additive global permission for global action or cross-group membership and role management.
 5. Allow public reads of groups and categories without user identity.

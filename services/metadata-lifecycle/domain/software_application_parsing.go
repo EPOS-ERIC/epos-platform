@@ -15,6 +15,11 @@ func NewSoftwareApplicationInput(value SoftwareApplicationInput) (SoftwareApplic
 	if value.Name == "" {
 		return SoftwareApplicationInput{}, fmt.Errorf("software application name is required: %w", ErrSoftwareApplicationInvalid)
 	}
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return SoftwareApplicationInput{}, fmt.Errorf("software application keywords: %w: %w", err, ErrSoftwareApplicationInvalid)
+	}
+	value.Keywords = keywords
 	if err := validateUUIDList(value.CreatorIDs, "creator"); err != nil {
 		return SoftwareApplicationInput{}, fmt.Errorf("software application creators: %w: %w", err, ErrSoftwareApplicationInvalid)
 	}
@@ -74,6 +79,11 @@ func NewSoftwareApplicationMetadata(value SoftwareApplicationMetadata) (Software
 	if value.Name == "" {
 		return SoftwareApplicationMetadata{}, fmt.Errorf("software application name is required: %w", ErrSoftwareApplicationInvalid)
 	}
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return SoftwareApplicationMetadata{}, fmt.Errorf("software application keywords: %w: %w", err, ErrSoftwareApplicationInvalid)
+	}
+	value.Keywords = keywords
 
 	seenIdentifiers := make(map[uuid.UUID]struct{}, len(value.Identifiers))
 	for _, identifier := range value.Identifiers {

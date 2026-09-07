@@ -2,183 +2,95 @@ package clients
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"google.golang.org/grpc/metadata"
 )
 
-func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID string) ([]domain.ContactPoint, error) {
-	if c == nil || c.contactPoints == nil {
-		return nil, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
-	}
-
-	points, response, err := c.contactPoints.ListContactPoints(ctx).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) ListContactPoints(ctx context.Context, actorID string) (*metadatalifecyclev1.ListContactPointsResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.ListContactPoints(ctx, &metadatalifecyclev1.ListContactPointsRequest{})
 	if err != nil {
-		return nil, wrapCanonicalError("list metadata-lifecycle contact points", response, err)
+		return nil, c.wrapError(ctx, "list metadata-lifecycle contact points", err)
 	}
-
-	return mapSlice(points, toDomainContactPoint), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) GetContactPoint(ctx context.Context, actorID, id string) (domain.ContactPoint, error) {
-	if c == nil || c.contactPoints == nil {
-		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
-	}
-
-	point, response, err := c.contactPoints.GetContactPoint(ctx, id).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) GetContactPoint(ctx context.Context, actorID, id string) (*metadatalifecyclev1.GetContactPointResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.GetContactPoint(ctx, &metadatalifecyclev1.GetContactPointRequest{ContactPointId: id})
 	if err != nil {
-		return domain.ContactPoint{}, wrapCanonicalError("get metadata-lifecycle contact point", response, err)
+		return nil, c.wrapError(ctx, "get metadata-lifecycle contact point", err)
 	}
-	if point == nil {
-		return domain.ContactPoint{}, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
-	}
-
-	return toDomainContactPoint(*point), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID string, input domain.CreateContactPointInput) (domain.ContactPoint, error) {
-	if c == nil || c.contactPoints == nil {
-		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
-	}
-
-	point, response, err := c.contactPoints.CreateContactPoint(ctx).
-		XEPOSUserID(actorID).
-		CreateContactPointRequest(toClientCreateContactPointRequest(input)).Execute()
+func (c *MetadataLifecycle) CreateContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateContactPointRequest) (*metadatalifecyclev1.CreateContactPointResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.CreateContactPoint(ctx, request)
 	if err != nil {
-		return domain.ContactPoint{}, wrapCanonicalError("create metadata-lifecycle contact point", response, err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle contact point", err)
 	}
-	if point == nil {
-		return domain.ContactPoint{}, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
-	}
-
-	return toDomainContactPoint(*point), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID, id string, input domain.ReplaceContactPointInput) (domain.ContactPoint, error) {
-	if c == nil || c.contactPoints == nil {
-		return domain.ContactPoint{}, fmt.Errorf("metadata-lifecycle contact-point client is not configured")
-	}
-
-	point, response, err := c.contactPoints.ReplaceContactPoint(ctx, id).
-		XEPOSUserID(actorID).
-		ReplaceContactPointRequest(toClientReplaceContactPointRequest(input)).Execute()
+func (c *MetadataLifecycle) ReplaceContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceContactPointRequest) (*metadatalifecyclev1.ReplaceContactPointResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.ReplaceContactPoint(ctx, request)
 	if err != nil {
-		return domain.ContactPoint{}, wrapCanonicalError("replace metadata-lifecycle contact point", response, err)
+		return nil, c.wrapError(ctx, "replace metadata-lifecycle contact point", err)
 	}
-	if point == nil {
-		return domain.ContactPoint{}, fmt.Errorf("decode metadata-lifecycle contact point: response is empty")
-	}
-
-	return toDomainContactPoint(*point), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID, id string) error {
-	if c == nil || c.contactPoints == nil {
-		return fmt.Errorf("metadata-lifecycle contact-point client is not configured")
-	}
-
-	response, err := c.contactPoints.DeleteContactPoint(ctx, id).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) DeleteContactPoint(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteContactPointRequest) (*metadatalifecyclev1.DeleteContactPointResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.contactPoints.DeleteContactPoint(ctx, request)
 	if err != nil {
-		return wrapCanonicalError("delete metadata-lifecycle contact point", response, err)
+		return nil, c.wrapError(ctx, "delete metadata-lifecycle contact point", err)
 	}
-
-	return nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) ([]domain.CanonicalOrganization, error) {
-	if c == nil || c.organizations == nil {
-		return nil, fmt.Errorf("metadata-lifecycle organization client is not configured")
-	}
-
-	organizations, response, err := c.organizations.ListOrganizations(ctx).Execute()
+func (c *MetadataLifecycle) ListOrganizations(ctx context.Context) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
+	response, err := c.organizations.ListOrganizations(ctx, &metadatalifecyclev1.ListOrganizationsRequest{})
 	if err != nil {
-		return nil, wrapCanonicalError("list metadata-lifecycle organizations", response, err)
+		return nil, c.wrapError(ctx, "list metadata-lifecycle organizations", err)
 	}
-
-	return mapSlice(organizations, toDomainCanonicalOrganization), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (domain.CanonicalOrganization, error) {
-	if c == nil || c.organizations == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle organization client is not configured")
-	}
-
-	organization, response, err := c.organizations.GetOrganization(ctx, id).Execute()
+func (c *MetadataLifecycle) GetOrganization(ctx context.Context, id string) (*metadatalifecyclev1.GetOrganizationResponse, error) {
+	response, err := c.organizations.GetOrganization(ctx, &metadatalifecyclev1.GetOrganizationRequest{OrganizationId: id})
 	if err != nil {
-		return domain.CanonicalOrganization{}, wrapCanonicalError("get metadata-lifecycle organization", response, err)
+		return nil, c.wrapError(ctx, "get metadata-lifecycle organization", err)
 	}
-	if organization == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
-	}
-
-	return toDomainCanonicalOrganization(*organization), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, input domain.CreateOrganizationInput) (domain.CanonicalOrganization, error) {
-	if c == nil || c.organizations == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle organization client is not configured")
-	}
-
-	request := toClientCreateCanonicalOrganizationRequest(input)
-
-	organization, response, err := c.organizations.CreateOrganization(ctx).
-		XEPOSUserID(actorID).
-		CreateCanonicalOrganizationRequest(request).
-		Execute()
+func (c *MetadataLifecycle) CreateOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateOrganizationRequest) (*metadatalifecyclev1.CreateOrganizationResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.organizations.CreateOrganization(ctx, request)
 	if err != nil {
-		return domain.CanonicalOrganization{}, wrapCanonicalError("create metadata-lifecycle organization", response, err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle organization", err)
 	}
-	if organization == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
-	}
-	return toDomainCanonicalOrganization(*organization), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID, id string, input domain.ReplaceOrganizationInput) (domain.CanonicalOrganization, error) {
-	if c == nil || c.organizations == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("metadata-lifecycle organization client is not configured")
-	}
-
-	request := toClientReplaceCanonicalOrganizationRequest(input)
-
-	organization, response, err := c.organizations.ReplaceOrganization(ctx, id).
-		XEPOSUserID(actorID).
-		ReplaceCanonicalOrganizationRequest(request).
-		Execute()
+func (c *MetadataLifecycle) ReplaceOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceOrganizationRequest) (*metadatalifecyclev1.ReplaceOrganizationResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.organizations.ReplaceOrganization(ctx, request)
 	if err != nil {
-		return domain.CanonicalOrganization{}, wrapCanonicalError("replace metadata-lifecycle organization", response, err)
+		return nil, c.wrapError(ctx, "replace metadata-lifecycle organization", err)
 	}
-	if organization == nil {
-		return domain.CanonicalOrganization{}, fmt.Errorf("decode metadata-lifecycle organization: response is empty")
-	}
-	return toDomainCanonicalOrganization(*organization), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID, id string) error {
-	if c == nil || c.organizations == nil {
-		return fmt.Errorf("metadata-lifecycle organization client is not configured")
-	}
-
-	response, err := c.organizations.DeleteOrganization(ctx, id).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) DeleteOrganization(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteOrganizationRequest) (*metadatalifecyclev1.DeleteOrganizationResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.organizations.DeleteOrganization(ctx, request)
 	if err != nil {
-		return wrapCanonicalError("delete metadata-lifecycle organization", response, err)
+		return nil, c.wrapError(ctx, "delete metadata-lifecycle organization", err)
 	}
-	return nil
-}
-
-func wrapCanonicalError(operation string, response *http.Response, err error) error {
-	if response != nil {
-		switch response.StatusCode {
-		case http.StatusBadRequest:
-			return fmt.Errorf("%s: %w", operation, domain.ErrBadRequest)
-		case http.StatusForbidden:
-			return fmt.Errorf("%s: %w", operation, domain.ErrForbidden)
-		case http.StatusNotFound:
-			return fmt.Errorf("%s: %w", operation, domain.ErrNotFound)
-		case http.StatusConflict:
-			return fmt.Errorf("%s: %w", operation, domain.ErrConflict)
-		}
-	}
-	return wrapConnectionError(operation, err)
+	return response, nil
 }

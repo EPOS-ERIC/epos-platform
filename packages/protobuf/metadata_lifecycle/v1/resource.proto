@@ -1,0 +1,458 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message CreateResourceRequest {
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  oneof metadata {
+    option (buf.validate.oneof).required = true;
+    DatasetInput dataset = 2;
+    SoftwareApplicationInput software_application = 3;
+    SoftwareSourceCodeInput software_source_code = 4;
+  }
+}
+
+message CreateResourceResponse {
+  ResourceRecord resource = 1;
+}
+
+message GetResourceVersionRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message GetResourceVersionResponse {
+  ResourceVersion resource = 1;
+}
+
+message ResourceVersion {
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  int32 revision = 3 [(buf.validate.field).int32.gte = 0];
+  VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
+  string created_by = 5 [(buf.validate.field).string.min_len = 1];
+  string group_id = 6 [(buf.validate.field).string.uuid = true];
+  string group_name = 7 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  oneof metadata {
+    DatasetResourceMetadata dataset = 10;
+    SoftwareApplicationResourceMetadata software_application = 11;
+    SoftwareSourceCodeResourceMetadata software_source_code = 12;
+  }
+}
+
+message DatasetResourceMetadata {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string title = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.min_len = 1];
+  repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  optional string accrual_periodicity = 5 [(buf.validate.field).string.min_len = 1];
+  optional string quality_annotation = 6 [(buf.validate.field).string.min_len = 1];
+  optional string access_right = 7 [(buf.validate.field).string.min_len = 1];
+  repeated Distribution distributions = 8;
+  optional string spatial_coverage = 9 [(buf.validate.field).string.min_len = 1];
+  Temporal temporal_coverage = 10;
+  repeated Identifier persistent_identifiers = 11;
+  repeated string contact_points = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated EntityReference providers = 13;
+  repeated EntityReference categories = 14;
+  google.protobuf.Timestamp created = 15;
+  google.protobuf.Timestamp updated = 16;
+}
+
+message SoftwareApplicationResourceMetadata {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 4 [(buf.validate.field).string.min_len = 1];
+  optional string license = 5 [(buf.validate.field).string.min_len = 1];
+  optional string version = 6 [(buf.validate.field).string.min_len = 1];
+  repeated string keywords = 7 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  optional string download_url = 8 [(buf.validate.field).string.uri = true];
+  optional string requirements = 9 [(buf.validate.field).string.min_len = 1];
+  optional string operating_system = 10 [(buf.validate.field).string.min_len = 1];
+  repeated EntityReference creators = 11;
+  repeated Identifier identifiers = 12;
+  repeated EntityReference categories = 13;
+  repeated string contact_points = 14 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message SoftwareSourceCodeResourceMetadata {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string description = 3 [(buf.validate.field).string.min_len = 1];
+  optional string programming_language = 4 [(buf.validate.field).string.min_len = 1];
+  repeated string keywords = 5 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  optional string repository = 6 [(buf.validate.field).string.min_len = 1];
+  optional string license = 7 [(buf.validate.field).string.min_len = 1];
+  optional string software_requirements = 8 [(buf.validate.field).string.min_len = 1];
+  optional string runtime_platform = 9 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 10 [(buf.validate.field).string.min_len = 1];
+  optional string version = 11 [(buf.validate.field).string.min_len = 1];
+  repeated EntityReference creators = 12;
+  repeated Identifier identifiers = 13;
+  repeated EntityReference categories = 14;
+  repeated string contact_points = 15 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message ResourceRecord {
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  int32 revision = 3 [(buf.validate.field).int32.gte = 0];
+  VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
+}
+
+message Temporal {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+}
+
+message DatasetInput {
+  string title = 1 [(buf.validate.field).string.min_len = 1];
+  optional string description = 2 [(buf.validate.field).string.min_len = 1];
+  repeated string keywords = 3 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  optional string accrual_periodicity = 4 [(buf.validate.field).string.min_len = 1];
+  optional string quality_annotation = 5 [(buf.validate.field).string.min_len = 1];
+  optional string access_right = 6 [(buf.validate.field).string.min_len = 1];
+  repeated DistributionInput distributions = 7;
+  optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
+  Temporal temporal_coverage = 9;
+  repeated IdentifierInput persistent_identifiers = 10;
+  repeated string contact_points = 11 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string providers = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string categories = 13 [(buf.validate.field).repeated.items.string.uuid = true];
+  google.protobuf.Timestamp created = 14;
+  google.protobuf.Timestamp updated = 15;
+}
+
+message DistributionInput {
+  string title = 1 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string license = 3 [(buf.validate.field).string.min_len = 1];
+  // TODO: this can be either downloadable file or web service, use an enum like in the db
+  string type = 4;
+  google.protobuf.Timestamp issued = 5;
+  google.protobuf.Timestamp modified = 6;
+  optional int64 byte_size = 7 [(buf.validate.field).int64.gte = 1];
+  oneof delivery {
+    option (buf.validate.oneof).required = true;
+    WebServiceInput web_service = 8;
+    DownloadableFile downloadable_file = 9;
+  }
+}
+
+message Distribution {
+  string title = 1 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string license = 3 [(buf.validate.field).string.min_len = 1];
+  string type = 4 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp issued = 5;
+  google.protobuf.Timestamp modified = 6;
+  optional int64 byte_size = 7 [(buf.validate.field).int64.gte = 1];
+  oneof delivery {
+    WebService web_service = 8;
+    DownloadableFile downloadable_file = 9;
+  }
+  string id = 10 [(buf.validate.field).string.uuid = true];
+}
+
+message WebServiceInput {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
+  string template_url = 3 [(buf.validate.field).string.min_len = 1];
+  repeated ParameterInput parameters = 4;
+  string format = 5 [(buf.validate.field).string.min_len = 1];
+  optional string provider_id = 6 [(buf.validate.field).string.uuid = true];
+  Documentation documentation = 7;
+  optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
+  Temporal temporal_coverage = 9;
+  repeated string contact_points = 10 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message WebService {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
+  string template_url = 3 [(buf.validate.field).string.min_len = 1];
+  repeated Parameter parameters = 4;
+  string format = 5 [(buf.validate.field).string.min_len = 1];
+  Documentation documentation = 7;
+  optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
+  Temporal temporal_coverage = 9;
+  repeated string contact_points = 10 [(buf.validate.field).repeated.items.string.uuid = true];
+  string id = 11 [(buf.validate.field).string.uuid = true];
+  EntityReference provider_reference = 13;
+}
+
+message DownloadableFile {
+  string url = 1 [(buf.validate.field).string.uri = true];
+  string format = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message Documentation {
+  optional string title = 1 [(buf.validate.field).string.min_len = 1];
+  optional string description = 2 [(buf.validate.field).string.min_len = 1];
+  string uri = 3 [(buf.validate.field).string.uri = true];
+}
+
+message Parameter {
+  ParameterMetadata metadata = 1;
+  oneof value {
+    StringParameter string = 2;
+    BooleanParameter boolean = 3;
+    IntegerParameter integer = 4;
+    FloatParameter float = 5;
+    DateTimeParameter date_time = 6;
+  }
+}
+
+message ParameterInput {
+  ParameterMetadataInput metadata = 1;
+  oneof value {
+    option (buf.validate.oneof).required = true;
+    StringParameter string = 2;
+    BooleanParameter boolean = 3;
+    IntegerParameter integer = 4;
+    FloatParameter float = 5;
+    DateTimeParameter date_time = 6;
+  }
+}
+
+message ParameterMetadata {
+  string variable = 1 [(buf.validate.field).string.min_len = 1];
+  string property = 2 [(buf.validate.field).string.min_len = 1];
+  string label = 3 [(buf.validate.field).string.min_len = 1];
+  bool required = 4;
+  // TODO: maybe rename this to controlled_values? also in the db. to make it clear that when this is set we expect that this parameter values are only the ones in the controlled list of values and no custom one can be used. basically an enum
+  bool multiple_values = 5;
+  bool read_only = 6;
+  string id = 7 [(buf.validate.field).string.uuid = true];
+}
+
+message ParameterMetadataInput {
+  string variable = 1 [(buf.validate.field).string.min_len = 1];
+  string property = 2 [(buf.validate.field).string.min_len = 1];
+  string label = 3 [(buf.validate.field).string.min_len = 1];
+  bool required = 4;
+  bool multiple_values = 5;
+  bool read_only = 6;
+}
+
+message StringParameter {
+  optional string default = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string allowed_values = 2 [(buf.validate.field).repeated.items.string.min_len = 1];
+  // TODO: this should be optional
+  string pattern = 3;
+}
+
+message BooleanParameter {
+  optional bool default = 1;
+}
+
+message IntegerParameter {
+  optional int64 minimum = 1;
+  optional int64 maximum = 2;
+  optional int64 default = 3;
+  repeated int64 allowed_values = 4;
+}
+
+message FloatParameter {
+  optional double minimum = 1;
+  optional double maximum = 2;
+  optional double default = 3;
+  repeated double allowed_values = 4;
+}
+
+message DateTimeParameter {
+  google.protobuf.Timestamp minimum = 1;
+  google.protobuf.Timestamp maximum = 2;
+  google.protobuf.Timestamp default = 3;
+  // TODO: what sholud this be? the go pattern used to parse? RFC pattern? an enum instead? maybe just useless?
+  string pattern = 4;
+}
+
+message SoftwareApplicationInput {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 3 [(buf.validate.field).string.min_len = 1];
+  optional string license = 4 [(buf.validate.field).string.min_len = 1];
+  optional string version = 5 [(buf.validate.field).string.min_len = 1];
+  repeated string keywords = 6 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  optional string download_url = 7 [(buf.validate.field).string.uri = true];
+  optional string requirements = 8 [(buf.validate.field).string.min_len = 1];
+  optional string operating_system = 9 [(buf.validate.field).string.min_len = 1];
+  repeated string creators = 10 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated IdentifierInput identifiers = 11;
+  repeated string categories = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_points = 13 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message SoftwareSourceCodeInput {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string programming_language = 3 [(buf.validate.field).string.min_len = 1];
+  repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  optional string repository = 5 [(buf.validate.field).string.min_len = 1];
+  optional string license = 6 [(buf.validate.field).string.min_len = 1];
+  optional string software_requirements = 7 [(buf.validate.field).string.min_len = 1];
+  optional string runtime_platform = 8 [(buf.validate.field).string.min_len = 1];
+  optional string main_entity_of_page = 9 [(buf.validate.field).string.min_len = 1];
+  optional string version = 10 [(buf.validate.field).string.min_len = 1];
+  repeated string creators = 11 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated IdentifierInput identifiers = 12;
+  repeated string categories = 13 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_points = 14 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message DiscardResourceDraftRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message SubmitResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message WithdrawResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message ReopenResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message PublishResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message UnpublishResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+}
+
+message SubmitResourceResponse {
+  ResourceRecord resource = 1;
+}
+message WithdrawResourceResponse {
+  ResourceRecord resource = 1;
+}
+message ReopenResourceResponse {
+  ResourceRecord resource = 1;
+}
+message PublishResourceResponse {
+  ResourceRecord resource = 1;
+}
+message UnpublishResourceResponse {
+  ResourceRecord resource = 1;
+}
+message DiscardResourceDraftResponse {}
+
+message RejectResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+  string note = 4 [(buf.validate.field).string.min_len = 1];
+}
+message RejectResourceResponse {
+  ResourceRecord resource = 1;
+}
+
+message DraftResourceFromPublicationRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+}
+message DraftResourceFromPublicationResponse {
+  ResourceRecord resource = 1;
+}
+message DraftResourceFromLatestArchiveRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+}
+message DraftResourceFromLatestArchiveResponse {
+  ResourceRecord resource = 1;
+}
+
+message CopyPublishedResourceRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string group_id = 3 [(buf.validate.field).string.uuid = true];
+}
+message CopyPublishedResourceResponse {
+  ResourceRecord resource = 1;
+}
+
+message ReplaceResourceDraftRequest {
+  int32 revision = 1 [(buf.validate.field).int32.gt = 0];
+  oneof metadata {
+    option (buf.validate.oneof).required = true;
+    DatasetInput dataset = 2;
+    SoftwareApplicationInput software_application = 3;
+    SoftwareSourceCodeInput software_source_code = 4;
+  }
+  string resource_id = 5 [(buf.validate.field).string.uuid = true];
+  string version_id = 6 [(buf.validate.field).string.uuid = true];
+}
+
+message ReplaceResourceDraftResponse {
+  ResourceRecord resource = 1;
+}
+
+service ResourceService {
+  rpc CreateResource(CreateResourceRequest) returns (CreateResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc GetResourceVersion(GetResourceVersionRequest) returns (GetResourceVersionResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
+  }
+  rpc ReplaceResourceDraft(ReplaceResourceDraftRequest) returns (ReplaceResourceDraftResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DiscardResourceDraft(DiscardResourceDraftRequest) returns (DiscardResourceDraftResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc SubmitResource(SubmitResourceRequest) returns (SubmitResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc WithdrawResource(WithdrawResourceRequest) returns (WithdrawResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc RejectResource(RejectResourceRequest) returns (RejectResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReopenResource(ReopenResourceRequest) returns (ReopenResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc PublishResource(PublishResourceRequest) returns (PublishResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc UnpublishResource(UnpublishResourceRequest) returns (UnpublishResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DraftResourceFromPublication(DraftResourceFromPublicationRequest) returns (DraftResourceFromPublicationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DraftResourceFromLatestArchive(DraftResourceFromLatestArchiveRequest) returns (DraftResourceFromLatestArchiveResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc CopyPublishedResource(CopyPublishedResourceRequest) returns (CopyPublishedResourceResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

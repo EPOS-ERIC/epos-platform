@@ -102,3 +102,11 @@ def before_call(context, case, kwargs):
                 path_parameters["versionId"] = target[1]
 
     case.path_parameters = path_parameters
+
+    if label == "POST /groups/{groupId}/categories":
+        category_id = _env("SCHEMATHESIS_CATEGORY_ID")
+        body = case.body
+        if category_id is not None and isinstance(body, dict) and body.get("parent_category_id") is not None:
+            body = dict(body)
+            body["parent_category_id"] = category_id
+            case.body = body

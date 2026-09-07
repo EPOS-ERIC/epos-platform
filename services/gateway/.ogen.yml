@@ -3,3 +3,4 @@ generator:
     disable:
       - ogen/otel
       - paths/client
+  convenient_errors: on

@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message Organization {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string street = 3 [(buf.validate.field).string.min_len = 1];
+  optional string locality = 4 [(buf.validate.field).string.min_len = 1];
+  optional string postal_code = 5 [(buf.validate.field).string.min_len = 1];
+  optional string country = 6 [(buf.validate.field).string.min_len = 1];
+  optional string logo_url = 7 [(buf.validate.field).string.uri = true];
+  optional string page_url = 8 [(buf.validate.field).string.uri = true];
+  optional string email = 9 [(buf.validate.field).string.email = true];
+  optional string lei_code = 10 [(buf.validate.field).string.min_len = 1];
+  repeated Identifier identifiers = 11;
+  repeated string parents = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_point_ids = 13 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+
+message ListOrganizationsRequest {}
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+}
+
+message GetOrganizationRequest {
+  string organization_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message CreateOrganizationRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  optional string street = 2 [(buf.validate.field).string.min_len = 1];
+  optional string locality = 3 [(buf.validate.field).string.min_len = 1];
+  optional string postal_code = 4 [(buf.validate.field).string.min_len = 1];
+  optional string country = 5 [(buf.validate.field).string.min_len = 1];
+  optional string logo_url = 6 [(buf.validate.field).string.uri = true];
+  optional string page_url = 7 [(buf.validate.field).string.uri = true];
+  optional string email = 8 [(buf.validate.field).string.email = true];
+  optional string lei_code = 9 [(buf.validate.field).string.min_len = 1];
+  repeated IdentifierInput identifiers = 10;
+  repeated string parents = 11 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_point_ids = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message ReplaceOrganizationRequest {
+  string organization_id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string street = 3 [(buf.validate.field).string.min_len = 1];
+  optional string locality = 4 [(buf.validate.field).string.min_len = 1];
+  optional string postal_code = 5 [(buf.validate.field).string.min_len = 1];
+  optional string country = 6 [(buf.validate.field).string.min_len = 1];
+  optional string logo_url = 7 [(buf.validate.field).string.uri = true];
+  optional string page_url = 8 [(buf.validate.field).string.uri = true];
+  optional string email = 9 [(buf.validate.field).string.email = true];
+  optional string lei_code = 10 [(buf.validate.field).string.min_len = 1];
+  repeated IdentifierInput identifiers = 11;
+  repeated string parents = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_point_ids = 13 [(buf.validate.field).repeated.items.string.uuid = true];
+}
+message ReplaceOrganizationResponse {
+  Organization organization = 1;
+}
+
+message DeleteOrganizationRequest {
+  string organization_id = 1 [(buf.validate.field).string.uuid = true];
+}
+message DeleteOrganizationResponse {}
+
+service OrganizationService {
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReplaceOrganization(ReplaceOrganizationRequest) returns (ReplaceOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

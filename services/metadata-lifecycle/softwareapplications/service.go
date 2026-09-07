@@ -45,7 +45,6 @@ type Authorizer interface {
 	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
 	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
-	CanReadContactPoint(context.Context, string) (domain.Result, error)
 }
 
 type Service struct {
@@ -86,29 +85,20 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, applicat
 	return application, nil
 }
 
-func (s *Service) Read(ctx context.Context, actor *domain.Actor, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, bool, error) {
+func (s *Service) Read(ctx context.Context, actor *domain.Actor, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	result, err := s.authorizer.CanReadSoftwareApplicationVersion(ctx, actor.OptionalString(), applicationID, versionID)
 	if err != nil {
-		return domain.SoftwareApplicationVersion{}, false, operationError("authorize application read", err)
+		return domain.SoftwareApplicationVersion{}, operationError("authorize application read", err)
 	}
 	if !result.Allowed {
-		return domain.SoftwareApplicationVersion{}, false, fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
-	}
-
-	includeContacts := false
-	if actor != nil {
-		contactResult, err := s.authorizer.CanReadContactPoint(ctx, string(*actor))
-		if err != nil {
-			return domain.SoftwareApplicationVersion{}, false, operationError("authorize contact point read", err)
-		}
-		includeContacts = contactResult.Allowed
+		return domain.SoftwareApplicationVersion{}, fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
 	}
 
 	application, err := s.store.Get(ctx, applicationID, versionID)
 	if err != nil {
-		return domain.SoftwareApplicationVersion{}, false, operationError("get application version", err)
+		return domain.SoftwareApplicationVersion{}, operationError("get application version", err)
 	}
-	return application, includeContacts, nil
+	return application, nil
 }
 
 func (s *Service) Submit(ctx context.Context, actor domain.Actor, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {

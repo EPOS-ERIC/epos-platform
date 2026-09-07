@@ -2,10 +2,25 @@ package domain
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
 )
+
+var keywordPattern = regexp.MustCompile(`^[A-Za-z0-9 _-]+$`)
+
+func normalizeKeywords(values []string) ([]string, error) {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" || !keywordPattern.MatchString(value) {
+			return nil, fmt.Errorf("keyword %q is invalid", value)
+		}
+		result = append(result, value)
+	}
+	return result, nil
+}
 
 func NewIdentifierInput(value IdentifierInput) (IdentifierInput, error) {
 	value.Type = IdentifierType(strings.TrimSpace(string(value.Type)))

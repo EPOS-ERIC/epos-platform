@@ -3,136 +3,89 @@ package clients
 import (
 	"context"
 	"fmt"
-	"net/http"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
+	"google.golang.org/grpc/metadata"
 )
 
-func (c *MetadataLifecycle) CreateGroup(ctx context.Context, actorID string, input domain.CreateGroupInput) (domain.Group, error) {
-	if c == nil || c.groups == nil {
-		return domain.Group{}, fmt.Errorf("metadata-lifecycle group client is not configured")
-	}
-
-	request := toClientCreateGroupRequest(input)
-
-	group, response, err := c.groups.CreateGroup(ctx).XEPOSUserID(actorID).CreateGroupRequest(request).Execute()
+func (c *MetadataLifecycle) CreateGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateGroupRequest) (*metadatalifecyclev1.CreateGroupResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.groups.CreateGroup(ctx, request)
 	if err != nil {
-		return domain.Group{}, wrapGroupManagementError("create metadata-lifecycle group", response, err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle group", err)
 	}
-	return toDomainGroup(group)
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ReplaceGroup(ctx context.Context, actorID, id string, input domain.ReplaceGroupInput) (domain.Group, error) {
-	if c == nil || c.groups == nil {
-		return domain.Group{}, fmt.Errorf("metadata-lifecycle group client is not configured")
-	}
-
-	request := toClientReplaceGroupRequest(input)
-
-	group, response, err := c.groups.ReplaceGroup(ctx, id).XEPOSUserID(actorID).ReplaceGroupRequest(request).Execute()
+func (c *MetadataLifecycle) ReplaceGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceGroupRequest) (*metadatalifecyclev1.ReplaceGroupResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.groups.ReplaceGroup(ctx, request)
 	if err != nil {
-		return domain.Group{}, wrapGroupManagementError("replace metadata-lifecycle group", response, err)
+		return nil, c.wrapError(ctx, "replace metadata-lifecycle group", err)
 	}
-	return toDomainGroup(group)
+	return response, nil
 }
 
-func (c *MetadataLifecycle) DeleteGroup(ctx context.Context, actorID, id string) error {
-	if c == nil || c.groups == nil {
-		return fmt.Errorf("metadata-lifecycle group client is not configured")
-	}
-	response, err := c.groups.DeleteGroup(ctx, id).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) DeleteGroup(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteGroupRequest) (*metadatalifecyclev1.DeleteGroupResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.groups.DeleteGroup(ctx, request)
 	if err != nil {
-		return wrapGroupManagementError("delete metadata-lifecycle group", response, err)
+		return nil, c.wrapError(ctx, "delete metadata-lifecycle group", err)
 	}
-	return nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ListGroupMemberships(ctx context.Context, groupID, actorID string) ([]domain.GroupMembership, error) {
-	if c == nil || c.access == nil {
-		return nil, fmt.Errorf("metadata-lifecycle group access client is not configured")
-	}
-	memberships, response, err := c.access.ListGroupMemberships(ctx, groupID).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) ListGroupMemberships(ctx context.Context, actorID string, request *metadatalifecyclev1.ListGroupMembershipsRequest) (*metadatalifecyclev1.ListGroupMembershipsResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.access.ListGroupMemberships(ctx, request)
 	if err != nil {
-		return nil, wrapGroupAccessError("list metadata-lifecycle group memberships", response, err)
+		return nil, c.wrapError(ctx, "list memberships", err)
 	}
-	return mapSliceErr(memberships, toDomainGroupMembershipValue)
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ListCategories(ctx context.Context, groupID string) ([]domain.Category, error) {
-	if c == nil || c.categories == nil {
-		return nil, fmt.Errorf("metadata-lifecycle category client is not configured")
-	}
-	categories, response, err := c.categories.ListGroupCategories(ctx, groupID).Execute()
+func (c *MetadataLifecycle) ListCategories(ctx context.Context, request *metadatalifecyclev1.ListCategoriesRequest) (*metadatalifecyclev1.ListCategoriesResponse, error) {
+	response, err := c.categories.ListCategories(ctx, request)
 	if err != nil {
-		return nil, wrapCategoryError("list metadata-lifecycle categories", response, err)
+		return nil, c.wrapError(ctx, "list metadata-lifecycle categories", err)
 	}
-	return mapSlice(categories, toDomainCategory), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) GetCategory(ctx context.Context, groupID, categoryID string) (domain.Category, error) {
-	if c == nil || c.categories == nil {
-		return domain.Category{}, fmt.Errorf("metadata-lifecycle category client is not configured")
-	}
-	category, response, err := c.categories.GetGroupCategory(ctx, groupID, categoryID).Execute()
+func (c *MetadataLifecycle) GetCategory(ctx context.Context, request *metadatalifecyclev1.GetCategoryRequest) (*metadatalifecyclev1.GetCategoryResponse, error) {
+	response, err := c.categories.GetCategory(ctx, request)
 	if err != nil {
-		return domain.Category{}, wrapCategoryError("get metadata-lifecycle category", response, err)
+		return nil, c.wrapError(ctx, "get metadata-lifecycle category", err)
 	}
-	if category == nil {
-		return domain.Category{}, fmt.Errorf("decode metadata-lifecycle category: response is empty")
+	if response == nil || response.Category == nil {
+		return nil, fmt.Errorf("decode metadata-lifecycle category: response is empty")
 	}
-	return toDomainCategory(*category), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) CreateCategory(ctx context.Context, actorID, groupID string, input domain.CreateCategoryInput) (domain.Category, error) {
-	if c == nil || c.categories == nil {
-		return domain.Category{}, fmt.Errorf("metadata-lifecycle category client is not configured")
-	}
-	category, response, err := c.categories.CreateGroupCategory(ctx, groupID).
-		XEPOSUserID(actorID).
-		CreateCategoryRequest(toClientCreateCategoryRequest(input)).
-		Execute()
+func (c *MetadataLifecycle) CreateCategory(ctx context.Context, actorID string, request *metadatalifecyclev1.CreateCategoryRequest) (*metadatalifecyclev1.CreateCategoryResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.categories.CreateCategory(ctx, request)
 	if err != nil {
-		return domain.Category{}, wrapCategoryError("create metadata-lifecycle category", response, err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle category", err)
 	}
-	if category == nil {
-		return domain.Category{}, fmt.Errorf("decode metadata-lifecycle category: response is empty")
-	}
-	return toDomainCategory(*category), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) ReplaceCategory(ctx context.Context, actorID, groupID, categoryID string, input domain.ReplaceCategoryInput) (domain.Category, error) {
-	if c == nil || c.categories == nil {
-		return domain.Category{}, fmt.Errorf("metadata-lifecycle category client is not configured")
-	}
-	request := toClientReplaceCategoryRequest(input)
-	category, response, err := c.categories.ReplaceGroupCategory(ctx, groupID, categoryID).
-		XEPOSUserID(actorID).
-		ReplaceCategoryRequest(request).
-		Execute()
+func (c *MetadataLifecycle) ReplaceCategory(ctx context.Context, actorID string, request *metadatalifecyclev1.ReplaceCategoryRequest) (*metadatalifecyclev1.ReplaceCategoryResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.categories.ReplaceCategory(ctx, request)
 	if err != nil {
-		return domain.Category{}, wrapCategoryError("replace metadata-lifecycle category", response, err)
+		return nil, c.wrapError(ctx, "replace metadata-lifecycle category", err)
 	}
-	if category == nil {
-		return domain.Category{}, fmt.Errorf("decode metadata-lifecycle category: response is empty")
-	}
-	return toDomainCategory(*category), nil
+	return response, nil
 }
 
-func (c *MetadataLifecycle) DeleteCategory(ctx context.Context, actorID, groupID, categoryID string) error {
-	if c == nil || c.categories == nil {
-		return fmt.Errorf("metadata-lifecycle category client is not configured")
-	}
-	response, err := c.categories.DeleteGroupCategory(ctx, groupID, categoryID).XEPOSUserID(actorID).Execute()
+func (c *MetadataLifecycle) DeleteCategory(ctx context.Context, actorID string, request *metadatalifecyclev1.DeleteCategoryRequest) (*metadatalifecyclev1.DeleteCategoryResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.categories.DeleteCategory(ctx, request)
 	if err != nil {
-		return wrapCategoryError("delete metadata-lifecycle category", response, err)
+		return nil, c.wrapError(ctx, "delete metadata-lifecycle category", err)
 	}
-	return nil
-}
-
-func wrapGroupManagementError(operation string, response *http.Response, err error) error {
-	return wrapGroupAccessError(operation, response, err)
-}
-
-func wrapCategoryError(operation string, response *http.Response, err error) error {
-	return wrapGroupAccessError(operation, response, err)
+	return response, nil
 }

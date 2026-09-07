@@ -1,10 +1,10 @@
-//nolint:dupl,exhaustruct_v5,wrapcheck
 package handlers
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
+	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
@@ -13,13 +13,13 @@ func (h *ogenHandler) ListContactPoints(ctx context.Context) ([]gatewayapi.Conta
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.canonical.ListContactPoints(ctx, actor)
+	v, err := h.metadataLifecycle.ListContactPoints(ctx, actor)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list contact points: %w", err)
 	}
 	out := []gatewayapi.ContactPoint{}
-	for _, x := range v {
-		mapped, err := mapContact(x)
+	for _, x := range v.ContactPoints {
+		mapped, err := toAPIProtoContactPoint(x)
 		if err != nil {
 			return nil, err
 		}
@@ -33,25 +33,25 @@ func (h *ogenHandler) GetContactPoint(ctx context.Context, q gatewayapi.GetConta
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.canonical.GetContactPoint(ctx, actor, q.ContactPointId.String())
+	v, err := h.metadataLifecycle.GetContactPoint(ctx, actor, q.ContactPointId.String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get contact point: %w", err)
 	}
-	r, err := mapContact(v)
+	r, err := toAPIProtoContactPoint(v.ContactPoint)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get contact point: %w", err)
 	}
 	return &r, nil
 }
 
 func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.CanonicalOrganization, error) {
-	v, err := h.canonical.ListOrganizations(ctx)
+	v, err := h.metadataLifecycle.ListOrganizations(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list organizations: %w", err)
 	}
 	out := []gatewayapi.CanonicalOrganization{}
-	for _, x := range v {
-		mapped, err := mapOrganization(x)
+	for _, x := range v.Organizations {
+		mapped, err := toAPIProtoOrganization(x)
 		if err != nil {
 			return nil, err
 		}
@@ -61,13 +61,13 @@ func (h *ogenHandler) ListOrganizations(ctx context.Context) ([]gatewayapi.Canon
 }
 
 func (h *ogenHandler) GetOrganization(ctx context.Context, p gatewayapi.GetOrganizationParams) (*gatewayapi.CanonicalOrganization, error) {
-	v, err := h.canonical.GetOrganization(ctx, p.OrganizationId.String())
+	v, err := h.metadataLifecycle.GetOrganization(ctx, p.OrganizationId.String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get organization: %w", err)
 	}
-	r, err := mapOrganization(v)
+	r, err := toAPIProtoOrganization(v.Organization)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get organization: %w", err)
 	}
 	return &r, nil
 }
@@ -77,13 +77,13 @@ func (h *ogenHandler) CreateOrganization(ctx context.Context, q *gatewayapi.Crea
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.canonical.CreateOrganization(ctx, a, mapCreateOrganization(q))
+	v, err := h.metadataLifecycle.CreateOrganization(ctx, a, toProtoCreateOrganizationRequest(q))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create organization: %w", err)
 	}
-	r, err := mapOrganization(v)
+	r, err := toAPIProtoOrganization(v.Organization)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create organization: %w", err)
 	}
 	return &r, nil
 }
@@ -93,21 +93,12 @@ func (h *ogenHandler) ReplaceOrganization(ctx context.Context, q *gatewayapi.Rep
 	if !ok {
 		return nil, authMissing()
 	}
-	in := domain.ReplaceOrganizationInput{Name: string(q.Name), Address: mapAddress(q.Address), LogoURL: fromNilString(q.LogoURL), PageURL: fromNilString(q.PageURL), Email: fromNilString(q.Email), LEICode: fromNilString(q.LeiCode), Parents: make([]string, len(q.Parents)), ContactPointIDs: make([]string, len(q.ContactPointIds))}
-	for i := range q.Parents {
-		in.Parents[i] = q.Parents[i].String()
-	}
-	for i := range q.ContactPointIds {
-		in.ContactPointIDs[i] = q.ContactPointIds[i].String()
-	}
-	for _, x := range q.Identifiers {
-		in.Identifiers = append(in.Identifiers, domain.OrganizationIdentifierInput{Type: string(x.Type), Value: string(x.Value)})
-	}
-	v, err := h.canonical.ReplaceOrganization(ctx, a, p.OrganizationId.String(), in)
+	in := toProtoReplaceOrganizationRequest(q, p.OrganizationId.String())
+	v, err := h.metadataLifecycle.ReplaceOrganization(ctx, a, in)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("replace organization: %w", err)
 	}
-	r, err := mapOrganization(v)
+	r, err := toAPIProtoOrganization(v.Organization)
 	if err != nil {
 		return nil, err
 	}
@@ -119,11 +110,14 @@ func (h *ogenHandler) CreateContactPoint(ctx context.Context, q *gatewayapi.Crea
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.canonical.CreateContactPoint(ctx, a, domain.CreateContactPointInput{Email: string(q.Email), Role: string(q.Role)})
+	v, err := h.metadataLifecycle.CreateContactPoint(ctx, a, &metadatalifecyclev1.CreateContactPointRequest{
+		Email: string(q.Email),
+		Role:  string(q.Role),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create contact point: %w", err)
 	}
-	r, err := mapContact(v)
+	r, err := toAPIProtoContactPoint(v.ContactPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -135,11 +129,15 @@ func (h *ogenHandler) ReplaceContactPoint(ctx context.Context, q *gatewayapi.Rep
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.canonical.ReplaceContactPoint(ctx, a, p.ContactPointId.String(), domain.ReplaceContactPointInput{Email: string(q.Email), Role: string(q.Role)})
+	v, err := h.metadataLifecycle.ReplaceContactPoint(ctx, a, &metadatalifecyclev1.ReplaceContactPointRequest{
+		ContactPointId: p.ContactPointId.String(),
+		Email:          string(q.Email),
+		Role:           string(q.Role),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("replace contact point: %w", err)
 	}
-	r, err := mapContact(v)
+	r, err := toAPIProtoContactPoint(v.ContactPoint)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +149,10 @@ func (h *ogenHandler) DeleteContactPoint(ctx context.Context, p gatewayapi.Delet
 	if !ok {
 		return authMissing()
 	}
-	return h.canonical.DeleteContactPoint(ctx, a, p.ContactPointId.String())
+	if _, err := h.metadataLifecycle.DeleteContactPoint(ctx, a, &metadatalifecyclev1.DeleteContactPointRequest{ContactPointId: p.ContactPointId.String()}); err != nil {
+		return fmt.Errorf("delete contact point: %w", err)
+	}
+	return nil
 }
 
 func (h *ogenHandler) DeleteOrganization(ctx context.Context, p gatewayapi.DeleteOrganizationParams) error {
@@ -159,5 +160,8 @@ func (h *ogenHandler) DeleteOrganization(ctx context.Context, p gatewayapi.Delet
 	if !ok {
 		return authMissing()
 	}
-	return h.canonical.DeleteOrganization(ctx, a, p.OrganizationId.String())
+	if _, err := h.metadataLifecycle.DeleteOrganization(ctx, a, &metadatalifecyclev1.DeleteOrganizationRequest{OrganizationId: p.OrganizationId.String()}); err != nil {
+		return fmt.Errorf("delete organization: %w", err)
+	}
+	return nil
 }

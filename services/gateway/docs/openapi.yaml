@@ -348,7 +348,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/UserSummary"
+                  $ref: "#/components/schemas/UserListItem"
               examples:
                 list:
                   summary: User list
@@ -360,6 +360,8 @@ paths:
                       global_roles: [ADMIN]
                       global_permissions: []
                       status: "ACTIVE"
+                      created_at: "2026-06-17T12:48:45.574Z"
+                      updated_at: "2026-06-17T12:48:45.574Z"
         default:
           description: Gateway error
           content:
@@ -855,7 +857,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}:
     parameters:
-      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/GetUserID"
     get:
       tags:
         - Users
@@ -922,7 +924,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/global-permissions/{permission}:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/Permission"
     put:
       tags:
@@ -960,7 +962,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/block:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
     post:
       tags:
         - Users
@@ -986,7 +988,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/unblock:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
     post:
       tags:
         - Users
@@ -1006,7 +1008,7 @@ paths:
                 $ref: "#/components/schemas/Problem"
   /users/{id}/global-roles/{role}:
     parameters:
-      - $ref: "#/components/parameters/UserUUID"
+      - $ref: "#/components/parameters/UserID"
       - $ref: "#/components/parameters/GlobalRole"
     put:
       tags:
@@ -1137,18 +1139,14 @@ paths:
     delete:
       tags:
         - Resources
-      summary: Discard resource draft version
-      description: Permanently discards an editable draft version.
+      summary: Delete resource draft version
+      description: Permanently deletes an existing editable draft version. This operation does not create or assign a lifecycle status.
       operationId: discardResourceDraftVersion
       security:
         - bearerAuth: []
       responses:
-        "200":
-          description: Draft version discarded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WriteResult"
+        "204":
+          description: Draft version deleted
         default:
           description: Gateway error
           content:
@@ -1404,23 +1402,22 @@ components:
         type: string
         format: uuid
 
-    UserId:
+    GetUserID:
       name: id
       in: path
       required: true
-      description: User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup.
+      description: User identifier. Use `self` to resolve the authenticated user.
       schema:
         type: string
         example: self
 
-    UserUUID:
+    UserID:
       name: id
       in: path
       required: true
       description: User identifier.
       schema:
         type: string
-        format: uuid
 
     Permission:
       name: permission
@@ -1651,7 +1648,7 @@ components:
       schema:
         type: array
         items:
-          $ref: "#/components/schemas/DiscoveryVersioningStatus"
+          $ref: "#/components/schemas/VersioningStatus"
         default:
           - PUBLISHED
       style: form
@@ -1668,7 +1665,7 @@ components:
       schema:
         type: array
         items:
-          type: string
+          $ref: "#/components/schemas/Keyword"
       style: form
       explode: false
 
@@ -1800,6 +1797,11 @@ components:
       minLength: 1
       pattern: '[^\u0009-\u000D\u0020\u0085\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]'
 
+    Keyword:
+      type: string
+      minLength: 1
+      pattern: '^[A-Za-z0-9 _-]+$'
+
     DiscoveryResourceType:
       type: string
       description: Resource type identifier used in discovery results.
@@ -1815,19 +1817,13 @@ components:
 
     VersioningStatus:
       type: string
-      description: Lowercase lifecycle state returned by write operations.
+      description: Lifecycle state used by resource and discovery operations.
       enum:
-        - published
-        - draft
-        - submitted
-        - archived
-        - discarded
-        - rejected
-
-    DiscoveryVersioningStatus:
-      type: string
-      description: Uppercase versioning state accepted by the discovery filter.
-      enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
+        - PUBLISHED
+        - DRAFT
+        - SUBMITTED
+        - ARCHIVED
+        - REJECTED
 
     DatasetDraftMetadata:
       type: object
@@ -1835,8 +1831,10 @@ components:
       required: [title]
       properties:
         title: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string }
-        keywords: { type: string }
+        description: { $ref: "#/components/schemas/NonBlankString" }
+        keywords:
+          type: array
+          items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { type: string, nullable: true }
         quality_annotation: { type: string, nullable: true }
         access_right: { type: string, nullable: true }
@@ -1855,7 +1853,7 @@ components:
         persistent_identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/IdentifierDraft" },
+            items: { $ref: "#/components/schemas/IdentifierInput" },
           }
         contact_points: { type: array, items: { type: string, format: uuid } }
         providers: { type: array, items: { type: string, format: uuid } }
@@ -1866,11 +1864,13 @@ components:
     SoftwareApplicationDraftMetadata:
       type: object
       additionalProperties: false
-      required: [name]
+      required: [name, description]
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string }
-        keywords: { type: string }
+        description: { $ref: "#/components/schemas/NonBlankString" }
+        keywords:
+          type: array
+          items: { $ref: "#/components/schemas/Keyword" }
         license: { type: string, nullable: true }
         version: { type: string, nullable: true }
         download_url: { type: string, format: uri }
@@ -1881,7 +1881,7 @@ components:
         identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/SoftwareIdentifier" },
+            items: { $ref: "#/components/schemas/IdentifierInput" },
           }
         categories: { type: array, items: { type: string, format: uuid } }
         contact_points: { type: array, items: { type: string, format: uuid } }
@@ -1889,11 +1889,13 @@ components:
     SoftwareSourceCodeDraftMetadata:
       type: object
       additionalProperties: false
-      required: [name]
+      required: [name, description]
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string }
-        keywords: { type: string }
+        description: { $ref: "#/components/schemas/NonBlankString" }
+        keywords:
+          type: array
+          items: { $ref: "#/components/schemas/Keyword" }
         repository: { type: string, format: uri }
         programming_language: { type: string }
         license: { type: string, nullable: true }
@@ -1905,20 +1907,12 @@ components:
         identifiers:
           {
             type: array,
-            items: { $ref: "#/components/schemas/SoftwareIdentifier" },
+            items: { $ref: "#/components/schemas/IdentifierInput" },
           }
         categories: { type: array, items: { type: string, format: uuid } }
         contact_points: { type: array, items: { type: string, format: uuid } }
 
-    SoftwareIdentifier:
-      type: object
-      additionalProperties: false
-      required: [type, value]
-      properties:
-        type: { $ref: "#/components/schemas/NonBlankString" }
-        value: { $ref: "#/components/schemas/NonBlankString" }
-
-    IdentifierDraft:
+    IdentifierInput:
       type: object
       additionalProperties: false
       required: [type, value]
@@ -1951,7 +1945,7 @@ components:
             - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
-        byte_size: { type: integer, format: int64, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebServiceDraft" }
 
     DownloadableFileDistributionDraft:
@@ -1968,7 +1962,7 @@ components:
             - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
-        byte_size: { type: integer, format: int64, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebServiceDraft:
@@ -2300,7 +2294,7 @@ components:
         resource_id: { type: string, format: uuid }
         version_id: { type: string, format: uuid }
         revision: { type: integer, format: int32 }
-        status: { type: string }
+        status: { $ref: "#/components/schemas/VersioningStatus" }
         # TODO: make this not required, only have the creator if the user is authenticated and a member of a group, otherwise omit this field complitely, we don't want to leak other user's ids
         created_by: { type: string }
         group_id: { type: string, format: uuid }
@@ -2340,7 +2334,9 @@ components:
         id: { type: string, format: uuid }
         title: { type: string }
         description: { type: string }
-        keywords: { type: string }
+        keywords:
+          type: array
+          items: { $ref: "#/components/schemas/Keyword" }
         accrual_periodicity: { type: string, nullable: true }
         quality_annotation: { type: string, nullable: true }
         access_right: { type: string, nullable: true }
@@ -2356,7 +2352,7 @@ components:
         temporal_coverage: { $ref: "#/components/schemas/TemporalCoverage" }
         persistent_identifiers:
           type: array
-          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+          items: { $ref: "#/components/schemas/Identifier" }
         contact_points:
           type: array
           nullable: true
@@ -2393,7 +2389,9 @@ components:
         main_entity_of_page: { type: string, nullable: true }
         license: { type: string, nullable: true }
         version: { type: string, nullable: true }
-        keywords: { type: string }
+        keywords:
+          type: array
+          items: { $ref: "#/components/schemas/Keyword" }
         download_url: { type: string, nullable: true }
         requirements: { type: string, nullable: true }
         operating_system: { type: string, nullable: true }
@@ -2402,7 +2400,7 @@ components:
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+          items: { $ref: "#/components/schemas/Identifier" }
         contact_points:
           type: array
           nullable: true
@@ -2432,7 +2430,9 @@ components:
         name: { type: string }
         description: { type: string }
         programming_language: { type: string, nullable: true }
-        keywords: { type: string }
+        keywords:
+          type: array
+          items: { $ref: "#/components/schemas/Keyword" }
         repository: { type: string, nullable: true }
         license: { type: string, nullable: true }
         software_requirements: { type: string, nullable: true }
@@ -2444,7 +2444,7 @@ components:
           items: { $ref: "#/components/schemas/ResourceVersionReference" }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/ResourceIdentifier" }
+          items: { $ref: "#/components/schemas/Identifier" }
         contact_points:
           type: array
           nullable: true
@@ -2478,7 +2478,7 @@ components:
             - "http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
-        byte_size: { type: integer, format: int64, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         web_service: { $ref: "#/components/schemas/WebService" }
 
     DownloadableFileDistribution:
@@ -2496,7 +2496,7 @@ components:
             - "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE"
         issued: { type: string, format: date-time, nullable: true }
         modified: { type: string, format: date-time, nullable: true }
-        byte_size: { type: integer, format: int64, nullable: true }
+        byte_size: { type: integer, format: int64, nullable: true, minimum: 1 }
         downloadable_file: { $ref: "#/components/schemas/DownloadableFile" }
 
     WebService:
@@ -2524,13 +2524,13 @@ components:
           type: array
           items: { type: string, format: uuid }
 
-    ResourceIdentifier:
+    Identifier:
       type: object
       required: [id, type, value]
       properties:
         id: { type: string, format: uuid }
-        type: { type: string }
-        value: { type: string }
+        type: { type: string, minLength: 1 }
+        value: { type: string, minLength: 1 }
 
     ResourceVersionReference:
       type: object
@@ -2615,7 +2615,20 @@ components:
           type: string
 
     DiscoveryItem:
+      oneOf:
+        - $ref: "#/components/schemas/DatasetDiscoveryItem"
+        - $ref: "#/components/schemas/SoftwareApplicationDiscoveryItem"
+        - $ref: "#/components/schemas/SoftwareSourceCodeDiscoveryItem"
+      discriminator:
+        propertyName: type
+        mapping:
+          dataset: "#/components/schemas/DatasetDiscoveryItem"
+          software-application: "#/components/schemas/SoftwareApplicationDiscoveryItem"
+          software-source-code: "#/components/schemas/SoftwareSourceCodeDiscoveryItem"
+
+    DatasetDiscoveryItem:
       type: object
+      additionalProperties: false
       required:
         - type
         - resource_id
@@ -2626,51 +2639,90 @@ components:
         - concept
         - group
       properties:
-        type:
-          $ref: "#/components/schemas/DiscoveryResourceType"
-        resource_id:
-          type: string
-          format: uuid
-        version_id:
-          type: string
-          format: uuid
-        name:
-          type: string
+        type: { type: string, enum: [dataset] }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
         status:
-          type: string
-          enum: [PUBLISHED, DRAFT, SUBMITTED, ARCHIVED, REJECTED]
-        updated_at:
-          type: string
-          format: date-time
-        concept:
-          type: string
-          enum: [DATA, FACILITIES, SOFTWARE]
-        created_by:
-          $ref: "#/components/schemas/Reference"
-        group:
-          $ref: "#/components/schemas/Reference"
+          $ref: "#/components/schemas/VersioningStatus"
+        updated_at: { type: string, format: date-time }
+        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        created_by: { $ref: "#/components/schemas/Reference" }
+        group: { $ref: "#/components/schemas/Reference" }
         providers:
           type: array
-          items:
-            $ref: "#/components/schemas/Reference"
-        creators:
-          type: array
-          items:
-            $ref: "#/components/schemas/Reference"
+          items: { $ref: "#/components/schemas/Reference" }
         categories:
           type: array
-          items:
-            $ref: "#/components/schemas/Reference"
+          items: { $ref: "#/components/schemas/Reference" }
         distributions:
           type: array
-          items:
-            $ref: "#/components/schemas/Reference"
+          items: { $ref: "#/components/schemas/Reference" }
+
+    SoftwareApplicationDiscoveryItem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - resource_id
+        - version_id
+        - name
+        - status
+        - updated_at
+        - concept
+        - group
+      properties:
+        type: { type: string, enum: [software-application] }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
+        updated_at: { type: string, format: date-time }
+        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        created_by: { $ref: "#/components/schemas/Reference" }
+        group: { $ref: "#/components/schemas/Reference" }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
+
+    SoftwareSourceCodeDiscoveryItem:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - resource_id
+        - version_id
+        - name
+        - status
+        - updated_at
+        - concept
+        - group
+      properties:
+        type: { type: string, enum: [software-source-code] }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        name: { type: string }
+        status:
+          $ref: "#/components/schemas/VersioningStatus"
+        updated_at: { type: string, format: date-time }
+        concept: { $ref: "#/components/schemas/DiscoveryConcept" }
+        created_by: { $ref: "#/components/schemas/Reference" }
+        group: { $ref: "#/components/schemas/Reference" }
+        creators:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Reference" }
 
     UserStatus:
       type: string
       enum:
         - ACTIVE
-        - INACTIVE
         - BLOCKED
 
     BlockUserRequest:
@@ -2700,7 +2752,7 @@ components:
 
     User:
       allOf:
-        - $ref: "#/components/schemas/UserSummary"
+        - $ref: "#/components/schemas/UserListItem"
         - type: object
           description: User record returned by gateway user endpoints.
           required:
@@ -2712,9 +2764,9 @@ components:
               items:
                 $ref: "#/components/schemas/UserMembershipSummary"
 
-    UserSummary:
+    UserListItem:
       type: object
-      description: User record returned by user endpoints.
+      description: User record returned by the user list endpoint.
       required:
         - id
         - email
@@ -2723,6 +2775,8 @@ components:
         - status
         - global_roles
         - global_permissions
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -2742,6 +2796,12 @@ components:
           type: array
           items:
             type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     Category:
       type: object
       required: [id, group_id, parent_category_id, name]
@@ -2749,7 +2809,7 @@ components:
         id: { type: string, format: uuid }
         group_id: { type: string, format: uuid }
         parent_category_id: { type: string, format: uuid, nullable: true }
-        name: { type: string }
+        name: { type: string, minLength: 1 }
     CreateCategoryRequest:
       type: object
       required: [name]
@@ -2770,11 +2830,11 @@ components:
       additionalProperties: false
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string, nullable: true }
-        label: { type: string, nullable: true }
-        logo: { type: string, nullable: true }
-        page: { type: string, nullable: true }
-        color: { type: string, nullable: true }
+        description: { type: string, nullable: true, minLength: 1 }
+        label: { type: string, nullable: true, minLength: 1 }
+        logo: { type: string, nullable: true, minLength: 1 }
+        page: { type: string, nullable: true, minLength: 1 }
+        color: { type: string, nullable: true, minLength: 1 }
         position: { type: integer, format: int32 }
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
     ReplaceGroupRequest:
@@ -2783,11 +2843,11 @@ components:
       additionalProperties: false
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string, nullable: true }
-        label: { type: string, nullable: true }
-        logo: { type: string, nullable: true }
-        page: { type: string, nullable: true }
-        color: { type: string, nullable: true }
+        description: { type: string, nullable: true, minLength: 1 }
+        label: { type: string, nullable: true, minLength: 1 }
+        logo: { type: string, nullable: true, minLength: 1 }
+        page: { type: string, nullable: true, minLength: 1 }
+        color: { type: string, nullable: true, minLength: 1 }
         position: { type: integer, format: int32 }
         concept: { type: string, enum: [DATA, FACILITIES, SOFTWARE] }
     ContactPoint:
@@ -2795,59 +2855,45 @@ components:
       required: [id, email, role]
       properties:
         id: { type: string, format: uuid }
-        email: { type: string }
-        role: { type: string }
+        email: { type: string, format: email, minLength: 1 }
+        role: { type: string, minLength: 1 }
     CreateContactPointRequest:
       type: object
       required: [email, role]
       additionalProperties: false
       properties:
-        email: { $ref: "#/components/schemas/NonBlankString" }
+        email: { type: string, format: email, minLength: 1 }
         role: { $ref: "#/components/schemas/NonBlankString" }
     ReplaceContactPointRequest:
       type: object
       required: [email, role]
       additionalProperties: false
       properties:
-        email: { $ref: "#/components/schemas/NonBlankString" }
+        email: { type: string, format: email, minLength: 1 }
         role: { $ref: "#/components/schemas/NonBlankString" }
     OrganizationAddress:
       type: object
       required: [street, locality, postal_code, country]
       additionalProperties: false
       properties:
-        street: { type: string, nullable: true }
-        locality: { type: string, nullable: true }
-        postal_code: { type: string, nullable: true }
-        country: { type: string, nullable: true }
-    OrganizationIdentifier:
-      type: object
-      required: [id, type, value]
-      properties:
-        id: { type: string, format: uuid }
-        type: { type: string }
-        value: { type: string }
-    OrganizationIdentifierRequest:
-      type: object
-      required: [type, value]
-      additionalProperties: false
-      properties:
-        type: { $ref: "#/components/schemas/NonBlankString" }
-        value: { $ref: "#/components/schemas/NonBlankString" }
+        street: { type: string, nullable: true, minLength: 1 }
+        locality: { type: string, nullable: true, minLength: 1 }
+        postal_code: { type: string, nullable: true, minLength: 1 }
+        country: { type: string, nullable: true, minLength: 1 }
     CanonicalOrganization:
       type: object
       required: [id, name, address, identifiers, parents, contact_point_ids]
       properties:
         id: { type: string, format: uuid }
-        name: { type: string }
+        name: { type: string, minLength: 1 }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
-        logo_url: { type: string, nullable: true }
-        page_url: { type: string, nullable: true }
-        email: { type: string, nullable: true }
-        lei_code: { type: string, nullable: true }
+        logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        page_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        email: { type: string, format: email, nullable: true, minLength: 1 }
+        lei_code: { type: string, nullable: true, minLength: 1 }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/OrganizationIdentifier" }
+          items: { $ref: "#/components/schemas/Identifier" }
         parents:
           type: array
           items: { type: string, format: uuid }
@@ -2861,13 +2907,13 @@ components:
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
-        logo_url: { type: string, nullable: true }
-        page_url: { type: string, nullable: true }
-        email: { type: string, nullable: true }
-        lei_code: { type: string, nullable: true }
+        logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        page_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        email: { type: string, format: email, nullable: true, minLength: 1 }
+        lei_code: { type: string, nullable: true, minLength: 1 }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/OrganizationIdentifierRequest" }
+          items: { $ref: "#/components/schemas/IdentifierInput" }
         parents:
           type: array
           items: { type: string, format: uuid }
@@ -2892,13 +2938,13 @@ components:
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
         address: { $ref: "#/components/schemas/OrganizationAddress" }
-        logo_url: { type: string, nullable: true }
-        page_url: { type: string, nullable: true }
-        email: { type: string, nullable: true }
-        lei_code: { type: string, nullable: true }
+        logo_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        page_url: { type: string, format: uri, nullable: true, minLength: 1 }
+        email: { type: string, format: email, nullable: true, minLength: 1 }
+        lei_code: { type: string, nullable: true, minLength: 1 }
         identifiers:
           type: array
-          items: { $ref: "#/components/schemas/OrganizationIdentifierRequest" }
+          items: { $ref: "#/components/schemas/IdentifierInput" }
         parents:
           type: array
           items: { type: string, format: uuid }
@@ -2919,21 +2965,27 @@ components:
           format: uuid
         name:
           type: string
+          minLength: 1
         description:
           type: string
           nullable: true
+          minLength: 1
         label:
           type: string
           nullable: true
+          minLength: 1
         logo:
           type: string
           nullable: true
+          minLength: 1
         page:
           type: string
           nullable: true
+          minLength: 1
         color:
           type: string
           nullable: true
+          minLength: 1
         position:
           type: integer
           format: int32

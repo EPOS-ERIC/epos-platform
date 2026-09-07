@@ -2404,7 +2404,8 @@ func (s *Server) handleDeleteOrganizationRequest(args [1]string, argsEscaped boo
 
 // handleDiscardResourceDraftVersionRequest handles discardResourceDraftVersion operation.
 //
-// Permanently discards an editable draft version.
+// Permanently deletes an existing editable draft version. This operation does not create or assign a
+// lifecycle status.
 //
 // DELETE /resources/{resourceType}/{id}/versions/{versionId}/draft
 func (s *Server) handleDiscardResourceDraftVersionRequest(args [3]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
@@ -2478,12 +2479,12 @@ func (s *Server) handleDiscardResourceDraftVersionRequest(args [3]string, argsEs
 
 	var rawBody []byte
 
-	var response *WriteResult
+	var response *DiscardResourceDraftVersionNoContent
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
 			OperationName:    DiscardResourceDraftVersionOperation,
-			OperationSummary: "Discard resource draft version",
+			OperationSummary: "Delete resource draft version",
 			OperationID:      "discardResourceDraftVersion",
 			Body:             nil,
 			RawBody:          rawBody,
@@ -2507,7 +2508,7 @@ func (s *Server) handleDiscardResourceDraftVersionRequest(args [3]string, argsEs
 		type (
 			Request  = struct{}
 			Params   = DiscardResourceDraftVersionParams
-			Response = *WriteResult
+			Response = *DiscardResourceDraftVersionNoContent
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
@@ -2518,12 +2519,12 @@ func (s *Server) handleDiscardResourceDraftVersionRequest(args [3]string, argsEs
 			mreq,
 			unpackDiscardResourceDraftVersionParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.DiscardResourceDraftVersion(ctx, params)
+				err = s.h.DiscardResourceDraftVersion(ctx, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.DiscardResourceDraftVersion(ctx, params)
+		err = s.h.DiscardResourceDraftVersion(ctx, params)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*ProblemStatusCode](err); ok {
@@ -4761,7 +4762,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 
 	var rawBody []byte
 
-	var response []UserSummary
+	var response []UserListItem
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -4777,7 +4778,7 @@ func (s *Server) handleListUsersRequest(args [0]string, argsEscaped bool, w http
 		type (
 			Request  = struct{}
 			Params   = struct{}
-			Response = []UserSummary
+			Response = []UserListItem
 		)
 		response, err = middleware.HookMiddleware[
 			Request,

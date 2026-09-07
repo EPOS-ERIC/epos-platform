@@ -11,7 +11,7 @@ import (
 type DatasetInput struct {
 	Title                 string
 	Description           string
-	Keywords              string
+	Keywords              []string
 	AccrualPeriodicity    *string
 	QualityAnnotation     *string
 	AccessRight           *string
@@ -42,7 +42,7 @@ type DatasetMetadata struct {
 	ID                    uuid.UUID
 	Title                 string
 	Description           string
-	Keywords              string
+	Keywords              []string
 	AccrualPeriodicity    *string
 	QualityAnnotation     *string
 	AccessRight           *string

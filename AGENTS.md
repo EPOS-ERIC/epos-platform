@@ -40,6 +40,7 @@
 - Expect the user to run `tilt up` with the development stack deployed. Code changes should be reflected in the running environment through the existing development workflow.
 - Agents may inspect container logs, execute commands in local containers, and read or edit local development database tables when required for the task.
 - Local development data and containers are volatile and must not be treated as persistent or production data.
+- Use `make get-dev-token` to get admin token to use the local tilt environment.
 - Ask the user before cleaning or deleting the local environment. Cleanup requires stopping Tilt, running the appropriate clean operation, and restarting Tilt; do not perform those steps autonomously.
 
 ## Observability

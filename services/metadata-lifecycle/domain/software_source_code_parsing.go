@@ -15,6 +15,11 @@ func NewSoftwareSourceCodeInput(value SoftwareSourceCodeInput) (SoftwareSourceCo
 	if value.Name == "" {
 		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code name is required: %w", ErrSoftwareSourceCodeInvalid)
 	}
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code keywords: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+	}
+	value.Keywords = keywords
 	if err := validateUUIDList(value.CreatorIDs, "creator"); err != nil {
 		return SoftwareSourceCodeInput{}, fmt.Errorf("software source code creators: %w: %w", err, ErrSoftwareSourceCodeInvalid)
 	}
@@ -74,6 +79,11 @@ func NewSoftwareSourceCodeMetadata(value SoftwareSourceCodeMetadata) (SoftwareSo
 	if value.Name == "" {
 		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code name is required: %w", ErrSoftwareSourceCodeInvalid)
 	}
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return SoftwareSourceCodeMetadata{}, fmt.Errorf("software source code keywords: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+	}
+	value.Keywords = keywords
 
 	seenIdentifiers := make(map[uuid.UUID]struct{}, len(value.Identifiers))
 	for _, identifier := range value.Identifiers {

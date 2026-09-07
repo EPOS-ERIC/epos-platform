@@ -6,17 +6,21 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
 )
 
 type securityHandler struct {
-	auth        *auth.Service
-	provisioner *clients.MetadataLifecycle
+	auth     *auth.Service
+	identity *identity.Service
 }
 
-func NewSecurityHandler(authService *auth.Service, provisioner *clients.MetadataLifecycle) gatewayapi.SecurityHandler {
-	return &securityHandler{auth: authService, provisioner: provisioner}
+func NewSecurityHandler(authService *auth.Service, identity *identity.Service) gatewayapi.SecurityHandler {
+	return &securityHandler{
+		auth:     authService,
+		identity: identity,
+	}
 }
 
 var _ gatewayapi.SecurityHandler = (*securityHandler)(nil)
@@ -29,7 +33,8 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 		}
 		return nil, fmt.Errorf("authenticate bearer token: %w", err)
 	}
-	user, err := s.provisioner.EnsureUser(ctx, clients.ActorIdentity{
+
+	user, err := s.identity.EnsureUser(ctx, domain.ActorIdentity{
 		AuthIdentifier: identity.AuthIdentifier,
 		Email:          identity.Email,
 		GivenName:      identity.GivenName,
@@ -38,5 +43,6 @@ func (s *securityHandler) HandleBearerAuth(ctx context.Context, _ gatewayapi.Ope
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", errProvisioningUnavailable, err)
 	}
+
 	return withActor(ctx, user), nil
 }

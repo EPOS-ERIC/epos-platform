@@ -3,17 +3,12 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	ServerPort     string        `envconfig:"PORT" default:"5000"`
-	RequestTimeout time.Duration `envconfig:"REQUEST_TIMEOUT" default:"30s"`
-	ReadTimeout    time.Duration `envconfig:"READ_TIMEOUT" default:"15s"`
-	WriteTimeout   time.Duration `envconfig:"WRITE_TIMEOUT" default:"30s"`
-	IdleTimeout    time.Duration `envconfig:"IDLE_TIMEOUT" default:"60s"`
+	ServerPort string `envconfig:"SERVER_PORT" default:"5001"`
 
 	DBHost     string `envconfig:"DB_HOST" default:"localhost"`
 	DBPort     string `envconfig:"DB_PORT" default:"5432"`
@@ -36,22 +31,10 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
-// Validate checks required values and timeout settings.
+// Validate checks required values.
 func (c *Config) Validate() error {
 	if c.ServerPort == "" {
-		return fmt.Errorf("port is required")
-	}
-	if c.RequestTimeout <= 0 {
-		return fmt.Errorf("request_timeout must be greater than zero")
-	}
-	if c.ReadTimeout <= 0 {
-		return fmt.Errorf("read_timeout must be greater than zero")
-	}
-	if c.WriteTimeout <= 0 {
-		return fmt.Errorf("write_timeout must be greater than zero")
-	}
-	if c.IdleTimeout <= 0 {
-		return fmt.Errorf("idle_timeout must be greater than zero")
+		return fmt.Errorf("server_port is required")
 	}
 	if c.DBHost == "" {
 		return fmt.Errorf("db_host is required")

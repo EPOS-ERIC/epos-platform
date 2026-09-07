@@ -84,7 +84,7 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 	}
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001") {
-		return domain.ImportResult{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, domain.ErrImportConflict)
+		return domain.ImportResult{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, errors.Join(domain.ErrImportConflict, pgErr))
 	}
 	return domain.ImportResult{}, fmt.Errorf("metadata import transaction: %w", err)
 }

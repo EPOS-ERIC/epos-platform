@@ -10,13 +10,18 @@ import (
 )
 
 func toDomainUserSummary(row sqlc.ListUsersRow, globalRoles, globalPermissions []string) (domain.UserSummary, error) {
+	roles, err := toDomainGlobalRoles(globalRoles)
+	if err != nil {
+		return domain.UserSummary{}, fmt.Errorf("map global roles: %w", err)
+	}
+
 	user, err := domain.NewUserSummary(domain.UserSummary{
 		ID:                row.ID,
 		Email:             row.Email,
 		GivenName:         row.GivenName,
 		FamilyName:        row.FamilyName,
 		Status:            domain.UserStatus(row.Status),
-		GlobalRoles:       globalRoles,
+		GlobalRoles:       roles,
 		GlobalPermissions: globalPermissions,
 	})
 	if err != nil {
@@ -36,8 +41,13 @@ func toDomainUser(
 	updatedAt time.Time,
 	globalRoles []string,
 	globalPermissions []string,
-	memberships []domain.UserMembership,
+	memberships []domain.Membership,
 ) (domain.User, error) {
+	roles, err := toDomainGlobalRoles(globalRoles)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("map global roles: %w", err)
+	}
+
 	user, err := domain.NewUser(domain.User{
 		ID:                id,
 		Email:             email,
@@ -46,7 +56,7 @@ func toDomainUser(
 		Status:            domain.UserStatus(status),
 		CreatedAt:         createdAt,
 		UpdatedAt:         updatedAt,
-		GlobalRoles:       globalRoles,
+		GlobalRoles:       roles,
 		GlobalPermissions: globalPermissions,
 		Memberships:       memberships,
 	})
@@ -55,6 +65,23 @@ func toDomainUser(
 	}
 
 	return user, nil
+}
+
+func toDomainGlobalRoles(values []string) ([]domain.GlobalRole, error) {
+	if values == nil {
+		return nil, nil
+	}
+
+	roles := make([]domain.GlobalRole, len(values))
+	for i, value := range values {
+		role := domain.GlobalRole(value)
+		if role != domain.GlobalRoleAdmin {
+			return nil, fmt.Errorf("unknown global role: %q", value)
+		}
+		roles[i] = role
+	}
+
+	return roles, nil
 }
 
 func toDomainRoleRequest(id uuid.UUID, role string, status sqlc.RoleRequestStatus, requestedAt time.Time) (domain.RoleRequest, error) {

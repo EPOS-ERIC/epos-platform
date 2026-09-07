@@ -13,7 +13,7 @@ type SoftwareApplicationInput struct {
 	MainEntityOfPage *string
 	License          *string
 	Version          *string
-	Keywords         string
+	Keywords         []string
 	DownloadURL      *string
 	Requirements     *string
 	OperatingSystem  *string
@@ -42,7 +42,7 @@ type SoftwareApplicationMetadata struct {
 	MainEntityOfPage *string
 	License          *string
 	Version          *string
-	Keywords         string
+	Keywords         []string
 	DownloadURL      *string
 	Requirements     *string
 	OperatingSystem  *string

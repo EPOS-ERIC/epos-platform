@@ -46,7 +46,7 @@ BEGIN
                     AND group_id = (row_data->>'group_id')::uuid
             )
         ) THEN
-        RAISE EXCEPTION 'inactive memberships cannot retain group roles or permissions';
+        RAISE EXCEPTION 'non-active memberships cannot retain group roles or permissions';
     END IF;
 
     IF TG_TABLE_NAME = 'global_permission_grants'

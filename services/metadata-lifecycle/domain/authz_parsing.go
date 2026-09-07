@@ -6,7 +6,7 @@ import "github.com/google/uuid"
 func NewPersistedUserStatus(value string) (UserStatus, error) {
 	status := UserStatus(value)
 	switch status {
-	case UserStatusActive, UserStatusInactive, UserStatusBlocked:
+	case UserStatusActive, UserStatusBlocked:
 		return status, nil
 	default:
 		return "", ErrInvalidAuthorization

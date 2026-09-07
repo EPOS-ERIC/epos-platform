@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dbtx"
+	resourcedb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/resource"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/domain"
 	"github.com/google/uuid"
@@ -572,7 +573,7 @@ func readDatasetMetadata(ctx context.Context, q *sqlc.Queries, version sqlc.GetL
 		ID:                    version.ID,
 		Title:                 version.Title,
 		Description:           version.Description,
-		Keywords:              version.Keywords,
+		Keywords:              resourcedb.KeywordsFromString(version.Keywords),
 		AccrualPeriodicity:    version.AccrualPeriodicity,
 		QualityAnnotation:     version.QualityAnnotation,
 		AccessRight:           version.AccessRight,

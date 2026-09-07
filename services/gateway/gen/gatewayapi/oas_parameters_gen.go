@@ -139,7 +139,7 @@ func decodeApplyRoleRequestDecisionParams(args [2]string, argsEscaped bool, r *h
 // AssignGlobalRoleParams is parameters of assignGlobalRole operation.
 type AssignGlobalRoleParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global role key.
 	Role GlobalRole
 }
@@ -150,7 +150,7 @@ func unpackAssignGlobalRoleParams(packed middleware.Parameters) (params AssignGl
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -187,7 +187,7 @@ func decodeAssignGlobalRoleParams(args [2]string, argsEscaped bool, r *http.Requ
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -449,7 +449,7 @@ func decodeAssignGroupRoleParams(args [3]string, argsEscaped bool, r *http.Reque
 // BlockUserParams is parameters of blockUser operation.
 type BlockUserParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 }
 
 func unpackBlockUserParams(packed middleware.Parameters) (params BlockUserParams) {
@@ -458,7 +458,7 @@ func unpackBlockUserParams(packed middleware.Parameters) (params BlockUserParams
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	return params
 }
@@ -488,7 +488,7 @@ func decodeBlockUserParams(args [1]string, argsEscaped bool, r *http.Request) (p
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -1595,10 +1595,10 @@ type DiscoverResourcesParams struct {
 	Provider []uuid.UUID `json:",omitempty"`
 	// Filter by one or more versioning states. When omitted, defaults to `PUBLISHED`. Pass comma-separated
 	// values in a single parameter: `?versioningStatus=PUBLISHED,DRAFT`.
-	VersioningStatus []DiscoveryVersioningStatus `json:",omitempty"`
+	VersioningStatus []VersioningStatus `json:",omitempty"`
 	// Filter resources that carry all supplied keyword values. Pass comma-separated values in a single
 	// parameter: `?keywords=seismology,stations`.
-	Keywords []string `json:",omitempty"`
+	Keywords []Keyword `json:",omitempty"`
 }
 
 func unpackDiscoverResourcesParams(packed middleware.Parameters) (params DiscoverResourcesParams) {
@@ -1689,7 +1689,7 @@ func unpackDiscoverResourcesParams(packed middleware.Parameters) (params Discove
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.VersioningStatus = v.([]DiscoveryVersioningStatus)
+			params.VersioningStatus = v.([]VersioningStatus)
 		}
 	}
 	{
@@ -1698,7 +1698,7 @@ func unpackDiscoverResourcesParams(packed middleware.Parameters) (params Discove
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Keywords = v.([]string)
+			params.Keywords = v.([]Keyword)
 		}
 	}
 	return params
@@ -2130,11 +2130,11 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 	}
 	// Set default value for query: versioningStatus.
 	{
-		var defaultVal0 []DiscoveryVersioningStatus
+		var defaultVal0 []VersioningStatus
 		{
-			var defaultVal0Elem DiscoveryVersioningStatus
+			var defaultVal0Elem VersioningStatus
 
-			val := DiscoveryVersioningStatus("PUBLISHED")
+			val := VersioningStatus("PUBLISHED")
 			defaultVal0Elem = val
 			defaultVal0 = append(defaultVal0, defaultVal0Elem)
 		}
@@ -2152,7 +2152,7 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
 				params.VersioningStatus = nil
 				return d.DecodeArray(func(d uri.Decoder) error {
-					var paramsDotVersioningStatusVal DiscoveryVersioningStatus
+					var paramsDotVersioningStatusVal VersioningStatus
 					if err := func() error {
 						val, err := d.DecodeValue()
 						if err != nil {
@@ -2164,7 +2164,7 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 							return err
 						}
 
-						paramsDotVersioningStatusVal = DiscoveryVersioningStatus(c)
+						paramsDotVersioningStatusVal = VersioningStatus(c)
 						return nil
 					}(); err != nil {
 						return err
@@ -2218,19 +2218,26 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
 				params.Keywords = nil
 				return d.DecodeArray(func(d uri.Decoder) error {
-					var paramsDotKeywordsVal string
+					var paramsDotKeywordsVal Keyword
 					if err := func() error {
-						val, err := d.DecodeValue()
-						if err != nil {
+						var paramsDotKeywordsValVal string
+						if err := func() error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToString(val)
+							if err != nil {
+								return err
+							}
+
+							paramsDotKeywordsValVal = c
+							return nil
+						}(); err != nil {
 							return err
 						}
-
-						c, err := conv.ToString(val)
-						if err != nil {
-							return err
-						}
-
-						paramsDotKeywordsVal = c
+						paramsDotKeywordsVal = Keyword(paramsDotKeywordsValVal)
 						return nil
 					}(); err != nil {
 						return err
@@ -2239,6 +2246,28 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 					return nil
 				})
 			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				var failures []validate.FieldError
+				for i, elem := range params.Keywords {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
 				return err
 			}
 		}
@@ -3009,7 +3038,7 @@ func decodeGetResourceVersionParams(args [3]string, argsEscaped bool, r *http.Re
 
 // GetUserParams is parameters of getUser operation.
 type GetUserParams struct {
-	// User identifier. Use `self` to resolve authenticated user, or UUID for direct user lookup.
+	// User identifier. Use `self` to resolve the authenticated user.
 	ID string
 }
 
@@ -3076,7 +3105,7 @@ func decodeGetUserParams(args [1]string, argsEscaped bool, r *http.Request) (par
 // GrantGlobalPermissionParams is parameters of grantGlobalPermission operation.
 type GrantGlobalPermissionParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global permission key.
 	Permission Permission
 }
@@ -3087,7 +3116,7 @@ func unpackGrantGlobalPermissionParams(packed middleware.Parameters) (params Gra
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -3124,7 +3153,7 @@ func decodeGrantGlobalPermissionParams(args [2]string, argsEscaped bool, r *http
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -3882,7 +3911,7 @@ func decodeRejectResourceVersionParams(args [3]string, argsEscaped bool, r *http
 // RemoveGlobalRoleParams is parameters of removeGlobalRole operation.
 type RemoveGlobalRoleParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global role key.
 	Role GlobalRole
 }
@@ -3893,7 +3922,7 @@ func unpackRemoveGlobalRoleParams(packed middleware.Parameters) (params RemoveGl
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -3930,7 +3959,7 @@ func decodeRemoveGlobalRoleParams(args [2]string, argsEscaped bool, r *http.Requ
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -4942,7 +4971,7 @@ func decodeRequestGroupRoleParams(args [1]string, argsEscaped bool, r *http.Requ
 // RevokeGlobalPermissionParams is parameters of revokeGlobalPermission operation.
 type RevokeGlobalPermissionParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 	// Global permission key.
 	Permission Permission
 }
@@ -4953,7 +4982,7 @@ func unpackRevokeGlobalPermissionParams(packed middleware.Parameters) (params Re
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	{
 		key := middleware.ParameterKey{
@@ -4990,7 +5019,7 @@ func decodeRevokeGlobalPermissionParams(args [2]string, argsEscaped bool, r *htt
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}
@@ -5434,7 +5463,7 @@ func decodeSubmitResourceVersionParams(args [3]string, argsEscaped bool, r *http
 // UnblockUserParams is parameters of unblockUser operation.
 type UnblockUserParams struct {
 	// User identifier.
-	ID uuid.UUID
+	ID string
 }
 
 func unpackUnblockUserParams(packed middleware.Parameters) (params UnblockUserParams) {
@@ -5443,7 +5472,7 @@ func unpackUnblockUserParams(packed middleware.Parameters) (params UnblockUserPa
 			Name: "id",
 			In:   "path",
 		}
-		params.ID = packed[key].(uuid.UUID)
+		params.ID = packed[key].(string)
 	}
 	return params
 }
@@ -5473,7 +5502,7 @@ func decodeUnblockUserParams(args [1]string, argsEscaped bool, r *http.Request) 
 					return err
 				}
 
-				c, err := conv.ToUUID(val)
+				c, err := conv.ToString(val)
 				if err != nil {
 					return err
 				}

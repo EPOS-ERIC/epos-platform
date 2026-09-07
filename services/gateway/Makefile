@@ -19,28 +19,18 @@ test:
 fmt:
 	golangci-lint fmt
 
-lint: fmt
+lint: fix fmt
 	golangci-lint run ./...
 
-METADATA_LIFECYCLE_SPEC := ../metadata-lifecycle/docs/openapi.yaml
-METADATA_LIFECYCLE_CLIENT_GEN_DIR := gen/metadata-lifecycle
-GATEWAY_SERVER_GEN_DIR := gen/gatewayapi
+fix:
+	go mod tidy
+	go fix ./...
 
-generate: generate-metadata-lifecycle generate-gateway-server
-
-generate-metadata-lifecycle:
-	openapi-generator generate -g go \
-		-i $(METADATA_LIFECYCLE_SPEC) \
-		-o $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) \
-		--global-property apiDocs=false,modelDocs=false,apiTests=false,modelTests=false \
-		-p packageName=metadatalifecycleclient,withGoMod=false,generateInterfaces=true,hideGenerationTimestamp=true,useOneOfDiscriminatorLookup=true
-	(cd $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
-
-generate-gateway-server:
+generate:
 	go generate .
-	(cd $(GATEWAY_SERVER_GEN_DIR) && golangci-lint fmt -c ../../.golangci.yaml)
 
+GATEWAY_SERVER_GEN_DIR := gen/gatewayapi
 clean:
-	rm -rf $(BIN) $(METADATA_LIFECYCLE_CLIENT_GEN_DIR) $(GATEWAY_SERVER_GEN_DIR)
+	rm -rf $(BIN) $(GATEWAY_SERVER_GEN_DIR)
 
-.PHONY: build build-docker generate generate-metadata-lifecycle generate-gateway-server test fmt lint clean
+.PHONY: build build-docker generate test fmt lint clean fix

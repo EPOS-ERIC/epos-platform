@@ -12,9 +12,8 @@ type Result struct {
 type UserStatus string
 
 const (
-	UserStatusActive   UserStatus = "ACTIVE"
-	UserStatusInactive UserStatus = "INACTIVE"
-	UserStatusBlocked  UserStatus = "BLOCKED"
+	UserStatusActive  UserStatus = "ACTIVE"
+	UserStatusBlocked UserStatus = "BLOCKED"
 )
 
 // PermissionScope identifies the resource level covered by a permission.

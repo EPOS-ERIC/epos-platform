@@ -4,32 +4,21 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/EPOS-ERIC/epos-platform/packages/go/middleware"
 	"github.com/EPOS-ERIC/epos-platform/packages/go/observability"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/auth"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/canonical"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/clients"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/discovery"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/docs"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
-	groupservice "github.com/EPOS-ERIC/epos-platform/services/gateway/groups"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
-	metadataimports "github.com/EPOS-ERIC/epos-platform/services/gateway/imports"
-	"github.com/EPOS-ERIC/epos-platform/services/gateway/lifecycle"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/server/handlers"
 	"github.com/go-chi/chi/v5"
 )
 
 func NewRouter(
 	log *slog.Logger,
-	canonicalService *canonical.Service,
-	discoveryService *discovery.Service,
-	groupsService *groupservice.Service,
-	lifecycleService *lifecycle.Service,
 	identityService *identity.Service,
-	importsService *metadataimports.Service,
 	metadataLifecycleClient *clients.MetadataLifecycle,
 	authService *auth.Service,
 	corsAllowOrigin string,
@@ -47,6 +36,8 @@ func NewRouter(
 
 	// TODO: maybe we can have this endpoint be outside of the logger middleware so that we can siplify the middleware to not manually exclude health logs
 	r.Get("/health", health)
+
+	// TODO: modify the docs library to have this shared, like returning the routes directly
 	r.Get("/openapi.yaml", serveOpenAPISpec(log))
 	r.Get("/scalar", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/scalar/", http.StatusMovedPermanently)
@@ -59,16 +50,12 @@ func NewRouter(
 	r.Handle("/swagger/*", http.StripPrefix("/swagger", http.FileServer(http.FS(docs.GetUI()))))
 
 	generatedHandler := handlers.NewOgenHandler(
-		canonicalService,
-		discoveryService,
-		groupsService,
 		identityService,
-		importsService,
-		lifecycleService,
+		metadataLifecycleClient,
 	)
 	generatedServer, err := gatewayapi.NewServer(
 		generatedHandler,
-		handlers.NewSecurityHandler(authService, metadataLifecycleClient),
+		handlers.NewSecurityHandler(authService, identityService),
 		gatewayapi.WithPathPrefix("/v1"),
 		gatewayapi.WithErrorHandler(handlers.NewErrorHandler(log)),
 	)
@@ -82,11 +69,7 @@ func NewRouter(
 
 func requestBodyLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		limit := int64(10 << 20)
-		if strings.HasPrefix(strings.ToLower(r.Header.Get("Content-Type")), "text/turtle") {
-			limit = 50 << 20
-		}
-		r.Body = http.MaxBytesReader(w, r.Body, limit)
+		r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
 		next.ServeHTTP(w, r)
 	})
 }

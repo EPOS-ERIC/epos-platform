@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+message ListGroupsRequest {}
+
+message GetGroupRequest {
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message Group {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string description = 3 [(buf.validate.field).string.min_len = 1];
+  optional string label = 4 [(buf.validate.field).string.min_len = 1];
+  optional string logo = 5 [(buf.validate.field).string.min_len = 1];
+  optional string page = 6 [(buf.validate.field).string.min_len = 1];
+  optional string color = 7 [(buf.validate.field).string.min_len = 1];
+  int32 position = 8;
+  TopLevelConcept concept = 9 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ListGroupsResponse {
+  repeated Group groups = 1;
+}
+
+message GetGroupResponse {
+  Group group = 1;
+}
+
+message CreateGroupRequest {
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  optional string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string label = 3 [(buf.validate.field).string.min_len = 1];
+  optional string logo = 4 [(buf.validate.field).string.min_len = 1];
+  optional string page = 5 [(buf.validate.field).string.min_len = 1];
+  optional string color = 6 [(buf.validate.field).string.min_len = 1];
+  int32 position = 7;
+  TopLevelConcept concept = 8 [(buf.validate.field).enum.defined_only = true];
+}
+
+message CreateGroupResponse {
+  Group group = 1;
+}
+
+message ReplaceGroupRequest {
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string description = 3 [(buf.validate.field).string.min_len = 1];
+  optional string label = 4 [(buf.validate.field).string.min_len = 1];
+  optional string logo = 5 [(buf.validate.field).string.min_len = 1];
+  optional string page = 6 [(buf.validate.field).string.min_len = 1];
+  optional string color = 7 [(buf.validate.field).string.min_len = 1];
+  int32 position = 8;
+  TopLevelConcept concept = 9 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ReplaceGroupResponse {
+  Group group = 1;
+}
+
+message DeleteGroupRequest {
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message DeleteGroupResponse {}
+
+service GroupService {
+  rpc ListGroups(ListGroupsRequest) returns (ListGroupsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_NOT_NEEDED;
+  }
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc ReplaceGroup(ReplaceGroupRequest) returns (ReplaceGroupResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
+  }
+}

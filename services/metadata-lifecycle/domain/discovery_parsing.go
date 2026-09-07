@@ -71,7 +71,11 @@ func NewDiscoveryFilter(value DiscoveryFilter) (DiscoveryFilter, error) {
 	providers := make([]uuid.UUID, len(value.Providers))
 	copy(providers, value.Providers)
 	value.Providers = providers
-	value.Keywords = normalizedStrings(value.Keywords)
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return DiscoveryFilter{}, fmt.Errorf("discovery keywords: %w: %w", err, ErrInvalidDiscovery)
+	}
+	value.Keywords = keywords
 
 	if value.DateFrom != nil && value.DateTo != nil && value.DateFrom.After(*value.DateTo) {
 		return DiscoveryFilter{}, ErrInvalidDiscovery
@@ -224,17 +228,6 @@ func validStatus(value Status) bool {
 	default:
 		return false
 	}
-}
-
-func normalizedStrings(values []string) []string {
-	result := make([]string, 0, len(values))
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value != "" {
-			result = append(result, value)
-		}
-	}
-	return result
 }
 
 func normalizedOptionalString(value *string) *string {
