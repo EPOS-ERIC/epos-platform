@@ -91,7 +91,7 @@ func setProtoOptURI(out *gatewayapi.OptNilURI, value *string) error {
 	}
 	parsed, err := url.Parse(*value)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse URI: %w", err)
 	}
 	out.SetTo(*parsed)
 	return nil

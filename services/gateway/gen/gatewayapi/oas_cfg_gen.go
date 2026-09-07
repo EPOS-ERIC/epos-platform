@@ -37,7 +37,7 @@ type ServerOption interface {
 	applyServer(*serverConfig)
 }
 
-var _ ServerOption = (optionFunc[serverConfig])(nil)
+var _ ServerOption = optionFunc[serverConfig](nil)
 
 func (o optionFunc[C]) applyServer(c *C) {
 	o(c)

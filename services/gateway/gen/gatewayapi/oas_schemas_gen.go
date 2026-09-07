@@ -3905,7 +3905,7 @@ func (o *NilBool) SetToNull() {
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o NilBool) Get() (v bool, ok bool) {
+func (o NilBool) Get() (v, ok bool) {
 	if o.Null {
 		return v, false
 	}
