@@ -18,7 +18,7 @@ message SearchResourcesRequest {
   google.protobuf.Timestamp date_from = 6;
   google.protobuf.Timestamp date_to = 7;
   repeated string provider_ids = 8 [(buf.validate.field).repeated.items.string.uuid = true];
-  repeated string keywords = 9 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 9 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string editor_id = 10 [(buf.validate.field).string.min_len = 1];
   repeated VersioningStatus versioning_statuses = 11 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }

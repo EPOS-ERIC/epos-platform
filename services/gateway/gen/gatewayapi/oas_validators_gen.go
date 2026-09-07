@@ -2536,7 +2536,7 @@ func (s IntegerParameterKind) Validate() error {
 }
 
 func (s Keyword) Validate() error {
-	alias := string(s)
+	alias := (string)(s)
 	if err := (validate.String{
 		MinLength:     1,
 		MinLengthSet:  true,
@@ -2544,7 +2544,7 @@ func (s Keyword) Validate() error {
 		MaxLengthSet:  false,
 		Email:         false,
 		Hostname:      false,
-		Regex:         regexMap["^[A-Za-z0-9 _-]+$"],
+		Regex:         regexMap["^[A-Za-z0-9 _:-]+$"],
 		MinNumeric:    0,
 		MinNumericSet: false,
 		MaxNumeric:    0,
@@ -2664,7 +2664,7 @@ func (s *MembershipUser) Validate() error {
 }
 
 func (s NonBlankString) Validate() error {
-	alias := string(s)
+	alias := (string)(s)
 	if err := (validate.String{
 		MinLength:     1,
 		MinLengthSet:  true,

@@ -649,7 +649,7 @@ var File_metadata_lifecycle_v1_discovery_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_discovery_proto_rawDesc = "" +
 	"\n" +
-	"%metadata_lifecycle/v1/discovery.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\xf0\x05\n" +
+	"%metadata_lifecycle/v1/discovery.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\xf1\x05\n" +
 	"\x16SearchResourcesRequest\x12\"\n" +
 	"\x05query\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x05query\x88\x01\x01\x12Y\n" +
 	"\x0eresource_types\x18\x02 \x03(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\r\xbaH\n" +
@@ -661,8 +661,8 @@ const file_metadata_lifecycle_v1_discovery_proto_rawDesc = "" +
 	"\tdate_from\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\bdateFrom\x123\n" +
 	"\adate_to\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x06dateTo\x120\n" +
 	"\fprovider_ids\x18\b \x03(\tB\r\xbaH\n" +
-	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\vproviderIds\x129\n" +
-	"\bkeywords\x18\t \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x132\x11^[A-Za-z0-9 _-]+$R\bkeywords\x12)\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\vproviderIds\x12:\n" +
+	"\bkeywords\x18\t \x03(\tB\x1e\xbaH\x1b\x92\x01\x18\"\x16r\x142\x12^[A-Za-z0-9 _:-]+$R\bkeywords\x12)\n" +
 	"\teditor_id\x18\n" +
 	" \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\beditorId\x88\x01\x01\x12g\n" +
 	"\x13versioning_statuses\x18\v \x03(\x0e2'.metadata_lifecycle.v1.VersioningStatusB\r\xbaH\n" +

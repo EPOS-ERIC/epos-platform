@@ -1800,7 +1800,7 @@ components:
     Keyword:
       type: string
       minLength: 1
-      pattern: '^[A-Za-z0-9 _-]+$'
+      pattern: '^[A-Za-z0-9 _:-]+$'
 
     DiscoveryResourceType:
       type: string

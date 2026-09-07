@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var keywordPattern = regexp.MustCompile(`^[A-Za-z0-9 _-]+$`)
+var keywordPattern = regexp.MustCompile(`^[A-Za-z0-9 _:-]+$`)
 
 func normalizeKeywords(values []string) ([]string, error) {
 	result := make([]string, 0, len(values))

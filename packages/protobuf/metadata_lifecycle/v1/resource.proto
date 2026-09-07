@@ -54,7 +54,7 @@ message DatasetResourceMetadata {
   string id = 1 [(buf.validate.field).string.uuid = true];
   string title = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
-  repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string accrual_periodicity = 5 [(buf.validate.field).string.min_len = 1];
   optional string quality_annotation = 6 [(buf.validate.field).string.min_len = 1];
   optional string access_right = 7 [(buf.validate.field).string.min_len = 1];
@@ -76,7 +76,7 @@ message SoftwareApplicationResourceMetadata {
   optional string main_entity_of_page = 4 [(buf.validate.field).string.min_len = 1];
   optional string license = 5 [(buf.validate.field).string.min_len = 1];
   optional string version = 6 [(buf.validate.field).string.min_len = 1];
-  repeated string keywords = 7 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 7 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string download_url = 8 [(buf.validate.field).string.uri = true];
   optional string requirements = 9 [(buf.validate.field).string.min_len = 1];
   optional string operating_system = 10 [(buf.validate.field).string.min_len = 1];
@@ -91,7 +91,7 @@ message SoftwareSourceCodeResourceMetadata {
   string name = 2 [(buf.validate.field).string.min_len = 1];
   string description = 3 [(buf.validate.field).string.min_len = 1];
   optional string programming_language = 4 [(buf.validate.field).string.min_len = 1];
-  repeated string keywords = 5 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 5 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string repository = 6 [(buf.validate.field).string.min_len = 1];
   optional string license = 7 [(buf.validate.field).string.min_len = 1];
   optional string software_requirements = 8 [(buf.validate.field).string.min_len = 1];
@@ -119,7 +119,7 @@ message Temporal {
 message DatasetInput {
   string title = 1 [(buf.validate.field).string.min_len = 1];
   optional string description = 2 [(buf.validate.field).string.min_len = 1];
-  repeated string keywords = 3 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 3 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string accrual_periodicity = 4 [(buf.validate.field).string.min_len = 1];
   optional string quality_annotation = 5 [(buf.validate.field).string.min_len = 1];
   optional string access_right = 6 [(buf.validate.field).string.min_len = 1];
@@ -285,7 +285,7 @@ message SoftwareApplicationInput {
   optional string main_entity_of_page = 3 [(buf.validate.field).string.min_len = 1];
   optional string license = 4 [(buf.validate.field).string.min_len = 1];
   optional string version = 5 [(buf.validate.field).string.min_len = 1];
-  repeated string keywords = 6 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 6 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string download_url = 7 [(buf.validate.field).string.uri = true];
   optional string requirements = 8 [(buf.validate.field).string.min_len = 1];
   optional string operating_system = 9 [(buf.validate.field).string.min_len = 1];
@@ -299,7 +299,7 @@ message SoftwareSourceCodeInput {
   string name = 1 [(buf.validate.field).string.min_len = 1];
   string description = 2 [(buf.validate.field).string.min_len = 1];
   optional string programming_language = 3 [(buf.validate.field).string.min_len = 1];
-  repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
+  repeated string keywords = 4 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _:-]+$"];
   optional string repository = 5 [(buf.validate.field).string.min_len = 1];
   optional string license = 6 [(buf.validate.field).string.min_len = 1];
   optional string software_requirements = 7 [(buf.validate.field).string.min_len = 1];
