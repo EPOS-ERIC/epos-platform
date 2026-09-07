@@ -5,18 +5,19 @@ package metadata_lifecycle.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
 message ListUsersRequest {}
 message UserListItem {
-  string id = 1;
-  string email = 2;
-  string given_name = 3;
-  string family_name = 4;
-  UserStatus status = 5;
-  repeated GlobalRole global_roles = 6;
-  repeated string global_permissions = 7;
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  string email = 2 [(buf.validate.field).string.email = true];
+  string given_name = 3 [(buf.validate.field).string.min_len = 1];
+  string family_name = 4 [(buf.validate.field).string.min_len = 1];
+  UserStatus status = 5 [(buf.validate.field).enum.defined_only = true];
+  repeated GlobalRole global_roles = 6 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  repeated string global_permissions = 7 [(buf.validate.field).repeated.items.string.min_len = 1];
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;
 }
@@ -32,35 +33,17 @@ enum UserStatus {
   USER_STATUS_ACTIVE = 1;
   USER_STATUS_BLOCKED = 2;
 }
-enum MembershipStatus {
-  MEMBERSHIP_STATUS_UNSPECIFIED = 0;
-  MEMBERSHIP_STATUS_PENDING = 1;
-  MEMBERSHIP_STATUS_ACTIVE = 2;
-  MEMBERSHIP_STATUS_REJECTED = 3;
-}
-enum GroupRole {
-  GROUP_ROLE_UNSPECIFIED = 0;
-  GROUP_ROLE_EDITOR = 1;
-  GROUP_ROLE_REVIEWER = 2;
-  GROUP_ROLE_ADMIN = 3;
-}
 enum GlobalRole {
   GLOBAL_ROLE_UNSPECIFIED = 0;
   GLOBAL_ROLE_ADMIN = 1;
 }
-enum RoleRequestStatus {
-  ROLE_REQUEST_STATUS_UNSPECIFIED = 0;
-  ROLE_REQUEST_STATUS_PENDING = 1;
-  ROLE_REQUEST_STATUS_ACCEPTED = 2;
-  ROLE_REQUEST_STATUS_REJECTED = 3;
-}
 message GetUserResponse {
-  string id = 1;
-  string email = 2;
-  string given_name = 3;
-  string family_name = 4;
-  UserStatus status = 5;
-  repeated GlobalRole global_roles = 6;
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  string email = 2 [(buf.validate.field).string.email = true];
+  string given_name = 3 [(buf.validate.field).string.min_len = 1];
+  string family_name = 4 [(buf.validate.field).string.min_len = 1];
+  UserStatus status = 5 [(buf.validate.field).enum.defined_only = true];
+  repeated GlobalRole global_roles = 6 [(buf.validate.field).repeated.items.enum.defined_only = true];
   repeated string global_permissions = 7;
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;
@@ -81,13 +64,13 @@ message RevokeGlobalPermissionResponse {}
 
 message AssignGlobalRoleRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
-  string role = 2 [(buf.validate.field).string.min_len = 1];
+  GlobalRole role = 2 [(buf.validate.field).enum.defined_only = true];
 }
 message AssignGlobalRoleResponse {}
 
 message RemoveGlobalRoleRequest {
   string user_id = 1 [(buf.validate.field).string.min_len = 1];
-  string role = 2 [(buf.validate.field).string.min_len = 1];
+  GlobalRole role = 2 [(buf.validate.field).enum.defined_only = true];
 }
 message RemoveGlobalRoleResponse {}
 
@@ -103,25 +86,20 @@ message UnblockUserRequest {
 message UnblockUserResponse {}
 
 message UserMembership {
-  GroupReference group = 1;
-  repeated GroupRole group_roles = 2;
-  MembershipStatus status = 3;
-  repeated string group_permissions = 4;
+  EntityReference group = 1;
+  repeated GroupRole group_roles = 2 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  MembershipStatus status = 3 [(buf.validate.field).enum.defined_only = true];
+  repeated string group_permissions = 4 [(buf.validate.field).repeated.items.string.min_len = 1];
   repeated RoleRequest role_requests = 5;
   google.protobuf.Timestamp created_at = 6;
   google.protobuf.Timestamp updated_at = 7;
 }
 message RoleRequest {
-  string id = 1;
-  GroupRole group_role = 2;
-  RoleRequestStatus status = 3;
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  GroupRole group_role = 2 [(buf.validate.field).enum.defined_only = true];
+  RoleRequestStatus status = 3 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp requested_at = 4;
 }
-message GroupReference {
-  string id = 1;
-  string name = 2;
-}
-
 service UserService {
   rpc GetUser(GetUserRequest) returns (GetUserResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;

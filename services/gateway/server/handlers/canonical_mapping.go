@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net/url"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
@@ -32,8 +33,12 @@ func toAPIProtoOrganization(v *metadatalifecyclev1.Organization) (gatewayapi.Can
 	setProtoNilString(&r.Address.Locality, v.Locality)
 	setProtoNilString(&r.Address.PostalCode, v.PostalCode)
 	setProtoNilString(&r.Address.Country, v.Country)
-	setProtoOptString(&r.LogoURL, v.LogoUrl)
-	setProtoOptString(&r.PageURL, v.PageUrl)
+	if err := setProtoOptURI(&r.LogoURL, v.LogoUrl); err != nil {
+		return gatewayapi.CanonicalOrganization{}, fmt.Errorf("decode organization.logo_url: %w", err)
+	}
+	if err := setProtoOptURI(&r.PageURL, v.PageUrl); err != nil {
+		return gatewayapi.CanonicalOrganization{}, fmt.Errorf("decode organization.page_url: %w", err)
+	}
 	setProtoOptString(&r.Email, v.Email)
 	setProtoOptString(&r.LeiCode, v.LeiCode)
 	for _, identifier := range v.Identifiers {
@@ -41,7 +46,11 @@ func toAPIProtoOrganization(v *metadatalifecyclev1.Organization) (gatewayapi.Can
 		if err != nil {
 			return gatewayapi.CanonicalOrganization{}, err
 		}
-		r.Identifiers = append(r.Identifiers, gatewayapi.OrganizationIdentifier{ID: identifierID, Type: identifier.Type, Value: identifier.Value})
+		r.Identifiers = append(r.Identifiers, gatewayapi.Identifier{
+			ID:    identifierID,
+			Type:  identifier.Type,
+			Value: identifier.Value,
+		})
 	}
 	for _, parent := range v.Parents {
 		parentID, err := parseUUID("organization.parent_id", parent)
@@ -75,8 +84,21 @@ func setProtoOptString(out *gatewayapi.OptNilString, value *string) {
 	out.SetTo(*value)
 }
 
+// TODO: change these functions to be pure and without side effects
+func setProtoOptURI(out *gatewayapi.OptNilURI, value *string) error {
+	if value == nil {
+		return nil
+	}
+	parsed, err := url.Parse(*value)
+	if err != nil {
+		return err
+	}
+	out.SetTo(*parsed)
+	return nil
+}
+
 func toProtoCreateOrganizationRequest(q *gatewayapi.CreateOrganizationRequest) *metadatalifecyclev1.CreateOrganizationRequest {
-	r := &metadatalifecyclev1.CreateOrganizationRequest{Name: string(q.Name), LogoUrl: toProtoOptString(q.LogoURL), PageUrl: toProtoOptString(q.PageURL), Email: toProtoOptString(q.Email), LeiCode: toProtoOptString(q.LeiCode), Parents: uuidStringValues(q.Parents), ContactPointIds: uuidStringValues(q.ContactPointIds)}
+	r := &metadatalifecyclev1.CreateOrganizationRequest{Name: string(q.Name), LogoUrl: toProtoOptURIString(q.LogoURL), PageUrl: toProtoOptURIString(q.PageURL), Email: toProtoOptString(q.Email), LeiCode: toProtoOptString(q.LeiCode), Parents: uuidStringValues(q.Parents), ContactPointIds: uuidStringValues(q.ContactPointIds)}
 	if q.Address.Set {
 		r.Street = toProtoNilString(q.Address.Value.Street)
 		r.Locality = toProtoNilString(q.Address.Value.Locality)
@@ -88,11 +110,19 @@ func toProtoCreateOrganizationRequest(q *gatewayapi.CreateOrganizationRequest) *
 }
 
 func toProtoReplaceOrganizationRequest(q *gatewayapi.ReplaceOrganizationRequest, id string) *metadatalifecyclev1.ReplaceOrganizationRequest {
-	return &metadatalifecyclev1.ReplaceOrganizationRequest{OrganizationId: id, Name: string(q.Name), Street: toProtoNilString(q.Address.Street), Locality: toProtoNilString(q.Address.Locality), PostalCode: toProtoNilString(q.Address.PostalCode), Country: toProtoNilString(q.Address.Country), LogoUrl: toProtoNilString(q.LogoURL), PageUrl: toProtoNilString(q.PageURL), Email: toProtoNilString(q.Email), LeiCode: toProtoNilString(q.LeiCode), Identifiers: protoIdentifierInputs(q.Identifiers), Parents: uuidStringValues(q.Parents), ContactPointIds: uuidStringValues(q.ContactPointIds)}
+	return &metadatalifecyclev1.ReplaceOrganizationRequest{OrganizationId: id, Name: string(q.Name), Street: toProtoNilString(q.Address.Street), Locality: toProtoNilString(q.Address.Locality), PostalCode: toProtoNilString(q.Address.PostalCode), Country: toProtoNilString(q.Address.Country), LogoUrl: toProtoNilURIString(q.LogoURL), PageUrl: toProtoNilURIString(q.PageURL), Email: toProtoNilString(q.Email), LeiCode: toProtoNilString(q.LeiCode), Identifiers: protoIdentifierInputs(q.Identifiers), Parents: uuidStringValues(q.Parents), ContactPointIds: uuidStringValues(q.ContactPointIds)}
 }
 
 func toProtoOptString(value gatewayapi.OptNilString) *string {
 	return toClientStringPtr(value)
+}
+
+func toProtoOptURIString(value gatewayapi.OptNilURI) *string {
+	if !value.Set || value.Null {
+		return nil
+	}
+	result := value.Value.String()
+	return &result
 }
 
 func toProtoNilString(value gatewayapi.NilString) *string {
@@ -100,6 +130,14 @@ func toProtoNilString(value gatewayapi.NilString) *string {
 		return nil
 	}
 	return &value.Value
+}
+
+func toProtoNilURIString(value gatewayapi.NilURI) *string {
+	if value.Null {
+		return nil
+	}
+	result := value.Value.String()
+	return &result
 }
 
 func uuidStringValues(values []uuid.UUID) []string {
@@ -110,10 +148,13 @@ func uuidStringValues(values []uuid.UUID) []string {
 	return result
 }
 
-func protoIdentifierInputs(values []gatewayapi.OrganizationIdentifierRequest) []*metadatalifecyclev1.OrganizationIdentifierInput {
-	result := make([]*metadatalifecyclev1.OrganizationIdentifierInput, len(values))
+func protoIdentifierInputs(values []gatewayapi.IdentifierInput) []*metadatalifecyclev1.IdentifierInput {
+	result := make([]*metadatalifecyclev1.IdentifierInput, len(values))
 	for i, value := range values {
-		result[i] = &metadatalifecyclev1.OrganizationIdentifierInput{Type: string(value.Type), Value: string(value.Value)}
+		result[i] = &metadatalifecyclev1.IdentifierInput{
+			Type:  string(value.Type),
+			Value: string(value.Value),
+		}
 	}
 	return result
 }

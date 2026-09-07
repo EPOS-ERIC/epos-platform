@@ -1,20 +1,22 @@
 package handlers
 
 import (
-	"time"
-
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalifecyclev1.DatasetDraftMetadata {
-	r := &metadatalifecyclev1.DatasetDraftMetadata{Title: string(v.Title), ContactPoints: uuidStrings(v.ContactPoints), Providers: uuidStrings(v.Providers), Categories: uuidStrings(v.Categories)}
-	if v.Description.Set {
-		r.Description = new(v.Description.Value)
+func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalifecyclev1.DatasetInput {
+	r := &metadatalifecyclev1.DatasetInput{
+		Title:            string(v.Title),
+		ContactPoints:    uuidStrings(v.ContactPoints),
+		Providers:        uuidStrings(v.Providers),
+		Categories:       uuidStrings(v.Categories),
+		Keywords:         toProtoKeywords(v.Keywords),
+		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
 	}
-	if v.Keywords.Set {
-		r.Keywords = new(v.Keywords.Value)
+	if v.Description.Set {
+		r.Description = new(string(v.Description.Value))
 	}
 	if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 		r.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
@@ -28,15 +30,17 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalif
 	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 		r.SpatialCoverage = new(v.SpatialCoverage.Value)
 	}
-	r.TemporalCoverage = toProtoTemporal(v.TemporalCoverage)
 	if v.Created.Set && !v.Created.Null {
-		r.Created = timestampPtr(v.Created.Value)
+		r.Created = timestamppb.New(v.Created.Value)
 	}
 	if v.Updated.Set && !v.Updated.Null {
-		r.Updated = timestampPtr(v.Updated.Value)
+		r.Updated = timestamppb.New(v.Updated.Value)
 	}
 	for _, id := range v.PersistentIdentifiers {
-		r.PersistentIdentifiers = append(r.PersistentIdentifiers, &metadatalifecyclev1.IdentifierDraft{Type: string(id.Type), Value: string(id.Value)})
+		r.PersistentIdentifiers = append(r.PersistentIdentifiers, &metadatalifecyclev1.IdentifierInput{
+			Type:  string(id.Type),
+			Value: string(id.Value),
+		})
 	}
 	for _, distribution := range v.Distributions {
 		r.Distributions = append(r.Distributions, toProtoDistributionDraft(distribution))
@@ -44,13 +48,16 @@ func toProtoDatasetDraftMetadata(v gatewayapi.DatasetDraftMetadata) *metadatalif
 	return r
 }
 
-func timestampPtr(value time.Time) *timestamppb.Timestamp { return timestamppb.New(value) }
-
-func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDraftMetadata) *metadatalifecyclev1.SoftwareApplicationDraftMetadata {
-	r := &metadatalifecyclev1.SoftwareApplicationDraftMetadata{Name: string(v.Name), Creators: uuidStrings(v.Creators), Categories: uuidStrings(v.Categories), ContactPoints: uuidStrings(v.ContactPoints)}
-	if v.Description.Set {
-		r.Description = new(v.Description.Value)
+func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDraftMetadata) *metadatalifecyclev1.SoftwareApplicationInput {
+	r := &metadatalifecyclev1.SoftwareApplicationInput{
+		Name:          string(v.Name),
+		Creators:      uuidStrings(v.Creators),
+		Categories:    uuidStrings(v.Categories),
+		ContactPoints: uuidStrings(v.ContactPoints),
+		Description:   string(v.Description),
+		Keywords:      toProtoKeywords(v.Keywords),
 	}
+
 	if v.MainEntityOfPage.Set {
 		r.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 	}
@@ -59,9 +66,6 @@ func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDra
 	}
 	if v.Version.Set && !v.Version.Null {
 		r.Version = new(v.Version.Value)
-	}
-	if v.Keywords.Set {
-		r.Keywords = new(v.Keywords.Value)
 	}
 	if v.DownloadURL.Set {
 		r.DownloadUrl = new(v.DownloadURL.Value.String())
@@ -73,21 +77,25 @@ func toProtoSoftwareApplicationDraftMetadata(v gatewayapi.SoftwareApplicationDra
 		r.OperatingSystem = new(v.OperatingSystem.Value)
 	}
 	for _, id := range v.Identifiers {
-		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierDraft{Type: string(id.Type), Value: string(id.Value)})
+		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierInput{
+			Type:  string(id.Type),
+			Value: string(id.Value),
+		})
 	}
 	return r
 }
 
-func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraftMetadata) *metadatalifecyclev1.SoftwareSourceCodeDraftMetadata {
-	r := &metadatalifecyclev1.SoftwareSourceCodeDraftMetadata{Name: string(v.Name), Creators: uuidStrings(v.Creators), Categories: uuidStrings(v.Categories), ContactPoints: uuidStrings(v.ContactPoints)}
-	if v.Description.Set {
-		r.Description = new(v.Description.Value)
+func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraftMetadata) *metadatalifecyclev1.SoftwareSourceCodeInput {
+	r := &metadatalifecyclev1.SoftwareSourceCodeInput{
+		Name:          string(v.Name),
+		Creators:      uuidStrings(v.Creators),
+		Categories:    uuidStrings(v.Categories),
+		ContactPoints: uuidStrings(v.ContactPoints),
+		Description:   string(v.Description),
+		Keywords:      toProtoKeywords(v.Keywords),
 	}
 	if v.ProgrammingLanguage.Set {
 		r.ProgrammingLanguage = new(v.ProgrammingLanguage.Value)
-	}
-	if v.Keywords.Set {
-		r.Keywords = new(v.Keywords.Value)
 	}
 	if v.Repository.Set {
 		r.Repository = new(v.Repository.Value.String())
@@ -108,7 +116,10 @@ func toProtoSoftwareSourceCodeDraftMetadata(v gatewayapi.SoftwareSourceCodeDraft
 		r.Version = new(v.Version.Value)
 	}
 	for _, id := range v.Identifiers {
-		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierDraft{Type: string(id.Type), Value: string(id.Value)})
+		r.Identifiers = append(r.Identifiers, &metadatalifecyclev1.IdentifierInput{
+			Type:  string(id.Type),
+			Value: string(id.Value),
+		})
 	}
 	return r
 }

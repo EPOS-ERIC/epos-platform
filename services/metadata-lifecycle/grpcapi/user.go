@@ -119,7 +119,11 @@ func (u *UserServer) AssignGlobalRole(ctx context.Context, request *metadatalife
 		return nil, err
 	}
 
-	if err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), request.GetRole()); err != nil {
+	role, err := toDomainGlobalRole(request.GetRole())
+	if err != nil {
+		return nil, toUserMutationError("assign global role", err)
+	}
+	if err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
 		return nil, toUserMutationError("assign global role", err)
 	}
 
@@ -132,7 +136,11 @@ func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalife
 		return nil, err
 	}
 
-	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), request.GetRole()); err != nil {
+	role, err := toDomainGlobalRole(request.GetRole())
+	if err != nil {
+		return nil, toUserMutationError("remove global role", err)
+	}
+	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
 		return nil, toUserMutationError("remove global role", err)
 	}
 
@@ -251,7 +259,7 @@ func toProtoMembership(value domain.Membership) (*metadatalifecyclev1.UserMember
 	}
 
 	return &metadatalifecyclev1.UserMembership{
-		Group: &metadatalifecyclev1.GroupReference{
+		Group: &metadatalifecyclev1.EntityReference{
 			Id:   value.Group.ID.String(),
 			Name: value.Group.Name,
 		},
@@ -341,6 +349,15 @@ func toProtoGlobalRole(value domain.GlobalRole) (metadatalifecyclev1.GlobalRole,
 		return metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN, nil
 	default:
 		return 0, fmt.Errorf("unknown global role: %q", value)
+	}
+}
+
+func toDomainGlobalRole(value metadatalifecyclev1.GlobalRole) (domain.GlobalRole, error) {
+	switch value {
+	case metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN:
+		return domain.GlobalRoleAdmin, nil
+	default:
+		return "", domain.ErrInvalidUser
 	}
 }
 

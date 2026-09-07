@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package metadata_lifecycle.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
+
+enum ResourceType {
+  RESOURCE_TYPE_UNSPECIFIED = 0;
+  RESOURCE_TYPE_DATASET = 1;
+  RESOURCE_TYPE_SOFTWARE_APPLICATION = 2;
+  RESOURCE_TYPE_SOFTWARE_SOURCE_CODE = 3;
+}
+
+enum VersioningStatus {
+  VERSIONING_STATUS_UNSPECIFIED = 0;
+  VERSIONING_STATUS_PUBLISHED = 1;
+  VERSIONING_STATUS_DRAFT = 2;
+  VERSIONING_STATUS_SUBMITTED = 3;
+  VERSIONING_STATUS_ARCHIVED = 4;
+  VERSIONING_STATUS_REJECTED = 5;
+}
+
+enum TopLevelConcept {
+  TOP_LEVEL_CONCEPT_UNSPECIFIED = 0;
+  TOP_LEVEL_CONCEPT_DATA = 1;
+  TOP_LEVEL_CONCEPT_FACILITIES = 2;
+  TOP_LEVEL_CONCEPT_SOFTWARE = 3;
+}
+
+enum MembershipStatus {
+  MEMBERSHIP_STATUS_UNSPECIFIED = 0;
+  MEMBERSHIP_STATUS_PENDING = 1;
+  MEMBERSHIP_STATUS_ACTIVE = 2;
+  MEMBERSHIP_STATUS_REJECTED = 3;
+}
+
+enum GroupRole {
+  GROUP_ROLE_UNSPECIFIED = 0;
+  GROUP_ROLE_EDITOR = 1;
+  GROUP_ROLE_REVIEWER = 2;
+  GROUP_ROLE_ADMIN = 3;
+}
+
+enum RoleRequestStatus {
+  ROLE_REQUEST_STATUS_UNSPECIFIED = 0;
+  ROLE_REQUEST_STATUS_PENDING = 1;
+  ROLE_REQUEST_STATUS_ACCEPTED = 2;
+  ROLE_REQUEST_STATUS_REJECTED = 3;
+}
+
+message Identifier {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string type = 2 [(buf.validate.field).string.min_len = 1];
+  string value = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message IdentifierInput {
+  string type = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2 [(buf.validate.field).string.min_len = 1];
+}
+
+message EntityReference {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2;
+}
+
+message UserReference {
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 2;
+}

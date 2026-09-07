@@ -10,9 +10,26 @@ import (
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 )
 
+func toProtoLifecycleResourceType(value gatewayapi.LifecycleResourceType) (metadatalifecyclev1.ResourceType, error) {
+	switch value {
+	case gatewayapi.LifecycleResourceTypeDataset:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET, nil
+	case gatewayapi.LifecycleResourceTypeSoftwareApplication:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION, nil
+	case gatewayapi.LifecycleResourceTypeSoftwareSourceCode:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE, nil
+	default:
+		return 0, fmt.Errorf("invalid lifecycle resource type %q", value)
+	}
+}
+
 func (h *ogenHandler) GetResourceVersion(ctx context.Context, q gatewayapi.GetResourceVersionParams) (*gatewayapi.ResourceVersion, error) {
 	actor, _ := actorID(ctx)
-	v, err := h.metadataLifecycle.GetResourceVersion(ctx, actor, string(q.ResourceType), q.ID.String(), q.VersionId.String())
+	resourceType, err := toProtoLifecycleResourceType(q.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.GetResourceVersion(ctx, actor, resourceType, q.ID.String(), q.VersionId.String())
 	if err != nil {
 		return nil, fmt.Errorf("get resource version: %w", err)
 	}
@@ -23,7 +40,7 @@ func (h *ogenHandler) GetResourceVersion(ctx context.Context, q gatewayapi.GetRe
 	return &r, nil
 }
 
-func toAPIWriteResult(v *metadatalifecyclev1.ResourceRecord, resourceType string) (*gatewayapi.WriteResult, error) {
+func toAPIWriteResult(v *metadatalifecyclev1.ResourceRecord, resourceType gatewayapi.WriteResourceType) (*gatewayapi.WriteResult, error) {
 	if v == nil {
 		return nil, errors.New("resource operation returned empty response")
 	}
@@ -32,7 +49,7 @@ func toAPIWriteResult(v *metadatalifecyclev1.ResourceRecord, resourceType string
 		return nil, fmt.Errorf("map versioning status: %w", err)
 	}
 	return &gatewayapi.WriteResult{
-		ResourceType: gatewayapi.WriteResourceType(resourceType),
+		ResourceType: resourceType,
 		ID:           v.ResourceId,
 		Status:       status,
 	}, nil
@@ -43,11 +60,15 @@ func (h *ogenHandler) CopyResource(ctx context.Context, p gatewayapi.CopyResourc
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.CopyResource(ctx, a, p.GroupId.String(), string(p.ResourceType), p.ID.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.CopyResource(ctx, a, p.GroupId.String(), resourceType, p.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("copy resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) DraftFromPublication(ctx context.Context, p gatewayapi.DraftFromPublicationParams) (*gatewayapi.WriteResult, error) {
@@ -55,11 +76,15 @@ func (h *ogenHandler) DraftFromPublication(ctx context.Context, p gatewayapi.Dra
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.CreateResourceDraftFromPublication(ctx, a, string(p.ResourceType), p.ID.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.CreateResourceDraftFromPublication(ctx, a, resourceType, p.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("create draft from publication: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) DraftFromArchive(ctx context.Context, p gatewayapi.DraftFromArchiveParams) (*gatewayapi.WriteResult, error) {
@@ -67,11 +92,15 @@ func (h *ogenHandler) DraftFromArchive(ctx context.Context, p gatewayapi.DraftFr
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.CreateResourceDraftFromArchive(ctx, a, string(p.ResourceType), p.ID.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.CreateResourceDraftFromArchive(ctx, a, resourceType, p.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("create draft from archive: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) DiscardResourceDraftVersion(ctx context.Context, p gatewayapi.DiscardResourceDraftVersionParams) error {
@@ -79,7 +108,11 @@ func (h *ogenHandler) DiscardResourceDraftVersion(ctx context.Context, p gateway
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.DiscardResourceDraft(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String()); err != nil {
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return err
+	}
+	if err := h.metadataLifecycle.DiscardResourceDraft(ctx, a, resourceType, p.ID.String(), p.VersionId.String()); err != nil {
 		return fmt.Errorf("discard resource draft: %w", err)
 	}
 	return nil
@@ -90,11 +123,15 @@ func (h *ogenHandler) SubmitResourceVersion(ctx context.Context, p gatewayapi.Su
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.SubmitResource(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.SubmitResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String())
 	if err != nil {
 		return nil, fmt.Errorf("submit resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) WithdrawResourceVersion(ctx context.Context, p gatewayapi.WithdrawResourceVersionParams) (*gatewayapi.WriteResult, error) {
@@ -102,11 +139,15 @@ func (h *ogenHandler) WithdrawResourceVersion(ctx context.Context, p gatewayapi.
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.WithdrawResource(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.WithdrawResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String())
 	if err != nil {
 		return nil, fmt.Errorf("withdraw resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) ReopenResourceVersion(ctx context.Context, p gatewayapi.ReopenResourceVersionParams) (*gatewayapi.WriteResult, error) {
@@ -114,11 +155,15 @@ func (h *ogenHandler) ReopenResourceVersion(ctx context.Context, p gatewayapi.Re
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.ReopenResource(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.ReopenResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String())
 	if err != nil {
 		return nil, fmt.Errorf("reopen resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) PublishResourceVersion(ctx context.Context, p gatewayapi.PublishResourceVersionParams) (*gatewayapi.WriteResult, error) {
@@ -126,11 +171,15 @@ func (h *ogenHandler) PublishResourceVersion(ctx context.Context, p gatewayapi.P
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.PublishResource(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.PublishResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String())
 	if err != nil {
 		return nil, fmt.Errorf("publish resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) UnpublishResourceVersion(ctx context.Context, p gatewayapi.UnpublishResourceVersionParams) (*gatewayapi.WriteResult, error) {
@@ -138,11 +187,15 @@ func (h *ogenHandler) UnpublishResourceVersion(ctx context.Context, p gatewayapi
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.UnpublishResource(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String())
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.UnpublishResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String())
 	if err != nil {
 		return nil, fmt.Errorf("unpublish resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) RejectResourceVersion(ctx context.Context, q *gatewayapi.RejectResourceRequest, p gatewayapi.RejectResourceVersionParams) (*gatewayapi.WriteResult, error) {
@@ -150,11 +203,15 @@ func (h *ogenHandler) RejectResourceVersion(ctx context.Context, q *gatewayapi.R
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.RejectResource(ctx, a, string(p.ResourceType), p.ID.String(), p.VersionId.String(), string(q.Note))
+	resourceType, err := toProtoLifecycleResourceType(p.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.RejectResource(ctx, a, resourceType, p.ID.String(), p.VersionId.String(), string(q.Note))
 	if err != nil {
 		return nil, fmt.Errorf("reject resource: %w", err)
 	}
-	return toAPIWriteResult(v.GetResource(), string(p.ResourceType))
+	return toAPIWriteResult(v.GetResource(), gatewayapi.WriteResourceType(p.ResourceType))
 }
 
 func (h *ogenHandler) CreateResource(ctx context.Context, q gatewayapi.CreateResourceDraftRequest, p gatewayapi.CreateResourceParams) (*gatewayapi.WriteResult, error) {
@@ -178,7 +235,7 @@ func (h *ogenHandler) CreateResource(ctx context.Context, q gatewayapi.CreateRes
 		return nil, fmt.Errorf("map versioning status: %w", err)
 	}
 	return &gatewayapi.WriteResult{
-		ResourceType: gatewayapi.WriteResourceType(typ),
+		ResourceType: typ,
 		ID:           v.Resource.ResourceId,
 		Status:       status,
 	}, nil

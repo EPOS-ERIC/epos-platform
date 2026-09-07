@@ -5,6 +5,7 @@ package metadata_lifecycle.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
 import "metadata_lifecycle/v1/user.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
@@ -18,8 +19,8 @@ message MembershipUser {
 
 message GroupMembership {
   MembershipUser user = 1;
-  string status = 2;
-  repeated string roles = 3;
+  MembershipStatus status = 2 [(buf.validate.field).enum.defined_only = true];
+  repeated GroupRole roles = 3 [(buf.validate.field).repeated.items.enum.defined_only = true];
   repeated string permissions = 4;
   repeated RoleRequest role_requests = 5;
   google.protobuf.Timestamp created_at = 6;
@@ -27,86 +28,86 @@ message GroupMembership {
 }
 
 message ListGroupMembershipsRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
 }
 message ListGroupMembershipsResponse {
   repeated GroupMembership memberships = 1;
 }
 
 message RequestMembershipRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string roles = 2;
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  repeated GroupRole roles = 2 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 message RequestMembershipResponse {
   GroupMembership membership = 1;
 }
 
 message WithdrawMembershipRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
 }
 message WithdrawMembershipResponse {}
 
 message DecideMembershipRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
-  string status = 3 [(buf.validate.field).string.min_len = 1];
+  MembershipStatus status = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message DecideMembershipResponse {
   GroupMembership membership = 1;
 }
 
 message RevokeMembershipRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
 }
 message RevokeMembershipResponse {}
 
 message RequestRoleRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  string role = 2 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  GroupRole role = 2 [(buf.validate.field).enum.defined_only = true];
 }
 message RequestRoleResponse {
   RoleRequest request = 1;
 }
 
 message ApplyRoleRequestDecisionRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  string request_id = 2 [(buf.validate.field).string.min_len = 1];
-  string status = 3 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  string request_id = 2 [(buf.validate.field).string.uuid = true];
+  RoleRequestStatus status = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message ApplyRoleRequestDecisionResponse {
   GroupMembership membership = 1;
 }
 
 message WithdrawRoleRequestRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  string request_id = 2 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  string request_id = 2 [(buf.validate.field).string.uuid = true];
 }
 message WithdrawRoleRequestResponse {}
 
 message AssignRoleRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
-  string role = 3 [(buf.validate.field).string.min_len = 1];
+  GroupRole role = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message AssignRoleResponse {}
 
 message RemoveRoleRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
-  string role = 3 [(buf.validate.field).string.min_len = 1];
+  GroupRole role = 3 [(buf.validate.field).enum.defined_only = true];
 }
 message RemoveRoleResponse {}
 
 message GrantPermissionRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
   string permission = 3 [(buf.validate.field).string.min_len = 1];
 }
 message GrantPermissionResponse {}
 
 message RevokePermissionRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string user_id = 2 [(buf.validate.field).string.min_len = 1];
   string permission = 3 [(buf.validate.field).string.min_len = 1];
 }

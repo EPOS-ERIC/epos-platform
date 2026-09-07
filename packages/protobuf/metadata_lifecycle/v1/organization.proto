@@ -4,35 +4,24 @@ package metadata_lifecycle.v1;
 
 import "buf/validate/validate.proto";
 import "metadata_lifecycle/v1/annotations.proto";
+import "metadata_lifecycle/v1/common.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
-// TODO: maybe we can extract this to a shared file because in the end the shape of the identifier is the same for software/organizations/dataset, so we avoid duplication
-message OrganizationIdentifier {
-  string id = 1;
-  string type = 2;
-  string value = 3;
-}
-
 message Organization {
-  string id = 1;
-  string name = 2;
-  optional string street = 3;
-  optional string locality = 4;
-  optional string postal_code = 5;
-  optional string country = 6;
-  optional string logo_url = 7;
-  optional string page_url = 8;
-  optional string email = 9;
-  optional string lei_code = 10;
-  repeated OrganizationIdentifier identifiers = 11;
-  repeated string parents = 12;
-  repeated string contact_point_ids = 13;
-}
-
-message OrganizationIdentifierInput {
-  string type = 1 [(buf.validate.field).string.min_len = 1];
-  string value = 2 [(buf.validate.field).string.min_len = 1];
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  optional string street = 3 [(buf.validate.field).string.min_len = 1];
+  optional string locality = 4 [(buf.validate.field).string.min_len = 1];
+  optional string postal_code = 5 [(buf.validate.field).string.min_len = 1];
+  optional string country = 6 [(buf.validate.field).string.min_len = 1];
+  optional string logo_url = 7 [(buf.validate.field).string.uri = true];
+  optional string page_url = 8 [(buf.validate.field).string.uri = true];
+  optional string email = 9 [(buf.validate.field).string.email = true];
+  optional string lei_code = 10 [(buf.validate.field).string.min_len = 1];
+  repeated Identifier identifiers = 11;
+  repeated string parents = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_point_ids = 13 [(buf.validate.field).repeated.items.string.uuid = true];
 }
 
 message ListOrganizationsRequest {}
@@ -41,7 +30,7 @@ message ListOrganizationsResponse {
 }
 
 message GetOrganizationRequest {
-  string organization_id = 1 [(buf.validate.field).string.min_len = 1];
+  string organization_id = 1 [(buf.validate.field).string.uuid = true];
 }
 message GetOrganizationResponse {
   Organization organization = 1;
@@ -49,43 +38,43 @@ message GetOrganizationResponse {
 
 message CreateOrganizationRequest {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  optional string street = 2;
-  optional string locality = 3;
-  optional string postal_code = 4;
-  optional string country = 5;
-  optional string logo_url = 6;
-  optional string page_url = 7;
-  optional string email = 8;
-  optional string lei_code = 9;
-  repeated OrganizationIdentifierInput identifiers = 10;
-  repeated string parents = 11;
-  repeated string contact_point_ids = 12;
+  optional string street = 2 [(buf.validate.field).string.min_len = 1];
+  optional string locality = 3 [(buf.validate.field).string.min_len = 1];
+  optional string postal_code = 4 [(buf.validate.field).string.min_len = 1];
+  optional string country = 5 [(buf.validate.field).string.min_len = 1];
+  optional string logo_url = 6 [(buf.validate.field).string.uri = true];
+  optional string page_url = 7 [(buf.validate.field).string.uri = true];
+  optional string email = 8 [(buf.validate.field).string.email = true];
+  optional string lei_code = 9 [(buf.validate.field).string.min_len = 1];
+  repeated IdentifierInput identifiers = 10;
+  repeated string parents = 11 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_point_ids = 12 [(buf.validate.field).repeated.items.string.uuid = true];
 }
 message CreateOrganizationResponse {
   Organization organization = 1;
 }
 
 message ReplaceOrganizationRequest {
-  string organization_id = 1 [(buf.validate.field).string.min_len = 1];
+  string organization_id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
-  optional string street = 3;
-  optional string locality = 4;
-  optional string postal_code = 5;
-  optional string country = 6;
-  optional string logo_url = 7;
-  optional string page_url = 8;
-  optional string email = 9;
-  optional string lei_code = 10;
-  repeated OrganizationIdentifierInput identifiers = 11;
-  repeated string parents = 12;
-  repeated string contact_point_ids = 13;
+  optional string street = 3 [(buf.validate.field).string.min_len = 1];
+  optional string locality = 4 [(buf.validate.field).string.min_len = 1];
+  optional string postal_code = 5 [(buf.validate.field).string.min_len = 1];
+  optional string country = 6 [(buf.validate.field).string.min_len = 1];
+  optional string logo_url = 7 [(buf.validate.field).string.uri = true];
+  optional string page_url = 8 [(buf.validate.field).string.uri = true];
+  optional string email = 9 [(buf.validate.field).string.email = true];
+  optional string lei_code = 10 [(buf.validate.field).string.min_len = 1];
+  repeated IdentifierInput identifiers = 11;
+  repeated string parents = 12 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string contact_point_ids = 13 [(buf.validate.field).repeated.items.string.uuid = true];
 }
 message ReplaceOrganizationResponse {
   Organization organization = 1;
 }
 
 message DeleteOrganizationRequest {
-  string organization_id = 1 [(buf.validate.field).string.min_len = 1];
+  string organization_id = 1 [(buf.validate.field).string.uuid = true];
 }
 message DeleteOrganizationResponse {}
 

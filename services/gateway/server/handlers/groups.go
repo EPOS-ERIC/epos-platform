@@ -69,6 +69,19 @@ func toAPIGroupConcept(value metadatalifecyclev1.TopLevelConcept) (gatewayapi.Gr
 	}
 }
 
+func toProtoGroupConcept(value string) metadatalifecyclev1.TopLevelConcept {
+	switch value {
+	case string(gatewayapi.GroupConceptDATA):
+		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA
+	case string(gatewayapi.GroupConceptFACILITIES):
+		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES
+	case string(gatewayapi.GroupConceptSOFTWARE):
+		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE
+	default:
+		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
+	}
+}
+
 func (h *ogenHandler) GetGroup(ctx context.Context, q gatewayapi.GetGroupParams) (*gatewayapi.Group, error) {
 	v, err := h.metadataLifecycle.GetGroup(ctx, &metadatalifecyclev1.GetGroupRequest{GroupId: q.GroupId.String()})
 	if err != nil {
@@ -93,7 +106,7 @@ func (h *ogenHandler) CreateGroup(ctx context.Context, q *gatewayapi.CreateGroup
 		Logo:        toClientStringPtr(q.Logo),
 		Page:        toClientStringPtr(q.Page),
 		Color:       toClientStringPtr(q.Color),
-		Concept:     string(q.Concept),
+		Concept:     toProtoGroupConcept(string(q.Concept)),
 	}
 	if q.Position.Set {
 		in.Position = q.Position.Value
@@ -122,7 +135,7 @@ func (h *ogenHandler) ReplaceGroup(ctx context.Context, q *gatewayapi.ReplaceGro
 		Logo:        toClientStringPtr(q.Logo),
 		Page:        toClientStringPtr(q.Page),
 		Color:       toClientStringPtr(q.Color),
-		Concept:     string(q.Concept),
+		Concept:     toProtoGroupConcept(string(q.Concept)),
 	}
 	if q.Position.Set {
 		in.Position = q.Position.Value
@@ -221,7 +234,11 @@ func (h *ogenHandler) ApplyRoleRequestDecision(ctx context.Context, q *gatewayap
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.ApplyRoleRequestDecision(ctx, p.GroupId.String(), p.RequestId.String(), string(q.Status), a)
+	status, err := toProtoRoleRequestStatus(q.Status)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.ApplyRoleRequestDecision(ctx, p.GroupId.String(), p.RequestId.String(), status, a)
 	if err != nil {
 		return nil, fmt.Errorf("apply role request decision: %w", err)
 	}
@@ -237,7 +254,11 @@ func (h *ogenHandler) AssignGroupRole(ctx context.Context, p gatewayapi.AssignGr
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.AssignGroupRole(ctx, p.GroupId.String(), p.UserId.String(), string(p.Role), a); err != nil {
+	role, err := toProtoGroupRole(p.Role)
+	if err != nil {
+		return err
+	}
+	if err := h.metadataLifecycle.AssignGroupRole(ctx, p.GroupId.String(), p.UserId.String(), role, a); err != nil {
 		return fmt.Errorf("assign group role: %w", err)
 	}
 	return nil
@@ -248,7 +269,11 @@ func (h *ogenHandler) RemoveGroupRole(ctx context.Context, p gatewayapi.RemoveGr
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId.String(), string(p.Role), a); err != nil {
+	role, err := toProtoGroupRole(p.Role)
+	if err != nil {
+		return err
+	}
+	if err := h.metadataLifecycle.RemoveGroupRole(ctx, p.GroupId.String(), p.UserId.String(), role, a); err != nil {
 		return fmt.Errorf("remove group role: %w", err)
 	}
 	return nil
@@ -303,7 +328,11 @@ func (h *ogenHandler) RequestGroupRole(ctx context.Context, q *gatewayapi.Create
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.RequestRole(ctx, p.GroupId.String(), string(q.Role), a)
+	role, err := toProtoRoleRequestRole(q.Role)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.RequestRole(ctx, p.GroupId.String(), role, a)
 	if err != nil {
 		return nil, fmt.Errorf("request role: %w", err)
 	}
@@ -361,9 +390,13 @@ func (h *ogenHandler) RequestGroupMembership(ctx context.Context, q *gatewayapi.
 	if !ok {
 		return nil, authMissing()
 	}
-	roles := make([]string, len(q.Roles))
+	roles := make([]metadatalifecyclev1.GroupRole, len(q.Roles))
 	for i := range q.Roles {
-		roles[i] = string(q.Roles[i])
+		role, err := toProtoMembershipRole(q.Roles[i])
+		if err != nil {
+			return nil, err
+		}
+		roles[i] = role
 	}
 	v, err := h.metadataLifecycle.RequestMembership(ctx, params.GroupId.String(), a, roles)
 	if err != nil {
@@ -381,7 +414,11 @@ func (h *ogenHandler) DecideGroupMembership(ctx context.Context, q *gatewayapi.M
 	if !ok {
 		return nil, authMissing()
 	}
-	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId.String(), string(q.Status), a)
+	status, err := toProtoMembershipStatus(q.Status)
+	if err != nil {
+		return nil, err
+	}
+	v, err := h.metadataLifecycle.DecideMembership(ctx, params.GroupId.String(), params.UserId.String(), status, a)
 	if err != nil {
 		return nil, fmt.Errorf("decide membership: %w", err)
 	}

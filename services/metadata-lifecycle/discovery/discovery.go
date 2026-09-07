@@ -17,15 +17,15 @@ type Repository interface {
 }
 
 type DatasetReader interface {
-	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.DatasetVersion, bool, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
 }
 
 type SoftwareApplicationReader interface {
-	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareApplicationVersion, bool, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareApplicationVersion, error)
 }
 
 type SoftwareSourceCodeReader interface {
-	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, bool, error)
+	Read(context.Context, *domain.Actor, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 }
 
 type GroupReader interface {
@@ -157,7 +157,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 
 	switch candidate.Type {
 	case domain.Dataset:
-		value, _, err := s.datasets.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
+		value, err := s.datasets.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
 		if err != nil {
 			return domain.DiscoveryItem{}, fmt.Errorf("read discovery dataset: %w", err)
 		}
@@ -174,7 +174,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 			return domain.DiscoveryItem{}, fmt.Errorf("map discovery dataset distributions: %w", err)
 		}
 	case domain.SoftwareApplication:
-		value, _, err := s.sotfwareApplications.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
+		value, err := s.sotfwareApplications.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
 		if err != nil {
 			return domain.DiscoveryItem{}, fmt.Errorf("read discovery application: %w", err)
 		}
@@ -187,7 +187,7 @@ func (s *Service) item(ctx context.Context, actor *domain.Actor, candidate domai
 			return domain.DiscoveryItem{}, fmt.Errorf("map discovery application categories: %w", err)
 		}
 	case domain.SoftwareSourceCode:
-		value, _, err := s.softwareSourceCodes.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
+		value, err := s.softwareSourceCodes.Read(ctx, actor, candidate.ResourceID, candidate.VersionID)
 		if err != nil {
 			return domain.DiscoveryItem{}, fmt.Errorf("read discovery source code: %w", err)
 		}

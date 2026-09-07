@@ -176,7 +176,7 @@ func (m *mapper) softwareApplication(source string) (domain.SoftwareApplicationM
 		MainEntityOfPage: stringPtr(m.optionalString(source, schemaMainEntityOfPage)),
 		License:          stringPtr(m.optionalString(source, schemaLicense)),
 		Version:          stringPtr(m.optionalStringOneOf(source, schemaSoftwareVersion, schemaVersion)),
-		Keywords:         strings.Join(m.strings(source, schemaKeywords), ","),
+		Keywords:         m.keywords(source, schemaKeywords),
 		DownloadURL:      stringPtr(m.optionalString(source, schemaDownloadURL)),
 		Requirements:     stringPtr(m.optionalString(source, schemaSoftwareRequirements)),
 		OperatingSystem:  stringPtr(m.optionalString(source, schemaOperatingSystem)),
@@ -199,7 +199,7 @@ func (m *mapper) softwareSourceCode(source string) (domain.SoftwareSourceCodeMet
 		Name:                 m.requiredString(source, schemaName),
 		Description:          m.optionalString(source, schemaDescription),
 		ProgrammingLanguage:  stringPtr(m.optionalString(source, schemaProgrammingLanguage)),
-		Keywords:             strings.Join(m.strings(source, schemaKeywords), ","),
+		Keywords:             m.keywords(source, schemaKeywords),
 		Repository:           stringPtr(m.optionalString(source, schemaCodeRepository)),
 		License:              stringPtr(m.optionalString(source, schemaLicense)),
 		SoftwareRequirements: stringPtr(m.optionalString(source, schemaSoftwareRequirements)),
@@ -266,7 +266,7 @@ func (m *mapper) dataset(source string) (domain.DatasetMetadata, error) {
 		ID:          id,
 		Title:       m.requiredString(source, dctTitle),
 		Description: m.optionalString(source, dctDescription),
-		Keywords:    strings.Join(m.strings(source, dcatKeyword), ","),
+		Keywords:    m.keywords(source, dcatKeyword),
 
 		AccrualPeriodicity:    nil,
 		QualityAnnotation:     nil,
@@ -841,6 +841,16 @@ func (m *mapper) strings(subject, predicate string) []string {
 	result := make([]string, 0, len(values))
 	for _, value := range values {
 		result = append(result, value.RawValue())
+	}
+	return result
+}
+
+func (m *mapper) keywords(subject, predicate string) []string {
+	result := make([]string, 0)
+	for _, value := range m.strings(subject, predicate) {
+		for keyword := range strings.SplitSeq(value, ",") {
+			result = append(result, strings.TrimSpace(keyword))
+		}
 	}
 	return result
 }

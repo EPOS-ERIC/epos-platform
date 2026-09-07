@@ -6,14 +6,26 @@ import (
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftRequest) (*metadatalifecyclev1.CreateResourceRequest, string, error) {
+func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftRequest) (*metadatalifecyclev1.CreateResourceRequest, gatewayapi.WriteResourceType, error) {
 	request := &metadatalifecyclev1.CreateResourceRequest{GroupId: groupID}
 	switch {
 	case q.IsCreateDatasetResourceRequest():
 		v := q.CreateDatasetResourceRequest.Metadata
-		metadata := &metadatalifecyclev1.DatasetMetadata{Title: string(v.Title), Description: v.Description.Value, Keywords: v.Keywords.Value}
+		metadata := &metadatalifecyclev1.DatasetInput{
+			Title:            string(v.Title),
+			Keywords:         toProtoKeywords(v.Keywords),
+			TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
+			ContactPoints:    uuidStrings(v.ContactPoints),
+			Providers:        uuidStrings(v.Providers),
+			Categories:       uuidStrings(v.Categories),
+		}
+		if v.Description.Set {
+			description := string(v.Description.Value)
+			metadata.Description = &description
+		}
 		if v.AccrualPeriodicity.Set && !v.AccrualPeriodicity.Null {
 			metadata.AccrualPeriodicity = new(v.AccrualPeriodicity.Value)
 		}
@@ -26,27 +38,33 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 		if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
 			metadata.SpatialCoverage = new(v.SpatialCoverage.Value)
 		}
-		metadata.TemporalCoverage = toProtoTemporal(v.TemporalCoverage)
 		if v.Created.Set && !v.Created.Null {
-			metadata.Created = timestampPtr(v.Created.Value)
+			metadata.Created = timestamppb.New(v.Created.Value)
 		}
 		if v.Updated.Set && !v.Updated.Null {
-			metadata.Updated = timestampPtr(v.Updated.Value)
+			metadata.Updated = timestamppb.New(v.Updated.Value)
 		}
-		metadata.ContactPoints = uuidStrings(v.ContactPoints)
-		metadata.Providers = uuidStrings(v.Providers)
-		metadata.Categories = uuidStrings(v.Categories)
 		for _, id := range v.PersistentIdentifiers {
-			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, &metadatalifecyclev1.Identifier{Type: string(id.Type), Value: string(id.Value)})
+			metadata.PersistentIdentifiers = append(metadata.PersistentIdentifiers, &metadatalifecyclev1.IdentifierInput{
+				Type:  string(id.Type),
+				Value: string(id.Value),
+			})
 		}
 		for _, distribution := range v.Distributions {
 			metadata.Distributions = append(metadata.Distributions, toProtoDistribution(distribution))
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_Dataset{Dataset: metadata}
-		return request, "dataset", nil
+		return request, gatewayapi.WriteResourceTypeDataset, nil
 	case q.IsCreateSoftwareApplicationResourceRequest():
 		v := q.CreateSoftwareApplicationResourceRequest.Metadata
-		metadata := &metadatalifecyclev1.SoftwareApplicationMetadata{Name: string(v.Name), Description: v.Description.Value, Keywords: v.Keywords.Value, Creators: uuidStrings(v.Creators), Categories: uuidStrings(v.Categories), ContactPoints: uuidStrings(v.ContactPoints)}
+		metadata := &metadatalifecyclev1.SoftwareApplicationInput{
+			Name:          string(v.Name),
+			Description:   string(v.Description),
+			Keywords:      toProtoKeywords(v.Keywords),
+			Creators:      uuidStrings(v.Creators),
+			Categories:    uuidStrings(v.Categories),
+			ContactPoints: uuidStrings(v.ContactPoints),
+		}
 		if v.MainEntityOfPage.Set {
 			metadata.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 		}
@@ -66,13 +84,23 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.OperatingSystem = new(v.OperatingSystem.Value)
 		}
 		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.Identifier{Type: string(id.Type), Value: string(id.Value)})
+			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.IdentifierInput{
+				Type:  string(id.Type),
+				Value: string(id.Value),
+			})
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareApplication{SoftwareApplication: metadata}
-		return request, "software-application", nil
+		return request, gatewayapi.WriteResourceTypeSoftwareApplication, nil
 	case q.IsCreateSoftwareSourceCodeResourceRequest():
 		v := q.CreateSoftwareSourceCodeResourceRequest.Metadata
-		metadata := &metadatalifecyclev1.SoftwareSourceCodeMetadata{Name: string(v.Name), Description: v.Description.Value, Keywords: v.Keywords.Value, Creators: uuidStrings(v.Creators), Categories: uuidStrings(v.Categories), ContactPoints: uuidStrings(v.ContactPoints)}
+		metadata := &metadatalifecyclev1.SoftwareSourceCodeInput{
+			Name:          string(v.Name),
+			Description:   string(v.Description),
+			Keywords:      toProtoKeywords(v.Keywords),
+			Creators:      uuidStrings(v.Creators),
+			Categories:    uuidStrings(v.Categories),
+			ContactPoints: uuidStrings(v.ContactPoints),
+		}
 		if v.ProgrammingLanguage.Set {
 			metadata.ProgrammingLanguage = new(v.ProgrammingLanguage.Value)
 		}
@@ -95,30 +123,39 @@ func toProtoCreateResource(groupID string, q gatewayapi.CreateResourceDraftReque
 			metadata.MainEntityOfPage = new(v.MainEntityOfPage.Value.String())
 		}
 		for _, id := range v.Identifiers {
-			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.Identifier{Type: string(id.Type), Value: string(id.Value)})
+			metadata.Identifiers = append(metadata.Identifiers, &metadatalifecyclev1.IdentifierInput{
+				Type:  string(id.Type),
+				Value: string(id.Value),
+			})
 		}
 		request.Metadata = &metadatalifecyclev1.CreateResourceRequest_SoftwareSourceCode{SoftwareSourceCode: metadata}
-		return request, "software-source-code", nil
+		return request, gatewayapi.WriteResourceTypeSoftwareSourceCode, nil
 	default:
 		return nil, "", errors.New("unsupported resource draft discriminator")
 	}
 }
 
-func toProtoReplaceResourceDraft(q gatewayapi.ReplaceResourceDraftRequest) (string, *metadatalifecyclev1.ReplaceResourceDraftRequest, error) {
+func toProtoReplaceResourceDraft(q gatewayapi.ReplaceResourceDraftRequest) (gatewayapi.WriteResourceType, *metadatalifecyclev1.ReplaceResourceDraftRequest, error) {
 	request := &metadatalifecyclev1.ReplaceResourceDraftRequest{}
 	switch {
 	case q.IsReplaceDatasetDraftRequest():
-		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_Dataset{Dataset: toProtoDatasetDraftMetadata(q.ReplaceDatasetDraftRequest.Metadata)}
+		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_Dataset{
+			Dataset: toProtoDatasetDraftMetadata(q.ReplaceDatasetDraftRequest.Metadata),
+		}
 		request.Revision = q.ReplaceDatasetDraftRequest.Revision
-		return "dataset", request, nil
+		return gatewayapi.WriteResourceTypeDataset, request, nil
 	case q.IsReplaceSoftwareApplicationDraftRequest():
-		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareApplication{SoftwareApplication: toProtoSoftwareApplicationDraftMetadata(q.ReplaceSoftwareApplicationDraftRequest.Metadata)}
+		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareApplication{
+			SoftwareApplication: toProtoSoftwareApplicationDraftMetadata(q.ReplaceSoftwareApplicationDraftRequest.Metadata),
+		}
 		request.Revision = q.ReplaceSoftwareApplicationDraftRequest.Revision
-		return "software-application", request, nil
+		return gatewayapi.WriteResourceTypeSoftwareApplication, request, nil
 	case q.IsReplaceSoftwareSourceCodeDraftRequest():
-		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareSourceCode{SoftwareSourceCode: toProtoSoftwareSourceCodeDraftMetadata(q.ReplaceSoftwareSourceCodeDraftRequest.Metadata)}
+		request.Metadata = &metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareSourceCode{
+			SoftwareSourceCode: toProtoSoftwareSourceCodeDraftMetadata(q.ReplaceSoftwareSourceCodeDraftRequest.Metadata),
+		}
 		request.Revision = q.ReplaceSoftwareSourceCodeDraftRequest.Revision
-		return "software-source-code", request, nil
+		return gatewayapi.WriteResourceTypeSoftwareSourceCode, request, nil
 	default:
 		return "", nil, errors.New("unsupported resource draft discriminator")
 	}

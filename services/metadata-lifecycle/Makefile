@@ -20,6 +20,7 @@ dev: generate
 	go run .
 
 fix:
+	go mod tidy
 	go fix ./...
 
 generate:

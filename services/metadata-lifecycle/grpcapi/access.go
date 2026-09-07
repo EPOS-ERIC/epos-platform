@@ -53,7 +53,10 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 	roles := make([]domain.GroupRole, len(request.Roles))
 	seen := make(map[domain.GroupRole]struct{}, len(request.Roles))
 	for i, role := range request.Roles {
-		parsedRole, err := domain.NewRequestedGroupRole(role)
+		parsedRole, err := toDomainGroupRole(role)
+		if err == nil {
+			parsedRole, err = domain.NewRequestedGroupRole(string(parsedRole))
+		}
 		if err != nil {
 			return nil, toAccessError("request membership", err)
 		}
@@ -89,7 +92,7 @@ func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatali
 	if err != nil {
 		return nil, err
 	}
-	membershipStatus, err := domain.NewMembershipStatus(request.Status)
+	membershipStatus, err := toDomainMembershipStatus(request.Status)
 	if err != nil {
 		return nil, toAccessError("decide membership", err)
 	}
@@ -119,7 +122,10 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 	if err != nil {
 		return nil, err
 	}
-	role, err := domain.NewRequestedGroupRole(request.Role)
+	role, err := toDomainGroupRole(request.Role)
+	if err == nil {
+		role, err = domain.NewRequestedGroupRole(string(role))
+	}
 	if err != nil {
 		return nil, toAccessError("request role", err)
 	}
@@ -147,7 +153,7 @@ func (s *AccessServer) ApplyRoleRequestDecision(ctx context.Context, request *me
 	if err != nil {
 		return nil, err
 	}
-	roleRequestStatus, err := domain.NewRoleRequestStatus(request.Status)
+	roleRequestStatus, err := toDomainRoleRequestStatus(request.Status)
 	if err != nil {
 		return nil, toAccessError("decide role request", err)
 	}
@@ -178,7 +184,7 @@ func (s *AccessServer) AssignRole(ctx context.Context, request *metadatalifecycl
 		if err != nil {
 			return err
 		}
-		role, err := domain.NewGroupRole(request.Role)
+		role, err := toDomainGroupRole(request.Role)
 		if err != nil {
 			return toAccessError("assign role", err)
 		}
@@ -192,7 +198,7 @@ func (s *AccessServer) RemoveRole(ctx context.Context, request *metadatalifecycl
 		if err != nil {
 			return err
 		}
-		role, err := domain.NewGroupRole(request.Role)
+		role, err := toDomainGroupRole(request.Role)
 		if err != nil {
 			return toAccessError("remove role", err)
 		}
@@ -238,16 +244,52 @@ func parseAccessID(value, name string) (uuid.UUID, error) {
 }
 
 func toProtoGroupMembership(value domain.GroupMembership) *metadatalifecyclev1.GroupMembership {
-	roles := make([]string, len(value.Roles))
+	roles := make([]metadatalifecyclev1.GroupRole, len(value.Roles))
 	for i, role := range value.Roles {
-		roles[i] = string(role)
+		roles[i], _ = toProtoGroupRole(role)
 	}
 	requests := make([]*metadatalifecyclev1.RoleRequest, len(value.RoleRequests))
 	for i, request := range value.RoleRequests {
 		mapped, _ := toProtoRoleRequest(request)
 		requests[i] = mapped
 	}
-	return &metadatalifecyclev1.GroupMembership{User: &metadatalifecyclev1.MembershipUser{Id: value.User.ID, GivenName: value.User.GivenName, FamilyName: value.User.FamilyName, Email: value.User.Email}, Status: string(value.Status), Roles: roles, Permissions: append([]string(nil), value.Permissions...), RoleRequests: requests, CreatedAt: timestamppb.New(value.CreatedAt), UpdatedAt: timestamppb.New(value.UpdatedAt)}
+	status, _ := toProtoMembershipStatus(value.Status)
+	return &metadatalifecyclev1.GroupMembership{User: &metadatalifecyclev1.MembershipUser{Id: value.User.ID, GivenName: value.User.GivenName, FamilyName: value.User.FamilyName, Email: value.User.Email}, Status: status, Roles: roles, Permissions: append([]string(nil), value.Permissions...), RoleRequests: requests, CreatedAt: timestamppb.New(value.CreatedAt), UpdatedAt: timestamppb.New(value.UpdatedAt)}
+}
+
+func toDomainGroupRole(value metadatalifecyclev1.GroupRole) (domain.GroupRole, error) {
+	switch value {
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_EDITOR:
+		return domain.GroupRoleEditor, nil
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_REVIEWER:
+		return domain.GroupRoleReviewer, nil
+	case metadatalifecyclev1.GroupRole_GROUP_ROLE_ADMIN:
+		return domain.GroupRoleAdmin, nil
+	default:
+		return "", domain.ErrInvalidAccess
+	}
+}
+
+func toDomainMembershipStatus(value metadatalifecyclev1.MembershipStatus) (domain.MembershipStatus, error) {
+	switch value {
+	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_ACTIVE:
+		return domain.MembershipActive, nil
+	case metadatalifecyclev1.MembershipStatus_MEMBERSHIP_STATUS_REJECTED:
+		return domain.MembershipRejected, nil
+	default:
+		return "", domain.ErrInvalidAccess
+	}
+}
+
+func toDomainRoleRequestStatus(value metadatalifecyclev1.RoleRequestStatus) (domain.RoleRequestStatus, error) {
+	switch value {
+	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_ACCEPTED:
+		return domain.RoleRequestAccepted, nil
+	case metadatalifecyclev1.RoleRequestStatus_ROLE_REQUEST_STATUS_REJECTED:
+		return domain.RoleRequestRejected, nil
+	default:
+		return "", domain.ErrInvalidAccess
+	}
 }
 
 func toAccessError(operation string, err error) error {

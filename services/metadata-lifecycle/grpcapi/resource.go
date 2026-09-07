@@ -114,14 +114,13 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 	}
 
 	var value any
-	var includeContacts bool
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
-		value, includeContacts, err = s.datasets.Read(ctx, actor, resourceID, versionID)
+		value, err = s.datasets.Read(ctx, actor, resourceID, versionID)
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
-		value, includeContacts, err = s.applications.Read(ctx, actor, resourceID, versionID)
+		value, err = s.applications.Read(ctx, actor, resourceID, versionID)
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
-		value, includeContacts, err = s.sourceCodes.Read(ctx, actor, resourceID, versionID)
+		value, err = s.sourceCodes.Read(ctx, actor, resourceID, versionID)
 	default:
 		return nil, status.Error(codes.InvalidArgument, "resource type is required") //nolint:wrapcheck
 	}
@@ -136,19 +135,19 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
-		response.Metadata = &metadatalifecyclev1.ResourceVersion_Dataset{Dataset: datasetResourceMetadata(item.Metadata, includeContacts)}
+		response.Metadata = &metadatalifecyclev1.ResourceVersion_Dataset{Dataset: datasetResourceMetadata(item.Metadata)}
 	case domain.SoftwareApplicationVersion:
 		response.ResourceId, response.VersionId = item.SoftwareApplicationID.String(), item.VersionID.String()
 		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
-		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareApplication{SoftwareApplication: applicationResourceMetadata(item.Metadata, includeContacts)}
+		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareApplication{SoftwareApplication: applicationResourceMetadata(item.Metadata)}
 	case domain.SoftwareSourceCodeVersion:
 		response.ResourceId, response.VersionId = item.SoftwareSourceCodeID.String(), item.VersionID.String()
 		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
-		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareSourceCode{SoftwareSourceCode: sourceCodeResourceMetadata(item.Metadata, includeContacts)}
+		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareSourceCode{SoftwareSourceCode: sourceCodeResourceMetadata(item.Metadata)}
 	default:
 		return nil, status.Error(codes.Internal, "unsupported resource type") //nolint:wrapcheck
 	}
@@ -177,7 +176,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if value.Dataset == nil {
 			return nil, status.Error(codes.InvalidArgument, "dataset metadata is required")
 		}
-		metadata, err := datasetDraftInput(value.Dataset)
+		metadata, err := datasetInput(value.Dataset)
 		if err != nil {
 			return nil, err
 		}
@@ -194,7 +193,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if value.SoftwareApplication == nil {
 			return nil, status.Error(codes.InvalidArgument, "software application metadata is required")
 		}
-		metadata, err := softwareApplicationDraftInput(value.SoftwareApplication)
+		metadata, err := softwareApplicationInput(value.SoftwareApplication)
 		if err != nil {
 			return nil, err
 		}
@@ -211,7 +210,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		if value.SoftwareSourceCode == nil {
 			return nil, status.Error(codes.InvalidArgument, "software source code metadata is required")
 		}
-		metadata, err := softwareSourceCodeDraftInput(value.SoftwareSourceCode)
+		metadata, err := softwareSourceCodeInput(value.SoftwareSourceCode)
 		if err != nil {
 			return nil, err
 		}
@@ -566,8 +565,8 @@ func optionalActorFromContext(ctx context.Context) (*domain.Actor, error) {
 	return &actor, nil
 }
 
-func datasetResourceMetadata(value domain.DatasetMetadata, includeContacts bool) *metadatalifecyclev1.DatasetResourceMetadata {
-	result := &metadatalifecyclev1.DatasetResourceMetadata{Id: value.ID.String(), Title: value.Title, Description: value.Description, Keywords: value.Keywords, AccrualPeriodicity: value.AccrualPeriodicity, QualityAnnotation: value.QualityAnnotation, AccessRight: value.AccessRight, SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage), Created: timestampOutput(value.SourceCreated), Updated: timestampOutput(value.SourceUpdated), ContactsIncluded: includeContacts}
+func datasetResourceMetadata(value domain.DatasetMetadata) *metadatalifecyclev1.DatasetResourceMetadata {
+	result := &metadatalifecyclev1.DatasetResourceMetadata{Id: value.ID.String(), Title: value.Title, Description: value.Description, Keywords: value.Keywords, AccrualPeriodicity: value.AccrualPeriodicity, QualityAnnotation: value.QualityAnnotation, AccessRight: value.AccessRight, SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage), Created: timestampOutput(value.SourceCreated), Updated: timestampOutput(value.SourceUpdated)}
 	for _, item := range value.PersistentIdentifiers {
 		result.PersistentIdentifiers = append(result.PersistentIdentifiers, identifierOutput(item))
 	}
@@ -577,19 +576,17 @@ func datasetResourceMetadata(value domain.DatasetMetadata, includeContacts bool)
 	for _, item := range value.Categories {
 		result.Categories = append(result.Categories, referenceOutput(item.ID, item.Name))
 	}
-	if includeContacts {
-		for _, item := range value.ContactPoints {
-			result.ContactPoints = append(result.ContactPoints, item.ID.String())
-		}
+	for _, item := range value.ContactPoints {
+		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
 	for _, item := range value.Distributions {
-		result.Distributions = append(result.Distributions, distributionOutput(item, includeContacts))
+		result.Distributions = append(result.Distributions, distributionOutput(item))
 	}
 	return result
 }
 
-func applicationResourceMetadata(value domain.SoftwareApplicationMetadata, includeContacts bool) *metadatalifecyclev1.SoftwareApplicationResourceMetadata {
-	result := &metadatalifecyclev1.SoftwareApplicationResourceMetadata{Id: value.ID.String(), Name: value.Name, Description: value.Description, MainEntityOfPage: value.MainEntityOfPage, License: value.License, Version: value.Version, Keywords: value.Keywords, DownloadUrl: value.DownloadURL, Requirements: value.Requirements, OperatingSystem: value.OperatingSystem, ContactsIncluded: includeContacts}
+func applicationResourceMetadata(value domain.SoftwareApplicationMetadata) *metadatalifecyclev1.SoftwareApplicationResourceMetadata {
+	result := &metadatalifecyclev1.SoftwareApplicationResourceMetadata{Id: value.ID.String(), Name: value.Name, Description: value.Description, MainEntityOfPage: value.MainEntityOfPage, License: value.License, Version: value.Version, Keywords: value.Keywords, DownloadUrl: value.DownloadURL, Requirements: value.Requirements, OperatingSystem: value.OperatingSystem}
 	for _, item := range value.Creators {
 		result.Creators = append(result.Creators, referenceOutput(item.ID, item.Name))
 	}
@@ -599,16 +596,14 @@ func applicationResourceMetadata(value domain.SoftwareApplicationMetadata, inclu
 	for _, item := range value.Categories {
 		result.Categories = append(result.Categories, referenceOutput(item.ID, item.Name))
 	}
-	if includeContacts {
-		for _, item := range value.ContactPoints {
-			result.ContactPoints = append(result.ContactPoints, item.ID.String())
-		}
+	for _, item := range value.ContactPoints {
+		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
 	return result
 }
 
-func sourceCodeResourceMetadata(value domain.SoftwareSourceCodeMetadata, includeContacts bool) *metadatalifecyclev1.SoftwareSourceCodeResourceMetadata {
-	result := &metadatalifecyclev1.SoftwareSourceCodeResourceMetadata{Id: value.ID.String(), Name: value.Name, Description: value.Description, ProgrammingLanguage: value.ProgrammingLanguage, Keywords: value.Keywords, Repository: value.Repository, License: value.License, SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform, MainEntityOfPage: value.MainEntityOfPage, Version: value.Version, ContactsIncluded: includeContacts}
+func sourceCodeResourceMetadata(value domain.SoftwareSourceCodeMetadata) *metadatalifecyclev1.SoftwareSourceCodeResourceMetadata {
+	result := &metadatalifecyclev1.SoftwareSourceCodeResourceMetadata{Id: value.ID.String(), Name: value.Name, Description: value.Description, ProgrammingLanguage: value.ProgrammingLanguage, Keywords: value.Keywords, Repository: value.Repository, License: value.License, SoftwareRequirements: value.SoftwareRequirements, RuntimePlatform: value.RuntimePlatform, MainEntityOfPage: value.MainEntityOfPage, Version: value.Version}
 	for _, item := range value.Creators {
 		result.Creators = append(result.Creators, referenceOutput(item.ID, item.Name))
 	}
@@ -618,20 +613,18 @@ func sourceCodeResourceMetadata(value domain.SoftwareSourceCodeMetadata, include
 	for _, item := range value.Categories {
 		result.Categories = append(result.Categories, referenceOutput(item.ID, item.Name))
 	}
-	if includeContacts {
-		for _, item := range value.ContactPoints {
-			result.ContactPoints = append(result.ContactPoints, item.ID.String())
-		}
+	for _, item := range value.ContactPoints {
+		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
 	return result
 }
 
-func referenceOutput(id uuid.UUID, name string) *metadatalifecyclev1.ResourceReference {
-	return &metadatalifecyclev1.ResourceReference{Id: id.String(), Name: name}
+func referenceOutput(id uuid.UUID, name string) *metadatalifecyclev1.EntityReference {
+	return &metadatalifecyclev1.EntityReference{Id: id.String(), Name: name}
 }
 
-func identifierOutput(value domain.Identifier) *metadatalifecyclev1.ResourceIdentifier {
-	return &metadatalifecyclev1.ResourceIdentifier{Id: value.ID.String(), Type: string(value.Type), Value: value.Value}
+func identifierOutput(value domain.Identifier) *metadatalifecyclev1.Identifier {
+	return &metadatalifecyclev1.Identifier{Id: value.ID.String(), Type: string(value.Type), Value: value.Value}
 }
 
 func geometryString(value geom.T) *string {
@@ -659,28 +652,24 @@ func temporalOutput(value *domain.Temporal) *metadatalifecyclev1.Temporal {
 	return &metadatalifecyclev1.Temporal{Start: timestampOutput(value.Start), End: timestampOutput(value.End)}
 }
 
-func distributionOutput(value domain.Distribution, includeContacts bool) *metadatalifecyclev1.Distribution {
+func distributionOutput(value domain.Distribution) *metadatalifecyclev1.Distribution {
 	result := &metadatalifecyclev1.Distribution{Id: value.ID.String(), Title: value.Title, Description: value.Description, License: value.License, Type: string(value.Type), Issued: timestampOutput(value.Issued), Modified: timestampOutput(value.Modified), ByteSize: value.ByteSize}
 	if value.DownloadableFile != nil {
 		result.Delivery = &metadatalifecyclev1.Distribution_DownloadableFile{DownloadableFile: &metadatalifecyclev1.DownloadableFile{Url: value.DownloadableFile.URL, Format: value.DownloadableFile.Format}}
 	}
 	if value.WebService != nil {
-		result.Delivery = &metadatalifecyclev1.Distribution_WebService{WebService: webServiceOutput(*value.WebService, includeContacts)}
+		result.Delivery = &metadatalifecyclev1.Distribution_WebService{WebService: webServiceOutput(*value.WebService)}
 	}
 	return result
 }
 
-func webServiceOutput(value domain.WebService, includeContacts bool) *metadatalifecyclev1.WebService {
-	result := &metadatalifecyclev1.WebService{Id: value.ID.String(), Name: value.Name, Description: value.Description, TemplateUrl: value.TemplateURL, Format: value.Format, Documentation: documentationOutput(value.Documentation), SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage), ContactsIncluded: includeContacts}
+func webServiceOutput(value domain.WebService) *metadatalifecyclev1.WebService {
+	result := &metadatalifecyclev1.WebService{Id: value.ID.String(), Name: value.Name, Description: value.Description, TemplateUrl: value.TemplateURL, Format: value.Format, Documentation: documentationOutput(value.Documentation), SpatialCoverage: geometryString(value.SpatialCoverage), TemporalCoverage: temporalOutput(value.TemporalCoverage)}
 	if value.Provider != nil {
-		result.Provider = new(string)
-		*result.Provider = value.Provider.ID.String()
 		result.ProviderReference = referenceOutput(value.Provider.ID, value.Provider.Name)
 	}
-	if includeContacts {
-		for _, item := range value.ContactPoints {
-			result.ContactPoints = append(result.ContactPoints, item.ID.String())
-		}
+	for _, item := range value.ContactPoints {
+		result.ContactPoints = append(result.ContactPoints, item.ID.String())
 	}
 	for _, item := range value.Parameters {
 		result.Parameters = append(result.Parameters, parameterOutput(item))
@@ -697,7 +686,7 @@ func documentationOutput(value *domain.Documentation) *metadatalifecyclev1.Docum
 
 func parameterOutput(value domain.Parameter) *metadatalifecyclev1.Parameter {
 	metadata := value.GetMetadata()
-	result := &metadatalifecyclev1.Parameter{Metadata: &metadatalifecyclev1.ParameterMetadata{Id: metadata.ID.String(), Kind: string(metadata.Kind), Variable: metadata.Variable, Property: metadata.Property, Label: metadata.Label, Required: metadata.Required, MultipleValues: metadata.MultipleValues, ReadOnly: metadata.ReadOnly}}
+	result := &metadatalifecyclev1.Parameter{Metadata: &metadatalifecyclev1.ParameterMetadata{Id: metadata.ID.String(), Variable: metadata.Variable, Property: metadata.Property, Label: metadata.Label, Required: metadata.Required, MultipleValues: metadata.MultipleValues, ReadOnly: metadata.ReadOnly}}
 	switch item := value.(type) {
 	case domain.StringParameter:
 		result.Value = &metadatalifecyclev1.Parameter_String_{String_: &metadatalifecyclev1.StringParameter{Default: item.Default, AllowedValues: item.AllowedValues, Pattern: item.Pattern}}
@@ -724,7 +713,7 @@ func resourceReadError(err error) error {
 	}
 }
 
-func datasetInput(value *metadatalifecyclev1.DatasetMetadata) (domain.DatasetInput, error) {
+func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput, error) {
 	contactPoints, err := resourceParseUUIDs(value.GetContactPoints(), "dataset contact point")
 	if err != nil {
 		return domain.DatasetInput{}, err
@@ -775,7 +764,7 @@ func datasetInput(value *metadatalifecyclev1.DatasetMetadata) (domain.DatasetInp
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
-func distributionInput(value *metadatalifecyclev1.Distribution) (domain.DistributionInput, error) {
+func distributionInput(value *metadatalifecyclev1.DistributionInput) (domain.DistributionInput, error) {
 	if value == nil {
 		return domain.DistributionInput{}, status.Error(codes.InvalidArgument, "distribution is required") //nolint:wrapcheck
 	}
@@ -789,13 +778,13 @@ func distributionInput(value *metadatalifecyclev1.Distribution) (domain.Distribu
 	}
 	result := domain.DistributionInput{Title: value.GetTitle(), Description: value.GetDescription(), License: value.License, Type: domain.DistributionType(value.GetType()), Issued: issued, Modified: modified, ByteSize: value.ByteSize}
 	switch delivery := value.GetDelivery().(type) {
-	case *metadatalifecyclev1.Distribution_WebService:
+	case *metadatalifecyclev1.DistributionInput_WebService:
 		mapped, err := webServiceInput(delivery.WebService)
 		if err != nil {
 			return domain.DistributionInput{}, err
 		}
 		result.WebService = &mapped
-	case *metadatalifecyclev1.Distribution_DownloadableFile:
+	case *metadatalifecyclev1.DistributionInput_DownloadableFile:
 		if delivery.DownloadableFile == nil {
 			return domain.DistributionInput{}, status.Error(codes.InvalidArgument, "downloadable file is required") //nolint:wrapcheck
 		}
@@ -806,7 +795,7 @@ func distributionInput(value *metadatalifecyclev1.Distribution) (domain.Distribu
 	return result, nil
 }
 
-func webServiceInput(value *metadatalifecyclev1.WebService) (domain.WebServiceInput, error) {
+func webServiceInput(value *metadatalifecyclev1.WebServiceInput) (domain.WebServiceInput, error) {
 	if value == nil {
 		return domain.WebServiceInput{}, status.Error(codes.InvalidArgument, "web service is required")
 	}
@@ -815,8 +804,8 @@ func webServiceInput(value *metadatalifecyclev1.WebService) (domain.WebServiceIn
 		return domain.WebServiceInput{}, err
 	}
 	var provider *uuid.UUID
-	if value.Provider != nil {
-		id, err := parseUUID(value.GetProvider(), "web service provider")
+	if value.ProviderId != nil {
+		id, err := parseUUID(value.GetProviderId(), "web service provider")
 		if err != nil {
 			return domain.WebServiceInput{}, err
 		}
@@ -845,7 +834,7 @@ func webServiceInput(value *metadatalifecyclev1.WebService) (domain.WebServiceIn
 	return domain.WebServiceInput{Name: value.GetName(), Description: value.GetDescription(), TemplateURL: value.GetTemplateUrl(), Parameters: parameters, Format: value.GetFormat(), ProviderID: provider, Documentation: documentation, SpatialCoverage: spatial, TemporalCoverage: temporal, ContactPointIDs: contactPoints}, nil
 }
 
-func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, error) {
+func parameterInput(value *metadatalifecyclev1.ParameterInput) (domain.Parameter, error) {
 	if value == nil || value.GetMetadata() == nil {
 		return nil, status.Error(codes.InvalidArgument, "parameter metadata is required")
 	}
@@ -859,7 +848,7 @@ func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, err
 		ReadOnly:       m.GetReadOnly(),
 	}
 	switch v := value.GetValue().(type) {
-	case *metadatalifecyclev1.Parameter_String_:
+	case *metadatalifecyclev1.ParameterInput_String_:
 		if v.String_ == nil {
 			return nil, status.Error(codes.InvalidArgument, "string parameter is required")
 		}
@@ -869,22 +858,22 @@ func parameterInput(value *metadatalifecyclev1.Parameter) (domain.Parameter, err
 			AllowedValues: v.String_.GetAllowedValues(),
 			Pattern:       v.String_.GetPattern(),
 		}, nil
-	case *metadatalifecyclev1.Parameter_Boolean:
+	case *metadatalifecyclev1.ParameterInput_Boolean:
 		if v.Boolean == nil {
 			return nil, status.Error(codes.InvalidArgument, "boolean parameter is required")
 		}
 		return domain.BooleanParameter{Metadata: metadata, Default: v.Boolean.Default}, nil
-	case *metadatalifecyclev1.Parameter_Integer:
+	case *metadatalifecyclev1.ParameterInput_Integer:
 		if v.Integer == nil {
 			return nil, status.Error(codes.InvalidArgument, "integer parameter is required")
 		}
 		return domain.IntegerParameter{Metadata: metadata, Minimum: v.Integer.Minimum, Maximum: v.Integer.Maximum, Default: v.Integer.Default, AllowedValues: v.Integer.GetAllowedValues()}, nil
-	case *metadatalifecyclev1.Parameter_Float:
+	case *metadatalifecyclev1.ParameterInput_Float:
 		if v.Float == nil {
 			return nil, status.Error(codes.InvalidArgument, "float parameter is required")
 		}
 		return domain.FloatParameter{Metadata: metadata, Minimum: v.Float.Minimum, Maximum: v.Float.Maximum, Default: v.Float.Default, AllowedValues: v.Float.GetAllowedValues()}, nil
-	case *metadatalifecyclev1.Parameter_DateTime:
+	case *metadatalifecyclev1.ParameterInput_DateTime:
 		if v.DateTime == nil {
 			return nil, status.Error(codes.InvalidArgument, "date-time parameter is required")
 		}
@@ -914,7 +903,7 @@ func documentationInput(value *metadatalifecyclev1.Documentation) (*domain.Docum
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
-func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationMetadata) (domain.SoftwareApplicationInput, error) {
+func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationInput) (domain.SoftwareApplicationInput, error) {
 	creators, err := resourceParseUUIDs(value.GetCreators(), "software application creator")
 	if err != nil {
 		return domain.SoftwareApplicationInput{}, err
@@ -949,7 +938,7 @@ func softwareApplicationInput(value *metadatalifecyclev1.SoftwareApplicationMeta
 }
 
 //nolint:dupl // Create and draft protobufs intentionally map identical domain fields.
-func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeMetadata) (domain.SoftwareSourceCodeInput, error) {
+func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeInput, error) {
 	creators, err := resourceParseUUIDs(value.GetCreators(), "software source code creator")
 	if err != nil {
 		return domain.SoftwareSourceCodeInput{}, err
@@ -984,7 +973,7 @@ func softwareSourceCodeInput(value *metadatalifecyclev1.SoftwareSourceCodeMetada
 	}, nil
 }
 
-func identifierInputs(values []*metadatalifecyclev1.Identifier) ([]domain.IdentifierInput, error) {
+func identifierInputs(values []*metadatalifecyclev1.IdentifierInput) ([]domain.IdentifierInput, error) {
 	result := make([]domain.IdentifierInput, 0, len(values))
 	for _, value := range values {
 		if value == nil {

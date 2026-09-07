@@ -46,7 +46,6 @@ type Authorizer interface {
 	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
 	CanReadDatasetVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
-	CanReadContactPoint(context.Context, string) (domain.Result, error)
 }
 
 type Service struct {
@@ -89,30 +88,21 @@ func (s *Service) ReplaceDraft(ctx context.Context, actor domain.Actor, datasetI
 	return dataset, nil
 }
 
-func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, bool, error) {
+func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {
 	result, err := s.authorizer.CanReadDatasetVersion(ctx, actor.OptionalString(), datasetID, versionID)
 	if err != nil {
-		return domain.DatasetVersion{}, false, operationError("authorize dataset read", err)
+		return domain.DatasetVersion{}, operationError("authorize dataset read", err)
 	}
 	if !result.Allowed {
-		return domain.DatasetVersion{}, false, fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
-	}
-
-	includeContacts := false
-	if actor != nil {
-		contactResult, err := s.authorizer.CanReadContactPoint(ctx, string(*actor))
-		if err != nil {
-			return domain.DatasetVersion{}, false, operationError("authorize contact point read", err)
-		}
-		includeContacts = contactResult.Allowed
+		return domain.DatasetVersion{}, fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
 	}
 
 	dataset, err := s.store.Get(ctx, datasetID, versionID)
 	if err != nil {
-		return domain.DatasetVersion{}, false, operationError("get dataset version", err)
+		return domain.DatasetVersion{}, operationError("get dataset version", err)
 	}
 
-	return dataset, includeContacts, nil
+	return dataset, nil
 }
 
 func (s *Service) Submit(ctx context.Context, actor domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {

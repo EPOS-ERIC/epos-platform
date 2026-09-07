@@ -17,6 +17,11 @@ func NewDatasetInput(value DatasetInput) (DatasetInput, error) {
 	if value.Title == "" {
 		return DatasetInput{}, fmt.Errorf("dataset title is required: %w", ErrInvalidDataset)
 	}
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return DatasetInput{}, fmt.Errorf("dataset keywords: %w: %w", err, ErrInvalidDataset)
+	}
+	value.Keywords = keywords
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return DatasetInput{}, fmt.Errorf("dataset temporal coverage: %w", err)
 	}
@@ -90,6 +95,11 @@ func NewDatasetMetadata(value DatasetMetadata) (DatasetMetadata, error) {
 	if value.Title == "" {
 		return DatasetMetadata{}, fmt.Errorf("dataset title is required: %w", ErrInvalidDataset)
 	}
+	keywords, err := normalizeKeywords(value.Keywords)
+	if err != nil {
+		return DatasetMetadata{}, fmt.Errorf("dataset keywords: %w: %w", err, ErrInvalidDataset)
+	}
+	value.Keywords = keywords
 	if err := validateTemporal(value.TemporalCoverage); err != nil {
 		return DatasetMetadata{}, fmt.Errorf("dataset temporal coverage: %w", err)
 	}

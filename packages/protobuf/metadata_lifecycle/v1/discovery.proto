@@ -5,8 +5,7 @@ package metadata_lifecycle.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "metadata_lifecycle/v1/annotations.proto";
-import "metadata_lifecycle/v1/group.proto";
-import "metadata_lifecycle/v1/resource.proto";
+import "metadata_lifecycle/v1/common.proto";
 
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
@@ -14,12 +13,12 @@ message SearchResourcesRequest {
   optional string query = 1 [(buf.validate.field).string.min_len = 1];
   repeated ResourceType resource_types = 2 [(buf.validate.field).repeated.items.enum.defined_only = true];
   repeated TopLevelConcept concepts = 3 [(buf.validate.field).repeated.items.enum.defined_only = true];
-  optional string group_id = 4 [(buf.validate.field).string.min_len = 1];
+  optional string group_id = 4 [(buf.validate.field).string.uuid = true];
   optional string spatial_filter = 5 [(buf.validate.field).string.min_len = 1];
   google.protobuf.Timestamp date_from = 6;
   google.protobuf.Timestamp date_to = 7;
-  repeated string provider_ids = 8 [(buf.validate.field).repeated.items.string.min_len = 1];
-  repeated string keywords = 9 [(buf.validate.field).repeated.items.string.min_len = 1];
+  repeated string provider_ids = 8 [(buf.validate.field).repeated.items.string.uuid = true];
+  repeated string keywords = 9 [(buf.validate.field).repeated.items.string.pattern = "^[A-Za-z0-9 _-]+$"];
   optional string editor_id = 10 [(buf.validate.field).string.min_len = 1];
   repeated VersioningStatus versioning_statuses = 11 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
@@ -38,48 +37,43 @@ message DiscoveryItem {
 }
 
 message DatasetDiscoveryItem {
-  string resource_id = 1;
-  string version_id = 2;
-  string name = 3;
-  VersioningStatus status = 4;
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  string name = 3 [(buf.validate.field).string.min_len = 1];
+  VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp updated_at = 5;
-  TopLevelConcept concept = 6;
-  DiscoveryReference created_by = 7;
-  DiscoveryReference group = 8;
-  repeated DiscoveryReference providers = 9;
-  repeated DiscoveryReference categories = 10;
-  repeated DiscoveryReference distributions = 11;
+  TopLevelConcept concept = 6 [(buf.validate.field).enum.defined_only = true];
+  UserReference created_by = 7;
+  EntityReference group = 8;
+  repeated EntityReference providers = 9;
+  repeated EntityReference categories = 10;
+  repeated EntityReference distributions = 11;
 }
 
 message SoftwareApplicationDiscoveryItem {
-  string resource_id = 1;
-  string version_id = 2;
-  string name = 3;
-  VersioningStatus status = 4;
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  string name = 3 [(buf.validate.field).string.min_len = 1];
+  VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp updated_at = 5;
-  TopLevelConcept concept = 6;
-  DiscoveryReference created_by = 7;
-  DiscoveryReference group = 8;
-  repeated DiscoveryReference creators = 9;
-  repeated DiscoveryReference categories = 10;
+  TopLevelConcept concept = 6 [(buf.validate.field).enum.defined_only = true];
+  UserReference created_by = 7;
+  EntityReference group = 8;
+  repeated EntityReference creators = 9;
+  repeated EntityReference categories = 10;
 }
 
 message SoftwareSourceCodeDiscoveryItem {
-  string resource_id = 1;
-  string version_id = 2;
-  string name = 3;
-  VersioningStatus status = 4;
+  string resource_id = 1 [(buf.validate.field).string.uuid = true];
+  string version_id = 2 [(buf.validate.field).string.uuid = true];
+  string name = 3 [(buf.validate.field).string.min_len = 1];
+  VersioningStatus status = 4 [(buf.validate.field).enum.defined_only = true];
   google.protobuf.Timestamp updated_at = 5;
-  TopLevelConcept concept = 6;
-  DiscoveryReference created_by = 7;
-  DiscoveryReference group = 8;
-  repeated DiscoveryReference creators = 9;
-  repeated DiscoveryReference categories = 10;
-}
-
-message DiscoveryReference {
-  string id = 1;
-  string name = 2;
+  TopLevelConcept concept = 6 [(buf.validate.field).enum.defined_only = true];
+  UserReference created_by = 7;
+  EntityReference group = 8;
+  repeated EntityReference creators = 9;
+  repeated EntityReference categories = 10;
 }
 
 service DiscoveryService {

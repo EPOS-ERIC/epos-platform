@@ -59,6 +59,15 @@ func toAPIUserListItem(user *metadatalifecyclev1.UserListItem) (gatewayapi.UserL
 	}, nil
 }
 
+func toProtoGlobalRole(value gatewayapi.GlobalRole) (metadatalifecyclev1.GlobalRole, error) {
+	switch value {
+	case gatewayapi.GlobalRoleADMIN:
+		return metadatalifecyclev1.GlobalRole_GLOBAL_ROLE_ADMIN, nil
+	default:
+		return 0, fmt.Errorf("invalid global role %q", value)
+	}
+}
+
 func toAPIUserStatus(value metadatalifecyclev1.UserStatus) (gatewayapi.UserStatus, error) {
 	switch value {
 	case metadatalifecyclev1.UserStatus_USER_STATUS_ACTIVE:
@@ -109,7 +118,11 @@ func toAPIUser(v domain.User) (gatewayapi.User, error) {
 			UpdatedAt:   m.UpdatedAt,
 		}
 		for _, role := range m.Roles {
-			membership.Roles = append(membership.Roles, gatewayapi.MembershipRole(role))
+			mapped, err := toAPIMembershipRole(role)
+			if err != nil {
+				return gatewayapi.User{}, err
+			}
+			membership.Roles = append(membership.Roles, mapped)
 		}
 		for _, request := range m.RoleRequests {
 			mapped, err := toAPIRoleRequest(request)
@@ -166,7 +179,11 @@ func (h *ogenHandler) AssignGlobalRole(ctx context.Context, p gatewayapi.AssignG
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.AssignGlobalRole(ctx, a, p.ID, string(p.Role)); err != nil {
+	role, err := toProtoGlobalRole(p.Role)
+	if err != nil {
+		return err
+	}
+	if err := h.metadataLifecycle.AssignGlobalRole(ctx, a, p.ID, role); err != nil {
 		return fmt.Errorf("assign global role: %w", err)
 	}
 	return nil
@@ -177,7 +194,11 @@ func (h *ogenHandler) RemoveGlobalRole(ctx context.Context, p gatewayapi.RemoveG
 	if !ok {
 		return authMissing()
 	}
-	if err := h.metadataLifecycle.RemoveGlobalRole(ctx, a, p.ID, string(p.Role)); err != nil {
+	role, err := toProtoGlobalRole(p.Role)
+	if err != nil {
+		return err
+	}
+	if err := h.metadataLifecycle.RemoveGlobalRole(ctx, a, p.ID, role); err != nil {
 		return fmt.Errorf("remove global role: %w", err)
 	}
 	return nil

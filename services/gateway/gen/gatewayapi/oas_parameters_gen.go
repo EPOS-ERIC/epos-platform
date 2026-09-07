@@ -1598,7 +1598,7 @@ type DiscoverResourcesParams struct {
 	VersioningStatus []VersioningStatus `json:",omitempty"`
 	// Filter resources that carry all supplied keyword values. Pass comma-separated values in a single
 	// parameter: `?keywords=seismology,stations`.
-	Keywords []string `json:",omitempty"`
+	Keywords []Keyword `json:",omitempty"`
 }
 
 func unpackDiscoverResourcesParams(packed middleware.Parameters) (params DiscoverResourcesParams) {
@@ -1698,7 +1698,7 @@ func unpackDiscoverResourcesParams(packed middleware.Parameters) (params Discove
 			In:   "query",
 		}
 		if v, ok := packed[key]; ok {
-			params.Keywords = v.([]string)
+			params.Keywords = v.([]Keyword)
 		}
 	}
 	return params
@@ -2218,19 +2218,26 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 			if err := q.DecodeParam(cfg, func(d uri.Decoder) error {
 				params.Keywords = nil
 				return d.DecodeArray(func(d uri.Decoder) error {
-					var paramsDotKeywordsVal string
+					var paramsDotKeywordsVal Keyword
 					if err := func() error {
-						val, err := d.DecodeValue()
-						if err != nil {
+						var paramsDotKeywordsValVal string
+						if err := func() error {
+							val, err := d.DecodeValue()
+							if err != nil {
+								return err
+							}
+
+							c, err := conv.ToString(val)
+							if err != nil {
+								return err
+							}
+
+							paramsDotKeywordsValVal = c
+							return nil
+						}(); err != nil {
 							return err
 						}
-
-						c, err := conv.ToString(val)
-						if err != nil {
-							return err
-						}
-
-						paramsDotKeywordsVal = c
+						paramsDotKeywordsVal = Keyword(paramsDotKeywordsValVal)
 						return nil
 					}(); err != nil {
 						return err
@@ -2239,6 +2246,28 @@ func decodeDiscoverResourcesParams(args [0]string, argsEscaped bool, r *http.Req
 					return nil
 				})
 			}); err != nil {
+				return err
+			}
+			if err := func() error {
+				var failures []validate.FieldError
+				for i, elem := range params.Keywords {
+					if err := func() error {
+						if err := elem.Validate(); err != nil {
+							return err
+						}
+						return nil
+					}(); err != nil {
+						failures = append(failures, validate.FieldError{
+							Name:  fmt.Sprintf("[%d]", i),
+							Error: err,
+						})
+					}
+				}
+				if len(failures) > 0 {
+					return &validate.Error{Fields: failures}
+				}
+				return nil
+			}(); err != nil {
 				return err
 			}
 		}

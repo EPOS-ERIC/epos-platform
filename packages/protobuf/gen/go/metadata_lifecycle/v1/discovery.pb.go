@@ -297,11 +297,11 @@ type DatasetDiscoveryItem struct {
 	Status        VersioningStatus       `protobuf:"varint,4,opt,name=status,proto3,enum=metadata_lifecycle.v1.VersioningStatus" json:"status,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	Concept       TopLevelConcept        `protobuf:"varint,6,opt,name=concept,proto3,enum=metadata_lifecycle.v1.TopLevelConcept" json:"concept,omitempty"`
-	CreatedBy     *DiscoveryReference    `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	Group         *DiscoveryReference    `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
-	Providers     []*DiscoveryReference  `protobuf:"bytes,9,rep,name=providers,proto3" json:"providers,omitempty"`
-	Categories    []*DiscoveryReference  `protobuf:"bytes,10,rep,name=categories,proto3" json:"categories,omitempty"`
-	Distributions []*DiscoveryReference  `protobuf:"bytes,11,rep,name=distributions,proto3" json:"distributions,omitempty"`
+	CreatedBy     *UserReference         `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	Group         *EntityReference       `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
+	Providers     []*EntityReference     `protobuf:"bytes,9,rep,name=providers,proto3" json:"providers,omitempty"`
+	Categories    []*EntityReference     `protobuf:"bytes,10,rep,name=categories,proto3" json:"categories,omitempty"`
+	Distributions []*EntityReference     `protobuf:"bytes,11,rep,name=distributions,proto3" json:"distributions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -378,35 +378,35 @@ func (x *DatasetDiscoveryItem) GetConcept() TopLevelConcept {
 	return TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
 }
 
-func (x *DatasetDiscoveryItem) GetCreatedBy() *DiscoveryReference {
+func (x *DatasetDiscoveryItem) GetCreatedBy() *UserReference {
 	if x != nil {
 		return x.CreatedBy
 	}
 	return nil
 }
 
-func (x *DatasetDiscoveryItem) GetGroup() *DiscoveryReference {
+func (x *DatasetDiscoveryItem) GetGroup() *EntityReference {
 	if x != nil {
 		return x.Group
 	}
 	return nil
 }
 
-func (x *DatasetDiscoveryItem) GetProviders() []*DiscoveryReference {
+func (x *DatasetDiscoveryItem) GetProviders() []*EntityReference {
 	if x != nil {
 		return x.Providers
 	}
 	return nil
 }
 
-func (x *DatasetDiscoveryItem) GetCategories() []*DiscoveryReference {
+func (x *DatasetDiscoveryItem) GetCategories() []*EntityReference {
 	if x != nil {
 		return x.Categories
 	}
 	return nil
 }
 
-func (x *DatasetDiscoveryItem) GetDistributions() []*DiscoveryReference {
+func (x *DatasetDiscoveryItem) GetDistributions() []*EntityReference {
 	if x != nil {
 		return x.Distributions
 	}
@@ -421,10 +421,10 @@ type SoftwareApplicationDiscoveryItem struct {
 	Status        VersioningStatus       `protobuf:"varint,4,opt,name=status,proto3,enum=metadata_lifecycle.v1.VersioningStatus" json:"status,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	Concept       TopLevelConcept        `protobuf:"varint,6,opt,name=concept,proto3,enum=metadata_lifecycle.v1.TopLevelConcept" json:"concept,omitempty"`
-	CreatedBy     *DiscoveryReference    `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	Group         *DiscoveryReference    `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
-	Creators      []*DiscoveryReference  `protobuf:"bytes,9,rep,name=creators,proto3" json:"creators,omitempty"`
-	Categories    []*DiscoveryReference  `protobuf:"bytes,10,rep,name=categories,proto3" json:"categories,omitempty"`
+	CreatedBy     *UserReference         `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	Group         *EntityReference       `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
+	Creators      []*EntityReference     `protobuf:"bytes,9,rep,name=creators,proto3" json:"creators,omitempty"`
+	Categories    []*EntityReference     `protobuf:"bytes,10,rep,name=categories,proto3" json:"categories,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -501,28 +501,28 @@ func (x *SoftwareApplicationDiscoveryItem) GetConcept() TopLevelConcept {
 	return TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
 }
 
-func (x *SoftwareApplicationDiscoveryItem) GetCreatedBy() *DiscoveryReference {
+func (x *SoftwareApplicationDiscoveryItem) GetCreatedBy() *UserReference {
 	if x != nil {
 		return x.CreatedBy
 	}
 	return nil
 }
 
-func (x *SoftwareApplicationDiscoveryItem) GetGroup() *DiscoveryReference {
+func (x *SoftwareApplicationDiscoveryItem) GetGroup() *EntityReference {
 	if x != nil {
 		return x.Group
 	}
 	return nil
 }
 
-func (x *SoftwareApplicationDiscoveryItem) GetCreators() []*DiscoveryReference {
+func (x *SoftwareApplicationDiscoveryItem) GetCreators() []*EntityReference {
 	if x != nil {
 		return x.Creators
 	}
 	return nil
 }
 
-func (x *SoftwareApplicationDiscoveryItem) GetCategories() []*DiscoveryReference {
+func (x *SoftwareApplicationDiscoveryItem) GetCategories() []*EntityReference {
 	if x != nil {
 		return x.Categories
 	}
@@ -537,10 +537,10 @@ type SoftwareSourceCodeDiscoveryItem struct {
 	Status        VersioningStatus       `protobuf:"varint,4,opt,name=status,proto3,enum=metadata_lifecycle.v1.VersioningStatus" json:"status,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	Concept       TopLevelConcept        `protobuf:"varint,6,opt,name=concept,proto3,enum=metadata_lifecycle.v1.TopLevelConcept" json:"concept,omitempty"`
-	CreatedBy     *DiscoveryReference    `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
-	Group         *DiscoveryReference    `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
-	Creators      []*DiscoveryReference  `protobuf:"bytes,9,rep,name=creators,proto3" json:"creators,omitempty"`
-	Categories    []*DiscoveryReference  `protobuf:"bytes,10,rep,name=categories,proto3" json:"categories,omitempty"`
+	CreatedBy     *UserReference         `protobuf:"bytes,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	Group         *EntityReference       `protobuf:"bytes,8,opt,name=group,proto3" json:"group,omitempty"`
+	Creators      []*EntityReference     `protobuf:"bytes,9,rep,name=creators,proto3" json:"creators,omitempty"`
+	Categories    []*EntityReference     `protobuf:"bytes,10,rep,name=categories,proto3" json:"categories,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -617,103 +617,52 @@ func (x *SoftwareSourceCodeDiscoveryItem) GetConcept() TopLevelConcept {
 	return TopLevelConcept_TOP_LEVEL_CONCEPT_UNSPECIFIED
 }
 
-func (x *SoftwareSourceCodeDiscoveryItem) GetCreatedBy() *DiscoveryReference {
+func (x *SoftwareSourceCodeDiscoveryItem) GetCreatedBy() *UserReference {
 	if x != nil {
 		return x.CreatedBy
 	}
 	return nil
 }
 
-func (x *SoftwareSourceCodeDiscoveryItem) GetGroup() *DiscoveryReference {
+func (x *SoftwareSourceCodeDiscoveryItem) GetGroup() *EntityReference {
 	if x != nil {
 		return x.Group
 	}
 	return nil
 }
 
-func (x *SoftwareSourceCodeDiscoveryItem) GetCreators() []*DiscoveryReference {
+func (x *SoftwareSourceCodeDiscoveryItem) GetCreators() []*EntityReference {
 	if x != nil {
 		return x.Creators
 	}
 	return nil
 }
 
-func (x *SoftwareSourceCodeDiscoveryItem) GetCategories() []*DiscoveryReference {
+func (x *SoftwareSourceCodeDiscoveryItem) GetCategories() []*EntityReference {
 	if x != nil {
 		return x.Categories
 	}
 	return nil
 }
 
-type DiscoveryReference struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DiscoveryReference) Reset() {
-	*x = DiscoveryReference{}
-	mi := &file_metadata_lifecycle_v1_discovery_proto_msgTypes[6]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DiscoveryReference) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DiscoveryReference) ProtoMessage() {}
-
-func (x *DiscoveryReference) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_discovery_proto_msgTypes[6]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DiscoveryReference.ProtoReflect.Descriptor instead.
-func (*DiscoveryReference) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_discovery_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *DiscoveryReference) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *DiscoveryReference) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
 var File_metadata_lifecycle_v1_discovery_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_discovery_proto_rawDesc = "" +
 	"\n" +
-	"%metadata_lifecycle/v1/discovery.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a!metadata_lifecycle/v1/group.proto\x1a$metadata_lifecycle/v1/resource.proto\"\xdd\x05\n" +
+	"%metadata_lifecycle/v1/discovery.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\xf0\x05\n" +
 	"\x16SearchResourcesRequest\x12\"\n" +
 	"\x05query\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x05query\x88\x01\x01\x12Y\n" +
 	"\x0eresource_types\x18\x02 \x03(\x0e2#.metadata_lifecycle.v1.ResourceTypeB\r\xbaH\n" +
 	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\rresourceTypes\x12Q\n" +
 	"\bconcepts\x18\x03 \x03(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\r\xbaH\n" +
-	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\bconcepts\x12'\n" +
-	"\bgroup_id\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\agroupId\x88\x01\x01\x123\n" +
+	"\x92\x01\a\"\x05\x82\x01\x02\x10\x01R\bconcepts\x12(\n" +
+	"\bgroup_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x01R\agroupId\x88\x01\x01\x123\n" +
 	"\x0espatial_filter\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\rspatialFilter\x88\x01\x01\x127\n" +
 	"\tdate_from\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\bdateFrom\x123\n" +
-	"\adate_to\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x06dateTo\x12/\n" +
-	"\fprovider_ids\x18\b \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\vproviderIds\x12(\n" +
-	"\bkeywords\x18\t \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\bkeywords\x12)\n" +
+	"\adate_to\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x06dateTo\x120\n" +
+	"\fprovider_ids\x18\b \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\vproviderIds\x129\n" +
+	"\bkeywords\x18\t \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x132\x11^[A-Za-z0-9 _-]+$R\bkeywords\x12)\n" +
 	"\teditor_id\x18\n" +
 	" \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\beditorId\x88\x01\x01\x12g\n" +
 	"\x13versioning_statuses\x18\v \x03(\x0e2'.metadata_lifecycle.v1.VersioningStatusB\r\xbaH\n" +
@@ -729,65 +678,62 @@ const file_metadata_lifecycle_v1_discovery_proto_rawDesc = "" +
 	"\adataset\x18\x01 \x01(\v2+.metadata_lifecycle.v1.DatasetDiscoveryItemH\x00R\adataset\x12l\n" +
 	"\x14software_application\x18\x02 \x01(\v27.metadata_lifecycle.v1.SoftwareApplicationDiscoveryItemH\x00R\x13softwareApplication\x12j\n" +
 	"\x14software_source_code\x18\x03 \x01(\v26.metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItemH\x00R\x12softwareSourceCodeB\x11\n" +
-	"\bresource\x12\x05\xbaH\x02\b\x01\"\x98\x05\n" +
-	"\x14DatasetDiscoveryItem\x12\x1f\n" +
-	"\vresource_id\x18\x01 \x01(\tR\n" +
-	"resourceId\x12\x1d\n" +
+	"\bresource\x12\x05\xbaH\x02\b\x01\"\xb8\x05\n" +
+	"\x14DatasetDiscoveryItem\x12)\n" +
+	"\vresource_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"resourceId\x12'\n" +
 	"\n" +
-	"version_id\x18\x02 \x01(\tR\tversionId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12?\n" +
-	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusR\x06status\x129\n" +
+	"version_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12\x1b\n" +
+	"\x04name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12I\n" +
+	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12@\n" +
-	"\aconcept\x18\x06 \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptR\aconcept\x12H\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12J\n" +
+	"\aconcept\x18\x06 \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\b\xbaH\x05\x82\x01\x02\x10\x01R\aconcept\x12C\n" +
 	"\n" +
-	"created_by\x18\a \x01(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\tcreatedBy\x12?\n" +
-	"\x05group\x18\b \x01(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\x05group\x12G\n" +
-	"\tproviders\x18\t \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\tproviders\x12I\n" +
-	"\n" +
-	"categories\x18\n" +
-	" \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\n" +
-	"categories\x12O\n" +
-	"\rdistributions\x18\v \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\rdistributions\"\xd1\x04\n" +
-	" SoftwareApplicationDiscoveryItem\x12\x1f\n" +
-	"\vresource_id\x18\x01 \x01(\tR\n" +
-	"resourceId\x12\x1d\n" +
-	"\n" +
-	"version_id\x18\x02 \x01(\tR\tversionId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12?\n" +
-	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusR\x06status\x129\n" +
-	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12@\n" +
-	"\aconcept\x18\x06 \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptR\aconcept\x12H\n" +
-	"\n" +
-	"created_by\x18\a \x01(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\tcreatedBy\x12?\n" +
-	"\x05group\x18\b \x01(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\x05group\x12E\n" +
-	"\bcreators\x18\t \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\bcreators\x12I\n" +
+	"created_by\x18\a \x01(\v2$.metadata_lifecycle.v1.UserReferenceR\tcreatedBy\x12<\n" +
+	"\x05group\x18\b \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x05group\x12D\n" +
+	"\tproviders\x18\t \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\tproviders\x12F\n" +
 	"\n" +
 	"categories\x18\n" +
-	" \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\n" +
-	"categories\"\xd0\x04\n" +
-	"\x1fSoftwareSourceCodeDiscoveryItem\x12\x1f\n" +
-	"\vresource_id\x18\x01 \x01(\tR\n" +
-	"resourceId\x12\x1d\n" +
+	" \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\n" +
+	"categories\x12L\n" +
+	"\rdistributions\x18\v \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\rdistributions\"\xf4\x04\n" +
+	" SoftwareApplicationDiscoveryItem\x12)\n" +
+	"\vresource_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"resourceId\x12'\n" +
 	"\n" +
-	"version_id\x18\x02 \x01(\tR\tversionId\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\x12?\n" +
-	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusR\x06status\x129\n" +
+	"version_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12\x1b\n" +
+	"\x04name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12I\n" +
+	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12@\n" +
-	"\aconcept\x18\x06 \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptR\aconcept\x12H\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12J\n" +
+	"\aconcept\x18\x06 \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\b\xbaH\x05\x82\x01\x02\x10\x01R\aconcept\x12C\n" +
 	"\n" +
-	"created_by\x18\a \x01(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\tcreatedBy\x12?\n" +
-	"\x05group\x18\b \x01(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\x05group\x12E\n" +
-	"\bcreators\x18\t \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\bcreators\x12I\n" +
+	"created_by\x18\a \x01(\v2$.metadata_lifecycle.v1.UserReferenceR\tcreatedBy\x12<\n" +
+	"\x05group\x18\b \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x05group\x12B\n" +
+	"\bcreators\x18\t \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\bcreators\x12F\n" +
 	"\n" +
 	"categories\x18\n" +
-	" \x03(\v2).metadata_lifecycle.v1.DiscoveryReferenceR\n" +
-	"categories\"8\n" +
-	"\x12DiscoveryReference\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name2\x8a\x01\n" +
+	" \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\n" +
+	"categories\"\xf3\x04\n" +
+	"\x1fSoftwareSourceCodeDiscoveryItem\x12)\n" +
+	"\vresource_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
+	"resourceId\x12'\n" +
+	"\n" +
+	"version_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\x12\x1b\n" +
+	"\x04name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12I\n" +
+	"\x06status\x18\x04 \x01(\x0e2'.metadata_lifecycle.v1.VersioningStatusB\b\xbaH\x05\x82\x01\x02\x10\x01R\x06status\x129\n" +
+	"\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12J\n" +
+	"\aconcept\x18\x06 \x01(\x0e2&.metadata_lifecycle.v1.TopLevelConceptB\b\xbaH\x05\x82\x01\x02\x10\x01R\aconcept\x12C\n" +
+	"\n" +
+	"created_by\x18\a \x01(\v2$.metadata_lifecycle.v1.UserReferenceR\tcreatedBy\x12<\n" +
+	"\x05group\x18\b \x01(\v2&.metadata_lifecycle.v1.EntityReferenceR\x05group\x12B\n" +
+	"\bcreators\x18\t \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\bcreators\x12F\n" +
+	"\n" +
+	"categories\x18\n" +
+	" \x03(\v2&.metadata_lifecycle.v1.EntityReferenceR\n" +
+	"categories2\x8a\x01\n" +
 	"\x10DiscoveryService\x12v\n" +
 	"\x0fSearchResources\x12-.metadata_lifecycle.v1.SearchResourcesRequest\x1a..metadata_lifecycle.v1.SearchResourcesResponse\"\x04\x80\xb5\x18\x02BgZegithub.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1b\x06proto3"
 
@@ -803,7 +749,7 @@ func file_metadata_lifecycle_v1_discovery_proto_rawDescGZIP() []byte {
 	return file_metadata_lifecycle_v1_discovery_proto_rawDescData
 }
 
-var file_metadata_lifecycle_v1_discovery_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_metadata_lifecycle_v1_discovery_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_metadata_lifecycle_v1_discovery_proto_goTypes = []any{
 	(*SearchResourcesRequest)(nil),           // 0: metadata_lifecycle.v1.SearchResourcesRequest
 	(*SearchResourcesResponse)(nil),          // 1: metadata_lifecycle.v1.SearchResourcesResponse
@@ -811,44 +757,45 @@ var file_metadata_lifecycle_v1_discovery_proto_goTypes = []any{
 	(*DatasetDiscoveryItem)(nil),             // 3: metadata_lifecycle.v1.DatasetDiscoveryItem
 	(*SoftwareApplicationDiscoveryItem)(nil), // 4: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem
 	(*SoftwareSourceCodeDiscoveryItem)(nil),  // 5: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem
-	(*DiscoveryReference)(nil),               // 6: metadata_lifecycle.v1.DiscoveryReference
-	(ResourceType)(0),                        // 7: metadata_lifecycle.v1.ResourceType
-	(TopLevelConcept)(0),                     // 8: metadata_lifecycle.v1.TopLevelConcept
-	(*timestamppb.Timestamp)(nil),            // 9: google.protobuf.Timestamp
-	(VersioningStatus)(0),                    // 10: metadata_lifecycle.v1.VersioningStatus
+	(ResourceType)(0),                        // 6: metadata_lifecycle.v1.ResourceType
+	(TopLevelConcept)(0),                     // 7: metadata_lifecycle.v1.TopLevelConcept
+	(*timestamppb.Timestamp)(nil),            // 8: google.protobuf.Timestamp
+	(VersioningStatus)(0),                    // 9: metadata_lifecycle.v1.VersioningStatus
+	(*UserReference)(nil),                    // 10: metadata_lifecycle.v1.UserReference
+	(*EntityReference)(nil),                  // 11: metadata_lifecycle.v1.EntityReference
 }
 var file_metadata_lifecycle_v1_discovery_proto_depIdxs = []int32{
-	7,  // 0: metadata_lifecycle.v1.SearchResourcesRequest.resource_types:type_name -> metadata_lifecycle.v1.ResourceType
-	8,  // 1: metadata_lifecycle.v1.SearchResourcesRequest.concepts:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	9,  // 2: metadata_lifecycle.v1.SearchResourcesRequest.date_from:type_name -> google.protobuf.Timestamp
-	9,  // 3: metadata_lifecycle.v1.SearchResourcesRequest.date_to:type_name -> google.protobuf.Timestamp
-	10, // 4: metadata_lifecycle.v1.SearchResourcesRequest.versioning_statuses:type_name -> metadata_lifecycle.v1.VersioningStatus
+	6,  // 0: metadata_lifecycle.v1.SearchResourcesRequest.resource_types:type_name -> metadata_lifecycle.v1.ResourceType
+	7,  // 1: metadata_lifecycle.v1.SearchResourcesRequest.concepts:type_name -> metadata_lifecycle.v1.TopLevelConcept
+	8,  // 2: metadata_lifecycle.v1.SearchResourcesRequest.date_from:type_name -> google.protobuf.Timestamp
+	8,  // 3: metadata_lifecycle.v1.SearchResourcesRequest.date_to:type_name -> google.protobuf.Timestamp
+	9,  // 4: metadata_lifecycle.v1.SearchResourcesRequest.versioning_statuses:type_name -> metadata_lifecycle.v1.VersioningStatus
 	2,  // 5: metadata_lifecycle.v1.SearchResourcesResponse.items:type_name -> metadata_lifecycle.v1.DiscoveryItem
 	3,  // 6: metadata_lifecycle.v1.DiscoveryItem.dataset:type_name -> metadata_lifecycle.v1.DatasetDiscoveryItem
 	4,  // 7: metadata_lifecycle.v1.DiscoveryItem.software_application:type_name -> metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem
 	5,  // 8: metadata_lifecycle.v1.DiscoveryItem.software_source_code:type_name -> metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem
-	10, // 9: metadata_lifecycle.v1.DatasetDiscoveryItem.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	9,  // 10: metadata_lifecycle.v1.DatasetDiscoveryItem.updated_at:type_name -> google.protobuf.Timestamp
-	8,  // 11: metadata_lifecycle.v1.DatasetDiscoveryItem.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	6,  // 12: metadata_lifecycle.v1.DatasetDiscoveryItem.created_by:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 13: metadata_lifecycle.v1.DatasetDiscoveryItem.group:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 14: metadata_lifecycle.v1.DatasetDiscoveryItem.providers:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 15: metadata_lifecycle.v1.DatasetDiscoveryItem.categories:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 16: metadata_lifecycle.v1.DatasetDiscoveryItem.distributions:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	10, // 17: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	9,  // 18: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.updated_at:type_name -> google.protobuf.Timestamp
-	8,  // 19: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	6,  // 20: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.created_by:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 21: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.group:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 22: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.creators:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 23: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.categories:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	10, // 24: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.status:type_name -> metadata_lifecycle.v1.VersioningStatus
-	9,  // 25: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.updated_at:type_name -> google.protobuf.Timestamp
-	8,  // 26: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
-	6,  // 27: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.created_by:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 28: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.group:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 29: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.creators:type_name -> metadata_lifecycle.v1.DiscoveryReference
-	6,  // 30: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.categories:type_name -> metadata_lifecycle.v1.DiscoveryReference
+	9,  // 9: metadata_lifecycle.v1.DatasetDiscoveryItem.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	8,  // 10: metadata_lifecycle.v1.DatasetDiscoveryItem.updated_at:type_name -> google.protobuf.Timestamp
+	7,  // 11: metadata_lifecycle.v1.DatasetDiscoveryItem.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
+	10, // 12: metadata_lifecycle.v1.DatasetDiscoveryItem.created_by:type_name -> metadata_lifecycle.v1.UserReference
+	11, // 13: metadata_lifecycle.v1.DatasetDiscoveryItem.group:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 14: metadata_lifecycle.v1.DatasetDiscoveryItem.providers:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 15: metadata_lifecycle.v1.DatasetDiscoveryItem.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 16: metadata_lifecycle.v1.DatasetDiscoveryItem.distributions:type_name -> metadata_lifecycle.v1.EntityReference
+	9,  // 17: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	8,  // 18: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.updated_at:type_name -> google.protobuf.Timestamp
+	7,  // 19: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
+	10, // 20: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.created_by:type_name -> metadata_lifecycle.v1.UserReference
+	11, // 21: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.group:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 22: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.creators:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 23: metadata_lifecycle.v1.SoftwareApplicationDiscoveryItem.categories:type_name -> metadata_lifecycle.v1.EntityReference
+	9,  // 24: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.status:type_name -> metadata_lifecycle.v1.VersioningStatus
+	8,  // 25: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.updated_at:type_name -> google.protobuf.Timestamp
+	7,  // 26: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.concept:type_name -> metadata_lifecycle.v1.TopLevelConcept
+	10, // 27: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.created_by:type_name -> metadata_lifecycle.v1.UserReference
+	11, // 28: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.group:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 29: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.creators:type_name -> metadata_lifecycle.v1.EntityReference
+	11, // 30: metadata_lifecycle.v1.SoftwareSourceCodeDiscoveryItem.categories:type_name -> metadata_lifecycle.v1.EntityReference
 	0,  // 31: metadata_lifecycle.v1.DiscoveryService.SearchResources:input_type -> metadata_lifecycle.v1.SearchResourcesRequest
 	1,  // 32: metadata_lifecycle.v1.DiscoveryService.SearchResources:output_type -> metadata_lifecycle.v1.SearchResourcesResponse
 	32, // [32:33] is the sub-list for method output_type
@@ -864,8 +811,7 @@ func file_metadata_lifecycle_v1_discovery_proto_init() {
 		return
 	}
 	file_metadata_lifecycle_v1_annotations_proto_init()
-	file_metadata_lifecycle_v1_group_proto_init()
-	file_metadata_lifecycle_v1_resource_proto_init()
+	file_metadata_lifecycle_v1_common_proto_init()
 	file_metadata_lifecycle_v1_discovery_proto_msgTypes[0].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_discovery_proto_msgTypes[2].OneofWrappers = []any{
 		(*DiscoveryItem_Dataset)(nil),
@@ -878,7 +824,7 @@ func file_metadata_lifecycle_v1_discovery_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_discovery_proto_rawDesc), len(file_metadata_lifecycle_v1_discovery_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

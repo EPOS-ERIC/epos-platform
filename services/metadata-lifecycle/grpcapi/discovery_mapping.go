@@ -257,19 +257,19 @@ func toProtoDiscoveryConcept(value domain.TopLevelConcept) metadatalifecyclev1.T
 	}
 }
 
-func toProtoDiscoveryCreatedBy(value *domain.DiscoveryCreatedBy) *metadatalifecyclev1.DiscoveryReference {
+func toProtoDiscoveryCreatedBy(value *domain.DiscoveryCreatedBy) *metadatalifecyclev1.UserReference {
 	if value == nil {
 		return nil
 	}
-	return &metadatalifecyclev1.DiscoveryReference{Id: value.ID, Name: value.Name}
+	return &metadatalifecyclev1.UserReference{Id: value.ID, Name: value.Name}
 }
 
-func toProtoDiscoveryReference(value domain.DiscoveryReference) *metadatalifecyclev1.DiscoveryReference {
-	return &metadatalifecyclev1.DiscoveryReference{Id: value.ID.String(), Name: value.Name}
+func toProtoDiscoveryReference(value domain.DiscoveryReference) *metadatalifecyclev1.EntityReference {
+	return &metadatalifecyclev1.EntityReference{Id: value.ID.String(), Name: value.Name}
 }
 
-func toProtoDiscoveryReferences(values []domain.DiscoveryReference) []*metadatalifecyclev1.DiscoveryReference {
-	result := make([]*metadatalifecyclev1.DiscoveryReference, 0, len(values))
+func toProtoDiscoveryReferences(values []domain.DiscoveryReference) []*metadatalifecyclev1.EntityReference {
+	result := make([]*metadatalifecyclev1.EntityReference, 0, len(values))
 	for _, value := range values {
 		result = append(result, toProtoDiscoveryReference(value))
 	}

@@ -118,52 +118,75 @@ func (c *MetadataLifecycle) GetGroup(ctx context.Context, request *metadatalifec
 
 func (c *MetadataLifecycle) WithdrawMembershipRequest(ctx context.Context, groupID, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.WithdrawMembership(ctx, &metadatalifecyclev1.WithdrawMembershipRequest{GroupId: groupID})
+	_, err := c.access.WithdrawMembership(ctx, &metadatalifecyclev1.WithdrawMembershipRequest{
+		GroupId: groupID,
+	})
 	if err != nil {
 		return wrapGRPCError("withdraw membership", err)
 	}
 	return nil
 }
 
-func (c *MetadataLifecycle) RequestMembership(ctx context.Context, groupID, actorID string, roles []string) (*metadatalifecyclev1.RequestMembershipResponse, error) {
+func (c *MetadataLifecycle) RequestMembership(ctx context.Context, groupID, actorID string, roles []metadatalifecyclev1.GroupRole) (*metadatalifecyclev1.RequestMembershipResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.access.RequestMembership(ctx, &metadatalifecyclev1.RequestMembershipRequest{GroupId: groupID, Roles: roles})
+
+	response, err := c.access.RequestMembership(ctx, &metadatalifecyclev1.RequestMembershipRequest{
+		GroupId: groupID,
+		Roles:   roles,
+	})
 	if err != nil {
 		return nil, wrapGRPCError("request membership", err)
 	}
+
 	return response, nil
 }
 
-func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userID, status, actorID string) (*metadatalifecyclev1.DecideMembershipResponse, error) {
+func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userID string, status metadatalifecyclev1.MembershipStatus, actorID string) (*metadatalifecyclev1.DecideMembershipResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.access.DecideMembership(ctx, &metadatalifecyclev1.DecideMembershipRequest{GroupId: groupID, UserId: userID, Status: status})
+
+	response, err := c.access.DecideMembership(ctx, &metadatalifecyclev1.DecideMembershipRequest{
+		GroupId: groupID,
+		UserId:  userID,
+		Status:  status,
+	})
 	if err != nil {
 		return nil, wrapGRPCError("decide membership", err)
 	}
+
 	return response, nil
 }
 
 func (c *MetadataLifecycle) RevokeMembership(ctx context.Context, groupID, userID, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.RevokeMembership(ctx, &metadatalifecyclev1.RevokeMembershipRequest{GroupId: groupID, UserId: userID})
+	_, err := c.access.RevokeMembership(ctx, &metadatalifecyclev1.RevokeMembershipRequest{
+		GroupId: groupID,
+		UserId:  userID,
+	})
 	if err != nil {
 		return wrapGRPCError("revoke membership", err)
 	}
 	return nil
 }
 
-func (c *MetadataLifecycle) RequestRole(ctx context.Context, groupID, role, actorID string) (*metadatalifecyclev1.RequestRoleResponse, error) {
+func (c *MetadataLifecycle) RequestRole(ctx context.Context, groupID string, role metadatalifecyclev1.GroupRole, actorID string) (*metadatalifecyclev1.RequestRoleResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.access.RequestRole(ctx, &metadatalifecyclev1.RequestRoleRequest{GroupId: groupID, Role: role})
+	response, err := c.access.RequestRole(ctx, &metadatalifecyclev1.RequestRoleRequest{
+		GroupId: groupID,
+		Role:    role,
+	})
 	if err != nil {
 		return nil, wrapGRPCError("request role", err)
 	}
 	return response, nil
 }
 
-func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID, status, actorID string) (*metadatalifecyclev1.ApplyRoleRequestDecisionResponse, error) {
+func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupID, requestID string, status metadatalifecyclev1.RoleRequestStatus, actorID string) (*metadatalifecyclev1.ApplyRoleRequestDecisionResponse, error) {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	response, err := c.access.ApplyRoleRequestDecision(ctx, &metadatalifecyclev1.ApplyRoleRequestDecisionRequest{GroupId: groupID, RequestId: requestID, Status: status})
+	response, err := c.access.ApplyRoleRequestDecision(ctx, &metadatalifecyclev1.ApplyRoleRequestDecisionRequest{
+		GroupId:   groupID,
+		RequestId: requestID,
+		Status:    status,
+	})
 	if err != nil {
 		return nil, wrapGRPCError("decide role request", err)
 	}
@@ -172,25 +195,36 @@ func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupI
 
 func (c *MetadataLifecycle) WithdrawRoleRequest(ctx context.Context, groupID, requestID, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.WithdrawRoleRequest(ctx, &metadatalifecyclev1.WithdrawRoleRequestRequest{GroupId: groupID, RequestId: requestID})
+	_, err := c.access.WithdrawRoleRequest(ctx, &metadatalifecyclev1.WithdrawRoleRequestRequest{
+		GroupId:   groupID,
+		RequestId: requestID,
+	})
 	if err != nil {
 		return wrapGRPCError("withdraw role request", err)
 	}
 	return nil
 }
 
-func (c *MetadataLifecycle) AssignGroupRole(ctx context.Context, groupID, userID, role, actorID string) error {
+func (c *MetadataLifecycle) AssignGroupRole(ctx context.Context, groupID, userID string, role metadatalifecyclev1.GroupRole, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.AssignRole(ctx, &metadatalifecyclev1.AssignRoleRequest{GroupId: groupID, UserId: userID, Role: role})
+	_, err := c.access.AssignRole(ctx, &metadatalifecyclev1.AssignRoleRequest{
+		GroupId: groupID,
+		UserId:  userID,
+		Role:    role,
+	})
 	if err != nil {
 		return wrapGRPCError("assign role", err)
 	}
 	return nil
 }
 
-func (c *MetadataLifecycle) RemoveGroupRole(ctx context.Context, groupID, userID, role, actorID string) error {
+func (c *MetadataLifecycle) RemoveGroupRole(ctx context.Context, groupID, userID string, role metadatalifecyclev1.GroupRole, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.RemoveRole(ctx, &metadatalifecyclev1.RemoveRoleRequest{GroupId: groupID, UserId: userID, Role: role})
+	_, err := c.access.RemoveRole(ctx, &metadatalifecyclev1.RemoveRoleRequest{
+		GroupId: groupID,
+		UserId:  userID,
+		Role:    role,
+	})
 	if err != nil {
 		return wrapGRPCError("remove role", err)
 	}
@@ -199,7 +233,11 @@ func (c *MetadataLifecycle) RemoveGroupRole(ctx context.Context, groupID, userID
 
 func (c *MetadataLifecycle) GrantGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.GrantPermission(ctx, &metadatalifecyclev1.GrantPermissionRequest{GroupId: groupID, UserId: userID, Permission: permission})
+	_, err := c.access.GrantPermission(ctx, &metadatalifecyclev1.GrantPermissionRequest{
+		GroupId:    groupID,
+		UserId:     userID,
+		Permission: permission,
+	})
 	if err != nil {
 		return wrapGRPCError("grant permission", err)
 	}
@@ -208,7 +246,11 @@ func (c *MetadataLifecycle) GrantGroupPermission(ctx context.Context, groupID, u
 
 func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, userID, permission, actorID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.access.RevokePermission(ctx, &metadatalifecyclev1.RevokePermissionRequest{GroupId: groupID, UserId: userID, Permission: permission})
+	_, err := c.access.RevokePermission(ctx, &metadatalifecyclev1.RevokePermissionRequest{
+		GroupId:    groupID,
+		UserId:     userID,
+		Permission: permission,
+	})
 	if err != nil {
 		return wrapGRPCError("revoke permission", err)
 	}
@@ -217,7 +259,10 @@ func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, 
 
 func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.RevokeGlobalPermission(ctx, &metadatalifecyclev1.RevokeGlobalPermissionRequest{UserId: userID, Permission: permission})
+	_, err := c.users.RevokeGlobalPermission(ctx, &metadatalifecyclev1.RevokeGlobalPermissionRequest{
+		UserId:     userID,
+		Permission: permission,
+	})
 	if err != nil {
 		return wrapGRPCError("revoke metadata-lifecycle global permission", err)
 	}
@@ -226,25 +271,34 @@ func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID,
 
 func (c *MetadataLifecycle) GrantGlobalPermission(ctx context.Context, actorID, userID, permission string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.GrantGlobalPermission(ctx, &metadatalifecyclev1.GrantGlobalPermissionRequest{UserId: userID, Permission: permission})
+	_, err := c.users.GrantGlobalPermission(ctx, &metadatalifecyclev1.GrantGlobalPermissionRequest{
+		UserId:     userID,
+		Permission: permission,
+	})
 	if err != nil {
 		return wrapGRPCError("grant metadata-lifecycle global permission", err)
 	}
 	return nil
 }
 
-func (c *MetadataLifecycle) AssignGlobalRole(ctx context.Context, actorID, userID, role string) error {
+func (c *MetadataLifecycle) AssignGlobalRole(ctx context.Context, actorID, userID string, role metadatalifecyclev1.GlobalRole) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.AssignGlobalRole(ctx, &metadatalifecyclev1.AssignGlobalRoleRequest{UserId: userID, Role: role})
+	_, err := c.users.AssignGlobalRole(ctx, &metadatalifecyclev1.AssignGlobalRoleRequest{
+		UserId: userID,
+		Role:   role,
+	})
 	if err != nil {
 		return wrapGRPCError("assign metadata-lifecycle global role", err)
 	}
 	return nil
 }
 
-func (c *MetadataLifecycle) RemoveGlobalRole(ctx context.Context, actorID, userID, role string) error {
+func (c *MetadataLifecycle) RemoveGlobalRole(ctx context.Context, actorID, userID string, role metadatalifecyclev1.GlobalRole) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.RemoveGlobalRole(ctx, &metadatalifecyclev1.RemoveGlobalRoleRequest{UserId: userID, Role: role})
+	_, err := c.users.RemoveGlobalRole(ctx, &metadatalifecyclev1.RemoveGlobalRoleRequest{
+		UserId: userID,
+		Role:   role,
+	})
 	if err != nil {
 		return wrapGRPCError("remove metadata-lifecycle global role", err)
 	}
@@ -253,7 +307,10 @@ func (c *MetadataLifecycle) RemoveGlobalRole(ctx context.Context, actorID, userI
 
 func (c *MetadataLifecycle) BlockUser(ctx context.Context, actorID, userID, reason string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.BlockUser(ctx, &metadatalifecyclev1.BlockUserRequest{UserId: userID, Reason: reason})
+	_, err := c.users.BlockUser(ctx, &metadatalifecyclev1.BlockUserRequest{
+		UserId: userID,
+		Reason: reason,
+	})
 	if err != nil {
 		return wrapGRPCError("block metadata-lifecycle user", err)
 	}
@@ -262,7 +319,9 @@ func (c *MetadataLifecycle) BlockUser(ctx context.Context, actorID, userID, reas
 
 func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID string) error {
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
-	_, err := c.users.UnblockUser(ctx, &metadatalifecyclev1.UnblockUserRequest{UserId: userID})
+	_, err := c.users.UnblockUser(ctx, &metadatalifecyclev1.UnblockUserRequest{
+		UserId: userID,
+	})
 	if err != nil {
 		return wrapGRPCError("unblock metadata-lifecycle user", err)
 	}

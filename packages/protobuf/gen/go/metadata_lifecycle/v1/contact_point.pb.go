@@ -534,31 +534,31 @@ var File_metadata_lifecycle_v1_contact_point_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_contact_point_proto_rawDesc = "" +
 	"\n" +
-	")metadata_lifecycle/v1/contact_point.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"H\n" +
-	"\fContactPoint\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
-	"\x04role\x18\x03 \x01(\tR\x04role\"\x1a\n" +
+	")metadata_lifecycle/v1/contact_point.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"d\n" +
+	"\fContactPoint\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1d\n" +
+	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
+	"\x04role\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"\x1a\n" +
 	"\x18ListContactPointsRequest\"g\n" +
 	"\x19ListContactPointsResponse\x12J\n" +
-	"\x0econtact_points\x18\x01 \x03(\v2#.metadata_lifecycle.v1.ContactPointR\rcontactPoints\"K\n" +
-	"\x16GetContactPointRequest\x121\n" +
-	"\x10contact_point_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0econtactPointId\"c\n" +
+	"\x0econtact_points\x18\x01 \x03(\v2#.metadata_lifecycle.v1.ContactPointR\rcontactPoints\"L\n" +
+	"\x16GetContactPointRequest\x122\n" +
+	"\x10contact_point_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtactPointId\"c\n" +
 	"\x17GetContactPointResponse\x12H\n" +
 	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"W\n" +
 	"\x19CreateContactPointRequest\x12\x1d\n" +
-	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05email\x12\x1b\n" +
+	"\x05email\x18\x01 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
 	"\x04role\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"f\n" +
 	"\x1aCreateContactPointResponse\x12H\n" +
-	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"\x8b\x01\n" +
-	"\x1aReplaceContactPointRequest\x121\n" +
-	"\x10contact_point_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0econtactPointId\x12\x1d\n" +
-	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05email\x12\x1b\n" +
+	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"\x8c\x01\n" +
+	"\x1aReplaceContactPointRequest\x122\n" +
+	"\x10contact_point_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtactPointId\x12\x1d\n" +
+	"\x05email\x18\x02 \x01(\tB\a\xbaH\x04r\x02`\x01R\x05email\x12\x1b\n" +
 	"\x04role\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04role\"g\n" +
 	"\x1bReplaceContactPointResponse\x12H\n" +
-	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"N\n" +
-	"\x19DeleteContactPointRequest\x121\n" +
-	"\x10contact_point_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0econtactPointId\"\x1c\n" +
+	"\rcontact_point\x18\x01 \x01(\v2#.metadata_lifecycle.v1.ContactPointR\fcontactPoint\"O\n" +
+	"\x19DeleteContactPointRequest\x122\n" +
+	"\x10contact_point_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0econtactPointId\"\x1c\n" +
 	"\x1aDeleteContactPointResponse2\x92\x05\n" +
 	"\x13ContactPointService\x12|\n" +
 	"\x11ListContactPoints\x12/.metadata_lifecycle.v1.ListContactPointsRequest\x1a0.metadata_lifecycle.v1.ListContactPointsResponse\"\x04\x80\xb5\x18\x03\x12v\n" +

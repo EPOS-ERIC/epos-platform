@@ -65,6 +65,10 @@ func (g *GroupServer) CreateGroup(ctx context.Context, request *metadatalifecycl
 		return nil, err
 	}
 
+	concept, err := toDomainTopLevelConcept(request.GetConcept())
+	if err != nil {
+		return nil, toGroupMutationError("create group", err)
+	}
 	group, err := g.groups.Create(ctx, actor, domain.GroupInput{
 		Name:        request.GetName(),
 		Description: request.Description,
@@ -73,7 +77,7 @@ func (g *GroupServer) CreateGroup(ctx context.Context, request *metadatalifecycl
 		Page:        request.Page,
 		Color:       request.Color,
 		Position:    request.GetPosition(),
-		Concept:     request.GetConcept(),
+		Concept:     concept,
 	})
 	if err != nil {
 		return nil, toGroupMutationError("create group", err)
@@ -97,6 +101,10 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
 	}
 
+	concept, err := toDomainTopLevelConcept(request.GetConcept())
+	if err != nil {
+		return nil, toGroupMutationError("replace group", err)
+	}
 	group, err := g.groups.Replace(ctx, actor, id, domain.GroupInput{
 		Name:        request.GetName(),
 		Description: request.Description,
@@ -105,7 +113,7 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 		Page:        request.Page,
 		Color:       request.Color,
 		Position:    request.GetPosition(),
-		Concept:     request.GetConcept(),
+		Concept:     concept,
 	})
 	if err != nil {
 		return nil, toGroupMutationError("replace group", err)
@@ -117,6 +125,19 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 	}
 
 	return &metadatalifecyclev1.ReplaceGroupResponse{Group: result}, nil
+}
+
+func toDomainTopLevelConcept(value metadatalifecyclev1.TopLevelConcept) (string, error) {
+	switch value {
+	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_DATA:
+		return string(domain.TopLevelConceptData), nil
+	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_FACILITIES:
+		return string(domain.TopLevelConceptFacilities), nil
+	case metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE:
+		return string(domain.TopLevelConceptSoftware), nil
+	default:
+		return "", domain.ErrInvalidGroup
+	}
 }
 
 func (g *GroupServer) DeleteGroup(ctx context.Context, request *metadatalifecyclev1.DeleteGroupRequest) (*metadatalifecyclev1.DeleteGroupResponse, error) {

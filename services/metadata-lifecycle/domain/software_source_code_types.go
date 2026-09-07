@@ -11,7 +11,7 @@ type SoftwareSourceCodeInput struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string
@@ -41,7 +41,7 @@ type SoftwareSourceCodeMetadata struct {
 	Name                 string
 	Description          string
 	ProgrammingLanguage  *string
-	Keywords             string
+	Keywords             []string
 	Repository           *string
 	License              *string
 	SoftwareRequirements *string

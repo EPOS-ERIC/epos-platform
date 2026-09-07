@@ -98,7 +98,7 @@ func toAPIDatasetMetadata(v *metadatalifecyclev1.DatasetResourceMetadata) (gatew
 		ID:                 id,
 		Title:              v.GetTitle(),
 		Description:        v.GetDescription(),
-		Keywords:           v.GetKeywords(),
+		Keywords:           toAPIKeywords(v.GetKeywords()),
 		AccrualPeriodicity: toAPINilString(v.AccrualPeriodicity),
 		QualityAnnotation:  toAPINilString(v.QualityAnnotation),
 		AccessRight:        toAPINilString(v.AccessRight),
@@ -163,7 +163,7 @@ func toAPISoftwareApplicationMetadata(v *metadatalifecyclev1.SoftwareApplication
 		MainEntityOfPage: toAPINilString(v.MainEntityOfPage),
 		License:          toAPINilString(v.License),
 		Version:          toAPINilString(v.Version),
-		Keywords:         v.Keywords,
+		Keywords:         toAPIKeywords(v.Keywords),
 		DownloadURL:      toAPINilString(v.DownloadUrl),
 		Requirements:     toAPINilString(v.Requirements),
 		OperatingSystem:  toAPINilString(v.OperatingSystem),
@@ -195,7 +195,7 @@ func toAPISoftwareSourceCodeMetadata(v *metadatalifecyclev1.SoftwareSourceCodeRe
 		Name:                 v.GetName(),
 		Description:          v.GetDescription(),
 		ProgrammingLanguage:  toAPINilString(v.ProgrammingLanguage),
-		Keywords:             v.Keywords,
+		Keywords:             toAPIKeywords(v.Keywords),
 		Repository:           toAPINilString(v.Repository),
 		License:              toAPINilString(v.License),
 		SoftwareRequirements: toAPINilString(v.SoftwareRequirements),
@@ -219,7 +219,7 @@ func toAPISoftwareSourceCodeMetadata(v *metadatalifecyclev1.SoftwareSourceCodeRe
 	return result, err
 }
 
-func toAPIReferences(values []*metadatalifecyclev1.ResourceReference, field string) ([]gatewayapi.ResourceVersionReference, error) {
+func toAPIReferences(values []*metadatalifecyclev1.EntityReference, field string) ([]gatewayapi.ResourceVersionReference, error) {
 	result := make([]gatewayapi.ResourceVersionReference, 0, len(values))
 	for _, value := range values {
 		if value == nil {
@@ -237,8 +237,8 @@ func toAPIReferences(values []*metadatalifecyclev1.ResourceReference, field stri
 	return result, nil
 }
 
-func toAPIIdentifiers(values []*metadatalifecyclev1.ResourceIdentifier) ([]gatewayapi.ResourceIdentifier, error) {
-	result := make([]gatewayapi.ResourceIdentifier, 0, len(values))
+func toAPIIdentifiers(values []*metadatalifecyclev1.Identifier) ([]gatewayapi.Identifier, error) {
+	result := make([]gatewayapi.Identifier, 0, len(values))
 	for _, value := range values {
 		if value == nil {
 			continue
@@ -252,12 +252,12 @@ func toAPIIdentifiers(values []*metadatalifecyclev1.ResourceIdentifier) ([]gatew
 	return result, nil
 }
 
-func toAPIIdentifier(value *metadatalifecyclev1.ResourceIdentifier) (gatewayapi.ResourceIdentifier, error) {
-	id, err := parseUUID("resource_identifier.id", value.GetId())
+func toAPIIdentifier(value *metadatalifecyclev1.Identifier) (gatewayapi.Identifier, error) {
+	id, err := parseUUID("identifier.id", value.GetId())
 	if err != nil {
-		return gatewayapi.ResourceIdentifier{}, err
+		return gatewayapi.Identifier{}, err
 	}
-	return gatewayapi.ResourceIdentifier{
+	return gatewayapi.Identifier{
 		ID:    id,
 		Type:  value.GetType(),
 		Value: value.GetValue(),

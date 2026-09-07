@@ -8,14 +8,14 @@ import "metadata_lifecycle/v1/annotations.proto";
 option go_package = "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1;metadatalifecyclev1";
 
 message ListCategoriesRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
 }
 
 message CanonicalCategory {
-  string id = 1;
-  string group_id = 2;
-  optional string parent_category_id = 3;
-  string name = 4;
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  string group_id = 2 [(buf.validate.field).string.uuid = true];
+  optional string parent_category_id = 3 [(buf.validate.field).string.uuid = true];
+  string name = 4 [(buf.validate.field).string.min_len = 1];
 }
 
 message ListCategoriesResponse {
@@ -23,8 +23,8 @@ message ListCategoriesResponse {
 }
 
 message GetCategoryRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  string category_id = 2 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  string category_id = 2 [(buf.validate.field).string.uuid = true];
 }
 
 message GetCategoryResponse {
@@ -32,9 +32,9 @@ message GetCategoryResponse {
 }
 
 message CreateCategoryRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
   string name = 2 [(buf.validate.field).string.min_len = 1];
-  optional string parent_category_id = 3;
+  optional string parent_category_id = 3 [(buf.validate.field).string.uuid = true];
 }
 
 message CreateCategoryResponse {
@@ -42,10 +42,10 @@ message CreateCategoryResponse {
 }
 
 message ReplaceCategoryRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  string category_id = 2 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  string category_id = 2 [(buf.validate.field).string.uuid = true];
   string name = 3 [(buf.validate.field).string.min_len = 1];
-  optional string parent_category_id = 4;
+  optional string parent_category_id = 4 [(buf.validate.field).string.uuid = true];
 }
 
 message ReplaceCategoryResponse {
@@ -53,8 +53,8 @@ message ReplaceCategoryResponse {
 }
 
 message DeleteCategoryRequest {
-  string group_id = 1 [(buf.validate.field).string.min_len = 1];
-  string category_id = 2 [(buf.validate.field).string.min_len = 1];
+  string group_id = 1 [(buf.validate.field).string.uuid = true];
+  string category_id = 2 [(buf.validate.field).string.uuid = true];
 }
 
 message DeleteCategoryResponse {}

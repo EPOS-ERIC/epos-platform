@@ -105,7 +105,7 @@ func parseOrganizationID(value string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func toOrganizationInput(name string, street, locality, postalCode, country, logo, page, email, lei *string, identifiers []*metadatalifecyclev1.OrganizationIdentifierInput, parents, contactPoints []string) (domain.OrganizationInput, error) {
+func toOrganizationInput(name string, street, locality, postalCode, country, logo, page, email, lei *string, identifiers []*metadatalifecyclev1.IdentifierInput, parents, contactPoints []string) (domain.OrganizationInput, error) {
 	input := domain.OrganizationInput{
 		Name:        name,
 		Street:      street,
@@ -153,9 +153,9 @@ func toProtoOrganization(value domain.Organization) *metadatalifecyclev1.Organiz
 	result := &metadatalifecyclev1.Organization{Id: value.ID.String(), Name: value.Name, Street: value.Street, Locality: value.Locality, PostalCode: value.PostalCode, Country: value.Country, LogoUrl: value.LogoURL, PageUrl: value.PageURL, Email: value.Email, LeiCode: value.LEICode}
 	result.Parents = uuidStrings(value.Parents)
 	result.ContactPointIds = uuidStrings(value.ContactPoints)
-	result.Identifiers = make([]*metadatalifecyclev1.OrganizationIdentifier, len(value.Identifiers))
+	result.Identifiers = make([]*metadatalifecyclev1.Identifier, len(value.Identifiers))
 	for i, identifier := range value.Identifiers {
-		result.Identifiers[i] = &metadatalifecyclev1.OrganizationIdentifier{Id: identifier.ID.String(), Type: identifier.Type, Value: identifier.Value}
+		result.Identifiers[i] = &metadatalifecyclev1.Identifier{Id: identifier.ID.String(), Type: identifier.Type, Value: identifier.Value}
 	}
 	return result
 }

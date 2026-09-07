@@ -144,7 +144,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			return gatewayapi.Parameter{}, err
 		}
 		return gatewayapi.NewStringParameterParameter(gatewayapi.StringParameter{
-			Kind:          gatewayapi.StringParameterKind(value.Metadata.GetKind()),
+			Kind:          gatewayapi.StringParameterKindSTRING,
 			Metadata:      metadata,
 			Default:       toAPINilStringValue(v.Default),
 			AllowedValues: v.AllowedValues,
@@ -157,7 +157,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			return gatewayapi.Parameter{}, err
 		}
 		return gatewayapi.NewBooleanParameterParameter(gatewayapi.BooleanParameter{
-			Kind:     gatewayapi.BooleanParameterKind(value.Metadata.GetKind()),
+			Kind:     gatewayapi.BooleanParameterKindBOOLEAN,
 			Metadata: metadata,
 			Default:  toAPINilBoolValue(v.Default),
 		}), nil
@@ -168,7 +168,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			return gatewayapi.Parameter{}, err
 		}
 		return gatewayapi.NewIntegerParameterParameter(gatewayapi.IntegerParameter{
-			Kind:          gatewayapi.IntegerParameterKind(value.Metadata.GetKind()),
+			Kind:          gatewayapi.IntegerParameterKindINTEGER,
 			Metadata:      metadata,
 			Minimum:       toAPINilInt64Value(v.Minimum),
 			Maximum:       toAPINilInt64Value(v.Maximum),
@@ -182,7 +182,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			return gatewayapi.Parameter{}, err
 		}
 		return gatewayapi.NewFloatParameterParameter(gatewayapi.FloatParameter{
-			Kind:          gatewayapi.FloatParameterKind(value.Metadata.GetKind()),
+			Kind:          gatewayapi.FloatParameterKindFLOAT,
 			Metadata:      metadata,
 			Minimum:       toAPINilFloat64Value(v.Minimum),
 			Maximum:       toAPINilFloat64Value(v.Maximum),
@@ -196,7 +196,7 @@ func toAPIParameter(value *metadatalifecyclev1.Parameter) (gatewayapi.Parameter,
 			return gatewayapi.Parameter{}, err
 		}
 		return gatewayapi.NewDateTimeParameterParameter(gatewayapi.DateTimeParameter{
-			Kind:     gatewayapi.DateTimeParameterKind(value.Metadata.GetKind()),
+			Kind:     gatewayapi.DateTimeParameterKindDATETIME,
 			Metadata: metadata,
 			Minimum:  toAPINilTimeValue(v.Minimum),
 			Maximum:  toAPINilTimeValue(v.Maximum),

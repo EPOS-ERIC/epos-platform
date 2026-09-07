@@ -22,89 +22,28 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// TODO: maybe we can extract this to a shared file because in the end the shape of the identifier is the same for software/organizations/dataset, so we avoid duplication
-type OrganizationIdentifier struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	Value         string                 `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OrganizationIdentifier) Reset() {
-	*x = OrganizationIdentifier{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OrganizationIdentifier) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OrganizationIdentifier) ProtoMessage() {}
-
-func (x *OrganizationIdentifier) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OrganizationIdentifier.ProtoReflect.Descriptor instead.
-func (*OrganizationIdentifier) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *OrganizationIdentifier) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *OrganizationIdentifier) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *OrganizationIdentifier) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
 type Organization struct {
-	state           protoimpl.MessageState    `protogen:"open.v1"`
-	Id              string                    `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name            string                    `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Street          *string                   `protobuf:"bytes,3,opt,name=street,proto3,oneof" json:"street,omitempty"`
-	Locality        *string                   `protobuf:"bytes,4,opt,name=locality,proto3,oneof" json:"locality,omitempty"`
-	PostalCode      *string                   `protobuf:"bytes,5,opt,name=postal_code,json=postalCode,proto3,oneof" json:"postal_code,omitempty"`
-	Country         *string                   `protobuf:"bytes,6,opt,name=country,proto3,oneof" json:"country,omitempty"`
-	LogoUrl         *string                   `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3,oneof" json:"logo_url,omitempty"`
-	PageUrl         *string                   `protobuf:"bytes,8,opt,name=page_url,json=pageUrl,proto3,oneof" json:"page_url,omitempty"`
-	Email           *string                   `protobuf:"bytes,9,opt,name=email,proto3,oneof" json:"email,omitempty"`
-	LeiCode         *string                   `protobuf:"bytes,10,opt,name=lei_code,json=leiCode,proto3,oneof" json:"lei_code,omitempty"`
-	Identifiers     []*OrganizationIdentifier `protobuf:"bytes,11,rep,name=identifiers,proto3" json:"identifiers,omitempty"`
-	Parents         []string                  `protobuf:"bytes,12,rep,name=parents,proto3" json:"parents,omitempty"`
-	ContactPointIds []string                  `protobuf:"bytes,13,rep,name=contact_point_ids,json=contactPointIds,proto3" json:"contact_point_ids,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Street          *string                `protobuf:"bytes,3,opt,name=street,proto3,oneof" json:"street,omitempty"`
+	Locality        *string                `protobuf:"bytes,4,opt,name=locality,proto3,oneof" json:"locality,omitempty"`
+	PostalCode      *string                `protobuf:"bytes,5,opt,name=postal_code,json=postalCode,proto3,oneof" json:"postal_code,omitempty"`
+	Country         *string                `protobuf:"bytes,6,opt,name=country,proto3,oneof" json:"country,omitempty"`
+	LogoUrl         *string                `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3,oneof" json:"logo_url,omitempty"`
+	PageUrl         *string                `protobuf:"bytes,8,opt,name=page_url,json=pageUrl,proto3,oneof" json:"page_url,omitempty"`
+	Email           *string                `protobuf:"bytes,9,opt,name=email,proto3,oneof" json:"email,omitempty"`
+	LeiCode         *string                `protobuf:"bytes,10,opt,name=lei_code,json=leiCode,proto3,oneof" json:"lei_code,omitempty"`
+	Identifiers     []*Identifier          `protobuf:"bytes,11,rep,name=identifiers,proto3" json:"identifiers,omitempty"`
+	Parents         []string               `protobuf:"bytes,12,rep,name=parents,proto3" json:"parents,omitempty"`
+	ContactPointIds []string               `protobuf:"bytes,13,rep,name=contact_point_ids,json=contactPointIds,proto3" json:"contact_point_ids,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Organization) Reset() {
 	*x = Organization{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[1]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -116,7 +55,7 @@ func (x *Organization) String() string {
 func (*Organization) ProtoMessage() {}
 
 func (x *Organization) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[1]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -129,7 +68,7 @@ func (x *Organization) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Organization.ProtoReflect.Descriptor instead.
 func (*Organization) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{1}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Organization) GetId() string {
@@ -202,7 +141,7 @@ func (x *Organization) GetLeiCode() string {
 	return ""
 }
 
-func (x *Organization) GetIdentifiers() []*OrganizationIdentifier {
+func (x *Organization) GetIdentifiers() []*Identifier {
 	if x != nil {
 		return x.Identifiers
 	}
@@ -223,58 +162,6 @@ func (x *Organization) GetContactPointIds() []string {
 	return nil
 }
 
-type OrganizationIdentifierInput struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *OrganizationIdentifierInput) Reset() {
-	*x = OrganizationIdentifierInput{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *OrganizationIdentifierInput) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*OrganizationIdentifierInput) ProtoMessage() {}
-
-func (x *OrganizationIdentifierInput) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use OrganizationIdentifierInput.ProtoReflect.Descriptor instead.
-func (*OrganizationIdentifierInput) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *OrganizationIdentifierInput) GetType() string {
-	if x != nil {
-		return x.Type
-	}
-	return ""
-}
-
-func (x *OrganizationIdentifierInput) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
 type ListOrganizationsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -283,7 +170,7 @@ type ListOrganizationsRequest struct {
 
 func (x *ListOrganizationsRequest) Reset() {
 	*x = ListOrganizationsRequest{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -295,7 +182,7 @@ func (x *ListOrganizationsRequest) String() string {
 func (*ListOrganizationsRequest) ProtoMessage() {}
 
 func (x *ListOrganizationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[3]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -308,7 +195,7 @@ func (x *ListOrganizationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrganizationsRequest.ProtoReflect.Descriptor instead.
 func (*ListOrganizationsRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{3}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{1}
 }
 
 type ListOrganizationsResponse struct {
@@ -320,7 +207,7 @@ type ListOrganizationsResponse struct {
 
 func (x *ListOrganizationsResponse) Reset() {
 	*x = ListOrganizationsResponse{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[4]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -332,7 +219,7 @@ func (x *ListOrganizationsResponse) String() string {
 func (*ListOrganizationsResponse) ProtoMessage() {}
 
 func (x *ListOrganizationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[4]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -345,7 +232,7 @@ func (x *ListOrganizationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrganizationsResponse.ProtoReflect.Descriptor instead.
 func (*ListOrganizationsResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{4}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListOrganizationsResponse) GetOrganizations() []*Organization {
@@ -364,7 +251,7 @@ type GetOrganizationRequest struct {
 
 func (x *GetOrganizationRequest) Reset() {
 	*x = GetOrganizationRequest{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[5]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +263,7 @@ func (x *GetOrganizationRequest) String() string {
 func (*GetOrganizationRequest) ProtoMessage() {}
 
 func (x *GetOrganizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[5]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +276,7 @@ func (x *GetOrganizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrganizationRequest.ProtoReflect.Descriptor instead.
 func (*GetOrganizationRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{5}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetOrganizationRequest) GetOrganizationId() string {
@@ -408,7 +295,7 @@ type GetOrganizationResponse struct {
 
 func (x *GetOrganizationResponse) Reset() {
 	*x = GetOrganizationResponse{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[6]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -420,7 +307,7 @@ func (x *GetOrganizationResponse) String() string {
 func (*GetOrganizationResponse) ProtoMessage() {}
 
 func (x *GetOrganizationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[6]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -433,7 +320,7 @@ func (x *GetOrganizationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrganizationResponse.ProtoReflect.Descriptor instead.
 func (*GetOrganizationResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{6}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetOrganizationResponse) GetOrganization() *Organization {
@@ -444,26 +331,26 @@ func (x *GetOrganizationResponse) GetOrganization() *Organization {
 }
 
 type CreateOrganizationRequest struct {
-	state           protoimpl.MessageState         `protogen:"open.v1"`
-	Name            string                         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Street          *string                        `protobuf:"bytes,2,opt,name=street,proto3,oneof" json:"street,omitempty"`
-	Locality        *string                        `protobuf:"bytes,3,opt,name=locality,proto3,oneof" json:"locality,omitempty"`
-	PostalCode      *string                        `protobuf:"bytes,4,opt,name=postal_code,json=postalCode,proto3,oneof" json:"postal_code,omitempty"`
-	Country         *string                        `protobuf:"bytes,5,opt,name=country,proto3,oneof" json:"country,omitempty"`
-	LogoUrl         *string                        `protobuf:"bytes,6,opt,name=logo_url,json=logoUrl,proto3,oneof" json:"logo_url,omitempty"`
-	PageUrl         *string                        `protobuf:"bytes,7,opt,name=page_url,json=pageUrl,proto3,oneof" json:"page_url,omitempty"`
-	Email           *string                        `protobuf:"bytes,8,opt,name=email,proto3,oneof" json:"email,omitempty"`
-	LeiCode         *string                        `protobuf:"bytes,9,opt,name=lei_code,json=leiCode,proto3,oneof" json:"lei_code,omitempty"`
-	Identifiers     []*OrganizationIdentifierInput `protobuf:"bytes,10,rep,name=identifiers,proto3" json:"identifiers,omitempty"`
-	Parents         []string                       `protobuf:"bytes,11,rep,name=parents,proto3" json:"parents,omitempty"`
-	ContactPointIds []string                       `protobuf:"bytes,12,rep,name=contact_point_ids,json=contactPointIds,proto3" json:"contact_point_ids,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Name            string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Street          *string                `protobuf:"bytes,2,opt,name=street,proto3,oneof" json:"street,omitempty"`
+	Locality        *string                `protobuf:"bytes,3,opt,name=locality,proto3,oneof" json:"locality,omitempty"`
+	PostalCode      *string                `protobuf:"bytes,4,opt,name=postal_code,json=postalCode,proto3,oneof" json:"postal_code,omitempty"`
+	Country         *string                `protobuf:"bytes,5,opt,name=country,proto3,oneof" json:"country,omitempty"`
+	LogoUrl         *string                `protobuf:"bytes,6,opt,name=logo_url,json=logoUrl,proto3,oneof" json:"logo_url,omitempty"`
+	PageUrl         *string                `protobuf:"bytes,7,opt,name=page_url,json=pageUrl,proto3,oneof" json:"page_url,omitempty"`
+	Email           *string                `protobuf:"bytes,8,opt,name=email,proto3,oneof" json:"email,omitempty"`
+	LeiCode         *string                `protobuf:"bytes,9,opt,name=lei_code,json=leiCode,proto3,oneof" json:"lei_code,omitempty"`
+	Identifiers     []*IdentifierInput     `protobuf:"bytes,10,rep,name=identifiers,proto3" json:"identifiers,omitempty"`
+	Parents         []string               `protobuf:"bytes,11,rep,name=parents,proto3" json:"parents,omitempty"`
+	ContactPointIds []string               `protobuf:"bytes,12,rep,name=contact_point_ids,json=contactPointIds,proto3" json:"contact_point_ids,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *CreateOrganizationRequest) Reset() {
 	*x = CreateOrganizationRequest{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[7]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -475,7 +362,7 @@ func (x *CreateOrganizationRequest) String() string {
 func (*CreateOrganizationRequest) ProtoMessage() {}
 
 func (x *CreateOrganizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[7]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -488,7 +375,7 @@ func (x *CreateOrganizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrganizationRequest.ProtoReflect.Descriptor instead.
 func (*CreateOrganizationRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{7}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *CreateOrganizationRequest) GetName() string {
@@ -554,7 +441,7 @@ func (x *CreateOrganizationRequest) GetLeiCode() string {
 	return ""
 }
 
-func (x *CreateOrganizationRequest) GetIdentifiers() []*OrganizationIdentifierInput {
+func (x *CreateOrganizationRequest) GetIdentifiers() []*IdentifierInput {
 	if x != nil {
 		return x.Identifiers
 	}
@@ -584,7 +471,7 @@ type CreateOrganizationResponse struct {
 
 func (x *CreateOrganizationResponse) Reset() {
 	*x = CreateOrganizationResponse{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[8]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -596,7 +483,7 @@ func (x *CreateOrganizationResponse) String() string {
 func (*CreateOrganizationResponse) ProtoMessage() {}
 
 func (x *CreateOrganizationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[8]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -609,7 +496,7 @@ func (x *CreateOrganizationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrganizationResponse.ProtoReflect.Descriptor instead.
 func (*CreateOrganizationResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{8}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CreateOrganizationResponse) GetOrganization() *Organization {
@@ -620,27 +507,27 @@ func (x *CreateOrganizationResponse) GetOrganization() *Organization {
 }
 
 type ReplaceOrganizationRequest struct {
-	state           protoimpl.MessageState         `protogen:"open.v1"`
-	OrganizationId  string                         `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Name            string                         `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Street          *string                        `protobuf:"bytes,3,opt,name=street,proto3,oneof" json:"street,omitempty"`
-	Locality        *string                        `protobuf:"bytes,4,opt,name=locality,proto3,oneof" json:"locality,omitempty"`
-	PostalCode      *string                        `protobuf:"bytes,5,opt,name=postal_code,json=postalCode,proto3,oneof" json:"postal_code,omitempty"`
-	Country         *string                        `protobuf:"bytes,6,opt,name=country,proto3,oneof" json:"country,omitempty"`
-	LogoUrl         *string                        `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3,oneof" json:"logo_url,omitempty"`
-	PageUrl         *string                        `protobuf:"bytes,8,opt,name=page_url,json=pageUrl,proto3,oneof" json:"page_url,omitempty"`
-	Email           *string                        `protobuf:"bytes,9,opt,name=email,proto3,oneof" json:"email,omitempty"`
-	LeiCode         *string                        `protobuf:"bytes,10,opt,name=lei_code,json=leiCode,proto3,oneof" json:"lei_code,omitempty"`
-	Identifiers     []*OrganizationIdentifierInput `protobuf:"bytes,11,rep,name=identifiers,proto3" json:"identifiers,omitempty"`
-	Parents         []string                       `protobuf:"bytes,12,rep,name=parents,proto3" json:"parents,omitempty"`
-	ContactPointIds []string                       `protobuf:"bytes,13,rep,name=contact_point_ids,json=contactPointIds,proto3" json:"contact_point_ids,omitempty"`
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	OrganizationId  string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Street          *string                `protobuf:"bytes,3,opt,name=street,proto3,oneof" json:"street,omitempty"`
+	Locality        *string                `protobuf:"bytes,4,opt,name=locality,proto3,oneof" json:"locality,omitempty"`
+	PostalCode      *string                `protobuf:"bytes,5,opt,name=postal_code,json=postalCode,proto3,oneof" json:"postal_code,omitempty"`
+	Country         *string                `protobuf:"bytes,6,opt,name=country,proto3,oneof" json:"country,omitempty"`
+	LogoUrl         *string                `protobuf:"bytes,7,opt,name=logo_url,json=logoUrl,proto3,oneof" json:"logo_url,omitempty"`
+	PageUrl         *string                `protobuf:"bytes,8,opt,name=page_url,json=pageUrl,proto3,oneof" json:"page_url,omitempty"`
+	Email           *string                `protobuf:"bytes,9,opt,name=email,proto3,oneof" json:"email,omitempty"`
+	LeiCode         *string                `protobuf:"bytes,10,opt,name=lei_code,json=leiCode,proto3,oneof" json:"lei_code,omitempty"`
+	Identifiers     []*IdentifierInput     `protobuf:"bytes,11,rep,name=identifiers,proto3" json:"identifiers,omitempty"`
+	Parents         []string               `protobuf:"bytes,12,rep,name=parents,proto3" json:"parents,omitempty"`
+	ContactPointIds []string               `protobuf:"bytes,13,rep,name=contact_point_ids,json=contactPointIds,proto3" json:"contact_point_ids,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
 
 func (x *ReplaceOrganizationRequest) Reset() {
 	*x = ReplaceOrganizationRequest{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[9]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -652,7 +539,7 @@ func (x *ReplaceOrganizationRequest) String() string {
 func (*ReplaceOrganizationRequest) ProtoMessage() {}
 
 func (x *ReplaceOrganizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[9]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -665,7 +552,7 @@ func (x *ReplaceOrganizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceOrganizationRequest.ProtoReflect.Descriptor instead.
 func (*ReplaceOrganizationRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{9}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ReplaceOrganizationRequest) GetOrganizationId() string {
@@ -738,7 +625,7 @@ func (x *ReplaceOrganizationRequest) GetLeiCode() string {
 	return ""
 }
 
-func (x *ReplaceOrganizationRequest) GetIdentifiers() []*OrganizationIdentifierInput {
+func (x *ReplaceOrganizationRequest) GetIdentifiers() []*IdentifierInput {
 	if x != nil {
 		return x.Identifiers
 	}
@@ -768,7 +655,7 @@ type ReplaceOrganizationResponse struct {
 
 func (x *ReplaceOrganizationResponse) Reset() {
 	*x = ReplaceOrganizationResponse{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[10]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -780,7 +667,7 @@ func (x *ReplaceOrganizationResponse) String() string {
 func (*ReplaceOrganizationResponse) ProtoMessage() {}
 
 func (x *ReplaceOrganizationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[10]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +680,7 @@ func (x *ReplaceOrganizationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReplaceOrganizationResponse.ProtoReflect.Descriptor instead.
 func (*ReplaceOrganizationResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{10}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ReplaceOrganizationResponse) GetOrganization() *Organization {
@@ -812,7 +699,7 @@ type DeleteOrganizationRequest struct {
 
 func (x *DeleteOrganizationRequest) Reset() {
 	*x = DeleteOrganizationRequest{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[11]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -824,7 +711,7 @@ func (x *DeleteOrganizationRequest) String() string {
 func (*DeleteOrganizationRequest) ProtoMessage() {}
 
 func (x *DeleteOrganizationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[11]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -837,7 +724,7 @@ func (x *DeleteOrganizationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrganizationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteOrganizationRequest) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{11}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DeleteOrganizationRequest) GetOrganizationId() string {
@@ -855,7 +742,7 @@ type DeleteOrganizationResponse struct {
 
 func (x *DeleteOrganizationResponse) Reset() {
 	*x = DeleteOrganizationResponse{}
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[12]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -867,7 +754,7 @@ func (x *DeleteOrganizationResponse) String() string {
 func (*DeleteOrganizationResponse) ProtoMessage() {}
 
 func (x *DeleteOrganizationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[12]
+	mi := &file_metadata_lifecycle_v1_organization_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -880,34 +767,32 @@ func (x *DeleteOrganizationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrganizationResponse.ProtoReflect.Descriptor instead.
 func (*DeleteOrganizationResponse) Descriptor() ([]byte, []int) {
-	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{12}
+	return file_metadata_lifecycle_v1_organization_proto_rawDescGZIP(), []int{10}
 }
 
 var File_metadata_lifecycle_v1_organization_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_organization_proto_rawDesc = "" +
 	"\n" +
-	"(metadata_lifecycle/v1/organization.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"R\n" +
-	"\x16OrganizationIdentifier\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
-	"\x05value\x18\x03 \x01(\tR\x05value\"\xac\x04\n" +
-	"\fOrganization\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1b\n" +
-	"\x06street\x18\x03 \x01(\tH\x00R\x06street\x88\x01\x01\x12\x1f\n" +
-	"\blocality\x18\x04 \x01(\tH\x01R\blocality\x88\x01\x01\x12$\n" +
-	"\vpostal_code\x18\x05 \x01(\tH\x02R\n" +
-	"postalCode\x88\x01\x01\x12\x1d\n" +
-	"\acountry\x18\x06 \x01(\tH\x03R\acountry\x88\x01\x01\x12\x1e\n" +
-	"\blogo_url\x18\a \x01(\tH\x04R\alogoUrl\x88\x01\x01\x12\x1e\n" +
-	"\bpage_url\x18\b \x01(\tH\x05R\apageUrl\x88\x01\x01\x12\x19\n" +
-	"\x05email\x18\t \x01(\tH\x06R\x05email\x88\x01\x01\x12\x1e\n" +
+	"(metadata_lifecycle/v1/organization.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\x1a\"metadata_lifecycle/v1/common.proto\"\x9b\x05\n" +
+	"\fOrganization\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12$\n" +
+	"\x06street\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x06street\x88\x01\x01\x12(\n" +
+	"\blocality\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\blocality\x88\x01\x01\x12-\n" +
+	"\vpostal_code\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\n" +
+	"postalCode\x88\x01\x01\x12&\n" +
+	"\acountry\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\acountry\x88\x01\x01\x12(\n" +
+	"\blogo_url\x18\a \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x04R\alogoUrl\x88\x01\x01\x12(\n" +
+	"\bpage_url\x18\b \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x05R\apageUrl\x88\x01\x01\x12\"\n" +
+	"\x05email\x18\t \x01(\tB\a\xbaH\x04r\x02`\x01H\x06R\x05email\x88\x01\x01\x12'\n" +
 	"\blei_code\x18\n" +
-	" \x01(\tH\aR\aleiCode\x88\x01\x01\x12O\n" +
-	"\videntifiers\x18\v \x03(\v2-.metadata_lifecycle.v1.OrganizationIdentifierR\videntifiers\x12\x18\n" +
-	"\aparents\x18\f \x03(\tR\aparents\x12*\n" +
-	"\x11contact_point_ids\x18\r \x03(\tR\x0fcontactPointIdsB\t\n" +
+	" \x01(\tB\a\xbaH\x04r\x02\x10\x01H\aR\aleiCode\x88\x01\x01\x12C\n" +
+	"\videntifiers\x18\v \x03(\v2!.metadata_lifecycle.v1.IdentifierR\videntifiers\x12'\n" +
+	"\aparents\x18\f \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\aparents\x129\n" +
+	"\x11contact_point_ids\x18\r \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\x0fcontactPointIdsB\t\n" +
 	"\a_streetB\v\n" +
 	"\t_localityB\x0e\n" +
 	"\f_postal_codeB\n" +
@@ -916,32 +801,31 @@ const file_metadata_lifecycle_v1_organization_proto_rawDesc = "" +
 	"\t_logo_urlB\v\n" +
 	"\t_page_urlB\b\n" +
 	"\x06_emailB\v\n" +
-	"\t_lei_code\"Y\n" +
-	"\x1bOrganizationIdentifierInput\x12\x1b\n" +
-	"\x04type\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04type\x12\x1d\n" +
-	"\x05value\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05value\"\x1a\n" +
+	"\t_lei_code\"\x1a\n" +
 	"\x18ListOrganizationsRequest\"f\n" +
 	"\x19ListOrganizationsResponse\x12I\n" +
-	"\rorganizations\x18\x01 \x03(\v2#.metadata_lifecycle.v1.OrganizationR\rorganizations\"J\n" +
-	"\x16GetOrganizationRequest\x120\n" +
-	"\x0forganization_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0eorganizationId\"b\n" +
+	"\rorganizations\x18\x01 \x03(\v2#.metadata_lifecycle.v1.OrganizationR\rorganizations\"K\n" +
+	"\x16GetOrganizationRequest\x121\n" +
+	"\x0forganization_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0eorganizationId\"b\n" +
 	"\x17GetOrganizationResponse\x12G\n" +
-	"\forganization\x18\x01 \x01(\v2#.metadata_lifecycle.v1.OrganizationR\forganization\"\xb7\x04\n" +
+	"\forganization\x18\x01 \x01(\v2#.metadata_lifecycle.v1.OrganizationR\forganization\"\x93\x05\n" +
 	"\x19CreateOrganizationRequest\x12\x1b\n" +
-	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1b\n" +
-	"\x06street\x18\x02 \x01(\tH\x00R\x06street\x88\x01\x01\x12\x1f\n" +
-	"\blocality\x18\x03 \x01(\tH\x01R\blocality\x88\x01\x01\x12$\n" +
-	"\vpostal_code\x18\x04 \x01(\tH\x02R\n" +
-	"postalCode\x88\x01\x01\x12\x1d\n" +
-	"\acountry\x18\x05 \x01(\tH\x03R\acountry\x88\x01\x01\x12\x1e\n" +
-	"\blogo_url\x18\x06 \x01(\tH\x04R\alogoUrl\x88\x01\x01\x12\x1e\n" +
-	"\bpage_url\x18\a \x01(\tH\x05R\apageUrl\x88\x01\x01\x12\x19\n" +
-	"\x05email\x18\b \x01(\tH\x06R\x05email\x88\x01\x01\x12\x1e\n" +
-	"\blei_code\x18\t \x01(\tH\aR\aleiCode\x88\x01\x01\x12T\n" +
+	"\x04name\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12$\n" +
+	"\x06street\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x06street\x88\x01\x01\x12(\n" +
+	"\blocality\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\blocality\x88\x01\x01\x12-\n" +
+	"\vpostal_code\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\n" +
+	"postalCode\x88\x01\x01\x12&\n" +
+	"\acountry\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\acountry\x88\x01\x01\x12(\n" +
+	"\blogo_url\x18\x06 \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x04R\alogoUrl\x88\x01\x01\x12(\n" +
+	"\bpage_url\x18\a \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x05R\apageUrl\x88\x01\x01\x12\"\n" +
+	"\x05email\x18\b \x01(\tB\a\xbaH\x04r\x02`\x01H\x06R\x05email\x88\x01\x01\x12'\n" +
+	"\blei_code\x18\t \x01(\tB\a\xbaH\x04r\x02\x10\x01H\aR\aleiCode\x88\x01\x01\x12H\n" +
 	"\videntifiers\x18\n" +
-	" \x03(\v22.metadata_lifecycle.v1.OrganizationIdentifierInputR\videntifiers\x12\x18\n" +
-	"\aparents\x18\v \x03(\tR\aparents\x12*\n" +
-	"\x11contact_point_ids\x18\f \x03(\tR\x0fcontactPointIdsB\t\n" +
+	" \x03(\v2&.metadata_lifecycle.v1.IdentifierInputR\videntifiers\x12'\n" +
+	"\aparents\x18\v \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\aparents\x129\n" +
+	"\x11contact_point_ids\x18\f \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\x0fcontactPointIdsB\t\n" +
 	"\a_streetB\v\n" +
 	"\t_localityB\x0e\n" +
 	"\f_postal_codeB\n" +
@@ -952,23 +836,25 @@ const file_metadata_lifecycle_v1_organization_proto_rawDesc = "" +
 	"\x06_emailB\v\n" +
 	"\t_lei_code\"e\n" +
 	"\x1aCreateOrganizationResponse\x12G\n" +
-	"\forganization\x18\x01 \x01(\v2#.metadata_lifecycle.v1.OrganizationR\forganization\"\xea\x04\n" +
-	"\x1aReplaceOrganizationRequest\x120\n" +
-	"\x0forganization_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0eorganizationId\x12\x1b\n" +
-	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12\x1b\n" +
-	"\x06street\x18\x03 \x01(\tH\x00R\x06street\x88\x01\x01\x12\x1f\n" +
-	"\blocality\x18\x04 \x01(\tH\x01R\blocality\x88\x01\x01\x12$\n" +
-	"\vpostal_code\x18\x05 \x01(\tH\x02R\n" +
-	"postalCode\x88\x01\x01\x12\x1d\n" +
-	"\acountry\x18\x06 \x01(\tH\x03R\acountry\x88\x01\x01\x12\x1e\n" +
-	"\blogo_url\x18\a \x01(\tH\x04R\alogoUrl\x88\x01\x01\x12\x1e\n" +
-	"\bpage_url\x18\b \x01(\tH\x05R\apageUrl\x88\x01\x01\x12\x19\n" +
-	"\x05email\x18\t \x01(\tH\x06R\x05email\x88\x01\x01\x12\x1e\n" +
+	"\forganization\x18\x01 \x01(\v2#.metadata_lifecycle.v1.OrganizationR\forganization\"\xc7\x05\n" +
+	"\x1aReplaceOrganizationRequest\x121\n" +
+	"\x0forganization_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0eorganizationId\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12$\n" +
+	"\x06street\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x00R\x06street\x88\x01\x01\x12(\n" +
+	"\blocality\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\blocality\x88\x01\x01\x12-\n" +
+	"\vpostal_code\x18\x05 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x02R\n" +
+	"postalCode\x88\x01\x01\x12&\n" +
+	"\acountry\x18\x06 \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x03R\acountry\x88\x01\x01\x12(\n" +
+	"\blogo_url\x18\a \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x04R\alogoUrl\x88\x01\x01\x12(\n" +
+	"\bpage_url\x18\b \x01(\tB\b\xbaH\x05r\x03\x88\x01\x01H\x05R\apageUrl\x88\x01\x01\x12\"\n" +
+	"\x05email\x18\t \x01(\tB\a\xbaH\x04r\x02`\x01H\x06R\x05email\x88\x01\x01\x12'\n" +
 	"\blei_code\x18\n" +
-	" \x01(\tH\aR\aleiCode\x88\x01\x01\x12T\n" +
-	"\videntifiers\x18\v \x03(\v22.metadata_lifecycle.v1.OrganizationIdentifierInputR\videntifiers\x12\x18\n" +
-	"\aparents\x18\f \x03(\tR\aparents\x12*\n" +
-	"\x11contact_point_ids\x18\r \x03(\tR\x0fcontactPointIdsB\t\n" +
+	" \x01(\tB\a\xbaH\x04r\x02\x10\x01H\aR\aleiCode\x88\x01\x01\x12H\n" +
+	"\videntifiers\x18\v \x03(\v2&.metadata_lifecycle.v1.IdentifierInputR\videntifiers\x12'\n" +
+	"\aparents\x18\f \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\aparents\x129\n" +
+	"\x11contact_point_ids\x18\r \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\x0fcontactPointIdsB\t\n" +
 	"\a_streetB\v\n" +
 	"\t_localityB\x0e\n" +
 	"\f_postal_codeB\n" +
@@ -979,9 +865,9 @@ const file_metadata_lifecycle_v1_organization_proto_rawDesc = "" +
 	"\x06_emailB\v\n" +
 	"\t_lei_code\"f\n" +
 	"\x1bReplaceOrganizationResponse\x12G\n" +
-	"\forganization\x18\x01 \x01(\v2#.metadata_lifecycle.v1.OrganizationR\forganization\"M\n" +
-	"\x19DeleteOrganizationRequest\x120\n" +
-	"\x0forganization_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x0eorganizationId\"\x1c\n" +
+	"\forganization\x18\x01 \x01(\v2#.metadata_lifecycle.v1.OrganizationR\forganization\"N\n" +
+	"\x19DeleteOrganizationRequest\x121\n" +
+	"\x0forganization_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x0eorganizationId\"\x1c\n" +
 	"\x1aDeleteOrganizationResponse2\x92\x05\n" +
 	"\x13OrganizationService\x12|\n" +
 	"\x11ListOrganizations\x12/.metadata_lifecycle.v1.ListOrganizationsRequest\x1a0.metadata_lifecycle.v1.ListOrganizationsResponse\"\x04\x80\xb5\x18\x01\x12v\n" +
@@ -1002,40 +888,40 @@ func file_metadata_lifecycle_v1_organization_proto_rawDescGZIP() []byte {
 	return file_metadata_lifecycle_v1_organization_proto_rawDescData
 }
 
-var file_metadata_lifecycle_v1_organization_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_metadata_lifecycle_v1_organization_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_metadata_lifecycle_v1_organization_proto_goTypes = []any{
-	(*OrganizationIdentifier)(nil),      // 0: metadata_lifecycle.v1.OrganizationIdentifier
-	(*Organization)(nil),                // 1: metadata_lifecycle.v1.Organization
-	(*OrganizationIdentifierInput)(nil), // 2: metadata_lifecycle.v1.OrganizationIdentifierInput
-	(*ListOrganizationsRequest)(nil),    // 3: metadata_lifecycle.v1.ListOrganizationsRequest
-	(*ListOrganizationsResponse)(nil),   // 4: metadata_lifecycle.v1.ListOrganizationsResponse
-	(*GetOrganizationRequest)(nil),      // 5: metadata_lifecycle.v1.GetOrganizationRequest
-	(*GetOrganizationResponse)(nil),     // 6: metadata_lifecycle.v1.GetOrganizationResponse
-	(*CreateOrganizationRequest)(nil),   // 7: metadata_lifecycle.v1.CreateOrganizationRequest
-	(*CreateOrganizationResponse)(nil),  // 8: metadata_lifecycle.v1.CreateOrganizationResponse
-	(*ReplaceOrganizationRequest)(nil),  // 9: metadata_lifecycle.v1.ReplaceOrganizationRequest
-	(*ReplaceOrganizationResponse)(nil), // 10: metadata_lifecycle.v1.ReplaceOrganizationResponse
-	(*DeleteOrganizationRequest)(nil),   // 11: metadata_lifecycle.v1.DeleteOrganizationRequest
-	(*DeleteOrganizationResponse)(nil),  // 12: metadata_lifecycle.v1.DeleteOrganizationResponse
+	(*Organization)(nil),                // 0: metadata_lifecycle.v1.Organization
+	(*ListOrganizationsRequest)(nil),    // 1: metadata_lifecycle.v1.ListOrganizationsRequest
+	(*ListOrganizationsResponse)(nil),   // 2: metadata_lifecycle.v1.ListOrganizationsResponse
+	(*GetOrganizationRequest)(nil),      // 3: metadata_lifecycle.v1.GetOrganizationRequest
+	(*GetOrganizationResponse)(nil),     // 4: metadata_lifecycle.v1.GetOrganizationResponse
+	(*CreateOrganizationRequest)(nil),   // 5: metadata_lifecycle.v1.CreateOrganizationRequest
+	(*CreateOrganizationResponse)(nil),  // 6: metadata_lifecycle.v1.CreateOrganizationResponse
+	(*ReplaceOrganizationRequest)(nil),  // 7: metadata_lifecycle.v1.ReplaceOrganizationRequest
+	(*ReplaceOrganizationResponse)(nil), // 8: metadata_lifecycle.v1.ReplaceOrganizationResponse
+	(*DeleteOrganizationRequest)(nil),   // 9: metadata_lifecycle.v1.DeleteOrganizationRequest
+	(*DeleteOrganizationResponse)(nil),  // 10: metadata_lifecycle.v1.DeleteOrganizationResponse
+	(*Identifier)(nil),                  // 11: metadata_lifecycle.v1.Identifier
+	(*IdentifierInput)(nil),             // 12: metadata_lifecycle.v1.IdentifierInput
 }
 var file_metadata_lifecycle_v1_organization_proto_depIdxs = []int32{
-	0,  // 0: metadata_lifecycle.v1.Organization.identifiers:type_name -> metadata_lifecycle.v1.OrganizationIdentifier
-	1,  // 1: metadata_lifecycle.v1.ListOrganizationsResponse.organizations:type_name -> metadata_lifecycle.v1.Organization
-	1,  // 2: metadata_lifecycle.v1.GetOrganizationResponse.organization:type_name -> metadata_lifecycle.v1.Organization
-	2,  // 3: metadata_lifecycle.v1.CreateOrganizationRequest.identifiers:type_name -> metadata_lifecycle.v1.OrganizationIdentifierInput
-	1,  // 4: metadata_lifecycle.v1.CreateOrganizationResponse.organization:type_name -> metadata_lifecycle.v1.Organization
-	2,  // 5: metadata_lifecycle.v1.ReplaceOrganizationRequest.identifiers:type_name -> metadata_lifecycle.v1.OrganizationIdentifierInput
-	1,  // 6: metadata_lifecycle.v1.ReplaceOrganizationResponse.organization:type_name -> metadata_lifecycle.v1.Organization
-	3,  // 7: metadata_lifecycle.v1.OrganizationService.ListOrganizations:input_type -> metadata_lifecycle.v1.ListOrganizationsRequest
-	5,  // 8: metadata_lifecycle.v1.OrganizationService.GetOrganization:input_type -> metadata_lifecycle.v1.GetOrganizationRequest
-	7,  // 9: metadata_lifecycle.v1.OrganizationService.CreateOrganization:input_type -> metadata_lifecycle.v1.CreateOrganizationRequest
-	9,  // 10: metadata_lifecycle.v1.OrganizationService.ReplaceOrganization:input_type -> metadata_lifecycle.v1.ReplaceOrganizationRequest
-	11, // 11: metadata_lifecycle.v1.OrganizationService.DeleteOrganization:input_type -> metadata_lifecycle.v1.DeleteOrganizationRequest
-	4,  // 12: metadata_lifecycle.v1.OrganizationService.ListOrganizations:output_type -> metadata_lifecycle.v1.ListOrganizationsResponse
-	6,  // 13: metadata_lifecycle.v1.OrganizationService.GetOrganization:output_type -> metadata_lifecycle.v1.GetOrganizationResponse
-	8,  // 14: metadata_lifecycle.v1.OrganizationService.CreateOrganization:output_type -> metadata_lifecycle.v1.CreateOrganizationResponse
-	10, // 15: metadata_lifecycle.v1.OrganizationService.ReplaceOrganization:output_type -> metadata_lifecycle.v1.ReplaceOrganizationResponse
-	12, // 16: metadata_lifecycle.v1.OrganizationService.DeleteOrganization:output_type -> metadata_lifecycle.v1.DeleteOrganizationResponse
+	11, // 0: metadata_lifecycle.v1.Organization.identifiers:type_name -> metadata_lifecycle.v1.Identifier
+	0,  // 1: metadata_lifecycle.v1.ListOrganizationsResponse.organizations:type_name -> metadata_lifecycle.v1.Organization
+	0,  // 2: metadata_lifecycle.v1.GetOrganizationResponse.organization:type_name -> metadata_lifecycle.v1.Organization
+	12, // 3: metadata_lifecycle.v1.CreateOrganizationRequest.identifiers:type_name -> metadata_lifecycle.v1.IdentifierInput
+	0,  // 4: metadata_lifecycle.v1.CreateOrganizationResponse.organization:type_name -> metadata_lifecycle.v1.Organization
+	12, // 5: metadata_lifecycle.v1.ReplaceOrganizationRequest.identifiers:type_name -> metadata_lifecycle.v1.IdentifierInput
+	0,  // 6: metadata_lifecycle.v1.ReplaceOrganizationResponse.organization:type_name -> metadata_lifecycle.v1.Organization
+	1,  // 7: metadata_lifecycle.v1.OrganizationService.ListOrganizations:input_type -> metadata_lifecycle.v1.ListOrganizationsRequest
+	3,  // 8: metadata_lifecycle.v1.OrganizationService.GetOrganization:input_type -> metadata_lifecycle.v1.GetOrganizationRequest
+	5,  // 9: metadata_lifecycle.v1.OrganizationService.CreateOrganization:input_type -> metadata_lifecycle.v1.CreateOrganizationRequest
+	7,  // 10: metadata_lifecycle.v1.OrganizationService.ReplaceOrganization:input_type -> metadata_lifecycle.v1.ReplaceOrganizationRequest
+	9,  // 11: metadata_lifecycle.v1.OrganizationService.DeleteOrganization:input_type -> metadata_lifecycle.v1.DeleteOrganizationRequest
+	2,  // 12: metadata_lifecycle.v1.OrganizationService.ListOrganizations:output_type -> metadata_lifecycle.v1.ListOrganizationsResponse
+	4,  // 13: metadata_lifecycle.v1.OrganizationService.GetOrganization:output_type -> metadata_lifecycle.v1.GetOrganizationResponse
+	6,  // 14: metadata_lifecycle.v1.OrganizationService.CreateOrganization:output_type -> metadata_lifecycle.v1.CreateOrganizationResponse
+	8,  // 15: metadata_lifecycle.v1.OrganizationService.ReplaceOrganization:output_type -> metadata_lifecycle.v1.ReplaceOrganizationResponse
+	10, // 16: metadata_lifecycle.v1.OrganizationService.DeleteOrganization:output_type -> metadata_lifecycle.v1.DeleteOrganizationResponse
 	12, // [12:17] is the sub-list for method output_type
 	7,  // [7:12] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
@@ -1049,16 +935,17 @@ func file_metadata_lifecycle_v1_organization_proto_init() {
 		return
 	}
 	file_metadata_lifecycle_v1_annotations_proto_init()
-	file_metadata_lifecycle_v1_organization_proto_msgTypes[1].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_common_proto_init()
+	file_metadata_lifecycle_v1_organization_proto_msgTypes[0].OneofWrappers = []any{}
+	file_metadata_lifecycle_v1_organization_proto_msgTypes[5].OneofWrappers = []any{}
 	file_metadata_lifecycle_v1_organization_proto_msgTypes[7].OneofWrappers = []any{}
-	file_metadata_lifecycle_v1_organization_proto_msgTypes[9].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_metadata_lifecycle_v1_organization_proto_rawDesc), len(file_metadata_lifecycle_v1_organization_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

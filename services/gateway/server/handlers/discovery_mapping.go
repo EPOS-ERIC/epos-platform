@@ -12,7 +12,9 @@ import (
 )
 
 func toProtoSearchResourcesRequest(value gatewayapi.DiscoverResourcesParams) (*metadatalifecyclev1.SearchResourcesRequest, error) {
-	result := &metadatalifecyclev1.SearchResourcesRequest{Keywords: value.Keywords}
+	result := &metadatalifecyclev1.SearchResourcesRequest{
+		Keywords: toProtoKeywords(value.Keywords),
+	}
 	for _, provider := range value.Provider {
 		result.ProviderIds = append(result.ProviderIds, provider.String())
 	}
@@ -117,7 +119,7 @@ type apiDiscoveryCommon struct {
 	Group      gatewayapi.Reference
 }
 
-func toAPIDiscoveryCommon(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept metadatalifecyclev1.TopLevelConcept, createdBy, group *metadatalifecyclev1.DiscoveryReference) (apiDiscoveryCommon, error) {
+func toAPIDiscoveryCommon(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept metadatalifecyclev1.TopLevelConcept, createdBy *metadatalifecyclev1.UserReference, group *metadatalifecyclev1.EntityReference) (apiDiscoveryCommon, error) {
 	parsedResourceID, err := parseUUID("discovery.resource_id", resourceID)
 	if err != nil {
 		return apiDiscoveryCommon{}, err
@@ -155,7 +157,7 @@ func toAPIDiscoveryCommon(resourceID, versionID, name string, status metadatalif
 		Group:      parsedGroup,
 	}
 	if createdBy != nil {
-		value, err := toAPIDiscoveryReference(createdBy)
+		value, err := toAPIDiscoveryUserReference(createdBy)
 		if err != nil {
 			return apiDiscoveryCommon{}, err
 		}
@@ -241,7 +243,7 @@ func toAPIDiscovery(value *metadatalifecyclev1.DiscoveryItem) (gatewayapi.Discov
 	return gatewayapi.DiscoveryItem{}, errors.New("discovery item resource is required")
 }
 
-func toAPISoftwareDiscoveryFields(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept metadatalifecyclev1.TopLevelConcept, createdBy, group *metadatalifecyclev1.DiscoveryReference, creators, categories []*metadatalifecyclev1.DiscoveryReference) (apiDiscoveryCommon, []gatewayapi.Reference, []gatewayapi.Reference, error) {
+func toAPISoftwareDiscoveryFields(resourceID, versionID, name string, status metadatalifecyclev1.VersioningStatus, updatedAt *timestamppb.Timestamp, concept metadatalifecyclev1.TopLevelConcept, createdBy *metadatalifecyclev1.UserReference, group *metadatalifecyclev1.EntityReference, creators, categories []*metadatalifecyclev1.EntityReference) (apiDiscoveryCommon, []gatewayapi.Reference, []gatewayapi.Reference, error) {
 	common, err := toAPIDiscoveryCommon(resourceID, versionID, name, status, updatedAt, concept, createdBy, group)
 	if err != nil {
 		return apiDiscoveryCommon{}, nil, nil, err
@@ -270,14 +272,24 @@ func toAPIDiscoveryConceptValue(value metadatalifecyclev1.TopLevelConcept) (gate
 	}
 }
 
-func toAPIDiscoveryReference(value *metadatalifecyclev1.DiscoveryReference) (gatewayapi.Reference, error) {
+func toAPIDiscoveryUserReference(value *metadatalifecyclev1.UserReference) (gatewayapi.Reference, error) {
+	if value == nil {
+		return gatewayapi.Reference{}, errors.New("discovery user reference is required")
+	}
+	return gatewayapi.Reference{
+		ID:   value.Id,
+		Name: value.Name,
+	}, nil
+}
+
+func toAPIDiscoveryReference(value *metadatalifecyclev1.EntityReference) (gatewayapi.Reference, error) {
 	if value == nil {
 		return gatewayapi.Reference{}, errors.New("discovery reference is required")
 	}
 	return gatewayapi.Reference{ID: value.Id, Name: value.Name}, nil
 }
 
-func toAPIDiscoveryReferences(values []*metadatalifecyclev1.DiscoveryReference) ([]gatewayapi.Reference, error) {
+func toAPIDiscoveryReferences(values []*metadatalifecyclev1.EntityReference) ([]gatewayapi.Reference, error) {
 	result := make([]gatewayapi.Reference, 0, len(values))
 	for _, value := range values {
 		mapped, err := toAPIDiscoveryReference(value)

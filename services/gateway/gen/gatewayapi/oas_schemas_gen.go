@@ -209,16 +209,16 @@ func (s *BooleanParameterKind) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CanonicalOrganization
 type CanonicalOrganization struct {
-	ID              uuid.UUID                `json:"id"`
-	Name            string                   `json:"name"`
-	Address         OrganizationAddress      `json:"address"`
-	LogoURL         OptNilString             `json:"logo_url"`
-	PageURL         OptNilString             `json:"page_url"`
-	Email           OptNilString             `json:"email"`
-	LeiCode         OptNilString             `json:"lei_code"`
-	Identifiers     []OrganizationIdentifier `json:"identifiers"`
-	Parents         []uuid.UUID              `json:"parents"`
-	ContactPointIds []uuid.UUID              `json:"contact_point_ids"`
+	ID              uuid.UUID           `json:"id"`
+	Name            string              `json:"name"`
+	Address         OrganizationAddress `json:"address"`
+	LogoURL         OptNilURI           `json:"logo_url"`
+	PageURL         OptNilURI           `json:"page_url"`
+	Email           OptNilString        `json:"email"`
+	LeiCode         OptNilString        `json:"lei_code"`
+	Identifiers     []Identifier        `json:"identifiers"`
+	Parents         []uuid.UUID         `json:"parents"`
+	ContactPointIds []uuid.UUID         `json:"contact_point_ids"`
 }
 
 // GetID returns the value of ID.
@@ -237,12 +237,12 @@ func (s *CanonicalOrganization) GetAddress() OrganizationAddress {
 }
 
 // GetLogoURL returns the value of LogoURL.
-func (s *CanonicalOrganization) GetLogoURL() OptNilString {
+func (s *CanonicalOrganization) GetLogoURL() OptNilURI {
 	return s.LogoURL
 }
 
 // GetPageURL returns the value of PageURL.
-func (s *CanonicalOrganization) GetPageURL() OptNilString {
+func (s *CanonicalOrganization) GetPageURL() OptNilURI {
 	return s.PageURL
 }
 
@@ -257,7 +257,7 @@ func (s *CanonicalOrganization) GetLeiCode() OptNilString {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *CanonicalOrganization) GetIdentifiers() []OrganizationIdentifier {
+func (s *CanonicalOrganization) GetIdentifiers() []Identifier {
 	return s.Identifiers
 }
 
@@ -287,12 +287,12 @@ func (s *CanonicalOrganization) SetAddress(val OrganizationAddress) {
 }
 
 // SetLogoURL sets the value of LogoURL.
-func (s *CanonicalOrganization) SetLogoURL(val OptNilString) {
+func (s *CanonicalOrganization) SetLogoURL(val OptNilURI) {
 	s.LogoURL = val
 }
 
 // SetPageURL sets the value of PageURL.
-func (s *CanonicalOrganization) SetPageURL(val OptNilString) {
+func (s *CanonicalOrganization) SetPageURL(val OptNilURI) {
 	s.PageURL = val
 }
 
@@ -307,7 +307,7 @@ func (s *CanonicalOrganization) SetLeiCode(val OptNilString) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *CanonicalOrganization) SetIdentifiers(val []OrganizationIdentifier) {
+func (s *CanonicalOrganization) SetIdentifiers(val []Identifier) {
 	s.Identifiers = val
 }
 
@@ -434,12 +434,12 @@ func (s *CreateCategoryRequest) SetParentCategoryID(val OptNilUUID) {
 
 // Ref: #/components/schemas/CreateContactPointRequest
 type CreateContactPointRequest struct {
-	Email NonBlankString `json:"email"`
+	Email string         `json:"email"`
 	Role  NonBlankString `json:"role"`
 }
 
 // GetEmail returns the value of Email.
-func (s *CreateContactPointRequest) GetEmail() NonBlankString {
+func (s *CreateContactPointRequest) GetEmail() string {
 	return s.Email
 }
 
@@ -449,7 +449,7 @@ func (s *CreateContactPointRequest) GetRole() NonBlankString {
 }
 
 // SetEmail sets the value of Email.
-func (s *CreateContactPointRequest) SetEmail(val NonBlankString) {
+func (s *CreateContactPointRequest) SetEmail(val string) {
 	s.Email = val
 }
 
@@ -716,15 +716,15 @@ func (s *CreateMembershipRequestRolesItem) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CreateOrganizationRequest
 type CreateOrganizationRequest struct {
-	Name            NonBlankString                  `json:"name"`
-	Address         OptOrganizationAddress          `json:"address"`
-	LogoURL         OptNilString                    `json:"logo_url"`
-	PageURL         OptNilString                    `json:"page_url"`
-	Email           OptNilString                    `json:"email"`
-	LeiCode         OptNilString                    `json:"lei_code"`
-	Identifiers     []OrganizationIdentifierRequest `json:"identifiers"`
-	Parents         []uuid.UUID                     `json:"parents"`
-	ContactPointIds []uuid.UUID                     `json:"contact_point_ids"`
+	Name            NonBlankString         `json:"name"`
+	Address         OptOrganizationAddress `json:"address"`
+	LogoURL         OptNilURI              `json:"logo_url"`
+	PageURL         OptNilURI              `json:"page_url"`
+	Email           OptNilString           `json:"email"`
+	LeiCode         OptNilString           `json:"lei_code"`
+	Identifiers     []IdentifierInput      `json:"identifiers"`
+	Parents         []uuid.UUID            `json:"parents"`
+	ContactPointIds []uuid.UUID            `json:"contact_point_ids"`
 }
 
 // GetName returns the value of Name.
@@ -738,12 +738,12 @@ func (s *CreateOrganizationRequest) GetAddress() OptOrganizationAddress {
 }
 
 // GetLogoURL returns the value of LogoURL.
-func (s *CreateOrganizationRequest) GetLogoURL() OptNilString {
+func (s *CreateOrganizationRequest) GetLogoURL() OptNilURI {
 	return s.LogoURL
 }
 
 // GetPageURL returns the value of PageURL.
-func (s *CreateOrganizationRequest) GetPageURL() OptNilString {
+func (s *CreateOrganizationRequest) GetPageURL() OptNilURI {
 	return s.PageURL
 }
 
@@ -758,7 +758,7 @@ func (s *CreateOrganizationRequest) GetLeiCode() OptNilString {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *CreateOrganizationRequest) GetIdentifiers() []OrganizationIdentifierRequest {
+func (s *CreateOrganizationRequest) GetIdentifiers() []IdentifierInput {
 	return s.Identifiers
 }
 
@@ -783,12 +783,12 @@ func (s *CreateOrganizationRequest) SetAddress(val OptOrganizationAddress) {
 }
 
 // SetLogoURL sets the value of LogoURL.
-func (s *CreateOrganizationRequest) SetLogoURL(val OptNilString) {
+func (s *CreateOrganizationRequest) SetLogoURL(val OptNilURI) {
 	s.LogoURL = val
 }
 
 // SetPageURL sets the value of PageURL.
-func (s *CreateOrganizationRequest) SetPageURL(val OptNilString) {
+func (s *CreateOrganizationRequest) SetPageURL(val OptNilURI) {
 	s.PageURL = val
 }
 
@@ -803,7 +803,7 @@ func (s *CreateOrganizationRequest) SetLeiCode(val OptNilString) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *CreateOrganizationRequest) SetIdentifiers(val []OrganizationIdentifierRequest) {
+func (s *CreateOrganizationRequest) SetIdentifiers(val []IdentifierInput) {
 	s.Identifiers = val
 }
 
@@ -1264,8 +1264,8 @@ func (s *DatasetDiscoveryItemType) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/DatasetDraftMetadata
 type DatasetDraftMetadata struct {
 	Title              NonBlankString      `json:"title"`
-	Description        OptString           `json:"description"`
-	Keywords           OptString           `json:"keywords"`
+	Description        OptNonBlankString   `json:"description"`
+	Keywords           []Keyword           `json:"keywords"`
 	AccrualPeriodicity OptNilString        `json:"accrual_periodicity"`
 	QualityAnnotation  OptNilString        `json:"quality_annotation"`
 	AccessRight        OptNilString        `json:"access_right"`
@@ -1273,7 +1273,7 @@ type DatasetDraftMetadata struct {
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage       OptNilString        `json:"spatial_coverage"`
 	TemporalCoverage      OptTemporalCoverage `json:"temporal_coverage"`
-	PersistentIdentifiers []IdentifierDraft   `json:"persistent_identifiers"`
+	PersistentIdentifiers []IdentifierInput   `json:"persistent_identifiers"`
 	ContactPoints         []uuid.UUID         `json:"contact_points"`
 	Providers             []uuid.UUID         `json:"providers"`
 	Categories            []uuid.UUID         `json:"categories"`
@@ -1287,12 +1287,12 @@ func (s *DatasetDraftMetadata) GetTitle() NonBlankString {
 }
 
 // GetDescription returns the value of Description.
-func (s *DatasetDraftMetadata) GetDescription() OptString {
+func (s *DatasetDraftMetadata) GetDescription() OptNonBlankString {
 	return s.Description
 }
 
 // GetKeywords returns the value of Keywords.
-func (s *DatasetDraftMetadata) GetKeywords() OptString {
+func (s *DatasetDraftMetadata) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
@@ -1327,7 +1327,7 @@ func (s *DatasetDraftMetadata) GetTemporalCoverage() OptTemporalCoverage {
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
-func (s *DatasetDraftMetadata) GetPersistentIdentifiers() []IdentifierDraft {
+func (s *DatasetDraftMetadata) GetPersistentIdentifiers() []IdentifierInput {
 	return s.PersistentIdentifiers
 }
 
@@ -1362,12 +1362,12 @@ func (s *DatasetDraftMetadata) SetTitle(val NonBlankString) {
 }
 
 // SetDescription sets the value of Description.
-func (s *DatasetDraftMetadata) SetDescription(val OptString) {
+func (s *DatasetDraftMetadata) SetDescription(val OptNonBlankString) {
 	s.Description = val
 }
 
 // SetKeywords sets the value of Keywords.
-func (s *DatasetDraftMetadata) SetKeywords(val OptString) {
+func (s *DatasetDraftMetadata) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
@@ -1402,7 +1402,7 @@ func (s *DatasetDraftMetadata) SetTemporalCoverage(val OptTemporalCoverage) {
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
-func (s *DatasetDraftMetadata) SetPersistentIdentifiers(val []IdentifierDraft) {
+func (s *DatasetDraftMetadata) SetPersistentIdentifiers(val []IdentifierInput) {
 	s.PersistentIdentifiers = val
 }
 
@@ -1437,7 +1437,7 @@ type DatasetResourceMetadata struct {
 	ID                 uuid.UUID                           `json:"id"`
 	Title              string                              `json:"title"`
 	Description        string                              `json:"description"`
-	Keywords           string                              `json:"keywords"`
+	Keywords           []Keyword                           `json:"keywords"`
 	AccrualPeriodicity OptNilString                        `json:"accrual_periodicity"`
 	QualityAnnotation  OptNilString                        `json:"quality_annotation"`
 	AccessRight        OptNilString                        `json:"access_right"`
@@ -1445,7 +1445,7 @@ type DatasetResourceMetadata struct {
 	// WKT POINT or POLYGON geometry in EPSG:4326.
 	SpatialCoverage       OptNilString               `json:"spatial_coverage"`
 	TemporalCoverage      OptTemporalCoverage        `json:"temporal_coverage"`
-	PersistentIdentifiers []ResourceIdentifier       `json:"persistent_identifiers"`
+	PersistentIdentifiers []Identifier               `json:"persistent_identifiers"`
 	ContactPoints         []uuid.UUID                `json:"contact_points"`
 	Providers             []ResourceVersionReference `json:"providers"`
 	Categories            []ResourceVersionReference `json:"categories"`
@@ -1474,7 +1474,7 @@ func (s *DatasetResourceMetadata) GetDescription() string {
 }
 
 // GetKeywords returns the value of Keywords.
-func (s *DatasetResourceMetadata) GetKeywords() string {
+func (s *DatasetResourceMetadata) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
@@ -1509,7 +1509,7 @@ func (s *DatasetResourceMetadata) GetTemporalCoverage() OptTemporalCoverage {
 }
 
 // GetPersistentIdentifiers returns the value of PersistentIdentifiers.
-func (s *DatasetResourceMetadata) GetPersistentIdentifiers() []ResourceIdentifier {
+func (s *DatasetResourceMetadata) GetPersistentIdentifiers() []Identifier {
 	return s.PersistentIdentifiers
 }
 
@@ -1559,7 +1559,7 @@ func (s *DatasetResourceMetadata) SetDescription(val string) {
 }
 
 // SetKeywords sets the value of Keywords.
-func (s *DatasetResourceMetadata) SetKeywords(val string) {
+func (s *DatasetResourceMetadata) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
@@ -1594,7 +1594,7 @@ func (s *DatasetResourceMetadata) SetTemporalCoverage(val OptTemporalCoverage) {
 }
 
 // SetPersistentIdentifiers sets the value of PersistentIdentifiers.
-func (s *DatasetResourceMetadata) SetPersistentIdentifiers(val []ResourceIdentifier) {
+func (s *DatasetResourceMetadata) SetPersistentIdentifiers(val []Identifier) {
 	s.PersistentIdentifiers = val
 }
 
@@ -3196,29 +3196,66 @@ func (s *GroupRole) UnmarshalText(data []byte) error {
 	}
 }
 
-// Ref: #/components/schemas/IdentifierDraft
-type IdentifierDraft struct {
+// Ref: #/components/schemas/Identifier
+type Identifier struct {
+	ID    uuid.UUID `json:"id"`
+	Type  string    `json:"type"`
+	Value string    `json:"value"`
+}
+
+// GetID returns the value of ID.
+func (s *Identifier) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetType returns the value of Type.
+func (s *Identifier) GetType() string {
+	return s.Type
+}
+
+// GetValue returns the value of Value.
+func (s *Identifier) GetValue() string {
+	return s.Value
+}
+
+// SetID sets the value of ID.
+func (s *Identifier) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetType sets the value of Type.
+func (s *Identifier) SetType(val string) {
+	s.Type = val
+}
+
+// SetValue sets the value of Value.
+func (s *Identifier) SetValue(val string) {
+	s.Value = val
+}
+
+// Ref: #/components/schemas/IdentifierInput
+type IdentifierInput struct {
 	Type  NonBlankString `json:"type"`
 	Value NonBlankString `json:"value"`
 }
 
 // GetType returns the value of Type.
-func (s *IdentifierDraft) GetType() NonBlankString {
+func (s *IdentifierInput) GetType() NonBlankString {
 	return s.Type
 }
 
 // GetValue returns the value of Value.
-func (s *IdentifierDraft) GetValue() NonBlankString {
+func (s *IdentifierInput) GetValue() NonBlankString {
 	return s.Value
 }
 
 // SetType sets the value of Type.
-func (s *IdentifierDraft) SetType(val NonBlankString) {
+func (s *IdentifierInput) SetType(val NonBlankString) {
 	s.Type = val
 }
 
 // SetValue sets the value of Value.
-func (s *IdentifierDraft) SetValue(val NonBlankString) {
+func (s *IdentifierInput) SetValue(val NonBlankString) {
 	s.Value = val
 }
 
@@ -3584,6 +3621,8 @@ func (s *IntegerParameterKind) UnmarshalText(data []byte) error {
 	}
 }
 
+type Keyword string
+
 type LifecycleResourceType string
 
 const (
@@ -3866,7 +3905,7 @@ func (o *NilBool) SetToNull() {
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o NilBool) Get() (v, ok bool) {
+func (o NilBool) Get() (v bool, ok bool) {
 	if o.Null {
 		return v, false
 	}
@@ -4055,6 +4094,51 @@ func (o NilString) Get() (v string, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o NilString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewNilURI returns new NilURI with value set to v.
+func NewNilURI(v url.URL) NilURI {
+	return NilURI{
+		Value: v,
+	}
+}
+
+// NilURI is nullable url.URL.
+type NilURI struct {
+	Value url.URL
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilURI) SetTo(v url.URL) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilURI) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilURI) SetToNull() {
+	o.Null = true
+	var v url.URL
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilURI) Get() (v url.URL, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilURI) Or(d url.URL) url.URL {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4450,6 +4534,74 @@ func (o OptNilString) Or(d string) string {
 	return d
 }
 
+// NewOptNilURI returns new OptNilURI with value set to v.
+func NewOptNilURI(v url.URL) OptNilURI {
+	return OptNilURI{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilURI is optional nullable url.URL.
+type OptNilURI struct {
+	Value url.URL
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilURI was set.
+func (o OptNilURI) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilURI) Reset() {
+	var v url.URL
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilURI) SetTo(v url.URL) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilURI) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilURI) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v url.URL
+	o.Value = v
+}
+
+// IsEmpty returns true if the field was omitted from the payload (not Set and not Null).
+func (o OptNilURI) IsEmpty() bool {
+	return !o.Set && !o.Null
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilURI) Get() (v url.URL, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilURI) Or(d url.URL) url.URL {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptNilUUID returns new OptNilUUID with value set to v.
 func NewOptNilUUID(v uuid.UUID) OptNilUUID {
 	return OptNilUUID{
@@ -4512,6 +4664,52 @@ func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptNonBlankString returns new OptNonBlankString with value set to v.
+func NewOptNonBlankString(v NonBlankString) OptNonBlankString {
+	return OptNonBlankString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNonBlankString is optional NonBlankString.
+type OptNonBlankString struct {
+	Value NonBlankString
+	Set   bool
+}
+
+// IsSet returns true if OptNonBlankString was set.
+func (o OptNonBlankString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNonBlankString) Reset() {
+	var v NonBlankString
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptNonBlankString) SetTo(v NonBlankString) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNonBlankString) Get() (v NonBlankString, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNonBlankString) Or(d NonBlankString) NonBlankString {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -4886,69 +5084,6 @@ func (s *OrganizationAddress) SetPostalCode(val NilString) {
 // SetCountry sets the value of Country.
 func (s *OrganizationAddress) SetCountry(val NilString) {
 	s.Country = val
-}
-
-// Ref: #/components/schemas/OrganizationIdentifier
-type OrganizationIdentifier struct {
-	ID    uuid.UUID `json:"id"`
-	Type  string    `json:"type"`
-	Value string    `json:"value"`
-}
-
-// GetID returns the value of ID.
-func (s *OrganizationIdentifier) GetID() uuid.UUID {
-	return s.ID
-}
-
-// GetType returns the value of Type.
-func (s *OrganizationIdentifier) GetType() string {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *OrganizationIdentifier) GetValue() string {
-	return s.Value
-}
-
-// SetID sets the value of ID.
-func (s *OrganizationIdentifier) SetID(val uuid.UUID) {
-	s.ID = val
-}
-
-// SetType sets the value of Type.
-func (s *OrganizationIdentifier) SetType(val string) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *OrganizationIdentifier) SetValue(val string) {
-	s.Value = val
-}
-
-// Ref: #/components/schemas/OrganizationIdentifierRequest
-type OrganizationIdentifierRequest struct {
-	Type  NonBlankString `json:"type"`
-	Value NonBlankString `json:"value"`
-}
-
-// GetType returns the value of Type.
-func (s *OrganizationIdentifierRequest) GetType() NonBlankString {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *OrganizationIdentifierRequest) GetValue() NonBlankString {
-	return s.Value
-}
-
-// SetType sets the value of Type.
-func (s *OrganizationIdentifierRequest) SetType(val NonBlankString) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *OrganizationIdentifierRequest) SetValue(val NonBlankString) {
-	s.Value = val
 }
 
 // Ref: #/components/schemas/Parameter
@@ -5697,12 +5832,12 @@ func (s *ReplaceCategoryRequest) SetParentCategoryID(val NilUUID) {
 
 // Ref: #/components/schemas/ReplaceContactPointRequest
 type ReplaceContactPointRequest struct {
-	Email NonBlankString `json:"email"`
+	Email string         `json:"email"`
 	Role  NonBlankString `json:"role"`
 }
 
 // GetEmail returns the value of Email.
-func (s *ReplaceContactPointRequest) GetEmail() NonBlankString {
+func (s *ReplaceContactPointRequest) GetEmail() string {
 	return s.Email
 }
 
@@ -5712,7 +5847,7 @@ func (s *ReplaceContactPointRequest) GetRole() NonBlankString {
 }
 
 // SetEmail sets the value of Email.
-func (s *ReplaceContactPointRequest) SetEmail(val NonBlankString) {
+func (s *ReplaceContactPointRequest) SetEmail(val string) {
 	s.Email = val
 }
 
@@ -5934,15 +6069,15 @@ func (s *ReplaceGroupRequestConcept) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/ReplaceOrganizationRequest
 type ReplaceOrganizationRequest struct {
-	Name            NonBlankString                  `json:"name"`
-	Address         OrganizationAddress             `json:"address"`
-	LogoURL         NilString                       `json:"logo_url"`
-	PageURL         NilString                       `json:"page_url"`
-	Email           NilString                       `json:"email"`
-	LeiCode         NilString                       `json:"lei_code"`
-	Identifiers     []OrganizationIdentifierRequest `json:"identifiers"`
-	Parents         []uuid.UUID                     `json:"parents"`
-	ContactPointIds []uuid.UUID                     `json:"contact_point_ids"`
+	Name            NonBlankString      `json:"name"`
+	Address         OrganizationAddress `json:"address"`
+	LogoURL         NilURI              `json:"logo_url"`
+	PageURL         NilURI              `json:"page_url"`
+	Email           NilString           `json:"email"`
+	LeiCode         NilString           `json:"lei_code"`
+	Identifiers     []IdentifierInput   `json:"identifiers"`
+	Parents         []uuid.UUID         `json:"parents"`
+	ContactPointIds []uuid.UUID         `json:"contact_point_ids"`
 }
 
 // GetName returns the value of Name.
@@ -5956,12 +6091,12 @@ func (s *ReplaceOrganizationRequest) GetAddress() OrganizationAddress {
 }
 
 // GetLogoURL returns the value of LogoURL.
-func (s *ReplaceOrganizationRequest) GetLogoURL() NilString {
+func (s *ReplaceOrganizationRequest) GetLogoURL() NilURI {
 	return s.LogoURL
 }
 
 // GetPageURL returns the value of PageURL.
-func (s *ReplaceOrganizationRequest) GetPageURL() NilString {
+func (s *ReplaceOrganizationRequest) GetPageURL() NilURI {
 	return s.PageURL
 }
 
@@ -5976,7 +6111,7 @@ func (s *ReplaceOrganizationRequest) GetLeiCode() NilString {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *ReplaceOrganizationRequest) GetIdentifiers() []OrganizationIdentifierRequest {
+func (s *ReplaceOrganizationRequest) GetIdentifiers() []IdentifierInput {
 	return s.Identifiers
 }
 
@@ -6001,12 +6136,12 @@ func (s *ReplaceOrganizationRequest) SetAddress(val OrganizationAddress) {
 }
 
 // SetLogoURL sets the value of LogoURL.
-func (s *ReplaceOrganizationRequest) SetLogoURL(val NilString) {
+func (s *ReplaceOrganizationRequest) SetLogoURL(val NilURI) {
 	s.LogoURL = val
 }
 
 // SetPageURL sets the value of PageURL.
-func (s *ReplaceOrganizationRequest) SetPageURL(val NilString) {
+func (s *ReplaceOrganizationRequest) SetPageURL(val NilURI) {
 	s.PageURL = val
 }
 
@@ -6021,7 +6156,7 @@ func (s *ReplaceOrganizationRequest) SetLeiCode(val NilString) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *ReplaceOrganizationRequest) SetIdentifiers(val []OrganizationIdentifierRequest) {
+func (s *ReplaceOrganizationRequest) SetIdentifiers(val []IdentifierInput) {
 	s.Identifiers = val
 }
 
@@ -6273,43 +6408,6 @@ func (s *ReplaceSoftwareSourceCodeDraftRequestResourceType) UnmarshalText(data [
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-// Ref: #/components/schemas/ResourceIdentifier
-type ResourceIdentifier struct {
-	ID    uuid.UUID `json:"id"`
-	Type  string    `json:"type"`
-	Value string    `json:"value"`
-}
-
-// GetID returns the value of ID.
-func (s *ResourceIdentifier) GetID() uuid.UUID {
-	return s.ID
-}
-
-// GetType returns the value of Type.
-func (s *ResourceIdentifier) GetType() string {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *ResourceIdentifier) GetValue() string {
-	return s.Value
-}
-
-// SetID sets the value of ID.
-func (s *ResourceIdentifier) SetID(val uuid.UUID) {
-	s.ID = val
-}
-
-// SetType sets the value of Type.
-func (s *ResourceIdentifier) SetType(val string) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *ResourceIdentifier) SetValue(val string) {
-	s.Value = val
 }
 
 // Ref: #/components/schemas/ResourceVersion
@@ -6909,19 +7007,19 @@ func (s *SoftwareApplicationDiscoveryItemType) UnmarshalText(data []byte) error 
 
 // Ref: #/components/schemas/SoftwareApplicationDraftMetadata
 type SoftwareApplicationDraftMetadata struct {
-	Name             NonBlankString       `json:"name"`
-	Description      OptString            `json:"description"`
-	Keywords         OptString            `json:"keywords"`
-	License          OptNilString         `json:"license"`
-	Version          OptNilString         `json:"version"`
-	DownloadURL      OptURI               `json:"download_url"`
-	Requirements     OptNilString         `json:"requirements"`
-	OperatingSystem  OptNilString         `json:"operating_system"`
-	MainEntityOfPage OptURI               `json:"main_entity_of_page"`
-	Creators         []uuid.UUID          `json:"creators"`
-	Identifiers      []SoftwareIdentifier `json:"identifiers"`
-	Categories       []uuid.UUID          `json:"categories"`
-	ContactPoints    []uuid.UUID          `json:"contact_points"`
+	Name             NonBlankString    `json:"name"`
+	Description      NonBlankString    `json:"description"`
+	Keywords         []Keyword         `json:"keywords"`
+	License          OptNilString      `json:"license"`
+	Version          OptNilString      `json:"version"`
+	DownloadURL      OptURI            `json:"download_url"`
+	Requirements     OptNilString      `json:"requirements"`
+	OperatingSystem  OptNilString      `json:"operating_system"`
+	MainEntityOfPage OptURI            `json:"main_entity_of_page"`
+	Creators         []uuid.UUID       `json:"creators"`
+	Identifiers      []IdentifierInput `json:"identifiers"`
+	Categories       []uuid.UUID       `json:"categories"`
+	ContactPoints    []uuid.UUID       `json:"contact_points"`
 }
 
 // GetName returns the value of Name.
@@ -6930,12 +7028,12 @@ func (s *SoftwareApplicationDraftMetadata) GetName() NonBlankString {
 }
 
 // GetDescription returns the value of Description.
-func (s *SoftwareApplicationDraftMetadata) GetDescription() OptString {
+func (s *SoftwareApplicationDraftMetadata) GetDescription() NonBlankString {
 	return s.Description
 }
 
 // GetKeywords returns the value of Keywords.
-func (s *SoftwareApplicationDraftMetadata) GetKeywords() OptString {
+func (s *SoftwareApplicationDraftMetadata) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
@@ -6975,7 +7073,7 @@ func (s *SoftwareApplicationDraftMetadata) GetCreators() []uuid.UUID {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareApplicationDraftMetadata) GetIdentifiers() []SoftwareIdentifier {
+func (s *SoftwareApplicationDraftMetadata) GetIdentifiers() []IdentifierInput {
 	return s.Identifiers
 }
 
@@ -6995,12 +7093,12 @@ func (s *SoftwareApplicationDraftMetadata) SetName(val NonBlankString) {
 }
 
 // SetDescription sets the value of Description.
-func (s *SoftwareApplicationDraftMetadata) SetDescription(val OptString) {
+func (s *SoftwareApplicationDraftMetadata) SetDescription(val NonBlankString) {
 	s.Description = val
 }
 
 // SetKeywords sets the value of Keywords.
-func (s *SoftwareApplicationDraftMetadata) SetKeywords(val OptString) {
+func (s *SoftwareApplicationDraftMetadata) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
@@ -7040,7 +7138,7 @@ func (s *SoftwareApplicationDraftMetadata) SetCreators(val []uuid.UUID) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareApplicationDraftMetadata) SetIdentifiers(val []SoftwareIdentifier) {
+func (s *SoftwareApplicationDraftMetadata) SetIdentifiers(val []IdentifierInput) {
 	s.Identifiers = val
 }
 
@@ -7063,12 +7161,12 @@ type SoftwareApplicationResourceMetadata struct {
 	MainEntityOfPage OptNilString                                    `json:"main_entity_of_page"`
 	License          OptNilString                                    `json:"license"`
 	Version          OptNilString                                    `json:"version"`
-	Keywords         string                                          `json:"keywords"`
+	Keywords         []Keyword                                       `json:"keywords"`
 	DownloadURL      OptNilString                                    `json:"download_url"`
 	Requirements     OptNilString                                    `json:"requirements"`
 	OperatingSystem  OptNilString                                    `json:"operating_system"`
 	Creators         []ResourceVersionReference                      `json:"creators"`
-	Identifiers      []ResourceIdentifier                            `json:"identifiers"`
+	Identifiers      []Identifier                                    `json:"identifiers"`
 	ContactPoints    []uuid.UUID                                     `json:"contact_points"`
 	Categories       []ResourceVersionReference                      `json:"categories"`
 }
@@ -7109,7 +7207,7 @@ func (s *SoftwareApplicationResourceMetadata) GetVersion() OptNilString {
 }
 
 // GetKeywords returns the value of Keywords.
-func (s *SoftwareApplicationResourceMetadata) GetKeywords() string {
+func (s *SoftwareApplicationResourceMetadata) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
@@ -7134,7 +7232,7 @@ func (s *SoftwareApplicationResourceMetadata) GetCreators() []ResourceVersionRef
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareApplicationResourceMetadata) GetIdentifiers() []ResourceIdentifier {
+func (s *SoftwareApplicationResourceMetadata) GetIdentifiers() []Identifier {
 	return s.Identifiers
 }
 
@@ -7184,7 +7282,7 @@ func (s *SoftwareApplicationResourceMetadata) SetVersion(val OptNilString) {
 }
 
 // SetKeywords sets the value of Keywords.
-func (s *SoftwareApplicationResourceMetadata) SetKeywords(val string) {
+func (s *SoftwareApplicationResourceMetadata) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
@@ -7209,7 +7307,7 @@ func (s *SoftwareApplicationResourceMetadata) SetCreators(val []ResourceVersionR
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareApplicationResourceMetadata) SetIdentifiers(val []ResourceIdentifier) {
+func (s *SoftwareApplicationResourceMetadata) SetIdentifiers(val []Identifier) {
 	s.Identifiers = val
 }
 
@@ -7255,32 +7353,6 @@ func (s *SoftwareApplicationResourceMetadataResourceType) UnmarshalText(data []b
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
-}
-
-// Ref: #/components/schemas/SoftwareIdentifier
-type SoftwareIdentifier struct {
-	Type  NonBlankString `json:"type"`
-	Value NonBlankString `json:"value"`
-}
-
-// GetType returns the value of Type.
-func (s *SoftwareIdentifier) GetType() NonBlankString {
-	return s.Type
-}
-
-// GetValue returns the value of Value.
-func (s *SoftwareIdentifier) GetValue() NonBlankString {
-	return s.Value
-}
-
-// SetType sets the value of Type.
-func (s *SoftwareIdentifier) SetType(val NonBlankString) {
-	s.Type = val
-}
-
-// SetValue sets the value of Value.
-func (s *SoftwareIdentifier) SetValue(val NonBlankString) {
-	s.Value = val
 }
 
 // Ref: #/components/schemas/SoftwareSourceCodeDiscoveryItem
@@ -7444,20 +7516,20 @@ func (s *SoftwareSourceCodeDiscoveryItemType) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/SoftwareSourceCodeDraftMetadata
 type SoftwareSourceCodeDraftMetadata struct {
-	Name                 NonBlankString       `json:"name"`
-	Description          OptString            `json:"description"`
-	Keywords             OptString            `json:"keywords"`
-	Repository           OptURI               `json:"repository"`
-	ProgrammingLanguage  OptString            `json:"programming_language"`
-	License              OptNilString         `json:"license"`
-	SoftwareRequirements OptNilString         `json:"software_requirements"`
-	RuntimePlatform      OptNilString         `json:"runtime_platform"`
-	MainEntityOfPage     OptURI               `json:"main_entity_of_page"`
-	Version              OptNilString         `json:"version"`
-	Creators             []uuid.UUID          `json:"creators"`
-	Identifiers          []SoftwareIdentifier `json:"identifiers"`
-	Categories           []uuid.UUID          `json:"categories"`
-	ContactPoints        []uuid.UUID          `json:"contact_points"`
+	Name                 NonBlankString    `json:"name"`
+	Description          NonBlankString    `json:"description"`
+	Keywords             []Keyword         `json:"keywords"`
+	Repository           OptURI            `json:"repository"`
+	ProgrammingLanguage  OptString         `json:"programming_language"`
+	License              OptNilString      `json:"license"`
+	SoftwareRequirements OptNilString      `json:"software_requirements"`
+	RuntimePlatform      OptNilString      `json:"runtime_platform"`
+	MainEntityOfPage     OptURI            `json:"main_entity_of_page"`
+	Version              OptNilString      `json:"version"`
+	Creators             []uuid.UUID       `json:"creators"`
+	Identifiers          []IdentifierInput `json:"identifiers"`
+	Categories           []uuid.UUID       `json:"categories"`
+	ContactPoints        []uuid.UUID       `json:"contact_points"`
 }
 
 // GetName returns the value of Name.
@@ -7466,12 +7538,12 @@ func (s *SoftwareSourceCodeDraftMetadata) GetName() NonBlankString {
 }
 
 // GetDescription returns the value of Description.
-func (s *SoftwareSourceCodeDraftMetadata) GetDescription() OptString {
+func (s *SoftwareSourceCodeDraftMetadata) GetDescription() NonBlankString {
 	return s.Description
 }
 
 // GetKeywords returns the value of Keywords.
-func (s *SoftwareSourceCodeDraftMetadata) GetKeywords() OptString {
+func (s *SoftwareSourceCodeDraftMetadata) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
@@ -7516,7 +7588,7 @@ func (s *SoftwareSourceCodeDraftMetadata) GetCreators() []uuid.UUID {
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []SoftwareIdentifier {
+func (s *SoftwareSourceCodeDraftMetadata) GetIdentifiers() []IdentifierInput {
 	return s.Identifiers
 }
 
@@ -7536,12 +7608,12 @@ func (s *SoftwareSourceCodeDraftMetadata) SetName(val NonBlankString) {
 }
 
 // SetDescription sets the value of Description.
-func (s *SoftwareSourceCodeDraftMetadata) SetDescription(val OptString) {
+func (s *SoftwareSourceCodeDraftMetadata) SetDescription(val NonBlankString) {
 	s.Description = val
 }
 
 // SetKeywords sets the value of Keywords.
-func (s *SoftwareSourceCodeDraftMetadata) SetKeywords(val OptString) {
+func (s *SoftwareSourceCodeDraftMetadata) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
@@ -7586,7 +7658,7 @@ func (s *SoftwareSourceCodeDraftMetadata) SetCreators(val []uuid.UUID) {
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareSourceCodeDraftMetadata) SetIdentifiers(val []SoftwareIdentifier) {
+func (s *SoftwareSourceCodeDraftMetadata) SetIdentifiers(val []IdentifierInput) {
 	s.Identifiers = val
 }
 
@@ -7607,7 +7679,7 @@ type SoftwareSourceCodeResourceMetadata struct {
 	Name                 string                                         `json:"name"`
 	Description          string                                         `json:"description"`
 	ProgrammingLanguage  OptNilString                                   `json:"programming_language"`
-	Keywords             string                                         `json:"keywords"`
+	Keywords             []Keyword                                      `json:"keywords"`
 	Repository           OptNilString                                   `json:"repository"`
 	License              OptNilString                                   `json:"license"`
 	SoftwareRequirements OptNilString                                   `json:"software_requirements"`
@@ -7615,7 +7687,7 @@ type SoftwareSourceCodeResourceMetadata struct {
 	MainEntityOfPage     OptNilString                                   `json:"main_entity_of_page"`
 	Version              OptNilString                                   `json:"version"`
 	Creators             []ResourceVersionReference                     `json:"creators"`
-	Identifiers          []ResourceIdentifier                           `json:"identifiers"`
+	Identifiers          []Identifier                                   `json:"identifiers"`
 	ContactPoints        []uuid.UUID                                    `json:"contact_points"`
 	Categories           []ResourceVersionReference                     `json:"categories"`
 }
@@ -7646,7 +7718,7 @@ func (s *SoftwareSourceCodeResourceMetadata) GetProgrammingLanguage() OptNilStri
 }
 
 // GetKeywords returns the value of Keywords.
-func (s *SoftwareSourceCodeResourceMetadata) GetKeywords() string {
+func (s *SoftwareSourceCodeResourceMetadata) GetKeywords() []Keyword {
 	return s.Keywords
 }
 
@@ -7686,7 +7758,7 @@ func (s *SoftwareSourceCodeResourceMetadata) GetCreators() []ResourceVersionRefe
 }
 
 // GetIdentifiers returns the value of Identifiers.
-func (s *SoftwareSourceCodeResourceMetadata) GetIdentifiers() []ResourceIdentifier {
+func (s *SoftwareSourceCodeResourceMetadata) GetIdentifiers() []Identifier {
 	return s.Identifiers
 }
 
@@ -7726,7 +7798,7 @@ func (s *SoftwareSourceCodeResourceMetadata) SetProgrammingLanguage(val OptNilSt
 }
 
 // SetKeywords sets the value of Keywords.
-func (s *SoftwareSourceCodeResourceMetadata) SetKeywords(val string) {
+func (s *SoftwareSourceCodeResourceMetadata) SetKeywords(val []Keyword) {
 	s.Keywords = val
 }
 
@@ -7766,7 +7838,7 @@ func (s *SoftwareSourceCodeResourceMetadata) SetCreators(val []ResourceVersionRe
 }
 
 // SetIdentifiers sets the value of Identifiers.
-func (s *SoftwareSourceCodeResourceMetadata) SetIdentifiers(val []ResourceIdentifier) {
+func (s *SoftwareSourceCodeResourceMetadata) SetIdentifiers(val []Identifier) {
 	s.Identifiers = val
 }
 

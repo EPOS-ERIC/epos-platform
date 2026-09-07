@@ -582,44 +582,44 @@ var File_metadata_lifecycle_v1_category_proto protoreflect.FileDescriptor
 
 const file_metadata_lifecycle_v1_category_proto_rawDesc = "" +
 	"\n" +
-	"$metadata_lifecycle/v1/category.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\";\n" +
-	"\x15ListCategoriesRequest\x12\"\n" +
-	"\bgroup_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\agroupId\"\x9c\x01\n" +
-	"\x11CanonicalCategory\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
-	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x121\n" +
-	"\x12parent_category_id\x18\x03 \x01(\tH\x00R\x10parentCategoryId\x88\x01\x01\x12\x12\n" +
-	"\x04name\x18\x04 \x01(\tR\x04nameB\x15\n" +
+	"$metadata_lifecycle/v1/category.proto\x12\x15metadata_lifecycle.v1\x1a\x1bbuf/validate/validate.proto\x1a'metadata_lifecycle/v1/annotations.proto\"<\n" +
+	"\x15ListCategoriesRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\"\xc3\x01\n" +
+	"\x11CanonicalCategory\x12\x18\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12#\n" +
+	"\bgroup_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12;\n" +
+	"\x12parent_category_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x10parentCategoryId\x88\x01\x01\x12\x1b\n" +
+	"\x04name\x18\x04 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04nameB\x15\n" +
 	"\x13_parent_category_id\"b\n" +
 	"\x16ListCategoriesResponse\x12H\n" +
 	"\n" +
 	"categories\x18\x01 \x03(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\n" +
-	"categories\"b\n" +
-	"\x12GetCategoryRequest\x12\"\n" +
-	"\bgroup_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\agroupId\x12(\n" +
-	"\vcategory_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"categories\"d\n" +
+	"\x12GetCategoryRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12)\n" +
+	"\vcategory_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"categoryId\"[\n" +
 	"\x13GetCategoryResponse\x12D\n" +
-	"\bcategory\x18\x01 \x01(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\bcategory\"\xa2\x01\n" +
-	"\x15CreateCategoryRequest\x12\"\n" +
-	"\bgroup_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\agroupId\x12\x1b\n" +
-	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x121\n" +
-	"\x12parent_category_id\x18\x03 \x01(\tH\x00R\x10parentCategoryId\x88\x01\x01B\x15\n" +
+	"\bcategory\x18\x01 \x01(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\bcategory\"\xad\x01\n" +
+	"\x15CreateCategoryRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12\x1b\n" +
+	"\x04name\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12;\n" +
+	"\x12parent_category_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x10parentCategoryId\x88\x01\x01B\x15\n" +
 	"\x13_parent_category_id\"^\n" +
 	"\x16CreateCategoryResponse\x12D\n" +
-	"\bcategory\x18\x01 \x01(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\bcategory\"\xcd\x01\n" +
-	"\x16ReplaceCategoryRequest\x12\"\n" +
-	"\bgroup_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\agroupId\x12(\n" +
-	"\vcategory_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"\bcategory\x18\x01 \x01(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\bcategory\"\xd9\x01\n" +
+	"\x16ReplaceCategoryRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12)\n" +
+	"\vcategory_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"categoryId\x12\x1b\n" +
-	"\x04name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x121\n" +
-	"\x12parent_category_id\x18\x04 \x01(\tH\x00R\x10parentCategoryId\x88\x01\x01B\x15\n" +
+	"\x04name\x18\x03 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x04name\x12;\n" +
+	"\x12parent_category_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x10parentCategoryId\x88\x01\x01B\x15\n" +
 	"\x13_parent_category_id\"_\n" +
 	"\x17ReplaceCategoryResponse\x12D\n" +
-	"\bcategory\x18\x01 \x01(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\bcategory\"e\n" +
-	"\x15DeleteCategoryRequest\x12\"\n" +
-	"\bgroup_id\x18\x01 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\agroupId\x12(\n" +
-	"\vcategory_id\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\n" +
+	"\bcategory\x18\x01 \x01(\v2(.metadata_lifecycle.v1.CanonicalCategoryR\bcategory\"g\n" +
+	"\x15DeleteCategoryRequest\x12#\n" +
+	"\bgroup_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\agroupId\x12)\n" +
+	"\vcategory_id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"categoryId\"\x18\n" +
 	"\x16DeleteCategoryResponse2\xd4\x04\n" +
 	"\x0fCategoryService\x12s\n" +
