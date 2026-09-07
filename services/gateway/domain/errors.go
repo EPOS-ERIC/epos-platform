@@ -37,13 +37,14 @@ func ErrorMetadataFrom(err error) (ErrorMetadata, bool) {
 }
 
 var (
-	ErrNotImplemented  = errors.New("not implemented")
-	ErrNotFound        = errors.New("not found")
-	ErrBadRequest      = errors.New("bad request")
-	ErrConflict        = errors.New("conflict")
-	ErrUpstreamTimeout = errors.New("upstream timeout")
-	ErrForbidden       = errors.New("forbidden")
-	ErrUnauthorized    = errors.New("unauthorized")
+	ErrNotImplemented      = errors.New("not implemented")
+	ErrNotFound            = errors.New("not found")
+	ErrBadRequest          = errors.New("bad request")
+	ErrConflict            = errors.New("conflict")
+	ErrUpstreamTimeout     = errors.New("upstream timeout")
+	ErrUpstreamUnavailable = errors.New("upstream unavailable")
+	ErrForbidden           = errors.New("forbidden")
+	ErrUnauthorized        = errors.New("unauthorized")
 )
 
 // UpstreamError represents a failed request to a downstream service.

@@ -69,16 +69,11 @@ func (g *GroupServer) CreateGroup(ctx context.Context, request *metadatalifecycl
 	if err != nil {
 		return nil, toGroupMutationError("create group", err)
 	}
-	group, err := g.groups.Create(ctx, actor, domain.GroupInput{
-		Name:        request.GetName(),
-		Description: request.Description,
-		Label:       request.Label,
-		Logo:        request.Logo,
-		Page:        request.Page,
-		Color:       request.Color,
-		Position:    request.GetPosition(),
-		Concept:     concept,
-	})
+	input, err := groupInput(request.GetName(), request.Description, request.Label, request.Logo, request.Page, request.Color, request.GetPosition(), concept)
+	if err != nil {
+		return nil, toGroupMutationError("create group", err)
+	}
+	group, err := g.groups.Create(ctx, actor, input)
 	if err != nil {
 		return nil, toGroupMutationError("create group", err)
 	}
@@ -105,16 +100,11 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 	if err != nil {
 		return nil, toGroupMutationError("replace group", err)
 	}
-	group, err := g.groups.Replace(ctx, actor, id, domain.GroupInput{
-		Name:        request.GetName(),
-		Description: request.Description,
-		Label:       request.Label,
-		Logo:        request.Logo,
-		Page:        request.Page,
-		Color:       request.Color,
-		Position:    request.GetPosition(),
-		Concept:     concept,
-	})
+	input, err := groupInput(request.GetName(), request.Description, request.Label, request.Logo, request.Page, request.Color, request.GetPosition(), concept)
+	if err != nil {
+		return nil, toGroupMutationError("replace group", err)
+	}
+	group, err := g.groups.Replace(ctx, actor, id, input)
 	if err != nil {
 		return nil, toGroupMutationError("replace group", err)
 	}
@@ -125,6 +115,19 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 	}
 
 	return &metadatalifecyclev1.ReplaceGroupResponse{Group: result}, nil
+}
+
+func groupInput(name string, description, label, logo, page, color *string, position int32, concept string) (domain.GroupInput, error) {
+	return domain.NewGroupInput(domain.GroupInput{
+		Name:        name,
+		Description: description,
+		Label:       label,
+		Logo:        logo,
+		Page:        page,
+		Color:       color,
+		Position:    position,
+		Concept:     concept,
+	})
 }
 
 func toDomainTopLevelConcept(value metadatalifecyclev1.TopLevelConcept) (string, error) {

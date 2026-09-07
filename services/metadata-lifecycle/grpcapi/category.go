@@ -135,7 +135,7 @@ func categoryInput(name string, parent *string) (domain.CategoryInput, error) {
 		}
 		input.ParentCategoryID = &id
 	}
-	return input, nil
+	return domain.NewCategoryInput(input)
 }
 
 func toProtoCategory(value domain.Category) *metadatalifecyclev1.CanonicalCategory {

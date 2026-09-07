@@ -77,9 +77,10 @@ func wrapGRPCError(operation string, err error) error {
 		return fmt.Errorf("%s: %w", operation, domain.ErrUnauthorized)
 	case codes.DeadlineExceeded, codes.Canceled:
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
+	case codes.Unavailable:
+		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamUnavailable)
 	default:
-		// Internal, Unavailable, Unknown, ResourceExhausted, Unimplemented.
-		// Gateway handlers already turn unknown upstream failures into 503.
+		// Internal, Unknown, ResourceExhausted, and Unimplemented are upstream errors.
 		return fmt.Errorf("%s: %w", operation, err)
 	}
 }

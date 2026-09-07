@@ -92,6 +92,8 @@ func problemStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, domain.ErrUpstreamTimeout):
 		return http.StatusGatewayTimeout
+	case errors.Is(err, domain.ErrUpstreamUnavailable):
+		return http.StatusServiceUnavailable
 	case errors.Is(err, errAuthUnavailable), errors.Is(err, errProvisioningUnavailable):
 		return http.StatusServiceUnavailable
 	default:
@@ -129,6 +131,8 @@ func problemDetails(err error) (int, string, string) {
 		return status, "conflict", "operation conflicts with existing data"
 	case errors.Is(err, domain.ErrUpstreamTimeout):
 		return status, "upstream_timeout", "request timed out"
+	case errors.Is(err, domain.ErrUpstreamUnavailable):
+		return status, "upstream_unavailable", "upstream service is unavailable"
 	default:
 		if status == http.StatusGatewayTimeout {
 			return status, "upstream_timeout", "request timed out"
