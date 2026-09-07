@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/sqlc"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,6 +19,24 @@ func Run(ctx context.Context, db *pgxpool.Pool, queries *sqlc.Queries, fn func(*
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	if err := fn(queries.WithTx(tx)); err != nil {
+		return fmt.Errorf("execute transaction: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+	return nil
+}
+
+// RunWithTx executes fn in one PostgreSQL transaction and exposes its
+// transaction for scoped savepoints.
+func RunWithTx(ctx context.Context, db *pgxpool.Pool, queries *sqlc.Queries, fn func(*sqlc.Queries, pgx.Tx) error) error {
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	if err := fn(queries.WithTx(tx), tx); err != nil {
 		return fmt.Errorf("execute transaction: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {

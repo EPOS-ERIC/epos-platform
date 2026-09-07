@@ -280,8 +280,8 @@ func (UnimplementedHandler) GrantGroupPermission(ctx context.Context, params Gra
 
 // ImportTurtleMetadata implements importTurtleMetadata operation.
 //
-// Atomically imports RDF Turtle metadata and creates or updates draft content. Requires global
-// administrator access.
+// Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid
+// optional relations are skipped and reported in warnings. Requires global administrator access.
 //
 // POST /imports/turtle
 func (UnimplementedHandler) ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (r *ImportResult, _ error) {

@@ -14,6 +14,7 @@ const (
 	dctTitle                   = "http://purl.org/dc/terms/title"
 	dctDescription             = "http://purl.org/dc/terms/description"
 	dctIdentifier              = "http://purl.org/dc/terms/identifier"
+	dctType                    = "http://purl.org/dc/terms/type"
 	dctPublisher               = "http://purl.org/dc/terms/publisher"
 	dctConformsTo              = "http://purl.org/dc/terms/conformsTo"
 	dctLicense                 = "http://purl.org/dc/terms/license"

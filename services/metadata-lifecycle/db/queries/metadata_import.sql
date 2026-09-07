@@ -125,20 +125,73 @@ VALUES
     );
 
 -- name: UpsertImportContactPoint :one
-INSERT INTO
-    contact_points (id, email, role)
-VALUES
-    (
+WITH existing_natural_key AS (
+    SELECT
+        id
+    FROM
+        contact_points
+    WHERE
+        contact_points.email = sqlc.arg(email)
+        AND contact_points.role = sqlc.arg(role)
+),
+updated_id AS (
+    UPDATE
+        contact_points
+    SET
+        email = sqlc.arg(email),
+        role = sqlc.arg(role)
+    WHERE
+        contact_points.id = sqlc.arg(id)
+        AND NOT EXISTS (
+            SELECT
+                1
+            FROM
+                existing_natural_key
+        )
+    RETURNING
+        id
+),
+inserted AS (
+    INSERT INTO
+        contact_points (id, email, role)
+    SELECT
         sqlc.arg(id),
         sqlc.arg(email),
         sqlc.arg(role)
-    ) ON CONFLICT (id) DO
-UPDATE
-SET
-    email = EXCLUDED.email,
-    role = EXCLUDED.role
-RETURNING
-    id;
+    WHERE
+        NOT EXISTS (
+            SELECT
+                1
+            FROM
+                existing_natural_key
+        )
+        AND NOT EXISTS (
+            SELECT
+                1
+            FROM
+                updated_id
+        ) ON CONFLICT (id) DO NOTHING
+    RETURNING
+        id
+)
+SELECT
+    id
+FROM
+    existing_natural_key
+UNION
+ALL
+SELECT
+    id
+FROM
+    updated_id
+UNION
+ALL
+SELECT
+    id
+FROM
+    inserted
+LIMIT
+    1;
 
 -- name: UpsertImportCategory :one
 INSERT INTO
@@ -257,3 +310,11 @@ VALUES
     )
 RETURNING
     *;
+
+-- name: GetImportOrganizationByName :one
+SELECT
+    id
+FROM
+    organizations
+WHERE
+    name = sqlc.arg(name);

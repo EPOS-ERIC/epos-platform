@@ -1,4 +1,4 @@
-// Package metadataimport coordinates authorized, atomic metadata imports.
+// Package metadataimport coordinates authorized metadata imports.
 package metadataimport
 
 import (

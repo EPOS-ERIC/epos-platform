@@ -4046,8 +4046,8 @@ func (s *Server) handleGrantGroupPermissionRequest(args [3]string, argsEscaped b
 
 // handleImportTurtleMetadataRequest handles importTurtleMetadata operation.
 //
-// Atomically imports RDF Turtle metadata and creates or updates draft content. Requires global
-// administrator access.
+// Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid
+// optional relations are skipped and reported in warnings. Requires global administrator access.
 //
 // POST /imports/turtle
 func (s *Server) handleImportTurtleMetadataRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {

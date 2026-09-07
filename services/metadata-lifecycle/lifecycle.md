@@ -259,7 +259,7 @@ Blocked identity remains attributable but has unauthenticated-level access: publ
 
 ## Metadata Import
 
-Metadata import is restricted to global `ADMIN`. Import may create/update canonical organizations, contact points, categories, category schemes, and resource `DRAFT` content only. Imported categories and category-scheme changes are applied to specified group and must obey group ownership and hierarchy invariants. Imported resources must obey one-active-change rule and cannot enter `SUBMITTED`, `REJECTED`, `PUBLISHED`, or `ARCHIVED` directly. Import must obey revision, ownership, hierarchy, category-scheme, identifier, and atomicity invariants. Publication always uses normal submit/publish lifecycle.
+Metadata import is restricted to global `ADMIN`. Import may create/update canonical organizations, contact points, categories, category schemes, and resource `DRAFT` content only. Imported categories and category-scheme changes are applied to specified group and must obey group ownership and hierarchy invariants. Imported resources must obey one-active-change rule and cannot enter `SUBMITTED`, `REJECTED`, `PUBLISHED`, or `ARCHIVED` directly. Entity validation and import conflicts skip only affected entities and return diagnostics; invalid optional relations are omitted and their parents are revalidated. Syntax, authorization, timeout, and database failures roll back the entire request. Counts report entities persisted by the successful transaction. Publication always uses normal submit/publish lifecycle.
 
 ## Notification Subscriptions
 

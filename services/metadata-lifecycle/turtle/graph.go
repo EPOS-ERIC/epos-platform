@@ -9,7 +9,14 @@ import (
 )
 
 type graph struct {
-	values map[string]map[string][]rdf.Term
+	values     map[string]map[string][]rdf.Term
+	duplicates []duplicate
+}
+
+type duplicate struct {
+	subject   string
+	predicate string
+	object    string
 }
 
 func parseGraph(input io.Reader, baseURI string) (*graph, error) {
@@ -19,9 +26,21 @@ func parseGraph(input io.Reader, baseURI string) (*graph, error) {
 	}
 
 	result := &graph{values: make(map[string]map[string][]rdf.Term)}
+	seen := make(map[string]struct{})
 	for triple := range parsed.IterTriples() {
 		subject := triple.Subject.RawValue()
 		predicate := triple.Predicate.RawValue()
+		object := triple.Object.RawValue()
+		key := subject + "\x00" + predicate + "\x00" + object
+		if _, ok := seen[key]; ok {
+			result.duplicates = append(result.duplicates, duplicate{
+				subject:   subject,
+				predicate: predicate,
+				object:    object,
+			})
+			continue
+		}
+		seen[key] = struct{}{}
 		if result.values[subject] == nil {
 			result.values[subject] = make(map[string][]rdf.Term)
 		}
@@ -32,9 +51,14 @@ func parseGraph(input io.Reader, baseURI string) (*graph, error) {
 
 func (g *graph) subjects(predicate, object string) []string {
 	var result []string
+	seen := make(map[string]struct{})
 	for subject, predicates := range g.values {
 		for _, value := range predicates[predicate] {
 			if value.RawValue() == object {
+				if _, ok := seen[subject]; ok {
+					continue
+				}
+				seen[subject] = struct{}{}
 				result = append(result, subject)
 			}
 		}
@@ -66,8 +90,14 @@ func (g *graph) firstString(subject, predicate string) (string, bool) {
 func (g *graph) refs(subject, predicate string) []string {
 	values := g.valuesFor(subject, predicate)
 	result := make([]string, 0, len(values))
+	seen := make(map[string]struct{}, len(values))
 	for _, value := range values {
-		result = append(result, value.RawValue())
+		raw := value.RawValue()
+		if _, ok := seen[raw]; ok {
+			continue
+		}
+		seen[raw] = struct{}{}
+		result = append(result, raw)
 	}
 	sort.Strings(result)
 	return result

@@ -52,7 +52,7 @@ paths:
       tags:
         - Imports
       summary: Import Turtle metadata
-      description: Atomically imports RDF Turtle metadata and creates or updates draft content. Requires global administrator access.
+      description: Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid optional relations are skipped and reported in warnings. Requires global administrator access.
       operationId: importTurtleMetadata
       security:
         - bearerAuth: []
@@ -64,7 +64,7 @@ paths:
               type: string
       responses:
         "200":
-          description: Import completed
+          description: Import completed. Counts include persisted entities; warnings include skipped entities and omitted relations.
           content:
             application/json:
               schema:

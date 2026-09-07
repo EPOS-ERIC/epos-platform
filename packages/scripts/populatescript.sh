@@ -2,8 +2,11 @@
 
 set -euo pipefail
 
+MERGED_TTL_FILE=$(mktemp)
+
 cleanup() {
   docker rm -f cache >/dev/null 2>&1 || true
+  rm -f "$MERGED_TTL_FILE"
 }
 
 trap cleanup EXIT
@@ -65,18 +68,25 @@ while IFS= read -r TTL_URL; do
       ;;
   esac
 
-  printf 'Importing %s through %s\n' "$TTL_URL" "$IMPORT_URL"
+  printf 'Fetching %s\n' "$TTL_URL"
+  # Repair legacy forms rejected by the gateway Turtle parser.
   curl --silent --show-error --fail-with-body "$TTL_URL" | \
-    curl \
-      --silent \
-      --show-error \
-      --fail-with-body \
-      --request POST \
-      "$IMPORT_URL" \
-      --header "Authorization: Bearer $TOKEN" \
-      --header 'Content-Type: text/turtle' \
-      --data-binary @-
-  printf '\n'
+    sed -E \
+      -e 's/^(@prefix[[:space:]]+[^:[:space:]]+:)</\1 </' \
+      -e 's|<environment_type:|<environment-type:|g' >> "$MERGED_TTL_FILE"
+  printf '\n' >> "$MERGED_TTL_FILE"
 done <<< "$INDEX_CONTENT"
+
+printf 'Importing merged metadata through %s\n' "$IMPORT_URL"
+curl \
+  --silent \
+  --show-error \
+  --fail-with-body \
+  --request POST \
+  "$IMPORT_URL" \
+  --header "Authorization: Bearer $TOKEN" \
+  --header 'Content-Type: text/turtle' \
+  --data-binary "@$MERGED_TTL_FILE"
+printf '\n'
 
 printf 'Metadata population completed\n'

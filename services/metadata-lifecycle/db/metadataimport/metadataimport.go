@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	datasetdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/dataset"
@@ -30,51 +31,74 @@ func New(pool *pgxpool.Pool) *Repo {
 
 // Import persists one metadata batch in a transaction.
 func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBatch) (domain.ImportResult, error) {
-	result := domain.ImportResult{
-		Groups:               len(batch.CategorySchemes),
-		Categories:           len(batch.Categories),
-		Organizations:        len(batch.Organizations),
-		ContactPoints:        len(batch.ContactPoints),
-		Datasets:             len(batch.Datasets),
-		SoftwareApplications: len(batch.SoftwareApplications),
-		SoftwareSourceCodes:  len(batch.SoftwareSourceCodes),
-		Warnings:             batch.Warnings,
-	}
+	result := domain.ImportResult{Warnings: batch.Warnings}
 
-	err := dbtx.Run(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries) error {
-		groupIDs, err := importGroups(ctx, q, batch.CategorySchemes)
+	err := dbtx.RunWithTx(ctx, r.db, sqlc.New(r.db), func(q *sqlc.Queries, tx pgx.Tx) error {
+		groupIDs, err := importGroups(ctx, tx, q, batch.CategorySchemes, &result)
 		if err != nil {
 			return err
 		}
-		organizationIDs, err := importOrganizations(ctx, q, batch)
+		organizationIDs, err := importOrganizations(ctx, tx, q, batch.Organizations, &result)
 		if err != nil {
 			return err
 		}
-		contactIDs, err := importContactPoints(ctx, q, batch.ContactPoints)
+		contactIDs, err := importContactPoints(ctx, tx, q, batch.ContactPoints, &result)
 		if err != nil {
 			return err
 		}
-		if err := importOrganizationContactPoints(ctx, q, batch.Organizations, organizationIDs, contactIDs); err != nil {
+		if err := importOrganizationMemberships(ctx, tx, q, batch, organizationIDs, &result); err != nil {
 			return err
 		}
-		categoryIDs, err := importCategories(ctx, q, batch, groupIDs)
+		if err := importOrganizationContactPoints(ctx, tx, q, batch.Organizations, organizationIDs, contactIDs, &result); err != nil {
+			return err
+		}
+		categoryIDs, err := importCategories(ctx, tx, q, batch, groupIDs, &result)
 		if err != nil {
 			return err
 		}
 		for _, dataset := range batch.Datasets {
-			err := importDataset(ctx, q, actorID, dataset, groupIDs, organizationIDs, contactIDs, categoryIDs)
+			value, ok := prepareDataset(dataset, organizationIDs, contactIDs, categoryIDs, &result)
+			if !ok {
+				continue
+			}
+			imported, err := importEntity(ctx, tx, "dataset", dataset.ID.String(), &result, func() error {
+				return importDataset(ctx, q, actorID, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
+			})
 			if err != nil {
 				return err
 			}
+			if imported {
+				result.Datasets++
+			}
 		}
 		for _, application := range batch.SoftwareApplications {
-			if err := importSoftwareApplication(ctx, q, actorID, application, groupIDs, organizationIDs, contactIDs, categoryIDs); err != nil {
+			value, ok := prepareSoftwareApplication(application, organizationIDs, contactIDs, categoryIDs, &result)
+			if !ok {
+				continue
+			}
+			imported, err := importEntity(ctx, tx, "software application", application.ID.String(), &result, func() error {
+				return importSoftwareApplication(ctx, q, actorID, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
+			})
+			if err != nil {
 				return err
+			}
+			if imported {
+				result.SoftwareApplications++
 			}
 		}
 		for _, sourceCode := range batch.SoftwareSourceCodes {
-			if err := importSoftwareSourceCode(ctx, q, actorID, sourceCode, groupIDs, organizationIDs, contactIDs, categoryIDs); err != nil {
+			value, ok := prepareSoftwareSourceCode(sourceCode, organizationIDs, contactIDs, categoryIDs, &result)
+			if !ok {
+				continue
+			}
+			imported, err := importEntity(ctx, tx, "software source code", sourceCode.ID.String(), &result, func() error {
+				return importSoftwareSourceCode(ctx, q, actorID, value, groupIDs, organizationIDs, contactIDs, categoryIDs)
+			})
+			if err != nil {
 				return err
+			}
+			if imported {
+				result.SoftwareSourceCodes++
 			}
 		}
 		return nil
@@ -87,6 +111,58 @@ func (r *Repo) Import(ctx context.Context, actorID string, batch domain.ImportBa
 		return domain.ImportResult{}, fmt.Errorf("database invariant: %s: %w", pgErr.ConstraintName, errors.Join(domain.ErrImportConflict, pgErr))
 	}
 	return domain.ImportResult{}, fmt.Errorf("metadata import transaction: %w", err)
+}
+
+func importEntity(ctx context.Context, tx pgx.Tx, kind, subject string, result *domain.ImportResult, fn func() error) (bool, error) {
+	err := withSavepoint(ctx, tx, savepointName(kind, subject), fn)
+	if err == nil {
+		return true, nil
+	}
+	if !recoverableImportError(err) {
+		return false, err
+	}
+	addImportDiagnostic(result, domain.ImportDiagnostic{
+		Severity: domain.ImportSeverityError,
+		Subject:  subject,
+		Message:  fmt.Sprintf("%s skipped: %s", kind, err),
+	})
+	return false, nil
+}
+
+func addImportDiagnostic(result *domain.ImportResult, diagnostic domain.ImportDiagnostic) {
+	result.Warnings = append(result.Warnings, diagnostic)
+}
+
+func withSavepoint(ctx context.Context, tx pgx.Tx, name string, fn func() error) error {
+	if _, err := tx.Exec(ctx, "SAVEPOINT "+name); err != nil {
+		return fmt.Errorf("create savepoint %q: %w", name, err)
+	}
+	err := fn()
+	if err == nil {
+		if _, releaseErr := tx.Exec(ctx, "RELEASE SAVEPOINT "+name); releaseErr != nil {
+			return fmt.Errorf("release savepoint %q: %w", name, releaseErr)
+		}
+		return nil
+	}
+	if _, rollbackErr := tx.Exec(ctx, "ROLLBACK TO SAVEPOINT "+name); rollbackErr != nil {
+		return errors.Join(err, fmt.Errorf("rollback savepoint %q: %w", name, rollbackErr))
+	}
+	if _, releaseErr := tx.Exec(ctx, "RELEASE SAVEPOINT "+name); releaseErr != nil {
+		return errors.Join(err, fmt.Errorf("release savepoint %q: %w", name, releaseErr))
+	}
+	return err
+}
+
+func savepointName(kind, subject string) string {
+	return "import_" + strings.ReplaceAll(uuid.NewSHA1(uuid.NameSpaceURL, []byte(kind+"\x00"+subject)).String(), "-", "_")
+}
+
+func recoverableImportError(err error) bool {
+	if errors.Is(err, domain.ErrInvalidImport) || errors.Is(err, domain.ErrImportConflict) {
+		return true
+	}
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && (strings.HasPrefix(pgErr.Code, "23") || pgErr.Code == "P0001")
 }
 
 //nolint:dupl // Typed application and source-code imports use distinct SQLC operations.
@@ -240,158 +316,489 @@ func remapSoftwareSourceCodeReferences(value *domain.SoftwareSourceCodeMetadata,
 	}
 }
 
-func importGroups(ctx context.Context, q *sqlc.Queries, schemes []domain.Group) (map[uuid.UUID]uuid.UUID, error) {
+func importGroups(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, schemes []domain.Group, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
 	ids := make(map[uuid.UUID]uuid.UUID, len(schemes))
 	for _, scheme := range schemes {
-		id, err := q.UpsertImportGroup(ctx, sqlc.UpsertImportGroupParams{
-			ID:          scheme.ID,
-			Name:        scheme.Name,
-			Description: scheme.Description,
-			Concept:     sqlc.TopLevelConcept(scheme.Concept),
-			Label:       scheme.Label,
-			Logo:        scheme.Logo,
-			Page:        scheme.Page,
-			Color:       scheme.Color,
-			Position:    scheme.Position,
+		var id uuid.UUID
+		imported, err := importEntity(ctx, tx, "category scheme", scheme.ID.String(), result, func() error {
+			var err error
+			id, err = q.UpsertImportGroup(ctx, sqlc.UpsertImportGroupParams{
+				ID:          scheme.ID,
+				Name:        scheme.Name,
+				Description: scheme.Description,
+				Concept:     sqlc.TopLevelConcept(scheme.Concept),
+				Label:       scheme.Label,
+				Logo:        scheme.Logo,
+				Page:        scheme.Page,
+				Color:       scheme.Color,
+				Position:    scheme.Position,
+			})
+			if err != nil {
+				return fmt.Errorf("upsert group %q: %w", scheme.ID, err)
+			}
+			return nil
 		})
 		if err != nil {
-			return nil, fmt.Errorf("upsert group %q: %w", scheme.ID, err)
+			return nil, err
+		}
+		if !imported {
+			continue
 		}
 		ids[scheme.ID] = id
+		result.Groups++
 	}
 	return ids, nil
 }
 
-func importOrganizations(ctx context.Context, q *sqlc.Queries, batch domain.ImportBatch) (map[uuid.UUID]uuid.UUID, error) {
-	ids := make(map[uuid.UUID]uuid.UUID, len(batch.Organizations))
-	stableIDs := make(map[uuid.UUID]uuid.UUID, len(batch.Organizations))
-	for _, organization := range batch.Organizations {
-		id, err := q.UpsertImportOrganization(ctx, sqlc.UpsertImportOrganizationParams{
-			ID:         organization.ID,
-			Name:       organization.Name,
-			Street:     organization.Street,
-			Locality:   organization.Locality,
-			PostalCode: organization.PostalCode,
-			Country:    organization.Country,
-			LogoUrl:    organization.LogoURL,
-			PageUrl:    organization.PageURL,
-			Email:      organization.Email,
-			LeiCode:    organization.LEICode,
+func importOrganizations(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, organizations []domain.OrganizationMetadata, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
+	ids := make(map[uuid.UUID]uuid.UUID, len(organizations))
+	ordered := append([]domain.OrganizationMetadata(nil), organizations...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		if ordered[i].Name != ordered[j].Name {
+			return ordered[i].Name < ordered[j].Name
+		}
+		return ordered[i].ID.String() < ordered[j].ID.String()
+	})
+	canonical := make([]domain.OrganizationMetadata, 0, len(ordered))
+	sourceIDsByName := make(map[string][]uuid.UUID, len(ordered))
+	canonicalIndexByName := make(map[string]int, len(ordered))
+	for _, organization := range ordered {
+		index, ok := canonicalIndexByName[organization.Name]
+		if !ok {
+			index = len(canonical)
+			canonical = append(canonical, organization)
+			canonicalIndexByName[organization.Name] = index
+		} else {
+			for _, identifier := range organization.Identifiers {
+				canonical[index].Identifiers = appendUniqueIdentifier(canonical[index].Identifiers, identifier)
+			}
+		}
+		sourceIDsByName[organization.Name] = append(sourceIDsByName[organization.Name], organization.ID)
+	}
+
+	for _, organization := range canonical {
+		var id uuid.UUID
+		imported, err := importEntity(ctx, tx, "organization", organization.ID.String(), result, func() error {
+			var err error
+			id, err = q.GetImportOrganizationByName(ctx, organization.Name)
+			if errors.Is(err, pgx.ErrNoRows) {
+				id = organization.ID
+			} else if err != nil {
+				return fmt.Errorf("find organization %q: %w", organization.ID, err)
+			}
+			id, err = q.UpsertImportOrganization(ctx, sqlc.UpsertImportOrganizationParams{
+				ID:         id,
+				Name:       organization.Name,
+				Street:     organization.Street,
+				Locality:   organization.Locality,
+				PostalCode: organization.PostalCode,
+				Country:    organization.Country,
+				LogoUrl:    organization.LogoURL,
+				PageUrl:    organization.PageURL,
+				Email:      organization.Email,
+				LeiCode:    organization.LEICode,
+			})
+			if err != nil {
+				return fmt.Errorf("upsert organization %q: %w", organization.ID, err)
+			}
+			if err := q.DeleteImportOrganizationIdentifiers(ctx, &id); err != nil {
+				return fmt.Errorf("replace organization identifiers %q: %w", organization.ID, err)
+			}
+			for _, identifier := range organization.Identifiers {
+				if err := q.AddImportOrganizationIdentifier(ctx, sqlc.AddImportOrganizationIdentifierParams{
+					Type:           string(identifier.Type),
+					Value:          identifier.Value,
+					OrganizationID: &id,
+				}); err != nil {
+					return fmt.Errorf("add organization identifier %q: %w", organization.ID, err)
+				}
+			}
+			return nil
 		})
 		if err != nil {
-			return nil, fmt.Errorf("upsert organization %q: %w", organization.ID, err)
+			return nil, err
 		}
-		if err := q.DeleteImportOrganizationIdentifiers(ctx, &id); err != nil {
-			return nil, fmt.Errorf("replace organization identifiers %q: %w", organization.ID, err)
-		}
-		for _, identifier := range organization.Identifiers {
-			if err := q.AddImportOrganizationIdentifier(ctx, sqlc.AddImportOrganizationIdentifierParams{
-				Type:           string(identifier.Type),
-				Value:          identifier.Value,
-				OrganizationID: &id,
-			}); err != nil {
-				return nil, fmt.Errorf("add organization identifier %q: %w", organization.ID, err)
+		if imported {
+			for _, sourceID := range sourceIDsByName[organization.Name] {
+				ids[sourceID] = id
 			}
-		}
-		ids[organization.ID] = id
-		stableIDs[organization.ID] = id
-	}
-	for _, organization := range batch.Organizations {
-		childID := stableIDs[organization.ID]
-		if err := q.DeleteImportOrganizationMemberships(ctx, childID); err != nil {
-			return nil, fmt.Errorf("replace organization hierarchy %q: %w", organization.ID, err)
-		}
-	}
-	for _, edge := range batch.OrganizationEdges {
-		parentID, parentOK := stableIDs[edge.ParentID]
-		childID, childOK := stableIDs[edge.ChildID]
-		if !parentOK || !childOK {
-			return nil, fmt.Errorf("invalid organization hierarchy: %w", domain.ErrInvalidImport)
-		}
-		if err := q.AddImportOrganizationMembership(ctx, sqlc.AddImportOrganizationMembershipParams{
-			ChildOrganizationID:  childID,
-			ParentOrganizationID: parentID,
-		}); err != nil {
-			return nil, fmt.Errorf("add organization hierarchy: %w", err)
+			result.Organizations++
 		}
 	}
 	return ids, nil
 }
 
-func importOrganizationContactPoints(ctx context.Context, q *sqlc.Queries, organizations []domain.OrganizationMetadata, organizationIDs, contactIDs map[uuid.UUID]uuid.UUID) error {
-	for _, organization := range organizations {
-		organizationID := organizationIDs[organization.ID]
-		if err := q.DeleteImportOrganizationContactPoints(ctx, organizationID); err != nil {
-			return fmt.Errorf("replace organization contact points %q: %w", organization.ID, err)
+func appendUniqueIdentifier(values []domain.Identifier, value domain.Identifier) []domain.Identifier {
+	for _, existing := range values {
+		if existing.Type == value.Type && existing.Value == value.Value {
+			return values
 		}
-		for _, contact := range organization.ContactPoints {
-			contactID, ok := contactIDs[contact.ID]
-			if !ok {
-				return fmt.Errorf("organization %q references unknown contact point %q: %w", organization.ID, contact.ID, domain.ErrInvalidImport)
+	}
+	return append(values, value)
+}
+
+func importOrganizationMemberships(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, batch domain.ImportBatch, organizationIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) error {
+	for _, organization := range batch.Organizations {
+		organizationID, ok := organizationIDs[organization.ID]
+		if !ok {
+			continue
+		}
+		if _, err := importEntity(ctx, tx, "organization hierarchy", organization.ID.String(), result, func() error {
+			if err := q.DeleteImportOrganizationMemberships(ctx, organizationID); err != nil {
+				return fmt.Errorf("replace organization hierarchy %q: %w", organization.ID, err)
 			}
-			if err := q.AddImportOrganizationContactPoint(ctx, sqlc.AddImportOrganizationContactPointParams{
-				OrganizationID: organizationID,
-				ContactPointID: contactID,
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	for _, edge := range batch.OrganizationEdges {
+		parentID, parentOK := organizationIDs[edge.ParentID]
+		childID, childOK := organizationIDs[edge.ChildID]
+		if !parentOK || !childOK {
+			addImportDiagnostic(result, domain.ImportDiagnostic{
+				Severity: domain.ImportSeverityWarning,
+				Subject:  edge.ChildID.String(),
+				Message:  fmt.Sprintf("organization hierarchy %q -> %q omitted: organization is invalid", edge.ChildID, edge.ParentID),
+			})
+			continue
+		}
+		if _, err := importEntity(ctx, tx, "organization hierarchy", edge.ChildID.String(), result, func() error {
+			if err := q.AddImportOrganizationMembership(ctx, sqlc.AddImportOrganizationMembershipParams{
+				ChildOrganizationID:  childID,
+				ParentOrganizationID: parentID,
 			}); err != nil {
-				return fmt.Errorf("add organization contact point %q: %w", organization.ID, err)
+				return fmt.Errorf("add organization hierarchy: %w", err)
 			}
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func importContactPoints(ctx context.Context, q *sqlc.Queries, contacts []domain.ContactPoint) (map[uuid.UUID]uuid.UUID, error) {
+func importOrganizationContactPoints(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, organizations []domain.OrganizationMetadata, organizationIDs, contactIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) error {
+	contactPointsByOrganization := make(map[uuid.UUID][]uuid.UUID, len(organizations))
+	organizationOrder := make([]uuid.UUID, 0, len(organizations))
+	seenOrganizations := make(map[uuid.UUID]struct{}, len(organizations))
+	seenContactPoints := make(map[uuid.UUID]map[uuid.UUID]struct{}, len(organizations))
+
+	for _, organization := range organizations {
+		organizationID, ok := organizationIDs[organization.ID]
+		if !ok {
+			continue
+		}
+		if _, ok := seenOrganizations[organizationID]; !ok {
+			seenOrganizations[organizationID] = struct{}{}
+			organizationOrder = append(organizationOrder, organizationID)
+			seenContactPoints[organizationID] = make(map[uuid.UUID]struct{})
+		}
+		for _, contact := range organization.ContactPoints {
+			contactID, ok := contactIDs[contact.ID]
+			if !ok {
+				addImportDiagnostic(result, domain.ImportDiagnostic{
+					Severity:  domain.ImportSeverityWarning,
+					Subject:   organization.ID.String(),
+					Predicate: "contactPoint",
+					Message:   fmt.Sprintf("contact point %q omitted: contact point is unavailable", contact.ID),
+				})
+				continue
+			}
+			if _, ok := seenContactPoints[organizationID][contactID]; ok {
+				continue
+			}
+			seenContactPoints[organizationID][contactID] = struct{}{}
+			contactPointsByOrganization[organizationID] = append(contactPointsByOrganization[organizationID], contactID)
+		}
+	}
+
+	for _, organizationID := range organizationOrder {
+		if _, err := importEntity(ctx, tx, "organization contact points", organizationID.String(), result, func() error {
+			if err := q.DeleteImportOrganizationContactPoints(ctx, organizationID); err != nil {
+				return fmt.Errorf("replace organization contact points %q: %w", organizationID, err)
+			}
+			for _, contactID := range contactPointsByOrganization[organizationID] {
+				if err := q.AddImportOrganizationContactPoint(ctx, sqlc.AddImportOrganizationContactPointParams{
+					OrganizationID: organizationID,
+					ContactPointID: contactID,
+				}); err != nil {
+					return fmt.Errorf("add organization contact point %q: %w", organizationID, err)
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func importContactPoints(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, contacts []domain.ContactPoint, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
 	ids := make(map[uuid.UUID]uuid.UUID, len(contacts))
+	importedIDs := make(map[uuid.UUID]struct{}, len(contacts))
 	for _, contact := range contacts {
-		id, err := q.UpsertImportContactPoint(ctx, sqlc.UpsertImportContactPointParams{
-			ID:    contact.ID,
-			Email: contact.Email,
-			Role:  string(contact.Role),
+		var id uuid.UUID
+		imported, err := importEntity(ctx, tx, "contact point", contact.ID.String(), result, func() error {
+			var err error
+			id, err = q.UpsertImportContactPoint(ctx, sqlc.UpsertImportContactPointParams{
+				ID:    contact.ID,
+				Email: contact.Email,
+				Role:  string(contact.Role),
+			})
+			if err != nil {
+				return fmt.Errorf("upsert contact point %q: %w", contact.ID, err)
+			}
+			return nil
 		})
 		if err != nil {
-			return nil, fmt.Errorf("upsert contact point %q: %w", contact.ID, err)
+			return nil, err
 		}
-		ids[contact.ID] = id
+		if imported {
+			ids[contact.ID] = id
+			if _, ok := importedIDs[id]; !ok {
+				importedIDs[id] = struct{}{}
+				result.ContactPoints++
+			}
+		}
 	}
 	return ids, nil
 }
 
-func importCategories(ctx context.Context, q *sqlc.Queries, batch domain.ImportBatch, groupIDs map[uuid.UUID]uuid.UUID) (map[uuid.UUID]uuid.UUID, error) {
+func importCategories(ctx context.Context, tx pgx.Tx, q *sqlc.Queries, batch domain.ImportBatch, groupIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) (map[uuid.UUID]uuid.UUID, error) {
 	ids := make(map[uuid.UUID]uuid.UUID, len(batch.Categories))
 	groups := make(map[uuid.UUID]uuid.UUID, len(batch.Categories))
 	for _, category := range batch.Categories {
 		groupID, ok := groupIDs[category.Scheme.ID]
 		if !ok {
-			return nil, fmt.Errorf("category %q references unknown scheme: %w", category.ID, domain.ErrInvalidImport)
+			addImportDiagnostic(result, domain.ImportDiagnostic{
+				Severity: domain.ImportSeverityError,
+				Subject:  category.ID.String(),
+				Message:  fmt.Sprintf("category skipped: category scheme %q is unavailable", category.Scheme.ID),
+			})
+			continue
 		}
-		row, err := q.UpsertImportCategory(ctx, sqlc.UpsertImportCategoryParams{
-			ID:      category.ID,
-			GroupID: groupID,
-			Name:    category.Name,
+		var row sqlc.UpsertImportCategoryRow
+		imported, err := importEntity(ctx, tx, "category", category.ID.String(), result, func() error {
+			var err error
+			row, err = q.UpsertImportCategory(ctx, sqlc.UpsertImportCategoryParams{
+				ID:      category.ID,
+				GroupID: groupID,
+				Name:    category.Name,
+			})
+			if err != nil {
+				return fmt.Errorf("upsert category %q: %w", category.ID, err)
+			}
+			if row.GroupID != groupID {
+				return fmt.Errorf("category %q belongs to another group: %w", category.ID, domain.ErrImportConflict)
+			}
+			return nil
 		})
 		if err != nil {
-			return nil, fmt.Errorf("upsert category %q: %w", category.ID, err)
+			return nil, err
 		}
-		if row.GroupID != groupID {
-			return nil, fmt.Errorf("category %q belongs to another group: %w", category.ID, domain.ErrImportConflict)
+		if imported {
+			ids[category.ID], groups[category.ID] = row.ID, groupID
+			result.Categories++
 		}
-		ids[category.ID], groups[category.ID] = row.ID, groupID
 	}
 	for _, edge := range batch.CategoryEdges {
 		parentID, parentOK := ids[edge.ParentID]
 		childID, childOK := ids[edge.ChildID]
 		if !parentOK || !childOK || groups[edge.ParentID] != groups[edge.ChildID] {
-			return nil, fmt.Errorf("invalid category hierarchy: %w", domain.ErrInvalidImport)
+			addImportDiagnostic(result, domain.ImportDiagnostic{
+				Severity: domain.ImportSeverityWarning,
+				Subject:  edge.ChildID.String(),
+				Message:  fmt.Sprintf("category parent %q omitted: category is unavailable", edge.ParentID),
+			})
+			continue
 		}
-		if err := q.SetImportCategoryParent(ctx, sqlc.SetImportCategoryParentParams{
-			ParentID: &parentID,
-			ChildID:  childID,
-			GroupID:  groups[edge.ChildID],
+		if _, err := importEntity(ctx, tx, "category hierarchy", edge.ChildID.String(), result, func() error {
+			if err := q.SetImportCategoryParent(ctx, sqlc.SetImportCategoryParentParams{
+				ParentID: &parentID,
+				ChildID:  childID,
+				GroupID:  groups[edge.ChildID],
+			}); err != nil {
+				return fmt.Errorf("set category parent: %w", err)
+			}
+			return nil
 		}); err != nil {
-			return nil, fmt.Errorf("set category parent: %w", err)
+			return nil, err
 		}
 	}
 	return ids, nil
+}
+
+func prepareDataset(value domain.DatasetMetadata, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) (domain.DatasetMetadata, bool) {
+	providers := make([]domain.OrganizationMetadata, 0, len(value.Providers))
+	for _, provider := range value.Providers {
+		if _, ok := organizationIDs[provider.ID]; !ok {
+			addMissingReferenceWarning(result, value.ID, "provider", "organization", provider.ID)
+			continue
+		}
+		providers = append(providers, provider)
+	}
+	value.Providers = providers
+
+	contacts := make([]domain.ContactPoint, 0, len(value.ContactPoints))
+	for _, contact := range value.ContactPoints {
+		if _, ok := contactIDs[contact.ID]; !ok {
+			addMissingReferenceWarning(result, value.ID, "contactPoint", "contact point", contact.ID)
+			continue
+		}
+		contacts = append(contacts, contact)
+	}
+	value.ContactPoints = contacts
+
+	categories := make([]domain.CategoryMetadata, 0, len(value.Categories))
+	for _, category := range value.Categories {
+		if _, ok := categoryIDs[category.ID]; !ok {
+			addMissingReferenceWarning(result, value.ID, "theme", "category", category.ID)
+			continue
+		}
+		categories = append(categories, category)
+	}
+	value.Categories = categories
+
+	for i := range value.Distributions {
+		service := value.Distributions[i].WebService
+		if service == nil {
+			continue
+		}
+		if service.Provider != nil {
+			if _, ok := organizationIDs[service.Provider.ID]; !ok {
+				addMissingReferenceWarning(result, value.ID, "provider", "organization", service.Provider.ID)
+				service.Provider = nil
+			}
+		}
+		serviceContacts := make([]domain.ContactPoint, 0, len(service.ContactPoints))
+		for _, contact := range service.ContactPoints {
+			if _, ok := contactIDs[contact.ID]; !ok {
+				addMissingReferenceWarning(result, value.ID, "contactPoint", "contact point", contact.ID)
+				continue
+			}
+			serviceContacts = append(serviceContacts, contact)
+		}
+		service.ContactPoints = serviceContacts
+	}
+
+	if err := value.Validate(); err != nil {
+		addImportDiagnostic(result, domain.ImportDiagnostic{
+			Severity: domain.ImportSeverityError,
+			Subject:  value.ID.String(),
+			Message:  fmt.Sprintf("dataset skipped: %s", err),
+		})
+		return domain.DatasetMetadata{}, false
+	}
+	if _, err := domain.NewImportBatch(domain.ImportBatch{Datasets: []domain.DatasetMetadata{value}}); err != nil {
+		addImportDiagnostic(result, domain.ImportDiagnostic{
+			Severity: domain.ImportSeverityError,
+			Subject:  value.ID.String(),
+			Message:  fmt.Sprintf("dataset skipped: %s", err),
+		})
+		return domain.DatasetMetadata{}, false
+	}
+	return value, true
+}
+
+//nolint:dupl // Typed application and source-code preparation use distinct domain types.
+func prepareSoftwareApplication(value domain.SoftwareApplicationMetadata, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) (domain.SoftwareApplicationMetadata, bool) {
+	creators := make([]domain.OrganizationMetadata, 0, len(value.Creators))
+	for _, creator := range value.Creators {
+		if _, ok := organizationIDs[creator.ID]; !ok {
+			addMissingReferenceWarning(result, value.ID, "creator", "organization", creator.ID)
+			continue
+		}
+		creators = append(creators, creator)
+	}
+	value.Creators = creators
+	value.ContactPoints = filterContactPoints(value.ID, "contactPoint", value.ContactPoints, contactIDs, result)
+	value.Categories = filterCategories(value.ID, value.Categories, categoryIDs, result)
+
+	if err := value.Validate(); err != nil {
+		addImportDiagnostic(result, domain.ImportDiagnostic{
+			Severity: domain.ImportSeverityError,
+			Subject:  value.ID.String(),
+			Message:  fmt.Sprintf("software application skipped: %s", err),
+		})
+		return domain.SoftwareApplicationMetadata{}, false
+	}
+	if _, err := domain.NewImportBatch(domain.ImportBatch{SoftwareApplications: []domain.SoftwareApplicationMetadata{value}}); err != nil {
+		addImportDiagnostic(result, domain.ImportDiagnostic{
+			Severity: domain.ImportSeverityError,
+			Subject:  value.ID.String(),
+			Message:  fmt.Sprintf("software application skipped: %s", err),
+		})
+		return domain.SoftwareApplicationMetadata{}, false
+	}
+	return value, true
+}
+
+//nolint:dupl // Typed application and source-code preparation use distinct domain types.
+func prepareSoftwareSourceCode(value domain.SoftwareSourceCodeMetadata, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) (domain.SoftwareSourceCodeMetadata, bool) {
+	creators := make([]domain.OrganizationMetadata, 0, len(value.Creators))
+	for _, creator := range value.Creators {
+		if _, ok := organizationIDs[creator.ID]; !ok {
+			addMissingReferenceWarning(result, value.ID, "creator", "organization", creator.ID)
+			continue
+		}
+		creators = append(creators, creator)
+	}
+	value.Creators = creators
+	value.ContactPoints = filterContactPoints(value.ID, "contactPoint", value.ContactPoints, contactIDs, result)
+	value.Categories = filterCategories(value.ID, value.Categories, categoryIDs, result)
+
+	if err := value.Validate(); err != nil {
+		addImportDiagnostic(result, domain.ImportDiagnostic{
+			Severity: domain.ImportSeverityError,
+			Subject:  value.ID.String(),
+			Message:  fmt.Sprintf("software source code skipped: %s", err),
+		})
+		return domain.SoftwareSourceCodeMetadata{}, false
+	}
+	if _, err := domain.NewImportBatch(domain.ImportBatch{SoftwareSourceCodes: []domain.SoftwareSourceCodeMetadata{value}}); err != nil {
+		addImportDiagnostic(result, domain.ImportDiagnostic{
+			Severity: domain.ImportSeverityError,
+			Subject:  value.ID.String(),
+			Message:  fmt.Sprintf("software source code skipped: %s", err),
+		})
+		return domain.SoftwareSourceCodeMetadata{}, false
+	}
+	return value, true
+}
+
+func filterContactPoints(owner uuid.UUID, predicate string, values []domain.ContactPoint, contactIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) []domain.ContactPoint {
+	filtered := make([]domain.ContactPoint, 0, len(values))
+	for _, contact := range values {
+		if _, ok := contactIDs[contact.ID]; !ok {
+			addMissingReferenceWarning(result, owner, predicate, "contact point", contact.ID)
+			continue
+		}
+		filtered = append(filtered, contact)
+	}
+	return filtered
+}
+
+func filterCategories(owner uuid.UUID, values []domain.CategoryMetadata, categoryIDs map[uuid.UUID]uuid.UUID, result *domain.ImportResult) []domain.CategoryMetadata {
+	filtered := make([]domain.CategoryMetadata, 0, len(values))
+	for _, category := range values {
+		if _, ok := categoryIDs[category.ID]; !ok {
+			addMissingReferenceWarning(result, owner, "theme", "category", category.ID)
+			continue
+		}
+		filtered = append(filtered, category)
+	}
+	return filtered
+}
+
+func addMissingReferenceWarning(result *domain.ImportResult, owner uuid.UUID, predicate, kind string, id uuid.UUID) {
+	addImportDiagnostic(result, domain.ImportDiagnostic{
+		Severity:  domain.ImportSeverityWarning,
+		Subject:   owner.String(),
+		Predicate: predicate,
+		Message:   fmt.Sprintf("%s %q omitted: %s is unavailable", kind, id, kind),
+	})
 }
 
 func importDataset(
@@ -479,9 +886,17 @@ func importDataset(
 }
 
 func remapDatasetReferences(value *domain.DatasetInput, organizationIDs, contactIDs, categoryIDs map[uuid.UUID]uuid.UUID) {
-	for i := range value.ProviderIDs {
-		value.ProviderIDs[i] = organizationIDs[value.ProviderIDs[i]]
+	providerIDs := make([]uuid.UUID, 0, len(value.ProviderIDs))
+	seenProviders := make(map[uuid.UUID]struct{}, len(value.ProviderIDs))
+	for _, providerID := range value.ProviderIDs {
+		providerID = organizationIDs[providerID]
+		if _, ok := seenProviders[providerID]; ok {
+			continue
+		}
+		seenProviders[providerID] = struct{}{}
+		providerIDs = append(providerIDs, providerID)
 	}
+	value.ProviderIDs = providerIDs
 	for i := range value.ContactPointIDs {
 		value.ContactPointIDs[i] = contactIDs[value.ContactPointIDs[i]]
 	}

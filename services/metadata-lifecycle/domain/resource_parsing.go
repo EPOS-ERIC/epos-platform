@@ -100,6 +100,11 @@ func validateOrganization(value OrganizationMetadata) error {
 	return validateContactPoints(value.ContactPoints, "organization contact point")
 }
 
+// Validate validates organization metadata embedded in an import or resource.
+func (value OrganizationMetadata) Validate() error {
+	return validateOrganization(value)
+}
+
 func validateCategories(values []CategoryMetadata, relation string) error {
 	seen := make(map[uuid.UUID]struct{}, len(values))
 	for _, value := range values {
@@ -138,4 +143,9 @@ func validateCategory(value CategoryMetadata) error {
 		}
 	}
 	return nil
+}
+
+// Validate validates category metadata embedded in an import or resource.
+func (value CategoryMetadata) Validate() error {
+	return validateCategory(value)
 }

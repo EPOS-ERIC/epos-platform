@@ -506,3 +506,27 @@ func distributionInput(value Distribution) DistributionInput {
 	}
 	return result
 }
+
+// Input returns caller-shaped fields from persisted web-service metadata.
+func (value WebService) Input() WebServiceInput {
+	var providerID *uuid.UUID
+	if value.Provider != nil {
+		providerID = &value.Provider.ID
+	}
+	contactPointIDs := make([]uuid.UUID, len(value.ContactPoints))
+	for i, contact := range value.ContactPoints {
+		contactPointIDs[i] = contact.ID
+	}
+	return WebServiceInput{
+		Name:             value.Name,
+		Description:      value.Description,
+		TemplateURL:      value.TemplateURL,
+		Parameters:       value.Parameters,
+		Format:           value.Format,
+		ProviderID:       providerID,
+		Documentation:    value.Documentation,
+		SpatialCoverage:  value.SpatialCoverage,
+		TemporalCoverage: value.TemporalCoverage,
+		ContactPointIDs:  contactPointIDs,
+	}
+}

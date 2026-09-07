@@ -191,8 +191,8 @@ type Handler interface {
 	GrantGroupPermission(ctx context.Context, params GrantGroupPermissionParams) error
 	// ImportTurtleMetadata implements importTurtleMetadata operation.
 	//
-	// Atomically imports RDF Turtle metadata and creates or updates draft content. Requires global
-	// administrator access.
+	// Imports valid RDF Turtle metadata and creates or updates draft content. Invalid entities and invalid
+	// optional relations are skipped and reported in warnings. Requires global administrator access.
 	//
 	// POST /imports/turtle
 	ImportTurtleMetadata(ctx context.Context, req ImportTurtleMetadataReq) (*ImportResult, error)

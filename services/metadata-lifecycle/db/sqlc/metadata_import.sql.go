@@ -247,6 +247,22 @@ func (q *Queries) GetImportDataset(ctx context.Context, id uuid.UUID) (GetImport
 	return i, err
 }
 
+const getImportOrganizationByName = `-- name: GetImportOrganizationByName :one
+SELECT
+    id
+FROM
+    organizations
+WHERE
+    name = $1
+`
+
+func (q *Queries) GetImportOrganizationByName(ctx context.Context, name string) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, getImportOrganizationByName, name)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getImportSoftwareApplication = `-- name: GetImportSoftwareApplication :one
 SELECT
     resource.id, resource.group_id, resource.created_by, resource.created_at,
@@ -395,30 +411,78 @@ func (q *Queries) UpsertImportCategory(ctx context.Context, arg UpsertImportCate
 }
 
 const upsertImportContactPoint = `-- name: UpsertImportContactPoint :one
-INSERT INTO
-    contact_points (id, email, role)
-VALUES
-    (
+WITH existing_natural_key AS (
+    SELECT
+        id
+    FROM contact_points
+    WHERE
+        contact_points.email = $1
+        AND contact_points.role = $2
+), updated_id AS (
+    UPDATE
+        contact_points
+    SET
+        email = $1,
+        role = $2
+    WHERE
+        contact_points.id = $3
+        AND NOT EXISTS (
+            SELECT
+                1
+            FROM
+                existing_natural_key
+        )
+    RETURNING
+        id
+), inserted AS (
+    INSERT INTO
+        contact_points (id, email, role)
+    SELECT
+        $3,
         $1,
-        $2,
-        $3
-    ) ON CONFLICT (id) DO
-UPDATE
-SET
-    email = EXCLUDED.email,
-    role = EXCLUDED.role
-RETURNING
+        $2
+    WHERE
+        NOT EXISTS (
+            SELECT
+                1
+            FROM
+                existing_natural_key
+        )
+        AND NOT EXISTS (
+            SELECT
+                1
+            FROM
+                updated_id
+        ) ON CONFLICT (id) DO NOTHING
+    RETURNING
+        id
+)
+SELECT
     id
+FROM
+    existing_natural_key
+UNION ALL
+SELECT
+    id
+FROM
+    updated_id
+UNION ALL
+SELECT
+    id
+FROM
+    inserted
+LIMIT
+    1
 `
 
 type UpsertImportContactPointParams struct {
-	ID    uuid.UUID
 	Email string
 	Role  string
+	ID    uuid.UUID
 }
 
 func (q *Queries) UpsertImportContactPoint(ctx context.Context, arg UpsertImportContactPointParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, upsertImportContactPoint, arg.ID, arg.Email, arg.Role)
+	row := q.db.QueryRow(ctx, upsertImportContactPoint, arg.Email, arg.Role, arg.ID)
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
