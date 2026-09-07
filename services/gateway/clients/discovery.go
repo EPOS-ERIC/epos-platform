@@ -14,7 +14,7 @@ func (c *MetadataLifecycle) SearchResources(ctx context.Context, actorID string,
 
 	response, err := c.discovery.SearchResources(ctx, request)
 	if err != nil {
-		return nil, wrapGRPCError("search metadata-lifecycle resources", err)
+		return nil, c.wrapError(ctx, "search metadata-lifecycle resources", err)
 	}
 	return response, nil
 }

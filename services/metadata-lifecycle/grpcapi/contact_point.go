@@ -2,7 +2,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -29,7 +28,7 @@ func (c *ContactPointServer) ListContactPoints(ctx context.Context, _ *metadatal
 	}
 	values, err := c.contactPoints.List(ctx, actor)
 	if err != nil {
-		return nil, toContactPointError("list contact points", err)
+		return nil, wrapHandlerError(err)
 	}
 	result := make([]*metadatalifecyclev1.ContactPoint, len(values))
 	for i, value := range values {
@@ -49,7 +48,7 @@ func (c *ContactPointServer) GetContactPoint(ctx context.Context, request *metad
 	}
 	value, err := c.contactPoints.Get(ctx, actor, id)
 	if err != nil {
-		return nil, toContactPointError("get contact point", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.GetContactPointResponse{ContactPoint: toProtoContactPoint(value)}, nil
 }
@@ -61,11 +60,11 @@ func (c *ContactPointServer) CreateContactPoint(ctx context.Context, request *me
 	}
 	input, err := contactPointInput(request.GetEmail(), request.GetRole())
 	if err != nil {
-		return nil, toContactPointError("create contact point", err)
+		return nil, err
 	}
 	value, err := c.contactPoints.Create(ctx, actor, input)
 	if err != nil {
-		return nil, toContactPointError("create contact point", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.CreateContactPointResponse{ContactPoint: toProtoContactPoint(value)}, nil
 }
@@ -81,11 +80,11 @@ func (c *ContactPointServer) ReplaceContactPoint(ctx context.Context, request *m
 	}
 	input, err := contactPointInput(request.GetEmail(), request.GetRole())
 	if err != nil {
-		return nil, toContactPointError("replace contact point", err)
+		return nil, err
 	}
 	value, err := c.contactPoints.Replace(ctx, actor, id, input)
 	if err != nil {
-		return nil, toContactPointError("replace contact point", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.ReplaceContactPointResponse{ContactPoint: toProtoContactPoint(value)}, nil
 }
@@ -100,38 +99,27 @@ func (c *ContactPointServer) DeleteContactPoint(ctx context.Context, request *me
 		return nil, err
 	}
 	if err := c.contactPoints.Delete(ctx, actor, id); err != nil {
-		return nil, toContactPointError("delete contact point", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.DeleteContactPointResponse{}, nil
 }
 
 func contactPointInput(email, role string) (domain.ContactPointInput, error) {
-	return domain.NewContactPointInput(domain.ContactPointInput{Email: email, Role: role})
+	result, err := domain.NewContactPointInput(domain.ContactPointInput{Email: email, Role: role})
+	if err != nil {
+		return domain.ContactPointInput{}, fmt.Errorf("validate contact point input: %w", err)
+	}
+	return result, nil
 }
 
 func parseContactPointID(value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return uuid.Nil, fmt.Errorf("invalid contact point id: %w", status.Error(codes.InvalidArgument, "invalid contact point id"))
+		return uuid.Nil, status.Error(codes.InvalidArgument, "invalid contact point id")
 	}
 	return id, nil
 }
 
 func toProtoContactPoint(value domain.ContactPoint) *metadatalifecyclev1.ContactPoint {
 	return &metadatalifecyclev1.ContactPoint{Id: value.ID.String(), Email: value.Email, Role: value.Role}
-}
-
-func toContactPointError(operation string, err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidContactPoint):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid contact point"))
-	case errors.Is(err, domain.ErrContactPointForbidden):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "contact point operation is not permitted"))
-	case errors.Is(err, domain.ErrContactPointNotFound):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "contact point not found"))
-	case errors.Is(err, domain.ErrContactPointConflict):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "contact point already exists"))
-	default:
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
-	}
 }

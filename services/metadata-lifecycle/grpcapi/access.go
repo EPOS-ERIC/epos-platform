@@ -2,8 +2,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	accessservice "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/access"
@@ -19,12 +17,14 @@ type AccessServer struct {
 	access *accessservice.Service
 }
 
-func NewAccess(access *accessservice.Service) *AccessServer { return &AccessServer{access: access} }
+func NewAccess(access *accessservice.Service) *AccessServer {
+	return &AccessServer{access: access}
+}
 
 func (s *AccessServer) ListGroupMemberships(ctx context.Context, request *metadatalifecyclev1.ListGroupMembershipsRequest) (*metadatalifecyclev1.ListGroupMembershipsResponse, error) {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	groupID, err := parseAccessID(request.GroupId, "group id")
 	if err != nil {
@@ -32,7 +32,7 @@ func (s *AccessServer) ListGroupMemberships(ctx context.Context, request *metada
 	}
 	values, err := s.access.ListMemberships(ctx, actor, groupID)
 	if err != nil {
-		return nil, toAccessError("list memberships", err)
+		return nil, wrapHandlerError(err)
 	}
 	result := make([]*metadatalifecyclev1.GroupMembership, len(values))
 	for i, value := range values {
@@ -58,17 +58,17 @@ func (s *AccessServer) RequestMembership(ctx context.Context, request *metadatal
 			parsedRole, err = domain.NewRequestedGroupRole(string(parsedRole))
 		}
 		if err != nil {
-			return nil, toAccessError("request membership", err)
+			return nil, wrapHandlerError(err)
 		}
 		if _, ok := seen[parsedRole]; ok {
-			return nil, toAccessError("request membership", domain.ErrInvalidAccess)
+			return nil, domain.ErrInvalidAccess
 		}
 		seen[parsedRole] = struct{}{}
 		roles[i] = parsedRole
 	}
 	value, err := s.access.RequestMembership(ctx, actor, groupID, roles)
 	if err != nil {
-		return nil, toAccessError("request membership", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.RequestMembershipResponse{Membership: toProtoGroupMembership(value)}, nil
 }
@@ -79,26 +79,26 @@ func (s *AccessServer) WithdrawMembership(ctx context.Context, request *metadata
 		if err != nil {
 			return err
 		}
-		return toAccessError("withdraw membership request", s.access.WithdrawMembershipRequest(ctx, actor, groupID))
+		return s.access.WithdrawMembershipRequest(ctx, actor, groupID)
 	})
 }
 
 func (s *AccessServer) DecideMembership(ctx context.Context, request *metadatalifecyclev1.DecideMembershipRequest) (*metadatalifecyclev1.DecideMembershipResponse, error) {
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	groupID, err := parseAccessID(request.GroupId, "group id")
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	membershipStatus, err := toDomainMembershipStatus(request.Status)
 	if err != nil {
-		return nil, toAccessError("decide membership", err)
+		return nil, wrapHandlerError(err)
 	}
 	value, err := s.access.DecideMembership(ctx, actor, groupID, request.UserId, membershipStatus)
 	if err != nil {
-		return nil, toAccessError("decide membership", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.DecideMembershipResponse{Membership: toProtoGroupMembership(value)}, nil
 }
@@ -109,7 +109,7 @@ func (s *AccessServer) RevokeMembership(ctx context.Context, request *metadatali
 		if err != nil {
 			return err
 		}
-		return toAccessError("revoke membership", s.access.RevokeMembership(ctx, actor, groupID, request.UserId))
+		return s.access.RevokeMembership(ctx, actor, groupID, request.UserId)
 	})
 }
 
@@ -127,15 +127,15 @@ func (s *AccessServer) RequestRole(ctx context.Context, request *metadatalifecyc
 		role, err = domain.NewRequestedGroupRole(string(role))
 	}
 	if err != nil {
-		return nil, toAccessError("request role", err)
+		return nil, wrapHandlerError(err)
 	}
 	value, err := s.access.RequestRole(ctx, actor, groupID, role)
 	if err != nil {
-		return nil, toAccessError("request role", err)
+		return nil, wrapHandlerError(err)
 	}
 	roleRequest, err := toProtoRoleRequest(value)
 	if err != nil {
-		return nil, fmt.Errorf("map role request: %w", status.Error(codes.Internal, "map role request"))
+		return nil, err
 	}
 	return &metadatalifecyclev1.RequestRoleResponse{Request: roleRequest}, nil
 }
@@ -155,11 +155,11 @@ func (s *AccessServer) ApplyRoleRequestDecision(ctx context.Context, request *me
 	}
 	roleRequestStatus, err := toDomainRoleRequestStatus(request.Status)
 	if err != nil {
-		return nil, toAccessError("decide role request", err)
+		return nil, err
 	}
 	value, err := s.access.ApplyRoleRequestDecision(ctx, actor, groupID, requestID, roleRequestStatus)
 	if err != nil {
-		return nil, toAccessError("decide role request", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.ApplyRoleRequestDecisionResponse{Membership: toProtoGroupMembership(value)}, nil
 }
@@ -174,7 +174,7 @@ func (s *AccessServer) WithdrawRoleRequest(ctx context.Context, request *metadat
 		if err != nil {
 			return err
 		}
-		return toAccessError("withdraw role request", s.access.WithdrawRoleRequest(ctx, actor, groupID, requestID))
+		return s.access.WithdrawRoleRequest(ctx, actor, groupID, requestID)
 	})
 }
 
@@ -186,9 +186,9 @@ func (s *AccessServer) AssignRole(ctx context.Context, request *metadatalifecycl
 		}
 		role, err := toDomainGroupRole(request.Role)
 		if err != nil {
-			return toAccessError("assign role", err)
+			return err
 		}
-		return toAccessError("assign role", s.access.AssignRole(ctx, actor, groupID, request.UserId, role))
+		return s.access.AssignRole(ctx, actor, groupID, request.UserId, role)
 	})
 }
 
@@ -200,9 +200,9 @@ func (s *AccessServer) RemoveRole(ctx context.Context, request *metadatalifecycl
 		}
 		role, err := toDomainGroupRole(request.Role)
 		if err != nil {
-			return toAccessError("remove role", err)
+			return err
 		}
-		return toAccessError("remove role", s.access.RemoveRole(ctx, actor, groupID, request.UserId, role))
+		return s.access.RemoveRole(ctx, actor, groupID, request.UserId, role)
 	})
 }
 
@@ -212,7 +212,7 @@ func (s *AccessServer) GrantPermission(ctx context.Context, request *metadatalif
 		if err != nil {
 			return err
 		}
-		return toAccessError("grant permission", s.access.GrantPermission(ctx, actor, groupID, request.UserId, request.Permission))
+		return s.access.GrantPermission(ctx, actor, groupID, request.UserId, request.Permission)
 	})
 }
 
@@ -222,7 +222,7 @@ func (s *AccessServer) RevokePermission(ctx context.Context, request *metadatali
 		if err != nil {
 			return err
 		}
-		return toAccessError("revoke permission", s.access.RevokePermission(ctx, actor, groupID, request.UserId, request.Permission))
+		return s.access.RevokePermission(ctx, actor, groupID, request.UserId, request.Permission)
 	})
 }
 
@@ -289,23 +289,5 @@ func toDomainRoleRequestStatus(value metadatalifecyclev1.RoleRequestStatus) (dom
 		return domain.RoleRequestRejected, nil
 	default:
 		return "", domain.ErrInvalidAccess
-	}
-}
-
-func toAccessError(operation string, err error) error {
-	if err == nil {
-		return nil
-	}
-	switch {
-	case errors.Is(err, domain.ErrInvalidAccess):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid access request"))
-	case errors.Is(err, domain.ErrAccessForbidden):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "access operation is not permitted"))
-	case errors.Is(err, domain.ErrAccessNotFound):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "access resource not found"))
-	case errors.Is(err, domain.ErrAccessConflict):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "access operation conflicts"))
-	default:
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
 	}
 }

@@ -4,8 +4,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -44,11 +42,11 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 	}
 	actor, err := actorFromContext(ctx)
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	groupID, err := parseUUID(request.GetGroupId(), "group id")
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 
 	switch value := request.GetMetadata().(type) {
@@ -62,7 +60,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 		}
 		created, err := s.datasets.CreateDraft(ctx, actor, groupID, input)
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		return createResponse(created.DatasetID, created.VersionID, created.Revision, created.Status), nil
 	case *metadatalifecyclev1.CreateResourceRequest_SoftwareApplication:
@@ -75,7 +73,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 		}
 		created, err := s.applications.CreateDraft(ctx, actor, groupID, input)
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		return createResponse(created.SoftwareApplicationID, created.VersionID, created.Revision, created.Status), nil
 	case *metadatalifecyclev1.CreateResourceRequest_SoftwareSourceCode:
@@ -88,7 +86,7 @@ func (s *ResourceServer) CreateResource(ctx context.Context, request *metadatali
 		}
 		created, err := s.sourceCodes.CreateDraft(ctx, actor, groupID, input)
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		return createResponse(created.SoftwareSourceCodeID, created.VersionID, created.Revision, created.Status), nil
 	default:
@@ -102,11 +100,11 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 	}
 	resourceID, err := parseUUID(request.GetResourceId(), "resource id")
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	versionID, err := parseUUID(request.GetVersionId(), "version id")
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	actor, err := optionalActorFromContext(ctx)
 	if err != nil {
@@ -125,7 +123,7 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 		return nil, status.Error(codes.InvalidArgument, "resource type is required") //nolint:wrapcheck
 	}
 	if err != nil {
-		return nil, resourceReadError(err)
+		return nil, wrapHandlerError(err)
 	}
 
 	response := &metadatalifecyclev1.ResourceVersion{}
@@ -182,11 +180,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		}
 		input, err := domain.NewDatasetDraftInput(domain.DatasetDraftInput{Revision: request.GetRevision(), Metadata: metadata})
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		result, err := s.datasets.ReplaceDraft(ctx, actor, resourceID, versionID, input)
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.DatasetID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
 	case *metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareApplication:
@@ -199,11 +197,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		}
 		input, err := domain.NewSoftwareApplicationDraftInput(domain.SoftwareApplicationDraftInput{Revision: request.GetRevision(), Metadata: metadata})
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		result, err := s.applications.ReplaceDraft(ctx, actor, resourceID, versionID, input)
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareApplicationID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
 	case *metadatalifecyclev1.ReplaceResourceDraftRequest_SoftwareSourceCode:
@@ -216,11 +214,11 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 		}
 		input, err := domain.NewSoftwareSourceCodeDraftInput(domain.SoftwareSourceCodeDraftInput{Revision: request.GetRevision(), Metadata: metadata})
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		result, err := s.sourceCodes.ReplaceDraft(ctx, actor, resourceID, versionID, input)
 		if err != nil {
-			return nil, resourceError(err)
+			return nil, wrapHandlerError(err)
 		}
 		return &metadatalifecyclev1.ReplaceResourceDraftResponse{Resource: &metadatalifecyclev1.ResourceRecord{ResourceId: result.SoftwareSourceCodeID.String(), VersionId: result.VersionID.String(), Revision: result.Revision, Status: toGRPCVersioningStatus(result.Status)}}, nil
 	default:
@@ -231,7 +229,7 @@ func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *meta
 func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *metadatalifecyclev1.DiscardResourceDraftRequest) (*metadatalifecyclev1.DiscardResourceDraftResponse, error) {
 	actor, resourceID, versionID, _, err := s.lifecycleRequest(ctx, request)
 	if err != nil {
-		return nil, err
+		return nil, wrapHandlerError(err)
 	}
 	switch request.GetResourceType() {
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
@@ -244,7 +242,7 @@ func (s *ResourceServer) DiscardResourceDraft(ctx context.Context, request *meta
 		return nil, status.Error(codes.InvalidArgument, "resource type is required") //nolint:wrapcheck
 	}
 	if err != nil {
-		return nil, resourceError(err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.DiscardResourceDraftResponse{}, nil
 }
@@ -299,33 +297,33 @@ func (s *ResourceServer) RejectResource(ctx context.Context, request *metadatali
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 		value, e := domain.NewDatasetRejectionInput(domain.DatasetRejectionInput{Note: request.GetNote()})
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		result, e := s.datasets.Reject(ctx, actor, resourceID, versionID, value)
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
 		return &metadatalifecyclev1.RejectResourceResponse{Resource: record}, e
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
 		value, e := domain.NewSoftwareApplicationRejectionInput(domain.SoftwareApplicationRejectionInput{Note: request.GetNote()})
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		result, e := s.applications.Reject(ctx, actor, resourceID, versionID, value)
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
 		return &metadatalifecyclev1.RejectResourceResponse{Resource: record}, e
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 		value, e := domain.NewSoftwareSourceCodeRejectionInput(domain.SoftwareSourceCodeRejectionInput{Note: request.GetNote()})
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		result, e := s.sourceCodes.Reject(ctx, actor, resourceID, versionID, value)
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
 		return &metadatalifecyclev1.RejectResourceResponse{Resource: record}, e
@@ -427,21 +425,21 @@ func (s *ResourceServer) CopyPublishedResource(ctx context.Context, request *met
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
 		result, e := s.datasets.CopyPublished(ctx, actor, sourceID, groupID)
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
 		return &metadatalifecyclev1.CopyPublishedResourceResponse{Resource: record}, e
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
 		result, e := s.applications.CopyPublished(ctx, actor, sourceID, groupID)
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
 		return &metadatalifecyclev1.CopyPublishedResourceResponse{Resource: record}, e
 	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
 		result, e := s.sourceCodes.CopyPublished(ctx, actor, sourceID, groupID)
 		if e != nil {
-			return nil, resourceError(e)
+			return nil, wrapHandlerError(e)
 		}
 		record, e := lifecycleResponse(result)
 		return &metadatalifecyclev1.CopyPublishedResourceResponse{Resource: record}, e
@@ -482,7 +480,7 @@ func (s *ResourceServer) lifecycleTransition(ctx context.Context, request resour
 	}
 	result, err := call(actor, id, version)
 	if err != nil {
-		return nil, resourceError(err)
+		return nil, err
 	}
 	return lifecycleResponse(result)
 }
@@ -528,7 +526,7 @@ func (s *ResourceServer) draftResource(ctx context.Context, request draftResourc
 		return nil, status.Error(codes.InvalidArgument, "resource type is required") //nolint:wrapcheck
 	}
 	if err != nil {
-		return nil, resourceError(err)
+		return nil, wrapHandlerError(err)
 	}
 	return lifecycleResponse(result)
 }
@@ -700,17 +698,6 @@ func parameterOutput(value domain.Parameter) *metadatalifecyclev1.Parameter {
 		result.Value = &metadatalifecyclev1.Parameter_DateTime{DateTime: &metadatalifecyclev1.DateTimeParameter{Minimum: timestampOutput(item.Minimum), Maximum: timestampOutput(item.Maximum), Default: timestampOutput(item.Default), Pattern: item.Pattern}}
 	}
 	return result
-}
-
-func resourceReadError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrDatasetForbidden), errors.Is(err, domain.ErrSoftwareApplicationForbidden), errors.Is(err, domain.ErrSoftwareSourceCodeForbidden):
-		return fmt.Errorf("read resource: %w", status.Error(codes.PermissionDenied, "resource operation is not permitted"))
-	case errors.Is(err, domain.ErrDatasetNotFound), errors.Is(err, domain.ErrSoftwareApplicationNotFound), errors.Is(err, domain.ErrSoftwareSourceCodeNotFound):
-		return fmt.Errorf("read resource: %w", status.Error(codes.NotFound, "resource or version not found"))
-	default:
-		return fmt.Errorf("read resource: %w", status.Error(codes.Internal, "read resource"))
-	}
 }
 
 func datasetInput(value *metadatalifecyclev1.DatasetInput) (domain.DatasetInput, error) {
@@ -1070,20 +1057,5 @@ func createResponse(resourceID, versionID uuid.UUID, revision int32, resourceSta
 			Revision:   revision,
 			Status:     toGRPCVersioningStatus(resourceStatus),
 		},
-	}
-}
-
-func resourceError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidDataset), errors.Is(err, domain.ErrSoftwareApplicationInvalid), errors.Is(err, domain.ErrSoftwareSourceCodeInvalid):
-		return fmt.Errorf("create resource: %w", status.Error(codes.InvalidArgument, "invalid resource draft"))
-	case errors.Is(err, domain.ErrDatasetForbidden), errors.Is(err, domain.ErrSoftwareApplicationForbidden), errors.Is(err, domain.ErrSoftwareSourceCodeForbidden):
-		return fmt.Errorf("create resource: %w", status.Error(codes.PermissionDenied, "resource operation is not permitted"))
-	case errors.Is(err, domain.ErrDatasetConflict), errors.Is(err, domain.ErrSoftwareApplicationConflict), errors.Is(err, domain.ErrSoftwareSourceCodeConflict):
-		return fmt.Errorf("create resource: %w", status.Error(codes.AlreadyExists, "resource operation conflicts with existing data"))
-	case errors.Is(err, domain.ErrDatasetNotFound), errors.Is(err, domain.ErrSoftwareApplicationNotFound), errors.Is(err, domain.ErrSoftwareSourceCodeNotFound):
-		return fmt.Errorf("create resource: %w", status.Error(codes.NotFound, "resource or version not found"))
-	default:
-		return fmt.Errorf("create resource: %w", status.Error(codes.Internal, "create resource"))
 	}
 }

@@ -3,7 +3,6 @@ package grpcapi
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 
@@ -40,30 +39,17 @@ func (s *ImportServer) ImportTurtle(ctx context.Context, request *metadatalifecy
 
 	batch, err := s.parser.Parse(bytes.NewReader(request.GetTurtle()))
 	if err != nil {
-		return nil, importError(fmt.Errorf("parse Turtle: %w: %w", domain.ErrInvalidImport, err))
+		return nil, fmt.Errorf("parse Turtle: %w: %w", domain.ErrInvalidImport, err)
 	}
 
 	result, err := s.service.Import(ctx, actor, batch)
 	if err != nil {
-		return nil, importError(err)
+		return nil, wrapHandlerError(err)
 	}
 
 	response, err := toProtoImportResponse(result)
 	if err != nil {
-		return nil, importError(err)
+		return nil, err
 	}
 	return response, nil
-}
-
-func importError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidImport):
-		return status.Error(codes.InvalidArgument, "invalid metadata import")
-	case errors.Is(err, domain.ErrImportForbidden):
-		return status.Error(codes.PermissionDenied, "global admin required")
-	case errors.Is(err, domain.ErrImportConflict):
-		return status.Error(codes.Aborted, "metadata import conflicts with existing data")
-	default:
-		return status.Error(codes.Internal, "metadata import failed")
-	}
 }

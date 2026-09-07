@@ -13,7 +13,7 @@ func (c *MetadataLifecycle) CreateResourceDraft(ctx context.Context, actorID str
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.resources.CreateResource(ctx, request)
 	if err != nil {
-		return nil, wrapGRPCError("create metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -28,7 +28,7 @@ func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID stri
 		VersionId:    versionID,
 	})
 	if err != nil {
-		return nil, wrapGRPCError("get metadata-lifecycle resource version", err)
+		return nil, c.wrapError(ctx, "get metadata-lifecycle resource version", err)
 	}
 	return response, nil
 }
@@ -42,7 +42,7 @@ func (c *MetadataLifecycle) ReplaceResourceDraft(ctx context.Context, actorID, r
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.resources.ReplaceResourceDraft(ctx, request)
 	if err != nil {
-		return nil, wrapGRPCError("replace metadata-lifecycle resource draft", err)
+		return nil, c.wrapError(ctx, "replace metadata-lifecycle resource draft", err)
 	}
 	return response, nil
 }
@@ -55,7 +55,7 @@ func (c *MetadataLifecycle) DiscardResourceDraft(ctx context.Context, actorID st
 		VersionId:    versionID,
 	})
 	if err != nil {
-		return wrapGRPCError("discard metadata-lifecycle resource draft", err)
+		return c.wrapError(ctx, "discard metadata-lifecycle resource draft", err)
 	}
 	return nil
 }
@@ -63,7 +63,7 @@ func (c *MetadataLifecycle) DiscardResourceDraft(ctx context.Context, actorID st
 func (c *MetadataLifecycle) SubmitResource(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID, versionID string) (*metadatalifecyclev1.SubmitResourceResponse, error) {
 	response, err := c.resources.SubmitResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.SubmitResourceRequest{ResourceType: resourceType, ResourceId: resourceID, VersionId: versionID})
 	if err != nil {
-		return nil, wrapGRPCError("submit metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "submit metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -71,7 +71,7 @@ func (c *MetadataLifecycle) SubmitResource(ctx context.Context, actorID string, 
 func (c *MetadataLifecycle) WithdrawResource(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID, versionID string) (*metadatalifecyclev1.WithdrawResourceResponse, error) {
 	response, err := c.resources.WithdrawResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.WithdrawResourceRequest{ResourceType: resourceType, ResourceId: resourceID, VersionId: versionID})
 	if err != nil {
-		return nil, wrapGRPCError("withdraw metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "withdraw metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -80,7 +80,7 @@ func (c *MetadataLifecycle) RejectResource(ctx context.Context, actorID string, 
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.resources.RejectResource(ctx, &metadatalifecyclev1.RejectResourceRequest{ResourceType: resourceType, ResourceId: resourceID, VersionId: versionID, Note: note})
 	if err != nil {
-		return nil, wrapGRPCError("reject metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "reject metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -88,7 +88,7 @@ func (c *MetadataLifecycle) RejectResource(ctx context.Context, actorID string, 
 func (c *MetadataLifecycle) ReopenResource(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID, versionID string) (*metadatalifecyclev1.ReopenResourceResponse, error) {
 	response, err := c.resources.ReopenResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.ReopenResourceRequest{ResourceType: resourceType, ResourceId: resourceID, VersionId: versionID})
 	if err != nil {
-		return nil, wrapGRPCError("reopen metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "reopen metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -96,7 +96,7 @@ func (c *MetadataLifecycle) ReopenResource(ctx context.Context, actorID string, 
 func (c *MetadataLifecycle) PublishResource(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID, versionID string) (*metadatalifecyclev1.PublishResourceResponse, error) {
 	response, err := c.resources.PublishResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.PublishResourceRequest{ResourceType: resourceType, ResourceId: resourceID, VersionId: versionID})
 	if err != nil {
-		return nil, wrapGRPCError("publish metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "publish metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -104,7 +104,7 @@ func (c *MetadataLifecycle) PublishResource(ctx context.Context, actorID string,
 func (c *MetadataLifecycle) UnpublishResource(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID, versionID string) (*metadatalifecyclev1.UnpublishResourceResponse, error) {
 	response, err := c.resources.UnpublishResource(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.UnpublishResourceRequest{ResourceType: resourceType, ResourceId: resourceID, VersionId: versionID})
 	if err != nil {
-		return nil, wrapGRPCError("unpublish metadata-lifecycle resource", err)
+		return nil, c.wrapError(ctx, "unpublish metadata-lifecycle resource", err)
 	}
 	return response, nil
 }
@@ -112,7 +112,7 @@ func (c *MetadataLifecycle) UnpublishResource(ctx context.Context, actorID strin
 func (c *MetadataLifecycle) CreateResourceDraftFromPublication(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID string) (*metadatalifecyclev1.DraftResourceFromPublicationResponse, error) {
 	response, err := c.resources.DraftResourceFromPublication(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.DraftResourceFromPublicationRequest{ResourceType: resourceType, ResourceId: resourceID})
 	if err != nil {
-		return nil, wrapGRPCError("create metadata-lifecycle draft from publication", err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle draft from publication", err)
 	}
 	return response, nil
 }
@@ -120,7 +120,7 @@ func (c *MetadataLifecycle) CreateResourceDraftFromPublication(ctx context.Conte
 func (c *MetadataLifecycle) CreateResourceDraftFromArchive(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID string) (*metadatalifecyclev1.DraftResourceFromLatestArchiveResponse, error) {
 	response, err := c.resources.DraftResourceFromLatestArchive(metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID), &metadatalifecyclev1.DraftResourceFromLatestArchiveRequest{ResourceType: resourceType, ResourceId: resourceID})
 	if err != nil {
-		return nil, wrapGRPCError("create metadata-lifecycle draft from archive", err)
+		return nil, c.wrapError(ctx, "create metadata-lifecycle draft from archive", err)
 	}
 	return response, nil
 }
@@ -133,7 +133,7 @@ func (c *MetadataLifecycle) CopyResource(ctx context.Context, actorID, groupID s
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.resources.CopyPublishedResource(ctx, &metadatalifecyclev1.CopyPublishedResourceRequest{ResourceType: resourceType, ResourceId: resourceID, GroupId: group.String()})
 	if err != nil {
-		return nil, wrapGRPCError("copy metadata-lifecycle published resource", err)
+		return nil, c.wrapError(ctx, "copy metadata-lifecycle published resource", err)
 	}
 	return response, nil
 }

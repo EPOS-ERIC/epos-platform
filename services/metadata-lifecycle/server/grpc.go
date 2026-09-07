@@ -43,7 +43,10 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 
 	server := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
-		grpc.UnaryInterceptor(validateUnaryRPC(validator)),
+		grpc.ChainUnaryInterceptor(
+			logUnaryRPC(log),
+			validateUnaryRPC(validator),
+		),
 		grpc.MaxRecvMsgSize(maxImportTurtleMessageSize),
 	)
 	healthServer := health.NewServer()
@@ -118,5 +121,38 @@ func validateUnaryRPC(validator protovalidate.Validator) grpc.UnaryServerInterce
 		}
 
 		return handler(ctx, req)
+	}
+}
+
+func logUnaryRPC(log *slog.Logger) grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req any,
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (any, error) {
+		response, err := handler(ctx, req)
+		if err == nil {
+			return response, nil
+		}
+		err = NormalizeError(info.FullMethod, err)
+
+		code := status.Code(err)
+		level := slog.LevelError
+		switch code {
+		case codes.Canceled,
+			codes.InvalidArgument,
+			codes.NotFound,
+			codes.AlreadyExists,
+			codes.PermissionDenied,
+			codes.Unauthenticated,
+			codes.FailedPrecondition,
+			codes.Aborted,
+			codes.OutOfRange:
+			level = slog.LevelWarn
+		}
+
+		log.Log(ctx, level, "grpc request failed", "method", info.FullMethod, "code", code.String(), "error", err)
+		return response, err
 	}
 }

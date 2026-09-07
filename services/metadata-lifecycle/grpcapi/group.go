@@ -2,7 +2,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -25,14 +24,14 @@ func NewGroup(groups *groups.Service) *GroupServer {
 func (g *GroupServer) ListGroups(ctx context.Context, _ *metadatalifecyclev1.ListGroupsRequest) (*metadatalifecyclev1.ListGroupsResponse, error) {
 	values, err := g.groups.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("list groups: %w", status.Error(codes.Internal, "list groups"))
+		return nil, wrapHandlerError(err)
 	}
 
 	result := make([]*metadatalifecyclev1.Group, len(values))
 	for i, value := range values {
 		mapped, err := toProtoGroup(value)
 		if err != nil {
-			return nil, fmt.Errorf("map groups: %w", status.Error(codes.Internal, "map groups"))
+			return nil, err
 		}
 		result[i] = mapped
 	}
@@ -43,17 +42,17 @@ func (g *GroupServer) ListGroups(ctx context.Context, _ *metadatalifecyclev1.Lis
 func (g *GroupServer) GetGroup(ctx context.Context, request *metadatalifecyclev1.GetGroupRequest) (*metadatalifecyclev1.GetGroupResponse, error) {
 	id, err := uuid.Parse(request.GetGroupId())
 	if err != nil || id == uuid.Nil {
-		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 
 	value, err := g.groups.Get(ctx, id)
 	if err != nil {
-		return nil, toGroupError(err)
+		return nil, wrapHandlerError(err)
 	}
 
 	group, err := toProtoGroup(value)
 	if err != nil {
-		return nil, fmt.Errorf("map group: %w", status.Error(codes.Internal, "map group"))
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.GetGroupResponse{Group: group}, nil
@@ -67,20 +66,20 @@ func (g *GroupServer) CreateGroup(ctx context.Context, request *metadatalifecycl
 
 	concept, err := toDomainTopLevelConcept(request.GetConcept())
 	if err != nil {
-		return nil, toGroupMutationError("create group", err)
+		return nil, err
 	}
 	input, err := groupInput(request.GetName(), request.Description, request.Label, request.Logo, request.Page, request.Color, request.GetPosition(), concept)
 	if err != nil {
-		return nil, toGroupMutationError("create group", err)
+		return nil, err
 	}
 	group, err := g.groups.Create(ctx, actor, input)
 	if err != nil {
-		return nil, toGroupMutationError("create group", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	result, err := toProtoGroup(group)
 	if err != nil {
-		return nil, fmt.Errorf("map group: %w", status.Error(codes.Internal, "map group"))
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.CreateGroupResponse{Group: result}, nil
@@ -93,32 +92,32 @@ func (g *GroupServer) ReplaceGroup(ctx context.Context, request *metadatalifecyc
 	}
 	id, err := uuid.Parse(request.GetGroupId())
 	if err != nil || id == uuid.Nil {
-		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 
 	concept, err := toDomainTopLevelConcept(request.GetConcept())
 	if err != nil {
-		return nil, toGroupMutationError("replace group", err)
+		return nil, err
 	}
 	input, err := groupInput(request.GetName(), request.Description, request.Label, request.Logo, request.Page, request.Color, request.GetPosition(), concept)
 	if err != nil {
-		return nil, toGroupMutationError("replace group", err)
+		return nil, err
 	}
 	group, err := g.groups.Replace(ctx, actor, id, input)
 	if err != nil {
-		return nil, toGroupMutationError("replace group", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	result, err := toProtoGroup(group)
 	if err != nil {
-		return nil, fmt.Errorf("map group: %w", status.Error(codes.Internal, "map group"))
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.ReplaceGroupResponse{Group: result}, nil
 }
 
 func groupInput(name string, description, label, logo, page, color *string, position int32, concept string) (domain.GroupInput, error) {
-	return domain.NewGroupInput(domain.GroupInput{
+	result, err := domain.NewGroupInput(domain.GroupInput{
 		Name:        name,
 		Description: description,
 		Label:       label,
@@ -128,6 +127,10 @@ func groupInput(name string, description, label, logo, page, color *string, posi
 		Position:    position,
 		Concept:     concept,
 	})
+	if err != nil {
+		return domain.GroupInput{}, fmt.Errorf("validate group input: %w", err)
+	}
+	return result, nil
 }
 
 func toDomainTopLevelConcept(value metadatalifecyclev1.TopLevelConcept) (string, error) {
@@ -150,40 +153,14 @@ func (g *GroupServer) DeleteGroup(ctx context.Context, request *metadatalifecycl
 	}
 	id, err := uuid.Parse(request.GetGroupId())
 	if err != nil || id == uuid.Nil {
-		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 
 	if err := g.groups.Delete(ctx, actor, id); err != nil {
-		return nil, toGroupMutationError("delete group", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.DeleteGroupResponse{}, nil
-}
-
-func toGroupError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidGroup):
-		return fmt.Errorf("get group: %w", status.Error(codes.InvalidArgument, "invalid group id"))
-	case errors.Is(err, domain.ErrGroupNotFound):
-		return fmt.Errorf("get group: %w", status.Error(codes.NotFound, "group not found"))
-	default:
-		return fmt.Errorf("get group: %w", status.Error(codes.Internal, "get group"))
-	}
-}
-
-func toGroupMutationError(operation string, err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidGroup):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid group"))
-	case errors.Is(err, domain.ErrGroupNotFound):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "group not found"))
-	case errors.Is(err, domain.ErrGroupForbidden):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "group operation is not permitted"))
-	case errors.Is(err, domain.ErrGroupConflict):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "group operation conflicts with existing data"))
-	default:
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
-	}
 }
 
 func toProtoGroup(value domain.Group) (*metadatalifecyclev1.Group, error) {
@@ -214,6 +191,6 @@ func toProtoTopLevelConcept(value string) (metadatalifecyclev1.TopLevelConcept, 
 	case domain.TopLevelConceptSoftware:
 		return metadatalifecyclev1.TopLevelConcept_TOP_LEVEL_CONCEPT_SOFTWARE, nil
 	default:
-		return 0, status.Error(codes.Internal, "map group concept")
+		return 0, fmt.Errorf("unsupported top-level concept %q", value)
 	}
 }

@@ -18,7 +18,7 @@ func (c *MetadataLifecycle) ProvisionUser(ctx context.Context, identity domain.A
 		FamilyName: identity.FamilyName,
 	})
 	if err != nil {
-		return wrapGRPCError("provision metadata-lifecycle user", err)
+		return c.wrapError(ctx, "provision metadata-lifecycle user", err)
 	}
 
 	return nil
@@ -28,7 +28,7 @@ func (c *MetadataLifecycle) GetUser(ctx context.Context, actorID, id string) (do
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	user, err := c.users.GetUser(ctx, &metadatalifecyclev1.GetUserRequest{UserId: id})
 	if err != nil {
-		return domain.User{}, wrapGRPCError("get metadata-lifecycle user", err)
+		return domain.User{}, c.wrapError(ctx, "get metadata-lifecycle user", err)
 	}
 
 	status, err := fromProtoUserStatus(user.Status)

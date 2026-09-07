@@ -2,7 +2,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -25,12 +24,12 @@ func NewCategory(categories *categories.Service) *CategoryServer {
 func (c *CategoryServer) ListCategories(ctx context.Context, request *metadatalifecyclev1.ListCategoriesRequest) (*metadatalifecyclev1.ListCategoriesResponse, error) {
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 
 	values, err := c.categories.List(ctx, groupID)
 	if err != nil {
-		return nil, toCategoryError("list categories", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	result := make([]*metadatalifecyclev1.CanonicalCategory, len(values))
@@ -44,16 +43,16 @@ func (c *CategoryServer) ListCategories(ctx context.Context, request *metadatali
 func (c *CategoryServer) GetCategory(ctx context.Context, request *metadatalifecyclev1.GetCategoryRequest) (*metadatalifecyclev1.GetCategoryResponse, error) {
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 	categoryID, err := uuid.Parse(request.GetCategoryId())
 	if err != nil || categoryID == uuid.Nil {
-		return nil, fmt.Errorf("invalid category id: %w", status.Error(codes.InvalidArgument, "invalid category id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid category id")
 	}
 
 	value, err := c.categories.Get(ctx, groupID, categoryID)
 	if err != nil {
-		return nil, toCategoryError("get category", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.GetCategoryResponse{Category: toProtoCategory(value)}, nil
@@ -66,15 +65,15 @@ func (c *CategoryServer) CreateCategory(ctx context.Context, request *metadatali
 	}
 	groupID, err := uuid.Parse(request.GetGroupId())
 	if err != nil || groupID == uuid.Nil {
-		return nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 	input, err := categoryInput(request.GetName(), request.ParentCategoryId)
 	if err != nil {
-		return nil, fmt.Errorf("invalid category: %w", status.Error(codes.InvalidArgument, "invalid category"))
+		return nil, wrapHandlerError(err)
 	}
 	value, err := c.categories.Create(ctx, actor, groupID, input)
 	if err != nil {
-		return nil, toCategoryError("create category", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.CreateCategoryResponse{Category: toProtoCategory(value)}, nil
 }
@@ -90,11 +89,11 @@ func (c *CategoryServer) ReplaceCategory(ctx context.Context, request *metadatal
 	}
 	input, err := categoryInput(request.GetName(), request.ParentCategoryId)
 	if err != nil {
-		return nil, fmt.Errorf("invalid category: %w", status.Error(codes.InvalidArgument, "invalid category"))
+		return nil, wrapHandlerError(err)
 	}
 	value, err := c.categories.Replace(ctx, actor, groupID, categoryID, input)
 	if err != nil {
-		return nil, toCategoryError("replace category", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.ReplaceCategoryResponse{Category: toProtoCategory(value)}, nil
 }
@@ -109,7 +108,7 @@ func (c *CategoryServer) DeleteCategory(ctx context.Context, request *metadatali
 		return nil, err
 	}
 	if err := c.categories.Delete(ctx, actor, groupID, categoryID); err != nil {
-		return nil, toCategoryError("delete category", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.DeleteCategoryResponse{}, nil
 }
@@ -117,11 +116,11 @@ func (c *CategoryServer) DeleteCategory(ctx context.Context, request *metadatali
 func parseCategoryIDs(group, category string) (uuid.UUID, uuid.UUID, error) {
 	groupID, err := uuid.Parse(group)
 	if err != nil || groupID == uuid.Nil {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid group id: %w", status.Error(codes.InvalidArgument, "invalid group id"))
+		return uuid.Nil, uuid.Nil, status.Error(codes.InvalidArgument, "invalid group id")
 	}
 	categoryID, err := uuid.Parse(category)
 	if err != nil || categoryID == uuid.Nil {
-		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid category id: %w", status.Error(codes.InvalidArgument, "invalid category id"))
+		return uuid.Nil, uuid.Nil, status.Error(codes.InvalidArgument, "invalid category id")
 	}
 	return groupID, categoryID, nil
 }
@@ -135,7 +134,11 @@ func categoryInput(name string, parent *string) (domain.CategoryInput, error) {
 		}
 		input.ParentCategoryID = &id
 	}
-	return domain.NewCategoryInput(input)
+	result, err := domain.NewCategoryInput(input)
+	if err != nil {
+		return domain.CategoryInput{}, fmt.Errorf("validate category input: %w", err)
+	}
+	return result, nil
 }
 
 func toProtoCategory(value domain.Category) *metadatalifecyclev1.CanonicalCategory {
@@ -149,19 +152,4 @@ func toProtoCategory(value domain.Category) *metadatalifecyclev1.CanonicalCatego
 		result.ParentCategoryId = &parentID
 	}
 	return result
-}
-
-func toCategoryError(operation string, err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidCategory):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid category"))
-	case errors.Is(err, domain.ErrCategoryForbidden):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "category operation is not permitted"))
-	case errors.Is(err, domain.ErrCategoryNotFound):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "category not found"))
-	case errors.Is(err, domain.ErrCategoryConflict):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "category operation conflicts with existing data"))
-	default:
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
-	}
 }

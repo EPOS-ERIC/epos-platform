@@ -1,6 +1,7 @@
 package grpcapi
 
 import (
+	"errors"
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -11,6 +12,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+var ErrInvalidDiscoveryFilter = errors.New("invalid discovery filter")
 
 func toDomainDiscoveryFilter(value *metadatalifecyclev1.SearchResourcesRequest) (domain.DiscoveryFilter, error) {
 	query, err := optionalDiscoveryString(value.Query, "query")
@@ -162,7 +165,7 @@ func toDomainDiscoveryStatuses(values []metadatalifecyclev1.VersioningStatus) ([
 }
 
 func discoveryInvalidError(err error) error {
-	return fmt.Errorf("invalid discovery filter: %w", status.Error(codes.InvalidArgument, err.Error()))
+	return fmt.Errorf("%w: %w", ErrInvalidDiscoveryFilter, err)
 }
 
 func toProtoDiscoveryResponse(values []domain.DiscoveryItem) (*metadatalifecyclev1.SearchResourcesResponse, error) {

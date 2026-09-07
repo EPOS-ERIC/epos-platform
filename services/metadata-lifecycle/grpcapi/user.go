@@ -2,7 +2,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 
@@ -36,22 +35,22 @@ func (u *UserServer) GetUser(ctx context.Context, request *metadatalifecyclev1.G
 
 	user, err := u.users.GetByID(ctx, actor, request.UserId)
 	if err != nil {
-		return nil, toUserError(err)
+		return nil, wrapHandlerError(err)
 	}
 
 	userStatus, err := toProtoUserStatus(user.Status)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "map user status")
+		return nil, err
 	}
 
 	globalRoles, err := mapSliceErr(user.GlobalRoles, toProtoGlobalRole)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "map global roles")
+		return nil, err
 	}
 
 	memberships, err := mapSliceErr(user.Memberships, toProtoMembership)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "map memberships")
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.GetUserResponse{
@@ -76,12 +75,12 @@ func (u *UserServer) ListUsers(ctx context.Context, _ *metadatalifecyclev1.ListU
 
 	users, err := u.users.List(ctx, actor)
 	if err != nil {
-		return nil, toUserError(err)
+		return nil, wrapHandlerError(err)
 	}
 
 	result, err := mapSliceErr(users, toProtoUserListItem)
 	if err != nil {
-		return nil, status.Error(codes.Internal, "map users")
+		return nil, err
 	}
 
 	return &metadatalifecyclev1.ListUsersResponse{Users: result}, nil
@@ -94,7 +93,7 @@ func (u *UserServer) GrantGlobalPermission(ctx context.Context, request *metadat
 	}
 
 	if err := u.users.GrantGlobalPermission(ctx, actor, request.GetUserId(), request.GetPermission()); err != nil {
-		return nil, toUserMutationError("grant global permission", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.GrantGlobalPermissionResponse{}, nil
@@ -107,7 +106,7 @@ func (u *UserServer) RevokeGlobalPermission(ctx context.Context, request *metada
 	}
 
 	if err := u.users.RevokeGlobalPermission(ctx, actor, request.GetUserId(), request.GetPermission()); err != nil {
-		return nil, toUserMutationError("revoke global permission", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.RevokeGlobalPermissionResponse{}, nil
@@ -121,10 +120,10 @@ func (u *UserServer) AssignGlobalRole(ctx context.Context, request *metadatalife
 
 	role, err := toDomainGlobalRole(request.GetRole())
 	if err != nil {
-		return nil, toUserMutationError("assign global role", err)
+		return nil, err
 	}
 	if err := u.users.AssignGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
-		return nil, toUserMutationError("assign global role", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.AssignGlobalRoleResponse{}, nil
@@ -138,10 +137,10 @@ func (u *UserServer) RemoveGlobalRole(ctx context.Context, request *metadatalife
 
 	role, err := toDomainGlobalRole(request.GetRole())
 	if err != nil {
-		return nil, toUserMutationError("remove global role", err)
+		return nil, err
 	}
 	if err := u.users.RemoveGlobalRole(ctx, actor, request.GetUserId(), string(role)); err != nil {
-		return nil, toUserMutationError("remove global role", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.RemoveGlobalRoleResponse{}, nil
@@ -154,7 +153,7 @@ func (u *UserServer) BlockUser(ctx context.Context, request *metadatalifecyclev1
 	}
 
 	if err := u.users.BlockUser(ctx, actor, request.GetUserId(), request.GetReason()); err != nil {
-		return nil, toUserMutationError("block user", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.BlockUserResponse{}, nil
@@ -167,7 +166,7 @@ func (u *UserServer) UnblockUser(ctx context.Context, request *metadatalifecycle
 	}
 
 	if err := u.users.UnblockUser(ctx, actor, request.GetUserId()); err != nil {
-		return nil, toUserMutationError("unblock user", err)
+		return nil, wrapHandlerError(err)
 	}
 
 	return &metadatalifecyclev1.UnblockUserResponse{}, nil
@@ -214,32 +213,6 @@ func toProtoUserListItem(value domain.UserSummary) (*metadatalifecyclev1.UserLis
 		CreatedAt:         timestamppb.New(value.CreatedAt),
 		UpdatedAt:         timestamppb.New(value.UpdatedAt),
 	}, nil
-}
-
-func toUserError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrUserNotFound):
-		return status.Error(codes.NotFound, "user not found")
-	case errors.Is(err, domain.ErrUserForbidden):
-		return status.Error(codes.PermissionDenied, "user read is not permitted")
-	default:
-		return status.Error(codes.Internal, "get user")
-	}
-}
-
-func toUserMutationError(operation string, err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidUser):
-		return status.Error(codes.InvalidArgument, "invalid user permission request")
-	case errors.Is(err, domain.ErrUserNotFound):
-		return status.Error(codes.NotFound, "user not found")
-	case errors.Is(err, domain.ErrUserConflict):
-		return status.Error(codes.Aborted, "global role change conflicts with current users")
-	case errors.Is(err, domain.ErrUserForbidden):
-		return status.Error(codes.PermissionDenied, "user permission change is not permitted")
-	default:
-		return status.Error(codes.Internal, operation)
-	}
 }
 
 func toProtoMembership(value domain.Membership) (*metadatalifecyclev1.UserMembership, error) {

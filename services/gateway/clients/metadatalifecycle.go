@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
@@ -19,6 +20,7 @@ import (
 // TODO: clean up this package, create a sub package metadatalifecycle and in there split the grpc functions into logical files
 
 type MetadataLifecycle struct {
+	log           *slog.Logger
 	users         metadatalifecyclev1.UserServiceClient
 	groups        metadatalifecyclev1.GroupServiceClient
 	categories    metadatalifecyclev1.CategoryServiceClient
@@ -33,7 +35,7 @@ type MetadataLifecycle struct {
 
 const actorMetadataKey = "x-epos-user-id"
 
-func NewMetadataLifecycle(baseURL string) (*MetadataLifecycle, error) {
+func NewMetadataLifecycle(log *slog.Logger, baseURL string) (*MetadataLifecycle, error) {
 	conn, err := grpc.NewClient(
 		baseURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -44,6 +46,7 @@ func NewMetadataLifecycle(baseURL string) (*MetadataLifecycle, error) {
 	}
 
 	client := &MetadataLifecycle{
+		log:           log,
 		users:         metadatalifecyclev1.NewUserServiceClient(conn),
 		groups:        metadatalifecyclev1.NewGroupServiceClient(conn),
 		categories:    metadatalifecyclev1.NewCategoryServiceClient(conn),
@@ -59,7 +62,12 @@ func NewMetadataLifecycle(baseURL string) (*MetadataLifecycle, error) {
 	return client, nil
 }
 
-func wrapGRPCError(operation string, err error) error {
+func (c *MetadataLifecycle) wrapError(ctx context.Context, operation string, err error) error {
+	// Metadata-lifecycle logs handled errors; gateway logs only when it was unavailable.
+	if status.Code(err) == codes.Unavailable {
+		c.log.ErrorContext(ctx, "metadata-lifecycle request failed", "operation", operation, "code", status.Code(err), "error", err)
+	}
+
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
 		return fmt.Errorf("%s: %w", operation, domain.ErrUpstreamTimeout)
 	}
@@ -88,7 +96,7 @@ func wrapGRPCError(operation string, err error) error {
 func (c *MetadataLifecycle) ListGroups(ctx context.Context) (*metadatalifecyclev1.ListGroupsResponse, error) {
 	response, err := c.groups.ListGroups(ctx, &metadatalifecyclev1.ListGroupsRequest{})
 	if err != nil {
-		return nil, wrapGRPCError("list metadata-lifecycle groups", err)
+		return nil, c.wrapError(ctx, "list metadata-lifecycle groups", err)
 	}
 
 	return response, nil
@@ -98,7 +106,7 @@ func (c *MetadataLifecycle) ListUsers(ctx context.Context, actorID string) (*met
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	users, err := c.users.ListUsers(ctx, &metadatalifecyclev1.ListUsersRequest{})
 	if err != nil {
-		return nil, wrapGRPCError("list metadata-lifecycle users", err)
+		return nil, c.wrapError(ctx, "list metadata-lifecycle users", err)
 	}
 
 	return users, nil
@@ -107,7 +115,7 @@ func (c *MetadataLifecycle) ListUsers(ctx context.Context, actorID string) (*met
 func (c *MetadataLifecycle) GetGroup(ctx context.Context, request *metadatalifecyclev1.GetGroupRequest) (*metadatalifecyclev1.GetGroupResponse, error) {
 	response, err := c.groups.GetGroup(ctx, request)
 	if err != nil {
-		return nil, wrapGRPCError("get metadata-lifecycle group", err)
+		return nil, c.wrapError(ctx, "get metadata-lifecycle group", err)
 	}
 
 	if response == nil || response.Group == nil {
@@ -123,7 +131,7 @@ func (c *MetadataLifecycle) WithdrawMembershipRequest(ctx context.Context, group
 		GroupId: groupID,
 	})
 	if err != nil {
-		return wrapGRPCError("withdraw membership", err)
+		return c.wrapError(ctx, "withdraw membership", err)
 	}
 	return nil
 }
@@ -136,7 +144,7 @@ func (c *MetadataLifecycle) RequestMembership(ctx context.Context, groupID, acto
 		Roles:   roles,
 	})
 	if err != nil {
-		return nil, wrapGRPCError("request membership", err)
+		return nil, c.wrapError(ctx, "request membership", err)
 	}
 
 	return response, nil
@@ -151,7 +159,7 @@ func (c *MetadataLifecycle) DecideMembership(ctx context.Context, groupID, userI
 		Status:  status,
 	})
 	if err != nil {
-		return nil, wrapGRPCError("decide membership", err)
+		return nil, c.wrapError(ctx, "decide membership", err)
 	}
 
 	return response, nil
@@ -164,7 +172,7 @@ func (c *MetadataLifecycle) RevokeMembership(ctx context.Context, groupID, userI
 		UserId:  userID,
 	})
 	if err != nil {
-		return wrapGRPCError("revoke membership", err)
+		return c.wrapError(ctx, "revoke membership", err)
 	}
 	return nil
 }
@@ -176,7 +184,7 @@ func (c *MetadataLifecycle) RequestRole(ctx context.Context, groupID string, rol
 		Role:    role,
 	})
 	if err != nil {
-		return nil, wrapGRPCError("request role", err)
+		return nil, c.wrapError(ctx, "request role", err)
 	}
 	return response, nil
 }
@@ -189,7 +197,7 @@ func (c *MetadataLifecycle) ApplyRoleRequestDecision(ctx context.Context, groupI
 		Status:    status,
 	})
 	if err != nil {
-		return nil, wrapGRPCError("decide role request", err)
+		return nil, c.wrapError(ctx, "decide role request", err)
 	}
 	return response, nil
 }
@@ -201,7 +209,7 @@ func (c *MetadataLifecycle) WithdrawRoleRequest(ctx context.Context, groupID, re
 		RequestId: requestID,
 	})
 	if err != nil {
-		return wrapGRPCError("withdraw role request", err)
+		return c.wrapError(ctx, "withdraw role request", err)
 	}
 	return nil
 }
@@ -214,7 +222,7 @@ func (c *MetadataLifecycle) AssignGroupRole(ctx context.Context, groupID, userID
 		Role:    role,
 	})
 	if err != nil {
-		return wrapGRPCError("assign role", err)
+		return c.wrapError(ctx, "assign role", err)
 	}
 	return nil
 }
@@ -227,7 +235,7 @@ func (c *MetadataLifecycle) RemoveGroupRole(ctx context.Context, groupID, userID
 		Role:    role,
 	})
 	if err != nil {
-		return wrapGRPCError("remove role", err)
+		return c.wrapError(ctx, "remove role", err)
 	}
 	return nil
 }
@@ -240,7 +248,7 @@ func (c *MetadataLifecycle) GrantGroupPermission(ctx context.Context, groupID, u
 		Permission: permission,
 	})
 	if err != nil {
-		return wrapGRPCError("grant permission", err)
+		return c.wrapError(ctx, "grant permission", err)
 	}
 	return nil
 }
@@ -253,7 +261,7 @@ func (c *MetadataLifecycle) RevokeGroupPermission(ctx context.Context, groupID, 
 		Permission: permission,
 	})
 	if err != nil {
-		return wrapGRPCError("revoke permission", err)
+		return c.wrapError(ctx, "revoke permission", err)
 	}
 	return nil
 }
@@ -265,7 +273,7 @@ func (c *MetadataLifecycle) RevokeGlobalPermission(ctx context.Context, actorID,
 		Permission: permission,
 	})
 	if err != nil {
-		return wrapGRPCError("revoke metadata-lifecycle global permission", err)
+		return c.wrapError(ctx, "revoke metadata-lifecycle global permission", err)
 	}
 	return nil
 }
@@ -277,7 +285,7 @@ func (c *MetadataLifecycle) GrantGlobalPermission(ctx context.Context, actorID, 
 		Permission: permission,
 	})
 	if err != nil {
-		return wrapGRPCError("grant metadata-lifecycle global permission", err)
+		return c.wrapError(ctx, "grant metadata-lifecycle global permission", err)
 	}
 	return nil
 }
@@ -289,7 +297,7 @@ func (c *MetadataLifecycle) AssignGlobalRole(ctx context.Context, actorID, userI
 		Role:   role,
 	})
 	if err != nil {
-		return wrapGRPCError("assign metadata-lifecycle global role", err)
+		return c.wrapError(ctx, "assign metadata-lifecycle global role", err)
 	}
 	return nil
 }
@@ -301,7 +309,7 @@ func (c *MetadataLifecycle) RemoveGlobalRole(ctx context.Context, actorID, userI
 		Role:   role,
 	})
 	if err != nil {
-		return wrapGRPCError("remove metadata-lifecycle global role", err)
+		return c.wrapError(ctx, "remove metadata-lifecycle global role", err)
 	}
 	return nil
 }
@@ -313,7 +321,7 @@ func (c *MetadataLifecycle) BlockUser(ctx context.Context, actorID, userID, reas
 		Reason: reason,
 	})
 	if err != nil {
-		return wrapGRPCError("block metadata-lifecycle user", err)
+		return c.wrapError(ctx, "block metadata-lifecycle user", err)
 	}
 	return nil
 }
@@ -324,7 +332,7 @@ func (c *MetadataLifecycle) UnblockUser(ctx context.Context, actorID, userID str
 		UserId: userID,
 	})
 	if err != nil {
-		return wrapGRPCError("unblock metadata-lifecycle user", err)
+		return c.wrapError(ctx, "unblock metadata-lifecycle user", err)
 	}
 	return nil
 }
@@ -333,7 +341,7 @@ func (c *MetadataLifecycle) ImportTurtle(ctx context.Context, actorID string, re
 	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
 	response, err := c.import_.ImportTurtle(ctx, request)
 	if err != nil {
-		return nil, wrapGRPCError("import metadata-lifecycle Turtle", err)
+		return nil, c.wrapError(ctx, "import metadata-lifecycle Turtle", err)
 	}
 	return response, nil
 }

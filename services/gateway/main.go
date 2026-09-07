@@ -28,7 +28,7 @@ func main() {
 	log.Debug("config loaded", "listen", cfg.Server.Listen)
 
 	metadataLifecycleClient, err := clients.NewMetadataLifecycle(
-		// TODO: inject logger
+		log,
 		cfg.Services.MetadataLifecycle.URL,
 	)
 	if err != nil {

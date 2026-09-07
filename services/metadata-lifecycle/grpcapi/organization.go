@@ -2,7 +2,6 @@ package grpcapi
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
@@ -25,7 +24,7 @@ func NewOrganization(organizations *organizations.Service) *OrganizationServer {
 func (o *OrganizationServer) ListOrganizations(ctx context.Context, _ *metadatalifecyclev1.ListOrganizationsRequest) (*metadatalifecyclev1.ListOrganizationsResponse, error) {
 	values, err := o.organizations.List(ctx)
 	if err != nil {
-		return nil, toOrganizationError("list organizations", err)
+		return nil, wrapHandlerError(err)
 	}
 	result := make([]*metadatalifecyclev1.Organization, len(values))
 	for i, value := range values {
@@ -41,7 +40,7 @@ func (o *OrganizationServer) GetOrganization(ctx context.Context, request *metad
 	}
 	value, err := o.organizations.Get(ctx, id)
 	if err != nil {
-		return nil, toOrganizationError("get organization", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.GetOrganizationResponse{Organization: toProtoOrganization(value)}, nil
 }
@@ -53,11 +52,11 @@ func (o *OrganizationServer) CreateOrganization(ctx context.Context, request *me
 	}
 	input, err := toOrganizationInput(request.Name, request.Street, request.Locality, request.PostalCode, request.Country, request.LogoUrl, request.PageUrl, request.Email, request.LeiCode, request.Identifiers, request.Parents, request.ContactPointIds)
 	if err != nil {
-		return nil, fmt.Errorf("invalid organization: %w", status.Error(codes.InvalidArgument, "invalid organization"))
+		return nil, err
 	}
 	value, err := o.organizations.Create(ctx, actor, input)
 	if err != nil {
-		return nil, toOrganizationError("create organization", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.CreateOrganizationResponse{Organization: toProtoOrganization(value)}, nil
 }
@@ -73,11 +72,11 @@ func (o *OrganizationServer) ReplaceOrganization(ctx context.Context, request *m
 	}
 	input, err := toOrganizationInput(request.Name, request.Street, request.Locality, request.PostalCode, request.Country, request.LogoUrl, request.PageUrl, request.Email, request.LeiCode, request.Identifiers, request.Parents, request.ContactPointIds)
 	if err != nil {
-		return nil, fmt.Errorf("invalid organization: %w", status.Error(codes.InvalidArgument, "invalid organization"))
+		return nil, err
 	}
 	value, err := o.organizations.Replace(ctx, actor, id, input)
 	if err != nil {
-		return nil, toOrganizationError("replace organization", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.ReplaceOrganizationResponse{Organization: toProtoOrganization(value)}, nil
 }
@@ -92,7 +91,7 @@ func (o *OrganizationServer) DeleteOrganization(ctx context.Context, request *me
 		return nil, err
 	}
 	if err := o.organizations.Delete(ctx, actor, id); err != nil {
-		return nil, toOrganizationError("delete organization", err)
+		return nil, wrapHandlerError(err)
 	}
 	return &metadatalifecyclev1.DeleteOrganizationResponse{}, nil
 }
@@ -100,7 +99,7 @@ func (o *OrganizationServer) DeleteOrganization(ctx context.Context, request *me
 func parseOrganizationID(value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil || id == uuid.Nil {
-		return uuid.Nil, fmt.Errorf("invalid organization id: %w", status.Error(codes.InvalidArgument, "invalid organization id"))
+		return uuid.Nil, status.Error(codes.InvalidArgument, "invalid organization id")
 	}
 	return id, nil
 }
@@ -166,19 +165,4 @@ func uuidStrings(values []uuid.UUID) []string {
 		result[i] = value.String()
 	}
 	return result
-}
-
-func toOrganizationError(operation string, err error) error {
-	switch {
-	case errors.Is(err, domain.ErrInvalidOrganization):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.InvalidArgument, "invalid organization"))
-	case errors.Is(err, domain.ErrOrganizationForbidden):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.PermissionDenied, "organization operation is not permitted"))
-	case errors.Is(err, domain.ErrOrganizationNotFound):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.NotFound, "organization not found"))
-	case errors.Is(err, domain.ErrOrganizationConflict):
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.AlreadyExists, "organization already exists"))
-	default:
-		return fmt.Errorf("%s: %w", operation, status.Error(codes.Internal, operation))
-	}
 }
