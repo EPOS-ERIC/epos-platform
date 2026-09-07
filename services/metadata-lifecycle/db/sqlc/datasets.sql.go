@@ -432,7 +432,7 @@ categories AS (
         dataset_version_id = $1
         AND $6::boolean
 ),
-web_services AS (
+inserted_web_services AS (
     INSERT INTO
         web_services (
             id,
@@ -493,7 +493,7 @@ web_service_contacts AS (
     FROM
         web_service_contact_points AS link
         JOIN web_services AS source ON source.id = link.web_service_id
-        JOIN web_services AS target ON target.id = uuid_generate_v5(
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
                     id
@@ -537,7 +537,7 @@ web_service_parameters AS (
     FROM
         web_service_parameters AS parameter
         JOIN web_services AS source ON source.id = parameter.web_service_id
-        JOIN web_services AS target ON target.id = uuid_generate_v5(
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
                     id
@@ -590,7 +590,7 @@ distributions AS (
     FROM
         distributions AS distribution
         LEFT JOIN web_services AS source ON source.id = distribution.web_service_id
-        LEFT JOIN web_services AS target ON target.id = uuid_generate_v5(
+        LEFT JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
                     id
