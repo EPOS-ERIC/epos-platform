@@ -1,0 +1,74 @@
+@import '../detail-shared.css';
+
+.providers-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 18px;
+}
+
+.providers-box {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #fdba74;
+  border-radius: 16px;
+  background: color-mix(in srgb, #fff7ed 48%, var(--surface) 52%);
+}
+
+.providers-box--selected,
+.providers-list {
+  background: var(--surface);
+}
+
+.providers-box-header,
+.provider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.providers-box-header h3 {
+  margin: 0;
+}
+
+.providers-list {
+  display: grid;
+  max-height: 300px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  list-style: none;
+}
+
+.provider-row {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.provider-row--selected {
+  background: #fff7ed;
+}
+
+.provider-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.provider-state {
+  color: #c2410c;
+  font-weight: 700;
+}
+
+.provider-remove {
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .providers-grid {
+    grid-template-columns: 1fr;
+  }
+}

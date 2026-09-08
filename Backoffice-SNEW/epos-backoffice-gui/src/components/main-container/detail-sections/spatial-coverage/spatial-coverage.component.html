@@ -1,0 +1,27 @@
+<section id="spatial-coverage" class="detail-section-card app-card">
+  <div class="detail-section-header">
+    <div>
+      <h2>Spatial Coverage</h2>
+      <p class="subtitle app-muted">WKT geometry in EPSG:4326 with map preview.</p>
+    </div>
+  </div>
+
+  <fieldset class="detail-fieldset spatial-layout" [disabled]="disabled">
+    <div class="spatial-map-panel">
+      <div #spatialMapContainer class="spatial-map" aria-label="Spatial coverage preview"></div>
+    </div>
+
+    <div class="spatial-editor">
+      <label class="detail-field">
+        <span class="detail-label">WKT geometry</span>
+        <textarea class="app-input spatial-wkt-input" [class.app-input--invalid]="validationError()" rows="7" [ngModel]="model ?? ''" (ngModelChange)="onWktChange($event)" [ngModelOptions]="{ standalone: true }" placeholder="POINT (12.5 41.9)"></textarea>
+      </label>
+
+      <p class="spatial-help">Supports <a style="text-decoration: underline;" target="_blank" href="https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry">WKT</a> points, lines, polygons, multi-geometries and geometry collections. Coordinates use longitude latitude order.</p>
+
+      @if (validationError()) {
+        <p class="spatial-error" role="alert">{{ validationError() }}</p>
+      }
+    </div>
+  </fieldset>
+</section>

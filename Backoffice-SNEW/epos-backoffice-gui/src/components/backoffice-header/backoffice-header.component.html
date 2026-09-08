@@ -1,0 +1,101 @@
+<header class="header-shell">
+  <div class="header-copy">
+    <p class="breadcrumb app-muted">Backoffice / {{ sectionTitle }} / {{ pageLabel }}</p>
+    <div>
+      <h1>{{ sectionTitle }}</h1>
+      <p class="app-muted">Placheholder Text.</p>
+    </div>
+  </div>
+
+  <div class="header-actions header-actions--top">
+    <button type="button" class="app-button app-button--ghost app-button--icon" (click)="toggleTheme.emit()" [attr.aria-label]="darkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+      <app-icon [name]="darkMode ? 'sun' : 'moon'" [size]="16" />
+    </button>
+
+    <div class="user-menu">
+      <button
+        type="button"
+        class="app-chip admin-chip"
+        (click)="toggleUserMenu($event)"
+        aria-haspopup="menu"
+        [attr.aria-expanded]="userMenuOpen()"
+      >
+        <span class="app-avatar"><app-icon name="user" [size]="16" /></span>
+        <span class="admin-copy">
+          <strong>Admin</strong>
+          <span class="app-muted">Backoffice user</span>
+        </span>
+        <app-icon name="chevron-down" [size]="14" />
+      </button>
+
+      @if (userMenuOpen()) {
+        <div class="user-menu-panel app-card" role="menu" (click)="$event.stopPropagation()">
+          <button type="button" class="app-button user-menu-logout" role="menuitem" (click)="logout()">
+            Logout
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (showSearchActions) {
+    <div class="header-actions header-actions--bottom">
+      <label class="search" aria-label="Search records">
+        <span>⌕</span>
+        <input
+          class="app-input"
+          type="search"
+          placeholder="Search records"
+          [ngModel]="searchQuery"
+          (ngModelChange)="searchQueryChange.emit($event)"
+          [ngModelOptions]="{ standalone: true }"
+        />
+      </label>
+
+      <div class="filter-menu">
+        <button
+          type="button"
+          class="app-button app-button--ghost"
+          (click)="toggleFilterMenu($event)"
+          aria-haspopup="dialog"
+          [attr.aria-expanded]="filterMenuOpen()"
+        >
+          Filters
+          @if (activeFilterCount()) {
+            <span class="filter-count">{{ activeFilterCount() }}</span>
+          }
+        </button>
+
+        @if (filterMenuOpen()) {
+          <div class="filter-panel app-card" role="dialog" aria-label="Filter results" (click)="$event.stopPropagation()">
+            <div class="filter-panel-header">
+              <strong>Filter results</strong>
+              <button type="button" class="filter-clear" (click)="clearFilters()" [disabled]="!canClearFilters()">Clear</button>
+            </div>
+
+            <fieldset class="filter-group">
+              <legend>Data type</legend>
+              @for (option of dataTypeOptions; track option.value) {
+                <label class="filter-option">
+                  <input type="checkbox" [checked]="selectedDataTypes.includes(option.value)" (change)="toggleDataType(option.value)" />
+                  <span>{{ option.label }}</span>
+                </label>
+              }
+            </fieldset>
+
+            <fieldset class="filter-group">
+              <legend>Versioning status</legend>
+              @for (status of versioningStatusOptions; track status) {
+                <label class="filter-option">
+                  <input type="checkbox" [checked]="selectedVersioningStatuses.includes(status)" (change)="toggleVersioningStatus(status)" />
+                  <span>{{ status }}</span>
+                </label>
+              }
+            </fieldset>
+          </div>
+        }
+      </div>
+      <button type="button" class="app-button app-button--primary" (click)="addNewResource.emit()">Add New Resource</button>
+    </div>
+  }
+</header>

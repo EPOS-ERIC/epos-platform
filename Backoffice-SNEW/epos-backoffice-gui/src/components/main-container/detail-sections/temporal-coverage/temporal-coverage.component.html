@@ -1,0 +1,27 @@
+<section id="temporal-coverage" class="detail-section-card app-card">
+  <div class="detail-section-header">
+    <div>
+      <h2>Temporal Coverage</h2>
+      <p class="subtitle app-muted">Start and end time fields.</p>
+    </div>
+  </div>
+
+  @if (warningKind !== 'none') {
+    <div class="temporal-warning" [class.temporal-warning--error]="warningKind === 'error'" [class.temporal-warning--warning]="warningKind === 'warning'">
+      <app-icon [name]="'warning'" [size]="16" />
+      <span>{{ warningMessage }}</span>
+    </div>
+  }
+
+  <fieldset class="detail-fieldset detail-form-grid" [disabled]="disabled">
+    <label class="detail-field">
+      <span class="detail-label">Start time</span>
+      <input class="app-input" type="datetime-local" [(ngModel)]="model.start" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+    </label>
+
+    <label class="detail-field">
+      <span class="detail-label">End time</span>
+      <input class="app-input" type="datetime-local" [(ngModel)]="model.end" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
+    </label>
+  </fieldset>
+</section>

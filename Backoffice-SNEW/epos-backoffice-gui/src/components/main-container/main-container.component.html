@@ -1,0 +1,359 @@
+<main class="main-container-layout">
+  <app-navigation-sidebar
+    [isAdmin]="isAdmin"
+    [groups]="groups()"
+    [groupsLoading]="groupsLoading()"
+    [currentSectionPath]="sectionPath()"
+    [selectedGroupId]="selectedGroupId()"
+    [detailItems]="detailNavigationItems()"
+    [detailRootLabel]="detailRootLabel"
+    [detailBackLink]="['/', sectionPath()]"
+    [detailBackQueryParams]="selectedGroupId() ? { groupId: selectedGroupId() } : null"
+    [detailActions]="detailSidebarActions()"
+    (detailAction)="handleSidebarDetailAction($event)"
+  />
+
+  <section class="content" #detailScrollContainer>
+    <app-backoffice-header
+      [sectionTitle]="sectionTitle()"
+      [pageLabel]="pageLabel()"
+      [darkMode]="darkMode()"
+      [showSearchActions]="pageLabel() === 'Results'"
+      [searchQuery]="searchQuery()"
+      [selectedDataTypes]="selectedDataTypes()"
+      [selectedVersioningStatuses]="selectedVersioningStatuses()"
+      (searchQueryChange)="updateSearchQuery($event)"
+      (filtersChange)="updateResultsFilters($event)"
+      (toggleTheme)="toggleTheme()"
+      (addNewResource)="openCreateResourceDialog()"
+    />
+
+    @if (detailToastMessage()) {
+      <div class="detail-toast" [class.detail-toast--visible]="detailToastVisible()" role="status" aria-live="polite">
+        <span class="detail-toast-message">{{ detailToastMessage() }}</span>
+        <button type="button" class="detail-toast-close" (click)="dismissDetailToast()" aria-label="Dismiss notification">×</button>
+      </div>
+    }
+
+    @if (pageLabel() === 'Detail') {
+      <div class="detail-page-actions">
+        <button type="button" class="app-button app-button--icon detail-back-to-top" (click)="scrollDetailToTop()" title="Back to top" aria-label="Back to top">
+          <span aria-hidden="true" class="detail-back-to-top-icon">⌃</span>
+        </button>
+      </div>
+    }
+
+    <div class="content-spacer">
+      @if (adminPage() === 'groups') {
+        <app-admin-groups />
+      } @else if (resourceVersionLoading()) {
+        <section class="detail-card app-card">
+          <div class="detail-empty">Loading detail...</div>
+        </section>
+      } @else if (datasetVersion()) {
+        @if (datasetForm; as form) {
+          <div class="detail-page">
+            @if (canDeleteDetail()) {
+              <div class="detail-overview-actions">
+                <button type="button" class="app-button detail-delete-button" (click)="openDeleteDetailDialog()" [disabled]="detailDeleting() || detailSaving()">
+                  {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              </div>
+            }
+
+            @if (detailActionError()) {
+              <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
+            }
+
+            <section class="detail-overview detail-card app-card">
+              <div class="detail-overview-item detail-overview-item--wide">
+                <span class="detail-label">Title</span>
+                <strong>{{ detailTitleValue() }}</strong>
+              </div>
+
+              <div class="detail-overview-item" [attr.data-status]="datasetVersion()!.status.toLowerCase()">
+                <span class="detail-label">Status</span>
+                <strong>{{ datasetVersion()!.status.toUpperCase() }}</strong>
+              </div>
+
+              <div class="detail-overview-item">
+                <span class="detail-label">Resource ID</span>
+                <strong>{{ datasetVersion()!.resource_id }}</strong>
+              </div>
+            </section>
+
+            <app-general-information [model]="datasetForm" [disabled]="!canEditDetail()" (modelChange)="datasetForm = $event" [backLink]="['/', sectionPath()]"></app-general-information>
+            <app-spatial-coverage [model]="datasetForm!.spatial" [disabled]="!canEditDetail()" (modelChange)="updateDatasetSpatial($event)"></app-spatial-coverage>
+            <app-temporal-coverage [model]="datasetForm!.temporal" [disabled]="!canEditDetail()" (modelChange)="updateDatasetTemporal($event)" [warningKind]="temporalWarningKind()" [warningMessage]="temporalWarningMessage()"></app-temporal-coverage>
+
+            <app-identifiers [model]="datasetForm!.persistentIdentifiers" [disabled]="!canEditDetail()" title="Persistent Identifiers" subtitle="Type and identifier value pairs."></app-identifiers>
+
+            <app-contact-points [model]="datasetForm!.contactPoints" [editable]="canEditDetail()" [disabled]="!canEditDetail()" (modelChange)="updateDatasetContactPoints($event)"></app-contact-points>
+            <app-providers [model]="datasetForm!.providers" [disabled]="!canEditDetail()" (modelChange)="updateDatasetProviders($any($event))"></app-providers>
+            <app-categories [groupId]="datasetVersion()!.group_id" [model]="datasetForm!.categories" [disabled]="!canEditDetail()" (modelChange)="updateDatasetCategories($event)"></app-categories>
+            <app-distribution [model]="datasetForm!.distributions" [disabled]="!canEditDetail()" (modelChange)="updateDatasetDistributions($event)"></app-distribution>
+          </div>
+        }
+      } @else if (softwareApplicationForm) {
+        <div class="detail-page">
+            @if (canDeleteDetail()) {
+              <div class="detail-overview-actions">
+              <button type="button" class="app-button detail-delete-button" (click)="openDeleteDetailDialog()" [disabled]="detailDeleting() || detailSaving()">
+                {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
+              </button>
+              </div>
+            }
+
+          @if (detailActionError()) {
+            <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
+          }
+
+          <section class="detail-overview detail-card app-card">
+            <div class="detail-overview-item detail-overview-item--wide">
+              <span class="detail-label">Title</span>
+              <strong>{{ detailTitleValue() }}</strong>
+            </div>
+
+            <div class="detail-overview-item" [attr.data-status]="resourceVersion()!.status.toLowerCase()">
+              <span class="detail-label">Status</span>
+              <strong>{{ resourceVersion()!.status.toUpperCase() }}</strong>
+            </div>
+
+            <div class="detail-overview-item">
+              <span class="detail-label">Resource ID</span>
+              <strong>{{ resourceVersion()!.resource_id }}</strong>
+            </div>
+          </section>
+
+          <app-software-general-information [model]="softwareApplicationForm" [disabled]="!canEditDetail()" resourceType="software-application" [backLink]="['/', sectionPath()]" (modelChange)="updateSoftwareApplicationForm($event)"></app-software-general-information>
+          <app-identifiers [model]="softwareApplicationForm.identifiers" [disabled]="!canEditDetail()" title="Persistent Identifiers" subtitle="Type and identifier value pairs."></app-identifiers>
+          <app-contact-points
+            [model]="softwareApplicationForm.contact_points ?? []"
+            [editable]="canEditDetail()"
+            [disabled]="!canEditDetail()"
+            (modelChange)="softwareApplicationForm.contact_points = $event"
+          ></app-contact-points>
+          <app-categories
+            [groupId]="resourceVersion()!.group_id"
+            [model]="softwareApplicationForm.categories"
+            [disabled]="!canEditDetail()"
+            (modelChange)="softwareApplicationForm.categories = $event"
+          ></app-categories>
+        </div>
+      } @else if (softwareSourceCodeForm) {
+        <div class="detail-page">
+          @if (canDeleteDetail()) {
+            <div class="detail-overview-actions">
+              <button type="button" class="app-button detail-delete-button" (click)="deleteDetail()" [disabled]="detailDeleting() || detailSaving()">
+                {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
+              </button>
+            </div>
+          }
+
+          @if (detailActionError()) {
+            <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
+          }
+
+          <section class="detail-overview detail-card app-card">
+            <div class="detail-overview-item detail-overview-item--wide">
+              <span class="detail-label">Title</span>
+              <strong>{{ detailTitleValue() }}</strong>
+            </div>
+
+            <div class="detail-overview-item">
+              <span class="detail-label">Resource ID</span>
+              <strong>{{ resourceVersion()!.resource_id }}</strong>
+            </div>
+
+            <div class="detail-overview-item" [attr.data-status]="resourceVersion()!.status.toLowerCase()">
+              <span class="detail-label">Status</span>
+              <strong>{{ resourceVersion()!.status.toUpperCase() }}</strong>
+            </div>
+          </section>
+
+          <app-software-general-information [model]="softwareSourceCodeForm" [disabled]="!canEditDetail()" resourceType="software-source-code" [backLink]="['/', sectionPath()]" (modelChange)="updateSoftwareSourceCodeForm($event)"></app-software-general-information>
+          <app-identifiers [model]="softwareSourceCodeForm.identifiers" [disabled]="!canEditDetail()" title="Persistent Identifiers" subtitle="Type and identifier value pairs."></app-identifiers>
+          <app-contact-points
+            [model]="softwareSourceCodeForm.contact_points ?? []"
+            [editable]="canEditDetail()"
+            [disabled]="!canEditDetail()"
+            (modelChange)="softwareSourceCodeForm.contact_points = $event"
+          ></app-contact-points>
+          <app-categories
+            [groupId]="resourceVersion()!.group_id"
+            [model]="softwareSourceCodeForm.categories"
+            [disabled]="!canEditDetail()"
+            (modelChange)="softwareSourceCodeForm.categories = $event"
+          ></app-categories>
+        </div>
+      } @else if (resourceVersion()) {
+        <section class="detail-card app-card">
+          <div class="detail-header">
+            <div>
+              <p class="eyebrow app-badge app-badge--primary">Detail</p>
+              <h2>{{ detailName() }}</h2>
+              <p class="subtitle app-muted">Version {{ resourceVersion()!.version_id }} · Revision {{ resourceVersion()!.revision }}</p>
+            </div>
+
+            <div class="detail-header-actions">
+              @if (canDeleteDetail()) {
+                <button type="button" class="app-button detail-delete-button detail-overview-delete-button" (click)="openDeleteDetailDialog()" [disabled]="detailDeleting() || detailSaving()">
+                  {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
+                </button>
+              }
+
+              <a class="app-button app-button--ghost" [routerLink]="['/', sectionPath()]">Back to results</a>
+            </div>
+          </div>
+
+          @if (detailActionError()) {
+            <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
+          }
+
+          <div class="detail-grid">
+            <div class="detail-panel">
+              <span class="detail-label">Resource ID</span>
+              <strong>{{ resourceVersion()!.resource_id }}</strong>
+            </div>
+            <div class="detail-panel">
+              <span class="detail-label">Version ID</span>
+              <strong>{{ resourceVersion()!.version_id }}</strong>
+            </div>
+            <div class="detail-panel">
+              <span class="detail-label">Status</span>
+              <strong>{{ resourceVersion()!.status }}</strong>
+            </div>
+            <div class="detail-panel">
+              <span class="detail-label">Group</span>
+              <strong>{{ resourceVersion()!.group_name }}</strong>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3>Description</h3>
+            <p>{{ detailDescription() }}</p>
+          </div>
+
+          <div class="detail-section detail-section--split">
+            <div>
+              <h3>Keywords</h3>
+              <p>{{ detailKeywords() }}</p>
+            </div>
+            <div>
+              <h3>Distributions</h3>
+              <p>{{ detailDistributionCount() }}</p>
+            </div>
+          </div>
+        </section>
+      } @else {
+        <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
+      }
+    </div>
+
+    @if (createResourceDialogOpen()) {
+      <div class="resource-dialog-backdrop" (click)="closeCreateResourceDialog()">
+        <section class="resource-dialog app-card" (click)="$event.stopPropagation()">
+          <div class="detail-section-header">
+            <div>
+              <p class="eyebrow app-badge app-badge--primary">Create Resource Draft</p>
+              <h2>Add New Resource</h2>
+              <p class="subtitle app-muted">Choose a resource type and target group.</p>
+            </div>
+          </div>
+
+          <div class="detail-form-grid">
+            <label class="detail-field">
+              <span class="detail-label">Title</span>
+              <input class="app-input" type="text" [ngModel]="createResourceTitle()" (ngModelChange)="createResourceTitle.set($event)" placeholder="Enter resource title" />
+            </label>
+
+            <label class="detail-field">
+              <span class="detail-label">Resource type</span>
+              <select class="app-input" [ngModel]="createResourceType()" (ngModelChange)="createResourceType.set($event)">
+                @for (item of createResourceTypes; track item.value) {
+                  <option [ngValue]="item.value">{{ item.label }}</option>
+                }
+              </select>
+            </label>
+
+            @if (createResourceType() !== 'dataset') {
+              <label class="detail-field detail-field--full">
+                <span class="detail-label">Description</span>
+                <textarea class="app-input detail-textarea" rows="3" [ngModel]="createResourceDescription()" (ngModelChange)="createResourceDescription.set($event)" placeholder="Enter resource description"></textarea>
+              </label>
+            }
+
+            <label class="detail-field">
+              <span class="detail-label">Group</span>
+              <select class="app-input" [ngModel]="createResourceGroupId()" (ngModelChange)="createResourceGroupId.set($event)" [disabled]="groupsLoading() || !groups().length">
+                @if (groupsLoading()) {
+                  <option value="">Loading groups...</option>
+                } @else {
+                  @for (group of groups(); track group.id) {
+                    <option [ngValue]="group.id">{{ group.name }}</option>
+                  }
+                }
+              </select>
+            </label>
+          </div>
+
+          @if (createResourceError()) {
+            <div class="temporal-warning temporal-warning--error resource-dialog-error">{{ createResourceError() }}</div>
+          }
+
+          <div class="resource-dialog-actions">
+            <button type="button" class="app-button app-button--ghost" (click)="closeCreateResourceDialog()">Cancel</button>
+            <button type="button" class="app-button app-button--primary" (click)="submitCreateResource()" [disabled]="createResourceSaving() || !createResourceGroupId() || groupsLoading() || !createResourceTitle().trim() || (createResourceType() !== 'dataset' && !createResourceDescription().trim())">
+              {{ createResourceSaving() ? 'Creating...' : 'Create' }}
+            </button>
+          </div>
+        </section>
+      </div>
+    }
+
+    @if (detailDeleteDialogOpen()) {
+      <div class="resource-dialog-backdrop" (click)="closeDeleteDetailDialog()">
+        <section class="resource-dialog app-card delete-confirm-dialog" (click)="$event.stopPropagation()">
+          <div class="detail-section-header">
+            <div>
+              <p class="eyebrow app-badge app-badge--primary">Confirm Delete</p>
+              <h2>Delete this draft?</h2>
+              <p class="subtitle app-muted">This action cannot be undone.</p>
+            </div>
+          </div>
+
+          <p class="delete-confirm-text">You are about to permanently delete the current draft version.</p>
+
+          <div class="resource-dialog-actions">
+            <button type="button" class="app-button app-button--ghost" (click)="closeDeleteDetailDialog()">Cancel</button>
+            <button type="button" class="app-button detail-delete-button" (click)="confirmDeleteDetail()" [disabled]="detailDeleting()">{{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}</button>
+          </div>
+        </section>
+      </div>
+    }
+
+    @if (detailRejectDialogOpen()) {
+      <div class="resource-dialog-backdrop" (click)="closeRejectDetailDialog()">
+        <section class="resource-dialog app-card delete-confirm-dialog" (click)="$event.stopPropagation()">
+          <div class="detail-section-header">
+            <div>
+              <p class="eyebrow app-badge">Reject Resource</p>
+              <h2>Reject this submission?</h2>
+              <p class="subtitle app-muted">Add a reviewer note before rejecting.</p>
+            </div>
+          </div>
+
+          <label class="detail-field">
+            <span class="detail-label">Note</span>
+            <textarea class="app-input detail-textarea" rows="5" [ngModel]="detailRejectNote()" (ngModelChange)="detailRejectNote.set($event)" placeholder="Enter rejection note"></textarea>
+          </label>
+
+          <div class="resource-dialog-actions">
+            <button type="button" class="app-button app-button--ghost" (click)="closeRejectDetailDialog()">Cancel</button>
+            <button type="button" class="app-button detail-delete-button" (click)="confirmRejectDetail()" [disabled]="detailRejecting() || !detailRejectNote().trim()">{{ detailRejecting() ? 'Rejecting...' : 'Reject' }}</button>
+          </div>
+        </section>
+      </div>
+    }
+  </section>
+</main>

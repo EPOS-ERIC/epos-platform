@@ -1,0 +1,128 @@
+@import '../detail-shared.css';
+
+.parameter-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.parameter-toolbar--bottom {
+  margin-top: 14px;
+}
+
+.parameter-table {
+  border: 1px solid var(--line);
+}
+
+.parameter-table th,
+.parameter-table td {
+  border: 1px solid var(--line);
+}
+
+.parameter-action-col {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.parameter-remove-button {
+  color: #b91c1c;
+}
+
+.parameter-dialog {
+  width: min(520px, 100%);
+}
+
+.parameter-dialog-error {
+  margin-top: 8px;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.parameter-switch-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.parameter-switch-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.parameter-switch-track {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.parameter-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.parameter-switch-control input:checked + .parameter-switch-track {
+  border-color: var(--olive-700);
+  background: var(--olive-600);
+}
+
+.parameter-switch-control input:checked + .parameter-switch-track::after {
+  transform: translateX(18px);
+  background: #ffffff;
+}
+
+.parameter-switch-control input:focus-visible + .parameter-switch-track {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.parameter-switch-control input:disabled + .parameter-switch-track {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.parameter-options {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.parameter-options-header,
+.parameter-option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.parameter-options-header {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.parameter-option-list {
+  display: grid;
+  gap: 8px;
+}
+
+.parameter-option-row .app-input {
+  flex: 1;
+}
+
+.parameter-options-empty {
+  padding: 12px;
+}

@@ -1,0 +1,59 @@
+@import '../detail-shared.css';
+
+.spatial-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.2fr) minmax(280px, 0.8fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.spatial-map-panel,
+.spatial-editor {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.spatial-map {
+  height: 320px;
+}
+
+.spatial-editor {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+}
+
+.spatial-wkt-input {
+  min-height: 150px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.spatial-help,
+.spatial-error {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.spatial-help {
+  color: var(--text-muted);
+}
+
+.spatial-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .spatial-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .spatial-map {
+    height: 260px;
+  }
+}

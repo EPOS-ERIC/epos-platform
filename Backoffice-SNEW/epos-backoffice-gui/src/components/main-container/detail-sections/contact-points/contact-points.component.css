@@ -1,0 +1,117 @@
+@import '../detail-shared.css';
+
+.contact-points-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 18px;
+}
+
+.contact-points-box {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-2);
+}
+
+.contact-points-box--assigned {
+  background: var(--surface);
+}
+
+.contact-points-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.75fr);
+  gap: 16px;
+  padding: 12px;
+}
+
+.contact-points-control {
+  display: grid;
+  gap: 8px;
+}
+
+.contact-points-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.contact-points-panel-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.contact-points-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  max-height: 300px;
+  overflow: auto;
+}
+
+.contact-point-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.contact-point-row--selected {
+  background: color-mix(in srgb, var(--olive-100) 40%, var(--surface) 60%);
+}
+
+.contact-points-list--assigned .contact-point-row {
+  padding: 8px 12px;
+}
+
+.contact-point-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.contact-point-email {
+  color: var(--text-strong);
+  word-break: break-word;
+}
+
+.contact-point-role {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.contact-point-action {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.9rem;
+}
+
+.contact-point-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+@media (max-width: 900px) {
+  .contact-points-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-points-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

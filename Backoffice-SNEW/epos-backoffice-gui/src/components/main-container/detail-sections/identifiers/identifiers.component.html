@@ -1,0 +1,46 @@
+<section [id]="anchor" class="detail-section-card app-card">
+  <div class="detail-section-header">
+    <div>
+      <h2>{{ title }}</h2>
+      <p class="subtitle app-muted">{{ subtitle }}</p>
+    </div>
+
+  </div>
+
+  <fieldset class="detail-fieldset" [disabled]="disabled">
+    <div class="identifiers-box">
+      <div class="identifiers-box-header">
+        <h3><span class="app-badge identifier-list-badge">Identifier List</span></h3>
+        <span class="webservice-summary-hint">{{ model.length }}</span>
+      </div>
+
+      @if (model.length) {
+        <ul class="identifiers-list">
+          @for (identifier of model; track $index) {
+            <li class="identifier-list-row">
+              <span class="identifier-number" aria-hidden="true">{{ $index + 1 }}</span>
+              <div class="identifier-fields">
+                <label class="detail-field">
+                  <span class="detail-label">Type</span>
+                  <input class="app-input" type="text" [(ngModel)]="identifier.type" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" placeholder="e.g. DOI" />
+                </label>
+
+                <label class="detail-field">
+                  <span class="detail-label">Identifier value</span>
+                  <input class="app-input" type="text" [(ngModel)]="identifier.value" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" placeholder="Enter identifier" />
+                </label>
+              </div>
+
+              <button type="button" class="app-button app-button--ghost identifier-remove" (click)="removeItem($index)" [attr.aria-label]="'Remove identifier ' + ($index + 1)">Remove</button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="detail-empty">No identifiers added.</div>
+      }
+    </div>
+    <div class="identifiers-actions">
+      <button type="button" class="app-button app-button--primary" (click)="addItem()" [disabled]="disabled">Add identifier</button>
+    </div>
+  </fieldset>
+</section>

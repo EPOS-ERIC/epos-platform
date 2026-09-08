@@ -1,0 +1,83 @@
+<section class="table-card app-card">
+  <div class="table-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Results</p>
+      <h2>{{ sectionTitle }}</h2>
+      <p class="subtitle app-muted">{{ selectedGroupName ? 'Resources in ' + selectedGroupName : 'Select a group from the sidebar to load resources.' }}</p>
+    </div>
+
+    <div class="toolbar">
+      <button type="button" class="app-button">Export</button>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+    @if (!selectedGroupId) {
+      <div class="table-empty">Select a group to view resources.</div>
+    } @else if (discoveryLoading) {
+      <div class="table-empty">Loading discovery results...</div>
+    } @else if (discoveryItems?.length) {
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Group</th>
+            <th>Author</th>
+            <th>Last Change</th>
+            <th>Status</th>
+            <th class="actions-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of paginatedItems; track item.type + ':' + item.resource_id + ':' + item.version_id) {
+            <tr>
+              <td>
+                <a class="item-link" [routerLink]="detailLink(item)" [queryParams]="detailQueryParams(item)">
+                  <strong>{{ item.name }}</strong>
+                </a>
+              </td>
+              <td>{{ item.type }}</td>
+              <td>{{ item.group.name }}</td>
+              <td>
+                <div class="relation-text">{{ discoveryAuthor(item) }}</div>
+              </td>
+              <td>
+                <div class="relation-text">{{ discoveryLastChange(item) }}</div>
+              </td>
+              <td>
+                <span class="status-pill" [class]="discoveryStatusClass(item.status)">{{ item.status }}</span>
+              </td>
+              <td class="actions-col">
+                <a class="app-button app-button--ghost" [routerLink]="detailLink(item)" [queryParams]="detailQueryParams(item)">View</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="table-empty">No resources found for this group.</div>
+    }
+  </div>
+
+  @if (selectedGroupId && discoveryItems?.length) {
+    <div class="table-footer">
+      <div class="page-size-control">
+        <label for="results-page-size">Rows per page</label>
+        <select id="results-page-size" [value]="pageSize" (change)="changePageSize($event)">
+          @for (option of pageSizeOptions; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </div>
+
+      <span>Showing {{ firstResult }}-{{ lastResult }} of {{ discoveryItems!.length }}</span>
+
+      <nav class="pager" aria-label="Results pagination">
+        <button type="button" class="pager-button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
+        <span class="page-indicator" aria-live="polite">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button type="button" class="pager-button" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+      </nav>
+    </div>
+  }
+</section>
