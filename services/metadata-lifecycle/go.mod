@@ -8,6 +8,7 @@ require (
 	github.com/EPOS-ERIC/epos-platform/packages/go/observability v0.0.0
 	github.com/EPOS-ERIC/epos-platform/packages/protobuf v0.0.0
 	github.com/deiu/rdf2go v0.0.0-20241212211204-b661ba0dfd25
+	github.com/exaring/otelpgx v0.11.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/kelseyhightower/envconfig v1.4.0

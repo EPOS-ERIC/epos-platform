@@ -44,6 +44,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	server := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
+			grpcapi.ActorTracingInterceptor(),
 			logUnaryRPC(log),
 			validateUnaryRPC(validator),
 		),

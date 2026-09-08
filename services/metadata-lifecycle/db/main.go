@@ -22,6 +22,7 @@ import (
 	softwareapplicationsdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwareapplications"
 	softwaresourcecodesdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/softwaresourcecodes"
 	usersdb "github.com/EPOS-ERIC/epos-platform/services/metadata-lifecycle/db/users"
+	"github.com/exaring/otelpgx"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -79,6 +80,9 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parse postgres pool config: %w", err)
 	}
+	poolConfig.ConnConfig.Tracer = otelpgx.NewTracer(
+		otelpgx.WithSpanNameFunc(queryOperationName),
+	)
 	poolConfig.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
 		// initialize the pgxgeom library for using wkt in go
 		if err := pgxgeom.Register(ctx, conn); err != nil {
@@ -89,6 +93,10 @@ func Open(log *slog.Logger, cfg config.Config) (*PostgresDB, error) {
 	db, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("open postgres pool: %w", err)
+	}
+	if err := otelpgx.RecordStats(db); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("record postgres pool stats: %w", err)
 	}
 	if err := db.Ping(context.Background()); err != nil {
 		db.Close()

@@ -11,6 +11,7 @@ import (
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/domain"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/EPOS-ERIC/epos-platform/services/gateway/identity"
+	"github.com/EPOS-ERIC/epos-platform/services/gateway/internal/authcontext"
 	"github.com/ogen-go/ogen/ogenerrors"
 )
 
@@ -52,15 +53,8 @@ func (h *ogenHandler) NewError(ctx context.Context, err error) *gatewayapi.Probl
 
 var errMissingActor = errors.New("bearer token required")
 
-type authenticatedActorKey struct{}
-
-func withActor(ctx context.Context, actor domain.User) context.Context {
-	return context.WithValue(ctx, authenticatedActorKey{}, actor)
-}
-
 func actorID(ctx context.Context) (string, bool) {
-	user, ok := ctx.Value(authenticatedActorKey{}).(domain.User)
-	return user.ID, ok
+	return authcontext.ActorID(ctx)
 }
 
 func toClientStringPtr(v gatewayapi.OptNilString) *string {
