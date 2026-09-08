@@ -2301,6 +2301,7 @@ components:
         group_name: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        rejection_note: { $ref: "#/components/schemas/NonBlankString" }
         metadata:
           oneOf:
             - $ref: "#/components/schemas/DatasetResourceMetadata"

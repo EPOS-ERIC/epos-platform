@@ -115,6 +115,7 @@ func NewSoftwareSourceCodeVersion(
 	createdBy Actor,
 	group Group,
 	createdAt, updatedAt time.Time,
+	rejectionNote *string,
 	metadata SoftwareSourceCodeMetadata,
 ) (SoftwareSourceCodeVersion, error) {
 	if softwareSourceCodeID == uuid.Nil || versionID == uuid.Nil {
@@ -150,6 +151,10 @@ func NewSoftwareSourceCodeVersion(
 	if createdAt.IsZero() || updatedAt.IsZero() {
 		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code timestamps are required: %w", ErrSoftwareSourceCodeInvalid)
 	}
+	rejectionNote, err = NewRejectionNote(status, rejectionNote)
+	if err != nil {
+		return SoftwareSourceCodeVersion{}, fmt.Errorf("software source code rejection note: %w: %w", err, ErrSoftwareSourceCodeInvalid)
+	}
 	return SoftwareSourceCodeVersion{
 		SoftwareSourceCodeID: softwareSourceCodeID,
 		VersionID:            versionID,
@@ -159,6 +164,7 @@ func NewSoftwareSourceCodeVersion(
 		Group:                normalizedGroup,
 		CreatedAt:            createdAt,
 		UpdatedAt:            updatedAt,
+		RejectionNote:        rejectionNote,
 		Metadata:             metadata,
 	}, nil
 }

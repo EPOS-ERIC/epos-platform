@@ -109,6 +109,7 @@ func sourceCodeResult(ctx context.Context, q *sqlc.Queries, sourceCodeID, versio
 		resourcedb.ToGroup(row.Group),
 		version.CreatedAt,
 		version.UpdatedAt,
+		version.RejectionNote,
 		metadata,
 	)
 	if err != nil {

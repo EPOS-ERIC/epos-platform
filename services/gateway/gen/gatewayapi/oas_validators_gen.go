@@ -2536,7 +2536,7 @@ func (s IntegerParameterKind) Validate() error {
 }
 
 func (s Keyword) Validate() error {
-	alias := (string)(s)
+	alias := string(s)
 	if err := (validate.String{
 		MinLength:     1,
 		MinLengthSet:  true,
@@ -2664,7 +2664,7 @@ func (s *MembershipUser) Validate() error {
 }
 
 func (s NonBlankString) Validate() error {
-	alias := (string)(s)
+	alias := string(s)
 	if err := (validate.String{
 		MinLength:     1,
 		MinLengthSet:  true,
@@ -3599,6 +3599,24 @@ func (s *ResourceVersion) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "status",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.RejectionNote.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "rejection_note",
 			Error: err,
 		})
 	}

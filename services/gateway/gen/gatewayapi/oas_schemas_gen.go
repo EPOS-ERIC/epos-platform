@@ -3905,7 +3905,7 @@ func (o *NilBool) SetToNull() {
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o NilBool) Get() (v bool, ok bool) {
+func (o NilBool) Get() (v, ok bool) {
 	if o.Null {
 		return v, false
 	}
@@ -6412,16 +6412,17 @@ func (s *ReplaceSoftwareSourceCodeDraftRequestResourceType) UnmarshalText(data [
 
 // Ref: #/components/schemas/ResourceVersion
 type ResourceVersion struct {
-	ResourceID uuid.UUID               `json:"resource_id"`
-	VersionID  uuid.UUID               `json:"version_id"`
-	Revision   int32                   `json:"revision"`
-	Status     VersioningStatus        `json:"status"`
-	CreatedBy  string                  `json:"created_by"`
-	GroupID    uuid.UUID               `json:"group_id"`
-	GroupName  string                  `json:"group_name"`
-	CreatedAt  time.Time               `json:"created_at"`
-	UpdatedAt  time.Time               `json:"updated_at"`
-	Metadata   ResourceVersionMetadata `json:"metadata"`
+	ResourceID    uuid.UUID               `json:"resource_id"`
+	VersionID     uuid.UUID               `json:"version_id"`
+	Revision      int32                   `json:"revision"`
+	Status        VersioningStatus        `json:"status"`
+	CreatedBy     string                  `json:"created_by"`
+	GroupID       uuid.UUID               `json:"group_id"`
+	GroupName     string                  `json:"group_name"`
+	CreatedAt     time.Time               `json:"created_at"`
+	UpdatedAt     time.Time               `json:"updated_at"`
+	RejectionNote OptNonBlankString       `json:"rejection_note"`
+	Metadata      ResourceVersionMetadata `json:"metadata"`
 }
 
 // GetResourceID returns the value of ResourceID.
@@ -6467,6 +6468,11 @@ func (s *ResourceVersion) GetCreatedAt() time.Time {
 // GetUpdatedAt returns the value of UpdatedAt.
 func (s *ResourceVersion) GetUpdatedAt() time.Time {
 	return s.UpdatedAt
+}
+
+// GetRejectionNote returns the value of RejectionNote.
+func (s *ResourceVersion) GetRejectionNote() OptNonBlankString {
+	return s.RejectionNote
 }
 
 // GetMetadata returns the value of Metadata.
@@ -6517,6 +6523,11 @@ func (s *ResourceVersion) SetCreatedAt(val time.Time) {
 // SetUpdatedAt sets the value of UpdatedAt.
 func (s *ResourceVersion) SetUpdatedAt(val time.Time) {
 	s.UpdatedAt = val
+}
+
+// SetRejectionNote sets the value of RejectionNote.
+func (s *ResourceVersion) SetRejectionNote(val OptNonBlankString) {
+	s.RejectionNote = val
 }
 
 // SetMetadata sets the value of Metadata.

@@ -294,6 +294,7 @@ type ResourceVersion struct {
 	//	*ResourceVersion_SoftwareApplication
 	//	*ResourceVersion_SoftwareSourceCode
 	Metadata      isResourceVersion_Metadata `protobuf_oneof:"metadata"`
+	RejectionNote *string                    `protobuf:"bytes,13,opt,name=rejection_note,json=rejectionNote,proto3,oneof" json:"rejection_note,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -423,6 +424,13 @@ func (x *ResourceVersion) GetSoftwareSourceCode() *SoftwareSourceCodeResourceMet
 		}
 	}
 	return nil
+}
+
+func (x *ResourceVersion) GetRejectionNote() string {
+	if x != nil && x.RejectionNote != nil {
+		return *x.RejectionNote
+	}
+	return ""
 }
 
 type isResourceVersion_Metadata interface {
@@ -4089,7 +4097,7 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\n" +
 	"version_id\x18\x03 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\tversionId\"`\n" +
 	"\x1aGetResourceVersionResponse\x12B\n" +
-	"\bresource\x18\x01 \x01(\v2&.metadata_lifecycle.v1.ResourceVersionR\bresource\"\xf8\x05\n" +
+	"\bresource\x18\x01 \x01(\v2&.metadata_lifecycle.v1.ResourceVersionR\bresource\"\xc0\x06\n" +
 	"\x0fResourceVersion\x12)\n" +
 	"\vresource_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\n" +
 	"resourceId\x12'\n" +
@@ -4109,9 +4117,11 @@ const file_metadata_lifecycle_v1_resource_proto_rawDesc = "" +
 	"\adataset\x18\n" +
 	" \x01(\v2..metadata_lifecycle.v1.DatasetResourceMetadataH\x00R\adataset\x12o\n" +
 	"\x14software_application\x18\v \x01(\v2:.metadata_lifecycle.v1.SoftwareApplicationResourceMetadataH\x00R\x13softwareApplication\x12m\n" +
-	"\x14software_source_code\x18\f \x01(\v29.metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadataH\x00R\x12softwareSourceCodeB\n" +
+	"\x14software_source_code\x18\f \x01(\v29.metadata_lifecycle.v1.SoftwareSourceCodeResourceMetadataH\x00R\x12softwareSourceCode\x123\n" +
+	"\x0erejection_note\x18\r \x01(\tB\a\xbaH\x04r\x02\x10\x01H\x01R\rrejectionNote\x88\x01\x01B\n" +
 	"\n" +
-	"\bmetadata\"\x97\b\n" +
+	"\bmetadataB\x11\n" +
+	"\x0f_rejection_note\"\x97\b\n" +
 	"\x17DatasetResourceMetadata\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12\x1d\n" +
 	"\x05title\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\x05title\x12)\n" +

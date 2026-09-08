@@ -11782,22 +11782,29 @@ func (s *ResourceVersion) encodeFields(e *jx.Encoder) {
 		json.EncodeDateTime(e, s.UpdatedAt)
 	}
 	{
+		if s.RejectionNote.Set {
+			e.FieldStart("rejection_note")
+			s.RejectionNote.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("metadata")
 		s.Metadata.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfResourceVersion = [10]string{
-	0: "resource_id",
-	1: "version_id",
-	2: "revision",
-	3: "status",
-	4: "created_by",
-	5: "group_id",
-	6: "group_name",
-	7: "created_at",
-	8: "updated_at",
-	9: "metadata",
+var jsonFieldsNameOfResourceVersion = [11]string{
+	0:  "resource_id",
+	1:  "version_id",
+	2:  "revision",
+	3:  "status",
+	4:  "created_by",
+	5:  "group_id",
+	6:  "group_name",
+	7:  "created_at",
+	8:  "updated_at",
+	9:  "rejection_note",
+	10: "metadata",
 }
 
 // Decode decodes ResourceVersion from json.
@@ -11915,8 +11922,18 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
+		case "rejection_note":
+			if err := func() error {
+				s.RejectionNote.Reset()
+				if err := s.RejectionNote.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejection_note\"")
+			}
 		case "metadata":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Metadata.Decode(d); err != nil {
 					return err
@@ -11936,7 +11953,7 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000011,
+		0b00000101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

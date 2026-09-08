@@ -12,37 +12,49 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 	if v == nil {
 		return gatewayapi.ResourceVersion{}, errors.New("decode metadata-lifecycle resource record: response is empty")
 	}
+
 	status, err := toAPIVersioningStatus(v.Status)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
+
 	resourceID, err := parseUUID("resource_version.resource_id", v.ResourceId)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
+
 	versionID, err := parseUUID("resource_version.version_id", v.VersionId)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
+
 	groupID, err := parseUUID("resource_version.group_id", v.GroupId)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
+
 	metadata, err := toAPIResourceMetadata(v)
 	if err != nil {
 		return gatewayapi.ResourceVersion{}, err
 	}
+
+	var rejectionNote gatewayapi.OptNonBlankString
+	if v.RejectionNote != nil {
+		rejectionNote = gatewayapi.NewOptNonBlankString(gatewayapi.NonBlankString(*v.RejectionNote))
+	}
+
 	return gatewayapi.ResourceVersion{
-		ResourceID: resourceID,
-		VersionID:  versionID,
-		Revision:   v.Revision,
-		Status:     status,
-		CreatedBy:  v.CreatedBy,
-		GroupID:    groupID,
-		GroupName:  v.GroupName,
-		CreatedAt:  v.CreatedAt.AsTime(),
-		UpdatedAt:  v.UpdatedAt.AsTime(),
-		Metadata:   metadata,
+		ResourceID:    resourceID,
+		VersionID:     versionID,
+		Revision:      v.Revision,
+		Status:        status,
+		CreatedBy:     v.CreatedBy,
+		GroupID:       groupID,
+		GroupName:     v.GroupName,
+		CreatedAt:     v.CreatedAt.AsTime(),
+		UpdatedAt:     v.UpdatedAt.AsTime(),
+		RejectionNote: rejectionNote,
+		Metadata:      metadata,
 	}, nil
 }
 

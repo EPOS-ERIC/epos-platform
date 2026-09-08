@@ -64,5 +64,6 @@ type SoftwareSourceCodeVersion struct {
 	Group                Group
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
+	RejectionNote        *string
 	Metadata             SoftwareSourceCodeMetadata
 }

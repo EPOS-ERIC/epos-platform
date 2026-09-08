@@ -133,18 +133,21 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
+		response.RejectionNote = item.RejectionNote
 		response.Metadata = &metadatalifecyclev1.ResourceVersion_Dataset{Dataset: datasetResourceMetadata(item.Metadata)}
 	case domain.SoftwareApplicationVersion:
 		response.ResourceId, response.VersionId = item.SoftwareApplicationID.String(), item.VersionID.String()
 		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
+		response.RejectionNote = item.RejectionNote
 		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareApplication{SoftwareApplication: applicationResourceMetadata(item.Metadata)}
 	case domain.SoftwareSourceCodeVersion:
 		response.ResourceId, response.VersionId = item.SoftwareSourceCodeID.String(), item.VersionID.String()
 		response.Revision, response.Status = item.Revision, toGRPCVersioningStatus(item.Status)
 		response.CreatedBy, response.GroupId, response.GroupName = string(item.CreatedBy), item.Group.ID.String(), item.Group.Name
 		response.CreatedAt, response.UpdatedAt = timestamppb.New(item.CreatedAt), timestamppb.New(item.UpdatedAt)
+		response.RejectionNote = item.RejectionNote
 		response.Metadata = &metadatalifecyclev1.ResourceVersion_SoftwareSourceCode{SoftwareSourceCode: sourceCodeResourceMetadata(item.Metadata)}
 	default:
 		return nil, status.Error(codes.Internal, "unsupported resource type") //nolint:wrapcheck

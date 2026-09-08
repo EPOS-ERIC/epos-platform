@@ -150,6 +150,7 @@ func NewDatasetVersion(
 	createdBy Actor,
 	group Group,
 	createdAt, updatedAt time.Time,
+	rejectionNote *string,
 	metadata DatasetMetadata,
 ) (DatasetVersion, error) {
 	if datasetID == uuid.Nil || versionID == uuid.Nil {
@@ -185,16 +186,21 @@ func NewDatasetVersion(
 	if createdAt.IsZero() || updatedAt.IsZero() {
 		return DatasetVersion{}, fmt.Errorf("dataset timestamps are required: %w", ErrInvalidDataset)
 	}
+	rejectionNote, err = NewRejectionNote(status, rejectionNote)
+	if err != nil {
+		return DatasetVersion{}, fmt.Errorf("dataset rejection note: %w: %w", err, ErrInvalidDataset)
+	}
 	return DatasetVersion{
-		DatasetID: datasetID,
-		VersionID: versionID,
-		Revision:  revision,
-		Status:    status,
-		CreatedBy: actor,
-		Group:     normalizedGroup,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-		Metadata:  metadata,
+		DatasetID:     datasetID,
+		VersionID:     versionID,
+		Revision:      revision,
+		Status:        status,
+		CreatedBy:     actor,
+		Group:         normalizedGroup,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+		RejectionNote: rejectionNote,
+		Metadata:      metadata,
 	}, nil
 }
 

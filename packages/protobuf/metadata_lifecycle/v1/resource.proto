@@ -48,6 +48,7 @@ message ResourceVersion {
     SoftwareApplicationResourceMetadata software_application = 11;
     SoftwareSourceCodeResourceMetadata software_source_code = 12;
   }
+  optional string rejection_note = 13 [(buf.validate.field).string.min_len = 1];
 }
 
 message DatasetResourceMetadata {

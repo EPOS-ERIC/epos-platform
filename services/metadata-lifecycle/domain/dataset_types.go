@@ -229,13 +229,14 @@ func (k ParameterKind) Valid() bool {
 
 // DatasetVersion is dataset metadata with lifecycle identity.
 type DatasetVersion struct {
-	DatasetID uuid.UUID
-	VersionID uuid.UUID
-	Revision  int32
-	Status    Status
-	CreatedBy Actor
-	Group     Group
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Metadata  DatasetMetadata
+	DatasetID     uuid.UUID
+	VersionID     uuid.UUID
+	Revision      int32
+	Status        Status
+	CreatedBy     Actor
+	Group         Group
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	RejectionNote *string
+	Metadata      DatasetMetadata
 }

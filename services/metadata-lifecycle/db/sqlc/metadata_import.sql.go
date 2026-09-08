@@ -414,11 +414,13 @@ const upsertImportContactPoint = `-- name: UpsertImportContactPoint :one
 WITH existing_natural_key AS (
     SELECT
         id
-    FROM contact_points
+    FROM
+        contact_points
     WHERE
         contact_points.email = $1
         AND contact_points.role = $2
-), updated_id AS (
+),
+updated_id AS (
     UPDATE
         contact_points
     SET
@@ -434,7 +436,8 @@ WITH existing_natural_key AS (
         )
     RETURNING
         id
-), inserted AS (
+),
+inserted AS (
     INSERT INTO
         contact_points (id, email, role)
     SELECT
@@ -461,12 +464,14 @@ SELECT
     id
 FROM
     existing_natural_key
-UNION ALL
+UNION
+ALL
 SELECT
     id
 FROM
     updated_id
-UNION ALL
+UNION
+ALL
 SELECT
     id
 FROM
