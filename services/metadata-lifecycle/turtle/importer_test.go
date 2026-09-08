@@ -236,6 +236,89 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
 	}
 }
 
+func TestParserUsesDistributionOperationOnly(t *testing.T) {
+	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+<category:dataset> a skos:ConceptScheme;
+    dct:title "Dataset categories";
+    skos:hasTopConcept <category:facets/dataset-theme>.
+<category:one> a skos:Concept;
+    skos:inScheme <category:dataset>;
+    skos:prefLabel "One".
+<dataset:one> a dcat:Dataset;
+    dct:title "Dataset one";
+    dcat:theme <category:one>;
+    dcat:distribution <distribution:one>.
+<distribution:one> a dcat:Distribution;
+    dct:title "Distribution one";
+    dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
+    dct:conformsTo <service:one>;
+    dcat:accessURL <operation:selected>;
+    dct:format "application/json".
+<service:one> a epos:WebService;
+    schema:name "Service one";
+    hydra:supportedOperation <operation:other>, <operation:selected>.
+<operation:selected> hydra:template "https://example.com/selected{?selected}";
+    hydra:property <property:selected>.
+<property:selected> hydra:mapping <parameter:selected>.
+<parameter:selected> hydra:variable "selected";
+    hydra:property "selected";
+    rdfs:range xsd:string.
+<operation:other> hydra:template "https://example.com/other{?other}";
+    hydra:property <property:other>.
+<property:other> hydra:mapping <parameter:other>.
+<parameter:other> hydra:variable "other";
+    hydra:property "other";
+    rdfs:range xsd:string.
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(batch.Datasets) != 1 || len(batch.Datasets[0].Distributions) != 1 {
+		t.Fatalf("dataset distributions = %+v, want one distribution", batch.Datasets)
+	}
+	service := batch.Datasets[0].Distributions[0].WebService
+	if service == nil {
+		t.Fatal("distribution web service = nil")
+	}
+	if service.TemplateURL != "https://example.com/selected{?selected}" {
+		t.Fatalf("template URL = %q, want selected operation template", service.TemplateURL)
+	}
+	if len(service.Parameters) != 1 || service.Parameters[0].GetMetadata().Variable != "selected" {
+		t.Fatalf("parameters = %+v, want selected operation parameter only", service.Parameters)
+	}
+}
+
+func TestParserDropsWebServiceDistributionWithoutOperation(t *testing.T) {
+	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+<category:dataset> a skos:ConceptScheme;
+    dct:title "Dataset categories";
+    skos:hasTopConcept <category:facets/dataset-theme>.
+<category:one> a skos:Concept;
+    skos:inScheme <category:dataset>;
+    skos:prefLabel "One".
+<dataset:one> a dcat:Dataset;
+    dct:title "Dataset one";
+    dcat:theme <category:one>;
+    dcat:distribution <distribution:one>.
+<distribution:one> a dcat:Distribution;
+    dct:title "Distribution one";
+    dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
+    dct:conformsTo <service:one>;
+    dct:format "application/json".
+<service:one> a epos:WebService;
+    schema:name "Service one".
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(batch.Datasets) != 1 || len(batch.Datasets[0].Distributions) != 0 {
+		t.Fatalf("dataset distributions = %+v, want distribution skipped", batch.Datasets)
+	}
+	assertDiagnostic(t, batch.Warnings, "dataset:one", dcatDistributionLink, dcatAccessURL)
+}
+
 func assertDiagnostic(t *testing.T, diagnostics []domain.ImportDiagnostic, subject, predicate, message string) {
 	t.Helper()
 	for _, diagnostic := range diagnostics {
@@ -318,7 +401,8 @@ func TestParserDiagnosesIncompatibleParameterKinds(t *testing.T) {
 <distribution:one> a dcat:Distribution;
     dct:title "Distribution one";
     dct:format "application/json";
-    dct:conformsTo <service:one>.
+    dct:conformsTo <service:one>;
+    dcat:accessURL <operation:one>.
 <service:one> a epos:WebService;
     schema:name "Service one";
     hydra:supportedOperation <operation:one>.

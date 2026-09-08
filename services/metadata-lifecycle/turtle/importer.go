@@ -519,7 +519,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		if !hasService {
 			return domain.Distribution{}, fmt.Errorf("web service distribution requires %s", dctConformsTo)
 		}
-		webService, err := m.webService(serviceSource, distribution.ID, m.optionalString(source, dctFormat))
+		webService, err := m.webServiceForDistribution(source, serviceSource, distribution.ID, m.optionalString(source, dctFormat))
 		if err != nil {
 			m.recordInvalid("web service", serviceSource, err)
 			return domain.Distribution{}, fmt.Errorf("web service %q: %w", serviceSource, err)
@@ -529,7 +529,7 @@ func (m *mapper) distribution(source string, owner uuid.UUID) (domain.Distributi
 		distribution.DownloadableFile = downloadableFile(m, source)
 	case "":
 		if hasService && m.graph.hasType(serviceSource, "https://www.epos-eu.org/epos-dcat-ap#WebService") {
-			webService, err := m.webService(serviceSource, distribution.ID, m.optionalString(source, dctFormat))
+			webService, err := m.webServiceForDistribution(source, serviceSource, distribution.ID, m.optionalString(source, dctFormat))
 			if err != nil {
 				m.recordInvalid("web service", serviceSource, err)
 				return domain.Distribution{}, fmt.Errorf("web service %q: %w", serviceSource, err)
@@ -586,7 +586,15 @@ func downloadableFile(m *mapper, source string) *domain.DownloadableFile {
 	return &domain.DownloadableFile{URL: url, Format: m.optionalString(source, dctFormat)}
 }
 
-func (m *mapper) webService(source string, owner uuid.UUID, format string) (domain.WebService, error) {
+func (m *mapper) webServiceForDistribution(distribution, source string, owner uuid.UUID, format string) (domain.WebService, error) {
+	operation, ok := m.firstString(distribution, dcatAccessURL)
+	if !ok || strings.TrimSpace(operation) == "" {
+		return domain.WebService{}, fmt.Errorf("web service distribution requires %s", dcatAccessURL)
+	}
+	return m.webService(source, owner, format, operation)
+}
+
+func (m *mapper) webService(source string, owner uuid.UUID, format, operationSource string) (domain.WebService, error) {
 	if err := m.checkSingleValues(source,
 		schemaName, schemaDescription, dctTitle, dctTemporal, dctSpatial,
 	); err != nil {
@@ -651,29 +659,27 @@ func (m *mapper) webService(source string, owner uuid.UUID, format string) (doma
 		}
 	}
 
-	for _, operation := range m.graph.refs(source, hydraSupportedOperation) {
-		if template, ok := m.firstString(operation, hydraTemplate); ok && service.TemplateURL == "" {
+	if template, ok := m.firstString(operationSource, hydraTemplate); ok {
+		service.TemplateURL = template
+	}
+	for _, property := range m.graph.refs(operationSource, hydraProperty) {
+		if template, ok := m.firstString(property, hydraTemplate); ok && service.TemplateURL == "" {
 			service.TemplateURL = template
 		}
-		for _, property := range m.graph.refs(operation, hydraProperty) {
-			if template, ok := m.firstString(property, hydraTemplate); ok && service.TemplateURL == "" {
-				service.TemplateURL = template
+		for _, mapping := range m.graph.refs(property, hydraMapping) {
+			parameter, err := m.parameter(mapping, service.ID)
+			if err != nil {
+				m.recordInvalid("parameter", mapping, err)
+				m.omitRelation(source, hydraMapping, "parameter", mapping, err)
+				continue
 			}
-			for _, mapping := range m.graph.refs(property, hydraMapping) {
-				parameter, err := m.parameter(mapping, service.ID)
-				if err != nil {
-					m.recordInvalid("parameter", mapping, err)
-					m.omitRelation(source, hydraMapping, "parameter", mapping, err)
-					continue
-				}
-				parameters, mergeErr := appendUniqueParameter(service.Parameters, parameter)
-				if mergeErr != nil {
-					m.recordInvalid("parameter", mapping, mergeErr)
-					m.omitRelation(source, hydraMapping, "parameter", mapping, mergeErr)
-					continue
-				}
-				service.Parameters = parameters
+			parameters, mergeErr := appendUniqueParameter(service.Parameters, parameter)
+			if mergeErr != nil {
+				m.recordInvalid("parameter", mapping, mergeErr)
+				m.omitRelation(source, hydraMapping, "parameter", mapping, mergeErr)
+				continue
 			}
+			service.Parameters = parameters
 		}
 	}
 
