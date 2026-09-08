@@ -578,6 +578,38 @@ func (a *Authorizer) CanReadContactPoint(ctx context.Context, userID string) (do
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
 }
 
+// CanReadDiscoveryCreatedBy allows creator identity exposure to active users
+// with membership in at least one group.
+func (a *Authorizer) CanReadDiscoveryCreatedBy(ctx context.Context, userID *string) (domain.Result, error) {
+	if userID == nil || *userID == "" {
+		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
+	}
+
+	_, result, err := a.activeUser(ctx, *userID)
+	if err != nil || !result.Allowed {
+		return result, err
+	}
+
+	isAdmin, err := a.repository.IsGlobalAdmin(ctx, *userID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
+	}
+
+	if isAdmin {
+		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+	}
+
+	member, err := a.repository.HasAnyActiveMembership(ctx, *userID)
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("check active memberships: %w", err)
+	}
+	if !member {
+		return domain.Result{Allowed: false, Reason: "user has no active group membership"}, nil
+	}
+
+	return domain.Result{Allowed: true, Reason: "active group member"}, nil
+}
+
 func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceType, id uuid.UUID) (bool, error) {
 	switch typ {
 	case domain.Dataset:

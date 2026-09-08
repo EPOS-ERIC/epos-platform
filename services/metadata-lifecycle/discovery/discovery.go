@@ -36,6 +36,7 @@ type Authorizer interface {
 	CanReadDatasetVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
+	CanReadDiscoveryCreatedBy(context.Context, *string) (domain.Result, error)
 }
 
 type Service struct {
@@ -69,13 +70,15 @@ func New(
 }
 
 func (s *Service) Search(ctx context.Context, actor *domain.Actor, filter domain.DiscoveryFilter) ([]domain.DiscoveryItem, error) {
-	includeCreatedBy := slices.ContainsFunc(filter.VersioningStatuses, func(status domain.Status) bool {
-		return status != domain.Published
-	})
-	for _, status := range filter.VersioningStatuses {
-		if status != domain.Published && actor == nil {
-			return nil, fmt.Errorf("versioningStatus requires authentication: %w", domain.ErrDiscoveryDenied)
+	includeCreatedBy := false
+	if actor == nil {
+		filter.VersioningStatuses = []domain.Status{domain.Published}
+	} else {
+		result, err := s.authorizer.CanReadDiscoveryCreatedBy(ctx, actor.OptionalString())
+		if err != nil {
+			return nil, fmt.Errorf("authorize discovery creator visibility: %w", err)
 		}
+		includeCreatedBy = result.Allowed
 	}
 
 	// TODO: don't do the query before knowing what the user has access to. better to have custom query that returns correct things maybe?
