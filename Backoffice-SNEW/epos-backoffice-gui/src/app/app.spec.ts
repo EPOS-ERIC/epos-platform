@@ -1,10 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [provideHttpClient(), provideOAuthClient(), provideRouter([])],
     }).compileComponents();
   });
 
@@ -14,10 +18,13 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render global outlets', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, epos-backoffice-gui');
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+    expect(compiled.querySelector('app-dialog-outlet')).toBeTruthy();
+    expect(compiled.querySelector('app-resource-creation-dialog')).toBeTruthy();
+    expect(compiled.querySelector('app-toast-outlet')).toBeTruthy();
   });
 });

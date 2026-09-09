@@ -28,13 +28,6 @@
       (addNewResource)="openCreateResourceDialog()"
     />
 
-    @if (detailToastMessage()) {
-      <div class="detail-toast" [class.detail-toast--visible]="detailToastVisible()" role="status" aria-live="polite">
-        <span class="detail-toast-message">{{ detailToastMessage() }}</span>
-        <button type="button" class="detail-toast-close" (click)="dismissDetailToast()" aria-label="Dismiss notification">×</button>
-      </div>
-    }
-
     @if (pageLabel() === 'Detail') {
       <div class="detail-page-actions">
         <button type="button" class="app-button app-button--icon detail-back-to-top" (click)="scrollDetailToTop()" title="Back to top" aria-label="Back to top">
@@ -254,110 +247,5 @@
       }
     </div>
 
-    @if (createResourceDialogOpen()) {
-      <div class="resource-dialog-backdrop" (click)="closeCreateResourceDialog()">
-        <section class="resource-dialog app-card" (click)="$event.stopPropagation()">
-          <div class="detail-section-header">
-            <div>
-              <p class="eyebrow app-badge app-badge--primary">Create Resource Draft</p>
-              <h2>Add New Resource</h2>
-              <p class="subtitle app-muted">Choose a resource type and target group.</p>
-            </div>
-          </div>
-
-          <div class="detail-form-grid">
-            <label class="detail-field">
-              <span class="detail-label">Title</span>
-              <input class="app-input" type="text" [ngModel]="createResourceTitle()" (ngModelChange)="createResourceTitle.set($event)" placeholder="Enter resource title" />
-            </label>
-
-            <label class="detail-field">
-              <span class="detail-label">Resource type</span>
-              <select class="app-input" [ngModel]="createResourceType()" (ngModelChange)="createResourceType.set($event)">
-                @for (item of createResourceTypes; track item.value) {
-                  <option [ngValue]="item.value">{{ item.label }}</option>
-                }
-              </select>
-            </label>
-
-            @if (createResourceType() !== 'dataset') {
-              <label class="detail-field detail-field--full">
-                <span class="detail-label">Description</span>
-                <textarea class="app-input detail-textarea" rows="3" [ngModel]="createResourceDescription()" (ngModelChange)="createResourceDescription.set($event)" placeholder="Enter resource description"></textarea>
-              </label>
-            }
-
-            <label class="detail-field">
-              <span class="detail-label">Group</span>
-              <select class="app-input" [ngModel]="createResourceGroupId()" (ngModelChange)="createResourceGroupId.set($event)" [disabled]="groupsLoading() || !groups().length">
-                @if (groupsLoading()) {
-                  <option value="">Loading groups...</option>
-                } @else {
-                  @for (group of groups(); track group.id) {
-                    <option [ngValue]="group.id">{{ group.name }}</option>
-                  }
-                }
-              </select>
-            </label>
-          </div>
-
-          @if (createResourceError()) {
-            <div class="temporal-warning temporal-warning--error resource-dialog-error">{{ createResourceError() }}</div>
-          }
-
-          <div class="resource-dialog-actions">
-            <button type="button" class="app-button app-button--ghost" (click)="closeCreateResourceDialog()">Cancel</button>
-            <button type="button" class="app-button app-button--primary" (click)="submitCreateResource()" [disabled]="createResourceSaving() || !createResourceGroupId() || groupsLoading() || !createResourceTitle().trim() || (createResourceType() !== 'dataset' && !createResourceDescription().trim())">
-              {{ createResourceSaving() ? 'Creating...' : 'Create' }}
-            </button>
-          </div>
-        </section>
-      </div>
-    }
-
-    @if (detailDeleteDialogOpen()) {
-      <div class="resource-dialog-backdrop" (click)="closeDeleteDetailDialog()">
-        <section class="resource-dialog app-card delete-confirm-dialog" (click)="$event.stopPropagation()">
-          <div class="detail-section-header">
-            <div>
-              <p class="eyebrow app-badge app-badge--primary">Confirm Delete</p>
-              <h2>Delete this draft?</h2>
-              <p class="subtitle app-muted">This action cannot be undone.</p>
-            </div>
-          </div>
-
-          <p class="delete-confirm-text">You are about to permanently delete the current draft version.</p>
-
-          <div class="resource-dialog-actions">
-            <button type="button" class="app-button app-button--ghost" (click)="closeDeleteDetailDialog()">Cancel</button>
-            <button type="button" class="app-button detail-delete-button" (click)="confirmDeleteDetail()" [disabled]="detailDeleting()">{{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}</button>
-          </div>
-        </section>
-      </div>
-    }
-
-    @if (detailRejectDialogOpen()) {
-      <div class="resource-dialog-backdrop" (click)="closeRejectDetailDialog()">
-        <section class="resource-dialog app-card delete-confirm-dialog" (click)="$event.stopPropagation()">
-          <div class="detail-section-header">
-            <div>
-              <p class="eyebrow app-badge">Reject Resource</p>
-              <h2>Reject this submission?</h2>
-              <p class="subtitle app-muted">Add a reviewer note before rejecting.</p>
-            </div>
-          </div>
-
-          <label class="detail-field">
-            <span class="detail-label">Note</span>
-            <textarea class="app-input detail-textarea" rows="5" [ngModel]="detailRejectNote()" (ngModelChange)="detailRejectNote.set($event)" placeholder="Enter rejection note"></textarea>
-          </label>
-
-          <div class="resource-dialog-actions">
-            <button type="button" class="app-button app-button--ghost" (click)="closeRejectDetailDialog()">Cancel</button>
-            <button type="button" class="app-button detail-delete-button" (click)="confirmRejectDetail()" [disabled]="detailRejecting() || !detailRejectNote().trim()">{{ detailRejecting() ? 'Rejecting...' : 'Reject' }}</button>
-          </div>
-        </section>
-      </div>
-    }
   </section>
 </main>

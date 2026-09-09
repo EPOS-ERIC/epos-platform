@@ -1,0 +1,50 @@
+@if (dialogService.state(); as dialog) {
+  <div class="dialog-backdrop" (click)="dialogService.dismiss()">
+    <section
+      class="dialog app-card"
+      [class.dialog--destructive]="dialog.destructive"
+      [attr.role]="dialog.destructive ? 'alertdialog' : 'dialog'"
+      aria-modal="true"
+      aria-labelledby="shared-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="dialog-header">
+        <div>
+          @if (dialog.eyebrow) {
+            <p class="dialog-eyebrow app-badge" [class.dialog-eyebrow--destructive]="dialog.destructive">{{ dialog.eyebrow }}</p>
+          }
+          <h2 id="shared-dialog-title">{{ dialog.title }}</h2>
+          @if (dialog.message) {
+            <p class="dialog-message app-muted">{{ dialog.message }}</p>
+          }
+        </div>
+      </div>
+
+      @if (dialog.kind === 'prompt') {
+        <label class="dialog-field">
+          <span>{{ dialog.inputLabel }}</span>
+          <textarea
+            class="app-input"
+            rows="5"
+            autofocus
+            [(ngModel)]="promptValue"
+            [placeholder]="dialog.placeholder || ''"
+          ></textarea>
+        </label>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="dialogService.dismiss()">{{ dialog.cancelLabel || 'Cancel' }}</button>
+        <button
+          type="button"
+          class="app-button app-button--primary"
+          [class.dialog-confirm--destructive]="dialog.destructive"
+          [disabled]="dialog.kind === 'prompt' && dialog.required && !promptValue.trim()"
+          (click)="dialogService.accept(promptValue.trim())"
+        >
+          {{ dialog.confirmLabel || 'Confirm' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

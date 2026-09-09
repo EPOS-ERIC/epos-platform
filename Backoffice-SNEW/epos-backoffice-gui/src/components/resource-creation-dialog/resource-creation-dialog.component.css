@@ -1,0 +1,99 @@
+.resource-creation-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.58);
+  backdrop-filter: blur(4px);
+}
+
+.resource-creation-dialog {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.dialog-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+}
+
+h2 {
+  margin: 0 0 6px;
+  color: var(--text-strong);
+  font-size: 1.35rem;
+}
+
+.subtitle {
+  margin: 0;
+}
+
+.resource-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.form-field--wide {
+  grid-column: 1 / -1;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.dialog-error {
+  margin-top: 16px;
+  color: #b91c1c;
+  font-size: 0.86rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .resource-creation-backdrop {
+    padding: 12px;
+  }
+
+  .resource-creation-dialog {
+    max-height: calc(100vh - 24px);
+    padding: 16px;
+  }
+
+  .resource-form {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field--wide {
+    grid-column: auto;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-actions .app-button {
+    width: 100%;
+  }
+}

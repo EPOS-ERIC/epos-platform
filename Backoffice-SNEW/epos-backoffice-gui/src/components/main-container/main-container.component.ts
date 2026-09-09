@@ -1,12 +1,10 @@
 import { Component, DestroyRef, DOCUMENT, ElementRef, Input, ViewChild, effect, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, catchError, combineLatest, debounceTime, distinctUntilChanged, finalize, map, of, switchMap } from 'rxjs';
-import type { Observable, Subscription } from 'rxjs';
+import type { Subscription } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import type {
-  CreateResourceDraftRequest,
   Distribution,
   DatasetDraftMetadata,
   DatasetResourceMetadata,
@@ -36,11 +34,13 @@ import type {
   TemporalCoverage,
   Group,
   WebServiceDistributionDraft,
-  WebServiceDistribution,
-  WriteResult
+  WebServiceDistribution
 } from '../../../generated/backofficeSchemas';
 import { ApiService, type ResourceVersionResponse } from '../../services/api.service';
+import { DialogService } from '../../services/dialog.service';
 import { GroupsStore } from '../../services/groups.store';
+import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
+import { ToastService } from '../../services/toast.service';
 import {
   BackofficeHeaderComponent,
   DISCOVERY_VERSIONING_STATUSES,
@@ -245,7 +245,6 @@ export type DatasetDetailForm = {
     CategoriesComponent,
     ContactPointsComponent,
     DistributionComponent,
-    FormsModule,
     GeneralInformationComponent,
     IdentifiersComponent,
     NavigationSidebarComponent,
@@ -264,7 +263,10 @@ export class MainContainerComponent {
   @ViewChild('detailScrollContainer') private detailScrollContainerRef?: ElementRef<HTMLElement>;
 
   private readonly apiService = inject(ApiService);
+  private readonly dialogService = inject(DialogService);
   private readonly groupsStore = inject(GroupsStore);
+  private readonly resourceCreationDialog = inject(ResourceCreationDialogService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
@@ -296,23 +298,6 @@ export class MainContainerComponent {
   protected readonly detailReopening = signal(false);
   protected readonly detailDeleting = signal(false);
   protected readonly detailActionError = signal('');
-  protected readonly detailDeleteDialogOpen = signal(false);
-  protected readonly detailRejectDialogOpen = signal(false);
-  protected readonly detailRejectNote = signal('');
-  protected readonly detailToastMessage = signal('');
-  protected readonly detailToastVisible = signal(false);
-  protected readonly createResourceDialogOpen = signal(false);
-  protected readonly createResourceTitle = signal('');
-  protected readonly createResourceDescription = signal('');
-  protected readonly createResourceType = signal<DiscoveryResourceType>('dataset');
-  protected readonly createResourceGroupId = signal('');
-  protected readonly createResourceSaving = signal(false);
-  protected readonly createResourceError = signal('');
-  protected readonly createResourceTypes: Array<{ label: string; value: DiscoveryResourceType }> = [
-    { label: 'dataset', value: 'dataset' },
-    { label: 'softwareapplication', value: 'software-application' },
-    { label: 'softwaresourcecode', value: 'software-source-code' }
-  ];
   protected readonly datasetVersion = signal<ResourceVersionResponse<'dataset'> | null>(null);
   protected datasetForm: DatasetDetailForm | null = null;
   protected softwareApplicationForm: SoftwareApplicationResourceMetadata | null = null;
@@ -415,11 +400,7 @@ export class MainContainerComponent {
     this.activeDataType.set(isDetailRoute ? (detailDataType ?? null) : null);
 
     this.detailActionError.set('');
-    this.detailDeleteDialogOpen.set(false);
-    this.detailRejectDialogOpen.set(false);
-    this.detailRejectNote.set('');
-    this.detailToastMessage.set('');
-    this.detailToastVisible.set(false);
+    this.dialogService.dismiss();
 
     this.sectionPath.set(adminPage ? `admin/${adminPage}` : this.currentSectionPath());
     this.sectionTitle.set(isDetailRoute && detailDataType ? this.resourceTypeLabel(detailDataType) : (routeData.sectionTitle ?? 'Data'));
@@ -857,8 +838,6 @@ export class MainContainerComponent {
     return this.detailStatus()?.toUpperCase() === 'REJECTED';
   }
 
-  private detailToastTimeout?: ReturnType<typeof setTimeout>;
-
   private detailVersionContext(): { resourceType: DiscoveryResourceType; resourceId: string; versionId: string; groupId: string } | null {
     const resourceType = this.detailResourceType();
 
@@ -878,40 +857,6 @@ export class MainContainerComponent {
       versionId: version.version_id,
       groupId: version.group_id
     };
-  }
-
-  private showDetailToast(message: string): void {
-    this.detailToastMessage.set(message);
-    this.detailToastVisible.set(true);
-
-    if (this.detailToastTimeout) {
-      clearTimeout(this.detailToastTimeout);
-    }
-
-    this.detailToastTimeout = setTimeout(() => {
-      this.detailToastVisible.set(false);
-      this.detailToastTimeout = setTimeout(() => {
-        this.detailToastMessage.set('');
-        this.detailToastTimeout = undefined;
-      }, 180);
-    }, 3500);
-  }
-
-  protected dismissDetailToast(): void {
-    if (!this.detailToastMessage()) {
-      return;
-    }
-
-    this.detailToastVisible.set(false);
-
-    if (this.detailToastTimeout) {
-      clearTimeout(this.detailToastTimeout);
-    }
-
-    this.detailToastTimeout = setTimeout(() => {
-      this.detailToastMessage.set('');
-      this.detailToastTimeout = undefined;
-    }, 180);
   }
 
   private reloadCurrentDetail(resourceType: DiscoveryResourceType, resourceId: string, versionId: string): void {
@@ -982,7 +927,7 @@ export class MainContainerComponent {
     request
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        switchMap((result) => this.resolveCreatedResourceRoute(result, context.groupId)),
+        switchMap((result) => this.resourceCreationDialog.resolveCreatedResourceRoute(result, context.groupId, this.sectionPath())),
         finalize(() => this.detailCreatingDraft.set(false)),
         catchError((error) => {
           console.error(`Failed to create draft from ${status.toLowerCase()}`, error);
@@ -1034,7 +979,7 @@ export class MainContainerComponent {
           return;
         }
 
-        this.showDetailToast(`Successfully Archived ${this.detailName()}`);
+        this.toastService.success(`Successfully Archived ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -1068,24 +1013,31 @@ export class MainContainerComponent {
           return;
         }
 
-        this.showDetailToast(`Successfully Submitted ${this.detailName()}`);
+        this.toastService.success(`Successfully Submitted ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
 
-  protected openRejectDetailDialog(): void {
+  protected async openRejectDetailDialog(): Promise<void> {
     if (this.detailRejecting() || !this.canPublishDetail()) {
       return;
     }
 
     this.detailActionError.set('');
-    this.detailRejectNote.set('');
-    this.detailRejectDialogOpen.set(true);
-  }
+    const note = await this.dialogService.prompt({
+      eyebrow: 'Reject Resource',
+      title: 'Reject this submission?',
+      message: 'Add a reviewer note before rejecting.',
+      inputLabel: 'Note',
+      placeholder: 'Enter rejection note',
+      confirmLabel: 'Reject',
+      destructive: true,
+      required: true
+    });
 
-  protected closeRejectDetailDialog(): void {
-    this.detailRejectDialogOpen.set(false);
-    this.detailRejectNote.set('');
+    if (note) {
+      this.confirmRejectDetail(note);
+    }
   }
 
   protected publishDetail(): void {
@@ -1118,19 +1070,13 @@ export class MainContainerComponent {
           return;
         }
 
-        this.showDetailToast(`Successfully Published ${this.detailName()}`);
+        this.toastService.success(`Successfully Published ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
 
-  protected confirmRejectDetail(): void {
+  private confirmRejectDetail(note: string): void {
     if (this.detailRejecting() || !this.canPublishDetail()) {
-      return;
-    }
-
-    const note = this.detailRejectNote().trim();
-
-    if (!note) {
       return;
     }
 
@@ -1140,7 +1086,6 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailRejectDialogOpen.set(false);
     this.detailRejecting.set(true);
     this.detailActionError.set('');
 
@@ -1162,7 +1107,7 @@ export class MainContainerComponent {
           return;
         }
 
-        this.showDetailToast(`Successfully Rejected ${this.detailName()}`);
+        this.toastService.success(`Successfully Rejected ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -1197,7 +1142,7 @@ export class MainContainerComponent {
           return;
         }
 
-        this.showDetailToast(`Successfully Reverted ${this.detailName()} to Draft`);
+        this.toastService.success(`Successfully Reverted ${this.detailName()} to Draft`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -1242,20 +1187,26 @@ export class MainContainerComponent {
     this.openDeleteDetailDialog();
   }
 
-  protected openDeleteDetailDialog(): void {
+  protected async openDeleteDetailDialog(): Promise<void> {
     if (this.detailDeleting() || !this.canDeleteDetail()) {
       return;
     }
 
     this.detailActionError.set('');
-    this.detailDeleteDialogOpen.set(true);
+    const confirmed = await this.dialogService.confirm({
+      eyebrow: 'Confirm Delete',
+      title: 'Delete this draft?',
+      message: 'You are about to permanently delete the current draft version. This action cannot be undone.',
+      confirmLabel: 'Delete draft',
+      destructive: true
+    });
+
+    if (confirmed) {
+      this.confirmDeleteDetail();
+    }
   }
 
-  protected closeDeleteDetailDialog(): void {
-    this.detailDeleteDialogOpen.set(false);
-  }
-
-  protected confirmDeleteDetail(): void {
+  private confirmDeleteDetail(): void {
     if (this.detailDeleting() || !this.canDeleteDetail()) {
       return;
     }
@@ -1266,7 +1217,6 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailDeleteDialogOpen.set(false);
     this.detailDeleting.set(true);
     this.detailActionError.set('');
 
@@ -1294,96 +1244,7 @@ export class MainContainerComponent {
   }
 
   protected openCreateResourceDialog(): void {
-    this.createResourceError.set('');
-    this.createResourceTitle.set('');
-    this.createResourceDescription.set('');
-    this.createResourceDialogOpen.set(true);
-
-    if (!this.createResourceGroupId() && this.groups().length) {
-      this.createResourceGroupId.set(this.selectedGroupId() || this.groups()[0].id);
-    }
-  }
-
-  protected closeCreateResourceDialog(): void {
-    this.createResourceDialogOpen.set(false);
-    this.createResourceError.set('');
-    this.createResourceTitle.set('');
-    this.createResourceDescription.set('');
-    this.createResourceType.set('dataset');
-  }
-
-  protected submitCreateResource(): void {
-    const title = this.createResourceTitle().trim();
-    const description = this.createResourceDescription().trim();
-
-    if (this.createResourceSaving() || !this.createResourceGroupId() || !title || (this.createResourceType() !== 'dataset' && !description)) {
-      return;
-    }
-
-    const payload = this.buildCreateResourceDraftRequest(this.createResourceType(), title, description);
-
-    if (!payload) {
-      return;
-    }
-
-    this.createResourceSaving.set(true);
-    this.createResourceError.set('');
-
-    this.apiService
-      .createResourceDraft(this.createResourceGroupId(), payload)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-          switchMap((result) => this.resolveCreatedResourceRoute(result, this.createResourceGroupId())),
-        finalize(() => this.createResourceSaving.set(false)),
-        catchError((error) => {
-          console.error('Failed to create resource draft', error);
-          this.createResourceError.set('Failed to create resource draft.');
-          return of(null);
-        })
-      )
-      .subscribe((route) => {
-        if (!route) {
-          this.createResourceError.set('Created resource, but could not open its detail page.');
-          return;
-        }
-
-        const groupId = this.createResourceGroupId();
-        const dataType = this.createResourceType();
-        this.closeCreateResourceDialog();
-        void this.router.navigate(route, { replaceUrl: true, queryParams: { groupId, dataType } });
-      });
-  }
-
-  private resolveCreatedResourceRoute(result: WriteResult, groupId: string): Observable<readonly [string, string, string, string] | null> {
-    return this.apiService
-      .getDiscovery({
-        groupId,
-        type: [result.resourceType],
-        versioningStatus: ['DRAFT'] satisfies VersioningStatus[]
-      })
-      .pipe(
-        map((items) => items.find((item) => item.resource_id === result.id && item.type === result.resourceType)),
-        map((item) => {
-          if (!item) {
-            return null;
-          }
-
-          return ['/', this.sectionPathForGroup(groupId), item.resource_id, item.version_id] as const;
-        })
-      );
-  }
-
-  private sectionPathForGroup(groupId: string): string {
-    switch (this.groups().find((group) => group.id === groupId)?.concept) {
-      case 'DATA':
-        return 'data';
-      case 'SOFTWARE':
-        return 'software';
-      case 'FACILITIES':
-        return 'facilities';
-      default:
-        return this.sectionPath();
-    }
+    this.resourceCreationDialog.open(this.selectedGroupId(), this.sectionPath());
   }
 
   protected scrollDetailToTop(): void {
@@ -1459,48 +1320,6 @@ export class MainContainerComponent {
           || (typeof parameter.defaultValue === 'string' && !parameter.defaultValue.trim()))
       )
     ) ?? false;
-  }
-
-  private buildCreateResourceDraftRequest(resourceType: DiscoveryResourceType, title: string, description: string): CreateResourceDraftRequest | null {
-    switch (resourceType) {
-      case 'dataset':
-        return this.buildCreateDatasetResourceRequest(title);
-      case 'software-application':
-        return this.buildCreateSoftwareApplicationResourceRequest(title, description);
-      case 'software-source-code':
-        return this.buildCreateSoftwareSourceCodeResourceRequest(title, description);
-      default:
-        return null;
-    }
-  }
-
-  private buildCreateDatasetResourceRequest(title: string): CreateResourceDraftRequest {
-    return {
-      resource_type: 'dataset',
-      metadata: {
-        title
-      }
-    };
-  }
-
-  private buildCreateSoftwareApplicationResourceRequest(title: string, description: string): CreateResourceDraftRequest {
-    return {
-      resource_type: 'software-application',
-      metadata: {
-        name: title,
-        description
-      }
-    };
-  }
-
-  private buildCreateSoftwareSourceCodeResourceRequest(title: string, description: string): CreateResourceDraftRequest {
-    return {
-      resource_type: 'software-source-code',
-      metadata: {
-        name: title,
-        description
-      }
-    };
   }
 
   protected addPersistentIdentifier(): void {

@@ -281,25 +281,11 @@ app-navigation-sidebar .sidebar.is-collapsed .nav-item {
   margin: 0.2rem 0 0.35rem;
 }
 
-.delete-confirm-dialog {
-  width: min(520px, 100%);
-}
-
-.delete-confirm-text {
-  margin: 0;
-  color: var(--text);
-  line-height: 1.5;
-}
-
 .resource-dialog-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 20px;
-}
-
-.resource-dialog-error {
-  margin-top: 16px;
 }
 
 app-web-service-parameters .parameter-table {
@@ -459,72 +445,7 @@ app-navigation-sidebar .group-nav-icon {
   object-fit: contain;
 }
 
-.detail-toast {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: min(440px, calc(100vw - 48px));
-  padding: 12px 14px 12px 16px;
-  border: 1px solid #86efac;
-  border-radius: 14px;
-  background: #f0fdf4;
-  color: #166534;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
-  font-size: 0.9rem;
-  font-weight: 600;
-  transform: translate3d(calc(100% + 32px), 0, 0);
-  opacity: 0;
-  transition: transform 180ms ease, opacity 180ms ease;
-  pointer-events: none;
-}
-
-.detail-toast--visible {
-  transform: translate3d(0, 0, 0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.detail-toast-message {
-  flex: 1;
-  min-width: 0;
-}
-
-.detail-toast-close {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(22, 101, 52, 0.08);
-  color: #166534;
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.detail-toast-close:hover {
-  background: rgba(22, 101, 52, 0.14);
-}
-
-@media (max-width: 640px) {
-  .detail-toast {
-    top: 12px;
-    right: 12px;
-    width: calc(100vw - 24px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .detail-toast {
-    transition: opacity 180ms ease;
-  }
-
   app-navigation-sidebar .nav-tree-children--scrollable {
     animation: none;
   }

@@ -1,9 +1,13 @@
 import { Component, DOCUMENT, effect, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { DialogOutletComponent } from '../components/dialog-outlet/dialog-outlet.component';
+import { ResourceCreationDialogComponent } from '../components/resource-creation-dialog/resource-creation-dialog.component';
+import { ToastOutletComponent } from '../components/toast-outlet/toast-outlet.component';
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [DialogOutletComponent, ResourceCreationDialogComponent, RouterOutlet, ToastOutletComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

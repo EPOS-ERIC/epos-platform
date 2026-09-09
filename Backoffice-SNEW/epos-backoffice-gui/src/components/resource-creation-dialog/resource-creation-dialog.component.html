@@ -1,0 +1,63 @@
+@if (dialog.openState()) {
+  <div class="resource-creation-backdrop" (click)="dialog.close()">
+    <section class="resource-creation-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="resource-creation-title" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <p class="eyebrow app-badge app-badge--primary">Create Resource Draft</p>
+        <h2 id="resource-creation-title">Add New Resource</h2>
+        <p class="subtitle app-muted">Choose a resource type and target group.</p>
+      </div>
+
+      <div class="resource-form">
+        <label class="form-field">
+          <span>Title</span>
+          <input class="app-input" type="text" [ngModel]="dialog.title()" (ngModelChange)="dialog.title.set($event)" placeholder="Enter resource title" />
+        </label>
+
+        <label class="form-field">
+          <span>Resource type</span>
+          <select class="app-input" [ngModel]="dialog.resourceType()" (ngModelChange)="dialog.resourceType.set($event)">
+            @for (item of dialog.resourceTypes; track item.value) {
+              <option [ngValue]="item.value">{{ item.label }}</option>
+            }
+          </select>
+        </label>
+
+        @if (dialog.resourceType() !== 'dataset') {
+          <label class="form-field form-field--wide">
+            <span>Description</span>
+            <textarea class="app-input" rows="3" [ngModel]="dialog.description()" (ngModelChange)="dialog.description.set($event)" placeholder="Enter resource description"></textarea>
+          </label>
+        }
+
+        <label class="form-field">
+          <span>Group</span>
+          <select class="app-input" [ngModel]="dialog.groupId()" (ngModelChange)="dialog.groupId.set($event)" [disabled]="dialog.groupsLoading() || !dialog.groups().length">
+            @if (dialog.groupsLoading()) {
+              <option value="">Loading groups...</option>
+            } @else {
+              @for (group of dialog.groups(); track group.id) {
+                <option [ngValue]="group.id">{{ group.name }}</option>
+              }
+            }
+          </select>
+        </label>
+      </div>
+
+      @if (dialog.error()) {
+        <div class="dialog-error" role="alert">{{ dialog.error() }}</div>
+      }
+
+      <div class="dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="dialog.close()" [disabled]="dialog.saving()">Cancel</button>
+        <button
+          type="button"
+          class="app-button app-button--primary"
+          (click)="dialog.submit()"
+          [disabled]="dialog.saving() || !dialog.groupId() || dialog.groupsLoading() || !dialog.title().trim() || (dialog.resourceType() !== 'dataset' && !dialog.description().trim())"
+        >
+          {{ dialog.saving() ? 'Creating...' : 'Create' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}
