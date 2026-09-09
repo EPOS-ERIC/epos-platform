@@ -74,9 +74,15 @@
       <span>Showing {{ firstResult }}-{{ lastResult }} of {{ discoveryItems!.length }}</span>
 
       <nav class="pager" aria-label="Results pagination">
+        <button type="button" class="pager-button pager-button--icon" aria-label="First page" title="First page" [disabled]="currentPage === 1" (click)="setPage(1)">
+          <span aria-hidden="true">&laquo;</span>
+        </button>
         <button type="button" class="pager-button" [disabled]="currentPage === 1" (click)="setPage(currentPage - 1)">Previous</button>
         <span class="page-indicator" aria-live="polite">Page {{ currentPage }} of {{ totalPages }}</span>
         <button type="button" class="pager-button" [disabled]="currentPage === totalPages" (click)="setPage(currentPage + 1)">Next</button>
+        <button type="button" class="pager-button pager-button--icon" aria-label="Last page" title="Last page" [disabled]="currentPage === totalPages" (click)="setPage(totalPages)">
+          <span aria-hidden="true">&raquo;</span>
+        </button>
       </nav>
     </div>
   }

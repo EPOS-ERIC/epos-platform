@@ -230,6 +230,13 @@ tbody tr:hover {
   padding: 8px 12px;
 }
 
+.pager-button--icon {
+  min-width: 36px;
+  padding-inline: 9px;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
 .pager-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
