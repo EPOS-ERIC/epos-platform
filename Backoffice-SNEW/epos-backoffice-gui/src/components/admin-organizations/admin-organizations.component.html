@@ -1,0 +1,168 @@
+<section class="organizations-card app-card">
+  <div class="organizations-header">
+    <div>
+      <p class="eyebrow app-badge app-badge--primary">Administration</p>
+      <h2>Organizations</h2>
+      <p class="subtitle app-muted">Create and manage canonical organizations used across platform resources.</p>
+    </div>
+
+    <label class="organization-search">
+      <span class="visually-hidden">Search organizations</span>
+      <input
+        class="app-input"
+        type="search"
+        placeholder="Search organizations"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        [ngModelOptions]="{ standalone: true }"
+      />
+    </label>
+  </div>
+
+  @if (organizationsError()) {
+    <div class="organizations-message organizations-message--error">{{ organizationsError() }}</div>
+  } @else if (organizationsLoading()) {
+    <div class="organizations-message">Loading organizations...</div>
+  } @else if (filteredOrganizations().length) {
+    <ul class="organization-list">
+      @for (organization of filteredOrganizations(); track organization.id) {
+        <li class="organization-item">
+          <div class="organization-summary">
+            @if (organization.logo_url) {
+              <img class="organization-logo" [src]="organization.logo_url" alt="" />
+            } @else {
+              <span class="organization-logo organization-logo--placeholder" aria-hidden="true">{{ organization.name.charAt(0).toUpperCase() }}</span>
+            }
+
+            <div>
+              <h3>{{ organization.name }}</h3>
+              <p>{{ organizationLocation(organization) }}</p>
+              <div class="organization-meta">
+                @if (organization.email) {
+                  <a [href]="'mailto:' + organization.email">{{ organization.email }}</a>
+                }
+                @if (organization.page_url) {
+                  <a [href]="organization.page_url" target="_blank" rel="noopener noreferrer">Website</a>
+                }
+                @if (organization.lei_code) {
+                  <span>LEI {{ organization.lei_code }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="organization-actions">
+            <button type="button" class="app-button app-button--ghost" (click)="openEditEditor(organization)">Manage</button>
+            <button type="button" class="app-button organization-delete-button" (click)="openDeleteDialog(organization)">Delete</button>
+          </div>
+        </li>
+      }
+    </ul>
+    <div class="organizations-footer">Showing {{ filteredOrganizations().length }} of {{ organizations().length }} organizations</div>
+  } @else {
+    <div class="organizations-message">No organizations found.</div>
+  }
+</section>
+
+<button type="button" class="app-button add-organization-button" (click)="openCreateEditor()">
+  <span aria-hidden="true">+</span>
+  Add organization
+</button>
+
+@if (editorOpen()) {
+  <div class="organization-backdrop" (click)="closeEditor()">
+    <section class="organization-dialog app-card" role="dialog" aria-modal="true" aria-labelledby="organization-dialog-title" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow app-badge app-badge--primary">{{ editingOrganization() ? 'Manage organization' : 'New organization' }}</p>
+          <h2 id="organization-dialog-title">{{ editingOrganization()?.name || 'Add organization' }}</h2>
+        </div>
+        <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Close</button>
+      </div>
+
+      @if (editorError()) {
+        <div class="organizations-message organizations-message--error">{{ editorError() }}</div>
+      }
+
+      <form class="organization-form" #organizationEditorForm="ngForm" (ngSubmit)="saveOrganization()">
+        <label class="form-field form-field--wide">
+          <span>Name *</span>
+          <input class="app-input" name="name" required [(ngModel)]="organizationForm.name" />
+        </label>
+        <label class="form-field">
+          <span>Email</span>
+          <input class="app-input" name="email" type="email" [(ngModel)]="organizationForm.email" />
+        </label>
+        <label class="form-field">
+          <span>LEI code</span>
+          <input class="app-input" name="leiCode" [(ngModel)]="organizationForm.leiCode" />
+        </label>
+        <label class="form-field">
+          <span>Website URL</span>
+          <input class="app-input" name="pageUrl" type="url" [(ngModel)]="organizationForm.pageUrl" />
+        </label>
+        <div class="logo-url-field">
+          <label class="form-field">
+            <span>Logo URL</span>
+            <input class="app-input" name="logoUrl" type="url" [ngModel]="organizationForm.logoUrl" (ngModelChange)="updateLogoUrl($event)" />
+          </label>
+          <div class="logo-preview" aria-label="Logo preview">
+            @if (organizationForm.logoUrl.trim() && !logoPreviewFailed) {
+              <img [src]="organizationForm.logoUrl" alt="Logo preview" (error)="logoPreviewFailed = true" />
+            } @else {
+              <span aria-hidden="true">Preview</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-section-title form-field--wide">Address</div>
+        <label class="form-field form-field--wide">
+          <span>Street</span>
+          <input class="app-input" name="street" [(ngModel)]="organizationForm.street" />
+        </label>
+        <label class="form-field">
+          <span>Locality</span>
+          <input class="app-input" name="locality" [(ngModel)]="organizationForm.locality" />
+        </label>
+        <label class="form-field">
+          <span>Postal code</span>
+          <input class="app-input" name="postalCode" [(ngModel)]="organizationForm.postalCode" />
+        </label>
+        <label class="form-field form-field--wide">
+          <span>Country</span>
+          <input class="app-input" name="country" [(ngModel)]="organizationForm.country" />
+        </label>
+
+        @if (editingOrganization()) {
+          <p class="form-note form-field--wide">Existing identifiers, parent relationships and contact points are preserved by this editor.</p>
+        }
+
+        <div class="dialog-actions form-field--wide">
+          <button type="button" class="app-button app-button--ghost" (click)="closeEditor()" [disabled]="editorSaving()">Cancel</button>
+          <button type="submit" class="app-button app-button--primary" [disabled]="organizationEditorForm.invalid || editorSaving()">
+            {{ editorSaving() ? 'Saving...' : (editingOrganization() ? 'Save changes' : 'Create organization') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (pendingDelete(); as organization) {
+  <div class="organization-backdrop" (click)="closeDeleteDialog()">
+    <section class="delete-dialog app-card" role="alertdialog" aria-modal="true" aria-labelledby="delete-organization-title" (click)="$event.stopPropagation()">
+      <p class="eyebrow app-badge app-badge--danger">Delete organization</p>
+      <h2 id="delete-organization-title">Delete {{ organization.name }}?</h2>
+      <p class="subtitle app-muted">This operation cannot be undone and may fail if the organization is still referenced.</p>
+      @if (deleteError()) {
+        <div class="organizations-message organizations-message--error">{{ deleteError() }}</div>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="app-button app-button--ghost" (click)="closeDeleteDialog()" [disabled]="!!deletingOrganizationId()">Cancel</button>
+        <button type="button" class="app-button organization-delete-button" (click)="deleteOrganization()" [disabled]="!!deletingOrganizationId()">
+          {{ deletingOrganizationId() ? 'Deleting...' : 'Delete organization' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

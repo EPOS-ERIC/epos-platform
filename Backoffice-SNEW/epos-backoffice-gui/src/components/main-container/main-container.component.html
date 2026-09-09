@@ -46,6 +46,10 @@
     <div class="content-spacer">
       @if (adminPage() === 'groups') {
         <app-admin-groups />
+      } @else if (adminPage() === 'categories') {
+        <app-admin-categories [groups]="groups()" [groupsLoading]="groupsLoading()" />
+      } @else if (adminPage() === 'organizations') {
+        <app-admin-organizations />
       } @else if (resourceVersionLoading()) {
         <section class="detail-card app-card">
           <div class="detail-empty">Loading detail...</div>

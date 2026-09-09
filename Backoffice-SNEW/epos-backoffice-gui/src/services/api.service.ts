@@ -6,6 +6,8 @@ import type {
   CanonicalOrganization,
   Category,
   ContactPoint,
+  CreateCategoryRequest,
+  CreateOrganizationRequest,
   CreateResourceDraftRequest,
   DatasetResourceMetadata,
   DiscoveryItem,
@@ -14,6 +16,8 @@ import type {
   ResourceVersionReference,
   ResourceVersion,
   RejectResourceRequest,
+  ReplaceCategoryRequest,
+  ReplaceOrganizationRequest,
   WriteResult,
   DatasetDraftMetadata,
   ReplaceResourceDraftRequest,
@@ -256,8 +260,68 @@ export class ApiService {
     );
   }
 
+  getCanonicalOrganizations(): Observable<CanonicalOrganization[]> {
+    return this.http.get<CanonicalOrganization[]>(`${this.baseUrl}/organizations`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  createOrganization(payload: CreateOrganizationRequest): Observable<CanonicalOrganization> {
+    return this.http.post<CanonicalOrganization>(`${this.baseUrl}/organizations`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  replaceOrganization(id: string, payload: ReplaceOrganizationRequest): Observable<CanonicalOrganization> {
+    return this.http.put<CanonicalOrganization>(`${this.baseUrl}/organizations/${encodeURIComponent(id)}`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  deleteOrganization(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/organizations/${encodeURIComponent(id)}`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
   getGroupCategories(groupId: string): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories`);
+  }
+
+  createGroupCategory(groupId: string, payload: CreateCategoryRequest): Observable<Category> {
+    return this.http.post<Category>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories`, payload, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
+  }
+
+  replaceGroupCategory(groupId: string, categoryId: string, payload: ReplaceCategoryRequest): Observable<Category> {
+    return this.http.put<Category>(
+      `${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories/${encodeURIComponent(categoryId)}`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${this.bearerToken}`
+        }
+      }
+    );
+  }
+
+  deleteGroupCategory(groupId: string, categoryId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/groups/${encodeURIComponent(groupId)}/categories/${encodeURIComponent(categoryId)}`, {
+      headers: {
+        Authorization: `Bearer ${this.bearerToken}`
+      }
+    });
   }
 
   getGroups(): Observable<Group[]> {

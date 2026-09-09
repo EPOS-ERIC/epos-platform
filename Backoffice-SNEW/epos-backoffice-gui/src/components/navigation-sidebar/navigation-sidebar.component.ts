@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { AppIconComponent, type IconName } from '../app-icon/app-icon.component';
 import type { DiscoveryConcept, Group } from '../../../generated/backofficeSchemas';
+import { groupIconPath } from '../../group-icons';
 
 type NavigationItem = {
   label: string;
@@ -55,16 +56,11 @@ export class NavigationSidebarComponent {
   ];
 
   protected readonly adminItems: NavigationItem[] = [
-    { label: 'Categories', route: '#categories', icon: 'tags' },
+    { label: 'Categories', route: '/admin/categories', icon: 'tags' },
     { label: 'Groups', route: '/admin/groups', icon: 'users' },
-    { label: 'Organizations', route: '#organizations', icon: 'building' }
+    { label: 'Organizations', route: '/admin/organizations', icon: 'building' }
   ];
-  private readonly groupIconPaths: Record<string, string> = {
-    '1375500a-fc04-5831-a7f5-39ea5fcb0445': '/group-icons/1375500a-fc04-5831-a7f5-39ea5fcb0445.svg',
-    'a244acb4-8986-5cd0-aa4b-827171e4f639': '/group-icons/a244acb4-8986-5cd0-aa4b-827171e4f639.png',
-    '94a5445f-a8c4-5805-a79d-b8993738ea30': '/group-icons/94a5445f-a8c4-5805-a79d-b8993738ea30.png',
-    '23b9b58a-9f1c-5d18-85f9-73842733835c': '/group-icons/23b9b58a-9f1c-5d18-85f9-73842733835c.png'
-  };
+  protected readonly groupIconPath = groupIconPath;
 
   protected get detailRootIcon(): IconName | undefined {
     if (this.detailRootLabel === 'Dataset') {
@@ -92,10 +88,6 @@ export class NavigationSidebarComponent {
 
   protected groupsForItem(item: NavigationItem): Group[] {
     return item.concept ? this.groups.filter((group) => group.concept === item.concept) : [];
-  }
-
-  protected groupIconPath(groupId: string): string | undefined {
-    return this.groupIconPaths[groupId];
   }
 
   protected isMainSectionActive(item: NavigationItem): boolean {

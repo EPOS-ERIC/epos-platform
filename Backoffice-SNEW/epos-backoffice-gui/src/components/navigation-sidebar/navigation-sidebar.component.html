@@ -20,7 +20,7 @@
     </div>
   </div>
 
-  <nav class="nav" [class.nav--main]="!detailItems.length">
+  <nav class="nav" [class.nav--main]="!detailItems.length" [class.nav--detail]="!!detailItems.length">
     @if (!detailItems.length) {
       @for (item of items; track item.route) {
         <div class="nav-tree-item" [class.nav-tree-item--expanded]="!collapsed() && isMainSectionActive(item)">
@@ -32,7 +32,7 @@
           </a>
 
           @if (!collapsed() && isMainSectionActive(item)) {
-            <div class="nav-tree-children">
+            <div class="nav-tree-children nav-tree-children--scrollable">
               @if (groupsLoading) {
                 <span class="nav-section-title">Loading groups...</span>
               } @else {
@@ -71,7 +71,7 @@
         </div>
 
         @for (item of detailItems; track item.anchor) {
-          <div class="nav-tree-item">
+          <div class="nav-tree-item" [class.nav-tree-item--expanded]="!!item.children?.length && !collapsed() && isNodeExpanded(item.anchor)">
             <div class="nav-tree-row">
               <a class="nav-item nav-item--nested nav-item--anchor nav-item--tree-link" [href]="'#' + item.anchor" (click)="scrollToSectionAndExpand($event, item.anchor)" [class.centered]="collapsed()" [class.active]="isDetailAnchorActive(item.anchor)">
                 <span class="nav-label" [class.hidden]="collapsed()">{{ item.label }}</span>
@@ -85,9 +85,9 @@
             </div>
 
             @if (item.children?.length && !collapsed() && isNodeExpanded(item.anchor)) {
-              <div class="nav-tree-children">
+              <div class="nav-tree-children nav-tree-children--fill">
                 @for (child of item.children; track child.anchor) {
-                  <div class="nav-tree-item nav-tree-item--child">
+                  <div class="nav-tree-item nav-tree-item--child" [class.nav-tree-item--expanded]="!!child.children?.length && isNodeExpanded(child.anchor)">
                     <div class="nav-tree-row nav-tree-row--child">
                       <a class="nav-item nav-item--nested nav-item--anchor nav-item--sub nav-item--tree-link" [href]="'#' + child.anchor" (click)="scrollToSectionAndExpand($event, child.anchor)" [class.active]="isDetailAnchorActive(child.anchor)">
                         <span class="nav-label">{{ child.label }}</span>
@@ -101,7 +101,7 @@
                     </div>
 
                     @if (child.children?.length && isNodeExpanded(child.anchor)) {
-                      <div class="nav-tree-children nav-tree-children--sub">
+                      <div class="nav-tree-children nav-tree-children--sub nav-tree-children--scrollable">
                         @for (grandchild of child.children; track grandchild.anchor) {
                           <a class="nav-item nav-item--nested nav-item--anchor nav-item--sub nav-item--sub-sub nav-item--tree-link" [href]="'#' + grandchild.anchor" (click)="scrollToSectionAndExpand($event, grandchild.anchor)" [class.active]="isDetailAnchorActive(grandchild.anchor)">
                             <span class="nav-label">{{ grandchild.label }}</span>

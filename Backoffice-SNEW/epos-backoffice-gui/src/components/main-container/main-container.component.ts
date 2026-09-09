@@ -58,11 +58,13 @@ import { ResultsTableComponent } from '../results-table/results-table.component'
 import { SpatialCoverageComponent } from './detail-sections/spatial-coverage/spatial-coverage.component';
 import { TemporalCoverageComponent } from './detail-sections/temporal-coverage/temporal-coverage.component';
 import { AdminGroupsComponent } from '../admin-groups/admin-groups.component';
+import { AdminOrganizationsComponent } from '../admin-organizations/admin-organizations.component';
+import { AdminCategoriesComponent } from '../admin-categories/admin-categories.component';
 
 type RouteData = {
   sectionTitle?: string;
   discoveryType?: DiscoveryResourceType[];
-  adminPage?: 'groups';
+  adminPage?: 'groups' | 'categories' | 'organizations';
 };
 
 type RouteState = {
@@ -236,7 +238,9 @@ export type DatasetDetailForm = {
 @Component({
   selector: 'app-main-container',
   imports: [
+    AdminCategoriesComponent,
     AdminGroupsComponent,
+    AdminOrganizationsComponent,
     BackofficeHeaderComponent,
     CategoriesComponent,
     ContactPointsComponent,
@@ -424,7 +428,7 @@ export class MainContainerComponent {
       this.discoveryRequest?.unsubscribe();
       this.selectedGroupId.set('');
       this.selectedGroupName.set('');
-      this.pageLabel.set('Users');
+      this.pageLabel.set(adminPage === 'groups' ? 'Users' : adminPage === 'categories' ? 'Categories' : 'Organizations');
       this.detailNavigationItems.set([]);
       this.discoveryItems.set(null);
       this.discoveryLoading.set(false);
@@ -690,17 +694,7 @@ export class MainContainerComponent {
   }
 
   protected canEditDetail(): boolean {
-    const status = this.detailStatus()?.toUpperCase();
-
-    if (status === 'DRAFT') {
-      return true;
-    }
-
-    if (status === 'SUBMITTED') {
-      return this.isAdmin;
-    }
-
-    return false;
+    return this.detailStatus()?.toUpperCase() === 'DRAFT';
   }
 
   protected detailStatus(): string | null {

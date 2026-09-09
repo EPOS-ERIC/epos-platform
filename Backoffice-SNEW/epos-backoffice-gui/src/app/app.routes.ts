@@ -63,5 +63,17 @@ export const routes: Routes = [
     component: MainContainerComponent,
     canActivate: [authGuard],
     data: { sectionTitle: 'Groups', adminPage: 'groups' }
+  },
+  {
+    path: 'admin/categories',
+    component: MainContainerComponent,
+    canActivate: [authGuard],
+    data: { sectionTitle: 'Categories', adminPage: 'categories' }
+  },
+  {
+    path: 'admin/organizations',
+    component: MainContainerComponent,
+    canActivate: [authGuard],
+    data: { sectionTitle: 'Organizations', adminPage: 'organizations' }
   }
 ];
