@@ -1,17 +1,19 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, catchError, finalize, map, of, switchMap } from 'rxjs';
+import { catchError, finalize, of, switchMap } from 'rxjs';
 
-import type { CreateResourceDraftRequest, DiscoveryResourceType, VersioningStatus, WriteResult } from '../../generated/backofficeSchemas';
+import type { CreateResourceDraftRequest, DiscoveryResourceType } from '../../generated/backofficeSchemas';
 import { ApiService } from './api.service';
 import { GroupsStore } from './groups.store';
+import { ResourceActionsService } from './resource-actions.service';
 
 @Injectable({ providedIn: 'root' })
 export class ResourceCreationDialogService {
   private readonly apiService = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly groupsStore = inject(GroupsStore);
+  private readonly resourceActions = inject(ResourceActionsService);
   private readonly router = inject(Router);
   private fallbackSectionPath = 'data';
 
@@ -68,7 +70,7 @@ export class ResourceCreationDialogService {
     this.apiService
       .createResourceDraft(groupId, payload)
       .pipe(
-        switchMap((result) => this.resolveCreatedResourceRoute(result, groupId, this.fallbackSectionPath)),
+        switchMap((result) => this.resourceActions.resolveCreatedResourceRoute(result, groupId, this.fallbackSectionPath)),
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.saving.set(false)),
         catchError((error) => {
@@ -86,36 +88,6 @@ export class ResourceCreationDialogService {
         this.openState.set(false);
         void this.router.navigate(route, { replaceUrl: true, queryParams: { groupId, dataType: resourceType } });
       });
-  }
-
-  resolveCreatedResourceRoute(
-    result: WriteResult,
-    groupId: string,
-    fallbackSectionPath: string
-  ): Observable<readonly [string, string, string, string] | null> {
-    return this.apiService
-      .getDiscovery({
-        groupId,
-        type: [result.resourceType],
-        versioningStatus: ['DRAFT'] satisfies VersioningStatus[]
-      })
-      .pipe(
-        map((items) => items.find((item) => item.resource_id === result.id && item.type === result.resourceType)),
-        map((item) => item ? ['/', this.sectionPathForGroup(groupId, fallbackSectionPath), item.resource_id, item.version_id] as const : null)
-      );
-  }
-
-  private sectionPathForGroup(groupId: string, fallbackSectionPath: string): string {
-    switch (this.groups().find((group) => group.id === groupId)?.concept) {
-      case 'DATA':
-        return 'data';
-      case 'SOFTWARE':
-        return 'software';
-      case 'FACILITIES':
-        return 'facilities';
-      default:
-        return fallbackSectionPath;
-    }
   }
 
   private buildRequest(resourceType: DiscoveryResourceType, title: string, description: string): CreateResourceDraftRequest {

@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { AppIconComponent, type IconName } from '../app-icon/app-icon.component';
 import type { DiscoveryConcept, Group } from '../../../generated/backofficeSchemas';
 import { groupIconPath } from '../../group-icons';
+import type { ResourceActionItem, ResourceActionKey } from '../../models/resource-actions';
 
 type NavigationItem = {
   label: string;
@@ -12,17 +13,6 @@ type NavigationItem = {
   icon?: IconName;
   concept?: DiscoveryConcept;
   children?: NavigationItem[];
-};
-
-export type SidebarActionVariant = 'primary' | 'ghost' | 'danger';
-
-export type SidebarActionItem = {
-  key: string;
-  label: string;
-  loadingLabel?: string;
-  disabled?: boolean;
-  loading?: boolean;
-  variant?: SidebarActionVariant;
 };
 
 @Component({
@@ -39,12 +29,12 @@ export class NavigationSidebarComponent {
   @Input() detailRootLabel = '';
   @Input() detailBackLink: string | string[] = '/';
   @Input() detailBackQueryParams: Record<string, string> | null = null;
-  @Input() detailActions: SidebarActionItem[] = [];
+  @Input() detailActions: ResourceActionItem[] = [];
   @Input() groups: Group[] = [];
   @Input() groupsLoading = false;
   @Input() currentSectionPath = '';
   @Input() selectedGroupId = '';
-  @Output() detailAction = new EventEmitter<string>();
+  @Output() detailAction = new EventEmitter<ResourceActionKey>();
 
   protected readonly collapsed = signal(false);
   protected readonly expandedNodes = signal<Set<string>>(new Set());
@@ -141,7 +131,7 @@ export class NavigationSidebarComponent {
     this.document.location.hash = anchor;
   }
 
-  protected emitDetailAction(key: string): void {
+  protected emitDetailAction(key: ResourceActionKey): void {
     this.detailAction.emit(key);
   }
 

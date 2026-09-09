@@ -22,9 +22,9 @@ import type {
   ReplaceDatasetDraftRequest,
   ReplaceSoftwareApplicationDraftRequest,
   ReplaceSoftwareSourceCodeDraftRequest,
-  RejectResourceRequest,
   ResourceVersionReference,
   ResourceVersion,
+  VersioningStatus,
   DownloadableFileDistribution,
   SoftwareApplicationDraftMetadata,
   SoftwareApplicationResourceMetadata,
@@ -39,8 +39,9 @@ import { ApiService, type ResourceVersionResponse } from '../../services/api.ser
 import { DialogService } from '../../services/dialog.service';
 import { GroupsStore } from '../../services/groups.store';
 import { LocalStorageService } from '../../services/local-storage.service';
+import { ResourceActionsService } from '../../services/resource-actions.service';
 import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
-import { ToastService } from '../../services/toast.service';
+import type { ResourceActionItem, ResourceActionKey, ResourceVersionContext, SaveResourceContext } from '../../models/resource-actions';
 import { normalizeResultsFilters, type ResultsFilters } from '../../models/results-filters';
 import { BackofficeHeaderComponent } from '../backoffice-header/backoffice-header.component';
 import { CategoriesComponent } from './detail-sections/categories/categories.component';
@@ -48,7 +49,7 @@ import { ContactPointsComponent } from './detail-sections/contact-points/contact
 import { DistributionComponent } from './detail-sections/distribution/distribution.component';
 import { GeneralInformationComponent } from './detail-sections/general-information/general-information.component';
 import { IdentifiersComponent } from './detail-sections/identifiers/identifiers.component';
-import { NavigationSidebarComponent, type SidebarActionItem } from '../navigation-sidebar/navigation-sidebar.component';
+import { NavigationSidebarComponent } from '../navigation-sidebar/navigation-sidebar.component';
 import { ProvidersComponent } from './detail-sections/providers/providers.component';
 import { SoftwareGeneralInformationComponent } from './detail-sections/software-general-information/software-general-information.component';
 import { ResultsTableComponent } from '../results-table/results-table.component';
@@ -236,8 +237,8 @@ export class MainContainerComponent {
   private readonly dialogService = inject(DialogService);
   private readonly groupsStore = inject(GroupsStore);
   private readonly localStorage = inject(LocalStorageService);
+  private readonly resourceActions = inject(ResourceActionsService);
   private readonly resourceCreationDialog = inject(ResourceCreationDialogService);
-  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
@@ -261,14 +262,14 @@ export class MainContainerComponent {
   private readonly activeDataType = signal<DiscoveryResourceType | null>(null);
   protected readonly resourceVersion = signal<ResourceVersionResponse<DiscoveryResourceType> | null>(null);
   protected readonly resourceVersionLoading = signal(false);
-  protected readonly detailSaving = signal(false);
-  protected readonly detailPublishing = signal(false);
-  protected readonly detailCreatingDraft = signal(false);
-  protected readonly detailArchiving = signal(false);
-  protected readonly detailRejecting = signal(false);
-  protected readonly detailReopening = signal(false);
-  protected readonly detailDeleting = signal(false);
-  protected readonly detailActionError = signal('');
+  protected readonly detailSaving = this.resourceActions.saving;
+  protected readonly detailPublishing = this.resourceActions.publishing;
+  protected readonly detailCreatingDraft = this.resourceActions.creatingDraft;
+  protected readonly detailArchiving = this.resourceActions.archiving;
+  protected readonly detailRejecting = this.resourceActions.rejecting;
+  protected readonly detailReopening = this.resourceActions.reopening;
+  protected readonly detailDeleting = this.resourceActions.deleting;
+  protected readonly detailActionError = this.resourceActions.error;
   protected readonly datasetVersion = signal<ResourceVersionResponse<'dataset'> | null>(null);
   protected datasetForm: DatasetDetailForm | null = null;
   protected softwareApplicationForm: SoftwareApplicationResourceMetadata | null = null;
@@ -370,7 +371,7 @@ export class MainContainerComponent {
     this.adminPage.set(adminPage);
     this.activeDataType.set(isDetailRoute ? (detailDataType ?? null) : null);
 
-    this.detailActionError.set('');
+    this.resourceActions.clearError();
     this.dialogService.dismiss();
 
     this.sectionPath.set(adminPage ? `admin/${adminPage}` : this.currentSectionPath());
@@ -642,10 +643,10 @@ export class MainContainerComponent {
   }
 
   protected canEditDetail(): boolean {
-    return this.detailStatus()?.toUpperCase() === 'DRAFT';
+    return this.detailStatus() === 'DRAFT';
   }
 
-  protected detailStatus(): string | null {
+  protected detailStatus(): VersioningStatus | null {
     return this.datasetVersion()?.status ?? this.resourceVersion()?.status ?? null;
   }
 
@@ -653,159 +654,31 @@ export class MainContainerComponent {
     return this.activeDataType();
   }
 
-  protected detailDeleteContext(): { resourceType: DiscoveryResourceType; resourceId: string; versionId: string } | null {
-    const resourceType = this.detailResourceType();
-
-    if (!resourceType) {
-      return null;
-    }
-
-    if (resourceType === 'dataset') {
-      const version = this.datasetVersion();
-
-      if (!version) {
-        return null;
-      }
-
-      return {
-        resourceType,
-        resourceId: version.resource_id,
-        versionId: version.version_id
-      };
-    }
-
-    const version = this.resourceVersion();
-
-    if (!version) {
-      return null;
-    }
-
-    return {
-      resourceType,
-      resourceId: version.resource_id,
-      versionId: version.version_id
-    };
-  }
-
   protected canDeleteDetail(): boolean {
-    return this.detailStatus()?.toUpperCase() === 'DRAFT' && Boolean(this.detailDeleteContext());
+    return this.detailStatus() === 'DRAFT' && Boolean(this.detailVersionContext());
   }
 
-  protected detailSidebarActions(): SidebarActionItem[] {
+  protected detailSidebarActions(): ResourceActionItem[] {
     if (this.pageLabel() !== 'Detail') {
       return [];
     }
 
-    const status = this.detailStatus()?.toUpperCase();
-
-    if (status === 'PUBLISHED') {
-      const actionPending = this.detailCreatingDraft() || this.detailArchiving();
-
-      return [
-        {
-          key: 'create-new-draft',
-          label: 'Create New Draft',
-          loadingLabel: 'Creating...',
-          variant: 'primary',
-          disabled: actionPending,
-          loading: this.detailCreatingDraft()
-        },
-        {
-          key: 'archive',
-          label: 'Archive',
-          loadingLabel: 'Archiving...',
-          variant: 'danger',
-          disabled: actionPending,
-          loading: this.detailArchiving()
-        }
-      ];
-    }
-
-    if (status === 'ARCHIVED') {
-      return [
-        {
-          key: 'create-new-draft',
-          label: 'Create New Draft',
-          loadingLabel: 'Creating...',
-          variant: 'primary',
-          disabled: this.detailCreatingDraft(),
-          loading: this.detailCreatingDraft()
-        }
-      ];
-    }
-
-    if (status === 'REJECTED') {
-      return [
-        {
-          key: 'revert-to-draft',
-          label: 'Revert to Draft',
-          loadingLabel: 'Reverting...',
-          variant: 'primary',
-          disabled: this.detailReopening() || this.detailDeleting(),
-          loading: this.detailReopening()
-        }
-      ];
-    }
-
-    if (status === 'SUBMITTED' && !this.isAdmin) {
-      return [];
-    }
-
-    if (status === 'SUBMITTED' && this.isAdmin) {
-      return [
-        {
-          key: 'publish',
-          label: 'Publish',
-          loadingLabel: 'Publishing...',
-          variant: 'primary',
-          disabled: this.detailPublishing() || this.detailRejecting() || this.detailDeleting(),
-          loading: this.detailPublishing()
-        },
-        {
-          key: 'reject',
-          label: 'Reject',
-          variant: 'danger',
-          disabled: this.detailPublishing() || this.detailRejecting() || this.detailDeleting(),
-          loading: this.detailRejecting()
-        }
-      ];
-    }
-
-    if (status !== 'DRAFT') {
-      return [];
-    }
-
-    return [
-      {
-        key: 'save',
-        label: 'Save',
-        loadingLabel: 'Saving...',
-        variant: 'primary',
-        disabled: !this.canEditDetail() || this.detailSaving() || this.detailDeleting() || this.detailPublishing() || this.detailRejecting() || this.detailReopening(),
-        loading: this.detailSaving()
-      },
-      {
-        key: 'submit',
-        label: 'Submit',
-        variant: 'ghost' as const,
-        disabled: this.detailSaving() || this.detailDeleting() || this.detailPublishing() || this.detailRejecting() || this.detailReopening()
-      }
-    ];
+    return this.resourceActions.sidebarActions(this.detailStatus(), this.isAdmin);
   }
 
   protected canSubmitDetail(): boolean {
-    return this.detailStatus()?.toUpperCase() === 'DRAFT';
+    return this.detailStatus() === 'DRAFT';
   }
 
   protected canPublishDetail(): boolean {
-    return this.detailStatus()?.toUpperCase() === 'SUBMITTED' && this.isAdmin;
+    return this.detailStatus() === 'SUBMITTED' && this.isAdmin;
   }
 
   protected canRevertToDraftDetail(): boolean {
-    return this.detailStatus()?.toUpperCase() === 'REJECTED';
+    return this.detailStatus() === 'REJECTED';
   }
 
-  private detailVersionContext(): { resourceType: DiscoveryResourceType; resourceId: string; versionId: string; groupId: string } | null {
+  private detailVersionContext(): ResourceVersionContext | null {
     const resourceType = this.detailResourceType();
 
     if (!resourceType) {
@@ -835,7 +708,7 @@ export class MainContainerComponent {
     this.loadResourceVersion(resourceType, resourceId, versionId);
   }
 
-  protected handleSidebarDetailAction(actionKey: string): void {
+  protected handleSidebarDetailAction(actionKey: ResourceActionKey): void {
     if (actionKey === 'save') {
       this.saveDetail();
       return;
@@ -872,7 +745,7 @@ export class MainContainerComponent {
   }
 
   protected createNewDraftFromCurrentVersion(): void {
-    const status = this.detailStatus()?.toUpperCase();
+    const status = this.detailStatus();
 
     if (this.detailCreatingDraft() || this.detailArchiving() || (status !== 'PUBLISHED' && status !== 'ARCHIVED')) {
       return;
@@ -884,28 +757,13 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailCreatingDraft.set(true);
-    this.detailActionError.set('');
-
-    const request = status === 'PUBLISHED'
-      ? this.apiService.createDraftFromPublication(context.resourceType, context.resourceId)
-      : this.apiService.createDraftFromArchive(context.resourceType, context.resourceId);
-
-    request
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        switchMap((result) => this.resourceCreationDialog.resolveCreatedResourceRoute(result, context.groupId, this.sectionPath())),
-        finalize(() => this.detailCreatingDraft.set(false)),
-        catchError((error) => {
-          console.error(`Failed to create draft from ${status.toLowerCase()}`, error);
-          this.detailActionError.set(`Failed to create a new draft from this ${status.toLowerCase()} resource.`);
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .createDraft(context, status, this.sectionPath())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((route) => {
         if (!route) {
           if (!this.detailActionError()) {
-            this.detailActionError.set('Draft created, but its detail page could not be opened.');
+            this.resourceActions.setError('Draft created, but its detail page could not be opened.');
           }
           return;
         }
@@ -917,7 +775,7 @@ export class MainContainerComponent {
   }
 
   protected archivePublishedDetail(): void {
-    if (this.detailArchiving() || this.detailCreatingDraft() || this.detailStatus()?.toUpperCase() !== 'PUBLISHED') {
+    if (this.detailArchiving() || this.detailCreatingDraft() || this.detailStatus() !== 'PUBLISHED') {
       return;
     }
 
@@ -927,26 +785,14 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailArchiving.set(true);
-    this.detailActionError.set('');
-
-    this.apiService
-      .unpublishResourceVersion(context.resourceType, context.resourceId, context.versionId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailArchiving.set(false)),
-        catchError((error) => {
-          console.error('Failed to archive published resource version', error);
-          this.detailActionError.set('Failed to archive this resource version.');
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .archive(context, this.detailTitleValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) {
           return;
         }
 
-        this.toastService.success(`Successfully Archived ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -962,25 +808,14 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailSaving.set(true);
-
-    this.apiService
-      .submitResourceVersion(context.resourceType, context.resourceId, context.versionId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailSaving.set(false)),
-        catchError((error) => {
-          console.error('Failed to submit resource version', error);
-          this.detailActionError.set('Failed to submit resource version.');
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .submit(context, this.detailTitleValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) {
           return;
         }
 
-        this.toastService.success(`Successfully Submitted ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -990,7 +825,7 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailActionError.set('');
+    this.resourceActions.clearError();
     const note = await this.dialogService.prompt({
       eyebrow: 'Reject Resource',
       title: 'Reject this submission?',
@@ -1018,26 +853,14 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailPublishing.set(true);
-    this.detailActionError.set('');
-
-    this.apiService
-      .publishResourceVersion(context.resourceType, context.resourceId, context.versionId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailPublishing.set(false)),
-        catchError((error) => {
-          console.error('Failed to publish resource version', error);
-          this.detailActionError.set('Failed to publish resource version.');
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .publish(context, this.detailTitleValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) {
           return;
         }
 
-        this.toastService.success(`Successfully Published ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -1053,28 +876,14 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailRejecting.set(true);
-    this.detailActionError.set('');
-
-    const payload: RejectResourceRequest = { note };
-
-    this.apiService
-      .rejectResourceVersion(context.resourceType, context.resourceId, context.versionId, payload)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailRejecting.set(false)),
-        catchError((error) => {
-          console.error('Failed to reject resource version', error);
-          this.detailActionError.set('Failed to reject resource version.');
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .reject(context, note, this.detailTitleValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) {
           return;
         }
 
-        this.toastService.success(`Successfully Rejected ${this.detailName()}`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -1090,26 +899,14 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailReopening.set(true);
-    this.detailActionError.set('');
-
-    this.apiService
-      .reopenResourceVersion(context.resourceType, context.resourceId, context.versionId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailReopening.set(false)),
-        catchError((error) => {
-          console.error('Failed to reopen resource version', error);
-          this.detailActionError.set('Failed to revert resource to draft.');
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .reopen(context, this.detailTitleValue())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) {
           return;
         }
 
-        this.toastService.success(`Successfully Reverted ${this.detailName()} to Draft`);
         this.reloadCurrentDetail(context.resourceType, context.resourceId, context.versionId);
       });
   }
@@ -1119,34 +916,22 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailActionError.set('');
+    this.resourceActions.clearError();
     const saveContext = this.buildSaveContext();
 
     if (!saveContext) {
       return;
     }
 
-    this.detailSaving.set(true);
-
-    this.apiService
-      .saveResourceVersionDraft(saveContext.resourceId, saveContext.versionId, saveContext.targetStatus, saveContext.payload)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailSaving.set(false)),
-        catchError((error) => {
-          console.error('Failed to save resource version', error);
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .save(saveContext)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((savedVersion) => {
         if (!savedVersion) {
           return;
         }
 
-        this.apiService
-          .getResourceVersion(saveContext.resourceType, saveContext.resourceId, saveContext.versionId)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe((resourceVersion) => this.applySavedVersion(saveContext.resourceType, resourceVersion as ResourceVersion));
+        this.applySavedVersion(saveContext.resourceType, savedVersion as ResourceVersion);
       });
   }
 
@@ -1159,7 +944,7 @@ export class MainContainerComponent {
       return;
     }
 
-    this.detailActionError.set('');
+    this.resourceActions.clearError();
     const confirmed = await this.dialogService.confirm({
       eyebrow: 'Confirm Delete',
       title: 'Delete this draft?',
@@ -1178,26 +963,15 @@ export class MainContainerComponent {
       return;
     }
 
-    const deleteContext = this.detailDeleteContext();
+    const deleteContext = this.detailVersionContext();
 
     if (!deleteContext) {
       return;
     }
 
-    this.detailDeleting.set(true);
-    this.detailActionError.set('');
-
-    this.apiService
-      .deleteResourceVersionDraft(deleteContext.resourceType, deleteContext.resourceId, deleteContext.versionId)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.detailDeleting.set(false)),
-        catchError((error) => {
-          console.error('Failed to delete resource draft', error);
-          this.detailActionError.set('Failed to delete resource draft.');
-          return of(null);
-        })
-      )
+    this.resourceActions
+      .delete(deleteContext)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result && this.detailActionError()) {
           return;
@@ -1218,21 +992,13 @@ export class MainContainerComponent {
     this.detailScrollContainerRef?.nativeElement.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  private buildSaveContext():
-    | {
-        resourceType: DiscoveryResourceType;
-        resourceId: string;
-        versionId: string;
-        targetStatus: 'draft' | 'submitted';
-        payload: ReplaceDatasetDraftRequest | ReplaceSoftwareApplicationDraftRequest | ReplaceSoftwareSourceCodeDraftRequest;
-      }
-    | null {
+  private buildSaveContext(): SaveResourceContext | null {
     const status = this.detailStatus()?.toLowerCase();
     const targetStatus: 'draft' | 'submitted' = status === 'submitted' ? 'submitted' : 'draft';
 
     if (this.datasetVersion() && this.datasetForm) {
       if (this.hasRequiredParameterWithoutDefault()) {
-        this.detailActionError.set('Every required web service parameter must have a default value.');
+        this.resourceActions.setError('Every required web service parameter must have a default value.');
         return null;
       }
 
@@ -1247,7 +1013,7 @@ export class MainContainerComponent {
 
     if (this.resourceVersion() && this.softwareApplicationForm) {
       if (!this.softwareApplicationForm.description.trim()) {
-        this.detailActionError.set('Software description is required.');
+        this.resourceActions.setError('Software description is required.');
         return null;
       }
 
@@ -1262,7 +1028,7 @@ export class MainContainerComponent {
 
     if (this.resourceVersion() && this.softwareSourceCodeForm) {
       if (!this.softwareSourceCodeForm.description.trim()) {
-        this.detailActionError.set('Software description is required.');
+        this.resourceActions.setError('Software description is required.');
         return null;
       }
 
