@@ -2,22 +2,9 @@ import { Component, Input, Output, EventEmitter, HostListener, inject, signal } 
 import { FormsModule } from '@angular/forms';
 
 import type { DiscoveryResourceType, VersioningStatus } from '../../../generated/backofficeSchemas';
+import { DISCOVERY_VERSIONING_STATUSES, type ResultsFilters } from '../../models/results-filters';
 import { AuthService } from '../../services/auth.service';
 import { AppIconComponent } from '../app-icon/app-icon.component';
-
-export type ResultsFilters = {
-  searchQuery: string;
-  dataTypes: DiscoveryResourceType[];
-  versioningStatuses: VersioningStatus[];
-};
-
-export const DISCOVERY_VERSIONING_STATUSES: VersioningStatus[] = [
-  'DRAFT',
-  'SUBMITTED',
-  'PUBLISHED',
-  'ARCHIVED',
-  'REJECTED'
-];
 
 @Component({
   selector: 'app-backoffice-header',

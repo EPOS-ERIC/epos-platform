@@ -1,6 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import { AuthConfig, OAuthService } from 'angular-oauth2-oidc';
 
+import { LocalStorageService } from './local-storage.service';
+
 const LIVE_AUTH_ISSUER = 'https://aaai.epos-eu.org/oauth2';
 const LIVE_AUTHORIZATION_ENDPOINT = 'https://aaai.epos-eu.org/oauth2-as/oauth2-authz';
 const LOCAL_AUTH_ISSUER = 'http://localhost:8110/oauth2';
@@ -21,7 +23,10 @@ export class AuthService {
     ? LOCAL_AUTHORIZATION_ENDPOINT
     : LIVE_AUTHORIZATION_ENDPOINT;
 
-  constructor(private readonly oauthService: OAuthService) {
+  constructor(
+    private readonly oauthService: OAuthService,
+    private readonly localStorage: LocalStorageService
+  ) {
     this.oauthService.events.subscribe(() => this.authenticated.set(this.oauthService.hasValidAccessToken()));
   }
 
@@ -54,14 +59,14 @@ export class AuthService {
   }
 
   private async initializeOAuth(): Promise<void> {
-    const previousIssuer = localStorage.getItem(AUTH_ISSUER_KEY);
+    const previousIssuer = this.localStorage.get(AUTH_ISSUER_KEY);
     const tokenIssuer = (this.oauthService.getIdentityClaims() as { iss?: string } | null)?.iss;
 
     this.oauthService.configure(this.makeAuthConfig());
     if ((previousIssuer && previousIssuer !== this.issuer) || (tokenIssuer && tokenIssuer !== this.issuer)) {
       this.oauthService.logOut(true);
     }
-    localStorage.setItem(AUTH_ISSUER_KEY, this.issuer);
+    this.localStorage.set(AUTH_ISSUER_KEY, this.issuer);
 
     const { JwksValidationHandler } = await import('angular-oauth2-oidc-jwks');
     this.oauthService.tokenValidationHandler = new JwksValidationHandler();

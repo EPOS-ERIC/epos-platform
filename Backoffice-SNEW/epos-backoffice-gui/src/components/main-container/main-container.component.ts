@@ -10,7 +10,6 @@ import type {
   DatasetResourceMetadata,
   DiscoveryConcept,
   DiscoveryItem,
-  VersioningStatus,
   DiscoveryResourceType,
   Documentation,
   DownloadableFile,
@@ -39,13 +38,11 @@ import type {
 import { ApiService, type ResourceVersionResponse } from '../../services/api.service';
 import { DialogService } from '../../services/dialog.service';
 import { GroupsStore } from '../../services/groups.store';
+import { LocalStorageService } from '../../services/local-storage.service';
 import { ResourceCreationDialogService } from '../../services/resource-creation-dialog.service';
 import { ToastService } from '../../services/toast.service';
-import {
-  BackofficeHeaderComponent,
-  DISCOVERY_VERSIONING_STATUSES,
-  type ResultsFilters
-} from '../backoffice-header/backoffice-header.component';
+import { normalizeResultsFilters, type ResultsFilters } from '../../models/results-filters';
+import { BackofficeHeaderComponent } from '../backoffice-header/backoffice-header.component';
 import { CategoriesComponent } from './detail-sections/categories/categories.component';
 import { ContactPointsComponent } from './detail-sections/contact-points/contact-points.component';
 import { DistributionComponent } from './detail-sections/distribution/distribution.component';
@@ -77,33 +74,6 @@ type RouteState = {
 type SoftwareResourceMetadata = SoftwareApplicationResourceMetadata | SoftwareSourceCodeResourceMetadata;
 
 const RESULTS_FILTERS_STORAGE_KEY = 'epos-backoffice-results-filters';
-const DISCOVERY_RESOURCE_TYPES: DiscoveryResourceType[] = ['dataset', 'software-application', 'software-source-code'];
-
-function loadPersistedResultsFilters(): ResultsFilters {
-  try {
-    const storedValue: unknown = JSON.parse(localStorage.getItem(RESULTS_FILTERS_STORAGE_KEY) ?? 'null');
-
-    if (!storedValue || typeof storedValue !== 'object') {
-      return { searchQuery: '', dataTypes: [], versioningStatuses: ['PUBLISHED'] };
-    }
-
-    const storedFilters = storedValue as Partial<Record<keyof ResultsFilters, unknown>>;
-    const dataTypes = Array.isArray(storedFilters.dataTypes)
-      ? storedFilters.dataTypes.filter((value): value is DiscoveryResourceType => DISCOVERY_RESOURCE_TYPES.includes(value as DiscoveryResourceType))
-      : [];
-    const versioningStatuses = Array.isArray(storedFilters.versioningStatuses)
-      ? storedFilters.versioningStatuses.filter((value): value is VersioningStatus => DISCOVERY_VERSIONING_STATUSES.includes(value as VersioningStatus))
-      : [];
-
-    return {
-      searchQuery: typeof storedFilters.searchQuery === 'string' ? storedFilters.searchQuery : '',
-      dataTypes,
-      versioningStatuses: versioningStatuses.length ? versioningStatuses : ['PUBLISHED']
-    };
-  } catch {
-    return { searchQuery: '', dataTypes: [], versioningStatuses: ['PUBLISHED'] };
-  }
-}
 
 type DetailNavigationItem = {
   label: string;
@@ -265,12 +235,13 @@ export class MainContainerComponent {
   private readonly apiService = inject(ApiService);
   private readonly dialogService = inject(DialogService);
   private readonly groupsStore = inject(GroupsStore);
+  private readonly localStorage = inject(LocalStorageService);
   private readonly resourceCreationDialog = inject(ResourceCreationDialogService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
-  private readonly initialResultsFilters = loadPersistedResultsFilters();
+  private readonly initialResultsFilters = normalizeResultsFilters(this.localStorage.getJson(RESULTS_FILTERS_STORAGE_KEY));
   private discoveryRequest?: Subscription;
   private readonly searchQueryChanges = new Subject<string>();
   protected readonly sectionTitle = signal('Data');
@@ -495,15 +466,11 @@ export class MainContainerComponent {
   }
 
   private persistResultsFilters(): void {
-    try {
-      localStorage.setItem(RESULTS_FILTERS_STORAGE_KEY, JSON.stringify({
-        searchQuery: this.searchQuery(),
-        dataTypes: this.selectedDataTypes(),
-        versioningStatuses: this.selectedVersioningStatuses()
-      } satisfies ResultsFilters));
-    } catch {
-      // Search remains usable when browser storage is unavailable.
-    }
+    this.localStorage.setJson(RESULTS_FILTERS_STORAGE_KEY, {
+      searchQuery: this.searchQuery(),
+      dataTypes: this.selectedDataTypes(),
+      versioningStatuses: this.selectedVersioningStatuses()
+    } satisfies ResultsFilters);
   }
 
   private reloadResultsForFilterChange(): void {
