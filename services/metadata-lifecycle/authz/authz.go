@@ -17,6 +17,7 @@ type repository interface {
 	IsGlobalAdmin(context.Context, string) (bool, error)
 	HasGlobalPermission(context.Context, string, string) (bool, error)
 	IsActiveMember(context.Context, string, uuid.UUID) (bool, error)
+	ActiveMemberGroupIDs(context.Context, string, []uuid.UUID) ([]uuid.UUID, error)
 	HasAnyActiveMembership(context.Context, string) (bool, error)
 	HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error)
 	HasGroupRole(context.Context, string, uuid.UUID, string) (bool, error)
@@ -321,33 +322,7 @@ func (a *Authorizer) CanReadDatasetVersion(ctx context.Context, userID *string, 
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("load dataset version authorization: %w", err)
 	}
-	if version.Status == domain.Published {
-		return domain.Result{Allowed: true, Reason: "public published resource"}, nil
-	}
-	if userID == nil {
-		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
-	}
-
-	_, result, err := a.activeUser(ctx, *userID)
-	if err != nil || !result.Allowed {
-		return result, err
-	}
-	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
-	}
-	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
-	}
-
-	member, err := a.repository.IsActiveMember(ctx, *userID, version.GroupID)
-	if err != nil {
-		return domain.Result{}, fmt.Errorf("check group membership: %w", err)
-	}
-	if !member {
-		return domain.Result{Allowed: false, Reason: "user is not an active group member"}, nil
-	}
-	return domain.Result{Allowed: true, Reason: "active group member"}, nil
+	return a.authorizeVersionRead(ctx, userID, version.GroupID, version.Status)
 }
 
 // CanReadSoftwareApplicationVersion applies publication and stored-group membership rules to one version.
@@ -376,32 +351,50 @@ func versionReadError(resource string, err error) (domain.Result, error) {
 	return domain.Result{}, fmt.Errorf("load %s version authorization: %w", resource, err)
 }
 
+// authorizeVersionRead loads actor facts needed to evaluate one non-public version.
 func (a *Authorizer) authorizeVersionRead(ctx context.Context, userID *string, groupID uuid.UUID, status domain.Status) (domain.Result, error) {
 	if status == domain.Published {
-		return domain.Result{Allowed: true, Reason: "public published resource"}, nil
+		return versionReadDecision(status, userID != nil, false, false, false, ""), nil
 	}
 	if userID == nil {
-		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
+		return versionReadDecision(status, false, false, false, false, ""), nil
 	}
 	_, result, err := a.activeUser(ctx, *userID)
 	if err != nil || !result.Allowed {
-		return result, err
+		return versionReadDecision(status, true, false, false, false, result.Reason), err
 	}
 	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
 	}
 	if admin {
-		return domain.Result{Allowed: true, Reason: "global admin"}, nil
+		return versionReadDecision(status, true, true, true, false, result.Reason), nil
 	}
 	member, err := a.repository.IsActiveMember(ctx, *userID, groupID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check group membership: %w", err)
 	}
-	if !member {
-		return domain.Result{Allowed: false, Reason: "user is not an active group member"}, nil
+	return versionReadDecision(status, true, true, false, member, result.Reason), nil
+}
+
+// versionReadDecision applies the shared version visibility rule to loaded facts.
+func versionReadDecision(status domain.Status, authenticated, active, admin, member bool, inactiveReason string) domain.Result {
+	if status == domain.Published {
+		return domain.Result{Allowed: true, Reason: "public published resource"}
 	}
-	return domain.Result{Allowed: true, Reason: "active group member"}, nil
+	if !authenticated {
+		return domain.Result{Allowed: false, Reason: "authentication required"}
+	}
+	if !active {
+		return domain.Result{Allowed: false, Reason: inactiveReason}
+	}
+	if admin {
+		return domain.Result{Allowed: true, Reason: "global admin"}
+	}
+	if !member {
+		return domain.Result{Allowed: false, Reason: "user is not an active group member"}
+	}
+	return domain.Result{Allowed: true, Reason: "active group member"}
 }
 
 // AuthorizeAdmin permits active global administrators only.
@@ -590,12 +583,11 @@ func (a *Authorizer) CanReadDiscoveryCreatedBy(ctx context.Context, userID *stri
 		return result, err
 	}
 
-	isAdmin, err := a.repository.IsGlobalAdmin(ctx, *userID)
+	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
 	}
-
-	if isAdmin {
+	if admin {
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
@@ -608,6 +600,83 @@ func (a *Authorizer) CanReadDiscoveryCreatedBy(ctx context.Context, userID *stri
 	}
 
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
+}
+
+// AuthorizeDiscovery applies discovery visibility once and returns candidates safe to project.
+// It reuses creator visibility checks and loads candidate group memberships in one batch.
+func (a *Authorizer) AuthorizeDiscovery(ctx context.Context, actor *domain.Actor, candidates []domain.DiscoveryCandidate) (domain.DiscoveryAuthorization, error) {
+	result := domain.DiscoveryAuthorization{
+		AllowedCandidates: make([]domain.DiscoveryCandidate, 0, len(candidates)),
+	}
+	if len(candidates) == 0 {
+		return result, nil
+	}
+	for _, candidate := range candidates {
+		switch candidate.Type {
+		case domain.Dataset, domain.SoftwareApplication, domain.SoftwareSourceCode:
+		default:
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("unsupported resource type %q: %w", candidate.Type, domain.ErrInvalidDiscovery)
+		}
+	}
+
+	creator := domain.Result{Allowed: false, Reason: "authentication required"}
+	if actor != nil {
+		var err error
+		creator, err = a.CanReadDiscoveryCreatedBy(ctx, (*string)(actor))
+		if err != nil {
+			return domain.DiscoveryAuthorization{}, fmt.Errorf("check discovery creator visibility: %w", err)
+		}
+		result.IncludeCreatedBy = creator.Allowed
+	}
+
+	activeGroups := make(map[uuid.UUID]struct{})
+	if actor != nil && creator.Allowed && creator.Reason != "global admin" {
+		groupIDs := make([]uuid.UUID, 0, len(candidates))
+		seenGroups := make(map[uuid.UUID]struct{}, len(candidates))
+		for _, candidate := range candidates {
+			if candidate.Status == domain.Published || candidate.GroupID == uuid.Nil {
+				continue
+			}
+			if _, ok := seenGroups[candidate.GroupID]; ok {
+				continue
+			}
+			seenGroups[candidate.GroupID] = struct{}{}
+			groupIDs = append(groupIDs, candidate.GroupID)
+		}
+		if len(groupIDs) > 0 {
+			groups, err := a.repository.ActiveMemberGroupIDs(ctx, string(*actor), groupIDs)
+			if err != nil {
+				return domain.DiscoveryAuthorization{}, fmt.Errorf("load discovery group memberships: %w", err)
+			}
+			for _, groupID := range groups {
+				activeGroups[groupID] = struct{}{}
+			}
+		}
+	}
+
+	for _, candidate := range candidates {
+		if !discoveryCandidateAllowed(actor, creator, activeGroups, candidate) {
+			continue
+		}
+		result.AllowedCandidates = append(result.AllowedCandidates, candidate)
+	}
+
+	return result, nil
+}
+
+// discoveryCandidateAllowed evaluates canonical candidate status and group facts.
+func discoveryCandidateAllowed(actor *domain.Actor, creator domain.Result, activeGroups map[uuid.UUID]struct{}, candidate domain.DiscoveryCandidate) bool {
+	if candidate.Status == domain.Published {
+		return true
+	}
+	if actor == nil || !creator.Allowed {
+		return false
+	}
+	if creator.Reason == "global admin" {
+		return true
+	}
+	_, member := activeGroups[candidate.GroupID]
+	return member
 }
 
 func (a *Authorizer) resourcePublished(ctx context.Context, typ domain.ResourceType, id uuid.UUID) (bool, error) {

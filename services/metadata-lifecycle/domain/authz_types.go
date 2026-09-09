@@ -36,3 +36,9 @@ type VersionAuthz struct {
 	GroupID    uuid.UUID
 	Status     Status
 }
+
+// DiscoveryAuthorization contains candidates allowed by the discovery policy.
+type DiscoveryAuthorization struct {
+	AllowedCandidates []DiscoveryCandidate
+	IncludeCreatedBy  bool
+}

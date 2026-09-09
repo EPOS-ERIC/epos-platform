@@ -834,6 +834,44 @@ func (q *Queries) IsSoftwareSourceCodePublished(ctx context.Context, softwareSou
 	return published, err
 }
 
+const listActiveMemberGroupIDs = `-- name: ListActiveMemberGroupIDs :many
+SELECT
+    group_id
+FROM
+    group_memberships
+WHERE
+    user_id = $1
+    AND STATUS = 'ACTIVE'
+    AND group_id = ANY($2::uuid [])
+ORDER BY
+    group_id
+`
+
+type ListActiveMemberGroupIDsParams struct {
+	UserID   string
+	GroupIds []uuid.UUID
+}
+
+func (q *Queries) ListActiveMemberGroupIDs(ctx context.Context, arg ListActiveMemberGroupIDsParams) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listActiveMemberGroupIDs, arg.UserID, arg.GroupIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []uuid.UUID
+	for rows.Next() {
+		var group_id uuid.UUID
+		if err := rows.Scan(&group_id); err != nil {
+			return nil, err
+		}
+		items = append(items, group_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPendingUserGroupRoleRequests = `-- name: ListPendingUserGroupRoleRequests :many
 SELECT
     id,

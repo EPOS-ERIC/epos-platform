@@ -301,6 +301,18 @@ SELECT
             AND STATUS = 'ACTIVE'
     ) AS active;
 
+-- name: ListActiveMemberGroupIDs :many
+SELECT
+    group_id
+FROM
+    group_memberships
+WHERE
+    user_id = sqlc.arg(user_id)
+    AND STATUS = 'ACTIVE'
+    AND group_id = ANY(sqlc.arg(group_ids)::uuid [])
+ORDER BY
+    group_id;
+
 -- name: HasAnyActiveMembership :one
 SELECT
     EXISTS (

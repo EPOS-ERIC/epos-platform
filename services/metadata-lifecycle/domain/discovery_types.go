@@ -28,11 +28,20 @@ type DiscoveryCandidate struct {
 	ResourceID uuid.UUID
 	VersionID  uuid.UUID
 	GroupID    uuid.UUID
+	GroupName  string
 	Status     Status
 	Name       string
 	UpdatedAt  time.Time
 	Concept    TopLevelConcept
 	CreatedBy  *DiscoveryCreatedBy
+}
+
+// DiscoveryRelations contains only relationships exposed by discovery.
+type DiscoveryRelations struct {
+	Providers     []DiscoveryReference
+	Creators      []DiscoveryReference
+	Categories    []DiscoveryReference
+	Distributions []DiscoveryReference
 }
 
 // DiscoveryItem is a resource summary returned by discovery.
