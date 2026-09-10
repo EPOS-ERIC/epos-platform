@@ -1,0 +1,226 @@
+@if (store.loading()) {
+  <section class="detail-card app-card">
+    <div class="detail-empty">Loading detail...</div>
+  </section>
+} @else if (store.loadError()) {
+  <section class="detail-card app-card">
+    <div class="detail-empty detail-action-error">{{ store.loadError() }}</div>
+  </section>
+} @else if (store.datasetVersion(); as version) {
+  @if (store.datasetForm(); as form) {
+    <div class="detail-page">
+      @if (store.canDelete()) {
+        <div class="detail-overview-actions">
+          <button
+            type="button"
+            class="app-button detail-delete-button"
+            (click)="store.openDeleteDialog()"
+            [disabled]="store.deleting() || store.saving()"
+          >
+            {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+          </button>
+        </div>
+      }
+
+      @if (store.actionError()) {
+        <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
+      }
+
+      <section class="detail-overview detail-card app-card">
+        <div class="detail-overview-item detail-overview-item--wide">
+          <span class="detail-label">Title</span>
+          <strong>{{ store.title() }}</strong>
+        </div>
+
+        <div class="detail-overview-item" [attr.data-status]="version.status.toLowerCase()">
+          <span class="detail-label">Status</span>
+          <strong>{{ version.status.toUpperCase() }}</strong>
+        </div>
+
+        <div class="detail-overview-item">
+          <span class="detail-label">Resource ID</span>
+          <strong>{{ version.resource_id }}</strong>
+        </div>
+      </section>
+
+      <app-general-information
+        [model]="form"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.setDatasetForm($event)"
+        [backLink]="backLink()"
+      />
+      <app-spatial-coverage
+        [model]="form.spatial"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetSpatial($event)"
+      />
+      <app-temporal-coverage
+        [model]="form.temporal"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetTemporal($event)"
+        [warningKind]="store.temporalWarningKind()"
+        [warningMessage]="store.temporalWarningMessage()"
+      />
+      <app-identifiers
+        [model]="form.persistentIdentifiers"
+        [disabled]="!store.canEdit()"
+        title="Persistent Identifiers"
+        subtitle="Type and identifier value pairs."
+      />
+      <app-contact-points
+        [model]="form.contactPoints"
+        [editable]="store.canEdit()"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetContactPoints($event)"
+      />
+      <app-providers
+        [model]="form.providers"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetProviders($any($event))"
+      />
+      <app-categories
+        [groupId]="version.group_id"
+        [model]="form.categories"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetCategories($event)"
+      />
+      <app-distribution
+        [model]="form.distributions"
+        [disabled]="!store.canEdit()"
+        (modelChange)="store.updateDatasetDistributions($event)"
+      />
+    </div>
+  }
+} @else if (store.softwareApplicationForm(); as form) {
+  @if (store.resourceVersion(); as version) {
+    <div class="detail-page">
+      @if (store.canDelete()) {
+        <div class="detail-overview-actions">
+          <button
+            type="button"
+            class="app-button detail-delete-button"
+            (click)="store.openDeleteDialog()"
+            [disabled]="store.deleting() || store.saving()"
+          >
+            {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+          </button>
+        </div>
+      }
+
+      @if (store.actionError()) {
+        <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
+      }
+
+      <section class="detail-overview detail-card app-card">
+        <div class="detail-overview-item detail-overview-item--wide">
+          <span class="detail-label">Title</span>
+          <strong>{{ store.title() }}</strong>
+        </div>
+
+        <div class="detail-overview-item" [attr.data-status]="version.status.toLowerCase()">
+          <span class="detail-label">Status</span>
+          <strong>{{ version.status.toUpperCase() }}</strong>
+        </div>
+
+        <div class="detail-overview-item">
+          <span class="detail-label">Resource ID</span>
+          <strong>{{ version.resource_id }}</strong>
+        </div>
+      </section>
+
+      <app-software-general-information
+        [model]="form"
+        [disabled]="!store.canEdit()"
+        resourceType="software-application"
+        [backLink]="backLink()"
+        (modelChange)="store.updateSoftwareApplicationForm($event)"
+      />
+      <app-identifiers
+        [model]="form.identifiers"
+        [disabled]="!store.canEdit()"
+        title="Persistent Identifiers"
+        subtitle="Type and identifier value pairs."
+      />
+      <app-contact-points
+        [model]="form.contact_points ?? []"
+        [editable]="store.canEdit()"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareApplicationContactPoints($event)"
+      />
+      <app-categories
+        [groupId]="version.group_id"
+        [model]="form.categories"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareApplicationCategories($event)"
+      />
+    </div>
+  }
+} @else if (store.softwareSourceCodeForm(); as form) {
+  @if (store.resourceVersion(); as version) {
+    <div class="detail-page">
+      @if (store.canDelete()) {
+        <div class="detail-overview-actions">
+          <button
+            type="button"
+            class="app-button detail-delete-button"
+            (click)="store.openDeleteDialog()"
+            [disabled]="store.deleting() || store.saving()"
+          >
+            {{ store.deleting() ? 'Deleting...' : 'Delete draft' }}
+          </button>
+        </div>
+      }
+
+      @if (store.actionError()) {
+        <div class="detail-action-error detail-overview-error">{{ store.actionError() }}</div>
+      }
+
+      <section class="detail-overview detail-card app-card">
+        <div class="detail-overview-item detail-overview-item--wide">
+          <span class="detail-label">Title</span>
+          <strong>{{ store.title() }}</strong>
+        </div>
+
+        <div class="detail-overview-item">
+          <span class="detail-label">Resource ID</span>
+          <strong>{{ version.resource_id }}</strong>
+        </div>
+
+        <div class="detail-overview-item" [attr.data-status]="version.status.toLowerCase()">
+          <span class="detail-label">Status</span>
+          <strong>{{ version.status.toUpperCase() }}</strong>
+        </div>
+      </section>
+
+      <app-software-general-information
+        [model]="form"
+        [disabled]="!store.canEdit()"
+        resourceType="software-source-code"
+        [backLink]="backLink()"
+        (modelChange)="store.updateSoftwareSourceCodeForm($event)"
+      />
+      <app-identifiers
+        [model]="form.identifiers"
+        [disabled]="!store.canEdit()"
+        title="Persistent Identifiers"
+        subtitle="Type and identifier value pairs."
+      />
+      <app-contact-points
+        [model]="form.contact_points ?? []"
+        [editable]="store.canEdit()"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareSourceCodeContactPoints($event)"
+      />
+      <app-categories
+        [groupId]="version.group_id"
+        [model]="form.categories"
+        [disabled]="!store.canEdit()"
+        (modelChange)="updateSoftwareSourceCodeCategories($event)"
+      />
+    </div>
+  }
+} @else {
+  <section class="detail-card app-card">
+    <div class="detail-empty">No resource detail available.</div>
+  </section>
+}

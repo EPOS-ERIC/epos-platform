@@ -62,8 +62,7 @@ export class ResultsTableComponent implements OnChanges {
   }
 
   protected discoveryLastChange(item: DiscoveryItem): string {
-    const date = new Date(item.updated_at);
-    return Number.isNaN(date.getTime()) ? item.updated_at : date.toLocaleString();
+    return item.updated_at;
   }
 
   protected detailLink(item: DiscoveryItem): string[] {

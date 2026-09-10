@@ -5,12 +5,12 @@
     [groupsLoading]="groupsLoading()"
     [currentSectionPath]="sectionPath()"
     [selectedGroupId]="selectedGroupId()"
-    [detailItems]="detailNavigationItems()"
-    [detailRootLabel]="detailRootLabel"
+    [detailItems]="detailStore.navigationItems()"
+    [detailRootLabel]="detailStore.rootLabel()"
     [detailBackLink]="['/', sectionPath()]"
     [detailBackQueryParams]="selectedGroupId() ? { groupId: selectedGroupId() } : null"
-    [detailActions]="detailSidebarActions()"
-    (detailAction)="handleSidebarDetailAction($event)"
+    [detailActions]="detailStore.sidebarActions()"
+    (detailAction)="detailStore.handleSidebarAction($event)"
   />
 
   <section class="content" #detailScrollContainer>
@@ -43,209 +43,11 @@
         <app-admin-categories [groups]="groups()" [groupsLoading]="groupsLoading()" />
       } @else if (adminPage() === 'organizations') {
         <app-admin-organizations />
-      } @else if (resourceVersionLoading()) {
-        <section class="detail-card app-card">
-          <div class="detail-empty">Loading detail...</div>
-        </section>
-      } @else if (datasetVersion()) {
-        @if (datasetForm; as form) {
-          <div class="detail-page">
-            @if (canDeleteDetail()) {
-              <div class="detail-overview-actions">
-                <button type="button" class="app-button detail-delete-button" (click)="openDeleteDetailDialog()" [disabled]="detailDeleting() || detailSaving()">
-                  {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
-                </button>
-              </div>
-            }
-
-            @if (detailActionError()) {
-              <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
-            }
-
-            <section class="detail-overview detail-card app-card">
-              <div class="detail-overview-item detail-overview-item--wide">
-                <span class="detail-label">Title</span>
-                <strong>{{ detailTitleValue() }}</strong>
-              </div>
-
-              <div class="detail-overview-item" [attr.data-status]="datasetVersion()!.status.toLowerCase()">
-                <span class="detail-label">Status</span>
-                <strong>{{ datasetVersion()!.status.toUpperCase() }}</strong>
-              </div>
-
-              <div class="detail-overview-item">
-                <span class="detail-label">Resource ID</span>
-                <strong>{{ datasetVersion()!.resource_id }}</strong>
-              </div>
-            </section>
-
-            <app-general-information [model]="datasetForm" [disabled]="!canEditDetail()" (modelChange)="datasetForm = $event" [backLink]="['/', sectionPath()]"></app-general-information>
-            <app-spatial-coverage [model]="datasetForm!.spatial" [disabled]="!canEditDetail()" (modelChange)="updateDatasetSpatial($event)"></app-spatial-coverage>
-            <app-temporal-coverage [model]="datasetForm!.temporal" [disabled]="!canEditDetail()" (modelChange)="updateDatasetTemporal($event)" [warningKind]="temporalWarningKind()" [warningMessage]="temporalWarningMessage()"></app-temporal-coverage>
-
-            <app-identifiers [model]="datasetForm!.persistentIdentifiers" [disabled]="!canEditDetail()" title="Persistent Identifiers" subtitle="Type and identifier value pairs."></app-identifiers>
-
-            <app-contact-points [model]="datasetForm!.contactPoints" [editable]="canEditDetail()" [disabled]="!canEditDetail()" (modelChange)="updateDatasetContactPoints($event)"></app-contact-points>
-            <app-providers [model]="datasetForm!.providers" [disabled]="!canEditDetail()" (modelChange)="updateDatasetProviders($any($event))"></app-providers>
-            <app-categories [groupId]="datasetVersion()!.group_id" [model]="datasetForm!.categories" [disabled]="!canEditDetail()" (modelChange)="updateDatasetCategories($event)"></app-categories>
-            <app-distribution [model]="datasetForm!.distributions" [disabled]="!canEditDetail()" (modelChange)="updateDatasetDistributions($event)"></app-distribution>
-          </div>
-        }
-      } @else if (softwareApplicationForm) {
-        <div class="detail-page">
-            @if (canDeleteDetail()) {
-              <div class="detail-overview-actions">
-              <button type="button" class="app-button detail-delete-button" (click)="openDeleteDetailDialog()" [disabled]="detailDeleting() || detailSaving()">
-                {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
-              </button>
-              </div>
-            }
-
-          @if (detailActionError()) {
-            <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
-          }
-
-          <section class="detail-overview detail-card app-card">
-            <div class="detail-overview-item detail-overview-item--wide">
-              <span class="detail-label">Title</span>
-              <strong>{{ detailTitleValue() }}</strong>
-            </div>
-
-            <div class="detail-overview-item" [attr.data-status]="resourceVersion()!.status.toLowerCase()">
-              <span class="detail-label">Status</span>
-              <strong>{{ resourceVersion()!.status.toUpperCase() }}</strong>
-            </div>
-
-            <div class="detail-overview-item">
-              <span class="detail-label">Resource ID</span>
-              <strong>{{ resourceVersion()!.resource_id }}</strong>
-            </div>
-          </section>
-
-          <app-software-general-information [model]="softwareApplicationForm" [disabled]="!canEditDetail()" resourceType="software-application" [backLink]="['/', sectionPath()]" (modelChange)="updateSoftwareApplicationForm($event)"></app-software-general-information>
-          <app-identifiers [model]="softwareApplicationForm.identifiers" [disabled]="!canEditDetail()" title="Persistent Identifiers" subtitle="Type and identifier value pairs."></app-identifiers>
-          <app-contact-points
-            [model]="softwareApplicationForm.contact_points ?? []"
-            [editable]="canEditDetail()"
-            [disabled]="!canEditDetail()"
-            (modelChange)="softwareApplicationForm.contact_points = $event"
-          ></app-contact-points>
-          <app-categories
-            [groupId]="resourceVersion()!.group_id"
-            [model]="softwareApplicationForm.categories"
-            [disabled]="!canEditDetail()"
-            (modelChange)="softwareApplicationForm.categories = $event"
-          ></app-categories>
-        </div>
-      } @else if (softwareSourceCodeForm) {
-        <div class="detail-page">
-          @if (canDeleteDetail()) {
-            <div class="detail-overview-actions">
-              <button type="button" class="app-button detail-delete-button" (click)="deleteDetail()" [disabled]="detailDeleting() || detailSaving()">
-                {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
-              </button>
-            </div>
-          }
-
-          @if (detailActionError()) {
-            <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
-          }
-
-          <section class="detail-overview detail-card app-card">
-            <div class="detail-overview-item detail-overview-item--wide">
-              <span class="detail-label">Title</span>
-              <strong>{{ detailTitleValue() }}</strong>
-            </div>
-
-            <div class="detail-overview-item">
-              <span class="detail-label">Resource ID</span>
-              <strong>{{ resourceVersion()!.resource_id }}</strong>
-            </div>
-
-            <div class="detail-overview-item" [attr.data-status]="resourceVersion()!.status.toLowerCase()">
-              <span class="detail-label">Status</span>
-              <strong>{{ resourceVersion()!.status.toUpperCase() }}</strong>
-            </div>
-          </section>
-
-          <app-software-general-information [model]="softwareSourceCodeForm" [disabled]="!canEditDetail()" resourceType="software-source-code" [backLink]="['/', sectionPath()]" (modelChange)="updateSoftwareSourceCodeForm($event)"></app-software-general-information>
-          <app-identifiers [model]="softwareSourceCodeForm.identifiers" [disabled]="!canEditDetail()" title="Persistent Identifiers" subtitle="Type and identifier value pairs."></app-identifiers>
-          <app-contact-points
-            [model]="softwareSourceCodeForm.contact_points ?? []"
-            [editable]="canEditDetail()"
-            [disabled]="!canEditDetail()"
-            (modelChange)="softwareSourceCodeForm.contact_points = $event"
-          ></app-contact-points>
-          <app-categories
-            [groupId]="resourceVersion()!.group_id"
-            [model]="softwareSourceCodeForm.categories"
-            [disabled]="!canEditDetail()"
-            (modelChange)="softwareSourceCodeForm.categories = $event"
-          ></app-categories>
-        </div>
-      } @else if (resourceVersion()) {
-        <section class="detail-card app-card">
-          <div class="detail-header">
-            <div>
-              <p class="eyebrow app-badge app-badge--primary">Detail</p>
-              <h2>{{ detailName() }}</h2>
-              <p class="subtitle app-muted">Version {{ resourceVersion()!.version_id }} · Revision {{ resourceVersion()!.revision }}</p>
-            </div>
-
-            <div class="detail-header-actions">
-              @if (canDeleteDetail()) {
-                <button type="button" class="app-button detail-delete-button detail-overview-delete-button" (click)="openDeleteDetailDialog()" [disabled]="detailDeleting() || detailSaving()">
-                  {{ detailDeleting() ? 'Deleting...' : 'Delete draft' }}
-                </button>
-              }
-
-              <a class="app-button app-button--ghost" [routerLink]="['/', sectionPath()]">Back to results</a>
-            </div>
-          </div>
-
-          @if (detailActionError()) {
-            <div class="detail-action-error detail-overview-error">{{ detailActionError() }}</div>
-          }
-
-          <div class="detail-grid">
-            <div class="detail-panel">
-              <span class="detail-label">Resource ID</span>
-              <strong>{{ resourceVersion()!.resource_id }}</strong>
-            </div>
-            <div class="detail-panel">
-              <span class="detail-label">Version ID</span>
-              <strong>{{ resourceVersion()!.version_id }}</strong>
-            </div>
-            <div class="detail-panel">
-              <span class="detail-label">Status</span>
-              <strong>{{ resourceVersion()!.status }}</strong>
-            </div>
-            <div class="detail-panel">
-              <span class="detail-label">Group</span>
-              <strong>{{ resourceVersion()!.group_name }}</strong>
-            </div>
-          </div>
-
-          <div class="detail-section">
-            <h3>Description</h3>
-            <p>{{ detailDescription() }}</p>
-          </div>
-
-          <div class="detail-section detail-section--split">
-            <div>
-              <h3>Keywords</h3>
-              <p>{{ detailKeywords() }}</p>
-            </div>
-            <div>
-              <h3>Distributions</h3>
-              <p>{{ detailDistributionCount() }}</p>
-            </div>
-          </div>
-        </section>
+      } @else if (pageLabel() === 'Detail') {
+        <app-resource-detail-page />
       } @else {
         <app-results-table [sectionTitle]="sectionTitle()" [sectionPath]="sectionPath()" [selectedGroupId]="selectedGroupId()" [selectedGroupName]="selectedGroupName()" [discoveryItems]="discoveryItems()" [discoveryLoading]="discoveryLoading()" />
       }
     </div>
-
   </section>
 </main>
