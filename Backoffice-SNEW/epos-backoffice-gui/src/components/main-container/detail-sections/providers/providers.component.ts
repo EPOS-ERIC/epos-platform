@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { catchError, finalize, of } from 'rxjs';
 
-import type { DatasetProviderForm } from '../../main-container.component';
+import type { DatasetProviderForm } from '../../../../models/dataset-detail-form';
 import { ApiService } from '../../../../services/api.service';
 
 @Component({

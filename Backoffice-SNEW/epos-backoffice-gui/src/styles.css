@@ -257,6 +257,131 @@ app-navigation-sidebar .sidebar.is-collapsed .nav-item {
   box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.18);
 }
 
+.app-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(15, 118, 110, 0.1), transparent 38%),
+    rgba(2, 6, 23, 0.66);
+  backdrop-filter: blur(8px) saturate(0.85);
+  animation: app-dialog-backdrop-in 160ms ease-out;
+}
+
+.app-dialog {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 28px 80px rgba(2, 6, 23, 0.28), 0 8px 24px rgba(2, 6, 23, 0.16);
+  animation: app-dialog-panel-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.app-dialog::before {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  height: 4px;
+  background: linear-gradient(90deg, var(--olive-700), var(--olive-600), var(--amber-600));
+  content: '';
+}
+
+.app-dialog--compact {
+  width: min(520px, 100%);
+}
+
+.app-dialog--wide {
+  width: min(680px, 100%);
+}
+
+.app-dialog-header {
+  grid-row: 1;
+  padding: 28px 28px 22px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 72%, var(--surface) 28%), var(--surface));
+}
+
+.app-dialog-header h2 {
+  margin: 8px 0 6px;
+  color: var(--text-strong);
+  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.app-dialog-body {
+  grid-row: 2;
+  min-height: 0;
+  padding: 22px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.app-dialog-actions {
+  grid-row: 3;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 28px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 58%, var(--surface) 42%);
+}
+
+@keyframes app-dialog-backdrop-in {
+  from { opacity: 0; }
+}
+
+@keyframes app-dialog-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-dialog-backdrop {
+    align-items: end;
+    padding: 12px max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .app-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 18px;
+  }
+
+  .app-dialog-header {
+    padding: 24px 20px 18px;
+  }
+
+  .app-dialog-body {
+    padding: 20px;
+  }
+
+  .app-dialog-actions {
+    flex-direction: column-reverse;
+    padding: 16px 20px max(16px, env(safe-area-inset-bottom));
+  }
+
+  .app-dialog-actions .app-button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dialog,
+  .app-dialog-backdrop {
+    animation: none;
+  }
+}
+
 .resource-dialog-backdrop {
   position: fixed;
   inset: 0;

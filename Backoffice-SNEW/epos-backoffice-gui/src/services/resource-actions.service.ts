@@ -8,6 +8,7 @@ import type {
   WriteResult
 } from '../../generated/backofficeSchemas';
 import type { ResourceActionItem, ResourceActionKey, ResourceVersionContext, SaveResourceContext } from '../models/resource-actions';
+import { resourceCapabilities } from '../models/resource-capabilities';
 import { ApiService } from './api.service';
 import { GroupsStore } from './groups.store';
 import { ToastService } from './toast.service';
@@ -40,32 +41,31 @@ export class ResourceActionsService {
 
   sidebarActions(status: VersioningStatus | null, isAdmin: boolean): ResourceActionItem[] {
     const pending = this.pendingActionState();
+    const capabilities = resourceCapabilities(status, isAdmin);
 
-    if (status === 'PUBLISHED') {
+    if (capabilities.archive) {
       return [
         this.action('create-new-draft', 'Create New Draft', 'Creating...', 'primary', pending),
         this.action('archive', 'Archive', 'Archiving...', 'danger', pending)
       ];
     }
 
-    if (status === 'ARCHIVED') {
+    if (capabilities.createDraft) {
       return [this.action('create-new-draft', 'Create New Draft', 'Creating...', 'primary', pending)];
     }
 
-    if (status === 'REJECTED') {
+    if (capabilities.reopen) {
       return [this.action('revert-to-draft', 'Revert to Draft', 'Reverting...', 'primary', pending)];
     }
 
-    if (status === 'SUBMITTED') {
-      return isAdmin
-        ? [
-            this.action('publish', 'Publish', 'Publishing...', 'primary', pending),
-            this.action('reject', 'Reject', undefined, 'danger', pending)
-          ]
-        : [];
+    if (capabilities.publish || capabilities.reject) {
+      return [
+        this.action('publish', 'Publish', 'Publishing...', 'primary', pending),
+        this.action('reject', 'Reject', undefined, 'danger', pending)
+      ];
     }
 
-    if (status === 'DRAFT') {
+    if (capabilities.save || capabilities.submit) {
       return [
         this.action('save', 'Save', 'Saving...', 'primary', pending),
         this.action('submit', 'Submit', undefined, 'ghost', pending)

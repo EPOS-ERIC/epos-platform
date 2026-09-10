@@ -1,11 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-export type IdentifierItem = {
-  id?: string;
-  type: string;
-  value: string;
-};
+import type { DatasetPersistentIdentifierForm } from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-identifiers',
@@ -14,12 +10,12 @@ export type IdentifierItem = {
   styleUrl: './identifiers.component.css'
 })
 export class IdentifiersComponent {
-  @Input() model: IdentifierItem[] = [];
+  @Input() model: DatasetPersistentIdentifierForm[] = [];
   @Input() disabled = false;
   @Input() anchor = 'persistent-identifiers';
   @Input() title = 'Identifiers';
   @Input() subtitle = 'Type and identifier value pairs.';
-  @Output() modelChange = new EventEmitter<IdentifierItem[]>();
+  @Output() modelChange = new EventEmitter<DatasetPersistentIdentifierForm[]>();
 
   protected emitModelChange(): void {
     this.modelChange.emit(this.model);

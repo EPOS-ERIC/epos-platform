@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
-import type { DatasetDetailForm } from '../../main-container.component';
+import type { DatasetDetailForm } from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-general-information',

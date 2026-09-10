@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { wktToGeoJSON, type WktGeoJsonGeometry } from '@terraformer/wkt';
 import * as L from 'leaflet';
 
-import type { DatasetSpatialForm } from '../../main-container.component';
+import type { DatasetSpatialForm } from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-spatial-coverage',

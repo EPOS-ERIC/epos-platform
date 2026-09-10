@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { DatasetDistributionCommonForm, DatasetDistributionForm } from '../../main-container.component';
+import type { DatasetDistributionCommonForm, DatasetDistributionForm } from '../../../../models/dataset-detail-form';
 import { WebServiceComponent } from '../web-service/web-service.component';
 
 @Component({

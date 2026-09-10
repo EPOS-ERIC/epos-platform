@@ -1,39 +1,42 @@
 @if (dialogService.state(); as dialog) {
-  <div class="dialog-backdrop" (click)="dialogService.dismiss()">
+  <div class="app-dialog-backdrop" (click)="dialogService.dismiss()">
     <section
-      class="dialog app-card"
+      class="app-dialog app-dialog--compact app-card"
       [class.dialog--destructive]="dialog.destructive"
       [attr.role]="dialog.destructive ? 'alertdialog' : 'dialog'"
       aria-modal="true"
       aria-labelledby="shared-dialog-title"
+      [attr.aria-describedby]="dialog.message ? 'shared-dialog-description' : null"
       (click)="$event.stopPropagation()"
     >
-      <div class="dialog-header">
+      <header class="app-dialog-header">
         <div>
           @if (dialog.eyebrow) {
             <p class="dialog-eyebrow app-badge" [class.dialog-eyebrow--destructive]="dialog.destructive">{{ dialog.eyebrow }}</p>
           }
           <h2 id="shared-dialog-title">{{ dialog.title }}</h2>
           @if (dialog.message) {
-            <p class="dialog-message app-muted">{{ dialog.message }}</p>
+            <p id="shared-dialog-description" class="dialog-message app-muted">{{ dialog.message }}</p>
           }
         </div>
-      </div>
+      </header>
 
       @if (dialog.kind === 'prompt') {
-        <label class="dialog-field">
-          <span>{{ dialog.inputLabel }}</span>
-          <textarea
-            class="app-input"
-            rows="5"
-            autofocus
-            [(ngModel)]="promptValue"
-            [placeholder]="dialog.placeholder || ''"
-          ></textarea>
-        </label>
+        <div class="app-dialog-body">
+          <label class="dialog-field">
+            <span>{{ dialog.inputLabel }}</span>
+            <textarea
+              class="app-input"
+              rows="5"
+              autofocus
+              [(ngModel)]="promptValue"
+              [placeholder]="dialog.placeholder || ''"
+            ></textarea>
+          </label>
+        </div>
       }
 
-      <div class="dialog-actions">
+      <footer class="app-dialog-actions">
         <button type="button" class="app-button app-button--ghost" (click)="dialogService.dismiss()">{{ dialog.cancelLabel || 'Cancel' }}</button>
         <button
           type="button"
@@ -44,7 +47,7 @@
         >
           {{ dialog.confirmLabel || 'Confirm' }}
         </button>
-      </div>
+      </footer>
     </section>
   </div>
 }

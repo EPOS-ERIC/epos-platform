@@ -12,7 +12,7 @@ import type {
   DatasetWebServiceForm,
   DatasetWebServiceParameterForm,
   DatasetProviderForm
-} from '../../main-container.component';
+} from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-web-service',

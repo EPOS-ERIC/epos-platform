@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { DatasetWebServiceDocumentationForm } from '../../main-container.component';
+import type { DatasetWebServiceDocumentationForm } from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-web-service-documentation',

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import type { ParameterDraftMetadata, ParameterKind } from '../../../../../generated/backofficeSchemas';
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
-import type { DatasetWebServiceParameterForm } from '../../main-container.component';
+import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
 
 @Component({
   selector: 'app-web-service-parameters',
