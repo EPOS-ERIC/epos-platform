@@ -4,10 +4,16 @@ import { FormsModule } from '@angular/forms';
 import type { ParameterDraftMetadata, ParameterKind } from '../../../../../generated/backofficeSchemas';
 import { AppIconComponent } from '../../../app-icon/app-icon.component';
 import type { DatasetWebServiceParameterForm } from '../../../../models/dataset-detail-form';
+import { AllowedValuesEditorComponent } from './allowed-values-editor.component';
+
+interface ParameterListItem {
+  parameter: DatasetWebServiceParameterForm;
+  globalIndex: number;
+}
 
 @Component({
   selector: 'app-web-service-parameters',
-  imports: [AppIconComponent, FormsModule],
+  imports: [AllowedValuesEditorComponent, AppIconComponent, FormsModule],
   templateUrl: './web-service-parameters.component.html',
   styleUrl: './web-service-parameters.component.css'
 })
@@ -17,7 +23,8 @@ export class WebServiceParametersComponent {
   @Output() modelChange = new EventEmitter<DatasetWebServiceParameterForm[]>();
 
   protected parameterPage = 0;
-  protected expandedParameterIndex: number | null = null;
+  protected selectedParameterIndex = 0;
+  protected parameterSearchQuery = '';
   protected readonly parameterPageSize = 10;
   protected readonly parameterKinds: readonly ParameterKind[] = ['STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME'];
   protected addParameterDialogOpen = false;
@@ -33,24 +40,41 @@ export class WebServiceParametersComponent {
   }
 
   protected parameterPageCount(): number {
-    return Math.max(1, Math.ceil(this.model.length / this.parameterPageSize));
+    return Math.max(1, Math.ceil(this.filteredParameterCount() / this.parameterPageSize));
   }
 
-  protected pagedParameters(): DatasetWebServiceParameterForm[] {
+  protected filteredParameterCount(): number {
+    return this.filteredParameterEntries().length;
+  }
+
+  protected pagedParameters(): ParameterListItem[] {
     const start = this.parameterPage * this.parameterPageSize;
-    return this.model.slice(start, start + this.parameterPageSize);
+    return this.filteredParameterEntries().slice(start, start + this.parameterPageSize);
   }
 
-  protected parameterGlobalIndex(localIndex: number): number {
-    return this.parameterPage * this.parameterPageSize + localIndex;
+  protected selectedParameter(): DatasetWebServiceParameterForm | null {
+    return this.model[this.selectedParameterGlobalIndex()] ?? null;
   }
 
-  protected isParameterExpanded(globalIndex: number): boolean {
-    return this.expandedParameterIndex === globalIndex;
+  protected selectedParameterGlobalIndex(): number {
+    const entries = this.filteredParameterEntries();
+    return entries.some(({ globalIndex }) => globalIndex === this.selectedParameterIndex)
+      ? this.selectedParameterIndex
+      : (entries[0]?.globalIndex ?? -1);
   }
 
-  protected toggleParameterRow(globalIndex: number): void {
-    this.expandedParameterIndex = this.expandedParameterIndex === globalIndex ? null : globalIndex;
+  protected isParameterSelected(globalIndex: number): boolean {
+    return this.selectedParameterGlobalIndex() === globalIndex;
+  }
+
+  protected selectParameter(globalIndex: number): void {
+    this.selectedParameterIndex = globalIndex;
+  }
+
+  protected onParameterSearch(query: string): void {
+    this.parameterSearchQuery = query;
+    this.parameterPage = 0;
+    this.selectedParameterIndex = this.filteredParameterEntries()[0]?.globalIndex ?? 0;
   }
 
   protected openAddParameterDialog(): void {
@@ -76,8 +100,9 @@ export class WebServiceParametersComponent {
 
     const parameter = this.createParameter(this.selectedParameterKind);
     const parameterIndex = this.model.length;
+    this.parameterSearchQuery = '';
     this.parameterPage = Math.floor(parameterIndex / this.parameterPageSize);
-    this.expandedParameterIndex = parameterIndex;
+    this.selectedParameterIndex = parameterIndex;
     this.modelChange.emit([...this.model, parameter]);
     this.closeAddParameterDialog();
   }
@@ -88,33 +113,30 @@ export class WebServiceParametersComponent {
     }
 
     const nextModel = this.model.filter((_, parameterIndex) => parameterIndex !== index);
-    const lastPage = Math.max(0, Math.ceil(nextModel.length / this.parameterPageSize) - 1);
+    const filteredEntries = this.filteredParameterEntries(nextModel);
+    const lastPage = Math.max(0, Math.ceil(filteredEntries.length / this.parameterPageSize) - 1);
     this.parameterPage = Math.min(this.parameterPage, lastPage);
 
-    if (this.expandedParameterIndex === index) {
-      this.expandedParameterIndex = null;
-    } else if (this.expandedParameterIndex !== null && this.expandedParameterIndex > index) {
-      this.expandedParameterIndex -= 1;
+    if (this.selectedParameterIndex === index) {
+      this.selectedParameterIndex = Math.min(index, nextModel.length - 1);
+    } else if (this.selectedParameterIndex > index) {
+      this.selectedParameterIndex -= 1;
+    }
+
+    this.selectedParameterIndex = Math.max(0, this.selectedParameterIndex);
+    if (!filteredEntries.some(({ globalIndex }) => globalIndex === this.selectedParameterIndex)) {
+      this.selectedParameterIndex = filteredEntries[this.parameterPage * this.parameterPageSize]?.globalIndex ?? 0;
     }
 
     this.modelChange.emit(nextModel);
   }
 
-  protected addAllowedValue(parameter: DatasetWebServiceParameterForm): void {
-    if (this.disabled || !('allowedValues' in parameter)) {
+  protected updateAllowedValues(parameter: DatasetWebServiceParameterForm, values: string[]): void {
+    if (!('allowedValues' in parameter)) {
       return;
     }
 
-    parameter.allowedValues.push('');
-    this.emitModelChange();
-  }
-
-  protected removeAllowedValue(parameter: DatasetWebServiceParameterForm, index: number): void {
-    if (this.disabled || !('allowedValues' in parameter)) {
-      return;
-    }
-
-    parameter.allowedValues.splice(index, 1);
+    parameter.allowedValues = values;
     this.emitModelChange();
   }
 
@@ -129,44 +151,33 @@ export class WebServiceParametersComponent {
 
   protected previousParameterPage(): void {
     this.parameterPage = Math.max(0, this.parameterPage - 1);
-    this.expandedParameterIndex = null;
+    this.selectFirstParameterOnPage();
   }
 
   protected nextParameterPage(): void {
     this.parameterPage = Math.min(this.parameterPageCount() - 1, this.parameterPage + 1);
-    this.expandedParameterIndex = null;
-  }
-
-  protected goToParameterPage(page: number): void {
-    this.parameterPage = page;
-    this.expandedParameterIndex = null;
-  }
-
-  protected parameterPageItems(): Array<number | null> {
-    const totalPages = this.parameterPageCount();
-
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, index) => index);
-    }
-
-    const currentPage = this.parameterPage;
-    const pages = new Set<number>([0, totalPages - 1, Math.max(0, currentPage - 1), currentPage, Math.min(totalPages - 1, currentPage + 1)]);
-    const sortedPages = Array.from(pages).sort((a, b) => a - b);
-    const items: Array<number | null> = [];
-
-    sortedPages.forEach((page, index) => {
-      if (index > 0 && page - sortedPages[index - 1] > 1) {
-        items.push(null);
-      }
-
-      items.push(page);
-    });
-
-    return items;
+    this.selectFirstParameterOnPage();
   }
 
   private isParameterKind(value: string): value is ParameterKind {
     return this.parameterKinds.some((kind) => kind === value);
+  }
+
+  private selectFirstParameterOnPage(): void {
+    this.selectedParameterIndex = this.pagedParameters()[0]?.globalIndex ?? 0;
+  }
+
+  private filteredParameterEntries(model = this.model): ParameterListItem[] {
+    const query = this.parameterSearchQuery.trim().toLocaleLowerCase();
+
+    return model
+      .map((parameter, globalIndex) => ({ parameter, globalIndex }))
+      .filter(({ parameter }) => !query || [
+        parameter.kind,
+        parameter.metadata.label,
+        parameter.metadata.variable,
+        parameter.metadata.property
+      ].some((value) => value.toLocaleLowerCase().includes(query)));
   }
 
   private createParameter(kind: ParameterKind): DatasetWebServiceParameterForm {

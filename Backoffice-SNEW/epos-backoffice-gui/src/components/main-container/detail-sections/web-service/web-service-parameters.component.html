@@ -6,54 +6,83 @@
 
   <div class="webservice-subsection-body">
     @if (model.length) {
-      <fieldset class="detail-fieldset" [disabled]="disabled">
-        <table class="parameter-table">
-          <thead>
-            <tr>
-              <th class="parameter-toggle-col"></th>
-              <th>Kind</th>
-              <th>Label</th>
-              <th>Variable</th>
-              <th>Property</th>
+      <div class="parameter-workspace-frame">
+        <div class="parameter-workspace">
+          <aside class="parameter-list-panel" aria-label="Parameters list">
+            <div class="parameter-list-header">
+              <div>
+                <span class="parameter-list-title">Parameters</span>
+                <span class="parameter-list-count">
+                  {{ filteredParameterCount() === model.length ? model.length : filteredParameterCount() + ' / ' + model.length }}
+                </span>
+              </div>
               @if (!disabled) {
-                <th class="parameter-action-col">Actions</th>
+                <button type="button" class="app-button app-button--primary parameter-add-button" (click)="openAddParameterDialog()">Add</button>
               }
-            </tr>
-          </thead>
-          <tbody>
-            @for (parameter of pagedParameters(); track $index; let localIndex = $index) {
-              <tr class="parameter-table-row" [class.parameter-table-row--expanded]="isParameterExpanded(parameterGlobalIndex(localIndex))">
-                <td class="parameter-toggle-col">
-                  <button
-                    type="button"
-                    class="parameter-toggle-button"
-                    (click)="toggleParameterRow(parameterGlobalIndex(localIndex))"
-                    [attr.aria-expanded]="isParameterExpanded(parameterGlobalIndex(localIndex))"
-                    [attr.aria-label]="(isParameterExpanded(parameterGlobalIndex(localIndex)) ? 'Collapse' : 'Expand') + ' parameter ' + (parameter.metadata.label || parameter.kind)"
-                  >
-                    <app-icon [name]="isParameterExpanded(parameterGlobalIndex(localIndex)) ? 'chevron-left' : 'chevron-right'" [size]="14" />
-                  </button>
-                </td>
-                <td>{{ parameter.kind }}</td>
-                <td><strong>{{ parameter.metadata.label }}</strong></td>
-                <td>{{ parameter.metadata.variable }}</td>
-                <td>{{ parameter.metadata.property }}</td>
-                @if (!disabled) {
-                  <td class="parameter-action-col">
-                    <button type="button" class="app-button app-button--ghost parameter-remove-button" (click)="removeParameter(parameterGlobalIndex(localIndex))">Remove</button>
-                  </td>
-                }
-              </tr>
+            </div>
 
-              @if (isParameterExpanded(parameterGlobalIndex(localIndex))) {
-                <tr class="parameter-detail-row">
-                  <td [attr.colspan]="disabled ? 5 : 6">
-                    <div class="parameter-detail-panel">
-                      <div class="parameter-detail-heading">
-                        <span class="app-badge app-badge--green">Parameter details</span>
-                        <span class="webservice-summary-hint">{{ parameter.kind }}</span>
-                      </div>
-                      <div class="detail-form-grid">
+            <div class="parameter-search">
+              <app-icon class="parameter-search-icon" name="search" [size]="16" />
+              <input
+                type="search"
+                class="parameter-search-input"
+                placeholder="Search parameters"
+                aria-label="Search parameters"
+                [ngModel]="parameterSearchQuery"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onParameterSearch($event)"
+              />
+            </div>
+
+            <div class="parameter-list" role="listbox" aria-label="Select a parameter">
+              @for (item of pagedParameters(); track item.globalIndex) {
+                @let parameter = item.parameter;
+                <button
+                  type="button"
+                  role="option"
+                  class="parameter-list-item"
+                  [class.parameter-list-item--selected]="isParameterSelected(item.globalIndex)"
+                  [attr.aria-selected]="isParameterSelected(item.globalIndex)"
+                  (click)="selectParameter(item.globalIndex)"
+                >
+                  <span class="parameter-list-item-heading">
+                    <span class="parameter-kind">{{ parameter.kind }}</span>
+                    <app-icon name="chevron-right" [size]="14" />
+                  </span>
+                  <strong>{{ parameter.metadata.label || 'Unnamed parameter' }}</strong>
+                  <span class="parameter-list-item-meta">{{ parameter.metadata.variable || 'No variable' }}</span>
+                </button>
+              } @empty {
+                <p class="parameter-search-empty">No parameters match your search.</p>
+              }
+            </div>
+
+            <div class="parameter-list-footer">
+              <span>{{ parameterPagerLabel() }}</span>
+              <div class="parameter-list-pager">
+                <button type="button" class="parameter-page-button" (click)="previousParameterPage()" [disabled]="parameterPage === 0" aria-label="Previous parameters page">Prev</button>
+                <button type="button" class="parameter-page-button" (click)="nextParameterPage()" [disabled]="parameterPage >= parameterPageCount() - 1" aria-label="Next parameters page">Next</button>
+              </div>
+            </div>
+          </aside>
+
+          @if (selectedParameter(); as parameter) {
+            <section class="parameter-editor" aria-label="Selected parameter details">
+              <div class="parameter-detail-card">
+                <header class="parameter-editor-header">
+                  <div>
+                    <span class="parameter-kind">{{ parameter.kind }}</span>
+                    <h3>{{ parameter.metadata.label || 'Unnamed parameter' }}</h3>
+                    <p>{{ parameter.metadata.variable || 'No variable configured' }}<span aria-hidden="true"> · </span>{{ parameter.metadata.property || 'No property configured' }}</p>
+                  </div>
+                  @if (!disabled) {
+                    <button type="button" class="app-button app-button--ghost parameter-remove-button" (click)="removeParameter(selectedParameterGlobalIndex())">Remove</button>
+                  }
+                </header>
+
+                <fieldset class="detail-fieldset parameter-editor-fields" [disabled]="disabled">
+                  <div class="parameter-detail-panel">
+                  <div class="detail-form-grid">
                         <label class="detail-field">
                           <span class="detail-label">Variable</span>
                           <input class="app-input" type="text" [(ngModel)]="parameter.metadata.variable" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
@@ -131,28 +160,7 @@
                             </label>
                           </div>
                           @if (parameter.metadata.multiple_values) {
-                            <div class="parameter-options">
-                              <div class="parameter-options-header">
-                                <span class="detail-label">Allowed values</span>
-                                @if (!disabled) {
-                                  <button type="button" class="app-button app-button--ghost" (click)="addAllowedValue(parameter)">Add option</button>
-                                }
-                              </div>
-                              @if (parameter.allowedValues.length) {
-                                <div class="parameter-option-list">
-                                  @for (value of parameter.allowedValues; track $index) {
-                                    <div class="parameter-option-row">
-                                      <input class="app-input" type="text" [(ngModel)]="parameter.allowedValues[$index]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-                                      @if (!disabled) {
-                                        <button type="button" class="app-button app-button--ghost parameter-remove-button" (click)="removeAllowedValue(parameter, $index)">Remove</button>
-                                      }
-                                    </div>
-                                  }
-                                </div>
-                              } @else {
-                                <div class="detail-empty parameter-options-empty">No allowed values configured.</div>
-                              }
-                            </div>
+                            <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
                           }
                         }
                         @case ('BOOLEAN') {
@@ -189,28 +197,7 @@
                             </label>
                           </div>
                           @if (parameter.metadata.multiple_values) {
-                            <div class="parameter-options">
-                              <div class="parameter-options-header">
-                                <span class="detail-label">Allowed values</span>
-                                @if (!disabled) {
-                                  <button type="button" class="app-button app-button--ghost" (click)="addAllowedValue(parameter)">Add option</button>
-                                }
-                              </div>
-                              @if (parameter.allowedValues.length) {
-                                <div class="parameter-option-list">
-                                  @for (value of parameter.allowedValues; track $index) {
-                                    <div class="parameter-option-row">
-                                      <input class="app-input" type="number" step="1" [(ngModel)]="parameter.allowedValues[$index]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-                                      @if (!disabled) {
-                                        <button type="button" class="app-button app-button--ghost parameter-remove-button" (click)="removeAllowedValue(parameter, $index)">Remove</button>
-                                      }
-                                    </div>
-                                  }
-                                </div>
-                              } @else {
-                                <div class="detail-empty parameter-options-empty">No allowed values configured.</div>
-                              }
-                            </div>
+                            <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
                           }
                         }
                         @case ('FLOAT') {
@@ -232,28 +219,7 @@
                             </label>
                           </div>
                           @if (parameter.metadata.multiple_values) {
-                            <div class="parameter-options">
-                              <div class="parameter-options-header">
-                                <span class="detail-label">Allowed values</span>
-                                @if (!disabled) {
-                                  <button type="button" class="app-button app-button--ghost" (click)="addAllowedValue(parameter)">Add option</button>
-                                }
-                              </div>
-                              @if (parameter.allowedValues.length) {
-                                <div class="parameter-option-list">
-                                  @for (value of parameter.allowedValues; track $index) {
-                                    <div class="parameter-option-row">
-                                      <input class="app-input" type="number" step="any" [(ngModel)]="parameter.allowedValues[$index]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="emitModelChange()" />
-                                      @if (!disabled) {
-                                        <button type="button" class="app-button app-button--ghost parameter-remove-button" (click)="removeAllowedValue(parameter, $index)">Remove</button>
-                                      }
-                                    </div>
-                                  }
-                                </div>
-                              } @else {
-                                <div class="detail-empty parameter-options-empty">No allowed values configured.</div>
-                              }
-                            </div>
+                            <app-allowed-values-editor [values]="parameter.allowedValues" [kind]="parameter.kind" [defaultValue]="parameter.defaultValue" [disabled]="disabled" (valuesChange)="updateAllowedValues(parameter, $event)" />
                           }
                         }
                         @case ('DATETIME') {
@@ -280,39 +246,24 @@
                           </div>
                         }
                       }
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
-
-        <div class="table-footer table-footer--compact">
-          <span>{{ parameterPagerLabel() }}</span>
-          <div class="pager">
-            <button type="button" class="app-button app-button--ghost" (click)="previousParameterPage()" [disabled]="parameterPage === 0">Prev</button>
-
-            @for (pageItem of parameterPageItems(); track $index) {
-              @if (pageItem === null) {
-                <span class="pager-ellipsis">…</span>
-              } @else {
-                <button type="button" class="app-button" [class.pager-button--active]="parameterPage === pageItem" (click)="goToParameterPage(pageItem)">{{ pageItem + 1 }}</button>
-              }
-            }
-
-            <button type="button" class="app-button app-button--ghost" (click)="nextParameterPage()" [disabled]="parameterPage >= parameterPageCount() - 1">Next</button>
-          </div>
+                  </div>
+                </fieldset>
+              </div>
+            </section>
+          } @else {
+            <section class="parameter-editor parameter-editor--empty" aria-label="Selected parameter details">
+              <div class="parameter-editor-empty">No parameter selected.</div>
+            </section>
+          }
         </div>
-      </fieldset>
+      </div>
     } @else {
       <div class="detail-empty">No parameters available.</div>
-    }
-
-    @if (!disabled) {
-      <div class="parameter-toolbar parameter-toolbar--bottom">
-        <button type="button" class="app-button app-button--primary" (click)="openAddParameterDialog()">Add parameter</button>
-      </div>
+      @if (!disabled) {
+        <div class="parameter-toolbar parameter-toolbar--bottom">
+          <button type="button" class="app-button app-button--primary" (click)="openAddParameterDialog()">Add parameter</button>
+        </div>
+      }
     }
   </div>
 
@@ -323,7 +274,7 @@
           <div>
             <p class="eyebrow app-badge app-badge--primary">Web Service Parameter</p>
             <h2>Add parameter</h2>
-            <p class="subtitle app-muted">Choose the parameter type. Its specific fields will be available in the table after creation.</p>
+            <p class="subtitle app-muted">Choose the parameter type. Its specific fields will be available in the detail panel after creation.</p>
           </div>
         </div>
 

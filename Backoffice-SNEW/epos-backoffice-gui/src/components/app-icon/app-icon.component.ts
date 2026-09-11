@@ -10,6 +10,7 @@ export type IconName =
   | 'tags'
   | 'users'
   | 'user'
+  | 'search'
   | 'warning'
   | 'sun'
   | 'moon';

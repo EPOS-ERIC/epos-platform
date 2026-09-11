@@ -11,6 +11,7 @@ import type {
   VersioningStatus
 } from '../../generated/backofficeSchemas';
 import {
+  hasParameterDefaultOutsideAllowedValues,
   hasRequiredParameterWithoutDefault,
   temporalWarningKind,
   temporalWarningMessage,
@@ -326,6 +327,11 @@ export class ResourceDetailStore {
     if (datasetVersion && datasetForm) {
       if (hasRequiredParameterWithoutDefault(datasetForm)) {
         this.resourceActions.setError('Every required web service parameter must have a default value.');
+        return null;
+      }
+
+      if (hasParameterDefaultOutsideAllowedValues(datasetForm)) {
+        this.resourceActions.setError('A web service parameter default value must be included in its allowed values.');
         return null;
       }
 

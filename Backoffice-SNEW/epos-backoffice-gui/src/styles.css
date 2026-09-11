@@ -159,7 +159,7 @@ app-navigation-sidebar .nav-tree-children--scrollable {
   background-image:
     linear-gradient(rgba(248, 250, 252, 0.16), rgba(248, 250, 252, 0.16)),
     linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.95), transparent);
-  background-position: left top, left -50%;
+  background-position: right top, right -50%;
   background-size: 1px 100%, 2px 34%;
   background-repeat: no-repeat;
   scrollbar-width: none;
@@ -413,44 +413,284 @@ app-navigation-sidebar .sidebar.is-collapsed .nav-item {
   margin-top: 20px;
 }
 
-app-web-service-parameters .parameter-table {
-  border: 2px solid color-mix(in srgb, var(--olive-100) 52%, var(--olive-600) 48%);
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+app-web-service-parameters .parameter-workspace {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.34fr) minmax(0, 1fr);
+  height: 720px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, var(--text-muted) 22%);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.06);
 }
 
-app-web-service-parameters .parameter-table thead th {
-  border-color: color-mix(in srgb, var(--olive-100) 58%, var(--olive-600) 42%);
-  background: color-mix(in srgb, var(--olive-100) 68%, var(--olive-600) 32%);
-  color: color-mix(in srgb, var(--text-strong) 82%, var(--olive-700) 18%) !important;
-}
-
-app-web-service-parameters .parameter-table-row--expanded > td {
-  border-color: rgba(255, 255, 255, 0.24);
-  border-bottom-color: transparent;
-  background: color-mix(in srgb, #3b82f6 48%, #334155 52%);
-  color: #ffffff;
-  box-shadow: inset 4px 0 0 #60a5fa;
-}
-
-app-web-service-parameters .parameter-detail-row > td {
-  padding: 14px 28px 22px;
-  border: 2px solid color-mix(in srgb, var(--line) 65%, var(--olive-600) 35%);
-  border-top: 0;
-  background: color-mix(in srgb, var(--olive-100) 20%, var(--surface-2) 80%);
-}
-
-app-web-service-parameters .parameter-detail-panel {
-  margin: 0;
+app-web-service-parameters .parameter-list-panel {
+  display: flex;
   min-width: 0;
-  border-left: 5px solid var(--olive-600);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  min-height: 0;
+  flex-direction: column;
+  border-right: 1px solid #596d7e;
+  background: #35495a;
+  color: #f8fafc;
 }
 
-app-web-service-parameters .parameter-detail-heading {
+app-web-service-parameters .parameter-list-header,
+app-web-service-parameters .parameter-list-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  gap: 10px;
+  padding: 14px;
+}
+
+app-web-service-parameters .parameter-list-header {
+  border-bottom: 1px solid #596d7e;
+}
+
+app-web-service-parameters .parameter-list-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f8fafc;
+}
+
+app-web-service-parameters .parameter-list-count {
+  margin-left: 7px;
+  color: #cfdae3;
+  font-size: 0.78rem;
+}
+
+app-web-service-parameters .parameter-add-button {
+  min-height: 32px;
+  padding: 6px 12px;
+}
+
+app-web-service-parameters .parameter-search {
+  position: relative;
+  padding: 10px 12px;
+  border-bottom: 1px solid #596d7e;
+}
+
+app-web-service-parameters .parameter-search-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 23px;
+  color: #f8fafc;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+app-web-service-parameters .parameter-search-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 11px 8px 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  outline: 0;
+  background: rgba(15, 23, 42, 0.2);
+  color: #f8fafc;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+app-web-service-parameters .parameter-search-input::placeholder {
+  color: #cfdae3;
+}
+
+app-web-service-parameters .parameter-search-input:focus {
+  border-color: rgba(255, 255, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+app-web-service-parameters .parameter-list {
+  display: grid;
+  align-content: start;
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+  overflow-y: auto;
+  background-image:
+    linear-gradient(rgba(248, 250, 252, 0.18), rgba(248, 250, 252, 0.18)),
+    linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.92), transparent);
+  background-position: left top, left -50%;
+  background-size: 1px 100%, 2px 34%;
+  background-repeat: no-repeat;
+  scrollbar-width: none;
+  animation: parameter-list-scroll-shimmer 2.8s linear infinite;
+}
+
+app-web-service-parameters .parameter-search-empty {
+  margin: 0;
+  padding: 22px 12px;
+  color: #cfdae3;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+app-web-service-parameters .parameter-list::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes parameter-list-scroll-shimmer {
+  from {
+    background-position: right top, right -50%;
+  }
+
+  to {
+    background-position: right top, right 150%;
+  }
+}
+
+app-web-service-parameters .parameter-list-item {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  padding: 13px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #f8fafc;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+app-web-service-parameters .parameter-list-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+app-web-service-parameters .parameter-list-item--selected {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 3px 0 0 var(--olive-600);
+}
+
+app-web-service-parameters .parameter-list-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #cfdae3;
+}
+
+app-web-service-parameters .parameter-kind {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--olive-600);
+}
+
+app-web-service-parameters .parameter-list .parameter-kind {
+  color: #c3cdd4;
+}
+
+app-web-service-parameters .parameter-list-item--selected .parameter-kind {
+  color: #e4e9ed;
+}
+
+app-web-service-parameters .parameter-list-item-meta {
+  overflow: hidden;
+  color: #cfdae3;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+app-web-service-parameters .parameter-list-footer {
+  margin-top: auto;
+  border-top: 1px solid #596d7e;
+  color: #cfdae3;
+  font-size: 0.75rem;
+}
+
+app-web-service-parameters .parameter-list-pager {
+  display: flex;
+  gap: 4px;
+}
+
+app-web-service-parameters .parameter-page-button {
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+app-web-service-parameters .parameter-page-button:disabled {
+  color: #cfdae3;
+  opacity: 0.45;
+  cursor: default;
+}
+
+app-web-service-parameters .parameter-editor {
+  min-width: 0;
+  min-height: 0;
+  padding: 24px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--text-muted) 18%);
+}
+
+app-web-service-parameters .parameter-detail-card {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--text-muted) 24%);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.06);
+}
+
+app-web-service-parameters .parameter-editor--empty {
+  display: grid;
+  place-items: center;
+}
+
+app-web-service-parameters .parameter-editor-empty {
+  padding: 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+app-web-service-parameters .parameter-editor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 0;
+  padding: 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+app-web-service-parameters .parameter-editor-header h3 {
+  margin: 5px 0 3px;
+  color: var(--text-strong);
+  font-size: 1.15rem;
+}
+
+app-web-service-parameters .parameter-editor-header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+app-web-service-parameters .parameter-editor-fields {
+  min-width: 0;
+  margin: 0;
+  padding: 24px;
+  border: 0;
+}
+
+app-web-service-parameters .parameter-detail-card .parameter-detail-panel {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 app-web-service-parameters .parameter-switch-control {
@@ -526,6 +766,34 @@ app-web-service .webservice-subsection {
 }
 
 @media (max-width: 768px) {
+  app-web-service-parameters .parameter-workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 290px minmax(0, 1fr);
+    height: 900px;
+  }
+
+  app-web-service-parameters .parameter-list-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  app-web-service-parameters .parameter-list {
+    overflow-y: auto;
+  }
+
+  app-web-service-parameters .parameter-editor {
+    padding: 18px;
+  }
+
+  app-web-service-parameters .parameter-editor-header {
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  app-web-service-parameters .parameter-editor-fields {
+    padding: 18px;
+  }
+
   app-distribution .distribution-body {
     padding: 14px;
   }
@@ -571,7 +839,8 @@ app-navigation-sidebar .group-nav-icon {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  app-navigation-sidebar .nav-tree-children--scrollable {
+  app-navigation-sidebar .nav-tree-children--scrollable,
+  app-web-service-parameters .parameter-list {
     animation: none;
   }
 }

@@ -107,6 +107,23 @@ export function hasRequiredParameterWithoutDefault(form: DatasetDetailForm): boo
   );
 }
 
+export function hasParameterDefaultOutsideAllowedValues(form: DatasetDetailForm): boolean {
+  return form.distributions.some(
+    (distribution) => distribution.kind === 'web-service' && distribution.webService.parameters.some((parameter) => {
+      if (!('allowedValues' in parameter) || !parameter.allowedValues.length || parameter.defaultValue === null) {
+        return false;
+      }
+
+      if (parameter.kind === 'STRING') {
+        return !!parameter.defaultValue.trim() && !parameter.allowedValues.includes(parameter.defaultValue);
+      }
+
+      const defaultValue = toNumberOrNull(parameter.defaultValue);
+      return defaultValue !== null && !parameter.allowedValues.some((value) => toNumberOrNull(value) === defaultValue);
+    })
+  );
+}
+
 export function temporalWarningKind(form: DatasetDetailForm): 'none' | 'warning' | 'error' {
   const temporal = form.temporal;
 
@@ -362,7 +379,7 @@ function buildWebServiceParameterDraft(parameter: DatasetWebServiceParameterForm
         default: toNumberOrNull(parameter.defaultValue),
         allowed_values: parameter.allowedValues
           .map((value) => Number(value))
-          .filter((value) => Number.isFinite(value))
+          .filter((value) => Number.isInteger(value))
       };
     case 'FLOAT':
       return {

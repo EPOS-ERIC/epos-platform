@@ -5,6 +5,7 @@ import type {
   DatasetWebServiceParameterForm
 } from '../models/dataset-detail-form';
 import {
+  hasParameterDefaultOutsideAllowedValues,
   hasRequiredParameterWithoutDefault,
   temporalWarningKind,
   temporalWarningMessage,
@@ -96,9 +97,9 @@ function emptyDatasetForm(): DatasetDetailForm {
 }
 
 function parameter(
-  defaultValue: DatasetWebServiceParameterForm['defaultValue'],
+  defaultValue: string | null,
   required = true
-): DatasetWebServiceParameterForm {
+): Extract<DatasetWebServiceParameterForm, { kind: 'STRING' }> {
   return {
     kind: 'STRING',
     metadata: {
@@ -110,7 +111,7 @@ function parameter(
       multiple_values: false,
       read_only: false
     },
-    defaultValue: defaultValue as string | null,
+    defaultValue,
     allowedValues: [],
     pattern: ''
   };
@@ -274,6 +275,16 @@ describe('toDatasetSaveRequest', () => {
 });
 
 describe('dataset validation helpers', () => {
+  it('detects parameter defaults that are missing from allowed values', () => {
+    const stringParameter = parameter('fallback');
+    stringParameter.allowedValues = ['first', 'second'];
+
+    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([stringParameter]))).toBe(true);
+
+    stringParameter.allowedValues.push('fallback');
+    expect(hasParameterDefaultOutsideAllowedValues(formWithParameters([stringParameter]))).toBe(false);
+  });
+
   it('detects required null and blank string defaults but accepts non-required or false defaults', () => {
     expect(hasRequiredParameterWithoutDefault(formWithParameters([parameter(null)]))).toBe(true);
     expect(hasRequiredParameterWithoutDefault(formWithParameters([parameter('   ')]))).toBe(true);
