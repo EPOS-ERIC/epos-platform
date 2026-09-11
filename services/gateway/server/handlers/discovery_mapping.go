@@ -19,20 +19,16 @@ func toProtoSearchResourcesRequest(value gatewayapi.DiscoverResourcesParams) (*m
 		result.ProviderIds = append(result.ProviderIds, provider.String())
 	}
 	if value.Q.Set {
-		query := value.Q.Value
-		result.Query = &query
+		result.Query = new(value.Q.Value)
 	}
 	if value.GroupId.Set {
-		groupID := value.GroupId.Value.String()
-		result.GroupId = &groupID
+		result.GroupId = new(value.GroupId.Value.String())
 	}
 	if value.EditorId.Set {
-		editorID := value.EditorId.Value
-		result.EditorId = &editorID
+		result.EditorId = new(value.EditorId.Value)
 	}
 	if value.SpatialFilter.Set {
-		spatialFilter := value.SpatialFilter.Value
-		result.SpatialFilter = &spatialFilter
+		result.SpatialFilter = new(value.SpatialFilter.Value)
 	}
 	if value.DateFrom.Set {
 		result.DateFrom = timestamppb.New(value.DateFrom.Value)

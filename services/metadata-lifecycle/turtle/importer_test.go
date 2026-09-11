@@ -11,6 +11,7 @@ const importPrefixes = `
 @prefix dcat: <http://www.w3.org/ns/dcat#> .
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix epos: <https://www.epos-eu.org/epos-dcat-ap#> .
+@prefix http: <http://www.w3.org/2006/http#> .
 @prefix schema: <http://schema.org/> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix hydra: <http://www.w3.org/ns/hydra/core#> .
@@ -236,6 +237,122 @@ func TestParserUsesDistributionTypeForWebService(t *testing.T) {
 	}
 }
 
+func TestParserAllowsNumericParametersWithoutAllowedValues(t *testing.T) {
+	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+<category:dataset> a skos:ConceptScheme;
+    dct:title "Dataset categories";
+    skos:hasTopConcept <category:facets/dataset-theme>.
+<category:one> a skos:Concept;
+    skos:inScheme <category:dataset>;
+    skos:prefLabel "One".
+<dataset:one> a dcat:Dataset;
+    dct:title "Dataset one";
+    dcat:theme <category:one>;
+    dcat:distribution <distribution:one>.
+<distribution:one> a dcat:Distribution;
+    dct:title "Distribution one";
+    dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
+    dct:format "application/json";
+    dct:conformsTo <service:one>;
+    dcat:accessURL <operation:one>.
+<service:one> schema:name "Service one";
+    hydra:supportedOperation <operation:one>.
+<operation:one> hydra:template "https://example.com/data{?count,ratio}";
+    hydra:property <property:one>.
+<property:one> hydra:mapping <parameter:count>, <parameter:ratio>.
+<parameter:count> hydra:variable "count";
+    hydra:property "count";
+    rdfs:range xsd:integer.
+<parameter:ratio> hydra:variable "ratio";
+    hydra:property "ratio";
+    rdfs:range xsd:float.
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(batch.Datasets) != 1 || len(batch.Datasets[0].Distributions) != 1 {
+		t.Fatalf("dataset distributions = %+v, want one distribution", batch.Datasets)
+	}
+	service := batch.Datasets[0].Distributions[0].WebService
+	if service == nil || len(service.Parameters) != 2 {
+		t.Fatalf("service parameters = %+v, want two parameters; warnings = %+v", service, batch.Warnings)
+	}
+	for _, parameter := range service.Parameters {
+		switch schema := parameter.Schema.(type) {
+		case domain.IntegerSchema:
+			if schema.Enum != nil {
+				t.Fatalf("integer enum = %v, want nil", schema.Enum)
+			}
+		case domain.FloatSchema:
+			if schema.Enum != nil {
+				t.Fatalf("float enum = %v, want nil", schema.Enum)
+			}
+		default:
+			t.Fatalf("parameter %q schema = %T, want numeric schema", parameter.Name, parameter.Schema)
+		}
+	}
+}
+
+func TestParserMapsMultipleValuesForEnumParameters(t *testing.T) {
+	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
+<category:dataset> a skos:ConceptScheme;
+    dct:title "Dataset categories";
+    skos:hasTopConcept <category:facets/dataset-theme>.
+<category:one> a skos:Concept;
+    skos:inScheme <category:dataset>;
+    skos:prefLabel "One".
+<dataset:one> a dcat:Dataset;
+    dct:title "Dataset one";
+    dcat:theme <category:one>;
+    dcat:distribution <distribution:one>.
+<distribution:one> a dcat:Distribution;
+    dct:title "Distribution one";
+    dct:type "https://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE"^^xsd:anyURI;
+    dct:format "application/json";
+    dct:conformsTo <service:one>;
+    dcat:accessURL <operation:one>.
+<service:one> schema:name "Service one";
+    hydra:supportedOperation <operation:one>.
+<operation:one> hydra:template "https://example.com/data{?value}";
+    hydra:property <property:one>.
+<property:one> hydra:mapping <parameter:one>.
+<parameter:one> hydra:variable "value";
+    hydra:property "value";
+    schema:multipleValues true;
+    http:paramValue "one", "two";
+    rdfs:range xsd:string.
+`))
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+
+	if len(batch.Datasets) != 1 || len(batch.Datasets[0].Distributions) != 1 {
+		t.Fatalf("dataset distributions = %+v, want one distribution", batch.Datasets)
+	}
+	service := batch.Datasets[0].Distributions[0].WebService
+	if service == nil || len(service.Parameters) != 1 {
+		t.Fatalf("service parameters = %+v, want one parameter", service)
+	}
+	schema, ok := service.Parameters[0].Schema.(domain.StringSchema)
+	if !ok || !schema.MultipleValues {
+		t.Fatal("MultipleValues = false, want true")
+	}
+	if service.Parameters[0].Explode {
+		t.Fatal("Explode = true, want false for imported parameters")
+	}
+	if service.Type != domain.WebServiceTypeGeoJSON {
+		t.Fatalf("web service type = %q, want GEOJSON", service.Type)
+	}
+	if service.VisibleOn != nil {
+		t.Fatalf("visible on = %v, want nil", service.VisibleOn)
+	}
+	schema, ok = service.Parameters[0].Schema.(domain.StringSchema)
+	if !ok || len(schema.Enum) != 2 {
+		t.Fatalf("schema = %#v, want two enum values", service.Parameters[0].Schema)
+	}
+}
+
 func TestParserUsesDistributionOperationOnly(t *testing.T) {
 	batch, err := (Parser{}).Parse(strings.NewReader(importPrefixes + `
 <category:dataset> a skos:ConceptScheme;
@@ -281,10 +398,10 @@ func TestParserUsesDistributionOperationOnly(t *testing.T) {
 	if service == nil {
 		t.Fatal("distribution web service = nil")
 	}
-	if service.TemplateURL != "https://example.com/selected{?selected}" {
+	if service.TemplateURL != "https://example.com/selected" {
 		t.Fatalf("template URL = %q, want selected operation template", service.TemplateURL)
 	}
-	if len(service.Parameters) != 1 || service.Parameters[0].GetMetadata().Variable != "selected" {
+	if len(service.Parameters) != 1 || service.Parameters[0].Name != "selected" {
 		t.Fatalf("parameters = %+v, want selected operation parameter only", service.Parameters)
 	}
 }
@@ -340,45 +457,56 @@ func TestAppendUniqueIdentifierDeduplicatesTypeAndValue(t *testing.T) {
 func TestAppendUniqueParameterMergesConflictingDefaults(t *testing.T) {
 	firstDefault := "json"
 	secondDefault := "xml"
-	first := domain.StringParameter{
-		Metadata:      domain.ParameterMetadata{Variable: "format"},
-		Default:       &firstDefault,
-		AllowedValues: []string{"json"},
+	first := domain.WebServiceParameter{
+		Name: "format",
+		Schema: domain.StringSchema{
+			Default:        &firstDefault,
+			Enum:           []string{"json"},
+			MultipleValues: true,
+		},
 	}
-	second := domain.StringParameter{
-		Metadata:      domain.ParameterMetadata{Variable: "format", Required: true},
-		Default:       &secondDefault,
-		AllowedValues: []string{"xml"},
+	second := domain.WebServiceParameter{
+		Name:     "format",
+		Required: true,
+		Schema: domain.StringSchema{
+			Default: &secondDefault,
+			Enum:    []string{"xml"},
+		},
 	}
 
-	values, err := appendUniqueParameter([]domain.Parameter{first}, second)
+	values, err := appendUniqueParameter([]domain.WebServiceParameter{first}, second)
 	if err != nil {
 		t.Fatalf("appendUniqueParameter() error = %v", err)
 	}
 	if len(values) != 1 {
 		t.Fatalf("parameters = %d, want 1", len(values))
 	}
-	merged := values[0].(domain.StringParameter)
-	if merged.Default != nil {
-		t.Fatalf("default = %q, want nil after conflict", *merged.Default)
+	merged := values[0]
+	schema := merged.Schema.(domain.StringSchema)
+	if schema.Default != nil {
+		t.Fatalf("default = %q, want nil after conflict", *schema.Default)
 	}
-	if len(merged.AllowedValues) != 2 || merged.AllowedValues[0] != "json" || merged.AllowedValues[1] != "xml" {
-		t.Fatalf("allowed values = %v, want [json xml]", merged.AllowedValues)
+	if len(schema.Enum) != 2 || schema.Enum[0] != "json" || schema.Enum[1] != "xml" {
+		t.Fatalf("allowed values = %v, want [json xml]", schema.Enum)
 	}
-	if !merged.Metadata.Required {
+	if !merged.Required {
 		t.Fatal("required = false, want true")
 	}
 }
 
 func TestAppendUniqueParameterRejectsIncompatibleKinds(t *testing.T) {
-	first := domain.StringParameter{Metadata: domain.ParameterMetadata{Variable: "format"}}
-	second := domain.BooleanParameter{Metadata: domain.ParameterMetadata{Variable: "format"}}
+	first := domain.WebServiceParameter{
+		Name: "format", Schema: domain.StringSchema{},
+	}
+	second := domain.WebServiceParameter{
+		Name: "format", Schema: domain.BooleanSchema{},
+	}
 
-	values, err := appendUniqueParameter([]domain.Parameter{first}, second)
+	values, err := appendUniqueParameter([]domain.WebServiceParameter{first}, second)
 	if err == nil {
 		t.Fatal("appendUniqueParameter() error = nil, want incompatible kind error")
 	}
-	if len(values) != 1 || values[0].Kind() != domain.ParameterKindString {
+	if len(values) != 1 || values[0].Schema.Kind() != domain.ParameterSchemaKindString {
 		t.Fatalf("parameters = %v, want original string parameter", values)
 	}
 	if !strings.Contains(err.Error(), "incompatible kinds") {

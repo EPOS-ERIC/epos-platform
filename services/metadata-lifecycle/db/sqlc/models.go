@@ -182,49 +182,50 @@ func (ns NullNotificationScope) Value() (driver.Value, error) {
 	return string(ns.NotificationScope), nil
 }
 
-type ParameterKind string
+type ParameterSchemaKind string
 
 const (
-	ParameterKindSTRING   ParameterKind = "STRING"
-	ParameterKindBOOLEAN  ParameterKind = "BOOLEAN"
-	ParameterKindINTEGER  ParameterKind = "INTEGER"
-	ParameterKindFLOAT    ParameterKind = "FLOAT"
-	ParameterKindDATETIME ParameterKind = "DATETIME"
+	ParameterSchemaKindSTRING   ParameterSchemaKind = "STRING"
+	ParameterSchemaKindBOOLEAN  ParameterSchemaKind = "BOOLEAN"
+	ParameterSchemaKindINTEGER  ParameterSchemaKind = "INTEGER"
+	ParameterSchemaKindFLOAT    ParameterSchemaKind = "FLOAT"
+	ParameterSchemaKindDATETIME ParameterSchemaKind = "DATETIME"
+	ParameterSchemaKindTEMPLATE ParameterSchemaKind = "TEMPLATE"
 )
 
-func (e *ParameterKind) Scan(src interface{}) error {
+func (e *ParameterSchemaKind) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = ParameterKind(s)
+		*e = ParameterSchemaKind(s)
 	case string:
-		*e = ParameterKind(s)
+		*e = ParameterSchemaKind(s)
 	default:
-		return fmt.Errorf("unsupported scan type for ParameterKind: %T", src)
+		return fmt.Errorf("unsupported scan type for ParameterSchemaKind: %T", src)
 	}
 	return nil
 }
 
-type NullParameterKind struct {
-	ParameterKind ParameterKind
-	Valid         bool // Valid is true if ParameterKind is not NULL
+type NullParameterSchemaKind struct {
+	ParameterSchemaKind ParameterSchemaKind
+	Valid               bool // Valid is true if ParameterSchemaKind is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullParameterKind) Scan(value interface{}) error {
+func (ns *NullParameterSchemaKind) Scan(value interface{}) error {
 	if value == nil {
-		ns.ParameterKind, ns.Valid = "", false
+		ns.ParameterSchemaKind, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.ParameterKind.Scan(value)
+	return ns.ParameterSchemaKind.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullParameterKind) Value() (driver.Value, error) {
+func (ns NullParameterSchemaKind) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.ParameterKind), nil
+	return string(ns.ParameterSchemaKind), nil
 }
 
 type PermissionScope string
@@ -442,6 +443,188 @@ func (ns NullUserStatus) Value() (driver.Value, error) {
 	return string(ns.UserStatus), nil
 }
 
+type WebServiceHttpMethod string
+
+const (
+	WebServiceHttpMethodGET    WebServiceHttpMethod = "GET"
+	WebServiceHttpMethodPOST   WebServiceHttpMethod = "POST"
+	WebServiceHttpMethodPUT    WebServiceHttpMethod = "PUT"
+	WebServiceHttpMethodDELETE WebServiceHttpMethod = "DELETE"
+)
+
+func (e *WebServiceHttpMethod) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WebServiceHttpMethod(s)
+	case string:
+		*e = WebServiceHttpMethod(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WebServiceHttpMethod: %T", src)
+	}
+	return nil
+}
+
+type NullWebServiceHttpMethod struct {
+	WebServiceHttpMethod WebServiceHttpMethod
+	Valid                bool // Valid is true if WebServiceHttpMethod is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWebServiceHttpMethod) Scan(value interface{}) error {
+	if value == nil {
+		ns.WebServiceHttpMethod, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WebServiceHttpMethod.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWebServiceHttpMethod) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WebServiceHttpMethod), nil
+}
+
+type WebServiceParameterLocation string
+
+const (
+	WebServiceParameterLocationPATH   WebServiceParameterLocation = "PATH"
+	WebServiceParameterLocationQUERY  WebServiceParameterLocation = "QUERY"
+	WebServiceParameterLocationHEADER WebServiceParameterLocation = "HEADER"
+)
+
+func (e *WebServiceParameterLocation) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WebServiceParameterLocation(s)
+	case string:
+		*e = WebServiceParameterLocation(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WebServiceParameterLocation: %T", src)
+	}
+	return nil
+}
+
+type NullWebServiceParameterLocation struct {
+	WebServiceParameterLocation WebServiceParameterLocation
+	Valid                       bool // Valid is true if WebServiceParameterLocation is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWebServiceParameterLocation) Scan(value interface{}) error {
+	if value == nil {
+		ns.WebServiceParameterLocation, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WebServiceParameterLocation.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWebServiceParameterLocation) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WebServiceParameterLocation), nil
+}
+
+type WebServiceType string
+
+const (
+	WebServiceTypeWMS     WebServiceType = "WMS"
+	WebServiceTypeGEOJSON WebServiceType = "GEOJSON"
+	WebServiceTypeDYNAMIC WebServiceType = "DYNAMIC"
+	WebServiceTypeWMTS    WebServiceType = "WMTS"
+	WebServiceTypeWFS     WebServiceType = "WFS"
+	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+)
+
+func (e *WebServiceType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WebServiceType(s)
+	case string:
+		*e = WebServiceType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WebServiceType: %T", src)
+	}
+	return nil
+}
+
+type NullWebServiceType struct {
+	WebServiceType WebServiceType
+	Valid          bool // Valid is true if WebServiceType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWebServiceType) Scan(value interface{}) error {
+	if value == nil {
+		ns.WebServiceType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WebServiceType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWebServiceType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WebServiceType), nil
+}
+
+type WebServiceVisibleOn string
+
+const (
+	WebServiceVisibleOnGRAPH WebServiceVisibleOn = "GRAPH"
+	WebServiceVisibleOnTABLE WebServiceVisibleOn = "TABLE"
+	WebServiceVisibleOnMAP   WebServiceVisibleOn = "MAP"
+)
+
+func (e *WebServiceVisibleOn) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = WebServiceVisibleOn(s)
+	case string:
+		*e = WebServiceVisibleOn(s)
+	default:
+		return fmt.Errorf("unsupported scan type for WebServiceVisibleOn: %T", src)
+	}
+	return nil
+}
+
+type NullWebServiceVisibleOn struct {
+	WebServiceVisibleOn WebServiceVisibleOn
+	Valid               bool // Valid is true if WebServiceVisibleOn is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullWebServiceVisibleOn) Scan(value interface{}) error {
+	if value == nil {
+		ns.WebServiceVisibleOn, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.WebServiceVisibleOn.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullWebServiceVisibleOn) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.WebServiceVisibleOn), nil
+}
+
+type BooleanParameterSchema struct {
+	ParameterID  uuid.UUID
+	SchemaKind   ParameterSchemaKind
+	DefaultValue *bool
+}
+
 type Category struct {
 	ID               uuid.UUID
 	GroupID          uuid.UUID
@@ -510,6 +693,15 @@ type DatasetVersionProvider struct {
 	OrganizationID   uuid.UUID
 }
 
+type DatetimeParameterSchema struct {
+	ParameterID  uuid.UUID
+	SchemaKind   ParameterSchemaKind
+	Minimum      *time.Time
+	Maximum      *time.Time
+	DefaultValue *time.Time
+	Layout       *string
+}
+
 type Distribution struct {
 	ID                     uuid.UUID
 	DatasetVersionID       uuid.UUID
@@ -523,6 +715,16 @@ type Distribution struct {
 	DownloadableFileUrl    *string
 	DownloadableFileFormat *string
 	WebServiceID           *uuid.UUID
+}
+
+type FloatParameterSchema struct {
+	ParameterID    uuid.UUID
+	SchemaKind     ParameterSchemaKind
+	Minimum        *float64
+	Maximum        *float64
+	DefaultValue   *float64
+	Enum           []float64
+	MultipleValues bool
 }
 
 type GlobalNotificationSubscription struct {
@@ -604,6 +806,16 @@ type Identifier struct {
 	SoftwareSourceCodeVersionID  *uuid.UUID
 }
 
+type IntegerParameterSchema struct {
+	ParameterID    uuid.UUID
+	SchemaKind     ParameterSchemaKind
+	Minimum        *int64
+	Maximum        *int64
+	DefaultValue   *int64
+	Enum           []int64
+	MultipleValues bool
+}
+
 type NotificationEventType struct {
 	Key                   string
 	Scope                 NotificationScope
@@ -631,6 +843,29 @@ type OrganizationContactPoint struct {
 type OrganizationMembership struct {
 	ChildOrganizationID  uuid.UUID
 	ParentOrganizationID uuid.UUID
+}
+
+type Parameter struct {
+	ID                  uuid.UUID
+	Position            int32
+	Name                string
+	Label               string
+	Description         *string
+	Required            bool
+	ReadOnly            bool
+	WebServiceID        *uuid.UUID
+	WebServiceBodyID    *uuid.UUID
+	TemplateParameterID *uuid.UUID
+	SchemaKind          ParameterSchemaKind
+	Property            *string
+	Location            *WebServiceParameterLocation
+	Explode             bool
+}
+
+type ParameterTemplate struct {
+	ParameterID uuid.UUID
+	SchemaKind  ParameterSchemaKind
+	Template    string
 }
 
 type Permission struct {
@@ -753,6 +988,15 @@ type SoftwareSourceCodeVersionCreator struct {
 	OrganizationID              uuid.UUID
 }
 
+type StringParameterSchema struct {
+	ParameterID    uuid.UUID
+	SchemaKind     ParameterSchemaKind
+	Pattern        *string
+	DefaultValue   *string
+	Enum           []string
+	MultipleValues bool
+}
+
 type User struct {
 	ID          string
 	FamilyName  string
@@ -777,8 +1021,11 @@ type WebService struct {
 	ID                       uuid.UUID
 	DatasetVersionID         uuid.UUID
 	Name                     string
-	Description              string
+	Description              *string
 	TemplateUrl              string
+	Method                   WebServiceHttpMethod
+	Type                     WebServiceType
+	VisibleOn                []WebServiceVisibleOn
 	Format                   string
 	ProviderOrganizationID   *uuid.UUID
 	DocumentationTitle       *string
@@ -789,20 +1036,14 @@ type WebService struct {
 	TemporalEnd              *time.Time
 }
 
+type WebServiceBody struct {
+	ID           uuid.UUID
+	WebServiceID uuid.UUID
+	ContentType  string
+	Template     string
+}
+
 type WebServiceContactPoint struct {
 	WebServiceID   uuid.UUID
 	ContactPointID uuid.UUID
-}
-
-type WebServiceParameter struct {
-	ID             uuid.UUID
-	WebServiceID   uuid.UUID
-	Kind           ParameterKind
-	Variable       string
-	Property       string
-	Label          string
-	Required       bool
-	MultipleValues bool
-	ReadOnly       bool
-	Config         []byte
 }
