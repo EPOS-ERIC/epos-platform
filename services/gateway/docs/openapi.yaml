@@ -1180,6 +1180,33 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /resources/{resourceType}/{id}/versions:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: List resource versions
+      description: Returns the version history for a resource. Requires an authenticated user with access to the resource's owning group.
+      operationId: listResourceVersions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version summaries returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceVersionSummary"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/submit:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -1800,7 +1827,7 @@ components:
     Keyword:
       type: string
       minLength: 1
-      pattern: '^[A-Za-z0-9 _:-]+$'
+      pattern: "^[A-Za-z0-9 _:-]+$"
 
     DiscoveryResourceType:
       type: string
@@ -1968,14 +1995,26 @@ components:
     WebServiceDraft:
       type: object
       additionalProperties: false
-      required: [name, template_url, format]
+      required: [name, template_url, method, type, format]
       properties:
         name: { $ref: "#/components/schemas/NonBlankString" }
-        description: { type: string }
+        description: { type: string, nullable: true, minLength: 1 }
         template_url: { $ref: "#/components/schemas/NonBlankString" }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        type: { $ref: "#/components/schemas/WebServiceType" }
+        visible_on:
+          type: array
+          nullable: true
+          minItems: 1
+          items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         parameters:
           type: array
           items: { $ref: "#/components/schemas/ParameterDraft" }
+        body_content_type: { $ref: "#/components/schemas/NonBlankString" }
+        body_template: { $ref: "#/components/schemas/NonBlankString" }
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameterDraft" }
         format: { $ref: "#/components/schemas/NonBlankString" }
         provider: { type: string, format: uuid }
         documentation: { $ref: "#/components/schemas/Documentation" }
@@ -1995,6 +2034,7 @@ components:
         - $ref: "#/components/schemas/IntegerParameter"
         - $ref: "#/components/schemas/FloatParameter"
         - $ref: "#/components/schemas/DateTimeParameter"
+        - $ref: "#/components/schemas/TemplateParameter"
       discriminator:
         propertyName: kind
         mapping:
@@ -2003,6 +2043,7 @@ components:
           INTEGER: "#/components/schemas/IntegerParameter"
           FLOAT: "#/components/schemas/FloatParameter"
           DATETIME: "#/components/schemas/DateTimeParameter"
+          TEMPLATE: "#/components/schemas/TemplateParameter"
 
     ParameterDraft:
       oneOf:
@@ -2011,6 +2052,7 @@ components:
         - $ref: "#/components/schemas/IntegerParameterDraft"
         - $ref: "#/components/schemas/FloatParameterDraft"
         - $ref: "#/components/schemas/DateTimeParameterDraft"
+        - $ref: "#/components/schemas/TemplateParameterDraft"
       discriminator:
         propertyName: kind
         mapping:
@@ -2019,150 +2061,583 @@ components:
           INTEGER: "#/components/schemas/IntegerParameterDraft"
           FLOAT: "#/components/schemas/FloatParameterDraft"
           DATETIME: "#/components/schemas/DateTimeParameterDraft"
+          TEMPLATE: "#/components/schemas/TemplateParameterDraft"
 
-    ParameterDraftMetadata:
-      type: object
-      additionalProperties: false
-      required:
-        [kind, variable, property, label, required, multiple_values, read_only]
-      properties:
-        kind: { $ref: "#/components/schemas/ParameterKind" }
-        variable: { type: string }
-        property: { type: string }
-        label: { type: string }
-        required: { type: boolean }
-        multiple_values: { type: boolean }
-        read_only: { type: boolean }
+    ScalarParameter:
+      oneOf:
+        - $ref: "#/components/schemas/StringScalarParameter"
+        - $ref: "#/components/schemas/BooleanScalarParameter"
+        - $ref: "#/components/schemas/IntegerScalarParameter"
+        - $ref: "#/components/schemas/FloatScalarParameter"
+        - $ref: "#/components/schemas/DateTimeScalarParameter"
+      discriminator:
+        propertyName: kind
+        mapping:
+          STRING: "#/components/schemas/StringScalarParameter"
+          BOOLEAN: "#/components/schemas/BooleanScalarParameter"
+          INTEGER: "#/components/schemas/IntegerScalarParameter"
+          FLOAT: "#/components/schemas/FloatScalarParameter"
+          DATETIME: "#/components/schemas/DateTimeScalarParameter"
+
+    ScalarParameterDraft:
+      oneOf:
+        - $ref: "#/components/schemas/StringScalarParameterDraft"
+        - $ref: "#/components/schemas/BooleanScalarParameterDraft"
+        - $ref: "#/components/schemas/IntegerScalarParameterDraft"
+        - $ref: "#/components/schemas/FloatScalarParameterDraft"
+        - $ref: "#/components/schemas/DateTimeScalarParameterDraft"
+      discriminator:
+        propertyName: kind
+        mapping:
+          STRING: "#/components/schemas/StringScalarParameterDraft"
+          BOOLEAN: "#/components/schemas/BooleanScalarParameterDraft"
+          INTEGER: "#/components/schemas/IntegerScalarParameterDraft"
+          FLOAT: "#/components/schemas/FloatScalarParameterDraft"
+          DATETIME: "#/components/schemas/DateTimeScalarParameterDraft"
 
     StringParameterDraft:
       type: object
       additionalProperties: false
-      required: [kind, metadata, default, allowed_values, pattern]
+      required:
+        [
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          multiple_values,
+        ]
       properties:
         kind: { type: string, enum: [STRING] }
-        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
         default: { type: string, nullable: true }
-        allowed_values: { type: array, items: { type: string } }
-        pattern: { type: string }
+        enum: { type: array, items: { type: string } }
+        pattern: { type: string, nullable: true }
 
     BooleanParameterDraft:
       type: object
       additionalProperties: false
-      required: [kind, metadata, default]
+      required:
+        [kind, position, name, label, required, read_only, location, explode]
       properties:
         kind: { type: string, enum: [BOOLEAN] }
-        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        read_only: { type: boolean }
         default: { type: boolean, nullable: true }
 
     IntegerParameterDraft:
       type: object
       additionalProperties: false
-      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      required:
+        [
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          multiple_values,
+        ]
       properties:
         kind: { type: string, enum: [INTEGER] }
-        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        allowed_values: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { type: integer, format: int64 } }
 
     FloatParameterDraft:
       type: object
       additionalProperties: false
-      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      required:
+        [
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          multiple_values,
+        ]
       properties:
         kind: { type: string, enum: [FLOAT] }
-        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        allowed_values: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { type: number, format: double } }
 
     DateTimeParameterDraft:
       type: object
       additionalProperties: false
-      required: [kind, metadata, minimum, maximum, default, pattern]
+      required:
+        [kind, position, name, label, required, read_only, location, explode]
       properties:
         kind: { type: string, enum: [DATETIME] }
-        metadata: { $ref: "#/components/schemas/ParameterDraftMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        read_only: { type: boolean }
         minimum: { type: string, format: date-time, nullable: true }
         maximum: { type: string, format: date-time, nullable: true }
         default: { type: string, format: date-time, nullable: true }
-        pattern: { type: string }
-
-    ParameterMetadata:
-      type: object
-      additionalProperties: false
-      required:
-        [id, variable, property, label, required, multiple_values, read_only]
-      properties:
-        id: { type: string, format: uuid }
-        variable: { type: string }
-        property: { type: string }
-        label: { type: string }
-        required: { type: boolean }
-        multiple_values: { type: boolean }
-        read_only: { type: boolean }
+        layout: { type: string, nullable: true }
 
     StringParameter:
       type: object
       additionalProperties: false
-      required: [kind, metadata, default, allowed_values, pattern]
+      required:
+        [
+          id,
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          multiple_values,
+        ]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [STRING] }
-        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
         default: { type: string, nullable: true }
-        allowed_values: { type: array, items: { type: string } }
-        pattern: { type: string }
+        enum: { type: array, items: { type: string } }
+        pattern: { type: string, nullable: true }
 
     BooleanParameter:
       type: object
       additionalProperties: false
-      required: [kind, metadata, default]
+      required:
+        [
+          id,
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+        ]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [BOOLEAN] }
-        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        read_only: { type: boolean }
         default: { type: boolean, nullable: true }
 
     IntegerParameter:
       type: object
       additionalProperties: false
-      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      required:
+        [
+          id,
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          multiple_values,
+        ]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [INTEGER] }
-        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
         minimum: { type: integer, format: int64, nullable: true }
         maximum: { type: integer, format: int64, nullable: true }
         default: { type: integer, format: int64, nullable: true }
-        allowed_values: { type: array, items: { type: integer, format: int64 } }
+        enum: { type: array, items: { type: integer, format: int64 } }
 
     FloatParameter:
       type: object
       additionalProperties: false
-      required: [kind, metadata, minimum, maximum, default, allowed_values]
+      required:
+        [
+          id,
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          multiple_values,
+        ]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [FLOAT] }
-        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        multiple_values: { type: boolean }
+        read_only: { type: boolean }
         minimum: { type: number, format: double, nullable: true }
         maximum: { type: number, format: double, nullable: true }
         default: { type: number, format: double, nullable: true }
-        allowed_values: { type: array, items: { type: number, format: double } }
+        enum: { type: array, items: { type: number, format: double } }
 
     DateTimeParameter:
       type: object
       additionalProperties: false
-      required: [kind, metadata, minimum, maximum, default, pattern]
+      required:
+        [
+          id,
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+        ]
       properties:
+        id: { type: string, format: uuid }
         kind: { type: string, enum: [DATETIME] }
-        metadata: { $ref: "#/components/schemas/ParameterMetadata" }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        read_only: { type: boolean }
         minimum: { type: string, format: date-time, nullable: true }
         maximum: { type: string, format: date-time, nullable: true }
         default: { type: string, format: date-time, nullable: true }
-        pattern: { type: string }
+        layout: { type: string, nullable: true }
 
-    ParameterKind:
+    TemplateParameterDraft:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          template,
+          parameters,
+        ]
+      properties:
+        kind: { type: string, enum: [TEMPLATE] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        read_only: { type: boolean }
+        template: { type: string, minLength: 1 }
+        parameters:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ScalarParameterDraft" },
+          }
+
+    TemplateParameter:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          id,
+          kind,
+          position,
+          name,
+          label,
+          required,
+          read_only,
+          location,
+          explode,
+          template,
+          parameters,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [TEMPLATE] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        property: { type: string, nullable: true }
+        location: { $ref: "#/components/schemas/ParameterLocation" }
+        explode: { type: boolean }
+        read_only: { type: boolean }
+        template: { type: string, minLength: 1 }
+        parameters:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/ScalarParameter" },
+          }
+
+    StringScalarParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [STRING] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        default: { type: string, nullable: true }
+        enum: { type: array, items: { type: string } }
+        pattern: { type: string, nullable: true }
+
+    BooleanScalarParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [BOOLEAN] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        default: { type: boolean, nullable: true }
+
+    IntegerScalarParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [INTEGER] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        minimum: { type: integer, format: int64, nullable: true }
+        maximum: { type: integer, format: int64, nullable: true }
+        default: { type: integer, format: int64, nullable: true }
+        enum: { type: array, items: { type: integer, format: int64 } }
+
+    FloatScalarParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [FLOAT] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        minimum: { type: number, format: double, nullable: true }
+        maximum: { type: number, format: double, nullable: true }
+        default: { type: number, format: double, nullable: true }
+        enum: { type: array, items: { type: number, format: double } }
+
+    DateTimeScalarParameterDraft:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [DATETIME] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        minimum: { type: string, format: date-time, nullable: true }
+        maximum: { type: string, format: date-time, nullable: true }
+        default: { type: string, format: date-time, nullable: true }
+        layout: { type: string, nullable: true }
+
+    StringScalarParameter:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [STRING] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        default: { type: string, nullable: true }
+        enum: { type: array, items: { type: string } }
+        pattern: { type: string, nullable: true }
+
+    BooleanScalarParameter:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [BOOLEAN] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        default: { type: boolean, nullable: true }
+
+    IntegerScalarParameter:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [INTEGER] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        minimum: { type: integer, format: int64, nullable: true }
+        maximum: { type: integer, format: int64, nullable: true }
+        default: { type: integer, format: int64, nullable: true }
+        enum: { type: array, items: { type: integer, format: int64 } }
+
+    FloatScalarParameter:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [FLOAT] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        minimum: { type: number, format: double, nullable: true }
+        maximum: { type: number, format: double, nullable: true }
+        default: { type: number, format: double, nullable: true }
+        enum: { type: array, items: { type: number, format: double } }
+
+    DateTimeScalarParameter:
+      type: object
+      additionalProperties: false
+      required: [kind, position, name, label, required, read_only]
+      properties:
+        kind: { type: string, enum: [DATETIME] }
+        position: { type: integer, format: int32 }
+        name: { $ref: "#/components/schemas/NonBlankString" }
+        label: { $ref: "#/components/schemas/NonBlankString" }
+        description: { type: string, nullable: true }
+        required: { type: boolean }
+        read_only: { type: boolean }
+        minimum: { type: string, format: date-time, nullable: true }
+        maximum: { type: string, format: date-time, nullable: true }
+        default: { type: string, format: date-time, nullable: true }
+        layout: { type: string, nullable: true }
+
+    ParameterLocation:
       type: string
-      enum: [STRING, BOOLEAN, INTEGER, FLOAT, DATETIME]
+      enum: [PATH, QUERY, HEADER]
+
+    WebServiceMethod:
+      type: string
+      enum: [GET, POST, PUT, DELETE]
+
+    WebServiceType:
+      type: string
+      enum: [WMS, GEOJSON, DYNAMIC, WMTS, WFS, COVJSON]
+
+    WebServiceVisibleOn:
+      type: string
+      enum: [GRAPH, TABLE, MAP]
 
     DownloadableFile:
       type: object
@@ -2301,6 +2776,7 @@ components:
         group_name: { type: string }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
+        rejection_note: { $ref: "#/components/schemas/NonBlankString" }
         metadata:
           oneOf:
             - $ref: "#/components/schemas/DatasetResourceMetadata"
@@ -2312,6 +2788,50 @@ components:
               dataset: "#/components/schemas/DatasetResourceMetadata"
               software-application: "#/components/schemas/SoftwareApplicationResourceMetadata"
               software-source-code: "#/components/schemas/SoftwareSourceCodeResourceMetadata"
+
+    ResourceVersionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          resource_type,
+          resource_id,
+          version_id,
+          revision,
+          status,
+          name,
+          created_by,
+          created_at,
+          updated_at,
+          submitted_by,
+          submitted_at,
+          published_by,
+          published_at,
+          archived_by,
+          archived_at,
+          rejected_by,
+          rejected_at,
+          rejection_note,
+        ]
+      properties:
+        resource_type: { $ref: "#/components/schemas/DiscoveryResourceType" }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision: { type: integer, format: int32, minimum: 1 }
+        status: { $ref: "#/components/schemas/VersioningStatus" }
+        name: { type: string, minLength: 1 }
+        created_by: { type: string, minLength: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        submitted_by: { type: string, minLength: 1, nullable: true }
+        submitted_at: { type: string, format: date-time, nullable: true }
+        published_by: { type: string, minLength: 1, nullable: true }
+        published_at: { type: string, format: date-time, nullable: true }
+        archived_by: { type: string, minLength: 1, nullable: true }
+        archived_at: { type: string, format: date-time, nullable: true }
+        rejected_by: { type: string, minLength: 1, nullable: true }
+        rejected_at: { type: string, format: date-time, nullable: true }
+        rejection_note: { type: string, minLength: 1, nullable: true }
 
     DatasetResourceMetadata:
       type: object
@@ -2501,16 +3021,28 @@ components:
 
     WebService:
       type: object
-      required: [id, name, description, template_url, format]
+      required: [id, name, template_url, method, type, format]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
-        description: { type: string }
+        description: { type: string, nullable: true, minLength: 1 }
         template_url: { type: string }
+        method: { $ref: "#/components/schemas/WebServiceMethod" }
+        type: { $ref: "#/components/schemas/WebServiceType" }
+        visible_on:
+          type: array
+          nullable: true
+          minItems: 1
+          items: { $ref: "#/components/schemas/WebServiceVisibleOn" }
         parameters:
           type: array
           items: { $ref: "#/components/schemas/Parameter" }
         format: { type: string }
+        body_content_type: { type: string, nullable: true }
+        body_template: { type: string, nullable: true }
+        body_parameters:
+          type: array
+          items: { $ref: "#/components/schemas/ScalarParameter" }
         provider: { $ref: "#/components/schemas/ResourceVersionReference" }
         documentation: { $ref: "#/components/schemas/Documentation" }
         spatial_coverage:

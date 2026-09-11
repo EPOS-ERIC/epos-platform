@@ -40,6 +40,27 @@ func (h *ogenHandler) GetResourceVersion(ctx context.Context, q gatewayapi.GetRe
 	return &r, nil
 }
 
+func (h *ogenHandler) ListResourceVersions(ctx context.Context, q gatewayapi.ListResourceVersionsParams) ([]gatewayapi.ResourceVersionSummary, error) {
+	actor, ok := actorID(ctx)
+	if !ok {
+		return nil, authMissing()
+	}
+	resourceType, err := toProtoLifecycleResourceType(q.ResourceType)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := h.metadataLifecycle.ListResourceVersions(ctx, actor, resourceType, q.ID.String())
+	if err != nil {
+		return nil, fmt.Errorf("list resource versions: %w", err)
+	}
+	versions, err := toAPIResourceVersionSummaries(response.GetVersions())
+	if err != nil {
+		return nil, fmt.Errorf("map resource version summaries: %w", err)
+	}
+	return versions, nil
+}
+
 func toAPIWriteResult(v *metadatalifecyclev1.ResourceRecord, resourceType gatewayapi.WriteResourceType) (*gatewayapi.WriteResult, error) {
 	if v == nil {
 		return nil, errors.New("resource operation returned empty response")

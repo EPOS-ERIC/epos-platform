@@ -388,6 +388,9 @@ inserted_web_services AS (
             name,
             description,
             template_url,
+            method,
+            TYPE,
+            visible_on,
             format,
             provider_organization_id,
             documentation_title,
@@ -416,6 +419,9 @@ inserted_web_services AS (
         name,
         description,
         template_url,
+        method,
+        TYPE,
+        visible_on,
         format,
         provider_organization_id,
         documentation_title,
@@ -431,6 +437,32 @@ inserted_web_services AS (
     RETURNING
         id,
         dataset_version_id
+),
+inserted_web_service_bodies AS (
+    INSERT INTO
+        web_service_bodies (id, web_service_id, content_type, template)
+    SELECT
+        uuid_generate_v5(target.id, source.id::text),
+        target.id,
+        source.content_type,
+        source.template
+    FROM
+        web_service_bodies AS source
+        JOIN web_services AS source_service ON source_service.id = source.web_service_id
+        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_service.id::text
+        )
+    WHERE
+        source_service.dataset_version_id = sqlc.arg(source_version_id)
+    RETURNING
+        id,
+        web_service_id
 ),
 web_service_contacts AS (
     INSERT INTO
@@ -459,33 +491,163 @@ web_service_contacts AS (
     WHERE
         source.dataset_version_id = sqlc.arg(source_version_id)
 ),
-web_service_parameters AS (
+inserted_parameters AS (
     INSERT INTO
-        web_service_parameters (
+        parameters (
+            id,
             web_service_id,
-            kind,
-            variable,
-            property,
+            web_service_body_id,
+            position,
+            name,
             label,
+            description,
             required,
-            multiple_values,
             READ_ONLY,
-            config
+            property,
+            location,
+            explode,
+            schema_kind,
+            template_parameter_id
         )
     SELECT
-        target.id,
-        parameter.kind,
-        parameter.variable,
-        parameter.property,
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            parameter.id::text
+        ),
+        target_service.id,
+        target_body.id,
+        parameter.position,
+        parameter.name,
         parameter.label,
+        parameter.description,
         parameter.required,
-        parameter.multiple_values,
         parameter.read_only,
-        parameter.config
+        parameter.property,
+        parameter.location,
+        parameter.explode,
+        parameter.schema_kind,
+        NULL
     FROM
-        web_service_parameters AS parameter
-        JOIN web_services AS source ON source.id = parameter.web_service_id
-        JOIN inserted_web_services AS target ON target.id = uuid_generate_v5(
+        parameters AS parameter
+        LEFT JOIN web_service_bodies AS source_body ON source_body.id = parameter.web_service_body_id
+        LEFT JOIN inserted_web_services AS target_service ON target_service.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            COALESCE(
+                parameter.web_service_id,
+                source_body.web_service_id
+            )::text
+        )
+        LEFT JOIN inserted_web_service_bodies AS target_body ON target_body.id = uuid_generate_v5(
+            target_service.id,
+            source_body.id::text
+        )
+    WHERE
+        parameter.template_parameter_id IS NULL
+        AND (
+            target_service.id IS NOT NULL
+            OR target_body.id IS NOT NULL
+        )
+    RETURNING
+        id
+),
+inserted_parameter_templates AS (
+    INSERT INTO
+        parameter_templates (parameter_id, template)
+    SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_template.parameter_id::text
+        ),
+        source_template.template
+    FROM
+        parameter_templates AS source_template
+        JOIN inserted_parameters AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_template.parameter_id::text
+        )
+    RETURNING
+        parameter_id
+),
+template_parameters AS (
+    INSERT INTO
+        parameters (
+            id,
+            template_parameter_id,
+            position,
+            name,
+            label,
+            description,
+            required,
+            READ_ONLY,
+            schema_kind
+        )
+    SELECT
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_parameter.id::text
+        ),
+        uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_parameter.template_parameter_id::text
+        ),
+        source_parameter.position,
+        source_parameter.name,
+        source_parameter.label,
+        source_parameter.description,
+        source_parameter.required,
+        source_parameter.read_only,
+        source_parameter.schema_kind
+    FROM
+        parameters AS source_parameter
+        JOIN inserted_parameter_templates AS target_template ON target_template.parameter_id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source_parameter.template_parameter_id::text
+        )
+    RETURNING
+        id
+),
+parameter_map AS (
+    SELECT
+        source.id AS source_id,
+        target.id
+    FROM
+        parameters AS source
+        JOIN inserted_parameters AS target ON target.id = uuid_generate_v5(
             (
                 SELECT
                     id
@@ -494,14 +656,112 @@ web_service_parameters AS (
             ),
             source.id::text
         )
-        AND target.dataset_version_id = (
-            SELECT
-                id
-            FROM
-                inserted
+    UNION
+    ALL
+    SELECT
+        source.id AS source_id,
+        target.id
+    FROM
+        parameters AS source
+        JOIN template_parameters AS target ON target.id = uuid_generate_v5(
+            (
+                SELECT
+                    id
+                FROM
+                    inserted
+            ),
+            source.id::text
         )
-    WHERE
-        source.dataset_version_id = sqlc.arg(source_version_id)
+),
+inserted_string_parameter_schemas AS (
+    INSERT INTO
+        string_parameter_schemas (
+            parameter_id,
+            pattern,
+            default_value,
+            enum,
+            multiple_values
+        )
+    SELECT
+        target.id,
+        source.pattern,
+        source.default_value,
+        source.enum,
+        source.multiple_values
+    FROM
+        string_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_boolean_parameter_schemas AS (
+    INSERT INTO
+        boolean_parameter_schemas (parameter_id, default_value)
+    SELECT
+        target.id,
+        source.default_value
+    FROM
+        boolean_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_integer_parameter_schemas AS (
+    INSERT INTO
+        integer_parameter_schemas (
+            parameter_id,
+            minimum,
+            maximum,
+            default_value,
+            enum,
+            multiple_values
+        )
+    SELECT
+        target.id,
+        source.minimum,
+        source.maximum,
+        source.default_value,
+        source.enum,
+        source.multiple_values
+    FROM
+        integer_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_float_parameter_schemas AS (
+    INSERT INTO
+        float_parameter_schemas (
+            parameter_id,
+            minimum,
+            maximum,
+            default_value,
+            enum,
+            multiple_values
+        )
+    SELECT
+        target.id,
+        source.minimum,
+        source.maximum,
+        source.default_value,
+        source.enum,
+        source.multiple_values
+    FROM
+        float_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
+),
+inserted_datetime_parameter_schemas AS (
+    INSERT INTO
+        datetime_parameter_schemas (
+            parameter_id,
+            minimum,
+            maximum,
+            default_value,
+            layout
+        )
+    SELECT
+        target.id,
+        source.minimum,
+        source.maximum,
+        source.default_value,
+        source.layout
+    FROM
+        datetime_parameter_schemas AS source
+        JOIN parameter_map AS target ON target.source_id = source.parameter_id
 ),
 distributions AS (
     INSERT INTO
@@ -610,6 +870,9 @@ INSERT INTO
         name,
         description,
         template_url,
+        method,
+        TYPE,
+        visible_on,
         format,
         provider_organization_id,
         documentation_title,
@@ -625,6 +888,9 @@ VALUES
         sqlc.arg(name),
         sqlc.arg(description),
         sqlc.arg(template_url),
+        sqlc.arg(method),
+        sqlc.arg(TYPE),
+        sqlc.arg(visible_on),
         sqlc.arg(format),
         sqlc.narg(provider_organization_id),
         sqlc.narg(documentation_title),
@@ -633,6 +899,18 @@ VALUES
         sqlc.narg(spatial_coverage),
         sqlc.narg(temporal_start),
         sqlc.narg(temporal_end)
+    )
+RETURNING
+    *;
+
+-- name: AddLifecycleWebServiceBody :one
+INSERT INTO
+    web_service_bodies (web_service_id, content_type, template)
+VALUES
+    (
+        sqlc.arg(web_service_id),
+        sqlc.arg(content_type),
+        sqlc.arg(template)
     )
 RETURNING
     *;
@@ -646,30 +924,131 @@ VALUES
         sqlc.arg(contact_point_id)
     );
 
--- name: AddLifecycleWebServiceParameter :exec
+-- name: AddLifecycleParameter :one
 INSERT INTO
-    web_service_parameters (
+    parameters (
         web_service_id,
-        kind,
-        variable,
-        property,
+        web_service_body_id,
+        template_parameter_id,
+        position,
+        name,
         label,
+        description,
         required,
-        multiple_values,
         READ_ONLY,
-        config
+        property,
+        location,
+        explode,
+        schema_kind
     )
 VALUES
     (
-        sqlc.arg(web_service_id),
-        sqlc.arg(kind),
-        sqlc.arg(variable),
-        sqlc.arg(property),
+        sqlc.narg(web_service_id),
+        sqlc.narg(web_service_body_id),
+        sqlc.narg(template_parameter_id),
+        sqlc.arg(position),
+        sqlc.arg(name),
         sqlc.arg(label),
+        sqlc.narg(description),
         sqlc.arg(required),
-        sqlc.arg(multiple_values),
         sqlc.arg(READ_ONLY),
-        sqlc.arg(config)
+        sqlc.narg(property),
+        sqlc.narg(location),
+        sqlc.arg(explode),
+        sqlc.arg(schema_kind)
+    )
+RETURNING
+    *;
+
+-- name: AddLifecycleStringParameterSchema :exec
+INSERT INTO
+    string_parameter_schemas (
+        parameter_id,
+        pattern,
+        default_value,
+        enum,
+        multiple_values
+    )
+VALUES
+    (
+        sqlc.arg(parameter_id),
+        sqlc.narg(pattern),
+        sqlc.narg(default_value),
+        sqlc.narg(enum),
+        sqlc.arg(multiple_values)
+    );
+
+-- name: AddLifecycleBooleanParameterSchema :exec
+INSERT INTO
+    boolean_parameter_schemas (parameter_id, default_value)
+VALUES
+    (sqlc.arg(parameter_id), sqlc.narg(default_value));
+
+-- name: AddLifecycleIntegerParameterSchema :exec
+INSERT INTO
+    integer_parameter_schemas (
+        parameter_id,
+        minimum,
+        maximum,
+        default_value,
+        enum,
+        multiple_values
+    )
+VALUES
+    (
+        sqlc.arg(parameter_id),
+        sqlc.narg(minimum),
+        sqlc.narg(maximum),
+        sqlc.narg(default_value),
+        sqlc.narg(enum),
+        sqlc.arg(multiple_values)
+    );
+
+-- name: AddLifecycleFloatParameterSchema :exec
+INSERT INTO
+    float_parameter_schemas (
+        parameter_id,
+        minimum,
+        maximum,
+        default_value,
+        enum,
+        multiple_values
+    )
+VALUES
+    (
+        sqlc.arg(parameter_id),
+        sqlc.narg(minimum),
+        sqlc.narg(maximum),
+        sqlc.narg(default_value),
+        sqlc.narg(enum),
+        sqlc.arg(multiple_values)
+    );
+
+-- name: AddLifecycleDatetimeParameterSchema :exec
+INSERT INTO
+    datetime_parameter_schemas (
+        parameter_id,
+        minimum,
+        maximum,
+        default_value,
+        layout
+    )
+VALUES
+    (
+        sqlc.arg(parameter_id),
+        sqlc.narg(minimum),
+        sqlc.narg(maximum),
+        sqlc.narg(default_value),
+        sqlc.narg(layout)
+    );
+
+-- name: AddLifecycleParameterTemplate :exec
+INSERT INTO
+    parameter_templates (parameter_id, template)
+VALUES
+    (
+        sqlc.arg(parameter_id),
+        sqlc.arg(template)
     );
 
 -- name: AddLifecycleDistribution :exec
@@ -775,6 +1154,33 @@ FROM
 WHERE
     version.id = sqlc.arg(version_id)
     AND version.dataset_id = sqlc.arg(dataset_id);
+
+-- name: ListLifecycleDatasetVersionSummaries :many
+SELECT
+    version.id,
+    version.dataset_id,
+    version.status,
+    version.revision,
+    version.title,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    dataset_versions AS version
+WHERE
+    version.dataset_id = sqlc.arg(dataset_id)
+ORDER BY
+    version.created_at,
+    version.id;
 
 -- name: GetLifecycleDatasetGroup :one
 SELECT
@@ -898,23 +1304,89 @@ ORDER BY
 
 -- name: ListLifecycleWebServiceParameters :many
 SELECT
-    id,
-    web_service_id,
-    kind,
-    variable,
-    property,
-    label,
-    required,
-    multiple_values,
-    READ_ONLY,
-    config
+    parameter.*
 FROM
-    web_service_parameters
+    parameters AS parameter
+    LEFT JOIN web_service_bodies AS body ON body.id = parameter.web_service_body_id
+WHERE
+    parameter.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+    OR body.web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
+ORDER BY
+    COALESCE(parameter.web_service_id, body.web_service_id),
+    parameter.position,
+    parameter.name;
+
+-- name: ListLifecycleStringParameterSchemas :many
+SELECT
+    sqlc.embed(schema)
+FROM
+    string_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY(sqlc.arg(parameter_ids)::uuid []);
+
+-- name: ListLifecycleBooleanParameterSchemas :many
+SELECT
+    sqlc.embed(schema)
+FROM
+    boolean_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY(sqlc.arg(parameter_ids)::uuid []);
+
+-- name: ListLifecycleIntegerParameterSchemas :many
+SELECT
+    sqlc.embed(schema)
+FROM
+    integer_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY(sqlc.arg(parameter_ids)::uuid []);
+
+-- name: ListLifecycleFloatParameterSchemas :many
+SELECT
+    sqlc.embed(schema)
+FROM
+    float_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY(sqlc.arg(parameter_ids)::uuid []);
+
+-- name: ListLifecycleDatetimeParameterSchemas :many
+SELECT
+    sqlc.embed(schema)
+FROM
+    datetime_parameter_schemas AS schema
+WHERE
+    schema.parameter_id = ANY(sqlc.arg(parameter_ids)::uuid []);
+
+-- name: ListLifecycleWebServiceBodies :many
+SELECT
+    *
+FROM
+    web_service_bodies
 WHERE
     web_service_id = ANY(sqlc.arg(web_service_ids)::uuid [])
 ORDER BY
-    web_service_id,
-    id;
+    web_service_id;
+
+-- name: ListLifecycleParameterTemplates :many
+SELECT
+    *
+FROM
+    parameter_templates
+WHERE
+    parameter_id = ANY(sqlc.arg(parameter_ids)::uuid [])
+ORDER BY
+    parameter_id;
+
+-- name: ListLifecycleTemplateParameters :many
+SELECT
+    *
+FROM
+    parameters
+WHERE
+    template_parameter_id = ANY(sqlc.arg(parameter_ids)::uuid [])
+ORDER BY
+    template_parameter_id,
+    position,
+    name;
 
 -- name: ListLifecycleDistributions :many
 SELECT

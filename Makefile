@@ -39,24 +39,25 @@ clean: down
 	docker volume rm -f docker_neo4j-data docker_data-retriever-db-data docker_oss-aai-data docker_metadata-lifecycle-db-data
 
 test:
-	$(MAKE) -C apps/platform test
+	+$(MAKE) -j test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service
+test-gateway:
 	$(MAKE) -C services/gateway test
+test-metadata-lifecycle:
 	$(MAKE) -C services/metadata-lifecycle test
+test-data-retriever:
 	$(MAKE) -C services/data-retriever test
+test-oss-aai-service:
 	$(MAKE) -C services/oss-aai-service test
 
-fmt:
-	$(MAKE) -C apps/platform fmt
-	$(MAKE) -C services/gateway fmt
-	$(MAKE) -C services/data-retriever fmt
-	$(MAKE) -C services/oss-aai-service fmt
-	$(MAKE) -C services/metadata-lifecycle fmt
-
 lint:
-	$(MAKE) -C apps/platform lint
+	+$(MAKE) -j lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle
+lint-gateway:
 	$(MAKE) -C services/gateway lint
+lint-data-retriever:
 	$(MAKE) -C services/data-retriever lint
+lint-oss-aai-service:
 	$(MAKE) -C services/oss-aai-service lint
+lint-metadata-lifecycle:
 	$(MAKE) -C services/metadata-lifecycle lint
 
 test-schemathesis:
@@ -112,4 +113,4 @@ get-dev-token:
 		-d username=admin@admin.org \
 		-d password=adminadmin
 
-.PHONY: up down populate populate-metadatone clean-db-volumes test test-hurl fmt lint test-schemathesis get-dev-token
+.PHONY: up down populate populate-metadatone clean test test-gateway test-metadata-lifecycle test-data-retriever test-oss-aai-service lint lint-gateway lint-data-retriever lint-oss-aai-service lint-metadata-lifecycle test-hurl test-schemathesis get-dev-token

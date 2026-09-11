@@ -76,6 +76,19 @@ func (r *Repo) Get(ctx context.Context, sourceCodeID, versionID uuid.UUID) (doma
 	return result, err
 }
 
+func (r *Repo) List(ctx context.Context, sourceCodeID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	rows, err := sqlc.New(r.db).ListLifecycleSoftwareSourceCodeVersionSummaries(ctx, sourceCodeID)
+	if err != nil {
+		return nil, fmt.Errorf("list source code version summaries: %w", err)
+	}
+
+	result := make([]domain.ResourceVersionSummary, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, toDomainSoftwareSourceCodeVersionSummary(row))
+	}
+	return result, nil
+}
+
 func (r *Repo) GetPublished(ctx context.Context, sourceCodeID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareSourceCodeVersion(ctx, sourceCodeID)
 	if errors.Is(err, pgx.ErrNoRows) {

@@ -19,6 +19,7 @@ type fakeRepository struct {
 	datasetGroup uuid.UUID
 	scope        domain.PermissionScope
 	published    bool
+	activeGroups []uuid.UUID
 }
 
 func (r fakeRepository) User(context.Context, string) (domain.AuthorizationUser, error) {
@@ -39,6 +40,10 @@ func (r fakeRepository) IsActiveMember(context.Context, string, uuid.UUID) (bool
 
 func (r fakeRepository) HasAnyActiveMembership(context.Context, string) (bool, error) {
 	return r.anyMember, nil
+}
+
+func (r fakeRepository) ActiveMemberGroupIDs(context.Context, string, []uuid.UUID) ([]uuid.UUID, error) {
+	return r.activeGroups, nil
 }
 
 func (r fakeRepository) HasGroupPermission(context.Context, string, uuid.UUID, string) (bool, error) {
@@ -191,5 +196,59 @@ func TestCanReadContactPointRequiresMembershipOrAdmin(t *testing.T) {
 				t.Fatalf("allowed = %t, want %t", result.Allowed, test.allowed)
 			}
 		})
+	}
+}
+
+func TestAuthorizeDiscoveryPreservesVersionVisibilityRules(t *testing.T) {
+	t.Parallel()
+	groupID := uuid.New()
+	otherGroupID := uuid.New()
+	candidates := []domain.DiscoveryCandidate{
+		{Type: domain.Dataset, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: groupID, Status: domain.Published, Name: "published"},
+		{Type: domain.SoftwareApplication, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: groupID, Status: domain.Draft, Name: "member draft"},
+		{Type: domain.SoftwareSourceCode, ResourceID: uuid.New(), VersionID: uuid.New(), GroupID: otherGroupID, Status: domain.Draft, Name: "other draft"},
+	}
+	actor := domain.Actor("user-1")
+	result, err := New(slog.Default(), fakeRepository{
+		user:         domain.AuthorizationUser{ID: string(actor), Status: domain.UserStatusActive},
+		anyMember:    true,
+		activeGroups: []uuid.UUID{groupID},
+	}).AuthorizeDiscovery(context.Background(), &actor, candidates)
+	if err != nil {
+		t.Fatalf("authorize discovery: %v", err)
+	}
+	if len(result.AllowedCandidates) != 2 {
+		t.Fatalf("allowed candidates = %d, want 2", len(result.AllowedCandidates))
+	}
+	if !result.IncludeCreatedBy {
+		t.Fatal("include creator = false, want true")
+	}
+	if result.AllowedCandidates[0].ResourceID != candidates[0].ResourceID || result.AllowedCandidates[1].ResourceID != candidates[1].ResourceID {
+		t.Fatalf("allowed candidates = %#v", result.AllowedCandidates)
+	}
+}
+
+func TestAuthorizeDiscoveryAllowsPublishedCandidatesWithoutActor(t *testing.T) {
+	t.Parallel()
+	published := domain.DiscoveryCandidate{
+		Type:       domain.Dataset,
+		ResourceID: uuid.New(),
+		VersionID:  uuid.New(),
+		GroupID:    uuid.New(),
+		Status:     domain.Published,
+		Name:       "published",
+	}
+	draft := published
+	draft.VersionID = uuid.New()
+	draft.Status = domain.Draft
+	result, err := New(slog.Default(), fakeRepository{}).AuthorizeDiscovery(context.Background(), nil, []domain.DiscoveryCandidate{published, draft})
+	if err != nil {
+		t.Fatalf("authorize discovery: %v", err)
+	}
+	if len(result.AllowedCandidates) != 1 || result.AllowedCandidates[0].ResourceID != published.ResourceID {
+		t.Fatalf("allowed candidates = %#v", result.AllowedCandidates)
+	}
+	if result.IncludeCreatedBy {
+		t.Fatal("include creator = true, want false")
 	}
 }

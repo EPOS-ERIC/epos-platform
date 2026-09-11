@@ -1,6 +1,11 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"errors"
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type ResourceType string
 
@@ -27,6 +32,43 @@ func (s Status) Valid() bool {
 	default:
 		return false
 	}
+}
+
+type ResourceVersionSummary struct {
+	ResourceType  ResourceType
+	ResourceID    uuid.UUID
+	VersionID     uuid.UUID
+	Revision      int32
+	Status        Status
+	Name          string
+	CreatedBy     Actor
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	SubmittedBy   *string
+	SubmittedAt   *time.Time
+	PublishedBy   *string
+	PublishedAt   *time.Time
+	ArchivedBy    *string
+	ArchivedAt    *time.Time
+	RejectedBy    *string
+	RejectedAt    *time.Time
+	RejectionNote *string
+}
+
+// NewRejectionNote normalizes and validates a rejection note for a version status.
+func NewRejectionNote(status Status, note *string) (*string, error) {
+	note = normalizedOptionalString(note)
+	switch status {
+	case Published, Archived:
+		if note != nil {
+			return nil, errors.New("rejection note is not allowed for published or archived resource")
+		}
+	case Rejected:
+		if note == nil {
+			return nil, errors.New("rejection note is required for rejected resource")
+		}
+	}
+	return note, nil
 }
 
 type IdentifierType string

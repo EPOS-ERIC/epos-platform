@@ -110,6 +110,19 @@ func (r *Repo) Get(ctx context.Context, datasetID, versionID uuid.UUID) (domain.
 	return datasetResultFromRow(ctx, q, version)
 }
 
+func (r *Repo) List(ctx context.Context, datasetID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	rows, err := sqlc.New(r.db).ListLifecycleDatasetVersionSummaries(ctx, datasetID)
+	if err != nil {
+		return nil, fmt.Errorf("list dataset version summaries: %w", err)
+	}
+
+	result := make([]domain.ResourceVersionSummary, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, toDomainDatasetVersionSummary(row))
+	}
+	return result, nil
+}
+
 func (r *Repo) GetPublished(ctx context.Context, datasetID uuid.UUID) (domain.DatasetVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleDatasetVersion(ctx, datasetID)
 	if err != nil {
@@ -438,6 +451,9 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 			Name:                     service.Name,
 			Description:              service.Description,
 			TemplateUrl:              service.TemplateURL,
+			Method:                   sqlc.WebServiceHttpMethod(service.Method),
+			Type:                     sqlc.WebServiceType(service.Type),
+			VisibleOn:                visibleOnValues(service.VisibleOn),
 			Format:                   service.Format,
 			ProviderOrganizationID:   providerID,
 			DocumentationTitle:       title,
@@ -459,23 +475,26 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 				return fmt.Errorf("add web service contact point: %w", err)
 			}
 		}
-		for _, parameter := range service.Parameters {
-			record, err := encodeParameter(parameter)
+		var bodyID *uuid.UUID
+		if service.Body != nil {
+			body, err := q.AddLifecycleWebServiceBody(ctx, sqlc.AddLifecycleWebServiceBodyParams{
+				WebServiceID: created.ID,
+				ContentType:  service.Body.ContentType,
+				Template:     service.Body.Template,
+			})
 			if err != nil {
-				return fmt.Errorf("encode web service parameter: %w", err)
+				return fmt.Errorf("add web service body: %w", err)
 			}
-			m := record.metadata
-			if err := q.AddLifecycleWebServiceParameter(ctx, sqlc.AddLifecycleWebServiceParameterParams{
-				WebServiceID:   created.ID,
-				Kind:           sqlc.ParameterKind(record.kind),
-				Variable:       m.Variable,
-				Property:       m.Property,
-				Label:          m.Label,
-				Required:       m.Required,
-				MultipleValues: m.MultipleValues,
-				ReadOnly:       m.ReadOnly,
-				Config:         record.config,
-			}); err != nil {
+			bodyID = &body.ID
+			for _, parameter := range service.Body.Parameters {
+				if _, err := persistParameter(ctx, q, parameter, nil, bodyID, nil, nil, nil, false); err != nil {
+					return fmt.Errorf("add web service body parameter: %w", err)
+				}
+			}
+		}
+		for _, parameter := range service.Parameters {
+			location := parameter.Location
+			if _, err := persistParameter(ctx, q, parameter.Parameter, &created.ID, nil, nil, parameter.Property, &location, parameter.Explode); err != nil {
 				return fmt.Errorf("add web service parameter: %w", err)
 			}
 		}
@@ -513,6 +532,17 @@ func PersistChildren(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID, 
 		}
 	}
 	return nil
+}
+
+func visibleOnValues(values []domain.WebServiceVisibleOn) []sqlc.WebServiceVisibleOn {
+	if values == nil {
+		return nil
+	}
+	result := make([]sqlc.WebServiceVisibleOn, len(values))
+	for i, value := range values {
+		result[i] = sqlc.WebServiceVisibleOn(value)
+	}
+	return result
 }
 
 func lifecycleError(err error) error {
@@ -665,31 +695,104 @@ func readWebServices(ctx context.Context, q *sqlc.Queries, versionID uuid.UUID) 
 		service.ContactPoints = append(service.ContactPoints, toDomainContactPoint(item.ContactPoint))
 		result[item.WebServiceID] = service
 	}
+	bodies, err := q.ListLifecycleWebServiceBodies(ctx, ids)
+	if err != nil {
+		return nil, fmt.Errorf("list web service bodies: %w", err)
+	}
+	bodyByID := make(map[uuid.UUID]sqlc.WebServiceBody, len(bodies))
+	for _, body := range bodies {
+		if _, exists := result[body.WebServiceID]; !exists {
+			return nil, fmt.Errorf("body %s references missing web service %s", body.ID, body.WebServiceID)
+		}
+		bodyByID[body.ID] = body
+		service := result[body.WebServiceID]
+		service.Body = &domain.RequestBody{ContentType: body.ContentType, Template: body.Template}
+		result[body.WebServiceID] = service
+	}
 	parameters, err := q.ListLifecycleWebServiceParameters(ctx, ids)
 	if err != nil {
 		return nil, fmt.Errorf("list web service parameters: %w", err)
 	}
+	templateIDs := make([]uuid.UUID, 0, len(parameters))
 	for _, item := range parameters {
-		parameter, err := decodeParameter(parameterRecord{
-			kind: domain.ParameterKind(item.Kind),
-			metadata: domain.ParameterMetadata{
-				ID:             item.ID,
-				Kind:           domain.ParameterKind(item.Kind),
-				Variable:       item.Variable,
-				Property:       item.Property,
-				Label:          item.Label,
-				Required:       item.Required,
-				MultipleValues: item.MultipleValues,
-				ReadOnly:       item.ReadOnly,
-			},
-			config: item.Config,
-		})
+		if item.SchemaKind == sqlc.ParameterSchemaKindTEMPLATE {
+			templateIDs = append(templateIDs, item.ID)
+		}
+	}
+	templates, err := q.ListLifecycleParameterTemplates(ctx, templateIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list parameter templates: %w", err)
+	}
+	templateByID := make(map[uuid.UUID]*sqlc.ParameterTemplate, len(templates))
+	for i := range templates {
+		templateByID[templates[i].ParameterID] = &templates[i]
+	}
+	children, err := q.ListLifecycleTemplateParameters(ctx, templateIDs)
+	if err != nil {
+		return nil, fmt.Errorf("list template parameters: %w", err)
+	}
+	childrenByParentID := make(map[uuid.UUID][]sqlc.Parameter, len(children))
+	parameterIDs := make([]uuid.UUID, 0, len(parameters)+len(children))
+	for _, parameter := range parameters {
+		parameterIDs = append(parameterIDs, parameter.ID)
+	}
+	for _, child := range children {
+		if child.TemplateParameterID == nil {
+			return nil, fmt.Errorf("template parameter %s has no parent", child.ID)
+		}
+		childrenByParentID[*child.TemplateParameterID] = append(childrenByParentID[*child.TemplateParameterID], child)
+		parameterIDs = append(parameterIDs, child.ID)
+	}
+	schemas, err := readParameterSchemas(ctx, q, parameterIDs)
+	if err != nil {
+		return nil, err
+	}
+	bodyParameters := make(map[uuid.UUID][]domain.Parameter, len(bodies))
+	for _, item := range parameters {
+		parameter, err := domainParameter(item, templateByID[item.ID], childrenByParentID[item.ID], schemas)
 		if err != nil {
 			return nil, fmt.Errorf("decode web service parameter: %w", err)
 		}
-		service := result[item.WebServiceID]
-		service.Parameters = append(service.Parameters, parameter)
-		result[item.WebServiceID] = service
+		if item.WebServiceID != nil {
+			service, exists := result[*item.WebServiceID]
+			if !exists {
+				return nil, fmt.Errorf("parameter %s references missing web service %s", item.ID, *item.WebServiceID)
+			}
+			var location domain.ParameterLocation
+			if item.Location != nil {
+				location = domain.ParameterLocation(*item.Location)
+			}
+			service.Parameters = append(service.Parameters, domain.WebServiceParameter{
+				ID:        item.ID,
+				Parameter: parameter,
+				Property:  item.Property,
+				Location:  location,
+				Explode:   item.Explode,
+			})
+			result[*item.WebServiceID] = service
+			continue
+		}
+		if item.WebServiceBodyID == nil {
+			return nil, fmt.Errorf("parameter %s has no owner", item.ID)
+		}
+		if _, exists := bodyByID[*item.WebServiceBodyID]; !exists {
+			return nil, fmt.Errorf("parameter %s references missing web service body %s", item.ID, *item.WebServiceBodyID)
+		}
+		bodyParameters[*item.WebServiceBodyID] = append(bodyParameters[*item.WebServiceBodyID], parameter)
+	}
+	for _, body := range bodies {
+		service := result[body.WebServiceID]
+		bodyValue := *service.Body
+		bodyValue.Parameters = bodyParameters[body.ID]
+		service.Body = &bodyValue
+		result[body.WebServiceID] = service
+	}
+	for id, service := range result {
+		parsed, err := domain.NewWebService(service)
+		if err != nil {
+			return nil, fmt.Errorf("parse web service %s: %w", id, err)
+		}
+		result[id] = parsed
 	}
 	return result, nil
 }

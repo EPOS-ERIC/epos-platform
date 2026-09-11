@@ -13,11 +13,298 @@ import (
 	go_geom "github.com/twpayne/go-geom"
 )
 
+const listDiscoveryApplicationCategories = `-- name: ListDiscoveryApplicationCategories :many
+SELECT
+    link.software_application_version_id AS version_id,
+    category.id,
+    category.name
+FROM
+    software_application_version_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.software_application_version_id = ANY($1::uuid [])
+ORDER BY
+    link.software_application_version_id,
+    category.id
+`
+
+type ListDiscoveryApplicationCategoriesRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoveryApplicationCategories(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoveryApplicationCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveryApplicationCategories, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoveryApplicationCategoriesRow
+	for rows.Next() {
+		var i ListDiscoveryApplicationCategoriesRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDiscoveryApplicationCreators = `-- name: ListDiscoveryApplicationCreators :many
+SELECT
+    link.software_application_version_id AS version_id,
+    organization.id,
+    organization.name
+FROM
+    software_application_version_creators AS link
+    JOIN organizations AS organization ON organization.id = link.organization_id
+WHERE
+    link.software_application_version_id = ANY($1::uuid [])
+ORDER BY
+    link.software_application_version_id,
+    organization.id
+`
+
+type ListDiscoveryApplicationCreatorsRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoveryApplicationCreators(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoveryApplicationCreatorsRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveryApplicationCreators, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoveryApplicationCreatorsRow
+	for rows.Next() {
+		var i ListDiscoveryApplicationCreatorsRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDiscoveryDatasetCategories = `-- name: ListDiscoveryDatasetCategories :many
+SELECT
+    link.dataset_version_id AS version_id,
+    category.id,
+    category.name
+FROM
+    dataset_version_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.dataset_version_id = ANY($1::uuid [])
+ORDER BY
+    link.dataset_version_id,
+    category.id
+`
+
+type ListDiscoveryDatasetCategoriesRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoveryDatasetCategories(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoveryDatasetCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveryDatasetCategories, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoveryDatasetCategoriesRow
+	for rows.Next() {
+		var i ListDiscoveryDatasetCategoriesRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDiscoveryDatasetDistributions = `-- name: ListDiscoveryDatasetDistributions :many
+SELECT
+    dataset_version_id AS version_id,
+    id,
+    title AS name
+FROM
+    distributions
+WHERE
+    dataset_version_id = ANY($1::uuid [])
+ORDER BY
+    dataset_version_id,
+    id
+`
+
+type ListDiscoveryDatasetDistributionsRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoveryDatasetDistributions(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoveryDatasetDistributionsRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveryDatasetDistributions, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoveryDatasetDistributionsRow
+	for rows.Next() {
+		var i ListDiscoveryDatasetDistributionsRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDiscoveryDatasetProviders = `-- name: ListDiscoveryDatasetProviders :many
+SELECT
+    link.dataset_version_id AS version_id,
+    organization.id,
+    organization.name
+FROM
+    dataset_version_providers AS link
+    JOIN organizations AS organization ON organization.id = link.organization_id
+WHERE
+    link.dataset_version_id = ANY($1::uuid [])
+ORDER BY
+    link.dataset_version_id,
+    organization.id
+`
+
+type ListDiscoveryDatasetProvidersRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoveryDatasetProviders(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoveryDatasetProvidersRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoveryDatasetProviders, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoveryDatasetProvidersRow
+	for rows.Next() {
+		var i ListDiscoveryDatasetProvidersRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDiscoverySourceCodeCategories = `-- name: ListDiscoverySourceCodeCategories :many
+SELECT
+    link.software_source_code_version_id AS version_id,
+    category.id,
+    category.name
+FROM
+    software_source_code_version_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.software_source_code_version_id = ANY($1::uuid [])
+ORDER BY
+    link.software_source_code_version_id,
+    category.id
+`
+
+type ListDiscoverySourceCodeCategoriesRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoverySourceCodeCategories(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoverySourceCodeCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoverySourceCodeCategories, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoverySourceCodeCategoriesRow
+	for rows.Next() {
+		var i ListDiscoverySourceCodeCategoriesRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDiscoverySourceCodeCreators = `-- name: ListDiscoverySourceCodeCreators :many
+SELECT
+    link.software_source_code_version_id AS version_id,
+    organization.id,
+    organization.name
+FROM
+    software_source_code_version_creators AS link
+    JOIN organizations AS organization ON organization.id = link.organization_id
+WHERE
+    link.software_source_code_version_id = ANY($1::uuid [])
+ORDER BY
+    link.software_source_code_version_id,
+    organization.id
+`
+
+type ListDiscoverySourceCodeCreatorsRow struct {
+	VersionID uuid.UUID
+	ID        uuid.UUID
+	Name      string
+}
+
+func (q *Queries) ListDiscoverySourceCodeCreators(ctx context.Context, versionIds []uuid.UUID) ([]ListDiscoverySourceCodeCreatorsRow, error) {
+	rows, err := q.db.Query(ctx, listDiscoverySourceCodeCreators, versionIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDiscoverySourceCodeCreatorsRow
+	for rows.Next() {
+		var i ListDiscoverySourceCodeCreatorsRow
+		if err := rows.Scan(&i.VersionID, &i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const searchDiscoveryApplications = `-- name: SearchDiscoveryApplications :many
 SELECT
     resource.id AS resource_id,
     version.id AS version_id,
     resource.group_id,
+    resource_group.name AS group_name,
     version.status,
     version.name,
     version.updated_at,
@@ -109,6 +396,7 @@ type SearchDiscoveryApplicationsRow struct {
 	ResourceID    uuid.UUID
 	VersionID     uuid.UUID
 	GroupID       uuid.UUID
+	GroupName     string
 	Status        ResourceStatus
 	Name          string
 	UpdatedAt     time.Time
@@ -139,6 +427,7 @@ func (q *Queries) SearchDiscoveryApplications(ctx context.Context, arg SearchDis
 			&i.ResourceID,
 			&i.VersionID,
 			&i.GroupID,
+			&i.GroupName,
 			&i.Status,
 			&i.Name,
 			&i.UpdatedAt,
@@ -161,6 +450,7 @@ SELECT
     dataset.id AS resource_id,
     version.id AS version_id,
     dataset.group_id,
+    resource_group.name AS group_name,
     version.status,
     version.title AS name,
     version.updated_at,
@@ -276,6 +566,7 @@ type SearchDiscoveryDatasetsRow struct {
 	ResourceID    uuid.UUID
 	VersionID     uuid.UUID
 	GroupID       uuid.UUID
+	GroupName     string
 	Status        ResourceStatus
 	Name          string
 	UpdatedAt     time.Time
@@ -309,6 +600,7 @@ func (q *Queries) SearchDiscoveryDatasets(ctx context.Context, arg SearchDiscove
 			&i.ResourceID,
 			&i.VersionID,
 			&i.GroupID,
+			&i.GroupName,
 			&i.Status,
 			&i.Name,
 			&i.UpdatedAt,
@@ -331,6 +623,7 @@ SELECT
     resource.id AS resource_id,
     version.id AS version_id,
     resource.group_id,
+    resource_group.name AS group_name,
     version.status,
     version.name,
     version.updated_at,
@@ -422,6 +715,7 @@ type SearchDiscoverySourceCodesRow struct {
 	ResourceID    uuid.UUID
 	VersionID     uuid.UUID
 	GroupID       uuid.UUID
+	GroupName     string
 	Status        ResourceStatus
 	Name          string
 	UpdatedAt     time.Time
@@ -452,6 +746,7 @@ func (q *Queries) SearchDiscoverySourceCodes(ctx context.Context, arg SearchDisc
 			&i.ResourceID,
 			&i.VersionID,
 			&i.GroupID,
+			&i.GroupName,
 			&i.Status,
 			&i.Name,
 			&i.UpdatedAt,

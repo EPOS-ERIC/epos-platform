@@ -399,6 +399,23 @@ func encodeListOrganizationsResponse(response []CanonicalOrganization, w http.Re
 	return nil
 }
 
+func encodeListResourceVersionsResponse(response []ResourceVersionSummary, w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+
+	e := new(jx.Encoder)
+	e.ArrStart()
+	for _, elem := range response {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+	if _, err := e.WriteTo(w); err != nil {
+		return errors.Wrap(err, "write")
+	}
+
+	return nil
+}
+
 func encodeListUsersResponse(response []UserListItem, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
@@ -646,5 +663,4 @@ func encodeErrorResponse(response *ProblemStatusCode, w http.ResponseWriter) err
 		return errors.Wrapf(ht.ErrInternalServerErrorResponse, "code: %d, message: %s", code, http.StatusText(code))
 	}
 	return nil
-
 }

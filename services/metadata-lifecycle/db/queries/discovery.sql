@@ -3,6 +3,7 @@ SELECT
     dataset.id AS resource_id,
     version.id AS version_id,
     dataset.group_id,
+    resource_group.name AS group_name,
     version.status,
     version.title AS name,
     version.updated_at,
@@ -104,6 +105,7 @@ SELECT
     resource.id AS resource_id,
     version.id AS version_id,
     resource.group_id,
+    resource_group.name AS group_name,
     version.status,
     version.name,
     version.updated_at,
@@ -184,6 +186,7 @@ SELECT
     resource.id AS resource_id,
     version.id AS version_id,
     resource.group_id,
+    resource_group.name AS group_name,
     version.status,
     version.name,
     version.updated_at,
@@ -258,3 +261,100 @@ WHERE
         cardinality(sqlc.arg(resource_types)::text []) = 0
         OR 'software-source-code' = ANY(sqlc.arg(resource_types)::text [])
     );
+
+-- name: ListDiscoveryDatasetProviders :many
+SELECT
+    link.dataset_version_id AS version_id,
+    organization.id,
+    organization.name
+FROM
+    dataset_version_providers AS link
+    JOIN organizations AS organization ON organization.id = link.organization_id
+WHERE
+    link.dataset_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    link.dataset_version_id,
+    organization.id;
+
+-- name: ListDiscoveryDatasetCategories :many
+SELECT
+    link.dataset_version_id AS version_id,
+    category.id,
+    category.name
+FROM
+    dataset_version_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.dataset_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    link.dataset_version_id,
+    category.id;
+
+-- name: ListDiscoveryDatasetDistributions :many
+SELECT
+    dataset_version_id AS version_id,
+    id,
+    title AS name
+FROM
+    distributions
+WHERE
+    dataset_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    dataset_version_id,
+    id;
+
+-- name: ListDiscoveryApplicationCreators :many
+SELECT
+    link.software_application_version_id AS version_id,
+    organization.id,
+    organization.name
+FROM
+    software_application_version_creators AS link
+    JOIN organizations AS organization ON organization.id = link.organization_id
+WHERE
+    link.software_application_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    link.software_application_version_id,
+    organization.id;
+
+-- name: ListDiscoveryApplicationCategories :many
+SELECT
+    link.software_application_version_id AS version_id,
+    category.id,
+    category.name
+FROM
+    software_application_version_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.software_application_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    link.software_application_version_id,
+    category.id;
+
+-- name: ListDiscoverySourceCodeCreators :many
+SELECT
+    link.software_source_code_version_id AS version_id,
+    organization.id,
+    organization.name
+FROM
+    software_source_code_version_creators AS link
+    JOIN organizations AS organization ON organization.id = link.organization_id
+WHERE
+    link.software_source_code_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    link.software_source_code_version_id,
+    organization.id;
+
+-- name: ListDiscoverySourceCodeCategories :many
+SELECT
+    link.software_source_code_version_id AS version_id,
+    category.id,
+    category.name
+FROM
+    software_source_code_version_categories AS link
+    JOIN categories AS category ON category.id = link.category_id
+WHERE
+    link.software_source_code_version_id = ANY(sqlc.arg(version_ids)::uuid [])
+ORDER BY
+    link.software_source_code_version_id,
+    category.id;

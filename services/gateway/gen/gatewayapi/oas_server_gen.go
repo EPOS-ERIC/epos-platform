@@ -226,6 +226,13 @@ type Handler interface {
 	//
 	// GET /organizations
 	ListOrganizations(ctx context.Context) ([]CanonicalOrganization, error)
+	// ListResourceVersions implements listResourceVersions operation.
+	//
+	// Returns the version history for a resource. Requires an authenticated user with access to the
+	// resource's owning group.
+	//
+	// GET /resources/{resourceType}/{id}/versions
+	ListResourceVersions(ctx context.Context, params ListResourceVersionsParams) ([]ResourceVersionSummary, error)
 	// ListUsers implements listUsers operation.
 	//
 	// Retrieve all user profiles. Allowed to super admins only.

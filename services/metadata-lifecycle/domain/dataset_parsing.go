@@ -2,9 +2,6 @@ package domain
 
 import (
 	"fmt"
-	"math"
-	"regexp"
-	"slices"
 	"strings"
 	"time"
 
@@ -150,6 +147,7 @@ func NewDatasetVersion(
 	createdBy Actor,
 	group Group,
 	createdAt, updatedAt time.Time,
+	rejectionNote *string,
 	metadata DatasetMetadata,
 ) (DatasetVersion, error) {
 	if datasetID == uuid.Nil || versionID == uuid.Nil {
@@ -185,16 +183,21 @@ func NewDatasetVersion(
 	if createdAt.IsZero() || updatedAt.IsZero() {
 		return DatasetVersion{}, fmt.Errorf("dataset timestamps are required: %w", ErrInvalidDataset)
 	}
+	rejectionNote, err = NewRejectionNote(status, rejectionNote)
+	if err != nil {
+		return DatasetVersion{}, fmt.Errorf("dataset rejection note: %w: %w", err, ErrInvalidDataset)
+	}
 	return DatasetVersion{
-		DatasetID: datasetID,
-		VersionID: versionID,
-		Revision:  revision,
-		Status:    status,
-		CreatedBy: actor,
-		Group:     normalizedGroup,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-		Metadata:  metadata,
+		DatasetID:     datasetID,
+		VersionID:     versionID,
+		Revision:      revision,
+		Status:        status,
+		CreatedBy:     actor,
+		Group:         normalizedGroup,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+		RejectionNote: rejectionNote,
+		Metadata:      metadata,
 	}, nil
 }
 
@@ -282,39 +285,6 @@ func NewDistributionInput(value DistributionInput) (DistributionInput, error) {
 	return value, nil
 }
 
-func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
-	value.Name = strings.TrimSpace(value.Name)
-	value.TemplateURL = strings.TrimSpace(value.TemplateURL)
-	value.Format = strings.TrimSpace(value.Format)
-	if value.Name == "" || value.TemplateURL == "" || value.Format == "" {
-		return WebServiceInput{}, fmt.Errorf("name, template URL, and format are required: %w", ErrInvalidDataset)
-	}
-	if err := validateTemporal(value.TemporalCoverage); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service temporal coverage: %w", err)
-	}
-	if value.ProviderID != nil && *value.ProviderID == uuid.Nil {
-		return WebServiceInput{}, fmt.Errorf("web service provider ID is required: %w", ErrInvalidDataset)
-	}
-	if err := validateUUIDList(value.ContactPointIDs, "web service contact point"); err != nil {
-		return WebServiceInput{}, fmt.Errorf("web service contact points: %w: %w", err, ErrInvalidDataset)
-	}
-	if value.Documentation != nil && strings.TrimSpace(value.Documentation.URI) == "" {
-		return WebServiceInput{}, fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
-	}
-	seenVariables := make(map[string]struct{}, len(value.Parameters))
-	for _, parameter := range value.Parameters {
-		if err := validateParameter(parameter, false); err != nil {
-			return WebServiceInput{}, fmt.Errorf("web service parameter: %w", err)
-		}
-		variable := parameter.GetMetadata().Variable
-		if _, exists := seenVariables[variable]; exists {
-			return WebServiceInput{}, fmt.Errorf("duplicate parameter variable %q: %w", variable, ErrInvalidDataset)
-		}
-		seenVariables[variable] = struct{}{}
-	}
-	return value, nil
-}
-
 func validateDistribution(value Distribution) error {
 	if value.ID == uuid.Nil || strings.TrimSpace(value.Title) == "" {
 		return fmt.Errorf("ID and title are required: %w", ErrInvalidDataset)
@@ -333,7 +303,7 @@ func validateDistribution(value Distribution) error {
 		return fmt.Errorf("downloadable file URL and format are required: %w", ErrInvalidDataset)
 	}
 	if value.WebService != nil {
-		if err := validateWebService(*value.WebService); err != nil {
+		if _, err := NewWebService(*value.WebService); err != nil {
 			return fmt.Errorf("web service: %w", err)
 		}
 	}
@@ -351,119 +321,11 @@ func (d Distribution) DeliveryType() (DistributionType, error) {
 	}
 }
 
-func validateWebService(value WebService) error {
-	if value.ID == uuid.Nil || strings.TrimSpace(value.Name) == "" || strings.TrimSpace(value.TemplateURL) == "" || strings.TrimSpace(value.Format) == "" {
-		return fmt.Errorf("ID, name, template URL, and format are required: %w", ErrInvalidDataset)
-	}
-	if err := validateTemporal(value.TemporalCoverage); err != nil {
-		return fmt.Errorf("temporal coverage: %w", err)
-	}
-	if value.Documentation != nil && strings.TrimSpace(value.Documentation.URI) == "" {
-		return fmt.Errorf("documentation URI is required: %w", ErrInvalidDataset)
-	}
-	if value.Provider != nil {
-		if err := validateOrganization(*value.Provider); err != nil {
-			return fmt.Errorf("provider: %w: %w", err, ErrInvalidDataset)
-		}
-	}
-	if err := validateContactPoints(value.ContactPoints, "web service contact point"); err != nil {
-		return fmt.Errorf("contact points: %w: %w", err, ErrInvalidDataset)
-	}
-	seenVariables := make(map[string]struct{}, len(value.Parameters))
-	for _, parameter := range value.Parameters {
-		if err := validateParameter(parameter, true); err != nil {
-			return fmt.Errorf("parameter: %w", err)
-		}
-		variable := parameter.GetMetadata().Variable
-		if _, exists := seenVariables[variable]; exists {
-			return fmt.Errorf("duplicate parameter variable %q: %w", variable, ErrInvalidDataset)
-		}
-		seenVariables[variable] = struct{}{}
-	}
-	return nil
-}
-
 func validateTemporal(value *Temporal) error {
 	if value != nil && value.Start != nil && value.End != nil && value.Start.After(*value.End) {
 		return fmt.Errorf("start must not be after end: %w", ErrInvalidDataset)
 	}
 	return nil
-}
-
-func validateParameter(value Parameter, requireID bool) error {
-	if value == nil {
-		return fmt.Errorf("parameter is required: %w", ErrInvalidDataset)
-	}
-	metadata := value.GetMetadata()
-	if requireID && metadata.ID == uuid.Nil {
-		return fmt.Errorf("parameter ID is required: %w", ErrInvalidDataset)
-	}
-	if !value.Kind().Valid() || (metadata.Kind != "" && metadata.Kind != value.Kind()) {
-		return fmt.Errorf("parameter kind is invalid: %w", ErrInvalidDataset)
-	}
-	if strings.TrimSpace(metadata.Variable) == "" || strings.TrimSpace(metadata.Property) == "" || strings.TrimSpace(metadata.Label) == "" {
-		return fmt.Errorf("parameter variable, property, and label are required: %w", ErrInvalidDataset)
-	}
-	switch parameter := value.(type) {
-	case StringParameter:
-		if err := validatePattern(parameter.Pattern); err != nil {
-			return err
-		}
-		if parameter.Default != nil && len(parameter.AllowedValues) > 0 && !slices.Contains(parameter.AllowedValues, *parameter.Default) {
-			return fmt.Errorf("parameter default is not an allowed value: %w", ErrInvalidDataset)
-		}
-	case BooleanParameter:
-	case IntegerParameter:
-		if parameter.Minimum != nil && parameter.Maximum != nil && *parameter.Minimum > *parameter.Maximum {
-			return fmt.Errorf("parameter minimum must not exceed maximum: %w", ErrInvalidDataset)
-		}
-		if parameter.Default != nil && ((parameter.Minimum != nil && *parameter.Default < *parameter.Minimum) || (parameter.Maximum != nil && *parameter.Default > *parameter.Maximum)) {
-			return fmt.Errorf("parameter default is outside allowed range: %w", ErrInvalidDataset)
-		}
-		if parameter.Default != nil && len(parameter.AllowedValues) > 0 && !slices.Contains(parameter.AllowedValues, *parameter.Default) {
-			return fmt.Errorf("parameter default is not an allowed value: %w", ErrInvalidDataset)
-		}
-	case FloatParameter:
-		if (parameter.Minimum != nil && !isFinite(parameter.Minimum)) || (parameter.Maximum != nil && !isFinite(parameter.Maximum)) || (parameter.Default != nil && !isFinite(parameter.Default)) {
-			return fmt.Errorf("parameter values must be finite: %w", ErrInvalidDataset)
-		}
-		if parameter.Minimum != nil && parameter.Maximum != nil && *parameter.Minimum > *parameter.Maximum {
-			return fmt.Errorf("parameter minimum must not exceed maximum: %w", ErrInvalidDataset)
-		}
-		if parameter.Default != nil && ((parameter.Minimum != nil && *parameter.Default < *parameter.Minimum) || (parameter.Maximum != nil && *parameter.Default > *parameter.Maximum)) {
-			return fmt.Errorf("parameter default is outside allowed range: %w", ErrInvalidDataset)
-		}
-		if parameter.Default != nil && len(parameter.AllowedValues) > 0 && !slices.Contains(parameter.AllowedValues, *parameter.Default) {
-			return fmt.Errorf("parameter default is not an allowed value: %w", ErrInvalidDataset)
-		}
-	case DateTimeParameter:
-		if err := validatePattern(parameter.Pattern); err != nil {
-			return err
-		}
-		if parameter.Minimum != nil && parameter.Maximum != nil && parameter.Minimum.After(*parameter.Maximum) {
-			return fmt.Errorf("parameter minimum must not be after maximum: %w", ErrInvalidDataset)
-		}
-		if parameter.Default != nil && ((parameter.Minimum != nil && parameter.Default.Before(*parameter.Minimum)) || (parameter.Maximum != nil && parameter.Default.After(*parameter.Maximum))) {
-			return fmt.Errorf("parameter default is outside allowed range: %w", ErrInvalidDataset)
-		}
-	default:
-		return fmt.Errorf("unsupported parameter type %T: %w", value, ErrInvalidDataset)
-	}
-	return nil
-}
-
-func validatePattern(pattern string) error {
-	if pattern == "" {
-		return nil
-	}
-	if _, err := regexp.Compile(pattern); err != nil {
-		return fmt.Errorf("invalid parameter pattern: %w: %w", err, ErrInvalidDataset)
-	}
-	return nil
-}
-
-func isFinite(value *float64) bool {
-	return value != nil && !math.IsNaN(*value) && !math.IsInf(*value, 0)
 }
 
 func distributionInput(value Distribution) DistributionInput {
@@ -495,7 +357,11 @@ func distributionInput(value Distribution) DistributionInput {
 			Name:             value.WebService.Name,
 			Description:      value.WebService.Description,
 			TemplateURL:      value.WebService.TemplateURL,
-			Parameters:       value.WebService.Parameters,
+			Method:           value.WebService.Method,
+			Type:             value.WebService.Type,
+			VisibleOn:        value.WebService.VisibleOn,
+			Body:             value.WebService.Body,
+			Parameters:       webServiceParameterInputs(value.WebService.Parameters),
 			Format:           value.WebService.Format,
 			ProviderID:       providerIDPointer,
 			Documentation:    value.WebService.Documentation,
@@ -521,7 +387,11 @@ func (value WebService) Input() WebServiceInput {
 		Name:             value.Name,
 		Description:      value.Description,
 		TemplateURL:      value.TemplateURL,
-		Parameters:       value.Parameters,
+		Method:           value.Method,
+		Type:             value.Type,
+		VisibleOn:        value.VisibleOn,
+		Body:             value.Body,
+		Parameters:       webServiceParameterInputs(value.Parameters),
 		Format:           value.Format,
 		ProviderID:       providerID,
 		Documentation:    value.Documentation,

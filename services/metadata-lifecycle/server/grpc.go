@@ -44,6 +44,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	server := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
+			grpcapi.ActorTracingInterceptor(),
 			logUnaryRPC(log),
 			validateUnaryRPC(validator),
 		),
@@ -75,7 +76,7 @@ func Run(ctx context.Context, cfg config.Config, log *slog.Logger, db *db.Postgr
 	applicationSvc := softwareapplications.New(log, db.SoftwareApplications, authorizer)
 	sourceCodeSvc := softwaresourcecodes.New(log, db.SoftwareSourceCodes, authorizer)
 	metadatalifecyclev1.RegisterResourceServiceServer(server, grpcapi.NewResource(datasetSvc, applicationSvc, sourceCodeSvc))
-	discoverySvc := discovery.New(log, db.Discovery, authorizer, datasetSvc, applicationSvc, sourceCodeSvc, groupsSvc)
+	discoverySvc := discovery.New(log, db.Discovery, authorizer)
 	metadatalifecyclev1.RegisterDiscoveryServiceServer(server, grpcapi.NewDiscovery(discoverySvc))
 
 	listener, err := net.Listen("tcp", ":"+cfg.ServerPort)

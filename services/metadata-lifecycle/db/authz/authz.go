@@ -79,6 +79,19 @@ func (r *Repo) IsActiveMember(ctx context.Context, userID string, groupID uuid.U
 	return active, nil
 }
 
+// ActiveMemberGroupIDs returns candidate groups where user has active membership.
+func (r *Repo) ActiveMemberGroupIDs(ctx context.Context, userID string, groupIDs []uuid.UUID) ([]uuid.UUID, error) {
+	result, err := r.ListActiveMemberGroupIDs(ctx, sqlc.ListActiveMemberGroupIDsParams{
+		UserID:   userID,
+		GroupIds: groupIDs,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list active member groups: %w", err)
+	}
+
+	return result, nil
+}
+
 func (r *Repo) HasGroupRole(ctx context.Context, userID string, groupID uuid.UUID, roleKey string) (bool, error) {
 	hasRole, err := r.Queries.HasGroupRole(ctx, sqlc.HasGroupRoleParams{
 		UserID:  userID,

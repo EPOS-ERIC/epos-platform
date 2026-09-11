@@ -493,6 +493,33 @@ WHERE
     version.id = sqlc.arg(version_id)
     AND version.software_application_id = sqlc.arg(software_application_id);
 
+-- name: ListLifecycleSoftwareApplicationVersionSummaries :many
+SELECT
+    version.id,
+    version.software_application_id,
+    version.status,
+    version.revision,
+    version.name,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    software_application_versions AS version
+WHERE
+    version.software_application_id = sqlc.arg(software_application_id)
+ORDER BY
+    version.created_at,
+    version.id;
+
 -- name: ListLifecycleSoftwareApplicationIdentifiers :many
 SELECT
     sqlc.embed(identifier)

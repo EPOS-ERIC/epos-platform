@@ -33,6 +33,36 @@ message GetResourceVersionResponse {
   ResourceVersion resource = 1;
 }
 
+message ListResourceVersionsRequest {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+}
+
+message ResourceVersionSummary {
+  ResourceType resource_type = 1 [(buf.validate.field).enum.defined_only = true];
+  string resource_id = 2 [(buf.validate.field).string.uuid = true];
+  string version_id = 3 [(buf.validate.field).string.uuid = true];
+  int32 revision = 4 [(buf.validate.field).int32.gte = 1];
+  VersioningStatus status = 5 [(buf.validate.field).enum.defined_only = true];
+  string name = 6 [(buf.validate.field).string.min_len = 1];
+  string created_by = 7 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  optional string submitted_by = 10 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp submitted_at = 11;
+  optional string published_by = 12 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp published_at = 13;
+  optional string archived_by = 14 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp archived_at = 15;
+  optional string rejected_by = 16 [(buf.validate.field).string.min_len = 1];
+  google.protobuf.Timestamp rejected_at = 17;
+  optional string rejection_note = 18 [(buf.validate.field).string.min_len = 1];
+}
+
+message ListResourceVersionsResponse {
+  repeated ResourceVersionSummary versions = 1;
+}
+
 message ResourceVersion {
   string resource_id = 1 [(buf.validate.field).string.uuid = true];
   string version_id = 2 [(buf.validate.field).string.uuid = true];
@@ -48,6 +78,7 @@ message ResourceVersion {
     SoftwareApplicationResourceMetadata software_application = 11;
     SoftwareSourceCodeResourceMetadata software_source_code = 12;
   }
+  optional string rejection_note = 13 [(buf.validate.field).string.min_len = 1];
 }
 
 message DatasetResourceMetadata {
@@ -165,24 +196,62 @@ message Distribution {
   string id = 10 [(buf.validate.field).string.uuid = true];
 }
 
+enum WebServiceMethod {
+  WEB_SERVICE_METHOD_UNSPECIFIED = 0;
+  WEB_SERVICE_METHOD_GET = 1;
+  WEB_SERVICE_METHOD_POST = 2;
+  WEB_SERVICE_METHOD_PUT = 3;
+  WEB_SERVICE_METHOD_DELETE = 4;
+}
+
+enum WebServiceType {
+  WEB_SERVICE_TYPE_UNSPECIFIED = 0;
+  WEB_SERVICE_TYPE_WMS = 1;
+  WEB_SERVICE_TYPE_GEOJSON = 2;
+  WEB_SERVICE_TYPE_DYNAMIC = 3;
+  WEB_SERVICE_TYPE_WMTS = 4;
+  WEB_SERVICE_TYPE_WFS = 5;
+  WEB_SERVICE_TYPE_COVJSON = 6;
+}
+
+enum WebServiceVisibleOn {
+  WEB_SERVICE_VISIBLE_ON_UNSPECIFIED = 0;
+  WEB_SERVICE_VISIBLE_ON_GRAPH = 1;
+  WEB_SERVICE_VISIBLE_ON_TABLE = 2;
+  WEB_SERVICE_VISIBLE_ON_MAP = 3;
+}
+
+enum WebServiceParameterLocation {
+  WEB_SERVICE_PARAMETER_LOCATION_UNSPECIFIED = 0;
+  WEB_SERVICE_PARAMETER_LOCATION_PATH = 1;
+  WEB_SERVICE_PARAMETER_LOCATION_QUERY = 2;
+  WEB_SERVICE_PARAMETER_LOCATION_HEADER = 3;
+}
+
 message WebServiceInput {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string description = 2 [(buf.validate.field).string.min_len = 1];
   string template_url = 3 [(buf.validate.field).string.min_len = 1];
-  repeated ParameterInput parameters = 4;
+  repeated Parameter parameters = 4;
   string format = 5 [(buf.validate.field).string.min_len = 1];
   optional string provider_id = 6 [(buf.validate.field).string.uuid = true];
   Documentation documentation = 7;
   optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
   Temporal temporal_coverage = 9;
   repeated string contact_points = 10 [(buf.validate.field).repeated.items.string.uuid = true];
+  WebServiceMethod method = 11 [(buf.validate.field).enum.defined_only = true];
+  optional string body_content_type = 12 [(buf.validate.field).string.min_len = 1];
+  optional string body_template = 13 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameter body_parameters = 14;
+  WebServiceType type = 15 [(buf.validate.field).enum.defined_only = true];
+  repeated WebServiceVisibleOn visible_on = 16 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 
 message WebService {
   string name = 1 [(buf.validate.field).string.min_len = 1];
-  string description = 2 [(buf.validate.field).string.min_len = 1];
+  optional string description = 2 [(buf.validate.field).string.min_len = 1];
   string template_url = 3 [(buf.validate.field).string.min_len = 1];
-  repeated Parameter parameters = 4;
+  repeated WebServiceParameter parameters = 4;
   string format = 5 [(buf.validate.field).string.min_len = 1];
   Documentation documentation = 7;
   optional string spatial_coverage = 8 [(buf.validate.field).string.min_len = 1];
@@ -190,6 +259,12 @@ message WebService {
   repeated string contact_points = 10 [(buf.validate.field).repeated.items.string.uuid = true];
   string id = 11 [(buf.validate.field).string.uuid = true];
   EntityReference provider_reference = 13;
+  WebServiceMethod method = 14 [(buf.validate.field).enum.defined_only = true];
+  optional string body_content_type = 15 [(buf.validate.field).string.min_len = 1];
+  optional string body_template = 16 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameter body_parameters = 17;
+  WebServiceType type = 18 [(buf.validate.field).enum.defined_only = true];
+  repeated WebServiceVisibleOn visible_on = 19 [(buf.validate.field).repeated.items.enum.defined_only = true];
 }
 
 message DownloadableFile {
@@ -204,53 +279,53 @@ message Documentation {
 }
 
 message Parameter {
-  ParameterMetadata metadata = 1;
-  oneof value {
-    StringParameter string = 2;
-    BooleanParameter boolean = 3;
-    IntegerParameter integer = 4;
-    FloatParameter float = 5;
-    DateTimeParameter date_time = 6;
-  }
-}
-
-message ParameterInput {
-  ParameterMetadataInput metadata = 1;
+  int32 position = 1;
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string label = 3 [(buf.validate.field).string.min_len = 1];
+  optional string description = 4 [(buf.validate.field).string.min_len = 1];
+  bool required = 5;
+  bool read_only = 6;
   oneof value {
     option (buf.validate.oneof).required = true;
-    StringParameter string = 2;
-    BooleanParameter boolean = 3;
-    IntegerParameter integer = 4;
-    FloatParameter float = 5;
-    DateTimeParameter date_time = 6;
+    StringParameter string = 7;
+    BooleanParameter boolean = 8;
+    IntegerParameter integer = 9;
+    FloatParameter float = 10;
+    DateTimeParameter date_time = 11;
+    TemplateParameter template = 12;
+  }
+  optional string property = 13;
+  WebServiceParameterLocation location = 14 [(buf.validate.field).enum.defined_only = true];
+  bool explode = 15;
+}
+
+message ScalarParameter {
+  int32 position = 1;
+  string name = 2 [(buf.validate.field).string.min_len = 1];
+  string label = 3 [(buf.validate.field).string.min_len = 1];
+  optional string description = 4 [(buf.validate.field).string.min_len = 1];
+  bool required = 5;
+  bool read_only = 6;
+  oneof value {
+    option (buf.validate.oneof).required = true;
+    ScalarStringParameter string = 7;
+    ScalarBooleanParameter boolean = 8;
+    ScalarIntegerParameter integer = 9;
+    ScalarFloatParameter float = 10;
+    ScalarDateTimeParameter date_time = 11;
   }
 }
 
-message ParameterMetadata {
-  string variable = 1 [(buf.validate.field).string.min_len = 1];
-  string property = 2 [(buf.validate.field).string.min_len = 1];
-  string label = 3 [(buf.validate.field).string.min_len = 1];
-  bool required = 4;
-  // TODO: maybe rename this to controlled_values? also in the db. to make it clear that when this is set we expect that this parameter values are only the ones in the controlled list of values and no custom one can be used. basically an enum
-  bool multiple_values = 5;
-  bool read_only = 6;
-  string id = 7 [(buf.validate.field).string.uuid = true];
-}
-
-message ParameterMetadataInput {
-  string variable = 1 [(buf.validate.field).string.min_len = 1];
-  string property = 2 [(buf.validate.field).string.min_len = 1];
-  string label = 3 [(buf.validate.field).string.min_len = 1];
-  bool required = 4;
-  bool multiple_values = 5;
-  bool read_only = 6;
+message WebServiceParameter {
+  string id = 1 [(buf.validate.field).string.uuid = true];
+  Parameter parameter = 2;
 }
 
 message StringParameter {
   optional string default = 1 [(buf.validate.field).string.min_len = 1];
-  repeated string allowed_values = 2 [(buf.validate.field).repeated.items.string.min_len = 1];
-  // TODO: this should be optional
-  string pattern = 3;
+  repeated string enum = 2 [(buf.validate.field).repeated.items.string.min_len = 1];
+  optional string pattern = 3 [(buf.validate.field).string.min_len = 1];
+  bool multiple_values = 4;
 }
 
 message BooleanParameter {
@@ -261,22 +336,59 @@ message IntegerParameter {
   optional int64 minimum = 1;
   optional int64 maximum = 2;
   optional int64 default = 3;
-  repeated int64 allowed_values = 4;
+  repeated int64 enum = 4;
+  bool multiple_values = 5;
 }
 
 message FloatParameter {
   optional double minimum = 1;
   optional double maximum = 2;
   optional double default = 3;
-  repeated double allowed_values = 4;
+  repeated double enum = 4;
+  bool multiple_values = 5;
 }
 
 message DateTimeParameter {
-  google.protobuf.Timestamp minimum = 1;
-  google.protobuf.Timestamp maximum = 2;
-  google.protobuf.Timestamp default = 3;
-  // TODO: what sholud this be? the go pattern used to parse? RFC pattern? an enum instead? maybe just useless?
-  string pattern = 4;
+  optional google.protobuf.Timestamp minimum = 1;
+  optional google.protobuf.Timestamp maximum = 2;
+  optional google.protobuf.Timestamp default = 3;
+  optional string layout = 4 [(buf.validate.field).string.min_len = 1];
+}
+
+message TemplateParameter {
+  string template = 1 [(buf.validate.field).string.min_len = 1];
+  repeated ScalarParameter parameters = 2;
+}
+
+message ScalarStringParameter {
+  optional string default = 1 [(buf.validate.field).string.min_len = 1];
+  repeated string enum = 2 [(buf.validate.field).repeated.items.string.min_len = 1];
+  optional string pattern = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+message ScalarBooleanParameter {
+  optional bool default = 1;
+}
+
+message ScalarIntegerParameter {
+  optional int64 minimum = 1;
+  optional int64 maximum = 2;
+  optional int64 default = 3;
+  repeated int64 enum = 4;
+}
+
+message ScalarFloatParameter {
+  optional double minimum = 1;
+  optional double maximum = 2;
+  optional double default = 3;
+  repeated double enum = 4;
+}
+
+message ScalarDateTimeParameter {
+  optional google.protobuf.Timestamp minimum = 1;
+  optional google.protobuf.Timestamp maximum = 2;
+  optional google.protobuf.Timestamp default = 3;
+  optional string layout = 4 [(buf.validate.field).string.min_len = 1];
 }
 
 message SoftwareApplicationInput {
@@ -421,6 +533,9 @@ service ResourceService {
   }
   rpc GetResourceVersion(GetResourceVersionRequest) returns (GetResourceVersionResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_OPTIONAL;
+  }
+  rpc ListResourceVersions(ListResourceVersionsRequest) returns (ListResourceVersionsResponse) {
+    option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;
   }
   rpc ReplaceResourceDraft(ReplaceResourceDraftRequest) returns (ReplaceResourceDraftResponse) {
     option (metadata_lifecycle.v1.actor_requirement) = ACTOR_REQUIREMENT_REQUIRED;

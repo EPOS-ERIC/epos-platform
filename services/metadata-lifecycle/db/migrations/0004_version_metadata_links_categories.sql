@@ -1,6 +1,10 @@
 -- +goose Up
 
-CREATE TYPE parameter_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME');
+CREATE TYPE web_service_http_method AS ENUM ('GET', 'POST', 'PUT', 'DELETE');
+CREATE TYPE web_service_type AS ENUM ('WMS', 'GEOJSON', 'DYNAMIC', 'WMTS', 'WFS', 'COVJSON');
+CREATE TYPE web_service_visible_on AS ENUM ('GRAPH', 'TABLE', 'MAP');
+CREATE TYPE web_service_parameter_location AS ENUM ('PATH', 'QUERY', 'HEADER');
+CREATE TYPE parameter_schema_kind AS ENUM ('STRING', 'BOOLEAN', 'INTEGER', 'FLOAT', 'DATETIME', 'TEMPLATE');
 
 CREATE TABLE identifiers (
     -- Identifier identity and RDF value metadata
@@ -65,8 +69,11 @@ CREATE TABLE web_services (
 
     -- Web service metadata
     name                      text NOT NULL,
-    description               text NOT NULL DEFAULT '',
+    description               text,
     template_url              text NOT NULL,
+    method                    web_service_http_method NOT NULL,
+    type                      web_service_type NOT NULL,
+    visible_on                web_service_visible_on[],
     format                    text NOT NULL,
     provider_organization_id  uuid REFERENCES organizations(id) ON DELETE SET NULL,
     documentation_title       text,
@@ -77,30 +84,255 @@ CREATE TABLE web_services (
     temporal_end              timestamptz,
 
     CHECK (temporal_start IS NULL OR temporal_end IS NULL OR temporal_start <= temporal_end),
-    CHECK ((documentation_title IS NULL AND documentation_description IS NULL AND documentation_uri IS NULL) OR documentation_uri IS NOT NULL)
+    CHECK ((documentation_title IS NULL AND documentation_description IS NULL AND documentation_uri IS NULL) OR documentation_uri IS NOT NULL),
+    CHECK (btrim(name) <> ''),
+    CHECK (description IS NULL OR btrim(description) <> ''),
+    CHECK (btrim(template_url) <> ''),
+    CHECK (btrim(format) <> ''),
+    CHECK (visible_on IS NULL OR cardinality(visible_on) > 0)
+);
+CREATE TABLE web_service_bodies (
+    id             uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    web_service_id uuid NOT NULL UNIQUE REFERENCES web_services(id) ON DELETE CASCADE,
+    content_type   text NOT NULL,
+    template       text NOT NULL,
+    CHECK (length(btrim(content_type)) > 0),
+    CHECK (length(btrim(template)) > 0)
 );
 CREATE TABLE web_service_contact_points (
     web_service_id   uuid NOT NULL REFERENCES web_services(id) ON DELETE CASCADE,
     contact_point_id uuid NOT NULL REFERENCES contact_points(id) ON DELETE CASCADE,
     PRIMARY KEY (web_service_id, contact_point_id)
 );
-CREATE TABLE web_service_parameters (
-    id              uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-    web_service_id  uuid NOT NULL REFERENCES web_services(id) ON DELETE CASCADE,
-    kind            parameter_kind NOT NULL,
-    variable        text NOT NULL,
-    property        text NOT NULL,
-    label           text NOT NULL,
-    required        boolean NOT NULL DEFAULT false,
-    multiple_values boolean NOT NULL DEFAULT false,
-    read_only       boolean NOT NULL DEFAULT false,
+CREATE TABLE parameters (
+    id                    uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+    position              integer NOT NULL,
+    name                  text NOT NULL,
+    label                 text NOT NULL,
+    description           text,
+    required              boolean NOT NULL DEFAULT false,
+    read_only             boolean NOT NULL DEFAULT false,
+    web_service_id        uuid REFERENCES web_services(id) ON DELETE CASCADE,
+    web_service_body_id   uuid REFERENCES web_service_bodies(id) ON DELETE CASCADE,
+    template_parameter_id uuid REFERENCES parameters(id) ON DELETE CASCADE,
 
-	-- Parameter-specific fields require a JSON object.
-    config          jsonb NOT NULL DEFAULT '{}'::jsonb,
-    CHECK (jsonb_typeof(config) = 'object'),
+    schema_kind           parameter_schema_kind NOT NULL,
+    property              text,
+    location              web_service_parameter_location,
+    explode               boolean NOT NULL DEFAULT false,
 
-    UNIQUE (web_service_id, variable)
+    CHECK (num_nonnulls(web_service_id, web_service_body_id, template_parameter_id) = 1),
+    CHECK (
+        (web_service_id IS NOT NULL AND location IS NOT NULL)
+        OR (web_service_id IS NULL AND location IS NULL AND property IS NULL AND NOT explode)
+    ),
+    CHECK (NOT explode OR (web_service_id IS NOT NULL AND location = 'QUERY')),
+    CHECK (schema_kind <> 'TEMPLATE' OR web_service_id IS NOT NULL),
+    CHECK (template_parameter_id IS NULL OR schema_kind <> 'TEMPLATE'),
+    CHECK (btrim(name) <> ''),
+    CHECK (btrim(label) <> ''),
+    UNIQUE (id, schema_kind)
 );
+
+CREATE TABLE string_parameter_schemas (
+    parameter_id    uuid PRIMARY KEY,
+    schema_kind    parameter_schema_kind NOT NULL DEFAULT 'STRING',
+    pattern        text,
+    default_value  text,
+    enum           text[],
+    multiple_values boolean NOT NULL DEFAULT false,
+
+    FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
+    CHECK (schema_kind = 'STRING'),
+    CHECK (enum IS NULL OR (cardinality(enum) > 0 AND array_position(enum, NULL) IS NULL AND array_position(enum, '') IS NULL)),
+    CHECK (NOT multiple_values OR enum IS NOT NULL)
+);
+
+CREATE TABLE boolean_parameter_schemas (
+    parameter_id   uuid PRIMARY KEY,
+    schema_kind    parameter_schema_kind NOT NULL DEFAULT 'BOOLEAN',
+    default_value  boolean,
+
+    FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
+    CHECK (schema_kind = 'BOOLEAN')
+);
+
+CREATE TABLE integer_parameter_schemas (
+    parameter_id    uuid PRIMARY KEY,
+    schema_kind     parameter_schema_kind NOT NULL DEFAULT 'INTEGER',
+    minimum         bigint,
+    maximum         bigint,
+    default_value   bigint,
+    enum            bigint[],
+    multiple_values boolean NOT NULL DEFAULT false,
+
+    FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
+    CHECK (schema_kind = 'INTEGER'),
+    CHECK (enum IS NULL OR (cardinality(enum) > 0 AND array_position(enum, NULL) IS NULL)),
+    CHECK (NOT multiple_values OR enum IS NOT NULL),
+    CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
+    CHECK (minimum IS NULL OR enum IS NULL OR minimum <= ALL(enum)),
+    CHECK (maximum IS NULL OR enum IS NULL OR maximum >= ALL(enum)),
+    CHECK (default_value IS NULL OR minimum IS NULL OR default_value >= minimum),
+    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum),
+    CHECK (default_value IS NULL OR enum IS NULL OR default_value = ANY(enum))
+);
+
+CREATE TABLE float_parameter_schemas (
+    parameter_id    uuid PRIMARY KEY,
+    schema_kind     parameter_schema_kind NOT NULL DEFAULT 'FLOAT',
+    minimum         double precision,
+    maximum         double precision,
+    default_value   double precision,
+    enum            double precision[],
+    multiple_values boolean NOT NULL DEFAULT false,
+
+    FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
+    CHECK (schema_kind = 'FLOAT'),
+    CHECK (enum IS NULL OR (cardinality(enum) > 0 AND array_position(enum, NULL) IS NULL)),
+    CHECK (NOT multiple_values OR enum IS NOT NULL),
+    CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum),
+    CHECK (minimum IS NULL OR enum IS NULL OR minimum <= ALL(enum)),
+    CHECK (maximum IS NULL OR enum IS NULL OR maximum >= ALL(enum)),
+    CHECK (default_value IS NULL OR minimum IS NULL OR default_value >= minimum),
+    CHECK (default_value IS NULL OR maximum IS NULL OR default_value <= maximum),
+    CHECK (default_value IS NULL OR enum IS NULL OR default_value = ANY(enum))
+);
+
+CREATE TABLE datetime_parameter_schemas (
+    parameter_id   uuid PRIMARY KEY,
+    schema_kind    parameter_schema_kind NOT NULL DEFAULT 'DATETIME',
+    minimum        timestamptz,
+    maximum        timestamptz,
+    default_value  timestamptz,
+    layout         text,
+
+    FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
+    CHECK (schema_kind = 'DATETIME'),
+    CHECK (minimum IS NULL OR maximum IS NULL OR minimum <= maximum)
+);
+
+CREATE TABLE parameter_templates (
+    parameter_id uuid PRIMARY KEY,
+    schema_kind  parameter_schema_kind NOT NULL DEFAULT 'TEMPLATE',
+    template     text NOT NULL,
+
+    FOREIGN KEY (parameter_id, schema_kind) REFERENCES parameters(id, schema_kind) ON DELETE CASCADE,
+    CHECK (schema_kind = 'TEMPLATE'),
+    CHECK (length(btrim(template)) > 0)
+);
+
+CREATE UNIQUE INDEX parameters_web_service_name_uq ON parameters (web_service_id, name) WHERE web_service_id IS NOT NULL;
+CREATE UNIQUE INDEX parameters_web_service_body_name_uq ON parameters (web_service_body_id, name) WHERE web_service_body_id IS NOT NULL;
+CREATE UNIQUE INDEX parameters_template_name_uq ON parameters (template_parameter_id, name) WHERE template_parameter_id IS NOT NULL;
+
+-- +goose StatementBegin
+CREATE FUNCTION validate_parameter_schema() RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_parameter_id uuid;
+    v_parameter_kind parameter_schema_kind;
+    v_schema_exists boolean;
+    v_template_parent_id uuid;
+    v_parent_kind parameter_schema_kind;
+BEGIN
+    IF TG_TABLE_NAME = 'parameters' THEN
+        v_parameter_id := NEW.id;
+    ELSE
+        v_parameter_id := COALESCE(NEW.parameter_id, OLD.parameter_id);
+    END IF;
+
+    IF TG_OP = 'DELETE' AND TG_TABLE_NAME <> 'parameters' THEN
+        IF NOT EXISTS (SELECT 1 FROM parameters WHERE id = v_parameter_id) THEN
+            RETURN OLD;
+        END IF;
+    END IF;
+
+    SELECT p.schema_kind, p.template_parameter_id
+    INTO v_parameter_kind, v_template_parent_id
+    FROM parameters AS p
+    WHERE p.id = v_parameter_id;
+
+    IF v_parameter_kind IS NULL THEN
+        IF TG_OP = 'DELETE' THEN
+            RETURN OLD;
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    v_schema_exists := CASE v_parameter_kind
+        WHEN 'STRING' THEN EXISTS (SELECT 1 FROM string_parameter_schemas WHERE parameter_id = v_parameter_id)
+        WHEN 'BOOLEAN' THEN EXISTS (SELECT 1 FROM boolean_parameter_schemas WHERE parameter_id = v_parameter_id)
+        WHEN 'INTEGER' THEN EXISTS (SELECT 1 FROM integer_parameter_schemas WHERE parameter_id = v_parameter_id)
+        WHEN 'FLOAT' THEN EXISTS (SELECT 1 FROM float_parameter_schemas WHERE parameter_id = v_parameter_id)
+        WHEN 'DATETIME' THEN EXISTS (SELECT 1 FROM datetime_parameter_schemas WHERE parameter_id = v_parameter_id)
+        WHEN 'TEMPLATE' THEN EXISTS (SELECT 1 FROM parameter_templates WHERE parameter_id = v_parameter_id)
+    END;
+    IF NOT v_schema_exists THEN
+        RAISE EXCEPTION 'parameter % is missing schema row for kind %', v_parameter_id, v_parameter_kind;
+    END IF;
+
+    SELECT schema_kind
+    INTO v_parent_kind
+    FROM parameters AS parent
+    WHERE parent.id = v_template_parent_id;
+    IF v_template_parent_id IS NOT NULL AND v_parent_kind IS DISTINCT FROM 'TEMPLATE' THEN
+        RAISE EXCEPTION 'parameter % has non-template parent', v_parameter_id;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM parameters
+        WHERE id = v_parameter_id
+          AND explode
+          AND (
+              (v_parameter_kind = 'STRING' AND NOT EXISTS (SELECT 1 FROM string_parameter_schemas WHERE parameter_id = v_parameter_id AND multiple_values))
+              OR (v_parameter_kind = 'INTEGER' AND NOT EXISTS (SELECT 1 FROM integer_parameter_schemas WHERE parameter_id = v_parameter_id AND multiple_values))
+              OR (v_parameter_kind = 'FLOAT' AND NOT EXISTS (SELECT 1 FROM float_parameter_schemas WHERE parameter_id = v_parameter_id AND multiple_values))
+              OR v_parameter_kind IN ('BOOLEAN', 'DATETIME', 'TEMPLATE')
+          )
+    ) THEN
+        RAISE EXCEPTION 'parameter % explode requires multiple values', v_parameter_id;
+    END IF;
+
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+-- +goose StatementEnd
+
+CREATE CONSTRAINT TRIGGER parameters_schema_integrity
+AFTER INSERT OR UPDATE ON parameters
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
+
+CREATE CONSTRAINT TRIGGER string_parameter_schema_integrity
+AFTER INSERT OR UPDATE OR DELETE ON string_parameter_schemas
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
+CREATE CONSTRAINT TRIGGER boolean_parameter_schema_integrity
+AFTER INSERT OR UPDATE OR DELETE ON boolean_parameter_schemas
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
+CREATE CONSTRAINT TRIGGER integer_parameter_schema_integrity
+AFTER INSERT OR UPDATE OR DELETE ON integer_parameter_schemas
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
+CREATE CONSTRAINT TRIGGER float_parameter_schema_integrity
+AFTER INSERT OR UPDATE OR DELETE ON float_parameter_schemas
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
+CREATE CONSTRAINT TRIGGER datetime_parameter_schema_integrity
+AFTER INSERT OR UPDATE OR DELETE ON datetime_parameter_schemas
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
+CREATE CONSTRAINT TRIGGER parameter_template_schema_integrity
+AFTER INSERT OR UPDATE OR DELETE ON parameter_templates
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION validate_parameter_schema();
 CREATE TABLE distributions (
     -- Version-owned distribution identity
     id                       uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -119,6 +351,7 @@ CREATE TABLE distributions (
     downloadable_file_url    text,
     downloadable_file_format text,
     web_service_id           uuid REFERENCES web_services(id) ON DELETE CASCADE,
+
     CHECK (
         (type = 'http://publications.europa.eu/resource/authority/distribution-type/WEB_SERVICE'
             AND downloadable_file_url IS NULL
@@ -158,5 +391,6 @@ CREATE TABLE software_source_code_version_categories (
 
 -- +goose Down
 
-DROP TABLE IF EXISTS software_source_code_version_categories, software_application_version_categories, software_source_code_version_contact_points, software_application_version_contact_points, dataset_version_categories, web_service_parameters, web_service_contact_points, distributions, web_services, dataset_version_contact_points, software_source_code_version_creators, software_application_version_creators, dataset_version_providers, identifiers;
-DROP TYPE IF EXISTS parameter_kind;
+DROP TABLE IF EXISTS software_source_code_version_categories, software_application_version_categories, software_source_code_version_contact_points, software_application_version_contact_points, dataset_version_categories, parameter_templates, datetime_parameter_schemas, float_parameter_schemas, integer_parameter_schemas, boolean_parameter_schemas, string_parameter_schemas, parameters, web_service_bodies, web_service_contact_points, distributions, web_services, dataset_version_contact_points, software_source_code_version_creators, software_application_version_creators, dataset_version_providers, identifiers;
+DROP FUNCTION IF EXISTS validate_parameter_schema();
+DROP TYPE IF EXISTS parameter_schema_kind, web_service_parameter_location, web_service_visible_on, web_service_type, web_service_http_method;

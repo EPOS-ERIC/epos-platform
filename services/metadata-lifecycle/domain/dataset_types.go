@@ -87,9 +87,13 @@ type Distribution struct {
 // WebServiceInput contains caller-controlled web-service fields.
 type WebServiceInput struct {
 	Name             string
-	Description      string
+	Description      *string
 	TemplateURL      string
-	Parameters       []Parameter
+	Method           HTTPMethod
+	Type             WebServiceType
+	VisibleOn        []WebServiceVisibleOn
+	Body             *RequestBody
+	Parameters       []WebServiceParameterInput
 	Format           string
 	ProviderID       *uuid.UUID
 	Documentation    *Documentation
@@ -102,9 +106,13 @@ type WebServiceInput struct {
 type WebService struct {
 	ID               uuid.UUID
 	Name             string
-	Description      string
+	Description      *string
 	TemplateURL      string
-	Parameters       []Parameter
+	Method           HTTPMethod
+	Type             WebServiceType
+	VisibleOn        []WebServiceVisibleOn
+	Body             *RequestBody
+	Parameters       []WebServiceParameter
 	Format           string
 	Provider         *OrganizationMetadata
 	Documentation    *Documentation
@@ -129,72 +137,182 @@ type Temporal struct {
 	End   *time.Time
 }
 
-type Parameter interface {
-	GetMetadata() ParameterMetadata
-	Kind() ParameterKind
+type HTTPMethod string
+
+const (
+	HTTPMethodGet    HTTPMethod = "GET"
+	HTTPMethodPost   HTTPMethod = "POST"
+	HTTPMethodPut    HTTPMethod = "PUT"
+	HTTPMethodDelete HTTPMethod = "DELETE"
+)
+
+func (m HTTPMethod) Valid() bool {
+	switch m {
+	case HTTPMethodGet, HTTPMethodPost, HTTPMethodPut, HTTPMethodDelete:
+		return true
+	default:
+		return false
+	}
 }
 
-type ParameterMetadata struct {
-	ID             uuid.UUID
-	Kind           ParameterKind
-	Variable       string
-	Property       string
-	Label          string
-	Required       bool
+type WebServiceType string
+
+const (
+	WebServiceTypeWMS     WebServiceType = "WMS"
+	WebServiceTypeGeoJSON WebServiceType = "GEOJSON"
+	WebServiceTypeDynamic WebServiceType = "DYNAMIC"
+	WebServiceTypeWMTS    WebServiceType = "WMTS"
+	WebServiceTypeWFS     WebServiceType = "WFS"
+	WebServiceTypeCOVJSON WebServiceType = "COVJSON"
+)
+
+func (t WebServiceType) Valid() bool {
+	switch t {
+	case WebServiceTypeWMS, WebServiceTypeGeoJSON, WebServiceTypeDynamic, WebServiceTypeWMTS, WebServiceTypeWFS, WebServiceTypeCOVJSON:
+		return true
+	default:
+		return false
+	}
+}
+
+type WebServiceVisibleOn string
+
+const (
+	WebServiceVisibleOnGraph WebServiceVisibleOn = "GRAPH"
+	WebServiceVisibleOnTable WebServiceVisibleOn = "TABLE"
+	WebServiceVisibleOnMap   WebServiceVisibleOn = "MAP"
+)
+
+func (v WebServiceVisibleOn) Valid() bool {
+	switch v {
+	case WebServiceVisibleOnGraph, WebServiceVisibleOnTable, WebServiceVisibleOnMap:
+		return true
+	default:
+		return false
+	}
+}
+
+type ParameterLocation string
+
+const (
+	ParameterLocationPath   ParameterLocation = "PATH"
+	ParameterLocationQuery  ParameterLocation = "QUERY"
+	ParameterLocationHeader ParameterLocation = "HEADER"
+)
+
+func (l ParameterLocation) Valid() bool {
+	switch l {
+	case ParameterLocationPath, ParameterLocationQuery, ParameterLocationHeader:
+		return true
+	default:
+		return false
+	}
+}
+
+// Parameter is a scalar body or template parameter.
+type Parameter struct {
+	Position    int
+	Name        string
+	Label       string
+	Description *string
+	Required    bool
+	ReadOnly    bool
+	Schema      ParameterSchema
+}
+
+type WebServiceParameterInput struct {
+	Parameter
+	Property *string
+	Location ParameterLocation
+	Explode  bool
+}
+
+type WebServiceParameter struct {
+	ID uuid.UUID
+	Parameter
+	Property *string
+	Location ParameterLocation
+	Explode  bool
+}
+
+type RequestBody struct {
+	ContentType string
+	Template    string
+	Parameters  []Parameter
+}
+
+type ParameterSchemaKind string
+
+const (
+	ParameterSchemaKindString   ParameterSchemaKind = "STRING"
+	ParameterSchemaKindBoolean  ParameterSchemaKind = "BOOLEAN"
+	ParameterSchemaKindInteger  ParameterSchemaKind = "INTEGER"
+	ParameterSchemaKindFloat    ParameterSchemaKind = "FLOAT"
+	ParameterSchemaKindDateTime ParameterSchemaKind = "DATETIME"
+	ParameterSchemaKindTemplate ParameterSchemaKind = "TEMPLATE"
+)
+
+type ParameterSchema interface {
+	Kind() ParameterSchemaKind
+	parameterSchema()
+}
+
+type StringSchema struct {
+	Pattern        *string
+	Enum           []string
+	Default        *string
 	MultipleValues bool
-	ReadOnly       bool
 }
 
-type StringParameter struct {
-	Metadata      ParameterMetadata
-	Default       *string
-	AllowedValues []string
-	Pattern       string
+func (StringSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindString }
+func (StringSchema) parameterSchema()          {}
+
+type BooleanSchema struct {
+	Default *bool
 }
 
-func (p StringParameter) GetMetadata() ParameterMetadata { return p.Metadata }
-func (p StringParameter) Kind() ParameterKind            { return ParameterKindString }
+func (BooleanSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindBoolean }
+func (BooleanSchema) parameterSchema()          {}
 
-type BooleanParameter struct {
-	Metadata ParameterMetadata
-	Default  *bool
+type IntegerSchema struct {
+	Minimum        *int64
+	Maximum        *int64
+	Enum           []int64
+	Default        *int64
+	MultipleValues bool
 }
 
-func (p BooleanParameter) GetMetadata() ParameterMetadata { return p.Metadata }
-func (p BooleanParameter) Kind() ParameterKind            { return ParameterKindBoolean }
+func (IntegerSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindInteger }
+func (IntegerSchema) parameterSchema()          {}
 
-type IntegerParameter struct {
-	Metadata      ParameterMetadata
-	Minimum       *int64
-	Maximum       *int64
-	Default       *int64
-	AllowedValues []int64
+type FloatSchema struct {
+	Minimum        *float64
+	Maximum        *float64
+	Enum           []float64
+	Default        *float64
+	MultipleValues bool
 }
 
-func (p IntegerParameter) GetMetadata() ParameterMetadata { return p.Metadata }
-func (p IntegerParameter) Kind() ParameterKind            { return ParameterKindInteger }
+func (FloatSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindFloat }
+func (FloatSchema) parameterSchema()          {}
 
-type FloatParameter struct {
-	Metadata      ParameterMetadata
-	Minimum       *float64
-	Maximum       *float64
-	Default       *float64
-	AllowedValues []float64
+type DateTimeSchema struct {
+	Minimum *time.Time
+	Maximum *time.Time
+	Default *time.Time
+	Layout  *string
 }
 
-func (p FloatParameter) GetMetadata() ParameterMetadata { return p.Metadata }
-func (p FloatParameter) Kind() ParameterKind            { return ParameterKindFloat }
+func (DateTimeSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindDateTime }
+func (DateTimeSchema) parameterSchema()          {}
 
-type DateTimeParameter struct {
-	Metadata ParameterMetadata
-	Minimum  *time.Time
-	Maximum  *time.Time
-	Default  *time.Time
-	Pattern  string
+type TemplateSchema struct {
+	Template   string
+	Parameters []Parameter
 }
 
-func (p DateTimeParameter) GetMetadata() ParameterMetadata { return p.Metadata }
-func (p DateTimeParameter) Kind() ParameterKind            { return ParameterKindDateTime }
+func (TemplateSchema) Kind() ParameterSchemaKind { return ParameterSchemaKindTemplate }
+func (TemplateSchema) parameterSchema()          {}
 
 type DistributionType string
 
@@ -208,34 +326,16 @@ func (t DistributionType) Valid() bool {
 	return t == DistributionTypeDownloadableFile || t == DistributionTypeWebService
 }
 
-type ParameterKind string
-
-const (
-	ParameterKindString   ParameterKind = "STRING"
-	ParameterKindBoolean  ParameterKind = "BOOLEAN"
-	ParameterKindInteger  ParameterKind = "INTEGER"
-	ParameterKindFloat    ParameterKind = "FLOAT"
-	ParameterKindDateTime ParameterKind = "DATETIME"
-)
-
-func (k ParameterKind) Valid() bool {
-	switch k {
-	case ParameterKindString, ParameterKindBoolean, ParameterKindInteger, ParameterKindFloat, ParameterKindDateTime:
-		return true
-	default:
-		return false
-	}
-}
-
 // DatasetVersion is dataset metadata with lifecycle identity.
 type DatasetVersion struct {
-	DatasetID uuid.UUID
-	VersionID uuid.UUID
-	Revision  int32
-	Status    Status
-	CreatedBy Actor
-	Group     Group
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Metadata  DatasetMetadata
+	DatasetID     uuid.UUID
+	VersionID     uuid.UUID
+	Revision      int32
+	Status        Status
+	CreatedBy     Actor
+	Group         Group
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	RejectionNote *string
+	Metadata      DatasetMetadata
 }

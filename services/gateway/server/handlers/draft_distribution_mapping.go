@@ -37,8 +37,11 @@ func toProtoDocumentation(v gatewayapi.OptDocumentation) *metadatalifecyclev1.Do
 func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.WebServiceInput {
 	r := &metadatalifecyclev1.WebServiceInput{
 		Name:             string(v.Name),
-		Description:      v.Description.Value,
+		Description:      protoOptString(v.Description),
 		TemplateUrl:      string(v.TemplateURL),
+		Method:           toProtoWebServiceMethod(v.Method),
+		Type:             toProtoWebServiceType(v.Type),
+		VisibleOn:        toProtoWebServiceVisibleOn(v.VisibleOn),
 		Format:           string(v.Format),
 		TemporalCoverage: toProtoTemporal(v.TemporalCoverage),
 		Documentation:    toProtoDocumentation(v.Documentation),
@@ -52,6 +55,17 @@ func toProtoWebServiceDraft(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.W
 	}
 	for _, parameter := range v.Parameters {
 		r.Parameters = append(r.Parameters, toProtoParameterDraft(parameter))
+	}
+	if v.BodyContentType.Set || v.BodyTemplate.Set || len(v.BodyParameters) > 0 {
+		if v.BodyContentType.Set {
+			r.BodyContentType = new(string(v.BodyContentType.Value))
+		}
+		if v.BodyTemplate.Set {
+			r.BodyTemplate = new(string(v.BodyTemplate.Value))
+		}
+		for _, parameter := range v.BodyParameters {
+			r.BodyParameters = append(r.BodyParameters, toProtoScalarParameterDraft(parameter))
+		}
 	}
 	return r
 }
@@ -95,7 +109,9 @@ func toProtoDistribution(v gatewayapi.DistributionDraft) *metadatalifecyclev1.Di
 	}
 	if v.IsWebServiceDistributionDraft() {
 		x := v.WebServiceDistributionDraft
-		r.Delivery = &metadatalifecyclev1.DistributionInput_WebService{WebService: toProtoWebService(x.WebService)}
+		r.Delivery = &metadatalifecyclev1.DistributionInput_WebService{
+			WebService: toProtoWebServiceDraft(x.WebService),
+		}
 		return r
 	}
 
@@ -139,17 +155,57 @@ func protoOptInt64(v gatewayapi.OptNilInt64) *int64 {
 	return new(v.Value)
 }
 
-func toProtoWebService(v gatewayapi.WebServiceDraft) *metadatalifecyclev1.WebServiceInput {
-	r := &metadatalifecyclev1.WebServiceInput{Name: string(v.Name), Description: v.Description.Value, TemplateUrl: string(v.TemplateURL), Format: string(v.Format), TemporalCoverage: toProtoTemporal(v.TemporalCoverage), Documentation: toProtoDocumentation(v.Documentation), ContactPoints: uuidStrings(v.ContactPoints)}
-	if v.SpatialCoverage.Set && !v.SpatialCoverage.Null {
-		r.SpatialCoverage = new(v.SpatialCoverage.Value)
+func toProtoWebServiceMethod(value gatewayapi.WebServiceMethod) metadatalifecyclev1.WebServiceMethod {
+	switch value {
+	case gatewayapi.WebServiceMethodGET:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_GET
+	case gatewayapi.WebServiceMethodPOST:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_POST
+	case gatewayapi.WebServiceMethodPUT:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_PUT
+	case gatewayapi.WebServiceMethodDELETE:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_DELETE
+	default:
+		return metadatalifecyclev1.WebServiceMethod_WEB_SERVICE_METHOD_UNSPECIFIED
 	}
-	if v.Provider.Set {
-		providerID := v.Provider.Value.String()
-		r.ProviderId = &providerID
+}
+
+func toProtoWebServiceType(value gatewayapi.WebServiceType) metadatalifecyclev1.WebServiceType {
+	switch value {
+	case gatewayapi.WebServiceTypeWMS:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMS
+	case gatewayapi.WebServiceTypeGEOJSON:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_GEOJSON
+	case gatewayapi.WebServiceTypeDYNAMIC:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_DYNAMIC
+	case gatewayapi.WebServiceTypeWMTS:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WMTS
+	case gatewayapi.WebServiceTypeWFS:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_WFS
+	case gatewayapi.WebServiceTypeCOVJSON:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_COVJSON
+	default:
+		return metadatalifecyclev1.WebServiceType_WEB_SERVICE_TYPE_UNSPECIFIED
 	}
-	for _, parameter := range v.Parameters {
-		r.Parameters = append(r.Parameters, toProtoParameterDraft(parameter))
+}
+
+func toProtoWebServiceVisibleOn(value gatewayapi.OptNilWebServiceVisibleOnArray) []metadatalifecyclev1.WebServiceVisibleOn {
+	values, ok := value.Get()
+	if !ok {
+		return nil
 	}
-	return r
+	result := make([]metadatalifecyclev1.WebServiceVisibleOn, len(values))
+	for i, item := range values {
+		switch item {
+		case gatewayapi.WebServiceVisibleOnGRAPH:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_GRAPH
+		case gatewayapi.WebServiceVisibleOnTABLE:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_TABLE
+		case gatewayapi.WebServiceVisibleOnMAP:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_MAP
+		default:
+			result[i] = metadatalifecyclev1.WebServiceVisibleOn_WEB_SERVICE_VISIBLE_ON_UNSPECIFIED
+		}
+	}
+	return result
 }

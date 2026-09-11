@@ -117,6 +117,7 @@ func NewSoftwareApplicationVersion(
 	createdBy Actor,
 	group Group,
 	createdAt, updatedAt time.Time,
+	rejectionNote *string,
 	metadata SoftwareApplicationMetadata,
 ) (SoftwareApplicationVersion, error) {
 	if softwareApplicationID == uuid.Nil || versionID == uuid.Nil {
@@ -152,6 +153,10 @@ func NewSoftwareApplicationVersion(
 	if createdAt.IsZero() || updatedAt.IsZero() {
 		return SoftwareApplicationVersion{}, fmt.Errorf("software application timestamps are required: %w", ErrSoftwareApplicationInvalid)
 	}
+	rejectionNote, err = NewRejectionNote(status, rejectionNote)
+	if err != nil {
+		return SoftwareApplicationVersion{}, fmt.Errorf("software application rejection note: %w: %w", err, ErrSoftwareApplicationInvalid)
+	}
 	return SoftwareApplicationVersion{
 		SoftwareApplicationID: softwareApplicationID,
 		VersionID:             versionID,
@@ -161,6 +166,7 @@ func NewSoftwareApplicationVersion(
 		Group:                 normalizedGroup,
 		CreatedAt:             createdAt,
 		UpdatedAt:             updatedAt,
+		RejectionNote:         rejectionNote,
 		Metadata:              metadata,
 	}, nil
 }

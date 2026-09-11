@@ -25,6 +25,7 @@ const (
 
 type Store interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
+	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)
 	GetPublished(context.Context, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	GetActive(context.Context, uuid.UUID) (domain.SoftwareSourceCodeVersion, error)
 	CreateDraft(context.Context, string, uuid.UUID, domain.SoftwareSourceCodeInput) (domain.SoftwareSourceCodeVersion, error)
@@ -44,6 +45,7 @@ type Store interface {
 type Authorizer interface {
 	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+	CanReadResourceVersions(context.Context, string, domain.ResourceType, uuid.UUID) (domain.Result, error)
 	CanReadSoftwareSourceCodeVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 }
 
@@ -97,6 +99,22 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, sourceCodeID, v
 		return domain.SoftwareSourceCodeVersion{}, operationError("get source code version", err)
 	}
 	return sourceCode, nil
+}
+
+func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, sourceCodeID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	result, err := s.authorizer.CanReadResourceVersions(ctx, string(actor), domain.SoftwareSourceCode, sourceCodeID)
+	if err != nil {
+		return nil, operationError("authorize source code version history", err)
+	}
+	if !result.Allowed {
+		if result.Reason == "resource not found" {
+			return nil, domain.ErrSoftwareSourceCodeNotFound
+		}
+		return nil, fmt.Errorf("%w: %s", domain.ErrSoftwareSourceCodeForbidden, result.Reason)
+	}
+
+	versions, err := s.store.List(ctx, sourceCodeID)
+	return versions, operationError("list source code versions", err)
 }
 
 func (s *Service) Submit(ctx context.Context, actor domain.Actor, sourceCodeID, versionID uuid.UUID) (domain.SoftwareSourceCodeVersion, error) {

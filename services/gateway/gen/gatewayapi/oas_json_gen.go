@@ -119,23 +119,74 @@ func (s *BooleanParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *BooleanParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfBooleanParameter = [3]string{
-	0: "kind",
-	1: "metadata",
-	2: "default",
+var jsonFieldsNameOfBooleanParameter = [12]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "property",
+	8:  "location",
+	9:  "explode",
+	10: "read_only",
+	11: "default",
 }
 
 // Decode decodes BooleanParameter from json.
@@ -143,12 +194,24 @@ func (s *BooleanParameter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode BooleanParameter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -157,19 +220,107 @@ func (s *BooleanParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
-			requiredBitSet[0] |= 1 << 1
+		case "position":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -186,7 +337,8 @@ func (s *BooleanParameter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
+	for i, mask := range [2]uint8{
+		0b01011111,
 		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -247,19 +399,65 @@ func (s *BooleanParameterDraft) encodeFields(e *jx.Encoder) {
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfBooleanParameterDraft = [3]string{
-	0: "kind",
-	1: "metadata",
-	2: "default",
+var jsonFieldsNameOfBooleanParameterDraft = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "property",
+	7:  "location",
+	8:  "explode",
+	9:  "read_only",
+	10: "default",
 }
 
 // Decode decodes BooleanParameterDraft from json.
@@ -267,7 +465,7 @@ func (s *BooleanParameterDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode BooleanParameterDraft to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -281,19 +479,107 @@ func (s *BooleanParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
+		case "position":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "default":
+		case "name":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -310,8 +596,9 @@ func (s *BooleanParameterDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00000111,
+	for i, mask := range [2]uint8{
+		0b10101111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -429,6 +716,500 @@ func (s BooleanParameterKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *BooleanParameterKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *BooleanScalarParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *BooleanScalarParameter) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfBooleanScalarParameter = [8]string{
+	0: "kind",
+	1: "position",
+	2: "name",
+	3: "label",
+	4: "description",
+	5: "required",
+	6: "read_only",
+	7: "default",
+}
+
+// Decode decodes BooleanScalarParameter from json.
+func (s *BooleanScalarParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode BooleanScalarParameter to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode BooleanScalarParameter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b01101111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfBooleanScalarParameter) {
+					name = jsonFieldsNameOfBooleanScalarParameter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *BooleanScalarParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *BooleanScalarParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *BooleanScalarParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *BooleanScalarParameterDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfBooleanScalarParameterDraft = [8]string{
+	0: "kind",
+	1: "position",
+	2: "name",
+	3: "label",
+	4: "description",
+	5: "required",
+	6: "read_only",
+	7: "default",
+}
+
+// Decode decodes BooleanScalarParameterDraft from json.
+func (s *BooleanScalarParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode BooleanScalarParameterDraft to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode BooleanScalarParameterDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b01101111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfBooleanScalarParameterDraft) {
+					name = jsonFieldsNameOfBooleanScalarParameterDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *BooleanScalarParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *BooleanScalarParameterDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes BooleanScalarParameterDraftKind as json.
+func (s BooleanScalarParameterDraftKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes BooleanScalarParameterDraftKind from json.
+func (s *BooleanScalarParameterDraftKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode BooleanScalarParameterDraftKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch BooleanScalarParameterDraftKind(v) {
+	case BooleanScalarParameterDraftKindBOOLEAN:
+		*s = BooleanScalarParameterDraftKindBOOLEAN
+	default:
+		*s = BooleanScalarParameterDraftKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s BooleanScalarParameterDraftKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *BooleanScalarParameterDraftKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes BooleanScalarParameterKind as json.
+func (s BooleanScalarParameterKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes BooleanScalarParameterKind from json.
+func (s *BooleanScalarParameterKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode BooleanScalarParameterKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch BooleanScalarParameterKind(v) {
+	case BooleanScalarParameterKindBOOLEAN:
+		*s = BooleanScalarParameterKindBOOLEAN
+	default:
+		*s = BooleanScalarParameterKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s BooleanScalarParameterKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *BooleanScalarParameterKind) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -3814,38 +4595,95 @@ func (s *DateTimeParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *DateTimeParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("minimum")
-		s.Minimum.Encode(e, json.EncodeDateTime)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("maximum")
-		s.Maximum.Encode(e, json.EncodeDateTime)
+		e.FieldStart("label")
+		s.Label.Encode(e)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e, json.EncodeDateTime)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
 	}
 	{
-		e.FieldStart("pattern")
-		e.Str(s.Pattern)
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Layout.Set {
+			e.FieldStart("layout")
+			s.Layout.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfDateTimeParameter = [6]string{
-	0: "kind",
-	1: "metadata",
-	2: "minimum",
-	3: "maximum",
-	4: "default",
-	5: "pattern",
+var jsonFieldsNameOfDateTimeParameter = [15]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "property",
+	8:  "location",
+	9:  "explode",
+	10: "read_only",
+	11: "minimum",
+	12: "maximum",
+	13: "default",
+	14: "layout",
 }
 
 // Decode decodes DateTimeParameter from json.
@@ -3853,12 +4691,24 @@ func (s *DateTimeParameter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode DateTimeParameter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -3867,19 +4717,107 @@ func (s *DateTimeParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
-			requiredBitSet[0] |= 1 << 1
+		case "position":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
 			}
 		case "minimum":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				s.Minimum.Reset()
 				if err := s.Minimum.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
@@ -3888,8 +4826,8 @@ func (s *DateTimeParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"minimum\"")
 			}
 		case "maximum":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				s.Maximum.Reset()
 				if err := s.Maximum.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
@@ -3898,8 +4836,8 @@ func (s *DateTimeParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"maximum\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
@@ -3907,17 +4845,15 @@ func (s *DateTimeParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "pattern":
-			requiredBitSet[0] |= 1 << 5
+		case "layout":
 			if err := func() error {
-				v, err := d.Str()
-				s.Pattern = string(v)
-				if err != nil {
+				s.Layout.Reset()
+				if err := s.Layout.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"pattern\"")
+				return errors.Wrap(err, "decode field \"layout\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -3928,8 +4864,9 @@ func (s *DateTimeParameter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b01011111,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -3989,34 +4926,86 @@ func (s *DateTimeParameterDraft) encodeFields(e *jx.Encoder) {
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("minimum")
-		s.Minimum.Encode(e, json.EncodeDateTime)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("maximum")
-		s.Maximum.Encode(e, json.EncodeDateTime)
+		e.FieldStart("label")
+		s.Label.Encode(e)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e, json.EncodeDateTime)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
 	}
 	{
-		e.FieldStart("pattern")
-		e.Str(s.Pattern)
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Layout.Set {
+			e.FieldStart("layout")
+			s.Layout.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfDateTimeParameterDraft = [6]string{
-	0: "kind",
-	1: "metadata",
-	2: "minimum",
-	3: "maximum",
-	4: "default",
-	5: "pattern",
+var jsonFieldsNameOfDateTimeParameterDraft = [14]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "property",
+	7:  "location",
+	8:  "explode",
+	9:  "read_only",
+	10: "minimum",
+	11: "maximum",
+	12: "default",
+	13: "layout",
 }
 
 // Decode decodes DateTimeParameterDraft from json.
@@ -4024,7 +5013,7 @@ func (s *DateTimeParameterDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode DateTimeParameterDraft to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -4038,19 +5027,107 @@ func (s *DateTimeParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
+		case "position":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "minimum":
+		case "name":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
 				if err := s.Minimum.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
@@ -4059,8 +5136,8 @@ func (s *DateTimeParameterDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"minimum\"")
 			}
 		case "maximum":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				s.Maximum.Reset()
 				if err := s.Maximum.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
@@ -4069,8 +5146,8 @@ func (s *DateTimeParameterDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"maximum\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
@@ -4078,17 +5155,15 @@ func (s *DateTimeParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "pattern":
-			requiredBitSet[0] |= 1 << 5
+		case "layout":
 			if err := func() error {
-				v, err := d.Str()
-				s.Pattern = string(v)
-				if err != nil {
+				s.Layout.Reset()
+				if err := s.Layout.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"pattern\"")
+				return errors.Wrap(err, "decode field \"layout\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -4099,8 +5174,9 @@ func (s *DateTimeParameterDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b10101111,
+		0b00000011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -4218,6 +5294,604 @@ func (s DateTimeParameterKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DateTimeParameterKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DateTimeScalarParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DateTimeScalarParameter) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Layout.Set {
+			e.FieldStart("layout")
+			s.Layout.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDateTimeScalarParameter = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "read_only",
+	7:  "minimum",
+	8:  "maximum",
+	9:  "default",
+	10: "layout",
+}
+
+// Decode decodes DateTimeScalarParameter from json.
+func (s *DateTimeScalarParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DateTimeScalarParameter to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
+				if err := s.Minimum.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minimum\"")
+			}
+		case "maximum":
+			if err := func() error {
+				s.Maximum.Reset()
+				if err := s.Maximum.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maximum\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "layout":
+			if err := func() error {
+				s.Layout.Reset()
+				if err := s.Layout.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"layout\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DateTimeScalarParameter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDateTimeScalarParameter) {
+					name = jsonFieldsNameOfDateTimeScalarParameter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DateTimeScalarParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DateTimeScalarParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *DateTimeScalarParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *DateTimeScalarParameterDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Layout.Set {
+			e.FieldStart("layout")
+			s.Layout.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDateTimeScalarParameterDraft = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "read_only",
+	7:  "minimum",
+	8:  "maximum",
+	9:  "default",
+	10: "layout",
+}
+
+// Decode decodes DateTimeScalarParameterDraft from json.
+func (s *DateTimeScalarParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DateTimeScalarParameterDraft to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
+				if err := s.Minimum.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minimum\"")
+			}
+		case "maximum":
+			if err := func() error {
+				s.Maximum.Reset()
+				if err := s.Maximum.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maximum\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "layout":
+			if err := func() error {
+				s.Layout.Reset()
+				if err := s.Layout.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"layout\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode DateTimeScalarParameterDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfDateTimeScalarParameterDraft) {
+					name = jsonFieldsNameOfDateTimeScalarParameterDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *DateTimeScalarParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DateTimeScalarParameterDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DateTimeScalarParameterDraftKind as json.
+func (s DateTimeScalarParameterDraftKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DateTimeScalarParameterDraftKind from json.
+func (s *DateTimeScalarParameterDraftKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DateTimeScalarParameterDraftKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DateTimeScalarParameterDraftKind(v) {
+	case DateTimeScalarParameterDraftKindDATETIME:
+		*s = DateTimeScalarParameterDraftKindDATETIME
+	default:
+		*s = DateTimeScalarParameterDraftKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DateTimeScalarParameterDraftKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DateTimeScalarParameterDraftKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DateTimeScalarParameterKind as json.
+func (s DateTimeScalarParameterKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DateTimeScalarParameterKind from json.
+func (s *DateTimeScalarParameterKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DateTimeScalarParameterKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DateTimeScalarParameterKind(v) {
+	case DateTimeScalarParameterKindDATETIME:
+		*s = DateTimeScalarParameterKindDATETIME
+	default:
+		*s = DateTimeScalarParameterKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DateTimeScalarParameterKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DateTimeScalarParameterKind) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -4539,6 +6213,48 @@ func (s DiscoveryItem) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *DiscoveryItem) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes DiscoveryResourceType as json.
+func (s DiscoveryResourceType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes DiscoveryResourceType from json.
+func (s *DiscoveryResourceType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode DiscoveryResourceType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch DiscoveryResourceType(v) {
+	case DiscoveryResourceTypeDataset:
+		*s = DiscoveryResourceTypeDataset
+	case DiscoveryResourceTypeSoftwareApplication:
+		*s = DiscoveryResourceTypeSoftwareApplication
+	case DiscoveryResourceTypeSoftwareSourceCode:
+		*s = DiscoveryResourceTypeSoftwareSourceCode
+	default:
+		*s = DiscoveryResourceType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s DiscoveryResourceType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *DiscoveryResourceType) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -5650,42 +7366,104 @@ func (s *FloatParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *FloatParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("minimum")
-		s.Minimum.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("maximum")
-		s.Maximum.Encode(e)
+		e.FieldStart("label")
+		s.Label.Encode(e)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
-	}
-	{
-		e.FieldStart("allowed_values")
-		e.ArrStart()
-		for _, elem := range s.AllowedValues {
-			e.Float64(elem)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
-		e.ArrEnd()
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("multiple_values")
+		e.Bool(s.MultipleValues)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Float64(elem)
+			}
+			e.ArrEnd()
+		}
 	}
 }
 
-var jsonFieldsNameOfFloatParameter = [6]string{
-	0: "kind",
-	1: "metadata",
-	2: "minimum",
-	3: "maximum",
-	4: "default",
-	5: "allowed_values",
+var jsonFieldsNameOfFloatParameter = [16]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "property",
+	8:  "location",
+	9:  "explode",
+	10: "multiple_values",
+	11: "read_only",
+	12: "minimum",
+	13: "maximum",
+	14: "default",
+	15: "enum",
 }
 
 // Decode decodes FloatParameter from json.
@@ -5693,12 +7471,24 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode FloatParameter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -5707,19 +7497,119 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
-			requiredBitSet[0] |= 1 << 1
+		case "position":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "multiple_values":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.MultipleValues = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"multiple_values\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
 			}
 		case "minimum":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				s.Minimum.Reset()
 				if err := s.Minimum.Decode(d); err != nil {
 					return err
 				}
@@ -5728,8 +7618,8 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"minimum\"")
 			}
 		case "maximum":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				s.Maximum.Reset()
 				if err := s.Maximum.Decode(d); err != nil {
 					return err
 				}
@@ -5738,8 +7628,8 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"maximum\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -5747,10 +7637,9 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "allowed_values":
-			requiredBitSet[0] |= 1 << 5
+		case "enum":
 			if err := func() error {
-				s.AllowedValues = make([]float64, 0)
+				s.Enum = make([]float64, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
 					var elem float64
 					v, err := d.Float64()
@@ -5758,14 +7647,14 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 					if err != nil {
 						return err
 					}
-					s.AllowedValues = append(s.AllowedValues, elem)
+					s.Enum = append(s.Enum, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"allowed_values\"")
+				return errors.Wrap(err, "decode field \"enum\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -5776,8 +7665,9 @@ func (s *FloatParameter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b01011111,
+		0b00001111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -5837,38 +7727,95 @@ func (s *FloatParameterDraft) encodeFields(e *jx.Encoder) {
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("minimum")
-		s.Minimum.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("maximum")
-		s.Maximum.Encode(e)
+		e.FieldStart("label")
+		s.Label.Encode(e)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
-	}
-	{
-		e.FieldStart("allowed_values")
-		e.ArrStart()
-		for _, elem := range s.AllowedValues {
-			e.Float64(elem)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
-		e.ArrEnd()
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("multiple_values")
+		e.Bool(s.MultipleValues)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Float64(elem)
+			}
+			e.ArrEnd()
+		}
 	}
 }
 
-var jsonFieldsNameOfFloatParameterDraft = [6]string{
-	0: "kind",
-	1: "metadata",
-	2: "minimum",
-	3: "maximum",
-	4: "default",
-	5: "allowed_values",
+var jsonFieldsNameOfFloatParameterDraft = [15]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "property",
+	7:  "location",
+	8:  "explode",
+	9:  "multiple_values",
+	10: "read_only",
+	11: "minimum",
+	12: "maximum",
+	13: "default",
+	14: "enum",
 }
 
 // Decode decodes FloatParameterDraft from json.
@@ -5876,7 +7823,7 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode FloatParameterDraft to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -5890,19 +7837,119 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
+		case "position":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "minimum":
+		case "name":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "multiple_values":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.MultipleValues = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"multiple_values\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
 				if err := s.Minimum.Decode(d); err != nil {
 					return err
 				}
@@ -5911,8 +7958,8 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"minimum\"")
 			}
 		case "maximum":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				s.Maximum.Reset()
 				if err := s.Maximum.Decode(d); err != nil {
 					return err
 				}
@@ -5921,8 +7968,8 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"maximum\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -5930,10 +7977,9 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "allowed_values":
-			requiredBitSet[0] |= 1 << 5
+		case "enum":
 			if err := func() error {
-				s.AllowedValues = make([]float64, 0)
+				s.Enum = make([]float64, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
 					var elem float64
 					v, err := d.Float64()
@@ -5941,14 +7987,14 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 					if err != nil {
 						return err
 					}
-					s.AllowedValues = append(s.AllowedValues, elem)
+					s.Enum = append(s.Enum, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"allowed_values\"")
+				return errors.Wrap(err, "decode field \"enum\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -5959,8 +8005,9 @@ func (s *FloatParameterDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b10101111,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -6078,6 +8125,630 @@ func (s FloatParameterKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *FloatParameterKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FloatScalarParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FloatScalarParameter) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Float64(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfFloatScalarParameter = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "read_only",
+	7:  "minimum",
+	8:  "maximum",
+	9:  "default",
+	10: "enum",
+}
+
+// Decode decodes FloatScalarParameter from json.
+func (s *FloatScalarParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FloatScalarParameter to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
+				if err := s.Minimum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minimum\"")
+			}
+		case "maximum":
+			if err := func() error {
+				s.Maximum.Reset()
+				if err := s.Maximum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maximum\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "enum":
+			if err := func() error {
+				s.Enum = make([]float64, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem float64
+					v, err := d.Float64()
+					elem = float64(v)
+					if err != nil {
+						return err
+					}
+					s.Enum = append(s.Enum, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"enum\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FloatScalarParameter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfFloatScalarParameter) {
+					name = jsonFieldsNameOfFloatScalarParameter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FloatScalarParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FloatScalarParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *FloatScalarParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *FloatScalarParameterDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Float64(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfFloatScalarParameterDraft = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "read_only",
+	7:  "minimum",
+	8:  "maximum",
+	9:  "default",
+	10: "enum",
+}
+
+// Decode decodes FloatScalarParameterDraft from json.
+func (s *FloatScalarParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FloatScalarParameterDraft to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
+				if err := s.Minimum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minimum\"")
+			}
+		case "maximum":
+			if err := func() error {
+				s.Maximum.Reset()
+				if err := s.Maximum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maximum\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "enum":
+			if err := func() error {
+				s.Enum = make([]float64, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem float64
+					v, err := d.Float64()
+					elem = float64(v)
+					if err != nil {
+						return err
+					}
+					s.Enum = append(s.Enum, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"enum\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode FloatScalarParameterDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfFloatScalarParameterDraft) {
+					name = jsonFieldsNameOfFloatScalarParameterDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *FloatScalarParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FloatScalarParameterDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FloatScalarParameterDraftKind as json.
+func (s FloatScalarParameterDraftKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes FloatScalarParameterDraftKind from json.
+func (s *FloatScalarParameterDraftKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FloatScalarParameterDraftKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch FloatScalarParameterDraftKind(v) {
+	case FloatScalarParameterDraftKindFLOAT:
+		*s = FloatScalarParameterDraftKindFLOAT
+	default:
+		*s = FloatScalarParameterDraftKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s FloatScalarParameterDraftKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FloatScalarParameterDraftKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes FloatScalarParameterKind as json.
+func (s FloatScalarParameterKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes FloatScalarParameterKind from json.
+func (s *FloatScalarParameterKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode FloatScalarParameterKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch FloatScalarParameterKind(v) {
+	case FloatScalarParameterKindFLOAT:
+		*s = FloatScalarParameterKindFLOAT
+	default:
+		*s = FloatScalarParameterKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s FloatScalarParameterKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *FloatScalarParameterKind) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -7202,42 +9873,104 @@ func (s *IntegerParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *IntegerParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("minimum")
-		s.Minimum.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("maximum")
-		s.Maximum.Encode(e)
+		e.FieldStart("label")
+		s.Label.Encode(e)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
-	}
-	{
-		e.FieldStart("allowed_values")
-		e.ArrStart()
-		for _, elem := range s.AllowedValues {
-			e.Int64(elem)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
-		e.ArrEnd()
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("multiple_values")
+		e.Bool(s.MultipleValues)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Int64(elem)
+			}
+			e.ArrEnd()
+		}
 	}
 }
 
-var jsonFieldsNameOfIntegerParameter = [6]string{
-	0: "kind",
-	1: "metadata",
-	2: "minimum",
-	3: "maximum",
-	4: "default",
-	5: "allowed_values",
+var jsonFieldsNameOfIntegerParameter = [16]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "property",
+	8:  "location",
+	9:  "explode",
+	10: "multiple_values",
+	11: "read_only",
+	12: "minimum",
+	13: "maximum",
+	14: "default",
+	15: "enum",
 }
 
 // Decode decodes IntegerParameter from json.
@@ -7245,12 +9978,24 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode IntegerParameter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -7259,19 +10004,119 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
-			requiredBitSet[0] |= 1 << 1
+		case "position":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "multiple_values":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.MultipleValues = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"multiple_values\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
 			}
 		case "minimum":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				s.Minimum.Reset()
 				if err := s.Minimum.Decode(d); err != nil {
 					return err
 				}
@@ -7280,8 +10125,8 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"minimum\"")
 			}
 		case "maximum":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				s.Maximum.Reset()
 				if err := s.Maximum.Decode(d); err != nil {
 					return err
 				}
@@ -7290,8 +10135,8 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"maximum\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -7299,10 +10144,9 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "allowed_values":
-			requiredBitSet[0] |= 1 << 5
+		case "enum":
 			if err := func() error {
-				s.AllowedValues = make([]int64, 0)
+				s.Enum = make([]int64, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
 					var elem int64
 					v, err := d.Int64()
@@ -7310,14 +10154,14 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 					if err != nil {
 						return err
 					}
-					s.AllowedValues = append(s.AllowedValues, elem)
+					s.Enum = append(s.Enum, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"allowed_values\"")
+				return errors.Wrap(err, "decode field \"enum\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -7328,8 +10172,9 @@ func (s *IntegerParameter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b01011111,
+		0b00001111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -7389,38 +10234,95 @@ func (s *IntegerParameterDraft) encodeFields(e *jx.Encoder) {
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("minimum")
-		s.Minimum.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("maximum")
-		s.Maximum.Encode(e)
+		e.FieldStart("label")
+		s.Label.Encode(e)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
-	}
-	{
-		e.FieldStart("allowed_values")
-		e.ArrStart()
-		for _, elem := range s.AllowedValues {
-			e.Int64(elem)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
-		e.ArrEnd()
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("multiple_values")
+		e.Bool(s.MultipleValues)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Int64(elem)
+			}
+			e.ArrEnd()
+		}
 	}
 }
 
-var jsonFieldsNameOfIntegerParameterDraft = [6]string{
-	0: "kind",
-	1: "metadata",
-	2: "minimum",
-	3: "maximum",
-	4: "default",
-	5: "allowed_values",
+var jsonFieldsNameOfIntegerParameterDraft = [15]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "property",
+	7:  "location",
+	8:  "explode",
+	9:  "multiple_values",
+	10: "read_only",
+	11: "minimum",
+	12: "maximum",
+	13: "default",
+	14: "enum",
 }
 
 // Decode decodes IntegerParameterDraft from json.
@@ -7428,7 +10330,7 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode IntegerParameterDraft to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -7442,19 +10344,119 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
+		case "position":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "minimum":
+		case "name":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "multiple_values":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.MultipleValues = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"multiple_values\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
 				if err := s.Minimum.Decode(d); err != nil {
 					return err
 				}
@@ -7463,8 +10465,8 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"minimum\"")
 			}
 		case "maximum":
-			requiredBitSet[0] |= 1 << 3
 			if err := func() error {
+				s.Maximum.Reset()
 				if err := s.Maximum.Decode(d); err != nil {
 					return err
 				}
@@ -7473,8 +10475,8 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"maximum\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -7482,10 +10484,9 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "allowed_values":
-			requiredBitSet[0] |= 1 << 5
+		case "enum":
 			if err := func() error {
-				s.AllowedValues = make([]int64, 0)
+				s.Enum = make([]int64, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
 					var elem int64
 					v, err := d.Int64()
@@ -7493,14 +10494,14 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 					if err != nil {
 						return err
 					}
-					s.AllowedValues = append(s.AllowedValues, elem)
+					s.Enum = append(s.Enum, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"allowed_values\"")
+				return errors.Wrap(err, "decode field \"enum\"")
 			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
@@ -7511,8 +10512,9 @@ func (s *IntegerParameterDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00111111,
+	for i, mask := range [2]uint8{
+		0b10101111,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -7630,6 +10632,630 @@ func (s IntegerParameterKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *IntegerParameterKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *IntegerScalarParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *IntegerScalarParameter) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Int64(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfIntegerScalarParameter = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "read_only",
+	7:  "minimum",
+	8:  "maximum",
+	9:  "default",
+	10: "enum",
+}
+
+// Decode decodes IntegerScalarParameter from json.
+func (s *IntegerScalarParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode IntegerScalarParameter to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
+				if err := s.Minimum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minimum\"")
+			}
+		case "maximum":
+			if err := func() error {
+				s.Maximum.Reset()
+				if err := s.Maximum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maximum\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "enum":
+			if err := func() error {
+				s.Enum = make([]int64, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem int64
+					v, err := d.Int64()
+					elem = int64(v)
+					if err != nil {
+						return err
+					}
+					s.Enum = append(s.Enum, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"enum\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode IntegerScalarParameter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfIntegerScalarParameter) {
+					name = jsonFieldsNameOfIntegerScalarParameter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *IntegerScalarParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *IntegerScalarParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *IntegerScalarParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *IntegerScalarParameterDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Minimum.Set {
+			e.FieldStart("minimum")
+			s.Minimum.Encode(e)
+		}
+	}
+	{
+		if s.Maximum.Set {
+			e.FieldStart("maximum")
+			s.Maximum.Encode(e)
+		}
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Int64(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+}
+
+var jsonFieldsNameOfIntegerScalarParameterDraft = [11]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "read_only",
+	7:  "minimum",
+	8:  "maximum",
+	9:  "default",
+	10: "enum",
+}
+
+// Decode decodes IntegerScalarParameterDraft from json.
+func (s *IntegerScalarParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode IntegerScalarParameterDraft to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "minimum":
+			if err := func() error {
+				s.Minimum.Reset()
+				if err := s.Minimum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minimum\"")
+			}
+		case "maximum":
+			if err := func() error {
+				s.Maximum.Reset()
+				if err := s.Maximum.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maximum\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "enum":
+			if err := func() error {
+				s.Enum = make([]int64, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem int64
+					v, err := d.Int64()
+					elem = int64(v)
+					if err != nil {
+						return err
+					}
+					s.Enum = append(s.Enum, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"enum\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode IntegerScalarParameterDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfIntegerScalarParameterDraft) {
+					name = jsonFieldsNameOfIntegerScalarParameterDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *IntegerScalarParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *IntegerScalarParameterDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes IntegerScalarParameterDraftKind as json.
+func (s IntegerScalarParameterDraftKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes IntegerScalarParameterDraftKind from json.
+func (s *IntegerScalarParameterDraftKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode IntegerScalarParameterDraftKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch IntegerScalarParameterDraftKind(v) {
+	case IntegerScalarParameterDraftKindINTEGER:
+		*s = IntegerScalarParameterDraftKindINTEGER
+	default:
+		*s = IntegerScalarParameterDraftKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s IntegerScalarParameterDraftKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *IntegerScalarParameterDraftKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes IntegerScalarParameterKind as json.
+func (s IntegerScalarParameterKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes IntegerScalarParameterKind from json.
+func (s *IntegerScalarParameterKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode IntegerScalarParameterKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch IntegerScalarParameterKind(v) {
+	case IntegerScalarParameterKindINTEGER:
+		*s = IntegerScalarParameterKindINTEGER
+	default:
+		*s = IntegerScalarParameterKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s IntegerScalarParameterKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *IntegerScalarParameterKind) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -8039,52 +11665,6 @@ func (s *MembershipUser) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes bool as json.
-func (o NilBool) Encode(e *jx.Encoder) {
-	if o.Null {
-		e.Null()
-		return
-	}
-	e.Bool(bool(o.Value))
-}
-
-// Decode decodes bool from json.
-func (o *NilBool) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode NilBool to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v bool
-		o.Value = v
-		o.Null = true
-		return nil
-	}
-	o.Null = false
-	v, err := d.Bool()
-	if err != nil {
-		return err
-	}
-	o.Value = bool(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s NilBool) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *NilBool) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
 // Encode encodes time.Time as json.
 func (o NilDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
 	if o.Null {
@@ -8129,98 +11709,6 @@ func (s NilDateTime) MarshalJSON() ([]byte, error) {
 func (s *NilDateTime) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d, json.DecodeDateTime)
-}
-
-// Encode encodes float64 as json.
-func (o NilFloat64) Encode(e *jx.Encoder) {
-	if o.Null {
-		e.Null()
-		return
-	}
-	e.Float64(float64(o.Value))
-}
-
-// Decode decodes float64 from json.
-func (o *NilFloat64) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode NilFloat64 to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v float64
-		o.Value = v
-		o.Null = true
-		return nil
-	}
-	o.Null = false
-	v, err := d.Float64()
-	if err != nil {
-		return err
-	}
-	o.Value = float64(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s NilFloat64) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *NilFloat64) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes int64 as json.
-func (o NilInt64) Encode(e *jx.Encoder) {
-	if o.Null {
-		e.Null()
-		return
-	}
-	e.Int64(int64(o.Value))
-}
-
-// Decode decodes int64 from json.
-func (o *NilInt64) Decode(d *jx.Decoder) error {
-	if o == nil {
-		return errors.New("invalid: unable to decode NilInt64 to nil")
-	}
-	if d.Next() == jx.Null {
-		if err := d.Null(); err != nil {
-			return err
-		}
-
-		var v int64
-		o.Value = v
-		o.Null = true
-		return nil
-	}
-	o.Null = false
-	v, err := d.Int64()
-	if err != nil {
-		return err
-	}
-	o.Value = int64(v)
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s NilInt64) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *NilInt64) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
 }
 
 // Encode encodes string as json.
@@ -8469,6 +11957,57 @@ func (s *OptInt32) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes bool as json.
+func (o OptNilBool) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Bool(bool(o.Value))
+}
+
+// Decode decodes bool from json.
+func (o *OptNilBool) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilBool to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v bool
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := d.Bool()
+	if err != nil {
+		return err
+	}
+	o.Value = bool(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilBool) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilBool) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes time.Time as json.
 func (o OptNilDateTime) Encode(e *jx.Encoder, format func(*jx.Encoder, time.Time)) {
 	if !o.Set {
@@ -8518,6 +12057,57 @@ func (s OptNilDateTime) MarshalJSON() ([]byte, error) {
 func (s *OptNilDateTime) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d, json.DecodeDateTime)
+}
+
+// Encode encodes float64 as json.
+func (o OptNilFloat64) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.Float64(float64(o.Value))
+}
+
+// Decode decodes float64 from json.
+func (o *OptNilFloat64) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilFloat64 to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v float64
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	v, err := d.Float64()
+	if err != nil {
+		return err
+	}
+	o.Value = float64(v)
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilFloat64) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilFloat64) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
 }
 
 // Encode encodes int64 as json.
@@ -8720,6 +12310,67 @@ func (s OptNilUUID) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptNilUUID) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes []WebServiceVisibleOn as json.
+func (o OptNilWebServiceVisibleOnArray) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	if o.Null {
+		e.Null()
+		return
+	}
+	e.ArrStart()
+	for _, elem := range o.Value {
+		elem.Encode(e)
+	}
+	e.ArrEnd()
+}
+
+// Decode decodes []WebServiceVisibleOn from json.
+func (o *OptNilWebServiceVisibleOnArray) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptNilWebServiceVisibleOnArray to nil")
+	}
+	if d.Next() == jx.Null {
+		if err := d.Null(); err != nil {
+			return err
+		}
+
+		var v []WebServiceVisibleOn
+		o.Value = v
+		o.Set = true
+		o.Null = true
+		return nil
+	}
+	o.Set = true
+	o.Null = false
+	o.Value = make([]WebServiceVisibleOn, 0)
+	if err := d.Arr(func(d *jx.Decoder) error {
+		var elem WebServiceVisibleOn
+		if err := elem.Decode(d); err != nil {
+			return err
+		}
+		o.Value = append(o.Value, elem)
+		return nil
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptNilWebServiceVisibleOnArray) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptNilWebServiceVisibleOnArray) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -9148,24 +12799,74 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.StringParameter
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("allowed_values")
-				e.ArrStart()
-				for _, elem := range s.AllowedValues {
-					e.Str(elem)
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
 				}
-				e.ArrEnd()
 			}
 			{
-				e.FieldStart("pattern")
-				e.Str(s.Pattern)
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("multiple_values")
+				e.Bool(s.MultipleValues)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Str(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Pattern.Set {
+					e.FieldStart("pattern")
+					s.Pattern.Encode(e)
+				}
 			}
 		}
 	case BooleanParameterParameter:
@@ -9174,12 +12875,54 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.BooleanParameter
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
 			}
 		}
 	case IntegerParameterParameter:
@@ -9188,28 +12931,80 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.IntegerParameter
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
 			}
 			{
-				e.FieldStart("minimum")
-				s.Minimum.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("maximum")
-				s.Maximum.Encode(e)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
+				e.FieldStart("label")
+				s.Label.Encode(e)
 			}
 			{
-				e.FieldStart("allowed_values")
-				e.ArrStart()
-				for _, elem := range s.AllowedValues {
-					e.Int64(elem)
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
 				}
-				e.ArrEnd()
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("multiple_values")
+				e.Bool(s.MultipleValues)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Int64(elem)
+					}
+					e.ArrEnd()
+				}
 			}
 		}
 	case FloatParameterParameter:
@@ -9218,28 +13013,80 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.FloatParameter
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
 			}
 			{
-				e.FieldStart("minimum")
-				s.Minimum.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("maximum")
-				s.Maximum.Encode(e)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
+				e.FieldStart("label")
+				s.Label.Encode(e)
 			}
 			{
-				e.FieldStart("allowed_values")
-				e.ArrStart()
-				for _, elem := range s.AllowedValues {
-					e.Float64(elem)
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
 				}
-				e.ArrEnd()
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("multiple_values")
+				e.Bool(s.MultipleValues)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Float64(elem)
+					}
+					e.ArrEnd()
+				}
 			}
 		}
 	case DateTimeParameterParameter:
@@ -9248,24 +13095,134 @@ func (s Parameter) encodeFields(e *jx.Encoder) {
 		{
 			s := s.DateTimeParameter
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
 			}
 			{
-				e.FieldStart("minimum")
-				s.Minimum.Encode(e, json.EncodeDateTime)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("maximum")
-				s.Maximum.Encode(e, json.EncodeDateTime)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e, json.EncodeDateTime)
+				e.FieldStart("label")
+				s.Label.Encode(e)
 			}
 			{
-				e.FieldStart("pattern")
-				e.Str(s.Pattern)
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Layout.Set {
+					e.FieldStart("layout")
+					s.Layout.Encode(e)
+				}
+			}
+		}
+	case TemplateParameterParameter:
+		e.FieldStart("kind")
+		e.Str("TEMPLATE")
+		{
+			s := s.TemplateParameter
+			{
+				e.FieldStart("id")
+				json.EncodeUUID(e, s.ID)
+			}
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				e.FieldStart("template")
+				e.Str(s.Template)
+			}
+			{
+				e.FieldStart("parameters")
+				e.ArrStart()
+				for _, elem := range s.Parameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
 			}
 		}
 	}
@@ -9309,6 +13266,9 @@ func (s *Parameter) Decode(d *jx.Decoder) error {
 				case "DATETIME":
 					s.Type = DateTimeParameterParameter
 					found = true
+				case "TEMPLATE":
+					s.Type = TemplateParameterParameter
+					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
 				}
@@ -9341,6 +13301,10 @@ func (s *Parameter) Decode(d *jx.Decoder) error {
 		}
 	case DateTimeParameterParameter:
 		if err := s.DateTimeParameter.Decode(d); err != nil {
+			return err
+		}
+	case TemplateParameterParameter:
+		if err := s.TemplateParameter.Decode(d); err != nil {
 			return err
 		}
 	default:
@@ -9377,24 +13341,70 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 		{
 			s := s.StringParameterDraft
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("allowed_values")
-				e.ArrStart()
-				for _, elem := range s.AllowedValues {
-					e.Str(elem)
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
 				}
-				e.ArrEnd()
 			}
 			{
-				e.FieldStart("pattern")
-				e.Str(s.Pattern)
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("multiple_values")
+				e.Bool(s.MultipleValues)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Str(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Pattern.Set {
+					e.FieldStart("pattern")
+					s.Pattern.Encode(e)
+				}
 			}
 		}
 	case BooleanParameterDraftParameterDraft:
@@ -9403,12 +13413,50 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 		{
 			s := s.BooleanParameterDraft
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
 			}
 		}
 	case IntegerParameterDraftParameterDraft:
@@ -9417,28 +13465,76 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 		{
 			s := s.IntegerParameterDraft
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("minimum")
-				s.Minimum.Encode(e)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("maximum")
-				s.Maximum.Encode(e)
+				e.FieldStart("label")
+				s.Label.Encode(e)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
-			}
-			{
-				e.FieldStart("allowed_values")
-				e.ArrStart()
-				for _, elem := range s.AllowedValues {
-					e.Int64(elem)
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
 				}
-				e.ArrEnd()
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("multiple_values")
+				e.Bool(s.MultipleValues)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Int64(elem)
+					}
+					e.ArrEnd()
+				}
 			}
 		}
 	case FloatParameterDraftParameterDraft:
@@ -9447,28 +13543,76 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 		{
 			s := s.FloatParameterDraft
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("minimum")
-				s.Minimum.Encode(e)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("maximum")
-				s.Maximum.Encode(e)
+				e.FieldStart("label")
+				s.Label.Encode(e)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e)
-			}
-			{
-				e.FieldStart("allowed_values")
-				e.ArrStart()
-				for _, elem := range s.AllowedValues {
-					e.Float64(elem)
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
 				}
-				e.ArrEnd()
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("multiple_values")
+				e.Bool(s.MultipleValues)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Float64(elem)
+					}
+					e.ArrEnd()
+				}
 			}
 		}
 	case DateTimeParameterDraftParameterDraft:
@@ -9477,24 +13621,126 @@ func (s ParameterDraft) encodeFields(e *jx.Encoder) {
 		{
 			s := s.DateTimeParameterDraft
 			{
-				e.FieldStart("metadata")
-				s.Metadata.Encode(e)
+				e.FieldStart("position")
+				e.Int32(s.Position)
 			}
 			{
-				e.FieldStart("minimum")
-				s.Minimum.Encode(e, json.EncodeDateTime)
+				e.FieldStart("name")
+				s.Name.Encode(e)
 			}
 			{
-				e.FieldStart("maximum")
-				s.Maximum.Encode(e, json.EncodeDateTime)
+				e.FieldStart("label")
+				s.Label.Encode(e)
 			}
 			{
-				e.FieldStart("default")
-				s.Default.Encode(e, json.EncodeDateTime)
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
 			}
 			{
-				e.FieldStart("pattern")
-				e.Str(s.Pattern)
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Layout.Set {
+					e.FieldStart("layout")
+					s.Layout.Encode(e)
+				}
+			}
+		}
+	case TemplateParameterDraftParameterDraft:
+		e.FieldStart("kind")
+		e.Str("TEMPLATE")
+		{
+			s := s.TemplateParameterDraft
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				if s.Property.Set {
+					e.FieldStart("property")
+					s.Property.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("location")
+				s.Location.Encode(e)
+			}
+			{
+				e.FieldStart("explode")
+				e.Bool(s.Explode)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				e.FieldStart("template")
+				e.Str(s.Template)
+			}
+			{
+				e.FieldStart("parameters")
+				e.ArrStart()
+				for _, elem := range s.Parameters {
+					elem.Encode(e)
+				}
+				e.ArrEnd()
 			}
 		}
 	}
@@ -9538,6 +13784,9 @@ func (s *ParameterDraft) Decode(d *jx.Decoder) error {
 				case "DATETIME":
 					s.Type = DateTimeParameterDraftParameterDraft
 					found = true
+				case "TEMPLATE":
+					s.Type = TemplateParameterDraftParameterDraft
+					found = true
 				default:
 					return errors.Errorf("unknown type %s", typ)
 				}
@@ -9572,6 +13821,10 @@ func (s *ParameterDraft) Decode(d *jx.Decoder) error {
 		if err := s.DateTimeParameterDraft.Decode(d); err != nil {
 			return err
 		}
+	case TemplateParameterDraftParameterDraft:
+		if err := s.TemplateParameterDraft.Decode(d); err != nil {
+			return err
+		}
 	default:
 		return errors.Errorf("inferred invalid type: %s", s.Type)
 	}
@@ -9591,442 +13844,44 @@ func (s *ParameterDraft) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode implements json.Marshaler.
-func (s *ParameterDraftMetadata) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ParameterDraftMetadata) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("kind")
-		s.Kind.Encode(e)
-	}
-	{
-		e.FieldStart("variable")
-		e.Str(s.Variable)
-	}
-	{
-		e.FieldStart("property")
-		e.Str(s.Property)
-	}
-	{
-		e.FieldStart("label")
-		e.Str(s.Label)
-	}
-	{
-		e.FieldStart("required")
-		e.Bool(s.Required)
-	}
-	{
-		e.FieldStart("multiple_values")
-		e.Bool(s.MultipleValues)
-	}
-	{
-		e.FieldStart("read_only")
-		e.Bool(s.ReadOnly)
-	}
-}
-
-var jsonFieldsNameOfParameterDraftMetadata = [7]string{
-	0: "kind",
-	1: "variable",
-	2: "property",
-	3: "label",
-	4: "required",
-	5: "multiple_values",
-	6: "read_only",
-}
-
-// Decode decodes ParameterDraftMetadata from json.
-func (s *ParameterDraftMetadata) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ParameterDraftMetadata to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "kind":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				if err := s.Kind.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"kind\"")
-			}
-		case "variable":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Variable = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"variable\"")
-			}
-		case "property":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Str()
-				s.Property = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"property\"")
-			}
-		case "label":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Str()
-				s.Label = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"label\"")
-			}
-		case "required":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				v, err := d.Bool()
-				s.Required = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"required\"")
-			}
-		case "multiple_values":
-			requiredBitSet[0] |= 1 << 5
-			if err := func() error {
-				v, err := d.Bool()
-				s.MultipleValues = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"multiple_values\"")
-			}
-		case "read_only":
-			requiredBitSet[0] |= 1 << 6
-			if err := func() error {
-				v, err := d.Bool()
-				s.ReadOnly = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"read_only\"")
-			}
-		default:
-			return errors.Errorf("unexpected field %q", k)
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode ParameterDraftMetadata")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b01111111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfParameterDraftMetadata) {
-					name = jsonFieldsNameOfParameterDraftMetadata[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ParameterDraftMetadata) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ParameterDraftMetadata) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode encodes ParameterKind as json.
-func (s ParameterKind) Encode(e *jx.Encoder) {
+// Encode encodes ParameterLocation as json.
+func (s ParameterLocation) Encode(e *jx.Encoder) {
 	e.Str(string(s))
 }
 
-// Decode decodes ParameterKind from json.
-func (s *ParameterKind) Decode(d *jx.Decoder) error {
+// Decode decodes ParameterLocation from json.
+func (s *ParameterLocation) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode ParameterKind to nil")
+		return errors.New("invalid: unable to decode ParameterLocation to nil")
 	}
 	v, err := d.StrBytes()
 	if err != nil {
 		return err
 	}
 	// Try to use constant string.
-	switch ParameterKind(v) {
-	case ParameterKindSTRING:
-		*s = ParameterKindSTRING
-	case ParameterKindBOOLEAN:
-		*s = ParameterKindBOOLEAN
-	case ParameterKindINTEGER:
-		*s = ParameterKindINTEGER
-	case ParameterKindFLOAT:
-		*s = ParameterKindFLOAT
-	case ParameterKindDATETIME:
-		*s = ParameterKindDATETIME
+	switch ParameterLocation(v) {
+	case ParameterLocationPATH:
+		*s = ParameterLocationPATH
+	case ParameterLocationQUERY:
+		*s = ParameterLocationQUERY
+	case ParameterLocationHEADER:
+		*s = ParameterLocationHEADER
 	default:
-		*s = ParameterKind(v)
+		*s = ParameterLocation(v)
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s ParameterKind) MarshalJSON() ([]byte, error) {
+func (s ParameterLocation) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ParameterKind) UnmarshalJSON(data []byte) error {
-	d := jx.DecodeBytes(data)
-	return s.Decode(d)
-}
-
-// Encode implements json.Marshaler.
-func (s *ParameterMetadata) Encode(e *jx.Encoder) {
-	e.ObjStart()
-	s.encodeFields(e)
-	e.ObjEnd()
-}
-
-// encodeFields encodes fields.
-func (s *ParameterMetadata) encodeFields(e *jx.Encoder) {
-	{
-		e.FieldStart("id")
-		json.EncodeUUID(e, s.ID)
-	}
-	{
-		e.FieldStart("variable")
-		e.Str(s.Variable)
-	}
-	{
-		e.FieldStart("property")
-		e.Str(s.Property)
-	}
-	{
-		e.FieldStart("label")
-		e.Str(s.Label)
-	}
-	{
-		e.FieldStart("required")
-		e.Bool(s.Required)
-	}
-	{
-		e.FieldStart("multiple_values")
-		e.Bool(s.MultipleValues)
-	}
-	{
-		e.FieldStart("read_only")
-		e.Bool(s.ReadOnly)
-	}
-}
-
-var jsonFieldsNameOfParameterMetadata = [7]string{
-	0: "id",
-	1: "variable",
-	2: "property",
-	3: "label",
-	4: "required",
-	5: "multiple_values",
-	6: "read_only",
-}
-
-// Decode decodes ParameterMetadata from json.
-func (s *ParameterMetadata) Decode(d *jx.Decoder) error {
-	if s == nil {
-		return errors.New("invalid: unable to decode ParameterMetadata to nil")
-	}
-	var requiredBitSet [1]uint8
-
-	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		switch string(k) {
-		case "id":
-			requiredBitSet[0] |= 1 << 0
-			if err := func() error {
-				v, err := json.DecodeUUID(d)
-				s.ID = v
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"id\"")
-			}
-		case "variable":
-			requiredBitSet[0] |= 1 << 1
-			if err := func() error {
-				v, err := d.Str()
-				s.Variable = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"variable\"")
-			}
-		case "property":
-			requiredBitSet[0] |= 1 << 2
-			if err := func() error {
-				v, err := d.Str()
-				s.Property = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"property\"")
-			}
-		case "label":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				v, err := d.Str()
-				s.Label = string(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"label\"")
-			}
-		case "required":
-			requiredBitSet[0] |= 1 << 4
-			if err := func() error {
-				v, err := d.Bool()
-				s.Required = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"required\"")
-			}
-		case "multiple_values":
-			requiredBitSet[0] |= 1 << 5
-			if err := func() error {
-				v, err := d.Bool()
-				s.MultipleValues = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"multiple_values\"")
-			}
-		case "read_only":
-			requiredBitSet[0] |= 1 << 6
-			if err := func() error {
-				v, err := d.Bool()
-				s.ReadOnly = bool(v)
-				if err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"read_only\"")
-			}
-		default:
-			return errors.Errorf("unexpected field %q", k)
-		}
-		return nil
-	}); err != nil {
-		return errors.Wrap(err, "decode ParameterMetadata")
-	}
-	// Validate required fields.
-	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b01111111,
-	} {
-		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
-			// Mask only required fields and check equality to mask using XOR.
-			//
-			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
-			// Bits of fields which would be set are actually bits of missed fields.
-			missed := bits.OnesCount8(result)
-			for bitN := 0; bitN < missed; bitN++ {
-				bitIdx := bits.TrailingZeros8(result)
-				fieldIdx := i*8 + bitIdx
-				var name string
-				if fieldIdx < len(jsonFieldsNameOfParameterMetadata) {
-					name = jsonFieldsNameOfParameterMetadata[fieldIdx]
-				} else {
-					name = strconv.Itoa(fieldIdx)
-				}
-				failures = append(failures, validate.FieldError{
-					Name:  name,
-					Error: validate.ErrFieldRequired,
-				})
-				// Reset bit.
-				result &^= 1 << bitIdx
-			}
-		}
-	}
-	if len(failures) > 0 {
-		return &validate.Error{Fields: failures}
-	}
-
-	return nil
-}
-
-// MarshalJSON implements stdjson.Marshaler.
-func (s *ParameterMetadata) MarshalJSON() ([]byte, error) {
-	e := jx.Encoder{}
-	s.Encode(&e)
-	return e.Bytes(), nil
-}
-
-// UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *ParameterMetadata) UnmarshalJSON(data []byte) error {
+func (s *ParameterLocation) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -11782,22 +15637,29 @@ func (s *ResourceVersion) encodeFields(e *jx.Encoder) {
 		json.EncodeDateTime(e, s.UpdatedAt)
 	}
 	{
+		if s.RejectionNote.Set {
+			e.FieldStart("rejection_note")
+			s.RejectionNote.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("metadata")
 		s.Metadata.Encode(e)
 	}
 }
 
-var jsonFieldsNameOfResourceVersion = [10]string{
-	0: "resource_id",
-	1: "version_id",
-	2: "revision",
-	3: "status",
-	4: "created_by",
-	5: "group_id",
-	6: "group_name",
-	7: "created_at",
-	8: "updated_at",
-	9: "metadata",
+var jsonFieldsNameOfResourceVersion = [11]string{
+	0:  "resource_id",
+	1:  "version_id",
+	2:  "revision",
+	3:  "status",
+	4:  "created_by",
+	5:  "group_id",
+	6:  "group_name",
+	7:  "created_at",
+	8:  "updated_at",
+	9:  "rejection_note",
+	10: "metadata",
 }
 
 // Decode decodes ResourceVersion from json.
@@ -11915,8 +15777,18 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
+		case "rejection_note":
+			if err := func() error {
+				s.RejectionNote.Reset()
+				if err := s.RejectionNote.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejection_note\"")
+			}
 		case "metadata":
-			requiredBitSet[1] |= 1 << 1
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Metadata.Decode(d); err != nil {
 					return err
@@ -11936,7 +15808,7 @@ func (s *ResourceVersion) Decode(d *jx.Decoder) error {
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
 		0b11111111,
-		0b00000011,
+		0b00000101,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -12499,6 +16371,371 @@ func (s *ResourceVersionReference) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *ResourceVersionSummary) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ResourceVersionSummary) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("resource_type")
+		s.ResourceType.Encode(e)
+	}
+	{
+		e.FieldStart("resource_id")
+		json.EncodeUUID(e, s.ResourceID)
+	}
+	{
+		e.FieldStart("version_id")
+		json.EncodeUUID(e, s.VersionID)
+	}
+	{
+		e.FieldStart("revision")
+		e.Int32(s.Revision)
+	}
+	{
+		e.FieldStart("status")
+		s.Status.Encode(e)
+	}
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+	{
+		e.FieldStart("created_by")
+		e.Str(s.CreatedBy)
+	}
+	{
+		e.FieldStart("created_at")
+		json.EncodeDateTime(e, s.CreatedAt)
+	}
+	{
+		e.FieldStart("updated_at")
+		json.EncodeDateTime(e, s.UpdatedAt)
+	}
+	{
+		e.FieldStart("submitted_by")
+		s.SubmittedBy.Encode(e)
+	}
+	{
+		e.FieldStart("submitted_at")
+		s.SubmittedAt.Encode(e, json.EncodeDateTime)
+	}
+	{
+		e.FieldStart("published_by")
+		s.PublishedBy.Encode(e)
+	}
+	{
+		e.FieldStart("published_at")
+		s.PublishedAt.Encode(e, json.EncodeDateTime)
+	}
+	{
+		e.FieldStart("archived_by")
+		s.ArchivedBy.Encode(e)
+	}
+	{
+		e.FieldStart("archived_at")
+		s.ArchivedAt.Encode(e, json.EncodeDateTime)
+	}
+	{
+		e.FieldStart("rejected_by")
+		s.RejectedBy.Encode(e)
+	}
+	{
+		e.FieldStart("rejected_at")
+		s.RejectedAt.Encode(e, json.EncodeDateTime)
+	}
+	{
+		e.FieldStart("rejection_note")
+		s.RejectionNote.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfResourceVersionSummary = [18]string{
+	0:  "resource_type",
+	1:  "resource_id",
+	2:  "version_id",
+	3:  "revision",
+	4:  "status",
+	5:  "name",
+	6:  "created_by",
+	7:  "created_at",
+	8:  "updated_at",
+	9:  "submitted_by",
+	10: "submitted_at",
+	11: "published_by",
+	12: "published_at",
+	13: "archived_by",
+	14: "archived_at",
+	15: "rejected_by",
+	16: "rejected_at",
+	17: "rejection_note",
+}
+
+// Decode decodes ResourceVersionSummary from json.
+func (s *ResourceVersionSummary) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ResourceVersionSummary to nil")
+	}
+	var requiredBitSet [3]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "resource_type":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.ResourceType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"resource_type\"")
+			}
+		case "resource_id":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ResourceID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"resource_id\"")
+			}
+		case "version_id":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.VersionID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version_id\"")
+			}
+		case "revision":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				v, err := d.Int32()
+				s.Revision = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"revision\"")
+			}
+		case "status":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Status.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"status\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "created_by":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Str()
+				s.CreatedBy = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_by\"")
+			}
+		case "created_at":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.CreatedAt = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_at\"")
+			}
+		case "updated_at":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeDateTime(d)
+				s.UpdatedAt = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"updated_at\"")
+			}
+		case "submitted_by":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				if err := s.SubmittedBy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"submitted_by\"")
+			}
+		case "submitted_at":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				if err := s.SubmittedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"submitted_at\"")
+			}
+		case "published_by":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				if err := s.PublishedBy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"published_by\"")
+			}
+		case "published_at":
+			requiredBitSet[1] |= 1 << 4
+			if err := func() error {
+				if err := s.PublishedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"published_at\"")
+			}
+		case "archived_by":
+			requiredBitSet[1] |= 1 << 5
+			if err := func() error {
+				if err := s.ArchivedBy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"archived_by\"")
+			}
+		case "archived_at":
+			requiredBitSet[1] |= 1 << 6
+			if err := func() error {
+				if err := s.ArchivedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"archived_at\"")
+			}
+		case "rejected_by":
+			requiredBitSet[1] |= 1 << 7
+			if err := func() error {
+				if err := s.RejectedBy.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejected_by\"")
+			}
+		case "rejected_at":
+			requiredBitSet[2] |= 1 << 0
+			if err := func() error {
+				if err := s.RejectedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejected_at\"")
+			}
+		case "rejection_note":
+			requiredBitSet[2] |= 1 << 1
+			if err := func() error {
+				if err := s.RejectionNote.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rejection_note\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ResourceVersionSummary")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [3]uint8{
+		0b11111111,
+		0b11111111,
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfResourceVersionSummary) {
+					name = jsonFieldsNameOfResourceVersionSummary[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ResourceVersionSummary) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ResourceVersionSummary) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *RoleRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -12853,6 +17090,748 @@ func (s RoleRequestStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *RoleRequestStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ScalarParameter as json.
+func (s ScalarParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+func (s ScalarParameter) encodeFields(e *jx.Encoder) {
+	switch s.Type {
+	case StringScalarParameterScalarParameter:
+		e.FieldStart("kind")
+		e.Str("STRING")
+		{
+			s := s.StringScalarParameter
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Str(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Pattern.Set {
+					e.FieldStart("pattern")
+					s.Pattern.Encode(e)
+				}
+			}
+		}
+	case BooleanScalarParameterScalarParameter:
+		e.FieldStart("kind")
+		e.Str("BOOLEAN")
+		{
+			s := s.BooleanScalarParameter
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+		}
+	case IntegerScalarParameterScalarParameter:
+		e.FieldStart("kind")
+		e.Str("INTEGER")
+		{
+			s := s.IntegerScalarParameter
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Int64(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+		}
+	case FloatScalarParameterScalarParameter:
+		e.FieldStart("kind")
+		e.Str("FLOAT")
+		{
+			s := s.FloatScalarParameter
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Float64(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+		}
+	case DateTimeScalarParameterScalarParameter:
+		e.FieldStart("kind")
+		e.Str("DATETIME")
+		{
+			s := s.DateTimeScalarParameter
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Layout.Set {
+					e.FieldStart("layout")
+					s.Layout.Encode(e)
+				}
+			}
+		}
+	}
+}
+
+// Decode decodes ScalarParameter from json.
+func (s *ScalarParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ScalarParameter to nil")
+	}
+	// Sum type discriminator.
+	if typ := d.Next(); typ != jx.Object {
+		return errors.Errorf("unexpected json type %q", typ)
+	}
+
+	var found bool
+	if err := d.Capture(func(d *jx.Decoder) error {
+		return d.ObjBytes(func(d *jx.Decoder, key []byte) error {
+			if found {
+				return d.Skip()
+			}
+			switch string(key) {
+			case "kind":
+				typ, err := d.Str()
+				if err != nil {
+					return err
+				}
+				switch typ {
+				case "STRING":
+					s.Type = StringScalarParameterScalarParameter
+					found = true
+				case "BOOLEAN":
+					s.Type = BooleanScalarParameterScalarParameter
+					found = true
+				case "INTEGER":
+					s.Type = IntegerScalarParameterScalarParameter
+					found = true
+				case "FLOAT":
+					s.Type = FloatScalarParameterScalarParameter
+					found = true
+				case "DATETIME":
+					s.Type = DateTimeScalarParameterScalarParameter
+					found = true
+				default:
+					return errors.Errorf("unknown type %s", typ)
+				}
+				return nil
+			}
+			return d.Skip()
+		})
+	}); err != nil {
+		return errors.Wrap(err, "capture")
+	}
+	if !found {
+		return errors.New("unable to detect sum type variant")
+	}
+	switch s.Type {
+	case StringScalarParameterScalarParameter:
+		if err := s.StringScalarParameter.Decode(d); err != nil {
+			return err
+		}
+	case BooleanScalarParameterScalarParameter:
+		if err := s.BooleanScalarParameter.Decode(d); err != nil {
+			return err
+		}
+	case IntegerScalarParameterScalarParameter:
+		if err := s.IntegerScalarParameter.Decode(d); err != nil {
+			return err
+		}
+	case FloatScalarParameterScalarParameter:
+		if err := s.FloatScalarParameter.Decode(d); err != nil {
+			return err
+		}
+	case DateTimeScalarParameterScalarParameter:
+		if err := s.DateTimeScalarParameter.Decode(d); err != nil {
+			return err
+		}
+	default:
+		return errors.Errorf("inferred invalid type: %s", s.Type)
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ScalarParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ScalarParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes ScalarParameterDraft as json.
+func (s ScalarParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+func (s ScalarParameterDraft) encodeFields(e *jx.Encoder) {
+	switch s.Type {
+	case StringScalarParameterDraftScalarParameterDraft:
+		e.FieldStart("kind")
+		e.Str("STRING")
+		{
+			s := s.StringScalarParameterDraft
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Str(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+			{
+				if s.Pattern.Set {
+					e.FieldStart("pattern")
+					s.Pattern.Encode(e)
+				}
+			}
+		}
+	case BooleanScalarParameterDraftScalarParameterDraft:
+		e.FieldStart("kind")
+		e.Str("BOOLEAN")
+		{
+			s := s.BooleanScalarParameterDraft
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+		}
+	case IntegerScalarParameterDraftScalarParameterDraft:
+		e.FieldStart("kind")
+		e.Str("INTEGER")
+		{
+			s := s.IntegerScalarParameterDraft
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Int64(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+		}
+	case FloatScalarParameterDraftScalarParameterDraft:
+		e.FieldStart("kind")
+		e.Str("FLOAT")
+		{
+			s := s.FloatScalarParameterDraft
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e)
+				}
+			}
+			{
+				if s.Enum != nil {
+					e.FieldStart("enum")
+					e.ArrStart()
+					for _, elem := range s.Enum {
+						e.Float64(elem)
+					}
+					e.ArrEnd()
+				}
+			}
+		}
+	case DateTimeScalarParameterDraftScalarParameterDraft:
+		e.FieldStart("kind")
+		e.Str("DATETIME")
+		{
+			s := s.DateTimeScalarParameterDraft
+			{
+				e.FieldStart("position")
+				e.Int32(s.Position)
+			}
+			{
+				e.FieldStart("name")
+				s.Name.Encode(e)
+			}
+			{
+				e.FieldStart("label")
+				s.Label.Encode(e)
+			}
+			{
+				if s.Description.Set {
+					e.FieldStart("description")
+					s.Description.Encode(e)
+				}
+			}
+			{
+				e.FieldStart("required")
+				e.Bool(s.Required)
+			}
+			{
+				e.FieldStart("read_only")
+				e.Bool(s.ReadOnly)
+			}
+			{
+				if s.Minimum.Set {
+					e.FieldStart("minimum")
+					s.Minimum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Maximum.Set {
+					e.FieldStart("maximum")
+					s.Maximum.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Default.Set {
+					e.FieldStart("default")
+					s.Default.Encode(e, json.EncodeDateTime)
+				}
+			}
+			{
+				if s.Layout.Set {
+					e.FieldStart("layout")
+					s.Layout.Encode(e)
+				}
+			}
+		}
+	}
+}
+
+// Decode decodes ScalarParameterDraft from json.
+func (s *ScalarParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ScalarParameterDraft to nil")
+	}
+	// Sum type discriminator.
+	if typ := d.Next(); typ != jx.Object {
+		return errors.Errorf("unexpected json type %q", typ)
+	}
+
+	var found bool
+	if err := d.Capture(func(d *jx.Decoder) error {
+		return d.ObjBytes(func(d *jx.Decoder, key []byte) error {
+			if found {
+				return d.Skip()
+			}
+			switch string(key) {
+			case "kind":
+				typ, err := d.Str()
+				if err != nil {
+					return err
+				}
+				switch typ {
+				case "STRING":
+					s.Type = StringScalarParameterDraftScalarParameterDraft
+					found = true
+				case "BOOLEAN":
+					s.Type = BooleanScalarParameterDraftScalarParameterDraft
+					found = true
+				case "INTEGER":
+					s.Type = IntegerScalarParameterDraftScalarParameterDraft
+					found = true
+				case "FLOAT":
+					s.Type = FloatScalarParameterDraftScalarParameterDraft
+					found = true
+				case "DATETIME":
+					s.Type = DateTimeScalarParameterDraftScalarParameterDraft
+					found = true
+				default:
+					return errors.Errorf("unknown type %s", typ)
+				}
+				return nil
+			}
+			return d.Skip()
+		})
+	}); err != nil {
+		return errors.Wrap(err, "capture")
+	}
+	if !found {
+		return errors.New("unable to detect sum type variant")
+	}
+	switch s.Type {
+	case StringScalarParameterDraftScalarParameterDraft:
+		if err := s.StringScalarParameterDraft.Decode(d); err != nil {
+			return err
+		}
+	case BooleanScalarParameterDraftScalarParameterDraft:
+		if err := s.BooleanScalarParameterDraft.Decode(d); err != nil {
+			return err
+		}
+	case IntegerScalarParameterDraftScalarParameterDraft:
+		if err := s.IntegerScalarParameterDraft.Decode(d); err != nil {
+			return err
+		}
+	case FloatScalarParameterDraftScalarParameterDraft:
+		if err := s.FloatScalarParameterDraft.Decode(d); err != nil {
+			return err
+		}
+	case DateTimeScalarParameterDraftScalarParameterDraft:
+		if err := s.DateTimeScalarParameterDraft.Decode(d); err != nil {
+			return err
+		}
+	default:
+		return errors.Errorf("inferred invalid type: %s", s.Type)
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ScalarParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ScalarParameterDraft) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -15123,37 +20102,97 @@ func (s *StringParameter) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *StringParameter) encodeFields(e *jx.Encoder) {
 	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
 		e.FieldStart("kind")
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("allowed_values")
-		e.ArrStart()
-		for _, elem := range s.AllowedValues {
-			e.Str(elem)
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
-		e.ArrEnd()
 	}
 	{
-		e.FieldStart("pattern")
-		e.Str(s.Pattern)
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("multiple_values")
+		e.Bool(s.MultipleValues)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Pattern.Set {
+			e.FieldStart("pattern")
+			s.Pattern.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfStringParameter = [5]string{
-	0: "kind",
-	1: "metadata",
-	2: "default",
-	3: "allowed_values",
-	4: "pattern",
+var jsonFieldsNameOfStringParameter = [15]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "property",
+	8:  "location",
+	9:  "explode",
+	10: "multiple_values",
+	11: "read_only",
+	12: "default",
+	13: "enum",
+	14: "pattern",
 }
 
 // Decode decodes StringParameter from json.
@@ -15161,12 +20200,24 @@ func (s *StringParameter) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode StringParameter to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "kind":
+		case "id":
 			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
 				if err := s.Kind.Decode(d); err != nil {
 					return err
@@ -15175,19 +20226,119 @@ func (s *StringParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
-			requiredBitSet[0] |= 1 << 1
+		case "position":
+			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "multiple_values":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.MultipleValues = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"multiple_values\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
 			}
 		case "default":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -15195,10 +20346,9 @@ func (s *StringParameter) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "allowed_values":
-			requiredBitSet[0] |= 1 << 3
+		case "enum":
 			if err := func() error {
-				s.AllowedValues = make([]string, 0)
+				s.Enum = make([]string, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
 					var elem string
 					v, err := d.Str()
@@ -15206,21 +20356,19 @@ func (s *StringParameter) Decode(d *jx.Decoder) error {
 					if err != nil {
 						return err
 					}
-					s.AllowedValues = append(s.AllowedValues, elem)
+					s.Enum = append(s.Enum, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"allowed_values\"")
+				return errors.Wrap(err, "decode field \"enum\"")
 			}
 		case "pattern":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				v, err := d.Str()
-				s.Pattern = string(v)
-				if err != nil {
+				s.Pattern.Reset()
+				if err := s.Pattern.Decode(d); err != nil {
 					return err
 				}
 				return nil
@@ -15236,8 +20384,9 @@ func (s *StringParameter) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00011111,
+	for i, mask := range [2]uint8{
+		0b01011111,
+		0b00001111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -15297,33 +20446,88 @@ func (s *StringParameterDraft) encodeFields(e *jx.Encoder) {
 		s.Kind.Encode(e)
 	}
 	{
-		e.FieldStart("metadata")
-		s.Metadata.Encode(e)
+		e.FieldStart("position")
+		e.Int32(s.Position)
 	}
 	{
-		e.FieldStart("default")
-		s.Default.Encode(e)
+		e.FieldStart("name")
+		s.Name.Encode(e)
 	}
 	{
-		e.FieldStart("allowed_values")
-		e.ArrStart()
-		for _, elem := range s.AllowedValues {
-			e.Str(elem)
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
 		}
-		e.ArrEnd()
 	}
 	{
-		e.FieldStart("pattern")
-		e.Str(s.Pattern)
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("multiple_values")
+		e.Bool(s.MultipleValues)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Pattern.Set {
+			e.FieldStart("pattern")
+			s.Pattern.Encode(e)
+		}
 	}
 }
 
-var jsonFieldsNameOfStringParameterDraft = [5]string{
-	0: "kind",
-	1: "metadata",
-	2: "default",
-	3: "allowed_values",
-	4: "pattern",
+var jsonFieldsNameOfStringParameterDraft = [14]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "property",
+	7:  "location",
+	8:  "explode",
+	9:  "multiple_values",
+	10: "read_only",
+	11: "default",
+	12: "enum",
+	13: "pattern",
 }
 
 // Decode decodes StringParameterDraft from json.
@@ -15331,7 +20535,7 @@ func (s *StringParameterDraft) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode StringParameterDraft to nil")
 	}
-	var requiredBitSet [1]uint8
+	var requiredBitSet [2]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -15345,19 +20549,119 @@ func (s *StringParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"kind\"")
 			}
-		case "metadata":
+		case "position":
 			requiredBitSet[0] |= 1 << 1
 			if err := func() error {
-				if err := s.Metadata.Decode(d); err != nil {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"metadata\"")
+				return errors.Wrap(err, "decode field \"position\"")
 			}
-		case "default":
+		case "name":
 			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "multiple_values":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.MultipleValues = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"multiple_values\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
 				if err := s.Default.Decode(d); err != nil {
 					return err
 				}
@@ -15365,10 +20669,9 @@ func (s *StringParameterDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"default\"")
 			}
-		case "allowed_values":
-			requiredBitSet[0] |= 1 << 3
+		case "enum":
 			if err := func() error {
-				s.AllowedValues = make([]string, 0)
+				s.Enum = make([]string, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
 					var elem string
 					v, err := d.Str()
@@ -15376,21 +20679,19 @@ func (s *StringParameterDraft) Decode(d *jx.Decoder) error {
 					if err != nil {
 						return err
 					}
-					s.AllowedValues = append(s.AllowedValues, elem)
+					s.Enum = append(s.Enum, elem)
 					return nil
 				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"allowed_values\"")
+				return errors.Wrap(err, "decode field \"enum\"")
 			}
 		case "pattern":
-			requiredBitSet[0] |= 1 << 4
 			if err := func() error {
-				v, err := d.Str()
-				s.Pattern = string(v)
-				if err != nil {
+				s.Pattern.Reset()
+				if err := s.Pattern.Decode(d); err != nil {
 					return err
 				}
 				return nil
@@ -15406,8 +20707,9 @@ func (s *StringParameterDraft) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [1]uint8{
-		0b00011111,
+	for i, mask := range [2]uint8{
+		0b10101111,
+		0b00000111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -15525,6 +20827,1261 @@ func (s StringParameterKind) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *StringParameterKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *StringScalarParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StringScalarParameter) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Pattern.Set {
+			e.FieldStart("pattern")
+			s.Pattern.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfStringScalarParameter = [10]string{
+	0: "kind",
+	1: "position",
+	2: "name",
+	3: "label",
+	4: "description",
+	5: "required",
+	6: "read_only",
+	7: "default",
+	8: "enum",
+	9: "pattern",
+}
+
+// Decode decodes StringScalarParameter from json.
+func (s *StringScalarParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StringScalarParameter to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "enum":
+			if err := func() error {
+				s.Enum = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Enum = append(s.Enum, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"enum\"")
+			}
+		case "pattern":
+			if err := func() error {
+				s.Pattern.Reset()
+				if err := s.Pattern.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pattern\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StringScalarParameter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfStringScalarParameter) {
+					name = jsonFieldsNameOfStringScalarParameter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StringScalarParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StringScalarParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *StringScalarParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StringScalarParameterDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		if s.Default.Set {
+			e.FieldStart("default")
+			s.Default.Encode(e)
+		}
+	}
+	{
+		if s.Enum != nil {
+			e.FieldStart("enum")
+			e.ArrStart()
+			for _, elem := range s.Enum {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Pattern.Set {
+			e.FieldStart("pattern")
+			s.Pattern.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfStringScalarParameterDraft = [10]string{
+	0: "kind",
+	1: "position",
+	2: "name",
+	3: "label",
+	4: "description",
+	5: "required",
+	6: "read_only",
+	7: "default",
+	8: "enum",
+	9: "pattern",
+}
+
+// Decode decodes StringScalarParameterDraft from json.
+func (s *StringScalarParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StringScalarParameterDraft to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "read_only":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "default":
+			if err := func() error {
+				s.Default.Reset()
+				if err := s.Default.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "enum":
+			if err := func() error {
+				s.Enum = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Enum = append(s.Enum, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"enum\"")
+			}
+		case "pattern":
+			if err := func() error {
+				s.Pattern.Reset()
+				if err := s.Pattern.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"pattern\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StringScalarParameterDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01101111,
+		0b00000000,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfStringScalarParameterDraft) {
+					name = jsonFieldsNameOfStringScalarParameterDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StringScalarParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StringScalarParameterDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StringScalarParameterDraftKind as json.
+func (s StringScalarParameterDraftKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes StringScalarParameterDraftKind from json.
+func (s *StringScalarParameterDraftKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StringScalarParameterDraftKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch StringScalarParameterDraftKind(v) {
+	case StringScalarParameterDraftKindSTRING:
+		*s = StringScalarParameterDraftKindSTRING
+	default:
+		*s = StringScalarParameterDraftKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s StringScalarParameterDraftKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StringScalarParameterDraftKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StringScalarParameterKind as json.
+func (s StringScalarParameterKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes StringScalarParameterKind from json.
+func (s *StringScalarParameterKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StringScalarParameterKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch StringScalarParameterKind(v) {
+	case StringScalarParameterKindSTRING:
+		*s = StringScalarParameterKindSTRING
+	default:
+		*s = StringScalarParameterKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s StringScalarParameterKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StringScalarParameterKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TemplateParameter) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TemplateParameter) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("id")
+		json.EncodeUUID(e, s.ID)
+	}
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		e.FieldStart("template")
+		e.Str(s.Template)
+	}
+	{
+		e.FieldStart("parameters")
+		e.ArrStart()
+		for _, elem := range s.Parameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfTemplateParameter = [13]string{
+	0:  "id",
+	1:  "kind",
+	2:  "position",
+	3:  "name",
+	4:  "label",
+	5:  "description",
+	6:  "required",
+	7:  "property",
+	8:  "location",
+	9:  "explode",
+	10: "read_only",
+	11: "template",
+	12: "parameters",
+}
+
+// Decode decodes TemplateParameter from json.
+func (s *TemplateParameter) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TemplateParameter to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := json.DecodeUUID(d)
+				s.ID = v
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"id\"")
+			}
+		case "kind":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 6
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "template":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				v, err := d.Str()
+				s.Template = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"template\"")
+			}
+		case "parameters":
+			requiredBitSet[1] |= 1 << 4
+			if err := func() error {
+				s.Parameters = make([]ScalarParameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ScalarParameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Parameters = append(s.Parameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"parameters\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TemplateParameter")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b01011111,
+		0b00011111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTemplateParameter) {
+					name = jsonFieldsNameOfTemplateParameter[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TemplateParameter) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TemplateParameter) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *TemplateParameterDraft) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *TemplateParameterDraft) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("kind")
+		s.Kind.Encode(e)
+	}
+	{
+		e.FieldStart("position")
+		e.Int32(s.Position)
+	}
+	{
+		e.FieldStart("name")
+		s.Name.Encode(e)
+	}
+	{
+		e.FieldStart("label")
+		s.Label.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("required")
+		e.Bool(s.Required)
+	}
+	{
+		if s.Property.Set {
+			e.FieldStart("property")
+			s.Property.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("location")
+		s.Location.Encode(e)
+	}
+	{
+		e.FieldStart("explode")
+		e.Bool(s.Explode)
+	}
+	{
+		e.FieldStart("read_only")
+		e.Bool(s.ReadOnly)
+	}
+	{
+		e.FieldStart("template")
+		e.Str(s.Template)
+	}
+	{
+		e.FieldStart("parameters")
+		e.ArrStart()
+		for _, elem := range s.Parameters {
+			elem.Encode(e)
+		}
+		e.ArrEnd()
+	}
+}
+
+var jsonFieldsNameOfTemplateParameterDraft = [12]string{
+	0:  "kind",
+	1:  "position",
+	2:  "name",
+	3:  "label",
+	4:  "description",
+	5:  "required",
+	6:  "property",
+	7:  "location",
+	8:  "explode",
+	9:  "read_only",
+	10: "template",
+	11: "parameters",
+}
+
+// Decode decodes TemplateParameterDraft from json.
+func (s *TemplateParameterDraft) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TemplateParameterDraft to nil")
+	}
+	var requiredBitSet [2]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "kind":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				if err := s.Kind.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"kind\"")
+			}
+		case "position":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Int32()
+				s.Position = int32(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"position\"")
+			}
+		case "name":
+			requiredBitSet[0] |= 1 << 2
+			if err := func() error {
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "label":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Label.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"label\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "required":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				v, err := d.Bool()
+				s.Required = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"required\"")
+			}
+		case "property":
+			if err := func() error {
+				s.Property.Reset()
+				if err := s.Property.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"property\"")
+			}
+		case "location":
+			requiredBitSet[0] |= 1 << 7
+			if err := func() error {
+				if err := s.Location.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"location\"")
+			}
+		case "explode":
+			requiredBitSet[1] |= 1 << 0
+			if err := func() error {
+				v, err := d.Bool()
+				s.Explode = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"explode\"")
+			}
+		case "read_only":
+			requiredBitSet[1] |= 1 << 1
+			if err := func() error {
+				v, err := d.Bool()
+				s.ReadOnly = bool(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"read_only\"")
+			}
+		case "template":
+			requiredBitSet[1] |= 1 << 2
+			if err := func() error {
+				v, err := d.Str()
+				s.Template = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"template\"")
+			}
+		case "parameters":
+			requiredBitSet[1] |= 1 << 3
+			if err := func() error {
+				s.Parameters = make([]ScalarParameterDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ScalarParameterDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Parameters = append(s.Parameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"parameters\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode TemplateParameterDraft")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [2]uint8{
+		0b10101111,
+		0b00001111,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfTemplateParameterDraft) {
+					name = jsonFieldsNameOfTemplateParameterDraft[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *TemplateParameterDraft) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TemplateParameterDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TemplateParameterDraftKind as json.
+func (s TemplateParameterDraftKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TemplateParameterDraftKind from json.
+func (s *TemplateParameterDraftKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TemplateParameterDraftKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TemplateParameterDraftKind(v) {
+	case TemplateParameterDraftKindTEMPLATE:
+		*s = TemplateParameterDraftKindTEMPLATE
+	default:
+		*s = TemplateParameterDraftKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TemplateParameterDraftKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TemplateParameterDraftKind) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes TemplateParameterKind as json.
+func (s TemplateParameterKind) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes TemplateParameterKind from json.
+func (s *TemplateParameterKind) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode TemplateParameterKind to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch TemplateParameterKind(v) {
+	case TemplateParameterKindTEMPLATE:
+		*s = TemplateParameterKindTEMPLATE
+	default:
+		*s = TemplateParameterKind(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s TemplateParameterKind) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *TemplateParameterKind) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -16476,12 +23033,28 @@ func (s *WebService) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("description")
-		e.Str(s.Description)
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
 	}
 	{
 		e.FieldStart("template_url")
 		e.Str(s.TemplateURL)
+	}
+	{
+		e.FieldStart("method")
+		s.Method.Encode(e)
+	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		if s.VisibleOn.Set {
+			e.FieldStart("visible_on")
+			s.VisibleOn.Encode(e)
+		}
 	}
 	{
 		if s.Parameters != nil {
@@ -16496,6 +23069,28 @@ func (s *WebService) encodeFields(e *jx.Encoder) {
 	{
 		e.FieldStart("format")
 		e.Str(s.Format)
+	}
+	{
+		if s.BodyContentType.Set {
+			e.FieldStart("body_content_type")
+			s.BodyContentType.Encode(e)
+		}
+	}
+	{
+		if s.BodyTemplate.Set {
+			e.FieldStart("body_template")
+			s.BodyTemplate.Encode(e)
+		}
+	}
+	{
+		if s.BodyParameters != nil {
+			e.FieldStart("body_parameters")
+			e.ArrStart()
+			for _, elem := range s.BodyParameters {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
 	}
 	{
 		if s.Provider.Set {
@@ -16533,18 +23128,24 @@ func (s *WebService) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWebService = [11]string{
+var jsonFieldsNameOfWebService = [17]string{
 	0:  "id",
 	1:  "name",
 	2:  "description",
 	3:  "template_url",
-	4:  "parameters",
-	5:  "format",
-	6:  "provider",
-	7:  "documentation",
-	8:  "spatial_coverage",
-	9:  "temporal_coverage",
-	10: "contact_points",
+	4:  "method",
+	5:  "type",
+	6:  "visible_on",
+	7:  "parameters",
+	8:  "format",
+	9:  "body_content_type",
+	10: "body_template",
+	11: "body_parameters",
+	12: "provider",
+	13: "documentation",
+	14: "spatial_coverage",
+	15: "temporal_coverage",
+	16: "contact_points",
 }
 
 // Decode decodes WebService from json.
@@ -16552,7 +23153,7 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode WebService to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -16581,11 +23182,9 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
 		case "description":
-			requiredBitSet[0] |= 1 << 2
 			if err := func() error {
-				v, err := d.Str()
-				s.Description = string(v)
-				if err != nil {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
 					return err
 				}
 				return nil
@@ -16603,6 +23202,36 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"template_url\"")
+			}
+		case "method":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Method.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"method\"")
+			}
+		case "type":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "visible_on":
+			if err := func() error {
+				s.VisibleOn.Reset()
+				if err := s.VisibleOn.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"visible_on\"")
 			}
 		case "parameters":
 			if err := func() error {
@@ -16622,7 +23251,7 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"parameters\"")
 			}
 		case "format":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[1] |= 1 << 0
 			if err := func() error {
 				v, err := d.Str()
 				s.Format = string(v)
@@ -16632,6 +23261,43 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"format\"")
+			}
+		case "body_content_type":
+			if err := func() error {
+				s.BodyContentType.Reset()
+				if err := s.BodyContentType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_content_type\"")
+			}
+		case "body_template":
+			if err := func() error {
+				s.BodyTemplate.Reset()
+				if err := s.BodyTemplate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_template\"")
+			}
+		case "body_parameters":
+			if err := func() error {
+				s.BodyParameters = make([]ScalarParameter, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ScalarParameter
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.BodyParameters = append(s.BodyParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_parameters\"")
 			}
 		case "provider":
 			if err := func() error {
@@ -16701,8 +23367,9 @@ func (s *WebService) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
-		0b00101111,
+	for i, mask := range [3]uint8{
+		0b00111011,
+		0b00000001,
 		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
@@ -17289,10 +23956,46 @@ func (s *WebServiceDraft) encodeFields(e *jx.Encoder) {
 		s.TemplateURL.Encode(e)
 	}
 	{
+		e.FieldStart("method")
+		s.Method.Encode(e)
+	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		if s.VisibleOn.Set {
+			e.FieldStart("visible_on")
+			s.VisibleOn.Encode(e)
+		}
+	}
+	{
 		if s.Parameters != nil {
 			e.FieldStart("parameters")
 			e.ArrStart()
 			for _, elem := range s.Parameters {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.BodyContentType.Set {
+			e.FieldStart("body_content_type")
+			s.BodyContentType.Encode(e)
+		}
+	}
+	{
+		if s.BodyTemplate.Set {
+			e.FieldStart("body_template")
+			s.BodyTemplate.Encode(e)
+		}
+	}
+	{
+		if s.BodyParameters != nil {
+			e.FieldStart("body_parameters")
+			e.ArrStart()
+			for _, elem := range s.BodyParameters {
 				elem.Encode(e)
 			}
 			e.ArrEnd()
@@ -17338,17 +24041,23 @@ func (s *WebServiceDraft) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWebServiceDraft = [10]string{
-	0: "name",
-	1: "description",
-	2: "template_url",
-	3: "parameters",
-	4: "format",
-	5: "provider",
-	6: "documentation",
-	7: "spatial_coverage",
-	8: "temporal_coverage",
-	9: "contact_points",
+var jsonFieldsNameOfWebServiceDraft = [16]string{
+	0:  "name",
+	1:  "description",
+	2:  "template_url",
+	3:  "method",
+	4:  "type",
+	5:  "visible_on",
+	6:  "parameters",
+	7:  "body_content_type",
+	8:  "body_template",
+	9:  "body_parameters",
+	10: "format",
+	11: "provider",
+	12: "documentation",
+	13: "spatial_coverage",
+	14: "temporal_coverage",
+	15: "contact_points",
 }
 
 // Decode decodes WebServiceDraft from json.
@@ -17390,6 +24099,36 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"template_url\"")
 			}
+		case "method":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Method.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"method\"")
+			}
+		case "type":
+			requiredBitSet[0] |= 1 << 4
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "visible_on":
+			if err := func() error {
+				s.VisibleOn.Reset()
+				if err := s.VisibleOn.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"visible_on\"")
+			}
 		case "parameters":
 			if err := func() error {
 				s.Parameters = make([]ParameterDraft, 0)
@@ -17407,8 +24146,45 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"parameters\"")
 			}
+		case "body_content_type":
+			if err := func() error {
+				s.BodyContentType.Reset()
+				if err := s.BodyContentType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_content_type\"")
+			}
+		case "body_template":
+			if err := func() error {
+				s.BodyTemplate.Reset()
+				if err := s.BodyTemplate.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_template\"")
+			}
+		case "body_parameters":
+			if err := func() error {
+				s.BodyParameters = make([]ScalarParameterDraft, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem ScalarParameterDraft
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.BodyParameters = append(s.BodyParameters, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"body_parameters\"")
+			}
 		case "format":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[1] |= 1 << 2
 			if err := func() error {
 				if err := s.Format.Decode(d); err != nil {
 					return err
@@ -17486,8 +24262,8 @@ func (s *WebServiceDraft) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [2]uint8{
-		0b00010101,
-		0b00000000,
+		0b00011101,
+		0b00000100,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -17529,6 +24305,140 @@ func (s *WebServiceDraft) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *WebServiceDraft) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes WebServiceMethod as json.
+func (s WebServiceMethod) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes WebServiceMethod from json.
+func (s *WebServiceMethod) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WebServiceMethod to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch WebServiceMethod(v) {
+	case WebServiceMethodGET:
+		*s = WebServiceMethodGET
+	case WebServiceMethodPOST:
+		*s = WebServiceMethodPOST
+	case WebServiceMethodPUT:
+		*s = WebServiceMethodPUT
+	case WebServiceMethodDELETE:
+		*s = WebServiceMethodDELETE
+	default:
+		*s = WebServiceMethod(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s WebServiceMethod) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WebServiceMethod) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes WebServiceType as json.
+func (s WebServiceType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes WebServiceType from json.
+func (s *WebServiceType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WebServiceType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch WebServiceType(v) {
+	case WebServiceTypeWMS:
+		*s = WebServiceTypeWMS
+	case WebServiceTypeGEOJSON:
+		*s = WebServiceTypeGEOJSON
+	case WebServiceTypeDYNAMIC:
+		*s = WebServiceTypeDYNAMIC
+	case WebServiceTypeWMTS:
+		*s = WebServiceTypeWMTS
+	case WebServiceTypeWFS:
+		*s = WebServiceTypeWFS
+	case WebServiceTypeCOVJSON:
+		*s = WebServiceTypeCOVJSON
+	default:
+		*s = WebServiceType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s WebServiceType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WebServiceType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes WebServiceVisibleOn as json.
+func (s WebServiceVisibleOn) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes WebServiceVisibleOn from json.
+func (s *WebServiceVisibleOn) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode WebServiceVisibleOn to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch WebServiceVisibleOn(v) {
+	case WebServiceVisibleOnGRAPH:
+		*s = WebServiceVisibleOnGRAPH
+	case WebServiceVisibleOnTABLE:
+		*s = WebServiceVisibleOnTABLE
+	case WebServiceVisibleOnMAP:
+		*s = WebServiceVisibleOnMAP
+	default:
+		*s = WebServiceVisibleOn(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s WebServiceVisibleOn) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *WebServiceVisibleOn) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

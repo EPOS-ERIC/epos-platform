@@ -34,7 +34,7 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization,Content-Type",
 	}
-	rn64AllowedHeaders = map[string]string{
+	rn65AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 		"POST":   "Authorization,Content-Type",
 	}
@@ -59,7 +59,7 @@ var (
 	rn22AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn65AllowedHeaders = map[string]string{
+	rn66AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
 	rn4AllowedHeaders = map[string]string{
@@ -76,7 +76,7 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization,Content-Type",
 	}
-	rn62AllowedHeaders = map[string]string{
+	rn63AllowedHeaders = map[string]string{
 		"PUT": "Authorization,Content-Type",
 	}
 	rn43AllowedHeaders = map[string]string{
@@ -85,34 +85,37 @@ var (
 	rn45AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
+	rn54AllowedHeaders = map[string]string{
+		"GET": "Authorization",
+	}
 	rn39AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
 	rn40AllowedHeaders = map[string]string{
 		"DELETE": "Authorization",
 	}
-	rn56AllowedHeaders = map[string]string{
+	rn57AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn57AllowedHeaders = map[string]string{
+	rn58AllowedHeaders = map[string]string{
 		"POST": "Authorization,Content-Type",
 	}
-	rn59AllowedHeaders = map[string]string{
+	rn60AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
-	rn66AllowedHeaders = map[string]string{
-		"POST": "Authorization",
-	}
-	rn68AllowedHeaders = map[string]string{
+	rn67AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 	rn69AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
+	rn70AllowedHeaders = map[string]string{
+		"POST": "Authorization",
+	}
 	rn41AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
-	rn54AllowedHeaders = map[string]string{
+	rn55AllowedHeaders = map[string]string{
 		"GET": "Authorization",
 	}
 	rn7AllowedHeaders = map[string]string{
@@ -129,7 +132,7 @@ var (
 		"DELETE": "Authorization",
 		"PUT":    "Authorization",
 	}
-	rn67AllowedHeaders = map[string]string{
+	rn68AllowedHeaders = map[string]string{
 		"POST": "Authorization",
 	}
 )
@@ -254,7 +257,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
-
 				}
 
 			case 'g': // Prefix: "groups"
@@ -414,7 +416,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 									return
 								}
-
 							}
 
 						case 'm': // Prefix: "membership"
@@ -451,7 +452,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "DELETE,POST",
-											allowedHeaders: rn64AllowedHeaders,
+											allowedHeaders: rn65AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -628,9 +629,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											}
 
 										}
-
 									}
-
 								}
 
 							}
@@ -743,11 +742,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 												return
 											}
-
 										}
-
 									}
-
 								}
 
 							case 'o': // Prefix: "ole-requests"
@@ -767,7 +763,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									default:
 										s.notAllowed(w, r, notAllowedParams{
 											allowedMethods: "POST",
-											allowedHeaders: rn65AllowedHeaders,
+											allowedHeaders: rn66AllowedHeaders,
 											acceptPost:     "application/json",
 											acceptPatch:    "",
 										})
@@ -817,15 +813,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 										return
 									}
-
 								}
 
 							}
 
 						}
-
 					}
-
 				}
 
 			case 'i': // Prefix: "imports/turtle"
@@ -922,7 +915,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 						return
 					}
-
 				}
 
 			case 'r': // Prefix: "resources/"
@@ -998,7 +990,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "PUT",
-										allowedHeaders: rn62AllowedHeaders,
+										allowedHeaders: rn63AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1006,7 +998,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 								return
 							}
-
 						}
 
 						elem = origElem
@@ -1106,35 +1097,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 							}
 
-						case 'v': // Prefix: "versions/"
+						case 'v': // Prefix: "versions"
 
-							if l := len("versions/"); len(elem) >= l && elem[0:l] == "versions/" {
+							if l := len("versions"); len(elem) >= l && elem[0:l] == "versions" {
 								elem = elem[l:]
 							} else {
 								break
 							}
 
-							// Param: "versionId"
-							// Match until "/"
-							idx := strings.IndexByte(elem, '/')
-							if idx < 0 {
-								idx = len(elem)
-							}
-							args[2] = elem[:idx]
-							elem = elem[idx:]
-
 							if len(elem) == 0 {
 								switch r.Method {
 								case "GET":
-									s.handleGetResourceVersionRequest([3]string{
+									s.handleListResourceVersionsRequest([2]string{
 										args[0],
 										args[1],
-										args[2],
 									}, elemIsEscaped, w, r)
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "GET",
-										allowedHeaders: rn39AllowedHeaders,
+										allowedHeaders: rn54AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1151,71 +1132,38 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 									break
 								}
 
+								// Param: "versionId"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[2] = elem[:idx]
+								elem = elem[idx:]
+
 								if len(elem) == 0 {
-									break
+									switch r.Method {
+									case "GET":
+										s.handleGetResourceVersionRequest([3]string{
+											args[0],
+											args[1],
+											args[2],
+										}, elemIsEscaped, w, r)
+									default:
+										s.notAllowed(w, r, notAllowedParams{
+											allowedMethods: "GET",
+											allowedHeaders: rn39AllowedHeaders,
+											acceptPost:     "",
+											acceptPatch:    "",
+										})
+									}
+
+									return
 								}
 								switch elem[0] {
-								case 'd': // Prefix: "draft"
+								case '/': // Prefix: "/"
 
-									if l := len("draft"); len(elem) >= l && elem[0:l] == "draft" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch r.Method {
-										case "DELETE":
-											s.handleDiscardResourceDraftVersionRequest([3]string{
-												args[0],
-												args[1],
-												args[2],
-											}, elemIsEscaped, w, r)
-										default:
-											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "DELETE",
-												allowedHeaders: rn40AllowedHeaders,
-												acceptPost:     "",
-												acceptPatch:    "",
-											})
-										}
-
-										return
-									}
-
-								case 'p': // Prefix: "publish"
-
-									if l := len("publish"); len(elem) >= l && elem[0:l] == "publish" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch r.Method {
-										case "POST":
-											s.handlePublishResourceVersionRequest([3]string{
-												args[0],
-												args[1],
-												args[2],
-											}, elemIsEscaped, w, r)
-										default:
-											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "POST",
-												allowedHeaders: rn56AllowedHeaders,
-												acceptPost:     "",
-												acceptPatch:    "",
-											})
-										}
-
-										return
-									}
-
-								case 'r': // Prefix: "re"
-
-									if l := len("re"); len(elem) >= l && elem[0:l] == "re" {
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 										elem = elem[l:]
 									} else {
 										break
@@ -1225,9 +1173,38 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										break
 									}
 									switch elem[0] {
-									case 'j': // Prefix: "ject"
+									case 'd': // Prefix: "draft"
 
-										if l := len("ject"); len(elem) >= l && elem[0:l] == "ject" {
+										if l := len("draft"); len(elem) >= l && elem[0:l] == "draft" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "DELETE":
+												s.handleDiscardResourceDraftVersionRequest([3]string{
+													args[0],
+													args[1],
+													args[2],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, notAllowedParams{
+													allowedMethods: "DELETE",
+													allowedHeaders: rn40AllowedHeaders,
+													acceptPost:     "",
+													acceptPatch:    "",
+												})
+											}
+
+											return
+										}
+
+									case 'p': // Prefix: "publish"
+
+										if l := len("publish"); len(elem) >= l && elem[0:l] == "publish" {
 											elem = elem[l:]
 										} else {
 											break
@@ -1237,7 +1214,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											// Leaf node.
 											switch r.Method {
 											case "POST":
-												s.handleRejectResourceVersionRequest([3]string{
+												s.handlePublishResourceVersionRequest([3]string{
 													args[0],
 													args[1],
 													args[2],
@@ -1246,7 +1223,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
 													allowedHeaders: rn57AllowedHeaders,
-													acceptPost:     "application/json",
+													acceptPost:     "",
 													acceptPatch:    "",
 												})
 											}
@@ -1254,9 +1231,81 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											return
 										}
 
-									case 'o': // Prefix: "open"
+									case 'r': // Prefix: "re"
 
-										if l := len("open"); len(elem) >= l && elem[0:l] == "open" {
+										if l := len("re"); len(elem) >= l && elem[0:l] == "re" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											break
+										}
+										switch elem[0] {
+										case 'j': // Prefix: "ject"
+
+											if l := len("ject"); len(elem) >= l && elem[0:l] == "ject" {
+												elem = elem[l:]
+											} else {
+												break
+											}
+
+											if len(elem) == 0 {
+												// Leaf node.
+												switch r.Method {
+												case "POST":
+													s.handleRejectResourceVersionRequest([3]string{
+														args[0],
+														args[1],
+														args[2],
+													}, elemIsEscaped, w, r)
+												default:
+													s.notAllowed(w, r, notAllowedParams{
+														allowedMethods: "POST",
+														allowedHeaders: rn58AllowedHeaders,
+														acceptPost:     "application/json",
+														acceptPatch:    "",
+													})
+												}
+
+												return
+											}
+
+										case 'o': // Prefix: "open"
+
+											if l := len("open"); len(elem) >= l && elem[0:l] == "open" {
+												elem = elem[l:]
+											} else {
+												break
+											}
+
+											if len(elem) == 0 {
+												// Leaf node.
+												switch r.Method {
+												case "POST":
+													s.handleReopenResourceVersionRequest([3]string{
+														args[0],
+														args[1],
+														args[2],
+													}, elemIsEscaped, w, r)
+												default:
+													s.notAllowed(w, r, notAllowedParams{
+														allowedMethods: "POST",
+														allowedHeaders: rn60AllowedHeaders,
+														acceptPost:     "",
+														acceptPatch:    "",
+													})
+												}
+
+												return
+											}
+
+										}
+
+									case 's': // Prefix: "submit"
+
+										if l := len("submit"); len(elem) >= l && elem[0:l] == "submit" {
 											elem = elem[l:]
 										} else {
 											break
@@ -1266,7 +1315,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											// Leaf node.
 											switch r.Method {
 											case "POST":
-												s.handleReopenResourceVersionRequest([3]string{
+												s.handleSubmitResourceVersionRequest([3]string{
 													args[0],
 													args[1],
 													args[2],
@@ -1274,7 +1323,65 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 											default:
 												s.notAllowed(w, r, notAllowedParams{
 													allowedMethods: "POST",
-													allowedHeaders: rn59AllowedHeaders,
+													allowedHeaders: rn67AllowedHeaders,
+													acceptPost:     "",
+													acceptPatch:    "",
+												})
+											}
+
+											return
+										}
+
+									case 'u': // Prefix: "unpublish"
+
+										if l := len("unpublish"); len(elem) >= l && elem[0:l] == "unpublish" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleUnpublishResourceVersionRequest([3]string{
+													args[0],
+													args[1],
+													args[2],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, notAllowedParams{
+													allowedMethods: "POST",
+													allowedHeaders: rn69AllowedHeaders,
+													acceptPost:     "",
+													acceptPatch:    "",
+												})
+											}
+
+											return
+										}
+
+									case 'w': // Prefix: "withdraw"
+
+										if l := len("withdraw"); len(elem) >= l && elem[0:l] == "withdraw" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch r.Method {
+											case "POST":
+												s.handleWithdrawResourceVersionRequest([3]string{
+													args[0],
+													args[1],
+													args[2],
+												}, elemIsEscaped, w, r)
+											default:
+												s.notAllowed(w, r, notAllowedParams{
+													allowedMethods: "POST",
+													allowedHeaders: rn70AllowedHeaders,
 													acceptPost:     "",
 													acceptPatch:    "",
 												})
@@ -1284,102 +1391,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 										}
 
 									}
-
-								case 's': // Prefix: "submit"
-
-									if l := len("submit"); len(elem) >= l && elem[0:l] == "submit" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch r.Method {
-										case "POST":
-											s.handleSubmitResourceVersionRequest([3]string{
-												args[0],
-												args[1],
-												args[2],
-											}, elemIsEscaped, w, r)
-										default:
-											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "POST",
-												allowedHeaders: rn66AllowedHeaders,
-												acceptPost:     "",
-												acceptPatch:    "",
-											})
-										}
-
-										return
-									}
-
-								case 'u': // Prefix: "unpublish"
-
-									if l := len("unpublish"); len(elem) >= l && elem[0:l] == "unpublish" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch r.Method {
-										case "POST":
-											s.handleUnpublishResourceVersionRequest([3]string{
-												args[0],
-												args[1],
-												args[2],
-											}, elemIsEscaped, w, r)
-										default:
-											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "POST",
-												allowedHeaders: rn68AllowedHeaders,
-												acceptPost:     "",
-												acceptPatch:    "",
-											})
-										}
-
-										return
-									}
-
-								case 'w': // Prefix: "withdraw"
-
-									if l := len("withdraw"); len(elem) >= l && elem[0:l] == "withdraw" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch r.Method {
-										case "POST":
-											s.handleWithdrawResourceVersionRequest([3]string{
-												args[0],
-												args[1],
-												args[2],
-											}, elemIsEscaped, w, r)
-										default:
-											s.notAllowed(w, r, notAllowedParams{
-												allowedMethods: "POST",
-												allowedHeaders: rn69AllowedHeaders,
-												acceptPost:     "",
-												acceptPatch:    "",
-											})
-										}
-
-										return
-									}
-
 								}
-
 							}
 
 						}
-
 					}
-
 				}
 
 			case 's': // Prefix: "search"
@@ -1422,7 +1438,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					default:
 						s.notAllowed(w, r, notAllowedParams{
 							allowedMethods: "GET",
-							allowedHeaders: rn54AllowedHeaders,
+							allowedHeaders: rn55AllowedHeaders,
 							acceptPost:     "",
 							acceptPatch:    "",
 						})
@@ -1621,7 +1637,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 								default:
 									s.notAllowed(w, r, notAllowedParams{
 										allowedMethods: "POST",
-										allowedHeaders: rn67AllowedHeaders,
+										allowedHeaders: rn68AllowedHeaders,
 										acceptPost:     "",
 										acceptPatch:    "",
 									})
@@ -1631,13 +1647,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							}
 
 						}
-
 					}
-
 				}
 
 			}
-
 		}
 	}
 	s.notFound(w, r)
@@ -1820,7 +1833,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							return
 						}
 					}
-
 				}
 
 			case 'g': // Prefix: "groups"
@@ -2003,7 +2015,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										return
 									}
 								}
-
 							}
 
 						case 'm': // Prefix: "membership"
@@ -2217,9 +2228,7 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 											}
 
 										}
-
 									}
-
 								}
 
 							}
@@ -2326,11 +2335,8 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 													return
 												}
 											}
-
 										}
-
 									}
-
 								}
 
 							case 'o': // Prefix: "ole-requests"
@@ -2399,15 +2405,12 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 											return
 										}
 									}
-
 								}
 
 							}
 
 						}
-
 					}
-
 				}
 
 			case 'i': // Prefix: "imports/turtle"
@@ -2519,7 +2522,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							return
 						}
 					}
-
 				}
 
 			case 'r': // Prefix: "resources/"
@@ -2600,7 +2602,6 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									return
 								}
 							}
-
 						}
 
 						elem = origElem
@@ -2694,33 +2695,24 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 							}
 
-						case 'v': // Prefix: "versions/"
+						case 'v': // Prefix: "versions"
 
-							if l := len("versions/"); len(elem) >= l && elem[0:l] == "versions/" {
+							if l := len("versions"); len(elem) >= l && elem[0:l] == "versions" {
 								elem = elem[l:]
 							} else {
 								break
 							}
 
-							// Param: "versionId"
-							// Match until "/"
-							idx := strings.IndexByte(elem, '/')
-							if idx < 0 {
-								idx = len(elem)
-							}
-							args[2] = elem[:idx]
-							elem = elem[idx:]
-
 							if len(elem) == 0 {
 								switch method {
 								case "GET":
-									r.name = GetResourceVersionOperation
-									r.summary = "Get resource version"
-									r.operationID = "getResourceVersion"
+									r.name = ListResourceVersionsOperation
+									r.summary = "List resource versions"
+									r.operationID = "listResourceVersions"
 									r.operationGroup = ""
-									r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}"
+									r.pathPattern = "/resources/{resourceType}/{id}/versions"
 									r.args = args
-									r.count = 3
+									r.count = 2
 									return r, true
 								default:
 									return
@@ -2735,63 +2727,34 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 									break
 								}
 
+								// Param: "versionId"
+								// Match until "/"
+								idx := strings.IndexByte(elem, '/')
+								if idx < 0 {
+									idx = len(elem)
+								}
+								args[2] = elem[:idx]
+								elem = elem[idx:]
+
 								if len(elem) == 0 {
-									break
+									switch method {
+									case "GET":
+										r.name = GetResourceVersionOperation
+										r.summary = "Get resource version"
+										r.operationID = "getResourceVersion"
+										r.operationGroup = ""
+										r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}"
+										r.args = args
+										r.count = 3
+										return r, true
+									default:
+										return
+									}
 								}
 								switch elem[0] {
-								case 'd': // Prefix: "draft"
+								case '/': // Prefix: "/"
 
-									if l := len("draft"); len(elem) >= l && elem[0:l] == "draft" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch method {
-										case "DELETE":
-											r.name = DiscardResourceDraftVersionOperation
-											r.summary = "Delete resource draft version"
-											r.operationID = "discardResourceDraftVersion"
-											r.operationGroup = ""
-											r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/draft"
-											r.args = args
-											r.count = 3
-											return r, true
-										default:
-											return
-										}
-									}
-
-								case 'p': // Prefix: "publish"
-
-									if l := len("publish"); len(elem) >= l && elem[0:l] == "publish" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch method {
-										case "POST":
-											r.name = PublishResourceVersionOperation
-											r.summary = "Publish resource version"
-											r.operationID = "publishResourceVersion"
-											r.operationGroup = ""
-											r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/publish"
-											r.args = args
-											r.count = 3
-											return r, true
-										default:
-											return
-										}
-									}
-
-								case 'r': // Prefix: "re"
-
-									if l := len("re"); len(elem) >= l && elem[0:l] == "re" {
+									if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 										elem = elem[l:]
 									} else {
 										break
@@ -2801,9 +2764,34 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										break
 									}
 									switch elem[0] {
-									case 'j': // Prefix: "ject"
+									case 'd': // Prefix: "draft"
 
-										if l := len("ject"); len(elem) >= l && elem[0:l] == "ject" {
+										if l := len("draft"); len(elem) >= l && elem[0:l] == "draft" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "DELETE":
+												r.name = DiscardResourceDraftVersionOperation
+												r.summary = "Delete resource draft version"
+												r.operationID = "discardResourceDraftVersion"
+												r.operationGroup = ""
+												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/draft"
+												r.args = args
+												r.count = 3
+												return r, true
+											default:
+												return
+											}
+										}
+
+									case 'p': // Prefix: "publish"
+
+										if l := len("publish"); len(elem) >= l && elem[0:l] == "publish" {
 											elem = elem[l:]
 										} else {
 											break
@@ -2813,11 +2801,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 											// Leaf node.
 											switch method {
 											case "POST":
-												r.name = RejectResourceVersionOperation
-												r.summary = "Reject resource version"
-												r.operationID = "rejectResourceVersion"
+												r.name = PublishResourceVersionOperation
+												r.summary = "Publish resource version"
+												r.operationID = "publishResourceVersion"
 												r.operationGroup = ""
-												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/reject"
+												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/publish"
 												r.args = args
 												r.count = 3
 												return r, true
@@ -2826,9 +2814,73 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 											}
 										}
 
-									case 'o': // Prefix: "open"
+									case 'r': // Prefix: "re"
 
-										if l := len("open"); len(elem) >= l && elem[0:l] == "open" {
+										if l := len("re"); len(elem) >= l && elem[0:l] == "re" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											break
+										}
+										switch elem[0] {
+										case 'j': // Prefix: "ject"
+
+											if l := len("ject"); len(elem) >= l && elem[0:l] == "ject" {
+												elem = elem[l:]
+											} else {
+												break
+											}
+
+											if len(elem) == 0 {
+												// Leaf node.
+												switch method {
+												case "POST":
+													r.name = RejectResourceVersionOperation
+													r.summary = "Reject resource version"
+													r.operationID = "rejectResourceVersion"
+													r.operationGroup = ""
+													r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/reject"
+													r.args = args
+													r.count = 3
+													return r, true
+												default:
+													return
+												}
+											}
+
+										case 'o': // Prefix: "open"
+
+											if l := len("open"); len(elem) >= l && elem[0:l] == "open" {
+												elem = elem[l:]
+											} else {
+												break
+											}
+
+											if len(elem) == 0 {
+												// Leaf node.
+												switch method {
+												case "POST":
+													r.name = ReopenResourceVersionOperation
+													r.summary = "Reopen resource version"
+													r.operationID = "reopenResourceVersion"
+													r.operationGroup = ""
+													r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/reopen"
+													r.args = args
+													r.count = 3
+													return r, true
+												default:
+													return
+												}
+											}
+
+										}
+
+									case 's': // Prefix: "submit"
+
+										if l := len("submit"); len(elem) >= l && elem[0:l] == "submit" {
 											elem = elem[l:]
 										} else {
 											break
@@ -2838,11 +2890,61 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 											// Leaf node.
 											switch method {
 											case "POST":
-												r.name = ReopenResourceVersionOperation
-												r.summary = "Reopen resource version"
-												r.operationID = "reopenResourceVersion"
+												r.name = SubmitResourceVersionOperation
+												r.summary = "Submit resource version"
+												r.operationID = "submitResourceVersion"
 												r.operationGroup = ""
-												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/reopen"
+												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/submit"
+												r.args = args
+												r.count = 3
+												return r, true
+											default:
+												return
+											}
+										}
+
+									case 'u': // Prefix: "unpublish"
+
+										if l := len("unpublish"); len(elem) >= l && elem[0:l] == "unpublish" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = UnpublishResourceVersionOperation
+												r.summary = "Unpublish resource version"
+												r.operationID = "unpublishResourceVersion"
+												r.operationGroup = ""
+												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/unpublish"
+												r.args = args
+												r.count = 3
+												return r, true
+											default:
+												return
+											}
+										}
+
+									case 'w': // Prefix: "withdraw"
+
+										if l := len("withdraw"); len(elem) >= l && elem[0:l] == "withdraw" {
+											elem = elem[l:]
+										} else {
+											break
+										}
+
+										if len(elem) == 0 {
+											// Leaf node.
+											switch method {
+											case "POST":
+												r.name = WithdrawResourceVersionOperation
+												r.summary = "Withdraw resource version"
+												r.operationID = "withdrawResourceVersion"
+												r.operationGroup = ""
+												r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/withdraw"
 												r.args = args
 												r.count = 3
 												return r, true
@@ -2852,90 +2954,11 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 										}
 
 									}
-
-								case 's': // Prefix: "submit"
-
-									if l := len("submit"); len(elem) >= l && elem[0:l] == "submit" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch method {
-										case "POST":
-											r.name = SubmitResourceVersionOperation
-											r.summary = "Submit resource version"
-											r.operationID = "submitResourceVersion"
-											r.operationGroup = ""
-											r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/submit"
-											r.args = args
-											r.count = 3
-											return r, true
-										default:
-											return
-										}
-									}
-
-								case 'u': // Prefix: "unpublish"
-
-									if l := len("unpublish"); len(elem) >= l && elem[0:l] == "unpublish" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch method {
-										case "POST":
-											r.name = UnpublishResourceVersionOperation
-											r.summary = "Unpublish resource version"
-											r.operationID = "unpublishResourceVersion"
-											r.operationGroup = ""
-											r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/unpublish"
-											r.args = args
-											r.count = 3
-											return r, true
-										default:
-											return
-										}
-									}
-
-								case 'w': // Prefix: "withdraw"
-
-									if l := len("withdraw"); len(elem) >= l && elem[0:l] == "withdraw" {
-										elem = elem[l:]
-									} else {
-										break
-									}
-
-									if len(elem) == 0 {
-										// Leaf node.
-										switch method {
-										case "POST":
-											r.name = WithdrawResourceVersionOperation
-											r.summary = "Withdraw resource version"
-											r.operationID = "withdrawResourceVersion"
-											r.operationGroup = ""
-											r.pathPattern = "/resources/{resourceType}/{id}/versions/{versionId}/withdraw"
-											r.args = args
-											r.count = 3
-											return r, true
-										default:
-											return
-										}
-									}
-
 								}
-
 							}
 
 						}
-
 					}
-
 				}
 
 			case 's': // Prefix: "search"
@@ -3183,13 +3206,10 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 							}
 
 						}
-
 					}
-
 				}
 
 			}
-
 		}
 	}
 	return r, false

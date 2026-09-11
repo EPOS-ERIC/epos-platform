@@ -982,6 +982,92 @@ func (q *Queries) ListLifecycleSoftwareSourceCodeIdentifiers(ctx context.Context
 	return items, nil
 }
 
+const listLifecycleSoftwareSourceCodeVersionSummaries = `-- name: ListLifecycleSoftwareSourceCodeVersionSummaries :many
+SELECT
+    version.id,
+    version.software_source_code_id,
+    version.status,
+    version.revision,
+    version.name,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    software_source_code_versions AS version
+WHERE
+    version.software_source_code_id = $1
+ORDER BY
+    version.created_at,
+    version.id
+`
+
+type ListLifecycleSoftwareSourceCodeVersionSummariesRow struct {
+	ID                   uuid.UUID
+	SoftwareSourceCodeID uuid.UUID
+	Status               ResourceStatus
+	Revision             int32
+	Name                 string
+	CreatedBy            string
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
+	SubmittedBy          *string
+	SubmittedAt          *time.Time
+	PublishedBy          *string
+	PublishedAt          *time.Time
+	ArchivedBy           *string
+	ArchivedAt           *time.Time
+	RejectedBy           *string
+	RejectedAt           *time.Time
+	RejectionNote        *string
+}
+
+func (q *Queries) ListLifecycleSoftwareSourceCodeVersionSummaries(ctx context.Context, softwareSourceCodeID uuid.UUID) ([]ListLifecycleSoftwareSourceCodeVersionSummariesRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleSoftwareSourceCodeVersionSummaries, softwareSourceCodeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleSoftwareSourceCodeVersionSummariesRow
+	for rows.Next() {
+		var i ListLifecycleSoftwareSourceCodeVersionSummariesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SoftwareSourceCodeID,
+			&i.Status,
+			&i.Revision,
+			&i.Name,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SubmittedBy,
+			&i.SubmittedAt,
+			&i.PublishedBy,
+			&i.PublishedAt,
+			&i.ArchivedBy,
+			&i.ArchivedAt,
+			&i.RejectedBy,
+			&i.RejectedAt,
+			&i.RejectionNote,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const publishLifecycleSoftwareSourceCodeVersion = `-- name: PublishLifecycleSoftwareSourceCodeVersion :one
 WITH target AS (
     SELECT
