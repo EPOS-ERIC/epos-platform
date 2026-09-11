@@ -19,7 +19,6 @@ var (
 	templateParameterNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 )
 
-// NewWebServiceInput parses and normalizes caller-controlled web-service fields.
 func NewWebServiceInput(value WebServiceInput) (WebServiceInput, error) {
 	value.Name = strings.TrimSpace(value.Name)
 	description, err := optionalWebServiceDescription(value.Description)
