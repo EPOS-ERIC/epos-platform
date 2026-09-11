@@ -606,7 +606,7 @@ func (m *mapper) webService(source string, owner uuid.UUID, format, operationSou
 		Description: stringPtr(m.optionalString(source, schemaDescription)),
 		TemplateURL: "",
 		Method:      domain.HTTPMethodGet,
-		// TODO: Import web-service type from source metadata instead of hardcoding GEOJSON.
+		// TODO: Map schema:serviceType to a supported WebServiceType instead of defaulting to GEOJSON.
 		Type: domain.WebServiceTypeGeoJSON,
 		// TODO: Import visible-on targets from source metadata.
 		VisibleOn:        nil,
@@ -1290,6 +1290,7 @@ func stripHydraQueryTemplate(value string) string {
 	return value
 }
 
+// TODO: Parse hydra template correctly
 func hydraParameterLocation(template, name string) domain.ParameterLocation {
 	for _, marker := range []string{"{?", "{&"} {
 		start := 0
