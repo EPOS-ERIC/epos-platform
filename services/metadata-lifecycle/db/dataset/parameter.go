@@ -87,11 +87,12 @@ func persistParameter(
 			ParameterID: created.ID,
 			Template:    schema.Template,
 		})
-		if schemaErr == nil {
-			for _, child := range schema.Parameters {
-				if _, err := persistParameter(ctx, q, child, nil, nil, &created.ID, nil, nil, false); err != nil {
-					return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
-				}
+		if schemaErr != nil {
+			break
+		}
+		for _, child := range schema.Parameters {
+			if _, err := persistParameter(ctx, q, child, nil, nil, &created.ID, nil, nil, false); err != nil {
+				return sqlc.Parameter{}, fmt.Errorf("add template parameter: %w", err)
 			}
 		}
 	default:
