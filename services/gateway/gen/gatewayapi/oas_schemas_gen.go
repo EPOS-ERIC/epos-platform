@@ -5873,6 +5873,51 @@ func (s *MembershipUser) SetEmail(val string) {
 	s.Email = val
 }
 
+// NewNilDateTime returns new NilDateTime with value set to v.
+func NewNilDateTime(v time.Time) NilDateTime {
+	return NilDateTime{
+		Value: v,
+	}
+}
+
+// NilDateTime is nullable time.Time.
+type NilDateTime struct {
+	Value time.Time
+	Null  bool
+}
+
+// SetTo sets value to v.
+func (o *NilDateTime) SetTo(v time.Time) {
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o NilDateTime) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *NilDateTime) SetToNull() {
+	o.Null = true
+	var v time.Time
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o NilDateTime) Get() (v time.Time, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o NilDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewNilString returns new NilString with value set to v.
 func NewNilString(v string) NilString {
 	return NilString{
@@ -8556,6 +8601,208 @@ func (s *ResourceVersionReference) SetID(val uuid.UUID) {
 // SetName sets the value of Name.
 func (s *ResourceVersionReference) SetName(val string) {
 	s.Name = val
+}
+
+// Ref: #/components/schemas/ResourceVersionSummary
+type ResourceVersionSummary struct {
+	ResourceType  DiscoveryResourceType `json:"resource_type"`
+	ResourceID    uuid.UUID             `json:"resource_id"`
+	VersionID     uuid.UUID             `json:"version_id"`
+	Revision      int32                 `json:"revision"`
+	Status        VersioningStatus      `json:"status"`
+	Name          string                `json:"name"`
+	CreatedBy     string                `json:"created_by"`
+	CreatedAt     time.Time             `json:"created_at"`
+	UpdatedAt     time.Time             `json:"updated_at"`
+	SubmittedBy   NilString             `json:"submitted_by"`
+	SubmittedAt   NilDateTime           `json:"submitted_at"`
+	PublishedBy   NilString             `json:"published_by"`
+	PublishedAt   NilDateTime           `json:"published_at"`
+	ArchivedBy    NilString             `json:"archived_by"`
+	ArchivedAt    NilDateTime           `json:"archived_at"`
+	RejectedBy    NilString             `json:"rejected_by"`
+	RejectedAt    NilDateTime           `json:"rejected_at"`
+	RejectionNote NilString             `json:"rejection_note"`
+}
+
+// GetResourceType returns the value of ResourceType.
+func (s *ResourceVersionSummary) GetResourceType() DiscoveryResourceType {
+	return s.ResourceType
+}
+
+// GetResourceID returns the value of ResourceID.
+func (s *ResourceVersionSummary) GetResourceID() uuid.UUID {
+	return s.ResourceID
+}
+
+// GetVersionID returns the value of VersionID.
+func (s *ResourceVersionSummary) GetVersionID() uuid.UUID {
+	return s.VersionID
+}
+
+// GetRevision returns the value of Revision.
+func (s *ResourceVersionSummary) GetRevision() int32 {
+	return s.Revision
+}
+
+// GetStatus returns the value of Status.
+func (s *ResourceVersionSummary) GetStatus() VersioningStatus {
+	return s.Status
+}
+
+// GetName returns the value of Name.
+func (s *ResourceVersionSummary) GetName() string {
+	return s.Name
+}
+
+// GetCreatedBy returns the value of CreatedBy.
+func (s *ResourceVersionSummary) GetCreatedBy() string {
+	return s.CreatedBy
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ResourceVersionSummary) GetCreatedAt() time.Time {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *ResourceVersionSummary) GetUpdatedAt() time.Time {
+	return s.UpdatedAt
+}
+
+// GetSubmittedBy returns the value of SubmittedBy.
+func (s *ResourceVersionSummary) GetSubmittedBy() NilString {
+	return s.SubmittedBy
+}
+
+// GetSubmittedAt returns the value of SubmittedAt.
+func (s *ResourceVersionSummary) GetSubmittedAt() NilDateTime {
+	return s.SubmittedAt
+}
+
+// GetPublishedBy returns the value of PublishedBy.
+func (s *ResourceVersionSummary) GetPublishedBy() NilString {
+	return s.PublishedBy
+}
+
+// GetPublishedAt returns the value of PublishedAt.
+func (s *ResourceVersionSummary) GetPublishedAt() NilDateTime {
+	return s.PublishedAt
+}
+
+// GetArchivedBy returns the value of ArchivedBy.
+func (s *ResourceVersionSummary) GetArchivedBy() NilString {
+	return s.ArchivedBy
+}
+
+// GetArchivedAt returns the value of ArchivedAt.
+func (s *ResourceVersionSummary) GetArchivedAt() NilDateTime {
+	return s.ArchivedAt
+}
+
+// GetRejectedBy returns the value of RejectedBy.
+func (s *ResourceVersionSummary) GetRejectedBy() NilString {
+	return s.RejectedBy
+}
+
+// GetRejectedAt returns the value of RejectedAt.
+func (s *ResourceVersionSummary) GetRejectedAt() NilDateTime {
+	return s.RejectedAt
+}
+
+// GetRejectionNote returns the value of RejectionNote.
+func (s *ResourceVersionSummary) GetRejectionNote() NilString {
+	return s.RejectionNote
+}
+
+// SetResourceType sets the value of ResourceType.
+func (s *ResourceVersionSummary) SetResourceType(val DiscoveryResourceType) {
+	s.ResourceType = val
+}
+
+// SetResourceID sets the value of ResourceID.
+func (s *ResourceVersionSummary) SetResourceID(val uuid.UUID) {
+	s.ResourceID = val
+}
+
+// SetVersionID sets the value of VersionID.
+func (s *ResourceVersionSummary) SetVersionID(val uuid.UUID) {
+	s.VersionID = val
+}
+
+// SetRevision sets the value of Revision.
+func (s *ResourceVersionSummary) SetRevision(val int32) {
+	s.Revision = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ResourceVersionSummary) SetStatus(val VersioningStatus) {
+	s.Status = val
+}
+
+// SetName sets the value of Name.
+func (s *ResourceVersionSummary) SetName(val string) {
+	s.Name = val
+}
+
+// SetCreatedBy sets the value of CreatedBy.
+func (s *ResourceVersionSummary) SetCreatedBy(val string) {
+	s.CreatedBy = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ResourceVersionSummary) SetCreatedAt(val time.Time) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *ResourceVersionSummary) SetUpdatedAt(val time.Time) {
+	s.UpdatedAt = val
+}
+
+// SetSubmittedBy sets the value of SubmittedBy.
+func (s *ResourceVersionSummary) SetSubmittedBy(val NilString) {
+	s.SubmittedBy = val
+}
+
+// SetSubmittedAt sets the value of SubmittedAt.
+func (s *ResourceVersionSummary) SetSubmittedAt(val NilDateTime) {
+	s.SubmittedAt = val
+}
+
+// SetPublishedBy sets the value of PublishedBy.
+func (s *ResourceVersionSummary) SetPublishedBy(val NilString) {
+	s.PublishedBy = val
+}
+
+// SetPublishedAt sets the value of PublishedAt.
+func (s *ResourceVersionSummary) SetPublishedAt(val NilDateTime) {
+	s.PublishedAt = val
+}
+
+// SetArchivedBy sets the value of ArchivedBy.
+func (s *ResourceVersionSummary) SetArchivedBy(val NilString) {
+	s.ArchivedBy = val
+}
+
+// SetArchivedAt sets the value of ArchivedAt.
+func (s *ResourceVersionSummary) SetArchivedAt(val NilDateTime) {
+	s.ArchivedAt = val
+}
+
+// SetRejectedBy sets the value of RejectedBy.
+func (s *ResourceVersionSummary) SetRejectedBy(val NilString) {
+	s.RejectedBy = val
+}
+
+// SetRejectedAt sets the value of RejectedAt.
+func (s *ResourceVersionSummary) SetRejectedAt(val NilDateTime) {
+	s.RejectedAt = val
+}
+
+// SetRejectionNote sets the value of RejectionNote.
+func (s *ResourceVersionSummary) SetRejectionNote(val NilString) {
+	s.RejectionNote = val
 }
 
 // RevokeGlobalPermissionNoContent is response for RevokeGlobalPermission operation.

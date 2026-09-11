@@ -333,6 +333,16 @@ func (UnimplementedHandler) ListOrganizations(ctx context.Context) (r []Canonica
 	return r, ht.ErrNotImplemented
 }
 
+// ListResourceVersions implements listResourceVersions operation.
+//
+// Returns the version history for a resource. Requires an authenticated user with access to the
+// resource's owning group.
+//
+// GET /resources/{resourceType}/{id}/versions
+func (UnimplementedHandler) ListResourceVersions(ctx context.Context, params ListResourceVersionsParams) (r []ResourceVersionSummary, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ListUsers implements listUsers operation.
 //
 // Retrieve all user profiles. Allowed to super admins only.

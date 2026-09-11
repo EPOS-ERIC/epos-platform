@@ -76,6 +76,19 @@ func (r *Repo) Get(ctx context.Context, applicationID, versionID uuid.UUID) (dom
 	return result, err
 }
 
+func (r *Repo) List(ctx context.Context, applicationID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	rows, err := sqlc.New(r.db).ListLifecycleSoftwareApplicationVersionSummaries(ctx, applicationID)
+	if err != nil {
+		return nil, fmt.Errorf("list application version summaries: %w", err)
+	}
+
+	result := make([]domain.ResourceVersionSummary, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, toDomainSoftwareApplicationVersionSummary(row))
+	}
+	return result, nil
+}
+
 func (r *Repo) GetPublished(ctx context.Context, applicationID uuid.UUID) (domain.SoftwareApplicationVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleSoftwareApplicationVersion(ctx, applicationID)
 	if errors.Is(err, pgx.ErrNoRows) {

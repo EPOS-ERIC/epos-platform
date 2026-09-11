@@ -25,6 +25,7 @@ const (
 
 type Store interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.SoftwareApplicationVersion, error)
+	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)
 	GetPublished(context.Context, uuid.UUID) (domain.SoftwareApplicationVersion, error)
 	GetActive(context.Context, uuid.UUID) (domain.SoftwareApplicationVersion, error)
 	CreateDraft(context.Context, string, uuid.UUID, domain.SoftwareApplicationInput) (domain.SoftwareApplicationVersion, error)
@@ -44,6 +45,7 @@ type Store interface {
 type Authorizer interface {
 	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+	CanReadResourceVersions(context.Context, string, domain.ResourceType, uuid.UUID) (domain.Result, error)
 	CanReadSoftwareApplicationVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 }
 
@@ -99,6 +101,22 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, applicationID, 
 		return domain.SoftwareApplicationVersion{}, operationError("get application version", err)
 	}
 	return application, nil
+}
+
+func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, applicationID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	result, err := s.authorizer.CanReadResourceVersions(ctx, string(actor), domain.SoftwareApplication, applicationID)
+	if err != nil {
+		return nil, operationError("authorize application version history", err)
+	}
+	if !result.Allowed {
+		if result.Reason == "resource not found" {
+			return nil, domain.ErrSoftwareApplicationNotFound
+		}
+		return nil, fmt.Errorf("%w: %s", domain.ErrSoftwareApplicationForbidden, result.Reason)
+	}
+
+	versions, err := s.store.List(ctx, applicationID)
+	return versions, operationError("list application versions", err)
 }
 
 func (s *Service) Submit(ctx context.Context, actor domain.Actor, applicationID, versionID uuid.UUID) (domain.SoftwareApplicationVersion, error) {

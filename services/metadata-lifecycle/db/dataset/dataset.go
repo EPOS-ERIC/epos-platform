@@ -110,6 +110,19 @@ func (r *Repo) Get(ctx context.Context, datasetID, versionID uuid.UUID) (domain.
 	return datasetResultFromRow(ctx, q, version)
 }
 
+func (r *Repo) List(ctx context.Context, datasetID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	rows, err := sqlc.New(r.db).ListLifecycleDatasetVersionSummaries(ctx, datasetID)
+	if err != nil {
+		return nil, fmt.Errorf("list dataset version summaries: %w", err)
+	}
+
+	result := make([]domain.ResourceVersionSummary, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, toDomainDatasetVersionSummary(row))
+	}
+	return result, nil
+}
+
 func (r *Repo) GetPublished(ctx context.Context, datasetID uuid.UUID) (domain.DatasetVersion, error) {
 	version, err := sqlc.New(r.db).GetPublishedLifecycleDatasetVersion(ctx, datasetID)
 	if err != nil {

@@ -170,6 +170,29 @@ func applicationMetadata(ctx context.Context, q *sqlc.Queries, row sqlc.GetLifec
 	return result, nil
 }
 
+func toDomainSoftwareApplicationVersionSummary(version sqlc.ListLifecycleSoftwareApplicationVersionSummariesRow) domain.ResourceVersionSummary {
+	return domain.ResourceVersionSummary{
+		ResourceType:  domain.SoftwareApplication,
+		ResourceID:    version.SoftwareApplicationID,
+		VersionID:     version.ID,
+		Revision:      version.Revision,
+		Status:        domain.Status(version.Status),
+		Name:          version.Name,
+		CreatedBy:     domain.Actor(version.CreatedBy),
+		CreatedAt:     version.CreatedAt,
+		UpdatedAt:     version.UpdatedAt,
+		SubmittedBy:   version.SubmittedBy,
+		SubmittedAt:   version.SubmittedAt,
+		PublishedBy:   version.PublishedBy,
+		PublishedAt:   version.PublishedAt,
+		ArchivedBy:    version.ArchivedBy,
+		ArchivedAt:    version.ArchivedAt,
+		RejectedBy:    version.RejectedBy,
+		RejectedAt:    version.RejectedAt,
+		RejectionNote: version.RejectionNote,
+	}
+}
+
 func organizationWithContactPoints(ctx context.Context, q *sqlc.Queries, value sqlc.Organization) (domain.OrganizationMetadata, error) {
 	result := resourcedb.ToOrganizationMetadata(value)
 	rows, err := q.ListLifecycleOrganizationContactPoints(ctx, []uuid.UUID{value.ID})

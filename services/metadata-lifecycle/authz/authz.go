@@ -522,12 +522,30 @@ func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resour
 		return domain.Result{Allowed: false, Reason: "authentication required"}, nil
 	}
 
-	_, result, err := a.activeUser(ctx, *userID)
+	return a.canReadResourceGroup(ctx, *userID, groupID)
+}
+
+// CanReadResourceVersions requires access to the resource's owning group.
+func (a *Authorizer) CanReadResourceVersions(ctx context.Context, userID string, resourceType domain.ResourceType, resourceID uuid.UUID) (domain.Result, error) {
+	groupID, err := a.resourceGroup(ctx, resourceType, resourceID)
+	if errors.Is(err, domain.ErrAuthorizationNotFound) {
+		return domain.Result{Allowed: false, Reason: "resource not found"}, nil
+	}
+	if err != nil {
+		return domain.Result{}, fmt.Errorf("load resource group: %w", err)
+	}
+
+	return a.canReadResourceGroup(ctx, userID, groupID)
+}
+
+// canReadResourceGroup permits active users who are global admins or active group members.
+func (a *Authorizer) canReadResourceGroup(ctx context.Context, userID string, groupID uuid.UUID) (domain.Result, error) {
+	_, result, err := a.activeUser(ctx, userID)
 	if err != nil || !result.Allowed {
 		return result, err
 	}
 
-	admin, err := a.repository.IsGlobalAdmin(ctx, *userID)
+	admin, err := a.repository.IsGlobalAdmin(ctx, userID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check global admin: %w", err)
 	}
@@ -535,13 +553,14 @@ func (a *Authorizer) CanReadResource(ctx context.Context, userID *string, resour
 		return domain.Result{Allowed: true, Reason: "global admin"}, nil
 	}
 
-	member, err := a.repository.IsActiveMember(ctx, *userID, groupID)
+	member, err := a.repository.IsActiveMember(ctx, userID, groupID)
 	if err != nil {
 		return domain.Result{}, fmt.Errorf("check group membership: %w", err)
 	}
 	if !member {
 		return domain.Result{Allowed: false, Reason: "user is not an active group member"}, nil
 	}
+
 	return domain.Result{Allowed: true, Reason: "active group member"}, nil
 }
 

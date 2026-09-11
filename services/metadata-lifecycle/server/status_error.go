@@ -215,7 +215,7 @@ func operationForMethod(method string) string {
 		return "contact point operation"
 	case "ListOrganizations", "GetOrganization", "CreateOrganization", "ReplaceOrganization", "DeleteOrganization":
 		return "organization operation"
-	case "GetResourceVersion":
+	case "GetResourceVersion", "ListResourceVersions":
 		return "read resource"
 	case "CreateResource", "ReplaceResourceDraft", "DiscardResourceDraft", "SubmitResource", "WithdrawResource", "RejectResource", "ReopenResource", "PublishResource", "UnpublishResource", "DraftResourceFromPublication", "DraftResourceFromLatestArchive", "CopyPublishedResource":
 		return "resource operation"

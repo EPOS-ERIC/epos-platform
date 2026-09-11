@@ -76,6 +76,29 @@ func toDomainDatasetVersion(version sqlc.GetLifecycleDatasetVersionRow, metadata
 	return result, nil
 }
 
+func toDomainDatasetVersionSummary(version sqlc.ListLifecycleDatasetVersionSummariesRow) domain.ResourceVersionSummary {
+	return domain.ResourceVersionSummary{
+		ResourceType:  domain.Dataset,
+		ResourceID:    version.DatasetID,
+		VersionID:     version.ID,
+		Revision:      version.Revision,
+		Status:        domain.Status(version.Status),
+		Name:          version.Title,
+		CreatedBy:     domain.Actor(version.CreatedBy),
+		CreatedAt:     version.CreatedAt,
+		UpdatedAt:     version.UpdatedAt,
+		SubmittedBy:   version.SubmittedBy,
+		SubmittedAt:   version.SubmittedAt,
+		PublishedBy:   version.PublishedBy,
+		PublishedAt:   version.PublishedAt,
+		ArchivedBy:    version.ArchivedBy,
+		ArchivedAt:    version.ArchivedAt,
+		RejectedBy:    version.RejectedBy,
+		RejectedAt:    version.RejectedAt,
+		RejectionNote: version.RejectionNote,
+	}
+}
+
 func temporal(start, end *time.Time) *domain.Temporal {
 	if start == nil && end == nil {
 		return nil

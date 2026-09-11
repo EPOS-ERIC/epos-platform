@@ -1155,6 +1155,33 @@ WHERE
     version.id = sqlc.arg(version_id)
     AND version.dataset_id = sqlc.arg(dataset_id);
 
+-- name: ListLifecycleDatasetVersionSummaries :many
+SELECT
+    version.id,
+    version.dataset_id,
+    version.status,
+    version.revision,
+    version.title,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    dataset_versions AS version
+WHERE
+    version.dataset_id = sqlc.arg(dataset_id)
+ORDER BY
+    version.created_at,
+    version.id;
+
 -- name: GetLifecycleDatasetGroup :one
 SELECT
     sqlc.embed(owning_group)

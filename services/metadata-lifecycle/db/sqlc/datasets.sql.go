@@ -986,7 +986,8 @@ parameter_map AS (
             ),
             source.id::text
         )
-    UNION ALL
+    UNION
+    ALL
     SELECT
         source.id AS source_id,
         target.id
@@ -1939,6 +1940,92 @@ func (q *Queries) ListLifecycleDatasetProviders(ctx context.Context, datasetVers
 			&i.PageUrl,
 			&i.Email,
 			&i.LeiCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listLifecycleDatasetVersionSummaries = `-- name: ListLifecycleDatasetVersionSummaries :many
+SELECT
+    version.id,
+    version.dataset_id,
+    version.status,
+    version.revision,
+    version.title,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    dataset_versions AS version
+WHERE
+    version.dataset_id = $1
+ORDER BY
+    version.created_at,
+    version.id
+`
+
+type ListLifecycleDatasetVersionSummariesRow struct {
+	ID            uuid.UUID
+	DatasetID     uuid.UUID
+	Status        ResourceStatus
+	Revision      int32
+	Title         string
+	CreatedBy     string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	SubmittedBy   *string
+	SubmittedAt   *time.Time
+	PublishedBy   *string
+	PublishedAt   *time.Time
+	ArchivedBy    *string
+	ArchivedAt    *time.Time
+	RejectedBy    *string
+	RejectedAt    *time.Time
+	RejectionNote *string
+}
+
+func (q *Queries) ListLifecycleDatasetVersionSummaries(ctx context.Context, datasetID uuid.UUID) ([]ListLifecycleDatasetVersionSummariesRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleDatasetVersionSummaries, datasetID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleDatasetVersionSummariesRow
+	for rows.Next() {
+		var i ListLifecycleDatasetVersionSummariesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.DatasetID,
+			&i.Status,
+			&i.Revision,
+			&i.Title,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SubmittedBy,
+			&i.SubmittedAt,
+			&i.PublishedBy,
+			&i.PublishedAt,
+			&i.ArchivedBy,
+			&i.ArchivedAt,
+			&i.RejectedBy,
+			&i.RejectedAt,
+			&i.RejectionNote,
 		); err != nil {
 			return nil, err
 		}

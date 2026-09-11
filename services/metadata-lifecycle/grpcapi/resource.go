@@ -155,6 +155,41 @@ func (s *ResourceServer) GetResourceVersion(ctx context.Context, request *metada
 	return &metadatalifecyclev1.GetResourceVersionResponse{Resource: response}, nil
 }
 
+func (s *ResourceServer) ListResourceVersions(ctx context.Context, request *metadatalifecyclev1.ListResourceVersionsRequest) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {
+	if request == nil {
+		return nil, status.Error(codes.InvalidArgument, "resource versions request is required")
+	}
+	actor, err := actorFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resourceID, err := parseUUID(request.GetResourceId(), "resource id")
+	if err != nil {
+		return nil, wrapHandlerError(err)
+	}
+
+	var summaries []domain.ResourceVersionSummary
+	switch request.GetResourceType() {
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
+		summaries, err = s.datasets.ListVersions(ctx, actor, resourceID)
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
+		summaries, err = s.applications.ListVersions(ctx, actor, resourceID)
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
+		summaries, err = s.sourceCodes.ListVersions(ctx, actor, resourceID)
+	default:
+		return nil, status.Error(codes.InvalidArgument, "resource type is required")
+	}
+	if err != nil {
+		return nil, wrapHandlerError(err)
+	}
+
+	response := &metadatalifecyclev1.ListResourceVersionsResponse{Versions: make([]*metadatalifecyclev1.ResourceVersionSummary, 0, len(summaries))}
+	for _, summary := range summaries {
+		response.Versions = append(response.Versions, resourceVersionSummaryOutput(summary))
+	}
+	return response, nil
+}
+
 func (s *ResourceServer) ReplaceResourceDraft(ctx context.Context, request *metadatalifecyclev1.ReplaceResourceDraftRequest) (*metadatalifecyclev1.ReplaceResourceDraftResponse, error) {
 	if request == nil {
 		return nil, status.Error(codes.InvalidArgument, "resource draft request is required")
@@ -1309,6 +1344,42 @@ func toGRPCVersioningStatus(status domain.Status) metadatalifecyclev1.Versioning
 		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_SUBMITTED
 	default:
 		return metadatalifecyclev1.VersioningStatus_VERSIONING_STATUS_UNSPECIFIED
+	}
+}
+
+func toGRPCResourceType(resourceType domain.ResourceType) metadatalifecyclev1.ResourceType {
+	switch resourceType {
+	case domain.Dataset:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET
+	case domain.SoftwareApplication:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION
+	case domain.SoftwareSourceCode:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE
+	default:
+		return metadatalifecyclev1.ResourceType_RESOURCE_TYPE_UNSPECIFIED
+	}
+}
+
+func resourceVersionSummaryOutput(value domain.ResourceVersionSummary) *metadatalifecyclev1.ResourceVersionSummary {
+	return &metadatalifecyclev1.ResourceVersionSummary{
+		ResourceType:  toGRPCResourceType(value.ResourceType),
+		ResourceId:    value.ResourceID.String(),
+		VersionId:     value.VersionID.String(),
+		Revision:      value.Revision,
+		Status:        toGRPCVersioningStatus(value.Status),
+		Name:          value.Name,
+		CreatedBy:     string(value.CreatedBy),
+		CreatedAt:     timestamppb.New(value.CreatedAt),
+		UpdatedAt:     timestamppb.New(value.UpdatedAt),
+		SubmittedBy:   value.SubmittedBy,
+		SubmittedAt:   timestampOutput(value.SubmittedAt),
+		PublishedBy:   value.PublishedBy,
+		PublishedAt:   timestampOutput(value.PublishedAt),
+		ArchivedBy:    value.ArchivedBy,
+		ArchivedAt:    timestampOutput(value.ArchivedAt),
+		RejectedBy:    value.RejectedBy,
+		RejectedAt:    timestampOutput(value.RejectedAt),
+		RejectionNote: value.RejectionNote,
 	}
 }
 

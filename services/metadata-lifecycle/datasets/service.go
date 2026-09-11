@@ -26,6 +26,7 @@ const (
 
 type Store interface {
 	Get(context.Context, uuid.UUID, uuid.UUID) (domain.DatasetVersion, error)
+	List(context.Context, uuid.UUID) ([]domain.ResourceVersionSummary, error)
 	GetPublished(context.Context, uuid.UUID) (domain.DatasetVersion, error)
 	GetActive(context.Context, uuid.UUID) (domain.DatasetVersion, error)
 	CreateDraft(context.Context, string, uuid.UUID, domain.DatasetInput) (domain.DatasetVersion, error)
@@ -45,6 +46,7 @@ type Store interface {
 type Authorizer interface {
 	AuthorizeGroup(context.Context, string, uuid.UUID, string) (domain.Result, error)
 	AuthorizeResource(context.Context, string, domain.ResourceType, uuid.UUID, string) (domain.Result, error)
+	CanReadResourceVersions(context.Context, string, domain.ResourceType, uuid.UUID) (domain.Result, error)
 	CanReadDatasetVersion(context.Context, *string, uuid.UUID, uuid.UUID) (domain.Result, error)
 }
 
@@ -103,6 +105,22 @@ func (s *Service) Read(ctx context.Context, actor *domain.Actor, datasetID, vers
 	}
 
 	return dataset, nil
+}
+
+func (s *Service) ListVersions(ctx context.Context, actor domain.Actor, datasetID uuid.UUID) ([]domain.ResourceVersionSummary, error) {
+	result, err := s.authorizer.CanReadResourceVersions(ctx, string(actor), domain.Dataset, datasetID)
+	if err != nil {
+		return nil, operationError("authorize dataset version history", err)
+	}
+	if !result.Allowed {
+		if result.Reason == "resource not found" {
+			return nil, domain.ErrDatasetNotFound
+		}
+		return nil, fmt.Errorf("%w: %s", domain.ErrDatasetForbidden, result.Reason)
+	}
+
+	versions, err := s.store.List(ctx, datasetID)
+	return versions, operationError("list dataset versions", err)
 }
 
 func (s *Service) Submit(ctx context.Context, actor domain.Actor, datasetID, versionID uuid.UUID) (domain.DatasetVersion, error) {

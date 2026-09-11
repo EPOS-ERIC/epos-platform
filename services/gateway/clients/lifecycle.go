@@ -33,6 +33,18 @@ func (c *MetadataLifecycle) GetResourceVersion(ctx context.Context, actorID stri
 	return response, nil
 }
 
+func (c *MetadataLifecycle) ListResourceVersions(ctx context.Context, actorID string, resourceType metadatalifecyclev1.ResourceType, resourceID string) (*metadatalifecyclev1.ListResourceVersionsResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, actorMetadataKey, actorID)
+	response, err := c.resources.ListResourceVersions(ctx, &metadatalifecyclev1.ListResourceVersionsRequest{
+		ResourceType: resourceType,
+		ResourceId:   resourceID,
+	})
+	if err != nil {
+		return nil, c.wrapError(ctx, "list metadata-lifecycle resource versions", err)
+	}
+	return response, nil
+}
+
 func (c *MetadataLifecycle) ReplaceResourceDraft(ctx context.Context, actorID, resourceID, versionID string, request *metadatalifecyclev1.ReplaceResourceDraftRequest) (*metadatalifecyclev1.ReplaceResourceDraftResponse, error) {
 	if request == nil {
 		return nil, fmt.Errorf("resource draft request is required")

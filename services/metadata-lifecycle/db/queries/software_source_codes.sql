@@ -499,6 +499,33 @@ WHERE
     version.id = sqlc.arg(version_id)
     AND version.software_source_code_id = sqlc.arg(software_source_code_id);
 
+-- name: ListLifecycleSoftwareSourceCodeVersionSummaries :many
+SELECT
+    version.id,
+    version.software_source_code_id,
+    version.status,
+    version.revision,
+    version.name,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    software_source_code_versions AS version
+WHERE
+    version.software_source_code_id = sqlc.arg(software_source_code_id)
+ORDER BY
+    version.created_at,
+    version.id;
+
 -- name: ListLifecycleSoftwareSourceCodeIdentifiers :many
 SELECT
     sqlc.embed(identifier)

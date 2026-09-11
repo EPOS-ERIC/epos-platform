@@ -40,6 +40,7 @@ const (
 	ListGroupMembershipsOperation           OperationName = "ListGroupMemberships"
 	ListGroupsOperation                     OperationName = "ListGroups"
 	ListOrganizationsOperation              OperationName = "ListOrganizations"
+	ListResourceVersionsOperation           OperationName = "ListResourceVersions"
 	ListUsersOperation                      OperationName = "ListUsers"
 	PublishResourceVersionOperation         OperationName = "PublishResourceVersion"
 	RejectResourceVersionOperation          OperationName = "RejectResourceVersion"

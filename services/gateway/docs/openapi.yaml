@@ -1180,6 +1180,33 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
+  /resources/{resourceType}/{id}/versions:
+    parameters:
+      - $ref: "#/components/parameters/LifecycleResourceType"
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags:
+        - Resources
+      summary: List resource versions
+      description: Returns the version history for a resource. Requires an authenticated user with access to the resource's owning group.
+      operationId: listResourceVersions
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Resource version summaries returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ResourceVersionSummary"
+        default:
+          description: Gateway error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
   /resources/{resourceType}/{id}/versions/{versionId}/submit:
     parameters:
       - $ref: "#/components/parameters/LifecycleResourceType"
@@ -2761,6 +2788,50 @@ components:
               dataset: "#/components/schemas/DatasetResourceMetadata"
               software-application: "#/components/schemas/SoftwareApplicationResourceMetadata"
               software-source-code: "#/components/schemas/SoftwareSourceCodeResourceMetadata"
+
+    ResourceVersionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          resource_type,
+          resource_id,
+          version_id,
+          revision,
+          status,
+          name,
+          created_by,
+          created_at,
+          updated_at,
+          submitted_by,
+          submitted_at,
+          published_by,
+          published_at,
+          archived_by,
+          archived_at,
+          rejected_by,
+          rejected_at,
+          rejection_note,
+        ]
+      properties:
+        resource_type: { $ref: "#/components/schemas/DiscoveryResourceType" }
+        resource_id: { type: string, format: uuid }
+        version_id: { type: string, format: uuid }
+        revision: { type: integer, format: int32, minimum: 1 }
+        status: { $ref: "#/components/schemas/VersioningStatus" }
+        name: { type: string, minLength: 1 }
+        created_by: { type: string, minLength: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        submitted_by: { type: string, minLength: 1, nullable: true }
+        submitted_at: { type: string, format: date-time, nullable: true }
+        published_by: { type: string, minLength: 1, nullable: true }
+        published_at: { type: string, format: date-time, nullable: true }
+        archived_by: { type: string, minLength: 1, nullable: true }
+        archived_at: { type: string, format: date-time, nullable: true }
+        rejected_by: { type: string, minLength: 1, nullable: true }
+        rejected_at: { type: string, format: date-time, nullable: true }
+        rejection_note: { type: string, minLength: 1, nullable: true }
 
     DatasetResourceMetadata:
       type: object

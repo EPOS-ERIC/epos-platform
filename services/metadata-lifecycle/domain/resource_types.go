@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -31,6 +32,27 @@ func (s Status) Valid() bool {
 	default:
 		return false
 	}
+}
+
+type ResourceVersionSummary struct {
+	ResourceType  ResourceType
+	ResourceID    uuid.UUID
+	VersionID     uuid.UUID
+	Revision      int32
+	Status        Status
+	Name          string
+	CreatedBy     Actor
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	SubmittedBy   *string
+	SubmittedAt   *time.Time
+	PublishedBy   *string
+	PublishedAt   *time.Time
+	ArchivedBy    *string
+	ArchivedAt    *time.Time
+	RejectedBy    *string
+	RejectedAt    *time.Time
+	RejectionNote *string
 }
 
 // NewRejectionNote normalizes and validates a rejection note for a version status.

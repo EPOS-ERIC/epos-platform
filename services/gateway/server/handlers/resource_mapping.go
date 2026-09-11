@@ -6,6 +6,7 @@ import (
 	metadatalifecyclev1 "github.com/EPOS-ERIC/epos-platform/packages/protobuf/gen/go/metadata_lifecycle/v1"
 	gatewayapi "github.com/EPOS-ERIC/epos-platform/services/gateway/gen/gatewayapi"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.ResourceVersion, error) {
@@ -56,6 +57,75 @@ func toAPIResourceVersion(v *metadatalifecyclev1.ResourceVersion) (gatewayapi.Re
 		RejectionNote: rejectionNote,
 		Metadata:      metadata,
 	}, nil
+}
+
+func toAPIResourceVersionSummaries(values []*metadatalifecyclev1.ResourceVersionSummary) ([]gatewayapi.ResourceVersionSummary, error) {
+	result := make([]gatewayapi.ResourceVersionSummary, 0, len(values))
+	for _, value := range values {
+		if value == nil {
+			return nil, errors.New("decode metadata-lifecycle resource version summary: response is empty")
+		}
+		resourceType, err := toAPIDiscoveryResourceType(value.ResourceType)
+		if err != nil {
+			return nil, err
+		}
+		status, err := toAPIVersioningStatus(value.Status)
+		if err != nil {
+			return nil, err
+		}
+		resourceID, err := parseUUID("resource_version_summary.resource_id", value.ResourceId)
+		if err != nil {
+			return nil, err
+		}
+		versionID, err := parseUUID("resource_version_summary.version_id", value.VersionId)
+		if err != nil {
+			return nil, err
+		}
+
+		mapped := gatewayapi.ResourceVersionSummary{
+			ResourceType: resourceType,
+			ResourceID:   resourceID,
+			VersionID:    versionID,
+			Revision:     value.Revision,
+			Status:       status,
+			Name:         value.Name,
+			CreatedBy:    value.CreatedBy,
+			CreatedAt:    value.CreatedAt.AsTime(),
+			UpdatedAt:    value.UpdatedAt.AsTime(),
+		}
+		setProtoNilString(&mapped.SubmittedBy, value.SubmittedBy)
+		setAPINilDateTime(&mapped.SubmittedAt, value.SubmittedAt)
+		setProtoNilString(&mapped.PublishedBy, value.PublishedBy)
+		setAPINilDateTime(&mapped.PublishedAt, value.PublishedAt)
+		setProtoNilString(&mapped.ArchivedBy, value.ArchivedBy)
+		setAPINilDateTime(&mapped.ArchivedAt, value.ArchivedAt)
+		setProtoNilString(&mapped.RejectedBy, value.RejectedBy)
+		setAPINilDateTime(&mapped.RejectedAt, value.RejectedAt)
+		setProtoNilString(&mapped.RejectionNote, value.RejectionNote)
+		result = append(result, mapped)
+	}
+	return result, nil
+}
+
+func toAPIDiscoveryResourceType(value metadatalifecyclev1.ResourceType) (gatewayapi.DiscoveryResourceType, error) {
+	switch value {
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_DATASET:
+		return gatewayapi.DiscoveryResourceTypeDataset, nil
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_APPLICATION:
+		return gatewayapi.DiscoveryResourceTypeSoftwareApplication, nil
+	case metadatalifecyclev1.ResourceType_RESOURCE_TYPE_SOFTWARE_SOURCE_CODE:
+		return gatewayapi.DiscoveryResourceTypeSoftwareSourceCode, nil
+	default:
+		return "", errors.New("unknown resource type")
+	}
+}
+
+func setAPINilDateTime(out *gatewayapi.NilDateTime, value *timestamppb.Timestamp) {
+	if value == nil {
+		out.SetToNull()
+		return
+	}
+	out.SetTo(value.AsTime())
 }
 
 func toAPIVersioningStatus(status metadatalifecyclev1.VersioningStatus) (gatewayapi.VersioningStatus, error) {

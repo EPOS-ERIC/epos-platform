@@ -968,6 +968,92 @@ func (q *Queries) ListLifecycleSoftwareApplicationIdentifiers(ctx context.Contex
 	return items, nil
 }
 
+const listLifecycleSoftwareApplicationVersionSummaries = `-- name: ListLifecycleSoftwareApplicationVersionSummaries :many
+SELECT
+    version.id,
+    version.software_application_id,
+    version.status,
+    version.revision,
+    version.name,
+    version.created_by,
+    version.created_at,
+    version.updated_at,
+    version.submitted_by,
+    version.submitted_at,
+    version.published_by,
+    version.published_at,
+    version.archived_by,
+    version.archived_at,
+    version.rejected_by,
+    version.rejected_at,
+    version.rejection_note
+FROM
+    software_application_versions AS version
+WHERE
+    version.software_application_id = $1
+ORDER BY
+    version.created_at,
+    version.id
+`
+
+type ListLifecycleSoftwareApplicationVersionSummariesRow struct {
+	ID                    uuid.UUID
+	SoftwareApplicationID uuid.UUID
+	Status                ResourceStatus
+	Revision              int32
+	Name                  string
+	CreatedBy             string
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	SubmittedBy           *string
+	SubmittedAt           *time.Time
+	PublishedBy           *string
+	PublishedAt           *time.Time
+	ArchivedBy            *string
+	ArchivedAt            *time.Time
+	RejectedBy            *string
+	RejectedAt            *time.Time
+	RejectionNote         *string
+}
+
+func (q *Queries) ListLifecycleSoftwareApplicationVersionSummaries(ctx context.Context, softwareApplicationID uuid.UUID) ([]ListLifecycleSoftwareApplicationVersionSummariesRow, error) {
+	rows, err := q.db.Query(ctx, listLifecycleSoftwareApplicationVersionSummaries, softwareApplicationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLifecycleSoftwareApplicationVersionSummariesRow
+	for rows.Next() {
+		var i ListLifecycleSoftwareApplicationVersionSummariesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SoftwareApplicationID,
+			&i.Status,
+			&i.Revision,
+			&i.Name,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.SubmittedBy,
+			&i.SubmittedAt,
+			&i.PublishedBy,
+			&i.PublishedAt,
+			&i.ArchivedBy,
+			&i.ArchivedAt,
+			&i.RejectedBy,
+			&i.RejectedAt,
+			&i.RejectionNote,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const publishLifecycleSoftwareApplicationVersion = `-- name: PublishLifecycleSoftwareApplicationVersion :one
 WITH target AS (
     SELECT

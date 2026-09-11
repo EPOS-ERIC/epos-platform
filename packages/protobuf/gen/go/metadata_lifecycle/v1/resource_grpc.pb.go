@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ResourceService_CreateResource_FullMethodName                 = "/metadata_lifecycle.v1.ResourceService/CreateResource"
 	ResourceService_GetResourceVersion_FullMethodName             = "/metadata_lifecycle.v1.ResourceService/GetResourceVersion"
+	ResourceService_ListResourceVersions_FullMethodName           = "/metadata_lifecycle.v1.ResourceService/ListResourceVersions"
 	ResourceService_ReplaceResourceDraft_FullMethodName           = "/metadata_lifecycle.v1.ResourceService/ReplaceResourceDraft"
 	ResourceService_DiscardResourceDraft_FullMethodName           = "/metadata_lifecycle.v1.ResourceService/DiscardResourceDraft"
 	ResourceService_SubmitResource_FullMethodName                 = "/metadata_lifecycle.v1.ResourceService/SubmitResource"
@@ -40,6 +41,7 @@ const (
 type ResourceServiceClient interface {
 	CreateResource(ctx context.Context, in *CreateResourceRequest, opts ...grpc.CallOption) (*CreateResourceResponse, error)
 	GetResourceVersion(ctx context.Context, in *GetResourceVersionRequest, opts ...grpc.CallOption) (*GetResourceVersionResponse, error)
+	ListResourceVersions(ctx context.Context, in *ListResourceVersionsRequest, opts ...grpc.CallOption) (*ListResourceVersionsResponse, error)
 	ReplaceResourceDraft(ctx context.Context, in *ReplaceResourceDraftRequest, opts ...grpc.CallOption) (*ReplaceResourceDraftResponse, error)
 	DiscardResourceDraft(ctx context.Context, in *DiscardResourceDraftRequest, opts ...grpc.CallOption) (*DiscardResourceDraftResponse, error)
 	SubmitResource(ctx context.Context, in *SubmitResourceRequest, opts ...grpc.CallOption) (*SubmitResourceResponse, error)
@@ -75,6 +77,16 @@ func (c *resourceServiceClient) GetResourceVersion(ctx context.Context, in *GetR
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetResourceVersionResponse)
 	err := c.cc.Invoke(ctx, ResourceService_GetResourceVersion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *resourceServiceClient) ListResourceVersions(ctx context.Context, in *ListResourceVersionsRequest, opts ...grpc.CallOption) (*ListResourceVersionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListResourceVersionsResponse)
+	err := c.cc.Invoke(ctx, ResourceService_ListResourceVersions_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +209,7 @@ func (c *resourceServiceClient) CopyPublishedResource(ctx context.Context, in *C
 type ResourceServiceServer interface {
 	CreateResource(context.Context, *CreateResourceRequest) (*CreateResourceResponse, error)
 	GetResourceVersion(context.Context, *GetResourceVersionRequest) (*GetResourceVersionResponse, error)
+	ListResourceVersions(context.Context, *ListResourceVersionsRequest) (*ListResourceVersionsResponse, error)
 	ReplaceResourceDraft(context.Context, *ReplaceResourceDraftRequest) (*ReplaceResourceDraftResponse, error)
 	DiscardResourceDraft(context.Context, *DiscardResourceDraftRequest) (*DiscardResourceDraftResponse, error)
 	SubmitResource(context.Context, *SubmitResourceRequest) (*SubmitResourceResponse, error)
@@ -223,6 +236,9 @@ func (UnimplementedResourceServiceServer) CreateResource(context.Context, *Creat
 }
 func (UnimplementedResourceServiceServer) GetResourceVersion(context.Context, *GetResourceVersionRequest) (*GetResourceVersionResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetResourceVersion not implemented")
+}
+func (UnimplementedResourceServiceServer) ListResourceVersions(context.Context, *ListResourceVersionsRequest) (*ListResourceVersionsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListResourceVersions not implemented")
 }
 func (UnimplementedResourceServiceServer) ReplaceResourceDraft(context.Context, *ReplaceResourceDraftRequest) (*ReplaceResourceDraftResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReplaceResourceDraft not implemented")
@@ -310,6 +326,24 @@ func _ResourceService_GetResourceVersion_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ResourceServiceServer).GetResourceVersion(ctx, req.(*GetResourceVersionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ResourceService_ListResourceVersions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListResourceVersionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceServiceServer).ListResourceVersions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceService_ListResourceVersions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceServiceServer).ListResourceVersions(ctx, req.(*ListResourceVersionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -526,6 +560,10 @@ var ResourceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetResourceVersion",
 			Handler:    _ResourceService_GetResourceVersion_Handler,
+		},
+		{
+			MethodName: "ListResourceVersions",
+			Handler:    _ResourceService_ListResourceVersions_Handler,
 		},
 		{
 			MethodName: "ReplaceResourceDraft",

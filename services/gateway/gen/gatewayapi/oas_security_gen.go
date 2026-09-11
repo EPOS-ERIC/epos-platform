@@ -62,6 +62,7 @@ var operationRolesBearerAuth = map[string][]string{
 	ImportTurtleMetadataOperation:           {},
 	ListContactPointsOperation:              {},
 	ListGroupMembershipsOperation:           {},
+	ListResourceVersionsOperation:           {},
 	ListUsersOperation:                      {},
 	PublishResourceVersionOperation:         {},
 	RejectResourceVersionOperation:          {},
